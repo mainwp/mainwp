@@ -1031,6 +1031,53 @@ class MainWP_Abilities_Batch_Cron_Handlers_Test extends MainWP_Abilities_Test_Ca
 		$this->assertSame( [ 'upgrade' ], array_column( $calls, 'what' ) );
 	}
 
+	/**
+	 * Queued translations need the selected slugs because the Child reads the list parameter.
+	 *
+	 * @return void
+	 */
+	public function test_process_update_job_dispatches_selected_translation_slugs() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site();
+		$this->set_site_translation_upgrades( $site_id, [
+			[ 'slug' => 'akismet', 'language' => 'fr_FR', 'version' => '1.0', 'new_version' => '2.0' ],
+			[ 'slug' => 'wordpress', 'language' => 'fr_FR', 'version' => '6.5', 'new_version' => '6.6' ],
+			[ 'slug' => 'twentytwentyfive', 'language' => 'fr_FR', 'version' => '1.0', 'new_version' => '2.0' ],
+		] );
+
+		$calls  = &$this->record_update_calls();
+		$job_id = 'test_update_translation_selected_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'translations' ], [ 'specific_items' => [ 'twentytwentyfive', 'akismet', 'missing' ] ] );
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+		$this->assertSame(
+			[ [ 'site_id' => $site_id, 'what' => 'upgradetranslation', 'type' => 'translation', 'list' => 'akismet,twentytwentyfive' ] ],
+			$calls
+		);
+
+		$calls  = [];
+		$job_id = 'test_update_translation_all_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'translations' ] );
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+		$this->assertSame(
+			[ [ 'site_id' => $site_id, 'what' => 'upgradetranslation', 'type' => 'translation', 'list' => 'akismet,wordpress,twentytwentyfive' ] ],
+			$calls
+		);
+
+		$calls  = [];
+		$job_id = 'test_update_translation_no_match_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'translations' ], [ 'specific_items' => [ 'missing' ] ] );
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+		$this->assertSame( [], $calls, 'No matching pending translation may be dispatched.' );
+
+		$this->set_site_translation_upgrades( $site_id, [] );
+		$job_id = 'test_update_translation_empty_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'translations' ] );
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+		$this->assertSame( [], $calls, 'A site without pending translations must not be called.' );
+	}
+
 	// =========================================================================
 	// Batch Job Processing Tests
 	// =========================================================================

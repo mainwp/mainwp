@@ -2434,10 +2434,29 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             return $child_version_check;
         }
 
-        $wp_upgrades = MainWP_DB::instance()->get_website_option( $site, 'wp_upgrades' );
-        $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
+        $user_extension         = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+        $global_ignored_plugins = array();
+        $global_ignored_themes  = array();
+        $global_ignored_core    = array();
+        if ( is_object( $user_extension ) ) {
+            $global_ignored_plugins = ! empty( $user_extension->ignored_plugins ) ? json_decode( $user_extension->ignored_plugins, true ) : array();
+            $global_ignored_themes  = ! empty( $user_extension->ignored_themes ) ? json_decode( $user_extension->ignored_themes, true ) : array();
+            $global_ignored_core    = ! empty( $user_extension->ignored_wp_upgrades ) ? json_decode( $user_extension->ignored_wp_upgrades, true ) : array();
+        }
 
-        if ( empty( $wp_upgrades ) || ! isset( $wp_upgrades['current'] ) || ! isset( $wp_upgrades['new'] ) ) {
+        if ( ! is_array( $global_ignored_plugins ) ) {
+            $global_ignored_plugins = array();
+        }
+        if ( ! is_array( $global_ignored_themes ) ) {
+            $global_ignored_themes = array();
+        }
+        if ( ! is_array( $global_ignored_core ) ) {
+            $global_ignored_core = array();
+        }
+
+        $updates = self::get_site_updates( $site, array( 'core' ), $global_ignored_plugins, $global_ignored_themes, $global_ignored_core );
+
+        if ( empty( $updates ) || '' === $updates[0]['current_version'] || '' === $updates[0]['new_version'] ) {
             return new \WP_Error(
                 'mainwp_no_updates',
                 __( 'No core updates available for this site.', 'mainwp' ),
@@ -2445,12 +2464,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
-        $update_info = array(
-            'current_version' => $wp_upgrades['current'],
-            'new_version'     => $wp_upgrades['new'],
-        );
-
-        $result = self::execute_core_update( $site, $update_info );
+        $result = self::execute_core_update( $site, $updates[0] );
 
         if ( is_wp_error( $result ) ) {
             return $result;
@@ -2503,41 +2517,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             $global_ignored_plugins = array();
         }
 
-        $site_ignored_plugins = ! empty( $site->ignored_plugins ) ? json_decode( $site->ignored_plugins, true ) : array();
-        if ( ! is_array( $site_ignored_plugins ) ) {
-            $site_ignored_plugins = array();
-        }
-
-        $plugin_upgrades = ! empty( $site->plugin_upgrades ) ? json_decode( $site->plugin_upgrades, true ) : array();
-        if ( ! is_array( $plugin_upgrades ) || empty( $plugin_upgrades ) ) {
-            return array(
-                'updated' => array(),
-                'errors'  => array(),
-                'summary' => array(
-                    'total_updated' => 0,
-                    'total_errors'  => 0,
-                ),
-            );
-        }
-
-        if ( ! empty( $site_ignored_plugins ) ) {
-            $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $site_ignored_plugins );
-        }
-        if ( ! empty( $global_ignored_plugins ) ) {
-            $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $global_ignored_plugins );
-        }
+        $updates = self::get_site_updates( $site, array( 'plugins' ), $global_ignored_plugins, array(), array() );
 
         if ( ! empty( $slugs ) ) {
-            $plugin_upgrades = array_filter(
-                $plugin_upgrades,
-                function ( $slug ) use ( $slugs ) {
-                    return in_array( $slug, $slugs, true );
-                },
-                ARRAY_FILTER_USE_KEY
+            $updates = array_filter(
+                $updates,
+                function ( $update ) use ( $slugs ) {
+                    return in_array( $update['slug'], $slugs, true );
+                }
             );
         }
 
-        if ( empty( $plugin_upgrades ) ) {
+        if ( empty( $updates ) ) {
             return array(
                 'updated' => array(),
                 'errors'  => array(),
@@ -2545,25 +2536,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'total_updated' => 0,
                     'total_errors'  => 0,
                 ),
-            );
-        }
-
-        $updates = array();
-        foreach ( $plugin_upgrades as $slug => $plugin ) {
-
-            $new_version = '';
-
-            if ( isset( $plugin['update']['new_version'] ) ) {
-                $new_version = $plugin['update']['new_version'];
-            } elseif ( isset( $plugin['new_version'] ) ) {
-                $new_version = $plugin['new_version'];
-            }
-
-            $updates[] = array(
-                'slug'            => $slug,
-                'name'            => isset( $plugin['Name'] ) ? $plugin['Name'] : $slug,
-                'current_version' => isset( $plugin['Version'] ) ? $plugin['Version'] : '',
-                'new_version'     => $new_version,
             );
         }
 
@@ -2621,41 +2593,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             $global_ignored_themes = array();
         }
 
-        $site_ignored_themes = ! empty( $site->ignored_themes ) ? json_decode( $site->ignored_themes, true ) : array();
-        if ( ! is_array( $site_ignored_themes ) ) {
-            $site_ignored_themes = array();
-        }
-
-        $theme_upgrades = ! empty( $site->theme_upgrades ) ? json_decode( $site->theme_upgrades, true ) : array();
-        if ( ! is_array( $theme_upgrades ) || empty( $theme_upgrades ) ) {
-            return array(
-                'updated' => array(),
-                'errors'  => array(),
-                'summary' => array(
-                    'total_updated' => 0,
-                    'total_errors'  => 0,
-                ),
-            );
-        }
-
-        if ( ! empty( $site_ignored_themes ) ) {
-            $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $site_ignored_themes );
-        }
-        if ( ! empty( $global_ignored_themes ) ) {
-            $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $global_ignored_themes );
-        }
+        $updates = self::get_site_updates( $site, array( 'themes' ), array(), $global_ignored_themes, array() );
 
         if ( ! empty( $slugs ) ) {
-            $theme_upgrades = array_filter(
-                $theme_upgrades,
-                function ( $slug ) use ( $slugs ) {
-                    return in_array( $slug, $slugs, true );
-                },
-                ARRAY_FILTER_USE_KEY
+            $updates = array_filter(
+                $updates,
+                function ( $update ) use ( $slugs ) {
+                    return in_array( $update['slug'], $slugs, true );
+                }
             );
         }
 
-        if ( empty( $theme_upgrades ) ) {
+        if ( empty( $updates ) ) {
             return array(
                 'updated' => array(),
                 'errors'  => array(),
@@ -2663,16 +2612,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'total_updated' => 0,
                     'total_errors'  => 0,
                 ),
-            );
-        }
-
-        $updates = array();
-        foreach ( $theme_upgrades as $slug => $theme ) {
-            $updates[] = array(
-                'slug'            => $slug,
-                'name'            => isset( $theme['Name'] ) ? $theme['Name'] : $slug,
-                'current_version' => isset( $theme['Version'] ) ? $theme['Version'] : '',
-                'new_version'     => $theme['update']['new_version'] ?? $theme['new_version'] ?? '',
             );
         }
 

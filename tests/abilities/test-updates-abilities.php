@@ -1622,6 +1622,63 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Core holds must prevent dispatch through the single-site ability.
+	 *
+	 * @return void
+	 */
+	public function test_update_site_core_honours_holds() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$held    = $this->create_test_site();
+		$flagged = $this->create_test_site( [ 'is_ignoreCoreUpdates' => 1 ] );
+		$free    = $this->create_test_site();
+		foreach ( [ $held, $flagged, $free ] as $site_id ) {
+			$this->set_site_option( $site_id, 'wp_upgrades', wp_json_encode( [ 'current' => '6.5', 'new' => '6.6' ] ) );
+		}
+		$ignored = wp_json_encode( [ 'ignored_versions' => [ 'all_versions' ] ] );
+		$this->set_site_option( $held, 'ignored_wp_upgrades', $ignored );
+		$extension = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+
+		$calls = [];
+		$mock  = static function ( $result, $website, $what ) use ( &$calls ) {
+			$calls[] = [ 'site_id' => (int) $website->id, 'what' => $what ];
+			return [ 'upgrade' => 'SUCCESS' ];
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $mock, 10, 3 );
+		try {
+			foreach ( [ $held, $flagged ] as $site_id ) {
+				$result = $this->execute_ability( 'mainwp/update-site-core-v1', [ 'site_id_or_domain' => $site_id ] );
+				$this->assertSame( [], $calls, 'A per-site core hold must prevent child calls.' );
+				$this->assertWPError( $result );
+				$this->assertSame( 'mainwp_no_updates', $result->get_error_code() );
+				$this->assertSame( [ 'status' => 404 ], $result->get_error_data() );
+			}
+
+			\MainWP\Dashboard\MainWP_DB_Common::instance()->update_user_extension(
+				[ 'userid' => $extension->userid, 'ignored_wp_upgrades' => $ignored ]
+			);
+			$result = $this->execute_ability( 'mainwp/update-site-core-v1', [ 'site_id_or_domain' => $free ] );
+			$this->assertSame( [], $calls, 'A global core hold must prevent child calls.' );
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_no_updates', $result->get_error_code() );
+			$this->assertSame( [ 'status' => 404 ], $result->get_error_data() );
+
+			\MainWP\Dashboard\MainWP_DB_Common::instance()->update_user_extension(
+				[ 'userid' => $extension->userid, 'ignored_wp_upgrades' => '' ]
+			);
+			$result = $this->execute_ability( 'mainwp/update-site-core-v1', [ 'site_id_or_domain' => $free ] );
+			$this->assertSame( [ [ 'site_id' => $free, 'what' => 'upgrade' ] ], $calls );
+			$this->assertNotWPError( $result );
+			$this->assertSame( 'wordpress', $result['updated']['slug'] );
+			$this->assertSame( '6.5', $result['updated']['old_version'] );
+			$this->assertSame( '6.6', $result['updated']['new_version'] );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $mock, 10 );
+		}
+	}
+
+	/**
 	 * Test that update-site-core rejects offline sites.
 	 *
 	 * @return void
@@ -1824,6 +1881,70 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertNotWPError( $result );
 		$this->assertIsArray( $result );
+	}
+
+	/**
+	 * Explicit slugs must respect whole-site holds and the existing ignore lists.
+	 *
+	 * @return void
+	 */
+	public function test_update_site_plugins_and_themes_honour_holds() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$calls = [];
+		$mock  = static function ( $result, $website, $what, $params ) use ( &$calls ) {
+			$calls[] = [ 'site_id' => (int) $website->id, 'what' => $what, 'type' => $params['type'], 'list' => $params['list'] ];
+			return [ 'upgrades' => array_fill_keys( explode( ',', $params['list'] ), true ) ];
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $mock, 10, 4 );
+		try {
+			foreach ( [ 'plugin', 'theme' ] as $type ) {
+				$flag    = 'plugin' === $type ? 'is_ignorePluginUpdates' : 'is_ignoreThemeUpdates';
+				$held    = 'plugin' === $type ? 'held/held.php' : 'held-theme';
+				$global  = 'plugin' === $type ? 'global/global.php' : 'global-theme';
+				$chosen  = 'plugin' === $type ? 'chosen/chosen.php' : 'chosen-theme';
+				$other   = 'plugin' === $type ? 'other/other.php' : 'other-theme';
+				$flagged = $this->create_test_site( [ $flag => 1 ] );
+				$free    = $this->create_test_site();
+				$updates = array_fill_keys( [ $held, $global, $chosen, $other ], [ 'Name' => 'Item', 'Version' => '1.0', 'new_version' => '2.0' ] );
+				$ignored = [ $held => [ 'Name' => 'Held', 'ignored_versions' => [ 'all_versions' ] ] ];
+				foreach ( [ $flagged, $free ] as $site_id ) {
+					if ( 'plugin' === $type ) {
+						$this->set_site_plugin_upgrades( $site_id, $updates );
+						$this->set_site_ignored_plugins( $site_id, $ignored );
+					} else {
+						$this->set_site_theme_upgrades( $site_id, $updates );
+						$this->set_site_ignored_themes( $site_id, $ignored );
+					}
+				}
+				$extension = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+				\MainWP\Dashboard\MainWP_DB_Common::instance()->update_user_extension(
+					[ 'userid' => $extension->userid, 'ignored_' . $type . 's' => wp_json_encode( [ $global => [ 'Name' => 'Global', 'ignored_versions' => [ 'all_versions' ] ] ] ) ]
+				);
+
+				$ability = 'mainwp/update-site-' . $type . 's-v1';
+				$calls   = [];
+				$result  = $this->execute_ability( $ability, [ 'site_id_or_domain' => $flagged, 'slugs' => [ $chosen ] ] );
+				$this->assertSame( [], $calls, $type . ' whole-site holds must prevent child calls.' );
+				$this->assertSame( [ 'updated' => [], 'errors' => [], 'summary' => [ 'total_updated' => 0, 'total_errors' => 0 ] ], $result );
+
+				$result = $this->execute_ability( $ability, [ 'site_id_or_domain' => $free, 'slugs' => [ $held, $global, $chosen, 'missing' ] ] );
+				$this->assertSame( [ [ 'site_id' => $free, 'what' => 'upgradeplugintheme', 'type' => $type, 'list' => $chosen ] ], $calls );
+				$this->assertNotWPError( $result );
+				$this->assertSame( [ $chosen ], array_column( $result['updated'], 'slug' ) );
+				$this->assertSame( [], $result['errors'] );
+				$this->assertSame( [ 'total_updated' => 1, 'total_errors' => 0 ], $result['summary'] );
+
+				$calls  = [];
+				$result = $this->execute_ability( $ability, [ 'site_id_or_domain' => $free ] );
+				$this->assertSame( [ [ 'site_id' => $free, 'what' => 'upgradeplugintheme', 'type' => $type, 'list' => $other ] ], $calls );
+				$this->assertNotWPError( $result );
+				$this->assertSame( [ $other ], array_column( $result['updated'], 'slug' ) );
+			}
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $mock, 10 );
+		}
 	}
 
 	/**

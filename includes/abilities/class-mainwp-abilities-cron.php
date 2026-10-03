@@ -857,10 +857,24 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     break;
 
                                 case 'translations':
-                                    /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                    do_action( 'mainwp_before_plugin_theme_translation_update', 'translation', '', $website );
+                                    $slugs = $this->get_update_slugs_for_site( $website, 'translation', $specific_items, $global_ignored );
+                                    if ( empty( $slugs ) ) {
+                                        break;
+                                    }
+                                    $slugs_list = implode( ',', $slugs );
 
-                                    $information = MainWP_Connect::fetch_url_authed( $website, 'upgradetranslation' );
+                                    /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
+                                    do_action( 'mainwp_before_plugin_theme_translation_update', 'translation', $slugs_list, $website );
+
+                                    $information = MainWP_Connect::fetch_url_authed(
+                                        $website,
+                                        'upgradetranslation',
+                                        array(
+                                            'type' => 'translation',
+                                            'list' => $slugs_list,
+                                        ),
+                                        true
+                                    );
 
                                     // Validate response - check for transport failure or API error.
                                     if ( false === $information ) {
@@ -875,7 +889,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
 
                                         // Fire after-action even on failure so hooks always run.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                        do_action( 'mainwp_after_plugin_theme_translation_update', null, 'translation', '', $website );
+                                        do_action( 'mainwp_after_plugin_theme_translation_update', null, 'translation', $slugs_list, $website );
                                     } elseif ( is_array( $information ) && isset( $information['error'] ) ) {
                                         $site_success  = false;
                                         $site_errors[] = 'translations: ' . $information['error'];
@@ -889,7 +903,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
 
                                         // Fire after-action even on failure so hooks always run.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', '', $website );
+                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', $slugs_list, $website );
                                     } elseif ( ! is_array( $information ) ) {
                                         $site_success  = false;
                                         $site_errors[] = 'translations: ' . __( 'Invalid response from child site.', 'mainwp' );
@@ -903,7 +917,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
 
                                         // Fire after-action even on failure so hooks always run.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                        do_action( 'mainwp_after_plugin_theme_translation_update', null, 'translation', '', $website );
+                                        do_action( 'mainwp_after_plugin_theme_translation_update', null, 'translation', $slugs_list, $website );
                                     } elseif ( isset( $information['upgrades_error'] ) && ! empty( $information['upgrades_error'] ) ) {
                                         // Partial failure - some translations failed to update.
                                         $error_msgs = array();
@@ -922,7 +936,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
 
                                         // Still fire after-action and sync for partial success.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', '', $website );
+                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', $slugs_list, $website );
 
                                         // Sync site data immediately if child returned sync info.
                                         if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
@@ -931,7 +945,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     } else {
                                         // Success - fire after-action and sync.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', '', $website );
+                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', $slugs_list, $website );
 
                                         // Sync site data immediately if child returned sync info.
                                         if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
@@ -1018,16 +1032,17 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
      * items whether run-updates or update-all ran at once or was queued.
      *
      * @param object $website        Site object.
-     * @param string $type           Type: 'core', 'plugin' or 'theme'.
+     * @param string $type           Type: 'core', 'plugin', 'theme' or 'translation'.
      * @param array  $specific_items Optional array of specific slugs to filter.
      * @param array  $global_ignored Job owner's global ignore lists, from get_global_ignored_updates().
      * @return array Array of slugs to update.
      */
     private function get_update_slugs_for_site( $website, string $type, array $specific_items, array $global_ignored ): array {
         $types   = array(
-            'core'   => 'core',
-            'plugin' => 'plugins',
-            'theme'  => 'themes',
+            'core'        => 'core',
+            'plugin'      => 'plugins',
+            'theme'       => 'themes',
+            'translation' => 'translations',
         );
         $updates = MainWP_Abilities_Updates::get_site_updates(
             $website,

@@ -647,7 +647,12 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Fetch Authorized URL.
      *
-     * @throws MainWP_Exception On incorrect website.
+     * A site the current user cannot edit is refused before any child
+     * request is sent. That result uses errorCode
+     * excep_fetch_url_authed_refused. A MainWP_Exception from the lookup,
+     * the edit check, or the child request keeps errorCode
+     * excep_fetch_url_authed. Message text is unchanged.
+     *
      * @param mixed $pluginFile Extension plugin file to verify.
      * @param mixed $key The child-key.
      * @param mixed $websiteId Child Site ID.
@@ -655,7 +660,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param mixed $params Parameters.
      * @param null  $rawResponse Raw responce.
      *
-     * @return mixed false|throw|error
+     * @return mixed false when hook verification fails, otherwise the child response or an error array.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
@@ -681,8 +686,8 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * A site the current user cannot edit is refused before any child
      * request is sent. That result uses errorCode
-     * excep_fetch_url_authed_refused. A MainWP_Exception from the child
-     * request, including a dropped connection, keeps errorCode
+     * excep_fetch_url_authed_refused. A MainWP_Exception from the lookup,
+     * the edit check, or the child request keeps errorCode
      * excep_fetch_url_authed. Message text is unchanged.
      *
      * @param mixed $websiteId Child Site ID.
@@ -695,19 +700,19 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
      */
     public static function fetch_url_authed( $websiteId, $what, $params, $rawResponse = null ) {
-        $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
-        if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-            // Refused before any child request is sent. Dropped connections
-            // stay on excep_fetch_url_authed.
-            return array(
-                'error'     => MainWP_Error_Helper::get_error_message(
-                    new MainWP_Exception( 'You can not edit this website.' )
-                ),
-                'errorCode' => 'excep_fetch_url_authed_refused',
-            );
-        }
-
         try {
+            $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+            if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
+                // Refused before any child request is sent. An exception from
+                // the lookup or the edit check stays on excep_fetch_url_authed.
+                return array(
+                    'error'     => MainWP_Error_Helper::get_error_message(
+                        new MainWP_Exception( 'You can not edit this website.' )
+                    ),
+                    'errorCode' => 'excep_fetch_url_authed_refused',
+                );
+            }
+
             return MainWP_Connect::fetch_url_authed( $website, $what, $params, false, false, true, $rawResponse );
         } catch ( MainWP_Exception $e ) {
             return array(

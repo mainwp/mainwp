@@ -309,6 +309,59 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
         $this->assert_disabled_key_error( $this->run_authentication_hooks() );
     }
 
+    public function test_revoked_super_admin_handler_removes_only_non_member_keys(): void {
+        global $wpdb;
+        $member_key = $this->create_key( $this->set_current_user_as_admin() );
+        $member_row = $this->key_row( $member_key );
+        $this->auth->revoked_super_admin_api_keys( (int) $member_row->user_id );
+        $this->assertEquals( $member_row, $this->key_row( $member_key ) );
+
+        // Single-site counts every existing user as a member, so a missing user stands in for a non-member.
+        $orphan_key  = $this->create_key( $this->orphan_id() );
+        $orphan_row  = $this->key_row( $orphan_key );
+        $base_prefix = $wpdb->base_prefix;
+
+        // A handler running under another blog's prefix must leave MainWP's captured table alone.
+        $wpdb->base_prefix = $base_prefix . 'unrelated_';
+        try {
+            $this->assertNotSame( MainWP_DB::instance()->get_table_name( 'api_keys' ), $wpdb->get_blog_prefix() . 'mainwp_api_keys' );
+            $this->auth->revoked_super_admin_api_keys( (int) $orphan_row->user_id );
+        } finally {
+            $wpdb->base_prefix = $base_prefix;
+        }
+        $this->assertEquals( $orphan_row, $this->key_row( $orphan_key ) );
+
+        $this->auth->revoked_super_admin_api_keys( (int) $orphan_row->user_id );
+        $this->assertNull( $this->key_row( $orphan_key ) );
+        $this->assertEquals( $member_row, $this->key_row( $member_key ) );
+    }
+
+    public function test_multisite_super_admin_revocation_removes_keys_of_non_members(): void {
+        if ( ! is_multisite() ) {
+            $this->markTestSkipped( 'The Abilities test configuration is single-site; super admin revocation and blog membership require multisite.' );
+        }
+        $outsider_id = $this->factory->user->create();
+        $this->assertTrue( remove_user_from_blog( $outsider_id, get_current_blog_id() ) );
+        grant_super_admin( $outsider_id );
+        $outsider_key = $this->create_key( $outsider_id );
+        $member_id    = $this->set_current_user_as_admin();
+        grant_super_admin( $member_id );
+        $member_key = $this->create_key( $member_id );
+        $member_row = $this->key_row( $member_key );
+
+        $this->prepare_anonymous_request( $outsider_key );
+        $this->assertNotWPError( $this->run_authentication_hooks() );
+        $this->assertSame( $outsider_id, get_current_user_id() );
+        $cache_key = 'mainwp_api_key_' . md5( mainwp_api_hash( $outsider_key['consumer_key'] ) );
+        $this->assertIsObject( wp_cache_get( $cache_key ) );
+
+        $this->assertTrue( revoke_super_admin( $outsider_id ) );
+        $this->assertTrue( revoke_super_admin( $member_id ) );
+        $this->assertNull( $this->key_row( $outsider_key ) );
+        $this->assertFalse( wp_cache_get( $cache_key ) );
+        $this->assertEquals( $member_row, $this->key_row( $member_key ) );
+    }
+
     /**
      * @dataProvider authentication_methods
      */

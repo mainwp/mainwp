@@ -116,6 +116,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         add_filter( 'rest_pre_dispatch', array( $this, 'check_user_permissions' ), 10, 3 );
         add_action( 'deleted_user', array( $this, 'delete_user_api_keys' ), 10, 3 );
         add_action( 'remove_user_from_blog', array( $this, 'remove_user_from_blog_api_keys' ), 10, 3 );
+        add_action( 'revoked_super_admin', array( $this, 'revoked_super_admin_api_keys' ) );
     }
 
     /**
@@ -155,6 +156,23 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
 
         unset( $reassign );
         if ( $wpdb->get_blog_prefix( $blog_id ) . 'mainwp_api_keys' !== MainWP_DB::instance()->get_table_name( 'api_keys' ) ) {
+            return;
+        }
+        $this->delete_user_api_keys( $user_id );
+    }
+
+    /**
+     * Delete a former super admin's API keys when they are not a member of MainWP's blog.
+     *
+     * Super admins may hold keys on a Dashboard subsite they were never added to. Once revoked, those keys
+     * are refused at use time, but would work again if super admin were re-granted.
+     *
+     * @param int $user_id User whose super admin privileges were revoked.
+     */
+    public function revoked_super_admin_api_keys( $user_id ) {
+        global $wpdb;
+
+        if ( $wpdb->get_blog_prefix() . 'mainwp_api_keys' !== MainWP_DB::instance()->get_table_name( 'api_keys' ) || is_user_member_of_blog( $user_id ) ) {
             return;
         }
         $this->delete_user_api_keys( $user_id );

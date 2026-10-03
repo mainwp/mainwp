@@ -130,8 +130,17 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         $db   = MainWP_DB::instance();
         $rows = $db->remove_rest_api_keys_by_user( $id, $db->get_table_name( 'api_keys' ) );
         foreach ( $rows as $row ) {
-            wp_cache_delete( 'mainwp_api_key_' . md5( $row->consumer_key ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+            self::delete_api_key_cache( $row->consumer_key );
         }
+    }
+
+    /**
+     * Invalidate the row cached for REST API authentication.
+     *
+     * @param string $consumer_key Stored consumer key, already hashed with mainwp_api_hash().
+     */
+    public static function delete_api_key_cache( $consumer_key ) {
+        wp_cache_delete( 'mainwp_api_key_' . md5( $consumer_key ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
     }
 
     /**

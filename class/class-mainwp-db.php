@@ -4228,8 +4228,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return array
      */
     public function update_rest_api_key( $key_id, $scope, $description, $enabled = 1 ) {
+        $key = $this->get_rest_api_key_by( $key_id );
+
         $permissions = in_array( $scope, array( 'read', 'write', 'delete', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
-        return $this->wpdb->update(
+        $updated     = $this->wpdb->update(
             $this->table_name( 'api_keys' ),
             array(
                 'description' => $description,
@@ -4240,6 +4242,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'key_id' => $key_id,
             )
         );
+        if ( $key ) {
+            \MainWP_REST_Authentication::delete_api_key_cache( $key->consumer_key );
+        }
+        return $updated;
     }
 
 
@@ -4274,8 +4280,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return array
      */
     public function remove_rest_api_key( $id ) {
+        $key        = $this->get_rest_api_key_by( $id );
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
-        return $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE key_id = %s", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        $deleted    = $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE key_id = %s", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        if ( $key ) {
+            \MainWP_REST_Authentication::delete_api_key_cache( $key->consumer_key );
+        }
+        return $deleted;
     }
 
     /**

@@ -669,7 +669,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $tour_id = '13210';
             } elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
                 $tour_id = '60206';
-            } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
+            } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['knowledgeid'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
                 if ( 'grid' === $siteViewMode ) {
                     $tour_id = '27217';
                 } else {
@@ -1571,11 +1571,13 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $page    = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
         $id      = 0;
         $website = null;
-        if ( isset( $_GET['dashboard'] ) || ( isset( $_GET['id'] ) && 'CostTrackerAdd' !== $page ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) {
+        if ( isset( $_GET['dashboard'] ) || ( isset( $_GET['id'] ) && 'CostTrackerAdd' !== $page ) || isset( $_GET['knowledgeid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) {
             if ( isset( $_GET['dashboard'] ) ) {
                 $id = intval( $_GET['dashboard'] );
             } elseif ( isset( $_GET['id'] ) ) {
                 $id = intval( $_GET['id'] );
+            } elseif ( isset( $_GET['knowledgeid'] ) ) {
+                $id = intval( $_GET['knowledgeid'] );
             } elseif ( isset( $_GET['updateid'] ) ) {
                 $id = intval( $_GET['updateid'] );
             } elseif ( isset( $_GET['emailsettingsid'] ) ) {
@@ -1820,7 +1822,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $subitems = apply_filters( 'mainwp_page_navigation', $subitems, $name_caller );
         ?>
         <div id="mainwp-page-navigation-wrapper">
-            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['monitor_wpid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['knowledgeid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['monitor_wpid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
                 <?php
                 //phpcs:disable WordPress.Security.NonceVerification
                 $id = 0;
@@ -1828,6 +1830,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     $id = intval( $_GET['dashboard'] );
                 } elseif ( isset( $_GET['id'] ) ) {
                     $id = intval( $_GET['id'] );
+                } elseif ( isset( $_GET['knowledgeid'] ) ) {
+                    $id = intval( $_GET['knowledgeid'] );
                 } elseif ( isset( $_GET['updateid'] ) ) {
                     $id = intval( $_GET['updateid'] );
                 } elseif ( isset( $_GET['emailsettingsid'] ) ) {
@@ -2531,7 +2535,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $video_id = 'k1-4x6h0LfE';
             } elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
                 $tour_id = '60206';
-            } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
+            } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['knowledgeid'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
                 if ( 'grid' === $siteViewMode ) {
                     $tour_id = '27217';
                 } else {

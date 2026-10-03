@@ -979,9 +979,6 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 </div>
                 <div style="clear:both"></div>
             </form>
-            <?php if ( $edit_client ) : ?>
-                <?php MainWP_Knowledge_UI::render_panel( 'client', $client_id ); ?>
-            <?php endif; ?>
         </div>
         <?php
         static::render_footer( $show );
@@ -2221,6 +2218,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <div class="ui section hidden divider after-add-contact-field"></div>
                 </div>
             </div>
+            <?php if ( $edit_client ) : ?>
+                <?php MainWP_Knowledge_UI::render_panel( 'client', $client_id, true ); ?>
+            <?php endif; ?>
         </div>
         <input type="hidden" name="client_fields[client_id]" value="<?php echo intval( $client_id ); ?>">
         <script type="text/javascript">

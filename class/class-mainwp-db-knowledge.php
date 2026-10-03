@@ -66,6 +66,13 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     const BODY_MAX_LENGTH = 10000;
 
     /**
+     * Number of body characters returned for table previews.
+     *
+     * @var int
+     */
+    const BODY_PREVIEW_LENGTH = 100;
+
+    /**
      * Maximum caller note length in characters.
      *
      * @var int
@@ -316,7 +323,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * List records visible to the current user.
      *
-     * @param array $args Optional scope_type, scope_id, type, search, limit, offset, with_body (default true).
+     * @param array $args Optional scope_type, scope_id, type, search, limit, offset, with_body (default true), and with_body_preview.
      *
      * @return object[]|\WP_Error Records, or a read error.
      */
@@ -332,7 +339,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * List and count with one visibility walk for the current user.
      *
-     * @param array $args Optional scope_type, scope_id, type, search, limit, offset, with_body (default true).
+     * @param array $args Optional scope_type, scope_id, type, search, limit, offset, with_body (default true), and with_body_preview.
      *
      * @return array{items: object[], total: int}|\WP_Error Records and total before pagination, or a read error.
      */
@@ -397,7 +404,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      *
      * @param string $scope_type Site or client.
      * @param int    $scope_id   Scope identifier.
-     * @param array  $args       Optional type and with_body (default true).
+     * @param array  $args       Optional type, with_body (default true), and with_body_preview.
      *
      * @return object[]|\WP_Error Records, or the scope's access or read error.
      */
@@ -440,14 +447,20 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * Keep both list paths on the same projection.
      *
-     * @param array $args Optional with_body.
+     * @param array $args Optional with_body and with_body_preview.
      *
      * @return string Fixed column list.
      */
     private function records_columns( array $args ): string {
-        return isset( $args['with_body'] ) && false === $args['with_body']
-            ? 'id, scope_type, scope_id, `type`, title, created_by, updated_by, created_at, updated_at, revision, source, caller_note, verified'
-            : '*';
+        if ( ! isset( $args['with_body'] ) || false !== $args['with_body'] ) {
+            return '*';
+        }
+
+        $preview = ! empty( $args['with_body_preview'] )
+            ? ', LEFT(body, ' . ( self::BODY_PREVIEW_LENGTH + 1 ) . ') AS body_preview'
+            : '';
+
+        return 'id, scope_type, scope_id, `type`, title' . $preview . ', created_by, updated_by, created_at, updated_at, revision, source, caller_note, verified';
     }
 
     /**

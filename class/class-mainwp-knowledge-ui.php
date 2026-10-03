@@ -87,7 +87,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'view'           => __( 'View', 'mainwp' ),
             'remove'         => __( 'Delete', 'mainwp' ),
             'unverified'     => __( 'Unverified', 'mainwp' ),
-            'unverifiedHint' => __( 'Saved by an AI client and not yet reviewed by a person.', 'mainwp' ),
+            'unverifiedHint' => __( 'Saved by an AI client and not yet reviewed by a person. Edit and save the entry to mark it as verified.', 'mainwp' ),
             'confirmDelete'  => __( 'Delete this knowledge record? Connected AI clients lose it immediately.', 'mainwp' ),
             'conflict'       => __( 'Someone else saved this record while you were editing it.', 'mainwp' ),
             'reload'         => __( 'Reload record', 'mainwp' ),
@@ -110,8 +110,15 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $scope = $this->read_scope();
         $db    = MainWP_DB_Knowledge::instance();
 
-        // The list rows carry no body; the editor loads it per record.
-        $records = $db->get_scope_records( $scope->scope_type, $scope->scope_id, array( 'with_body' => false ) );
+        // List rows carry only a short body preview; the editor loads the full body per record.
+        $records = $db->get_scope_records(
+            $scope->scope_type,
+            $scope->scope_id,
+            array(
+                'with_body'         => false,
+                'with_body_preview' => true,
+            )
+        );
         if ( is_wp_error( $records ) ) {
             $this->send_error( $records, 'mainwp_knowledge_db_error' === $records->get_error_code() ? null : __( 'You cannot view knowledge for this item.', 'mainwp' ) );
         }
@@ -154,7 +161,14 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $client_id = (int) $site->client_id;
         // Site access alone does not grant access to the client's knowledge.
-        $records = $db->get_scope_records( 'client', $client_id, array( 'with_body' => false ) );
+        $records = $db->get_scope_records(
+            'client',
+            $client_id,
+            array(
+                'with_body'         => false,
+                'with_body_preview' => true,
+            )
+        );
         if ( is_wp_error( $records ) ) {
             return 'mainwp_knowledge_db_error' === $records->get_error_code() ? $records : null;
         }
@@ -384,8 +398,15 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return array
      */
     private function record_summary( $record ) {
-        $editor = get_userdata( (int) $record->updated_by );
-        $labels = static::type_labels();
+        $editor      = get_userdata( (int) $record->updated_by );
+        $labels      = static::type_labels();
+        $preview_raw = isset( $record->body_preview )
+            ? (string) $record->body_preview
+            : (string) ( $record->body ?? '' );
+        $preview     = mb_substr( $preview_raw, 0, MainWP_DB_Knowledge::BODY_PREVIEW_LENGTH );
+        if ( mb_strlen( $preview_raw ) > MainWP_DB_Knowledge::BODY_PREVIEW_LENGTH ) {
+            $preview .= '…';
+        }
 
         return array(
             'id'              => (int) $record->id,
@@ -394,11 +415,11 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'type'            => $record->type,
             'type_label'      => isset( $labels[ $record->type ] ) ? $labels[ $record->type ] : $record->type,
             'title'           => $record->title,
+            'body_preview'    => $preview,
             'revision'        => (int) $record->revision,
             'source'          => $record->source,
             'verified'        => (int) $record->verified,
             'updated_at'      => (int) $record->updated_at,
-            'updated_display' => MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $record->updated_at ) ),
             /* translators: %s: human readable time difference. */
             'updated_ago'     => sprintf( __( '%s ago', 'mainwp' ), human_time_diff( (int) $record->updated_at ) ),
             'updated_by'      => (int) $record->updated_by,
@@ -423,12 +444,13 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Renders the panel for one scope. The list itself loads over AJAX so the
      * same permission path serves the first paint and every refresh.
      *
-     * @param string $scope_type 'site' or 'client'.
-     * @param int    $scope_id   Site or client id.
+     * @param string $scope_type   'site' or 'client'.
+     * @param int    $scope_id     Site or client id.
+     * @param bool   $as_accordion Whether to use the edit-page accordion layout.
      *
      * @return void
      */
-    public static function render_panel( $scope_type, $scope_id ) {
+    public static function render_panel( $scope_type, $scope_id, $as_accordion = false ) {
         $scope_id = (int) $scope_id;
         if ( $scope_id < 1 || ! in_array( $scope_type, MainWP_DB_Knowledge::SCOPE_TYPES, true ) ) {
             return;
@@ -469,8 +491,19 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             ),
         );
         ?>
-        <div class="ui segment" id="mainwp-knowledge-panel" data-scope-type="<?php echo esc_attr( $scope_type ); ?>" data-scope-id="<?php echo esc_attr( $scope_id ); ?>">
-            <h3 class="ui header"><?php esc_html_e( 'Knowledge', 'mainwp' ); ?></h3>
+        <?php if ( $as_accordion ) : ?>
+        <div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="mainwp-knowledge-accordion">
+            <h2 class="ui dividing header active title">
+                <i class="right dropdown icon"></i>
+                <?php esc_html_e( 'Knowledge', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'Add context, skills, and memories that connected AI clients can use when working for this client.', 'mainwp' ); ?></div>
+            </h2>
+            <div class="content active">
+        <?php endif; ?>
+        <div class="<?php echo $as_accordion ? 'ui basic padded segment dimmable mainwp-knowledge-accordion-content' : 'ui padded segment dimmable'; ?>" id="mainwp-knowledge-panel" data-scope-type="<?php echo esc_attr( $scope_type ); ?>" data-scope-id="<?php echo esc_attr( $scope_id ); ?>">
+            <div class="ui dimmer mainwp-knowledge-loader" aria-hidden="true">
+                <div class="ui loader" role="status" aria-label="<?php esc_attr_e( 'Loading...', 'mainwp' ); ?>"></div>
+            </div>
             <div class="ui info message">
                 <p><?php esc_html_e( 'Records saved here reach any AI client connected to this Dashboard through MCP. There is no export in this release.', 'mainwp' ); ?></p>
                 <p>
@@ -484,21 +517,21 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="ui hidden message" id="mainwp-knowledge-message"></div>
             <?php foreach ( $sections as $type => $section ) : ?>
             <div class="mainwp-knowledge-section" data-type="<?php echo esc_attr( $type ); ?>">
-                <h4 class="ui dividing header"><?php echo esc_html( $section['title'] ); ?></h4>
-                <p><?php echo esc_html( $section['help'] ); ?></p>
+                <div class="ui small header">
+                    <?php echo esc_html( $section['title'] ); ?>
+                    <div class="sub header"><?php echo esc_html( $section['help'] ); ?></div>
+                </div>
                 <table class="ui table">
                     <thead>
                         <tr>
                             <th><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
-                            <th class="mainwp-knowledge-type-cell"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
                             <th class="mainwp-knowledge-editor-cell"><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th>
-                            <th class="mainwp-knowledge-updated-cell"><?php esc_html_e( 'Updated', 'mainwp' ); ?></th>
                             <th class="mainwp-knowledge-actions-cell no-sort"></th>
                         </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
-                <button type="button" class="ui mini green button mainwp-knowledge-add" data-type="<?php echo esc_attr( $type ); ?>" style="display:none">
+                <button type="button" class="ui mini basic green button mainwp-knowledge-add" data-type="<?php echo esc_attr( $type ); ?>" style="display:none">
                     <?php
                     /* translators: %s: section name (Context, Skills or Memory). */
                     echo esc_html( sprintf( __( 'Add %s', 'mainwp' ), $section['title'] ) );
@@ -508,18 +541,19 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <?php endforeach; ?>
             <?php if ( 'site' === $scope_type ) : ?>
             <div id="mainwp-knowledge-inherited" style="display:none">
-                <h4 class="ui dividing header"></h4>
-                <p>
-                    <?php esc_html_e( 'Client records apply to every site assigned to the client, and AI clients receive them together with the records of this site. They are read-only here.', 'mainwp' ); ?>
-                    <a href="#" class="mainwp-knowledge-inherited-link"><?php echo esc_html( $client_link_label ); ?></a>
-                </p>
+                <div class="ui small header">
+                    <span class="mainwp-knowledge-inherited-title"></span>
+                    <div class="sub header">
+                        <?php esc_html_e( 'Client records apply to every site assigned to the client, and AI clients receive them together with the records of this site. They are read-only here.', 'mainwp' ); ?>
+                        <a href="#" class="mainwp-knowledge-inherited-link"><?php echo esc_html( $client_link_label ); ?></a>
+                    </div>
+                </div>
                 <table class="ui table">
                     <thead>
                         <tr>
                             <th><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
                             <th class="mainwp-knowledge-type-cell"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
                             <th class="mainwp-knowledge-editor-cell"><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th>
-                            <th class="mainwp-knowledge-updated-cell"><?php esc_html_e( 'Updated', 'mainwp' ); ?></th>
                             <th class="mainwp-knowledge-actions-cell no-sort"></th>
                         </tr>
                     </thead>
@@ -528,6 +562,10 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
             <?php endif; ?>
         </div>
+        <?php if ( $as_accordion ) : ?>
+            </div>
+        </div>
+        <?php endif; ?>
         <?php
         static::render_modal();
     }

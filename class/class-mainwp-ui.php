@@ -1262,11 +1262,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     return false;
                 } );
                 jQuery( '#mainwp-sites-sidebar-menu' ).accordion();
-				jQuery( '#mainwp-sites-sidebar-menu' ).on( 'click', '.mainwp-site-menu-item', function ( e ) {
-					if ( ! jQuery( e.target ).closest( '.content' ).length && ! jQuery( e.target ).closest( '.title' ).length ) {
-						jQuery( this ).find( '.title' ).first().trigger( 'click' );
-					}
-				} );
+                jQuery( '#mainwp-sites-sidebar-menu' ).on( 'click', '.mainwp-site-menu-item', function ( e ) {
+                    if ( ! jQuery( e.target ).closest( '.content' ).length && ! jQuery( e.target ).closest( '.title' ).length ) {
+                        jQuery( this ).find( '.title' ).first().trigger( 'click' );
+                    }
+                } );
 
                 <?php if ( ! $fix_dom_issue_for_wp_editor ) { ?>
 
@@ -1528,20 +1528,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
      */
     public static function render_header_actions() { // phpcs:ignore -- NOSONAR - complex method.
-        $sites_count   = MainWP_DB::instance()->get_websites_count();
-        $sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
-        $sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
-        $sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
-        $current_user  = get_current_user_id();
-        $custom_theme  = MainWP_Settings::get_instance()->get_current_user_theme();
-        $screen        = get_current_screen();
+        $sites_count                  = MainWP_DB::instance()->get_websites_count();
+        $sidebar_pages                = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
+        $sidebar_pages                = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
+        $sidebar_pages                = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
+        $current_user                 = get_current_user_id();
+        $custom_theme                 = MainWP_Settings::get_instance()->get_current_user_theme();
+        $screen                       = get_current_screen();
         $show_command_palette_trigger = wp_script_is( 'wp-core-commands', 'enqueued' );
         $command_palette_shortcut     = '';
         $command_palette_label        = '';
 
         if ( $show_command_palette_trigger ) {
             // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Used only to mirror WordPress core shortcut labels.
-            $is_apple_os = (bool) preg_match( '/Macintosh|Mac OS X|Mac_PowerPC/i', $_SERVER['HTTP_USER_AGENT'] ?? '' );
+            $is_apple_os = (bool) preg_match( '/Macintosh|Mac OS X|Mac_PowerPC/i', wp_unslash( $_SERVER['HTTP_USER_AGENT'] ?? '' ) );
 
             $command_palette_shortcut = $is_apple_os
                 ? _x( '⌘K', 'keyboard shortcut to open the command palette', 'mainwp' )
@@ -1895,7 +1895,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         }
 
                         ?>
-                        <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>" <?php if ( ! empty( $target ) ) : ?>target="<?php echo esc_attr( $target ); ?>"<?php endif; ?> <?php if ( ! empty( $rel ) ) : ?>rel="<?php echo esc_attr( $rel ); ?>"<?php endif; ?>>
+                        <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>"<?php echo ! empty( $target ) ? ' target="' . esc_attr( $target ) . '"' : ''; ?><?php echo ! empty( $rel ) ? ' rel="' . esc_attr( $rel ) . '"' : ''; ?>>
                         <?php echo isset( $item['before_title'] ) ? $item['before_title'] : ''; ?> <?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         </a>
                         <?php

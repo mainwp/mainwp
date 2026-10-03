@@ -1728,7 +1728,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         MainWP_System_Utility::set_current_wpid( $website->id );
         static::render_header( 'ManageSitesKnowledge' );
         MainWP_Manage_Sites_View::render_knowledge( $website );
-        static::render_footer( 'ManageSitesKnowledge' );
+        static::render_footer();
     }
 
     /**
@@ -1943,7 +1943,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         if ( ( isset( $_GET['action'] ) && 'add_submonitor' === $_GET['action'] ) || ! empty( $_GET['sub_monitor_id'] ) ) {
-            $websiteid = intval( $_GET['monitor_wpid'] );
+            $websiteid = isset( $_GET['monitor_wpid'] ) ? intval( $_GET['monitor_wpid'] ) : 0;
             $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
             // Show modal.
             static::render_monitor_site( $website );

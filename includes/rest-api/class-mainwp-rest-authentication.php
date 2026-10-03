@@ -309,7 +309,26 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return $error;
         }
 
+        // mainwp/v1 routes check their own option-stored v1 keys in each callback and never
+        // read the key user, so a failed v2 attempt there must look like no v2 key was sent.
+        if ( $this->is_v1_route() ) {
+            return $error;
+        }
+
         return $this->get_error();
+    }
+
+    /**
+     * Check whether WordPress is dispatching a mainwp/v1 route.
+     *
+     * Route matching in WP_REST_Server is case-insensitive, so the comparison is too.
+     *
+     * @return bool
+     */
+    private function is_v1_route() {
+        $segments = explode( '/', strtolower( trim( trim( (string) ( $GLOBALS['wp']->query_vars['rest_route'] ?? '' ) ), '/' ) ) );
+
+        return 'mainwp' === $segments[0] && isset( $segments[1] ) && 'v1' === $segments[1];
     }
 
     /**

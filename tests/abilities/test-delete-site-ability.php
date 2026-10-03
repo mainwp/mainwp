@@ -307,21 +307,22 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
     }
 
     /**
-     * Test that deleting a demo site skips both deletion hooks.
+     * Test that deleting a demo site fires both deletion hooks.
      *
-     * MainWP_Manage_Sites_Handler::remove_website() does not fire
-     * mainwp_delete_site or mainwp_site_deleted for demo sites.
+     * Demo sites skip the remote child deactivate and still fire
+     * mainwp_delete_site then mainwp_site_deleted with the site object.
      *
      * @return void
      */
-    public function test_delete_demo_site_skips_deletion_hooks() {
+    public function test_delete_demo_site_fires_deletion_hooks() {
         $this->skip_if_no_abilities_api();
         $this->set_current_user_as_admin();
 
-        $site_id = $this->create_test_site(
+        $site_url = 'https://test-delete-demo-site-hooks.example.com/';
+        $site_id  = $this->create_test_site(
             [
                 'name' => 'Test Demo Site Hooks',
-                'url'  => 'https://test-delete-demo-site-hooks.example.com/',
+                'url'  => $site_url,
             ]
         );
 
@@ -358,7 +359,80 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
             \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
             'The demo site row should still be removed.'
         );
-        $this->assertSame( [], $this->deletion_hook_fired, 'Demo site deletion must not fire mainwp_delete_site or mainwp_site_deleted.' );
+        $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+    }
+
+    /**
+     * Test that the manage-sites handler fires both hooks for a demo site.
+     *
+     * The ability path does not call remove_website(). This covers that
+     * handler directly: no remote deactivate, then the same two hooks.
+     *
+     * @return void
+     */
+    public function test_remove_website_demo_site_fires_deletion_hooks() {
+        $this->set_current_user_as_admin();
+
+        $site_url = 'https://test-handler-delete-demo-site-hooks.example.com/';
+        $site_id  = $this->create_test_site(
+            [
+                'name' => 'Test Handler Demo Site Hooks',
+                'url'  => $site_url,
+            ]
+        );
+
+        $property = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Demo_Handle::class, 'demo_website_ids' );
+        $property->setAccessible( true );
+        $previous = $property->getValue( null );
+        $demo_ids = is_array( $previous ) ? $previous : [];
+        $demo_ids[] = $site_id;
+
+        $this->record_deletion_hooks();
+
+        try {
+            $property->setValue( null, $demo_ids );
+
+            $site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id );
+            $this->assertTrue(
+                \MainWP\Dashboard\MainWP_Demo_Handle::get_instance()->is_demo_website( $site ),
+                'The fixture site should be treated as a demo site.'
+            );
+
+            $information = \MainWP\Dashboard\MainWP_Manage_Sites_Handler::remove_website( $site );
+        } finally {
+            $property->setValue( null, $previous );
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertIsArray( $information );
+        $this->assertTrue( $information['removed'], 'A demo delete skips the remote deactivate and marks the site removed locally.' );
+        $this->assertArrayNotHasKey( 'error', $information, 'A demo delete must not attempt the remote deactivate call.' );
+        $this->assertTrue( $information['removed_site'], 'The demo site row should be removed.' );
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The demo site row should be removed.'
+        );
+        $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+    }
+
+    /**
+     * Assert both deletion hooks fired once, in order, with the site object.
+     *
+     * @param int    $site_id  Deleted site id.
+     * @param string $site_url Deleted site url.
+     * @return void
+     */
+    private function assert_demo_deletion_hooks_fired( $site_id, $site_url ) {
+        $this->assertCount( 2, $this->deletion_hook_fired, 'Both deletion hooks should fire exactly once.' );
+        $this->assertSame( 'mainwp_delete_site', $this->deletion_hook_fired[0]['hook'], 'mainwp_delete_site fires first.' );
+        $this->assertSame( 'mainwp_site_deleted', $this->deletion_hook_fired[1]['hook'], 'mainwp_site_deleted fires second.' );
+
+        foreach ( $this->deletion_hook_fired as $call ) {
+            $this->assertCount( 1, $call['args'], 'The handler passes only the website object.' );
+            $this->assertIsObject( $call['args'][0] );
+            $this->assertSame( $site_id, (int) $call['args'][0]->id, 'Hook argument should be the deleted site.' );
+            $this->assertSame( $site_url, $call['args'][0]->url, 'Hook argument should be the site object, not an id.' );
+        }
     }
 
     /**

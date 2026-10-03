@@ -488,13 +488,15 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             /**
              * Delete Child Sites
              *
-             * Fires after a child site has been removed from MainWP Dashboard
+             * Fires after a child site has been removed from MainWP Dashboard.
+             * Demo sites skip the remote deactivate above, then fire the same
+             * hooks so extension rows for the site are removed.
              *
              * @param object $website Object containing child site data.
              *
              * @since 3.4
              */
-            ! $is_demo_wp && do_action( 'mainwp_delete_site', $website );
+            do_action( 'mainwp_delete_site', $website );
 
             /**
              * Fires immediately after a new website is deleted.
@@ -503,7 +505,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
              *
              * @param object   $website  website data.
              */
-            ! $is_demo_wp && do_action( 'mainwp_site_deleted', $website );
+            do_action( 'mainwp_site_deleted', $website );
 
         }
 

@@ -1065,7 +1065,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
             $this->delete_client_contacts_by_client_id( $client_id );
 
-            MainWP_DB_Knowledge::instance()->delete_by_scope( 'client', (int) $client_id );
+            $knowledge_deleted = MainWP_DB_Knowledge::instance()->delete_by_scope( 'client', (int) $client_id );
 
             MainWP_DB_Common::instance()->delete_widget_saved_filters_for_all_users( 'client', $client_id );
 
@@ -1084,7 +1084,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
              */
             do_action( 'mainwp_client_deleted', $current, $snapshot_info );
 
-            return true;
+            return ! is_wp_error( $knowledge_deleted );
         }
         return false;
     }

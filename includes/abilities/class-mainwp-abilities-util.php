@@ -362,10 +362,17 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * @param int $client_id Client ID.
      *
-     * @return int[] Site IDs attached to the client.
+     * @return int[]|false Site IDs attached to the client, or false on a roster read failure.
      */
     private static function get_client_site_ids( $client_id ) {
+        global $wpdb;
         $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( (int) $client_id, array( 'no_perm_check' => true ) );
+
+        // The roster query bypasses wpdb; knowledge's read guard needs its driver error.
+        if ( $wpdb->dbh instanceof \mysqli && 0 !== $wpdb->dbh->errno ) {
+            $wpdb->last_error = $wpdb->dbh->error;
+            return false;
+        }
 
         if ( ! is_array( $sites ) ) {
             return array();
@@ -401,7 +408,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         $client_id = is_object( $client ) ? (int) $client->client_id : (int) $client;
-        $site_ids  = self::get_client_site_ids( $client_id );
+        $site_ids  = (array) self::get_client_site_ids( $client_id );
         $overlap   = array_intersect( $site_ids, $allowed );
 
         if ( empty( $overlap ) ) {

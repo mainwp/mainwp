@@ -40,6 +40,8 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 	 */
 	private $suppressed_errors = null;
 
+	private $roster_table_prefix = null;
+
 	public function setUp(): void {
 		parent::setUp();
 		$this->db = MainWP_DB_Knowledge::instance();
@@ -47,6 +49,12 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 
 	public function tearDown(): void {
 		global $wpdb;
+		if ( null !== $this->roster_table_prefix ) {
+			$prefix = new \ReflectionProperty( MainWP_DB::class, 'table_prefix' );
+			$prefix->setAccessible( true );
+			$prefix->setValue( MainWP_DB::instance(), $this->roster_table_prefix );
+			$this->roster_table_prefix = null;
+		}
 		foreach ( $this->added_filters as $filter ) {
 			remove_filter( $filter[0], $filter[1], $filter[2] );
 		}
@@ -94,6 +102,29 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 			'mainwp_currentuserallowedaccesssites',
 			static function () use ( $site_ids ) {
 				return $site_ids;
+			}
+		);
+	}
+
+	private function fail_client_roster_reads(): void {
+		// The roster uses mysqli_query() directly, so WordPress's query filter cannot intercept it.
+		$prefix = new \ReflectionProperty( MainWP_DB::class, 'table_prefix' );
+		$prefix->setAccessible( true );
+		$this->roster_table_prefix = $prefix->getValue( MainWP_DB::instance() );
+		$prefix->setValue( MainWP_DB::instance(), $this->roster_table_prefix . 'missing_' );
+	}
+
+	private function fail_knowledge_deletes(): void {
+		global $wpdb;
+		$this->suppressed_errors = $wpdb->suppress_errors( true );
+		$name = $wpdb->prefix . 'mainwp_knowledge';
+		$this->track_filter(
+			'query',
+			static function ( $sql ) use ( $name ) {
+				if ( 0 === strpos( $sql, 'DELETE FROM `' . $name . '`' ) ) {
+					return str_replace( '`' . $name . '`', '`' . $name . '_missing`', $sql );
+				}
+				return $sql;
 			}
 		);
 	}
@@ -823,6 +854,159 @@ PHP;
 		$this->assertNull( $seen_in_listener );
 		$this->assertNull( $this->db->get_by_id( $client_rec->id ) );
 		$this->assertNotNull( $this->db->get_by_id( $kept->id ) );
+	}
+
+	public function test_knowledge_db_failure_roster_read_is_distinct_from_empty_roster() {
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$client_id = $this->create_test_client();
+		$site_id = $this->create_test_site( array( 'client_id' => $client_id ) );
+		$empty_client = $this->create_test_client();
+		$roster = new \ReflectionMethod( MainWP_Abilities_Util::class, 'get_client_site_ids' );
+		$roster->setAccessible( true );
+		$this->assertSame( array(), $roster->invoke( null, $empty_client ) );
+		$this->assertSame( array( $site_id ), array_values( $roster->invoke( null, $client_id ) ) );
+
+		$this->fail_client_roster_reads();
+		$wpdb->last_error = '';
+		$this->assertSame( array(), MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id, array( 'no_perm_check' => true ) ) );
+		$this->assertNotSame( 0, mysqli_errno( $wpdb->dbh ) );
+		$this->assertSame( '', $wpdb->last_error );
+		$this->assertFalse( $roster->invoke( null, $client_id ) );
+		$this->assertNotSame( '', $wpdb->last_error );
+	}
+
+	public static function knowledge_roster_read_operations(): array {
+		return array(
+			'scopes' => array( 'visible_scopes' ),
+			'page' => array( 'get_records_page' ),
+			'list' => array( 'get_records' ),
+			'count' => array( 'count_records' ),
+			'sql' => array( 'scope_where_sql' ),
+		);
+	}
+
+	/** @dataProvider knowledge_roster_read_operations */
+	public function test_knowledge_db_failure_roster_read_never_returns_partial_scopes( string $method ) {
+		$this->set_current_user_as_admin();
+		$client_id = $this->create_test_client();
+		$site_id = $this->create_test_site( array( 'client_id' => $client_id ) );
+		$this->create_record( 'site', $site_id );
+		$this->create_record( 'client', $client_id );
+		$this->restrict_current_user_to_sites( array( $site_id ) );
+		$this->assertSame( array( $client_id ), $this->db->visible_scopes()['clients'] );
+		$this->fail_client_roster_reads();
+
+		$result = $this->db->$method();
+		if ( 'scope_where_sql' === $method ) {
+			$this->assertSame( '1=0', $result );
+		} else {
+			$this->assert_error( $result, 'mainwp_knowledge_db_error', 500 );
+			$this->assertSame( 'Knowledge could not be read from the database. Try again.', $result->get_error_message() );
+		}
+	}
+
+	public function test_knowledge_db_failure_roster_read_reaches_list_ability() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$client_id = $this->create_test_client();
+		$site_id = $this->create_test_site( array( 'client_id' => $client_id ) );
+		$this->create_record( 'site', $site_id );
+		$this->create_record( 'client', $client_id );
+		$this->restrict_current_user_to_sites( array( $site_id ) );
+		$this->fail_client_roster_reads();
+
+		$this->assert_error( $this->execute_ability( 'mainwp/list-knowledge-v1' ), 'mainwp_knowledge_db_error', 500 );
+	}
+
+	public function test_knowledge_db_failure_control_keeps_non_knowledge_client_denial() {
+		$this->set_current_user_as_admin();
+		$client_id = $this->create_test_client();
+		$site_id = $this->create_test_site( array( 'client_id' => $client_id ) );
+		$this->restrict_current_user_to_sites( array( $site_id ) );
+		$this->fail_client_roster_reads();
+
+		foreach ( array( false, true ) as $full_coverage ) {
+			$this->assert_error( MainWP_Abilities_Util::check_client_access( $client_id, null, $full_coverage ), 'mainwp_client_not_found', 404 );
+		}
+	}
+
+	public function test_knowledge_db_failure_control_unrestricted_caller_never_reads_roster() {
+		$this->set_current_user_as_admin();
+		$client_id = $this->create_test_client();
+		$site_id = $this->create_test_site( array( 'client_id' => $client_id ) );
+		$this->create_record( 'site', $site_id );
+		$this->create_record( 'client', $client_id );
+		$scopes = $this->db->visible_scopes();
+		$page = wp_json_encode( $this->db->get_records_page() );
+		$roster_queries = 0;
+		$this->track_filter( 'mainwp_get_sql_websites', static function ( $params ) use ( &$roster_queries ) {
+			++$roster_queries;
+			return $params;
+		} );
+		$this->fail_client_roster_reads();
+
+		$this->assertSame( 'all', MainWP_Abilities_Util::get_allowed_site_ids() );
+		$this->assertTrue( MainWP_Abilities_Util::check_client_access( $client_id ) );
+		$this->assertSame( $scopes, $this->db->visible_scopes() );
+		$this->assertSame( $page, wp_json_encode( $this->db->get_records_page() ) );
+		$this->assertSame( 0, $roster_queries );
+	}
+
+	public static function knowledge_deletion_scopes(): array {
+		return array( 'site' => array( 'site' ), 'client' => array( 'client' ) );
+	}
+
+	/** @dataProvider knowledge_deletion_scopes */
+	public function test_knowledge_db_failure_scope_delete_reports_success_including_no_rows( string $scope_type ) {
+		$this->set_current_user_as_admin();
+		$scope_id = 'site' === $scope_type ? $this->create_test_site() : $this->create_test_client();
+		$record = $this->create_record( $scope_type, $scope_id );
+		$kept = $this->create_record( 'site', $this->create_test_site() );
+
+		$this->assertTrue( $this->db->delete_by_scope( $scope_type, $scope_id ) );
+		$this->assertNull( $this->db->get_by_id( $record->id ) );
+		$this->assertNotNull( $this->db->get_by_id( $kept->id ) );
+		$this->assertTrue( $this->db->delete_by_scope( $scope_type, $scope_id ) );
+	}
+
+	/** @dataProvider knowledge_deletion_scopes */
+	public function test_knowledge_db_failure_scope_delete_returns_db_error( string $scope_type ) {
+		$this->set_current_user_as_admin();
+		$scope_id = 'site' === $scope_type ? $this->create_test_site() : $this->create_test_client();
+		$record = $this->create_record( $scope_type, $scope_id );
+		$this->fail_knowledge_deletes();
+
+		$this->assert_error( $this->db->delete_by_scope( $scope_type, $scope_id ), 'mainwp_knowledge_db_error', 500 );
+		$this->assertNotNull( $this->db->get_by_id( $record->id ) );
+	}
+
+	/** @dataProvider knowledge_deletion_scopes */
+	public function test_knowledge_db_failure_parent_delete_proceeds_and_reports_cleanup_failure( string $scope_type ) {
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$client_id = $this->create_test_client();
+		$site_id = $this->create_test_site( array( 'client_id' => $client_id ) );
+		$scope_id = 'site' === $scope_type ? $site_id : $client_id;
+		$record = $this->create_record( $scope_type, $scope_id );
+		$listener_ran = false;
+		$this->track_filter( 'mainwp_client_deleted', static function () use ( &$listener_ran ) { $listener_ran = true; } );
+		$this->fail_knowledge_deletes();
+
+		$result = 'site' === $scope_type
+			? MainWP_DB::instance()->remove_website( $site_id )
+			: MainWP_DB_Client::instance()->delete_client( $client_id );
+
+		if ( 'site' === $scope_type ) {
+			$this->assertNull( $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$wpdb->prefix}mainwp_wp WHERE id = %d", $site_id ) ) );
+			$this->assertNull( $wpdb->get_var( $wpdb->prepare( "SELECT wpid FROM {$wpdb->prefix}mainwp_wp_sync WHERE wpid = %d", $site_id ) ) );
+		} else {
+			$this->assertNull( MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) );
+			$this->assertSame( '0', $wpdb->get_var( $wpdb->prepare( "SELECT client_id FROM {$wpdb->prefix}mainwp_wp WHERE id = %d", $site_id ) ) );
+			$this->assertTrue( $listener_ran );
+		}
+		$this->assertNotNull( $this->db->get_by_id( $record->id ) );
+		$this->assertFalse( $result );
 	}
 
 	/**

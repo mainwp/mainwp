@@ -260,8 +260,14 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             }
             foreach ( (array) $candidates as $client_id ) {
                 $client_id = (int) $client_id;
-                if ( $client_id > 0 && true === MainWP_Abilities_Util::check_client_access( $client_id ) ) {
-                    $clients[] = $client_id;
+                if ( $client_id > 0 ) {
+                    $access = $this->guard_read( static fn() => MainWP_Abilities_Util::check_client_access( $client_id ) );
+                    if ( is_wp_error( $access ) && 'mainwp_knowledge_db_error' === $access->get_error_code() ) {
+                        return $access;
+                    }
+                    if ( true === $access ) {
+                        $clients[] = $client_id;
+                    }
                 }
             }
         }
@@ -777,10 +783,10 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      * @param string $scope_type site|client.
      * @param int    $scope_id   Site or client ID.
      *
-     * @return void
+     * @return true|\WP_Error True on success, or a database error.
      */
-    public function delete_by_scope( string $scope_type, int $scope_id ): void {
-        $this->wpdb->delete(
+    public function delete_by_scope( string $scope_type, int $scope_id ) {
+        $deleted = $this->wpdb->delete(
             $this->table_name( 'knowledge' ),
             array(
                 'scope_type' => $scope_type,
@@ -788,6 +794,8 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             ),
             array( '%s', '%d' )
         );
+
+        return false === $deleted ? $this->db_error() : true;
     }
 
     /**

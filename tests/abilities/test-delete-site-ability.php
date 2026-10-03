@@ -307,6 +307,134 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
     }
 
     /**
+     * Test that a failed database delete of a live site fires no deletion hooks.
+     *
+     * @return void
+     */
+    public function test_delete_live_site_failed_delete_does_not_fire_deletion_hooks() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name' => 'Test Site Failed Delete',
+                'url'  => 'https://test-delete-site-failed.example.com/',
+            ]
+        );
+
+        $result = $this->execute_confirmed_delete_with_failing_site_row( $site_id );
+
+        $this->assert_failed_delete_fires_no_hooks( $result, $site_id );
+    }
+
+    /**
+     * Test that a failed database delete of a demo site fires no deletion hooks.
+     *
+     * @return void
+     */
+    public function test_delete_demo_site_failed_delete_does_not_fire_deletion_hooks() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name' => 'Test Demo Site Failed Delete',
+                'url'  => 'https://test-delete-demo-site-failed.example.com/',
+            ]
+        );
+
+        $property = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Demo_Handle::class, 'demo_website_ids' );
+        $property->setAccessible( true );
+        $previous = $property->getValue( null );
+        $demo_ids = is_array( $previous ) ? $previous : [];
+        $demo_ids[] = $site_id;
+
+        try {
+            $property->setValue( null, $demo_ids );
+
+            $site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id );
+            $this->assertTrue(
+                \MainWP\Dashboard\MainWP_Demo_Handle::get_instance()->is_demo_website( $site ),
+                'The fixture site should be treated as a demo site.'
+            );
+
+            $result = $this->execute_confirmed_delete_with_failing_site_row( $site_id );
+        } finally {
+            $property->setValue( null, $previous );
+        }
+
+        $this->assert_failed_delete_fires_no_hooks( $result, $site_id );
+    }
+
+    /**
+     * Confirm a delete while the site-row DELETE fails.
+     *
+     * @param int $site_id Site id.
+     * @return mixed Ability result.
+     */
+    private function execute_confirmed_delete_with_failing_site_row( $site_id ) {
+        $this->record_deletion_hooks();
+        add_filter( 'query', [ $this, 'fail_site_row_delete' ] );
+
+        try {
+            return $this->execute_ability(
+                'mainwp/delete-site-v1',
+                [
+                    'site_id_or_domain' => $site_id,
+                    'confirm'           => true,
+                ]
+            );
+        } finally {
+            remove_filter( 'query', [ $this, 'fail_site_row_delete' ] );
+            $this->remove_deletion_hook_recorders();
+        }
+    }
+
+    /**
+     * Rewrite the child-site DELETE into SQL that $wpdb->delete() rejects.
+     *
+     * An empty query returns false before MySQL runs, which is what
+     * MainWP_DB::remove_website() treats as a failed delete. Other deletes
+     * are left alone. Removed by the caller so later cleanup can run.
+     *
+     * @param string $query SQL.
+     * @return string
+     */
+    public function fail_site_row_delete( $query ) {
+        global $wpdb;
+
+        $site_table = '`' . $wpdb->prefix . 'mainwp_wp`';
+        if ( is_string( $query ) && false !== stripos( $query, 'DELETE FROM ' . $site_table ) ) {
+            return '';
+        }
+
+        return $query;
+    }
+
+    /**
+     * Assert a confirmed delete failed and neither deletion hook fired.
+     *
+     * @param mixed $result  Ability result.
+     * @param int   $site_id Site id that must still exist.
+     * @return void
+     */
+    private function assert_failed_delete_fires_no_hooks( $result, $site_id ) {
+        $this->assertWPError( $result );
+        $this->assertSame( 'mainwp_deletion_failed', $result->get_error_code() );
+        $this->assertSame( 500, $result->get_error_data()['status'] );
+        $this->assertSame( [], $this->deletion_hook_fired, 'A failed delete must not fire mainwp_delete_site or mainwp_site_deleted.' );
+
+        global $wpdb;
+        $remaining = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}mainwp_wp WHERE id = %d",
+                $site_id
+            )
+        );
+        $this->assertSame( 1, $remaining, 'A failed delete must leave the site row in place.' );
+    }
+
+    /**
      * Test that deleting a demo site fires both deletion hooks.
      *
      * Demo sites skip the remote child deactivate and still fire

@@ -4282,7 +4282,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     public function remove_rest_api_key( $id ) {
         $key        = $this->get_rest_api_key_by( $id );
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
-        $deleted    = $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE key_id = %s", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        $deleted    = $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE key_id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
         if ( $key ) {
             \MainWP_REST_Authentication::delete_api_key_cache( $key->consumer_key );
         }

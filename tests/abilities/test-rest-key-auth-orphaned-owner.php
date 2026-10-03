@@ -215,6 +215,32 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
         $this->assertSame( $this->auth->send_unauthorized_headers( new \WP_REST_Response() )->get_headers(), $wrong_headers );
     }
 
+    public static function array_credential_fields(): array {
+        return array(
+            'query secret'       => array( 'basic', 'consumer_secret' ),
+            'query token secret' => array( 'query_token', 'oauth_mainwp_cs' ),
+            'oauth signature'    => array( 'oauth', 'oauth_signature' ),
+        );
+    }
+
+    /**
+     * @dataProvider array_credential_fields
+     */
+    public function test_array_credential_is_indistinguishable_from_an_unknown_key( string $method, string $field ): void {
+        $live    = $this->create_key( $this->set_current_user_as_admin() );
+        $unknown = array( 'consumer_key' => 'ck_' . bin2hex( random_bytes( 16 ) ), 'consumer_secret' => $live['consumer_secret'] );
+        foreach ( array( $live, $unknown ) as $credentials ) {
+            $this->prepare_anonymous_request( $credentials, $method );
+            if ( 'basic' === $method ) {
+                // Basic headers are always strings; only the query-parameter form can carry an array.
+                unset( $_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'] );
+                $_GET = $credentials;
+            }
+            $_GET[ $field ] = array( $_GET[ $field ] );
+            $this->assert_disabled_key_error( $this->run_authentication_hooks() );
+        }
+    }
+
     public function test_orphaned_owner_cannot_write_tags(): void {
         global $wpdb;
         $credentials = $this->create_key( $this->orphan_id() );

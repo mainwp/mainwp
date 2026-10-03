@@ -423,6 +423,10 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
      * @return bool True if the submitted secret matches the stored value.
      */
     private function verify_consumer_secret( $stored, $submitted ) {
+        // An array secret (consumer_secret[]=x) would throw here, and only for a live key, which reveals that it exists.
+        if ( ! is_string( $submitted ) ) {
+            return false;
+        }
         if ( $this->is_legacy_plaintext_secret( $stored ) ) {
             return hash_equals( $stored, $submitted ); // @codingStandardsIgnoreLine
         }
@@ -793,6 +797,11 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         }
         $base_request_uri = rawurlencode( get_home_url( null, $request_path, $this->is_ssl_request() ? 'https' : 'http' ) );
 
+        // Same reasoning as verify_consumer_secret(): an array signature must not throw only for a live key.
+        if ( ! is_string( $params['oauth_signature'] ) ) {
+            return $this->refused_key_error();
+        }
+
         // Get the signature provided by the consumer and remove it from the parameters prior to checking the signature.
         $consumer_signature = rawurldecode( str_replace( ' ', '+', $params['oauth_signature'] ) );
         unset( $params['oauth_signature'] );
@@ -960,7 +969,9 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
                 )
             );
             if ( $user ) {
-                wp_cache_set( $cache_key, $user );
+                // Key edits and deletes clear this entry, but a request that read the row just before the write can
+                // store it again afterwards; the expiry bounds how long that stale row can authenticate.
+                wp_cache_set( $cache_key, $user, '', 5 * MINUTE_IN_SECONDS );
             }
         }
 
@@ -999,7 +1010,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             // an exact match against legacy plaintext values that may
             // contain whitespace or HTML-like characters.
             // phpcs:disable WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $pass = ! empty( $_REQUEST['key_pass'] ) ? wp_unslash( $_REQUEST['key_pass'] ) : '';
+            $pass = ! empty( $_REQUEST['key_pass'] ) && is_string( $_REQUEST['key_pass'] ) ? wp_unslash( $_REQUEST['key_pass'] ) : '';
             // phpcs:enable WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $expected = isset( $user->key_pass ) ? (string) $user->key_pass : '';
             if ( '' === $expected || ! hash_equals( $expected, $pass ) ) {

@@ -562,10 +562,6 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             return;
         }
 
-        // The name is one path segment. Rebuild from basename so the deleted
-        // path cannot pick up a directory from the stored value.
-        $favi = basename( $favi );
-
         $has_fs = MainWP_System_Utility::get_wp_file_system();
 
         /**
@@ -590,7 +586,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             return;
         }
 
-        if ( $wp_filesystem->exists( $target ) ) {
+        // A directory must never be passed to delete(). WordPress defaults to
+        // non-recursive, and is_file() keeps a favicon-named directory in place.
+        if ( is_file( $target ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_file -- local file check so a directory is not deleted.
             $wp_filesystem->delete( $target );
         }
     }

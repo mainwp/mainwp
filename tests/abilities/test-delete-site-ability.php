@@ -478,6 +478,54 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
     }
 
     /**
+     * Test that a directory named like the favicon file is left in place.
+     *
+     * @return void
+     */
+    public function test_delete_site_leaves_a_favicon_named_directory() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $site_id  = $this->create_test_site(
+            [
+                'name' => 'Test Site Favicon Directory',
+                'url'  => 'https://test-delete-site-favicon-directory.example.com/',
+            ]
+        );
+        $filename = 'favi-' . $site_id . '-favicon.ico';
+        $this->set_site_option( $site_id, 'favi_icon', $filename );
+        $path = $this->site_icons_directory() . $filename;
+        $this->assertTrue( mkdir( $path ) );
+        $marker = $path . '/keep.txt';
+        $this->assertNotFalse( file_put_contents( $marker, 'keep' ) );
+
+        try {
+            $result = $this->execute_ability(
+                'mainwp/delete-site-v1',
+                [
+                    'site_id_or_domain' => $site_id,
+                    'confirm'           => true,
+                ]
+            );
+
+            $this->assertNotWPError( $result, 'A favicon-named directory must not fail the delete.' );
+            $this->assertTrue( $result['deleted'], 'deleted should be true.' );
+            $this->assertDirectoryExists( $path, 'A directory with the favicon name must be left alone.' );
+            $this->assertFileExists( $marker, 'Files inside that directory must be left alone.' );
+        } finally {
+            $this->delete_file_if_present( $marker );
+            if ( is_dir( $path ) ) {
+                rmdir( $path );
+            }
+        }
+
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The site row should be removed.'
+        );
+    }
+
+    /**
      * Test that a dry-run does not remove the cached favicon file.
      *
      * @return void

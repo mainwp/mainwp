@@ -141,7 +141,17 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
      * @param string $consumer_key Stored consumer key, already hashed with mainwp_api_hash().
      */
     public static function delete_api_key_cache( $consumer_key ) {
-        wp_cache_delete( 'mainwp_api_key_' . md5( $consumer_key ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+        wp_cache_delete( self::api_key_cache_key( $consumer_key ) );
+    }
+
+    /**
+     * Object-cache key for a key row.
+     *
+     * @param string $consumer_key Stored consumer key, already hashed with mainwp_api_hash().
+     * @return string
+     */
+    private static function api_key_cache_key( $consumer_key ) {
+        return 'mainwp_api_key_' . md5( $consumer_key ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
     }
 
     /**
@@ -942,7 +952,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             array( '%d' )
         );
 
-        wp_cache_delete( 'mainwp_api_key_' . md5( $user->consumer_key ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+        self::delete_api_key_cache( $user->consumer_key );
 
         return true;
     }
@@ -957,7 +967,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         global $wpdb;
 
         $consumer_key = \mainwp_api_hash( sanitize_text_field( $consumer_key ) );
-        $cache_key    = 'mainwp_api_key_' . md5( $consumer_key ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+        $cache_key    = self::api_key_cache_key( $consumer_key );
         $user         = wp_cache_get( $cache_key );
 
         if ( false === $user ) {
@@ -1094,7 +1104,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             array( '%d' )
         );
 
-        wp_cache_delete( 'mainwp_api_key_' . md5( $this->user->consumer_key ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+        self::delete_api_key_cache( $this->user->consumer_key );
     }
 
     /**

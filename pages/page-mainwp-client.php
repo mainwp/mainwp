@@ -38,12 +38,18 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * @return bool Whether the client is in scope.
      */
     public static function has_client_access( $client_id, $full = false ) {
+        if ( (int) $client_id <= 0 ) {
+            return false;
+        }
         $allowed = MainWP_Abilities_Util::get_allowed_site_ids();
         if ( 'all' === $allowed ) {
             return true;
         }
         $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( (int) $client_id, array( 'no_perm_check' => true ) );
-        $ids   = array_map( 'intval', wp_list_pluck( (array) $sites, 'id' ) );
+        if ( ! is_array( $sites ) ) {
+            return false;
+        }
+        $ids = array_map( 'intval', wp_list_pluck( $sites, 'id' ) );
         if ( empty( $ids ) || ! array_intersect( $ids, $allowed ) ) {
             return false;
         }

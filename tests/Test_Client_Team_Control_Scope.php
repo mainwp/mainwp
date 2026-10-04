@@ -825,6 +825,48 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertContains( $hidden, $this->members( $existing ) );
     }
 
+    /** @return array Missing-client entry points. */
+    public static function missing_client_entry_points(): array {
+        return array( array( 'add form' ), array( 'delete' ), array( 'orphan contact image' ) );
+    }
+
+    /**
+     * @dataProvider missing_client_entry_points
+     * @param string $entry Entry point.
+     */
+    public function test_missing_client_refusal_has_no_incorrect_usage( $entry ): void {
+        $this->scope( array() );
+        $contact = MainWP_DB_Client::instance()->update_client_contact( array( 'contact_client_id' => 0, 'contact_name' => 'Orphan', 'contact_email' => 'orphan@example.com', 'contact_image' => 'scope-contact.png' ) );
+        $incorrect = 0;
+        $this->filter( 'doing_it_wrong_run', static function () use ( &$incorrect ) { ++$incorrect; } );
+        $before = $this->before_write();
+        if ( 'add form' === $entry ) {
+            $_GET = array( 'page' => 'ClientAddNew', 'client_id' => 0 );
+            $body = $this->capture( static function () { MainWP_Client::render_add_client(); } );
+            $this->assertStringContainsString( 'mainwp-permission-error', $body );
+        } elseif ( 'delete' === $entry ) {
+            $body = $this->dispatch( 'mainwp_clients_delete_client', array() );
+            $this->assertSame( 'Error - insufficient permissions!', json_decode( $body, true )['error'] ?? null );
+        } else {
+            $body = $this->operation( 'contact_image', (object) array( 'client_id' => 0 ), 0, 0, $contact->contact_id );
+            $this->assertSame( 'Error - insufficient permissions!', json_decode( $body, true )['error'] ?? null );
+        }
+        $this->assertSame( 0, $incorrect, 'A missing client must refuse without _doing_it_wrong.' );
+        $this->assert_unchanged( $before );
+    }
+
+    /** Invalid IDs must not reach the roster, even with unrestricted access. */
+    public function test_missing_client_access_skips_roster(): void {
+        foreach ( array( array(), 'all' ) as $scope ) {
+            $this->scope( $scope );
+            $queries = 0;
+            $this->filter( 'query', static function ( $sql ) use ( &$queries ) { ++$queries; return $sql; } );
+            $this->assertFalse( MainWP_Client::has_client_access( 0 ) );
+            $this->assertFalse( MainWP_Client::has_client_access( -1 ) );
+            $this->assertSame( 0, $queries, 'Invalid client IDs must not read a roster.' );
+        }
+    }
+
     /** Admins retain zero-site client behavior. */
     public function test_unrestricted_admin_zero_site_save_and_notes_allowed(): void {
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );

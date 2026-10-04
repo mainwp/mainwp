@@ -1975,12 +1975,22 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                         throw new MainWP_Exception( 'Error - insufficient permissions!' );
                     }
                     if ( ! $client && 'all' !== $allowed_sites && ! empty( $email ) ) {
-                        // The email column ignores case and trailing spaces, but preserves leading spaces.
-                        $email_key = strtolower( rtrim( $email, ' ' ) );
-                        if ( isset( $batch_emails[ $email_key ] ) && ! $batch_emails[ $email_key ] ) {
+                        // A later row with the same email edits the client an earlier row creates, and the write refuses it when that client has no allowed site.
+                        $earlier = null;
+                        foreach ( $batch_emails as $index => $batch_email ) {
+                            if ( $this->client_emails_match( $batch_email['email'], $email ) ) {
+                                $earlier = $index;
+                                break;
+                            }
+                        }
+                        if ( null === $earlier ) {
+                            $batch_emails[] = array(
+                                'email'    => $email,
+                                'has_site' => ! empty( $val_data['website_id'] ),
+                            );
+                        } elseif ( ! $batch_emails[ $earlier ]['has_site'] ) {
                             throw new MainWP_Exception( 'Error - insufficient permissions!' );
                         }
-                        $batch_emails[ $email_key ] = ! empty( $val_data['website_id'] ) || ! empty( $batch_emails[ $email_key ] );
                     }
                 }
                 foreach ( $dataes as $val_data ) {
@@ -2157,6 +2167,28 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function mainwp_get_sanitized_post( $key, $callback = 'sanitize_text_field' ) {
         return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : ''; //phpcs:ignore -- NonceVerification.
+    }
+
+    /**
+     * Whether two client emails find the same client in the write-time email lookup.
+     *
+     * The lookup compares against the email column, so its collation decides equality: it can fold case,
+     * accents and trailing spaces in ways PHP string functions cannot reproduce.
+     *
+     * @param string $first First email.
+     * @param string $second Second email.
+     * @return bool Whether the emails match.
+     */
+    private function client_emails_match( $first, $second ) {
+        global $wpdb;
+        $column = $wpdb->get_row( $wpdb->prepare( 'SHOW FULL COLUMNS FROM %i LIKE %s', MainWP_DB_Client::instance()->get_table_name( 'wp_clients' ), 'client_email' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- column metadata; only in-batch new emails of restricted users get here.
+        if ( ! $column || ! preg_match( '/^([a-z0-9]+)_[a-z0-9_]+$/i', (string) $column->Collation, $matches ) ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
+            return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT %s = %s', $first, $second ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compares two values, reads no table.
+        }
+        // Charset and collation are interpolated only after matching ^[a-z0-9_]+$ above.
+        $charset   = $matches[1];
+        $collation = $column->Collation; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
+        return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT CONVERT(%s USING ' . $charset . ') COLLATE ' . $collation . ' = CONVERT(%s USING ' . $charset . ') COLLATE ' . $collation, $first, $second ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- compares two values; identifiers allowlisted above.
     }
 
     /**

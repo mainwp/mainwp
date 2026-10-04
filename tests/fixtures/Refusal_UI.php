@@ -118,7 +118,7 @@ const context = vm.createContext({
     mainwp_validate_email: value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
     mainwp_confirm: (text, callback) => callback(),
     feedback: (target, text, style) => messages.push({ target, text, style }),
-    mainwp_set_message_zone: (target, text, style) => messages.push({ target, text, style }),
+    mainwp_set_message_zone: (target, text, style) => messages.push({ target, text, style, helper: true }),
     setHtml: (target, text) => messages.push({ target, text, style: '' }),
     setTimeout: callback => callback(), mainwp_forceReload: () => { ++reloads; }
 });

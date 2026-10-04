@@ -418,6 +418,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertNotEmpty( $errors, 'The server refusal must be visible in red.' );
         $statuses = array_values( array_filter( $ui['messages'], static function ( $message ) { return '#mainwp-message-zone-client' === $message['target']; } ) );
         $this->assertSame( '', end( $statuses )['text'], 'A failure must clear the pending status.' );
+        $this->assertTrue( end( $statuses )['helper'] ?? false, 'The pending status must be cleared through mainwp_set_message_zone(), which also hides the zone.' );
         $this->assertSame( 0, $ui['reloads'] );
     }
 
@@ -856,7 +857,8 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
      * unrestricted merges. New/new with two sites: both scopes merge both memberships.
      * Existing DB email in scope: both scopes merge. Existing DB email out of scope:
      * restricted refuses before writes; unrestricted merges.
-     * Case and trailing spaces match the email column; leading spaces remain distinct.
+     * Equality is the email column's collation, as in the write-time lookup: case (ASCII and not),
+     * accents and trailing spaces match; leading spaces remain distinct.
      *
      * @return array Scope, initial client, row memberships and expected refusal.
      */
@@ -873,13 +875,16 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $cases['restricted case match'] = array( 'restricted', 'new', array( false, true ), 'batch@example.com', true );
         $cases['restricted trailing space match'] = array( 'restricted', 'new', array( false, true ), 'Batch@example.com ', true );
         $cases['restricted case and trailing space match'] = array( 'restricted', 'new', array( false, false ), 'batch@example.com ', true );
+        $cases['restricted non-ascii case match'] = array( 'restricted', 'new', array( false, true ), 'ÉMILE@example.com', true, 'émile@example.com' );
+        $cases['restricted accent fold match'] = array( 'restricted', 'new', array( false, true ), 'Bätch@example.com', true );
+        $cases['all accent fold merge'] = array( 'all', 'new', array( false, true ), 'Bätch@example.com', false );
         return $cases;
     }
 
     /**
      * @dataProvider duplicate_multi_client_emails
      */
-    public function test_multi_client_duplicate_email_preflight( $scope, $existing, $sites, $second_email, $refused ): void {
+    public function test_multi_client_duplicate_email_preflight( $scope, $existing, $sites, $second_email, $refused, $first_email = 'Batch@example.com' ): void {
         $first = $this->create_test_site();
         $second = $this->create_test_site();
         if ( 'new' !== $existing ) {
@@ -890,7 +895,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->scope( 'all' === $scope ? 'all' : array( $first, $second ) );
         $before = $this->before_write();
         $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => array(
-            array( 'client_name' => 'First row', 'client_email' => 'Batch@example.com', 'website_id' => $sites[0] ? $first : '', 'contacts_field' => array( 'contact_name' => 'Batch contact', 'contact_email' => 'batch-contact@example.com' ) ),
+            array( 'client_name' => 'First row', 'client_email' => $first_email, 'website_id' => $sites[0] ? $first : '', 'contacts_field' => array( 'contact_name' => 'Batch contact', 'contact_email' => 'batch-contact@example.com' ) ),
             array( 'client_name' => 'Second row', 'client_email' => $second_email, 'website_id' => $sites[1] ? $second : '' ),
         ) ) );
         $this->assertSame( array( 'success' => ! $refused, 'data' => $refused ? 'Error - insufficient permissions!' : 'Created client successfully.' ), json_decode( $body, true ), $body );

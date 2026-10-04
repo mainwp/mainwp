@@ -2248,6 +2248,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param array $output Output values.
      *
      * @return array $message, $error, $id
+     * @throws MainWP_Exception When a submitted numeric group is not accessible.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
@@ -2399,9 +2400,14 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $groupids        = array();
                     $groupnames      = array();
                     $tmpArr          = array();
+                    $allowed_groups  = MainWP_Abilities_Util::get_allowed_group_ids();
                     if ( isset( $params['groupids'] ) && is_array( $params['groupids'] ) ) {
                         foreach ( $params['groupids'] as $group ) {
                             if ( is_numeric( $group ) ) {
+                                $existing_group = MainWP_DB_Common::instance()->get_group_by_id( $group );
+                                if ( ! $existing_group || ( 'all' !== $allowed_groups && ! in_array( (int) $existing_group->id, $allowed_groups, true ) ) ) {
+                                    throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
+                                }
                                 $groupids[] = $group;
                             } else {
                                 $group = trim( $group );

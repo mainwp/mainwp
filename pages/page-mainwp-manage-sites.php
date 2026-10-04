@@ -2059,6 +2059,23 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $groupids = explode( ',', sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_addgroups'] ) ) );
             }
 
+            $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+            foreach ( $groupids as $groupid ) {
+                $group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
+                if ( ! $group || ( 'all' !== $allowed_groups && ! in_array( (int) $group->id, $allowed_groups, true ) ) ) {
+                    return false;
+                }
+            }
+            // A site edit may only replace memberships in the caller's granted groups.
+            if ( 'all' !== $allowed_groups ) {
+                $existing_groups = MainWP_DB_Common::instance()->get_groups_by_website_id( $website->id );
+                foreach ( (array) $existing_groups as $existing_group ) {
+                    if ( ! in_array( (int) $existing_group->id, $allowed_groups, true ) ) {
+                        $groupids[] = $existing_group->id;
+                    }
+                }
+            }
+
             // to fix update staging site.
             if ( $website->is_staging ) {
                 $stag_gid = get_option( 'mainwp_stagingsites_group_id' );

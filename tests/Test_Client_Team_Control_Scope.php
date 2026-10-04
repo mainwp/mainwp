@@ -8,6 +8,8 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Client;
+use MainWP\Dashboard\MainWP_Client_List_Table;
+use MainWP\Dashboard\MainWP_Clients;
 use MainWP\Dashboard\MainWP_Client_Overview;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Client;
@@ -16,6 +18,8 @@ use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\Client_Scope_Controller;
 use MainWP\Dashboard\Client_Scope_Post_Handler;
 
+require_once __DIR__ . '/fixtures/Refusal_UI.php';
+
 /** AJAX termination must escape the import handlers' Exception catch blocks. */
 class Client_Scope_Response_Stop extends \Error {}
 
@@ -23,6 +27,7 @@ class Client_Scope_Response_Stop extends \Error {}
 class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
 
     use Site_Fixture;
+    use Refusal_UI;
 
     /** @var array Test-owned filters. */
     private $filters = array();
@@ -161,6 +166,68 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertStringContainsString( wp_create_nonce( 'editing-client-' . $client->client_id ), $html );
     }
 
+    /** Filter client rows before totals and extension hooks, preserving partial clients. */
+    public function test_client_list_filters_scope_before_totals_and_hooks(): void {
+        $visible = $this->client();
+        $allowed = $this->site( $visible );
+        $this->site( $visible );
+        $hidden = $this->client();
+        $this->site( $hidden );
+        $empty = $this->client();
+        $this->scope( array( $allowed ) );
+        $prepared = array();
+        $ids = array();
+        $this->filter( 'mainwp_clientstable_prepared_items', static function ( $clients, $client_ids ) use ( &$prepared, &$ids ) { $prepared = $clients; $ids = $client_ids; } );
+        $table = new MainWP_Client_List_Table();
+        try {
+            $table->prepare_items();
+            $this->assertSame( array( (int) $visible->client_id ), array_map( 'intval', wp_list_pluck( $table->items, 'client_id' ) ) );
+            $this->assertSame( 1, $table->total_items );
+            $this->assertSame( $table->items, $prepared );
+            $this->assertSame( array( (int) $visible->client_id ), array_map( 'intval', $ids ) );
+            $this->assertSame( $this->members( $visible ), array_map( 'intval', explode( ',', $table->items[0]['selected_sites'] ) ) );
+
+            $this->scope( 'all' );
+            $expected = MainWP_DB_Client::instance()->get_wp_client_by( 'all', null, ARRAY_A, array( 'with_selected_sites' => true, 'with_tags' => true ) );
+            $table->prepare_items();
+            $this->assertSame( $expected, $table->items );
+            $this->assertSame( count( $expected ), $table->total_items );
+            $this->assertSame( $expected, $prepared );
+        } finally {
+            remove_action( 'mainwp_manageclients_tabletop', array( $table, 'generate_tabletop' ) );
+        }
+    }
+
+    /** Widget output and its hook omit hidden clients; unrestricted output keeps all clients. */
+    public function test_clients_widget_filters_scope_before_output_and_hook(): void {
+        $visible = $this->client();
+        $allowed = $this->site( $visible );
+        $this->site( $visible );
+        $hidden = $this->client();
+        $this->site( $hidden );
+        $empty = $this->client();
+        $this->scope( array( $allowed ) );
+        $hook_clients = array();
+        $this->filter( 'mainwp_clients_widget_top', static function ( $clients ) use ( &$hook_clients ) { $hook_clients = $clients; } );
+        $html = $this->capture( static function () { MainWP_Clients::render(); } );
+        $this->assertStringNotContainsString( $hidden->name, $html );
+        $this->assertStringNotContainsString( $hidden->client_email, $html );
+        $this->assertStringNotContainsString( $empty->name, $html );
+        $this->assertStringNotContainsString( $empty->client_email, $html );
+        $this->assertStringContainsString( $visible->name, $html );
+        $this->assertStringContainsString( $visible->client_email, $html );
+        $this->assertSame( array( (int) $visible->client_id ), array_map( 'intval', wp_list_pluck( $hook_clients, 'client_id' ) ) );
+
+        $this->scope( 'all' );
+        $expected = MainWP_DB_Client::instance()->get_wp_clients();
+        $html = $this->capture( static function () { MainWP_Clients::render(); } );
+        $this->assertSame( $expected, $hook_clients );
+        foreach ( array( $visible, $hidden, $empty ) as $client ) {
+            $this->assertStringContainsString( $client->name, $html );
+            $this->assertStringContainsString( $client->client_email, $html );
+        }
+    }
+
     /** Add and import forms enforce the Dashboard mutation right. */
     public function test_add_and_import_forms_require_manage_clients_and_selector_is_scoped(): void {
         $allowed = $this->create_test_site( array( 'name' => 'Visible selector site' ) );
@@ -210,6 +277,100 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
     /** @return array Full-coverage operations. */
     public static function destructive(): array {
         return array( array( 'delete' ), array( 'suspend' ), array( 'unsuspend' ) );
+    }
+
+    /** @return array Client refusal handlers. */
+    public static function refusal_handlers(): array {
+        return array(
+            array( 'delete', 'bulk' ),
+            array( 'delete', '.client_deleteitem' ),
+            array( 'suspend', '.client-suspend-unsuspend-sites' ),
+            array( 'unsuspend', '.client-suspend-unsuspend-sites' ),
+        );
+    }
+
+    /**
+     * @dataProvider refusal_handlers
+     * @param string $operation Client operation.
+     * @param string $handler Click handler or bulk.
+     */
+    public function test_client_refusal_reaches_the_ui_as_an_error( $operation, $handler ): void {
+        $client = $this->client();
+        $site = $this->site( $client );
+        $this->site( $client );
+        if ( 'unsuspend' === $operation ) {
+            MainWP_DB_Client::instance()->update_client( array( 'client_id' => $client->client_id, 'suspended' => 1 ) );
+            MainWP_DB_Client::instance()->suspend_unsuspend_websites_by_client_id( $client->client_id, 1 );
+        }
+        $this->scope( array( $site ) );
+        $before = $this->before_write();
+        $body = $this->operation( $operation, $client );
+        $this->assert_unchanged( $before );
+        if ( 'delete' === $operation ) {
+            $this->assertSame( 'Error - insufficient permissions!', json_decode( $body, true )['error'] ?? null );
+        } else {
+            $this->assertSame( 'Error - insufficient permissions!', $body );
+        }
+        $action = 'mainwp_clients_' . ( 'delete' === $operation ? 'delete' : 'suspend' ) . '_client';
+        $this->assert_refusal_ui( 'mainwp-clients.js', $handler, $body, $action );
+    }
+
+    /** @return array Site client dropdowns. */
+    public static function site_dropdowns(): array {
+        return array( array( 'edit' ), array( 'add' ) );
+    }
+
+    /**
+     * @dataProvider site_dropdowns
+     * @param string $page Site form.
+     */
+    public function test_site_client_dropdown_keeps_current_and_overlapping_clients( $page ): void {
+        $current = $this->client();
+        $site = $this->site( $current );
+        $overlap = $this->client();
+        $other_site = $this->site( $overlap );
+        $this->site( $overlap );
+        $hidden = $this->client();
+        $this->site( $hidden );
+        $empty = $this->client();
+        $this->scope( array( $site, $other_site ) );
+        $this->assertSame( array( 0, (int) $current->client_id, (int) $overlap->client_id ), $this->site_client_options( $page, $site, $current->client_id ) );
+        $this->scope( 'all' );
+        $this->assertSame( array( 0, (int) $current->client_id, (int) $overlap->client_id, (int) $hidden->client_id, (int) $empty->client_id ), $this->site_client_options( $page, $site, $current->client_id ) );
+    }
+
+    /** @param string $page Site form. @param int $site Site ID. @param int $current Current client. @return array Sorted client options. */
+    private function site_client_options( $page, $site, $current ): array {
+        $html = $this->capture( static function () use ( $page, $site ) {
+            if ( 'edit' === $page ) {
+                MainWP_Manage_Sites_View::render_edit_site( $site, false );
+            } else {
+                MainWP_Manage_Sites::render_new_site_add_new_site( array() );
+            }
+        } );
+        $document = new \DOMDocument();
+        $previous = libxml_use_internal_errors( true );
+        try {
+            $this->assertTrue( $document->loadHTML( $html ) );
+        } finally {
+            libxml_clear_errors();
+            libxml_use_internal_errors( $previous );
+        }
+        $xpath = new \DOMXPath( $document );
+        if ( 'edit' === $page ) {
+            $input = $xpath->query( '//input[@name="mainwp_managesites_edit_client_id"]' )->item( 0 );
+            $this->assertNotNull( $input );
+            $this->assertSame( (string) $current, $input->getAttribute( 'value' ), 'Current client must remain selected.' );
+            $query = '//input[@name="mainwp_managesites_edit_client_id"]/parent::div/div[@class="menu"]/div[@class="item"]';
+        } else {
+            $query = '//div[@id="mainwp_managesites_add_client_id"]/div[@class="menu"]/div[@class="item"]';
+        }
+        $ids = array();
+        foreach ( $xpath->query( $query ) as $option ) {
+            $ids[] = (int) $option->getAttribute( 'data-value' );
+        }
+        sort( $ids );
+        return $ids;
     }
 
     /**
@@ -500,11 +661,13 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertFalse( $method->invoke( null, MainWP_DB::instance()->get_website_by_id( $site ) ) );
         $this->assert_unchanged( $before );
         $this->filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
-        $this->filter( 'mainwp_fetch_url_not_authed_pre', static function () { return array( 'register' => 'OK' ); } );
+        $register_calls = 0;
+        $this->filter( 'mainwp_fetch_url_not_authed_pre', static function () use ( &$register_calls ) { ++$register_calls; return array( 'register' => 'OK' ); } );
         $this->filter( 'mainwp_fetch_url_authed_pre', static function () { return array(); } );
         $_POST = array( 'managesites_add_wpurl' => 'https://client-scope-add.example.com/', 'managesites_add_wpname' => 'New site', 'managesites_add_wpadmin' => 'admin', 'clientid' => $client->client_id );
         $before = $this->before_write();
         $result = MainWP_Manage_Sites_View::add_site();
+        $this->assertSame( 0, $register_calls, 'Refused clients must not reach Child registration.' );
         $this->assert_unchanged( $before );
         $this->assertSame( 0, (int) $result[2] );
         $this->assertStringContainsString( 'permission', strtolower( $result[1] ) );

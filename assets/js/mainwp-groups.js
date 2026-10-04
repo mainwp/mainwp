@@ -177,6 +177,8 @@ jQuery(function () {
                 response = response.trim();
                 if (response == 'OK') {
                     mainwp_forceReload();
+                } else if (response.indexOf('ERROR ') === 0) {
+                    feedback('mainwp-message-zone', jQuery('<div>').text(response.substring(6)).html(), 'ui red message');
                 }
             });
         };
@@ -210,6 +212,7 @@ jQuery(function () {
 
         jQuery.post(ajaxurl, data, function (response) {
             if (response.error) {
+                $modal.find('.content').prepend(jQuery('<div class="ui red message"></div>').text(response.error));
                 // Remove loading state on error
                 $button.data("loading", false);
                 $button.removeClass("disabled");
@@ -298,6 +301,8 @@ jQuery(function () {
                 setTimeout(() => {
                     jQuery('#mainwp-message-zone').fadeOut();
                 }, 5000);
+            } else if (response?.error) {
+                feedback('mainwp-message-zone', jQuery('<div>').text(response.error).html(), 'ui red message');
             } else {
                 feedback('mainwp-message-zone', 'Undefined error occurred. Please try again.', 'ui green message');
             }

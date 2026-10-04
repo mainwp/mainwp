@@ -1074,7 +1074,16 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
             <?php
             if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-                $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+                $clients       = MainWP_DB_Client::instance()->get_wp_client_by( 'all', null, OBJECT, array( 'with_selected_sites' => true ) );
+                $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+                if ( 'all' !== $allowed_sites ) {
+                    $clients = array_filter(
+                        $clients,
+                        static function ( $client ) use ( $allowed_sites ) {
+                            return ! empty( $client->selected_sites ) && array_intersect( array_map( 'intval', explode( ',', $client->selected_sites ) ), $allowed_sites );
+                        }
+                    );
+                }
                 ?>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>

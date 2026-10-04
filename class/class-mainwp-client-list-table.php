@@ -326,6 +326,18 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
 
         $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all', null, ARRAY_A, $params );
 
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( 'all' !== $allowed_sites && is_array( $clients ) ) {
+            $clients = array_values(
+                array_filter(
+                    $clients,
+                    static function ( $client ) use ( $allowed_sites ) {
+                        return ! empty( $client['selected_sites'] ) && array_intersect( array_map( 'intval', explode( ',', $client['selected_sites'] ) ), $allowed_sites );
+                    }
+                )
+            );
+        }
+
         $totalRecords = ( $clients ? count( $clients ) : 0 );
 
         $clients_ids = array();
@@ -412,7 +424,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
             'searchDelay'   => 350,
         );
 
-        /**z
+        /**
          * Filter: mainwp_clients_table_features
          *
          * Filter the Clients table features.
@@ -798,8 +810,10 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     $cl_id1 = $item['client_id'];
                     ?>
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id1 ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
-                    <?php else :
-                    $cl_id2 = $item['client_id']; ?>
+                    <?php
+                else :
+                    $cl_id2 = $item['client_id'];
+                    ?>
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id2 ); ?>" data-tooltip="<?php echo $tooltip_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- htmlspecialchars() with double encoding, or esc_attr__() for an empty tooltip. ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                     <?php endif; ?>
                     <span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note" data-note="<?php echo MainWP_Utility::client_note_editor_attr( $edit ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped for an attribute without decoding typed entities. ?>"><?php echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput -- client_note_html() returns display HTML. ?></span>

@@ -13,18 +13,24 @@ use MainWP\Dashboard\MainWP_Manage_Sites;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\Group_Write_Post_Handler;
 
+require_once __DIR__ . '/fixtures/Refusal_UI.php';
+
 /**
  * Exercise UI writes with independent site and group restrictions.
  */
 class Test_Group_Write_Scope extends \WP_UnitTestCase {
 
     use Site_Fixture;
+    use Refusal_UI;
 
     /** @var array Hook callbacks owned by this test. */
     private $filters = array();
 
     /** @var array Mutation hook counts. */
     private $hook_calls = array();
+
+    /** @var int Child registration attempts. */
+    private $register_calls = 0;
 
     /**
      * Legacy raw exits would kill PHPUnit before it can inspect the database.
@@ -104,6 +110,16 @@ class Test_Group_Write_Scope extends \WP_UnitTestCase {
         return array( 'mixed scope' => array( 'mixed' ), 'missing site' => array( 'missing' ) );
     }
 
+    /** Empty tag names keep the original validation response. */
+    public function test_empty_group_name_keeps_original_error(): void {
+        $site = $this->create_test_site();
+        $this->scope( array( $site ), array() );
+        $before = $this->before_write();
+        $body = $this->dispatch( 'mainwp_group_sites_add', array( 'newName' => '', 'selected_sites' => array( $site ) ) );
+        $this->assert_unchanged( $before );
+        $this->assertSame( array( 'error' => 'Unexpected error occurred. Please try again.' ), json_decode( $body, true ) );
+    }
+
     /**
      * @dataProvider invalid_site_inputs
      * @param string $case Input case.
@@ -171,6 +187,31 @@ class Test_Group_Write_Scope extends \WP_UnitTestCase {
             array( 'mainwp_group_updategroup' ),
             array( 'mainwp_group_delete' ),
         );
+    }
+
+    /** @return array Group refusal handlers. */
+    public static function refusal_handlers(): array {
+        return array(
+            array( 'mainwp_group_updategroup', '#mainwp-save-sites-groups-selection-button' ),
+            array( 'mainwp_group_delete', '#mainwp-delete-group-button' ),
+            array( 'mainwp_group_rename', '#mainwp-update-new-group-button' ),
+        );
+    }
+
+    /**
+     * @dataProvider refusal_handlers
+     * @param string $action AJAX action.
+     * @param string $handler Click handler.
+     */
+    public function test_group_refusal_reaches_the_ui_as_an_error( $action, $handler ): void {
+        $site = $this->create_test_site();
+        $group = $this->group( array( $site ) );
+        $this->scope( array( $site ), array() );
+        $before = $this->before_write();
+        $body = $this->dispatch( $action, array( 'groupId' => $group, 'newName' => 'Refused rename', 'websiteIds' => array( $site ) ) );
+        $this->assert_unchanged( $before );
+        $this->assert_permission_response( $action, $body );
+        $this->assert_refusal_ui( 'mainwp-groups.js', $handler, $body, $action );
     }
 
     /**
@@ -349,6 +390,7 @@ class Test_Group_Write_Scope extends \WP_UnitTestCase {
         $this->scope( 'all', array( $allowed ) );
         $before = $this->before_write();
         $result = $this->add_site( array( $allowed, 'missing' === $case ? 99999999 : $denied ) );
+        $this->assertSame( 0, $this->register_calls, 'Refused groups must not reach Child registration.' );
         $this->assert_unchanged( $before );
         $this->assertSame( 0, (int) $result[2] );
         $this->assertStringContainsString( 'permission', strtolower( $result[1] ) );
@@ -490,7 +532,7 @@ class Test_Group_Write_Scope extends \WP_UnitTestCase {
 
     /** @param array $groups Group IDs or names. @return array Existing add-site response tuple. */
     private function add_site( $groups ): array {
-        $this->filter( 'mainwp_fetch_url_not_authed_pre', static function () { return array( 'register' => 'OK' ); } );
+        $this->filter( 'mainwp_fetch_url_not_authed_pre', function () { ++$this->register_calls; return array( 'register' => 'OK' ); } );
         $this->filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
         $this->filter( 'mainwp_fetch_url_authed_pre', static function () { return array(); } );
         $_POST = array(

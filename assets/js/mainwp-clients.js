@@ -48,6 +48,8 @@ jQuery(function () {
       jQuery.post(ajaxurl, data, function (response) {
         if (response.success) {
           rowElement.html('<td colspan="8"><i class="green check icon"></i> ' + response.result + '</td>');
+        } else if (response.error) {
+          mainwp_set_message_zone('#mainwp-message-zone', jQuery('<div>').text(response.error).html(), 'red');
         }
       }, 'json');
     }
@@ -75,6 +77,8 @@ jQuery(function () {
         if (response === 'success') {
             $button.text(new_status === 0 ? MainWP.I18n.t('Suspend Sites') : MainWP.I18n.t('Unsuspend Sites'));
             $button.attr('suspend-status', new_status);
+        } else if (response === 'Error - insufficient permissions!') {
+            mainwp_set_message_zone('#mainwp-message-zone', jQuery('<div>').text(response).html(), 'red');
         }
     });
 });

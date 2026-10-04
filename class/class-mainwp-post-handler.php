@@ -1023,6 +1023,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ! MainWP_Client::has_client_access( $client_id, true ) || ( $client_id && ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) ) ) {
             $ret['result'] = 'Error - insufficient permissions!';
+            $ret['error']  = $ret['result'];
             MainWP_Client::exit_json( $ret );
         }
         if ( $client_id ) {

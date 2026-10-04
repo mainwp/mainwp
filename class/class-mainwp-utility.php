@@ -2965,6 +2965,35 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Image names are shared by form, import and database write paths.
+     *
+     * @param mixed $name Proposed image name.
+     * @return bool Whether the name is a plain filename.
+     */
+    public static function is_valid_client_image_name( $name ) {
+        return is_string( $name ) && '' !== $name && false === strpos( $name, "\0" ) && false === strpos( $name, '\\' ) && basename( $name ) === $name && 0 === validate_file( $name );
+    }
+
+    /**
+     * Stored image names may predate validation or resolve through an outside symlink.
+     *
+     * @param mixed $name Stored or submitted image name.
+     * @return bool Whether the image path was accepted for deletion.
+     */
+    public static function delete_client_image( $name ) {
+        if ( ! static::is_valid_client_image_name( $name ) ) {
+            return false;
+        }
+        $dirs      = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
+        $directory = realpath( $dirs[0] );
+        $path      = realpath( $dirs[0] . $name );
+        if ( false === $directory || false === $path || ! is_file( $path ) || 0 !== strpos( wp_normalize_path( $path ), trailingslashit( wp_normalize_path( $directory ) ) ) ) {
+            return false;
+        }
+        return static::delete_file( $path );
+    }
+
+    /**
      * Delete icon file.
      *
      * @param string $sub_dir Sub dir file icon.

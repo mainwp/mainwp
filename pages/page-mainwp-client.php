@@ -403,10 +403,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'client_id' => $client_id,
                     );
                     MainWP_DB_Client::instance()->update_client( $update );
-                    MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $client->image );
+                    MainWP_Utility::delete_client_image( $client->image );
                 }
             } elseif ( ! empty( $iconfile_slug ) ) {
-                MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $iconfile_slug );
+                MainWP_Utility::delete_client_image( $iconfile_slug );
             }
             wp_die( wp_json_encode( array( 'result' => 'success' ) ) );
         }
@@ -415,7 +415,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $uploaded_icon = 'NOTCHANGE';
-        if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+        if ( is_array( $output ) && isset( $output['filename'] ) && MainWP_Utility::is_valid_client_image_name( $output['filename'] ) ) {
             $uploaded_icon = $output['filename'];
         }
 
@@ -479,10 +479,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'contact_id'    => $contact_id,
                     );
                     MainWP_DB_Client::instance()->update_client_contact( $update );
-                    MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $contact_data->contact_image );
+                    MainWP_Utility::delete_client_image( $contact_data->contact_image );
                 }
             } elseif ( ! empty( $iconfile_slug ) ) {
-                MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $iconfile_slug );
+                MainWP_Utility::delete_client_image( $iconfile_slug );
             }
             wp_die( wp_json_encode( array( 'result' => 'success' ) ) );
         }
@@ -491,7 +491,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $uploaded_icon = 'NOTCHANGE';
-        if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+        if ( is_array( $output ) && isset( $output['filename'] ) && MainWP_Utility::is_valid_client_image_name( $output['filename'] ) ) {
             $uploaded_icon = $output['filename'];
         }
 
@@ -1710,16 +1710,17 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         // compatible with quick setup.
         if ( isset( $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+            if ( is_array( $output ) && isset( $output['filename'] ) && MainWP_Utility::is_valid_client_image_name( $output['filename'] ) ) {
                 $client_image = $output['filename'];
             }
         }
 
         $client_data = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
         if ( $client_data && $client_data->image !== $client_image && $client_id ) {
+            // The hidden field is attacker-controlled; only the stored name identifies the old image.
             $old_file = $client_data->image;
             if ( $old_file !== $client_image && ! empty( $old_file ) ) {
-                MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $old_file );
+                MainWP_Utility::delete_client_image( $old_file );
             }
             $update = array(
                 'client_id' => $client_id,
@@ -1795,9 +1796,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         $contact_image = sanitize_text_field( wp_unslash( $_POST['mainwp_add_edit_contact_uploaded_icon_hidden']['contacts_field'][ $indx ] ) ); // phpcs:ignore WordPress.Security.NonceVerification
                     }
                     if ( $contact_data && $contact_data->contact_image !== $contact_image && $contact_id ) {
+                        // The hidden field is attacker-controlled; only the stored name identifies the old image.
                         $old_file = $contact_data->contact_image;
                         if ( $old_file !== $contact_image && ! empty( $old_file ) ) {
-                            MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $old_file );
+                            MainWP_Utility::delete_client_image( $old_file );
                         }
                         $update = array(
                             'contact_id'    => $contact_id,

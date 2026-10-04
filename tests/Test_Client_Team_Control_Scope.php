@@ -15,6 +15,7 @@ use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Manage_Sites;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
+use MainWP\Dashboard\MainWP_System_Utility;
 use MainWP\Dashboard\Client_Scope_Controller;
 use MainWP\Dashboard\Client_Scope_Post_Handler;
 
@@ -34,6 +35,9 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
 
     /** @var array Mutation hook counts. */
     private $hooks = array();
+
+    /** @var string Test-owned upload root. */
+    private $image_root = '';
 
     /** Capture legacy exits while running the source authorization and writes. */
     public static function setUpBeforeClass(): void {
@@ -77,6 +81,18 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
 
     /** Restore the shared suite's callbacks and request state. */
     public function tearDown(): void {
+        if ( $this->image_root ) {
+            $files = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $this->image_root, \FilesystemIterator::SKIP_DOTS ), \RecursiveIteratorIterator::CHILD_FIRST );
+            foreach ( $files as $file ) {
+                if ( $file->isDir() && ! $file->isLink() ) {
+                    rmdir( $file->getPathname() );
+                } else {
+                    unlink( $file->getPathname() );
+                }
+            }
+            rmdir( $this->image_root );
+            $this->image_root = '';
+        }
         foreach ( $this->filters as $hook => $callback ) {
             remove_filter( $hook, $callback, 999 );
         }
@@ -1582,6 +1598,161 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $client = $this->client();
         $this->assertSame( 'yes', json_decode( $this->save( $client ), true )['success'] );
         $this->assertSame( 'SUCCESS', json_decode( $this->operation( 'notes', $client ), true )['result'] );
+    }
+
+    /** @return array Image deletion entry points and stored filename shapes. */
+    public static function client_image_deletes(): array {
+        $cases = array();
+        foreach ( array( 'client delete', 'contact delete', 'client cascade', 'client replace', 'contact replace', 'client icon', 'contact icon', 'new client icon', 'new contact icon' ) as $operation ) {
+            foreach ( array( 'traversal', 'nested', 'symlink', 'legitimate' ) as $shape ) {
+                $cases[ $operation . ': ' . $shape ] = array( $operation, $shape );
+            }
+        }
+        return $cases;
+    }
+
+    /**
+     * Stored names may predate validation, including names pointing outside uploads.
+     *
+     * @dataProvider client_image_deletes
+     */
+    public function test_client_image_deletes_stay_inside_uploads( $operation, $shape ): void {
+        global $wpdb;
+        $directory = $this->image_directory();
+        $canary = $this->image_root . '/canary.png';
+        file_put_contents( $canary, 'outside image directory' );
+        $name = '../../canary.png';
+        if ( 'nested' === $shape ) {
+            mkdir( $directory . 'nested' );
+            $name = 'nested/image.png';
+            file_put_contents( $directory . $name, 'nested image' );
+        } elseif ( 'symlink' === $shape ) {
+            $name = 'linked.png';
+            symlink( $canary, $directory . $name );
+        } elseif ( 'legitimate' === $shape ) {
+            $name = 'image.png';
+            file_put_contents( $directory . $name, 'legitimate image' );
+        }
+        $client = $this->client();
+        $contact = MainWP_DB_Client::instance()->update_client_contact( array( 'contact_client_id' => $client->client_id, 'contact_name' => 'Contact', 'contact_email' => 'image-contact@example.com' ) );
+        $is_contact = false !== strpos( $operation, 'contact' ) || 'client cascade' === $operation;
+        $table = MainWP_DB_Client::instance()->get_table_name( $is_contact ? 'wp_clients_contacts' : 'wp_clients' );
+        $wpdb->update( $table, array( $is_contact ? 'contact_image' : 'image' => $name ), array( $is_contact ? 'contact_id' : 'client_id' => $is_contact ? $contact->contact_id : $client->client_id ) );
+        $this->scope( 'all' );
+
+        if ( 'client delete' === $operation || 'client cascade' === $operation ) {
+            $this->assertTrue( MainWP_DB_Client::instance()->delete_client( $client->client_id ) );
+        } elseif ( 'contact delete' === $operation ) {
+            $this->assertTrue( MainWP_DB_Client::instance()->delete_client_contact( $client->client_id, $contact->contact_id ) );
+        } elseif ( false !== strpos( $operation, 'replace' ) ) {
+            $post = $this->image_save_post( $client, $is_contact ? $contact : null );
+            $post[ $is_contact ? 'mainwp_add_edit_contact_uploaded_icon_hidden' : 'mainwp_add_edit_client_uploaded_icon_hidden' ] = $is_contact ? array( 'contacts_field' => array( 'replacement.png' ) ) : 'replacement.png';
+            file_put_contents( $directory . 'replacement.png', 'replacement' );
+            $this->assertSame( 'yes', json_decode( $this->dispatch( 'mainwp_clients_add_client', $post ), true )['success'] );
+        } else {
+            $kind = $is_contact ? 'contact' : 'client';
+            $id = 0 === strpos( $operation, 'new ' ) ? 0 : ( $is_contact ? $contact->contact_id : $client->client_id );
+            $body = $this->dispatch( 'mainwp_add_edit_' . $kind . '_upload_' . $kind . '_icon', array( 'delete' => 1, 'iconItemId' => $id, 'iconFileSlug' => $name, 'delnonce' => MainWP_System_Utility::get_custom_nonce( $kind, $name ) ) );
+            $this->assertSame( 'success', json_decode( $body, true )['result'] );
+        }
+        $this->assertFileExists( $canary, 'An image operation deleted the outside canary.' );
+        $this->assertSame( 'outside image directory', file_get_contents( $canary ) );
+        if ( 'legitimate' === $shape ) {
+            $this->assertFileDoesNotExist( $directory . $name );
+        } elseif ( 'traversal' !== $shape ) {
+            $this->assertFileExists( $directory . $name, 'A refused image name was deleted.' );
+        }
+    }
+
+    /** @return array Invalid proposed image names at both database write methods. */
+    public static function client_image_stores(): array {
+        $cases = array();
+        foreach ( array( 'client', 'contact' ) as $kind ) {
+            foreach ( array( '../canary.png', 'nested/image.png', '/tmp/image.png', "image\0.png", array( 'image.png' ) ) as $index => $name ) {
+                foreach ( array( false, true ) as $update ) {
+                    $cases[ $kind . '-' . $index . '-' . (int) $update ] = array( $kind, $name, $update );
+                }
+            }
+        }
+        return $cases;
+    }
+
+    /** @dataProvider client_image_stores */
+    public function test_client_image_store_refuses_non_filenames( $kind, $name, $update ): void {
+        if ( 'client' === $kind ) {
+            $data = array( 'name' => 'Client', 'client_email' => 'image-client@example.com', 'image' => $name );
+            if ( $update ) {
+                $data['client_id'] = $this->client()->client_id;
+            }
+            $record = MainWP_DB_Client::instance()->update_client( $data );
+            $field = 'image';
+        } else {
+            $data = array( 'contact_client_id' => $this->client()->client_id, 'contact_name' => 'Contact', 'contact_email' => 'image-contact@example.com', 'contact_image' => $name );
+            if ( $update ) {
+                $data['contact_id'] = MainWP_DB_Client::instance()->update_client_contact( array( 'contact_client_id' => $data['contact_client_id'], 'contact_name' => 'Original' ) )->contact_id;
+            }
+            $record = MainWP_DB_Client::instance()->update_client_contact( $data );
+            $field = 'contact_image';
+        }
+        $this->assertIsObject( $record );
+        $this->assertSame( '', $record->$field );
+    }
+
+    /** @return array Hidden-field writes on the Edit Client form. */
+    public static function client_image_hidden_fields(): array {
+        return array( array( 'client' ), array( 'contact' ), array( 'new contact' ) );
+    }
+
+    /** @dataProvider client_image_hidden_fields */
+    public function test_client_image_hidden_traversal_never_reaches_delete( $kind ): void {
+        $directory = $this->image_directory();
+        $canary = $this->image_root . '/canary.png';
+        file_put_contents( $canary, 'outside image directory' );
+        file_put_contents( $directory . 'original.png', 'stored image' );
+        $client = $this->client();
+        MainWP_DB_Client::instance()->update_client( array( 'client_id' => $client->client_id, 'image' => 'original.png' ) );
+        $contact = MainWP_DB_Client::instance()->update_client_contact( array( 'contact_client_id' => $client->client_id, 'contact_name' => 'Contact', 'contact_email' => 'image-contact@example.com', 'contact_image' => 'original.png' ) );
+        $post = $this->image_save_post( $client, 'contact' === $kind ? $contact : null );
+        if ( 'client' === $kind ) {
+            $post['mainwp_add_edit_client_uploaded_icon_hidden'] = '../../canary.png';
+        } else {
+            $group = 'new contact' === $kind ? 'new_contacts_field' : 'contacts_field';
+            if ( 'new contact' === $kind ) {
+                $post['client_fields'][ $group ] = array( 'client.contact.name' => array( 'New contact' ), 'contact.email' => array( 'new-contact@example.com' ), 'contact.role' => array( 'Owner' ) );
+            }
+            $post['mainwp_add_edit_contact_uploaded_icon_hidden'] = array( $group => array( '../../canary.png' ) );
+        }
+        $this->scope( 'all' );
+        $this->assertSame( 'yes', json_decode( $this->dispatch( 'mainwp_clients_add_client', $post ), true )['success'] );
+        $stored = 'client' === $kind ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client->client_id ) : MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_email', 'new contact' === $kind ? 'new-contact@example.com' : 'image-contact@example.com' );
+        $field = 'client' === $kind ? 'image' : 'contact_image';
+        $this->assertTrue( MainWP_DB_Client::instance()->delete_client( $client->client_id ) );
+        $this->assertFileExists( $canary, 'A submitted traversal name deleted the outside canary.' );
+        $this->assertSame( '', $stored->$field );
+    }
+
+    /** @return string Isolated client-images directory. */
+    private function image_directory(): string {
+        $this->image_root = sys_get_temp_dir() . '/mainwp-client-images-' . wp_generate_uuid4();
+        mkdir( $this->image_root );
+        $this->filter( 'mainwp_get_wp_upload_dir', function ( $upload ) {
+            $upload['basedir'] = $this->image_root;
+            return $upload;
+        } );
+        return MainWP_System_Utility::get_mainwp_dir( 'client-images', true )[0];
+    }
+
+    /** @param object $client Client. @param object|null $contact Existing contact. @return array Edit Client fields. */
+    private function image_save_post( $client, $contact = null ): array {
+        $post = array( 'nonce_client_id' => wp_create_nonce( 'editing-client-' . $client->client_id ), 'client_fields' => array( 'client_id' => $client->client_id, 'default_field' => array( 'client.name' => 'Edited client' ) ) );
+        if ( $contact ) {
+            $fields = array( 'client.contact.name' => 'Contact', 'contact.email' => $contact->contact_email, 'contact_id' => $contact->contact_id, 'nonce_contact_id' => wp_create_nonce( 'editing-' . $client->client_id . '-contact-' . $contact->contact_id ) );
+            foreach ( array( 'contact.phone', 'contact.role', 'contact.facebook', 'contact.twitter', 'contact.instagram', 'contact.linkedin', 'selected_icon', 'selected_color' ) as $field ) {
+                $fields[ $field ] = '';
+            }
+            $post['client_fields']['contacts_field'] = array_map( static function ( $value ) { return array( $value ); }, $fields );
+        }
+        return $post;
     }
 
     /** @return object Client fixture. */

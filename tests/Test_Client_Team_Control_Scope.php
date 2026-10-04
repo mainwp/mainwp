@@ -1367,23 +1367,58 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assert_unchanged( $before );
     }
 
-    /** A translated refusal is escaped once: markup stays inert and quotes do not show as entities. */
-    public function test_multi_client_ui_renders_translated_server_message_escaped_once(): void {
+    /** @return array Multi-client refusal paths and untranslated messages. */
+    public static function hostile_multi_client_refusals(): array {
+        return array(
+            'manage_clients' => array( 'manage_clients', 'Error - insufficient permissions!' ),
+            'site scope' => array( 'site scope', 'Error - insufficient permissions!' ),
+            'malformed' => array( 'malformed', 'The client data could not be read. Please try again.' ),
+            'invalid email' => array( 'invalid email', 'One or more email addresses are not valid. No clients were added.' ),
+            'too long' => array( 'too long', 'A client name or email address is too long. Names can have up to %1$d characters and email addresses up to %2$d. No clients were added.' ),
+            'insert' => array( 'insert', 'A client could not be saved, so the import stopped. Clients before it in the list may have been added; check the Clients page.' ),
+        );
+    }
+
+    /**
+     * Each refusal can carry translated markup through the server and UI.
+     *
+     * @dataProvider hostile_multi_client_refusals
+     */
+    public function test_multi_client_ui_renders_translated_server_message_escaped_once( $kind, $source ): void {
+        global $wpdb;
+        $site = $this->create_test_site();
+        $this->scope( 'all' );
+        $rows = array( array( 'client_name' => 'Client', 'client_email' => 'hostile@example.com', 'website_id' => $site ) );
+        if ( 'manage_clients' === $kind ) {
+            $this->filter( 'mainwp_currentusercan', '__return_false' );
+        } elseif ( 'site scope' === $kind ) {
+            $this->scope( array() );
+        } elseif ( 'malformed' === $kind ) {
+            $rows = 'not rows';
+        } elseif ( 'invalid email' === $kind ) {
+            $rows[0]['client_email'] = 'invalid-email';
+        } elseif ( 'too long' === $kind ) {
+            $rows[0]['client_name'] = str_repeat( 'n', $wpdb->get_col_length( MainWP_DB_Client::instance()->get_table_name( 'wp_clients' ), 'name' )['length'] + 1 );
+        } elseif ( 'insert' === $kind ) {
+            $client_insert = 'INSERT INTO `' . $wpdb->prefix . 'mainwp_wp_clients`';
+            $this->filter( 'query', static function ( $sql ) use ( $client_insert ) { return 0 === strpos( $sql, $client_insert ) ? '' : $sql; } );
+        }
         $translation = "<img src=x onerror=alert(1)>Les données n'ont pas pu être lues & relues.";
-        $filter = static function ( $translated, $text, $domain ) use ( $translation ) {
-            return 'mainwp' === $domain && 'The client data could not be read. Please try again.' === $text ? $translation : $translated;
-        };
-        add_filter( 'gettext', $filter, 10, 3 );
-        $response = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => 'not rows' ) );
-        remove_filter( 'gettext', $filter, 10 );
+        $this->filter( 'gettext', static function ( $translated, $text, $domain ) use ( $translation, $source ) {
+            return 'mainwp' === $domain && $source === $text ? $translation : $translated;
+        } );
+        $before = $this->before_write();
+        $response = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => $rows ) );
         $body = json_decode( $response, true );
         $this->assertFalse( $body['success'] );
         $this->assertSame( esc_html( $translation ), $body['data'] );
+        $this->assert_unchanged( $before );
         $ui = $this->run_refusal_ui( 'mainwp-clients.js', '#bulk_add_multi_create_client', $response );
         $errors = array_values( array_filter( $ui['messages'], static function ( $entry ) { return '#mainwp-message-zone' === $entry['target'] && 'red' === $entry['style']; } ) );
         $this->assertCount( 1, $errors );
         $this->assertSame( esc_html( $translation ), $errors[0]['text'] );
         $this->assertStringNotContainsString( '<', $errors[0]['text'] );
+        $this->assertSame( $translation, html_entity_decode( $errors[0]['text'], ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
         $this->assertSame( 0, $ui['reloads'] );
     }
 

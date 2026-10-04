@@ -174,6 +174,7 @@ let bulkManageClientsMaxThreads = mainwpParams['maximumInstallUpdateRequests'] =
 let bulkManageClientsCurrentThreads = 0;
 let bulkManageClientsTotal = 0;
 let bulkManageClientsFinished = 0;
+let bulkManageClientsFailed = false;
 let bulkManageClientsTaskRunning = false;
 
 // Trigger Manage Bulk Actions
@@ -219,6 +220,11 @@ let mainwp_manageclients_bulk_remove_next = function () {
     mainwp_manageclients_bulk_remove_specific(checkedBox);
   }
   if ((bulkManageClientsTotal > 0) && (bulkManageClientsFinished == bulkManageClientsTotal)) { // NOSONAR -- modified out side the function.
+    bulkManageClientsTaskRunning = false;
+    if (bulkManageClientsFailed) {
+      setHtml('#mainwp-message-zone-client', MainWP.I18n.t("Process completed."));
+      return;
+    }
     setHtml('#mainwp-message-zone-client', MainWP.I18n.t("Process completed. Reloading page..."));
     setTimeout(function () {
         mainwp_forceReload();
@@ -251,6 +257,9 @@ let mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
     } else if (response.success == 'SUCCESS') {
       result = MainWP.I18n.t('The client has been removed.');
     }
+    if (error != '' || response.success != 'SUCCESS') {
+      bulkManageClientsFailed = true;
+    }
 
     if (error == '') {
         rowObj.html('<td colspan="999"><i class="green check icon"></i> ' + result + '</td>');
@@ -276,6 +285,7 @@ let manageclients_bulk_init = function () {
     bulkManageClientsCurrentThreads = 0;
     bulkManageClientsTotal = 0;
     bulkManageClientsFinished = 0;
+    bulkManageClientsFailed = false;
     jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox').each(function () {
       jQuery(this).attr('status', 'queue')
     });

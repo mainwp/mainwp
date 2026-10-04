@@ -366,6 +366,37 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assert_refusal_ui( 'mainwp-clients.js', $handler, $body, $action );
     }
 
+    /** @return array Batch responses and expected reloads. */
+    public static function bulk_delete_completion_cases(): array {
+        $refused = array( 'success' => false, 'error' => 'Error - insufficient permissions!' );
+        $allowed = array( 'success' => 'SUCCESS' );
+        return array(
+            'single refusal' => array( array( $refused ), 0, array() ),
+            'mixed batch'    => array( array( $allowed, $refused ), 0, array( 'tr[clientid=1]' ) ),
+            'all success'    => array( array( $allowed, $allowed ), 1, array( 'tr[clientid=1]', 'tr[clientid=2]' ) ),
+        );
+    }
+
+    /**
+     * @dataProvider bulk_delete_completion_cases
+     * @param array $responses Batch responses.
+     * @param int   $reloads Expected reloads.
+     * @param array $fades Expected removed rows.
+     */
+    public function test_bulk_delete_completion_keeps_failed_rows( $responses, $reloads, $fades ): void {
+        $ui = $this->run_refusal_ui( 'mainwp-clients.js', 'bulk', wp_json_encode( $responses ) );
+        $this->assertSame( count( $responses ), $ui['finished'], 'Every row must reach completion.' );
+        $this->assertSame( array_fill( 0, count( $responses ), 'mainwp_clients_delete_client' ), $ui['posts'] );
+        $this->assertSame( $fades, $ui['fades'], 'Only deleted rows may fade out.' );
+        $this->assertSame( $reloads, $ui['reloads'], 'A failed row must prevent the completion reload.' );
+        if ( 0 === $reloads ) {
+            $errors = array_filter( $ui['messages'], static function ( $message ) {
+                return false !== strpos( $message['text'] ?? '', 'Error - insufficient permissions!' ) && false !== strpos( $message['style'] ?? '', 'red' );
+            } );
+            $this->assertNotEmpty( $errors, 'The refused row must retain its red error.' );
+        }
+    }
+
     /** @return array Site client dropdowns. */
     public static function site_dropdowns(): array {
         return array( array( 'edit' ), array( 'add' ) );

@@ -69,7 +69,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function type_labels() {
         return array(
             'context' => __( 'Context', 'mainwp' ),
-            'skill'   => __( 'Skills', 'mainwp' ),
+            'skill'   => __( 'Skill', 'mainwp' ),
             'memory'  => __( 'Memory', 'mainwp' ),
         );
     }
@@ -87,8 +87,8 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'view'           => __( 'View', 'mainwp' ),
             'remove'         => __( 'Delete', 'mainwp' ),
             'unverified'     => __( 'Unverified', 'mainwp' ),
-            'unverifiedHint' => __( 'Saved by an AI client and not yet reviewed by a person. Edit and save the entry to mark it as verified.', 'mainwp' ),
-            'confirmDelete'  => __( 'Delete this knowledge record? Connected AI clients lose it immediately.', 'mainwp' ),
+            'unverifiedHint' => __( 'Saved by an AI agent and not yet reviewed by a person. AI agents treat it as information only until you review and save it.', 'mainwp' ),
+            'confirmDelete'  => __( 'Delete this knowledge record? Connected AI agents lose it immediately.', 'mainwp' ),
             'conflict'       => __( 'Someone else saved this record while you were editing it.', 'mainwp' ),
             'reload'         => __( 'Reload record', 'mainwp' ),
             'reloaded'       => __( 'The latest version is loaded. Your unsaved text was replaced.', 'mainwp' ),
@@ -227,7 +227,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $this->send_error(
                 new \WP_Error(
                     'mainwp_knowledge_browser_session_required',
-                    __( 'Your browser session could not be confirmed. Reload the page, sign in again, and save.', 'mainwp' ),
+                    __( 'Your sign-in could not be confirmed, so the record was not saved. Sign in again and retry.', 'mainwp' ),
                     array( 'status' => 403 )
                 )
             );
@@ -500,16 +500,19 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $sections = array(
             'context' => array(
                 'title' => __( 'Context', 'mainwp' ),
+                'add'   => __( 'Add Context', 'mainwp' ),
                 'help'  => 'client' === $scope_type
-                    ? __( 'Facts an AI client should know before it acts for this client: hosting, agreements, preferences, constraints.', 'mainwp' )
-                    : __( 'Facts an AI client should know before it acts on this site: hosting, stack, constraints, known quirks.', 'mainwp' ),
+                    ? __( 'Facts an AI agent should know before it acts for this client: hosting, agreements, preferences, constraints.', 'mainwp' )
+                    : __( 'Facts an AI agent should know before it acts on this site: hosting, stack, constraints, known quirks.', 'mainwp' ),
             ),
             'skill'   => array(
                 'title' => __( 'Skills', 'mainwp' ),
+                'add'   => __( 'Add Skill', 'mainwp' ),
                 'help'  => __( 'Procedures and rules to follow when working here: how to deploy, what to check first, what never to touch.', 'mainwp' ),
             ),
             'memory'  => array(
                 'title' => __( 'Memory', 'mainwp' ),
+                'add'   => __( 'Add Memory', 'mainwp' ),
                 'help'  => __( 'Outcomes and observations recorded over time. Read them as history, not as the current state.', 'mainwp' ),
             ),
         );
@@ -519,7 +522,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <h2 class="ui dividing header active title">
                 <i class="right dropdown icon"></i>
                 <?php esc_html_e( 'Knowledge', 'mainwp' ); ?>
-                <div class="sub header"><?php esc_html_e( 'Add context, skills, and memories that connected AI clients can use when working for this client.', 'mainwp' ); ?></div>
+                <div class="sub header"><?php esc_html_e( 'Add context, skills, and memories that connected AI agents can use when working for this client.', 'mainwp' ); ?></div>
             </h2>
             <div class="content active">
         <?php endif; ?>
@@ -528,7 +531,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui loader" role="status" aria-label="<?php esc_attr_e( 'Loading...', 'mainwp' ); ?>"></div>
             </div>
             <div class="ui info message">
-                <p><?php esc_html_e( 'Records saved here reach any AI client connected to this Dashboard through MCP. There is no export in this release.', 'mainwp' ); ?></p>
+                <p><?php esc_html_e( 'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.', 'mainwp' ); ?></p>
                 <p>
                 <?php if ( 'client' === $scope_type ) : ?>
                     <?php esc_html_e( 'Client records apply to every site assigned to this client. Site records belong to the site and stay with it if the site is moved to another client.', 'mainwp' ); ?>
@@ -556,8 +559,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 </table>
                 <button type="button" class="ui mini basic green button mainwp-knowledge-add" data-type="<?php echo esc_attr( $type ); ?>" style="display:none">
                     <?php
-                    /* translators: %s: section name (Context, Skills or Memory). */
-                    echo esc_html( sprintf( __( 'Add %s', 'mainwp' ), $section['title'] ) );
+                    echo esc_html( $section['add'] );
                     ?>
                 </button>
             </div>
@@ -567,7 +569,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui small header">
                     <span class="mainwp-knowledge-inherited-title"></span>
                     <div class="sub header">
-                        <?php esc_html_e( 'Client records apply to every site assigned to the client, and AI clients receive them together with the records of this site. They are read-only here.', 'mainwp' ); ?>
+                        <?php esc_html_e( 'Client records apply to every site assigned to the client, and AI agents receive them together with the records of this site. They are read-only here.', 'mainwp' ); ?>
                         <a href="#" class="mainwp-knowledge-inherited-link"><?php echo esc_html( $client_link_label ); ?></a>
                     </div>
                 </div>
@@ -625,8 +627,8 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                     <div class="field" style="display:none">
                         <label for="mainwp-knowledge-description"><?php esc_html_e( 'Description', 'mainwp' ); ?></label>
-                        <textarea id="mainwp-knowledge-description" rows="2" maxlength="<?php echo (int) MainWP_DB_Knowledge::DESCRIPTION_MAX_LENGTH; ?>" aria-describedby="mainwp-knowledge-description-help" placeholder="<?php esc_attr_e( 'When should an AI agent use this skill? For example: when updating WooCommerce on this site.', 'mainwp' ); ?>"></textarea>
-                        <p id="mainwp-knowledge-description-help"><?php esc_html_e( 'AI agents see this before they open the skill, so say when it applies.', 'mainwp' ); ?></p>
+                        <textarea id="mainwp-knowledge-description" rows="2" maxlength="<?php echo (int) MainWP_DB_Knowledge::DESCRIPTION_MAX_LENGTH; ?>" aria-describedby="mainwp-knowledge-description-help" placeholder="<?php esc_attr_e( 'When to use this skill, for example: updating WooCommerce on this site.', 'mainwp' ); ?>"></textarea>
+                        <p id="mainwp-knowledge-description-help"><?php esc_html_e( 'AI agents read this to decide whether to open the skill. Say when it applies.', 'mainwp' ); ?></p>
                     </div>
                     <div class="field">
                         <label for="mainwp-knowledge-body"><?php esc_html_e( 'Body', 'mainwp' ); ?></label>

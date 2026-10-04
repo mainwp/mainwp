@@ -270,8 +270,8 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$html = $this->render_site_knowledge();
 		$this->assertStringContainsString( 'for="mainwp-knowledge-description">Description</label>', $html );
 		$this->assertMatchesRegularExpression( '/<textarea[^>]*id="mainwp-knowledge-description"[^>]*maxlength="1024"/', $html );
-		$this->assertStringContainsString( 'When should an AI agent use this skill? For example: when updating WooCommerce on this site.', $html );
-		$this->assertStringContainsString( 'AI agents see this before they open the skill, so say when it applies.', $html );
+		$this->assertStringContainsString( 'When to use this skill, for example: updating WooCommerce on this site.', $html );
+		$this->assertStringContainsString( 'AI agents read this to decide whether to open the skill. Say when it applies.', $html );
 	}
 
 	public function test_browser_session_save_refuses_api_key_without_cookie_and_accepts_cookie(): void {
@@ -288,7 +288,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			foreach ( array( $this->input(), $this->input( array( 'id' => $record->id, 'revision' => 1 ) ) ) as $input ) {
 				$response = $this->call( 'mainwp_knowledge_save', $input );
 				$this->assert_error( $response, 'mainwp_knowledge_browser_session_required', 403 );
-				$this->assertSame( 'Your browser session could not be confirmed. Reload the page, sign in again, and save.', $response['data']['message'] );
+				$this->assertSame( 'Your sign-in could not be confirmed, so the record was not saved. Sign in again and retry.', $response['data']['message'] );
 				$this->assertSame( 1, $this->row_count() );
 				$this->assertEquals( $record, $this->db->get_record( $record->id ) );
 			}
@@ -923,6 +923,51 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 
 		preg_match_all( '/<div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="([^"]+)">/', $html, $accordions );
 		$this->assertSame( 'mainwp-knowledge-accordion', end( $accordions[1] ) );
+	}
+
+	public function test_panel_uses_singular_types_and_separate_add_strings(): void {
+		$this->assertSame( array( 'context' => 'Context', 'skill' => 'Skill', 'memory' => 'Memory' ), MainWP_Knowledge_UI::type_labels() );
+		$messages = array();
+		$this->track_filter( 'gettext', static function ( $translated, $text, $domain ) use ( &$messages ) {
+			if ( 'mainwp' === $domain ) {
+				$messages[] = $text;
+			}
+			return $translated;
+		}, 10, 3 );
+		$html = $this->render_site_knowledge();
+		$this->assertStringContainsString( '<option value="skill">Skill</option>', $html );
+		$this->assertMatchesRegularExpression( '/data-type="skill">.*?<div class="ui small header">\s*Skills\s*<div/s', $html );
+		foreach ( array( 'Add Context', 'Add Skill', 'Add Memory' ) as $label ) {
+			$this->assertContains( $label, $messages );
+			$this->assertStringContainsString( $label, $html );
+		}
+		$this->assertNotContains( 'Add %s', $messages );
+		$this->assertStringNotContainsString( 'Add Skills', $html );
+		$skill = $this->create_record( array( 'type' => 'skill' ) );
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+		$items = array_column( $response['data']['inherited']['records'], null, 'id' );
+		$this->assertSame( 'Skill', $items[ $skill->id ]['type_label'] );
+	}
+
+	public function test_panel_copy_uses_ai_agent_and_the_review_hint(): void {
+		$strings = MainWP_Knowledge_UI::js_strings();
+		$this->assertSame( 'Saved by an AI agent and not yet reviewed by a person. AI agents treat it as information only until you review and save it.', $strings['unverifiedHint'] );
+		$this->assertSame( 'Delete this knowledge record? Connected AI agents lose it immediately.', $strings['confirmDelete'] );
+		$site = $this->render_site_knowledge();
+		foreach ( array(
+			'Facts an AI agent should know before it acts on this site: hosting, stack, constraints, known quirks.',
+			'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.',
+			'Client records apply to every site assigned to the client, and AI agents receive them together with the records of this site. They are read-only here.',
+			'Procedures and rules to follow when working here: how to deploy, what to check first, what never to touch.',
+		) as $text ) {
+			$this->assertStringContainsString( $text, $site );
+		}
+		ob_start();
+		MainWP_Knowledge_UI::render_panel( 'client', $this->client_id, true );
+		$client = ob_get_clean();
+		$this->assertStringContainsString( 'Facts an AI agent should know before it acts for this client: hosting, agreements, preferences, constraints.', $client );
+		$this->assertStringContainsString( 'Add context, skills, and memories that connected AI agents can use when working for this client.', $client );
+		$this->assertStringNotContainsString( 'AI client', $site . $client );
 	}
 
 	public function test_only_the_combined_inherited_table_has_a_type_column(): void {

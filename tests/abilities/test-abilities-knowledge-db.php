@@ -348,6 +348,13 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 		if ( null === $expected ) {
 			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
 			$this->assertSame( 0, $this->row_count() );
+			if ( isset( $fields['description'] ) && is_string( $fields['description'] ) && mb_strlen( $fields['description'] ) > 1024 ) {
+				$this->assertSame( 'The description can be at most 1024 characters.', $result->get_error_message() );
+			} elseif ( 'skill' === $fields['type'] && is_string( $fields['description'] ?? '' ) && '' === trim( $fields['description'] ?? '' ) ) {
+				$this->assertSame( 'A skill needs a description that says when an AI agent should use it.', $result->get_error_message() );
+			} elseif ( 'skill' !== $fields['type'] ) {
+				$this->assertSame( 'Only skills have a description. Remove it, or change the type to Skill.', $result->get_error_message() );
+			}
 		} else {
 			$this->assertNotWPError( $result );
 			$this->assertSame( $expected, $result->description );
@@ -389,6 +396,9 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 		$result = $this->db->save( $patch + array( 'id' => $record->id ), MainWP_DB_Knowledge::ORIGIN_UI, 1 );
 		if ( null === $expected ) {
 			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+			$this->assertSame( 'skill' === ( $patch['type'] ?? $before->type )
+				? 'A skill needs a description that says when an AI agent should use it.'
+				: 'Only skills have a description. Remove it, or change the type to Skill.', $result->get_error_message() );
 			$this->assertEquals( $before, $this->db->get_record( $record->id ) );
 		} else {
 			$this->assertNotWPError( $result );

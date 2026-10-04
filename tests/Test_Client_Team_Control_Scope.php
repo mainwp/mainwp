@@ -857,8 +857,8 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
      * unrestricted merges. New/new with two sites: both scopes merge both memberships.
      * Existing DB email in scope: both scopes merge. Existing DB email out of scope:
      * restricted refuses before writes; unrestricted merges.
-     * Equality is the email column's collation, as in the write-time lookup: case (ASCII and not),
-     * accents and trailing spaces match; leading spaces remain distinct.
+     * Email normalization precedes the column's collation comparison, so removable
+     * accents and padding cannot bypass the projected ownership checks.
      *
      * @return array Scope, initial client, row memberships and expected refusal.
      */
@@ -876,8 +876,8 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $cases['restricted trailing space match'] = array( 'restricted', 'new', array( false, true ), 'Batch@example.com ', true );
         $cases['restricted case and trailing space match'] = array( 'restricted', 'new', array( false, false ), 'batch@example.com ', true );
         $cases['restricted non-ascii case match'] = array( 'restricted', 'new', array( false, true ), 'ÉMILE@example.com', true, 'émile@example.com' );
-        $cases['restricted accent fold match'] = array( 'restricted', 'new', array( false, true ), 'Bätch@example.com', true );
-        $cases['all accent fold merge'] = array( 'all', 'new', array( false, true ), 'Bätch@example.com', false );
+        $cases['restricted stripped accent match'] = array( 'restricted', 'new', array( false, true ), 'Bäatch@example.com', true );
+        $cases['all stripped accent merge'] = array( 'all', 'new', array( false, true ), 'Bäatch@example.com', false );
         return $cases;
     }
 
@@ -931,8 +931,10 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
             'missing site' => array( array( array( 'B', 'missing' ) ), array(), array(), true, true ),
             'existing overlap' => array( array( array( 'A', 'S2' ) ), array( 'S2' => 'A' ), array(), false ),
             'existing ASCII case' => array( array( array( 'A', 'S2', 'EMILE@example.com' ) ), array( 'S2' => 'A' ), array(), false ),
-            'existing accent fold' => array( array( array( 'A', 'S2', 'emile@example.com' ) ), array( 'S2' => 'A' ), array(), false ),
-            'existing trailing space' => array( array( array( 'A', 'S2', 'émile@example.com ' ) ), array( 'S2' => 'A' ), array(), false ),
+            'existing sanitized accent' => array( array( array( 'A', 'S2', 'émile@example.com' ) ), array( 'S2' => 'A' ), array(), false ),
+            'existing trailing space' => array( array( array( 'A', 'S2', 'emile@example.com ' ) ), array( 'S2' => 'A' ), array(), false ),
+            'normalized existing overlap' => array( array( array( 'A', 'S2', '"emile"@example.com' ) ), array( 'S2' => 'A' ), array(), false ),
+            'normalized existing no overlap' => array( array( array( 'Z', 'S2', '"hidden"@example.com' ) ), array( 'S2' => 'Z' ), array(), true ),
             'existing no overlap' => array( array( array( 'Z', 'S2' ) ), array( 'S2' => 'Z' ), array(), true ),
             'existing empty roster' => array( array( array( 'E', 'S2' ) ), array( 'S2' => 'E' ), array(), true ),
             'unreferenced donor' => array( array( array( 'B', 'T' ) ), array( 'T' => 'B' ), array( 'B' ), false ),
@@ -950,9 +952,9 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
             'duplicate existing no overlap' => array( array( array( 'Z', '' ), array( 'Z', 'S2' ) ), array( 'S2' => 'Z' ), array(), true ),
             'duplicate ASCII case' => array( array( array( 'B', '' ), array( 'B', 'S2', 'B@example.com' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
             'S3-G1 duplicate accent fold' => array( array( array( 'B', '' ), array( 'B', 'S2', 'b̈@example.com' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
-            'duplicate non-ASCII case' => array( array( array( 'B', '', 'émile-new@example.com' ), array( 'B', 'S2', 'ÉMILE-NEW@example.com' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
+            'duplicate non-ASCII case' => array( array( array( 'B', '', 'émile-new@example.com', null, 'mile-new@example.com' ), array( 'B', 'S2', 'ÉMILE-NEW@example.com' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
             'duplicate trailing space' => array( array( array( 'B', '' ), array( 'B', 'S2', 'b@example.com ' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
-            'leading space distinct' => array( array( array( 'B', '' ), array( 'C', 'S2', ' b@example.com' ) ), array( 'S2' => 'C' ), array( 'B', 'C' ), false ),
+            'leading space normalized duplicate' => array( array( array( 'B', '' ), array( 'B', 'S2', ' b@example.com' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
             'hidden sites kept' => array( array( array( 'A', 'S2' ), array( 'A', 'S3' ) ), array( 'S2' => 'A', 'S3' => 'A' ), array(), false ),
             'new zero sites' => array( array( array( 'B', '' ) ), array(), array( 'B' ), false ),
             'existing overlap zero sites' => array( array( array( 'A', '' ) ), array(), array(), false ),
@@ -968,11 +970,11 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
             'C4-2 unavailable metadata' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'metadata' ),
             'C4-2 invalid metadata' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'invalid metadata' ),
             'C4-2 NULL comparison' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'comparison' ),
-            // update_client() skips its duplicate check for emails PHP reads as empty, but a later padded copy is a duplicate under PAD SPACE.
-            'zero email then padded zero' => array( array( array( 'B', 'S2', '0' ), array( 'B', 'S3', '0 ' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), false ),
-            'empty email then space' => array( array( array( 'B', 'S2', '' ), array( 'B', 'S3', ' ' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), false ),
-            'padded zero donor edited later' => array( array( array( 'B', 'S2', '0' ), array( 'B', 'S1', '0 ' ), array( 'A', 'S3' ) ), array( 'S1' => 'B', 'S2' => 'B', 'S3' => 'A' ), array( 'B' ), true ),
-            'zero emails stay distinct' => array( array( array( 'B', 'S2', '0' ), array( 'C', 'S3', '0' ) ), array( 'S2' => 'B', 'S3' => 'C' ), array( 'B', 'C' ), false ),
+            // Non-empty emails that sanitize to empty must refuse before any projected move is stored.
+            'zero email then padded zero' => array( array( array( 'B', 'S2', '0' ), array( 'B', 'S3', '0 ' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
+            'empty email then space' => array( array( array( 'B', 'S2', '' ), array( 'B', 'S3', ' ' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
+            'padded zero donor edited later' => array( array( array( 'B', 'S2', '0' ), array( 'B', 'S1', '0 ' ), array( 'A', 'S3' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
+            'zero emails invalid' => array( array( array( 'B', 'S2', '0' ), array( 'C', 'S3', '0' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
             // A new client the column cannot store is refused before the earlier projected move detaches a site.
             'over-long new email' => array( array( array( 'B', 'S1', str_repeat( 'a', 64 ) . '@' . str_repeat( 'b', 150 ) . '.com' ), array( 'A', 'S2' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
             'over-long new name' => array( array( array( 'B', 'S1', null, 'long name' ), array( 'A', 'S2' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
@@ -985,6 +987,96 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
             }
         }
         return $cases;
+    }
+
+    /** @return array Raw import values and their expected stored strings. */
+    public static function multi_client_normalization_matrix(): array {
+        $shapes = array(
+            'markup in name' => array( array( 'client_name' => '<img src=x onerror=alert(1)>Client' ), 'Client', 'second@example.com', null, false ),
+            'slashed name' => array( array( 'client_name' => "O\\'Brien" ), "O'Brien", 'second@example.com', null, false ),
+            'email normalization' => array( array( 'client_email' => '"second"@example.com' ), 'Second client', 'second@example.com', null, false ),
+            'markup in contact' => array( array( 'contacts_field' => array( 'contact_name' => "<b>O\\'Brien</b>", 'contact_email' => '"contact"@example.com', 'contact_role' => '<img src=x onerror=alert(1)>Owner' ) ), 'Second client', 'second@example.com', array( "O'Brien", 'contact@example.com', 'Owner' ), false ),
+            'invalid client email' => array( array( 'client_email' => 'invalid-email' ), '', '', null, true ),
+            'markup only email' => array( array( 'client_email' => '<script>' ), '', '', null, true ),
+            'invalid contact email' => array( array( 'contacts_field' => array( 'contact_name' => 'Contact', 'contact_email' => 'invalid-email' ) ), '', '', null, true ),
+        );
+        $cases = array();
+        foreach ( array( 'restricted', 'administrator' ) as $scope ) {
+            foreach ( $shapes as $name => $shape ) {
+                $cases[ $scope . ': ' . $name ] = array_merge( array( $scope ), $shape );
+            }
+        }
+        return $cases;
+    }
+
+    /**
+     * Invalid later rows must refuse before the first client or contact is stored.
+     *
+     * @dataProvider multi_client_normalization_matrix
+     * @param string $scope Caller scope.
+     * @param array  $fields Raw second-row fields.
+     * @param string $name Expected client name.
+     * @param string $email Expected client email.
+     * @param array|null $contact Expected contact fields.
+     * @param bool $refused Expected refusal.
+     */
+    public function test_multi_client_normalization_matrix( $scope, $fields, $name, $email, $contact, $refused ): void {
+        if ( 'administrator' === $scope ) {
+            wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+        }
+        $first = $this->create_test_site();
+        $second = $this->create_test_site();
+        $this->scope( 'administrator' === $scope ? 'all' : array( $first, $second ) );
+        $rows = array(
+            array( 'client_name' => 'First client', 'client_email' => 'first@example.com', 'website_id' => $first, 'contacts_field' => array( 'contact_name' => 'First contact', 'contact_email' => 'first-contact@example.com' ) ),
+            array_merge( array( 'client_name' => 'Second client', 'client_email' => 'second@example.com', 'website_id' => $second ), $fields ),
+        );
+        $before = $this->before_write();
+        $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => $rows ) );
+        $this->assertSame( array( 'success' => ! $refused, 'data' => $refused ? 'Undefined error. Please try again.' : 'Created client successfully.' ), json_decode( $body, true ), $body );
+        if ( $refused ) {
+            $this->assert_unchanged( $before );
+            return;
+        }
+        $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $email );
+        $this->assertIsObject( $client );
+        $this->assertSame( $name, $client->name );
+        $this->assertSame( $email, $client->client_email );
+        $this->assertSame( array( $second ), $this->members( $client ) );
+        if ( $contact ) {
+            $stored = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $client->primary_contact_id );
+            $this->assertIsObject( $stored );
+            $this->assertSame( $contact[0], $stored->contact_name );
+            $this->assertSame( $contact[1], $stored->contact_email );
+            $this->assertSame( $contact[2], $stored->contact_role );
+        }
+    }
+
+    /** @return array JSON import entry points. */
+    public static function json_import_handlers(): array {
+        return array( array( 'mainwp_import_website_add_client', true ), array( 'mainwp_import_website_add_client_no_site', false ) );
+    }
+
+    /**
+     * JSON escapes can carry markup past sanitization of the encoded string.
+     *
+     * @dataProvider json_import_handlers
+     * @param string $action Import action.
+     * @param bool $with_site Whether to attach a site.
+     */
+    public function test_json_import_normalizes_decoded_client_fields( $action, $with_site ): void {
+        $site = $this->create_test_site();
+        $this->scope( array( $site ) );
+        $json = wp_slash( wp_json_encode( array( 'name' => "<img src=x onerror=alert(1)>O'Brien", 'client_email' => '"json-client"@example.com' ), JSON_HEX_TAG ) );
+        $body = $this->dispatch( $action, array( 'client' => $with_site ? $json : array( $json ), 'site_id' => $with_site ? $site : '' ) );
+        $this->assertSame( array( 'success' => $with_site, 'data' => $with_site ? 'Created client successfully.' : 'Undefined error. Please try again.' ), json_decode( $body, true ), $body );
+        $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', 'json-client@example.com' );
+        $this->assertIsObject( $client );
+        $this->assertSame( "O'Brien", $client->name );
+        $this->assertSame( 'json-client@example.com', $client->client_email );
+        if ( $with_site ) {
+            $this->assertSame( array( $site ), $this->members( $client ) );
+        }
     }
 
     /**
@@ -1003,7 +1095,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
             wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
         }
         $clients = array();
-        foreach ( array( 'A' => 'émile@example.com', 'Z' => 'hidden@example.com', 'E' => 'empty@example.com', 'D' => 'donor@example.com' ) as $key => $email ) {
+        foreach ( array( 'A' => 'emile@example.com', 'Z' => 'hidden@example.com', 'E' => 'empty@example.com', 'D' => 'donor@example.com' ) as $key => $email ) {
             $clients[ $key ] = MainWP_DB_Client::instance()->update_client( array( 'name' => 'Original ' . $key, 'client_email' => $email ), true );
         }
         $sites = array();
@@ -1064,7 +1156,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
             $first = array_search( $key, array_column( $rows, 0 ), true );
             $this->assertGreaterThan( 0, (int) $new_rows[ $index ]['client_id'] );
             $this->assertSame( $data[ $first ]['client_name'] ?? '', $new_rows[ $index ]['name'] );
-            $this->assertSame( $data[ $first ]['client_email'] ?? '', $new_rows[ $index ]['client_email'] );
+            $this->assertSame( $rows[ $first ][4] ?? ( $data[ $first ]['client_email'] ?? '' ), $new_rows[ $index ]['client_email'] );
             foreach ( array( 'image', 'address_1', 'address_2', 'city', 'zip', 'state', 'country', 'note', 'client_phone', 'client_facebook', 'client_twitter', 'client_instagram', 'client_linkedin' ) as $field ) {
                 $this->assertSame( '', $new_rows[ $index ][ $field ], $field );
             }

@@ -1889,14 +1889,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         try {
             // Retrieve client data.
-            $data    = $this->mainwp_get_sanitized_post( 'client' );
+            $data    = isset( $_POST['client'] ) && is_string( $_POST['client'] ) ? wp_unslash( $_POST['client'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Encoded fields must be normalized after JSON decoding.
             $site_id = $this->mainwp_get_sanitized_post( 'site_id' );
 
             if ( empty( $data ) ) {
                 wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
             }
 
-            $client_data = json_decode( $data, true );
+            $client_data = $this->normalize_client_import_row( json_decode( $data, true ) );
             // Create client.
             $client = $this->mainwp_handle_create_client( $client_data, empty( $site_id ) ? array() : array( $site_id ) );
             if ( $client ) {
@@ -1926,14 +1926,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         }
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         try {
-            $data = ! empty( $_POST['client'] ) ? rest_sanitize_array( $_POST['client'] ) : array(); //phpcs:ignore -- NonceVerification.
+            $data = ! empty( $_POST['client'] ) ? wp_unslash( $_POST['client'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Encoded fields must be normalized after JSON decoding.
 
             if ( empty( $data ) || ! is_array( $data ) ) {
                 wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
             }
 
             foreach ( $data as $val_data ) {
-                $client_data = json_decode( stripslashes( $val_data ), true ); // Decode client data.
+                $client_data = $this->normalize_client_import_row( is_string( $val_data ) ? json_decode( $val_data, true ) : null );
                 $this->mainwp_handle_create_client( $client_data ); // Update or instert new client.
             }
         } catch ( \Exception $e ) {
@@ -1959,6 +1959,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array(); //phpcs:ignore -- NonceVerification.
         try {
             if ( ! empty( $dataes ) ) {
+                if ( ! is_array( $dataes ) ) {
+                    throw new MainWP_Exception( $error_msg );
+                }
+                foreach ( $dataes as $key => $row ) {
+                    $dataes[ $key ] = $this->normalize_client_import_row( $row, true );
+                }
                 $plan    = $this->plan_multi_client_import( $dataes );
                 $created = array();
                 // Access belongs to the whole plan; checking mutated DB state here could leave partial writes.
@@ -2141,6 +2147,46 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function mainwp_get_sanitized_post( $key, $callback = 'sanitize_text_field' ) {
         return isset( $_POST[ $key ] ) ? $callback( wp_unslash( $_POST[ $key ] ) ) : ''; //phpcs:ignore -- NonceVerification.
+    }
+
+    /**
+     * Import encoding must not bypass email lookup or allow stored markup.
+     *
+     * @param array $row Decoded client or Quick Setup row.
+     * @param bool  $multi_client Whether the row uses Quick Setup field names.
+     * @return array Normalized row.
+     * @throws MainWP_Exception When a row is malformed or an email is invalid.
+     */
+    private function normalize_client_import_row( $row, $multi_client = false ) {
+        $name_field  = $multi_client ? 'client_name' : 'name';
+        $email_field = 'client_email';
+        if ( ! is_array( $row ) || ( isset( $row[ $name_field ] ) && ! is_string( $row[ $name_field ] ) ) || ( isset( $row[ $email_field ] ) && ! is_string( $row[ $email_field ] ) ) || ( ! empty( $row['contacts_field'] ) && ( ! is_array( $row['contacts_field'] ) || array_filter( $row['contacts_field'], 'is_array' ) ) ) ) {
+            throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+        }
+        $row[ $name_field ]  = sanitize_text_field( wp_unslash( $row[ $name_field ] ?? '' ) );
+        $row[ $email_field ] = $this->normalize_client_import_email( $row[ $email_field ] ?? '' );
+        if ( ! empty( $row['contacts_field'] ) ) {
+            foreach ( array( 'contact_name', 'contact_role' ) as $field ) {
+                $row['contacts_field'][ $field ] = sanitize_text_field( wp_unslash( $row['contacts_field'][ $field ] ?? '' ) );
+            }
+            $row['contacts_field']['contact_email'] = $this->normalize_client_import_email( $row['contacts_field']['contact_email'] ?? '' );
+        }
+        return $row;
+    }
+
+    /**
+     * Non-empty invalid emails must refuse the batch before its first write.
+     *
+     * @param string $email Submitted email.
+     * @return string Normalized email.
+     * @throws MainWP_Exception When a non-empty email is invalid after sanitizing.
+     */
+    private function normalize_client_import_email( $email ) {
+        $normalized = sanitize_email( wp_unslash( $email ) );
+        if ( '' !== $email && ! is_email( $normalized ) ) {
+            throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+        }
+        return $normalized;
     }
 
     /**

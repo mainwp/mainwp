@@ -1163,6 +1163,23 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertSame( $with_site ? (int) $client->client_id : 0, (int) MainWP_DB::instance()->get_website_by_id_unscoped( $site )->client_id );
     }
 
+    /** @return array Import handlers with exception responses. */
+    public static function translated_import_catches(): array {
+        return array( array( 'mainwp_clients_add_multi_client' ), array( 'mainwp_import_website_add_client' ), array( 'mainwp_import_website_add_client_no_site' ) );
+    }
+
+    /** @dataProvider translated_import_catches */
+    public function test_import_catches_preserve_translated_percent_and_apostrophe( $action ): void {
+        $translation = "%41 L'import n'a pas pu lire <b>les données</b> & réessayer.";
+        $this->filter( 'gettext', static function ( $translated, $text, $domain ) use ( $translation ) {
+            return 'mainwp' === $domain && 'The client data could not be read. Please try again.' === $text ? $translation : $translated;
+        } );
+        $before = $this->before_write();
+        $response = $this->dispatch( $action, array( 'data' => 'not rows', 'client' => 'not JSON' ) );
+        $this->assertSame( array( 'success' => false, 'data' => esc_html( $translation ) ), json_decode( $response, true ), $response );
+        $this->assert_unchanged( $before );
+    }
+
     /** @return array Refusals across all import entry points and scopes. */
     public static function import_refusals(): array {
         $cases = array();

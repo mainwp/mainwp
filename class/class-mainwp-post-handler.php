@@ -1911,7 +1911,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
             }
         } catch ( \Exception $e ) {
-            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+            wp_die( wp_send_json_error( esc_html( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
         // In case of no created.
         wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
@@ -1954,7 +1954,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 }
             }
         } catch ( \Exception $e ) {
-            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+            wp_die( wp_send_json_error( esc_html( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
         // In case of no created.
         wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
@@ -2028,7 +2028,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 wp_die( wp_send_json_success( esc_html__( 'Created client successfully.', 'mainwp' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
             }
         } catch ( \Exception $e ) {
-            wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+            wp_die( wp_send_json_error( esc_html( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
         }
 
         wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput

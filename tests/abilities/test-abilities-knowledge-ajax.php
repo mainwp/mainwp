@@ -17,10 +17,13 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 	private $client_id;
 	private $site_id;
 	private $suppressed_errors = null;
+	private $previous_cookies = array();
 
 	public function setUp(): void {
 		parent::setUp();
 		$this->set_current_user_as_admin();
+		$this->previous_cookies = $_COOKIE;
+		$_COOKIE[ LOGGED_IN_COOKIE ] = wp_generate_auth_cookie( get_current_user_id(), time() + HOUR_IN_SECONDS, 'logged_in' );
 		$this->db        = MainWP_DB_Knowledge::instance();
 		$this->client_id = $this->create_test_client();
 		$this->site_id   = $this->create_test_site( array( 'client_id' => $this->client_id ) );
@@ -36,6 +39,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			$wpdb->suppress_errors( $this->suppressed_errors );
 			$this->suppressed_errors = null;
 		}
+		$_COOKIE = $this->previous_cookies;
 		parent::tearDown();
 	}
 
@@ -230,6 +234,82 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $response['success'] );
 		$this->assertSame( $record->id, $response['data']['record']['id'] );
 		$this->assertSame( $record->body, $response['data']['record']['body'] );
+	}
+
+	public function test_description_ajax_save_round_trip(): void {
+		$description = "Use <staging> & client's C:\\notes when upgrading WooCommerce.";
+		$input = $this->input( array( 'type' => 'skill', 'description' => $description ) );
+		$response = $this->call( 'mainwp_knowledge_save', $input );
+		$this->assertTrue( $response['success'] );
+		$record = $response['data']['record'];
+		$this->assertSame( $description, $record['description'] );
+		$this->assertSame( 1, $record['verified'] );
+		$this->assertSame( $description, $this->db->get_record( $record['id'] )->description );
+		$view = $this->call( 'mainwp_knowledge_get', array( 'id' => $record['id'] ) );
+		$this->assertSame( $description, $view['data']['record']['description'] );
+		$this->assertSame( $input['body'], $view['data']['record']['body'] );
+		$list = $this->call( 'mainwp_knowledge_list', $input );
+		$this->assertSame( $description, $list['data']['records'][0]['description'] );
+		$this->assertSame( $description, $list['data']['records'][0]['body_preview'] );
+		$this->assertArrayNotHasKey( 'body', $list['data']['records'][0] );
+		$updated = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => $record['id'], 'revision' => 1, 'type' => 'skill', 'description' => 'Use the revised procedure.' ) ) );
+		$this->assertTrue( $updated['success'] );
+		$this->assertSame( 'Use the revised procedure.', $updated['data']['record']['description'] );
+		$this->assertSame( 2, $updated['data']['record']['revision'] );
+		$this->assertSame( 'Use the revised procedure.', $this->db->get_record( $record['id'] )->description );
+	}
+
+	public function test_description_ajax_rejects_invalid_values_without_writing(): void {
+		foreach ( array( array( 'type' => 'skill' ), array( 'description' => 'Hidden text' ), array( 'type' => 'skill', 'description' => str_repeat( 'é', 1025 ) ) ) as $fields ) {
+			$this->assert_error( $this->call( 'mainwp_knowledge_save', $this->input( $fields ) ), 'mainwp_knowledge_invalid', 400 );
+			$this->assertSame( 0, $this->row_count() );
+		}
+	}
+
+	public function test_description_modal_exposes_the_field_and_help(): void {
+		$html = $this->render_site_knowledge();
+		$this->assertStringContainsString( 'for="mainwp-knowledge-description">Description</label>', $html );
+		$this->assertMatchesRegularExpression( '/<textarea[^>]*id="mainwp-knowledge-description"[^>]*maxlength="1024"/', $html );
+		$this->assertStringContainsString( 'When should an AI agent use this skill? For example: when updating WooCommerce on this site.', $html );
+		$this->assertStringContainsString( 'AI agents see this before they open the skill, so say when it applies.', $html );
+	}
+
+	public function test_browser_session_save_refuses_api_key_without_cookie_and_accepts_cookie(): void {
+		$auth = \MainWP_REST_Authentication::get_instance();
+		$user = new \ReflectionProperty( \MainWP_REST_Authentication::class, 'user' );
+		$user->setAccessible( true );
+		$previous_user = $user->getValue( $auth );
+		$record = $this->db->save( $this->input(), MainWP_DB_Knowledge::ORIGIN_ABILITY );
+		$this->assertNotWPError( $record );
+		$user->setValue( $auth, (object) array( 'user_id' => get_current_user_id() ) );
+		unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
+		try {
+			$this->assertTrue( \MainWP\Dashboard\MainWP_Abilities_Util::check_rest_api_permission() );
+			foreach ( array( $this->input(), $this->input( array( 'id' => $record->id, 'revision' => 1 ) ) ) as $input ) {
+				$response = $this->call( 'mainwp_knowledge_save', $input );
+				$this->assert_error( $response, 'mainwp_knowledge_browser_session_required', 403 );
+				$this->assertSame( 'Your browser session could not be confirmed. Reload the page, sign in again, and save.', $response['data']['message'] );
+				$this->assertSame( 1, $this->row_count() );
+				$this->assertEquals( $record, $this->db->get_record( $record->id ) );
+			}
+			$_COOKIE[ LOGGED_IN_COOKIE ] = wp_generate_auth_cookie( get_current_user_id(), time() + HOUR_IN_SECONDS, 'logged_in' );
+			$this->assertSame( get_current_user_id(), wp_validate_auth_cookie( '', 'logged_in' ) );
+			$response = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => $record->id, 'revision' => 1 ) ) );
+			$this->assertTrue( $response['success'] );
+			$this->assertSame( 1, $response['data']['record']['verified'] );
+			$this->assertSame( 1, $this->db->get_record( $record->id )->verified );
+		} finally {
+			$user->setValue( $auth, $previous_user );
+		}
+	}
+
+	public function test_browser_session_save_refuses_a_cookie_for_another_user(): void {
+		$other = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$_COOKIE[ LOGGED_IN_COOKIE ] = wp_generate_auth_cookie( $other, time() + HOUR_IN_SECONDS, 'logged_in' );
+		$this->assertSame( $other, wp_validate_auth_cookie( '', 'logged_in' ) );
+		$response = $this->call( 'mainwp_knowledge_save', $this->input() );
+		$this->assert_error( $response, 'mainwp_knowledge_browser_session_required', 403 );
+		$this->assertSame( 0, $this->row_count() );
 	}
 
 	public function test_save_creates_ui_record(): void {

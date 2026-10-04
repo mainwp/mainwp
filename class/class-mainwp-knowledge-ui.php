@@ -221,6 +221,18 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public function ajax_save() {
         $this->guard( 'mainwp_knowledge_save' );
 
+        // A nonce can belong to an API-key principal; only a matching browser session can vouch for a person's review.
+        $user_id = get_current_user_id();
+        if ( 0 === $user_id || wp_validate_auth_cookie( '', 'logged_in' ) !== $user_id ) {
+            $this->send_error(
+                new \WP_Error(
+                    'mainwp_knowledge_browser_session_required',
+                    __( 'Your browser session could not be confirmed. Reload the page, sign in again, and save.', 'mainwp' ),
+                    array( 'status' => 403 )
+                )
+            );
+        }
+
         $scope = $this->read_scope();
         $input = array(
             'scope_type' => $scope->scope_type,
@@ -230,6 +242,13 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             // The body is plain text kept verbatim (block 1 contract); save() enforces UTF-8 and length, and every renderer escapes it on output.
             'body'       => isset( $_POST['body'] ) && is_string( $_POST['body'] ) ? wp_unslash( $_POST['body'] ) : '', // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- guard() verified the nonce; validated in save().
         );
+
+        if ( array_key_exists( 'description', $_POST ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- guard() verified the nonce.
+            if ( ! is_string( $_POST['description'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- guard() verified the nonce.
+                $this->send_invalid( 'description' );
+            }
+            $input['description'] = wp_unslash( $_POST['description'] ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- guard() verified the nonce; save() validates the plain text and every renderer escapes it.
+        }
 
         $expected_revision = null;
         $id                = $this->read_id();
@@ -403,7 +422,10 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $preview_raw = isset( $record->body_preview )
             ? (string) $record->body_preview
             : (string) ( $record->body ?? '' );
-        $preview     = mb_substr( $preview_raw, 0, MainWP_DB_Knowledge::BODY_PREVIEW_LENGTH );
+        if ( 'skill' === $record->type ) {
+            $preview_raw = (string) ( $record->description ?? '' );
+        }
+        $preview = mb_substr( $preview_raw, 0, MainWP_DB_Knowledge::BODY_PREVIEW_LENGTH );
         if ( mb_strlen( $preview_raw ) > MainWP_DB_Knowledge::BODY_PREVIEW_LENGTH ) {
             $preview .= '…';
         }
@@ -415,6 +437,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'type'            => $record->type,
             'type_label'      => isset( $labels[ $record->type ] ) ? $labels[ $record->type ] : $record->type,
             'title'           => $record->title,
+            'description'     => $record->description ?? '',
             'body_preview'    => $preview,
             'revision'        => (int) $record->revision,
             'source'          => $record->source,
@@ -599,6 +622,11 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="field">
                         <label for="mainwp-knowledge-title"><?php esc_html_e( 'Title', 'mainwp' ); ?></label>
                         <input type="text" id="mainwp-knowledge-title" maxlength="<?php echo (int) MainWP_DB_Knowledge::TITLE_MAX_LENGTH; ?>" placeholder="<?php esc_attr_e( 'Short name for this record', 'mainwp' ); ?>">
+                    </div>
+                    <div class="field" style="display:none">
+                        <label for="mainwp-knowledge-description"><?php esc_html_e( 'Description', 'mainwp' ); ?></label>
+                        <textarea id="mainwp-knowledge-description" rows="2" maxlength="<?php echo (int) MainWP_DB_Knowledge::DESCRIPTION_MAX_LENGTH; ?>" aria-describedby="mainwp-knowledge-description-help" placeholder="<?php esc_attr_e( 'When should an AI agent use this skill? For example: when updating WooCommerce on this site.', 'mainwp' ); ?>"></textarea>
+                        <p id="mainwp-knowledge-description-help"><?php esc_html_e( 'AI agents see this before they open the skill, so say when it applies.', 'mainwp' ); ?></p>
                     </div>
                     <div class="field">
                         <label for="mainwp-knowledge-body"><?php esc_html_e( 'Body', 'mainwp' ); ?></label>

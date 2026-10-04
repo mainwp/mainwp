@@ -25,6 +25,7 @@ jQuery(function ($) {
     const typeField = $('#mainwp-knowledge-type');
     const typeViewField = $('#mainwp-knowledge-type-view');
     const titleField = $('#mainwp-knowledge-title');
+    const descriptionField = $('#mainwp-knowledge-description');
     const bodyField = $('#mainwp-knowledge-body');
     const idField = $('#mainwp-knowledge-id');
     const revisionField = $('#mainwp-knowledge-revision');
@@ -146,12 +147,21 @@ jQuery(function ($) {
         });
     };
 
+    const updateDescription = () => {
+        const isSkill = 'skill' === typeField.val();
+        descriptionField.closest('.field').toggle(isSkill).toggleClass('required', isSkill && !readOnly);
+        descriptionField.prop('required', isSkill && !readOnly).prop('readonly', readOnly);
+        $('#mainwp-knowledge-description-help').toggle(!readOnly);
+    };
+
     const fill = (record) => {
         idField.val(record.id);
         revisionField.val(record.revision);
         typeField.val(record.type);
         typeField.closest('.dropdown').dropdown('set selected', record.type);
         titleField.val(record.title);
+        descriptionField.val(record.description || '');
+        updateDescription();
         bodyField.val(record.body);
     };
 
@@ -167,6 +177,7 @@ jQuery(function ($) {
         hideMessage(modalMessage);
         titleField.prop('readonly', readOnly);
         bodyField.prop('readonly', readOnly);
+        updateDescription();
         typeField.closest('.field').toggle(!readOnly);
         typeViewField.closest('.field').toggle(readOnly);
         saveButton.toggle(!readOnly).prop('disabled', readOnly).toggleClass('disabled', readOnly).removeClass('loading');
@@ -177,7 +188,7 @@ jQuery(function ($) {
 
     const openAdd = (type) => {
         session++;
-        fill({ id: 0, revision: 0, type: type, title: '', body: '' });
+        fill({ id: 0, revision: 0, type: type, title: '', description: '', body: '' });
         openModal('add');
     };
 
@@ -252,12 +263,16 @@ jQuery(function ($) {
         if (readOnly || saveButton.hasClass('disabled')) {
             return;
         }
+        if ('skill' === typeField.val() && !descriptionField[0].reportValidity()) {
+            return;
+        }
         const current = session;
         hideMessage(modalMessage);
         saveButton.prop('disabled', true).addClass('loading disabled');
         const data = {
             type: typeField.val(),
             title: titleField.val(),
+            description: 'skill' === typeField.val() ? descriptionField.val() : '',
             body: bodyField.val(),
         };
         const id = parseInt(idField.val(), 10);
@@ -327,6 +342,7 @@ jQuery(function ($) {
     });
     saveButton.on('click', save);
 
+    typeField.on('change', updateDescription);
     typeField.closest('.dropdown').dropdown();
     load();
 });

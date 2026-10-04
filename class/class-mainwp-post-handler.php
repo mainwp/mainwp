@@ -2251,15 +2251,16 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     }
 
     /**
-     * Non-empty invalid emails must refuse the batch before its first write.
+     * Rewriting an email could select or create a different client or contact.
      *
      * @param string $email Unslashed submitted email.
      * @return string Normalized email.
-     * @throws MainWP_Exception When a non-empty email is invalid after sanitizing.
+     * @throws MainWP_Exception When an email is invalid or sanitizing would rewrite it.
      */
     private function normalize_client_import_email( $email ) {
-        $normalized = sanitize_email( $email );
-        if ( '' !== $email && ! is_email( $normalized ) ) {
+        $trimmed    = trim( $email );
+        $normalized = sanitize_email( $trimmed );
+        if ( '' !== $email && ( $normalized !== $trimmed || ! is_email( $normalized ) ) ) {
             throw new MainWP_Exception( esc_html__( 'One or more email addresses are not valid. No clients were added.', 'mainwp' ) );
         }
         return $normalized;

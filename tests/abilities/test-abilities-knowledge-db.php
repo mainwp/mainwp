@@ -171,6 +171,9 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 	}
 
 	private function create_record( string $scope_type, int $scope_id, array $overrides = array() ) {
+		if ( 'skill' === ( $overrides['type'] ?? '' ) ) {
+			$overrides += array( 'description' => 'Use this skill when maintaining the site.' );
+		}
 		$record = $this->db->save( $this->input( $scope_type, $scope_id, $overrides ), MainWP_DB_Knowledge::ORIGIN_UI );
 		$this->assertNotWPError( $record );
 		return $record;
@@ -317,6 +320,122 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 		$read = $this->db->get_record( $record->id );
 		$this->assertNotWPError( $read );
 		$this->assertEquals( $record, $read );
+	}
+
+	public static function description_create_cases(): array {
+		return array(
+			'skill omitted' => array( array( 'type' => 'skill' ), null ),
+			'skill empty' => array( array( 'type' => 'skill', 'description' => '' ), null ),
+			'skill whitespace' => array( array( 'type' => 'skill', 'description' => '   ' ), null ),
+			'skill supplied' => array( array( 'type' => 'skill', 'description' => 'Use <staging> & PHP < 8.' ), 'Use <staging> & PHP < 8.' ),
+			'skill maximum' => array( array( 'type' => 'skill', 'description' => str_repeat( 'é', 1024 ) ), str_repeat( 'é', 1024 ) ),
+			'skill too long' => array( array( 'type' => 'skill', 'description' => str_repeat( 'é', 1025 ) ), null ),
+			'skill invalid UTF-8' => array( array( 'type' => 'skill', 'description' => "broken \xC3 byte" ), null ),
+			'skill non-string' => array( array( 'type' => 'skill', 'description' => 7 ), null ),
+			'context omitted' => array( array( 'type' => 'context' ), '' ),
+			'context empty' => array( array( 'type' => 'context', 'description' => '' ), '' ),
+			'context supplied' => array( array( 'type' => 'context', 'description' => 'Hidden text' ), null ),
+			'memory omitted' => array( array( 'type' => 'memory' ), '' ),
+			'memory empty' => array( array( 'type' => 'memory', 'description' => '' ), '' ),
+			'memory supplied' => array( array( 'type' => 'memory', 'description' => 'Hidden text' ), null ),
+		);
+	}
+
+	/** @dataProvider description_create_cases */
+	public function test_description_create_rule_matrix( array $fields, ?string $expected ): void {
+		$this->set_current_user_as_admin();
+		$result = $this->db->save( $this->input( 'site', $this->create_test_site(), $fields ), MainWP_DB_Knowledge::ORIGIN_UI );
+		if ( null === $expected ) {
+			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+			$this->assertSame( 0, $this->row_count() );
+		} else {
+			$this->assertNotWPError( $result );
+			$this->assertSame( $expected, $result->description );
+			$this->assertSame( $expected, $this->db->get_record( $result->id )->description );
+		}
+	}
+
+	public static function description_update_cases(): array {
+		$cases = array();
+		foreach ( array( 'skill', 'context', 'memory', 'legacy skill' ) as $stored ) {
+			foreach ( array( null, 'skill', 'context', 'memory' ) as $type ) {
+				foreach ( array( 'omitted', 'empty', 'supplied' ) as $description ) {
+					$patch = array( 'title' => 'Edited title' );
+					if ( null !== $type ) {
+						$patch['type'] = $type;
+					}
+					if ( 'omitted' !== $description ) {
+						$patch['description'] = 'empty' === $description ? '' : 'Use the new procedure.';
+					}
+					$target = $type ?? ( 'legacy skill' === $stored ? 'skill' : $stored );
+					$expected = $patch['description'] ?? ( 'skill' === $target && 'skill' === $stored ? 'Use this skill when maintaining the site.' : '' );
+					$valid = 'skill' === $target ? '' !== $expected : '' === $expected;
+					$cases[ $stored . ' to ' . ( $type ?? 'unchanged' ) . ', ' . $description ] = array( $stored, $patch, $valid ? $expected : null );
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/** @dataProvider description_update_cases */
+	public function test_description_update_rule_matrix( string $stored, array $patch, ?string $expected ): void {
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$record = $this->create_record( 'site', $this->create_test_site(), array( 'type' => 'legacy skill' === $stored ? 'context' : $stored ) );
+		if ( 'legacy skill' === $stored ) {
+			$this->assertSame( 1, $wpdb->update( $wpdb->prefix . 'mainwp_knowledge', array( 'type' => 'skill' ), array( 'id' => $record->id ) ) );
+		}
+		$before = $this->db->get_record( $record->id );
+		$result = $this->db->save( $patch + array( 'id' => $record->id ), MainWP_DB_Knowledge::ORIGIN_UI, 1 );
+		if ( null === $expected ) {
+			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+			$this->assertEquals( $before, $this->db->get_record( $record->id ) );
+		} else {
+			$this->assertNotWPError( $result );
+			$this->assertSame( $expected, $result->description );
+			$this->assertSame( $patch['type'] ?? $before->type, $result->type );
+			$this->assertSame( 2, $result->revision );
+			$this->assertSame( $expected, $this->db->get_record( $record->id )->description );
+		}
+	}
+
+	public function test_description_update_authorizes_before_normalizing_hidden_record(): void {
+		$this->set_current_user_as_admin();
+		$record = $this->create_record( 'site', $this->create_test_site(), array( 'type' => 'skill' ) );
+		$this->restrict_current_user_to_sites( array( $this->create_test_site() ) );
+		$this->assert_not_found( $this->db->save( array( 'id' => $record->id, 'description' => '' ), MainWP_DB_Knowledge::ORIGIN_UI, 1 ), $record->id );
+	}
+
+	public function test_description_column_is_repaired_at_current_db_version(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'mainwp_knowledge';
+		$install = MainWP_Install::instance();
+		$version = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
+		$version->setAccessible( true );
+		$this->assertSame( $version->getValue( $install ), get_site_option( 'mainwp_db_version' ) );
+		remove_filter( 'query', array( $this, '_create_temporary_tables' ) );
+		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+		try {
+			if ( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) ) ) {
+				$this->assertNotFalse( $wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP COLUMN description', $table ) ) );
+			}
+			$this->assertNull( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) ) );
+			$install->install();
+			$column = $wpdb->get_row( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) );
+			$this->assertNotNull( $column );
+			$this->assertSame( 'varchar(1024)', $column->Type );
+			$this->assertSame( 'NO', $column->Null );
+			$this->assertSame( '', $column->Default );
+			$columns = $wpdb->get_col( $wpdb->prepare( 'SHOW COLUMNS FROM %i', $table ) );
+			$this->assertSame( 'description', $columns[ array_search( 'title', $columns, true ) + 1 ] );
+		} finally {
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+			foreach ( $this->db->hook_db_install_tables( array(), get_site_option( 'mainwp_db_version' ), $wpdb->get_charset_collate() ) as $sql ) {
+				dbDelta( $sql );
+			}
+			add_filter( 'query', array( $this, '_create_temporary_tables' ) );
+			add_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+		}
 	}
 
 	public function test_validation_rejects_bad_fields_without_writing() {
@@ -713,7 +832,7 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 	public function test_knowledge_encoding_validation_accepts_utf8_and_rejects_invalid_bytes() {
 		update_option( 'blog_charset', 'ISO-8859-1' );
 		$input = $this->input( 'client', 1, array( 'title' => 'Café 🍵', 'body' => "日本語\nRésumé" ) );
-		$this->assertSame( $input + array( 'caller_note' => '' ), $this->db->validate_input( $input ) );
+		$this->assertEquals( $input + array( 'description' => '', 'caller_note' => '' ), $this->db->validate_input( $input ) );
 		foreach ( array( 'title', 'body' ) as $field ) {
 			$invalid = $input;
 			$invalid[ $field ] = "Invalid \xC3\x28";

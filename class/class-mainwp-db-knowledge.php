@@ -66,6 +66,13 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     const BODY_MAX_LENGTH = 10000;
 
     /**
+     * Maximum skill description length in characters.
+     *
+     * @var int
+     */
+    const DESCRIPTION_MAX_LENGTH = 1024;
+
+    /**
      * Number of body characters returned for table previews.
      *
      * @var int
@@ -131,6 +138,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     scope_id bigint(20) unsigned NOT NULL,
     `type` enum('context','skill','memory') NOT NULL,
     title varchar(200) NOT NULL,
+    description varchar(1024) NOT NULL DEFAULT '',
     body longtext NOT NULL,
     created_by bigint(20) unsigned NOT NULL DEFAULT 0,
     updated_by bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -466,7 +474,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             ? ', LEFT(body, ' . ( self::BODY_PREVIEW_LENGTH + 1 ) . ') AS body_preview'
             : '';
 
-        return 'id, scope_type, scope_id, `type`, title' . $preview . ', created_by, updated_by, created_at, updated_at, revision, source, caller_note, verified';
+        return 'id, scope_type, scope_id, `type`, title, description' . $preview . ', created_by, updated_by, created_at, updated_at, revision, source, caller_note, verified';
     }
 
     /**
@@ -535,7 +543,8 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         }
         if ( isset( $args['search'] ) && is_string( $args['search'] ) && '' !== $args['search'] ) {
             $like     = '%' . $this->wpdb->esc_like( $args['search'] ) . '%';
-            $where[]  = '(title LIKE %s OR body LIKE %s)';
+            $where[]  = '(title LIKE %s OR description LIKE %s OR body LIKE %s)';
+            $values[] = $like;
             $values[] = $like;
             $values[] = $like;
         }
@@ -602,7 +611,28 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             return $this->invalid( 'origin' );
         }
 
-        $data = $this->validate_input( $input );
+        $row = null;
+        if ( array_key_exists( 'id', $input ) ) {
+            $id = filter_var( $input['id'], FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) );
+            if ( false === $id || is_bool( $input['id'] ) ) {
+                return $this->invalid( 'id' );
+            }
+            $row = $this->get_by_id( $id );
+            if ( null === $row ) {
+                return $this->not_found( $id );
+            }
+            if ( is_wp_error( $row ) ) {
+                return $row;
+            }
+
+            // Authorize before normalizing so a validation error cannot reveal a hidden record's type or description.
+            $access = $this->can_write( $row );
+            if ( is_wp_error( $access ) ) {
+                return $this->mask_not_found( $access, $id );
+            }
+        }
+
+        $data = $this->validate_input( $this->normalize_input( $input, $row ) );
         if ( is_wp_error( $data ) ) {
             return $data;
         }
@@ -634,7 +664,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             $inserted = $this->wpdb->insert(
                 $table,
                 $data,
-                array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%d', '%d' )
+                array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%d', '%d' )
             );
             if ( false === $inserted ) {
                 return $this->db_error();
@@ -647,25 +677,6 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
                 return $this->normalize_row( (object) ( array( 'id' => $id ) + $data ) );
             }
             return $saved ?? $this->not_found( $id );
-        }
-
-        $id = filter_var( $input['id'], FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) );
-        if ( false === $id || is_bool( $input['id'] ) ) {
-            return $this->invalid( 'id' );
-        }
-
-        $row = $this->get_by_id( $id );
-        if ( null === $row ) {
-            return $this->not_found( $id );
-        }
-        if ( is_wp_error( $row ) ) {
-            return $row;
-        }
-
-        // Access comes before the scope and revision checks so a restricted caller cannot tell an out-of-scope row from a missing one by the error it gets back.
-        $access = $this->can_write( $row );
-        if ( is_wp_error( $access ) ) {
-            return $this->mask_not_found( $access, $id );
         }
 
         if ( $row->scope_type !== $data['scope_type'] || $row->scope_id !== $data['scope_id'] ) {
@@ -682,9 +693,10 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         // The revision guard lives in the WHERE so two concurrent saves of the same revision cannot both win.
         $updated = $this->wpdb->query(
             $this->wpdb->prepare(
-                'UPDATE ' . esc_sql( $table ) . ' SET `type` = %s, title = %s, body = %s, caller_note = %s, source = %s, verified = %d, updated_by = %d, updated_at = %d, revision = revision + 1 WHERE id = %d AND revision = %d',
+                'UPDATE ' . esc_sql( $table ) . ' SET `type` = %s, title = %s, description = %s, body = %s, caller_note = %s, source = %s, verified = %d, updated_by = %d, updated_at = %d, revision = revision + 1 WHERE id = %d AND revision = %d',
                 $data['type'],
                 $data['title'],
+                $data['description'],
                 $data['body'],
                 $data['caller_note'],
                 $data['source'],
@@ -799,6 +811,23 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Preserve omitted fields while applying the type's description rule to a raw patch.
+     *
+     * @param array       $input  Raw writable fields.
+     * @param object|null $record Authorized existing record, or null for a create.
+     * @return array Resulting fields, before validation.
+     */
+    public function normalize_input( array $input, ?object $record = null ): array {
+        $description_supplied = array_key_exists( 'description', $input );
+        $fields               = array_merge( (array) $record, array( 'caller_note' => '' ), $input );
+        // An omitted description must not carry skill-only text into a type the UI cannot display it for.
+        if ( null !== $record && 'skill' === $record->type && isset( $input['type'] ) && 'skill' !== $input['type'] && ! $description_supplied ) {
+            $fields['description'] = '';
+        }
+        return $fields;
+    }
+
+    /**
      * Validate and normalise the writable fields.
      *
      * @param array $input Raw input.
@@ -836,6 +865,20 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             return $this->invalid( 'title' );
         }
 
+        $description = array_key_exists( 'description', $input ) ? $input['description'] : '';
+        if ( ! is_string( $description ) || ! $this->is_valid_utf8( $description ) ) {
+            return $this->invalid( 'description' );
+        }
+        if ( mb_strlen( $description ) > self::DESCRIPTION_MAX_LENGTH ) {
+            return $this->invalid( 'description', __( 'The description can be at most 1024 characters.', 'mainwp' ) );
+        }
+        if ( 'skill' === $type && '' === trim( $description ) ) {
+            return $this->invalid( 'description', __( 'A skill needs a description that says when an AI agent should use it.', 'mainwp' ) );
+        }
+        if ( 'skill' !== $type && '' !== $description ) {
+            return $this->invalid( 'description', __( 'Only skills have a description. Remove it, or change the type to Skill.', 'mainwp' ) );
+        }
+
         // Body is plain text kept byte for byte; escaping belongs to whoever renders it.
         $body = $input['body'] ?? null;
         // Invalid UTF-8 would pass the length check and then fail in wpdb's charset stripping as a 500.
@@ -861,6 +904,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             'scope_id'    => (int) $scope_id,
             'type'        => $type,
             'title'       => $title,
+            'description' => $description,
             'body'        => $body,
             'caller_note' => $caller_note,
         );
@@ -908,6 +952,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      * @return object Row.
      */
     private function normalize_row( object $row ): object {
+        $row->description = $row->description ?? '';
         foreach ( array( 'id', 'scope_id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'revision', 'verified' ) as $field ) {
             if ( isset( $row->$field ) ) {
                 $row->$field = (int) $row->$field;
@@ -952,15 +997,16 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * Validation error naming the offending field.
      *
-     * @param string $field Field name.
+     * @param string $field   Field name.
+     * @param string $message Optional explanation of the type rule.
      *
      * @return \WP_Error
      */
-    private function invalid( string $field ): \WP_Error {
+    private function invalid( string $field, string $message = '' ): \WP_Error {
         return new \WP_Error(
             'mainwp_knowledge_invalid',
             /* translators: %s: field name */
-            sprintf( __( 'Invalid knowledge record field: %s.', 'mainwp' ), $field ),
+            '' !== $message ? $message : sprintf( __( 'Invalid knowledge record field: %s.', 'mainwp' ), $field ),
             array( 'status' => 400 )
         );
     }

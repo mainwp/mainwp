@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.6'; // NOSONAR - no IP. 9.0.2.6 adds the mainwp_knowledge table. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
+    protected $mainwp_db_version = '9.0.2.7'; // NOSONAR - no IP. 9.0.2.7 adds skill descriptions. 9.0.2.6 adds the mainwp_knowledge table. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
 
     /**
      * Protected variable to hold the database option name.
@@ -116,6 +116,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
             $this->maybe_retry_repair_wp_group_primary_key();
             $this->maybe_create_knowledge_table( $currentVersion );
+            $this->maybe_repair_knowledge_table();
             return;
         }
 
@@ -689,6 +690,23 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $this->wpdb->suppress_errors( $suppress );
 
         return true;
+    }
+
+    /**
+     * Retry knowledge schema changes that may have failed before the version was saved.
+     *
+     * @return bool Whether a missing column was added.
+     */
+    public function maybe_repair_knowledge_table() {
+        $table = $this->table_name( 'knowledge' );
+        if ( null === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $table ) ) ) ) {
+            return false;
+        }
+        $column = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) );
+        if ( null !== $column ) {
+            return false;
+        }
+        return false !== $this->wpdb->query( $this->wpdb->prepare( "ALTER TABLE %i ADD COLUMN description varchar(1024) NOT NULL DEFAULT '' AFTER title", $table ) );
     }
 
     /**

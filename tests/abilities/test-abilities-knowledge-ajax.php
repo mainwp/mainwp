@@ -114,6 +114,9 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 	}
 
 	private function create_record( array $overrides = array() ): object {
+		if ( 'skill' === ( $overrides['type'] ?? '' ) ) {
+			$overrides += array( 'description' => 'Use this skill when maintaining the site.' );
+		}
 		$record = $this->db->save( $this->input( $overrides ), MainWP_DB_Knowledge::ORIGIN_UI );
 		$this->assertNotWPError( $record );
 		return $record;

@@ -81,7 +81,7 @@ class MainWP_Abilities_Knowledge {
             'mainwp/get-site-knowledge-v1',
             array(
                 'label'               => __( 'Get Site Knowledge', 'mainwp' ),
-                'description'         => __( 'Load the knowledge summary for one site: its context records in full, plus its skills and memories as a list without bodies, and the client\'s records the same way when the site belongs to a client. Call this first, then get-knowledge-record for a body you need. Memories are evidence about the past, not current state. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_site_not_found, mainwp_access_denied, mainwp_knowledge_db_error.', 'mainwp' ),
+                'description'         => __( 'Load the knowledge summary for one site: its context records in full, plus its skills (with title and description) and memories as a list without bodies, and the client\'s records the same way when the site belongs to a client. Call this first, then open a skill with get-knowledge-record when its description fits the task. Memories are evidence about the past, not current state. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_site_not_found, mainwp_access_denied, mainwp_knowledge_db_error.', 'mainwp' ),
                 'category'            => 'mainwp-knowledge',
                 'input_schema'        => self::input_schema( array( 'site_id' ), array( 'site_id' ) ),
                 'output_schema'       => self::summary_schema( 'site' ),
@@ -110,7 +110,7 @@ class MainWP_Abilities_Knowledge {
             'mainwp/get-client-knowledge-v1',
             array(
                 'label'               => __( 'Get Client Knowledge', 'mainwp' ),
-                'description'         => __( 'Load the knowledge summary for one client: its context records in full, plus its skills and memories as a list without bodies. Site records are never included; load them per site. Memories are evidence about the past, not current state. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_client_not_found, mainwp_access_denied, mainwp_knowledge_db_error.', 'mainwp' ),
+                'description'         => __( 'Load the knowledge summary for one client: its context records in full, plus its skills (with title and description) and memories as a list without bodies. Open a skill with get-knowledge-record when its description fits the task. Site records are never included; load them per site. Memories are evidence about the past, not current state. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_client_not_found, mainwp_access_denied, mainwp_knowledge_db_error.', 'mainwp' ),
                 'category'            => 'mainwp-knowledge',
                 'input_schema'        => self::input_schema( array( 'client_id' ), array( 'client_id' ) ),
                 'output_schema'       => self::summary_schema( 'client' ),
@@ -139,7 +139,7 @@ class MainWP_Abilities_Knowledge {
             'mainwp/list-knowledge-v1',
             array(
                 'label'               => __( 'List Knowledge', 'mainwp' ),
-                'description'         => __( 'List knowledge records the current user can see, without bodies. Filter by scope, type or a text query on title and body. total is computed under the same filters. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_knowledge_db_error.', 'mainwp' ),
+                'description'         => __( 'List knowledge records the current user can see, without bodies. Filter by scope, type or a text query on title, description and body. total is computed under the same filters. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_knowledge_db_error.', 'mainwp' ),
                 'category'            => 'mainwp-knowledge',
                 'input_schema'        => array(
                     // Every filter is optional, so a call without input (REST GET with no input parameter) must pass as an empty object.
@@ -174,7 +174,7 @@ class MainWP_Abilities_Knowledge {
                 'label'               => __( 'Create Knowledge Record', 'mainwp' ),
                 'description'         => __( 'Save a new knowledge record on a site or a client. Site-specific details belong on the site; pass scope_type client only for knowledge that applies to every site of the client. Requires confirm: true or dry_run: true; dry_run returns exactly what would be saved. Records saved by an agent are stored as source ability, verified false. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_site_not_found, mainwp_client_not_found, mainwp_knowledge_not_found, mainwp_access_denied, mainwp_confirmation_required, mainwp_knowledge_invalid, mainwp_knowledge_db_error.', 'mainwp' ),
                 'category'            => 'mainwp-knowledge',
-                'input_schema'        => self::input_schema( array( 'scope_type', 'scope_id', 'type', 'title', 'body', 'caller_note', 'confirm', 'dry_run' ), array( 'scope_type', 'scope_id', 'type', 'title', 'body' ) ),
+                'input_schema'        => self::input_schema( array( 'scope_type', 'scope_id', 'type', 'title', 'description', 'body', 'caller_note', 'confirm', 'dry_run' ), array( 'scope_type', 'scope_id', 'type', 'title', 'body' ) ),
                 'output_schema'       => self::write_schema( 'create' ),
                 'execute_callback'    => array( self::class, 'execute_create_knowledge_record' ),
                 'permission_callback' => self::permission_callback( 'create' ),
@@ -201,9 +201,9 @@ class MainWP_Abilities_Knowledge {
             'mainwp/update-knowledge-record-v1',
             array(
                 'label'               => __( 'Update Knowledge Record', 'mainwp' ),
-                'description'         => __( 'Replace the title, body, type or caller_note of a knowledge record. expected_revision must match the stored revision; a mismatch answers a conflict with the current revision. Requires confirm: true or dry_run: true; dry_run returns the current and the proposed record side by side. caller_note describes this write; omit it and the stored note is cleared. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_knowledge_not_found, mainwp_access_denied, mainwp_confirmation_required, mainwp_knowledge_invalid, mainwp_knowledge_conflict, mainwp_knowledge_db_error.', 'mainwp' ),
+                'description'         => __( 'Replace the title, description, body, type or caller_note of a knowledge record. expected_revision must match the stored revision; a mismatch answers a conflict with the current revision. Requires confirm: true or dry_run: true; dry_run returns the current and the proposed record side by side. caller_note describes this write; omit it and the stored note is cleared. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_knowledge_not_found, mainwp_access_denied, mainwp_confirmation_required, mainwp_knowledge_invalid, mainwp_knowledge_conflict, mainwp_knowledge_db_error.', 'mainwp' ),
                 'category'            => 'mainwp-knowledge',
-                'input_schema'        => self::input_schema( array( 'record_id', 'expected_revision', 'title', 'body', 'type', 'caller_note', 'confirm', 'dry_run' ), array( 'record_id', 'expected_revision' ) ),
+                'input_schema'        => self::input_schema( array( 'record_id', 'expected_revision', 'title', 'description', 'body', 'type', 'caller_note', 'confirm', 'dry_run' ), array( 'record_id', 'expected_revision' ) ),
                 'output_schema'       => self::write_schema( 'update' ),
                 'execute_callback'    => array( self::class, 'execute_update_knowledge_record' ),
                 'permission_callback' => self::permission_callback( 'update' ),
@@ -275,6 +275,10 @@ class MainWP_Abilities_Knowledge {
                 'type' => 'string',
                 'enum' => MainWP_DB_Knowledge::RECORD_TYPES,
             ),
+            'description'       => array(
+                'type'      => 'string',
+                'maxLength' => MainWP_DB_Knowledge::DESCRIPTION_MAX_LENGTH,
+            ),
             'title'             => array(
                 'type'      => 'string',
                 'minLength' => 1,
@@ -329,7 +333,7 @@ class MainWP_Abilities_Knowledge {
      * @return array Record schema.
      */
     private static function record_schema( bool $notice = false, bool $with_body = true ): array {
-        $properties = self::input_schema( array( 'scope_type', 'scope_id', 'type', 'title', 'body', 'caller_note' ) )['properties'];
+        $properties = self::input_schema( array( 'scope_type', 'scope_id', 'type', 'title', 'description', 'body', 'caller_note' ) )['properties'];
         $properties = array(
             'id' => array(
                 'type'    => 'integer',
@@ -447,7 +451,7 @@ class MainWP_Abilities_Knowledge {
             ),
         );
         if ( 'create' === $operation ) {
-            $fields                     = array_intersect_key( $record['properties'], array_flip( array( 'scope_type', 'scope_id', 'type', 'title', 'body', 'caller_note', 'source', 'verified' ) ) );
+            $fields                     = array_intersect_key( $record['properties'], array_flip( array( 'scope_type', 'scope_id', 'type', 'title', 'description', 'body', 'caller_note', 'source', 'verified' ) ) );
             $fields['source']['enum']   = array( 'ability' );
             $fields['verified']['enum'] = array( false );
             $properties['would_save']   = array(
@@ -567,7 +571,8 @@ class MainWP_Abilities_Knowledge {
      * @return array Canonical output.
      */
     private static function format_record( object $record ): array {
-        $result = (array) $record;
+        $result                = (array) $record;
+        $result['description'] = 'skill' === $record->type ? ( $record->description ?? '' ) : '';
         foreach ( array( 'id', 'scope_id', 'revision', 'created_by', 'updated_by' ) as $field ) {
             $result[ $field ] = (int) $result[ $field ];
         }
@@ -768,7 +773,7 @@ class MainWP_Abilities_Knowledge {
             return $confirmation;
         }
         $db     = MainWP_DB_Knowledge::instance();
-        $fields = $db->validate_input( $input );
+        $fields = $db->validate_input( $db->normalize_input( $input ) );
         if ( is_wp_error( $fields ) ) {
             return $fields;
         }
@@ -847,12 +852,8 @@ class MainWP_Abilities_Knowledge {
             return $record;
         }
         $db     = MainWP_DB_Knowledge::instance();
-        $fields = array_merge(
-            (array) $record,
-            array( 'caller_note' => '' ),
-            array_intersect_key( $input, array_flip( array( 'title', 'body', 'type', 'caller_note' ) ) )
-        );
-        $fields = $db->validate_input( $fields );
+        $patch  = array_intersect_key( $input, array_flip( array( 'title', 'description', 'body', 'type', 'caller_note' ) ) );
+        $fields = $db->validate_input( $db->normalize_input( $patch, $record ) );
         if ( is_wp_error( $fields ) ) {
             return $fields;
         }
@@ -874,7 +875,7 @@ class MainWP_Abilities_Knowledge {
                 'proposed' => self::format_record( $proposed ),
             );
         }
-        $saved = $db->save( $fields + array( 'id' => $record->id ), MainWP_DB_Knowledge::ORIGIN_ABILITY, (int) $input['expected_revision'] );
+        $saved = $db->save( $patch + array( 'id' => $record->id ), MainWP_DB_Knowledge::ORIGIN_ABILITY, (int) $input['expected_revision'] );
         return is_wp_error( $saved ) ? $saved : self::format_record( $saved );
     }
 

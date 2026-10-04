@@ -1092,6 +1092,90 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertSame( array_fill_keys( array_keys( $this->hooks ), 0 ), $this->hooks, 'Quick Setup imports must preserve the existing client hook sequence (none).' );
     }
 
+    /** @return array Request shapes the contact write cannot take, per scope. */
+    public static function malformed_multi_client_rows(): array {
+        $shapes = array(
+            'data string'              => 'abc',
+            'row string'               => array( 'abc' ),
+            'client email array'       => array( array( 'client_email' => array( 'x@example.com' ) ) ),
+            'client name array'        => array( array( 'client_name' => array( 'x' ) ) ),
+            'contacts field string'    => array( array( 'contacts_field' => 'abc' ) ),
+            'contacts field value array' => array( array( 'contacts_field' => array( 'contact_name' => array( 'x' ), 'contact_email' => 'c@example.com' ) ) ),
+        );
+        $cases = array();
+        foreach ( array( 'restricted', 'administrator' ) as $scope ) {
+            foreach ( $shapes as $name => $shape ) {
+                $cases[ $scope . ': ' . $name ] = array( $scope, $shape );
+            }
+        }
+        return $cases;
+    }
+
+    /**
+     * A malformed second row must refuse before the valid first row is written.
+     *
+     * @dataProvider malformed_multi_client_rows
+     * @param string       $scope Caller scope.
+     * @param array|string $shape Malformed data or rows.
+     */
+    public function test_multi_client_malformed_row_refused_before_any_write( $scope, $shape ): void {
+        if ( 'administrator' === $scope ) {
+            wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+        }
+        $site = $this->create_test_site( array( 'client_id' => 0 ) );
+        $this->scope( 'administrator' === $scope ? 'all' : array( $site ) );
+        $data = $shape;
+        if ( is_array( $shape ) ) {
+            $valid = array(
+                'client_name'    => 'Valid row',
+                'client_email'   => 'valid-' . wp_generate_uuid4() . '@example.com',
+                'website_id'     => $site,
+                'contacts_field' => array( 'contact_name' => 'Valid contact', 'contact_email' => 'valid-contact-' . wp_generate_uuid4() . '@example.com' ),
+            );
+            $data = array( $valid, is_array( $shape[0] ) ? array_merge( $valid, array( 'client_email' => 'second-' . wp_generate_uuid4() . '@example.com' ), $shape[0] ) : $shape[0] );
+        }
+        $before = $this->before_write();
+        $body   = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => $data ) );
+        $this->assertSame( array( 'success' => false, 'data' => 'Undefined error. Please try again.' ), json_decode( $body, true ), $body );
+        $this->assert_unchanged( $before );
+    }
+
+    /** A client row the database refuses must not get a contact written against a missing client. */
+    public function test_multi_client_failed_client_insert_writes_no_contact(): void {
+        global $wpdb;
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+        $this->scope( 'all' );
+        $site = $this->create_test_site( array( 'client_id' => 0 ) );
+        $data = array(
+            array(
+                'client_name'    => 'Too long',
+                'client_email'   => str_repeat( 'a', 200 ) . '@example.com',
+                'website_id'     => $site,
+                'contacts_field' => array( 'contact_name' => 'Orphan contact', 'contact_email' => 'orphan-' . wp_generate_uuid4() . '@example.com' ),
+            ),
+        );
+        $before   = $this->before_write();
+        $warnings = array();
+        // The defect surfaces only as a warning on the false client and a NULL contact insert.
+        set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler
+            static function ( $errno, $message ) use ( &$warnings ) {
+                $warnings[] = $message;
+                return true;
+            },
+            E_WARNING
+        );
+        try {
+            $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => $data ) );
+        } finally {
+            restore_error_handler();
+        }
+        $this->assertSame( array(), $warnings, $body );
+        $this->assertStringNotContainsString( 'contact_client_id', $wpdb->last_error );
+        $after = $this->snapshot();
+        $this->assertSame( $before['wp_clients'], $after['wp_clients'], 'The refused client row was written.' );
+        $this->assertSame( $before['wp_clients_contacts'], $after['wp_clients_contacts'], 'A contact was written for a client that does not exist.' );
+    }
+
     /** @return array Missing-client entry points. */
     public static function missing_client_entry_points(): array {
         return array( array( 'add form' ), array( 'delete' ), array( 'orphan contact image' ) );

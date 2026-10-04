@@ -1994,7 +1994,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                         MainWP_DB_Client::instance()->update_selected_sites_for_client( $client->client_id, $write['site_ids'] );
                     }
                     // Create client contact.
-                    if ( ! empty( $val_data['contacts_field'] ) ) {
+                    if ( ! empty( $client ) && ! empty( $val_data['contacts_field'] ) ) {
                         $this->mainwp_handle_create_contact_for_client( $client, $val_data['contacts_field'] );
                     }
                 }
@@ -2158,7 +2158,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $collation  = null;
         $plan       = array();
 
+        if ( ! is_array( $rows ) ) {
+            throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+        }
         foreach ( $rows as $row ) {
+            // The contact write runs after the row's client and site writes, so a shape it cannot take must be refused here.
+            if ( ! is_array( $row ) || ( isset( $row['client_name'] ) && ! is_string( $row['client_name'] ) ) || ( isset( $row['client_email'] ) && ! is_string( $row['client_email'] ) ) || ( ! empty( $row['contacts_field'] ) && ( ! is_array( $row['contacts_field'] ) || array_filter( $row['contacts_field'], 'is_array' ) ) ) ) {
+                throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+            }
             if ( ! empty( $row['website_id'] ) && ( ! MainWP_Utility::ctype_digit( $row['website_id'] ) || (int) $row['website_id'] <= 0 ) ) {
                 throw new MainWP_Exception( 'Error - insufficient permissions!' );
             }

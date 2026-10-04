@@ -968,11 +968,20 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
             'C4-2 unavailable metadata' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'metadata' ),
             'C4-2 invalid metadata' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'invalid metadata' ),
             'C4-2 NULL comparison' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'comparison' ),
+            // update_client() skips its duplicate check for emails PHP reads as empty, but a later padded copy is a duplicate under PAD SPACE.
+            'zero email then padded zero' => array( array( array( 'B', 'S2', '0' ), array( 'B', 'S3', '0 ' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), false ),
+            'empty email then space' => array( array( array( 'B', 'S2', '' ), array( 'B', 'S3', ' ' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), false ),
+            'padded zero donor edited later' => array( array( array( 'B', 'S2', '0' ), array( 'B', 'S1', '0 ' ), array( 'A', 'S3' ) ), array( 'S1' => 'B', 'S2' => 'B', 'S3' => 'A' ), array( 'B' ), true ),
+            'zero emails stay distinct' => array( array( array( 'B', 'S2', '0' ), array( 'C', 'S3', '0' ) ), array( 'S2' => 'B', 'S3' => 'C' ), array( 'B', 'C' ), false ),
+            // A new client the column cannot store is refused before the earlier projected move detaches a site.
+            'over-long new email' => array( array( array( 'B', 'S1', str_repeat( 'a', 64 ) . '@' . str_repeat( 'b', 150 ) . '.com' ), array( 'A', 'S2' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
+            'over-long new name' => array( array( array( 'B', 'S1', null, 'long name' ), array( 'A', 'S2' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
+            'client insert fails' => array( array( array( 'B', 'S1' ), array( 'C', 'S2' ) ), array(), array(), true, true, 'insert', 'Undefined error. Please try again.' ),
         );
         $cases = array();
         foreach ( array( 'restricted', 'administrator' ) as $scope ) {
             foreach ( $shapes as $name => $shape ) {
-                $cases[ $scope . ': ' . $name ] = array( $scope, $shape[0], $shape[1], $shape[2], $shape[3] && ( 'restricted' === $scope || ! empty( $shape[4] ) ), $shape[5] ?? '' );
+                $cases[ $scope . ': ' . $name ] = array( $scope, $shape[0], $shape[1], $shape[2], $shape[3] && ( 'restricted' === $scope || ! empty( $shape[4] ) ), $shape[5] ?? '', $shape[6] ?? '' );
             }
         }
         return $cases;
@@ -986,8 +995,9 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
      * @param array  $created New client references in insertion order.
      * @param bool   $refused Expected refusal.
      * @param string $fault Database comparison fault.
+     * @param string $message Refusal text when it is not the scope refusal.
      */
-    public function test_multi_client_plan_matrix( $scope, $rows, $owners, $created, $refused, $fault ): void {
+    public function test_multi_client_plan_matrix( $scope, $rows, $owners, $created, $refused, $fault, $message = '' ): void {
         global $wpdb;
         if ( 'administrator' === $scope ) {
             wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
@@ -1017,10 +1027,16 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
                 unset( $data[ $index ]['contacts_field']['contact_email'] );
             } elseif ( 'duplicate' === ( $row[3] ?? '' ) ) {
                 $data[ $index ]['contacts_field']['contact_email'] = 'duplicate-contact@example.com';
+            } elseif ( 'long name' === ( $row[3] ?? '' ) ) {
+                $data[ $index ]['client_name'] = str_repeat( 'n', 256 );
             }
         }
         if ( $fault ) {
-            $this->filter( 'query', static function ( $sql ) use ( $fault ) {
+            $client_insert = 'INSERT INTO `' . $wpdb->prefix . 'mainwp_wp_clients`';
+            $this->filter( 'query', static function ( $sql ) use ( $fault, $client_insert ) {
+                if ( 'insert' === $fault ) {
+                    return 0 === strpos( $sql, $client_insert ) ? '' : $sql;
+                }
                 if ( false !== strpos( $sql, 'SHOW FULL COLUMNS' ) ) {
                     if ( 'metadata' === $fault ) {
                         return 'SELECT NULL WHERE 1=0';
@@ -1034,7 +1050,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         }
         $before = $this->before_write();
         $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => $data ) );
-        $expected_response = array( 'success' => ! $refused, 'data' => $refused ? ( $rows ? 'Error - insufficient permissions!' : 'Undefined error. Please try again.' ) : 'Created client successfully.' );
+        $expected_response = array( 'success' => ! $refused, 'data' => $refused ? ( $message ? $message : ( $rows ? 'Error - insufficient permissions!' : 'Undefined error. Please try again.' ) ) : 'Created client successfully.' );
         $this->assertSame( $expected_response, json_decode( $body, true ), $body );
         $after = $this->snapshot();
         $before_ids = array_column( $before['wp_clients'], 'client_id' );

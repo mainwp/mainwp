@@ -1987,7 +1987,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
                     $client = ! empty( $write['client'] ) ? $write['client'] : ( $created[ $write['key'] ] ?? null );
                     if ( ! $client ) {
-                        $client                   = MainWP_DB_Client::instance()->update_client( $client_data );
+                        $client = MainWP_DB_Client::instance()->update_client( $client_data );
+                        if ( empty( $client ) ) {
+                            // The plan already moved this row's sites to the new client; later rows would write rosters that detach them.
+                            throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+                        }
                         $created[ $write['key'] ] = $client;
                     }
                     if ( ! empty( $client ) && null !== $write['site_ids'] ) {
@@ -2147,6 +2151,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * @throws MainWP_Exception When a row is outside client or site scope.
      */
     private function plan_multi_client_import( $rows ) {
+        global $wpdb;
+        $table      = MainWP_DB_Client::instance()->get_table_name( 'wp_clients' );
         $allowed    = MainWP_Abilities_Util::get_allowed_site_ids();
         $websites   = array();
         $owners     = array();
@@ -2222,11 +2228,20 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                     throw new MainWP_Exception( 'Error - insufficient permissions!' );
                 }
             } else {
+                // update_client() inserts nothing for a value the column cannot hold, and the executor stops there.
+                $stored = array(
+                    'name'         => $row['client_name'] ?? '',
+                    'client_email' => $email,
+                );
+                foreach ( $stored as $column => $value ) {
+                    if ( $wpdb->strip_invalid_text_for_column( $table, $column, $value ) !== $value ) {
+                        throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+                    }
+                }
                 $key             = 'new:' . count( $plan );
                 $rosters[ $key ] = array();
-                if ( ! empty( $email ) ) {
-                    $new_emails[ $key ] = $email;
-                }
+                // Emails PHP reads as empty are stored too, and update_client() treats a later padded copy as a duplicate.
+                $new_emails[ $key ] = $email;
             }
             if ( $site_id ) {
                 // Reassignment can remove the overlap needed to edit a later row's client.

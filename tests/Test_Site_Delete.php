@@ -454,10 +454,11 @@ class Test_Site_Delete extends \WP_UnitTestCase {
     }
 
     /**
-     * A site-row delete that matches nothing still returns 0 and removes the sync row.
+     * A site-row delete that matches nothing still returns 0 and clears related data.
      *
      * Zero rows is not a database error. The filter appends AND 1=0 to that one
-     * DELETE, so the statement runs and matches no site row.
+     * DELETE, so the statement runs and matches no site row. Related rows and
+     * both key files are still removed.
      *
      * @return void
      */
@@ -476,12 +477,27 @@ class Test_Site_Delete extends \WP_UnitTestCase {
             $this->assertSame( 1, $this->site_row_deletes_rewritten, 'The zero-row filter rewrites exactly one site-row DELETE.' );
             $this->assertSame( 1, $this->count_rows( 'mainwp_wp', 'id', $seed['site_id'] ) );
             $this->assertSame( 0, $this->count_rows( 'mainwp_wp_sync', 'wpid', $seed['site_id'] ) );
+            $this->assertSame( 0, $this->count_rows( 'mainwp_wp_group', 'wpid', $seed['site_id'] ) );
+            $this->assertSame( 0, $this->count_rows( 'mainwp_wp_options', 'wpid', $seed['site_id'] ) );
+            $this->assertSame( 0, $this->count_rows( 'mainwp_monitors', 'wpid', $seed['site_id'] ) );
+            $this->assertSame( 0, $this->count_knowledge_rows( $seed['site_id'] ) );
+            $this->assertFileDoesNotExist( $seed['opaque_key'] );
+            $this->assertFileDoesNotExist( $seed['legacy_key'] );
         } finally {
             remove_filter( 'query', array( $this, 'zero_site_row_delete' ) );
             if ( is_array( $seed ) ) {
                 $this->cleanup_site_delete_fixtures( $seed );
             }
         }
+    }
+
+    /**
+     * An id that is not digits is rejected before any delete.
+     *
+     * @return void
+     */
+    public function test_remove_website_rejects_a_non_numeric_id() {
+        $this->assertSame( false, MainWP_DB::instance()->remove_website( 'abc' ) );
     }
 
     /**

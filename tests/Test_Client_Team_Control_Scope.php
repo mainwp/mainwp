@@ -755,6 +755,76 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertStringContainsString( 'permission', strtolower( $result[1] ) );
     }
 
+    /** @return array Rows whose refusal must prevent earlier writes. */
+    public static function refused_multi_client_rows(): array {
+        return array( array( 'hidden site' ), array( 'missing site' ), array( 'hidden existing email' ), array( 'empty existing client' ) );
+    }
+
+    /**
+     * @dataProvider refused_multi_client_rows
+     * @param string $reason Refused second row.
+     */
+    public function test_multi_client_preflight_refuses_entire_batch( $reason ): void {
+        $allowed = $this->create_test_site();
+        $hidden = $this->client();
+        $hidden_site = $this->site( $hidden );
+        $empty = $this->client();
+        $this->scope( array( $allowed, 99999999 ) );
+        $row = array( 'client_name' => 'Refused', 'client_email' => 'refused@example.com', 'website_id' => $hidden_site );
+        if ( 'missing site' === $reason ) {
+            $row['website_id'] = 99999999;
+        } elseif ( 'hidden existing email' === $reason || 'empty existing client' === $reason ) {
+            $row['client_email'] = 'hidden existing email' === $reason ? $hidden->client_email : $empty->client_email;
+            $row['website_id'] = $allowed;
+        }
+        $before = $this->before_write();
+        $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => array(
+            array( 'client_name' => 'Allowed', 'client_email' => 'allowed@example.com', 'website_id' => $allowed, 'contacts_field' => array( 'contact_name' => 'Contact', 'contact_email' => 'contact@example.com' ) ),
+            $row,
+        ) ) );
+        $this->assertSame( array( 'success' => false, 'data' => 'Error - insufficient permissions!' ), json_decode( $body, true ), $body );
+        $this->assert_unchanged( $before );
+    }
+
+    /** @return array Allowed scope modes. */
+    public static function allowed_multi_client_scopes(): array {
+        return array( array( 'restricted' ), array( 'admin' ) );
+    }
+
+    /**
+     * @dataProvider allowed_multi_client_scopes
+     * @param string $scope Caller scope.
+     */
+    public function test_multi_client_preflight_keeps_allowed_batch( $scope ): void {
+        $existing = $this->client();
+        $member = $this->site( $existing );
+        $hidden = $this->site( $existing );
+        $first = $this->create_test_site();
+        $second = $this->create_test_site();
+        if ( 'admin' === $scope ) {
+            wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+            $this->scope( 'all' );
+        } else {
+            $this->scope( array( $member, $first, $second ) );
+        }
+        $this->before_write();
+        $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => array(
+            array( 'client_name' => 'New batch client', 'client_email' => 'batch@example.com', 'website_id' => $first, 'contacts_field' => array( 'contact_name' => 'Batch contact', 'contact_email' => 'batch-contact@example.com' ) ),
+            array( 'client_name' => 'Keep existing name', 'client_email' => $existing->client_email, 'website_id' => $second ),
+        ) ) );
+        $this->assertSame( array( 'success' => true, 'data' => 'Created client successfully.' ), json_decode( $body, true ), $body );
+        $new = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', 'batch@example.com' );
+        $this->assertIsObject( $new );
+        $this->assertSame( 'New batch client', $new->name );
+        $this->assertSame( array( $first ), $this->members( $new ) );
+        $contact = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_email', 'batch-contact@example.com' );
+        $this->assertIsObject( $contact );
+        $this->assertSame( (int) $new->client_id, (int) $contact->contact_client_id );
+        $this->assertSame( $existing->name, MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $existing->client_id )->name );
+        $this->assertContains( $second, $this->members( $existing ) );
+        $this->assertContains( $hidden, $this->members( $existing ) );
+    }
+
     /** Admins retain zero-site client behavior. */
     public function test_unrestricted_admin_zero_site_save_and_notes_allowed(): void {
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );

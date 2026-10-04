@@ -1947,6 +1947,8 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * Method ajax_clients_add_multi_client
      *
      * Create Multi Client form QSW.
+     *
+     * @throws MainWP_Exception When a row is outside client or site scope.
      */
     public function ajax_clients_add_multi_client() {
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
@@ -1957,6 +1959,20 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array(); //phpcs:ignore -- NonceVerification.
         try {
             if ( ! empty( $dataes ) ) {
+                // A refused row must not leave earlier clients or contacts behind.
+                $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+                foreach ( $dataes as $val_data ) {
+                    if ( ! empty( $val_data['website_id'] ) ) {
+                        $website = MainWP_DB::instance()->get_website_by_id_unscoped( $val_data['website_id'] );
+                        if ( ! MainWP_System_Utility::can_edit_website( $website ) || ( 'all' !== $allowed_sites && ! in_array( (int) $website->id, $allowed_sites, true ) ) ) {
+                            throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                        }
+                    }
+                    $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $val_data['client_email'] ?? '', OBJECT );
+                    if ( $client && ! MainWP_Client::has_client_access( $client->client_id ) ) {
+                        throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                    }
+                }
                 foreach ( $dataes as $val_data ) {
                     $client_data = array(
                         'image'              => '',

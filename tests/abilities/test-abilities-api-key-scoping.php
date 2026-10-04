@@ -1879,6 +1879,42 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertSame( array(), $far->get_data()['data'] );
     }
 
+    public function test_rest_client_list_pages_restricted_key_without_offset_overflow() {
+        $this->set_current_user_as_admin();
+        $hidden = $this->create_test_client( array( 'name' => 'Hidden Client' ) );
+        $this->create_test_site( array( 'client_id' => $hidden ) );
+        $visible = array();
+        $allowed = array();
+        for ( $i = 0; $i < 3; $i++ ) {
+            $visible[] = $this->create_test_client( array( 'name' => 'Visible Client ' . $i ) );
+            $allowed[] = $this->create_test_site( array( 'client_id' => $visible[ $i ] ) );
+        }
+        $this->restrict_ability_layer_only( $allowed );
+
+        $pages = array();
+        foreach ( array( 1, 2, 3 ) as $page ) {
+            $response = $this->dispatch_v2_get( '/mainwp/v2/clients', array( 'page' => $page, 'per_page' => 2 ) );
+            $this->assertSame( 200, $response->get_status(), 'Page ' . $page );
+            $data          = $response->get_data();
+            $pages[ $page ] = array_map( 'intval', array_column( $data['data'], 'id' ) );
+            $this->assertSame( 1, $data['success'], 'Page ' . $page );
+            $this->assertSame( count( $pages[ $page ] ), $data['total'], 'Page ' . $page );
+        }
+        $this->assertSame( array_slice( $visible, 0, 2 ), $pages[1], 'Hidden clients must not use up page slots.' );
+        $this->assertSame( array( $visible[2] ), $pages[2] );
+        $this->assertSame( array(), $pages[3] );
+
+        try {
+            $far = $this->dispatch_v2_get( '/mainwp/v2/clients', array( 'page' => (string) PHP_INT_MAX, 'per_page' => 2 ) );
+        } catch ( \TypeError $error ) {
+            $this->fail( 'A page number past the end must not overflow the offset: ' . $error->getMessage() );
+        }
+        $this->assertSame( 200, $far->get_status(), 'A page number past the end must not overflow the offset.' );
+        $this->assertSame( 1, $far->get_data()['success'] );
+        $this->assertSame( 0, $far->get_data()['total'] );
+        $this->assertSame( array(), $far->get_data()['data'] );
+    }
+
     public static function cost_scope_membership_updates() {
         $cases = array();
         foreach ( array( 'sites', 'groups', 'clients' ) as $field ) {

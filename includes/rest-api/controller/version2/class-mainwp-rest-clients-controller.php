@@ -492,7 +492,8 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         $clients = MainWP_DB_Client::instance()->get_wp_clients( $prepared_args );
         $clients = $this->filter_scoped_clients( $clients );
         if ( 'all' !== $allowed && $page > 0 && $per_page > 0 ) {
-            $clients = array_slice( $clients, ( $page - 1 ) * $per_page, $per_page );
+            // A huge page number would overflow the offset to a float.
+            $clients = $page - 1 < ceil( count( $clients ) / $per_page ) ? array_slice( $clients, ( $page - 1 ) * $per_page, $per_page ) : array();
         }
         $data = array();
         if ( is_array( $clients ) ) {

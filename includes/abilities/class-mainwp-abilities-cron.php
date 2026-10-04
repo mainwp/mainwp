@@ -230,7 +230,8 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
         $job['errors'] = isset( $job['errors'] ) && is_array( $job['errors'] ) ? $job['errors'] : array();
         $sites         = isset( $job['sites'] ) && is_array( $job['sites'] ) ? $job['sites'] : array();
 
-        $processed_ids = array_merge( $successes, array_column( $job['errors'], 'site_id' ) );
+        $unchanged     = isset( $job['unchanged'] ) && is_array( $job['unchanged'] ) ? $job['unchanged'] : array();
+        $processed_ids = array_merge( $successes, $unchanged, array_column( $job['errors'], 'site_id' ) );
         $remaining     = array_values( array_diff( $sites, $processed_ids ) );
 
         foreach ( $remaining as $site_id ) {
@@ -485,8 +486,6 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                 return;
             }
             $allowed_sites = $this->get_job_allowed_site_ids( $job );
-            // Loaded after restore_job_owner(): the global ignore lists belong to the job owner.
-            $global_ignored = $this->get_global_ignored_updates();
 
             // Status transition: queued -> processing.
             if ( 'queued' === $job['status'] ) {
@@ -502,12 +501,15 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
             }
 
             // Normalize result arrays defensively (transient data could be corrupted).
-            $job['updated'] = isset( $job['updated'] ) && is_array( $job['updated'] ) ? $job['updated'] : array();
-            $job['errors']  = isset( $job['errors'] ) && is_array( $job['errors'] ) ? $job['errors'] : array();
+            $job['updated']   = isset( $job['updated'] ) && is_array( $job['updated'] ) ? $job['updated'] : array();
+            $job['errors']    = isset( $job['errors'] ) && is_array( $job['errors'] ) ? $job['errors'] : array();
+            $job['skipped']   = isset( $job['skipped'] ) && is_array( $job['skipped'] ) ? $job['skipped'] : array();
+            $job['unchanged'] = isset( $job['unchanged'] ) && is_array( $job['unchanged'] ) ? $job['unchanged'] : array();
 
             // Calculate already processed site IDs.
             $processed_ids = array_merge(
                 $job['updated'],
+                $job['unchanged'],
                 array_column( $job['errors'], 'site_id' )
             );
 
@@ -550,20 +552,54 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                         continue;
                     }
 
-                    $site_success = true;
-                    $site_errors  = array();
+                    $site_success    = true;
+                    $site_errors     = array();
+                    $site_dispatched = false;
 
                     // Normalize specific_items to avoid TypeError if malformed in transient data.
                     $specific_items = isset( $job['specific_items'] ) && is_array( $job['specific_items'] )
                         ? $job['specific_items']
                         : array();
 
+                    // The restored owner's global lists and current holds are read at dispatch time.
+                    $plan = MainWP_Abilities_Updates::build_update_plan( array( $website ), $job['types'], $specific_items );
+                    if ( ! empty( $plan['errors'] ) ) {
+                        foreach ( $plan['errors'] as $error ) {
+                            $job['errors'][] = array(
+                                'site_id' => $site_id,
+                                'code'    => $error['code'],
+                                'message' => $error['message'],
+                            );
+                        }
+                        ++$job['processed'];
+                        continue;
+                    }
+                    $planned_slugs = array(
+                        'core'        => array(),
+                        'plugin'      => array(),
+                        'theme'       => array(),
+                        'translation' => array(),
+                    );
+                    foreach ( $plan['sites'] as $entry ) {
+                        foreach ( $entry['skipped'] as $item ) {
+                            $job['skipped'][] = array(
+                                'site_id' => $site_id,
+                                'type'    => $item['type'],
+                                'slug'    => $item['slug'],
+                                'reason'  => $item['reason'],
+                            );
+                        }
+                        foreach ( $entry['items'] as $item ) {
+                            $planned_slugs[ $item['type'] ][] = $item['slug'];
+                        }
+                    }
+
                     // Process each update type.
                     foreach ( $job['types'] as $type ) {
                         try {
                             switch ( $type ) {
                                 case 'core':
-                                    if ( empty( $this->get_update_slugs_for_site( $website, 'core', $specific_items, $global_ignored ) ) ) {
+                                    if ( empty( $planned_slugs['core'] ) ) {
                                         break;
                                     }
 
@@ -576,7 +612,8 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                      */
                                     do_action( 'mainwp_before_core_update', $website );
 
-                                    $information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
+                                    $site_dispatched = true;
+                                    $information     = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
 
                                     // Validate response - check for transport failure or API error.
                                     if ( false === $information ) {
@@ -638,7 +675,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     break;
 
                                 case 'plugins':
-                                    $slugs = $this->get_update_slugs_for_site( $website, 'plugin', $specific_items, $global_ignored );
+                                    $slugs = $planned_slugs['plugin'];
                                     if ( ! empty( $slugs ) ) {
                                         $slugs_list = implode( ',', $slugs );
 
@@ -653,7 +690,8 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                          */
                                         do_action( 'mainwp_before_plugin_theme_translation_update', 'plugin', $slugs_list, $website );
 
-                                        $information = MainWP_Connect::fetch_url_authed(
+                                        $site_dispatched = true;
+                                        $information     = MainWP_Connect::fetch_url_authed(
                                             $website,
                                             'upgradeplugintheme',
                                             array(
@@ -756,14 +794,15 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     break;
 
                                 case 'themes':
-                                    $slugs = $this->get_update_slugs_for_site( $website, 'theme', $specific_items, $global_ignored );
+                                    $slugs = $planned_slugs['theme'];
                                     if ( ! empty( $slugs ) ) {
                                         $slugs_list = implode( ',', $slugs );
 
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
                                         do_action( 'mainwp_before_plugin_theme_translation_update', 'theme', $slugs_list, $website );
 
-                                        $information = MainWP_Connect::fetch_url_authed(
+                                        $site_dispatched = true;
+                                        $information     = MainWP_Connect::fetch_url_authed(
                                             $website,
                                             'upgradeplugintheme',
                                             array(
@@ -857,7 +896,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     break;
 
                                 case 'translations':
-                                    $slugs = $this->get_update_slugs_for_site( $website, 'translation', $specific_items, $global_ignored );
+                                    $slugs = $planned_slugs['translation'];
                                     if ( empty( $slugs ) ) {
                                         break;
                                     }
@@ -866,7 +905,8 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
                                     do_action( 'mainwp_before_plugin_theme_translation_update', 'translation', $slugs_list, $website );
 
-                                    $information = MainWP_Connect::fetch_url_authed(
+                                    $site_dispatched = true;
+                                    $information     = MainWP_Connect::fetch_url_authed(
                                         $website,
                                         'upgradetranslation',
                                         array(
@@ -964,7 +1004,11 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                     }
 
                     if ( $site_success && empty( $site_errors ) ) {
-                        $job['updated'][] = $site_id;
+                        if ( $site_dispatched ) {
+                            $job['updated'][] = $site_id;
+                        } else {
+                            $job['unchanged'][] = $site_id;
+                        }
                     } else {
                         $job['errors'][] = array(
                             'site_id' => $site_id,
@@ -992,6 +1036,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
             // Recalculate remaining after processing.
             $processed_ids = array_merge(
                 $job['updated'],
+                $job['unchanged'],
                 array_column( $job['errors'], 'site_id' )
             );
             $remaining     = array_values( array_diff( $job['sites'], $processed_ids ) );
@@ -1023,68 +1068,6 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
         } finally {
             wp_set_current_user( $previous_user_id );
         }
-    }
-
-    /**
-     * Get the update slugs a queued job may dispatch for a site.
-     *
-     * Uses the immediate path's filter, so per-site, global and whole-site ignore settings hold back the same
-     * items whether run-updates or update-all ran at once or was queued.
-     *
-     * @param object $website        Site object.
-     * @param string $type           Type: 'core', 'plugin', 'theme' or 'translation'.
-     * @param array  $specific_items Optional array of specific slugs to filter.
-     * @param array  $global_ignored Job owner's global ignore lists, from get_global_ignored_updates().
-     * @return array Array of slugs to update.
-     */
-    private function get_update_slugs_for_site( $website, string $type, array $specific_items, array $global_ignored ): array {
-        $types   = array(
-            'core'        => 'core',
-            'plugin'      => 'plugins',
-            'theme'       => 'themes',
-            'translation' => 'translations',
-        );
-        $updates = MainWP_Abilities_Updates::get_site_updates(
-            $website,
-            array( $types[ $type ] ),
-            $global_ignored['plugins'],
-            $global_ignored['themes'],
-            $global_ignored['core']
-        );
-
-        $slugs = array();
-        foreach ( $updates as $update ) {
-            if ( $type !== $update['type'] ) {
-                continue;
-            }
-            // If specific items provided, filter to only those.
-            if ( ! empty( $specific_items ) && ! in_array( $update['slug'], $specific_items, true ) ) {
-                continue;
-            }
-            $slugs[] = $update['slug'];
-        }
-
-        return $slugs;
-    }
-
-    /**
-     * Load the current user's global ignore lists the way the immediate update path does.
-     *
-     * @return array{plugins: array, themes: array, core: array}
-     */
-    private function get_global_ignored_updates(): array {
-        $user_extension = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
-        $columns        = array(
-            'plugins' => 'ignored_plugins',
-            'themes'  => 'ignored_themes',
-            'core'    => 'ignored_wp_upgrades',
-        );
-        $lists          = array();
-        foreach ( $columns as $key => $column ) {
-            $list          = is_object( $user_extension ) && ! empty( $user_extension->{$column} ) ? json_decode( $user_extension->{$column}, true ) : array();
-            $lists[ $key ] = is_array( $list ) ? $list : array();
-        }
-        return $lists;
     }
 
     /**

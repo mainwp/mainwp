@@ -337,6 +337,7 @@ class MainWP_Abilities_Batch_Operations_Test extends MainWP_Abilities_Test_Case 
 			}
 
 			$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+				'confirm'             => true,
 				'site_ids_or_domains' => $site_ids,
 				'types'               => [ 'plugins' ],
 			] );
@@ -376,6 +377,7 @@ class MainWP_Abilities_Batch_Operations_Test extends MainWP_Abilities_Test_Case 
 			}
 
 			$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+				'confirm'             => true,
 				'site_ids_or_domains' => $site_ids,
 				'types'               => [ 'plugins' ],
 			] );

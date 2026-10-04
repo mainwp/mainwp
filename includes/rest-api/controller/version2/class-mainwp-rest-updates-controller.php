@@ -889,7 +889,9 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         if ( null !== $ability ) {
             // Build ability input for updating all sites with all update types.
             // Empty arrays mean "all sites" and "all types" respectively.
+            // REST v2 is the caller's explicit update request; its contract is unchanged.
             $ability_input = array(
+                'confirm'             => true,
                 'site_ids_or_domains' => array(),  // All sites.
                 'types'               => array(),  // All types.
             );
@@ -1016,7 +1018,9 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         if ( null !== $ability ) {
             // Build ability input for single-site update.
             // Empty types array means "all types".
+            // REST v2 is the caller's explicit update request; its contract is unchanged.
             $ability_input = array(
+                'confirm'             => true,
                 'site_ids_or_domains' => array( (int) $website->id ),
                 'types'               => array(),  // All types.
             );

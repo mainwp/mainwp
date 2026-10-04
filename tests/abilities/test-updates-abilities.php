@@ -22,6 +22,11 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Abilities_Updates;
+use MainWP\Dashboard\MainWP_Abilities_Util;
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Common;
+
 /**
  * Class MainWP_Updates_Abilities_Test
  *
@@ -454,6 +459,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $site_id ],
 			'types'               => [ 'plugins' ],
 		] );
@@ -488,6 +494,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $offline_id ],
 			'types'               => [ 'plugins' ],
 		] );
@@ -522,6 +529,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $outdated_id ],
 			'types'               => [ 'plugins' ],
 		] );
@@ -565,6 +573,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 			}
 
 			$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+				'confirm'             => true,
 				'site_ids_or_domains' => $site_ids,
 				'types'               => [ 'plugins' ],
 			] );
@@ -609,6 +618,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $online_id, $offline_id ],
 			'types'               => [ 'plugins' ],
 		] );
@@ -660,6 +670,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $site1_id, $site2_id ],
 			'types'               => [ 'plugins' ],
 		] );
@@ -1068,6 +1079,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 
 		// Empty list should update all sites.
 		$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [],
 			'types'               => [ 'plugins' ],
 		] );
@@ -1092,6 +1104,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $site_id ],
 			'types'               => [ 'plugins' ],
 			'specific_items'      => [ 'akismet/akismet.php' ],
@@ -1133,6 +1146,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $site_id ],
 			'types'               => [ 'plugins' ],
 		] );
@@ -1206,6 +1220,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		);
 
 		$result = $this->execute_ability( 'mainwp/run-updates-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $site_id ],
 			'types'               => [ 'plugins' ],
 		] );
@@ -1521,6 +1536,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] ) );
 
 		$result = $this->execute_ability( 'mainwp/update-site-core-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -1614,6 +1630,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		// Don't seed any core upgrades.
 
 		$result = $this->execute_ability( 'mainwp/update-site-core-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -1648,7 +1665,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		add_filter( 'mainwp_fetch_url_authed_pre', $mock, 10, 3 );
 		try {
 			foreach ( [ $held, $flagged ] as $site_id ) {
-				$result = $this->execute_ability( 'mainwp/update-site-core-v1', [ 'site_id_or_domain' => $site_id ] );
+				$result = $this->execute_ability( 'mainwp/update-site-core-v1', [ 'confirm' => true, 'site_id_or_domain' => $site_id ] );
 				$this->assertSame( [], $calls, 'A per-site core hold must prevent child calls.' );
 				$this->assertWPError( $result );
 				$this->assertSame( 'mainwp_no_updates', $result->get_error_code() );
@@ -1658,7 +1675,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 			\MainWP\Dashboard\MainWP_DB_Common::instance()->update_user_extension(
 				[ 'userid' => $extension->userid, 'ignored_wp_upgrades' => $ignored ]
 			);
-			$result = $this->execute_ability( 'mainwp/update-site-core-v1', [ 'site_id_or_domain' => $free ] );
+			$result = $this->execute_ability( 'mainwp/update-site-core-v1', [ 'confirm' => true, 'site_id_or_domain' => $free ] );
 			$this->assertSame( [], $calls, 'A global core hold must prevent child calls.' );
 			$this->assertWPError( $result );
 			$this->assertSame( 'mainwp_no_updates', $result->get_error_code() );
@@ -1667,7 +1684,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 			\MainWP\Dashboard\MainWP_DB_Common::instance()->update_user_extension(
 				[ 'userid' => $extension->userid, 'ignored_wp_upgrades' => '' ]
 			);
-			$result = $this->execute_ability( 'mainwp/update-site-core-v1', [ 'site_id_or_domain' => $free ] );
+			$result = $this->execute_ability( 'mainwp/update-site-core-v1', [ 'confirm' => true, 'site_id_or_domain' => $free ] );
 			$this->assertSame( [ [ 'site_id' => $free, 'what' => 'upgrade' ] ], $calls );
 			$this->assertNotWPError( $result );
 			$this->assertSame( 'wordpress', $result['updated']['slug'] );
@@ -1694,6 +1711,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-core-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -1717,6 +1735,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-core-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -1761,6 +1780,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-plugins-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -1875,6 +1895,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 
 		// Request only specific slug.
 		$result = $this->execute_ability( 'mainwp/update-site-plugins-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 			'slugs'             => [ 'akismet/akismet.php' ],
 		] );
@@ -1925,19 +1946,24 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 
 				$ability = 'mainwp/update-site-' . $type . 's-v1';
 				$calls   = [];
-				$result  = $this->execute_ability( $ability, [ 'site_id_or_domain' => $flagged, 'slugs' => [ $chosen ] ] );
+				$result  = $this->execute_ability( $ability, [ 'confirm' => true, 'site_id_or_domain' => $flagged, 'slugs' => [ $chosen ] ] );
 				$this->assertSame( [], $calls, $type . ' whole-site holds must prevent child calls.' );
-				$this->assertSame( [ 'updated' => [], 'errors' => [], 'summary' => [ 'total_updated' => 0, 'total_errors' => 0 ] ], $result );
+				$this->assertFalse( $result['dry_run'] );
+				$this->assertSame( [], $result['updated'] );
+				$this->assertSame( [], $result['errors'] );
+				$this->assertSame( [ 'total_skipped' => 1, 'total_updated' => 0, 'total_errors' => 0 ], $result['summary'] );
+				$this->assertSame( [ $chosen ], array_column( $result['skipped'], 'slug' ) );
+				$this->assertSame( [ 'ignored_site_flag' ], array_column( $result['skipped'], 'reason' ) );
 
-				$result = $this->execute_ability( $ability, [ 'site_id_or_domain' => $free, 'slugs' => [ $held, $global, $chosen, 'missing' ] ] );
+				$result = $this->execute_ability( $ability, [ 'confirm' => true, 'site_id_or_domain' => $free, 'slugs' => [ $held, $global, $chosen, 'missing' ] ] );
 				$this->assertSame( [ [ 'site_id' => $free, 'what' => 'upgradeplugintheme', 'type' => $type, 'list' => $chosen ] ], $calls );
 				$this->assertNotWPError( $result );
 				$this->assertSame( [ $chosen ], array_column( $result['updated'], 'slug' ) );
 				$this->assertSame( [], $result['errors'] );
-				$this->assertSame( [ 'total_updated' => 1, 'total_errors' => 0 ], $result['summary'] );
+				$this->assertSame( [ 'total_skipped' => 2, 'total_updated' => 1, 'total_errors' => 0 ], $result['summary'] );
 
 				$calls  = [];
-				$result = $this->execute_ability( $ability, [ 'site_id_or_domain' => $free ] );
+				$result = $this->execute_ability( $ability, [ 'confirm' => true, 'site_id_or_domain' => $free ] );
 				$this->assertSame( [ [ 'site_id' => $free, 'what' => 'upgradeplugintheme', 'type' => $type, 'list' => $other ] ], $calls );
 				$this->assertNotWPError( $result );
 				$this->assertSame( [ $other ], array_column( $result['updated'], 'slug' ) );
@@ -1963,6 +1989,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-plugins-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -1986,6 +2013,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-plugins-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -2030,6 +2058,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-themes-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -2129,6 +2158,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-themes-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -2152,6 +2182,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-themes-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -2196,6 +2227,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-translations-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -2295,6 +2327,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-translations-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -2318,6 +2351,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-site-translations-v1', [
+			'confirm'             => true,
 			'site_id_or_domain' => $site_id,
 		] );
 
@@ -2362,6 +2396,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-all-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $site_id ],
 		] );
 
@@ -2432,6 +2467,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->set_current_user_as_admin();
 
 		$result = $this->execute_ability( 'mainwp/update-all-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [],
 		] );
 
@@ -2467,6 +2503,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 			}
 
 			$result = $this->execute_ability( 'mainwp/update-all-v1', [
+				'confirm'             => true,
 				'site_ids_or_domains' => $site_ids,
 			] );
 
@@ -2522,6 +2559,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 
 		// Request only plugins.
 		$result = $this->execute_ability( 'mainwp/update-all-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $site_id ],
 			'types'               => [ 'plugins' ],
 		] );
@@ -2556,6 +2594,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-all-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $outdated_id ],
 		] );
 
@@ -2595,6 +2634,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-all-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $online_id, $offline_id ],
 		] );
 
@@ -2632,6 +2672,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		$result = $this->execute_ability( 'mainwp/update-all-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ $offline_id ],
 		] );
 
@@ -2662,6 +2703,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->set_current_user_as_admin();
 
 		$result = $this->execute_ability( 'mainwp/update-all-v1', [
+			'confirm'             => true,
 			'site_ids_or_domains' => [ 'nonexistent-site.invalid' ],
 		] );
 
@@ -3178,4 +3220,679 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotWPError( $remove_result );
 		$this->assertTrue( $remove_result['success'] );
 	}
+
+	/** Record child dispatches using the #298 recorder's fields. */
+	private function &record_update_calls(): array {
+		$calls = [];
+		add_filter( 'mainwp_fetch_url_authed_pre', static function ( $result, $website, $what, $params ) use ( &$calls ) {
+			$calls[] = [ 'site_id' => (int) $website->id, 'what' => $what, 'type' => $params['type'] ?? '', 'list' => $params['list'] ?? '' ];
+			return 'upgrade' === $what ? [ 'upgrade' => 'SUCCESS' ] : [ 'upgrades' => array_fill_keys( explode( ',', $params['list'] ?? '' ), true ) ];
+		}, 10, 4 );
+		return $calls;
+	}
+
+	private function seed_gate_updates( int $site_id ): void {
+		$this->set_site_option( $site_id, 'wp_upgrades', wp_json_encode( [ 'current' => '6.8.3', 'new' => '6.9' ] ) );
+		$this->set_site_plugin_upgrades( $site_id, [ 'sample/plugin.php' => [ 'Name' => 'Sample Plugin', 'Version' => '1.0', 'update' => [ 'new_version' => '2.0' ] ] ] );
+		$this->set_site_theme_upgrades( $site_id, [ 'sample-theme' => [ 'Name' => 'Sample Theme', 'Version' => '1.0', 'update' => [ 'new_version' => '1.1' ] ] ] );
+		$this->set_site_translation_upgrades( $site_id, [ [ 'slug' => 'sample-translation', 'version' => '1.0', 'new_version' => '2.0' ] ] );
+	}
+
+	public static function gate_abilities(): array {
+		return [
+			'run' => [ 'mainwp/run-updates-v1', 'execute_run_updates', null ],
+			'all' => [ 'mainwp/update-all-v1', 'execute_update_all', null ],
+			'core' => [ 'mainwp/update-site-core-v1', 'execute_update_site_core', 'core' ],
+			'plugins' => [ 'mainwp/update-site-plugins-v1', 'execute_update_site_plugins', 'plugins' ],
+			'themes' => [ 'mainwp/update-site-themes-v1', 'execute_update_site_themes', 'themes' ],
+			'translations' => [ 'mainwp/update-site-translations-v1', 'execute_update_site_translations', 'translations' ],
+		];
+	}
+
+	/** @dataProvider gate_abilities */
+	public function test_update_gate_neither_flag( $ability, $method, $type ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$calls = &$this->record_update_calls();
+		$result = $this->execute_ability( $ability, $type ? [ 'site_id_or_domain' => $site_id ] : [ 'site_ids_or_domains' => [ $site_id ] ] );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_confirmation_required', $result->get_error_code() );
+		$this->assertSame( 'Updates require confirm: true. Call with dry_run: true first to preview the plan.', $result->get_error_message() );
+		$this->assertSame( [ 'status' => 400 ], $result->get_error_data() );
+		$this->assertSame( [], $calls );
+	}
+
+	/** @dataProvider gate_abilities */
+	public function test_update_gate_both_flags( $ability, $method, $type ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$input = [ 'dry_run' => true, 'confirm' => true ];
+		$input[ $type ? 'site_id_or_domain' : 'site_ids_or_domains' ] = $type ? 999999 : [ 999999 ];
+		$result = MainWP_Abilities_Updates::$method( $input );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_invalid_input', $result->get_error_code() );
+		$this->assertSame( 'Cannot specify both dry_run and confirm.', $result->get_error_message() );
+		$this->assertSame( [ 'status' => 400 ], $result->get_error_data() );
+	}
+
+	public static function gate_empty_batch_inputs(): array {
+		$cases = [];
+		foreach ( [ 'execute_run_updates', 'execute_update_all' ] as $method ) {
+			foreach ( [ 'null' => null, 'empty' => [], 'false strings' => [ 'confirm' => 'false', 'dry_run' => '0' ] ] as $label => $input ) {
+				$cases[ $method . $label ] = [ $method, $input ];
+			}
+		}
+		return $cases;
+	}
+
+	/** @dataProvider gate_empty_batch_inputs */
+	public function test_update_gate_empty_batch_requires_confirmation( $method, $input ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$result = MainWP_Abilities_Updates::$method( $input );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_confirmation_required', $result->get_error_code() );
+		if ( null === $input || [] === $input ) {
+			$ability = wp_get_ability( 'execute_run_updates' === $method ? 'mainwp/run-updates-v1' : 'mainwp/update-all-v1' );
+			$result = $ability->execute( $input );
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_confirmation_required', $result->get_error_code() );
+		}
+
+	}
+
+	/** @dataProvider gate_abilities */
+	public function test_update_gate_schemas_and_annotations( $ability_name, $method, $type ) {
+		$this->skip_if_no_abilities_api();
+		$ability = wp_get_ability( $ability_name );
+		$schema = $ability->get_input_schema();
+		foreach ( [ 'confirm', 'dry_run' ] as $flag ) {
+			$this->assertSame( 'boolean', $schema['properties'][ $flag ]['type'] ?? null );
+			$this->assertFalse( $schema['properties'][ $flag ]['default'] );
+			$this->assertNotContains( $flag, $schema['required'] ?? [] );
+		}
+		$this->assertSame( $type ? 'object' : [ 'object', 'null' ], $schema['type'] );
+		$annotations = $ability->get_meta()['annotations'];
+		$this->assertTrue( $annotations['destructive'] );
+		$this->assertFalse( $annotations['readonly'] );
+		$this->assertFalse( $annotations['idempotent'] );
+		$this->assertStringStartsWith( 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user.', $annotations['instructions'] );
+		if ( ! $type ) {
+			$this->assertStringContainsString( 'Operations with >200 sites are automatically queued and return a job_id for status polling.', $annotations['instructions'] );
+		}
+	}
+
+	/** @dataProvider gate_abilities */
+	public function test_update_gate_preview_and_execution_validate( $ability_name, $method, $type ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->seed_gate_updates( $site_id );
+		$calls = &$this->record_update_calls();
+		$input = $type ? [ 'site_id_or_domain' => $site_id ] : [ 'site_ids_or_domains' => [ $site_id ] ];
+		$ability = wp_get_ability( $ability_name );
+		foreach ( [ 'dry_run', 'confirm' ] as $flag ) {
+			$result = $ability->execute( $input + [ $flag => true ] );
+			$this->assertNotWPError( $result, $ability_name . ' ' . $flag );
+			$this->assertTrue( rest_validate_value_from_schema( $result, $ability->get_output_schema() ) );
+			$matches = 0;
+			foreach ( $ability->get_output_schema()['oneOf'] as $branch ) {
+				$matches += true === rest_validate_value_from_schema( $result, $branch ) ? 1 : 0;
+			}
+			$this->assertSame( 1, $matches, 'Exactly one output branch must match.' );
+			if ( 'dry_run' === $flag ) {
+				$this->assertSame( [], $calls );
+				$this->assertTrue( $result['dry_run'] );
+				$this->assertSame( $type ? 1 : 4, $result['count'] );
+				$this->assertSame( $type ? [ rtrim( $type, 's' ) ] : [ 'core', 'plugin', 'theme', 'translation' ], array_column( $result['would_affect']['sites'][0]['items'], 'type' ) );
+				if ( 'mainwp/update-all-v1' === $ability_name || 'core' === $type ) {
+					$this->assertSame( [ false ], array_values( array_unique( array_column( $result['would_affect']['sites'][0]['items'], 'requested' ) ) ) );
+				}
+			} else {
+				$this->assertCount( $type ? 1 : 4, $calls );
+				$this->assertNotEmpty( $result['updated'] );
+			}
+		}
+		if ( ! $type ) {
+			$threshold = static function () { return 2; };
+			add_filter( 'mainwp_abilities_batch_threshold', $threshold );
+			try {
+				$ids = [ $site_id, $this->create_test_site(), $this->create_test_site() ];
+				$queued = $ability->execute( [ 'site_ids_or_domains' => $ids, 'confirm' => true ] );
+				$this->assertNotWPError( $queued );
+				$this->track_update_job( $queued['job_id'] );
+				$this->assertTrue( $queued['queued'] );
+				$this->assertTrue( rest_validate_value_from_schema( $queued, $ability->get_output_schema() ) );
+				$matches = 0;
+				foreach ( $ability->get_output_schema()['oneOf'] as $branch ) {
+					$matches += true === rest_validate_value_from_schema( $queued, $branch ) ? 1 : 0;
+				}
+				$this->assertSame( 1, $matches, 'Exactly one branch must match a queued execution result.' );
+			} finally {
+				remove_filter( 'mainwp_abilities_batch_threshold', $threshold );
+			}
+		}
+
+	}
+
+	public static function execution_skip_cases(): array {
+		$cases = [];
+		foreach ( [ 'run-updates', 'update-all' ] as $ability ) {
+			$cases[ $ability . '-plugin' ] = [ $ability, 'plugins', 'sample/plugin.php', 'Sample Plugin', '1.0', '2.0', 'ignored_site' ];
+			$cases[ $ability . '-theme' ] = [ $ability, 'themes', 'sample-theme', 'Sample Theme', '1.0', '1.1', 'ignored_global' ];
+			$cases[ $ability . '-core' ] = [ $ability, 'core', 'wordpress', 'WordPress', '6.8.3', '6.9', 'ignored_site_flag' ];
+		}
+		$cases['site-plugin'] = [ 'update-site-plugins', 'plugins', 'sample/plugin.php', 'Sample Plugin', '1.0', '2.0', 'ignored_site' ];
+		$cases['site-theme'] = [ 'update-site-themes', 'themes', 'sample-theme', 'Sample Theme', '1.0', '1.1', 'ignored_global' ];
+		return $cases;
+	}
+
+	/** @dataProvider execution_skip_cases */
+	public function test_update_execution_reports_held_items( $ability, $type, $slug, $name, $from, $to, $reason ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site( [ 'name' => 'Execution Hold Site', 'url' => 'https://execution-hold.example.org/' ] );
+		$this->seed_gate_updates( $site_id );
+		if ( 'ignored_site' === $reason ) {
+			$this->set_site_ignored_plugins( $site_id, [ $slug => 'Held' ] );
+		} elseif ( 'ignored_global' === $reason ) {
+			$extension = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+			MainWP_DB_Common::instance()->update_user_extension( [ 'userid' => $extension->userid, 'ignored_themes' => wp_json_encode( [ $slug => 'Held' ] ) ] );
+		} else {
+			MainWP_DB::instance()->update_website_values( $site_id, [ 'is_ignoreCoreUpdates' => 1 ] );
+		}
+		$requested = 'update-all' !== $ability;
+		$input = [ 'site_ids_or_domains' => [ $site_id ], 'types' => [ $type ] ];
+		if ( 'run-updates' === $ability ) {
+			$input['specific_items'] = [ $slug ];
+		} elseif ( 0 === strpos( $ability, 'update-site-' ) ) {
+			$input = [ 'site_id_or_domain' => $site_id, 'slugs' => [ $slug ] ];
+		}
+		$calls = &$this->record_update_calls();
+		$result = $this->execute_ability( 'mainwp/' . $ability . '-v1', $input + [ 'confirm' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assertArrayHasKey( 'skipped', $result );
+		$this->assertSame( [ [
+			'site_id' => $site_id, 'site_url' => 'https://execution-hold.example.org/', 'site_name' => 'Execution Hold Site',
+			'type' => rtrim( $type, 's' ), 'slug' => $slug, 'name' => $name, 'from' => $from, 'to' => $to,
+			'requested' => $requested, 'reason' => $reason,
+		] ], $result['skipped'] );
+		$this->assertFalse( $result['dry_run'] );
+		$this->assertSame( 1, $result['summary']['total_skipped'] );
+		$this->assertSame( 0, $result['summary']['total_updated'] );
+		$this->assertSame( [], $calls );
+		$this->assert_execution_output_validates( 'mainwp/' . $ability . '-v1', $result );
+	}
+
+	private function assert_execution_output_validates( string $ability_name, array $result ): void {
+		$schema = wp_get_ability( $ability_name )->get_output_schema();
+		$this->assertTrue( rest_validate_value_from_schema( $result, $schema ) );
+		$matches = 0;
+		foreach ( $schema['oneOf'] as $branch ) {
+			$matches += true === rest_validate_value_from_schema( $result, $branch ) ? 1 : 0;
+		}
+		$this->assertSame( 1, $matches, 'Exactly one execution branch must match.' );
+		$missing = $result;
+		unset( $missing['skipped'] );
+		$this->assertWPError( rest_validate_value_from_schema( $missing, $schema ), 'Execution must require skipped.' );
+		if ( isset( $result['summary'] ) ) {
+			$missing = $result;
+			unset( $missing['summary']['total_skipped'] );
+			$this->assertWPError( rest_validate_value_from_schema( $missing, $schema ), 'Execution summaries must require total_skipped.' );
+		}
+	}
+
+	/** @dataProvider gate_abilities */
+	public function test_update_execution_envelopes_validate( $ability_name, $method, $type ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->seed_gate_updates( $site_id );
+		$calls = &$this->record_update_calls();
+		$input = $type ? [ 'site_id_or_domain' => $site_id ] : [ 'site_ids_or_domains' => [ $site_id ] ];
+		$result = $this->execute_ability( $ability_name, $input + [ 'confirm' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assertArrayHasKey( 'dry_run', $result );
+		$this->assertFalse( $result['dry_run'] );
+		$this->assertSame( [], $result['skipped'] );
+		$this->assertSame( 0, $result['summary']['total_skipped'] );
+		$this->assertCount( $type ? 1 : 4, $calls );
+		$this->assert_execution_output_validates( $ability_name, $result );
+		if ( 'core' !== $type ) {
+			$empty = $this->execute_ability( $ability_name, $input + [ 'confirm' => true ] );
+			$this->assertNotWPError( $empty );
+			$this->assertFalse( $empty['dry_run'] );
+			$this->assertSame( [], $empty['skipped'] );
+			$this->assertSame( 0, $empty['summary']['total_skipped'] );
+			$this->assert_execution_output_validates( $ability_name, $empty );
+		}
+	}
+
+	public static function queued_execution_abilities(): array {
+		return [ [ 'mainwp/run-updates-v1' ], [ 'mainwp/update-all-v1' ] ];
+	}
+
+	/** @dataProvider queued_execution_abilities */
+	public function test_update_queued_execution_envelopes_validate( $ability_name ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->seed_gate_updates( $site_id );
+		$this->set_site_ignored_plugins( $site_id, [ 'sample/plugin.php' => 'Held' ] );
+		$calls = &$this->record_update_calls();
+		$threshold = static function () { return 1; };
+		add_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		try {
+			$result = $this->execute_ability( $ability_name, [ 'site_ids_or_domains' => [ $site_id, $this->create_test_site() ], 'types' => [ 'plugins' ], 'confirm' => true ] );
+			$this->assertNotWPError( $result );
+			$this->track_update_job( $result['job_id'] );
+			$this->assertArrayNotHasKey( 'skipped', $result );
+			$this->assertArrayNotHasKey( 'unchanged', $result );
+			$this->assertFalse( $result['dry_run'] );
+			$this->assertSame( [], $calls );
+			$job = get_transient( 'mainwp_update_job_' . $result['job_id'] );
+			$this->assertEmpty( $job['skipped'] ?? [] );
+			$schema = wp_get_ability( $ability_name )->get_output_schema();
+			$this->assertTrue( rest_validate_value_from_schema( $result, $schema ) );
+			$matches = 0;
+			foreach ( $schema['oneOf'] as $branch ) {
+				$matches += true === rest_validate_value_from_schema( $result, $branch ) ? 1 : 0;
+			}
+			$this->assertSame( 1, $matches, 'Exactly one execution branch must match.' );
+			foreach ( [ 'skipped', 'unchanged' ] as $property ) {
+				$this->assertArrayNotHasKey( $property, $schema['oneOf'][1]['properties'] );
+				$this->assertNotContains( $property, $schema['oneOf'][1]['required'] );
+			}
+		} finally {
+			remove_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		}
+	}
+
+	public static function gate_skip_cases(): array {
+		$cases = [];
+		foreach ( [ 'core' => 'wordpress', 'plugins' => 'sample/plugin.php', 'themes' => 'sample-theme' ] as $type => $slug ) {
+			foreach ( [ 'ignored_site', 'ignored_global', 'ignored_site_flag' ] as $reason ) {
+				foreach ( [ 'all_versions', 'target' ] as $version ) {
+					$cases[ $type . '-' . $reason . '-' . $version ] = [ $type, $slug, $reason, $version ];
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/** @dataProvider gate_skip_cases */
+	public function test_update_gate_skip_reasons_and_requested( $type, $slug, $reason, $version ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$flag = [ 'core' => 'is_ignoreCoreUpdates', 'plugins' => 'is_ignorePluginUpdates', 'themes' => 'is_ignoreThemeUpdates' ][ $type ];
+		$site_id = $this->create_test_site( [ $flag => 1 ] );
+		$this->seed_gate_updates( $site_id );
+		$target = [ 'core' => '6.9', 'plugins' => '2.0', 'themes' => '1.1' ][ $type ];
+		$hold = [ 'ignored_versions' => [ 'target' === $version ? $target : $version ] ];
+		$hold = 'core' === $type ? $hold : [ $slug => $hold ];
+		$column = 'core' === $type ? 'ignored_wp_upgrades' : 'ignored_' . $type;
+		$extension = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+		if ( 'ignored_site' === $reason ) {
+			if ( 'core' === $type ) {
+				$this->set_site_option( $site_id, $column, wp_json_encode( $hold ) );
+			} elseif ( 'plugins' === $type ) {
+				$this->set_site_ignored_plugins( $site_id, $hold );
+			} else {
+				$this->set_site_ignored_themes( $site_id, $hold );
+			}
+		}
+		if ( 'ignored_site_flag' !== $reason ) {
+			MainWP_DB_Common::instance()->update_user_extension( [ 'userid' => $extension->userid, $column => wp_json_encode( $hold ) ] );
+		}
+		$result = $this->execute_ability( 'mainwp/run-updates-v1', [ 'site_ids_or_domains' => [ $site_id ], 'types' => [ $type ], 'specific_items' => [ $slug, 'missing' ], 'dry_run' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assertSame( 0, $result['count'] );
+		$skipped = $result['would_affect']['sites'][0]['skipped'];
+		$this->assertCount( 1, $skipped );
+		$this->assertSame( $reason, $skipped[0]['reason'] );
+		$this->assertTrue( $skipped[0]['requested'] );
+		$this->assertSame( [ 'missing' ], $result['would_affect']['summary']['requested_not_found'] );
+		$alias = $this->execute_ability( 'mainwp/update-site-' . $type . '-v1', [ 'site_id_or_domain' => $site_id, 'dry_run' => true ] + ( 'core' === $type ? [] : [ 'slugs' => [ $slug, 'missing' ] ] ) );
+		$this->assertNotWPError( $alias );
+		$alias_skipped = $skipped;
+		if ( 'core' === $type ) {
+			$alias_skipped[0]['requested'] = false;
+		}
+		$this->assertSame( $alias_skipped, $alias['would_affect']['sites'][0]['skipped'] );
+		$all = $this->execute_ability( 'mainwp/update-all-v1', [ 'site_ids_or_domains' => [ $site_id ], 'types' => [ $type ], 'dry_run' => true ] );
+		$this->assertNotWPError( $all );
+		$this->assertFalse( $all['would_affect']['sites'][0]['skipped'][0]['requested'] );
+	}
+
+	public function test_update_gate_builder_matches_execution_filter() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site( [ 'is_ignoreThemeUpdates' => 1 ] );
+		$this->seed_gate_updates( $site_id );
+		$this->set_site_plugin_upgrades( $site_id, [
+			'free/free.php' => [ 'Version' => '1.0', 'update' => [ 'new_version' => '1.1' ] ],
+			'held/held.php' => [ 'Version' => '1.0', 'update' => [ 'new_version' => '1.1' ] ],
+			'global/global.php' => [ 'Version' => '1.0', 'update' => [ 'new_version' => '1.1' ] ],
+		] );
+		$this->set_site_ignored_plugins( $site_id, [ 'held/held.php' => 'Held' ] );
+		$extension = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+		$global = [ 'global/global.php' => [ 'ignored_versions' => [ '1.1' ] ] ];
+		MainWP_DB_Common::instance()->update_user_extension( [ 'userid' => $extension->userid, 'ignored_plugins' => wp_json_encode( $global ) ] );
+		$site = MainWP_Abilities_Util::resolve_site( $site_id );
+		$types = [ 'core', 'plugins', 'themes', 'translations' ];
+		$expected = MainWP_Abilities_Updates::get_site_updates( $site, $types, $global, [], [] );
+		foreach ( [ [], [ 'free/free.php', 'held/held.php', 'absent' ] ] as $selection ) {
+			$plan = MainWP_Abilities_Updates::build_update_plan( [ $site ], $types, $selection );
+			$actual = array_map( static function ( $item ) { return [ $item['type'], $item['slug'], $item['from'], $item['to'] ]; }, $plan['sites'][0]['items'] );
+			$eligible = array_values( array_filter( $expected, static function ( $item ) use ( $selection ) { return ! $selection || in_array( $item['slug'], $selection, true ); } ) );
+			$eligible = array_map( static function ( $item ) { return [ $item['type'], $item['slug'], $item['current_version'], $item['new_version'] ]; }, $eligible );
+			$this->assertSame( $eligible, $actual );
+		}
+	}
+
+	public static function gate_major_cases(): array {
+		return [
+			'core major' => [ 'core', '6.8.3', '6.9', true ], 'core minor' => [ 'core', '6.8.3', '6.8.4', false ],
+			'plugin major' => [ 'plugins', '1.9', '2.0', true ], 'plugin minor' => [ 'plugins', '1.0', '1.1', false ],
+			'theme major' => [ 'themes', '1.9', '2.0', true ], 'theme minor' => [ 'themes', '1.0', '1.1', false ],
+			'translation' => [ 'translations', '1.0', '2.0', false ],
+			'core unknown' => [ 'core', '', '6.9', null ], 'plugin unknown' => [ 'plugins', 'dev', '2.0', null ],
+			'theme unknown' => [ 'themes', '1.0', '', null ], 'no leading number' => [ 'plugins', '1.0', 'v2.0', null ],
+		];
+	}
+
+	/** @dataProvider gate_major_cases */
+	public function test_update_gate_major_versions( $type, $from, $to, $major ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		if ( 'core' === $type ) {
+			$this->set_site_option( $site_id, 'wp_upgrades', wp_json_encode( [ 'current' => $from, 'new' => $to ] ) );
+		} elseif ( 'plugins' === $type ) {
+			$this->set_site_plugin_upgrades( $site_id, [ 'slug' => [ 'Version' => $from, 'new_version' => $to ] ] );
+		} elseif ( 'themes' === $type ) {
+			$this->set_site_theme_upgrades( $site_id, [ 'slug' => [ 'Version' => $from, 'new_version' => $to ] ] );
+		} else {
+			$this->set_site_translation_upgrades( $site_id, [ [ 'slug' => 'slug', 'version' => $from, 'new_version' => $to ] ] );
+		}
+		$result = $this->execute_ability( 'mainwp/run-updates-v1', [ 'site_ids_or_domains' => [ $site_id ], 'types' => [ $type ], 'dry_run' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assertSame( $major, $result['would_affect']['sites'][0]['items'][0]['flags']['major'] );
+		$this->assertSame( $major, $result['would_affect']['by_item'][0]['flags']['major'] );
+		$this->assertSame( true === $major, $result['would_affect']['summary']['has_major'] );
+		$this->assertSame( null === $major, $result['would_affect']['summary']['has_unknown_version'] );
+	}
+
+	public function test_update_gate_site_count_excludes_idle_and_held_sites() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$planned = $this->create_test_site();
+		$idle = $this->create_test_site();
+		$held = $this->create_test_site();
+		$update = [ 'sample/plugin.php' => [ 'Name' => 'Sample Plugin', 'Version' => '1.0', 'new_version' => '1.1' ] ];
+		$this->set_site_plugin_upgrades( $planned, $update );
+		$this->set_site_plugin_upgrades( $held, $update );
+		$this->set_site_ignored_plugins( $held, [ 'sample/plugin.php' => 'Held' ] );
+		$threshold = static function () { return 2; };
+		add_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		try {
+			$result = $this->execute_ability( 'mainwp/run-updates-v1', [ 'site_ids_or_domains' => [ $planned, $idle, $held ], 'types' => [ 'plugins' ], 'dry_run' => true ] );
+			$this->assertNotWPError( $result );
+			$this->assertSame( 1, $result['would_affect']['summary']['site_count'] );
+			$this->assertSame( 1, $result['count'] );
+			$this->assertSame( 1, $result['would_affect']['summary']['skipped_count'] );
+			$this->assertTrue( $result['would_affect']['summary']['queued'] );
+			$this->assertSame( [ $planned, $held ], array_column( $result['would_affect']['sites'], 'site_id' ) );
+		} finally {
+			remove_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		}
+	}
+
+	public function test_update_gate_aggregation_order_truncation_and_warnings() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$ids = [];
+		foreach ( [ [ '1.0', '1.1' ], [ 'dev', '1.2' ], [ '1.0', '2.0' ] ] as $versions ) {
+			$id = $this->create_test_site();
+			$ids[] = $id;
+			$this->seed_gate_updates( $id );
+			$this->set_site_plugin_upgrades( $id, [ 'z' => [ 'Version' => '1.0', 'new_version' => '1.1' ], 'a' => [ 'Version' => $versions[0], 'new_version' => $versions[1] ] ] );
+		}
+		$threshold = static function () { return 2; };
+		add_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		try {
+			$result = $this->execute_ability( 'mainwp/run-updates-v1', [ 'site_ids_or_domains' => $ids, 'dry_run' => true ] );
+			$this->assertNotWPError( $result );
+			$plan = $result['would_affect'];
+			$this->assertSame( array_slice( $ids, 0, 2 ), array_column( $plan['sites'], 'site_id' ) );
+			$this->assertSame( [ 'wordpress', 'a', 'z', 'sample-theme', 'sample-translation' ], array_column( $plan['sites'][0]['items'], 'slug' ) );
+			$this->assertSame( [ 'wordpress', 'a', 'z', 'sample-theme', 'sample-translation' ], array_column( $plan['by_item'], 'slug' ) );
+			$this->assertSame( 15, $result['count'] );
+			$this->assertSame( 3, $plan['summary']['site_count'] );
+			$this->assertGreaterThan( count( $plan['sites'] ), $plan['summary']['site_count'] );
+			$this->assertTrue( $plan['summary']['queued'] );
+			$this->assertTrue( $plan['summary']['truncated'] );
+			$this->assertTrue( $plan['summary']['has_unknown_version'] );
+			$this->assertSame( [ '1.1', '1.2', '2.0' ], $plan['by_item'][1]['to'] );
+			$this->assertTrue( $plan['by_item'][1]['flags']['major'] );
+			$this->assertSame( 3, $plan['by_item'][1]['site_count'] );
+			$this->assertSame( [
+				'The plan includes WordPress core updates.', 'The plan includes a major version change.',
+				'More than 2 sites are selected, so the updates will run as a background job.',
+				'The site list is limited to the first 2 sites. by_item and summary cover every site.',
+			], $result['warnings'] );
+			$unknown = $this->execute_ability( 'mainwp/run-updates-v1', [ 'site_ids_or_domains' => array_slice( $ids, 0, 2 ), 'types' => [ 'plugins' ], 'dry_run' => true ] );
+			$this->assertNull( $unknown['would_affect']['by_item'][0]['flags']['major'] );
+			$all = $this->execute_ability( 'mainwp/update-all-v1', [ 'dry_run' => true ] );
+			$this->assertTrue( $all['would_affect']['summary']['all_sites'] );
+			$this->assertContains( 'No sites were named, so the plan covers every site you can access.', $all['warnings'] );
+		} finally {
+			remove_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		}
+	}
+
+	public static function gate_preview_side_effect_cases(): array {
+		$cases = [];
+		foreach ( self::gate_abilities() as $label => $args ) {
+			$cases[ $label . '-below' ] = array_merge( $args, [ 1 ] );
+			if ( null === $args[2] ) { $cases[ $label . '-above' ] = array_merge( $args, [ 3 ] ); }
+		}
+		return $cases;
+	}
+
+	/** @dataProvider gate_preview_side_effect_cases */
+	public function test_update_gate_preview_touches_nothing( $ability, $method, $type, $site_count ) {
+		$this->skip_if_no_abilities_api();
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$ids = [];
+		foreach ( range( 1, $site_count ) as $i ) {
+			$id = $this->create_test_site();
+			$ids[] = $id;
+			$this->seed_gate_updates( $id );
+		}
+		$calls = &$this->record_update_calls();
+		$filter_calls = 0;
+		$filter = static function ( $result ) use ( &$filter_calls ) { ++$filter_calls; return $result; };
+		$threshold = static function () { return 2; };
+		add_filter( 'mainwp_run_update_result', $filter );
+		add_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		$hooks = [ 'mainwp_before_wp_update', 'mainwp_after_wp_update', 'mainwp_after_upgrade_wp_success', 'mainwp_before_plugin_theme_translation_update', 'mainwp_after_plugin_theme_translation_update' ];
+		$before_actions = array_map( 'did_action', $hooks );
+		$before_cron = _get_cron_array();
+		$snapshot = function () use ( $wpdb ) {
+			return [ $wpdb->get_results( "SELECT id, plugin_upgrades, theme_upgrades, translation_upgrades FROM {$wpdb->prefix}mainwp_wp ORDER BY id", ARRAY_A ), $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}mainwp_wp_options ORDER BY wpid, name", ARRAY_A ) ];
+		};
+		$before = $snapshot();
+		$this->assertFalse( wp_next_scheduled( 'mainwp_process_update_job' ) );
+		try {
+			$result = MainWP_Abilities_Updates::$method( ( $type ? [ 'site_id_or_domain' => $ids[0] ] : [ 'site_ids_or_domains' => $ids ] ) + [ 'dry_run' => true ] );
+			if ( is_array( $result ) && isset( $result['job_id'] ) ) { $this->track_update_job( $result['job_id'] ); }
+			$this->assertSame( [], $calls, 'A preview must not dispatch to Child.' );
+			$this->assertSame( 0, $filter_calls, 'A preview must not filter execution results.' );
+			$this->assertSame( $before, $snapshot(), 'Upgrade columns and site options must stay unchanged.' );
+			$this->assertSame( $before_actions, array_map( 'did_action', $hooks ) );
+			$this->assertSame( $before_cron, _get_cron_array(), 'A preview must not schedule a job with any event arguments.' );
+			$this->assertFalse( wp_next_scheduled( 'mainwp_process_update_job' ) );
+			$this->assertSame( [], $wpdb->get_col( "SELECT option_name FROM {$wpdb->options} WHERE option_name LIKE '_transient_mainwp_update_job_%'" ) );
+			$this->assertNotWPError( $result );
+			$this->assertSame( $site_count > 2, $result['would_affect']['summary']['queued'] );
+		} finally {
+			remove_filter( 'mainwp_run_update_result', $filter );
+			remove_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		}
+	}
+
+	/** @dataProvider gate_abilities */
+	public function test_update_gate_reresolves_versions_and_holds( $ability, $method, $type ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$input = ( $type ? [ 'site_id_or_domain' => $site_id ] : [ 'site_ids_or_domains' => [ $site_id ], 'types' => [ 'plugins' ] ] );
+		$this->seed_gate_updates( $site_id );
+		$calls = &$this->record_update_calls();
+		$preview = $this->execute_ability( $ability, $input + [ 'dry_run' => true ] );
+		$this->assertNotWPError( $preview );
+		$this->assertSame( [], $calls );
+		if ( 'core' === $type ) {
+			$this->set_site_option( $site_id, 'wp_upgrades', wp_json_encode( [ 'current' => '6.8.3', 'new' => '7.0' ] ) );
+		} elseif ( 'themes' === $type ) {
+			$this->set_site_theme_upgrades( $site_id, [ 'sample-theme' => [ 'Version' => '1.0', 'new_version' => '7.0' ] ] );
+		} elseif ( 'translations' === $type ) {
+			$this->set_site_translation_upgrades( $site_id, [ [ 'slug' => 'sample-translation', 'version' => '1.0', 'new_version' => '7.0' ] ] );
+		} else {
+			$this->set_site_plugin_upgrades( $site_id, [ 'sample/plugin.php' => [ 'Version' => '1.0', 'new_version' => '7.0' ] ] );
+		}
+		$result = $this->execute_ability( $ability, $input + [ 'confirm' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assertSame( '7.0', 'core' === $type ? $result['updated']['new_version'] : $result['updated'][0]['new_version'] );
+		if ( 'translations' === $type ) { return; }
+		$this->seed_gate_updates( $site_id );
+		$this->assertNotWPError( $this->execute_ability( $ability, $input + [ 'dry_run' => true ] ) );
+		if ( 'core' === $type ) {
+			$this->set_site_option( $site_id, 'ignored_wp_upgrades', wp_json_encode( [ 'ignored_versions' => [ 'all_versions' ] ] ) );
+		} elseif ( 'themes' === $type ) {
+			$this->set_site_ignored_themes( $site_id, [ 'sample-theme' => 'Held' ] );
+		} else {
+			$this->set_site_ignored_plugins( $site_id, [ 'sample/plugin.php' => 'Held' ] );
+		}
+		$before = count( $calls );
+		$held = $this->execute_ability( $ability, $input + [ 'confirm' => true ] );
+		$this->assertCount( $before, $calls, 'A hold added after preview must be honoured.' );
+		if ( 'core' === $type ) {
+			$this->assertWPError( $held );
+			$this->assertSame( 'mainwp_no_updates', $held->get_error_code() );
+		} else {
+			$this->assertNotWPError( $held );
+			$this->assertSame( [], $held['updated'] );
+		}
+	}
+
+	/** @dataProvider gate_abilities */
+	public function test_update_gate_empty_and_unavailable_sites( $ability, $method, $type ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$empty = $this->create_test_site();
+		$offline = $this->create_test_site( [ 'offline_check_result' => -1 ] );
+		$outdated = $this->create_test_site( [ 'version' => '1.0' ] );
+		foreach ( [ $offline => 'mainwp_site_offline', $outdated => 'mainwp_child_outdated', $empty => null ] as $id => $code ) {
+			$result = $this->execute_ability( $ability, ( $type ? [ 'site_id_or_domain' => $id ] : [ 'site_ids_or_domains' => [ $id ] ] ) + [ 'dry_run' => true ] );
+			$this->assertNotWPError( $result );
+			$this->assertSame( 0, $result['count'] );
+			$this->assertSame( [], $result['would_affect']['sites'] );
+			$this->assertSame( 0, $result['would_affect']['summary']['site_count'] );
+			$this->assertSame( [], $result['would_affect']['summary']['requested_not_found'] );
+			$this->assertSame( $code ? [ $code ] : [], array_column( $result['errors'], 'code' ) );
+			$this->assertTrue( rest_validate_value_from_schema( $result, wp_get_ability( $ability )->get_output_schema() ) );
+		}
+	}
+
+	public function test_update_gate_preview_does_not_create_global_settings() {
+		$this->skip_if_no_abilities_api();
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->seed_gate_updates( $site_id );
+		$this->set_site_ignored_plugins( $site_id, [ 'sample/plugin.php' => 'Held' ] );
+		// The shared helper's constructor creates the row on first use; build it first so this pins the builder's own read.
+		\MainWP\Dashboard\MainWP_Common_Functions::instance();
+		$table = MainWP_DB_Common::instance()->get_table_name( 'users' );
+		$wpdb->delete( $table, [ 'userid' => 0 ], [ '%d' ] );
+		$before = $wpdb->get_results( "SELECT * FROM {$table} ORDER BY userid", ARRAY_A );
+		$result = $this->execute_ability( 'mainwp/run-updates-v1', [ 'site_ids_or_domains' => [ $site_id ], 'dry_run' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assertSame( 1, $result['would_affect']['summary']['skipped_count'] );
+		$this->assertSame( $before, $wpdb->get_results( "SELECT * FROM {$table} ORDER BY userid", ARRAY_A ), 'The plan builder must not create a missing global settings row.' );
+	}
+
+	public function test_update_gate_translation_uses_child_version_as_target() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->set_site_translation_upgrades( $site_id, [
+			[ 'type' => 'core', 'slug' => 'default', 'language' => 'de_DE', 'version' => '6.9', 'name' => 'WordPress (de_DE)' ],
+			[ 'type' => 'core', 'slug' => 'default', 'language' => 'fr_FR', 'version' => '6.9', 'name' => 'WordPress (fr_FR)' ],
+		] );
+		$result = $this->execute_ability( 'mainwp/update-site-translations-v1', [ 'site_id_or_domain' => $site_id, 'dry_run' => true ] );
+		$this->assertNotWPError( $result );
+		$item = $result['would_affect']['sites'][0]['items'][0];
+		$this->assertSame( [ '', '6.9' ], [ $item['from'], $item['to'] ] );
+		$this->assertSame( [ '6.9' ], $result['would_affect']['by_item'][0]['to'] );
+		$this->assertSame( 1, $result['would_affect']['by_item'][0]['site_count'] );
+		$this->record_update_calls();
+		$executed = $this->execute_ability( 'mainwp/update-site-translations-v1', [ 'site_id_or_domain' => $site_id, 'confirm' => true ] );
+		$this->assertNotWPError( $executed );
+		$this->assertSame( [ '', '6.9' ], [ $executed['updated'][0]['old_version'], $executed['updated'][0]['new_version'] ] );
+	}
+
+	public function test_update_gate_run_updates_preview_and_execution_share_child_floor() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site( [ 'version' => '4.0' ] );
+		$this->set_site_plugin_upgrades( $site_id, [ 'sample/plugin.php' => [ 'Name' => 'Sample Plugin', 'Version' => '1.0', 'update' => [ 'new_version' => '1.1' ] ] ] );
+		$calls = &$this->record_update_calls();
+		$input = [ 'site_ids_or_domains' => [ $site_id ], 'types' => [ 'plugins' ] ];
+		$preview = $this->execute_ability( 'mainwp/run-updates-v1', $input + [ 'dry_run' => true ] );
+		$this->assertNotWPError( $preview );
+		$this->assertSame( 1, $preview['count'] );
+		$this->assertSame( [], $preview['errors'] );
+		$result = $this->execute_ability( 'mainwp/run-updates-v1', $input + [ 'confirm' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assertSame( [], array_column( $result['errors'], 'code' ) );
+		$this->assertSame( [ 'upgradeplugintheme' ], array_column( $calls, 'what' ) );
+	}
+
+	public function test_update_gate_preview_resolution_and_access_errors() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$deny = static function () { return false; };
+		add_filter( 'mainwp_check_site_access', $deny );
+		try {
+			foreach ( self::gate_abilities() as [ $ability, $method, $type ] ) {
+				$result = MainWP_Abilities_Updates::$method( ( $type ? [ 'site_id_or_domain' => $site_id ] : [ 'site_ids_or_domains' => [ $site_id, 999999 ] ] ) + [ 'dry_run' => true ] );
+				if ( $type ) {
+					$this->assertWPError( $result );
+					$this->assertSame( 'mainwp_access_denied', $result->get_error_code() );
+					$missing = MainWP_Abilities_Updates::$method( [ 'site_id_or_domain' => 999999, 'dry_run' => true ] );
+					$this->assertWPError( $missing );
+					$this->assertSame( 'mainwp_site_not_found', $missing->get_error_code() );
+				} else {
+					$this->assertTrue( $result['dry_run'] );
+					$this->assertSame( 0, $result['count'] );
+					$this->assertCount( 2, $result['errors'] );
+					foreach ( $result['errors'] as $error ) {
+						$this->assertArrayHasKey( 'site_id', $error );
+						$this->assertArrayHasKey( 'site_url', $error );
+						$this->assertArrayHasKey( 'slug', $error );
+						$this->assertSame( 'site', $error['type'] );
+					}
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_check_site_access', $deny );
+		}
+	}
+
 }

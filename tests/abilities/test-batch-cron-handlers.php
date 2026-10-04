@@ -1061,7 +1061,7 @@ class MainWP_Abilities_Batch_Cron_Handlers_Test extends MainWP_Abilities_Test_Ca
 		$this->seed_update_job( $job_id, [ $site_id ], [ 'translations' ] );
 		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
 		$this->assertSame(
-			[ [ 'site_id' => $site_id, 'what' => 'upgradetranslation', 'type' => 'translation', 'list' => 'akismet,wordpress,twentytwentyfive' ] ],
+			[ [ 'site_id' => $site_id, 'what' => 'upgradetranslation', 'type' => 'translation', 'list' => 'akismet,twentytwentyfive,wordpress' ] ],
 			$calls
 		);
 
@@ -1076,6 +1076,85 @@ class MainWP_Abilities_Batch_Cron_Handlers_Test extends MainWP_Abilities_Test_Ca
 		$this->seed_update_job( $job_id, [ $site_id ], [ 'translations' ] );
 		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
 		$this->assertSame( [], $calls, 'A site without pending translations must not be called.' );
+	}
+
+	public function test_process_update_job_records_late_holds_and_completes() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$held = $this->create_test_site();
+		$mixed = $this->create_test_site();
+		$plugin = [ 'Name' => 'Plugin', 'Version' => '1.0', 'new_version' => '1.1' ];
+		$this->set_site_plugin_upgrades( $held, [ 'held/held.php' => $plugin ] );
+		$this->set_site_plugin_upgrades( $mixed, [ 'held/held.php' => $plugin, 'free/free.php' => $plugin ] );
+		$sites = [
+			\MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $held ),
+			\MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $mixed ),
+		];
+		$job_id = \MainWP\Dashboard\MainWP_Abilities_Util::queue_batch_updates( $sites, [ 'types' => [ 'plugins' ] ] );
+		$this->assertNotWPError( $job_id );
+		$this->track_update_job( $job_id );
+		$job = get_transient( 'mainwp_update_job_' . $job_id );
+		$this->assertEmpty( $job['skipped'] ?? [] );
+		foreach ( [ $held, $mixed ] as $site_id ) {
+			$this->set_site_ignored_plugins( $site_id, [ 'held/held.php' => 'Held' ] );
+		}
+		$calls = &$this->record_update_calls();
+		$chunk_size = static function () { return 1; };
+		add_filter( 'mainwp_abilities_cron_chunk_size', $chunk_size );
+		try {
+			wp_clear_scheduled_hook( 'mainwp_process_update_job', [ $job_id ] );
+			MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+			$job = get_transient( 'mainwp_update_job_' . $job_id );
+			$this->assertSame( [], $calls );
+			$this->assertSame( [], $job['updated'], 'A site with only held items must not count as updated.' );
+			$this->assertSame( [ $held ], $job['unchanged'] );
+			$this->assertSame( 'processing', $job['status'] );
+			$this->assertNotFalse( wp_next_scheduled( 'mainwp_process_update_job', [ $job_id ] ) );
+			wp_clear_scheduled_hook( 'mainwp_process_update_job', [ $job_id ] );
+			MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+			$job = get_transient( 'mainwp_update_job_' . $job_id );
+			$this->assertSame( [ [ 'site_id' => $mixed, 'what' => 'upgradeplugintheme', 'type' => 'plugin', 'list' => 'free/free.php' ] ], $calls );
+			$this->assertSame( [ $mixed ], $job['updated'] );
+			$this->assertSame( [ $held ], $job['unchanged'] );
+			$skipped = [
+				[ 'site_id' => $held, 'type' => 'plugin', 'slug' => 'held/held.php', 'reason' => 'ignored_site' ],
+				[ 'site_id' => $mixed, 'type' => 'plugin', 'slug' => 'held/held.php', 'reason' => 'ignored_site' ],
+			];
+			$this->assertSame( $skipped, $job['skipped'] );
+			$this->assertSame( 'completed', $job['status'] );
+			$this->assertSame( 2, $job['processed'] );
+			$this->assertFalse( wp_next_scheduled( 'mainwp_process_update_job', [ $job_id ] ), 'Completed jobs must not reschedule unchanged sites.' );
+			$status = $this->execute_ability( 'mainwp/get-batch-job-status-v1', [ 'job_id' => $job_id ] );
+			$this->assertNotWPError( $status );
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertSame( [ 'count' => 2, 'items' => $skipped ], $status['skipped'] );
+			$this->assertSame( 1, $status['unchanged'] );
+			$this->assertSame( 1, $status['succeeded'] );
+			$this->assertTrue( rest_validate_value_from_schema( $status, wp_get_ability( 'mainwp/get-batch-job-status-v1' )->get_output_schema() ) );
+		} finally {
+			remove_filter( 'mainwp_abilities_cron_chunk_size', $chunk_size );
+		}
+	}
+
+	public function test_update_job_status_reports_skipped_and_unchanged() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$job_id = 'update_' . wp_generate_uuid4();
+		$skipped = [ [ 'site_id' => 23, 'type' => 'theme', 'slug' => 'held-theme', 'reason' => 'ignored_global' ] ];
+		$this->seed_update_job( $job_id, [ 21, 22, 23 ], [ 'themes' ], [
+			'status' => 'completed', 'updated' => [ 21 ], 'unchanged' => [ 22, 23 ], 'skipped' => $skipped,
+			'processed' => 3, 'progress' => 100,
+		] );
+		$status = $this->execute_ability( 'mainwp/get-batch-job-status-v1', [ 'job_id' => $job_id ] );
+		$this->assertNotWPError( $status );
+		$this->assertArrayHasKey( 'skipped', $status );
+		$this->assertSame( [ 'count' => 1, 'items' => $skipped ], $status['skipped'] );
+		$this->assertSame( 2, $status['unchanged'] );
+		$this->assertSame( 1, $status['succeeded'] );
+		$schema = wp_get_ability( 'mainwp/get-batch-job-status-v1' )->get_output_schema();
+		$this->assertTrue( rest_validate_value_from_schema( $status, $schema ) );
+		unset( $status['skipped'] );
+		$this->assertWPError( rest_validate_value_from_schema( $status, $schema ) );
 	}
 
 	// =========================================================================
@@ -2131,7 +2210,7 @@ class MainWP_Abilities_Batch_Cron_Handlers_Test extends MainWP_Abilities_Test_Ca
 
 		$job = get_transient( 'mainwp_update_job_' . $job_id );
 
-		$this->assertContains( $in_scope, $job['updated'], 'The in-scope site must be processed.' );
+		$this->assertContains( $in_scope, $job['unchanged'], 'The in-scope site without pending updates must be processed.' );
 		$revoked = array_filter( $job['errors'], static fn( $e ) => 'access_revoked' === $e['code'] );
 		$this->assertCount( 1, $revoked, 'The out-of-scope site must be marked access_revoked.' );
 		$revoked_row = array_values( $revoked )[0];
@@ -2194,7 +2273,7 @@ class MainWP_Abilities_Batch_Cron_Handlers_Test extends MainWP_Abilities_Test_Ca
 		$this->assertSame( $owner_id, $observed_user_id, 'Site access must be checked as the job owner.' );
 		$job = get_transient( 'mainwp_update_job_' . $job_id );
 		$this->assertSame( 'completed', $job['status'], 'The job must finish under its owner.' );
-		$this->assertContains( $site_id, $job['updated'], 'The owned job must process its site.' );
+		$this->assertContains( $site_id, $job['unchanged'], 'The owned job must process its site without pending updates.' );
 	}
 
 	/**

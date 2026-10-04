@@ -216,6 +216,11 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 		$write_abilities = [
 			'mainwp/sync-sites-v1'          => true,  // Syncing same sites again has no additional effect.
 			'mainwp/run-updates-v1'         => false, // Each run may apply different updates.
+			'mainwp/update-all-v1'          => false,
+			'mainwp/update-site-core-v1'   => false,
+			'mainwp/update-site-plugins-v1' => false,
+			'mainwp/update-site-themes-v1'  => false,
+			'mainwp/update-site-translations-v1' => false,
 			'mainwp/set-ignored-updates-v1' => true,  // Ignoring same item again has no additional effect.
 		];
 
@@ -252,7 +257,11 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 
 			$annotations = $meta['annotations'];
 			$this->assertFalse( $annotations['readonly'], "Ability {$name} should not be readonly." );
-			$this->assertFalse( $annotations['destructive'], "Ability {$name} should not be destructive." );
+			$expected_destructive = in_array( $name, [
+				'mainwp/run-updates-v1', 'mainwp/update-all-v1', 'mainwp/update-site-core-v1',
+				'mainwp/update-site-plugins-v1', 'mainwp/update-site-themes-v1', 'mainwp/update-site-translations-v1',
+			], true );
+			$this->assertSame( $expected_destructive, $annotations['destructive'], "Ability {$name} destructive annotation should match its update behavior." );
 
 			// Check idempotent flag matches expected value.
 			if ( isset( $annotations['idempotent'] ) ) {

@@ -133,9 +133,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => 'Applies updates to child sites. Operations with >200 sites are automatically queued and return a job_id for status polling. Individual update failures do not fail the entire operation.',
+                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Operations with >200 sites are automatically queued and return a job_id for status polling. Individual update failures do not fail the entire operation.',
                         'readonly'     => false,
-                        'destructive'  => false,
+                        'destructive'  => true,
                         'idempotent'   => false,
                     ),
                 ),
@@ -249,9 +249,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => 'Updates WordPress core on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'core\'].',
+                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates WordPress core on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'core\'].',
                         'readonly'     => false,
-                        'destructive'  => false,
+                        'destructive'  => true,
                         'idempotent'   => false,
                     ),
                 ),
@@ -278,9 +278,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => 'Updates plugins on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'plugins\'].',
+                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates plugins on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'plugins\'].',
                         'readonly'     => false,
-                        'destructive'  => false,
+                        'destructive'  => true,
                         'idempotent'   => false,
                     ),
                 ),
@@ -307,9 +307,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => 'Updates themes on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'themes\'].',
+                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates themes on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'themes\'].',
                         'readonly'     => false,
-                        'destructive'  => false,
+                        'destructive'  => true,
                         'idempotent'   => false,
                     ),
                 ),
@@ -336,9 +336,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => 'Updates translations on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'translations\'].',
+                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates translations on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'translations\'].',
                         'readonly'     => false,
-                        'destructive'  => false,
+                        'destructive'  => true,
                         'idempotent'   => false,
                     ),
                 ),
@@ -452,9 +452,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => 'Applies all available updates (core, plugins, themes, translations) to specified sites or all sites. Operations with >200 sites are automatically queued and return a job_id for status polling.',
+                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Applies all available updates (core, plugins, themes, translations) to specified sites or all sites. Operations with >200 sites are automatically queued and return a job_id for status polling.',
                         'readonly'     => false,
-                        'destructive'  => false,
+                        'destructive'  => true,
                         'idempotent'   => false,
                     ),
                 ),
@@ -523,6 +523,16 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         return array(
             'type'                 => array( 'object', 'null' ),
             'properties'           => array(
+                'dry_run'             => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Preview the exact update plan without changing any site.', 'mainwp' ),
+                ),
+                'confirm'             => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Must be true to apply updates.', 'mainwp' ),
+                ),
                 'site_ids_or_domains' => array(
                     'type'        => 'array',
                     'description' => __( 'Sites to update. Empty array means all sites with available updates.', 'mainwp' ),
@@ -749,9 +759,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             'items'       => $error_item_schema,
         );
 
-        return array(
+        $schema = array(
             'type'        => 'object',
-            'description' => __( 'Response varies by operation mode. Immediate mode (≤200 sites) returns updated/errors/summary. Queued mode (>200 sites) returns queued/job_id/status_url/updates_queued/errors.', 'mainwp' ),
+            'description' => __( 'Response varies by mode. Preview (dry_run: true) returns dry_run, would_affect, count, warnings and errors and changes nothing. Immediate execution (200 sites or fewer) returns dry_run, skipped, updated, errors and summary. Queued execution (more than 200 sites) returns dry_run, queued, job_id, status_url, updates_queued and errors.', 'mainwp' ),
             'oneOf'       => array(
                 // Immediate execution response (≤ threshold sites).
                 array(
@@ -795,7 +805,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 // Queued execution response (> threshold sites).
                 array(
                     'type'        => 'object',
-                    'description' => __( 'Queued execution response for operations with >200 sites.', 'mainwp' ),
+                    'description' => __( 'Queued execution response for operations with more than 200 sites. Held items and unchanged sites are reported by get-batch-job-status-v1 once the job runs.', 'mainwp' ),
                     'properties'  => array(
                         'queued'         => array(
                             'type'        => 'boolean',
@@ -819,8 +829,12 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     ),
                     'required'    => array( 'queued', 'job_id', 'status_url', 'updates_queued', 'errors' ),
                 ),
+                self::get_update_preview_output_schema(),
             ),
         );
+        $schema['oneOf'][0] = self::add_update_execution_schema( $schema['oneOf'][0] );
+        $schema['oneOf'][1] = self::add_update_execution_schema( $schema['oneOf'][1], true );
+        return $schema;
     }
 
     /**
@@ -1035,6 +1049,16 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         return array(
             'type'                 => 'object',
             'properties'           => array(
+                'dry_run'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Preview the exact update plan without changing any site.', 'mainwp' ),
+                ),
+                'confirm'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Must be true to apply updates.', 'mainwp' ),
+                ),
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
                     'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
@@ -1051,7 +1075,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array
      */
     public static function get_update_site_core_output_schema(): array {
-        return array(
+        $execution_schema = array(
             'type'       => 'object',
             'properties' => array(
                 'updated' => array(
@@ -1077,6 +1101,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             ),
             'required'   => array( 'updated' ),
         );
+
+        return array(
+            'type'  => 'object',
+            'oneOf' => array( self::add_update_execution_schema( $execution_schema ), self::get_update_preview_output_schema() ),
+        );
     }
 
     /**
@@ -1088,6 +1117,16 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         return array(
             'type'                 => 'object',
             'properties'           => array(
+                'dry_run'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Preview the exact update plan without changing any site.', 'mainwp' ),
+                ),
+                'confirm'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Must be true to apply updates.', 'mainwp' ),
+                ),
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
                     'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
@@ -1151,7 +1190,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             'required'   => array( 'site_id', 'site_url', 'site_name', 'type', 'slug', 'code', 'message' ),
         );
 
-        return array(
+        $execution_schema = array(
             'type'       => 'object',
             'properties' => array(
                 'updated' => array(
@@ -1173,6 +1212,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             ),
             'required'   => array( 'updated', 'errors', 'summary' ),
         );
+
+        return array(
+            'type'  => 'object',
+            'oneOf' => array( self::add_update_execution_schema( $execution_schema ), self::get_update_preview_output_schema() ),
+        );
     }
 
     /**
@@ -1184,6 +1228,16 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         return array(
             'type'                 => 'object',
             'properties'           => array(
+                'dry_run'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Preview the exact update plan without changing any site.', 'mainwp' ),
+                ),
+                'confirm'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Must be true to apply updates.', 'mainwp' ),
+                ),
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
                     'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
@@ -1247,7 +1301,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             'required'   => array( 'site_id', 'site_url', 'site_name', 'type', 'slug', 'code', 'message' ),
         );
 
-        return array(
+        $execution_schema = array(
             'type'       => 'object',
             'properties' => array(
                 'updated' => array(
@@ -1269,6 +1323,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             ),
             'required'   => array( 'updated', 'errors', 'summary' ),
         );
+
+        return array(
+            'type'  => 'object',
+            'oneOf' => array( self::add_update_execution_schema( $execution_schema ), self::get_update_preview_output_schema() ),
+        );
     }
 
     /**
@@ -1280,6 +1339,16 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         return array(
             'type'                 => 'object',
             'properties'           => array(
+                'dry_run'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Preview the exact update plan without changing any site.', 'mainwp' ),
+                ),
+                'confirm'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Must be true to apply updates.', 'mainwp' ),
+                ),
                 'site_id_or_domain' => array(
                     'type'        => array( 'integer', 'string' ),
                     'description' => __( 'Site ID (numeric) or domain.', 'mainwp' ),
@@ -1343,7 +1412,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             'required'   => array( 'site_id', 'site_url', 'site_name', 'type', 'slug', 'code', 'message' ),
         );
 
-        return array(
+        $execution_schema = array(
             'type'       => 'object',
             'properties' => array(
                 'updated' => array(
@@ -1364,6 +1433,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
             ),
             'required'   => array( 'updated', 'errors', 'summary' ),
+        );
+
+        return array(
+            'type'  => 'object',
+            'oneOf' => array( self::add_update_execution_schema( $execution_schema ), self::get_update_preview_output_schema() ),
         );
     }
 
@@ -1487,6 +1561,16 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         return array(
             'type'                 => array( 'object', 'null' ),
             'properties'           => array(
+                'dry_run'             => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Preview the exact update plan without changing any site.', 'mainwp' ),
+                ),
+                'confirm'             => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => __( 'Must be true to apply updates.', 'mainwp' ),
+                ),
                 'site_ids_or_domains' => array(
                     'type'        => 'array',
                     'items'       => array(
@@ -1544,9 +1628,9 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             'items'       => $error_item_schema,
         );
 
-        return array(
+        $schema             = array(
             'type'        => 'object',
-            'description' => __( 'Response varies by operation mode. Immediate mode (≤200 sites) returns updated/errors/summary. Queued mode (>200 sites) returns queued/job_id/status_url/updates_queued/errors.', 'mainwp' ),
+            'description' => __( 'Response varies by mode. Preview (dry_run: true) returns dry_run, would_affect, count, warnings and errors and changes nothing. Immediate execution (200 sites or fewer) returns dry_run, skipped, updated, errors and summary. Queued execution (more than 200 sites) returns dry_run, queued, job_id, status_url, updates_queued and errors.', 'mainwp' ),
             'oneOf'       => array(
                 array(
                     'type'        => 'object',
@@ -1588,7 +1672,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
                 array(
                     'type'        => 'object',
-                    'description' => __( 'Queued execution response for operations with >200 sites.', 'mainwp' ),
+                    'description' => __( 'Queued execution response for operations with more than 200 sites. Held items and unchanged sites are reported by get-batch-job-status-v1 once the job runs.', 'mainwp' ),
                     'properties'  => array(
                         'queued'         => array(
                             'type'        => 'boolean',
@@ -1612,7 +1696,215 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     ),
                     'required'    => array( 'queued', 'job_id', 'status_url', 'updates_queued', 'errors' ),
                 ),
+                self::get_update_preview_output_schema(),
             ),
+        );
+        $schema['oneOf'][0] = self::add_update_execution_schema( $schema['oneOf'][0] );
+        $schema['oneOf'][1] = self::add_update_execution_schema( $schema['oneOf'][1], true );
+        return $schema;
+    }
+
+    /**
+     * Add skip reporting to an update execution schema.
+     *
+     * @param array $schema Execution schema.
+     * @param bool  $queued Whether execution queued a job.
+     * @return array
+     */
+    private static function add_update_execution_schema( array $schema, bool $queued = false ): array {
+        // WordPress does not enforce `const`; the branches stay exclusive through their required keys.
+        $schema['properties']['dry_run'] = array(
+            'type'  => 'boolean',
+            'const' => false,
+        );
+        $schema['required'][]            = 'dry_run';
+        if ( $queued ) {
+            return $schema;
+        }
+        $schema['required'][] = 'skipped';
+
+        $preview_schema  = self::get_update_preview_output_schema();
+        $site_properties = $preview_schema['properties']['would_affect']['properties']['sites']['items']['properties'];
+        $skip_schema     = $site_properties['skipped']['items'];
+        foreach ( array( 'site_id', 'site_url', 'site_name' ) as $key ) {
+            $skip_schema['properties'][ $key ] = $site_properties[ $key ];
+            $skip_schema['required'][]         = $key;
+        }
+        $schema['properties']['skipped'] = array(
+            'type'        => 'array',
+            'description' => __( 'Pending updates that were not sent because a hold applied, with the site each belongs to.', 'mainwp' ),
+            'items'       => $skip_schema,
+        );
+        if ( ! isset( $schema['properties']['summary'] ) ) {
+            $schema['properties']['summary'] = array(
+                'type'       => 'object',
+                'properties' => array(),
+                'required'   => array(),
+            );
+            $schema['required'][]            = 'summary';
+        }
+        $schema['properties']['summary']['properties']['total_skipped'] = array( 'type' => 'integer' );
+        $schema['properties']['summary']['required'][]                  = 'total_skipped';
+        return $schema;
+    }
+
+    /**
+     * Get the output schema shared by update previews.
+     *
+     * @return array
+     */
+    private static function get_update_preview_output_schema(): array {
+        $flags              = array(
+            'type'       => 'object',
+            'properties' => array(
+                'core'  => array(
+                    'type'        => 'boolean',
+                    'description' => __( 'True for a WordPress core update.', 'mainwp' ),
+                ),
+                'major' => array(
+                    'type'        => array( 'boolean', 'null' ),
+                    'description' => __( 'True when the first version number changes, or for WordPress core the first or second. Always false for translations. Null when either version cannot be parsed.', 'mainwp' ),
+                ),
+            ),
+            'required'   => array( 'core', 'major' ),
+        );
+        $item_properties    = array(
+            'type'      => array(
+                'type' => 'string',
+                'enum' => array( 'core', 'plugin', 'theme', 'translation' ),
+            ),
+            'slug'      => array( 'type' => 'string' ),
+            'name'      => array( 'type' => 'string' ),
+            'from'      => array( 'type' => 'string' ),
+            'to'        => array( 'type' => 'string' ),
+            'requested' => array(
+                'type'        => 'boolean',
+                'description' => __( 'True when the caller named this slug in specific_items or slugs.', 'mainwp' ),
+            ),
+        );
+        $item_schema        = array(
+            'type'       => 'object',
+            'properties' => $item_properties + array( 'flags' => $flags ),
+            'required'   => array( 'type', 'slug', 'name', 'from', 'to', 'requested', 'flags' ),
+        );
+        $skip_schema        = array(
+            'type'       => 'object',
+            'properties' => $item_properties + array(
+                'reason' => array(
+                    'type'        => 'string',
+                    'enum'        => array( 'ignored_site', 'ignored_global', 'ignored_site_flag' ),
+                    'description' => __( 'Which hold applies. ignored_site: the site\'s own ignore list. ignored_global: the global ignore list. ignored_site_flag: the site ignores every update of this type. The first matching layer wins, in that order.', 'mainwp' ),
+                ),
+            ),
+            'required'   => array( 'type', 'slug', 'name', 'from', 'to', 'reason', 'requested' ),
+        );
+        $summary_properties = array(
+            'site_count'          => array(
+                'type'        => 'integer',
+                'description' => __( 'Sites with at least one planned update, counted over every selected site even when sites is truncated.', 'mainwp' ),
+            ),
+            'item_count'          => array( 'type' => 'integer' ),
+            'skipped_count'       => array( 'type' => 'integer' ),
+            'all_sites'           => array( 'type' => 'boolean' ),
+            'queued'              => array( 'type' => 'boolean' ),
+            'truncated'           => array( 'type' => 'boolean' ),
+            'has_core'            => array( 'type' => 'boolean' ),
+            'has_major'           => array( 'type' => 'boolean' ),
+            'has_unknown_version' => array( 'type' => 'boolean' ),
+            'requested_not_found' => array(
+                'type'        => 'array',
+                'description' => __( 'Requested slugs with no pending update on any selected site. A held requested slug is not listed here; it appears in skipped.', 'mainwp' ),
+                'items'       => array( 'type' => 'string' ),
+            ),
+        );
+
+        return array(
+            'type'        => 'object',
+            'description' => __( 'Preview returned for dry_run: true. No site was changed.', 'mainwp' ),
+            'properties'  => array(
+                'dry_run'      => array(
+                    'type'  => 'boolean',
+                    'const' => true,
+                ),
+                'would_affect' => array(
+                    'type'       => 'object',
+                    'properties' => array(
+                        'sites'   => array(
+                            'type'  => 'array',
+                            'items' => array(
+                                'type'       => 'object',
+                                'properties' => array(
+                                    'site_id'   => array( 'type' => 'integer' ),
+                                    'site_url'  => array(
+                                        'type'   => 'string',
+                                        'format' => 'uri',
+                                    ),
+                                    'site_name' => array( 'type' => 'string' ),
+                                    'items'     => array(
+                                        'type'  => 'array',
+                                        'items' => $item_schema,
+                                    ),
+                                    'skipped'   => array(
+                                        'type'  => 'array',
+                                        'items' => $skip_schema,
+                                    ),
+                                ),
+                                'required'   => array( 'site_id', 'site_url', 'site_name', 'items', 'skipped' ),
+                            ),
+                        ),
+                        'by_item' => array(
+                            'type'        => 'array',
+                            'description' => __( 'Every planned update grouped by type and slug across all sites. Complete even when sites is truncated.', 'mainwp' ),
+                            'items'       => array(
+                                'type'       => 'object',
+                                'properties' => array(
+                                    'type'       => $item_properties['type'],
+                                    'slug'       => array( 'type' => 'string' ),
+                                    'name'       => array( 'type' => 'string' ),
+                                    'to'         => array(
+                                        'type'  => 'array',
+                                        'items' => array( 'type' => 'string' ),
+                                    ),
+                                    'site_count' => array( 'type' => 'integer' ),
+                                    'flags'      => $flags,
+                                ),
+                                'required'   => array( 'type', 'slug', 'name', 'to', 'site_count', 'flags' ),
+                            ),
+                        ),
+                        'summary' => array(
+                            'type'       => 'object',
+                            'properties' => $summary_properties,
+                            'required'   => array_keys( $summary_properties ),
+                        ),
+                    ),
+                    'required'   => array( 'sites', 'by_item', 'summary' ),
+                ),
+                'count'        => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Updates that would run. Equals summary.item_count.', 'mainwp' ),
+                ),
+                'warnings'     => array(
+                    'type'  => 'array',
+                    'items' => array( 'type' => 'string' ),
+                ),
+                'errors'       => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'       => 'object',
+                        'properties' => array(
+                            'site_id'   => array( 'type' => 'integer' ),
+                            'site_url'  => array( 'type' => 'string' ),
+                            'site_name' => array( 'type' => 'string' ),
+                            'type'      => array( 'type' => 'string' ),
+                            'slug'      => array( 'type' => 'string' ),
+                            'code'      => array( 'type' => 'string' ),
+                            'message'   => array( 'type' => 'string' ),
+                        ),
+                        'required'   => array( 'site_id', 'site_url', 'type', 'slug', 'code', 'message' ),
+                    ),
+                ),
+            ),
+            'required'    => array( 'dry_run', 'would_affect', 'count', 'warnings', 'errors' ),
         );
     }
 
@@ -1789,6 +2081,16 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
 
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        if ( $dry_run && $confirm ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'Cannot specify both dry_run and confirm.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $site_ids_or_domains = $input['site_ids_or_domains'] ?? array();
         $types               = $input['types'] ?? array();
         $specific_items      = $input['specific_items'] ?? array();
@@ -1822,6 +2124,24 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         // Check per-site ACLs and filter to allowed sites.
         $access_check = MainWP_Abilities_Util::check_batch_site_access( $site_ids_or_domains, $input );
 
+        if ( $dry_run ) {
+            return self::get_update_preview(
+                $access_check['allowed'],
+                $types,
+                $specific_items,
+                empty( $input['site_ids_or_domains'] ),
+                self::normalize_resolution_errors( $access_check['denied'] )
+            );
+        }
+
+        if ( ! $confirm ) {
+            return new \WP_Error(
+                'mainwp_confirmation_required',
+                __( 'Updates require confirm: true. Call with dry_run: true first to preview the plan.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $threshold = apply_filters( 'mainwp_abilities_batch_threshold', self::BATCH_THRESHOLD );
 
         if ( count( $access_check['allowed'] ) > $threshold ) {
@@ -1852,6 +2172,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             }
 
             return array(
+                'dry_run'        => false,
                 'queued'         => true,
                 'job_id'         => $job_id,
                 'status_url'     => rest_url( "mainwp/v2/jobs/{$job_id}" ),
@@ -1859,6 +2180,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'errors'         => $errors,
             );
         }
+
+        $skipped = self::get_execution_skipped( $access_check['allowed'], $types, $specific_items );
 
         // Immediate execution for ≤ BATCH_THRESHOLD sites.
         $updated       = array();
@@ -1916,8 +2239,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 continue;
             }
 
-            // Check child version before updates.
-            $version_check = MainWP_Abilities_Util::check_child_version( $site );
+            // Same floor as the plan builder, so a preview and its execution keep the same sites.
+            $version_check = MainWP_Abilities_Util::check_child_version( $site, '4.0' );
             if ( is_wp_error( $version_check ) ) {
                 $errors[] = array(
                     'site_id'  => (int) $site->id,
@@ -2039,9 +2362,12 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         return array(
+            'dry_run' => false,
+            'skipped' => $skipped,
             'updated' => $updated,
             'errors'  => $errors,
             'summary' => array(
+                'total_skipped' => count( $skipped ),
                 'total_updated' => count( $updated ),
                 'total_errors'  => count( $errors ),
                 'sites_updated' => count( $sites_updated ),
@@ -2409,6 +2735,16 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_update_site_core( array $input ) {
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        if ( $dry_run && $confirm ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'Cannot specify both dry_run and confirm.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $site_id_or_domain = $input['site_id_or_domain'];
 
         $site = MainWP_Abilities_Util::resolve_site( $site_id_or_domain );
@@ -2419,6 +2755,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
+        }
+
+        if ( $dry_run ) {
+            return self::get_update_preview( array( $site ), array( 'core' ), array() );
+        }
+
+        if ( ! $confirm ) {
+            return new \WP_Error(
+                'mainwp_confirmation_required',
+                __( 'Updates require confirm: true. Call with dry_run: true first to preview the plan.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
         }
 
         if ( isset( $site->offline_check_result ) && -1 === (int) $site->offline_check_result ) {
@@ -2433,6 +2781,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         if ( is_wp_error( $child_version_check ) ) {
             return $child_version_check;
         }
+
+        $skipped = self::get_execution_skipped( array( $site ), array( 'core' ), array() );
 
         $user_extension         = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
         $global_ignored_plugins = array();
@@ -2471,7 +2821,10 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         return array(
+            'dry_run' => false,
+            'skipped' => $skipped,
             'updated' => $result,
+            'summary' => array( 'total_skipped' => count( $skipped ) ),
         );
     }
 
@@ -2482,6 +2835,20 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_update_site_plugins( array $input ) { // phpcs:ignore -- NOSONAR - complex method.
+        if ( array_key_exists( 'slugs', $input ) && ! is_array( $input['slugs'] ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', __( 'The slugs parameter must be an array.', 'mainwp' ), array( 'status' => 400 ) );
+        }
+
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        if ( $dry_run && $confirm ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'Cannot specify both dry_run and confirm.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $site_id_or_domain = $input['site_id_or_domain'];
         $slugs             = $input['slugs'] ?? array();
 
@@ -2493,6 +2860,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
+        }
+
+        if ( $dry_run ) {
+            return self::get_update_preview( array( $site ), array( 'plugins' ), $slugs );
+        }
+
+        if ( ! $confirm ) {
+            return new \WP_Error(
+                'mainwp_confirmation_required',
+                __( 'Updates require confirm: true. Call with dry_run: true first to preview the plan.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
         }
 
         if ( isset( $site->offline_check_result ) && -1 === (int) $site->offline_check_result ) {
@@ -2507,6 +2886,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         if ( is_wp_error( $child_version_check ) ) {
             return $child_version_check;
         }
+
+        $skipped = self::get_execution_skipped( array( $site ), array( 'plugins' ), $slugs );
 
         $user_extension         = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
         $global_ignored_plugins = array();
@@ -2530,9 +2911,12 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( empty( $updates ) ) {
             return array(
+                'dry_run' => false,
+                'skipped' => $skipped,
                 'updated' => array(),
                 'errors'  => array(),
                 'summary' => array(
+                    'total_skipped' => count( $skipped ),
                     'total_updated' => 0,
                     'total_errors'  => 0,
                 ),
@@ -2542,9 +2926,12 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $result = self::execute_plugin_updates( $site, $updates );
 
         return array(
+            'dry_run' => false,
+            'skipped' => $skipped,
             'updated' => $result['updated'],
             'errors'  => $result['errors'],
             'summary' => array(
+                'total_skipped' => count( $skipped ),
                 'total_updated' => count( $result['updated'] ),
                 'total_errors'  => count( $result['errors'] ),
             ),
@@ -2558,6 +2945,20 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_update_site_themes( array $input ) { // phpcs:ignore -- NOSONAR - complex method.
+        if ( array_key_exists( 'slugs', $input ) && ! is_array( $input['slugs'] ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', __( 'The slugs parameter must be an array.', 'mainwp' ), array( 'status' => 400 ) );
+        }
+
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        if ( $dry_run && $confirm ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'Cannot specify both dry_run and confirm.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $site_id_or_domain = $input['site_id_or_domain'];
         $slugs             = $input['slugs'] ?? array();
 
@@ -2569,6 +2970,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
+        }
+
+        if ( $dry_run ) {
+            return self::get_update_preview( array( $site ), array( 'themes' ), $slugs );
+        }
+
+        if ( ! $confirm ) {
+            return new \WP_Error(
+                'mainwp_confirmation_required',
+                __( 'Updates require confirm: true. Call with dry_run: true first to preview the plan.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
         }
 
         if ( isset( $site->offline_check_result ) && -1 === (int) $site->offline_check_result ) {
@@ -2583,6 +2996,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         if ( is_wp_error( $child_version_check ) ) {
             return $child_version_check;
         }
+
+        $skipped = self::get_execution_skipped( array( $site ), array( 'themes' ), $slugs );
 
         $user_extension        = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
         $global_ignored_themes = array();
@@ -2606,9 +3021,12 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( empty( $updates ) ) {
             return array(
+                'dry_run' => false,
+                'skipped' => $skipped,
                 'updated' => array(),
                 'errors'  => array(),
                 'summary' => array(
+                    'total_skipped' => count( $skipped ),
                     'total_updated' => 0,
                     'total_errors'  => 0,
                 ),
@@ -2618,9 +3036,12 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $result = self::execute_theme_updates( $site, $updates );
 
         return array(
+            'dry_run' => false,
+            'skipped' => $skipped,
             'updated' => $result['updated'],
             'errors'  => $result['errors'],
             'summary' => array(
+                'total_skipped' => count( $skipped ),
                 'total_updated' => count( $result['updated'] ),
                 'total_errors'  => count( $result['errors'] ),
             ),
@@ -2634,6 +3055,20 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_update_site_translations( array $input ) { // phpcs:ignore -- NOSONAR - complex method.
+        if ( array_key_exists( 'slugs', $input ) && ! is_array( $input['slugs'] ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', __( 'The slugs parameter must be an array.', 'mainwp' ), array( 'status' => 400 ) );
+        }
+
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        if ( $dry_run && $confirm ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'Cannot specify both dry_run and confirm.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $site_id_or_domain = $input['site_id_or_domain'];
         $slugs             = $input['slugs'] ?? array();
 
@@ -2645,6 +3080,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
+        }
+
+        if ( $dry_run ) {
+            return self::get_update_preview( array( $site ), array( 'translations' ), $slugs );
+        }
+
+        if ( ! $confirm ) {
+            return new \WP_Error(
+                'mainwp_confirmation_required',
+                __( 'Updates require confirm: true. Call with dry_run: true first to preview the plan.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
         }
 
         if ( isset( $site->offline_check_result ) && -1 === (int) $site->offline_check_result ) {
@@ -2660,12 +3107,17 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             return $child_version_check;
         }
 
+        $skipped = self::get_execution_skipped( array( $site ), array( 'translations' ), $slugs );
+
         $translation_upgrades = ! empty( $site->translation_upgrades ) ? json_decode( $site->translation_upgrades, true ) : array();
         if ( ! is_array( $translation_upgrades ) || empty( $translation_upgrades ) ) {
             return array(
+                'dry_run' => false,
+                'skipped' => $skipped,
                 'updated' => array(),
                 'errors'  => array(),
                 'summary' => array(
+                    'total_skipped' => count( $skipped ),
                     'total_updated' => 0,
                     'total_errors'  => 0,
                 ),
@@ -2683,9 +3135,12 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( empty( $translation_upgrades ) ) {
             return array(
+                'dry_run' => false,
+                'skipped' => $skipped,
                 'updated' => array(),
                 'errors'  => array(),
                 'summary' => array(
+                    'total_skipped' => count( $skipped ),
                     'total_updated' => 0,
                     'total_errors'  => 0,
                 ),
@@ -2714,9 +3169,12 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $result = self::execute_translation_updates( $site, $updates );
 
         return array(
+            'dry_run' => false,
+            'skipped' => $skipped,
             'updated' => $result['updated'],
             'errors'  => $result['errors'],
             'summary' => array(
+                'total_skipped' => count( $skipped ),
                 'total_updated' => count( $result['updated'] ),
                 'total_errors'  => count( $result['errors'] ),
             ),
@@ -2900,6 +3358,16 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
 
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+        if ( $dry_run && $confirm ) {
+            return new \WP_Error(
+                'mainwp_invalid_input',
+                __( 'Cannot specify both dry_run and confirm.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         $site_ids_or_domains = $input['site_ids_or_domains'] ?? array();
         $types               = $input['types'] ?? array( 'core', 'plugins', 'themes', 'translations' );
 
@@ -2927,6 +3395,24 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         // Check per-site ACLs and filter to allowed sites.
         $access_check = MainWP_Abilities_Util::check_batch_site_access( $site_ids_or_domains, $input );
 
+        if ( $dry_run ) {
+            return self::get_update_preview(
+                $access_check['allowed'],
+                $types,
+                array(),
+                empty( $input['site_ids_or_domains'] ),
+                self::normalize_resolution_errors( $access_check['denied'] )
+            );
+        }
+
+        if ( ! $confirm ) {
+            return new \WP_Error(
+                'mainwp_confirmation_required',
+                __( 'Updates require confirm: true. Call with dry_run: true first to preview the plan.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+
         // Normalize ACL-denied errors to match the documented error item schema.
         $acl_errors = array();
         foreach ( $access_check['denied'] as $denied_entry ) {
@@ -2942,9 +3428,12 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         if ( empty( $sites ) ) {
             $normalized_errors = self::normalize_resolution_errors( $acl_errors );
             return array(
+                'dry_run' => false,
+                'skipped' => array(),
                 'updated' => array(),
                 'errors'  => $normalized_errors,
                 'summary' => array(
+                    'total_skipped' => 0,
                     'total_updated' => 0,
                     'total_errors'  => count( $normalized_errors ),
                     'sites_updated' => 0,
@@ -2967,6 +3456,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             }
 
             return array(
+                'dry_run'        => false,
                 'queued'         => true,
                 'job_id'         => $job_id,
                 'status_url'     => rest_url( "mainwp/v2/jobs/{$job_id}" ),
@@ -2974,6 +3464,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'errors'         => self::normalize_resolution_errors( $acl_errors ),
             );
         }
+
+        $skipped = self::get_execution_skipped( $sites, $types, array() );
 
         $user_extension         = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
         $global_ignored_plugins = array();
@@ -3108,9 +3600,12 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         return array(
+            'dry_run' => false,
+            'skipped' => $skipped,
             'updated' => $all_updated,
             'errors'  => $all_errors,
             'summary' => array(
+                'total_skipped' => count( $skipped ),
                 'total_updated' => count( $all_updated ),
                 'total_errors'  => count( $all_errors ),
                 'sites_updated' => count( $sites_updated_set ),
@@ -3121,6 +3616,30 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
     // =========================================================================
     // Helper Methods
     // =========================================================================
+
+    /**
+     * Flatten execution-time skips with their site details.
+     *
+     * Build one site at a time so the preview's site limit cannot truncate results.
+     *
+     * @param array $sites          Resolved sites.
+     * @param array $types          Selected update types.
+     * @param array $specific_items Selected slugs.
+     * @return array
+     */
+    private static function get_execution_skipped( array $sites, array $types, array $specific_items ): array {
+        $skipped = array();
+        foreach ( $sites as $site ) {
+            $plan = self::build_update_plan( array( $site ), $types, $specific_items );
+            foreach ( $plan['sites'] as $entry ) {
+                $site_info = array_intersect_key( $entry, array_flip( array( 'site_id', 'site_url', 'site_name' ) ) );
+                foreach ( $entry['skipped'] as $item ) {
+                    $skipped[] = $site_info + $item;
+                }
+            }
+        }
+        return $skipped;
+    }
 
     /**
      * Normalize resolution errors to match the documented error schema.
@@ -3208,6 +3727,263 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
         return $value ?? '';
+    }
+
+    /**
+     * Build a read-only plan using the execution path's ignore filters.
+     *
+     * @param array $sites          Resolved, accessible sites in resolution order.
+     * @param array $types          Update types to include.
+     * @param array $specific_items Requested slugs; empty selects every pending item.
+     * @return array Sites, item aggregates, summary and site errors.
+     */
+    public static function build_update_plan( array $sites, array $types, array $specific_items ): array {
+        global $wpdb;
+
+        // Read the same default global settings as execution, without creating a missing row.
+        $table = MainWP_DB_Common::instance()->get_table_name( 'users' );
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Read-only lookup; the existing getter inserts missing settings.
+        $extension = $wpdb->get_row( $wpdb->prepare( 'SELECT ignored_plugins, ignored_themes, ignored_wp_upgrades FROM %i WHERE userid = %d', $table, 0 ) );
+        $global    = array();
+        foreach ( array( 'ignored_plugins', 'ignored_themes', 'ignored_wp_upgrades' ) as $column ) {
+            $list              = is_object( $extension ) && ! empty( $extension->{$column} ) ? json_decode( $extension->{$column}, true ) : array();
+            $global[ $column ] = is_array( $list ) ? $list : array();
+        }
+
+        $threshold     = apply_filters( 'mainwp_abilities_batch_threshold', self::BATCH_THRESHOLD );
+        $plan          = array(
+            'sites'   => array(),
+            'by_item' => array(),
+            'summary' => array(
+                'site_count'          => 0,
+                'item_count'          => 0,
+                'skipped_count'       => 0,
+                'all_sites'           => false,
+                'queued'              => count( $sites ) > $threshold,
+                'truncated'           => false,
+                'has_core'            => false,
+                'has_major'           => false,
+                'has_unknown_version' => false,
+                'requested_not_found' => array(),
+            ),
+            'errors'  => array(),
+        );
+        $found         = array();
+        $by_item       = array();
+        $by_item_sites = array();
+        $order         = array(
+            'core'        => 0,
+            'plugin'      => 1,
+            'theme'       => 2,
+            'translation' => 3,
+        );
+        $sort          = static function ( $a, $b ) use ( $order ) {
+            $type_order = $order[ $a['type'] ] <=> $order[ $b['type'] ];
+            return 0 !== $type_order ? $type_order : strcmp( $a['slug'], $b['slug'] );
+        };
+
+        foreach ( $sites as $site ) {
+            $site_info = array(
+                'site_id'   => (int) $site->id,
+                'site_url'  => $site->url,
+                'site_name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
+            );
+            $failure   = MainWP_Abilities_Util::check_child_version( $site, '4.0' );
+            if ( isset( $site->offline_check_result ) && -1 === (int) $site->offline_check_result ) {
+                $failure = new \WP_Error( 'mainwp_site_offline', __( 'Site is known to be offline.', 'mainwp' ) );
+            }
+            if ( is_wp_error( $failure ) ) {
+                $plan['errors'][] = $site_info + array(
+                    'type'    => 'site',
+                    'slug'    => '',
+                    'code'    => $failure->get_error_code(),
+                    'message' => $failure->get_error_message(),
+                );
+                continue;
+            }
+
+            // Clones isolate each hold layer without changing the stored pending data.
+            // Nonempty JSON prevents the column fallback from restoring cleared holds.
+            $unheld = clone $site;
+            foreach ( array( 'ignored_plugins', 'ignored_themes', 'ignored_wp_upgrades' ) as $column ) {
+                $unheld->{$column} = '[]';
+            }
+            foreach ( array( 'is_ignoreCoreUpdates', 'is_ignorePluginUpdates', 'is_ignoreThemeUpdates' ) as $flag ) {
+                $unheld->{$flag} = 0;
+            }
+            $site_holds                      = clone $unheld;
+            $site_holds->ignored_plugins     = self::get_site_column_value( $site, 'ignored_plugins' );
+            $site_holds->ignored_themes      = self::get_site_column_value( $site, 'ignored_themes' );
+            $site_holds->ignored_wp_upgrades = MainWP_DB::instance()->get_website_option( $site, 'ignored_wp_upgrades' );
+            $flag_holds                      = clone $unheld;
+            foreach ( array( 'is_ignoreCoreUpdates', 'is_ignorePluginUpdates', 'is_ignoreThemeUpdates' ) as $flag ) {
+                $flag_holds->{$flag} = $site->{$flag} ?? 0;
+            }
+
+            $pending = self::get_site_updates( $unheld, $types, array(), array(), array() );
+            $layers  = array(
+                'ignored_site'      => self::get_site_updates( $site_holds, $types, array(), array(), array() ),
+                'ignored_global'    => self::get_site_updates( $unheld, $types, $global['ignored_plugins'], $global['ignored_themes'], $global['ignored_wp_upgrades'] ),
+                'ignored_site_flag' => self::get_site_updates( $flag_holds, $types, array(), array(), array() ),
+            );
+            foreach ( $layers as $reason => $updates ) {
+                $layers[ $reason ] = array();
+                foreach ( $updates as $update ) {
+                    $layers[ $reason ][ $update['type'] . ':' . $update['slug'] ] = true;
+                }
+            }
+
+            usort( $pending, $sort );
+            $entry = $site_info + array(
+                'items'   => array(),
+                'skipped' => array(),
+            );
+            foreach ( $pending as $update ) {
+                $requested = in_array( $update['slug'], $specific_items, true );
+                if ( ! empty( $specific_items ) && ! $requested ) {
+                    continue;
+                }
+                $found[] = $update['slug'];
+                $key     = $update['type'] . ':' . $update['slug'];
+                $from    = $update['current_version'];
+                $to      = $update['new_version'];
+                // The Child reports a translation's target as `version` with no installed version.
+                if ( 'translation' === $update['type'] && '' === (string) $to ) {
+                    $to   = $from;
+                    $from = '';
+                }
+                $item        = array(
+                    'type'      => $update['type'],
+                    'slug'      => $update['slug'],
+                    'name'      => $update['name'],
+                    'from'      => $from,
+                    'to'        => $to,
+                    'requested' => $requested,
+                );
+                $skip_reason = '';
+                foreach ( $layers as $reason => $remaining ) {
+                    if ( ! isset( $remaining[ $key ] ) ) {
+                        $skip_reason = $reason;
+                        break;
+                    }
+                }
+                if ( '' !== $skip_reason ) {
+                    $entry['skipped'][] = $item + array( 'reason' => $skip_reason );
+                    ++$plan['summary']['skipped_count'];
+                    continue;
+                }
+
+                $major            = self::is_major_update( $item['type'], $item['from'], $item['to'] );
+                $item['flags']    = array(
+                    'core'  => 'core' === $item['type'],
+                    'major' => $major,
+                );
+                $entry['items'][] = $item;
+                ++$plan['summary']['item_count'];
+                $plan['summary']['has_core']            = $plan['summary']['has_core'] || $item['flags']['core'];
+                $plan['summary']['has_major']           = $plan['summary']['has_major'] || true === $major;
+                $plan['summary']['has_unknown_version'] = $plan['summary']['has_unknown_version'] || null === $major;
+
+                if ( ! isset( $by_item[ $key ] ) ) {
+                    $by_item[ $key ] = array(
+                        'type'       => $item['type'],
+                        'slug'       => $item['slug'],
+                        'name'       => $item['name'],
+                        'to'         => array(),
+                        'site_count' => 0,
+                        'flags'      => $item['flags'],
+                    );
+                }
+                if ( ! in_array( $item['to'], $by_item[ $key ]['to'], true ) ) {
+                    $by_item[ $key ]['to'][] = $item['to'];
+                }
+                // One site can list the same translation slug once per language.
+                $by_item_sites[ $key ][ $site_info['site_id'] ] = true;
+                $by_item[ $key ]['site_count']                  = count( $by_item_sites[ $key ] );
+                $previous_major                                 = $by_item[ $key ]['flags']['major'];
+                $by_item[ $key ]['flags']['major']              = true === $major || true === $previous_major ? true : ( null === $major || null === $previous_major ? null : false );
+            }
+            if ( ! empty( $entry['items'] ) ) {
+                ++$plan['summary']['site_count'];
+            }
+            if ( ! empty( $entry['items'] ) || ! empty( $entry['skipped'] ) ) {
+                if ( count( $plan['sites'] ) < $threshold ) {
+                    $plan['sites'][] = $entry;
+                } else {
+                    $plan['summary']['truncated'] = true;
+                }
+            }
+        }
+
+        $plan['by_item'] = array_values( $by_item );
+        usort( $plan['by_item'], $sort );
+        $plan['summary']['requested_not_found'] = array_values( array_unique( array_diff( $specific_items, $found ) ) );
+        return $plan;
+    }
+
+    /**
+     * Determine whether a version change is major, or unknown.
+     *
+     * @param string $type Update type.
+     * @param string $from Current version.
+     * @param string $to   Target version.
+     * @return bool|null
+     */
+    private static function is_major_update( string $type, string $from, string $to ): ?bool {
+        if ( 'translation' === $type ) {
+            return false;
+        }
+        if ( ! preg_match( '/^(\d+)(?:\.(\d+))?/', $from, $from_parts ) || ! preg_match( '/^(\d+)(?:\.(\d+))?/', $to, $to_parts ) ) {
+            return null;
+        }
+        if ( (int) $from_parts[1] !== (int) $to_parts[1] ) {
+            return true;
+        }
+        return 'core' === $type && (int) ( $from_parts[2] ?? 0 ) !== (int) ( $to_parts[2] ?? 0 );
+    }
+
+    /**
+     * Format an update plan as the shared preview envelope.
+     *
+     * @param array $sites          Resolved, accessible sites.
+     * @param array $types          Update types.
+     * @param array $specific_items Requested slugs.
+     * @param bool  $all_sites      Whether the site selection was empty.
+     * @param array $errors         Normalized resolution and access errors.
+     * @return array
+     */
+    private static function get_update_preview( array $sites, array $types, array $specific_items, bool $all_sites = false, array $errors = array() ): array {
+        $plan                         = self::build_update_plan( $sites, $types, $specific_items );
+        $plan['summary']['all_sites'] = $all_sites;
+        $errors                       = array_merge( $errors, $plan['errors'] );
+        $summary                      = $plan['summary'];
+        $warnings                     = array();
+        if ( $summary['has_core'] ) {
+            $warnings[] = __( 'The plan includes WordPress core updates.', 'mainwp' );
+        }
+        if ( $summary['has_major'] ) {
+            $warnings[] = __( 'The plan includes a major version change.', 'mainwp' );
+        }
+        $threshold = apply_filters( 'mainwp_abilities_batch_threshold', self::BATCH_THRESHOLD );
+        if ( $summary['queued'] ) {
+            /* translators: %d: batch threshold in sites. */
+            $warnings[] = sprintf( __( 'More than %d sites are selected, so the updates will run as a background job.', 'mainwp' ), $threshold );
+        }
+        if ( $summary['truncated'] ) {
+            /* translators: %d: maximum number of sites shown in the plan. */
+            $warnings[] = sprintf( __( 'The site list is limited to the first %d sites. by_item and summary cover every site.', 'mainwp' ), $threshold );
+        }
+        if ( $summary['all_sites'] ) {
+            $warnings[] = __( 'No sites were named, so the plan covers every site you can access.', 'mainwp' );
+        }
+        unset( $plan['errors'] );
+        return array(
+            'dry_run'      => true,
+            'would_affect' => $plan,
+            'count'        => $summary['item_count'],
+            'warnings'     => $warnings,
+            'errors'       => $errors,
+        );
     }
 
     /**
@@ -3716,6 +4492,13 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             if ( is_array( $information ) && isset( $information['upgrades'] ) ) {
                 foreach ( $information['upgrades'] as $slug => $result ) {
                     if ( ! empty( $result ) && isset( $update_map[ $slug ] ) ) {
+                        $old_version = $update_map[ $slug ]['current_version'];
+                        $new_version = $update_map[ $slug ]['new_version'];
+                        // Match the plan builder: the Child's `version` is the translation's target.
+                        if ( '' === (string) $new_version ) {
+                            $new_version = $old_version;
+                            $old_version = '';
+                        }
                         $updated[] = array(
                             'site_id'     => (int) $site->id,
                             'site_url'    => $site->url,
@@ -3723,8 +4506,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                             'type'        => 'translation',
                             'slug'        => $slug,
                             'name'        => $update_map[ $slug ]['name'],
-                            'old_version' => $update_map[ $slug ]['current_version'],
-                            'new_version' => $update_map[ $slug ]['new_version'],
+                            'old_version' => $old_version,
+                            'new_version' => $new_version,
                         );
                     }
                 }

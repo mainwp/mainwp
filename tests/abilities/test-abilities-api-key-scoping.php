@@ -149,7 +149,7 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $outside = $this->create_test_site();
         $this->restrict_ability_layer_only( array() );
 
-        $result = $this->execute_ability( $ability_name, array() );
+        $result = $this->execute_ability( $ability_name, 'mainwp/sync-sites-v1' === $ability_name ? array() : array( 'confirm' => true ) );
 
         $this->assertNotWPError( $result );
         $this->assertIsArray( $result );
@@ -1248,6 +1248,49 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertSame( 'Website not found.', $process['errors'][0]['error'] );
         $this->restrict_ability_layer_only( array() );
         $this->assertWPError( $method->invoke( $controller ) );
+    }
+
+    public static function gate_rest_starts(): array {
+        return array( 'all' => array( false ), 'per-site' => array( true ) );
+    }
+
+    /** @dataProvider gate_rest_starts */
+    public function test_update_gate_rest_v2_starts_confirm_and_execute( $single ) {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $allowed = $this->create_test_site();
+        $outside = $this->create_test_site();
+        foreach ( array( $allowed, $outside ) as $id ) {
+            $this->set_site_plugin_upgrades( $id, array( 'sample/plugin.php' => array( 'Name' => 'Sample', 'Version' => '1.0', 'new_version' => '1.1' ) ) );
+        }
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        update_option( 'mainwp_batch_updates_is_running', 0 );
+        update_option( 'mainwp_batch_individual_updates_is_running', 0 );
+        $inputs = array();
+        $capture = static function ( $name, $input ) use ( &$inputs ) {
+            if ( 'mainwp/run-updates-v1' === $name ) { $inputs[] = $input; }
+        };
+        $calls = array();
+        $mock = static function ( $result, $site, $what, $params ) use ( &$calls ) {
+            $calls[] = (int) $site->id;
+            return array( 'upgrades' => array( 'sample/plugin.php' => true ) );
+        };
+        add_action( 'wp_before_execute_ability', $capture, 10, 2 );
+        add_filter( 'mainwp_fetch_url_authed_pre', $mock, 10, 4 );
+        try {
+            $controller = new \MainWP_Rest_Updates_Controller();
+            $request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates' );
+            $request->set_param( 'id_domain', $allowed );
+            $response = $single ? $controller->update_all_items_inidividual_site_start( $request ) : $controller->update_all_items_start( $request );
+            $this->assertNotWPError( $response );
+            $this->assertSame( true, $inputs[0]['confirm'] ?? null, 'REST v2 must confirm its explicit update request in-process.' );
+            $this->assertSame( array( $allowed ), $calls );
+            $this->assertSame( 1, $response->get_data()['success'] );
+            $this->assertNotEmpty( MainWP_DB::instance()->get_website_by_id( $outside )->plugin_upgrades );
+        } finally {
+            remove_action( 'wp_before_execute_ability', $capture, 10 );
+            remove_filter( 'mainwp_fetch_url_authed_pre', $mock, 10 );
+        }
     }
 
     public function test_rest_update_all_legacy_scopes_queued_sites() {

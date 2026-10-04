@@ -206,6 +206,7 @@ class Test_Abilities_Operation_Rights_Rest extends MainWP_Abilities_Test_Case {
 		$allowed = $this->run_ability(
 			'mainwp/run-updates-v1',
 			array(
+				'confirm'             => true,
 				'site_ids_or_domains' => array( (string) $site_id ),
 				'types'               => array( 'themes' ),
 			)

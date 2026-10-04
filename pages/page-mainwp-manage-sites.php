@@ -2052,6 +2052,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $updated = false;
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+            $can_manage_clients = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
+            $new_client_id      = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
+            if ( $new_client_id && ( ! $can_manage_clients || ! MainWP_Client::has_client_access( $new_client_id ) || ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $new_client_id ) ) ) {
+                return false;
+            }
             // update site.
             $groupids   = array();
             $groupnames = array();
@@ -2128,8 +2133,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 MainWP_Site_Url_Corrector::after_user_set_url( $website, $url );
             }
 
-            if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-                $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
+            if ( $can_manage_clients ) {
                 if ( $website->client_id !== $new_client_id ) {
                     $update = array(
                         'client_id' => $new_client_id,

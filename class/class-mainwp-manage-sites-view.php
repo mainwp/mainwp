@@ -2281,6 +2281,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         } else {
             try {
 
+                $client_id = isset( $params['clientid'] ) ? intval( $params['clientid'] ) : 0;
+                if ( $client_id && ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ! MainWP_Client::has_client_access( $client_id ) || ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) ) ) {
+                    throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                }
+
                 /**
                  * Filter to skip generating connection keys when adding a site in PHPUnit tests.
                  *

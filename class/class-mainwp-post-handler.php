@@ -1021,6 +1021,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $client_id = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ! MainWP_Client::has_client_access( $client_id, true ) || ( $client_id && ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) ) ) {
+            $ret['result'] = 'Error - insufficient permissions!';
+            MainWP_Client::exit_json( $ret );
+        }
         if ( $client_id ) {
             MainWP_DB_Client::instance()->delete_client( $client_id );
             $ret['success'] = 'SUCCESS';
@@ -1116,6 +1120,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $field_id  = isset( $_POST['field_id'] ) ? intval( $_POST['field_id'] ) : 0;
         $client_id = isset( $_POST['client_id'] ) ? intval( $_POST['client_id'] ) : 0;  // $client_id > 0, individual token.
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $field = MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id );
+        if ( ! $field || ! $field->client_id || ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ! MainWP_Client::has_client_access( $field->client_id ) ) {
+            $ret['error'] = 'Error - insufficient permissions!';
+            MainWP_Client::exit_json( $ret );
+        }
+        $client_id = (int) $field->client_id;
         if ( $client_id && MainWP_DB_Client::instance()->delete_client_field_by( 'field_id', $field_id, $client_id ) ) {
             $ret['success'] = true;
         }
@@ -1142,7 +1152,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * Post handler for saving a client note.
      *
      * Requires the same page-level permission the Clients screen enforces,
-     * and an existing client. Per-client scoping is left to Team Control.
+     * and an existing client within the caller's Team Control site scope.
      *
      * @uses \MainWP\Dashboard\MainWP_Client::save_note()
      */
@@ -1177,6 +1187,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             );
         }
 
+        if ( ! MainWP_Client::has_client_access( $client_id ) ) {
+            MainWP_Client::exit_json( array( 'error' => 'Error - insufficient permissions!' ) );
+        }
+
         MainWP_Client::save_note();
     }
 
@@ -1202,6 +1216,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
         if ( empty( $clientid ) ) {
             wp_die( 'Error - empty client id!' );
+        }
+
+        $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $clientid );
+        if ( ! $client || ! MainWP_Client::has_client_access( $clientid, true ) ) {
+            wp_die( 'Error - insufficient permissions!' );
         }
 
         $params = array(
@@ -1259,6 +1278,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function mainwp_clients_import_client() {  // phpcs:ignore -- NOSONAR
         $this->secure_request( 'mainwp_clients_import_client' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            return wp_send_json_error( array( 'message' => 'Error - insufficient permissions!' ) );
+        }
         // phpcs:disable
         // Set value from POST data.
         $default_values = array(
@@ -1297,14 +1319,25 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         }
 
         if ( ! empty( $client_to_add ) ) {
+            $allowed = MainWP_Abilities_Util::get_allowed_site_ids();
+            $current = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $default_values['client.email'] );
+            if ( ( 'all' !== $allowed && array_diff( array_map( 'intval', $selected_sites ), $allowed ) ) || ( $current && ( ! MainWP_Client::has_client_access( $current->client_id ) || ( isset( $client_to_add['suspended'] ) && (int) $client_to_add['suspended'] !== (int) $current->suspended && ! MainWP_Client::has_client_access( $current->client_id, true ) ) ) ) ) {
+                return wp_send_json_error( array( 'message' => 'Error - insufficient permissions!' ) );
+            }
             // Set default values.
             $client_to_add['created']            = time();
             $client_to_add['primary_contact_id'] = 0;
+            if ( $current && 'all' !== $allowed ) {
+                $client_to_add['client_id'] = $current->client_id;
+                unset( $client_to_add['created'], $client_to_add['primary_contact_id'] );
+                $sites          = MainWP_DB_Client::instance()->get_websites_by_client_ids( $current->client_id, array( 'no_perm_check' => true ) );
+                $selected_sites = MainWP_System::get_selected_sites_with_allowed_sites( $selected_sites, wp_list_pluck( (array) $sites, 'id' ) );
+            }
             // Inset client.
             $inserted = MainWP_DB_Client::instance()->update_client( $client_to_add, true );
 
             if ( ! empty( $inserted ) && is_object( $inserted ) ) {
-                if ( ! empty( $selected_sites ) ) {
+                if ( ! empty( $selected_sites ) || ( $current && 'all' !== $allowed ) ) {
                     MainWP_DB_Client::instance()->update_selected_sites_for_client( $inserted->client_id, $selected_sites ); // Set client to selected sites.
                 }
                 // Set default color and icon .
@@ -1849,6 +1882,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function ajax_import_website_add_client() {
         $this->secure_request( 'mainwp_import_website_add_client' ); // Check secure.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            return wp_send_json_error( 'Error - insufficient permissions!' );
+        }
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         try {
             // Retrieve client data.
@@ -1861,7 +1897,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
             $client_data = json_decode( $data, true );
             // Create client.
-            $client = $this->mainwp_handle_create_client( $client_data );
+            $client = $this->mainwp_handle_create_client( $client_data, empty( $site_id ) ? array() : array( $site_id ) );
             if ( $client ) {
                 // Add groups website and client.
                 if ( ! empty( $site_id ) ) {
@@ -1884,6 +1920,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function ajax_import_website_add_client_no_site() {
         $this->secure_request( 'mainwp_import_website_add_client_no_site' ); // Check secure.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            return wp_send_json_error( 'Error - insufficient permissions!' );
+        }
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         try {
             $data = ! empty( $_POST['client'] ) ? rest_sanitize_array( $_POST['client'] ) : array(); //phpcs:ignore -- NonceVerification.
@@ -1911,6 +1950,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     public function ajax_clients_add_multi_client() {
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         $this->check_security( 'mainwp_clients_add_multi_client' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            return wp_send_json_error( 'Error - insufficient permissions!' );
+        }
         $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array(); //phpcs:ignore -- NonceVerification.
         try {
             if ( ! empty( $dataes ) ) {
@@ -1937,7 +1979,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                     );
 
                     // Create client.
-                    $client = $this->mainwp_handle_create_client( $client_data );
+                    $client = $this->mainwp_handle_create_client( $client_data, empty( $val_data['website_id'] ) ? array() : array( $val_data['website_id'] ) );
 
                     // Create client successfy.
                     if ( ! empty( $client ) && ! empty( $val_data['website_id'] ) ) {
@@ -2099,12 +2141,21 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * @uses MainWP_DB_Client::instance()->update_client()
      *
      * @param array $client_data new client creation data.
+     * @param array $site_ids Sites to attach in this import row.
      *
      * @return object client data.
+     * @throws MainWP_Exception If the client or submitted sites are outside UI scope.
      */
-    public function mainwp_handle_create_client( $client_data ) {
+    public function mainwp_handle_create_client( $client_data, $site_ids = array() ) {
+        $allowed = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ( 'all' !== $allowed && array_diff( array_map( 'intval', $site_ids ), $allowed ) ) ) {
+            throw new MainWP_Exception( 'Error - insufficient permissions!' );
+        }
         // Check if client does not exist then create new one.
         $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $client_data['client_email'], OBJECT );
+        if ( $client && ! MainWP_Client::has_client_access( $client->client_id ) ) {
+            throw new MainWP_Exception( 'Error - insufficient permissions!' );
+        }
         if ( empty( $client ) ) {
             $client = MainWP_DB_Client::instance()->update_client( $client_data ); // Create client.
         }
@@ -2122,9 +2173,15 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      *
      * @param object $client client data.
      * @param int    $website_id id.
+     * @throws MainWP_Exception If the caller cannot attach the submitted site.
      */
     public function mainwp_handle_selected_sites_for_client( $client, $website_id ) {
-        $sites_ids = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id );
+        $allowed = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ( 'all' !== $allowed && ! in_array( (int) $website_id, $allowed, true ) ) ) {
+            throw new MainWP_Exception( 'Error - insufficient permissions!' );
+        }
+        // Imports append to the complete roster so hidden memberships survive.
+        $sites_ids = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id, array( 'no_perm_check' => true ) );
         $ids       = isset( $sites_ids ) && ! empty( $sites_ids ) ? array_column( $sites_ids, 'id' ) : array();
         $ids[]     = $website_id;
         MainWP_DB_Client::instance()->update_selected_sites_for_client( $client->client_id, $ids );

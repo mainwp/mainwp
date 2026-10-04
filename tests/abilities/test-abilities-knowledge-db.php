@@ -419,10 +419,88 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 	public function test_description_column_is_repaired_at_current_db_version(): void {
 		global $wpdb;
 		$table = $wpdb->prefix . 'mainwp_knowledge';
+		$this->with_description_column_dropped(
+			function () use ( $wpdb, $table ) {
+				MainWP_Install::instance()->install();
+				$column = $wpdb->get_row( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) );
+				$this->assertNotNull( $column );
+				$this->assertSame( 'varchar(1024)', $column->Type );
+				$this->assertSame( 'NO', $column->Null );
+				$this->assertSame( '', $column->Default );
+				$columns = $wpdb->get_col( $wpdb->prepare( 'SHOW COLUMNS FROM %i', $table ) );
+				$this->assertSame( 'description', $columns[ array_search( 'title', $columns, true ) + 1 ] );
+				$this->assertSame( 1, (int) get_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED ) );
+				$this->assertFalse( get_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING ) );
+			}
+		);
+	}
+
+	public function test_description_column_repair_is_quiet_and_hourly_when_alter_fails(): void {
+		global $wpdb;
+		$table = $wpdb->prefix . 'mainwp_knowledge';
+		$this->with_description_column_dropped(
+			function () use ( $wpdb, $table ) {
+				$attempts = array();
+				$this->track_filter(
+					'query',
+					static function ( $query ) use ( $wpdb, &$attempts ) {
+						if ( 0 === strpos( $query, 'ALTER TABLE' ) && false !== strpos( $query, 'ADD COLUMN description' ) ) {
+							$attempts[] = $wpdb->suppress_errors;
+							return 'ALTER TABLE mainwp_knowledge_missing_table ADD COLUMN description int';
+						}
+						return $query;
+					}
+				);
+				$install = MainWP_Install::instance();
+				$install->install();
+				$this->assertSame( array( true ), $attempts );
+				$this->assertNull( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) ) );
+				$this->assertFalse( get_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED ) );
+				$this->assertGreaterThanOrEqual( time() - 60, (int) get_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING ) );
+				$install->install();
+				$this->assertCount( 1, $attempts );
+				update_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING, time() - HOUR_IN_SECONDS - 1 );
+				$install->install();
+				$this->assertSame( array( true, true ), $attempts );
+			}
+		);
+	}
+
+	public function test_description_column_check_stops_querying_once_confirmed(): void {
+		$checks = array();
+		$this->track_filter(
+			'query',
+			static function ( $query ) use ( &$checks ) {
+				if ( 0 === stripos( $query, 'SHOW COLUMNS' ) && false !== strpos( $query, 'mainwp_knowledge' ) ) {
+					$checks[] = $query;
+				}
+				return $query;
+			}
+		);
+		delete_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED );
+		MainWP_Install::instance()->install();
+		$this->assertCount( 1, $checks );
+		$this->assertSame( 1, (int) get_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED ) );
+		MainWP_Install::instance()->install();
+		$this->assertCount( 1, $checks );
+	}
+
+	/**
+	 * Run a check against the current-version install path with the description column missing.
+	 *
+	 * The DDL commits the test transaction, so the column is restored and the repair markers are cleared before returning.
+	 *
+	 * @param callable $check Assertions to run while the column is missing.
+	 */
+	private function with_description_column_dropped( callable $check ): void {
+		global $wpdb;
+		$table   = $wpdb->prefix . 'mainwp_knowledge';
 		$install = MainWP_Install::instance();
 		$version = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
 		$version->setAccessible( true );
 		$this->assertSame( $version->getValue( $install ), get_site_option( 'mainwp_db_version' ) );
+		delete_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED );
+		delete_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING );
 		remove_filter( 'query', array( $this, '_create_temporary_tables' ) );
 		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
 		try {
@@ -430,15 +508,15 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 				$this->assertNotFalse( $wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP COLUMN description', $table ) ) );
 			}
 			$this->assertNull( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) ) );
-			$install->install();
-			$column = $wpdb->get_row( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) );
-			$this->assertNotNull( $column );
-			$this->assertSame( 'varchar(1024)', $column->Type );
-			$this->assertSame( 'NO', $column->Null );
-			$this->assertSame( '', $column->Default );
-			$columns = $wpdb->get_col( $wpdb->prepare( 'SHOW COLUMNS FROM %i', $table ) );
-			$this->assertSame( 'description', $columns[ array_search( 'title', $columns, true ) + 1 ] );
+			$check();
 		} finally {
+			// A query filter left in place would rewrite the restoring ALTER too.
+			foreach ( $this->added_filters as $filter ) {
+				remove_filter( $filter[0], $filter[1], $filter[2] );
+			}
+			$this->added_filters = array();
+			delete_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED );
+			delete_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING );
 			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 			foreach ( $this->db->hook_db_install_tables( array(), get_site_option( 'mainwp_db_version' ), $wpdb->get_charset_collate() ) as $sql ) {
 				dbDelta( $sql );

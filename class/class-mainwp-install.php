@@ -51,6 +51,16 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING = 'mainwp_wp_group_missing_primary_key_repair_pending';
 
     /**
+     * Network-scoped like mainwp_db_version. Once set, the per-request column check stops querying.
+     */
+    const KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED = 'mainwp_knowledge_description_column_confirmed';
+
+    /**
+     * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
+     */
+    const KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING = 'mainwp_knowledge_description_column_repair_pending';
+
+    /**
      * Private static variable to hold the single instance of the class.
      *
      * @static
@@ -695,18 +705,39 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     /**
      * Retry knowledge schema changes that may have failed before the version was saved.
      *
+     * The current-version path of install() runs on every request, so a confirmed
+     * column is remembered and a failing ALTER (a DB user without ALTER) is retried at
+     * most hourly instead of logging an error on each request.
+     *
      * @return bool Whether a missing column was added.
      */
     public function maybe_repair_knowledge_table() {
-        $table = $this->table_name( 'knowledge' );
+        if ( get_site_option( self::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED ) ) {
+            return false;
+        }
+        $pending = (int) get_site_option( self::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING );
+        if ( ! empty( $pending ) && time() - $pending < HOUR_IN_SECONDS ) {
+            return false;
+        }
+
+        $table    = $this->table_name( 'knowledge' );
+        $suppress = $this->wpdb->suppress_errors();
         if ( null === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $table ) ) ) ) {
+            $this->wpdb->suppress_errors( $suppress );
             return false;
         }
         $column = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) );
-        if ( null !== $column ) {
-            return false;
+        $added  = null === $column && false !== $this->wpdb->query( $this->wpdb->prepare( "ALTER TABLE %i ADD COLUMN description varchar(1024) NOT NULL DEFAULT '' AFTER title", $table ) );
+        $this->wpdb->suppress_errors( $suppress );
+
+        if ( null !== $column || $added ) {
+            update_site_option( self::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED, 1 );
+            delete_site_option( self::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING );
+        } else {
+            // A timestamp, not a formatted date: the retry throttle compares it against time().
+            update_site_option( self::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING, time() );
         }
-        return false !== $this->wpdb->query( $this->wpdb->prepare( "ALTER TABLE %i ADD COLUMN description varchar(1024) NOT NULL DEFAULT '' AFTER title", $table ) );
+        return $added;
     }
 
     /**

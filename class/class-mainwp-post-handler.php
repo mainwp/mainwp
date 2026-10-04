@@ -1880,11 +1880,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * Method ajax_import_website_add_client()
      *
      * Create client.
+     *
+     * @throws MainWP_Exception When the submitted client data is malformed.
      */
     public function ajax_import_website_add_client() {
         $this->secure_request( 'mainwp_import_website_add_client' ); // Check secure.
         if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-            return wp_send_json_error( 'Error - insufficient permissions!' );
+            return wp_send_json_error( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
         }
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         try {
@@ -1893,10 +1895,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             $site_id = $this->mainwp_get_sanitized_post( 'site_id' );
 
             if ( empty( $data ) ) {
-                wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+                throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
             }
 
-            $client_data = $this->normalize_client_import_row( json_decode( $data, true ) );
+            $decoded     = json_decode( $data );
+            $client_data = $this->normalize_client_import_row( $decoded instanceof \stdClass ? get_object_vars( $decoded ) : null );
             // Create client.
             $client = $this->mainwp_handle_create_client( $client_data, empty( $site_id ) ? array() : array( $site_id ) );
             if ( $client ) {
@@ -1918,23 +1921,37 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * Method ajax_import_website_add_client_no_site()
      *
      * Create client dont has a website.
+     *
+     * @throws MainWP_Exception When the submitted client data is malformed.
      */
     public function ajax_import_website_add_client_no_site() {
         $this->secure_request( 'mainwp_import_website_add_client_no_site' ); // Check secure.
         if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-            return wp_send_json_error( 'Error - insufficient permissions!' );
+            return wp_send_json_error( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
         }
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         try {
             $data = ! empty( $_POST['client'] ) ? wp_unslash( $_POST['client'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Encoded fields must be normalized after JSON decoding.
 
             if ( empty( $data ) || ! is_array( $data ) ) {
-                wp_die( wp_send_json_error( esc_html( $error_msg ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
+                throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
             }
 
+            $rows = array();
             foreach ( $data as $val_data ) {
-                $client_data = $this->normalize_client_import_row( is_string( $val_data ) ? json_decode( $val_data, true ) : null );
-                $this->mainwp_handle_create_client( $client_data ); // Update or instert new client.
+                $decoded     = is_string( $val_data ) ? json_decode( $val_data ) : null;
+                $client_data = $this->normalize_client_import_row( $decoded instanceof \stdClass ? get_object_vars( $decoded ) : null );
+                $rows[]      = array_merge( $client_data, array( 'client_name' => $client_data['name'] ) );
+            }
+            $plan    = $this->plan_multi_client_import( $rows );
+            $created = array();
+            foreach ( $plan as $write ) {
+                $client = $write['client'] ? $write['client'] : ( $created[ $write['key'] ] ?? null );
+                if ( ! $client ) {
+                    $client_data = $write['row'];
+                    unset( $client_data['client_name'] );
+                    $created[ $write['key'] ] = $this->mainwp_handle_create_client( $client_data );
+                }
             }
         } catch ( \Exception $e ) {
             wp_die( wp_send_json_error( sanitize_text_field( $e->getMessage() ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput
@@ -1954,14 +1971,14 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $error_msg = esc_html__( 'Undefined error. Please try again.', 'mainwp' );
         $this->check_security( 'mainwp_clients_add_multi_client' );
         if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-            return wp_send_json_error( 'Error - insufficient permissions!' );
+            return wp_send_json_error( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
         }
-        $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array(); //phpcs:ignore -- NonceVerification.
+        $dataes = array_key_exists( 'data', $_POST ) ? $_POST['data'] : array(); //phpcs:ignore -- NonceVerification.
         try {
+            if ( ! is_array( $dataes ) ) {
+                throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
+            }
             if ( ! empty( $dataes ) ) {
-                if ( ! is_array( $dataes ) ) {
-                    throw new MainWP_Exception( $error_msg );
-                }
                 foreach ( $dataes as $key => $row ) {
                     $dataes[ $key ] = $this->normalize_client_import_row( $row, true );
                 }
@@ -1996,7 +2013,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                         $client = MainWP_DB_Client::instance()->update_client( $client_data );
                         if ( empty( $client ) ) {
                             // The plan already moved this row's sites to the new client; later rows would write rosters that detach them.
-                            throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+                            throw new MainWP_Exception( esc_html__( 'A client could not be saved, so the import stopped. Clients before it in the list may have been added; check the Clients page.', 'mainwp' ) );
                         }
                         $created[ $write['key'] ] = $client;
                     }
@@ -2158,35 +2175,123 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * @throws MainWP_Exception When a row is malformed or an email is invalid.
      */
     private function normalize_client_import_row( $row, $multi_client = false ) {
+        $client_data = array(
+            'image'              => '',
+            'name'               => '',
+            'address_1'          => '',
+            'address_2'          => '',
+            'city'               => '',
+            'zip'                => '',
+            'state'              => '',
+            'country'            => '',
+            'note'               => '',
+            'selected_icon_info' => 'selected:wordpress;color:#34424d',
+            'client_email'       => '',
+            'client_phone'       => '',
+            'client_facebook'    => '',
+            'client_twitter'     => '',
+            'client_instagram'   => '',
+            'client_linkedin'    => '',
+            'suspended'          => 0,
+            'primary_contact_id' => 0,
+        );
         $name_field  = $multi_client ? 'client_name' : 'name';
-        $email_field = 'client_email';
-        if ( ! is_array( $row ) || ( isset( $row[ $name_field ] ) && ! is_string( $row[ $name_field ] ) ) || ( isset( $row[ $email_field ] ) && ! is_string( $row[ $email_field ] ) ) || ( ! empty( $row['contacts_field'] ) && ( ! is_array( $row['contacts_field'] ) || array_filter( $row['contacts_field'], 'is_array' ) ) ) ) {
-            throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+        $fields      = $multi_client ? array( 'client_name', 'client_email' ) : array_keys( $client_data );
+        if ( ! is_array( $row ) ) {
+            throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
         }
-        $row[ $name_field ]  = sanitize_text_field( wp_unslash( $row[ $name_field ] ?? '' ) );
-        $row[ $email_field ] = $this->normalize_client_import_email( $row[ $email_field ] ?? '' );
+        foreach ( $fields as $field ) {
+            if ( array_key_exists( $field, $row ) && ! is_string( $row[ $field ] ) ) {
+                throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
+            }
+        }
+        if ( array_key_exists( 'contacts_field', $row ) ) {
+            if ( ! $multi_client && $row['contacts_field'] instanceof \stdClass ) {
+                $row['contacts_field'] = get_object_vars( $row['contacts_field'] );
+            }
+            if ( ! is_array( $row['contacts_field'] ) ) {
+                throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
+            }
+            foreach ( $row['contacts_field'] as $value ) {
+                if ( ! is_string( $value ) ) {
+                    throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
+                }
+            }
+        }
+        // JSON fields were already unslashed before decoding; Quick Setup fields are still request data.
+        if ( $multi_client ) {
+            $row = wp_unslash( $row );
+        }
+        $name                = $row[ $name_field ] ?? '';
+        $row[ $name_field ]  = sanitize_text_field( $name );
+        $row['client_email'] = $this->normalize_client_import_email( $row['client_email'] ?? '' );
+        if ( ( '' !== $name && '' === $row[ $name_field ] ) || ( '' === $row[ $name_field ] && '' === $row['client_email'] ) ) {
+            throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
+        }
         if ( ! empty( $row['contacts_field'] ) ) {
             foreach ( array( 'contact_name', 'contact_role' ) as $field ) {
-                $row['contacts_field'][ $field ] = sanitize_text_field( wp_unslash( $row['contacts_field'][ $field ] ?? '' ) );
+                $row['contacts_field'][ $field ] = sanitize_text_field( $row['contacts_field'][ $field ] ?? '' );
             }
             $row['contacts_field']['contact_email'] = $this->normalize_client_import_email( $row['contacts_field']['contact_email'] ?? '' );
         }
-        return $row;
+        if ( $multi_client ) {
+            return $row;
+        }
+        $client_data['name']         = $row['name'];
+        $client_data['client_email'] = $row['client_email'];
+        foreach ( array( 'address_1', 'address_2', 'city', 'zip', 'state', 'country', 'client_phone' ) as $field ) {
+            $client_data[ $field ] = sanitize_text_field( $row[ $field ] ?? '' );
+        }
+        $client_data['note'] = MainWP_Utility::sanitize_client_note( $row['note'] ?? '' );
+        foreach ( array( 'client_facebook', 'client_twitter', 'client_instagram', 'client_linkedin' ) as $field ) {
+            $client_data[ $field ] = esc_url_raw( $row[ $field ] ?? '' );
+        }
+        // Imported identifiers and image paths must never select an update or a file to delete.
+        return $client_data;
     }
 
     /**
      * Non-empty invalid emails must refuse the batch before its first write.
      *
-     * @param string $email Submitted email.
+     * @param string $email Unslashed submitted email.
      * @return string Normalized email.
      * @throws MainWP_Exception When a non-empty email is invalid after sanitizing.
      */
     private function normalize_client_import_email( $email ) {
-        $normalized = sanitize_email( wp_unslash( $email ) );
+        $normalized = sanitize_email( $email );
         if ( '' !== $email && ! is_email( $normalized ) ) {
-            throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+            throw new MainWP_Exception( esc_html__( 'One or more email addresses are not valid. No clients were added.', 'mainwp' ) );
         }
         return $normalized;
+    }
+
+    /**
+     * Column refusals must precede inserts and projected site moves.
+     *
+     * @param string $name Normalized client name.
+     * @param string $email Normalized client email.
+     * @throws MainWP_Exception When either column cannot store its value.
+     */
+    private function validate_client_import_columns( $name, $email ) {
+        global $wpdb;
+        $table  = MainWP_DB_Client::instance()->get_table_name( 'wp_clients' );
+        $limits = array(
+            'name'         => $wpdb->get_col_length( $table, 'name' ),
+            'client_email' => $wpdb->get_col_length( $table, 'client_email' ),
+        );
+        $values = array(
+            'name'         => $name,
+            'client_email' => $email,
+        );
+        foreach ( $values as $column => $value ) {
+            if ( is_array( $limits[ $column ] ) && mb_strlen( $value, 'UTF-8' ) > $limits[ $column ]['length'] ) {
+                /* translators: 1: Maximum client name length, 2: Maximum client email address length. */
+                throw new MainWP_Exception( esc_html( sprintf( __( 'A client name or email address is too long. Names can have up to %1$d characters and email addresses up to %2$d. No clients were added.', 'mainwp' ), $limits['name']['length'], $limits['client_email']['length'] ) ) );
+            }
+            if ( $wpdb->strip_invalid_text_for_column( $table, $column, $value ) !== $value ) {
+                throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
+            }
+        }
     }
 
     /**
@@ -2197,8 +2302,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * @throws MainWP_Exception When a row is outside client or site scope.
      */
     private function plan_multi_client_import( $rows ) {
-        global $wpdb;
-        $table      = MainWP_DB_Client::instance()->get_table_name( 'wp_clients' );
         $allowed    = MainWP_Abilities_Util::get_allowed_site_ids();
         $websites   = array();
         $owners     = array();
@@ -2211,21 +2314,21 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $plan       = array();
 
         if ( ! is_array( $rows ) ) {
-            throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+            throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
         }
         foreach ( $rows as $row ) {
             // The contact write runs after the row's client and site writes, so a shape it cannot take must be refused here.
             if ( ! is_array( $row ) || ( isset( $row['client_name'] ) && ! is_string( $row['client_name'] ) ) || ( isset( $row['client_email'] ) && ! is_string( $row['client_email'] ) ) || ( ! empty( $row['contacts_field'] ) && ( ! is_array( $row['contacts_field'] ) || array_filter( $row['contacts_field'], 'is_array' ) ) ) ) {
-                throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
+                throw new MainWP_Exception( esc_html__( 'The client data could not be read. Please try again.', 'mainwp' ) );
             }
             if ( ! empty( $row['website_id'] ) && ( ! MainWP_Utility::ctype_digit( $row['website_id'] ) || (int) $row['website_id'] <= 0 ) ) {
-                throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
             }
             $site_id = empty( $row['website_id'] ) ? 0 : (int) $row['website_id'];
             if ( $site_id && ! array_key_exists( $site_id, $websites ) ) {
                 $website = MainWP_DB::instance()->get_website_by_id_unscoped( $row['website_id'] );
                 if ( ! MainWP_System_Utility::can_edit_website( $website ) || ( 'all' !== $allowed && ! in_array( (int) $website->id, $allowed, true ) ) ) {
-                    throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                    throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
                 }
                 $websites[ $site_id ] = $website;
                 $owners[ $site_id ]   = 'client:' . $website->client_id;
@@ -2271,19 +2374,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             }
             if ( null !== $key ) {
                 if ( 'all' !== $allowed && ! array_intersect( $rosters[ $key ], $allowed ) ) {
-                    throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                    throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
                 }
             } else {
-                // update_client() inserts nothing for a value the column cannot hold, and the executor stops there.
-                $stored = array(
-                    'name'         => $row['client_name'] ?? '',
-                    'client_email' => $email,
-                );
-                foreach ( $stored as $column => $value ) {
-                    if ( $wpdb->strip_invalid_text_for_column( $table, $column, $value ) !== $value ) {
-                        throw new MainWP_Exception( esc_html__( 'Undefined error. Please try again.', 'mainwp' ) );
-                    }
-                }
+                $this->validate_client_import_columns( $row['client_name'] ?? '', $email );
                 $key             = 'new:' . count( $plan );
                 $rosters[ $key ] = array();
                 // Emails PHP reads as empty are stored too, and update_client() treats a later padded copy as a duplicate.
@@ -2327,7 +2421,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             if ( null === $collation ) {
                 $column = $wpdb->get_row( $wpdb->prepare( 'SHOW FULL COLUMNS FROM %i LIKE %s', $table, 'client_email' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- column metadata, once per plan requiring pending-email comparison.
                 if ( ! $column || ! isset( $column->Collation ) || ! preg_match( '/^([a-z0-9]+)_[a-z0-9_]+$/i', (string) $column->Collation, $matches ) ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
-                    throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                    throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
                 }
                 $collation = array( $matches[1], $column->Collation ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
             }
@@ -2336,7 +2430,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         }
         $equal = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared -- prepared value comparison under the email column's collation.
         if ( $restricted && null === $equal ) {
-            throw new MainWP_Exception( 'Error - insufficient permissions!' );
+            throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
         }
         return '1' === (string) $equal;
     }
@@ -2358,15 +2452,19 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     public function mainwp_handle_create_client( $client_data, $site_ids = array() ) {
         $allowed = MainWP_Abilities_Util::get_allowed_site_ids();
         if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ( 'all' !== $allowed && array_diff( array_map( 'intval', $site_ids ), $allowed ) ) ) {
-            throw new MainWP_Exception( 'Error - insufficient permissions!' );
+            throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
         }
         // Check if client does not exist then create new one.
         $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $client_data['client_email'], OBJECT );
         if ( $client && ! MainWP_Client::has_client_access( $client->client_id ) ) {
-            throw new MainWP_Exception( 'Error - insufficient permissions!' );
+            throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
         }
         if ( empty( $client ) ) {
+            $this->validate_client_import_columns( $client_data['name'], $client_data['client_email'] );
             $client = MainWP_DB_Client::instance()->update_client( $client_data ); // Create client.
+            if ( ! $client ) {
+                throw new MainWP_Exception( esc_html__( 'A client could not be saved, so the import stopped. Clients before it in the list may have been added; check the Clients page.', 'mainwp' ) );
+            }
         }
 
         return $client;
@@ -2387,7 +2485,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     public function mainwp_handle_selected_sites_for_client( $client, $website_id ) {
         $allowed = MainWP_Abilities_Util::get_allowed_site_ids();
         if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ( 'all' !== $allowed && ! in_array( (int) $website_id, $allowed, true ) ) ) {
-            throw new MainWP_Exception( 'Error - insufficient permissions!' );
+            throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
         }
         // Imports append to the complete roster so hidden memberships survive.
         $sites_ids = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id, array( 'no_perm_check' => true ) );

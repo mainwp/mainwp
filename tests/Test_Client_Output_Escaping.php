@@ -8,6 +8,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Client;
+use MainWP\Dashboard\MainWP_Client_List_Table;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Updates_Per_Item;
@@ -97,6 +98,65 @@ class Test_Client_Output_Escaping extends \WP_UnitTestCase {
         $this->assertSame( $name, $links->item( 0 )->textContent );
         $this->assertSame( 0, $xpath->query( './/img | .//script', $links->item( 0 ) )->length );
         $this->assertSame( 'admin.php?page=ManageClients&client_id=' . $client->client_id, $links->item( 0 )->getAttribute( 'href' ) );
+    }
+
+    /** Legacy values must be escaped by the enabled Clients table columns. */
+    public function test_clients_list_escapes_core_text_and_social_columns(): void {
+        $text_fields = array( 'address_1', 'address_2', 'city', 'zip', 'state', 'country' );
+        $social_fields = array( 'client_facebook', 'client_twitter', 'client_instagram', 'client_linkedin' );
+        $data = array( 'name' => 'Client', 'client_email' => 'list@example.com' );
+        foreach ( $text_fields as $field ) {
+            $data[ $field ] = '<img src=x onerror=alert(1)>' . $field;
+        }
+        foreach ( $social_fields as $field ) {
+            $data[ $field ] = 'javascript:alert(1)';
+        }
+        $client = MainWP_DB_Client::instance()->update_client( $data, true );
+        $contact_name = '<script>alert(1)</script>Contact';
+        $contact = MainWP_DB_Client::instance()->update_client_contact( array( 'contact_client_id' => $client->client_id, 'contact_name' => $contact_name, 'contact_email' => 'list-contact@example.com' ) );
+        MainWP_DB_Client::instance()->update_client( array( 'client_id' => $client->client_id, 'primary_contact_id' => $contact->contact_id ) );
+        $enabled = array_merge( array( 'contact_name' ), $text_fields, $social_fields );
+        $columns = static function ( $columns ) use ( $enabled ) { return array_intersect_key( $columns, array_flip( $enabled ) ); };
+        add_filter( 'mainwp_clients_sitestable_getcolumns', $columns );
+        $table = new MainWP_Client_List_Table();
+        ob_start();
+        try {
+            $table->prepare_items();
+            $this->assertCount( 1, $table->items );
+            $this->assertSame( $contact_name, $table->items[0]['contact_name'] );
+            $table->display_rows();
+        } finally {
+            $html = ob_get_clean();
+            remove_filter( 'mainwp_clients_sitestable_getcolumns', $columns );
+            remove_action( 'mainwp_manageclients_tabletop', array( $table, 'generate_tabletop' ) );
+        }
+        $xpath = $this->xpath( '<table>' . $html . '</table>' );
+        foreach ( array_merge( array( 'contact_name' => $contact_name ), array_intersect_key( $data, array_flip( $text_fields ) ) ) as $field => $value ) {
+            $cell = $xpath->query( '//td[contains(@class,"column-' . $field . '")]' )->item( 0 );
+            $this->assertNotNull( $cell, $field );
+            $this->assertStringContainsString( esc_html( $value ), $html, $field );
+            $this->assertStringContainsString( $value, $cell->textContent, $field );
+            $this->assertSame( 0, $xpath->query( './/img | .//script', $cell )->length, $field );
+        }
+        foreach ( $social_fields as $field ) {
+            $link = $xpath->query( '//td[contains(@class,"column-' . $field . '")]/a' )->item( 0 );
+            $this->assertNotNull( $link, $field );
+            $this->assertSame( '', $link->getAttribute( 'href' ), $field );
+        }
+    }
+
+    /** Extension columns retain their HTML contract. */
+    public function test_clients_list_keeps_extension_column_html(): void {
+        $markup = '<strong>Extension</strong>';
+        $filter = static function ( $item ) use ( $markup ) { $item['extension'] = $markup; return $item; };
+        add_filter( 'mainwp_clients_sitestable_item', $filter );
+        $table = new MainWP_Client_List_Table();
+        try {
+            $this->assertSame( $markup, $table->column_default( array(), 'extension' ) );
+        } finally {
+            remove_filter( 'mainwp_clients_sitestable_item', $filter );
+            remove_action( 'mainwp_manageclients_tabletop', array( $table, 'generate_tabletop' ) );
+        }
     }
 
     /** @param string $html Rendered markup. @return \DOMXPath Parsed output. */

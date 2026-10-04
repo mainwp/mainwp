@@ -931,7 +931,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
             'missing site' => array( array( array( 'B', 'missing' ) ), array(), array(), true, true ),
             'existing overlap' => array( array( array( 'A', 'S2' ) ), array( 'S2' => 'A' ), array(), false ),
             'existing ASCII case' => array( array( array( 'A', 'S2', 'EMILE@example.com' ) ), array( 'S2' => 'A' ), array(), false ),
-            'existing sanitized accent' => array( array( array( 'A', 'S2', 'émile@example.com' ) ), array( 'S2' => 'A' ), array(), false ),
+            'existing decomposed combining mark stripped' => array( array( array( 'A', 'S2', 'émile@example.com' ) ), array( 'S2' => 'A' ), array(), false ),
             'existing trailing space' => array( array( array( 'A', 'S2', 'emile@example.com ' ) ), array( 'S2' => 'A' ), array(), false ),
             'normalized existing overlap' => array( array( array( 'A', 'S2', '"emile"@example.com' ) ), array( 'S2' => 'A' ), array(), false ),
             'normalized existing no overlap' => array( array( array( 'Z', 'S2', '"hidden"@example.com' ) ), array( 'S2' => 'Z' ), array(), true ),
@@ -961,7 +961,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
             'existing no overlap zero sites' => array( array( array( 'Z', '' ) ), array(), array(), true ),
             'existing empty zero sites' => array( array( array( 'E', '' ) ), array(), array(), true ),
             'all allowed three rows' => array( array( array( 'B', 'S2' ), array( 'C', 'S3' ), array( 'A', 'T' ) ), array( 'S2' => 'B', 'S3' => 'C', 'T' => 'A' ), array( 'B', 'C' ), false ),
-            'missing optional fields' => array( array( array( 'B', 'S2', '', 'omitted' ) ), array( 'S2' => 'B' ), array( 'B' ), false ),
+            'missing optional fields' => array( array( array( 'B', 'S2', '', 'omitted' ) ), array(), array(), true, true, '', 'malformed' ),
             'empty emails stay distinct' => array( array( array( 'B', 'S2', '' ), array( 'C', 'S3', '' ) ), array( 'S2' => 'B', 'S3' => 'C' ), array( 'B', 'C' ), false ),
             'zero site id' => array( array( array( 'B', 0 ) ), array(), array( 'B' ), false ),
             'incomplete contact' => array( array( array( 'B', 'S2', null, 'incomplete' ) ), array( 'S2' => 'B' ), array( 'B' ), false ),
@@ -971,14 +971,14 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
             'C4-2 invalid metadata' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'invalid metadata' ),
             'C4-2 NULL comparison' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'comparison' ),
             // Non-empty emails that sanitize to empty must refuse before any projected move is stored.
-            'zero email then padded zero' => array( array( array( 'B', 'S2', '0' ), array( 'B', 'S3', '0 ' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
-            'empty email then space' => array( array( array( 'B', 'S2', '' ), array( 'B', 'S3', ' ' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
-            'padded zero donor edited later' => array( array( array( 'B', 'S2', '0' ), array( 'B', 'S1', '0 ' ), array( 'A', 'S3' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
-            'zero emails invalid' => array( array( array( 'B', 'S2', '0' ), array( 'C', 'S3', '0' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
+            'zero email then padded zero' => array( array( array( 'B', 'S2', '0' ), array( 'B', 'S3', '0 ' ) ), array(), array(), true, true, '', 'invalid email' ),
+            'empty email then space' => array( array( array( 'B', 'S2', '' ), array( 'B', 'S3', ' ' ) ), array(), array(), true, true, '', 'invalid email' ),
+            'padded zero donor edited later' => array( array( array( 'B', 'S2', '0' ), array( 'B', 'S1', '0 ' ), array( 'A', 'S3' ) ), array(), array(), true, true, '', 'invalid email' ),
+            'zero emails invalid' => array( array( array( 'B', 'S2', '0' ), array( 'C', 'S3', '0' ) ), array(), array(), true, true, '', 'invalid email' ),
             // A new client the column cannot store is refused before the earlier projected move detaches a site.
-            'over-long new email' => array( array( array( 'B', 'S1', str_repeat( 'a', 64 ) . '@' . str_repeat( 'b', 150 ) . '.com' ), array( 'A', 'S2' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
-            'over-long new name' => array( array( array( 'B', 'S1', null, 'long name' ), array( 'A', 'S2' ) ), array(), array(), true, true, '', 'Undefined error. Please try again.' ),
-            'client insert fails' => array( array( array( 'B', 'S1' ), array( 'C', 'S2' ) ), array(), array(), true, true, 'insert', 'Undefined error. Please try again.' ),
+            'over-long new email' => array( array( array( 'B', 'S1', str_repeat( 'a', 64 ) . '@' . str_repeat( 'b', 150 ) . '.com' ), array( 'A', 'S2' ) ), array(), array(), true, true, '', 'too long' ),
+            'over-long new name' => array( array( array( 'B', 'S1', null, 'long name' ), array( 'A', 'S2' ) ), array(), array(), true, true, '', 'too long' ),
+            'client insert fails' => array( array( array( 'B', 'S1' ), array( 'C', 'S2' ) ), array(), array(), true, true, 'insert', 'insert' ),
         );
         $cases = array();
         foreach ( array( 'restricted', 'administrator' ) as $scope ) {
@@ -1033,7 +1033,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         );
         $before = $this->before_write();
         $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => $rows ) );
-        $this->assertSame( array( 'success' => ! $refused, 'data' => $refused ? 'Undefined error. Please try again.' : 'Created client successfully.' ), json_decode( $body, true ), $body );
+        $this->assertSame( array( 'success' => ! $refused, 'data' => $refused ? $this->import_refusal_message( 'invalid email' ) : 'Created client successfully.' ), json_decode( $body, true ), $body );
         if ( $refused ) {
             $this->assert_unchanged( $before );
             return;
@@ -1077,6 +1077,239 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         if ( $with_site ) {
             $this->assertSame( array( $site ), $this->members( $client ) );
         }
+    }
+
+    /** @return array JSON entry points under both authorization scopes. */
+    public static function json_import_scopes(): array {
+        $cases = array();
+        foreach ( array( 'restricted', 'administrator' ) as $scope ) {
+            foreach ( self::json_import_handlers() as $handler ) {
+                $cases[ $scope . ': ' . $handler[0] ] = array_merge( array( $scope ), $handler );
+            }
+        }
+        return $cases;
+    }
+
+    /**
+     * An imported identifier must never select an existing client for an update.
+     *
+     * @dataProvider json_import_scopes
+     */
+    public function test_json_import_only_stores_known_sanitized_columns( $scope, $action, $with_site ): void {
+        if ( 'administrator' === $scope ) {
+            wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+        }
+        $target = $this->client();
+        $hidden = $this->site( $target );
+        $site = $this->create_test_site();
+        $this->scope( 'administrator' === $scope ? 'all' : array( $site ) );
+        $before = $this->before_write();
+        $row = array(
+            'client_id' => $target->client_id,
+            'created' => 1,
+            'name' => "<b>Back\\slash O'Brien</b>",
+            'client_email' => 'known-columns@example.com',
+            'image' => '../../outside.png',
+            'suspended' => '1',
+            'primary_contact_id' => '999',
+            'selected_icon_info' => 'untrusted',
+            'note' => '<img src=x onerror=alert(1)>Note',
+        );
+        foreach ( array( 'address_1', 'address_2', 'city', 'zip', 'state', 'country', 'client_phone' ) as $field ) {
+            $row[ $field ] = '<img src=x onerror=alert(1)><b>' . $field . '</b>';
+        }
+        foreach ( array( 'client_facebook', 'client_twitter', 'client_instagram', 'client_linkedin' ) as $field ) {
+            $row[ $field ] = 'javascript:alert(1)';
+        }
+        $json = wp_slash( wp_json_encode( $row, JSON_HEX_TAG ) );
+        $body = $this->dispatch( $action, array( 'client' => $with_site ? $json : array( $json ), 'site_id' => $with_site ? $site : '' ) );
+        $this->assertSame( array( 'success' => $with_site, 'data' => $with_site ? __( 'Created client successfully.', 'mainwp' ) : __( 'Undefined error. Please try again.', 'mainwp' ) ), json_decode( $body, true ), $body );
+        $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $row['client_email'] );
+        $this->assertIsObject( $client );
+        $this->assertNotSame( $target->client_id, $client->client_id );
+        $this->assertSame( "Back\\slash O'Brien", $client->name );
+        foreach ( array( 'address_1', 'address_2', 'city', 'zip', 'state', 'country', 'client_phone' ) as $field ) {
+            $this->assertSame( $field, $client->$field, $field );
+        }
+        $this->assertSame( '&lt;img src=x onerror=alert(1)&gt;Note', $client->note );
+        foreach ( array( 'image', 'client_facebook', 'client_twitter', 'client_instagram', 'client_linkedin' ) as $field ) {
+            $this->assertSame( '', $client->$field, $field );
+        }
+        $this->assertSame( 'selected:wordpress;color:#34424d', $client->selected_icon_info );
+        $this->assertSame( '0', $client->suspended );
+        $this->assertSame( '0', $client->primary_contact_id );
+        $this->assertNotSame( '1', $client->created );
+        $after = $this->snapshot();
+        $this->assertCount( count( $before['wp_clients'] ) + 1, $after['wp_clients'] );
+        $this->assertSame( $before['wp_clients'][0], $after['wp_clients'][0], 'The targeted client must retain every column.' );
+        $this->assertSame( $before['wp_clients_contacts'], $after['wp_clients_contacts'] );
+        $this->assertSame( array( $hidden ), $this->members( $target ) );
+        $this->assertSame( $with_site ? (int) $client->client_id : 0, (int) MainWP_DB::instance()->get_website_by_id_unscoped( $site )->client_id );
+    }
+
+    /** @return array Refusals across all import entry points and scopes. */
+    public static function import_refusals(): array {
+        $cases = array();
+        $kinds = array( 'invalid email', 'invalid contact email', 'too long name', 'too long email', 'row string', 'name array', 'email null', 'contacts nested', 'contacts scalar', 'contact number', 'empty sanitized name', 'both empty', 'insert' );
+        foreach ( array( 'restricted', 'administrator' ) as $scope ) {
+            foreach ( array( 'site', 'no site', 'multi' ) as $handler ) {
+                foreach ( $kinds as $kind ) {
+                    $cases[ $scope . ': ' . $handler . ': ' . $kind ] = array( $scope, $handler, $kind );
+                }
+            }
+        }
+        return $cases;
+    }
+
+    /**
+     * Refused requests must preserve clients, contacts and site ownership.
+     *
+     * @dataProvider import_refusals
+     */
+    public function test_import_refusals_return_specific_translated_message_without_writes( $scope, $handler, $kind ): void {
+        global $wpdb;
+        if ( 'administrator' === $scope ) {
+            wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+        }
+        $existing = $this->client();
+        $site = $this->site( $existing );
+        $this->scope( 'administrator' === $scope ? 'all' : array( $site ) );
+        $name_field = 'multi' === $handler ? 'client_name' : 'name';
+        $valid = array( $name_field => 'Valid client', 'client_email' => 'valid@example.com' );
+        if ( 'multi' === $handler ) {
+            $valid['website_id'] = $site;
+            $valid['contacts_field'] = array( 'contact_name' => 'Valid contact', 'contact_email' => 'contact@example.com' );
+        }
+        $row = array_merge( $valid, array( 'client_email' => 'second@example.com' ) );
+        $message = 'malformed';
+        switch ( $kind ) {
+            case 'invalid email':
+                $row['client_email'] = 'invalid-email';
+                $message = 'invalid email';
+                break;
+            case 'invalid contact email':
+                $row['contacts_field']['contact_email'] = 'invalid-email';
+                $message = 'invalid email';
+                break;
+            case 'too long name':
+            case 'too long email':
+                $table = MainWP_DB_Client::instance()->get_table_name( 'wp_clients' );
+                $column = 'too long name' === $kind ? 'name' : 'client_email';
+                $limit = $wpdb->get_col_length( $table, $column )['length'];
+                $row[ 'name' === $column ? $name_field : $column ] = 'name' === $column ? str_repeat( 'é', $limit + 1 ) : str_repeat( 'a', $limit ) . '@example.com';
+                $message = 'too long';
+                break;
+            case 'row string':
+                $row = 'invalid row';
+                break;
+            case 'name array':
+                $row[ $name_field ] = array( 'Name' );
+                break;
+            case 'email null':
+                $row['client_email'] = null;
+                break;
+            case 'contacts nested':
+                $row['contacts_field'] = array( array( 'contact_name' => 'Contact' ) );
+                break;
+            case 'contacts scalar':
+                $row['contacts_field'] = false;
+                break;
+            case 'contact number':
+                $row['contacts_field']['contact_role'] = 123;
+                break;
+            case 'empty sanitized name':
+                $row[ $name_field ] = '<img src=x onerror=alert(1)>';
+                break;
+            case 'both empty':
+                $row[ $name_field ] = '';
+                $row['client_email'] = '';
+                break;
+            case 'insert':
+                $message = 'insert';
+                $client_insert = 'INSERT INTO `' . $wpdb->prefix . 'mainwp_wp_clients`';
+                $this->filter( 'query', static function ( $sql ) use ( $client_insert ) { return 0 === strpos( $sql, $client_insert ) ? '' : $sql; } );
+                break;
+        }
+        $before = $this->before_write();
+        if ( 'multi' === $handler ) {
+            $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => array( $valid, $row, array_merge( $valid, array( 'client_email' => 'third@example.com' ) ) ) ) );
+        } else {
+            $json = wp_slash( wp_json_encode( $row, JSON_HEX_TAG ) );
+            $batch = array( wp_slash( wp_json_encode( $valid ) ), $json, wp_slash( wp_json_encode( array_merge( $valid, array( 'client_email' => 'third@example.com' ) ) ) ) );
+            $body = $this->dispatch( 'mainwp_import_website_add_client' . ( 'no site' === $handler ? '_no_site' : '' ), array( 'client' => 'no site' === $handler ? $batch : $json, 'site_id' => $site ) );
+        }
+        $this->assertSame( array( 'success' => false, 'data' => $this->import_refusal_message( $message ) ), json_decode( $body, true ), $body );
+        $this->assert_unchanged( $before );
+    }
+
+    /** @return array Non-string known JSON columns and non-object JSON shapes. */
+    public static function malformed_json_imports(): array {
+        $cases = array();
+        foreach ( self::json_import_handlers() as $handler ) {
+            foreach ( array( 'name', 'client_email', 'address_1', 'address_2', 'city', 'zip', 'state', 'country', 'client_phone', 'note', 'client_facebook', 'client_twitter', 'client_instagram', 'client_linkedin', 'image', 'selected_icon_info', 'suspended', 'primary_contact_id' ) as $field ) {
+                $cases[ $handler[0] . ': ' . $field ] = array( $handler[0], $handler[1], wp_json_encode( array( 'name' => 'Client', 'client_email' => 'malformed@example.com', $field => array( 'invalid' ) ) ) );
+            }
+            foreach ( array( '{}', '[]', 'null', '42', '"scalar"', '{broken', '[{"name":"Client","client_email":"array@example.com"}]' ) as $json ) {
+                $cases[ $handler[0] . ': ' . $json ] = array( $handler[0], $handler[1], $json );
+            }
+        }
+        return $cases;
+    }
+
+    /** @dataProvider malformed_json_imports */
+    public function test_json_import_refuses_non_string_columns_and_non_object_rows( $action, $with_site, $json ): void {
+        $site = $this->create_test_site();
+        $this->scope( array( $site ) );
+        $before = $this->before_write();
+        $json = wp_slash( $json );
+        $body = $this->dispatch( $action, array( 'client' => $with_site ? $json : array( $json ), 'site_id' => $site ) );
+        $this->assertSame( array( 'success' => false, 'data' => $this->import_refusal_message( 'malformed' ) ), json_decode( $body, true ), $body );
+        $this->assert_unchanged( $before );
+    }
+
+    /** Precomposed non-ASCII email bytes retain the current sanitize_email behavior. */
+    public function test_multi_client_precomposed_accent_creates_sanitized_address(): void {
+        $existing = MainWP_DB_Client::instance()->update_client( array( 'name' => 'Existing', 'client_email' => 'emile@example.com' ), true );
+        $existing_site = $this->site( $existing );
+        $site = $this->create_test_site();
+        $this->scope( array( $existing_site, $site ) );
+        $before = $this->before_write();
+        $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => array( array( 'client_name' => 'New client', 'client_email' => 'émile@example.com', 'website_id' => $site ) ) ) );
+        $this->assertSame( array( 'success' => true, 'data' => __( 'Created client successfully.', 'mainwp' ) ), json_decode( $body, true ), $body );
+        $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', sanitize_email( 'émile@example.com' ) );
+        $this->assertIsObject( $client );
+        $this->assertNotSame( $existing->client_id, $client->client_id );
+        $this->assertSame( 'mile@example.com', $client->client_email );
+        $this->assertSame( $before['wp_clients'][0], $this->snapshot()['wp_clients'][0] );
+        $this->assertSame( array( $existing_site ), $this->members( $existing ) );
+        $this->assertSame( array( $site ), $this->members( $client ) );
+    }
+
+    /** Server text must not become executable markup in the refusal zone. */
+    public function test_multi_client_ui_escapes_server_message(): void {
+        $message = '<img src=x onerror=alert(1)>Unreadable & invalid';
+        $ui = $this->run_refusal_ui( 'mainwp-clients.js', '#bulk_add_multi_create_client', wp_json_encode( array( 'success' => false, 'data' => $message ) ) );
+        $errors = array_values( array_filter( $ui['messages'], static function ( $entry ) { return '#mainwp-message-zone' === $entry['target'] && 'red' === $entry['style']; } ) );
+        $this->assertCount( 1, $errors );
+        $this->assertSame( esc_html( $message ), $errors[0]['text'] );
+        $this->assertSame( 0, $ui['reloads'] );
+    }
+
+    /** @param string $kind Refusal category. @return string Translated response. */
+    private function import_refusal_message( $kind ): string {
+        if ( 'invalid email' === $kind ) {
+            return __( 'One or more email addresses are not valid. No clients were added.', 'mainwp' );
+        }
+        if ( 'too long' === $kind ) {
+            global $wpdb;
+            $table = MainWP_DB_Client::instance()->get_table_name( 'wp_clients' );
+            /* translators: 1: Maximum client name length, 2: Maximum client email address length. */
+            return sprintf( __( 'A client name or email address is too long. Names can have up to %1$d characters and email addresses up to %2$d. No clients were added.', 'mainwp' ), $wpdb->get_col_length( $table, 'name' )['length'], $wpdb->get_col_length( $table, 'client_email' )['length'] );
+        }
+        if ( 'insert' === $kind ) {
+            return __( 'A client could not be saved, so the import stopped. Clients before it in the list may have been added; check the Clients page.', 'mainwp' );
+        }
+        return __( 'The client data could not be read. Please try again.', 'mainwp' );
     }
 
     /**
@@ -1142,7 +1375,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         }
         $before = $this->before_write();
         $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => $data ) );
-        $expected_response = array( 'success' => ! $refused, 'data' => $refused ? ( $message ? $message : ( $rows ? 'Error - insufficient permissions!' : 'Undefined error. Please try again.' ) ) : 'Created client successfully.' );
+        $expected_response = array( 'success' => ! $refused, 'data' => $refused ? ( $message ? $this->import_refusal_message( $message ) : ( $rows ? 'Error - insufficient permissions!' : 'Undefined error. Please try again.' ) ) : 'Created client successfully.' );
         $this->assertSame( $expected_response, json_decode( $body, true ), $body );
         $after = $this->snapshot();
         $before_ids = array_column( $before['wp_clients'], 'client_id' );
@@ -1204,6 +1437,9 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
     public static function malformed_multi_client_rows(): array {
         $shapes = array(
             'data string'              => 'abc',
+            'data null'                => null,
+            'data false'               => false,
+            'data empty string'        => '',
             'row string'               => array( 'abc' ),
             'client email array'       => array( array( 'client_email' => array( 'x@example.com' ) ) ),
             'client name array'        => array( array( 'client_name' => array( 'x' ) ) ),
@@ -1224,7 +1460,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
      *
      * @dataProvider malformed_multi_client_rows
      * @param string       $scope Caller scope.
-     * @param array|string $shape Malformed data or rows.
+     * @param mixed        $shape Malformed data or rows.
      */
     public function test_multi_client_malformed_row_refused_before_any_write( $scope, $shape ): void {
         if ( 'administrator' === $scope ) {
@@ -1244,7 +1480,7 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         }
         $before = $this->before_write();
         $body   = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => $data ) );
-        $this->assertSame( array( 'success' => false, 'data' => 'Undefined error. Please try again.' ), json_decode( $body, true ), $body );
+        $this->assertSame( array( 'success' => false, 'data' => $this->import_refusal_message( 'malformed' ) ), json_decode( $body, true ), $body );
         $this->assert_unchanged( $before );
     }
 

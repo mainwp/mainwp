@@ -405,7 +405,29 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
 
         $site_table = '`' . $wpdb->prefix . 'mainwp_wp`';
         if ( is_string( $query ) && false !== stripos( $query, 'DELETE FROM ' . $site_table ) ) {
+            ++$this->site_row_deletes_rewritten;
             return '';
+        }
+
+        return $query;
+    }
+
+    /**
+     * Make the child-site DELETE match no row.
+     *
+     * $wpdb->delete() then returns 0, which is not a database error.
+     * Other deletes are left alone. Removed by the caller.
+     *
+     * @param string $query SQL.
+     * @return string
+     */
+    public function zero_site_row_delete( $query ) {
+        global $wpdb;
+
+        $site_table = '`' . $wpdb->prefix . 'mainwp_wp`';
+        if ( is_string( $query ) && false !== stripos( $query, 'DELETE FROM ' . $site_table ) ) {
+            ++$this->site_row_deletes_rewritten;
+            return $query . ' AND 1=0';
         }
 
         return $query;
@@ -541,6 +563,275 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
             'The demo site row should be removed.'
         );
         $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+    }
+
+    /**
+     * Test that the manage-sites handler fires both hooks for a live site.
+     *
+     * A live site calls fetch_url_authed() for deactivate. The testing filter
+     * stubs that call so this is not a staging site, which would skip it.
+     * Both hooks then fire once, in order, with that same website object.
+     *
+     * @return void
+     */
+    public function test_remove_website_live_site_fires_deletion_hooks() {
+        $this->set_current_user_as_admin();
+
+        $site_url = 'https://test-handler-delete-live-site-hooks.example.com/';
+        $site_id  = $this->create_test_site(
+            [
+                'name' => 'Test Handler Live Site Hooks',
+                'url'  => $site_url,
+            ]
+        );
+        $site     = $this->assert_handler_live_site( $site_id );
+
+        $remote_calls = [];
+        $this->record_deletion_hooks();
+        $stub = $this->stub_live_site_deactivate( $remote_calls );
+
+        try {
+            $information = \MainWP\Dashboard\MainWP_Manage_Sites_Handler::remove_website( $site );
+        } finally {
+            remove_filter( 'mainwp_fetch_url_authed_pre', $stub, 10 );
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertSame(
+            [
+                [
+                    'what' => 'deactivate',
+                    'id'   => $site_id,
+                ],
+            ],
+            $remote_calls,
+            'A live delete deactivates the child through fetch_url_authed().'
+        );
+        $this->assertIsArray( $information );
+        $this->assertTrue( $information['removed_site'], 'The live site row should be removed.' );
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The live site row should be removed.'
+        );
+        $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+        $this->assert_deletion_hook_argument_is( $site );
+    }
+
+    /**
+     * Test that a failed database delete of a live site fires no deletion hooks.
+     *
+     * @return void
+     */
+    public function test_remove_website_live_site_failed_delete_does_not_fire_deletion_hooks() {
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name' => 'Test Handler Live Site Failed Delete',
+                'url'  => 'https://test-handler-delete-live-site-failed.example.com/',
+            ]
+        );
+        $site    = $this->assert_handler_live_site( $site_id );
+
+        $remote_calls                     = [];
+        $this->site_row_deletes_rewritten = 0;
+        $this->record_deletion_hooks();
+        $stub = $this->stub_live_site_deactivate( $remote_calls );
+        add_filter( 'query', [ $this, 'fail_site_row_delete' ] );
+
+        try {
+            $information = \MainWP\Dashboard\MainWP_Manage_Sites_Handler::remove_website( $site );
+        } finally {
+            remove_filter( 'query', [ $this, 'fail_site_row_delete' ] );
+            remove_filter( 'mainwp_fetch_url_authed_pre', $stub, 10 );
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertSame( 1, $this->site_row_deletes_rewritten, 'The failure filter blanks exactly one site-row DELETE.' );
+        $this->assertSame(
+            [
+                [
+                    'what' => 'deactivate',
+                    'id'   => $site_id,
+                ],
+            ],
+            $remote_calls,
+            'The live deactivate still runs; only the database delete fails.'
+        );
+        $this->assert_handler_failed_delete_fires_no_hooks( $information, $site_id );
+    }
+
+    /**
+     * Test that a failed database delete of a demo site fires no deletion hooks.
+     *
+     * @return void
+     */
+    public function test_remove_website_demo_site_failed_delete_does_not_fire_deletion_hooks() {
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name' => 'Test Handler Demo Site Failed Delete',
+                'url'  => 'https://test-handler-delete-demo-site-failed.example.com/',
+            ]
+        );
+
+        $property = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Demo_Handle::class, 'demo_website_ids' );
+        $property->setAccessible( true );
+        $previous = $property->getValue( null );
+        $demo_ids = is_array( $previous ) ? $previous : [];
+        $demo_ids[] = $site_id;
+
+        $this->site_row_deletes_rewritten = 0;
+        $this->record_deletion_hooks();
+        add_filter( 'query', [ $this, 'fail_site_row_delete' ] );
+
+        try {
+            $property->setValue( null, $demo_ids );
+
+            $site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id );
+            $this->assertTrue(
+                \MainWP\Dashboard\MainWP_Demo_Handle::get_instance()->is_demo_website( $site ),
+                'The fixture site should be treated as a demo site.'
+            );
+
+            $information = \MainWP\Dashboard\MainWP_Manage_Sites_Handler::remove_website( $site );
+        } finally {
+            $property->setValue( null, $previous );
+            remove_filter( 'query', [ $this, 'fail_site_row_delete' ] );
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertSame( 1, $this->site_row_deletes_rewritten, 'The failure filter blanks exactly one site-row DELETE.' );
+        $this->assert_handler_failed_delete_fires_no_hooks( $information, $site_id );
+    }
+
+    /**
+     * Test that a delete matching no row still fires both hooks.
+     *
+     * Zero rows is not a database error. The ability path treats only false
+     * as failure, and removed_site stays unset because that flag is truthy-only.
+     *
+     * @return void
+     */
+    public function test_remove_website_zero_row_delete_still_fires_deletion_hooks() {
+        $this->set_current_user_as_admin();
+
+        $site_url = 'https://test-handler-delete-zero-rows.example.com/';
+        $site_id  = $this->create_test_site(
+            [
+                'name' => 'Test Handler Zero Row Delete',
+                'url'  => $site_url,
+            ]
+        );
+        $site     = $this->assert_handler_live_site( $site_id );
+
+        $remote_calls                     = [];
+        $this->site_row_deletes_rewritten = 0;
+        $this->record_deletion_hooks();
+        $stub = $this->stub_live_site_deactivate( $remote_calls );
+        add_filter( 'query', [ $this, 'zero_site_row_delete' ] );
+
+        try {
+            $information = \MainWP\Dashboard\MainWP_Manage_Sites_Handler::remove_website( $site );
+        } finally {
+            remove_filter( 'query', [ $this, 'zero_site_row_delete' ] );
+            remove_filter( 'mainwp_fetch_url_authed_pre', $stub, 10 );
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertSame( 1, $this->site_row_deletes_rewritten, 'The zero-row filter rewrites exactly one site-row DELETE.' );
+        $this->assertIsArray( $information );
+        $this->assertArrayNotHasKey( 'removed_site', $information, 'Zero rows does not set removed_site.' );
+        $this->assertSame( 1, $this->count_site_rows( $site_id ), 'A zero-row delete must leave the site row in place.' );
+        $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+        $this->assert_deletion_hook_argument_is( $site );
+    }
+
+    /**
+     * Assert the fixture is a live site: not staging and not demo.
+     *
+     * @param int $site_id Site id.
+     * @return object Website object.
+     */
+    private function assert_handler_live_site( $site_id ) {
+        $site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id );
+        $this->assertIsObject( $site );
+        $this->assertSame( 0, (int) $site->is_staging, 'The fixture is a live site, not a staging site.' );
+        $this->assertFalse(
+            \MainWP\Dashboard\MainWP_Demo_Handle::get_instance()->is_demo_website( $site ),
+            'The fixture is not a demo site.'
+        );
+        return $site;
+    }
+
+    /**
+     * Stub the live-site deactivate request.
+     *
+     * mainwp_fetch_url_authed_pre runs only in the test harness, before any
+     * HTTP call. The handler still takes the live branch.
+     *
+     * @param array $calls Collected deactivate calls, by reference.
+     * @return callable Filter callback, so the caller can remove it.
+     */
+    private function stub_live_site_deactivate( array &$calls ) {
+        $calls = [];
+        $stub  = static function ( $result, $website, $what ) use ( &$calls ) {
+            if ( false !== $result ) {
+                return $result;
+            }
+            $calls[] = [
+                'what' => $what,
+                'id'   => is_object( $website ) ? (int) $website->id : 0,
+            ];
+            return [ 'deactivated' => true ];
+        };
+        add_filter( 'mainwp_fetch_url_authed_pre', $stub, 10, 3 );
+        return $stub;
+    }
+
+    /**
+     * Assert a handler delete failed and neither deletion hook fired.
+     *
+     * @param mixed $information Handler return value.
+     * @param int   $site_id     Site id that must still exist.
+     * @return void
+     */
+    private function assert_handler_failed_delete_fires_no_hooks( $information, $site_id ) {
+        $this->assertIsArray( $information );
+        $this->assertArrayNotHasKey( 'removed_site', $information, 'A failed delete must not set removed_site.' );
+        $this->assertSame( [], $this->deletion_hook_fired, 'A failed delete must not fire mainwp_delete_site or mainwp_site_deleted.' );
+        $this->assertSame( 1, $this->count_site_rows( $site_id ), 'A failed delete must leave the site row in place.' );
+    }
+
+    /**
+     * Assert each recorded hook received this website object.
+     *
+     * @param object $website Website passed into remove_website().
+     * @return void
+     */
+    private function assert_deletion_hook_argument_is( $website ) {
+        $this->assertNotEmpty( $this->deletion_hook_fired );
+        foreach ( $this->deletion_hook_fired as $call ) {
+            $this->assertSame( $website, $call['args'][0], 'The hook receives the website object fetched before the delete.' );
+        }
+    }
+
+    /**
+     * Count mainwp_wp rows for a site id.
+     *
+     * @param int $site_id Site id.
+     * @return int
+     */
+    private function count_site_rows( $site_id ) {
+        global $wpdb;
+
+        return (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}mainwp_wp WHERE id = %d",
+                $site_id
+            )
+        );
     }
 
     /**
@@ -928,6 +1219,13 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
      * @var array<int, array{hook: string, args: array}>
      */
     private $deletion_hook_fired = [];
+
+    /**
+     * Site-row DELETE statements rewritten by the query filters.
+     *
+     * @var int
+     */
+    private $site_row_deletes_rewritten = 0;
 
     /**
      * Listeners registered by record_deletion_hooks().

@@ -206,7 +206,6 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         $groups = MainWP_DB_Common::instance()->get_groups_and_count( null, $for_manager );
 
-
         foreach ( $groups as $group ) {
             static::create_group_item( $group );
         }

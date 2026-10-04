@@ -752,7 +752,8 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
      * Test that the extension delete-site filter fires both hooks on success.
      *
      * mainwp_deletesite is the extension entry. It must fire mainwp_delete_site
-     * then mainwp_site_deleted with the website object, and return SUCCESS.
+     * then mainwp_site_deleted with the website object, return SUCCESS, and
+     * remove a normal cached favicon.
      *
      * @return void
      */
@@ -766,21 +767,24 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
                 'url'  => $site_url,
             ]
         );
+        $favicon  = $this->write_site_favicon( $site_id, 'favi-' . $site_id . '-favicon.ico' );
 
         $this->record_deletion_hooks();
 
         try {
             $result = apply_filters( 'mainwp_deletesite', $site_id );
+
+            $this->assertSame( [ 'result' => 'SUCCESS' ], $result );
+            $this->assertNull(
+                \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+                'A successful delete removes the site row.'
+            );
+            $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+            $this->assertFileDoesNotExist( $favicon, 'A normal cached favicon is removed.' );
         } finally {
             $this->remove_deletion_hook_recorders();
+            $this->delete_file_if_present( $favicon );
         }
-
-        $this->assertSame( [ 'result' => 'SUCCESS' ], $result );
-        $this->assertNull(
-            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
-            'A successful delete removes the site row.'
-        );
-        $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
     }
 
     /**
@@ -853,7 +857,7 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
      * Test that deleting a clone site fires both hooks and returns SUCCESS.
      *
      * The clone path only removes a staging site. The extension filter is
-     * mainwp_delete_clonesite.
+     * mainwp_delete_clonesite. A normal cached favicon is removed.
      *
      * @return void
      */
@@ -868,21 +872,24 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
                 'is_staging' => 1,
             ]
         );
+        $favicon  = $this->write_site_favicon( $site_id, 'favi-' . $site_id . '-favicon.ico' );
 
         $this->record_deletion_hooks();
 
         try {
             $result = $this->apply_delete_clone_site( '', $site_id );
+
+            $this->assertSame( [ 'result' => 'SUCCESS' ], $result );
+            $this->assertNull(
+                \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+                'A successful clone delete removes the site row.'
+            );
+            $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+            $this->assertFileDoesNotExist( $favicon, 'A normal cached favicon is removed.' );
         } finally {
             $this->remove_deletion_hook_recorders();
+            $this->delete_file_if_present( $favicon );
         }
-
-        $this->assertSame( [ 'result' => 'SUCCESS' ], $result );
-        $this->assertNull(
-            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
-            'A successful clone delete removes the site row.'
-        );
-        $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
     }
 
     /**

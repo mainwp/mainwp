@@ -326,17 +326,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
 
         $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all', null, ARRAY_A, $params );
 
-        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
-        if ( 'all' !== $allowed_sites && is_array( $clients ) ) {
-            $clients = array_values(
-                array_filter(
-                    $clients,
-                    static function ( $client ) use ( $allowed_sites ) {
-                        return ! empty( $client['selected_sites'] ) && array_intersect( array_map( 'intval', explode( ',', $client['selected_sites'] ) ), $allowed_sites );
-                    }
-                )
-            );
-        }
+        $clients = MainWP_Client::filter_viewable_clients( $clients );
 
         $totalRecords = ( $clients ? count( $clients ) : 0 );
 

@@ -51,6 +51,50 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Keep only the clients a restricted user may view: at least one of the client's sites is allowed.
+     *
+     * Judged on the site rows from one batched roster query, never on the GROUP_CONCAT selected_sites
+     * column: MySQL truncates that string at group_concat_max_len, and a cut-off id fragment can match
+     * an allowed site the client does not have.
+     *
+     * @param mixed $clients Client rows, arrays or objects carrying client_id.
+     * @return mixed The input unchanged for unrestricted users or non-arrays, otherwise the visible rows reindexed.
+     */
+    public static function filter_viewable_clients( $clients ) {
+        $allowed = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( 'all' === $allowed || ! is_array( $clients ) ) {
+            return $clients;
+        }
+
+        $client_id = static function ( $client ) {
+            if ( is_array( $client ) ) {
+                return isset( $client['client_id'] ) ? (int) $client['client_id'] : 0;
+            }
+            return is_object( $client ) && isset( $client->client_id ) ? (int) $client->client_id : 0;
+        };
+
+        $visible = array();
+        $ids     = array_filter( array_unique( array_map( $client_id, $clients ) ) );
+        if ( ! empty( $ids ) && ! empty( $allowed ) ) {
+            $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( array_values( $ids ), array( 'no_perm_check' => true ) );
+            foreach ( (array) $sites as $site ) {
+                if ( in_array( (int) $site->id, $allowed, true ) ) {
+                    $visible[ (int) $site->client_id ] = true;
+                }
+            }
+        }
+
+        return array_values(
+            array_filter(
+                $clients,
+                static function ( $client ) use ( $client_id, $visible ) {
+                    return isset( $visible[ $client_id( $client ) ] );
+                }
+            )
+        );
+    }
+
+    /**
      * Current page.
      *
      * @static

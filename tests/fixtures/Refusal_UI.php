@@ -73,7 +73,8 @@ function element(selector) {
         modal() { return item; },
         show() { return item; },
         hide() { return item; },
-        fadeOut() { fades.push(key); return item; }
+        fadeOut() { fades.push(key); return item; },
+        remove() { return item; }
     };
     elements.set(key, item);
     return item;
@@ -106,6 +107,10 @@ if (handler === 'bulk') {
 }
 process.stdout.write(JSON.stringify({ messages, posts, fades, reloads }));
 JS;
+        exec( 'command -v node', $node_path, $node_missing );
+        if ( 0 !== $node_missing ) {
+            $this->fail( 'node must be on PATH: these tests run the shipped JavaScript callbacks.' );
+        }
         $process = proc_open( array( 'node', '-e', $script, dirname( __DIR__, 2 ) . '/assets/js/' . $asset, $handler ), array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ), $pipes );
         $this->assertIsResource( $process, 'Could not start the JavaScript callback test.' );
         fwrite( $pipes[0], $body );
@@ -121,9 +126,7 @@ JS;
             return false !== strpos( $message['style'] ?? '', 'red' ) && false !== strpos( $message['text'] ?? '', 'Error - insufficient permissions!' );
         } );
         $this->assertNotEmpty( $visible_errors, 'Refusal was not rendered as a red error: ' . $output );
-        if ( 'bulk' !== $handler ) {
-            $this->assertSame( array(), $ui['fades'], 'Refusal must not fade out the retained row.' );
-        }
+        $this->assertSame( array(), $ui['fades'], 'Refusal must not fade out the retained row.' );
         $this->assertSame( 0, $ui['reloads'], 'Refusal must not trigger a success reload.' );
     }
 }

@@ -258,9 +258,12 @@ let mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
         rowObj.html('<td colspan="999"><i class="red times icon"></i> ' + error + '</td>');
     }
 
-    setTimeout(function () {
-      jQuery('tr[clientid=' + id + ']').fadeOut(1000);
-    }, 3000);
+    // A refused delete keeps the client, so its row stays visible with the error.
+    if (error == '') {
+      setTimeout(function () {
+        jQuery('tr[clientid=' + id + ']').fadeOut(1000);
+      }, 3000);
+    }
 
     mainwp_manageclients_bulk_remove_next();
   }, 'json');

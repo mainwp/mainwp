@@ -198,6 +198,57 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         }
     }
 
+    /** @return array Allowed-site scopes, row shapes and the clients each must keep. */
+    public static function viewable_client_cases(): array {
+        $restricted = array( 'partial', 'full', 'partial_short_roster' );
+        return array(
+            'restricted arrays'  => array( 'restricted', 'array', $restricted ),
+            'restricted objects' => array( 'restricted', 'object', $restricted ),
+            'no allowed sites'   => array( 'none', 'array', array() ),
+        );
+    }
+
+    /**
+     * Visibility comes from the client's real site rows, never the GROUP_CONCAT roster string,
+     * which MySQL truncates at group_concat_max_len.
+     *
+     * @dataProvider viewable_client_cases
+     */
+    public function test_filter_viewable_clients_matrix( $scope, $shape, $expected ): void {
+        $partial      = $this->client();
+        $partial_site = $this->site( $partial );
+        $this->site( $partial );
+        $full      = $this->client();
+        $full_site = $this->site( $full );
+        $hidden    = $this->client();
+        $this->site( $hidden );
+        $empty = $this->client();
+
+        $rows = array(
+            'partial'              => array( 'client_id' => $partial->client_id, 'selected_sites' => '' ),
+            'full'                 => array( 'client_id' => $full->client_id, 'selected_sites' => (string) $full_site ),
+            'hidden_forged_roster' => array( 'client_id' => $hidden->client_id, 'selected_sites' => (string) $partial_site ),
+            'empty'                => array( 'client_id' => $empty->client_id, 'selected_sites' => '' ),
+            'partial_short_roster' => array( 'client_id' => $partial->client_id, 'selected_sites' => substr( (string) $partial_site, 0, 1 ) ),
+            'no_client_id'         => array( 'selected_sites' => (string) $partial_site ),
+        );
+        $input = array();
+        foreach ( $rows as $key => $row ) {
+            $row['key'] = $key;
+            $input[]    = 'object' === $shape ? (object) $row : $row;
+        }
+
+        $this->scope( 'restricted' === $scope ? array( $partial_site, $full_site ) : array() );
+        $kept = MainWP_Client::filter_viewable_clients( $input );
+        $this->assertSame( $expected, array_map( static function ( $row ) { return is_array( $row ) ? $row['key'] : $row->key; }, $kept ) );
+        $this->assertSame( array_values( $kept ), $kept );
+
+        $this->scope( 'all' );
+        $this->assertSame( $input, MainWP_Client::filter_viewable_clients( $input ) );
+        $this->scope( array( $partial_site ) );
+        $this->assertFalse( MainWP_Client::filter_viewable_clients( false ) );
+    }
+
     /** Widget output and its hook omit hidden clients; unrestricted output keeps all clients. */
     public function test_clients_widget_filters_scope_before_output_and_hook(): void {
         $visible = $this->client();

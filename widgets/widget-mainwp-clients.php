@@ -36,18 +36,7 @@ class MainWP_Clients { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return mixed render_clients()
      */
     public static function render() {
-        $clients       = MainWP_DB_Client::instance()->get_wp_clients();
-        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
-        if ( 'all' !== $allowed_sites && is_array( $clients ) ) {
-            $clients = array_values(
-                array_filter(
-                    $clients,
-                    static function ( $client ) use ( $allowed_sites ) {
-                        return ! empty( $client['selected_sites'] ) && array_intersect( array_map( 'intval', explode( ',', $client['selected_sites'] ) ), $allowed_sites );
-                    }
-                )
-            );
-        }
+        $clients = MainWP_Client::filter_viewable_clients( MainWP_DB_Client::instance()->get_wp_clients() );
         static::render_clients( $clients );
     }
 

@@ -212,6 +212,7 @@ jQuery(function () {
 
         jQuery.post(ajaxurl, data, function (response) {
             if (response.error) {
+                $modal.find('.content > .ui.red.message').remove();
                 $modal.find('.content').prepend(jQuery('<div class="ui red message"></div>').text(response.error));
                 // Remove loading state on error
                 $button.data("loading", false);

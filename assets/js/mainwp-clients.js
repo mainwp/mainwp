@@ -258,6 +258,7 @@ let mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
       result = MainWP.I18n.t('The client has been removed.');
     }
     if (error != '' || response.success != 'SUCCESS') {
+      error = error || response.result || response.message || MainWP.I18n.t('Undefined error. Please try again.');
       bulkManageClientsFailed = true;
     }
 
@@ -488,10 +489,10 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
     jQuery.post(ajaxurl, data, function (response) {
       if (response?.success) {
         mainwp_forceReload('admin.php?page=mainwp-setup&step=monitoring&message=1');
-      } else if (response?.error) {
-        mainwp_set_message_zone('#mainwp-message-zone', response.error, 'red');
       } else {
-        mainwp_set_message_zone('#mainwp-message-zone', MainWP.I18n.t('Undefined error. Please try again.'), 'red');
+        const error = typeof response?.data === 'string' && response.data.trim() !== '' ? response.data : response?.error || MainWP.I18n.t('Undefined error. Please try again.');
+        mainwp_set_message_zone('#mainwp-message-zone', error, 'red');
+        jQuery('#mainwp-message-zone-client').html('');
       }
       jQuery('#bulk_add_multi_create_client').attr('disabled', false); // enable button
     });

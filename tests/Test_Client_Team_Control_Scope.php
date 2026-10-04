@@ -373,6 +373,9 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         return array(
             'single refusal' => array( array( $refused ), 0, array() ),
             'mixed batch'    => array( array( $allowed, $refused ), 0, array( 'tr[clientid=1]' ) ),
+            'missing id'     => array( array( array( 'success' => false, 'result' => 'Client ID empty.' ) ), 0, array() ),
+            'message only'   => array( array( array( 'success' => false, 'message' => 'Delete failed.' ) ), 0, array() ),
+            'no message'     => array( array( array( 'success' => false ) ), 0, array() ),
             'all success'    => array( array( $allowed, $allowed ), 1, array( 'tr[clientid=1]', 'tr[clientid=2]' ) ),
         );
     }
@@ -390,11 +393,32 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertSame( $fades, $ui['fades'], 'Only deleted rows may fade out.' );
         $this->assertSame( $reloads, $ui['reloads'], 'A failed row must prevent the completion reload.' );
         if ( 0 === $reloads ) {
-            $errors = array_filter( $ui['messages'], static function ( $message ) {
-                return false !== strpos( $message['text'] ?? '', 'Error - insufficient permissions!' ) && false !== strpos( $message['style'] ?? '', 'red' );
-            } );
-            $this->assertNotEmpty( $errors, 'The refused row must retain its red error.' );
+            foreach ( $responses as $response ) {
+                if ( 'SUCCESS' === ( $response['success'] ?? null ) ) {
+                    continue;
+                }
+                $expected = $response['error'] ?? $response['result'] ?? $response['message'] ?? 'Undefined error. Please try again.';
+                $errors = array_filter( $ui['messages'], static function ( $message ) use ( $expected ) {
+                    return false !== strpos( $message['text'] ?? '', $expected ) && false !== strpos( $message['style'] ?? '', 'red' );
+                } );
+                $this->assertNotEmpty( $errors, 'The failed row must retain its red error: ' . $expected );
+            }
         }
+    }
+
+    /** Quick Setup must show the server's refusal and remove its pending status. */
+    public function test_multi_client_ui_clears_status_on_refusal(): void {
+        $ui = $this->run_refusal_ui( 'mainwp-clients.js', '#bulk_add_multi_create_client', wp_json_encode( array( 'success' => false, 'data' => 'Error - insufficient permissions!' ) ) );
+        $this->assertSame( array( 'mainwp_clients_add_multi_client' ), $ui['posts'] );
+        $this->assertCount( 1, $ui['requests'][0]['data'], 'The click handler must collect a valid form row.' );
+        $this->assertSame( 'client@example.com', $ui['requests'][0]['data'][0]['client_email'] );
+        $errors = array_filter( $ui['messages'], static function ( $message ) {
+            return '#mainwp-message-zone' === $message['target'] && 'red' === $message['style'] && 'Error - insufficient permissions!' === $message['text'];
+        } );
+        $this->assertNotEmpty( $errors, 'The server refusal must be visible in red.' );
+        $statuses = array_values( array_filter( $ui['messages'], static function ( $message ) { return '#mainwp-message-zone-client' === $message['target']; } ) );
+        $this->assertSame( '', end( $statuses )['text'], 'A failure must clear the pending status.' );
+        $this->assertSame( 0, $ui['reloads'] );
     }
 
     /** @return array Site client dropdowns. */
@@ -823,6 +847,75 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertSame( $existing->name, MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $existing->client_id )->name );
         $this->assertContains( $second, $this->members( $existing ) );
         $this->assertContains( $hidden, $this->members( $existing ) );
+    }
+
+    /**
+     * Duplicate-email matrix, with every supplied site allowed:
+     * New/new site then no site: restricted and unrestricted merge.
+     * New/new no site then site, or neither with a site: restricted refuses before writes;
+     * unrestricted merges. New/new with two sites: both scopes merge both memberships.
+     * Existing DB email in scope: both scopes merge. Existing DB email out of scope:
+     * restricted refuses before writes; unrestricted merges.
+     * Case and trailing spaces match the email column; leading spaces remain distinct.
+     *
+     * @return array Scope, initial client, row memberships and expected refusal.
+     */
+    public static function duplicate_multi_client_emails(): array {
+        $cases = array();
+        foreach ( array( 'restricted', 'all' ) as $scope ) {
+            foreach ( array( 'site then none' => array( true, false ), 'none then site' => array( false, true ), 'neither' => array( false, false ), 'both' => array( true, true ) ) as $name => $sites ) {
+                $cases[ $scope . ' new ' . $name ] = array( $scope, 'new', $sites, 'Batch@example.com', 'restricted' === $scope && ! $sites[0] );
+            }
+            foreach ( array( 'in scope', 'out of scope' ) as $existing ) {
+                $cases[ $scope . ' existing ' . $existing ] = array( $scope, $existing, array( false, true ), 'Batch@example.com', 'restricted' === $scope && 'out of scope' === $existing );
+            }
+        }
+        $cases['restricted case match'] = array( 'restricted', 'new', array( false, true ), 'batch@example.com', true );
+        $cases['restricted trailing space match'] = array( 'restricted', 'new', array( false, true ), 'Batch@example.com ', true );
+        $cases['restricted case and trailing space match'] = array( 'restricted', 'new', array( false, false ), 'batch@example.com ', true );
+        return $cases;
+    }
+
+    /**
+     * @dataProvider duplicate_multi_client_emails
+     */
+    public function test_multi_client_duplicate_email_preflight( $scope, $existing, $sites, $second_email, $refused ): void {
+        $first = $this->create_test_site();
+        $second = $this->create_test_site();
+        if ( 'new' !== $existing ) {
+            $client = MainWP_DB_Client::instance()->update_client( array( 'name' => 'Existing batch client', 'client_email' => 'Batch@example.com' ), true );
+            $member = 'in scope' === $existing ? $first : $this->create_test_site();
+            MainWP_DB::instance()->update_website_values( $member, array( 'client_id' => $client->client_id ) );
+        }
+        $this->scope( 'all' === $scope ? 'all' : array( $first, $second ) );
+        $before = $this->before_write();
+        $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => array(
+            array( 'client_name' => 'First row', 'client_email' => 'Batch@example.com', 'website_id' => $sites[0] ? $first : '', 'contacts_field' => array( 'contact_name' => 'Batch contact', 'contact_email' => 'batch-contact@example.com' ) ),
+            array( 'client_name' => 'Second row', 'client_email' => $second_email, 'website_id' => $sites[1] ? $second : '' ),
+        ) ) );
+        $this->assertSame( array( 'success' => ! $refused, 'data' => $refused ? 'Error - insufficient permissions!' : 'Created client successfully.' ), json_decode( $body, true ), $body );
+        if ( $refused ) {
+            $this->assert_unchanged( $before );
+            return;
+        }
+        global $wpdb;
+        $this->assertSame( 1, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}mainwp_wp_clients WHERE client_email = %s", 'Batch@example.com' ) ) );
+        $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', 'Batch@example.com' );
+        $this->assertSame( 'new' === $existing ? 'First row' : 'Existing batch client', $client->name );
+        $members = array();
+        if ( $sites[0] || 'in scope' === $existing ) {
+            $members[] = $first;
+        }
+        if ( $sites[1] ) {
+            $members[] = $second;
+        }
+        if ( 'out of scope' === $existing ) {
+            $this->assertSame( array( $second, $member ), $this->members( $client ) );
+        } elseif ( empty( $members ) ) {
+            $this->assertEmpty( MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id, array( 'no_perm_check' => true ) ) );
+        } else {
+            $this->assertSame( $members, $this->members( $client ) );
+        }
     }
 
     /** @return array Missing-client entry points. */

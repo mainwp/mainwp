@@ -1961,6 +1961,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             if ( ! empty( $dataes ) ) {
                 // A refused row must not leave earlier clients or contacts behind.
                 $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+                $batch_emails  = array();
                 foreach ( $dataes as $val_data ) {
                     if ( ! empty( $val_data['website_id'] ) ) {
                         $website = MainWP_DB::instance()->get_website_by_id_unscoped( $val_data['website_id'] );
@@ -1968,9 +1969,18 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                             throw new MainWP_Exception( 'Error - insufficient permissions!' );
                         }
                     }
-                    $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $val_data['client_email'] ?? '', OBJECT );
+                    $email  = $val_data['client_email'] ?? '';
+                    $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $email, OBJECT );
                     if ( $client && ! MainWP_Client::has_client_access( $client->client_id ) ) {
                         throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                    }
+                    if ( ! $client && 'all' !== $allowed_sites && ! empty( $email ) ) {
+                        // The email column ignores case and trailing spaces, but preserves leading spaces.
+                        $email_key = strtolower( rtrim( $email, ' ' ) );
+                        if ( isset( $batch_emails[ $email_key ] ) && ! $batch_emails[ $email_key ] ) {
+                            throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                        }
+                        $batch_emails[ $email_key ] = ! empty( $val_data['website_id'] ) || ! empty( $batch_emails[ $email_key ] );
                     }
                 }
                 foreach ( $dataes as $val_data ) {

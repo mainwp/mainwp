@@ -2459,18 +2459,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                      */
                     global $current_user;
 
-                    // UI-created tags need the creator grant hook; REST keeps its existing hooks.
-                    if ( ! empty( $params['group_creation_ui'] ) ) {
-                        foreach ( $groupnames as $groupname ) {
-                            $group_id = MainWP_DB_Common::instance()->add_group( $current_user->ID, htmlspecialchars( $groupname ) );
-                            if ( $group_id ) {
-                                $groupids[] = $group_id;
-                                do_action( 'mainwp_added_new_group', $group_id );
-                            }
-                        }
-                        $groupnames = array();
-                    }
-
                     $others = array(
                         'groupids'          => $groupids,
                         'groupnames'        => $groupnames,
@@ -2485,6 +2473,17 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     );
 
                     $id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $others ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
+
+                    // Keep tags visible to the monitor filter inside add_website(), and grant only saved tags.
+                    if ( $id && ! empty( $params['group_creation_ui'] ) && ! empty( $groupnames ) ) {
+                        $existing_groupids = array_map( 'intval', $groupids );
+                        foreach ( MainWP_DB_Common::instance()->get_groups_by_website_id( $id ) as $group ) {
+                            if ( ! in_array( (int) $group->id, $existing_groupids, true ) ) {
+                                do_action( 'mainwp_site_tag_action', MainWP_DB_Common::instance()->get_group_by_id( $group->id ), 'created' );
+                                do_action( 'mainwp_added_new_group', (int) $group->id );
+                            }
+                        }
+                    }
 
                     if ( $id && isset( $params['clientid'] ) ) {
                         MainWP_DB::instance()->update_website_values( $id, array( 'client_id' => intval( $params['clientid'] ) ) );

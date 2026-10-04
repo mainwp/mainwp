@@ -435,6 +435,52 @@ class Test_Group_Write_Scope extends \WP_UnitTestCase {
      * @dataProvider named_tag_ui_paths
      * @param string $path UI entry point.
      */
+    public function test_named_tag_ui_failed_site_save_leaves_no_tag( $path ): void {
+        global $wpdb;
+        $this->scope( 'all', 'all' );
+        $this->assertTrue( \mainwp_current_user_can( 'dashboard', 'manage_groups' ) );
+        $table = MainWP_DB::instance()->get_table_name( 'wp' );
+        $attempts = 0;
+        $this->filter( 'query', static function ( $sql ) use ( $table, &$attempts ) {
+            if ( 0 === strpos( $sql, 'INSERT INTO `' . $table . '`' ) ) {
+                ++$attempts;
+                return str_replace( 'INSERT INTO `' . $table . '`', 'INSERT INTO `' . $table . '_missing`', $sql );
+            }
+            return $sql;
+        } );
+        $this->before_write();
+        $suppressed = $wpdb->suppress_errors();
+        try {
+            $result = $this->add_site( array( 'Failed save tag' ), $path );
+        } finally {
+            $wpdb->suppress_errors( $suppressed );
+        }
+        $this->assertSame( 1, $attempts, 'The site INSERT must fail.' );
+        $this->assertSame( 0, (int) $result[2] );
+        $this->assertSame( 0, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}mainwp_group WHERE name = %s", 'Failed save tag' ) ), 'A failed save must not create a tag.' );
+        $this->assertSame( 0, $this->hook_calls['mainwp_added_new_group'] );
+    }
+
+    /**
+     * @dataProvider named_tag_ui_paths
+     * @param string $path UI entry point.
+     */
+    public function test_named_tag_ui_monitor_filter_sees_memberships( $path ): void {
+        $this->scope( 'all', 'all' );
+        $seen = array();
+        $this->filter( 'mainwp_update_wp_monitor', static function ( $data ) use ( &$seen ) {
+            $seen = wp_list_pluck( MainWP_DB_Common::instance()->get_groups_by_website_id( $data['wpid'] ), 'name' );
+            return $data;
+        } );
+        $result = $this->add_site( array( 'Monitor visible tag' ), $path );
+        $this->assertGreaterThan( 0, (int) $result[2] );
+        $this->assertContains( 'Monitor visible tag', $seen, 'Site-save filters must retain the pre-sprint tag visibility.' );
+    }
+
+    /**
+     * @dataProvider named_tag_ui_paths
+     * @param string $path UI entry point.
+     */
     public function test_named_tag_ui_creates_once_and_grants_creator( $path ): void {
         $group = $this->group();
         $granted = array( $group );

@@ -38,6 +38,7 @@ const handlers = new Map();
 const elements = new Map();
 const messages = [];
 const posts = [];
+const requests = [];
 const fades = [];
 let reloads = 0;
 const escapeHtml = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
@@ -55,6 +56,7 @@ function element(selector) {
             return item;
         },
         ready(callback) { callback(); return item; },
+        each(callback) { callback.call(element('#mainwp-qsw-add-client-row-0'), 0); return item; },
         find(child) { return element(key + ' ' + child); },
         closest(parent) { return element(key + ' ' + parent); },
         parents(parent) { return element(parent); },
@@ -67,7 +69,10 @@ function element(selector) {
             if (value !== undefined) { state.data[name] = value; return item; }
             return state.data[name] ?? false;
         },
-        val() { return 'Tag name'; },
+        val(value) {
+            if (value !== undefined) { state.value = value; return item; }
+            return state.value ?? 'Tag name';
+        },
         prop() { return item; },
         html(value) {
             if (value === undefined) return state.text ? escapeHtml(state.text) : state.html;
@@ -103,12 +108,14 @@ function jQuery(selector) {
 }
 jQuery.post = (url, data, callback, type) => {
     posts.push(data.action);
-    callback(handler === 'bulk' ? responses[responseIndex++] : type === 'json' ? JSON.parse(response) : response);
+    requests.push(data);
+    callback(handler === 'bulk' ? responses[responseIndex++] : type === 'json' || handler === '#bulk_add_multi_create_client' ? JSON.parse(response) : response);
 };
 const context = vm.createContext({
     jQuery, document: {}, URLSearchParams, location: { search: '' }, ajaxurl: 'admin-ajax.php',
     mainwpParams: {}, MainWP: { I18n: { t: text => text } },
     mainwp_secure_data: data => data, confirm: () => true,
+    mainwp_validate_email: value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),
     mainwp_confirm: (text, callback) => callback(),
     feedback: (target, text, style) => messages.push({ target, text, style }),
     mainwp_set_message_zone: (target, text, style) => messages.push({ target, text, style }),
@@ -125,12 +132,22 @@ if (handler === 'bulk') {
         vm.runInContext('mainwp_manageclients_bulk_remove_specific(checked);', context);
     }
 } else {
+    if (handler === '#bulk_add_multi_create_client') {
+        element('#mainwp-qsw-add-client-row-0').attr('id', 'mainwp-qsw-add-client-row-0');
+        element('#mainwp-qsw-add-client-website-id-0').val('1');
+        element('#mainwp-qsw-add-client-site-url-0').val('https://client.example.com/');
+        element('#mainwp-qsw-add-client-client-name-0').val('Client');
+        element('#mainwp-qsw-add-client-client-email-0').val('client@example.com');
+        for (const field of ['client.contact.name', 'contact.email', 'contact.role']) {
+            element('input[name="client_fields[0][new_contacts_field][' + field + '][]"]').val('');
+        }
+    }
     const callback = handlers.get(handler);
     if (!callback) throw new Error('Missing handler: ' + handler);
     callback.call(element(handler), { preventDefault() {}, stopPropagation() {} });
 }
 const finished = handler === 'bulk' ? vm.runInContext('bulkManageClientsFinished', context) : 0;
-process.stdout.write(JSON.stringify({ messages, posts, fades, reloads, finished }));
+process.stdout.write(JSON.stringify({ messages, posts, requests, fades, reloads, finished }));
 JS;
         exec( 'command -v node', $node_path, $node_missing );
         if ( 0 !== $node_missing ) {

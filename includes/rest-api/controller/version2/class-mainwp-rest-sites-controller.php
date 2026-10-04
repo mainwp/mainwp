@@ -3407,6 +3407,29 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             }
 
             $item = $this->prepare_object_for_database( $request );
+            unset( $item['group_creation_ui'] );
+
+            // Filters can supply names after the public numeric-only input check.
+            $groupnames = array();
+            foreach ( isset( $item['groupids'] ) && is_array( $item['groupids'] ) ? $item['groupids'] : array() as $group ) {
+                if ( ! is_numeric( $group ) ) {
+                    $groupnames[] = trim( $group );
+                }
+            }
+            if ( ! empty( $item['groupnames_import'] ) ) {
+                $groupnames = array_merge( $groupnames, preg_split( '/[;,]/', $item['groupnames_import'] ) );
+            }
+            global $wpdb;
+            $table_group = MainWP_DB_Common::instance()->get_table_name( 'group' );
+            foreach ( array_unique( array_map( 'trim', $groupnames ) ) as $groupname ) {
+                if ( '' === $groupname ) {
+                    continue;
+                }
+                $group = MainWP_DB_Common::instance()->get_row_result( $wpdb->prepare( 'SELECT * FROM %i WHERE name IN (%s, %s)', $table_group, MainWP_DB_Common::instance()->escape( $groupname ), MainWP_DB_Common::instance()->escape( htmlspecialchars( $groupname ) ) ) );
+                if ( ! $group && ! MainWP_Abilities_Util::current_user_has_operation_right( 'manage_groups' ) ) {
+                    return new WP_Error( 'rest_forbidden', __( 'Error - insufficient permissions!', 'mainwp' ), array( 'status' => 403 ) );
+                }
+            }
 
             if ( empty( $item['name'] ) && ! empty( $item['url'] ) ) {
                 $item['name'] = MainWP_Utility::remove_http_prefix( $item['url'], true );

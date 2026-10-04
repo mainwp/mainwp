@@ -2168,6 +2168,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $params['uploaded_site_icon'] = isset( $_POST['uploaded_icon'] ) && ! empty( $_POST['uploaded_icon'] ) ? sanitize_text_field( wp_unslash( $_POST['uploaded_icon'] ) ) : '';
         $params['selected_site_icon'] = isset( $_POST['selected_icon'] ) && ! empty( $_POST['selected_icon'] ) ? sanitize_text_field( wp_unslash( $_POST['selected_icon'] ) ) : '';
         $params['cust_icon_color']    = isset( $_POST['cust_color'] ) && ! empty( $_POST['cust_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['cust_color'] ) ) : '';
+        $params['group_creation_ui']  = true;
 
         if ( isset( $_POST['qsw_page'] ) ) {
             $params['qsw_page'] = sanitize_text_field( wp_unslash( $_POST['qsw_page'] ) );
@@ -2248,7 +2249,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param array $output Output values.
      *
      * @return array $message, $error, $id
-     * @throws MainWP_Exception When a submitted numeric group is not accessible.
+     * @throws MainWP_Exception When a submitted group or new tag name is not authorized.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_name()
@@ -2286,7 +2287,10 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     throw new MainWP_Exception( 'Error - insufficient permissions!' );
                 }
 
-                $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+                $allowed_groups  = MainWP_Abilities_Util::get_allowed_group_ids();
+                $groupids        = array();
+                $groupnames      = array();
+                $submitted_names = array();
                 if ( isset( $params['groupids'] ) && is_array( $params['groupids'] ) ) {
                     foreach ( $params['groupids'] as $group ) {
                         if ( is_numeric( $group ) ) {
@@ -2294,9 +2298,36 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             if ( ! $existing_group || ( 'all' !== $allowed_groups && ! in_array( (int) $existing_group->id, $allowed_groups, true ) ) ) {
                                 throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
                             }
+                            $groupids[] = $existing_group->id;
+                        } else {
+                            $submitted_names[] = trim( $group );
                         }
                     }
                 }
+                if ( isset( $params['groupnames_import'] ) && '' !== $params['groupnames_import'] ) {
+                    $submitted_names = array_merge( $submitted_names, preg_split( '/[;,]/', $params['groupnames_import'] ) );
+                }
+                global $wpdb;
+                $table_group = MainWP_DB_Common::instance()->get_table_name( 'group' );
+                foreach ( array_unique( array_map( 'trim', $submitted_names ) ) as $groupname ) {
+                    if ( '' === $groupname ) {
+                        continue;
+                    }
+                    // A hidden existing name must not be mistaken for a new tag.
+                    $existing_group = MainWP_DB_Common::instance()->get_row_result( $wpdb->prepare( 'SELECT * FROM %i WHERE name IN (%s, %s)', $table_group, MainWP_DB_Common::instance()->escape( $groupname ), MainWP_DB_Common::instance()->escape( htmlspecialchars( $groupname ) ) ) );
+                    if ( $existing_group ) {
+                        if ( 'all' !== $allowed_groups && ! in_array( (int) $existing_group->id, $allowed_groups, true ) ) {
+                            throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
+                        }
+                        $groupids[] = $existing_group->id;
+                    } else {
+                        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_groups' ) ) {
+                            throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
+                        }
+                        $groupnames[] = $groupname;
+                    }
+                }
+                $groupids = array_unique( $groupids );
 
                 /**
                  * Filter to skip generating connection keys when adding a site in PHPUnit tests.
@@ -2414,46 +2445,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
 
                     $connection_step = 'save_site';
-                    $groupids        = array();
-                    $groupnames      = array();
-                    $tmpArr          = array();
-                    if ( isset( $params['groupids'] ) && is_array( $params['groupids'] ) ) {
-                        foreach ( $params['groupids'] as $group ) {
-                            if ( is_numeric( $group ) ) {
-                                $groupids[] = $group;
-                            } else {
-                                $group = trim( $group );
-                                if ( ! empty( $group ) ) {
-                                    $tmpArr[] = $group;
-                                }
-                            }
-                        }
-                        foreach ( $tmpArr as $tmp ) {
-                            $getgroup = MainWP_DB_Common::instance()->get_group_by_name( trim( $tmp ) );
-                            if ( $getgroup ) {
-                                if ( ! in_array( $getgroup->id, $groupids, true ) ) {
-                                    $groupids[] = $getgroup->id;
-                                }
-                            } else {
-                                $groupnames[] = trim( $tmp );
-                            }
-                        }
-                    }
-
-                    if ( isset( $params['groupnames_import'] ) && '' !== $params['groupnames_import'] ) {
-                        $tmpArr = preg_split( '/[;,]/', $params['groupnames_import'] );
-                        foreach ( $tmpArr as $tmp ) {
-                            $group = MainWP_DB_Common::instance()->get_group_by_name( trim( $tmp ) );
-                            if ( $group ) {
-                                if ( ! in_array( $group->id, $groupids, true ) ) {
-                                    $groupids[] = $group->id;
-                                }
-                            } else {
-                                $groupnames[] = trim( $tmp );
-                            }
-                        }
-                    }
-
                     if ( ! isset( $information['uniqueId'] ) || empty( $information['uniqueId'] ) ) {
                         $addUniqueId = '';
                     }
@@ -2467,6 +2458,18 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                      * @global string
                      */
                     global $current_user;
+
+                    // UI-created tags need the creator grant hook; REST keeps its existing hooks.
+                    if ( ! empty( $params['group_creation_ui'] ) ) {
+                        foreach ( $groupnames as $groupname ) {
+                            $group_id = MainWP_DB_Common::instance()->add_group( $current_user->ID, htmlspecialchars( $groupname ) );
+                            if ( $group_id ) {
+                                $groupids[] = $group_id;
+                                do_action( 'mainwp_added_new_group', $group_id );
+                            }
+                        }
+                        $groupnames = array();
+                    }
 
                     $others = array(
                         'groupids'          => $groupids,

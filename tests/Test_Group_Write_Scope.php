@@ -396,14 +396,60 @@ class Test_Group_Write_Scope extends \WP_UnitTestCase {
         $this->assertStringContainsString( 'permission', strtolower( $result[1] ) );
     }
 
-    /** Numeric grants and group creation by name retain the existing add path. */
-    public function test_add_site_allows_granted_numeric_group_and_new_name(): void {
+    /** New tag names require the tag right even alongside a granted numeric ID. */
+    public function test_add_site_refuses_new_name_without_manage_groups(): void {
         $group = $this->group();
         $this->scope( 'all', array( $group ) );
         $this->filter( 'mainwp_currentusercan', static function ( $can, $type, $right ) {
             return 'manage_groups' === $right ? false : $can;
         } );
+        $before = $this->before_write();
         $result = $this->add_site( array( $group, 'Named group' ) );
+        $this->assertSame( 0, $this->register_calls );
+        $this->assertSame( 0, (int) $result[2] );
+        $this->assertStringContainsString( 'Error - insufficient permissions!', $result[1] );
+        $this->assert_unchanged( $before );
+    }
+
+    /** @return array UI submissions that create tags by name. */
+    public static function named_tag_ui_paths(): array {
+        return array( array( 'add' ), array( 'csv' ) );
+    }
+
+    /**
+     * @dataProvider named_tag_ui_paths
+     * @param string $path UI entry point.
+     */
+    public function test_named_tag_ui_refuses_new_name_without_right( $path ): void {
+        $this->scope( 'all', 'all' );
+        $this->filter( 'mainwp_currentusercan', static function ( $can, $type, $right ) { return 'manage_groups' === $right ? false : $can; } );
+        $before = $this->before_write();
+        $result = $this->add_site( array( 'New tag' ), $path );
+        $this->assertSame( 0, $this->register_calls, 'Refusal must precede Child registration.' );
+        $this->assertSame( 0, (int) $result[2] );
+        $this->assertStringContainsString( 'Error - insufficient permissions!', $result[1] );
+        $this->assert_unchanged( $before );
+    }
+
+    /**
+     * @dataProvider named_tag_ui_paths
+     * @param string $path UI entry point.
+     */
+    public function test_named_tag_ui_creates_once_and_grants_creator( $path ): void {
+        $group = $this->group();
+        $granted = array( $group );
+        $this->scope( 'all', array( $group ) );
+        $this->filter( 'mainwp_currentuserallowedaccessgroups', static function () use ( &$granted ) { return $granted; } );
+        $created = array();
+        $grant = static function ( $id ) use ( &$granted, &$created ) { $granted[] = (int) $id; $created[] = (int) $id; };
+        add_action( 'mainwp_added_new_group', $grant );
+        $this->before_write();
+        try {
+            $existing = 'csv' === $path ? MainWP_DB_Common::instance()->get_group_by_id( $group )->name : $group;
+            $result = $this->add_site( array( $existing, 'Named group', 'Named group' ), $path );
+        } finally {
+            remove_action( 'mainwp_added_new_group', $grant );
+        }
         $site   = (int) $result[2];
         $this->assertSame( '', $result[1] );
         $this->assertGreaterThan( 0, $site );
@@ -413,6 +459,139 @@ class Test_Group_Write_Scope extends \WP_UnitTestCase {
         $named = MainWP_DB_Common::instance()->get_group_by_id( $named_id );
         $this->assertIsObject( $named );
         $this->assertSame( array( $site ), $this->members( $named->id ) );
+        $this->assertSame( array( (int) $named->id ), $created );
+        $this->assertSame( 1, $this->hook_calls['mainwp_added_new_group'] );
+    }
+
+    /**
+     * @dataProvider named_tag_ui_paths
+     * @param string $path UI entry point.
+     */
+    public function test_named_tag_ui_looks_up_granted_name_without_right( $path ): void {
+        $group = $this->group();
+        $name = MainWP_DB_Common::instance()->get_group_by_id( $group )->name;
+        $this->scope( 'all', array( $group ) );
+        $this->filter( 'mainwp_currentusercan', static function ( $can, $type, $right ) { return 'manage_groups' === $right ? false : $can; } );
+        $this->before_write();
+        $result = $this->add_site( array( $name ), $path );
+        $this->assertSame( '', $result[1] );
+        $this->assertGreaterThan( 0, (int) $result[2] );
+        $this->assertSame( array( (int) $result[2] ), $this->members( $group ) );
+        $this->assertSame( 0, $this->hook_calls['mainwp_added_new_group'] );
+    }
+
+    /**
+     * @dataProvider named_tag_ui_paths
+     * @param string $path UI entry point.
+     */
+    public function test_named_tag_ui_looks_up_encoded_existing_name( $path ): void {
+        $name = 'Salt & Pepper';
+        $group = (int) MainWP_DB_Common::instance()->add_group( get_current_user_id(), htmlspecialchars( $name ) );
+        $this->scope( 'all', array( $group ) );
+        $this->filter( 'mainwp_currentusercan', static function ( $can, $type, $right ) { return 'manage_groups' === $right ? false : $can; } );
+        $this->before_write();
+        $result = $this->add_site( array( $name ), $path );
+        $this->assertSame( '', $result[1] );
+        $this->assertGreaterThan( 0, (int) $result[2] );
+        $this->assertSame( array( (int) $result[2] ), $this->members( $group ) );
+        $this->assertSame( 0, $this->hook_calls['mainwp_added_new_group'] );
+
+        $this->scope( 'all', array() );
+        $before = $this->before_write();
+        $calls = $this->register_calls;
+        $result = $this->add_site( array( $name ), $path );
+        $this->assertSame( $calls, $this->register_calls );
+        $this->assertSame( 0, (int) $result[2] );
+        $this->assertStringContainsString( 'Error - insufficient permissions!', $result[1] );
+        $this->assert_unchanged( $before );
+    }
+
+    /**
+     * @dataProvider named_tag_ui_paths
+     * @param string $path UI entry point.
+     */
+    public function test_named_tag_ui_refuses_ungranted_existing_name( $path ): void {
+        $group = $this->group();
+        $name = MainWP_DB_Common::instance()->get_group_by_id( $group )->name;
+        $this->scope( 'all', array() );
+        $before = $this->before_write();
+        $result = $this->add_site( array( $name ), $path );
+        $this->assertSame( 0, $this->register_calls );
+        $this->assertSame( 0, (int) $result[2] );
+        $this->assertStringContainsString( 'Error - insufficient permissions!', $result[1] );
+        $this->assert_unchanged( $before );
+    }
+
+    /** Admins retain tag creation through Add Site. */
+    public function test_named_tag_ui_unrestricted_admin(): void {
+        $this->scope( 'all', 'all' );
+        $this->before_write();
+        $result = $this->add_site( array( 'Admin tag' ) );
+        $this->assertSame( '', $result[1] );
+        $this->assertGreaterThan( 0, (int) $result[2] );
+        $this->assertSame( 1, $this->hook_calls['mainwp_added_new_group'] );
+    }
+
+    /** REST filters can supply names, while the public input remains numeric. */
+    public function test_rest_named_tag_filter_refuses_new_name_without_right(): void {
+        $this->scope( 'all', 'all' );
+        $this->filter( 'mainwp_currentusercan', static function ( $can, $type, $right ) { return 'manage_groups' === $right ? false : $can; } );
+        $this->filter( 'mainwp_rest_pre_insert_site_item', static function ( $item ) { $item['groupids'] = array( 'REST new tag' ); return $item; } );
+        $before = $this->before_write();
+        $result = $this->rest_add_site();
+        $this->assertWPError( $result );
+        $this->assertSame( 403, $result->get_error_data()['status'] );
+        $this->assertSame( 'Error - insufficient permissions!', $result->get_error_message() );
+        $this->assertSame( 0, $this->register_calls );
+        $this->assert_unchanged( $before );
+    }
+
+    /** Existing names supplied by REST filters still use the group grant. */
+    public function test_rest_named_tag_filter_keeps_granted_lookup_without_right(): void {
+        $name = 'REST Salt & Pepper';
+        $group = (int) MainWP_DB_Common::instance()->add_group( get_current_user_id(), htmlspecialchars( $name ) );
+        $this->scope( 'all', array( $group ) );
+        $this->filter( 'mainwp_currentusercan', static function ( $can, $type, $right ) { return 'manage_groups' === $right ? false : $can; } );
+        $this->filter( 'mainwp_rest_pre_insert_site_item', static function ( $item ) use ( $name ) { $item['groupids'] = array( $name ); return $item; } );
+        $this->before_write();
+        $result = $this->rest_add_site();
+        $this->assertNotWPError( $result );
+        $this->assertSame( 1, $result->get_data()['success'] );
+        $this->assertSame( array( (int) $result->get_data()['data']['id'] ), $this->members( $group ) );
+        $this->assertSame( 0, $this->hook_calls['mainwp_added_new_group'] );
+    }
+
+    /** Names sent directly must keep the numeric-only HTTP 400 contract. */
+    public function test_rest_named_tag_input_stays_numeric_only(): void {
+        $before = $this->before_write();
+        $result = $this->rest_add_site( 'Direct name' );
+        $this->assertWPError( $result );
+        $this->assertSame( 400, $result->get_error_data()['status'] );
+        $this->assertSame( 'rest_invalid_param', $result->get_error_code() );
+        $this->assertSame( 0, $this->register_calls );
+        $this->assert_unchanged( $before );
+    }
+
+    /** Admin REST name creation keeps its existing hook behavior. */
+    public function test_rest_named_tag_filter_unrestricted_admin(): void {
+        $this->scope( 'all', 'all' );
+        $this->filter( 'mainwp_rest_pre_insert_site_item', static function ( $item ) { $item['groupids'] = array( 'REST admin tag' ); return $item; } );
+        $this->before_write();
+        $result = $this->rest_add_site();
+        $this->assertNotWPError( $result );
+        $this->assertSame( 1, $result->get_data()['success'] );
+        $this->assertIsObject( MainWP_DB_Common::instance()->get_group_by_name( 'REST admin tag' ) );
+        $this->assertSame( 0, $this->hook_calls['mainwp_added_new_group'] );
+    }
+
+    /** @param string $groups Public numeric group input. @return mixed REST response. */
+    private function rest_add_site( $groups = '' ) {
+        $this->filter( 'mainwp_fetch_url_not_authed_pre', function () { ++$this->register_calls; return array( 'register' => 'OK' ); } );
+        $this->filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
+        $this->filter( 'mainwp_fetch_url_authed_pre', static function () { return array(); } );
+        $request = new \WP_REST_Request( 'POST', '/mainwp/v2/sites/add' );
+        $request->set_body_params( array( 'url' => 'https://rest-tag-' . wp_generate_uuid4() . '.example.com/', 'name' => 'REST tag site', 'admin' => 'admin', 'groupids' => $groups ) );
+        return ( new \MainWP_Rest_Sites_Controller() )->create_item( $request );
     }
 
     /** @param mixed $sites Site grants. @param mixed $groups Group grants. */
@@ -531,7 +710,7 @@ class Test_Group_Write_Scope extends \WP_UnitTestCase {
     }
 
     /** @param array $groups Group IDs or names. @return array Existing add-site response tuple. */
-    private function add_site( $groups ): array {
+    private function add_site( $groups, $path = 'add' ): array {
         $this->filter( 'mainwp_fetch_url_not_authed_pre', function () { ++$this->register_calls; return array( 'register' => 'OK' ); } );
         $this->filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
         $this->filter( 'mainwp_fetch_url_authed_pre', static function () { return array(); } );
@@ -541,6 +720,10 @@ class Test_Group_Write_Scope extends \WP_UnitTestCase {
             'managesites_add_wpadmin' => 'admin',
             'groupids'               => implode( ',', $groups ),
         );
+        if ( 'csv' === $path ) {
+            $_POST['groupids'] = '';
+            $_POST['groupnames_import'] = implode( ';', $groups );
+        }
         return MainWP_Manage_Sites_View::add_site();
     }
 }

@@ -2216,11 +2216,11 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
 
     public static function users_csv_import_tag_selections() {
         return array(
-            'hidden tag'              => array( 'Hidden CSV Tag', true, array() ),
-            'granted tag'             => array( 'Granted CSV Tag', true, array( 'granted' ) ),
-            'missing tag'             => array( 'Missing CSV Tag', true, array() ),
-            'mixed tags'              => array( 'Granted CSV Tag;Hidden CSV Tag;Missing CSV Tag', true, array( 'granted' ) ),
-            'unrestricted hidden tag' => array( 'Hidden CSV Tag', false, array( 'hidden', 'outside' ) ),
+            'hidden tag'              => array( 'Test Tag Hidden CSV', true, array() ),
+            'granted tag'             => array( 'Test Tag Granted CSV', true, array( 'granted' ) ),
+            'missing tag'             => array( 'Test Tag Missing CSV', true, array() ),
+            'mixed tags'              => array( 'Test Tag Granted CSV;Test Tag Hidden CSV;Test Tag Missing CSV', true, array( 'granted' ) ),
+            'unrestricted hidden tag' => array( 'Test Tag Hidden CSV', false, array( 'hidden', 'outside' ) ),
         );
     }
 
@@ -2228,8 +2228,8 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
     public function test_rest_users_csv_import_scopes_tag_names( $names, $restricted, $expected_keys ) {
         $this->set_current_user_as_admin();
         $this->set_machine_context_override( true );
-        $granted_tag = $this->create_test_tag( array( 'name' => 'Granted CSV Tag' ) );
-        $hidden_tag  = $this->create_test_tag( array( 'name' => 'Hidden CSV Tag' ) );
+        $granted_tag = $this->create_test_tag( array( 'name' => 'Test Tag Granted CSV' ) );
+        $hidden_tag  = $this->create_test_tag( array( 'name' => 'Test Tag Hidden CSV' ) );
         $sites       = array(
             'granted' => $this->create_test_site(),
             'hidden'  => $this->create_test_site(),

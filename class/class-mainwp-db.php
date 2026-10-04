@@ -3392,13 +3392,17 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @param int $websiteid Child site ID.
      *
-     * @return int|boolean Return child site ID that was removed or false on failure.
+     * @return int|boolean Row count from the site-table delete, or false when the id is
+     *                     invalid or that delete fails. Zero is a row count, not a failure.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
     public function remove_website( $websiteid ) {
         if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
             $nr = $this->wpdb->delete( $this->table_name( 'wp' ), array( 'id' => $websiteid ) );
+            if ( false === $nr ) {
+                return false;
+            }
             $this->wpdb->delete( $this->table_name( 'wp_group' ), array( 'wpid' => $websiteid ) );
             $this->wpdb->delete( $this->table_name( 'wp_sync' ), array( 'wpid' => $websiteid ) );
             $this->wpdb->delete( $this->table_name( 'wp_options' ), array( 'wpid' => $websiteid ) );

@@ -105,7 +105,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 	}
 
 	private function input( array $overrides = array() ): array {
-		return array_merge(
+		$input = array_merge(
 			array(
 				'scope_type' => 'client',
 				'scope_id'   => $this->client_id,
@@ -115,6 +115,10 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			),
 			$overrides
 		);
+		if ( 'agency' === $input['scope_type'] && ! array_key_exists( 'scope_id', $overrides ) ) {
+			unset( $input['scope_id'] );
+		}
+		return $input;
 	}
 
 	private function create_record( array $overrides = array() ): object {
@@ -1047,5 +1051,74 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		// An empty or missing client block would read as "this client has no knowledge".
 		$this->assert_error( $response, 'mainwp_knowledge_db_error', 500 );
 		$this->assertArrayNotHasKey( 'inherited', $response['data'] );
+	}
+
+	public function test_agency_ajax_write_read_list_and_count(): void {
+		$input = $this->input( array( 'scope_type' => 'agency' ) );
+		$response = $this->call( 'mainwp_knowledge_save', $input );
+		$this->assertTrue( $response['success'] );
+		$id = $response['data']['record']['id'];
+		$this->assertSame( 0, $this->db->get_by_id( $id )->scope_id );
+		$this->assertTrue( $this->call( 'mainwp_knowledge_get', array( 'id' => $id ) )['success'] );
+		$list = $this->call( 'mainwp_knowledge_list', array( 'scope_type' => 'agency' ) );
+		$this->assertTrue( $list['success'] );
+		$this->assertTrue( $list['data']['can_write'] );
+		$this->assertCount( 1, $list['data']['records'] );
+		$this->assertSame( 1, $this->db->count_records( array( 'scope_type' => 'agency' ) ) );
+		$this->assertTrue( $this->call( 'mainwp_knowledge_delete', array( 'id' => $id, 'revision' => 1 ) )['success'] );
+	}
+
+	public function test_required_ajax_set_clear_and_reread(): void {
+		foreach ( array( 'context', 'skill' ) as $type ) {
+			$input = $this->input( array( 'scope_type' => 'agency', 'type' => $type, 'required' => '1' ) );
+			if ( 'skill' === $type ) {
+				$input['description'] = 'Use this skill for maintenance.';
+			}
+			$response = $this->call( 'mainwp_knowledge_save', $input );
+			$this->assertTrue( $response['success'] );
+			$id = $response['data']['record']['id'];
+			$this->assertSame( 1, $this->db->get_by_id( $id )->required );
+			$this->assertSame( 1, $this->db->get_by_id( $id )->verified );
+			$input['required'] = '0';
+			$response = $this->call( 'mainwp_knowledge_save', $input + array( 'id' => $id, 'revision' => 1 ) );
+			$this->assertTrue( $response['success'] );
+			$this->assertSame( 0, $this->db->get_by_id( $id )->required );
+			$this->assertSame( 2, $this->db->get_by_id( $id )->revision );
+		}
+	}
+
+	public function test_required_ajax_restricted_user_cannot_write_edit_or_delete(): void {
+		$record = $this->create_record( array( 'scope_type' => 'agency', 'required' => true ) );
+		$this->restrict_to_other_site();
+		$input = $this->input( array( 'scope_type' => 'agency', 'required' => '1' ) );
+		foreach ( array( $input, $input + array( 'id' => $record->id, 'revision' => 1 ) ) as $fields ) {
+			$this->assert_error( $this->call( 'mainwp_knowledge_save', $fields ), 'mainwp_restricted_account', 403 );
+		}
+		$this->assert_error( $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) ), 'mainwp_restricted_account', 403 );
+		$list = $this->call( 'mainwp_knowledge_list', array( 'scope_type' => 'agency' ) );
+		$this->assertTrue( $list['success'] );
+		$this->assertFalse( $list['data']['can_write'] );
+		$this->assertCount( 1, $list['data']['records'] );
+		$this->assertTrue( $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) )['success'] );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_required_ajax_delete_requires_cookie_and_trusted_origin(): void {
+		$record = $this->create_record( array( 'scope_type' => 'agency', 'required' => true ) );
+		$cookie = $_COOKIE[ LOGGED_IN_COOKIE ];
+		unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
+		$response = $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) );
+		$this->assertFalse( $response['success'] );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+		$_COOKIE[ LOGGED_IN_COOKIE ] = $cookie;
+		$this->assertTrue( $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) )['success'] );
+		$this->assertNull( $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_required_ajax_rejects_ineligible_records_and_agency_scope_id(): void {
+		foreach ( array( $this->input( array( 'required' => '1' ) ), $this->site_input( array( 'required' => '1' ) ), $this->input( array( 'scope_type' => 'agency', 'type' => 'memory', 'required' => '1' ) ), $this->input( array( 'scope_type' => 'agency', 'scope_id' => 0 ) ) ) as $input ) {
+			$this->assert_error( $this->call( 'mainwp_knowledge_save', $input ), 'mainwp_knowledge_invalid', 400 );
+		}
+		$this->assertSame( 0, $this->row_count() );
 	}
 }

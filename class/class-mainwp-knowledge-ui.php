@@ -243,6 +243,17 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'body'       => isset( $_POST['body'] ) && is_string( $_POST['body'] ) ? wp_unslash( $_POST['body'] ) : '', // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- guard() verified the nonce; validated in save().
         );
 
+        if ( 'agency' === $scope->scope_type && ! array_key_exists( 'scope_id', $_POST ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- guard() verified the nonce.
+            unset( $input['scope_id'] );
+        }
+        if ( array_key_exists( 'required', $_POST ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- guard() verified the nonce.
+            $required = $this->read_int( 'required' );
+            if ( ! in_array( $required, array( 0, 1 ), true ) ) {
+                $this->send_invalid( 'required' );
+            }
+            $input['required'] = (bool) $required;
+        }
+
         if ( array_key_exists( 'description', $_POST ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- guard() verified the nonce.
             if ( ! is_string( $_POST['description'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification -- guard() verified the nonce.
                 $this->send_invalid( 'description' );
@@ -285,7 +296,10 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( $revision < 1 ) {
             $this->send_invalid( 'revision' );
         }
-        $result = MainWP_DB_Knowledge::instance()->delete( $id, $revision );
+        // A matching browser session is the only trusted UI origin; the DB rechecks Required against its own row.
+        $user_id = get_current_user_id();
+        $origin  = $user_id > 0 && wp_validate_auth_cookie( '', 'logged_in' ) === $user_id ? MainWP_DB_Knowledge::ORIGIN_UI : MainWP_DB_Knowledge::ORIGIN_ABILITY;
+        $result  = MainWP_DB_Knowledge::instance()->delete( $id, $revision, $origin );
         if ( is_wp_error( $result ) ) {
             $this->send_error( $result );
         }

@@ -101,10 +101,14 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 	}
 
 	private function input( string $scope_type, int $scope_id, array $overrides = array() ): array {
-		return array_merge(
+		$input = array_merge(
 			array( 'scope_type' => $scope_type, 'scope_id' => $scope_id, 'type' => 'context', 'title' => 'Knowledge title', 'body' => 'Knowledge body' ),
 			$overrides
 		);
+		if ( 'agency' === $scope_type && ! array_key_exists( 'scope_id', $overrides ) ) {
+			unset( $input['scope_id'] );
+		}
+		return $input;
 	}
 
 	private function create_record( string $scope_type, int $scope_id, array $overrides = array() ) {
@@ -172,6 +176,7 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 			'source'      => $record->source,
 			'caller_note' => $record->caller_note,
 			'verified'    => (bool) $record->verified,
+			'required'    => (bool) $record->required,
 		);
 	}
 
@@ -280,7 +285,7 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 			$this->assertSame( ! $write || false !== strpos( $name, 'delete-' ), $meta['annotations']['idempotent'] );
 			$this->assertIsString( $meta['annotations']['instructions'] );
 			if ( $write ) {
-				$this->assertSame( 'Destructive: this changes what every connected AI agent reads about the site or client later. Preview with dry_run: true and show the user the exact content before calling with confirm: true.', $meta['annotations']['instructions'] );
+				$this->assertSame( 'Destructive: this changes what every connected AI agent reads at the agency, client or site level later. Preview with dry_run: true and show the user the exact content before calling with confirm: true.', $meta['annotations']['instructions'] );
 			}
 			$this->assertArrayNotHasKey( $name, MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS );
 			$matches = array_filter( array_keys( $routes ), static function ( $route ) use ( $name ) {
@@ -679,7 +684,7 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 		$input = $this->input( 'site', $site, array( 'title' => '  Trim edges  ', 'caller_note' => '<b>Draft</b>' ) );
 		$preview = $this->successful_call( 'mainwp/create-knowledge-record-v1', $input + array( 'dry_run' => true ) );
 		$this->assertTrue( $preview['dry_run'] );
-		$this->assertSame( $this->db->validate_input( $input ) + array( 'source' => 'ability', 'verified' => false ), $preview['would_save'] );
+		$this->assertSame( array_replace( $this->db->validate_input( $input ), array( 'required' => false, 'source' => 'ability', 'verified' => false ) ), $preview['would_save'] );
 		foreach ( array( 'id', 'created_at', 'updated_at', 'revision' ) as $field ) {
 			$this->assertArrayNotHasKey( $field, $preview['would_save'] );
 		}
@@ -1173,5 +1178,169 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 		// The record read runs in the permission callback, and core's execute() replaces any permission error with ability_invalid_permissions, so the callbacks are checked directly.
 		$this->assert_error( wp_get_ability( 'mainwp/get-knowledge-record-v1' )->check_permissions( $input ), 'mainwp_knowledge_db_error', 500 );
 		$this->assert_error( MainWP_Abilities_Knowledge::execute_get_knowledge_record( $input ), 'mainwp_knowledge_db_error', 500 );
+	}
+
+	public function test_agency_ability_create_preview_read_list_count_and_output_schema(): void {
+		$input = $this->input( 'agency', 0, array( 'type' => 'memory' ) );
+		$schema = wp_get_ability( 'mainwp/create-knowledge-record-v1' )->get_input_schema();
+		$this->assertNotContains( 'scope_id', $schema['required'] );
+		$this->assertSame( 1, $schema['properties']['scope_id']['minimum'] );
+		$preview = $this->successful_call( 'mainwp/create-knowledge-record-v1', $input + array( 'dry_run' => true ) );
+		$this->assertSame( 0, $preview['would_save']['scope_id'] );
+		$this->assertFalse( $preview['would_save']['required'] );
+		$this->assertSame( 0, $this->db->count_records() );
+		$record = $this->successful_call( 'mainwp/create-knowledge-record-v1', $input + array( 'confirm' => true ) );
+		$this->assertFalse( $record['required'] );
+		$this->assertFalse( $record['verified'] );
+		$read = $this->successful_call( 'mainwp/get-knowledge-record-v1', array( 'record_id' => $record['id'] ) );
+		$this->assertSame( 0, $read['scope_id'] );
+		$this->assertSame( 0, wp_get_ability( 'mainwp/get-knowledge-record-v1' )->get_output_schema()['properties']['scope_id']['minimum'] );
+		$list = $this->successful_call( 'mainwp/list-knowledge-v1', array( 'scope_type' => 'agency' ) );
+		$this->assertSame( array( $record['id'] ), array_column( $list['items'], 'id' ) );
+		$this->assertSame( 1, $list['total'] );
+	}
+
+	public function test_agency_ability_scope_id_validation_and_scope_enum(): void {
+		$input = $this->input( 'agency', 0, array( 'confirm' => true ) );
+		$this->assertTrue( wp_get_ability( 'mainwp/create-knowledge-record-v1' )->check_permissions( $input ) );
+		foreach ( array( 'global', 'tag' ) as $scope ) {
+			$this->assertWPError( $this->execute_ability( 'mainwp/create-knowledge-record-v1', array_replace( $input, array( 'scope_type' => $scope ) ) ) );
+		}
+		$this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
+		foreach ( array( 0, 1 ) as $id ) {
+			$this->assertWPError( $this->execute_ability( 'mainwp/create-knowledge-record-v1', $input + array( 'scope_id' => $id ) ) );
+		}
+		$this->assertWPError( $this->execute_ability( 'mainwp/list-knowledge-v1', array( 'scope_type' => 'agency', 'scope_id' => 0 ) ) );
+		foreach ( array( 'site', 'client' ) as $scope ) {
+			$missing = array_replace( $input, array( 'scope_type' => $scope ) );
+			$result = wp_get_ability( 'mainwp/create-knowledge-record-v1' )->check_permissions( $missing );
+			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+			$this->assertSame( 'Site and client records need a scope_id, the site or client the record belongs to.', $result->get_error_message() );
+			$this->assertWPError( $this->execute_ability( 'mainwp/create-knowledge-record-v1', $missing ) );
+		}
+		$this->assertSame( 0, $this->db->count_records() );
+	}
+
+	public function test_required_ability_refusal_matrix_before_write_or_preview(): void {
+		$input = $this->input( 'agency', 0 );
+		foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+			foreach ( array( true, false ) as $required ) {
+				$result = $this->execute_ability( 'mainwp/create-knowledge-record-v1', $input + array( $mode => true, 'required' => $required ) );
+				$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+				$this->assertSame( 'Leave out required. Only a person using the Dashboard can mark a record as required.', $result->get_error_message() );
+			}
+		}
+		$record = $this->create_record( 'agency', 0, array( 'required' => true ) );
+		foreach ( array( 'update', 'delete' ) as $operation ) {
+			foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+				$result = $this->execute_ability( 'mainwp/' . $operation . '-knowledge-record-v1', array( 'record_id' => $record->id, 'expected_revision' => 1, $mode => true ) );
+				$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+				$this->assertSame( 'This is a required agency record. Only a person using the Dashboard can change or delete it.', $result->get_error_message() );
+			}
+		}
+		$ordinary = $this->create_record( 'site', $this->create_test_site() );
+		foreach ( array( 'update', 'delete' ) as $operation ) {
+			$result = $this->execute_ability( 'mainwp/' . $operation . '-knowledge-record-v1', array( 'record_id' => $ordinary->id, 'expected_revision' => 1, 'dry_run' => true, 'required' => false ) );
+			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+		}
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_agency_restricted_api_key_reads_and_cannot_write(): void {
+		$record = $this->create_record( 'agency', 0 );
+		$auth = \MainWP_REST_Authentication::get_instance();
+		$user = new \ReflectionProperty( \MainWP_REST_Authentication::class, 'user' );
+		$user->setAccessible( true );
+		$previous = $user->getValue( $auth );
+		$user->setValue( $auth, (object) array( 'user_id' => get_current_user_id(), 'key_id' => 123, 'permissions' => 'read_write' ) );
+		$this->restrict_current_user_to_sites( array() );
+		$this->withhold_right( 'manage_clients' );
+		$this->withhold_right( 'access_individual_dashboard' );
+		try {
+			$this->assertTrue( MainWP_Abilities_Util::check_rest_api_permission() );
+			$this->assertSame( $record->id, $this->successful_call( 'mainwp/get-knowledge-record-v1', array( 'record_id' => $record->id ) )['id'] );
+			$list = $this->successful_call( 'mainwp/list-knowledge-v1', array( 'scope_type' => 'agency' ) );
+			$this->assertSame( 1, $list['total'] );
+			$this->assert_permission_denied( 'mainwp/create-knowledge-record-v1', $this->input( 'agency', 0, array( 'confirm' => true ) ), 'mainwp_restricted_account', 403 );
+			foreach ( array( 'update', 'delete' ) as $operation ) {
+				$this->assert_permission_denied( 'mainwp/' . $operation . '-knowledge-record-v1', array( 'record_id' => $record->id, 'expected_revision' => 1, 'confirm' => true ), 'mainwp_restricted_account', 403 );
+			}
+		} finally {
+			$user->setValue( $auth, $previous );
+		}
+	}
+
+	public function test_agency_summaries_have_separate_blocks_required_and_notice(): void {
+		$scopes = $this->fixtures();
+		$context = $this->create_record( 'agency', 0, array( 'required' => true ) );
+		$this->create_record( 'agency', 0, array( 'type' => 'skill', 'required' => true ) );
+		$this->create_record( 'agency', 0, array( 'type' => 'memory' ) );
+		$this->create_record( 'site', $scopes['site'] );
+		$this->create_record( 'client', $scopes['client'] );
+		$site = $this->successful_call( 'mainwp/get-site-knowledge-v1', array( 'site_id' => $scopes['site'] ) );
+		$client = $this->successful_call( 'mainwp/get-client-knowledge-v1', array( 'client_id' => $scopes['client'] ) );
+		$this->assertSame( $site['agency'], $client['agency'] );
+		$this->assertSame( array( 'agency_id', 'context', 'items' ), array_keys( $site['agency'] ) );
+		$this->assertSame( 0, $site['agency']['agency_id'] );
+		$this->assertSame( $context->body, $site['agency']['context'][0]['body'] );
+		$this->assertTrue( $site['agency']['context'][0]['required'] );
+		$this->assertArrayNotHasKey( 'agency', $site['client'] );
+		$nested = wp_get_ability( 'mainwp/get-site-knowledge-v1' )->get_output_schema()['properties']['client'];
+		$this->assertArrayNotHasKey( 'agency', $nested['properties'] );
+		$this->assertNotContains( 'agency', $nested['required'] );
+		foreach ( array( $site, $site['client'], $site['agency'], $client ) as $block ) {
+			foreach ( array_merge( $block['context'], $block['items'] ) as $record ) {
+				$this->assertIsBool( $record['required'] );
+			}
+		}
+		foreach ( $site['agency']['items'] as $record ) {
+			$this->assertArrayNotHasKey( 'body', $record );
+			$this->assertSame( 'skill' === $record['type'] ? 'Use this skill when maintaining the site.' : '', $record['description'] );
+		}
+		$this->assertSame( MainWP_Abilities_Knowledge::NOTICE, $site['notice'] );
+		foreach ( array( 'required: true', 'site over client, client over agency', 'do not pick one', "the agency's, client's or site's", "\n\nRecords come at three levels:" ) as $phrase ) {
+			$this->assertStringContainsString( $phrase, $site['notice'] );
+		}
+	}
+
+	public function test_agency_summary_read_failure_surfaces_db_error(): void {
+		global $wpdb;
+		$scopes = $this->fixtures();
+		$this->suppressed_errors = $wpdb->suppress_errors( true );
+		$failed = 0;
+		$this->track_filter( 'query', static function ( $sql ) use ( &$failed ) {
+			if ( 0 === strpos( $sql, 'SELECT' ) && false !== strpos( $sql, "scope_type = 'agency'" ) ) {
+				++$failed;
+				return str_replace( 'mainwp_knowledge', 'mainwp_knowledge_missing', $sql );
+			}
+			return $sql;
+		} );
+		foreach ( array( 'site', 'client' ) as $scope ) {
+			$this->assert_error( $this->execute_ability( 'mainwp/get-' . $scope . '-knowledge-v1', array( $scope . '_id' => $scopes[ $scope ] ) ), 'mainwp_knowledge_db_error', 500 );
+		}
+		$this->assertSame( 2, $failed );
+	}
+
+	public function test_verified_ability_filter_matches_items_and_total(): void {
+		$site = $this->create_test_site();
+		$verified = $this->create_record( 'site', $site );
+		$unverified = $this->db->save( $this->input( 'site', $site ), MainWP_DB_Knowledge::ORIGIN_ABILITY );
+		foreach ( array( 1 => $verified, 0 => $unverified ) as $flag => $record ) {
+			$result = $this->successful_call( 'mainwp/list-knowledge-v1', array( 'verified' => (bool) $flag ) );
+			$this->assertSame( array( $record->id ), array_column( $result['items'], 'id' ) );
+			$this->assertSame( 1, $result['total'] );
+			$text = $this->successful_call( 'mainwp/list-knowledge-v1', array( 'verified' => $flag ? 'true' : 'false' ) );
+			$this->assertSame( array( $record->id ), array_column( $text['items'], 'id' ) );
+			$this->assertSame( 1, $text['total'] );
+		}
+		$this->assertSame( 'boolean', wp_get_ability( 'mainwp/list-knowledge-v1' )->get_input_schema()['properties']['verified']['type'] );
+	}
+
+	public function test_ability_descriptions_name_agency_client_site_in_order(): void {
+		foreach ( array( 'create', 'update', 'delete' ) as $operation ) {
+			$ability = wp_get_ability( 'mainwp/' . $operation . '-knowledge-record-v1' );
+			$this->assertStringContainsString( 'agency, client or site', $ability->get_meta()['annotations']['instructions'] );
+		}
+		$this->assertStringContainsString( 'agency, client or site', wp_get_ability( 'mainwp/create-knowledge-record-v1' )->get_description() );
 	}
 }

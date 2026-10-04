@@ -158,7 +158,7 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 	}
 
 	private function input( string $scope_type, int $scope_id, array $overrides = array() ): array {
-		return array_merge(
+		$input = array_merge(
 			array(
 				'scope_type' => $scope_type,
 				'scope_id'   => $scope_id,
@@ -168,6 +168,10 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 			),
 			$overrides
 		);
+		if ( 'agency' === $scope_type && ! array_key_exists( 'scope_id', $overrides ) ) {
+			unset( $input['scope_id'] );
+		}
+		return $input;
 	}
 
 	private function create_record( string $scope_type, int $scope_id, array $overrides = array() ) {
@@ -210,7 +214,7 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 			$sites[] = $this->create_test_site( array( 'client_id' => $clients[ $i ] ) );
 		}
 		$records = array();
-		foreach ( array( 'site' => $sites[0], 'client' => $clients[0] ) as $type => $id ) {
+		foreach ( array( 'site' => $sites[0], 'client' => $clients[0], 'agency' => 0 ) as $type => $id ) {
 			$first = $this->create_record( $type, $id );
 			$second = $this->create_record( $type, $id );
 			$third = $this->create_record( $type, $id, array( 'type' => 'skill' ) );
@@ -244,7 +248,10 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 			'13 denied site filter' => array( 'F', array( array( 'site', $sites[0], 'mainwp_access_denied', 403 ) ) ),
 			'14 machine user zero' => array( 'M', array( array( 'site', $sites[0], 'mainwp_permission_denied', 401 ), array( 'client', $clients[0], 'mainwp_permission_denied', 401 ) ) ),
 			'15 subscriber' => array( 'S', array( array( 'site', $sites[0], 'mainwp_permission_denied', 403 ), array( 'client', $clients[0], 'mainwp_permission_denied', 403 ) ) ),
-			'16 invalid scope' => array( 'A', array( array( 'global', $sites[0], 'mainwp_knowledge_invalid', 400 ), array( '', $sites[0], 'mainwp_knowledge_invalid', 400 ) ) ),
+			'16 invalid scope' => array( 'A', array( array( 'global', $sites[0], 'mainwp_knowledge_invalid', 400 ), array( 'tag', $sites[0], 'mainwp_knowledge_invalid', 400 ), array( '', $sites[0], 'mainwp_knowledge_invalid', 400 ) ) ),
+			'18 agency readers' => array( 'A,R,W,F', array( array( 'agency', 0, $records['agency'], 0 ) ) ),
+			'19 agency base gate' => array( 'M', array( array( 'agency', 0, 'mainwp_permission_denied', 401 ) ) ),
+			'20 agency subscriber' => array( 'S', array( array( 'agency', 0, 'mainwp_permission_denied', 403 ) ) ),
 			'17 zero scope id' => array( 'A,R', array( array( 'site', 0, array(), 0 ), array( 'client', 0, array(), 0 ) ) ),
 		);
 		$errors = array();
@@ -255,7 +262,7 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 					$this->set_machine_context_override( 'M' === $caller ? true : null );
 					if ( 'R' === $caller ) {
 						$this->restrict_current_user_to_sites( array( $sites[0] ) );
-						if ( 0 === $id ) {
+						if ( 0 === $id && 'agency' !== $type ) {
 							$expected = 'mainwp_' . $type . '_not_found';
 							$status = 404;
 						}
@@ -421,16 +428,19 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 		$table = $wpdb->prefix . 'mainwp_knowledge';
 		$this->with_description_column_dropped(
 			function () use ( $wpdb, $table ) {
+				update_site_option( 'mainwp_knowledge_schema_repair_pending', time() - HOUR_IN_SECONDS - 1 );
+				$suppressed = $wpdb->suppress_errors;
 				MainWP_Install::instance()->install();
 				$column = $wpdb->get_row( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) );
 				$this->assertNotNull( $column );
+				$this->assertSame( $suppressed, $wpdb->suppress_errors );
 				$this->assertSame( 'varchar(1024)', $column->Type );
 				$this->assertSame( 'NO', $column->Null );
 				$this->assertSame( '', $column->Default );
 				$columns = $wpdb->get_col( $wpdb->prepare( 'SHOW COLUMNS FROM %i', $table ) );
 				$this->assertSame( 'description', $columns[ array_search( 'title', $columns, true ) + 1 ] );
-				$this->assertSame( 1, (int) get_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED ) );
-				$this->assertFalse( get_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING ) );
+				$this->assertSame( 'agency-required-description-1', get_site_option( 'mainwp_knowledge_schema_confirmed' ) );
+				$this->assertFalse( get_site_option( 'mainwp_knowledge_schema_repair_pending' ) );
 			}
 		);
 	}
@@ -452,14 +462,16 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 					}
 				);
 				$install = MainWP_Install::instance();
+				$suppressed = $wpdb->suppress_errors;
 				$install->install();
+				$this->assertSame( $suppressed, $wpdb->suppress_errors );
 				$this->assertSame( array( true ), $attempts );
 				$this->assertNull( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, 'description' ) ) );
-				$this->assertFalse( get_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED ) );
-				$this->assertGreaterThanOrEqual( time() - 60, (int) get_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING ) );
+				$this->assertFalse( get_site_option( 'mainwp_knowledge_schema_confirmed' ) );
+				$this->assertGreaterThanOrEqual( time() - 60, (int) get_site_option( 'mainwp_knowledge_schema_repair_pending' ) );
 				$install->install();
 				$this->assertCount( 1, $attempts );
-				update_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING, time() - HOUR_IN_SECONDS - 1 );
+				update_site_option( 'mainwp_knowledge_schema_repair_pending', time() - HOUR_IN_SECONDS - 1 );
 				$install->install();
 				$this->assertSame( array( true, true ), $attempts );
 			}
@@ -477,10 +489,10 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 				return $query;
 			}
 		);
-		delete_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED );
+		delete_site_option( 'mainwp_knowledge_schema_confirmed' );
 		MainWP_Install::instance()->install();
 		$this->assertCount( 1, $checks );
-		$this->assertSame( 1, (int) get_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED ) );
+		$this->assertSame( 'agency-required-description-1', get_site_option( 'mainwp_knowledge_schema_confirmed' ) );
 		MainWP_Install::instance()->install();
 		$this->assertCount( 1, $checks );
 	}
@@ -499,8 +511,8 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 		$version = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
 		$version->setAccessible( true );
 		$this->assertSame( $version->getValue( $install ), get_site_option( 'mainwp_db_version' ) );
-		delete_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED );
-		delete_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING );
+		delete_site_option( 'mainwp_knowledge_schema_confirmed' );
+		delete_site_option( 'mainwp_knowledge_schema_repair_pending' );
 		remove_filter( 'query', array( $this, '_create_temporary_tables' ) );
 		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
 		try {
@@ -515,8 +527,8 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 				remove_filter( $filter[0], $filter[1], $filter[2] );
 			}
 			$this->added_filters = array();
-			delete_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_CONFIRMED );
-			delete_site_option( MainWP_Install::KNOWLEDGE_DESCRIPTION_COLUMN_REPAIR_PENDING );
+			delete_site_option( 'mainwp_knowledge_schema_confirmed' );
+			delete_site_option( 'mainwp_knowledge_schema_repair_pending' );
 			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 			foreach ( $this->db->hook_db_install_tables( array(), get_site_option( 'mainwp_db_version' ), $wpdb->get_charset_collate() ) as $sql ) {
 				dbDelta( $sql );
@@ -920,7 +932,7 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 	public function test_knowledge_encoding_validation_accepts_utf8_and_rejects_invalid_bytes() {
 		update_option( 'blog_charset', 'ISO-8859-1' );
 		$input = $this->input( 'client', 1, array( 'title' => 'Café 🍵', 'body' => "日本語\nRésumé" ) );
-		$this->assertEquals( $input + array( 'description' => '', 'caller_note' => '' ), $this->db->validate_input( $input ) );
+		$this->assertEquals( $input + array( 'description' => '', 'caller_note' => '', 'required' => 0 ), $this->db->validate_input( $input ) );
 		foreach ( array( 'title', 'body' ) as $field ) {
 			$invalid = $input;
 			$invalid[ $field ] = "Invalid \xC3\x28";
@@ -1017,7 +1029,7 @@ PHP;
 		$bare_site  = $this->create_test_site();
 
 		$this->restrict_current_user_to_sites( array() );
-		$this->assertSame( '1=0', $this->db->scope_where_sql() );
+		$this->assertStringContainsString( "scope_type = 'agency'", $this->db->scope_where_sql() );
 		$this->assertSame( array(), $this->db->get_records() );
 		$this->assertSame( 0, $this->db->count_records() );
 		$this->clear_filters();
@@ -1519,5 +1531,253 @@ PHP;
 		$this->assertSame( 2, $updated->revision );
 		$this->assertSame( 'Edited', $updated->title );
 		$this->assertEquals( $this->db->get_by_id( $record->id ), $updated );
+	}
+
+	public function test_agency_db_storage_required_round_trip_and_rights(): void {
+		$this->set_current_user_as_admin();
+		$record = $this->create_record( 'agency', 0, array( 'required' => true ) );
+		$this->assertSame( 0, $record->scope_id );
+		$this->assertSame( 1, $this->db->get_by_id( $record->id )->required );
+		$this->assertSame( 1, $record->verified );
+		$cleared = $this->db->save( array( 'id' => $record->id, 'required' => false ), MainWP_DB_Knowledge::ORIGIN_UI, 1 );
+		$this->assertNotWPError( $cleared );
+		$this->assertSame( 0, $this->db->get_by_id( $record->id )->required );
+		$this->assertSame( 2, $cleared->revision );
+		$this->restrict_current_user_to_sites( array() );
+		$this->withhold_right( 'manage_clients' );
+		$this->withhold_right( 'access_individual_dashboard' );
+		$this->assertSame( $record->id, $this->db->get_record( $record->id )->id );
+		$this->assertSame( array( $record->id ), $this->ids( $this->db->get_records( array( 'scope_type' => 'agency', 'with_body' => false ) ) ) );
+		$this->assertSame( 1, $this->db->count_records( array( 'scope_type' => 'agency' ) ) );
+		$this->assert_error( $this->db->save( $this->input( 'agency', 0 ), MainWP_DB_Knowledge::ORIGIN_UI ), 'mainwp_restricted_account', 403 );
+		$this->assert_error( $this->db->save( array( 'id' => $record->id, 'required' => true ), MainWP_DB_Knowledge::ORIGIN_UI, 2 ), 'mainwp_restricted_account', 403 );
+		$this->assertSame( 0, $this->db->get_by_id( $record->id )->required );
+		$this->clear_filters();
+		$this->assertTrue( $this->db->delete( $record->id, 2, MainWP_DB_Knowledge::ORIGIN_UI ) );
+	}
+
+	public static function required_invalid_scopes(): array {
+		return array( 'site' => array( 'site', 'context' ), 'client' => array( 'client', 'skill' ), 'memory' => array( 'agency', 'memory' ) );
+	}
+
+	/** @dataProvider required_invalid_scopes */
+	public function test_required_db_rejects_ineligible_records( string $scope, string $type ): void {
+		$this->set_current_user_as_admin();
+		$id = 'site' === $scope ? $this->create_test_site() : ( 'client' === $scope ? $this->create_test_client() : 0 );
+		$input = $this->input( $scope, $id, array( 'type' => $type, 'required' => true ) );
+		if ( 'skill' === $type ) {
+			$input['description'] = 'Use this skill for maintenance.';
+		}
+		$result = $this->db->save( $input, MainWP_DB_Knowledge::ORIGIN_UI );
+		$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+		$this->assertSame( 'Only agency context and agency skills can be required.', $result->get_error_message() );
+		$this->assertSame( 0, $this->row_count() );
+	}
+
+	public function test_agency_db_scope_id_validation_and_invalid_scopes(): void {
+		$this->set_current_user_as_admin();
+		foreach ( array( 0, 1, null ) as $id ) {
+			$result = $this->db->save( $this->input( 'agency', 0, array( 'scope_id' => $id ) ), MainWP_DB_Knowledge::ORIGIN_UI );
+			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+			$this->assertSame( 'Agency records apply to every site, so leave out scope_id.', $result->get_error_message() );
+		}
+		foreach ( array( 'site', 'client' ) as $scope ) {
+			$input = $this->input( $scope, 1 );
+			unset( $input['scope_id'] );
+			$result = $this->db->save( $input, MainWP_DB_Knowledge::ORIGIN_UI );
+			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+			$this->assertSame( 'Site and client records need a scope_id, the site or client the record belongs to.', $result->get_error_message() );
+		}
+		foreach ( array( 'global', 'tag' ) as $scope ) {
+			$this->assert_error( $this->db->save( $this->input( $scope, 1 ), MainWP_DB_Knowledge::ORIGIN_UI ), 'mainwp_knowledge_invalid', 400 );
+		}
+	}
+
+	public function test_required_db_ability_input_and_stored_row_refusals(): void {
+		$this->set_current_user_as_admin();
+		foreach ( array( true, false ) as $required ) {
+			$result = $this->db->save( $this->input( 'agency', 0, array( 'required' => $required ) ), MainWP_DB_Knowledge::ORIGIN_ABILITY );
+			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+			$this->assertSame( 'Leave out required. Only a person using the Dashboard can mark a record as required.', $result->get_error_message() );
+		}
+		$record = $this->create_record( 'agency', 0, array( 'required' => true ) );
+		foreach ( array( $this->db->save( array( 'id' => $record->id, 'title' => 'Changed' ), MainWP_DB_Knowledge::ORIGIN_ABILITY, 1 ), $this->db->delete( $record->id, 1 ) ) as $result ) {
+			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+			$this->assertSame( 'This is a required agency record. Only a person using the Dashboard can change or delete it.', $result->get_error_message() );
+		}
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public static function required_write_operations(): array {
+		return array( 'update' => array( 'update' ), 'delete' => array( 'delete' ) );
+	}
+
+	/** @dataProvider required_write_operations */
+	public function test_required_db_rechecks_row_after_authorization( string $operation ): void {
+		$this->set_current_user_as_admin();
+		$record = $this->create_record( 'agency', 0 );
+		$this->assertTrue( $this->db->can_write( $record ) );
+		$this->assertNotWPError( $this->db->save( array( 'id' => $record->id, 'required' => true ), MainWP_DB_Knowledge::ORIGIN_UI, 1 ) );
+		$result = 'update' === $operation ? $this->db->save( array( 'id' => $record->id, 'title' => 'Late edit' ), MainWP_DB_Knowledge::ORIGIN_ABILITY, 1 ) : $this->db->delete( $record->id, 1 );
+		$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+		$this->assertSame( 1, $this->db->get_by_id( $record->id )->required );
+	}
+
+	/** @dataProvider required_write_operations */
+	public function test_required_db_atomic_guard_when_row_changes_before_sql( string $operation ): void {
+		$this->set_current_user_as_admin();
+		global $wpdb;
+		$record = $this->create_record( 'agency', 0 );
+		$table = $wpdb->prefix . 'mainwp_knowledge';
+		$raced = false;
+		$this->track_filter( 'query', static function ( $sql ) use ( $wpdb, $table, $record, $operation, &$raced ) {
+			$prefix = 'update' === $operation ? 'UPDATE ' . $table : 'DELETE FROM `' . $table . '`';
+			if ( ! $raced && 0 === strpos( $sql, $prefix ) ) {
+				$raced = true;
+				$wpdb->query( $wpdb->prepare( 'UPDATE %i SET required = 1, verified = 1, revision = revision + 1 WHERE id = %d', $table, $record->id ) );
+			}
+			return $sql;
+		} );
+		$result = 'update' === $operation ? $this->db->save( array( 'id' => $record->id, 'title' => 'Late edit' ), MainWP_DB_Knowledge::ORIGIN_ABILITY, 1 ) : $this->db->delete( $record->id );
+		$this->assertTrue( $raced );
+		$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+		$this->assertSame( 1, $this->db->get_by_id( $record->id )->required );
+		$this->assertSame( $record->title, $this->db->get_by_id( $record->id )->title );
+	}
+
+	public function test_verified_db_filter_agrees_for_list_count_and_page(): void {
+		$this->set_current_user_as_admin();
+		$verified = $this->create_record( 'site', $this->create_test_site() );
+		$unverified = $this->db->save( $this->input( 'site', $verified->scope_id ), MainWP_DB_Knowledge::ORIGIN_ABILITY );
+		$this->assertNotWPError( $unverified );
+		foreach ( array( 1 => $verified, 0 => $unverified ) as $flag => $record ) {
+			$args = array( 'verified' => (bool) $flag, 'with_body' => false );
+			$this->assertSame( array( $record->id ), $this->ids( $this->db->get_records( $args ) ) );
+			$this->assertSame( 1, $this->db->count_records( $args ) );
+			$page = $this->db->get_records_page( $args );
+			$this->assertSame( array( $record->id ), $this->ids( $page['items'] ) );
+			$this->assertSame( 1, $page['total'] );
+		}
+	}
+
+	public static function knowledge_schema_missing_components(): array {
+		$cases = array();
+		foreach ( array( '9.0.2.6', '9.0.2.7', '9.0.2.8', '9.0.2.27' ) as $version ) {
+			foreach ( array( 'agency', 'required', 'description' ) as $component ) {
+				$cases[ $version . ' missing ' . $component ] = array( $version, $component );
+			}
+		}
+		return $cases;
+	}
+
+	/** @dataProvider knowledge_schema_missing_components */
+	public function test_knowledge_schema_repair_by_inspection_preserves_rows( string $version, string $component ): void {
+		$this->set_current_user_as_admin();
+		global $wpdb;
+		$table = $wpdb->prefix . 'mainwp_knowledge';
+		$site = $this->create_record( 'site', $this->create_test_site() );
+		$client = $this->create_record( 'client', $this->create_test_client() );
+		$prior = get_site_option( 'mainwp_db_version' );
+		remove_filter( 'query', array( $this, '_create_temporary_tables' ) );
+		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+		try {
+			delete_site_option( 'mainwp_knowledge_schema_confirmed' );
+			delete_site_option( 'mainwp_knowledge_schema_repair_pending' );
+			update_site_option( 'mainwp_knowledge_description_column_confirmed', 1 );
+			if ( 'agency' === $component ) {
+				$this->assertNotFalse( $wpdb->query( $wpdb->prepare( "ALTER TABLE %i MODIFY scope_type enum('site','client') NOT NULL", $table ) ) );
+			} elseif ( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, $component ) ) ) {
+				$this->assertNotFalse( $wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP COLUMN %i', $table, $component ) ) );
+			}
+			update_site_option( 'mainwp_db_version', $version );
+			MainWP_Install::instance()->install();
+			$this->assertSame( '9.0.2.8', get_site_option( 'mainwp_db_version' ) );
+			$columns = $wpdb->get_results( $wpdb->prepare( 'SHOW COLUMNS FROM %i', $table ), OBJECT_K );
+			$this->assertSame( "enum('agency','site','client')", $columns['scope_type']->Type );
+			$this->assertArrayHasKey( 'required', $columns );
+			$this->assertArrayHasKey( 'description', $columns );
+			foreach ( array( $site, $client ) as $record ) {
+				$row = $this->db->get_by_id( $record->id );
+				$this->assertSame( $record->scope_type, $row->scope_type );
+				$this->assertSame( $record->scope_id, $row->scope_id );
+				$this->assertSame( $record->body, $row->body );
+				$this->assertSame( 0, $row->required );
+			}
+		} finally {
+			$this->clear_filters();
+			$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE id IN (%d,%d)', $table, $site->id, $client->id ) );
+			update_site_option( 'mainwp_db_version', $prior );
+			delete_site_option( 'mainwp_knowledge_schema_confirmed' );
+			delete_site_option( 'mainwp_knowledge_schema_repair_pending' );
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+			foreach ( $this->db->hook_db_install_tables( array(), $prior, $wpdb->get_charset_collate() ) as $sql ) {
+				dbDelta( $sql );
+			}
+			MainWP_Install::instance()->maybe_repair_knowledge_table();
+			MainWP_DB::instance()->remove_website( $site->scope_id );
+			MainWP_DB_Client::instance()->delete_client( $client->scope_id );
+			// DDL ended the fixture transaction; cleanup must survive the harness rollback too.
+			self::commit_transaction();
+			add_filter( 'query', array( $this, '_create_temporary_tables' ) );
+			add_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+		}
+	}
+
+	public static function knowledge_schema_components(): array {
+		return array( 'agency' => array( 'agency' ), 'required' => array( 'required' ), 'description' => array( 'description' ) );
+	}
+
+	/** @dataProvider knowledge_schema_components */
+	public function test_knowledge_schema_failed_alter_retries_on_next_eligible_load( string $component ): void {
+		$this->set_current_user_as_admin();
+		global $wpdb;
+		$table = $wpdb->prefix . 'mainwp_knowledge';
+		remove_filter( 'query', array( $this, '_create_temporary_tables' ) );
+		remove_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+		$suppressed = $wpdb->suppress_errors;
+		try {
+			delete_site_option( 'mainwp_knowledge_schema_confirmed' );
+			delete_site_option( 'mainwp_knowledge_schema_repair_pending' );
+			if ( 'agency' === $component ) {
+				$wpdb->query( $wpdb->prepare( "ALTER TABLE %i MODIFY scope_type enum('site','client') NOT NULL", $table ) );
+			} elseif ( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, $component ) ) ) {
+				$wpdb->query( $wpdb->prepare( 'ALTER TABLE %i DROP COLUMN %i', $table, $component ) );
+			}
+			$attempts = 0;
+			$this->track_filter( 'query', function ( $sql ) use ( $wpdb, &$attempts ) {
+				if ( 0 === strpos( $sql, 'ALTER TABLE' ) && false !== strpos( $sql, 'mainwp_knowledge' ) ) {
+					++$attempts;
+					$this->assertTrue( $wpdb->suppress_errors );
+					return str_replace( 'mainwp_knowledge', 'mainwp_knowledge_missing', $sql );
+				}
+				return $sql;
+			} );
+			update_site_option( 'mainwp_db_version', '9.0.2.8' );
+			$install = MainWP_Install::instance();
+			$install->install();
+			$this->assertSame( $suppressed, $wpdb->suppress_errors );
+			$this->assertSame( 1, $attempts );
+			$this->assertFalse( get_site_option( 'mainwp_knowledge_schema_confirmed' ) );
+			$install->install();
+			$this->assertSame( 1, $attempts );
+			$this->clear_filters();
+			update_site_option( 'mainwp_knowledge_schema_repair_pending', time() - HOUR_IN_SECONDS - 1 );
+			$install->install();
+			$this->assertSame( $suppressed, $wpdb->suppress_errors );
+			$this->assertSame( 'agency-required-description-1', get_site_option( 'mainwp_knowledge_schema_confirmed' ) );
+			$this->assertFalse( get_site_option( 'mainwp_knowledge_schema_repair_pending' ) );
+		} finally {
+			$this->clear_filters();
+			delete_site_option( 'mainwp_knowledge_schema_confirmed' );
+			delete_site_option( 'mainwp_knowledge_schema_repair_pending' );
+			require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+			foreach ( $this->db->hook_db_install_tables( array(), get_site_option( 'mainwp_db_version' ), $wpdb->get_charset_collate() ) as $sql ) {
+				dbDelta( $sql );
+			}
+			MainWP_Install::instance()->maybe_repair_knowledge_table();
+			$wpdb->suppress_errors( $suppressed );
+			add_filter( 'query', array( $this, '_create_temporary_tables' ) );
+			add_filter( 'query', array( $this, '_drop_temporary_tables' ) );
+		}
 	}
 }

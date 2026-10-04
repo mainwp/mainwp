@@ -34,6 +34,358 @@ use MainWP\Dashboard\MainWP_DB_Common;
  */
 class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 
+	public static function c3_hold_types(): array {
+		return [
+			'core' => [ 'core', 'wordpress', 'ignored_wp_upgrades', 'is_ignoreCoreUpdates' ],
+			'plugin' => [ 'plugin', 'sample/plugin.php', 'ignored_plugins', 'is_ignorePluginUpdates' ],
+			'theme' => [ 'theme', 'sample-theme', 'ignored_themes', 'is_ignoreThemeUpdates' ],
+		];
+	}
+
+	private function seed_c3_hold( int $site_id, string $type, string $slug ): void {
+		$entry = [ 'Name' => 'Stored Hold', 'ignored_versions' => [ 'all_versions' ] ];
+		if ( 'core' === $type ) {
+			$this->set_site_option( $site_id, 'ignored_wp_upgrades', wp_json_encode( $entry ) );
+		} elseif ( 'plugin' === $type ) {
+			$this->set_site_ignored_plugins( $site_id, [ $slug => $entry ] );
+		} else {
+			$this->set_site_ignored_themes( $site_id, [ $slug => $entry ] );
+		}
+	}
+
+	private function c3_database_state( int $site_id ): array {
+		global $wpdb;
+		return [
+			$wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mainwp_wp WHERE id = %d", $site_id ), ARRAY_A ),
+			$wpdb->get_results( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}mainwp_wp_options WHERE wpid = %d ORDER BY name", $site_id ), ARRAY_A ),
+			$wpdb->get_results( "SELECT * FROM {$wpdb->prefix}mainwp_users ORDER BY userid", ARRAY_A ),
+		];
+	}
+
+	private function assert_c3_output_validates( array $result ): void {
+		$schema = wp_get_ability( 'mainwp/unignore-site-updates-v1' )->get_output_schema();
+		$this->assertTrue( rest_validate_value_from_schema( $result, $schema ) );
+		$matches = 0;
+		foreach ( $schema['oneOf'] as $branch ) {
+			$matches += true === rest_validate_value_from_schema( $result, $branch ) ? 1 : 0;
+		}
+		$this->assertSame( 1, $matches, 'Exactly one output branch must match.' );
+		foreach ( array_keys( $result ) as $key ) {
+			$missing = $result;
+			unset( $missing[ $key ] );
+			$this->assertWPError( rest_validate_value_from_schema( $missing, $schema ), 'Output must require ' . $key );
+		}
+	}
+
+	public static function c3_old_remove_paths(): array {
+		return [
+			'set-core' => [ 'mainwp/set-ignored-updates-v1', 'core', 'wordpress', [ 'action' => 'unignore', 'type' => 'core', 'slug' => 'wordpress' ] ],
+			'set-plugin' => [ 'mainwp/set-ignored-updates-v1', 'plugin', 'sample/plugin.php', [ 'action' => 'unignore', 'type' => 'plugin', 'slug' => 'sample/plugin.php' ] ],
+			'set-theme' => [ 'mainwp/set-ignored-updates-v1', 'theme', 'sample-theme', [ 'action' => 'unignore', 'type' => 'theme', 'slug' => 'sample-theme' ] ],
+			'core' => [ 'mainwp/ignore-site-core-v1', 'core', 'wordpress', [ 'action' => 'remove' ] ],
+			'plugins' => [ 'mainwp/ignore-site-plugins-v1', 'plugin', 'sample/plugin.php', [ 'action' => 'remove', 'slugs' => [ 'sample/plugin.php' ] ] ],
+			'themes' => [ 'mainwp/ignore-site-themes-v1', 'theme', 'sample-theme', [ 'action' => 'remove', 'slugs' => [ 'sample-theme' ] ] ],
+		];
+	}
+
+	/** @dataProvider c3_old_remove_paths */
+	public function test_c3_old_remove_returns_replacement_without_changes( $ability, $type, $slug, $input ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->seed_c3_hold( $site_id, $type, $slug );
+		$before = $this->c3_database_state( $site_id );
+		$calls = &$this->record_update_calls();
+		$hook_counts = [ did_action( 'mainwp_before_' . $type . '_unignore' ), did_action( 'mainwp_after_' . $type . '_unignore' ) ];
+		$result = $this->execute_ability( $ability, $input + [ 'site_id_or_domain' => $site_id ] );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_unignore_moved', $result->get_error_code() );
+		$this->assertSame( 'Removing an item from the ignored list needs confirmation. Use mainwp/unignore-site-updates-v1.', $result->get_error_message() );
+		$this->assertSame( [ 'status' => 400, 'replacement' => 'mainwp/unignore-site-updates-v1' ], $result->get_error_data() );
+		$this->assertSame( $before, $this->c3_database_state( $site_id ) );
+		$this->assertSame( $hook_counts, [ did_action( 'mainwp_before_' . $type . '_unignore' ), did_action( 'mainwp_after_' . $type . '_unignore' ) ] );
+		$this->assertSame( [], $calls );
+	}
+
+	public static function c3_flag_inputs(): array {
+		return [
+			'both' => [ [ 'dry_run' => true, 'confirm' => true ], 'mainwp_invalid_input', 'Cannot specify both dry_run and confirm.' ],
+			'both strings' => [ [ 'dry_run' => '1', 'confirm' => '1' ], 'mainwp_invalid_input', 'Cannot specify both dry_run and confirm.' ],
+			'neither' => [ [], 'mainwp_confirmation_required', 'Removing a hold requires confirm: true. Call with dry_run: true first to preview it.' ],
+			'false strings' => [ [ 'dry_run' => '0', 'confirm' => 'false' ], 'mainwp_confirmation_required', 'Removing a hold requires confirm: true. Call with dry_run: true first to preview it.' ],
+		];
+	}
+
+	/** @dataProvider c3_flag_inputs */
+	public function test_c3_unignore_rejects_invalid_flags( $flags, $code, $message ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->seed_c3_hold( $site_id, 'plugin', 'sample/plugin.php' );
+		$before = $this->c3_database_state( $site_id );
+		$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', $flags + [ 'site_id_or_domain' => $site_id, 'type' => 'plugin', 'slugs' => [ 'sample/plugin.php' ] ] );
+		$this->assertWPError( $result );
+		$this->assertSame( $code, $result->get_error_code() );
+		$this->assertSame( $message, $result->get_error_message() );
+		$this->assertSame( [ 'status' => 400 ], $result->get_error_data() );
+		$this->assertSame( $before, $this->c3_database_state( $site_id ) );
+	}
+
+	public static function c3_invalid_slugs(): array {
+		$cases = [];
+		foreach ( [ 'plugin', 'theme' ] as $type ) {
+			foreach ( [ 'missing' => [], 'empty' => [ 'slugs' => [] ], 'scalar' => [ 'slugs' => 'sample' ] ] as $label => $input ) {
+				$cases[ $type . '-' . $label ] = [ $type, $input ];
+			}
+		}
+		return $cases;
+	}
+
+	/** @dataProvider c3_invalid_slugs */
+	public function test_c3_unignore_requires_plugin_and_theme_slugs( $type, $input ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$this->assertNotNull( wp_get_ability( 'mainwp/unignore-site-updates-v1' ) );
+		$site_id = $this->create_test_site();
+		$result = MainWP_Abilities_Updates::execute_unignore_site_updates( $input + [ 'site_id_or_domain' => $site_id, 'type' => $type, 'dry_run' => true ] );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_invalid_input', $result->get_error_code() );
+		$this->assertSame( [ 'status' => 400 ], $result->get_error_data() );
+		if ( [] === $input ) {
+			$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', [ 'site_id_or_domain' => $site_id, 'type' => $type, 'dry_run' => true ] );
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_invalid_input', $result->get_error_code() );
+		}
+	}
+
+	/** @dataProvider c3_hold_types */
+	public function test_c3_unignore_preview_and_confirm( $type, $slug, $column, $flag ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site( [ 'name' => 'Hold Site', 'url' => 'https://test-hold.example.org/' ] );
+		$this->seed_gate_updates( $site_id );
+		$this->seed_c3_hold( $site_id, $type, $slug );
+		$input = [ 'site_id_or_domain' => $site_id, 'type' => $type ];
+		if ( 'core' !== $type ) {
+			$input['slugs'] = [ $slug, 'not-held' ];
+		}
+		$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', $input + [ 'dry_run' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assertSame( [ 'dry_run', 'would_affect', 'count', 'warnings', 'errors' ], array_keys( $result ) );
+		$this->assertTrue( $result['dry_run'] );
+		$this->assertSame( 1, $result['count'] );
+		$this->assertSame( [ 'Removing a hold makes the update eligible for the next run, including update-all and queued runs.' ], $result['warnings'] );
+		$this->assertSame( [], $result['errors'] );
+		$this->assertSame( $site_id, $result['would_affect']['site_id'] );
+		$this->assertSame( 'https://test-hold.example.org/', $result['would_affect']['site_url'] );
+		$this->assertSame( 'Hold Site', $result['would_affect']['site_name'] );
+		$expected = [
+			'core' => [ 'WordPress', '6.8.3', '6.9' ],
+			'plugin' => [ 'Sample Plugin', '1.0', '2.0' ],
+			'theme' => [ 'Sample Theme', '1.0', '1.1' ],
+		][ $type ];
+		$this->assertSame( [ 'type' => $type, 'slug' => $slug, 'name' => $expected[0], 'held' => true, 'still_held_by' => null, 'pending' => [ 'from' => $expected[1], 'to' => $expected[2] ] ], $result['would_affect']['holds'][0] );
+		if ( 'core' !== $type ) {
+			$this->assertSame( [ 'type' => $type, 'slug' => 'not-held', 'name' => 'not-held', 'held' => false, 'still_held_by' => null, 'pending' => null ], $result['would_affect']['holds'][1] );
+		}
+		$this->assert_c3_output_validates( $result );
+		$before_hooks = [ did_action( 'mainwp_before_' . $type . '_unignore' ), did_action( 'mainwp_after_' . $type . '_unignore' ) ];
+		$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', $input + [ 'confirm' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assertSame( [ 'dry_run' => false, 'removed' => [ $slug ], 'not_held' => 'core' === $type ? [] : [ 'not-held' ], 'count' => 1 ], $result );
+		$this->assertSame( [ $before_hooks[0] + 1, $before_hooks[1] + 1 ], [ did_action( 'mainwp_before_' . $type . '_unignore' ), did_action( 'mainwp_after_' . $type . '_unignore' ) ] );
+		$this->assert_c3_output_validates( $result );
+		$site = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertSame( [], json_decode( 'core' === $type ? MainWP_DB::instance()->get_website_option( $site, $column ) : $site->{$column}, true ) );
+		$again = $this->execute_ability( 'mainwp/unignore-site-updates-v1', $input + [ 'confirm' => true ] );
+		$this->assertNotWPError( $again );
+		$this->assertSame( [ 'dry_run' => false, 'removed' => [], 'not_held' => 'core' === $type ? [ 'wordpress' ] : [ $slug, 'not-held' ], 'count' => 0 ], $again );
+		$this->assert_c3_output_validates( $again );
+		$preview = $this->execute_ability( 'mainwp/unignore-site-updates-v1', $input + [ 'dry_run' => true ] );
+		$this->assertNotWPError( $preview );
+		$this->assertSame( 0, $preview['count'] );
+		$this->assertSame( [], $preview['warnings'] );
+		$this->assert_c3_output_validates( $preview );
+	}
+
+	/** @dataProvider c3_hold_types */
+	public function test_c3_unignore_preview_reports_other_hold_layers( $type, $slug, $column, $flag ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->seed_c3_hold( $site_id, $type, $slug );
+		$input = [ 'site_id_or_domain' => $site_id, 'type' => $type, 'slugs' => [ $slug ], 'dry_run' => true ];
+		$entry = [ 'Name' => 'Global Hold', 'ignored_versions' => [ 'all_versions' ] ];
+		$extension = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+		MainWP_DB_Common::instance()->update_user_extension( [ 'userid' => $extension->userid, $column => wp_json_encode( 'core' === $type ? $entry : [ $slug => $entry ] ) ] );
+		MainWP_DB::instance()->update_website_values( $site_id, [ $flag => 1 ] );
+		$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', $input );
+		$this->assertNotWPError( $result );
+		$this->assertSame( 'global', $result['would_affect']['holds'][0]['still_held_by'] );
+		$this->assertSame( 'Stored Hold', $result['would_affect']['holds'][0]['name'] );
+		$this->assertNull( $result['would_affect']['holds'][0]['pending'] );
+		$this->assert_c3_output_validates( $result );
+		MainWP_DB_Common::instance()->update_user_extension( [ 'userid' => $extension->userid, $column => '[]' ] );
+		$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', $input );
+		$this->assertNotWPError( $result );
+		$this->assertSame( 'site_flag', $result['would_affect']['holds'][0]['still_held_by'] );
+		$this->assert_c3_output_validates( $result );
+		unset( $input['dry_run'] );
+		$confirmed = $this->execute_ability( 'mainwp/unignore-site-updates-v1', $input + [ 'confirm' => true ] );
+		$this->assertNotWPError( $confirmed );
+		$this->assertSame( [ $slug ], $confirmed['removed'] );
+		$this->assertSame( 1, (int) MainWP_DB::instance()->get_website_by_id( $site_id )->{$flag} );
+	}
+
+	/** @dataProvider c3_hold_types */
+	public function test_c3_unignore_preview_writes_nothing( $type, $slug, $column, $flag ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->seed_gate_updates( $site_id );
+		$this->seed_c3_hold( $site_id, $type, $slug );
+		global $wpdb;
+		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_users" );
+		$before = $this->c3_database_state( $site_id );
+		$calls = &$this->record_update_calls();
+		$hooks = [ did_action( 'mainwp_before_' . $type . '_unignore' ), did_action( 'mainwp_after_' . $type . '_unignore' ) ];
+		$writes = [];
+		$recorder = static function ( $query ) use ( &$writes ) {
+			if ( preg_match( '/^\s*(INSERT|UPDATE|DELETE|REPLACE)\b/i', $query ) ) {
+				$writes[] = $query;
+			}
+			return $query;
+		};
+		add_filter( 'query', $recorder );
+		try {
+			$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', [ 'site_id_or_domain' => $site_id, 'type' => $type, 'slugs' => [ $slug ], 'dry_run' => true ] );
+		} finally {
+			remove_filter( 'query', $recorder );
+		}
+		$this->assertNotWPError( $result );
+		$this->assertSame( [], $writes, 'Preview must not create even a missing global settings row.' );
+		$this->assertSame( $before, $this->c3_database_state( $site_id ) );
+		$this->assertSame( [], $calls );
+		$this->assertSame( $hooks, [ did_action( 'mainwp_before_' . $type . '_unignore' ), did_action( 'mainwp_after_' . $type . '_unignore' ) ] );
+	}
+
+	public function test_c3_unignore_core_ignores_supplied_slugs() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->seed_c3_hold( $site_id, 'core', 'wordpress' );
+		$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', [ 'site_id_or_domain' => $site_id, 'type' => 'core', 'slugs' => [ 'unrelated', 'another' ], 'confirm' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assertSame( [ 'wordpress' ], $result['removed'] );
+		$this->assertSame( [], $result['not_held'] );
+		$this->assert_c3_output_validates( $result );
+	}
+
+	public static function c3_global_pending_versions(): array {
+		return [
+			'plugin other version' => [ 'plugin', 'sample/plugin.php', 'ignored_plugins', 'is_ignorePluginUpdates', [ '1.9' ], 0, null ],
+			'plugin other version with site flag' => [ 'plugin', 'sample/plugin.php', 'ignored_plugins', 'is_ignorePluginUpdates', [ '1.9' ], 1, 'site_flag' ],
+			'plugin pending version' => [ 'plugin', 'sample/plugin.php', 'ignored_plugins', 'is_ignorePluginUpdates', [ '2.0' ], 1, 'global' ],
+			'core other version' => [ 'core', 'wordpress', 'ignored_wp_upgrades', 'is_ignoreCoreUpdates', [ '6.8.3' ], 0, null ],
+		];
+	}
+
+	/** @dataProvider c3_global_pending_versions */
+	public function test_c3_unignore_preview_matches_global_pending_version( $type, $slug, $column, $flag, $versions, $site_flag, $expected ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->seed_gate_updates( $site_id );
+		$this->seed_c3_hold( $site_id, $type, $slug );
+		$entry = [ 'Name' => 'Global Hold', 'ignored_versions' => $versions ];
+		$extension = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+		MainWP_DB_Common::instance()->update_user_extension( [ 'userid' => $extension->userid, $column => wp_json_encode( 'core' === $type ? $entry : [ $slug => $entry ] ) ] );
+		MainWP_DB::instance()->update_website_values( $site_id, [ $flag => $site_flag ] );
+		$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', [ 'site_id_or_domain' => $site_id, 'type' => $type, 'slugs' => [ $slug ], 'dry_run' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assert_c3_output_validates( $result );
+		$this->assertSame( 1, $result['count'] );
+		$this->assertTrue( $result['would_affect']['holds'][0]['held'] );
+		$this->assertSame( 'core' === $type ? '6.9' : '2.0', $result['would_affect']['holds'][0]['pending']['to'] );
+		$this->assertSame( $expected, $result['would_affect']['holds'][0]['still_held_by'] );
+	}
+
+	public static function c3_global_layer_matrix(): array {
+		$rows = [];
+		foreach ( [ 'plugin' => 'sample/plugin.php', 'theme' => 'sample-theme' ] as $type => $slug ) {
+			$all = [ 'Name' => 'Global Hold', 'ignored_versions' => [ 'all_versions' ] ];
+			$v20 = [ 'Name' => 'Global Hold', 'ignored_versions' => [ '2.0' ] ];
+			$v19 = [ 'Name' => 'Global Hold', 'ignored_versions' => [ '1.9' ] ];
+			$rows[ "$type nested, global 2.0" ]            = [ $type, $slug, 'nested', $v20, 0, 'global' ];
+			$rows[ "$type nested, global 1.9" ]            = [ $type, $slug, 'nested', $v19, 0, null ];
+			$rows[ "$type flat, global 2.0" ]              = [ $type, $slug, 'flat', $v20, 0, null ];
+			$rows[ "$type flat, global 2.0, site flag" ]   = [ $type, $slug, 'flat', $v20, 1, 'site_flag' ];
+			$rows[ "$type flat, global all_versions" ]     = [ $type, $slug, 'flat', $all, 0, 'global' ];
+			$rows[ "$type flat, global old string entry" ] = [ $type, $slug, 'flat', 'Global Hold', 0, 'global' ];
+		}
+		return $rows;
+	}
+
+	/**
+	 * The preview's global layer must agree with the filter that decides what runs
+	 * (get_not_ignored_updates_themesplugins), for both pending-data shapes.
+	 *
+	 * @dataProvider c3_global_layer_matrix
+	 */
+	public function test_c3_unignore_global_layer_matches_run_filter( $type, $slug, $shape, $global_entry, $site_flag, $expected ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site( [ 'plugin' === $type ? 'is_ignorePluginUpdates' : 'is_ignoreThemeUpdates' => $site_flag ] );
+		$item    = [ 'Name' => 'Sample', 'Version' => '1.0' ];
+		$item    = 'nested' === $shape ? $item + [ 'update' => [ 'new_version' => '2.0' ] ] : $item + [ 'new_version' => '2.0' ];
+		$pending = [ $slug => $item ];
+		$column  = 'plugin' === $type ? 'ignored_plugins' : 'ignored_themes';
+		if ( 'plugin' === $type ) {
+			$this->set_site_plugin_upgrades( $site_id, $pending );
+		} else {
+			$this->set_site_theme_upgrades( $site_id, $pending );
+		}
+		$this->seed_c3_hold( $site_id, $type, $slug );
+		$extension = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+		MainWP_DB_Common::instance()->update_user_extension( [ 'userid' => $extension->userid, $column => wp_json_encode( [ $slug => $global_entry ] ) ] );
+
+		$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', [ 'site_id_or_domain' => $site_id, 'type' => $type, 'slugs' => [ $slug ], 'dry_run' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assert_c3_output_validates( $result );
+		$this->assertSame( $expected, $result['would_affect']['holds'][0]['still_held_by'] );
+
+		$kept = \MainWP\Dashboard\MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $pending, [ $slug => $global_entry ] );
+		if ( ! $site_flag ) {
+			$this->assertSame( ! isset( $kept[ $slug ] ), 'global' === $expected, 'Preview and run filter disagree on the global layer.' );
+		}
+	}
+
+	public static function c3_preview_warning_layers(): array {
+		$eligible = 'Removing a hold makes the update eligible for the next run, including update-all and queued runs.';
+		$blocked = 'Items with still_held_by set stay blocked by the global ignored list or the site\'s ignore setting for that type until that hold is removed too.';
+		return [
+			'eligible only' => [ [ 'sample/plugin.php' ], [ 'not-held' ], [ $eligible ] ],
+			'blocked only' => [ [ 'sample/plugin.php' ], [ 'sample/plugin.php' ], [ $blocked ] ],
+			'eligible and blocked' => [ [ 'sample/plugin.php', 'blocked/plugin.php' ], [ 'blocked/plugin.php' ], [ $eligible, $blocked ] ],
+		];
+	}
+
+	/** @dataProvider c3_preview_warning_layers */
+	public function test_c3_unignore_preview_warnings_match_remaining_holds( $held_slugs, $global_slugs, $expected ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$entry = [ 'Name' => 'Stored Hold', 'ignored_versions' => [ 'all_versions' ] ];
+		$this->set_site_ignored_plugins( $site_id, array_fill_keys( $held_slugs, $entry ) );
+		$extension = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
+		MainWP_DB_Common::instance()->update_user_extension( [ 'userid' => $extension->userid, 'ignored_plugins' => wp_json_encode( array_fill_keys( $global_slugs, $entry ) ) ] );
+		$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', [ 'site_id_or_domain' => $site_id, 'type' => 'plugin', 'slugs' => array_merge( $held_slugs, [ 'not-held' ] ), 'dry_run' => true ] );
+		$this->assertNotWPError( $result );
+		$this->assert_c3_output_validates( $result );
+		$this->assertSame( count( $held_slugs ), $result['count'] );
+		$this->assertSame( $expected, $result['warnings'] );
+	}
+
 	// =========================================================================
 	// List Updates Tests
 	// =========================================================================
@@ -863,7 +1215,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Test that set-ignored-updates removes from list.
+	 * Test that confirmed unignore removes items from the ignored list.
 	 *
 	 * @return void
 	 */
@@ -884,16 +1236,16 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		] );
 
 		// Remove ignored update.
-		$result = $this->execute_ability( 'mainwp/set-ignored-updates-v1', [
-			'action'            => 'unignore',
+		$result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', [
+			'confirm'           => true,
 			'site_id_or_domain' => $site_id,
 			'type'              => 'plugin',
-			'slug'              => 'test-plugin',
+			'slugs'             => [ 'test-plugin' ],
 		] );
 
 		$this->assertNotWPError( $result );
-		$this->assertTrue( $result['success'] );
-		$this->assertEquals( 'unignore', $result['action'] );
+		$this->assertSame( [ 'test-plugin' ], $result['removed'] );
+		$this->assertSame( 1, $result['count'] );
 	}
 
 	/**
@@ -2855,7 +3207,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Test that ignore-site-core can add and remove from ignore list.
+	 * Test adding a core hold, then removing it with confirmed unignore.
 	 *
 	 * @return void
 	 */
@@ -2878,13 +3230,14 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $add_result['success'] );
 
 		// Remove from ignore list.
-		$remove_result = $this->execute_ability( 'mainwp/ignore-site-core-v1', [
+		$remove_result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', [
 			'site_id_or_domain' => $site_id,
-			'action'            => 'remove',
+			'type'              => 'core',
+			'confirm'           => true,
 		] );
 
 		$this->assertNotWPError( $remove_result );
-		$this->assertTrue( $remove_result['success'] );
+		$this->assertSame( [ 'wordpress' ], $remove_result['removed'] );
 	}
 
 	// =========================================================================
@@ -3017,7 +3370,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Test that ignore-site-plugins can add and remove from ignore list.
+	 * Test adding a plugin hold, then removing it with confirmed unignore.
 	 *
 	 * @return void
 	 */
@@ -3044,14 +3397,15 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertEquals( 1, $add_result['ignored_count'] );
 
 		// Remove from ignore list.
-		$remove_result = $this->execute_ability( 'mainwp/ignore-site-plugins-v1', [
+		$remove_result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', [
 			'site_id_or_domain' => $site_id,
 			'slugs'             => $test_slugs,
-			'action'            => 'remove',
+			'type'              => 'plugin',
+			'confirm'           => true,
 		] );
 
 		$this->assertNotWPError( $remove_result );
-		$this->assertTrue( $remove_result['success'] );
+		$this->assertSame( $test_slugs, $remove_result['removed'] );
 	}
 
 	// =========================================================================
@@ -3184,7 +3538,7 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Test that ignore-site-themes can add and remove from ignore list.
+	 * Test adding a theme hold, then removing it with confirmed unignore.
 	 *
 	 * @return void
 	 */
@@ -3211,14 +3565,15 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertEquals( 1, $add_result['ignored_count'] );
 
 		// Remove from ignore list.
-		$remove_result = $this->execute_ability( 'mainwp/ignore-site-themes-v1', [
+		$remove_result = $this->execute_ability( 'mainwp/unignore-site-updates-v1', [
 			'site_id_or_domain' => $site_id,
 			'slugs'             => $test_slugs,
-			'action'            => 'remove',
+			'type'              => 'theme',
+			'confirm'           => true,
 		] );
 
 		$this->assertNotWPError( $remove_result );
-		$this->assertTrue( $remove_result['success'] );
+		$this->assertSame( $test_slugs, $remove_result['removed'] );
 	}
 
 	/** Record child dispatches using the #298 recorder's fields. */

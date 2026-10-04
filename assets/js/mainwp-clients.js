@@ -491,7 +491,8 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
         mainwp_forceReload('admin.php?page=mainwp-setup&step=monitoring&message=1');
       } else {
         const error = typeof response?.data === 'string' && response.data.trim() !== '' ? response.data : response?.error || MainWP.I18n.t('Undefined error. Please try again.');
-        mainwp_set_message_zone('#mainwp-message-zone', jQuery('<div>').text(error).html(), 'red');
+        // The handler escapes its messages and strips tags in its catch; escaping again would show translated quotes as entities.
+        mainwp_set_message_zone('#mainwp-message-zone', error, 'red');
         mainwp_set_message_zone('#mainwp-message-zone-client', '');
       }
       jQuery('#bulk_add_multi_create_client').attr('disabled', false); // enable button

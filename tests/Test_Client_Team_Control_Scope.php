@@ -1285,13 +1285,23 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertSame( array( $site ), $this->members( $client ) );
     }
 
-    /** Server text must not become executable markup in the refusal zone. */
-    public function test_multi_client_ui_escapes_server_message(): void {
-        $message = '<img src=x onerror=alert(1)>Unreadable & invalid';
-        $ui = $this->run_refusal_ui( 'mainwp-clients.js', '#bulk_add_multi_create_client', wp_json_encode( array( 'success' => false, 'data' => $message ) ) );
+    /** A translated refusal is escaped once: markup stays inert and quotes do not show as entities. */
+    public function test_multi_client_ui_renders_translated_server_message_escaped_once(): void {
+        $translation = "<img src=x onerror=alert(1)>Les données n'ont pas pu être lues & relues.";
+        $filter = static function ( $translated, $text, $domain ) use ( $translation ) {
+            return 'mainwp' === $domain && 'The client data could not be read. Please try again.' === $text ? $translation : $translated;
+        };
+        add_filter( 'gettext', $filter, 10, 3 );
+        $response = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => 'not rows' ) );
+        remove_filter( 'gettext', $filter, 10 );
+        $body = json_decode( $response, true );
+        $this->assertFalse( $body['success'] );
+        $this->assertSame( esc_html( $translation ), $body['data'] );
+        $ui = $this->run_refusal_ui( 'mainwp-clients.js', '#bulk_add_multi_create_client', $response );
         $errors = array_values( array_filter( $ui['messages'], static function ( $entry ) { return '#mainwp-message-zone' === $entry['target'] && 'red' === $entry['style']; } ) );
         $this->assertCount( 1, $errors );
-        $this->assertSame( esc_html( $message ), $errors[0]['text'] );
+        $this->assertSame( esc_html( $translation ), $errors[0]['text'] );
+        $this->assertStringNotContainsString( '<', $errors[0]['text'] );
         $this->assertSame( 0, $ui['reloads'] );
     }
 

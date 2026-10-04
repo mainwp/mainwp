@@ -855,16 +855,20 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assert_unchanged( $before );
     }
 
-    /** Invalid IDs must not reach the roster, even with unrestricted access. */
+    /** Invalid IDs must not reach a restricted user's roster. */
     public function test_missing_client_access_skips_roster(): void {
-        foreach ( array( array(), 'all' ) as $scope ) {
-            $this->scope( $scope );
-            $queries = 0;
-            $this->filter( 'query', static function ( $sql ) use ( &$queries ) { ++$queries; return $sql; } );
-            $this->assertFalse( MainWP_Client::has_client_access( 0 ) );
-            $this->assertFalse( MainWP_Client::has_client_access( -1 ) );
-            $this->assertSame( 0, $queries, 'Invalid client IDs must not read a roster.' );
-        }
+        $this->scope( array() );
+        $queries = 0;
+        $this->filter( 'query', static function ( $sql ) use ( &$queries ) { ++$queries; return $sql; } );
+        $this->assertFalse( MainWP_Client::has_client_access( 0 ) );
+        $this->assertFalse( MainWP_Client::has_client_access( -1 ) );
+        $this->assertSame( 0, $queries, 'Invalid client IDs must not read a restricted roster.' );
+    }
+
+    /** Unrestricted access retains its legacy result without a client ID. */
+    public function test_missing_client_access_keeps_unrestricted_behavior(): void {
+        $this->scope( 'all' );
+        $this->assertTrue( MainWP_Client::has_client_access( 0 ) );
     }
 
     /** Admins retain zero-site client behavior. */

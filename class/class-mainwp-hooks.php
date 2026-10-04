@@ -395,7 +395,10 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      *
      * @param bool $site_id Child site ID.
      *
-     * @return bool|array Return false if empty and return array error - Site not found | result - SUCCESS.
+     * @return bool|array False when the id is empty. An error array when the site
+     *                    is missing or the database delete returned false.
+     *                    Result SUCCESS when the delete did not return false.
+     *                    Zero rows is still success.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
@@ -432,10 +435,18 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
             }
         }
 
-        MainWP_DB::instance()->remove_website( $site->id );
+        $removed = MainWP_DB::instance()->remove_website( $site->id );
+
+        // Same success test as the manage-sites handler and execute_delete_site():
+        // false is a database error. Zero rows still fires the hooks.
+        if ( false === $removed ) {
+            return array( 'error' => esc_html__( 'Failed to delete the website', 'mainwp' ) );
+        }
 
         /** This action is documented in pages\page-mainwp-manage-sites-handler.php */
         do_action( 'mainwp_delete_site', $site );
+        /** This action is documented in pages\page-mainwp-manage-sites-handler.php */
+        do_action( 'mainwp_site_deleted', $site );
         return array( 'result' => 'SUCCESS' );
     }
 

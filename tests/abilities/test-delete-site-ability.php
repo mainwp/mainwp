@@ -749,6 +749,208 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
     }
 
     /**
+     * Test that the extension delete-site filter fires both hooks on success.
+     *
+     * mainwp_deletesite is the extension entry. It must fire mainwp_delete_site
+     * then mainwp_site_deleted with the website object, and return SUCCESS.
+     *
+     * @return void
+     */
+    public function test_hook_delete_site_fires_deletion_hooks() {
+        $this->set_current_user_as_admin();
+
+        $site_url = 'https://test-hook-delete-site-success.example.com/';
+        $site_id  = $this->create_test_site(
+            [
+                'name' => 'Test Hook Delete Site',
+                'url'  => $site_url,
+            ]
+        );
+
+        $this->record_deletion_hooks();
+
+        try {
+            $result = apply_filters( 'mainwp_deletesite', $site_id );
+        } finally {
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertSame( [ 'result' => 'SUCCESS' ], $result );
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'A successful delete removes the site row.'
+        );
+        $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+    }
+
+    /**
+     * Test that a failed extension delete fires nothing and returns an error.
+     *
+     * @return void
+     */
+    public function test_hook_delete_site_failed_delete_fires_nothing() {
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name' => 'Test Hook Delete Site Failed',
+                'url'  => 'https://test-hook-delete-site-failed.example.com/',
+            ]
+        );
+
+        $this->site_row_deletes_rewritten = 0;
+        $this->record_deletion_hooks();
+        add_filter( 'query', [ $this, 'fail_site_row_delete' ] );
+
+        try {
+            $result = apply_filters( 'mainwp_deletesite', $site_id );
+        } finally {
+            remove_filter( 'query', [ $this, 'fail_site_row_delete' ] );
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertSame( 1, $this->site_row_deletes_rewritten, 'The failure filter blanks exactly one site-row DELETE.' );
+        $this->assert_extension_delete_failed( $result, $site_id, 'Failed to delete the website' );
+    }
+
+    /**
+     * Test that zero deleted rows still counts as success for the extension filter.
+     *
+     * Only false is a failed delete. A statement that matches no row fires both
+     * hooks and returns SUCCESS, matching the handler and the ability.
+     *
+     * @return void
+     */
+    public function test_hook_delete_site_zero_row_delete_still_fires_deletion_hooks() {
+        $this->set_current_user_as_admin();
+
+        $site_url = 'https://test-hook-delete-site-zero-rows.example.com/';
+        $site_id  = $this->create_test_site(
+            [
+                'name' => 'Test Hook Delete Site Zero Rows',
+                'url'  => $site_url,
+            ]
+        );
+
+        $this->site_row_deletes_rewritten = 0;
+        $this->record_deletion_hooks();
+        add_filter( 'query', [ $this, 'zero_site_row_delete' ] );
+
+        try {
+            $result = apply_filters( 'mainwp_deletesite', $site_id );
+        } finally {
+            remove_filter( 'query', [ $this, 'zero_site_row_delete' ] );
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertSame( 1, $this->site_row_deletes_rewritten, 'The zero-row filter rewrites exactly one site-row DELETE.' );
+        $this->assertSame( [ 'result' => 'SUCCESS' ], $result );
+        $this->assertSame( 1, $this->count_site_rows( $site_id ), 'A zero-row delete must leave the site row in place.' );
+        $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+    }
+
+    /**
+     * Test that deleting a clone site fires both hooks and returns SUCCESS.
+     *
+     * The clone path only removes a staging site. The extension filter is
+     * mainwp_delete_clonesite.
+     *
+     * @return void
+     */
+    public function test_hook_delete_clone_site_fires_deletion_hooks() {
+        $this->set_current_user_as_admin();
+
+        $site_url = 'https://test-hook-delete-clone-success.example.com/';
+        $site_id  = $this->create_test_site(
+            [
+                'name'       => 'Test Hook Delete Clone',
+                'url'        => $site_url,
+                'is_staging' => 1,
+            ]
+        );
+
+        $this->record_deletion_hooks();
+
+        try {
+            $result = $this->apply_delete_clone_site( '', $site_id );
+        } finally {
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertSame( [ 'result' => 'SUCCESS' ], $result );
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'A successful clone delete removes the site row.'
+        );
+        $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+    }
+
+    /**
+     * Test that a failed clone-site delete fires nothing and returns an error.
+     *
+     * @return void
+     */
+    public function test_hook_delete_clone_site_failed_delete_fires_nothing() {
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name'       => 'Test Hook Delete Clone Failed',
+                'url'        => 'https://test-hook-delete-clone-failed.example.com/',
+                'is_staging' => 1,
+            ]
+        );
+
+        $this->site_row_deletes_rewritten = 0;
+        $this->record_deletion_hooks();
+        add_filter( 'query', [ $this, 'fail_site_row_delete' ] );
+
+        try {
+            $result = $this->apply_delete_clone_site( '', $site_id );
+        } finally {
+            remove_filter( 'query', [ $this, 'fail_site_row_delete' ] );
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertSame( 1, $this->site_row_deletes_rewritten, 'The failure filter blanks exactly one site-row DELETE.' );
+        $this->assert_extension_delete_failed( $result, $site_id, 'Failed to delete the clone website' );
+    }
+
+    /**
+     * Test that a clone delete matching no row still fires both hooks.
+     *
+     * @return void
+     */
+    public function test_hook_delete_clone_site_zero_row_delete_still_fires_deletion_hooks() {
+        $this->set_current_user_as_admin();
+
+        $site_url = 'https://test-hook-delete-clone-zero-rows.example.com/';
+        $site_id  = $this->create_test_site(
+            [
+                'name'       => 'Test Hook Delete Clone Zero Rows',
+                'url'        => $site_url,
+                'is_staging' => 1,
+            ]
+        );
+
+        $this->site_row_deletes_rewritten = 0;
+        $this->record_deletion_hooks();
+        add_filter( 'query', [ $this, 'zero_site_row_delete' ] );
+
+        try {
+            $result = $this->apply_delete_clone_site( $site_url, false );
+        } finally {
+            remove_filter( 'query', [ $this, 'zero_site_row_delete' ] );
+            $this->remove_deletion_hook_recorders();
+        }
+
+        $this->assertSame( 1, $this->site_row_deletes_rewritten, 'The zero-row filter rewrites exactly one site-row DELETE.' );
+        $this->assertSame( [ 'result' => 'SUCCESS' ], $result );
+        $this->assertSame( 1, $this->count_site_rows( $site_id ), 'A zero-row delete must leave the site row in place.' );
+        $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
+    }
+
+    /**
      * Assert the fixture is a live site: not staging and not demo.
      *
      * @param int $site_id Site id.
@@ -1261,6 +1463,37 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
         add_action( 'mainwp_site_deleted', $on_site_deleted, 10, 10 );
 
         $this->deletion_hook_recorders = [ $on_delete_site, $on_site_deleted ];
+    }
+
+    /**
+     * Call the clone-site delete through its extension filter.
+     *
+     * The key is the same check hook_verify() uses. Pass a URL or a site id,
+     * matching the two extension callers.
+     *
+     * @param string   $clone_url     Clone URL, or an empty string to select by id.
+     * @param int|bool $clone_site_id Clone site id, or false when selecting by URL.
+     * @return mixed Filter result.
+     */
+    private function apply_delete_clone_site( $clone_url, $clone_site_id ) {
+        $plugin_file = 'mainwp-staging-extension/mainwp-staging-extension.php';
+        $key         = md5( $plugin_file . '-SNNonceAdder' );
+
+        return apply_filters( 'mainwp_delete_clonesite', $plugin_file, $key, $clone_url, $clone_site_id );
+    }
+
+    /**
+     * Assert an extension delete failed, fired no hooks, and kept the row.
+     *
+     * @param mixed  $result  Filter result.
+     * @param int    $site_id Site id that must still exist.
+     * @param string $error   Expected error text.
+     * @return void
+     */
+    private function assert_extension_delete_failed( $result, $site_id, $error ) {
+        $this->assertSame( [ 'error' => $error ], $result );
+        $this->assertSame( [], $this->deletion_hook_fired, 'A failed delete must not fire mainwp_delete_site or mainwp_site_deleted.' );
+        $this->assertSame( 1, $this->count_site_rows( $site_id ), 'A failed delete must leave the site row in place.' );
     }
 
     /**

@@ -1022,8 +1022,7 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *                          Result SUCCESS when the delete did not return
      *                          false. Zero rows is still success.
      *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::delete_website_favicon()
      */
     public static function hook_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! static::hook_verify( $pluginFile, $key ) ) {
@@ -1059,22 +1058,8 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 return false;
             }
 
-            MainWP_System_Utility::get_wp_file_system();
-
-            /**
-             * WordPress files system object.
-             *
-             * @global object
-             */
-            global $wp_filesystem;
-
-            $favi = MainWP_DB::instance()->get_website_option( $clone_site, 'favi_icon', '' );
-            if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $clone_site->id . '-' ) ) ) {
-                $dirs = MainWP_System_Utility::get_icons_dir();
-                if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
-                    $wp_filesystem->delete( $dirs[0] . $favi );
-                }
-            }
+            // Same favicon cleanup as the manage-sites handler, still before the DB delete.
+            MainWP_Manage_Sites_Handler::delete_website_favicon( $clone_site );
 
             $removed = MainWP_DB::instance()->remove_website( $clone_site->id );
 

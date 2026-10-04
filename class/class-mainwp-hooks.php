@@ -400,8 +400,7 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      *                    Result SUCCESS when the delete did not return false.
      *                    Zero rows is still success.
      *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::delete_website_favicon()
      */
     public function hook_delete_site( $site_id = false ) {
 
@@ -416,24 +415,9 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         if ( empty( $site ) ) {
             return array( 'error' => esc_html__( 'Not found the website', 'mainwp' ) );
         }
-        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
-        /**
-         * WordPress files system object.
-         *
-         * @global object
-         */
-        global $wp_filesystem;
-
-        if ( $hasWPFileSystem ) {
-            $favi = MainWP_DB::instance()->get_website_option( $site, 'favi_icon', '' );
-            if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $site->id . '-' ) ) ) {
-                $dirs = MainWP_System_Utility::get_icons_dir();
-                if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
-                    $wp_filesystem->delete( $dirs[0] . $favi );
-                }
-            }
-        }
+        // Same favicon cleanup as the manage-sites handler, still before the DB delete.
+        MainWP_Manage_Sites_Handler::delete_website_favicon( $site );
 
         $removed = MainWP_DB::instance()->remove_website( $site->id );
 

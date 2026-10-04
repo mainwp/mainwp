@@ -951,6 +951,71 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
     }
 
     /**
+     * Test that the extension delete-site filter does not follow a favicon path out of the icons directory.
+     *
+     * The stored name still contains favi-{id}-, which the old strpos() check accepted.
+     *
+     * @return void
+     */
+    public function test_hook_delete_site_keeps_favicon_outside_icons_directory() {
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name' => 'Test Hook Delete Site Favicon Traversal',
+                'url'  => 'https://test-hook-delete-site-favicon-traversal.example.com/',
+            ]
+        );
+        $outside = $this->plant_traversal_favicon( $site_id );
+
+        try {
+            $result = apply_filters( 'mainwp_deletesite', $site_id );
+
+            $this->assertSame( [ 'result' => 'SUCCESS' ], $result );
+            $this->assertFileExists( $outside, 'A favicon name that leaves the icons directory must not be deleted.' );
+        } finally {
+            $this->delete_file_if_present( $outside );
+        }
+
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The site row should be removed.'
+        );
+    }
+
+    /**
+     * Test that the clone-site delete does not follow a favicon path out of the icons directory.
+     *
+     * @return void
+     */
+    public function test_hook_delete_clone_site_keeps_favicon_outside_icons_directory() {
+        $this->set_current_user_as_admin();
+
+        $site_id = $this->create_test_site(
+            [
+                'name'       => 'Test Hook Delete Clone Favicon Traversal',
+                'url'        => 'https://test-hook-delete-clone-favicon-traversal.example.com/',
+                'is_staging' => 1,
+            ]
+        );
+        $outside = $this->plant_traversal_favicon( $site_id );
+
+        try {
+            $result = $this->apply_delete_clone_site( '', $site_id );
+
+            $this->assertSame( [ 'result' => 'SUCCESS' ], $result );
+            $this->assertFileExists( $outside, 'A favicon name that leaves the icons directory must not be deleted.' );
+        } finally {
+            $this->delete_file_if_present( $outside );
+        }
+
+        $this->assertNull(
+            \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ),
+            'The site row should be removed.'
+        );
+    }
+
+    /**
      * Assert the fixture is a live site: not staging and not demo.
      *
      * @param int $site_id Site id.
@@ -1388,6 +1453,28 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
         $this->assertNotFalse( file_put_contents( $path, 'favicon' ) );
         $this->assertFileExists( $path );
         return $path;
+    }
+
+    /**
+     * Store ../probe-keep-favi-{id}-x.txt and write that file above the icons directory.
+     *
+     * The name contains the favi-{id}- marker and points at the planted file.
+     *
+     * @param int $site_id Site id.
+     * @return string Absolute path of the file outside the icons directory.
+     */
+    private function plant_traversal_favicon( $site_id ) {
+        $filename = 'probe-keep-favi-' . $site_id . '-x.txt';
+        $outside  = $this->write_outside_icons_file( $filename );
+        $stored   = '../' . $filename;
+        $this->set_site_option( $site_id, 'favi_icon', $stored );
+
+        $icons    = $this->site_icons_directory();
+        $resolved = realpath( $icons . $stored );
+        $this->assertNotFalse( $resolved, 'The fixture path should resolve.' );
+        $this->assertSame( realpath( $outside ), $resolved, 'The stored name should point at the file outside the icons directory.' );
+
+        return $outside;
     }
 
     /**

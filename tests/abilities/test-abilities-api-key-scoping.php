@@ -2214,6 +2214,51 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertSame( 'invalid_site', $error->get_error_code() );
     }
 
+    public static function users_csv_import_tag_selections() {
+        return array(
+            'hidden tag'              => array( 'Hidden CSV Tag', true, array() ),
+            'granted tag'             => array( 'Granted CSV Tag', true, array( 'granted' ) ),
+            'missing tag'             => array( 'Missing CSV Tag', true, array() ),
+            'mixed tags'              => array( 'Granted CSV Tag;Hidden CSV Tag;Missing CSV Tag', true, array( 'granted' ) ),
+            'unrestricted hidden tag' => array( 'Hidden CSV Tag', false, array( 'hidden', 'outside' ) ),
+        );
+    }
+
+    /** @dataProvider users_csv_import_tag_selections */
+    public function test_rest_users_csv_import_scopes_tag_names( $names, $restricted, $expected_keys ) {
+        $this->set_current_user_as_admin();
+        $this->set_machine_context_override( true );
+        $granted_tag = $this->create_test_tag( array( 'name' => 'Granted CSV Tag' ) );
+        $hidden_tag  = $this->create_test_tag( array( 'name' => 'Hidden CSV Tag' ) );
+        $sites       = array(
+            'granted' => $this->create_test_site(),
+            'hidden'  => $this->create_test_site(),
+            'outside' => $this->create_test_site(),
+        );
+        $this->assign_site_to_tag( $sites['granted'], $granted_tag );
+        $this->assign_site_to_tag( $sites['hidden'], $hidden_tag );
+        $this->assign_site_to_tag( $sites['outside'], $granted_tag );
+        $this->assign_site_to_tag( $sites['outside'], $hidden_tag );
+        if ( $restricted ) {
+            // Site access alone cannot prevent selection through an ungranted tag.
+            $this->restrict_ability_layer_only( array( $sites['granted'], $sites['hidden'] ) );
+            $this->restrict_groups_ability_layer_only( array( $granted_tag ) );
+        }
+
+        $controller = new \MainWP_Rest_Users_Controller();
+        $method     = new \ReflectionMethod( $controller, 'get_websites_for_csv_user' );
+        $method->setAccessible( true );
+        $result   = $method->invoke( $controller, array( 'select_groups' => $names ) );
+        $selected = array_map( 'intval', array_keys( $result ) );
+        $expected = array();
+        foreach ( $expected_keys as $key ) {
+            $expected[] = $sites[ $key ];
+        }
+        sort( $selected );
+        sort( $expected );
+        $this->assertSame( $expected, $selected, 'CSV tag selection: ' . $names );
+    }
+
     public static function site_selection_sources() {
         return array( 'sites' => array( 'sites' ), 'groups' => array( 'groups' ), 'clients' => array( 'clients' ), 'csv sites' => array( 'select_sites' ), 'csv groups' => array( 'select_groups' ) );
     }

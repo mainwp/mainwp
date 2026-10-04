@@ -1116,6 +1116,17 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertNull( $this->db->get_by_id( $record->id ) );
 	}
 
+	public function test_required_ajax_delete_refuses_a_cookie_for_another_user(): void {
+		$record = $this->create_record( array( 'scope_type' => 'agency', 'required' => true ) );
+		$other  = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$_COOKIE[ LOGGED_IN_COOKIE ] = wp_generate_auth_cookie( $other, time() + HOUR_IN_SECONDS, 'logged_in' );
+		$this->assertSame( $other, wp_validate_auth_cookie( '', 'logged_in' ) );
+		$response = $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) );
+		$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
+		$this->assertSame( 'This is a required agency record. Only a person using the Dashboard can change or delete it.', $response['data']['message'] );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
 	public function test_required_ajax_rejects_ineligible_records_and_agency_scope_id(): void {
 		foreach ( array( $this->input( array( 'required' => '1' ) ), $this->site_input( array( 'required' => '1' ) ), $this->input( array( 'scope_type' => 'agency', 'type' => 'memory', 'required' => '1' ) ), $this->input( array( 'scope_type' => 'agency', 'scope_id' => 0 ) ) ) as $input ) {
 			$this->assert_error( $this->call( 'mainwp_knowledge_save', $input ), 'mainwp_knowledge_invalid', 400 );

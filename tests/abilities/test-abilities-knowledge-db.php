@@ -1556,6 +1556,15 @@ PHP;
 		$this->assertTrue( $this->db->delete( $record->id, 2, MainWP_DB_Knowledge::ORIGIN_UI ) );
 	}
 
+	public function test_rows_read_before_the_required_column_exists_are_not_required(): void {
+		$normalize = new \ReflectionMethod( MainWP_DB_Knowledge::class, 'normalize_row' );
+		$normalize->setAccessible( true );
+		$row = $normalize->invoke( $this->db, (object) array( 'id' => '7', 'scope_type' => 'agency', 'scope_id' => '0', 'verified' => '1' ) );
+		$this->assertSame( 0, $row->required );
+		$this->assertSame( '', $row->description );
+		$this->assertSame( 1, $normalize->invoke( $this->db, (object) array( 'required' => '1' ) )->required );
+	}
+
 	public function test_agency_db_writes_require_manage_clients_with_all_site_access(): void {
 		$this->set_current_user_as_admin();
 		$record = $this->create_record( 'agency', 0 );

@@ -1044,6 +1044,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      */
     private function normalize_row( object $row ): object {
         $row->description = $row->description ?? '';
+        $row->required    = $row->required ?? 0;
         foreach ( array( 'id', 'scope_id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'revision', 'verified', 'required' ) as $field ) {
             if ( isset( $row->$field ) ) {
                 $row->$field = (int) $row->$field;

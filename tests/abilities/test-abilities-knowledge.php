@@ -1270,6 +1270,34 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	public function test_agency_ability_writes_require_manage_clients_with_all_site_access(): void {
+		$record = $this->create_record( 'agency', 0 );
+		$this->track_filter( 'mainwp_currentuserallowedaccesssites', static function () { return 'all'; } );
+		$this->withhold_right( 'manage_clients' );
+		$this->assertTrue( MainWP_Abilities_Util::check_unrestricted_access() );
+		foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+			foreach ( array( 'create', 'update', 'delete' ) as $operation ) {
+				$input = 'create' === $operation
+					? $this->input( 'agency', 0, array( $mode => true ) )
+					: array( 'record_id' => $record->id, 'expected_revision' => 1, $mode => true );
+				if ( 'update' === $operation ) {
+					$input['title'] = 'Changed';
+				}
+				$this->assert_permission_denied( 'mainwp/' . $operation . '-knowledge-record-v1', $input, 'mainwp_access_denied', 403 );
+				$method = 'execute_' . $operation . '_knowledge_record';
+				$this->assert_error( MainWP_Abilities_Knowledge::$method( $input ), 'mainwp_access_denied', 403 );
+			}
+			$required_input = array( 'record_id' => $record->id, 'expected_revision' => 1, $mode => true, 'required' => true );
+			$this->assert_permission_denied( 'mainwp/update-knowledge-record-v1', $required_input, 'mainwp_access_denied', 403 );
+			$this->assert_error( MainWP_Abilities_Knowledge::execute_update_knowledge_record( $required_input ), 'mainwp_access_denied', 403 );
+		}
+		$this->assertSame( $record->id, $this->successful_call( 'mainwp/get-knowledge-record-v1', array( 'record_id' => $record->id ) )['id'] );
+		$list = $this->successful_call( 'mainwp/list-knowledge-v1', array( 'scope_type' => 'agency' ) );
+		$this->assertSame( 1, $list['total'] );
+		$this->assertSame( array( $record->id ), array_column( $list['items'], 'id' ) );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
 	public function test_agency_summaries_have_separate_blocks_required_and_notice(): void {
 		$scopes = $this->fixtures();
 		$context = $this->create_record( 'agency', 0, array( 'required' => true ) );

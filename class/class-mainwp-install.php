@@ -757,6 +757,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( $confirmed ) {
             update_site_option( self::KNOWLEDGE_SCHEMA_CONFIRMED, self::KNOWLEDGE_SCHEMA_REVISION );
+            delete_site_option( 'mainwp_knowledge_description_column_confirmed' );
+            delete_site_option( 'mainwp_knowledge_description_column_repair_pending' );
             delete_site_option( self::KNOWLEDGE_SCHEMA_REPAIR_PENDING );
         } else {
             // A timestamp, not a formatted date: the retry throttle compares it against time().

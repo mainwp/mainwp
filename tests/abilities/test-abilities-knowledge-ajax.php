@@ -1108,7 +1108,8 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$cookie = $_COOKIE[ LOGGED_IN_COOKIE ];
 		unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
 		$response = $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) );
-		$this->assertFalse( $response['success'] );
+		$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
+		$this->assertSame( 'This is a required agency record. Only a person using the Dashboard can change or delete it.', $response['data']['message'] );
 		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
 		$_COOKIE[ LOGGED_IN_COOKIE ] = $cookie;
 		$this->assertTrue( $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) )['success'] );

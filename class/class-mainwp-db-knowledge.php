@@ -205,10 +205,11 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
 
         if ( 'agency' === $type ) {
             $base = MainWP_Abilities_Util::check_rest_api_permission();
-            return is_wp_error( $base ) || ! $require_full_coverage ? $base : MainWP_Abilities_Util::check_unrestricted_access();
-        }
-
-        if ( 'site' === $type ) {
+            if ( is_wp_error( $base ) || ! $require_full_coverage ) {
+                return $base;
+            }
+            $scope = MainWP_Abilities_Util::check_unrestricted_access();
+        } elseif ( 'site' === $type ) {
             $scope = MainWP_Abilities_Util::check_site_access( $scope_id );
         } elseif ( 'client' === $type ) {
             $scope = $this->guard_read( static fn() => MainWP_Abilities_Util::check_client_access( $scope_id, null, $require_full_coverage ) );
@@ -715,6 +716,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         // The revision guard lives in the WHERE so two concurrent saves of the same revision cannot both win.
         $updated = $this->wpdb->query(
             $this->wpdb->prepare(
+                // nosec -- only the table identifier from table_name() is concatenated; every value, including the origin pair, is a bound placeholder.
                 'UPDATE ' . esc_sql( $table ) . ' SET `type` = %s, title = %s, description = %s, body = %s, caller_note = %s, source = %s, verified = %d, required = %d, updated_by = %d, updated_at = %d, revision = revision + 1 WHERE id = %d AND revision = %d AND ( %s = %s OR required = 0 )',
                 $data['type'],
                 $data['title'],
@@ -987,7 +989,8 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         if ( ! empty( $record->required ) && self::ORIGIN_UI !== $origin ) {
             return $this->invalid( 'required', __( 'This is a required agency record. Only a person using the Dashboard can change or delete it.', 'mainwp' ) );
         }
-        if ( array_key_exists( 'required', $input ) || ! empty( $record->required ) ) {
+        $required_changed = array_key_exists( 'required', $input ) && (int) ( $record->required ?? 0 ) !== (int) $input['required'];
+        if ( $required_changed || ! empty( $record->required ) ) {
             return MainWP_Abilities_Util::check_unrestricted_access();
         }
         return true;

@@ -1556,6 +1556,46 @@ PHP;
 		$this->assertTrue( $this->db->delete( $record->id, 2, MainWP_DB_Knowledge::ORIGIN_UI ) );
 	}
 
+	public function test_agency_db_writes_require_manage_clients_with_all_site_access(): void {
+		$this->set_current_user_as_admin();
+		$record = $this->create_record( 'agency', 0 );
+		$this->track_filter( 'mainwp_currentuserallowedaccesssites', static function () { return 'all'; } );
+		$this->withhold_right( 'manage_clients' );
+		$this->assertTrue( MainWP_Abilities_Util::check_unrestricted_access() );
+		foreach ( array( MainWP_DB_Knowledge::ORIGIN_UI, MainWP_DB_Knowledge::ORIGIN_ABILITY ) as $origin ) {
+			$this->assert_error( $this->db->save( $this->input( 'agency', 0 ), $origin ), 'mainwp_access_denied', 403 );
+			$this->assert_error( $this->db->save( array( 'id' => $record->id, 'title' => 'Changed' ), $origin, 1 ), 'mainwp_access_denied', 403 );
+			$this->assert_error( $this->db->delete( $record->id, 1, $origin ), 'mainwp_access_denied', 403 );
+		}
+		$this->assert_error( $this->db->save( array( 'id' => $record->id, 'required' => true ), MainWP_DB_Knowledge::ORIGIN_UI, 1 ), 'mainwp_access_denied', 403 );
+		$this->assertEquals( $record, $this->db->get_record( $record->id ) );
+		$this->assertSame( array( $record->id ), $this->ids( $this->db->get_records( array( 'scope_type' => 'agency' ) ) ) );
+		$this->assertSame( 1, $this->db->count_records( array( 'scope_type' => 'agency' ) ) );
+	}
+
+	public function test_required_db_ui_false_does_not_require_unrestricted_access(): void {
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$record = $this->create_record( 'site', $site_id );
+		$this->create_test_site();
+		$this->restrict_current_user_to_sites( array( $site_id ) );
+		foreach ( array( false, 0, '0' ) as $required ) {
+			$created = $this->db->save( $this->input( 'site', $site_id, array( 'required' => $required ) ), MainWP_DB_Knowledge::ORIGIN_UI );
+			$this->assertNotWPError( $created );
+			$this->assertSame( 0, $created->required );
+			$updated = $this->db->save( array( 'id' => $record->id, 'title' => 'Changed', 'required' => $required ), MainWP_DB_Knowledge::ORIGIN_UI, $record->revision );
+			$this->assertNotWPError( $updated );
+			$this->assertSame( 0, $updated->required );
+			$this->assertSame( 'Changed', $updated->title );
+			$record = $updated;
+		}
+		foreach ( array( true, 1, '1' ) as $required ) {
+			$this->assert_error( $this->db->save( $this->input( 'site', $site_id, array( 'required' => $required ) ), MainWP_DB_Knowledge::ORIGIN_UI ), 'mainwp_restricted_account', 403 );
+			$this->assert_error( $this->db->save( array( 'id' => $record->id, 'required' => $required ), MainWP_DB_Knowledge::ORIGIN_UI, $record->revision ), 'mainwp_restricted_account', 403 );
+		}
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
 	public static function required_invalid_scopes(): array {
 		return array( 'site' => array( 'site', 'context' ), 'client' => array( 'client', 'skill' ), 'memory' => array( 'agency', 'memory' ) );
 	}
@@ -1634,7 +1674,7 @@ PHP;
 			$prefix = 'update' === $operation ? 'UPDATE ' . $table : 'DELETE FROM `' . $table . '`';
 			if ( ! $raced && 0 === strpos( $sql, $prefix ) ) {
 				$raced = true;
-				$wpdb->query( $wpdb->prepare( 'UPDATE %i SET required = 1, verified = 1, revision = revision + 1 WHERE id = %d', $table, $record->id ) );
+				$wpdb->query( $wpdb->prepare( 'UPDATE %i SET required = 1, verified = 1 WHERE id = %d', $table, $record->id ) );
 			}
 			return $sql;
 		} );
@@ -1684,6 +1724,7 @@ PHP;
 			delete_site_option( 'mainwp_knowledge_schema_confirmed' );
 			delete_site_option( 'mainwp_knowledge_schema_repair_pending' );
 			update_site_option( 'mainwp_knowledge_description_column_confirmed', 1 );
+			update_site_option( 'mainwp_knowledge_description_column_repair_pending', time() );
 			if ( 'agency' === $component ) {
 				$this->assertNotFalse( $wpdb->query( $wpdb->prepare( "ALTER TABLE %i MODIFY scope_type enum('site','client') NOT NULL", $table ) ) );
 			} elseif ( $wpdb->get_var( $wpdb->prepare( 'SHOW COLUMNS FROM %i LIKE %s', $table, $component ) ) ) {
@@ -1692,6 +1733,8 @@ PHP;
 			update_site_option( 'mainwp_db_version', $version );
 			MainWP_Install::instance()->install();
 			$this->assertSame( '9.0.2.8', get_site_option( 'mainwp_db_version' ) );
+			$this->assertFalse( get_site_option( 'mainwp_knowledge_description_column_confirmed' ) );
+			$this->assertFalse( get_site_option( 'mainwp_knowledge_description_column_repair_pending' ) );
 			$columns = $wpdb->get_results( $wpdb->prepare( 'SHOW COLUMNS FROM %i', $table ), OBJECT_K );
 			$this->assertSame( "enum('agency','site','client')", $columns['scope_type']->Type );
 			$this->assertArrayHasKey( 'required', $columns );

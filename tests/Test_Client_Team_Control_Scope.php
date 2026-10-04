@@ -923,6 +923,175 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         }
     }
 
+    /** @return array Ordered rows, final owners, new clients and scope decisions. */
+    public static function multi_client_plan_matrix(): array {
+        $shapes = array(
+            'new accessible site' => array( array( array( 'B', 'S2' ) ), array( 'S2' => 'B' ), array( 'B' ), false ),
+            'new inaccessible site' => array( array( array( 'B', 'H' ) ), array( 'H' => 'B' ), array( 'B' ), true ),
+            'missing site' => array( array( array( 'B', 'missing' ) ), array(), array(), true, true ),
+            'existing overlap' => array( array( array( 'A', 'S2' ) ), array( 'S2' => 'A' ), array(), false ),
+            'existing ASCII case' => array( array( array( 'A', 'S2', 'EMILE@example.com' ) ), array( 'S2' => 'A' ), array(), false ),
+            'existing accent fold' => array( array( array( 'A', 'S2', 'emile@example.com' ) ), array( 'S2' => 'A' ), array(), false ),
+            'existing trailing space' => array( array( array( 'A', 'S2', 'émile@example.com ' ) ), array( 'S2' => 'A' ), array(), false ),
+            'existing no overlap' => array( array( array( 'Z', 'S2' ) ), array( 'S2' => 'Z' ), array(), true ),
+            'existing empty roster' => array( array( array( 'E', 'S2' ) ), array( 'S2' => 'E' ), array(), true ),
+            'unreferenced donor' => array( array( array( 'B', 'T' ) ), array( 'T' => 'B' ), array( 'B' ), false ),
+            'C4-1 earlier move removes later overlap' => array( array( array( 'B', 'S1' ), array( 'A', 'S2' ) ), array( 'S1' => 'B', 'S2' => 'A' ), array( 'B' ), true ),
+            'C4-1 reverse order' => array( array( array( 'A', 'S2' ), array( 'B', 'S1' ) ), array( 'S1' => 'B', 'S2' => 'A' ), array( 'B' ), false ),
+            'same site two new clients' => array( array( array( 'B', 'S2' ), array( 'C', 'S2' ) ), array( 'S2' => 'C' ), array( 'B', 'C' ), false ),
+            'same site later former owner' => array( array( array( 'B', 'S1' ), array( 'A', 'S1' ) ), array( 'S1' => 'A' ), array( 'B' ), true ),
+            'three rows retain another overlap' => array( array( array( 'A', 'S2' ), array( 'B', 'S1' ), array( 'A', 'S3' ) ), array( 'S1' => 'B', 'S2' => 'A', 'S3' => 'A' ), array( 'B' ), false ),
+            'new duplicate loses its only site' => array( array( array( 'B', 'S2' ), array( 'C', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'C', 'S3' => 'B' ), array( 'B', 'C' ), true ),
+            'S3-F1 duplicate none then site' => array( array( array( 'B', '' ), array( 'B', 'S2' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
+            'duplicate site then none' => array( array( array( 'B', 'S2' ), array( 'B', '' ) ), array( 'S2' => 'B' ), array( 'B' ), false ),
+            'duplicate neither site' => array( array( array( 'B', '' ), array( 'B', '' ) ), array(), array( 'B' ), true ),
+            'duplicate both sites' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), false ),
+            'duplicate existing overlap' => array( array( array( 'A', '' ), array( 'A', 'S2' ) ), array( 'S2' => 'A' ), array(), false ),
+            'duplicate existing no overlap' => array( array( array( 'Z', '' ), array( 'Z', 'S2' ) ), array( 'S2' => 'Z' ), array(), true ),
+            'duplicate ASCII case' => array( array( array( 'B', '' ), array( 'B', 'S2', 'B@example.com' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
+            'S3-G1 duplicate accent fold' => array( array( array( 'B', '' ), array( 'B', 'S2', 'b̈@example.com' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
+            'duplicate non-ASCII case' => array( array( array( 'B', '', 'émile-new@example.com' ), array( 'B', 'S2', 'ÉMILE-NEW@example.com' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
+            'duplicate trailing space' => array( array( array( 'B', '' ), array( 'B', 'S2', 'b@example.com ' ) ), array( 'S2' => 'B' ), array( 'B' ), true ),
+            'leading space distinct' => array( array( array( 'B', '' ), array( 'C', 'S2', ' b@example.com' ) ), array( 'S2' => 'C' ), array( 'B', 'C' ), false ),
+            'hidden sites kept' => array( array( array( 'A', 'S2' ), array( 'A', 'S3' ) ), array( 'S2' => 'A', 'S3' => 'A' ), array(), false ),
+            'new zero sites' => array( array( array( 'B', '' ) ), array(), array( 'B' ), false ),
+            'existing overlap zero sites' => array( array( array( 'A', '' ) ), array(), array(), false ),
+            'existing no overlap zero sites' => array( array( array( 'Z', '' ) ), array(), array(), true ),
+            'existing empty zero sites' => array( array( array( 'E', '' ) ), array(), array(), true ),
+            'all allowed three rows' => array( array( array( 'B', 'S2' ), array( 'C', 'S3' ), array( 'A', 'T' ) ), array( 'S2' => 'B', 'S3' => 'C', 'T' => 'A' ), array( 'B', 'C' ), false ),
+            'missing optional fields' => array( array( array( 'B', 'S2', '', 'omitted' ) ), array( 'S2' => 'B' ), array( 'B' ), false ),
+            'empty emails stay distinct' => array( array( array( 'B', 'S2', '' ), array( 'C', 'S3', '' ) ), array( 'S2' => 'B', 'S3' => 'C' ), array( 'B', 'C' ), false ),
+            'zero site id' => array( array( array( 'B', 0 ) ), array(), array( 'B' ), false ),
+            'incomplete contact' => array( array( array( 'B', 'S2', null, 'incomplete' ) ), array( 'S2' => 'B' ), array( 'B' ), false ),
+            'duplicate contact email' => array( array( array( 'B', 'S2', null, 'duplicate' ), array( 'C', 'S3', null, 'duplicate' ) ), array( 'S2' => 'B', 'S3' => 'C' ), array( 'B', 'C' ), false ),
+            'empty batch' => array( array(), array(), array(), true, true ),
+            'C4-2 unavailable metadata' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'metadata' ),
+            'C4-2 invalid metadata' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'invalid metadata' ),
+            'C4-2 NULL comparison' => array( array( array( 'B', 'S2' ), array( 'B', 'S3' ) ), array( 'S2' => 'B', 'S3' => 'B' ), array( 'B' ), true, false, 'comparison' ),
+        );
+        $cases = array();
+        foreach ( array( 'restricted', 'administrator' ) as $scope ) {
+            foreach ( $shapes as $name => $shape ) {
+                $cases[ $scope . ': ' . $name ] = array( $scope, $shape[0], $shape[1], $shape[2], $shape[3] && ( 'restricted' === $scope || ! empty( $shape[4] ) ), $shape[5] ?? '' );
+            }
+        }
+        return $cases;
+    }
+
+    /**
+     * @dataProvider multi_client_plan_matrix
+     * @param string $scope Caller scope.
+     * @param array  $rows Ordered client and site references.
+     * @param array  $owners Changed final site owners for an allowed batch.
+     * @param array  $created New client references in insertion order.
+     * @param bool   $refused Expected refusal.
+     * @param string $fault Database comparison fault.
+     */
+    public function test_multi_client_plan_matrix( $scope, $rows, $owners, $created, $refused, $fault ): void {
+        global $wpdb;
+        if ( 'administrator' === $scope ) {
+            wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+        }
+        $clients = array();
+        foreach ( array( 'A' => 'émile@example.com', 'Z' => 'hidden@example.com', 'E' => 'empty@example.com', 'D' => 'donor@example.com' ) as $key => $email ) {
+            $clients[ $key ] = MainWP_DB_Client::instance()->update_client( array( 'name' => 'Original ' . $key, 'client_email' => $email ), true );
+        }
+        $sites = array();
+        $initial_owners = array( 'S1' => 'A', 'S2' => '', 'S3' => '', 'H' => 'A', 'X' => 'Z', 'T' => 'D' );
+        foreach ( $initial_owners as $key => $owner ) {
+            $sites[ $key ] = $this->create_test_site( array( 'client_id' => $owner ? $clients[ $owner ]->client_id : 0 ) );
+        }
+        $sites['missing'] = 99999999;
+        $this->scope( 'administrator' === $scope ? 'all' : array( $sites['S1'], $sites['S2'], $sites['S3'], $sites['T'], $sites['missing'] ) );
+        $data = array();
+        foreach ( $rows as $index => $row ) {
+            $data[ $index ] = array(
+                'client_name' => 'Row ' . $index,
+                'client_email' => $row[2] ?? ( isset( $clients[ $row[0] ] ) ? $clients[ $row[0] ]->client_email : strtolower( $row[0] ) . '@example.com' ),
+                'website_id' => $sites[ $row[1] ] ?? $row[1],
+                'contacts_field' => array( 'contact_name' => 'Contact ' . $index, 'contact_email' => 'contact-' . $index . '@example.com' ),
+            );
+            if ( 'omitted' === ( $row[3] ?? '' ) ) {
+                unset( $data[ $index ]['client_name'], $data[ $index ]['client_email'], $data[ $index ]['contacts_field'] );
+            } elseif ( 'incomplete' === ( $row[3] ?? '' ) ) {
+                unset( $data[ $index ]['contacts_field']['contact_email'] );
+            } elseif ( 'duplicate' === ( $row[3] ?? '' ) ) {
+                $data[ $index ]['contacts_field']['contact_email'] = 'duplicate-contact@example.com';
+            }
+        }
+        if ( $fault ) {
+            $this->filter( 'query', static function ( $sql ) use ( $fault ) {
+                if ( false !== strpos( $sql, 'SHOW FULL COLUMNS' ) ) {
+                    if ( 'metadata' === $fault ) {
+                        return 'SELECT NULL WHERE 1=0';
+                    }
+                    if ( 'invalid metadata' === $fault ) {
+                        return "SELECT 'unsafe-collation' AS Collation";
+                    }
+                }
+                return 'comparison' === $fault && 0 === strpos( $sql, 'SELECT CONVERT(' ) ? 'SELECT NULL' : $sql;
+            } );
+        }
+        $before = $this->before_write();
+        $body = $this->dispatch( 'mainwp_clients_add_multi_client', array( 'data' => $data ) );
+        $expected_response = array( 'success' => ! $refused, 'data' => $refused ? ( $rows ? 'Error - insufficient permissions!' : 'Undefined error. Please try again.' ) : 'Created client successfully.' );
+        $this->assertSame( $expected_response, json_decode( $body, true ), $body );
+        $after = $this->snapshot();
+        $before_ids = array_column( $before['wp_clients'], 'client_id' );
+        $new_rows = array_values( array_filter( $after['wp_clients'], static function ( $row ) use ( $before_ids ) { return ! in_array( $row['client_id'], $before_ids, true ); } ) );
+        $this->assertCount( $refused ? 0 : count( $created ), $new_rows, 'Unexpected created client IDs: ' . wp_json_encode( array_column( $new_rows, 'client_id' ) ) );
+        if ( $refused ) {
+            $this->assert_unchanged( $before );
+            return;
+        }
+        foreach ( $created as $index => $key ) {
+            $first = array_search( $key, array_column( $rows, 0 ), true );
+            $this->assertGreaterThan( 0, (int) $new_rows[ $index ]['client_id'] );
+            $this->assertSame( $data[ $first ]['client_name'] ?? '', $new_rows[ $index ]['name'] );
+            $this->assertSame( $data[ $first ]['client_email'] ?? '', $new_rows[ $index ]['client_email'] );
+            foreach ( array( 'image', 'address_1', 'address_2', 'city', 'zip', 'state', 'country', 'note', 'client_phone', 'client_facebook', 'client_twitter', 'client_instagram', 'client_linkedin' ) as $field ) {
+                $this->assertSame( '', $new_rows[ $index ][ $field ], $field );
+            }
+            $this->assertSame( 'selected:wordpress;color:#34424d', $new_rows[ $index ]['selected_icon_info'] );
+            $this->assertSame( '0', $new_rows[ $index ]['suspended'] );
+            $clients[ $key ] = (object) $new_rows[ $index ];
+        }
+        $expected = $before;
+        $expected['wp_clients'] = array_merge( $expected['wp_clients'], $new_rows );
+        $contacts = array();
+        foreach ( $data as $index => $row ) {
+            $fields = $row['contacts_field'] ?? array();
+            if ( empty( $fields['contact_name'] ) || empty( $fields['contact_email'] ) || isset( $contacts[ $fields['contact_email'] ] ) ) {
+                continue;
+            }
+            $contact = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_email', $fields['contact_email'], ARRAY_A );
+            $this->assertIsArray( $contact );
+            $this->assertSame( $fields['contact_name'], $contact['contact_name'] );
+            $this->assertSame( (string) $clients[ $rows[ $index ][0] ]->client_id, $contact['contact_client_id'] );
+            foreach ( array( 'contact_role', 'contact_phone', 'facebook', 'twitter', 'instagram', 'linkedin', 'contact_icon_info' ) as $field ) {
+                $this->assertSame( '', $contact[ $field ], $field );
+            }
+            $contacts[ $fields['contact_email'] ] = $contact;
+            $expected['wp_clients_contacts'][] = $contact;
+            foreach ( $expected['wp_clients'] as &$client_row ) {
+                if ( $client_row['client_id'] === $contact['contact_client_id'] ) {
+                    $client_row['primary_contact_id'] = $contact['contact_id'];
+                }
+            }
+            unset( $client_row );
+        }
+        foreach ( array_merge( $initial_owners, $owners ) as $site => $owner ) {
+            foreach ( $expected['wp'] as &$site_row ) {
+                if ( (int) $site_row['id'] === $sites[ $site ] ) {
+                    $site_row['client_id'] = $owner ? (string) $clients[ $owner ]->client_id : '0';
+                }
+            }
+            unset( $site_row );
+        }
+        $this->assertSame( $expected, $after, 'Unexpected client, contact, field or site-assignment rows.' );
+        $this->assertSame( array_fill_keys( array_keys( $this->hooks ), 0 ), $this->hooks, 'Quick Setup imports must preserve the existing client hook sequence (none).' );
+    }
+
     /** @return array Missing-client entry points. */
     public static function missing_client_entry_points(): array {
         return array( array( 'add form' ), array( 'delete' ), array( 'orphan contact image' ) );

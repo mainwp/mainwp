@@ -1959,41 +1959,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $dataes = isset( $_POST['data'] ) ? $_POST['data'] : array(); //phpcs:ignore -- NonceVerification.
         try {
             if ( ! empty( $dataes ) ) {
-                // A refused row must not leave earlier clients or contacts behind.
-                $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
-                $batch_emails  = array();
-                foreach ( $dataes as $val_data ) {
-                    if ( ! empty( $val_data['website_id'] ) ) {
-                        $website = MainWP_DB::instance()->get_website_by_id_unscoped( $val_data['website_id'] );
-                        if ( ! MainWP_System_Utility::can_edit_website( $website ) || ( 'all' !== $allowed_sites && ! in_array( (int) $website->id, $allowed_sites, true ) ) ) {
-                            throw new MainWP_Exception( 'Error - insufficient permissions!' );
-                        }
-                    }
-                    $email  = $val_data['client_email'] ?? '';
-                    $client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $email, OBJECT );
-                    if ( $client && ! MainWP_Client::has_client_access( $client->client_id ) ) {
-                        throw new MainWP_Exception( 'Error - insufficient permissions!' );
-                    }
-                    if ( ! $client && 'all' !== $allowed_sites && ! empty( $email ) ) {
-                        // A later row with the same email edits the client an earlier row creates, and the write refuses it when that client has no allowed site.
-                        $earlier = null;
-                        foreach ( $batch_emails as $index => $batch_email ) {
-                            if ( $this->client_emails_match( $batch_email['email'], $email ) ) {
-                                $earlier = $index;
-                                break;
-                            }
-                        }
-                        if ( null === $earlier ) {
-                            $batch_emails[] = array(
-                                'email'    => $email,
-                                'has_site' => ! empty( $val_data['website_id'] ),
-                            );
-                        } elseif ( ! $batch_emails[ $earlier ]['has_site'] ) {
-                            throw new MainWP_Exception( 'Error - insufficient permissions!' );
-                        }
-                    }
-                }
-                foreach ( $dataes as $val_data ) {
+                $plan    = $this->plan_multi_client_import( $dataes );
+                $created = array();
+                // Access belongs to the whole plan; checking mutated DB state here could leave partial writes.
+                foreach ( $plan as $write ) {
+                    $val_data    = $write['row'];
                     $client_data = array(
                         'image'              => '',
                         'name'               => $val_data['client_name'] ?? '',
@@ -2015,13 +1985,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                         'primary_contact_id' => 0,
                     );
 
-                    // Create client.
-                    $client = $this->mainwp_handle_create_client( $client_data, empty( $val_data['website_id'] ) ? array() : array( $val_data['website_id'] ) );
-
-                    // Create client successfy.
-                    if ( ! empty( $client ) && ! empty( $val_data['website_id'] ) ) {
-                        // Add groups website and client.
-                        $this->mainwp_handle_selected_sites_for_client( $client, $val_data['website_id'] );
+                    $client = ! empty( $write['client'] ) ? $write['client'] : ( $created[ $write['key'] ] ?? null );
+                    if ( ! $client ) {
+                        $client                   = MainWP_DB_Client::instance()->update_client( $client_data );
+                        $created[ $write['key'] ] = $client;
+                    }
+                    if ( ! empty( $client ) && null !== $write['site_ids'] ) {
+                        MainWP_DB_Client::instance()->update_selected_sites_for_client( $client->client_id, $write['site_ids'] );
                     }
                     // Create client contact.
                     if ( ! empty( $val_data['contacts_field'] ) ) {
@@ -2170,25 +2140,137 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     }
 
     /**
-     * Whether two client emails find the same client in the write-time email lookup.
+     * Plan ordered imports against projected ownership so a refusal precedes every write.
      *
-     * The lookup compares against the email column, so its collation decides equality: it can fold case,
-     * accents and trailing spaces in ways PHP string functions cannot reproduce.
-     *
-     * @param string $first First email.
-     * @param string $second Second email.
-     * @return bool Whether the emails match.
+     * @param array $rows Submitted rows.
+     * @return array Authorized writes in request order.
+     * @throws MainWP_Exception When a row is outside client or site scope.
      */
-    private function client_emails_match( $first, $second ) {
-        global $wpdb;
-        $column = $wpdb->get_row( $wpdb->prepare( 'SHOW FULL COLUMNS FROM %i LIKE %s', MainWP_DB_Client::instance()->get_table_name( 'wp_clients' ), 'client_email' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- column metadata; only in-batch new emails of restricted users get here.
-        if ( ! $column || ! preg_match( '/^([a-z0-9]+)_[a-z0-9_]+$/i', (string) $column->Collation, $matches ) ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
-            return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT %s = %s', $first, $second ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compares two values, reads no table.
+    private function plan_multi_client_import( $rows ) {
+        $allowed    = MainWP_Abilities_Util::get_allowed_site_ids();
+        $websites   = array();
+        $owners     = array();
+        $emails     = array();
+        $clients    = array();
+        $references = array();
+        $rosters    = array();
+        $new_emails = array();
+        $collation  = null;
+        $plan       = array();
+
+        foreach ( $rows as $row ) {
+            if ( ! empty( $row['website_id'] ) && ( ! MainWP_Utility::ctype_digit( $row['website_id'] ) || (int) $row['website_id'] <= 0 ) ) {
+                throw new MainWP_Exception( 'Error - insufficient permissions!' );
+            }
+            $site_id = empty( $row['website_id'] ) ? 0 : (int) $row['website_id'];
+            if ( $site_id && ! array_key_exists( $site_id, $websites ) ) {
+                $website = MainWP_DB::instance()->get_website_by_id_unscoped( $row['website_id'] );
+                if ( ! MainWP_System_Utility::can_edit_website( $website ) || ( 'all' !== $allowed && ! in_array( (int) $website->id, $allowed, true ) ) ) {
+                    throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                }
+                $websites[ $site_id ] = $website;
+                $owners[ $site_id ]   = 'client:' . $website->client_id;
+            }
+            $email = $row['client_email'] ?? '';
+            if ( ! array_key_exists( $email, $emails ) ) {
+                $emails[ $email ] = MainWP_DB_Client::instance()->get_wp_client_by( 'client_email', $email, OBJECT );
+            }
+            $client = $emails[ $email ];
+            $key    = $client ? 'client:' . $client->client_id : null;
+            if ( $client ) {
+                $clients[ $key ] = $client;
+                $rosters[ $key ] = array();
+            }
+            $references[] = array(
+                'row'     => $row,
+                'client'  => $client,
+                'key'     => $key,
+                'site_id' => $site_id,
+            );
         }
-        // Charset and collation are interpolated only after matching ^[a-z0-9_]+$ above.
-        $charset   = $matches[1];
-        $collation = $column->Collation; // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
-        return '1' === (string) $wpdb->get_var( $wpdb->prepare( 'SELECT CONVERT(%s USING ' . $charset . ') COLLATE ' . $collation . ' = CONVERT(%s USING ' . $charset . ') COLLATE ' . $collation, $first, $second ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- compares two values; identifiers allowlisted above.
+        if ( $clients ) {
+            $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( array_column( $clients, 'client_id' ), array( 'no_perm_check' => true ) );
+            foreach ( (array) $sites as $site ) {
+                $key                                = 'client:' . $site->client_id;
+                $rosters[ $key ][ (int) $site->id ] = (int) $site->id;
+                $owners[ (int) $site->id ]          = $key;
+            }
+        }
+
+        foreach ( $references as $reference ) {
+            $row     = $reference['row'];
+            $key     = $reference['key'];
+            $site_id = $reference['site_id'];
+            $email   = $row['client_email'] ?? '';
+            if ( null === $key && ! empty( $email ) ) {
+                foreach ( $new_emails as $new_key => $new_email ) {
+                    if ( $this->client_emails_match( $new_email, $email, 'all' !== $allowed, $collation ) ) {
+                        $key = $new_key;
+                        break;
+                    }
+                }
+            }
+            if ( null !== $key ) {
+                if ( 'all' !== $allowed && ! array_intersect( $rosters[ $key ], $allowed ) ) {
+                    throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                }
+            } else {
+                $key             = 'new:' . count( $plan );
+                $rosters[ $key ] = array();
+                if ( ! empty( $email ) ) {
+                    $new_emails[ $key ] = $email;
+                }
+            }
+            if ( $site_id ) {
+                // Reassignment can remove the overlap needed to edit a later row's client.
+                $owner = $owners[ $site_id ];
+                unset( $rosters[ $owner ][ $site_id ] );
+                $rosters[ $key ][ $site_id ] = $site_id;
+                $owners[ $site_id ]          = $key;
+            }
+            $plan[] = array(
+                'row'      => $row,
+                'key'      => $key,
+                'client'   => $reference['client'],
+                // Complete projected rosters keep hidden sites without reclaiming sites moved earlier.
+                'site_ids' => $site_id ? array_values( $rosters[ $key ] ) : null,
+            );
+        }
+        return $plan;
+    }
+
+    /**
+     * Match pending clients using the email column's equality rules.
+     *
+     * @param string     $first First email.
+     * @param string     $second Second email.
+     * @param bool       $restricted Whether equality must fail closed.
+     * @param array|null $collation Cached charset and collation for this plan.
+     * @return bool Whether the emails match.
+     * @throws MainWP_Exception When restricted equality cannot be evaluated.
+     */
+    private function client_emails_match( $first, $second, $restricted, &$collation ) {
+        global $wpdb;
+        $table = MainWP_DB_Client::instance()->get_table_name( 'wp_clients' );
+        if ( ! $restricted ) {
+            // The empty column branch preserves lookup equality when collation metadata is unavailable.
+            $sql = $wpdb->prepare( 'SELECT client_email = %s FROM (SELECT client_email FROM %i WHERE 1=0 UNION ALL SELECT %s) AS pending_email', $second, $table, $first );
+        } else {
+            if ( null === $collation ) {
+                $column = $wpdb->get_row( $wpdb->prepare( 'SHOW FULL COLUMNS FROM %i LIKE %s', $table, 'client_email' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- column metadata, once per plan requiring pending-email comparison.
+                if ( ! $column || ! isset( $column->Collation ) || ! preg_match( '/^([a-z0-9]+)_[a-z0-9_]+$/i', (string) $column->Collation, $matches ) ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
+                    throw new MainWP_Exception( 'Error - insufficient permissions!' );
+                }
+                $collation = array( $matches[1], $column->Collation ); // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase -- MySQL column name.
+            }
+            // The column's allowlisted charset and collation preserve the lookup's equality rules.
+            $sql = $wpdb->prepare( 'SELECT CONVERT(%s USING ' . $collation[0] . ') COLLATE ' . $collation[1] . ' = CONVERT(%s USING ' . $collation[0] . ') COLLATE ' . $collation[1], $first, $second ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- charset and collation allowlisted above.
+        }
+        $equal = $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared -- prepared value comparison under the email column's collation.
+        if ( $restricted && null === $equal ) {
+            throw new MainWP_Exception( 'Error - insufficient permissions!' );
+        }
+        return '1' === (string) $equal;
     }
 
     /**

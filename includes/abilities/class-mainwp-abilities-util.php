@@ -106,32 +106,35 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Test seam for machine-context detection: WP_CLI / MAINWP_REST_API_DOING
      * cannot be defined per-test, so tests force this via reflection. Never
-     * set in production code; null means real constant detection.
+     * set in production code; true simulates CLI, 'rest' simulates REST,
+     * false disables machine context, and null uses real constant detection.
      *
-     * @var bool|null
+     * @var bool|string|null
      */
     private static $machine_context_override = null;
 
     /**
-     * Whether this request runs in WP_CLI or API-key REST.
-     *
-     * On its own this is NOT a bypass: current_user_has_operation_right()
-     * additionally requires that no user is authenticated. DOING_CRON is
+     * A WP-CLI run is a trusted local operator, so user zero there keeps full
+     * scope. Under API-key REST a key always runs as its owner; user zero means
+     * the owner is gone, and that request must get nothing. DOING_CRON is
      * deliberately absent: the batch worker restores the job owner via
      * wp_set_current_user() and wants real evaluation of that owner's rights.
      *
-     * @return bool True in a machine execution context.
+     * @return string 'cli', 'rest', or an empty string for other contexts.
      */
-    private static function is_machine_execution_context(): bool {
+    private static function get_machine_execution_context(): string {
+        if ( 'rest' === self::$machine_context_override ) {
+            return 'rest';
+        }
         if ( null !== self::$machine_context_override ) {
-            return self::$machine_context_override;
+            return self::$machine_context_override ? 'cli' : '';
         }
 
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
-            return true;
+            return 'cli';
         }
 
-        return defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING;
+        return defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ? 'rest' : '';
     }
 
     /**
@@ -142,15 +145,16 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * Without Team Control the filter defaults to true.
      *
      * Team Control denies an empty current user. Allowing machine requests
-     * without a user preserves WP-CLI automation. API-key REST authenticates
-     * as the key owner, whose Team Control rights must still apply.
+     * without a user preserves WP-CLI automation. Userless REST is denied;
+     * authenticated API-key owners retain their Team Control rights.
      *
      * @param string $right Dashboard right slug (delete_sites, update_plugins, ...).
      * @return bool True when the operation right is held.
      */
     public static function current_user_has_operation_right( string $right ): bool {
-        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
-            return true;
+        $machine_context = self::get_machine_execution_context();
+        if ( '' !== $machine_context && 0 === get_current_user_id() ) {
+            return 'cli' === $machine_context;
         }
 
         return (bool) apply_filters( 'mainwp_currentusercan', true, 'dashboard', $right );
@@ -304,27 +308,29 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
-     * Preserve userless CLI and REST access when Team Control denies user zero.
+     * Preserve userless CLI automation; userless REST has no site scope.
      * API-key requests carry a user whose site restrictions still apply.
      *
      * @return int[]|string Allowed site IDs, or 'all' for unrestricted access.
      */
     public static function get_scoped_site_ids_or_all() {
-        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
-            return 'all';
+        $machine_context = self::get_machine_execution_context();
+        if ( '' !== $machine_context && 0 === get_current_user_id() ) {
+            return 'cli' === $machine_context ? 'all' : array();
         }
 
         return self::get_allowed_site_ids();
     }
 
     /**
-     * Preserve userless CLI and REST access when Team Control denies user zero.
+     * Preserve userless CLI automation; userless REST has no group scope.
      *
      * @return int[]|string Allowed group IDs, or 'all' for unrestricted access.
      */
     public static function get_scoped_group_ids_or_all() {
-        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
-            return 'all';
+        $machine_context = self::get_machine_execution_context();
+        if ( '' !== $machine_context && 0 === get_current_user_id() ) {
+            return 'cli' === $machine_context ? 'all' : array();
         }
 
         return self::get_allowed_group_ids();

@@ -12,7 +12,6 @@ use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Extra_Exception;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_Abilities_Util;
-use MainWP\Dashboard\MainWP_Abilities_Clients;
 
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB;
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Rest_Api_Handle_V1;
@@ -316,9 +315,9 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         // the body bag outranks anything the create route registers, so the id is cleared
         // out of every bag before the handler can point a create at an existing cost.
         $request->set_param( 'id', null );
-        $scope = $this->prepare_cost_relationships( $request );
-        if ( is_wp_error( $scope ) ) {
-            return $scope;
+        $prepared = $this->prepare_cost_relationships( $request, $this->get_cost_relationship_scope( true ) );
+        if ( is_wp_error( $prepared ) ) {
+            return $prepared;
         }
         try {
             $resp_data = $this->handle_rest_update_insert_item( $request );
@@ -334,18 +333,23 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
     /**
      * Group grants and client overlap are independent ways to reach a cost.
      *
+     * @param bool $for_write Require every site of a linked client to be allowed.
      * @return array|null Allowed relationship IDs, or null for an unrestricted caller.
      */
-    private function get_cost_relationship_scope() {
+    private function get_cost_relationship_scope( $for_write = false ) {
         $sites  = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
         $groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
         if ( 'all' === $sites && 'all' === $groups ) {
             return null;
         }
+        $clients = 'all' === $sites ? 'all' : MainWP_Abilities_Util::get_accessible_client_ids( $sites );
+        if ( $for_write && 'all' !== $clients ) {
+            $clients = array_values( array_filter( $clients, static fn( $client_id ) => true === MainWP_Abilities_Util::check_client_access( $client_id, null, true ) ) );
+        }
         return array(
             'sites'   => $sites,
             'groups'  => $groups,
-            'clients' => 'all' === $sites ? 'all' : MainWP_Abilities_Util::get_accessible_client_ids( $sites ),
+            'clients' => $clients,
         );
     }
 
@@ -385,46 +389,77 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
     }
 
     /**
-     * Replacing visible links must preserve relationships hidden from the caller.
+     * Shared cost fields affect every linked site, tag and client.
      *
-     * @param WP_REST_Request $request Full details about the request.
-     * @param object|null     $cost Existing cost, or null for creation.
+     * @param object     $cost Cost row.
+     * @param array|null $scope Write scope from get_cost_relationship_scope( true ).
+     * @param string     $action 'update' or 'delete'.
      * @return true|WP_Error
      */
-    private function prepare_cost_relationships( $request, $cost = null ) {
-        $scope = $this->get_cost_relationship_scope();
+    private function check_cost_write_access( $cost, $scope, $action ) {
         if ( null === $scope ) {
             return true;
         }
-        $access = MainWP_Abilities_Clients::check_selected_sites_scope( array( 'selected_sites' => $request['sites'] ?? array() ) );
-        if ( is_wp_error( $access ) ) {
-            return $access;
-        }
-        foreach ( array( 'groups', 'clients' ) as $field ) {
-            $selected = isset( $request[ $field ] ) ? array_map( 'intval', $request[ $field ] ) : array();
-            $outside  = 'all' === $scope[ $field ] ? array() : array_diff( $selected, $scope[ $field ] );
-            if ( ! empty( $outside ) ) {
-                $id = (int) reset( $outside );
+        foreach ( $scope as $field => $allowed ) {
+            if ( 'all' !== $allowed && ! empty( array_diff( $this->get_cost_relationship_ids( $cost, $field ), $allowed ) ) ) {
                 return new WP_Error(
-                    'groups' === $field ? 'mainwp_tag_not_found' : 'mainwp_client_not_found',
-                    'groups' === $field
-                        /* translators: %d: tag ID */
-                        ? sprintf( __( 'No tag found with ID %d.', 'mainwp' ), $id )
-                        /* translators: %d: client ID */
-                        : sprintf( __( 'No client found with ID %d.', 'mainwp' ), $id ),
-                    array( 'status' => 404 )
+                    'mainwp_access_denied',
+                    'update' === $action
+                        ? __( 'You do not have permission to update this cost.', 'mainwp' )
+                        : __( 'You do not have permission to delete this cost.', 'mainwp' ),
+                    array( 'status' => 403 )
                 );
             }
         }
+        return true;
+    }
+
+    /**
+     * The scoped site list is checked here rather than through
+     * check_selected_sites_scope(), which reads the raw filter and so treats a
+     * userless REST caller as unrestricted.
+     *
+     * An update has already passed check_cost_write_access(), so the stored cost
+     * has no hidden links to preserve; omitted fields only need their current IDs
+     * because the save handler blanks anything missing from the request.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     * @param array|null      $scope Write scope from get_cost_relationship_scope( true ).
+     * @param object|null     $cost Existing cost, or null for creation.
+     * @return true|WP_Error
+     */
+    private function prepare_cost_relationships( $request, $scope, $cost = null ) {
+        if ( null === $scope ) {
+            return true;
+        }
+        foreach ( $scope as $field => $allowed ) {
+            $selected = array();
+            if ( isset( $request[ $field ] ) ) {
+                $selected = array_values( wp_parse_id_list( $request[ $field ] ) );
+                // Save what was checked: the handler intval()s the raw list, so -23 would pass here as 23 and be stored as -23.
+                $request->set_param( $field, $selected );
+            }
+            $outside = 'all' === $allowed ? array() : array_diff( $selected, $allowed );
+            if ( empty( $outside ) ) {
+                continue;
+            }
+            $id = (int) reset( $outside );
+            if ( 'sites' === $field ) {
+                /* translators: %d: site ID */
+                return new WP_Error( 'mainwp_site_not_found', sprintf( __( 'No site found with ID %d.', 'mainwp' ), $id ), array( 'status' => 404 ) );
+            }
+            if ( 'groups' === $field ) {
+                /* translators: %d: tag ID */
+                return new WP_Error( 'mainwp_tag_not_found', sprintf( __( 'No tag found with ID %d.', 'mainwp' ), $id ), array( 'status' => 404 ) );
+            }
+            /* translators: %d: client ID */
+            return new WP_Error( 'mainwp_client_not_found', sprintf( __( 'No client found with ID %d.', 'mainwp' ), $id ), array( 'status' => 404 ) );
+        }
         if ( $cost ) {
-            foreach ( $scope as $field => $allowed ) {
-                $current = $this->get_cost_relationship_ids( $cost, $field );
+            foreach ( array_keys( $scope ) as $field ) {
                 if ( ! isset( $request[ $field ] ) ) {
-                    $request->set_param( $field, $current );
-                    continue;
+                    $request->set_param( $field, $this->get_cost_relationship_ids( $cost, $field ) );
                 }
-                $hidden = 'all' === $allowed ? array() : array_diff( $current, $allowed );
-                $request->set_param( $field, array_values( array_unique( array_merge( array_map( 'intval', $request[ $field ] ), $hidden ) ) ) );
             }
         }
         return true;
@@ -611,9 +646,15 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
             return $cost;
         }
 
-        $scope = $this->prepare_cost_relationships( $request, $cost );
-        if ( is_wp_error( $scope ) ) {
-            return $scope;
+        $scope  = $this->get_cost_relationship_scope( true );
+        $access = $this->check_cost_write_access( $cost, $scope, 'update' );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+
+        $prepared = $this->prepare_cost_relationships( $request, $scope, $cost );
+        if ( is_wp_error( $prepared ) ) {
+            return $prepared;
         }
 
         try {
@@ -641,13 +682,9 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
             return $cost;
         }
 
-        $scope = $this->get_cost_relationship_scope();
-        if ( null !== $scope ) {
-            foreach ( $scope as $field => $allowed ) {
-                if ( 'all' !== $allowed && ! empty( array_diff( $this->get_cost_relationship_ids( $cost, $field ), $allowed ) ) ) {
-                    return new WP_Error( 'mainwp_access_denied', __( 'You do not have permission to delete this cost.', 'mainwp' ), array( 'status' => 403 ) );
-                }
-            }
+        $access = $this->check_cost_write_access( $cost, $this->get_cost_relationship_scope( true ), 'delete' );
+        if ( is_wp_error( $access ) ) {
+            return $access;
         }
 
         $deleted = Cost_Tracker_DB::get_instance()->delete_cost_tracker( 'id', $cost->id );

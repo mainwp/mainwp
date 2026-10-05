@@ -17,12 +17,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Knowledge {
 
     /**
-     * Register navigation under the same capability gate as knowledge AJAX.
+     * The Knowledge screen needs the Dashboard parent to load its assets.
      *
      * @return void
      */
     public static function init_menu() {
-        if ( true !== MainWP_Abilities_Util::check_rest_api_permission() ) {
+        if ( ! MainWP_System_Utility::is_admin() || true !== MainWP_Abilities_Util::check_rest_api_permission() ) {
             return;
         }
         add_submenu_page(
@@ -47,12 +47,12 @@ class MainWP_Knowledge {
     }
 
     /**
-     * Render the selected tab only after checking the base permission.
+     * Dashboard page access is required even when the base permission passes.
      *
      * @return void
      */
     public static function render() {
-        if ( true !== MainWP_Abilities_Util::check_rest_api_permission() ) {
+        if ( ! MainWP_System_Utility::is_admin() || true !== MainWP_Abilities_Util::check_rest_api_permission() ) {
             echo '<div class="ui message">' . esc_html__( 'You do not have permission to access this knowledge.', 'mainwp' ) . '</div>';
             return;
         }

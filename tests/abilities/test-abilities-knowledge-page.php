@@ -122,13 +122,27 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( 'mainwp-knowledge-add', $agency );
 	}
 
-	public function test_knowledge_menu_accepts_non_administrator_with_the_base_capability(): void {
+	public function test_knowledge_menu_and_page_refuse_non_mainwp_admin_with_the_base_capability(): void {
 		$id = self::factory()->user->create( array( 'role' => 'editor' ) );
 		$user = get_userdata( $id );
 		$user->add_cap( 'manage_options' );
 		wp_set_current_user( $id );
-		$this->assert_menu();
-		$this->assertStringContainsString( 'id="mainwp-knowledge-review-table"', $this->render() );
+		$this->register_menu();
+		MainWP_Knowledge::init_menu();
+		$this->assertNotContains( 'Knowledge', array_column( $GLOBALS['submenu']['mainwp_tab'] ?? array(), 2 ) );
+		$this->assertNotContains( 'Knowledge', array_column( $GLOBALS['mainwp_leftmenu']['leftbar'] ?? array(), 1 ) );
+		foreach ( array( 'review', 'agency' ) as $tab ) {
+			$html = $this->render( $tab );
+			$this->assertStringContainsString( 'You do not have permission to access this knowledge.', $html );
+			$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $html );
+			$this->assertStringNotContainsString( 'mainwp-knowledge-review-table', $html );
+		}
+		foreach ( array( 'render_left_menu', 'render_mobile_menu' ) as $method ) {
+			ob_start();
+			MainWP_Menu::$method();
+			$html = ob_get_clean();
+			$this->assertStringNotContainsString( 'page=Knowledge', $html, $method );
+		}
 	}
 
 	public function test_knowledge_menu_and_page_refuse_missing_base_capability(): void {

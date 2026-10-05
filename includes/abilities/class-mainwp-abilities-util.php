@@ -529,6 +529,42 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Batch form of check_client_access( $id, null, true ) for every client the
+     * sites reach: one query instead of a roster read per client. Staging sites
+     * are left out, as the roster read leaves them out.
+     *
+     * @param int[] $site_ids Allowed site IDs.
+     * @return int[] Client IDs whose every site is allowed; empty on a database error.
+     */
+    public static function get_fully_covered_client_ids( array $site_ids ) {
+        global $wpdb;
+
+        $site_ids   = array_values( array_unique( array_map( 'intval', array_filter( $site_ids, 'is_numeric' ) ) ) );
+        $client_ids = self::get_accessible_client_ids( $site_ids );
+        if ( empty( $client_ids ) ) {
+            return array();
+        }
+
+        $client_placeholders = implode( ',', array_fill( 0, count( $client_ids ), '%d' ) );
+        $site_placeholders   = implode( ',', array_fill( 0, count( $site_ids ), '%d' ) );
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Direct lookup for the client scope map; placeholder lists are counted %d fills, values bound via prepare(), table name from $wpdb->prefix.
+        $partial = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT client_id FROM {$wpdb->prefix}mainwp_wp WHERE is_staging = 0 AND client_id IN ({$client_placeholders}) AND id NOT IN ({$site_placeholders})",
+                array_merge( $client_ids, $site_ids )
+            )
+        );
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+        // A failed query returns no rows, which would read as "every client fully covered".
+        if ( '' !== $wpdb->last_error || ! is_array( $partial ) ) {
+            return array();
+        }
+
+        return array_values( array_diff( $client_ids, array_map( 'intval', $partial ) ) );
+    }
+
+    /**
      * Check if current user can manage sites (write operations).
      *
      * Currently a wrapper over check_rest_api_permission() which already verifies

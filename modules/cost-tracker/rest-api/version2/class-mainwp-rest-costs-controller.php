@@ -342,9 +342,12 @@ class MainWP_Rest_Costs_Controller extends MainWP_REST_Controller { //phpcs:igno
         if ( 'all' === $sites && 'all' === $groups ) {
             return null;
         }
-        $clients = 'all' === $sites ? 'all' : MainWP_Abilities_Util::get_accessible_client_ids( $sites );
-        if ( $for_write && 'all' !== $clients ) {
-            $clients = array_values( array_filter( $clients, static fn( $client_id ) => true === MainWP_Abilities_Util::check_client_access( $client_id, null, true ) ) );
+        if ( 'all' === $sites ) {
+            $clients = 'all';
+        } elseif ( $for_write ) {
+            $clients = MainWP_Abilities_Util::get_fully_covered_client_ids( $sites );
+        } else {
+            $clients = MainWP_Abilities_Util::get_accessible_client_ids( $sites );
         }
         return array(
             'sites'   => $sites,

@@ -2067,6 +2067,27 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         }
     }
 
+    public function test_fully_covered_client_ids_skip_staging_sites_and_fail_closed() {
+        global $wpdb;
+        $this->set_current_user_as_admin();
+        $full = $this->create_test_client();
+        $partial = $this->create_test_client();
+        $full_site = $this->create_test_site( array( 'client_id' => $full ) );
+        $this->create_test_site( array( 'client_id' => $full, 'is_staging' => 1 ) );
+        $partial_site = $this->create_test_site( array( 'client_id' => $partial ) );
+        $this->create_test_site( array( 'client_id' => $partial ) );
+        $allowed = array( $full_site, $partial_site );
+        $this->assertSame( array( $full ), MainWP_Abilities_Util::get_fully_covered_client_ids( $allowed ) );
+
+        $break = static fn( $query ) => false !== strpos( $query, 'AND id NOT IN' ) ? 'SELECT missing_column FROM ' . $wpdb->prefix . 'mainwp_wp' : $query;
+        $suppressed = $wpdb->suppress_errors( true );
+        add_filter( 'query', $break );
+        $result = MainWP_Abilities_Util::get_fully_covered_client_ids( $allowed );
+        remove_filter( 'query', $break );
+        $wpdb->suppress_errors( $suppressed );
+        $this->assertSame( array(), $result );
+    }
+
     public function test_rest_cost_scope_full_client_coverage_allows_create_update_and_delete() {
         $this->set_current_user_as_admin();
         $client = $this->create_test_client();

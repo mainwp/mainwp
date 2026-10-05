@@ -386,7 +386,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             static::exit_json(
                 array(
                     'result' => 'failed',
-                    'error'  => 'Error - insufficient permissions!',
+                    'error'  => esc_html__( 'Error - insufficient permissions!', 'mainwp' ),
                 )
             );
         }
@@ -462,7 +462,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             static::exit_json(
                 array(
                     'result' => 'failed',
-                    'error'  => 'Error - insufficient permissions!',
+                    'error'  => esc_html__( 'Error - insufficient permissions!', 'mainwp' ),
                 )
             );
         }
@@ -1527,7 +1527,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public static function add_client() { // phpcs:ignore -- NOSONAR -Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
         if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-            echo wp_json_encode( array( 'error' => 'Error - insufficient permissions!' ) );
+            echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
             return;
         }
 
@@ -1540,10 +1540,14 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         $editing_client_id = isset( $client_fields['client_id'] ) ? intval( $client_fields['client_id'] ) : 0;
 
+        if ( ! empty( $editing_client_id ) && ! wp_verify_nonce( $_POST['nonce_client_id'], 'editing-client-' . $editing_client_id ) ) { //phpcs:ignore -- NOSONAR - ok.
+            die( 'Invalid nonce!' );
+        }
+
         $current_client = $editing_client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $editing_client_id ) : null;
         $allowed_sites  = MainWP_Abilities_Util::get_allowed_site_ids();
         if ( ( $editing_client_id && ( ! $current_client || ! static::has_client_access( $editing_client_id ) ) ) || ( 'all' !== $allowed_sites && array_diff( array_map( 'intval', $selected_sites ), $allowed_sites ) ) ) {
-            echo wp_json_encode( array( 'error' => 'Error - insufficient permissions!' ) );
+            echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
             return;
         }
 
@@ -1551,14 +1555,14 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $primary_id = isset( $client_fields['default_field']['primary_contact_id'] ) ? intval( $client_fields['default_field']['primary_contact_id'] ) : 0;
         $primary    = $primary_id ? MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $primary_id ) : null;
         if ( $primary_id && ( ! $primary || ! $editing_client_id || (int) $primary->contact_client_id !== $editing_client_id ) ) {
-            echo wp_json_encode( array( 'error' => 'Error - insufficient permissions!' ) );
+            echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
             return;
         }
         foreach ( isset( $client_fields['custom_fields'] ) && is_array( $client_fields['custom_fields'] ) ? $client_fields['custom_fields'] : array() as $field_val ) {
             $field_id = is_array( $field_val ) ? array_key_first( $field_val ) : 0;
             $field    = $field_id ? MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id ) : null;
             if ( ! $field || ( (int) $field->client_id && ( ! $editing_client_id || (int) $field->client_id !== $editing_client_id ) ) ) {
-                echo wp_json_encode( array( 'error' => 'Error - insufficient permissions!' ) );
+                echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
                 return;
             }
         }
@@ -1572,17 +1576,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
             $contact = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', intval( $contact_id ) );
             if ( ! $contact || ! $editing_client_id || (int) $contact->contact_client_id !== $editing_client_id ) {
-                echo wp_json_encode( array( 'error' => 'Error - insufficient permissions!' ) );
+                echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
                 return;
             }
         }
         if ( $current_client && isset( $client_fields['default_field']['client.suspended'] ) && (int) $client_fields['default_field']['client.suspended'] !== (int) $current_client->suspended && ! static::has_client_access( $editing_client_id, true ) ) {
-            echo wp_json_encode( array( 'error' => 'Error - insufficient permissions!' ) );
+            echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
             return;
-        }
-
-        if ( ! empty( $editing_client_id ) && ! wp_verify_nonce( $_POST['nonce_client_id'], 'editing-client-' . $editing_client_id ) ) { //phpcs:ignore -- NOSONAR - ok.
-            die( 'Invalid nonce!' );
         }
 
         if ( ! isset( $client_fields['default_field']['client.name'] ) || empty( $client_fields['default_field']['client.name'] ) ) {
@@ -1716,6 +1716,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         }
 
         $client_data = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
+        if ( $client_data && ! MainWP_Utility::is_valid_client_image_name( $client_image ) ) {
+            $client_image = $client_data->image;
+        }
         if ( $client_data && $client_data->image !== $client_image && $client_id ) {
             // The hidden field is attacker-controlled; only the stored name identifies the old image.
             $old_file = $client_data->image;
@@ -2751,13 +2754,13 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         if ( $field_id ) {
             $owner = MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id );
             if ( ! $owner ) {
-                $return['error'] = 'Error - insufficient permissions!';
+                $return['error'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
                 static::exit_json( $return );
             }
             $client_id = (int) $owner->client_id;
         }
         if ( $client_id && ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ! static::has_client_access( $client_id ) || ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) ) ) {
-            $return['error'] = 'Error - insufficient permissions!';
+            $return['error'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
             static::exit_json( $return );
         }
 

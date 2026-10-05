@@ -111,6 +111,45 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         ++$this->hooks[ current_filter() ];
     }
 
+    /** Client and tag write refusals use the translated, server-escaped message. */
+    public function test_review_round_one_write_refusals_are_translatable(): void {
+        $client = $this->client();
+        $this->scope( array() );
+        $translation = '<strong>Accès refusé</strong> & permissions';
+        $this->filter( 'gettext', static function ( $translated, $text, $domain ) use ( $translation ) {
+            return 'mainwp' === $domain && 'Error - insufficient permissions!' === $text ? $translation : $translated;
+        } );
+        $before = $this->before_write();
+        $client_response = json_decode( $this->operation( 'delete', $client ), true );
+        $_POST = array( 'groupId' => 99999999, 'newName' => 'Refused rename' );
+        $tag_response = json_decode( $this->capture( static function () { \MainWP\Dashboard\MainWP_Manage_Groups::rename_group(); } ), true );
+
+        $this->assert_unchanged( $before );
+        $this->assertSame( array( esc_html( $translation ), esc_html( $translation ) ), array( $client_response['error'], $tag_response['error'] ) );
+    }
+
+    /** @return array Client IDs whose scope must not be checked before the edit nonce. */
+    public static function review_round_one_edit_nonce_clients(): array {
+        return array( 'out of scope' => array( false ), 'missing' => array( true ) );
+    }
+
+    /** @dataProvider review_round_one_edit_nonce_clients */
+    public function test_review_round_one_invalid_edit_nonce_precedes_client_scope( $missing ): void {
+        $client = $this->client();
+        $this->scope( array() );
+        $post = $this->image_save_post( $client );
+        if ( $missing ) {
+            $post['client_fields']['client_id'] = 99999999;
+        }
+        $post['nonce_client_id'] = 'invalid-edit-nonce';
+        $before = $this->before_write();
+
+        $response = $this->dispatch( 'mainwp_clients_add_client', $post );
+
+        $this->assert_unchanged( $before );
+        $this->assertSame( 'Invalid nonce!', $response );
+    }
+
     /** @return array Render callbacks. */
     public static function renders(): array {
         return array( array( 'overview' ), array( 'dispatch' ), array( 'edit' ), array( 'header' ) );
@@ -1827,9 +1866,13 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertSame( 'yes', json_decode( $this->dispatch( 'mainwp_clients_add_client', $post ), true )['success'] );
         $stored = 'client' === $kind ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client->client_id ) : MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_email', 'new contact' === $kind ? 'new-contact@example.com' : 'image-contact@example.com' );
         $field = 'client' === $kind ? 'image' : 'contact_image';
+        if ( 'client' === $kind ) {
+            $this->assertFileExists( $directory . 'original.png', 'An invalid hidden image name deleted the stored logo.' );
+            $this->assertSame( 'stored image', file_get_contents( $directory . 'original.png' ) );
+        }
+        $this->assertSame( 'client' === $kind ? 'original.png' : '', $stored->$field );
         $this->assertTrue( MainWP_DB_Client::instance()->delete_client( $client->client_id ) );
         $this->assertFileExists( $canary, 'A submitted traversal name deleted the outside canary.' );
-        $this->assertSame( '', $stored->$field );
     }
 
     /** @return string Isolated client-images directory. */

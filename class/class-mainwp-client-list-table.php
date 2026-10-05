@@ -591,7 +591,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 $class[] = 'collapsing';
             }
 
-            if ( 'websites' === $column_client_key ) {
+            if ( 'websites' === $column_client_key || 'knowledge' === $column_client_key ) {
                 $class[] = 'collapsing';
             }
 

@@ -971,6 +971,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'Saved by an AI agent and not yet reviewed by a person. AI agents treat it as information only until you review and save it.', $strings['unverifiedHint'] );
 		$this->assertSame( 'Delete this knowledge record? Connected AI agents lose it immediately.', $strings['confirmDelete'] );
 		$site = $this->render_site_knowledge();
+		$this->assertStringContainsString( '<div class="ui info message">', $site );
 		foreach ( array(
 			'Facts an AI agent should know before it acts on this site: hosting, stack, constraints, known quirks.',
 			'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.',
@@ -982,13 +983,19 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		ob_start();
 		MainWP_Knowledge_UI::render_panel( 'client', $this->client_id, true );
 		$client = ob_get_clean();
+		$this->assertStringContainsString( '<div class="ui info message">', $client );
+		$this->assertStringContainsString( 'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.', $client );
+		$this->assertStringContainsString( 'Client records apply to every site assigned to this client. Site records belong to the site and stay with it if the site is moved to another client.', $client );
 		$this->assertStringContainsString( 'Facts an AI agent should know before it acts for this client: hosting, agreements, preferences, constraints.', $client );
 		$this->assertStringContainsString( 'Add context, skills, and memories that connected AI agents can use when working for this client.', $client );
 		$this->assertStringNotContainsString( 'AI client', $site . $client );
 	}
 
 	public function test_only_the_combined_inherited_table_has_a_type_column(): void {
-		$this->assertSame( 1, substr_count( $this->render_site_knowledge(), '<th class="mainwp-knowledge-type-cell">' ) );
+		$html = $this->render_site_knowledge();
+		$this->assertSame( 1, substr_count( $html, '<th class="mainwp-knowledge-type-cell">' ) );
+		$this->assertSame( 4, substr_count( $html, '<th class="mainwp-knowledge-editor-cell collapsing">' ) );
+		$this->assertSame( 4, substr_count( $html, '<th class="mainwp-knowledge-actions-cell no-sort collapsing">' ) );
 	}
 
 	public function test_list_site_answers_db_error_when_the_client_lookup_fails(): void {
@@ -1390,6 +1397,10 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 1, preg_match_all( '/<h2\b[^>]*>\s*Knowledge\s*<div/', $html ) );
 		$this->assertStringContainsString( 'Context, skills, and memories that AI agents receive for this client and its sites.', $html );
 		$this->assertStringNotContainsString( 'Add context, skills, and memories that connected AI agents can use when working for this client.', $html );
+		$this->assertStringNotContainsString( '<div class="ui info message">', $html );
+		$this->assertStringContainsString( '<div class="dimmable mainwp-knowledge-site-list"', $html );
+		$this->assertStringNotContainsString( 'ui basic segment dimmable mainwp-knowledge-site-list', $html );
+		$this->assertStringContainsString( '<thead><tr><th>Title</th><th class="collapsing">Type</th><th class="collapsing">Last edited by</th><th class="collapsing"></th></tr></thead>', $html );
 		$this->assertStringNotContainsString( 'id="mainwp-knowledge-modal"', $html );
 		$this->assertNotFalse( has_action( 'admin_footer', array( MainWP_Knowledge_UI::class, 'render_modal' ) ) );
 	}
@@ -1478,6 +1489,11 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$html = ob_get_clean();
 		$this->assertStringNotContainsString( '<h2', $html );
 		$this->assertStringNotContainsString( 'Add context, skills, and memories that connected AI agents can use when working for this client.', $html );
+		$this->assertStringNotContainsString( '<div class="ui info message">', $html );
+		$this->assertStringNotContainsString( 'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.', $html );
+		$this->assertStringNotContainsString( 'Client records apply to every site assigned to this client. Site records belong to the site and stay with it if the site is moved to another client.', $html );
+		$this->assertSame( 3, substr_count( $html, '<th class="mainwp-knowledge-editor-cell collapsing">' ) );
+		$this->assertSame( 3, substr_count( $html, '<th class="mainwp-knowledge-actions-cell no-sort collapsing">' ) );
 		$this->assertStringContainsString( 'mainwp-knowledge-panel', $html );
 	}
 
@@ -1559,6 +1575,10 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 2, array_intersect( array( $this->client_id, $other_client ), array_column( $table->items, 'client_id' ) ) );
 		$this->assertSame( 1, $queries );
 		$items = array_column( $table->items, null, 'client_id' );
+		ob_start();
+		$table->print_column_headers( false );
+		$headers = ob_get_clean();
+		$this->assertStringContainsString( "id='knowledge' class='manage-knowledge-column collapsing no-sort'", $headers );
 		ob_start();
 		$table->single_row( $items[ $this->client_id ] );
 		$visible = ob_get_clean();

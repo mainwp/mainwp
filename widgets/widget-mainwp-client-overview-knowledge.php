@@ -127,13 +127,13 @@ class MainWP_Client_Overview_Knowledge {
                 </tr>
                 <tr class="content">
                     <td colspan="4">
-                        <div class="ui basic segment dimmable mainwp-knowledge-site-list" data-scope-type="site" data-scope-id="<?php echo esc_attr( $site_id ); ?>" data-can-write="0" data-site-url="<?php echo esc_url( $site_url ); ?>">
+                        <div class="dimmable mainwp-knowledge-site-list" data-scope-type="site" data-scope-id="<?php echo esc_attr( $site_id ); ?>" data-can-write="0" data-site-url="<?php echo esc_url( $site_url ); ?>">
                             <div class="ui dimmer mainwp-knowledge-loader" aria-hidden="true">
                                 <div class="ui loader" role="status" aria-label="<?php esc_attr_e( 'Loading...', 'mainwp' ); ?>"></div>
                             </div>
                             <div class="ui hidden message mainwp-knowledge-message"></div>
                             <table class="ui compact table">
-                                <thead><tr><th><?php esc_html_e( 'Title', 'mainwp' ); ?></th><th><?php esc_html_e( 'Type', 'mainwp' ); ?></th><th><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th><th></th></tr></thead>
+                                <thead><tr><th><?php esc_html_e( 'Title', 'mainwp' ); ?></th><th class="collapsing"><?php esc_html_e( 'Type', 'mainwp' ); ?></th><th class="collapsing"><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th><th class="collapsing"></th></tr></thead>
                                 <tbody></tbody>
                             </table>
                         </div>

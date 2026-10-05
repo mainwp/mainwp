@@ -357,7 +357,7 @@ jQuery(function ($) {
                 response.data.records.forEach((record) => {
                     const title = $('<td></td>');
                     if (!record.verified) {
-                        title.append($('<span class="ui mini yellow label"></span>').attr('data-tooltip', strings.unverifiedHint).attr('data-inverted', '').text(strings.unverified)).append(' ');
+                        title.append($('<span class="ui mini yellow label"></span>').attr('data-tooltip', strings.unverifiedHint).attr('data-inverted', '').text(strings.unverified)).append($('<br>'));
                     }
                     title.append($('<a href="#" class="mainwp-knowledge-view"></a>').text(record.title));
                     title.append($('<br>')).append($('<span class="ui small text"></span>').text(record.body_preview));

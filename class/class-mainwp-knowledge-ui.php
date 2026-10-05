@@ -713,7 +713,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <?php if ( ! $can_write ) : ?>
             <div class="ui message"><?php esc_html_e( 'Only users with client management rights and access to every site can change agency records.', 'mainwp' ); ?></div>
             <?php endif; ?>
-            <?php else : ?>
+            <?php elseif ( $show_header ) : ?>
             <div class="ui info message">
                 <p><?php esc_html_e( 'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.', 'mainwp' ); ?></p>
                 <p>
@@ -736,8 +736,8 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <thead>
                         <tr>
                             <th><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
-                            <th class="mainwp-knowledge-editor-cell"><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th>
-                            <th class="mainwp-knowledge-actions-cell no-sort"></th>
+                            <th class="mainwp-knowledge-editor-cell collapsing"><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th>
+                            <th class="mainwp-knowledge-actions-cell no-sort collapsing"></th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -765,8 +765,8 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <tr>
                             <th><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
                             <th class="mainwp-knowledge-type-cell"><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                            <th class="mainwp-knowledge-editor-cell"><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th>
-                            <th class="mainwp-knowledge-actions-cell no-sort"></th>
+                            <th class="mainwp-knowledge-editor-cell collapsing"><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th>
+                            <th class="mainwp-knowledge-actions-cell no-sort collapsing"></th>
                         </tr>
                     </thead>
                     <tbody></tbody>

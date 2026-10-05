@@ -370,6 +370,8 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
 
                                 $information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
 
+                                MainWP_Updates_Handler::activity_log_upgrade( $website, $information ); // see do_action_mainwp_install_actions for more details about the upgrade: plugins, themes, translation.
+
                                 // Validate response - check for transport failure or API error.
                                 if ( false === $information ) {
                                     $site_success  = false;
@@ -535,6 +537,10 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                             MainWP_Sync::sync_information_array( $website, $information['sync'] );
                                         }
                                     } else {
+                                        if ( isset( $information['other_data'] ) ) { // ok.
+                                            $output_array = $information['other_data']; // updated_data: plugins,themes,trans.
+                                            mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'plugin' );
+                                        }
                                         // Success - fire after-action and sync.
                                         /** This action is documented above in this switch case. */
                                         do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'plugin', $slugs_list, $website );
@@ -636,6 +642,10 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                             MainWP_Sync::sync_information_array( $website, $information['sync'] );
                                         }
                                     } else {
+                                        if ( isset( $information['other_data'] ) ) { // ok.
+                                            $output_array = $information['other_data']; // updated_data: plugins,themes,trans.
+                                            mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'theme' );
+                                        }
                                         // Success - fire after-action and sync.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
                                         do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'theme', $slugs_list, $website );
@@ -721,6 +731,10 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                         MainWP_Sync::sync_information_array( $website, $information['sync'] );
                                     }
                                 } else {
+                                    if ( isset( $information['other_data'] ) ) { // ok.
+                                        $output_array = $information['other_data']; // updated_data: plugins,themes,trans.
+                                        mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'trans' );
+                                    }
                                     // Success - fire after-action and sync.
                                     /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
                                     do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', '', $website );

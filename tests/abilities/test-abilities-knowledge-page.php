@@ -109,7 +109,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'data-can-write="0"', $agency );
 		$this->assertStringNotContainsString( 'id="mainwp-knowledge-required"', $agency );
 		$this->assertStringNotContainsString( 'mainwp-knowledge-add', $agency );
-		$this->assertStringContainsString( 'Only users with access to every site can change agency records.', $agency );
+		$this->assertStringContainsString( 'Only users with client management rights and access to every site can change agency records.', $agency );
 	}
 
 	public function test_knowledge_all_sites_without_manage_clients_has_read_only_agency_and_no_required(): void {

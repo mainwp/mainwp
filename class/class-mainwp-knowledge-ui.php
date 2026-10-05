@@ -684,7 +684,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
             <?php if ( 'agency' === $scope_type ) : ?>
                 <?php if ( ! $can_write ) : ?>
-            <div class="ui message"><?php esc_html_e( 'Only users with access to every site can change agency records.', 'mainwp' ); ?></div>
+            <div class="ui message"><?php esc_html_e( 'Only users with client management rights and access to every site can change agency records.', 'mainwp' ); ?></div>
             <?php endif; ?>
             <?php else : ?>
             <div class="ui info message">

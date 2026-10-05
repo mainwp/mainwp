@@ -40,10 +40,28 @@ class MainWP_Knowledge {
                 'slug'       => 'Knowledge',
                 'href'       => 'admin.php?page=Knowledge',
                 'icon'       => '<i class="book icon"></i>',
-                'nosubmenu'  => true,
             ),
             0
         );
+        $sub_items = array(
+            array(
+                'title'         => esc_html__( 'Review', 'mainwp' ),
+                'parent_key'    => 'Knowledge',
+                'slug'          => 'Knowledge',
+                'href'          => 'admin.php?page=Knowledge&tab=review',
+                'active_params' => array( 'tab' => 'review' ),
+            ),
+            array(
+                'title'         => esc_html__( 'Agency', 'mainwp' ),
+                'parent_key'    => 'Knowledge',
+                'slug'          => 'KnowledgeAgency',
+                'href'          => 'admin.php?page=Knowledge&tab=agency',
+                'active_params' => array( 'tab' => 'agency' ),
+            ),
+        );
+        foreach ( $sub_items as $item ) {
+            MainWP_Menu::add_left_menu( $item, 2 );
+        }
     }
 
     /**
@@ -62,7 +80,7 @@ class MainWP_Knowledge {
             array(
                 array(
                     'title'  => esc_html__( 'Review', 'mainwp' ),
-                    'href'   => 'admin.php?page=Knowledge',
+                    'href'   => 'admin.php?page=Knowledge&tab=review',
                     'active' => 'review' === $tab,
                 ),
                 array(
@@ -73,7 +91,7 @@ class MainWP_Knowledge {
             )
         );
         ?>
-        <div id="mainwp-knowledge-page" class="mainwp-main-content ui padded segment">
+        <div id="mainwp-knowledge-page" class="ui padded segment">
             <?php if ( 'agency' === $tab ) : ?>
             <h2 class="ui header">
                 <?php esc_html_e( 'Agency knowledge', 'mainwp' ); ?>
@@ -143,13 +161,13 @@ class MainWP_Knowledge {
             <table class="ui table" id="mainwp-knowledge-review-table" data-empty-default="<?php esc_attr_e( 'Nothing to review. Records saved by AI agents appear here until a person reviews them.', 'mainwp' ); ?>" data-empty-filtered="<?php esc_attr_e( 'No records match these filters.', 'mainwp' ); ?>">
                 <thead>
                     <tr>
-                        <th><?php esc_html_e( 'Level', 'mainwp' ); ?></th>
+                        <th class="collapsing"><?php esc_html_e( 'Level', 'mainwp' ); ?></th>
                         <th><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
                         <th><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
+                        <th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
                         <th><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th>
                         <th><?php esc_html_e( 'Updated', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Open', 'mainwp' ); ?></th>
+                        <th scope="col" class="collapsing"><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'mainwp' ); ?></span></th>
                     </tr>
                 </thead>
                 <tbody></tbody>

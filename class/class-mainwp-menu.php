@@ -1198,7 +1198,11 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
                     <?php if ( MainWP_System_Utility::is_admin() && true === MainWP_Abilities_Util::check_rest_api_permission() && ! static::is_disable_menu_item( 2, 'Knowledge' ) ) : ?>
                     <div class="item">
-                        <div class="title"><a href="<?php echo esc_url( admin_url( 'admin.php?page=Knowledge' ) ); ?>"><i class="book icon"></i> <?php esc_html_e( 'Knowledge', 'mainwp' ); ?></a></div>
+                        <div class="title"><a href="<?php echo esc_url( admin_url( 'admin.php?page=Knowledge' ) ); ?>" class="with-sub"><i class="book icon"></i> <?php esc_html_e( 'Knowledge', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+                        <div class="content menu">
+                            <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=Knowledge&tab=review' ) ); ?>"><?php esc_html_e( 'Review', 'mainwp' ); ?></a>
+                            <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=Knowledge&tab=agency' ) ); ?>"><?php esc_html_e( 'Agency', 'mainwp' ); ?></a>
+                        </div>
                     </div>
                     <?php endif; ?>
 

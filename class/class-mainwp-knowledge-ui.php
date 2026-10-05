@@ -218,6 +218,39 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return array|\WP_Error Cells, or a scope lookup error.
      */
     private function review_row( $record ) {
+        $level = $this->record_level_label( $record );
+        if ( is_wp_error( $level ) ) {
+            return $level;
+        }
+        $summary = $this->record_summary( $record );
+        $editor  = $summary['updated_by_name'];
+        $title   = esc_html( $record->title );
+        if ( $record->required ) {
+            $title .= ' <span class="ui mini label">' . esc_html__( 'Required', 'mainwp' ) . '</span>';
+        }
+        if ( 'skill' === $record->type ) {
+            $title .= '<div class="ui small text">' . esc_html( $record->description ) . '</div>';
+        }
+        return array(
+            'id'      => (int) $record->id,
+            'level'   => '<span class="ui mini label">' . esc_html( $level ) . '</span>',
+            'type'    => esc_html( $summary['type_label'] ),
+            'title'   => $title,
+            'status'  => '<span class="ui mini ' . ( $record->verified ? 'green' : 'yellow' ) . ' label">' . ( $record->verified ? esc_html__( 'Verified', 'mainwp' ) : esc_html__( 'Unverified', 'mainwp' ) ) . '</span>',
+            'editor'  => esc_html( $editor ),
+            'updated' => esc_html( $summary['updated_ago'] ),
+            'actions' => '<button type="button" class="ui mini basic button mainwp-knowledge-open" data-id="' . esc_attr( $record->id ) . '">' . esc_html__( 'Open', 'mainwp' ) . '</button>',
+        );
+    }
+
+    /**
+     * The review list and modal need the same scope name and lookup error handling.
+     *
+     * @param object $record Visible record.
+     *
+     * @return string|\WP_Error Level label, or a scope lookup error.
+     */
+    private function record_level_label( $record ) {
         $db    = MainWP_DB_Knowledge::instance();
         $level = __( 'Agency', 'mainwp' );
         if ( 'agency' !== $record->scope_type ) {
@@ -234,25 +267,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             /* translators: %s: site or client name. */
             $level = sprintf( 'site' === $record->scope_type ? __( 'Site: %s', 'mainwp' ) : __( 'Client: %s', 'mainwp' ), $scope->name ?? '' );
         }
-        $summary = $this->record_summary( $record );
-        $editor  = $summary['updated_by_name'];
-        $title   = esc_html( $record->title );
-        if ( 'skill' === $record->type ) {
-            $title .= '<div class="ui small text">' . esc_html( $record->description ) . '</div>';
-        }
-        if ( $record->required ) {
-            $title .= ' <span class="ui mini label">' . esc_html__( 'Required', 'mainwp' ) . '</span>';
-        }
-        return array(
-            'id'      => (int) $record->id,
-            'level'   => '<span class="ui mini label">' . esc_html( $level ) . '</span>',
-            'type'    => esc_html( $summary['type_label'] ),
-            'title'   => $title,
-            'status'  => '<span class="ui mini ' . ( $record->verified ? 'green' : 'yellow' ) . ' label">' . ( $record->verified ? esc_html__( 'Verified', 'mainwp' ) : esc_html__( 'Unverified', 'mainwp' ) ) . '</span>',
-            'editor'  => esc_html( $editor ),
-            'updated' => esc_html( $summary['updated_ago'] ),
-            'actions' => '<button type="button" class="ui mini basic button mainwp-knowledge-open" data-id="' . esc_attr( $record->id ) . '">' . esc_html__( 'Open', 'mainwp' ) . '</button>',
-        );
+        return $level;
     }
 
     /**
@@ -325,9 +340,16 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $this->send_error( $record );
         }
 
+        $level = $this->record_level_label( $record );
+        if ( is_wp_error( $level ) ) {
+            $this->send_error( $level );
+        }
+        $out                = $this->record_full( $record );
+        $out['level_label'] = $level;
+
         wp_send_json_success(
             array(
-                'record'    => $this->record_full( $record ),
+                'record'    => $out,
                 'can_write' => true === MainWP_DB_Knowledge::instance()->can_write( $record ),
             )
         );
@@ -762,6 +784,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return void
      */
     public static function render_modal() {
+        $strings          = static::js_strings();
         $can_write_agency = true === MainWP_DB_Knowledge::instance()->can_write(
             (object) array(
                 'scope_type' => 'agency',
@@ -771,7 +794,11 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <div class="ui small modal" id="mainwp-knowledge-modal">
             <i class="close icon"></i>
-            <div class="header" data-add="<?php esc_attr_e( 'Add knowledge record', 'mainwp' ); ?>" data-edit="<?php esc_attr_e( 'Edit knowledge record', 'mainwp' ); ?>" data-view="<?php esc_attr_e( 'View knowledge record', 'mainwp' ); ?>"><?php esc_html_e( 'Add knowledge record', 'mainwp' ); ?></div>
+            <div class="header" data-add="<?php esc_attr_e( 'Add knowledge record', 'mainwp' ); ?>" data-edit="<?php esc_attr_e( 'Edit knowledge record', 'mainwp' ); ?>" data-view="<?php esc_attr_e( 'View knowledge record', 'mainwp' ); ?>">
+                <span id="mainwp-knowledge-modal-title"><?php esc_html_e( 'Add knowledge record', 'mainwp' ); ?></span>
+                <span class="ui mini label" id="mainwp-knowledge-modal-level" style="display:none"></span>
+                <span class="ui mini yellow label" id="mainwp-knowledge-modal-unverified" style="display:none" data-tooltip="<?php echo esc_attr( $strings['unverifiedHint'] ); ?>" data-inverted=""><?php esc_html_e( 'Unverified', 'mainwp' ); ?></span>
+            </div>
             <div class="content">
                 <div class="ui hidden message" id="mainwp-knowledge-modal-message"></div>
                 <div class="ui form" id="mainwp-knowledge-form">

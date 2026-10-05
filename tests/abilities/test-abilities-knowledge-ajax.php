@@ -1145,13 +1145,20 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 	}
 
 	public function test_get_reports_scope_and_write_access_for_all_levels(): void {
-		foreach ( array( $this->input( array( 'scope_type' => 'agency' ) ), $this->input(), $this->site_input() ) as $input ) {
+		$levels = array(
+			'Agency' => $this->input( array( 'scope_type' => 'agency' ) ),
+			'Client: ' . \MainWP\Dashboard\MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $this->client_id )->name => $this->input(),
+			'Site: ' . \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $this->site_id )->name => $this->site_input(),
+		);
+		foreach ( $levels as $label => $input ) {
 			$record = $this->create_record( $input );
 			$get = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
 			$this->assertTrue( $get['success'] );
 			$this->assertTrue( $get['data']['can_write'] );
 			$this->assertSame( $record->scope_type, $get['data']['record']['scope_type'] );
 			$this->assertSame( $record->scope_id, $get['data']['record']['scope_id'] );
+			$this->assertArrayHasKey( 'level_label', $get['data']['record'] );
+			$this->assertSame( $label, $get['data']['record']['level_label'] );
 		}
 	}
 
@@ -1197,6 +1204,10 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 1, substr_count( $modal, 'id="mainwp-knowledge-modal"' ) );
 		$this->assertStringContainsString( 'id="mainwp-knowledge-type-view" readonly', $modal );
 		$this->assertStringContainsString( 'id="mainwp-knowledge-remove"', $modal );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-modal-title"', $modal );
+		$this->assertStringContainsString( 'class="ui mini label" id="mainwp-knowledge-modal-level" style="display:none"', $modal );
+		$strings = MainWP_Knowledge_UI::js_strings();
+		$this->assertStringContainsString( 'class="ui mini yellow label" id="mainwp-knowledge-modal-unverified" style="display:none" data-tooltip="' . esc_attr( $strings['unverifiedHint'] ) . '" data-inverted="">Unverified</span>', $modal );
 	}
 
 	private function review_record( array $overrides = array(), bool $verified = false ): object {
@@ -1297,6 +1308,10 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'mainwp-knowledge-open', $row['actions'] );
 		$this->assertStringContainsString( 'Open', $row['actions'] );
 		$this->assertArrayNotHasKey( 'body', $row );
+		$required = $this->create_record( array( 'scope_type' => 'agency', 'type' => 'skill', 'title' => '<b>Required rule</b>', 'required' => true ) );
+		$page = $this->call( 'mainwp_knowledge_review', array( 'status' => 'verified' ) );
+		$this->assertSame( $required->id, $page['data'][0]['id'] );
+		$this->assertSame( '&lt;b&gt;Required rule&lt;/b&gt; <span class="ui mini label">Required</span><div class="ui small text">' . esc_html( $required->description ) . '</div>', $page['data'][0]['title'] );
 	}
 
 	public function test_review_database_failure_is_an_error_not_an_empty_queue(): void {

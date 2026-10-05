@@ -21,12 +21,15 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		parent::setUp();
 		$this->set_current_user_as_admin();
 		$this->previous_get = $_GET;
-		foreach ( array( 'submenu', 'mainwp_leftmenu', 'current_screen', '_registered_pages', '_parent_pages', '_wp_submenu_nopriv' ) as $key ) {
+		foreach ( array( 'submenu', 'mainwp_leftmenu', 'mainwp_sub_leftmenu', '_mainwp_menu_active_slugs', 'plugin_page', 'current_screen', '_registered_pages', '_parent_pages', '_wp_submenu_nopriv' ) as $key ) {
 			$this->previous_globals[ $key ] = $GLOBALS[ $key ] ?? null;
 		}
 		$GLOBALS['current_screen'] = \WP_Screen::get( 'mainwp_page_Knowledge' );
 		$GLOBALS['submenu'] = array();
 		$GLOBALS['mainwp_leftmenu'] = array();
+		$GLOBALS['mainwp_sub_leftmenu'] = array();
+		$GLOBALS['_mainwp_menu_active_slugs'] = array();
+		$GLOBALS['plugin_page'] = 'Knowledge';
 		$_GET['page'] = 'Knowledge';
 	}
 
@@ -93,8 +96,11 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 
 	public function test_knowledge_menu_and_page_admit_unrestricted_users(): void {
 		$this->assert_menu();
-		$this->assertStringContainsString( 'id="mainwp-knowledge-review-table"', $this->render() );
+		$review = $this->render();
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review-table"', $review );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-page" class="ui padded segment"', $review );
 		$agency = $this->render( 'agency' );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-page" class="ui padded segment"', $agency );
 		$this->assertStringContainsString( 'data-scope-type="agency" data-scope-id="0" data-can-write="1"', $agency );
 		$this->assertStringContainsString( 'id="mainwp-knowledge-required"', $agency );
 		$this->assertStringContainsString( 'Client and site records cannot override a required record. Only a Dashboard user can edit or delete it.', $agency );
@@ -169,6 +175,9 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 				MainWP_Menu::$method();
 				$html = ob_get_clean();
 				$this->assertMatchesRegularExpression( '/href="[^"]*admin.php\?page=Knowledge"[^>]*>.*?Knowledge/s', $html, $method );
+				foreach ( array( 'review' => 'Review', 'agency' => 'Agency' ) as $tab => $label ) {
+					$this->assertMatchesRegularExpression( '/href="[^"]*admin.php\?page=Knowledge&#038;tab=' . $tab . '"[^>]*>\s*' . $label . '\s*<\/a>/', $html, $method );
+				}
 			}
 		}
 	}
@@ -178,11 +187,15 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'id="mainwp-knowledge-review-table"', $html );
 		$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $html );
 		$this->assertSame( 1, substr_count( $html, 'id="mainwp-knowledge-modal"' ) );
-		foreach ( array( 'Status', 'Unverified', 'Verified', 'All', 'Type', 'All types', 'Level', 'All levels', 'Open', 'Nothing to review. Records saved by AI agents appear here until a person reviews them.', 'No records match these filters.' ) as $copy ) {
+		foreach ( array( 'Status', 'Unverified', 'Verified', 'All', 'Type', 'All types', 'Level', 'All levels', 'Actions', 'Nothing to review. Records saved by AI agents appear here until a person reviews them.', 'No records match these filters.' ) as $copy ) {
 			$this->assertStringContainsString( $copy, $html );
 		}
 		$this->assertStringContainsString( 'admin.php?page=Knowledge', $html );
 		$this->assertStringContainsString( esc_url( 'admin.php?page=Knowledge&tab=agency' ), $html );
 		$this->assertMatchesRegularExpression( '/<option value="unverified"\s+selected/', $html );
+		$this->assertStringContainsString( '<th class="collapsing">Level</th>', $html );
+		$this->assertStringContainsString( '<th class="collapsing">Status</th>', $html );
+		$this->assertStringContainsString( '<th scope="col" class="collapsing"><span class="screen-reader-text">Actions</span></th>', $html );
+		$this->assertStringNotContainsString( '<th>Open</th>', $html );
 	}
 }

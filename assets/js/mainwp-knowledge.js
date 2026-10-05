@@ -9,6 +9,9 @@ jQuery(function ($) {
         return;
     }
     const modalHeader = modal.find('.header');
+    const modalTitle = $('#mainwp-knowledge-modal-title');
+    const modalLevel = $('#mainwp-knowledge-modal-level');
+    const modalUnverified = $('#mainwp-knowledge-modal-unverified');
     const modalMessage = $('#mainwp-knowledge-modal-message');
     const typeField = $('#mainwp-knowledge-type');
     const typeViewField = $('#mainwp-knowledge-type-view');
@@ -61,6 +64,8 @@ jQuery(function ($) {
         descriptionField.val(record.description || '');
         bodyField.val(record.body);
         requiredField.prop('checked', !!record.required);
+        modalLevel.text(record.level_label || '').toggle(!!record.level_label);
+        modalUnverified.toggle(record.verified === 0);
         updateFields();
     };
     const openModal = (mode) => {
@@ -74,7 +79,7 @@ jQuery(function ($) {
         saveButton.toggle(!readOnly).prop('disabled', readOnly).toggleClass('disabled', readOnly).removeClass('loading');
         deleteButton.toggle(!readOnly && parseInt(idField.val(), 10) > 0).prop('disabled', readOnly).removeClass('loading disabled');
         cancelButton.text(cancelButton.data(readOnly ? 'close' : 'cancel'));
-        modalHeader.text(modalHeader.data(mode));
+        modalTitle.text(modalHeader.data(mode));
         modal.modal('show');
     };
     const begin = (nextOwner) => {

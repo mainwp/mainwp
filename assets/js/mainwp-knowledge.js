@@ -50,7 +50,7 @@ jQuery(function ($) {
         descriptionField.closest('.field').toggle(isSkill).toggleClass('required', isSkill && !readOnly);
         descriptionField.prop('required', isSkill && !readOnly).prop('readonly', readOnly);
         $('#mainwp-knowledge-description-help').toggle(!readOnly);
-        const eligible = scope && 'agency' === scope.scope_type && ['context', 'skill'].includes(typeField.val());
+        const eligible = scope && ['agency', 'client'].includes(scope.scope_type) && ['context', 'skill'].includes(typeField.val());
         $('#mainwp-knowledge-required-field').toggle(!!eligible && canWrite && !readOnly);
         requiredField.prop('disabled', !eligible || !canWrite || readOnly);
     };
@@ -175,7 +175,7 @@ jQuery(function ($) {
             description: 'skill' === typeField.val() ? descriptionField.val() : '',
             body: bodyField.val(),
         });
-        if ('agency' === scope.scope_type) {
+        if (['agency', 'client'].includes(scope.scope_type)) {
             data.required = ['context', 'skill'].includes(data.type) && requiredField.prop('checked') ? 1 : 0;
         }
         const id = parseInt(idField.val(), 10);

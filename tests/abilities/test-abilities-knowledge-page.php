@@ -103,7 +103,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'id="mainwp-knowledge-page" class="ui padded segment"', $agency );
 		$this->assertStringContainsString( 'data-scope-type="agency" data-scope-id="0" data-can-write="1"', $agency );
 		$this->assertStringContainsString( 'id="mainwp-knowledge-required"', $agency );
-		$this->assertStringContainsString( 'Client and site records cannot override a required record. Only a Dashboard user can edit or delete it.', $agency );
+		$this->assertStringContainsString( 'Records at a more specific level cannot override a required record. Only a Dashboard user can edit or delete it.', $agency );
 		$this->assertStringContainsString( 'Agency records reach the AI agents working on every site in this Dashboard.', $agency );
 		$this->assertStringNotContainsString( 'Only users with client management rights and access to every site can change agency records.', $agency );
 	}

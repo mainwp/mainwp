@@ -839,7 +839,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <input type="checkbox" id="mainwp-knowledge-required" aria-describedby="mainwp-knowledge-required-help">
                             <label for="mainwp-knowledge-required"><?php esc_html_e( 'Required', 'mainwp' ); ?></label>
                         </div>
-                        <p id="mainwp-knowledge-required-help"><?php esc_html_e( 'Client and site records cannot override a required record. Only a Dashboard user can edit or delete it.', 'mainwp' ); ?></p>
+                        <p id="mainwp-knowledge-required-help"><?php esc_html_e( 'Records at a more specific level cannot override a required record. Only a Dashboard user can edit or delete it.', 'mainwp' ); ?></p>
                     </div>
                     <?php endif; ?>
                     <input type="hidden" id="mainwp-knowledge-id" value="0">

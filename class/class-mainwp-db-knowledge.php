@@ -969,8 +969,8 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             return $this->invalid( 'required' );
         }
         $required = (int) $required;
-        if ( $required && ( 'agency' !== $scope_type || 'memory' === $type ) ) {
-            return $this->invalid( 'required', __( 'Only agency context and agency skills can be required.', 'mainwp' ) );
+        if ( $required && ( 'site' === $scope_type || 'memory' === $type ) ) {
+            return $this->invalid( 'required', __( 'Only agency and client context and skills can be required.', 'mainwp' ) );
         }
 
         // Plain text kept verbatim like the body: sanitize_text_field() stored "<" as "&lt;" and dropped tag-shaped text.
@@ -1044,7 +1044,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             return $this->invalid( 'required', __( 'Leave out required. Only a person using the Dashboard can mark a record as required.', 'mainwp' ) );
         }
         if ( ! empty( $record->required ) && self::ORIGIN_UI !== $origin ) {
-            return $this->invalid( 'required', __( 'This is a required agency record. Only a person using the Dashboard can change or delete it.', 'mainwp' ) );
+            return $this->invalid( 'required', __( 'This is a required record. Only a person using the Dashboard can change or delete it.', 'mainwp' ) );
         }
         $required_changed = array_key_exists( 'required', $input ) && (int) ( $record->required ?? 0 ) !== (int) $input['required'];
         if ( $required_changed || ! empty( $record->required ) ) {

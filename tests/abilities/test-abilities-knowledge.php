@@ -1235,7 +1235,7 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 			foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
 				$result = $this->execute_ability( 'mainwp/' . $operation . '-knowledge-record-v1', array( 'record_id' => $record->id, 'expected_revision' => 1, $mode => true ) );
 				$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
-				$this->assertSame( 'This is a required agency record. Only a person using the Dashboard can change or delete it.', $result->get_error_message() );
+				$this->assertSame( 'This is a required record. Only a person using the Dashboard can change or delete it.', $result->get_error_message() );
 			}
 		}
 		$ordinary = $this->create_record( 'site', $this->create_test_site() );
@@ -1244,6 +1244,45 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
 		}
 		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_required_ability_refusal_matrix_for_client_records(): void {
+		$scopes = $this->fixtures();
+		foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+			foreach ( array( true, false ) as $required ) {
+				$result = $this->execute_ability( 'mainwp/create-knowledge-record-v1', $this->input( 'client', $scopes['client'], array( $mode => true, 'required' => $required ) ) );
+				$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+				$this->assertSame( 'Leave out required. Only a person using the Dashboard can mark a record as required.', $result->get_error_message() );
+			}
+		}
+		$this->assertSame( 0, $this->db->count_records() );
+		foreach ( array( 'context', 'skill' ) as $type ) {
+			$record = $this->create_record( 'client', $scopes['client'], array( 'type' => $type, 'required' => true ) );
+			foreach ( array( 'update', 'delete' ) as $operation ) {
+				foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+					$input = array( 'record_id' => $record->id, 'expected_revision' => 1, $mode => true );
+					if ( 'update' === $operation ) {
+						$input['title'] = 'Changed by an agent';
+					}
+					$result = $this->execute_ability( 'mainwp/' . $operation . '-knowledge-record-v1', $input );
+					$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+					$this->assertSame( 'This is a required record. Only a person using the Dashboard can change or delete it.', $result->get_error_message() );
+				}
+			}
+			$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+		}
+	}
+
+	public function test_site_summary_marks_required_client_context(): void {
+		$scopes = $this->fixtures();
+		$required = $this->create_record( 'client', $scopes['client'], array( 'required' => true ) );
+		$this->create_record( 'site', $scopes['site'] );
+		$site = $this->successful_call( 'mainwp/get-site-knowledge-v1', array( 'site_id' => $scopes['site'] ) );
+		$this->assertSame( array( $required->id ), array_column( $site['client']['context'], 'id' ) );
+		$this->assertTrue( $site['client']['context'][0]['required'] );
+		$this->assertFalse( $site['context'][0]['required'] );
+		$client = $this->successful_call( 'mainwp/get-client-knowledge-v1', array( 'client_id' => $scopes['client'] ) );
+		$this->assertTrue( $client['context'][0]['required'] );
 	}
 
 	public function test_agency_restricted_api_key_reads_and_cannot_write(): void {
@@ -1326,7 +1365,7 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 			$this->assertSame( 'skill' === $record['type'] ? 'Use this skill when maintaining the site.' : '', $record['description'] );
 		}
 		$this->assertSame( MainWP_Abilities_Knowledge::NOTICE, $site['notice'] );
-		foreach ( array( 'required: true', 'site over client, client over agency', 'do not pick one', "the agency's, client's or site's", "\n\nRecords come at three levels:" ) as $phrase ) {
+		foreach ( array( 'required: true', 'site over client, client over agency', 'a required client rule over site rules', 'do not pick one', "the agency's, client's or site's", "\n\nRecords come at three levels:" ) as $phrase ) {
 			$this->assertStringContainsString( $phrase, $site['notice'] );
 		}
 	}

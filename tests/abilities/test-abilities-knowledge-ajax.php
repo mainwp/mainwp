@@ -1109,6 +1109,29 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	public function test_required_ajax_client_set_clear_and_reread(): void {
+		foreach ( array( 'context', 'skill' ) as $type ) {
+			$input = $this->input( array( 'type' => $type, 'required' => '1' ) );
+			if ( 'skill' === $type ) {
+				$input['description'] = 'Use this skill for maintenance.';
+			}
+			$response = $this->call( 'mainwp_knowledge_save', $input );
+			$this->assertTrue( $response['success'] );
+			$id = $response['data']['record']['id'];
+			$this->assertSame( 1, $response['data']['record']['required'] );
+			$this->assertSame( 1, $this->db->get_by_id( $id )->required );
+			$this->assertSame( 1, $this->call( 'mainwp_knowledge_get', array( 'id' => $id ) )['data']['record']['required'] );
+			$inherited = array_column( $this->call( 'mainwp_knowledge_list', $this->site_input() )['data']['inherited']['records'], 'required', 'id' );
+			$this->assertSame( 1, $inherited[ $id ] );
+			$input['required'] = '0';
+			$response = $this->call( 'mainwp_knowledge_save', $input + array( 'id' => $id, 'revision' => 1 ) );
+			$this->assertTrue( $response['success'] );
+			$this->assertSame( 0, $response['data']['record']['required'] );
+			$this->assertSame( 0, $this->db->get_by_id( $id )->required );
+			$this->assertSame( 2, $this->db->get_by_id( $id )->revision );
+		}
+	}
+
 	public function test_required_ajax_restricted_user_cannot_write_edit_or_delete(): void {
 		$record = $this->create_record( array( 'scope_type' => 'agency', 'required' => true ) );
 		$this->restrict_to_other_site();
@@ -1134,7 +1157,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
 		$response = $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) );
 		$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
-		$this->assertSame( 'This is a required agency record. Only a person using the Dashboard can change or delete it.', $response['data']['message'] );
+		$this->assertSame( 'This is a required record. Only a person using the Dashboard can change or delete it.', $response['data']['message'] );
 		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
 		$_COOKIE[ LOGGED_IN_COOKIE ] = $cookie;
 		$this->assertTrue( $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) )['success'] );
@@ -1148,12 +1171,12 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $other, wp_validate_auth_cookie( '', 'logged_in' ) );
 		$response = $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) );
 		$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
-		$this->assertSame( 'This is a required agency record. Only a person using the Dashboard can change or delete it.', $response['data']['message'] );
+		$this->assertSame( 'This is a required record. Only a person using the Dashboard can change or delete it.', $response['data']['message'] );
 		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
 	}
 
 	public function test_required_ajax_rejects_ineligible_records_and_agency_scope_id(): void {
-		foreach ( array( $this->input( array( 'required' => '1' ) ), $this->site_input( array( 'required' => '1' ) ), $this->input( array( 'scope_type' => 'agency', 'type' => 'memory', 'required' => '1' ) ), $this->input( array( 'scope_type' => 'agency', 'scope_id' => 0 ) ) ) as $input ) {
+		foreach ( array( $this->input( array( 'type' => 'memory', 'required' => '1' ) ), $this->site_input( array( 'required' => '1' ) ), $this->input( array( 'scope_type' => 'agency', 'type' => 'memory', 'required' => '1' ) ), $this->input( array( 'scope_type' => 'agency', 'scope_id' => 0 ) ) ) as $input ) {
 			$this->assert_error( $this->call( 'mainwp_knowledge_save', $input ), 'mainwp_knowledge_invalid', 400 );
 		}
 		$this->assertSame( 0, $this->row_count() );

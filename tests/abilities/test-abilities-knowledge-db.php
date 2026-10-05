@@ -1606,7 +1606,13 @@ PHP;
 	}
 
 	public static function required_invalid_scopes(): array {
-		return array( 'site' => array( 'site', 'context' ), 'client' => array( 'client', 'skill' ), 'memory' => array( 'agency', 'memory' ) );
+		return array(
+			'site context' => array( 'site', 'context' ),
+			'site skill' => array( 'site', 'skill' ),
+			'agency memory' => array( 'agency', 'memory' ),
+			'client memory' => array( 'client', 'memory' ),
+			'site memory' => array( 'site', 'memory' ),
+		);
 	}
 
 	/** @dataProvider required_invalid_scopes */
@@ -1619,8 +1625,36 @@ PHP;
 		}
 		$result = $this->db->save( $input, MainWP_DB_Knowledge::ORIGIN_UI );
 		$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
-		$this->assertSame( 'Only agency context and agency skills can be required.', $result->get_error_message() );
+		$this->assertSame( 'Only agency and client context and skills can be required.', $result->get_error_message() );
 		$this->assertSame( 0, $this->row_count() );
+	}
+
+	public function test_client_db_storage_required_round_trip_and_rights(): void {
+		$this->set_current_user_as_admin();
+		$client_id = $this->create_test_client();
+		$site_id = $this->create_test_site( array( 'client_id' => $client_id ) );
+		foreach ( array( 'context', 'skill' ) as $type ) {
+			$record = $this->create_record( 'client', $client_id, array( 'type' => $type, 'required' => true ) );
+			$this->assertSame( 1, $record->required );
+			$this->assertSame( 1, $record->verified );
+			$this->assertSame( 1, $this->db->get_record( $record->id )->required );
+			$cleared = $this->db->save( array( 'id' => $record->id, 'required' => false ), MainWP_DB_Knowledge::ORIGIN_UI, 1 );
+			$this->assertNotWPError( $cleared );
+			$this->assertSame( 0, $this->db->get_by_id( $record->id )->required );
+			$this->assertSame( 2, $cleared->revision );
+		}
+		// Full coverage of the client passes can_write(), but setting or touching Required still needs access to every site.
+		$this->restrict_current_user_to_sites( array( $site_id ) );
+		$this->assertTrue( $this->db->can_write( $record ) );
+		$this->assert_error( $this->db->save( $this->input( 'client', $client_id, array( 'required' => true ) ), MainWP_DB_Knowledge::ORIGIN_UI ), 'mainwp_restricted_account', 403 );
+		$this->assert_error( $this->db->save( array( 'id' => $record->id, 'required' => true ), MainWP_DB_Knowledge::ORIGIN_UI, 2 ), 'mainwp_restricted_account', 403 );
+		$this->assertSame( 0, $this->db->get_by_id( $record->id )->required );
+		$this->clear_filters();
+		$this->assertNotWPError( $this->db->save( array( 'id' => $record->id, 'required' => true ), MainWP_DB_Knowledge::ORIGIN_UI, 2 ) );
+		$this->restrict_current_user_to_sites( array( $site_id ) );
+		$this->assert_error( $this->db->save( array( 'id' => $record->id, 'title' => 'Changed' ), MainWP_DB_Knowledge::ORIGIN_UI, 3 ), 'mainwp_restricted_account', 403 );
+		$this->assert_error( $this->db->delete( $record->id, 3, MainWP_DB_Knowledge::ORIGIN_UI ), 'mainwp_restricted_account', 403 );
+		$this->assertSame( 1, $this->db->get_by_id( $record->id )->required );
 	}
 
 	public function test_agency_db_scope_id_validation_and_invalid_scopes(): void {
@@ -1649,12 +1683,14 @@ PHP;
 			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
 			$this->assertSame( 'Leave out required. Only a person using the Dashboard can mark a record as required.', $result->get_error_message() );
 		}
-		$record = $this->create_record( 'agency', 0, array( 'required' => true ) );
-		foreach ( array( $this->db->save( array( 'id' => $record->id, 'title' => 'Changed' ), MainWP_DB_Knowledge::ORIGIN_ABILITY, 1 ), $this->db->delete( $record->id, 1 ) ) as $result ) {
-			$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
-			$this->assertSame( 'This is a required agency record. Only a person using the Dashboard can change or delete it.', $result->get_error_message() );
+		$client_id = $this->create_test_client();
+		foreach ( array( $this->create_record( 'agency', 0, array( 'required' => true ) ), $this->create_record( 'client', $client_id, array( 'required' => true ) ) ) as $record ) {
+			foreach ( array( $this->db->save( array( 'id' => $record->id, 'title' => 'Changed' ), MainWP_DB_Knowledge::ORIGIN_ABILITY, 1 ), $this->db->delete( $record->id, 1 ) ) as $result ) {
+				$this->assert_error( $result, 'mainwp_knowledge_invalid', 400 );
+				$this->assertSame( 'This is a required record. Only a person using the Dashboard can change or delete it.', $result->get_error_message() );
+			}
+			$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
 		}
-		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
 	}
 
 	public static function required_write_operations(): array {

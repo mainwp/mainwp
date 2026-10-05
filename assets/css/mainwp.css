@@ -1009,28 +1009,28 @@ table.mainwp-manage-wpsites-table .error a {
 /* Knowledge panel */
 
 .mainwp-knowledge-section,
-#mainwp-knowledge-inherited {
+.mainwp-knowledge-inherited {
     margin-bottom: 2em;
 }
 
 /* The combined inherited table is the only table that needs a type column. */
-#mainwp-knowledge-panel table th.mainwp-knowledge-type-cell {
+.mainwp-knowledge-panel table th.mainwp-knowledge-type-cell {
     width: 9em;
 }
 
-#mainwp-knowledge-panel table th.mainwp-knowledge-actions-cell {
+.mainwp-knowledge-panel table th.mainwp-knowledge-actions-cell {
     width: 12em;
 }
 
-#mainwp-knowledge-panel table td.mainwp-knowledge-actions-cell {
+.mainwp-knowledge-panel table td.mainwp-knowledge-actions-cell {
     white-space: nowrap;
 }
 
-#mainwp-knowledge-panel table th.mainwp-knowledge-editor-cell {
+.mainwp-knowledge-panel table th.mainwp-knowledge-editor-cell {
     width: 16em;
 }
 
-#mainwp-knowledge-panel table td.mainwp-knowledge-editor-cell {
+.mainwp-knowledge-panel table td.mainwp-knowledge-editor-cell {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;

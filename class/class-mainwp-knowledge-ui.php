@@ -32,6 +32,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         'mainwp_knowledge_get',
         'mainwp_knowledge_save',
         'mainwp_knowledge_delete',
+        'mainwp_knowledge_review',
     );
 
     /**
@@ -59,6 +60,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $handler->add_action( 'mainwp_knowledge_get', array( $self, 'ajax_get' ) );
         $handler->add_action( 'mainwp_knowledge_save', array( $self, 'ajax_save' ) );
         $handler->add_action( 'mainwp_knowledge_delete', array( $self, 'ajax_delete' ) );
+        $handler->add_action( 'mainwp_knowledge_review', array( $self, 'ajax_review' ) );
     }
 
     /**
@@ -87,6 +89,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'view'           => __( 'View', 'mainwp' ),
             'remove'         => __( 'Delete', 'mainwp' ),
             'unverified'     => __( 'Unverified', 'mainwp' ),
+            'required'       => __( 'Required', 'mainwp' ),
             'unverifiedHint' => __( 'Saved by an AI agent and not yet reviewed by a person. AI agents treat it as information only until you review and save it.', 'mainwp' ),
             'confirmDelete'  => __( 'Delete this knowledge record? Connected AI agents lose it immediately.', 'mainwp' ),
             'conflict'       => __( 'Someone else saved this record while you were editing it.', 'mainwp' ),
@@ -135,6 +138,120 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'can_write' => true === $db->can_write( $scope ),
                 'inherited' => $inherited,
             )
+        );
+    }
+
+    /**
+     * Review rows and totals share the same SQL visibility rules as ability lists.
+     *
+     * @return void
+     */
+    public function ajax_review() {
+        $this->guard( 'mainwp_knowledge_review' );
+        $options = array(
+            'status' => array( 'unverified', 'verified', 'all' ),
+            'type'   => array( '', 'context', 'skill', 'memory' ),
+            'level'  => array_merge( array( '' ), MainWP_DB_Knowledge::SCOPE_TYPES ),
+        );
+        $filters = array();
+        foreach ( $options as $key => $allowed ) {
+            $value = isset( $_POST[ $key ] ) ? wp_unslash( $_POST[ $key ] ) : $allowed[0]; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- guard() verifies the nonce; the fixed allowlist below validates each value.
+            if ( ! is_string( $value ) || ! in_array( $value, $allowed, true ) ) {
+                $this->send_invalid( $key );
+            }
+            $filters[ $key ] = $value;
+        }
+        $draw   = $this->read_int( 'draw' );
+        $offset = $this->read_int( 'start' );
+        $limit  = array_key_exists( 'length', $_POST ) ? $this->read_int( 'length' ) : 25; // phpcs:ignore WordPress.Security.NonceVerification -- guard() verifies the nonce.
+        foreach ( array(
+            'draw'   => $draw,
+            'start'  => $offset,
+            'length' => $limit,
+        ) as $key => $value ) {
+            if ( $value < 0 || ( 'length' === $key && ( 0 === $value || $value > 100 ) ) ) {
+                $this->send_invalid( $key );
+            }
+        }
+        $args = array(
+            'type'       => $filters['type'],
+            'scope_type' => $filters['level'],
+            'with_body'  => false,
+            'limit'      => $limit,
+            'offset'     => $offset,
+        );
+        if ( 'all' !== $filters['status'] ) {
+            $args['verified'] = 'verified' === $filters['status'];
+        }
+        $db   = MainWP_DB_Knowledge::instance();
+        $page = $db->get_records_page( $args );
+        if ( is_wp_error( $page ) ) {
+            $this->send_error( $page );
+        }
+        $total = $db->count_records();
+        if ( is_wp_error( $total ) ) {
+            $this->send_error( $total );
+        }
+        $rows = array();
+        foreach ( $page['items'] as $record ) {
+            $row = $this->review_row( $record );
+            if ( is_wp_error( $row ) ) {
+                $this->send_error( $row );
+            }
+            $rows[] = $row;
+        }
+        wp_send_json(
+            array(
+                'draw'            => $draw,
+                'recordsTotal'    => $total,
+                'recordsFiltered' => $page['total'],
+                'data'            => $rows,
+            )
+        );
+    }
+
+    /**
+     * Escaped cells for the server-side table; bodies stay in the modal endpoint.
+     *
+     * @param object $record Visible record.
+     *
+     * @return array|\WP_Error Cells, or a scope lookup error.
+     */
+    private function review_row( $record ) {
+        $db    = MainWP_DB_Knowledge::instance();
+        $level = __( 'Agency', 'mainwp' );
+        if ( 'agency' !== $record->scope_type ) {
+            $scope = $db->guard_read(
+                static function () use ( $record ) {
+                    return 'site' === $record->scope_type
+                        ? MainWP_DB::instance()->get_website_by_id( $record->scope_id )
+                        : MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $record->scope_id );
+                }
+            );
+            if ( is_wp_error( $scope ) ) {
+                return $scope;
+            }
+            /* translators: %s: site or client name. */
+            $level = sprintf( 'site' === $record->scope_type ? __( 'Site: %s', 'mainwp' ) : __( 'Client: %s', 'mainwp' ), $scope->name ?? '' );
+        }
+        $summary = $this->record_summary( $record );
+        $editor  = $summary['updated_by_name'];
+        $title   = esc_html( $record->title );
+        if ( 'skill' === $record->type ) {
+            $title .= '<div class="ui small text">' . esc_html( $record->description ) . '</div>';
+        }
+        if ( $record->required ) {
+            $title .= ' <span class="ui mini label">' . esc_html__( 'Required', 'mainwp' ) . '</span>';
+        }
+        return array(
+            'id'      => (int) $record->id,
+            'level'   => '<span class="ui mini label">' . esc_html( $level ) . '</span>',
+            'type'    => esc_html( $summary['type_label'] ),
+            'title'   => $title,
+            'status'  => '<span class="ui mini ' . ( $record->verified ? 'green' : 'yellow' ) . ' label">' . ( $record->verified ? esc_html__( 'Verified', 'mainwp' ) : esc_html__( 'Unverified', 'mainwp' ) ) . '</span>',
+            'editor'  => esc_html( $editor ),
+            'updated' => esc_html( $summary['updated_ago'] ),
+            'actions' => '<button type="button" class="ui mini basic button mainwp-knowledge-open" data-id="' . esc_attr( $record->id ) . '">' . esc_html__( 'Open', 'mainwp' ) . '</button>',
         );
     }
 
@@ -208,7 +325,12 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $this->send_error( $record );
         }
 
-        wp_send_json_success( array( 'record' => $this->record_full( $record ) ) );
+        wp_send_json_success(
+            array(
+                'record'    => $this->record_full( $record ),
+                'can_write' => true === MainWP_DB_Knowledge::instance()->can_write( $record ),
+            )
+        );
     }
 
     /**
@@ -432,6 +554,11 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     private function record_summary( $record ) {
         $editor      = get_userdata( (int) $record->updated_by );
+        $editor_name = $editor ? ( '' !== $editor->display_name ? $editor->display_name : $editor->user_login ) : __( 'Unknown user', 'mainwp' );
+        if ( $editor && MainWP_DB_Knowledge::ORIGIN_ABILITY === $record->source ) {
+            /* translators: %s: Dashboard user whose credentials the agent used. */
+            $editor_name = sprintf( __( 'AI agent via %s', 'mainwp' ), $editor_name );
+        }
         $labels      = static::type_labels();
         $preview_raw = isset( $record->body_preview )
             ? (string) $record->body_preview
@@ -456,11 +583,12 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'revision'        => (int) $record->revision,
             'source'          => $record->source,
             'verified'        => (int) $record->verified,
+            'required'        => (int) $record->required,
             'updated_at'      => (int) $record->updated_at,
             /* translators: %s: human readable time difference. */
             'updated_ago'     => sprintf( __( '%s ago', 'mainwp' ), human_time_diff( (int) $record->updated_at ) ),
             'updated_by'      => (int) $record->updated_by,
-            'updated_by_name' => $editor ? ( '' !== $editor->display_name ? $editor->display_name : $editor->user_login ) : __( 'Unknown user', 'mainwp' ),
+            'updated_by_name' => $editor_name,
         );
     }
 
@@ -481,7 +609,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * Renders the panel for one scope. The list itself loads over AJAX so the
      * same permission path serves the first paint and every refresh.
      *
-     * @param string $scope_type   'site' or 'client'.
+     * @param string $scope_type   Agency, site or client.
      * @param int    $scope_id     Site or client id.
      * @param bool   $as_accordion Whether to use the edit-page accordion layout.
      *
@@ -489,10 +617,16 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function render_panel( $scope_type, $scope_id, $as_accordion = false ) {
         $scope_id = (int) $scope_id;
-        if ( $scope_id < 1 || ! in_array( $scope_type, MainWP_DB_Knowledge::SCOPE_TYPES, true ) ) {
+        if ( ( 'agency' === $scope_type ? 0 !== $scope_id : $scope_id < 1 ) || ! in_array( $scope_type, MainWP_DB_Knowledge::SCOPE_TYPES, true ) ) {
             return;
         }
 
+        $can_write         = true === MainWP_DB_Knowledge::instance()->can_write(
+            (object) array(
+                'scope_type' => $scope_type,
+                'scope_id'   => $scope_id,
+            )
+        );
         $client_link_label = __( 'Edit on the client profile', 'mainwp' );
         if ( 'site' === $scope_type ) {
             $db   = MainWP_DB_Knowledge::instance();
@@ -530,6 +664,10 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'help'  => __( 'Outcomes and observations recorded over time. Read them as history, not as the current state.', 'mainwp' ),
             ),
         );
+        if ( 'agency' === $scope_type ) {
+            $sections['context']['help'] = __( 'Facts an AI agent should know before it acts on any site: your agency\'s standards, tools, contacts and policies.', 'mainwp' );
+            $sections['skill']['help']   = __( 'Procedures and rules to follow on any site: how to deploy, what to check first, what never to touch.', 'mainwp' );
+        }
         ?>
         <?php if ( $as_accordion ) : ?>
         <div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="mainwp-knowledge-accordion">
@@ -540,10 +678,15 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </h2>
             <div class="content active">
         <?php endif; ?>
-        <div class="<?php echo $as_accordion ? 'ui basic padded segment dimmable mainwp-knowledge-accordion-content' : 'ui padded segment dimmable'; ?>" id="mainwp-knowledge-panel" data-scope-type="<?php echo esc_attr( $scope_type ); ?>" data-scope-id="<?php echo esc_attr( $scope_id ); ?>">
+        <div class="<?php echo $as_accordion ? 'ui basic padded segment dimmable mainwp-knowledge-panel mainwp-knowledge-accordion-content' : ( 'agency' === $scope_type ? 'ui basic segment dimmable mainwp-knowledge-panel' : 'ui padded segment dimmable mainwp-knowledge-panel' ); ?>" data-scope-type="<?php echo esc_attr( $scope_type ); ?>" data-scope-id="<?php echo esc_attr( $scope_id ); ?>" data-can-write="<?php echo esc_attr( $can_write ? '1' : '0' ); ?>">
             <div class="ui dimmer mainwp-knowledge-loader" aria-hidden="true">
                 <div class="ui loader" role="status" aria-label="<?php esc_attr_e( 'Loading...', 'mainwp' ); ?>"></div>
             </div>
+            <?php if ( 'agency' === $scope_type ) : ?>
+                <?php if ( ! $can_write ) : ?>
+            <div class="ui message"><?php esc_html_e( 'Only users with access to every site can change agency records.', 'mainwp' ); ?></div>
+            <?php endif; ?>
+            <?php else : ?>
             <div class="ui info message">
                 <p><?php esc_html_e( 'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.', 'mainwp' ); ?></p>
                 <p>
@@ -554,7 +697,8 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <?php endif; ?>
                 </p>
             </div>
-            <div class="ui hidden message" id="mainwp-knowledge-message"></div>
+            <?php endif; ?>
+            <div class="ui hidden message mainwp-knowledge-message"></div>
             <?php foreach ( $sections as $type => $section ) : ?>
             <div class="mainwp-knowledge-section" data-type="<?php echo esc_attr( $type ); ?>">
                 <div class="ui small header">
@@ -571,15 +715,17 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </thead>
                     <tbody></tbody>
                 </table>
+                <?php if ( $can_write ) : ?>
                 <button type="button" class="ui mini basic green button mainwp-knowledge-add" data-type="<?php echo esc_attr( $type ); ?>" style="display:none">
                     <?php
                     echo esc_html( $section['add'] );
                     ?>
                 </button>
+                <?php endif; ?>
             </div>
             <?php endforeach; ?>
             <?php if ( 'site' === $scope_type ) : ?>
-            <div id="mainwp-knowledge-inherited" style="display:none">
+            <div class="mainwp-knowledge-inherited" style="display:none">
                 <div class="ui small header">
                     <span class="mainwp-knowledge-inherited-title"></span>
                     <div class="sub header">
@@ -606,7 +752,8 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         </div>
         <?php endif; ?>
         <?php
-        static::render_modal();
+        // WordPress deduplicates this callback when several panels share the page.
+        add_action( 'admin_footer', array( static::class, 'render_modal' ) );
     }
 
     /**
@@ -614,7 +761,13 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @return void
      */
-    private static function render_modal() {
+    public static function render_modal() {
+        $can_write_agency = true === MainWP_DB_Knowledge::instance()->can_write(
+            (object) array(
+                'scope_type' => 'agency',
+                'scope_id'   => 0,
+            )
+        );
         ?>
         <div class="ui small modal" id="mainwp-knowledge-modal">
             <i class="close icon"></i>
@@ -648,12 +801,22 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <label for="mainwp-knowledge-body"><?php esc_html_e( 'Body', 'mainwp' ); ?></label>
                         <textarea id="mainwp-knowledge-body" rows="10" maxlength="<?php echo (int) MainWP_DB_Knowledge::BODY_MAX_LENGTH; ?>" placeholder="<?php esc_attr_e( 'Plain text. Write it the way you would brief a new team member.', 'mainwp' ); ?>"></textarea>
                     </div>
+                    <?php if ( $can_write_agency ) : ?>
+                    <div class="field" id="mainwp-knowledge-required-field" style="display:none">
+                        <div class="ui checkbox">
+                            <input type="checkbox" id="mainwp-knowledge-required" aria-describedby="mainwp-knowledge-required-help">
+                            <label for="mainwp-knowledge-required"><?php esc_html_e( 'Required', 'mainwp' ); ?></label>
+                        </div>
+                        <p id="mainwp-knowledge-required-help"><?php esc_html_e( 'Client and site records cannot override a required record. Only a Dashboard user can edit or delete it.', 'mainwp' ); ?></p>
+                    </div>
+                    <?php endif; ?>
                     <input type="hidden" id="mainwp-knowledge-id" value="0">
                     <input type="hidden" id="mainwp-knowledge-revision" value="0">
                 </div>
             </div>
             <div class="actions">
                 <button type="button" class="ui cancel button" data-cancel="<?php esc_attr_e( 'Cancel', 'mainwp' ); ?>" data-close="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"><?php esc_html_e( 'Cancel', 'mainwp' ); ?></button>
+                <button type="button" class="ui red button" id="mainwp-knowledge-remove" style="display:none"><?php esc_html_e( 'Delete', 'mainwp' ); ?></button>
                 <button type="button" class="ui green button" id="mainwp-knowledge-save"><?php esc_html_e( 'Save', 'mainwp' ); ?></button>
             </div>
         </div>

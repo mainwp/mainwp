@@ -336,6 +336,21 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             static::init_mainwp_menu_items( $menus_items_low, 'second' );
 
         }
+
+        // Knowledge uses the ability base gate, including users without the administrator role.
+        if ( true === MainWP_Abilities_Util::check_rest_api_permission() ) {
+            static::init_mainwp_menu_items(
+                array(
+                    array(
+                        'slug'               => 'Knowledge',
+                        'menu_level'         => 2,
+                        'menu_rights'        => true,
+                        'init_menu_callback' => array( MainWP_Knowledge::class, 'init_menu' ),
+                    ),
+                ),
+                'knowledge'
+            );
+        }
     }
 
     /**
@@ -1182,6 +1197,12 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                     </div>
 
+                    <?php if ( true === MainWP_Abilities_Util::check_rest_api_permission() && ! static::is_disable_menu_item( 2, 'Knowledge' ) ) : ?>
+                    <div class="item">
+                        <div class="title"><a href="<?php echo esc_url( admin_url( 'admin.php?page=Knowledge' ) ); ?>"><i class="book icon"></i> <?php esc_html_e( 'Knowledge', 'mainwp' ); ?></a></div>
+                    </div>
+                    <?php endif; ?>
+
                     <div class="item">
                         <div class="title"><a href="admin.php?page=ManageClients" class="with-sub"><i class="users icon"></i> <?php esc_html_e( 'Clients', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
@@ -1295,7 +1316,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <a href="<?php echo esc_url( $link['url'] ); ?>" class="ui mini basic fluid button small text"><i class="icon wordpress"></i> <?php echo esc_html( $link['text'] ); ?></a><?php //phpcs:ignore -- to avoid auto fix icon wordpress. ?>
                     </div>
                     <div class="column">
-                        <a id="mainwp-help-menu-item-mobile" class="ui mini basic fluid button" href="#"><i class="question circle icon"></i> <?php esc_html_e( 'Help', 'mainwp' ); ?></a><?php //NOSONAR -- ignore double ID, elements not rendered at the same time. ?>
+                        <a id="mainwp-help-menu-item-mobile" class="ui mini basic fluid button" href="#"><i class="question circle icon"></i> <?php esc_html_e( 'Help', 'mainwp' ); ?></a><?php // NOSONAR -- ignore double ID, elements not rendered at the same time. ?>
                     </div>
                     <div class="column item-wp-admin">
                         <a class="ui mini basic fluid button" href="<?php echo esc_url_raw( wp_logout_url() ); ?>"><i class="sign out icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?></a>

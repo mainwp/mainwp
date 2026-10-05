@@ -39,6 +39,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			$wpdb->suppress_errors( $this->suppressed_errors );
 			$this->suppressed_errors = null;
 		}
+		remove_action( 'admin_footer', array( MainWP_Knowledge_UI::class, 'render_modal' ) );
 		$_COOKIE = $this->previous_cookies;
 		parent::tearDown();
 	}
@@ -851,6 +852,9 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		ob_start();
 		try {
 			\MainWP\Dashboard\MainWP_Manage_Sites_View::render_knowledge( $site );
+			if ( has_action( 'admin_footer', array( MainWP_Knowledge_UI::class, 'render_modal' ) ) ) {
+				MainWP_Knowledge_UI::render_modal();
+			}
 		} finally {
 			$html                      = ob_get_clean();
 			$GLOBALS['current_screen'] = $previous;
@@ -879,7 +883,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$html = $this->render_site_knowledge();
 
 		$this->assertStringContainsString(
-			'class="ui padded segment dimmable" id="mainwp-knowledge-panel" data-scope-type="site" data-scope-id="' . $this->site_id . '"',
+			'class="ui padded segment dimmable mainwp-knowledge-panel" data-scope-type="site" data-scope-id="' . $this->site_id . '" data-can-write="0"',
 			$html
 		);
 		$this->assertStringNotContainsString( '<h3 class="ui header">Knowledge</h3>', $html );
@@ -909,18 +913,19 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$client = \MainWP\Dashboard\MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $this->client_id );
 		ob_start();
 		\MainWP\Dashboard\MainWP_Client::render_add_client_content( $client );
+		MainWP_Knowledge_UI::render_modal();
 		$html = ob_get_clean();
 
 		$notes     = strpos( $html, 'id="mainwp-notes-meta-accordion"' );
 		$knowledge = strpos( $html, 'id="mainwp-knowledge-accordion"' );
-		$panel     = strpos( $html, 'id="mainwp-knowledge-panel" data-scope-type="client" data-scope-id="' . $this->client_id . '"' );
+		$panel     = strpos( $html, 'mainwp-knowledge-panel mainwp-knowledge-accordion-content" data-scope-type="client" data-scope-id="' . $this->client_id . '"' );
 
 		$this->assertNotFalse( $notes );
 		$this->assertNotFalse( $knowledge );
 		$this->assertNotFalse( $panel );
 		$this->assertGreaterThan( $notes, $knowledge );
 		$this->assertGreaterThan( $knowledge, $panel );
-		$this->assertSame( 1, substr_count( $html, 'id="mainwp-knowledge-panel"' ) );
+		$this->assertSame( 1, substr_count( $html, 'mainwp-knowledge-panel ' ) );
 		$this->assertStringContainsString( 'class="ui dimmer mainwp-knowledge-loader"', $html );
 		$this->assertStringNotContainsString( '<th class="mainwp-knowledge-type-cell">', $html );
 		$this->assertStringNotContainsString( '<th class="mainwp-knowledge-updated-cell">', $html );
@@ -1077,11 +1082,13 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			$response = $this->call( 'mainwp_knowledge_save', $input );
 			$this->assertTrue( $response['success'] );
 			$id = $response['data']['record']['id'];
+			$this->assertSame( 1, $response['data']['record']['required'] );
 			$this->assertSame( 1, $this->db->get_by_id( $id )->required );
 			$this->assertSame( 1, $this->db->get_by_id( $id )->verified );
 			$input['required'] = '0';
 			$response = $this->call( 'mainwp_knowledge_save', $input + array( 'id' => $id, 'revision' => 1 ) );
 			$this->assertTrue( $response['success'] );
+			$this->assertSame( 0, $response['data']['record']['required'] );
 			$this->assertSame( 0, $this->db->get_by_id( $id )->required );
 			$this->assertSame( 2, $this->db->get_by_id( $id )->revision );
 		}
@@ -1099,7 +1106,10 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $list['success'] );
 		$this->assertFalse( $list['data']['can_write'] );
 		$this->assertCount( 1, $list['data']['records'] );
-		$this->assertTrue( $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) )['success'] );
+		$get = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+		$this->assertTrue( $get['success'] );
+		$this->assertFalse( $get['data']['can_write'] );
+		$this->assertSame( 1, $get['data']['record']['required'] );
 		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
 	}
 
@@ -1132,5 +1142,184 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			$this->assert_error( $this->call( 'mainwp_knowledge_save', $input ), 'mainwp_knowledge_invalid', 400 );
 		}
 		$this->assertSame( 0, $this->row_count() );
+	}
+
+	public function test_get_reports_scope_and_write_access_for_all_levels(): void {
+		foreach ( array( $this->input( array( 'scope_type' => 'agency' ) ), $this->input(), $this->site_input() ) as $input ) {
+			$record = $this->create_record( $input );
+			$get = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+			$this->assertTrue( $get['success'] );
+			$this->assertTrue( $get['data']['can_write'] );
+			$this->assertSame( $record->scope_type, $get['data']['record']['scope_type'] );
+			$this->assertSame( $record->scope_id, $get['data']['record']['scope_id'] );
+		}
+	}
+
+	public function test_get_reports_read_only_access_for_restricted_scopes_and_rights(): void {
+		$agency = $this->create_record( array( 'scope_type' => 'agency' ) );
+		$client = $this->create_record();
+		$site = $this->create_record( $this->site_input() );
+		$this->create_test_site( array( 'client_id' => $this->client_id ) );
+		$this->restrict_to_own_site();
+		$this->withhold_right( 'edit_sites' );
+		foreach ( array( $agency, $client, $site ) as $record ) {
+			$get = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+			$this->assertTrue( $get['success'] );
+			$this->assertFalse( $get['data']['can_write'] );
+			$this->assertSame( $record->scope_type, $get['data']['record']['scope_type'] );
+			$this->assertSame( $record->scope_id, $get['data']['record']['scope_id'] );
+		}
+	}
+
+	public function test_get_agency_without_manage_clients_is_read_only(): void {
+		$record = $this->create_record( array( 'scope_type' => 'agency', 'required' => true ) );
+		$this->withhold_right( 'manage_clients' );
+		$get = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+		$this->assertTrue( $get['success'] );
+		$this->assertFalse( $get['data']['can_write'] );
+		$this->assertSame( 1, $get['data']['record']['required'] );
+		$input = $this->input( array( 'scope_type' => 'agency', 'required' => '0', 'id' => $record->id, 'revision' => 1 ) );
+		$this->assert_error( $this->call( 'mainwp_knowledge_save', $input ), 'mainwp_access_denied', 403 );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_multiple_panels_share_one_footer_modal(): void {
+		ob_start();
+		MainWP_Knowledge_UI::render_panel( 'site', $this->site_id );
+		MainWP_Knowledge_UI::render_panel( 'client', $this->client_id );
+		$html = ob_get_clean();
+		$this->assertSame( 2, substr_count( $html, 'mainwp-knowledge-panel"' ) );
+		$this->assertStringNotContainsString( 'id="mainwp-knowledge-modal"', $html );
+		$this->assertNotFalse( has_action( 'admin_footer', array( MainWP_Knowledge_UI::class, 'render_modal' ) ) );
+		ob_start();
+		MainWP_Knowledge_UI::render_modal();
+		$modal = ob_get_clean();
+		$this->assertSame( 1, substr_count( $modal, 'id="mainwp-knowledge-modal"' ) );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-type-view" readonly', $modal );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-remove"', $modal );
+	}
+
+	private function review_record( array $overrides = array(), bool $verified = false ): object {
+		$input = $this->input( $overrides );
+		if ( 'skill' === $input['type'] ) {
+			$input['description'] = 'Use <staging> & check the deployment.';
+		}
+		$record = $this->db->save( $input, $verified ? MainWP_DB_Knowledge::ORIGIN_UI : MainWP_DB_Knowledge::ORIGIN_ABILITY );
+		$this->assertNotWPError( $record );
+		return $record;
+	}
+
+	public function test_review_filters_status_type_and_level(): void {
+		$agency = $this->review_record( array( 'scope_type' => 'agency', 'type' => 'skill' ) );
+		$client = $this->review_record( array( 'type' => 'memory' ) );
+		$site = $this->review_record( $this->site_input(), true );
+		$cases = array(
+			array( array(), array( $agency->id, $client->id ) ),
+			array( array( 'status' => 'verified' ), array( $site->id ) ),
+			array( array( 'status' => 'all' ), array( $agency->id, $client->id, $site->id ) ),
+			array( array( 'type' => 'skill' ), array( $agency->id ) ),
+			array( array( 'level' => 'client' ), array( $client->id ) ),
+			array( array( 'status' => 'all', 'type' => 'context', 'level' => 'site' ), array( $site->id ) ),
+			array( array( 'type' => 'memory', 'level' => 'agency' ), array() ),
+		);
+		foreach ( $cases as $case ) {
+			$response = $this->call( 'mainwp_knowledge_review', $case[0] );
+			$this->assertEqualsCanonicalizing( $case[1], array_column( $response['data'], 'id' ) );
+			$this->assertSame( count( $case[1] ), $response['recordsFiltered'] );
+			$this->assertSame( 3, $response['recordsTotal'] );
+		}
+	}
+
+	public function test_review_pagination_counts_visible_matching_rows_before_limit(): void {
+		$ids = array();
+		for ( $i = 0; $i < 5; ++$i ) {
+			$ids[] = $this->review_record()->id;
+		}
+		$this->review_record( array(), true );
+		$page = $this->call( 'mainwp_knowledge_review', array( 'draw' => '7', 'start' => '2', 'length' => '2' ) );
+		$this->assertSame( 7, $page['draw'] );
+		$this->assertSame( 6, $page['recordsTotal'] );
+		$this->assertSame( 5, $page['recordsFiltered'] );
+		$this->assertSame( array_reverse( array_slice( $ids, 1, 2 ) ), array_column( $page['data'], 'id' ) );
+		$empty = $this->call( 'mainwp_knowledge_review', array( 'start' => '8', 'length' => '2' ) );
+		$this->assertSame( 5, $empty['recordsFiltered'] );
+		$this->assertSame( array(), $empty['data'] );
+	}
+
+	public function test_review_restricted_visibility_matches_knowledge_list_in_sql(): void {
+		$agency = $this->review_record( array( 'scope_type' => 'agency' ) );
+		$client = $this->review_record();
+		$site = $this->review_record( $this->site_input() );
+		$other_client = $this->create_test_client();
+		$other_site = $this->create_test_site( array( 'client_id' => $other_client ) );
+		$this->review_record( array( 'scope_id' => $other_client ) );
+		$this->review_record( array( 'scope_type' => 'site', 'scope_id' => $other_site ) );
+		$this->restrict_to_own_site();
+		$page = $this->call( 'mainwp_knowledge_review', array( 'length' => '1' ) );
+		$this->assertSame( 3, $page['recordsTotal'] );
+		$this->assertSame( 3, $page['recordsFiltered'] );
+		$this->assertCount( 1, $page['data'] );
+		$all = $this->call( 'mainwp_knowledge_review', array( 'length' => '10' ) );
+		$this->assertEqualsCanonicalizing( array( $agency->id, $client->id, $site->id ), array_column( $all['data'], 'id' ) );
+		$ability = \MainWP\Dashboard\MainWP_Abilities_Knowledge::execute_list_knowledge( array() );
+		$this->assertSame( array_column( $ability['items'], 'id' ), array_column( $all['data'], 'id' ) );
+		$this->withhold_right( 'manage_clients' );
+		$this->track_filter( 'mainwp_check_site_access', '__return_false' );
+		$agency_only = $this->call( 'mainwp_knowledge_review', array() );
+		$this->assertSame( 1, $agency_only['recordsTotal'] );
+		$this->assertSame( array( $agency->id ), array_column( $agency_only['data'], 'id' ) );
+	}
+
+	public function test_review_refuses_bad_nonce_and_missing_base_permission(): void {
+		$this->review_record();
+		$this->assert_error( $this->call( 'mainwp_knowledge_review', array( 'security' => wp_create_nonce( 'mainwp_knowledge_list' ) ) ), 'mainwp_knowledge_insecure', 403 );
+		$this->set_current_user_as_subscriber();
+		$this->assert_error( $this->call( 'mainwp_knowledge_review', array() ), 'mainwp_permission_denied', 403 );
+		wp_set_current_user( 0 );
+		$this->assert_error( $this->call( 'mainwp_knowledge_review', array() ), 'mainwp_permission_denied', 401 );
+	}
+
+	public function test_review_rejects_malformed_filters_and_pagination(): void {
+		foreach ( array( array( 'status' => 'draft' ), array( 'type' => 'code' ), array( 'level' => 'global' ), array( 'status' => array( 'all' ) ), array( 'start' => '-1' ), array( 'length' => '0' ), array( 'draw' => 'oops' ) ) as $post ) {
+			$this->assert_error( $this->call( 'mainwp_knowledge_review', $post ), 'mainwp_knowledge_invalid', 400 );
+		}
+	}
+
+	public function test_review_rows_escape_copy_and_show_agent_provenance(): void {
+		$record = $this->review_record( array( 'scope_type' => 'agency', 'type' => 'skill', 'title' => '<script>Rule</script>' ) );
+		$page = $this->call( 'mainwp_knowledge_review', array() );
+		$row = $page['data'][0];
+		$this->assertSame( $record->id, $row['id'] );
+		$this->assertStringContainsString( '&lt;script&gt;Rule&lt;/script&gt;', $row['title'] );
+		$this->assertStringContainsString( 'Use &lt;staging&gt; &amp; check the deployment.', $row['title'] );
+		$this->assertStringContainsString( 'Unverified', $row['status'] );
+		$this->assertSame( 'AI agent via ' . esc_html( wp_get_current_user()->display_name ), $row['editor'] );
+		$this->assertStringContainsString( 'mainwp-knowledge-open', $row['actions'] );
+		$this->assertStringContainsString( 'Open', $row['actions'] );
+		$this->assertArrayNotHasKey( 'body', $row );
+	}
+
+	public function test_review_database_failure_is_an_error_not_an_empty_queue(): void {
+		$this->review_record();
+		$this->fail_selects_on( 'mainwp_knowledge' );
+		$this->assert_error( $this->call( 'mainwp_knowledge_review', array() ), 'mainwp_knowledge_db_error', 500 );
+	}
+
+	public function test_agent_editor_labels_use_final_copy_and_unknown_user(): void {
+		$record = $this->review_record( array( 'scope_type' => 'agency' ) );
+		$get = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+		$this->assertSame( 'AI agent via ' . wp_get_current_user()->display_name, $get['data']['record']['updated_by_name'] );
+		global $wpdb;
+		$wpdb->update( $wpdb->prefix . 'mainwp_knowledge', array( 'updated_by' => 0 ), array( 'id' => $record->id ) );
+		$get = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+		$this->assertSame( 'Unknown user', $get['data']['record']['updated_by_name'] );
+		$page = $this->call( 'mainwp_knowledge_review', array() );
+		$this->assertSame( 'Unknown user', $page['data'][0]['editor'] );
+	}
+
+	public function test_review_handler_is_registered_with_its_nonce(): void {
+		MainWP_Knowledge_UI::init();
+		$this->assertContains( 'mainwp_knowledge_review', MainWP_Knowledge_UI::ACTIONS );
+		$this->assertNotFalse( has_action( 'wp_ajax_mainwp_knowledge_review', array( MainWP_Knowledge_UI::instance(), 'ajax_review' ) ) );
 	}
 }

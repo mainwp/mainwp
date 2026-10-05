@@ -3427,7 +3427,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
             $information = MainWP_Connect::fetch_url_authed( $site, 'upgrade' );
 
-            MainWP_Updates_Handler::activity_log_upgrade( $website, $information ); // see do_action_mainwp_install_actions for more details about the upgrade: plugins, themes, translation.
+            MainWP_Updates_Handler::activity_log_upgrade( $site, $information ); // see do_action_mainwp_install_actions for more details about the upgrade: plugins, themes, translation.
 
             /**
              * Action: mainwp_after_wp_update

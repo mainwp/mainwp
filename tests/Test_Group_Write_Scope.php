@@ -630,6 +630,82 @@ class Test_Group_Write_Scope extends \WP_UnitTestCase {
         $this->assertSame( 0, $this->hook_calls['mainwp_added_new_group'] );
     }
 
+    /** @return array Item fields a REST filter can fill with tag names. */
+    public static function rest_name_fields(): array {
+        return array( 'groupids' => array( 'groupids' ), 'groupnames_import' => array( 'groupnames_import' ) );
+    }
+
+    /**
+     * @dataProvider rest_name_fields
+     * @param string $field Item field the filter fills.
+     */
+    public function test_rest_named_tag_filter_refuses_ungranted_existing_name( $field ): void {
+        $granted = $this->group();
+        $name    = MainWP_DB_Common::instance()->get_group_by_id( $this->group() )->name;
+        $this->scope( 'all', array( $granted ) );
+        $this->filter( 'mainwp_rest_pre_insert_site_item', static function ( $item ) use ( $field, $name ) { $item[ $field ] = 'groupids' === $field ? array( $name ) : $name; return $item; } );
+        $before = $this->before_write();
+        $result = $this->rest_add_site( (string) $granted );
+        $this->assertWPError( $result );
+        $this->assertSame( 403, $result->get_error_data()['status'] );
+        $this->assertSame( 'Error - insufficient permissions!', $result->get_error_message() );
+        $this->assertSame( 0, $this->register_calls );
+        $this->assert_unchanged( $before );
+    }
+
+    /**
+     * @dataProvider invalid_groups
+     * @param string $case Group case.
+     */
+    public function test_rest_tag_filter_refuses_ungranted_or_missing_numeric_id( $case ): void {
+        $granted = $this->group();
+        $added   = 'missing' === $case ? 99999999 : $this->group();
+        $this->scope( 'all', array( $granted ) );
+        $this->filter( 'mainwp_rest_pre_insert_site_item', static function ( $item ) use ( $added ) { $item['groupids'][] = (string) $added; return $item; } );
+        $before = $this->before_write();
+        $result = $this->rest_add_site( (string) $granted );
+        $this->assertWPError( $result );
+        $this->assertSame( 403, $result->get_error_data()['status'] );
+        $this->assertSame( 'Error - insufficient permissions!', $result->get_error_message() );
+        $this->assertSame( 0, $this->register_calls );
+        $this->assert_unchanged( $before );
+    }
+
+    /**
+     * @dataProvider rest_name_fields
+     * @param string $field Item field the filter fills.
+     */
+    public function test_rest_named_tag_filter_allows_granted_existing_name( $field ): void {
+        $group = $this->group();
+        $name  = MainWP_DB_Common::instance()->get_group_by_id( $group )->name;
+        $this->scope( 'all', array( $group ) );
+        $this->filter( 'mainwp_rest_pre_insert_site_item', static function ( $item ) use ( $field, $name ) { $item[ $field ] = 'groupids' === $field ? array( $name ) : $name; return $item; } );
+        $this->before_write();
+        $result = $this->rest_add_site();
+        $this->assertNotWPError( $result );
+        $this->assertSame( 1, $result->get_data()['success'] );
+        $this->assertSame( 1, $this->register_calls );
+        $this->assertSame( array( (int) $result->get_data()['data']['id'] ), $this->members( $group ) );
+        $this->assertSame( 0, $this->hook_calls['mainwp_added_new_group'] );
+    }
+
+    /** Unrestricted callers keep attaching any existing tag a filter supplies. */
+    public function test_rest_tag_filter_unrestricted_existing_name_and_id(): void {
+        $named   = $this->group();
+        $numeric = $this->group();
+        $name    = MainWP_DB_Common::instance()->get_group_by_id( $named )->name;
+        $this->scope( 'all', 'all' );
+        $this->filter( 'mainwp_rest_pre_insert_site_item', static function ( $item ) use ( $name, $numeric ) { $item['groupids'] = array( $name, (string) $numeric ); return $item; } );
+        $this->before_write();
+        $result = $this->rest_add_site();
+        $this->assertNotWPError( $result );
+        $this->assertSame( 1, $result->get_data()['success'] );
+        $site = (int) $result->get_data()['data']['id'];
+        $this->assertSame( array( $site ), $this->members( $named ) );
+        $this->assertSame( array( $site ), $this->members( $numeric ) );
+        $this->assertSame( 0, $this->hook_calls['mainwp_added_new_group'] );
+    }
+
     /** @param string $groups Public numeric group input. @return mixed REST response. */
     private function rest_add_site( $groups = '' ) {
         $this->filter( 'mainwp_fetch_url_not_authed_pre', function () { ++$this->register_calls; return array( 'register' => 'OK' ); } );

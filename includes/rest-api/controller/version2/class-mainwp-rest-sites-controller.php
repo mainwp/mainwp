@@ -3409,11 +3409,18 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $item = $this->prepare_object_for_database( $request );
             unset( $item['group_creation_ui'] );
 
-            // Filters can supply names after the public numeric-only input check.
-            $groupnames = array();
+            // Filters can supply names and ids after the public numeric-only input check
+            // and the request-level scope check, so the final tag set is checked here.
+            $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+            $groupnames     = array();
             foreach ( isset( $item['groupids'] ) && is_array( $item['groupids'] ) ? $item['groupids'] : array() as $group ) {
                 if ( ! is_numeric( $group ) ) {
                     $groupnames[] = trim( $group );
+                    continue;
+                }
+                $existing_group = MainWP_DB_Common::instance()->get_group_by_id( $group );
+                if ( ! $existing_group || ( 'all' !== $allowed_groups && ! in_array( (int) $existing_group->id, $allowed_groups, true ) ) ) {
+                    return new WP_Error( 'rest_forbidden', __( 'Error - insufficient permissions!', 'mainwp' ), array( 'status' => 403 ) );
                 }
             }
             if ( ! empty( $item['groupnames_import'] ) ) {
@@ -3426,6 +3433,9 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     continue;
                 }
                 $group = MainWP_DB_Common::instance()->get_row_result( $wpdb->prepare( 'SELECT * FROM %i WHERE name IN (%s, %s)', $table_group, MainWP_DB_Common::instance()->escape( $groupname ), MainWP_DB_Common::instance()->escape( htmlspecialchars( $groupname ) ) ) );
+                if ( $group && 'all' !== $allowed_groups && ! in_array( (int) $group->id, $allowed_groups, true ) ) {
+                    return new WP_Error( 'rest_forbidden', __( 'Error - insufficient permissions!', 'mainwp' ), array( 'status' => 403 ) );
+                }
                 if ( ! $group && ! MainWP_Abilities_Util::current_user_has_operation_right( 'manage_groups' ) ) {
                     return new WP_Error( 'rest_forbidden', __( 'Error - insufficient permissions!', 'mainwp' ), array( 'status' => 403 ) );
                 }

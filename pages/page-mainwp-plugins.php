@@ -2333,8 +2333,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
                 $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
                 while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                    $allPlugins = json_decode( $website->plugins, true );
-                    $_count     = count( $allPlugins );
+                    $allPlugins = !empty($website->plugins) ? json_decode( $website->plugins, true ) : array();
+                    $_count     = $allPlugins ? count( $allPlugins ) : 0;
                     for ( $i = 0; $i < $_count; $i++ ) {
                         $plugin = $allPlugins[ $i ];
 

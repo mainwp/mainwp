@@ -915,6 +915,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         continue;
                     }
 
+                    if ( is_array( $pluginInfo ) && empy( $pluginInfo['slug'] ) ) {
+                        $pluginInfo['slug'] = $pluginSlug; // to fix: add more required plugin info.
+                    }
+
                     if ( MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $decodedIgnoredPlugins, 'plugin' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $websiteDecodedIgnoredPlugins, 'plugin' ) ) {
                         continue;
                     }

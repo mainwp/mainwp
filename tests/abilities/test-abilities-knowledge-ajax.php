@@ -11,6 +11,7 @@ use MainWP\Dashboard\MainWP_DB_Knowledge;
 use MainWP\Dashboard\MainWP_Knowledge_UI;
 use MainWP\Dashboard\MainWP_Client_Overview;
 use MainWP\Dashboard\MainWP_Client_Overview_Knowledge;
+use MainWP\Dashboard\MainWP_Client_List_Table;
 
 class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 
@@ -20,6 +21,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 	private $site_id;
 	private $suppressed_errors = null;
 	private $previous_cookies = array();
+	private $client_table;
 
 	public function setUp(): void {
 		parent::setUp();
@@ -42,6 +44,10 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			$this->suppressed_errors = null;
 		}
 		remove_action( 'admin_footer', array( MainWP_Knowledge_UI::class, 'render_modal' ) );
+		if ( $this->client_table ) {
+			remove_action( 'mainwp_manageclients_tabletop', array( $this->client_table, 'generate_tabletop' ) );
+			$this->client_table = null;
+		}
 		$_COOKIE = $this->previous_cookies;
 		parent::tearDown();
 	}
@@ -1529,4 +1535,44 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'mainwp_knowledge_db_error', $result->get_error_code() );
 	}
 
+	public function test_client_knowledge_column_prefetches_once_and_hides_unreadable_client_counts(): void {
+		$this->create_record();
+		$this->review_record();
+		$other_client = $this->create_test_client();
+		$this->create_test_site( array( 'client_id' => $other_client ) );
+		$this->create_record( array( 'scope_id' => $other_client ) );
+		$this->restrict_to_own_site();
+		$table = new MainWP_Client_List_Table();
+		$this->client_table = $table;
+		$this->assertArrayHasKey( 'knowledge', $table->get_default_columns() );
+		$this->track_filter( 'mainwp_clients_sitestable_getcolumns', static function () {
+			return array( 'knowledge' => 'Knowledge' );
+		} );
+		$queries = 0;
+		$this->track_filter( 'query', static function ( $sql ) use ( &$queries ) {
+			if ( false !== strpos( $sql, 'mainwp_knowledge' ) && 0 === stripos( ltrim( $sql ), 'SELECT' ) ) {
+				++$queries;
+			}
+			return $sql;
+		} );
+		$table->prepare_items();
+		$this->assertCount( 2, array_intersect( array( $this->client_id, $other_client ), array_column( $table->items, 'client_id' ) ) );
+		$this->assertSame( 1, $queries );
+		$items = array_column( $table->items, null, 'client_id' );
+		ob_start();
+		$table->single_row( $items[ $this->client_id ] );
+		$visible = ob_get_clean();
+		$this->assertStringContainsString( 'class="ui mini grey button"', $visible );
+		$this->assertStringContainsString( esc_url( admin_url( 'admin.php?page=ManageClients&client_id=' . $this->client_id ) ), $visible );
+		$this->assertStringContainsString( '</i>2</a>', $visible );
+		$this->assertStringContainsString( '1 unverified', $visible );
+		$this->assertStringContainsString( 'Saved by AI agents and not yet reviewed by a person.', $visible );
+		ob_start();
+		$table->single_row( $items[ $other_client ] );
+		$hidden = ob_get_clean();
+		$this->assertStringNotContainsString( 'Client knowledge records', $hidden );
+		$this->assertStringNotContainsString( 'unverified', $hidden );
+		$this->assertSame( 1, $queries );
+		remove_action( 'mainwp_manageclients_tabletop', array( $table, 'generate_tabletop' ) );
+	}
 }

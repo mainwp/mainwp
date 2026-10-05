@@ -175,8 +175,8 @@ jQuery(function ($) {
             description: 'skill' === typeField.val() ? descriptionField.val() : '',
             body: bodyField.val(),
         });
-        if ('agency' === scope.scope_type && ['context', 'skill'].includes(data.type)) {
-            data.required = requiredField.prop('checked') ? 1 : 0;
+        if ('agency' === scope.scope_type) {
+            data.required = ['context', 'skill'].includes(data.type) && requiredField.prop('checked') ? 1 : 0;
         }
         const id = parseInt(idField.val(), 10);
         if (id > 0) {
@@ -184,12 +184,14 @@ jQuery(function ($) {
             data.revision = revisionField.val();
         }
         post('mainwp_knowledge_save', data).done((response) => {
-            if (current !== session) {
+            if (response.success) {
+                if (current === session) {
+                    modal.modal('hide');
+                }
+                previousOwner.refresh();
                 return;
             }
-            if (response.success) {
-                modal.modal('hide');
-                previousOwner.refresh();
+            if (current !== session) {
                 return;
             }
             if (response.data && response.data.code === 'mainwp_knowledge_conflict') {
@@ -340,7 +342,10 @@ jQuery(function ($) {
             pageLength: 25,
             lengthMenu: [10, 25, 50, 100],
             language: { emptyTable: review.data('empty-default'), zeroRecords: review.data('empty-default') },
-            columns: ['level', 'type', 'title', 'status', 'editor', 'updated', 'actions'].map((key) => ({ data: key })),
+            columns: ['level', 'type', 'title', 'status', 'editor', 'updated', 'actions'].map((key) => ({
+                data: key,
+                className: ['level', 'status', 'actions'].includes(key) ? 'collapsing' : '',
+            })),
             ajax: (data, callback, settings) => {
                 const current = ++request;
                 const status = $('#mainwp-knowledge-filter-status').val();
@@ -407,13 +412,17 @@ jQuery(function ($) {
             deleteButton.prop('disabled', true).addClass('loading disabled');
             saveButton.prop('disabled', true).addClass('disabled');
             post('mainwp_knowledge_delete', data).done((response) => {
+                if (response.success) {
+                    if (current === session) {
+                        modal.modal('hide');
+                    }
+                    previousOwner.refresh();
+                    return;
+                }
                 if (current !== session) {
                     return;
                 }
-                if (response.success) {
-                    modal.modal('hide');
-                    previousOwner.refresh();
-                } else if (response.data && response.data.code === 'mainwp_knowledge_conflict') {
+                if (response.data && response.data.code === 'mainwp_knowledge_conflict') {
                     deleteButton.removeClass('loading');
                     showConflict(response.data.message);
                 } else {

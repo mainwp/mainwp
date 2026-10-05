@@ -188,10 +188,6 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( is_wp_error( $page ) ) {
             $this->send_error( $page );
         }
-        $total = $db->count_records();
-        if ( is_wp_error( $total ) ) {
-            $this->send_error( $total );
-        }
         $rows = array();
         foreach ( $page['items'] as $record ) {
             $row = $this->review_row( $record );
@@ -203,7 +199,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         wp_send_json(
             array(
                 'draw'            => $draw,
-                'recordsTotal'    => $total,
+                'recordsTotal'    => $page['total'],
                 'recordsFiltered' => $page['total'],
                 'data'            => $rows,
             )

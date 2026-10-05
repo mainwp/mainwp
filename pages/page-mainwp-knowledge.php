@@ -38,7 +38,7 @@ class MainWP_Knowledge {
                 'title'      => esc_html__( 'Knowledge', 'mainwp' ),
                 'parent_key' => 'mainwp_tab',
                 'slug'       => 'Knowledge',
-                'href'       => 'admin.php?page=Knowledge',
+                'href'       => 'admin.php?page=Knowledge&tab=review',
                 'icon'       => '<i class="book icon"></i>',
             ),
             0
@@ -99,7 +99,7 @@ class MainWP_Knowledge {
             </h2>
                 <?php MainWP_Knowledge_UI::render_panel( 'agency', 0 ); ?>
             <?php else : ?>
-                <?php static::render_review(); ?>
+                <?php self::render_review(); ?>
             <?php endif; ?>
         </div>
         <?php

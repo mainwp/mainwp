@@ -105,6 +105,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'id="mainwp-knowledge-required"', $agency );
 		$this->assertStringContainsString( 'Client and site records cannot override a required record. Only a Dashboard user can edit or delete it.', $agency );
 		$this->assertStringContainsString( 'Agency records reach the AI agents working on every site in this Dashboard.', $agency );
+		$this->assertStringNotContainsString( 'Only users with client management rights and access to every site can change agency records.', $agency );
 	}
 
 	public function test_knowledge_menu_and_page_admit_site_restricted_users_read_only(): void {
@@ -174,7 +175,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 				ob_start();
 				MainWP_Menu::$method();
 				$html = ob_get_clean();
-				$this->assertMatchesRegularExpression( '/href="[^"]*admin.php\?page=Knowledge"[^>]*>.*?Knowledge/s', $html, $method );
+				$this->assertMatchesRegularExpression( '/href="[^"]*admin.php\?page=Knowledge&(?:#038;)?tab=review"[^>]*>\s*<i class="book icon"><\/i>\s*(?:<span class="ui small text">)?Knowledge(?:<\/span>)?\s*<\/a>/', $html, $method );
 				foreach ( array( 'review' => 'Review', 'agency' => 'Agency' ) as $tab => $label ) {
 					$this->assertMatchesRegularExpression( '/href="[^"]*admin.php\?page=Knowledge&#038;tab=' . $tab . '"[^>]*>\s*' . $label . '\s*<\/a>/', $html, $method );
 				}

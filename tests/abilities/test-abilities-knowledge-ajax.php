@@ -1237,7 +1237,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			$response = $this->call( 'mainwp_knowledge_review', $case[0] );
 			$this->assertEqualsCanonicalizing( $case[1], array_column( $response['data'], 'id' ) );
 			$this->assertSame( count( $case[1] ), $response['recordsFiltered'] );
-			$this->assertSame( 3, $response['recordsTotal'] );
+			$this->assertSame( count( $case[1] ), $response['recordsTotal'] );
 		}
 	}
 
@@ -1249,7 +1249,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->review_record( array(), true );
 		$page = $this->call( 'mainwp_knowledge_review', array( 'draw' => '7', 'start' => '2', 'length' => '2' ) );
 		$this->assertSame( 7, $page['draw'] );
-		$this->assertSame( 6, $page['recordsTotal'] );
+		$this->assertSame( 5, $page['recordsTotal'] );
 		$this->assertSame( 5, $page['recordsFiltered'] );
 		$this->assertSame( array_reverse( array_slice( $ids, 1, 2 ) ), array_column( $page['data'], 'id' ) );
 		$empty = $this->call( 'mainwp_knowledge_review', array( 'start' => '8', 'length' => '2' ) );
@@ -1291,7 +1291,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 	}
 
 	public function test_review_rejects_malformed_filters_and_pagination(): void {
-		foreach ( array( array( 'status' => 'draft' ), array( 'type' => 'code' ), array( 'level' => 'global' ), array( 'status' => array( 'all' ) ), array( 'start' => '-1' ), array( 'length' => '0' ), array( 'draw' => 'oops' ) ) as $post ) {
+		foreach ( array( array( 'status' => 'draft' ), array( 'type' => 'code' ), array( 'level' => 'global' ), array( 'status' => array( 'all' ) ), array( 'start' => '-1' ), array( 'length' => '0' ), array( 'length' => '101' ), array( 'draw' => 'oops' ) ) as $post ) {
 			$this->assert_error( $this->call( 'mainwp_knowledge_review', $post ), 'mainwp_knowledge_invalid', 400 );
 		}
 	}

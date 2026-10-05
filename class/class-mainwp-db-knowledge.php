@@ -473,6 +473,63 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Count a rendered set together so widgets and tables do not count per row.
+     *
+     * @param string $scope_type Site or client.
+     * @param int[]  $scope_ids  Scope identifiers on the current page.
+     *
+     * @return array|\WP_Error Counts keyed by readable scope id, or a read error.
+     */
+    public function get_scope_counts( string $scope_type, array $scope_ids ) {
+        if ( ! in_array( $scope_type, array( 'site', 'client' ), true ) ) {
+            return $this->invalid( 'scope_type' );
+        }
+        $scope_ids = array_unique( array_map( 'intval', array_filter( $scope_ids, 'is_numeric' ) ) );
+        $counts    = array();
+        foreach ( $scope_ids as $scope_id ) {
+            if ( $scope_id < 1 ) {
+                continue;
+            }
+            $access = $this->can_read(
+                (object) array(
+                    'scope_type' => $scope_type,
+                    'scope_id'   => $scope_id,
+                )
+            );
+            if ( is_wp_error( $access ) && 'mainwp_knowledge_db_error' === $access->get_error_code() ) {
+                return $access;
+            }
+            if ( true === $access ) {
+                $counts[ $scope_id ] = array(
+                    'context'    => 0,
+                    'skill'      => 0,
+                    'memory'     => 0,
+                    'total'      => 0,
+                    'unverified' => 0,
+                );
+            }
+        }
+        if ( empty( $counts ) ) {
+            return $counts;
+        }
+
+        $placeholders           = implode( ',', array_fill( 0, count( $counts ), '%d' ) );
+        $sql                    = "SELECT scope_id, SUM(type = 'context') AS context, SUM(type = 'skill') AS skill, SUM(type = 'memory') AS memory, COUNT(*) AS total, SUM(verified = 0) AS unverified FROM %i WHERE scope_type = %s AND scope_id IN ({$placeholders}) GROUP BY scope_id";
+        $values                 = array_merge( array( $this->table_name( 'knowledge' ), $scope_type ), array_keys( $counts ) );
+        $this->wpdb->last_error = '';
+        $rows                   = $this->wpdb->get_results( $this->wpdb->prepare( $sql, $values ) );
+        if ( '' !== $this->wpdb->last_error ) {
+            return $this->db_read_error();
+        }
+        foreach ( (array) $rows as $row ) {
+            foreach ( array_keys( $counts[ (int) $row->scope_id ] ) as $key ) {
+                $counts[ (int) $row->scope_id ][ $key ] = (int) $row->$key;
+            }
+        }
+        return $counts;
+    }
+
+    /**
      * Keep both list paths on the same projection.
      *
      * @param array $args Optional with_body and with_body_preview.

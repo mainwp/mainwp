@@ -9,6 +9,8 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB_Knowledge;
 use MainWP\Dashboard\MainWP_Knowledge_UI;
+use MainWP\Dashboard\MainWP_Client_Overview;
+use MainWP\Dashboard\MainWP_Client_Overview_Knowledge;
 
 class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 
@@ -1337,4 +1339,194 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertContains( 'mainwp_knowledge_review', MainWP_Knowledge_UI::ACTIONS );
 		$this->assertNotFalse( has_action( 'wp_ajax_mainwp_knowledge_review', array( MainWP_Knowledge_UI::instance(), 'ajax_review' ) ) );
 	}
+
+	private function client_overview_widget(): string {
+		$previous_get = $_GET;
+		$_GET['client_id'] = $this->client_id;
+		ob_start();
+		try {
+			MainWP_Client_Overview_Knowledge::render();
+		} finally {
+			$html = ob_get_clean();
+			$_GET = $previous_get;
+		}
+		return $html;
+	}
+
+	private function client_overview_registration(): array {
+		$previous_get = $_GET;
+		$previous_boxes = $GLOBALS['mainwp_widget_boxes'] ?? null;
+		$_GET['client_id'] = $this->client_id;
+		$_GET['page'] = 'ClientOverview';
+		$GLOBALS['mainwp_widget_boxes'] = array();
+		ob_start();
+		try {
+			$screen = \WP_Screen::get( 'mainwp_page_ClientOverview' );
+			MainWP_Client_Overview::add_meta_boxes( $screen );
+			MainWP_Client_Overview::render_screen_options();
+			$boxes = $GLOBALS['mainwp_widget_boxes'][ $screen->id ];
+		} finally {
+			$html = ob_get_clean();
+			$_GET = $previous_get;
+			$GLOBALS['mainwp_widget_boxes'] = $previous_boxes;
+		}
+		return array( $boxes, $html );
+	}
+
+	public function test_client_overview_widget_is_enabled_and_editable_for_unrestricted_user(): void {
+		list( $boxes, $options ) = $this->client_overview_registration();
+		$this->assertArrayHasKey( 'knowledge', $boxes );
+		$this->assertSame( array( -1, -1, 6, 40 ), $boxes['knowledge']['layout'] );
+		$this->assertStringContainsString( 'id="mainwp_show_widget_knowledge"', $options );
+		$html = $this->client_overview_widget();
+		$this->assertStringContainsString( 'data-scope-type="client" data-scope-id="' . $this->client_id . '" data-can-write="1"', $html );
+		$this->assertStringContainsString( 'mainwp-knowledge-add', $html );
+		$this->assertSame( 1, preg_match_all( '/<h2\b[^>]*>\s*Knowledge\s*<div/', $html ) );
+		$this->assertStringContainsString( 'Context, skills, and memories that AI agents receive for this client and its sites.', $html );
+		$this->assertStringNotContainsString( 'Add context, skills, and memories that connected AI agents can use when working for this client.', $html );
+		$this->assertStringNotContainsString( 'id="mainwp-knowledge-modal"', $html );
+		$this->assertNotFalse( has_action( 'admin_footer', array( MainWP_Knowledge_UI::class, 'render_modal' ) ) );
+	}
+
+	public function test_client_overview_widget_partial_coverage_is_read_only_and_hides_unreadable_sites(): void {
+		$hidden = $this->create_test_site( array( 'client_id' => $this->client_id ) );
+		$this->create_record( $this->site_input( array( 'title' => 'Loaded only on expansion' ) ) );
+		$this->restrict_to_own_site();
+		$html = $this->client_overview_widget();
+		$this->assertStringContainsString( 'data-scope-type="client" data-scope-id="' . $this->client_id . '" data-can-write="0"', $html );
+		$this->assertStringNotContainsString( 'mainwp-knowledge-add', $html );
+		$this->assertStringContainsString( 'You can view these records. Editing client records needs client management rights and access to every site of this client.', $html );
+		$this->assertStringContainsString( 'data-site-id="' . $this->site_id . '"', $html );
+		$this->assertStringNotContainsString( 'data-site-id="' . $hidden . '"', $html );
+		$this->assertStringContainsString( 'Context: 1', $html );
+		$this->assertStringContainsString( 'Skills: 0', $html );
+		$this->assertStringContainsString( 'Memory: 0', $html );
+		$this->assertStringContainsString( 'View on the site', $html );
+		$this->assertStringContainsString( esc_url( admin_url( 'admin.php?page=managesites&knowledgeid=' . $this->site_id ) ), $html );
+		$this->assertStringNotContainsString( 'Loaded only on expansion', $html );
+		list( $boxes ) = $this->client_overview_registration();
+		$this->assertArrayHasKey( 'knowledge', $boxes );
+	}
+
+	public function test_client_overview_widget_hidden_without_manage_clients(): void {
+		$this->withhold_right( 'manage_clients' );
+		$this->assertSame( '', $this->client_overview_widget() );
+		list( $boxes, $options ) = $this->client_overview_registration();
+		$this->assertArrayNotHasKey( 'knowledge', $boxes );
+		$this->assertStringNotContainsString( 'mainwp_show_widget_knowledge', $options );
+	}
+
+	public function test_client_overview_widget_hidden_for_access_client_dashboard_only_user(): void {
+		$id = self::factory()->user->create( array( 'role' => 'editor' ) );
+		get_userdata( $id )->add_cap( 'manage_options' );
+		wp_set_current_user( $id );
+		$this->track_filter( 'mainwp_currentusercan', static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type ? 'access_client_dashboard' === $right : $allowed;
+		}, 10, 3 );
+		$this->assertTrue( \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) );
+		$this->assertSame( '', $this->client_overview_widget() );
+		list( $boxes ) = $this->client_overview_registration();
+		$this->assertArrayNotHasKey( 'knowledge', $boxes );
+	}
+
+	public function test_client_overview_widget_hidden_without_client_overlap(): void {
+		$this->restrict_to_other_site();
+		$this->assertSame( '', $this->client_overview_widget() );
+		list( $boxes ) = $this->client_overview_registration();
+		$this->assertArrayNotHasKey( 'knowledge', $boxes );
+	}
+
+	public function test_client_overview_widget_empty_sites_and_escaped_names(): void {
+		global $wpdb;
+		$wpdb->update( $wpdb->prefix . 'mainwp_wp', array( 'name' => '<script>Site & name</script>' ), array( 'id' => $this->site_id ) );
+		$html = $this->client_overview_widget();
+		$this->assertStringContainsString( '&lt;script&gt;Site &amp; name&lt;/script&gt;', $html );
+		$this->assertStringContainsString( 'No records', $html );
+		$this->track_filter( 'mainwp_check_site_access', '__return_false' );
+		$this->assertStringContainsString( 'No sites to show.', $this->client_overview_widget() );
+	}
+
+	public function test_client_overview_expansion_is_read_only_and_rechecks_site_access(): void {
+		$record = $this->create_record( $this->site_input() );
+		$this->restrict_to_own_site();
+		$input = $this->site_input( array( 'read_only' => '1' ) );
+		$response = $this->call( 'mainwp_knowledge_list', $input );
+		$this->assertTrue( $response['success'] );
+		$this->assertFalse( $response['data']['can_write'] );
+		$this->assertNull( $response['data']['inherited'] );
+		$this->assertSame( array( $record->id ), array_column( $response['data']['records'], 'id' ) );
+		$this->restrict_to_other_site();
+		$this->assert_error( $this->call( 'mainwp_knowledge_list', $input ), 'mainwp_site_not_found', 404 );
+		$this->assert_error( $this->call( 'mainwp_knowledge_list', $input + array( 'security' => wp_create_nonce( 'wrong' ) ) ), 'mainwp_knowledge_insecure', 403 );
+	}
+
+	public function test_client_overview_expansion_rejects_invalid_read_only_mode(): void {
+		foreach ( array( '2', '-1', array( '1' ) ) as $mode ) {
+			$this->assert_error( $this->call( 'mainwp_knowledge_list', $this->site_input( array( 'read_only' => $mode ) ) ), 'mainwp_knowledge_invalid', 400 );
+		}
+	}
+
+	public function test_client_overview_panel_can_omit_its_heading(): void {
+		ob_start();
+		MainWP_Knowledge_UI::render_panel( 'client', $this->client_id, true, false );
+		$html = ob_get_clean();
+		$this->assertStringNotContainsString( '<h2', $html );
+		$this->assertStringNotContainsString( 'Add context, skills, and memories that connected AI agents can use when working for this client.', $html );
+		$this->assertStringContainsString( 'mainwp-knowledge-panel', $html );
+	}
+
+	public function test_scope_counts_group_types_and_unverified_once_per_visible_set(): void {
+		$other_client = $this->create_test_client();
+		$other_site = $this->create_test_site( array( 'client_id' => $other_client ) );
+		foreach ( array( array( 'client', $this->client_id ), array( 'site', $this->site_id ) ) as $scope ) {
+			foreach ( array( 'context', 'skill', 'memory', 'memory' ) as $type ) {
+				$this->create_record( array( 'scope_type' => $scope[0], 'scope_id' => $scope[1], 'type' => $type ) );
+			}
+			$this->review_record( array( 'scope_type' => $scope[0], 'scope_id' => $scope[1], 'type' => 'skill' ) );
+		}
+		$queries = array();
+		$this->track_filter( 'query', static function ( $sql ) use ( &$queries ) {
+			if ( false !== strpos( $sql, 'mainwp_knowledge' ) && false !== stripos( $sql, 'GROUP BY' ) ) {
+				$queries[] = $sql;
+			}
+			return $sql;
+		} );
+		$expected = array( 'context' => 1, 'skill' => 2, 'memory' => 2, 'total' => 5, 'unverified' => 1 );
+		$clients = $this->db->get_scope_counts( 'client', array( $this->client_id, $other_client ) );
+		$sites = $this->db->get_scope_counts( 'site', array( $this->site_id, $other_site ) );
+		$this->assertSame( $expected, $clients[ $this->client_id ] );
+		$this->assertSame( $expected, $sites[ $this->site_id ] );
+		$this->assertSame( array( 'context' => 0, 'skill' => 0, 'memory' => 0, 'total' => 0, 'unverified' => 0 ), $clients[ $other_client ] );
+		$this->assertSame( $clients[ $other_client ], $sites[ $other_site ] );
+		$this->assertCount( 2, $queries );
+	}
+
+	public function test_scope_counts_exclude_unreadable_clients_and_sites(): void {
+		$other_client = $this->create_test_client();
+		$hidden = $this->create_test_site( array( 'client_id' => $this->client_id ) );
+		$other_site = $this->create_test_site( array( 'client_id' => $other_client ) );
+		$this->create_record();
+		$this->create_record( array( 'scope_id' => $other_client ) );
+		$this->create_record( $this->site_input() );
+		$this->create_record( $this->site_input( array( 'scope_id' => $hidden ) ) );
+		$this->restrict_to_own_site();
+		$clients = $this->db->get_scope_counts( 'client', array( $this->client_id, $other_client ) );
+		$sites = $this->db->get_scope_counts( 'site', array( $this->site_id, $hidden, $other_site ) );
+		$this->assertSame( array( $this->client_id ), array_keys( $clients ) );
+		$this->assertSame( array( $this->site_id ), array_keys( $sites ) );
+		$this->assertSame( 1, $clients[ $this->client_id ]['context'] );
+		$this->assertSame( 1, $sites[ $this->site_id ]['total'] );
+		$this->withhold_right( 'manage_clients' );
+		$this->assertSame( array(), $this->db->get_scope_counts( 'client', array( $this->client_id ) ) );
+		$this->track_filter( 'mainwp_check_site_access', '__return_false' );
+		$this->assertSame( array(), $this->db->get_scope_counts( 'site', array( $this->site_id ) ) );
+	}
+
+	public function test_scope_counts_database_failure_is_not_zero(): void {
+		$this->fail_selects_on( 'mainwp_knowledge' );
+		$result = $this->db->get_scope_counts( 'site', array( $this->site_id ) );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_knowledge_db_error', $result->get_error_code() );
+	}
+
 }

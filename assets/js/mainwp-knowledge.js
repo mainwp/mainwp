@@ -329,6 +329,75 @@ jQuery(function ($) {
         load();
     });
 
+    $('.mainwp-knowledge-site-list').each(function () {
+        const list = $(this);
+        const siteScope = recordScope({ scope_type: 'site', scope_id: list.data('scope-id') });
+        const message = list.children('.mainwp-knowledge-message');
+        const loader = list.children('.mainwp-knowledge-loader');
+        const body = list.find('tbody');
+        let request = 0;
+        const load = (preserveMessage = false) => {
+            const current = ++request;
+            body.empty();
+            loader.addClass('active').attr('aria-hidden', 'false');
+            post('mainwp_knowledge_list', $.extend({}, siteScope, { read_only: 1 })).done((response) => {
+                if (current !== request) {
+                    return;
+                }
+                if (!response.success) {
+                    showMessage(message, errorText(response), 'yellow');
+                    return;
+                }
+                if (!preserveMessage) {
+                    hideMessage(message);
+                }
+                if (!response.data.records.length) {
+                    body.append($('<tr></tr>').append($('<td colspan="4"></td>').append($('<em></em>').text(strings.noRecords))));
+                }
+                response.data.records.forEach((record) => {
+                    const title = $('<td></td>');
+                    if (!record.verified) {
+                        title.append($('<span class="ui mini yellow label"></span>').attr('data-tooltip', strings.unverifiedHint).attr('data-inverted', '').text(strings.unverified)).append(' ');
+                    }
+                    title.append($('<a href="#" class="mainwp-knowledge-view"></a>').text(record.title));
+                    title.append($('<br>')).append($('<span class="ui small text"></span>').text(record.body_preview));
+                    body.append($('<tr></tr>').attr('data-id', record.id)
+                        .append(title)
+                        .append($('<td></td>').text(record.type_label))
+                        .append($('<td></td>').append($('<span></span>').text(record.updated_by_name)).append($('<br>')).append($('<span class="ui small text"></span>').text(record.updated_ago)))
+                        .append($('<td class="right aligned"></td>').append($('<a class="ui mini basic button"></a>').attr('href', list.data('site-url')).text(strings.viewOnSite))));
+                });
+            }).fail(() => {
+                if (current === request) {
+                    showMessage(message, strings.failed, 'red');
+                }
+            }).always(() => {
+                if (current === request) {
+                    loader.removeClass('active').attr('aria-hidden', 'true');
+                }
+            });
+        };
+        const siteOwner = { message: message, refresh: load };
+        list.data('knowledge-owner', siteOwner);
+        list.on('click', '.mainwp-knowledge-view', function (event) {
+            event.preventDefault();
+            openRecord($(this).closest('tr').data('id'), 'view', siteOwner);
+        });
+    });
+    $('.mainwp-knowledge-site-accordion').each(function () {
+        const accordion = $(this);
+        accordion.find('tr.title a').on('click', (event) => event.stopPropagation());
+        accordion.accordion({
+            exclusive: false,
+            onOpen: function () {
+                const siteOwner = $(this).find('.mainwp-knowledge-site-list').data('knowledge-owner');
+                if (siteOwner) {
+                    siteOwner.refresh();
+                }
+            },
+        });
+    });
+
     const review = $('#mainwp-knowledge-review-table');
     if (review.length) {
         const message = $('#mainwp-knowledge-review-message');

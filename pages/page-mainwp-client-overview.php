@@ -45,6 +45,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         'note'               => true,
         'fields_info'        => true,
         'websites'           => true,
+        'knowledge'          => true,
         'recent_posts'       => true,
         'recent_pages'       => true,
         'non_mainwp_changes' => true,
@@ -219,6 +220,10 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         // Load the Websites widget.
         if ( static::$enable_widgets['websites'] ) {
             MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
+        if ( static::$enable_widgets['knowledge'] && MainWP_Client_Overview_Knowledge::can_read() ) {
+            MainWP_UI::add_widget_box( 'knowledge', array( MainWP_Client_Overview_Knowledge::class, 'render' ), $page, array( -1, -1, 6, 40 ) );
         }
 
         // Load the Info widget.
@@ -436,10 +441,15 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'note'               => esc_html__( 'Notes', 'mainwp' ),
             'fields_info'        => esc_html__( 'Addition Info', 'mainwp' ),
             'websites'           => esc_html__( 'Websites', 'mainwp' ),
+            'knowledge'          => esc_html__( 'Knowledge', 'mainwp' ),
             'recent_posts'       => esc_html__( 'Recent Posts', 'mainwp' ),
             'recent_pages'       => esc_html__( 'Recent Pages', 'mainwp' ),
             'non_mainwp_changes' => esc_html__( 'Network Activity', 'mainwp' ),
         );
+
+        if ( ! MainWP_Client_Overview_Knowledge::can_read() ) {
+            unset( $default_widgets['knowledge'] );
+        }
 
         if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', intval( $_GET['client_id'] ), ARRAY_A ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

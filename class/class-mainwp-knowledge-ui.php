@@ -99,6 +99,8 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             /* translators: %s: client name. */
             'inheritedFrom'  => __( 'Inherited from client: %s', 'mainwp' ),
             'inheritedEmpty' => __( 'This client has no knowledge records.', 'mainwp' ),
+            'viewOnSite'     => __( 'View on the site', 'mainwp' ),
+            'noRecords'      => __( 'No records', 'mainwp' ),
         );
     }
 
@@ -110,8 +112,12 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public function ajax_list() {
         $this->guard( 'mainwp_knowledge_list' );
 
-        $scope = $this->read_scope();
-        $db    = MainWP_DB_Knowledge::instance();
+        $scope     = $this->read_scope();
+        $db        = MainWP_DB_Knowledge::instance();
+        $read_only = $this->read_int( 'read_only' );
+        if ( ! in_array( $read_only, array( 0, 1 ), true ) ) {
+            $this->send_invalid( 'read_only' );
+        }
 
         // List rows carry only a short body preview; the editor loads the full body per record.
         $records = $db->get_scope_records(
@@ -127,7 +133,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
 
         // The whole panel fails on a client read error: showing the site block alone would read as a client with no knowledge.
-        $inherited = 'site' === $scope->scope_type ? $this->inherited_client( $scope->scope_id ) : null;
+        $inherited = 'site' === $scope->scope_type && ! $read_only ? $this->inherited_client( $scope->scope_id ) : null;
         if ( is_wp_error( $inherited ) ) {
             $this->send_error( $inherited );
         }
@@ -135,7 +141,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         wp_send_json_success(
             array(
                 'records'   => array_map( array( $this, 'record_summary' ), $records ),
-                'can_write' => true === $db->can_write( $scope ),
+                'can_write' => ! $read_only && true === $db->can_write( $scope ),
                 'inherited' => $inherited,
             )
         );
@@ -630,15 +636,18 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string $scope_type   Agency, site or client.
      * @param int    $scope_id     Site or client id.
      * @param bool   $as_accordion Whether to use the edit-page accordion layout.
+     * @param bool   $show_header  Whether the panel supplies its own heading.
      *
      * @return void
      */
-    public static function render_panel( $scope_type, $scope_id, $as_accordion = false ) {
+    public static function render_panel( $scope_type, $scope_id, $as_accordion = false, $show_header = true ) {
         $scope_id = (int) $scope_id;
         if ( ( 'agency' === $scope_type ? 0 !== $scope_id : $scope_id < 1 ) || ! in_array( $scope_type, MainWP_DB_Knowledge::SCOPE_TYPES, true ) ) {
             return;
         }
 
+        // A widget already supplies its heading and does not need a second accordion shell.
+        $as_accordion      = $as_accordion && $show_header;
         $can_write         = true === MainWP_DB_Knowledge::instance()->can_write(
             (object) array(
                 'scope_type' => $scope_type,
@@ -696,7 +705,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </h2>
             <div class="content active">
         <?php endif; ?>
-        <div class="<?php echo $as_accordion ? 'ui basic padded segment dimmable mainwp-knowledge-panel mainwp-knowledge-accordion-content' : ( 'agency' === $scope_type ? 'ui basic segment dimmable mainwp-knowledge-panel' : 'ui padded segment dimmable mainwp-knowledge-panel' ); ?>" data-scope-type="<?php echo esc_attr( $scope_type ); ?>" data-scope-id="<?php echo esc_attr( $scope_id ); ?>" data-can-write="<?php echo esc_attr( $can_write ? '1' : '0' ); ?>">
+        <div class="<?php echo $as_accordion ? 'ui basic padded segment dimmable mainwp-knowledge-panel mainwp-knowledge-accordion-content' : ( 'agency' === $scope_type || ! $show_header ? 'ui basic segment dimmable mainwp-knowledge-panel' : 'ui padded segment dimmable mainwp-knowledge-panel' ); ?>" data-scope-type="<?php echo esc_attr( $scope_type ); ?>" data-scope-id="<?php echo esc_attr( $scope_id ); ?>" data-can-write="<?php echo esc_attr( $can_write ? '1' : '0' ); ?>">
             <div class="ui dimmer mainwp-knowledge-loader" aria-hidden="true">
                 <div class="ui loader" role="status" aria-label="<?php esc_attr_e( 'Loading...', 'mainwp' ); ?>"></div>
             </div>

@@ -42,10 +42,14 @@ const requests = [];
 const fades = [];
 let reloads = 0;
 const escapeHtml = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+const entities = { amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+const decodeHtml = value => value.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);/gi, (match, name) => name[0] !== '#' ? entities[name.toLowerCase()] ?? match : String.fromCodePoint(name[1].toLowerCase() === 'x' ? parseInt(name.slice(2), 16) : parseInt(name.slice(1), 10)));
 function element(selector) {
     if (selector && selector.selector) return selector;
     const key = String(selector);
-    if (elements.has(key)) return elements.get(key);
+    // Created nodes like '<td ...>' must not share state between rows.
+    const created = key.startsWith('<');
+    if (!created && elements.has(key)) return elements.get(key);
     const state = { html: '', text: '', classes: key, attrs: {}, data: {} };
     const item = {
         selector: key,
@@ -89,6 +93,12 @@ function element(selector) {
             messages.push({ target: key, text: child.state.text, style: child.state.classes });
             return item;
         },
+        append(child) {
+            if (child.nodeType === 3) { state.text += child.textContent; return item; }
+            messages.push({ target: key, text: child.state.text, style: child.state.classes, node: true });
+            return item;
+        },
+        empty() { return item; },
         addClass() { return item; },
         removeClass() { return item; },
         hasClass() { return false; },
@@ -99,7 +109,7 @@ function element(selector) {
         fadeOut() { fades.push(key); return item; },
         remove() { return item; }
     };
-    elements.set(key, item);
+    if (!created) elements.set(key, item);
     return item;
 }
 function jQuery(selector) {
@@ -112,7 +122,8 @@ jQuery.post = (url, data, callback, type) => {
     callback(handler === 'bulk' ? responses[responseIndex++] : type === 'json' || handler === '#bulk_add_multi_create_client' ? JSON.parse(response) : response);
 };
 const context = vm.createContext({
-    jQuery, document: {}, URLSearchParams, location: { search: '' }, ajaxurl: 'admin-ajax.php',
+    jQuery, document: { createTextNode: value => ({ nodeType: 3, textContent: String(value) }) }, URLSearchParams,
+    DOMParser: class { parseFromString(value) { return { body: { textContent: decodeHtml(String(value).replace(/<[^>]*>/g, '')) } }; } }, location: { search: '' }, ajaxurl: 'admin-ajax.php',
     mainwpParams: {}, MainWP: { I18n: { t: text => text } },
     mainwp_secure_data: data => data, confirm: () => true,
     mainwp_validate_email: value => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value),

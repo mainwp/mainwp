@@ -265,7 +265,9 @@ let mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
     if (error == '') {
         rowObj.html('<td colspan="999"><i class="green check icon"></i> ' + result + '</td>');
     } else {
-        rowObj.html('<td colspan="999"><i class="red times icon"></i> ' + error + '</td>');
+        // Server messages arrive HTML-escaped once; decode the entities in an inert document and insert the result as text so no markup is interpreted.
+        let errorText = new DOMParser().parseFromString(String(error), 'text/html').body.textContent;
+        rowObj.empty().append(jQuery('<td colspan="999"><i class="red times icon"></i> </td>').append(document.createTextNode(errorText)));
     }
 
     // A refused delete keeps the client, so its row stays visible with the error.

@@ -461,6 +461,50 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         }
     }
 
+    /** @return array Translated bulk delete refusals. */
+    public static function hostile_bulk_delete_refusals(): array {
+        return array(
+            'markup'     => array( '<img src=x onerror=alert(1)>' ),
+            'apostrophe' => array( "Vous n'avez pas l'autorisation." ),
+        );
+    }
+
+    /**
+     * The server escapes the refusal once; the row must show it as plain text.
+     *
+     * @dataProvider hostile_bulk_delete_refusals
+     * @param string $translation Translated refusal.
+     */
+    public function test_bulk_delete_ui_renders_server_error_as_text( $translation ): void {
+        $client = $this->client();
+        $site = $this->site( $client );
+        $this->site( $client );
+        $this->scope( array( $site ) );
+        $this->filter( 'gettext', static function ( $translated, $text, $domain ) use ( $translation ) {
+            return 'mainwp' === $domain && 'Error - insufficient permissions!' === $text ? $translation : $translated;
+        } );
+        $before = $this->before_write();
+        $response = $this->operation( 'delete', $client );
+        $this->assert_unchanged( $before );
+        $this->assertSame( esc_html( $translation ), json_decode( $response, true )['error'] ?? null, $response );
+        $ui = $this->run_refusal_ui( 'mainwp-clients.js', 'bulk', wp_json_encode( array( json_decode( $response, true ) ) ) );
+        $errors = array_values( array_filter( $ui['messages'], static function ( $message ) {
+            return false !== strpos( $message['style'] ?? '', 'red times icon' );
+        } ) );
+        $this->assertCount( 1, $errors, wp_json_encode( $ui ) );
+        $this->assertSame( $translation, $errors[0]['text'], 'The row must show the decoded message exactly once.' );
+        $this->assertTrue( $errors[0]['node'] ?? false, 'The message must be inserted as a text node.' );
+        foreach ( $ui['messages'] as $message ) {
+            if ( $message['node'] ?? false ) {
+                continue;
+            }
+            $this->assertStringNotContainsString( 'img', $message['text'] ?? '', 'The server message must never be parsed as HTML in the page.' );
+            $this->assertStringNotContainsString( '&#039;', $message['text'] ?? '' );
+        }
+        $this->assertSame( array(), $ui['fades'] );
+        $this->assertSame( 0, $ui['reloads'] );
+    }
+
     /** Quick Setup must show the server's refusal and remove its pending status. */
     public function test_multi_client_ui_clears_status_on_refusal(): void {
         $ui = $this->run_refusal_ui( 'mainwp-clients.js', '#bulk_add_multi_create_client', wp_json_encode( array( 'success' => false, 'data' => 'Error - insufficient permissions!' ) ) );

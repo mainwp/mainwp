@@ -1398,6 +1398,9 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'Context, skills, and memories that AI agents receive for this client and its sites.', $html );
 		$this->assertStringNotContainsString( 'Add context, skills, and memories that connected AI agents can use when working for this client.', $html );
 		$this->assertStringNotContainsString( '<div class="ui info message">', $html );
+		$this->assertStringContainsString( '<div class="dimmable mainwp-knowledge-panel" data-scope-type="client"', $html );
+		$this->assertStringNotContainsString( 'ui basic segment dimmable mainwp-knowledge-panel', $html );
+		$this->assertStringNotContainsString( 'ui padded segment dimmable mainwp-knowledge-panel', $html );
 		$this->assertStringContainsString( '<div class="dimmable mainwp-knowledge-site-list"', $html );
 		$this->assertStringNotContainsString( 'ui basic segment dimmable mainwp-knowledge-site-list', $html );
 		$this->assertStringContainsString( '<thead><tr><th>Title</th><th class="collapsing">Type</th><th class="collapsing">Last edited by</th><th class="collapsing"></th></tr></thead>', $html );
@@ -1420,6 +1423,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'Memory: 0', $html );
 		$this->assertStringContainsString( 'View on the site', $html );
 		$this->assertStringContainsString( esc_url( admin_url( 'admin.php?page=managesites&knowledgeid=' . $this->site_id ) ), $html );
+		$this->assertStringContainsString( '<td class="right aligned collapsing"><a class="ui mini basic button" href="' . esc_url( admin_url( 'admin.php?page=managesites&knowledgeid=' . $this->site_id ) ) . '">View on the site</a></td>', $html );
 		$this->assertStringNotContainsString( 'Loaded only on expansion', $html );
 		list( $boxes ) = $this->client_overview_registration();
 		$this->assertArrayHasKey( 'knowledge', $boxes );
@@ -1463,6 +1467,20 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'No sites to show.', $this->client_overview_widget() );
 	}
 
+	public function test_client_overview_widget_site_roster_failure_is_not_empty(): void {
+		global $wpdb;
+		$this->suppressed_errors = $wpdb->suppress_errors( true );
+		$name = $wpdb->prefix . 'mainwp_wp';
+		$pattern = '/^\s*SELECT id, name FROM `?' . preg_quote( $name, '/' ) . '`? WHERE client_id\b/i';
+		$this->track_filter( 'query', static function ( $sql ) use ( $pattern, $name ) {
+			return preg_match( $pattern, $sql ) ? str_replace( $name, $name . '_missing', $sql ) : $sql;
+		} );
+		$html = $this->client_overview_widget();
+		$strings = MainWP_Knowledge_UI::js_strings();
+		$this->assertStringContainsString( '<div class="ui red message">' . esc_html( $strings['failed'] ) . '</div>', $html );
+		$this->assertStringNotContainsString( 'No sites to show.', $html );
+	}
+
 	public function test_client_overview_expansion_is_read_only_and_rechecks_site_access(): void {
 		$record = $this->create_record( $this->site_input() );
 		$this->restrict_to_own_site();
@@ -1494,7 +1512,13 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( 'Client records apply to every site assigned to this client. Site records belong to the site and stay with it if the site is moved to another client.', $html );
 		$this->assertSame( 3, substr_count( $html, '<th class="mainwp-knowledge-editor-cell collapsing">' ) );
 		$this->assertSame( 3, substr_count( $html, '<th class="mainwp-knowledge-actions-cell no-sort collapsing">' ) );
-		$this->assertStringContainsString( 'mainwp-knowledge-panel', $html );
+		$this->assertStringContainsString( '<div class="dimmable mainwp-knowledge-panel" data-scope-type="client"', $html );
+		$this->assertStringNotContainsString( 'ui basic segment dimmable mainwp-knowledge-panel', $html );
+		$this->assertStringNotContainsString( 'ui padded segment dimmable mainwp-knowledge-panel', $html );
+		ob_start();
+		MainWP_Knowledge_UI::render_panel( 'client', $this->client_id );
+		$full = ob_get_clean();
+		$this->assertStringContainsString( '<div class="ui padded segment dimmable mainwp-knowledge-panel" data-scope-type="client"', $full );
 	}
 
 	public function test_scope_counts_group_types_and_unverified_once_per_visible_set(): void {
@@ -1593,6 +1617,31 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( 'Client knowledge records', $hidden );
 		$this->assertStringNotContainsString( 'unverified', $hidden );
 		$this->assertSame( 1, $queries );
+		remove_action( 'mainwp_manageclients_tabletop', array( $table, 'generate_tabletop' ) );
+	}
+
+	public function test_client_knowledge_column_count_failure_renders_failed_message(): void {
+		$this->create_record();
+		$table = new MainWP_Client_List_Table();
+		$this->client_table = $table;
+		$this->track_filter( 'mainwp_clients_sitestable_getcolumns', static function () {
+			return array( 'knowledge' => 'Knowledge' );
+		} );
+		$this->fail_selects_on( 'mainwp_knowledge' );
+		$table->prepare_items();
+		$items = array_column( $table->items, null, 'client_id' );
+		$this->assertArrayHasKey( $this->client_id, $items );
+		ob_start();
+		try {
+			$table->single_row( $items[ $this->client_id ] );
+		} catch ( \Throwable $error ) {
+			$this->fail( 'Knowledge count failures must not break single_row(): ' . $error->getMessage() );
+		} finally {
+			$html = ob_get_clean();
+		}
+		$strings = MainWP_Knowledge_UI::js_strings();
+		$this->assertMatchesRegularExpression( '/<td class="knowledge column-knowledge">\s*<span>' . preg_quote( esc_html( $strings['failed'] ), '/' ) . '<\/span>\s*<\/td>/', $html );
+		$this->assertStringNotContainsString( 'Client knowledge records', $html );
 		remove_action( 'mainwp_manageclients_tabletop', array( $table, 'generate_tabletop' ) );
 	}
 }

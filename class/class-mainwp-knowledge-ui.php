@@ -705,7 +705,7 @@ class MainWP_Knowledge_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </h2>
             <div class="content active">
         <?php endif; ?>
-        <div class="<?php echo $as_accordion ? 'ui basic padded segment dimmable mainwp-knowledge-panel mainwp-knowledge-accordion-content' : ( 'agency' === $scope_type || ! $show_header ? 'ui basic segment dimmable mainwp-knowledge-panel' : 'ui padded segment dimmable mainwp-knowledge-panel' ); ?>" data-scope-type="<?php echo esc_attr( $scope_type ); ?>" data-scope-id="<?php echo esc_attr( $scope_id ); ?>" data-can-write="<?php echo esc_attr( $can_write ? '1' : '0' ); ?>">
+        <div class="<?php echo $as_accordion ? 'ui basic padded segment dimmable mainwp-knowledge-panel mainwp-knowledge-accordion-content' : ( 'agency' === $scope_type ? 'ui basic segment dimmable mainwp-knowledge-panel' : ( $show_header ? 'ui padded segment dimmable mainwp-knowledge-panel' : 'dimmable mainwp-knowledge-panel' ) ); ?>" data-scope-type="<?php echo esc_attr( $scope_type ); ?>" data-scope-id="<?php echo esc_attr( $scope_id ); ?>" data-can-write="<?php echo esc_attr( $can_write ? '1' : '0' ); ?>">
             <div class="ui dimmer mainwp-knowledge-loader" aria-hidden="true">
                 <div class="ui loader" role="status" aria-label="<?php esc_attr_e( 'Loading...', 'mainwp' ); ?>"></div>
             </div>

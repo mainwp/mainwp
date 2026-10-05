@@ -123,7 +123,7 @@ class MainWP_Client_Overview_Knowledge {
                         <span class="ui mini yellow label"><?php /* translators: %d: record count */ echo esc_html( sprintf( _n( '%d unverified', '%d unverified', $count['unverified'], 'mainwp' ), $count['unverified'] ) ); ?></span>
                         <?php endif; ?>
                     </td>
-                    <td class="right aligned"><a class="ui mini basic button" href="<?php echo esc_url( $site_url ); ?>"><?php esc_html_e( 'View on the site', 'mainwp' ); ?></a></td>
+                    <td class="right aligned collapsing"><a class="ui mini basic button" href="<?php echo esc_url( $site_url ); ?>"><?php esc_html_e( 'View on the site', 'mainwp' ); ?></a></td>
                 </tr>
                 <tr class="content">
                     <td colspan="4">

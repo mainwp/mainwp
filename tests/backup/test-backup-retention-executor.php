@@ -112,16 +112,17 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * incremental and spine runs use) with artifact files and record a
 	 * snapshot row over them.
 	 *
-	 * @param array $fields Snapshot row overrides.
+	 * @param array  $fields   Snapshot row overrides.
+	 * @param string $site_dir Site storage dir to create the snapshot under; the private root when empty.
 	 *
 	 * @return array{0: int, 1: string} Snapshot id and its local dir.
 	 */
-	private function make_snapshot_with_dir( array $fields = array() ) {
+	private function make_snapshot_with_dir( array $fields = array(), string $site_dir = '' ) {
 		global $wpdb;
 
 		$upload  = wp_upload_dir();
 		$site_id = isset( $fields['site_id'] ) ? (int) $fields['site_id'] : $this->site_id;
-		$dir     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-task-reten-' . uniqid();
+		$dir     = ( '' !== $site_dir ? $site_dir : \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) ) . 'snapshot-task-reten-' . uniqid();
 		wp_mkdir_p( $dir );
 		$this->fixture_dirs[] = $dir;
 
@@ -413,7 +414,9 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		add_filter( 'upload_dir', $filter );
 
 		try {
-			list( $snapshot_id, $dir ) = $this->make_snapshot_with_dir();
+			$legacy = \MainWP\Dashboard\MainWP_Backup_Private_Root::legacy_site_dir( $this->site_id );
+			$this->assertStringStartsWith( trailingslashit( $link ), $legacy, 'The artifact must sit under the symlinked uploads root.' );
+			list( $snapshot_id, $dir ) = $this->make_snapshot_with_dir( array(), $legacy );
 
 			$candidates = array(
 				array(

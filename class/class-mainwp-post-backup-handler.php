@@ -277,15 +277,16 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // on-demand backup carries on in the background.
         global $wpdb;
         $active_job = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id );
-        // Jobs that still carry a safety backup rank first, so later failures
-        // without one cannot push the only Roll Back out of the capped list.
+        // An available safety backup ranks first; a successor rollback owns its source.
         $failed_jobs = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
             $wpdb->prepare(
-                'SELECT id, snapshot_id, site_id, status, last_error, checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND status IN ( %s, %s ) ORDER BY ( checkpoint LIKE %s ) DESC, id DESC LIMIT 20', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
+                'SELECT failed.id, failed.snapshot_id, failed.site_id, failed.status, failed.last_error, failed.checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' failed WHERE failed.site_id = %d AND failed.status IN ( %s, %s ) ORDER BY ( failed.checkpoint LIKE %s AND NOT EXISTS ( SELECT 1 FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' successor WHERE successor.site_id = failed.site_id AND successor.id > failed.id AND successor.checkpoint REGEXP CONCAT( %s, failed.id, %s ) ) ) DESC, failed.id DESC LIMIT 20', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
                 $site_id,
                 MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
                 MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED,
-                '%' . $wpdb->esc_like( '"pre_snapshot_artifacts":[{' ) . '%'
+                '%' . $wpdb->esc_like( '"pre_snapshot_artifacts":[{' ) . '%',
+                '"rollback_of"[[:space:]]*:[[:space:]]*',
+                '[[:space:]]*[,}]'
             )
         );
         $failed_jobs = is_array( $failed_jobs ) ? $failed_jobs : array();

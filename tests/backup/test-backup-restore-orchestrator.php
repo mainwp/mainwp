@@ -4377,6 +4377,34 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Completed rollbacks must not crowd an available older source out of the list.
+	 */
+	public function test_failed_restore_list_prioritizes_available_rollback_over_completed_successors() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$store      = MainWP_Backup_Restore_Job_Store::instance();
+		$checkpoint = array( 'pre_snapshot_artifacts' => array( array( 'file' => 'backup-pre.tar.gz' ) ) );
+		$source     = $this->make_job( $checkpoint, $store::STATUS_FAILED_PERMANENT );
+		$ids        = array();
+		for ( $index = 0; $index < 20; ++$index ) {
+			$failed = $this->make_job( $checkpoint, $store::STATUS_FAILED_PERMANENT );
+			$ids[]  = (int) $failed->id;
+			$this->make_job( array( 'rollback_of' => (int) $failed->id ), $store::STATUS_COMPLETED );
+		}
+
+		$response = $this->b194_reload_snapshots();
+		$rows     = array_column( $response['failed_restore_jobs'], null, 'job_id' );
+		$this->assertCount( 20, $rows );
+		$this->assertArrayHasKey( (int) $source->id, $rows, 'The older source must remain listed with Roll Back.' );
+		$this->assertTrue( $rows[ $source->id ]['has_rollback'] );
+		$this->assertArrayNotHasKey( $ids[0], $rows, 'The oldest consumed source yields its place.' );
+		foreach ( $ids as $id ) {
+			if ( isset( $rows[ $id ] ) ) {
+				$this->assertFalse( $rows[ $id ]['has_rollback'] );
+			}
+		}
+	}
+
+	/**
 	 * A fresh request lists this site's failures and their rollback availability.
 	 */
 	public function test_b194_failed_restore_is_listed_after_reload() {

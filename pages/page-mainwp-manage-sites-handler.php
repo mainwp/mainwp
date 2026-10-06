@@ -485,28 +485,32 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 $information['removed_site'] = true;
             }
 
-            /**
-             * Delete Child Sites
-             *
-             * Fires after a child site has been removed from MainWP Dashboard.
-             * Demo sites skip the remote deactivate above, then fire the same
-             * hooks so extension rows for the site are removed.
-             *
-             * @param object $website Object containing child site data.
-             *
-             * @since 3.4
-             */
-            do_action( 'mainwp_delete_site', $website );
+            // Same success test as execute_delete_site(): false is a database
+            // error and fires nothing. Zero rows (the site was already gone)
+            // still fires the hooks, so this path and the ability path agree.
+            if ( false !== $removed ) {
+                /**
+                 * Delete Child Sites
+                 *
+                 * Fires after a child site has been removed from MainWP Dashboard.
+                 * Demo sites skip the remote deactivate above, then fire the same
+                 * hooks so extension rows for the site are removed.
+                 *
+                 * @param object $website Object containing child site data.
+                 *
+                 * @since 3.4
+                 */
+                do_action( 'mainwp_delete_site', $website );
 
-            /**
-             * Fires immediately after a new website is deleted.
-             *
-             * @since 4.5.1.1
-             *
-             * @param object   $website  website data.
-             */
-            do_action( 'mainwp_site_deleted', $website );
-
+                /**
+                 * Fires immediately after a new website is deleted.
+                 *
+                 * @since 4.5.1.1
+                 *
+                 * @param object   $website  website data.
+                 */
+                do_action( 'mainwp_site_deleted', $website );
+            }
         }
 
         return $information ? $information : false;

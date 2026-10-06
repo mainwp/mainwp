@@ -8,8 +8,8 @@ import { Dashboard } from '../lib/dashboard';
  * The dashboard makes the real outbound cURL + RSA + TLS calls to the children;
  * we trigger and observe them through the UI. The login + navigation tests are
  * concrete and pass against any MainWP build. The sync and backup/restore flows
- * depend on MainWP-specific selectors (see lib/dashboard.ts CONFIRM markers) and
- * are `test.fixme` until verified against the live DOM on the first run.
+ * use the MainWP-specific selectors in lib/dashboard.ts; backup/restore also
+ * needs REMOTE_TEST_RUN_DESTRUCTIVE=1.
  */
 test.describe('real path', () => {
   test.skip(!dashConfigured, 'REMOTE_DASH_URL / REMOTE_DASH_USER / REMOTE_DASH_PASS not set.');

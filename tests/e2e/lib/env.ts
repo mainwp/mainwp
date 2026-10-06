@@ -1,8 +1,8 @@
 /**
  * Remote testbed configuration, read from REMOTE_* environment variables.
  *
- * Source network-testbed/.env before running, or use
- * `run.sh test-live e2e`, which sources it. Nothing here throws when unset;
+ * Export these before running, for example by sourcing a .env file. Nothing
+ * here throws when unset;
  * specs gate themselves on the `*Configured` flags below.
  */
 

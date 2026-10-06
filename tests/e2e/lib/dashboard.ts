@@ -5,11 +5,8 @@ import { wpLogin } from './auth';
 /**
  * Page object for the remote MainWP dashboard.
  *
- * Selectors for MainWP-specific admin screens are centralized here so the
- * first-run "confirm against the live DOM" pass touches one file. Anything
- * marked CONFIRM is a best-effort guess that should be verified the first time
- * this suite runs against dev.mainwps.com; the flows that depend on them are
- * `test.fixme` in the specs until then.
+ * Selectors for MainWP-specific admin screens are centralized here, so a
+ * changed MainWP screen is fixed in one file.
  */
 export class Dashboard {
   constructor(private readonly page: Page) {}

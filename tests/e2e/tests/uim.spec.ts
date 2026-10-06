@@ -6,9 +6,9 @@ import { Dashboard } from '../lib/dashboard';
  * UIM (uptime / speed) against real children.
  *
  * The uptime monitor makes a real outbound request to each child's public URL
- * and times it. The page-loads test is concrete; asserting real latency values
- * for specific children depends on monitors being configured + wp-cron having
- * fired, and on MainWP-specific selectors, so it is `test.fixme`.
+ * and times it. The page-loads test is concrete; the monitor-rows test needs
+ * monitors configured and wp-cron to have fired, so that at least one row
+ * reports real status data.
  */
 test.describe('uim', () => {
   test.skip(!dashConfigured, 'REMOTE_DASH_URL / creds not set.');

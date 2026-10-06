@@ -10,8 +10,8 @@ import { Dashboard } from '../lib/dashboard';
  * destructive connection-break (deactivate mainwp-child -> dashboard
  * disconnected -> reconnect) both restore state in a `finally`. The
  * connection-break runs against ONE designated child (ENV.breakChildUrl), kept
- * off the data-bearing backup child. The dashboard-reflection case stays
- * `test.fixme` until the PluginsManage assertion surface is confirmed.
+ * off the data-bearing backup child. The dashboard-reflection case reads the
+ * plugin state back through PluginsManage after a single-site sync.
  */
 
 const MAINWP_CHILD = 'mainwp-child/mainwp-child.php';

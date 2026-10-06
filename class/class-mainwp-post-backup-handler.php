@@ -279,7 +279,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $active_job  = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id );
         $failed_jobs = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
             $wpdb->prepare(
-                'SELECT id, snapshot_id, site_id, status, last_error, checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND status IN ( %s, %s ) ORDER BY id DESC', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
+                'SELECT id, snapshot_id, site_id, status, last_error, checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND status IN ( %s, %s ) ORDER BY id DESC LIMIT 20', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
                 $site_id,
                 MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
                 MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED

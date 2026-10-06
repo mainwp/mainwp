@@ -4340,6 +4340,22 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Old failures must not make a reload response grow without a bound.
+	 */
+	public function test_b194_failed_restore_list_limits_to_twenty_newest_jobs() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$ids = array();
+		for ( $index = 0; $index < 25; ++$index ) {
+			$job   = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT );
+			$ids[] = (int) $job->id;
+		}
+
+		$response = $this->b194_reload_snapshots();
+		$this->assertCount( 20, $response['failed_restore_jobs'] );
+		$this->assertSame( array_slice( array_reverse( $ids ), 0, 20 ), array_column( $response['failed_restore_jobs'], 'job_id' ) );
+	}
+
+	/**
 	 * A fresh request lists this site's failures and their rollback availability.
 	 */
 	public function test_b194_failed_restore_is_listed_after_reload() {
@@ -4410,6 +4426,29 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( $artifacts, $retry->checkpoint['pre_snapshot_artifacts'] );
 		$this->assertTrue( $retry->checkpoint['plan'][0]['adopt_only'] );
 		$this->assertSame( 'backup-pre.tar.gz', $retry->checkpoint['plan'][0]['file'] );
+	}
+
+	/**
+	 * Unrelated restores must not load their checkpoints for rollback availability.
+	 */
+	public function test_b194_rollback_source_fetches_only_later_rollback_candidates() {
+		global $wpdb;
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$failed = $this->make_job(
+			array( 'pre_snapshot_artifacts' => array( array( 'file' => 'backup-pre.tar.gz' ) ) ),
+			$store::STATUS_FAILED_PERMANENT
+		);
+		for ( $index = 0; $index < 25; ++$index ) {
+			$this->make_job( array(), $store::STATUS_FAILED_PERMANENT );
+		}
+		$this->make_job( array( 'rollback_of' => (int) $failed->id + 10000 ), $store::STATUS_FAILED_PERMANENT );
+
+		$this->assertTrue( $this->orchestrator->has_rollback_source( $failed ), 'Another job\'s rollback must not consume this source.' );
+		$this->assertCount( 1, $wpdb->last_result, 'Only rollback candidates should cross the DB boundary.' );
+
+		$this->make_job( array( 'rollback_of' => (int) $failed->id ), $store::STATUS_FAILED_PERMANENT );
+		$this->assertFalse( $this->orchestrator->has_rollback_source( $failed ), 'A matching rollback must consume this source.' );
+		$this->assertCount( 2, $wpdb->last_result );
 	}
 
 	/**
@@ -4491,6 +4530,57 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			remove_filter( 'mainwp_restore_foreground_budget', $skip_drive );
 			unset( $_POST['security'], $_REQUEST['security'], $_POST['job_id'] );
 		}
+	}
+
+	/**
+	 * Retained safety artifacts must not enable another file rollback during a rollback.
+	 *
+	 * @dataProvider safety_artifact_rollback_cases
+	 * @param bool $rollback Whether this task rolls back a failed restore.
+	 */
+	public function test_child_task_file_rollback_with_safety_artifacts( $rollback ) {
+		$store      = MainWP_Backup_Restore_Job_Store::instance();
+		$checkpoint = array(
+			'pre_snapshot_artifacts' => array(
+				array(
+					'file' => 'backup-pre.tar.gz',
+					'size' => 1234,
+					'role' => 'full',
+				),
+			),
+		);
+		if ( $rollback ) {
+			$failed = $this->make_job( $checkpoint, $store::STATUS_FAILED_PERMANENT );
+			$id     = $this->orchestrator->initiate_rollback( $failed );
+			$this->assertTrue( $store->set_status( $id, $store::STATUS_STAGING ) );
+			$job = $store->get_job( $id );
+		} else {
+			$job = $this->make_job( $checkpoint, $store::STATUS_STAGING );
+		}
+		$this->assertFalse( $job->checkpoint['options']['file_rollback'] );
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'safety-artifacts-task',
+			'phase'   => 'queued',
+		);
+
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_TRANSFERRING, $job->status );
+		$calls = array_column( $this->calls, null, 'what' );
+		$this->assertArrayHasKey( 'restore_task_create', $calls );
+		$options = json_decode( $calls['restore_task_create']['params']['options_json'], true );
+		$this->assertSame( ! $rollback, $options['file_rollback'] );
+	}
+
+	/**
+	 * The same safety artifacts serve different purposes in restores and rollbacks.
+	 *
+	 * @return array Task cases.
+	 */
+	public static function safety_artifact_rollback_cases() {
+		return array(
+			'rollback'       => array( true ),
+			'normal restore' => array( false ),
+		);
 	}
 
 	/**

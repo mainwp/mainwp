@@ -58,6 +58,7 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 			'no data'       => array( 4096, 0, 0, 'The backup download was interrupted before completing. No partial data was saved. Try the download again.' ),
 			'kept prefix'   => array( 4096, 512, 0, 'The backup download was interrupted before completing. Partial data was kept so the next attempt can resume.' ),
 			'kept new data' => array( 4096, 0, 1024, 'The backup download was interrupted before completing. Partial data was kept so the next attempt can resume.' ),
+			'Range ignored' => array( 4096, 512, 1024, 'The backup download was interrupted before completing. Partial data was kept. Try the download again.' ),
 			'unknown size'  => array( false, 0, 1024, 'The backup download was interrupted before completing. Partial data was kept. Try the download again.' ),
 		);
 	}

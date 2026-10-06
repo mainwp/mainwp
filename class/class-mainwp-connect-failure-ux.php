@@ -315,7 +315,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return null;
         }
         $text = strip_tags( $text ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- wp_strip_all_tags() does not expose script/style regex failures.
-        $text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
+        $text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
         $text = preg_replace( '/\s+/u', ' ', $text );
         if ( ! is_string( $text ) || PREG_NO_ERROR !== preg_last_error() ) {
             return null;
@@ -770,10 +770,17 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         // A zero-width scan checks every position without consuming a prior name or value.
         // The pattern depends only on the fixed names, never on response values.
-        $pattern = '/(?=(?:' . implode( '|', self::SENSITIVE_PARAM_NAMES ) . ')[\'"]?\s*[:=])/iu';
-        $matched = preg_match( $pattern, $text );
-        if ( false === $matched || PREG_NO_ERROR !== preg_last_error() || 1 === $matched ) {
+        $pattern = '/(?=(?:' . implode( '|', self::SENSITIVE_PARAM_NAMES ) . ')[\'"\]]*\s*[:=])/iu';
+        // Malformed tags can leave angle brackets and spaces inside a sensitive name.
+        $detection = preg_replace( '/[\s<>]+/u', '', $text );
+        if ( ! is_string( $detection ) || PREG_NO_ERROR !== preg_last_error() ) {
             return '';
+        }
+        foreach ( array( $text, $detection ) as $candidate ) {
+            $matched = preg_match( $pattern, $candidate );
+            if ( false === $matched || PREG_NO_ERROR !== preg_last_error() || 1 === $matched ) {
+                return '';
+            }
         }
 
         $with_urls = preg_replace_callback(

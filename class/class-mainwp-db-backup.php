@@ -639,6 +639,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             (int) $task->id,
             array(
                 'userid'           => get_current_user_id(),
+                'authorized_sites' => (string) $site_id,
                 'destinations'     => wp_json_encode( $this->manual_backup_task_destinations( $site_id ) ),
                 'retention_count'  => MainWP_Backup_Settings::get_on_demand_retention_count(),
                 'next_run'         => 0,

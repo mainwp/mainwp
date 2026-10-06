@@ -165,6 +165,29 @@ class MainWP_Backup_Manual_Task_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Legacy hidden tasks need the caller's authorized scope before they can run.
+	 */
+	public function test_b320_existing_manual_task_refreshes_authorized_sites() {
+		global $wpdb;
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$db   = MainWP_DB_Backup::instance();
+		$task = $db->ensure_manual_backup_task( $this->website() );
+		$this->assertSame(
+			1,
+			$wpdb->update(
+				MainWP_DB::instance()->get_table_name( 'wp_backup' ),
+				array( 'authorized_sites' => null ),
+				array( 'id' => (int) $task->id )
+			)
+		);
+		$this->assertNull( $db->get_manual_backup_task( $this->site_id )->authorized_sites );
+
+		$refreshed = $db->ensure_manual_backup_task( $this->website() );
+		$this->assertSame( (int) $task->id, (int) $refreshed->id );
+		$this->assertSame( (string) $this->site_id, $refreshed->authorized_sites );
+	}
+
+	/**
 	 * The configurable on-demand retention count lands on the task.
 	 *
 	 * @return void

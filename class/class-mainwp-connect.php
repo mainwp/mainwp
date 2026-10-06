@@ -3371,7 +3371,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $partial_size = is_file( $file ) ? (int) filesize( $file ) : 0;
             if ( 0 === $partial_size ) {
                 $message = esc_html__( 'The backup download was interrupted before completing. No partial data was saved. Try the download again.', 'mainwp' );
-            } elseif ( false !== $expected_size && $partial_size < $expected_size ) {
+            } elseif ( false !== $expected_size && $partial_size < $expected_size && ( 0 === $requested_offset || 'w' !== $state->mode ) ) {
                 $message = esc_html__( 'The backup download was interrupted before completing. Partial data was kept so the next attempt can resume.', 'mainwp' );
             } else {
                 $message = esc_html__( 'The backup download was interrupted before completing. Partial data was kept. Try the download again.', 'mainwp' );

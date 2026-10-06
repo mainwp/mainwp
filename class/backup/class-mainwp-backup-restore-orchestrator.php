@@ -222,9 +222,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         global $wpdb;
         $checkpoints = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
             $wpdb->prepare(
-                'SELECT checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND id > %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
+                'SELECT checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND id > %d AND checkpoint LIKE %s', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
                 (int) $job->site_id,
-                (int) $job->id
+                (int) $job->id,
+                '%' . $wpdb->esc_like( '"rollback_of":' ) . '%'
             )
         );
         foreach ( $checkpoints as $checkpoint_json ) {
@@ -1181,7 +1182,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $options   = array(
             'sub_type'         => (string) $checkpoint['sub_type'],
             'has_foreign_keys' => null,
-            'file_rollback'    => ! empty( $checkpoint['options']['file_rollback'] ) || ! empty( $checkpoint['pre_snapshot_artifacts'] ),
+            'file_rollback'    => ! empty( $checkpoint['options']['file_rollback'] ) || ( empty( $checkpoint['is_rollback'] ) && ! empty( $checkpoint['pre_snapshot_artifacts'] ) ),
             'preserve_orders'  => ! empty( $checkpoint['options']['preserve_orders'] ),
             'woo_order_since'  => isset( $checkpoint['options']['woo_order_since'] ) ? (int) $checkpoint['options']['woo_order_since'] : 0,
         );

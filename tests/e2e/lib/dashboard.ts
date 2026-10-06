@@ -427,6 +427,9 @@ export class Dashboard {
       const ids = await links.evaluateAll((els) =>
         els.map((e) => parseInt(e.getAttribute('data-snapshot') ?? '0', 10)).filter((n) => n > 0),
       );
+      if (ids.length === 0) {
+        throw new Error('No restore link on the Snapshots page carries a positive data-snapshot id.');
+      }
       target = Math.max(...ids);
     }
     const snapshot = this.page.locator(`a.mainwp-restore-snapshot[data-snapshot="${target}"]`);

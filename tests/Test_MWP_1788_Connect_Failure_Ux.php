@@ -65,7 +65,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 				'resolved_ip' => '104.21.12.34',
 			)
 		);
-		$html = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html( $details );
+		$html    = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html( $details );
 
 		$this->assertSame( '', $details['response']['body'] );
 		$this->assertStringContainsString( 'Status: 403', $details['response']['text'] );
@@ -96,109 +96,107 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A body with credentials shows the withheld-excerpt placeholder.
+	 * Body text is absent from rendered and stored failure diagnostics.
+	 *
+	 * @dataProvider data_body_exclusion_inputs
+	 *
+	 * @param string $body Child response body.
 	 */
-	public function test_body_excerpt_is_safe(): void {
-		$body = '<html><title>Attention Required</title><p>password=supersecret uniqueId=abc123</p></html>';
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-
-		$this->assertSame( 'Placeholder: the response body was hidden because it may contain credentials.', $text );
-		$this->assertStringNotContainsString( 'supersecret', $text );
-		$this->assertStringNotContainsString( '<title>', $text );
+	public function test_body_text_never_reaches_failure_diagnostics( string $body ): void {
+		$ux      = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+		$context = array(
+			'http_status'      => 500,
+			'headers'          => "HTTP/1.1 500 Internal Server Error\r\ncontent-type: text/html\r\n",
+			'body'             => $body,
+			'skip_outbound_ip' => true,
+		);
+		$started = microtime( true );
+		$details = $ux::build_details( $context );
+		$output  = $ux::enrich_output( array(), $context );
+		$this->assertLessThan( 1.0, microtime( true ) - $started, 'A crafted body must not delay rendering.' );
+		$this->assertSame( '', $details['response']['body'] );
+		$this->assertSame( '', $output['response_body'] );
+		$without_body         = $context;
+		$without_body['body'] = '';
+		$this->assertSame( $ux::build_details( $without_body ), $details );
+		$this->assertSame( $ux::enrich_output( array(), $without_body ), $output );
+		$this->assertStringContainsString( 'Status: 500', $output['failure_ux'] );
+		$this->assertStringContainsString( 'content-type: text/html', $output['failure_ux_text'] );
 	}
 
 	/**
-	 * Excerpts hide credentials through markup and remain readable without sensitive names.
-	 *
-	 * @dataProvider data_body_excerpt_matrix
-	 *
-	 * @param string      $body      Raw response body.
-	 * @param array       $forbidden Secret values or fragments that must be absent.
-	 * @param string|null $expected  Exact excerpt for a readable or deliberately withheld body.
-	 */
-	public function test_body_excerpt_matrix( string $body, array $forbidden = array( 'supersecret', 'super secret' ), ?string $expected = null ): void {
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-
-		foreach ( $forbidden as $secret ) {
-			$this->assertStringNotContainsString( $secret, $text );
-		}
-		$this->assertNotSame( '', $text, 'Withheld excerpts need an explanation.' );
-		$this->assertTrue( mb_check_encoding( $text, 'UTF-8' ) );
-		$this->assertLessThanOrEqual( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::BODY_LIMIT + 3, mb_strlen( $text, 'UTF-8' ) );
-		if ( null !== $expected ) {
-			$this->assertSame( $expected, $text );
-		}
-	}
-
-	/**
-	 * Original markup cases, round-three triggers, and readable error bodies.
+	 * Representative S57 and S58 body inputs, including ordinary text.
 	 *
 	 * @return array<string,array>
 	 */
-	public function data_body_excerpt_matrix(): array {
-		$hidden = 'Placeholder: the response body was hidden because it may contain credentials.';
-
+	public function data_body_exclusion_inputs(): array {
 		return array(
-			'adjacent title and paragraph'     => array( '<html><title>Attention Required</title><p>password=supersecret</p></html>' ),
-			'adjacent divs'                    => array( '<div>Access Required</div><div>password=supersecret</div>' ),
-			'adjacent obsolete center'         => array( '<center>Access Required</center><center>password=supersecret</center>' ),
-			'details and summary'              => array( '<details><summary>Access Required</summary>password=supersecret</details>' ),
-			'adjacent inline bold'             => array( '<b>Required</b>password=supersecret' ),
-			'adjacent spans'                   => array( '<span>Required</span><span>password=supersecret</span>' ),
-			'adjacent custom element'          => array( '<x-note>Required</x-note>password=supersecret' ),
-			'strong inside the name'           => array( '<p>pass<strong>word</strong>=supersecret</p>' ),
-			'label inside the name'            => array( '<p>pass<label>word</label>=supersecret</p>' ),
-			'script inside the name'           => array( '<p>pass<script>void(0)</script>word=supersecret</p>' ),
-			'comment inside the name'          => array( '<p>pass<!-- x -->word=supersecret</p>' ),
-			'markup inside name and value'     => array( '<p>pass<b>word</b>=super<b>secret</b></p>' ),
-			'quoted value, name split'         => array( '<p>pass<i>word</i>: "supersecret"</p>' ),
-			'suffix name split by markup'      => array( '<p>api<em>_key</em>=supersecret</p>' ),
-			'uppercase tags and name'          => array( '<DIV>Access Required</DIV><DIV>PASSWORD=supersecret</DIV>' ),
-			'line break before the name'       => array( 'Access Required<br>password=supersecret' ),
-			'split name, glued to prior block' => array( '<p>Access Required</p><p>pass<b>word</b>=supersecret</p>' ),
-			'split name, then another pair'    => array( '<p>pass<b>word</b>=supersecret</p><p>uniqueId=abc</p>' ),
-			'short value beside line number'   => array( '<p>Error at line 12</p><p>co<b>de</b>=1</p>', array( '=1' ) ),
-			'multibyte truncation'             => array( 'a' . str_repeat( 'é', 1300 ), array(), 'a' . str_repeat( 'é', 1199 ) . '...' ),
-			'S57-R3-1 swallowed split name'    => array( '<p>user=bob</p>pass<b>word</b>=supersecret' ),
-			'S57-R3-2 overlapping values'      => array( '<p>to<b>ken</b>="super"</p><p>pass<b>word</b>="super-secret"</p>', array( 'super', '-secret' ) ),
-			'S57-R3-3 split entity'            => array( 'pass<b>word</b>="supersecret&#3<b>3</b>;"' ),
-			'S57-R3-4 quoted JIT exhaustion'   => array( '{"token":"' . str_repeat( 's', 9000 ) . '"}', array( str_repeat( 's', 64 ) ) ),
-			'S57-R3-5 5K value pattern'        => array( '<p>to<b>ken</b>="' . str_repeat( 's', 5000 ) . '"</p>', array( str_repeat( 's', 64 ) ) ),
-			'S57-R3-5 11K value pattern'       => array( '<p>to<b>ken</b>="' . str_repeat( 's', 11000 ) . '"</p>', array( str_repeat( 's', 64 ) ) ),
-			'S57-R3-5 long WAF error code'     => array( '<html><h1>Cloudflare: Access denied</h1><p>Error code: 1020</p><p>' . str_repeat( 'Request blocked. ', 950 ) . '</p></html>', array( '1020' ), $hidden ),
-			'S57-R3-6 malformed tag and name'  => array( '<p>token=password</p>pass<<b>word</b>=supersecret', array( 'supersecret', 'super secret' ) ),
-			'malformed split name alone'       => array( 'pass<<b>word</b>=supersecret', array( 'supersecret' ), $hidden ),
-			'malformed name after safe block'  => array( '<p>Access denied</p>pass<<b>word</b>=supersecret', array( 'supersecret' ), $hidden ),
-			'malformed tag before delimiter'   => array( 'password<<b>=</b>secret', array( 'secret' ), $hidden ),
-			'print_r password entry'           => array( '<pre>Array ( [user] => bob [password] => supersecret )</pre>', array( 'supersecret' ), $hidden ),
-			'var_dump password entry'          => array( '["password"]=> string(11) "supersecret"', array( 'supersecret' ), $hidden ),
-			'var_export password entry'        => array( "array ( 'password' => 'supersecret', )", array( 'supersecret' ), $hidden ),
-			'HTML5 colon entity'               => array( 'password&colon; secret', array( 'secret' ), $hidden ),
-			'zero-width space entity in name'  => array( 'pass&#8203;word=supersecret', array( 'supersecret' ), $hidden ),
-			'soft hyphen in name'              => array( 'pass&shy;word=supersecret', array( 'supersecret' ), $hidden ),
-			'raw zero-width space in name'     => array( "pass\u{200B}word=supersecret", array( 'supersecret' ), $hidden ),
-			'byte order mark in name'          => array( "pass\u{FEFF}word=supersecret", array( 'supersecret' ), $hidden ),
-			'word joiner before delimiter'     => array( "password\u{2060}=supersecret", array( 'supersecret' ), $hidden ),
-			'combining joiner in name'         => array( "pass\u{034F}word=supersecret", array( 'supersecret' ), $hidden ),
-			'non-joiner entity, colon pair'    => array( '<p>to&zwnj;ken: supersecret</p>', array( 'supersecret' ), $hidden ),
-			'URL-encoded delimiter'            => array( 'user=bob&password%3Dsupersecret', array( 'supersecret' ), $hidden ),
-			'URL userinfo'                     => array( 'See https://user:supersecret@example.test/help', array( 'supersecret', 'user' ), 'See https://example.test/help' ),
-			'URL userinfo split by markup'     => array( 'See https://user:<b>supersecret</b>@example.test/help', array( 'supersecret', 'user' ), 'See https://example.test/help' ),
-			'URL userinfo split by comment'    => array( 'See https://user:super<!-- x -->secret@example.test/help', array( 'super', 'user' ), 'See https://example.test/help' ),
-			'URL, then a contact address'      => array( 'See https://example.test/help or write to admin@example.test', array(), 'See https://example.test/help or write to admin@example.test' ),
-			'Cloudflare block page'            => array( '<!DOCTYPE html><html><head><title>Attention Required! | Cloudflare</title><style>body { color: #333; }</style></head><body><h1>Sorry, you have been blocked</h1><p>You are unable to access example.com</p><p>Cloudflare Ray ID: 8ab1234567890123</p><p>Your IP: 203.0.113.10</p><script>void(0)</script></body></html>', array(), 'Attention Required! | Cloudflare Sorry, you have been blocked You are unable to access example.com Cloudflare Ray ID: 8ab1234567890123 Your IP: 203.0.113.10' ),
-			'PHP warning and fatal page'       => array( '<br /><b>Warning</b>: Undefined array index "site" in <b>/var/www/html/wp-content/plugins/example/plugin.php</b> on line <b>42</b><br /><b>Fatal error</b>: Uncaught TypeError: count(): Argument #1 must be of type Countable|array, null given in /var/www/html/wp-content/plugins/example/plugin.php:43<br />Stack trace:<br />#0 {main}<br />thrown on line <b>43</b>', array(), 'Warning : Undefined array index "site" in /var/www/html/wp-content/plugins/example/plugin.php on line 42 Fatal error : Uncaught TypeError: count(): Argument #1 must be of type Countable|array, null given in /var/www/html/wp-content/plugins/example/plugin.php:43 Stack trace: #0 {main} thrown on line 43' ),
-			'wp_die page'                      => array( '<!DOCTYPE html><html><head><title>WordPress &rsaquo; Error</title><style>body { background: #fff; }</style></head><body id="error-page"><div class="wp-die-message"><p>There has been a critical error on this website.</p><p><a href="https://wordpress.org/documentation/article/faq-troubleshooting/">Learn more about troubleshooting WordPress.</a></p></div></body></html>', array(), 'WordPress › Error There has been a critical error on this website. Learn more about troubleshooting WordPress.' ),
-			'JSON error without secrets'       => array( '{"error":"service_unavailable","message":"Please try again later.","status":503}', array(), '{"error":"service_unavailable","message":"Please try again later.","status":503}' ),
-			'JSON error with code label'       => array( '{"code":"service_unavailable","message":"Please try again later.","status":503}', array( 'service_unavailable' ), $hidden ),
-			'sensitive name inside a word'     => array( '12RequiredPASSWORD = supersecret' ),
-			'sensitive pair in prior value'    => array( 'user=bobpassword=supersecret' ),
-			'quoted suffix inside prior value' => array( 'message="user=bob api-key: supersecret"' ),
-			'sensitive name past body limit'   => array( str_repeat( 'a', 1300 ) . ' token=supersecret', array( 'supersecret' ), $hidden ),
-			'regex metacharacters in value'    => array( 'pass<b>word</b>="supersecret/.*[a-z]+$"' ),
-			'URL query without sensitive name' => array( 'See https://example.test/help?ticket=private#fragment', array( 'private', 'fragment', '?' ), 'See https://example.test/help' ),
-			'name without a pair delimiter'    => array( '<p>Your password could not be verified.</p>', array(), 'Your password could not be verified.' ),
-			'invalid UTF-8 fails closed'       => array( "Failure \xff details", array( 'Failure', 'details' ), $hidden ),
+			'ordinary body'              => array( '<p>Private child diagnostic</p>' ),
+			'S57 split name'             => array( '<p>user=bob</p>pass<b>word</b>=supersecret' ),
+			'S57 malformed split'        => array( 'pass<<b>word</b>=supersecret' ),
+			'S58 invisible split'        => array( "pass\u{200B}word=supersecret" ),
+			'S58 Hangul split'           => array( "pass\u{3164}word=supersecret" ),
+			'S58 entity split'           => array( 'pass&#12644;word=supersecret' ),
+			'S58 fullwidth colon'        => array( 'password：supersecret' ),
+			'S58 fullwidth equals'       => array( 'token＝supersecret' ),
+			'URL userinfo'               => array( 'https://user:supersecret@example.test' ),
+			'URL entity space'           => array( 'https://user:&#32;supersecret@example.test' ),
+			'URL markup and entity'      => array( 'https://user:<b>supersecret</b>&#64;example.test' ),
+			'URL entity colon'           => array( 'https://user&#58;<i>supersecret</i>@example.test' ),
+			'URL quoted tag'             => array( 'https://user:<b title="a>b">supersecret</b>@example.test' ),
+			'HTML5 entity'               => array( 'password&colon; supersecret' ),
+			'table cells'                => array( '<td>mainwpsignature</td><td>supersecret</td>' ),
+			'500 KB crafted userinfo'    => array( str_repeat( '://a<', 100000 ) . '@' ),
+			'480 KB crafted script tags' => array( str_repeat( '<script>', 60000 ) ),
+		);
+	}
+
+	/**
+	 * A body can classify a block without contributing response text.
+	 */
+	public function test_cloudflare_classification_survives_body_removal(): void {
+		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+			array(
+				'http_status'      => 503,
+				'body'             => '<h1>Attention Required! Cloudflare</h1><p>Private Ray ID: supersecret</p>',
+				'skip_outbound_ip' => true,
+			)
+		);
+		$this->assertTrue( $details['waf_likely'] );
+		foreach ( array( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html( $details ), \MainWP\Dashboard\MainWP_Connect_Failure_Ux::format_text( $details ) ) as $surface ) {
+			$this->assertStringContainsString( 'Cloudflare / WAF / User-Agent allow', $surface );
+			$this->assertStringNotContainsString( 'Attention Required', $surface );
+			$this->assertStringNotContainsString( 'Private Ray ID', $surface );
+			$this->assertStringNotContainsString( 'supersecret', $surface );
+		}
+	}
+
+	/**
+	 * Legacy exception and output text cannot bypass body exclusion.
+	 */
+	public function test_readable_response_rebuilds_legacy_diagnostics(): void {
+		$ux        = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+		$exception = new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP' );
+		foreach ( array(
+			'Private body: supersecret',
+			array(
+				'text'        => 'Private body: supersecret',
+				'body'        => 'supersecret',
+				'http_status' => 500,
+			),
+		) as $data ) {
+			$exception->set_data( $data );
+			$text = $ux::readable_response_from_output( array(), $exception );
+			$this->assertStringNotContainsString( 'supersecret', $text );
+		}
+		$this->assertStringNotContainsString(
+			'supersecret',
+			$ux::readable_response_from_output(
+				array(
+					'http_status'       => 500,
+					'response_readable' => 'Private body: supersecret',
+				)
+			)
 		);
 	}
 
@@ -217,8 +215,6 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			ini_set( 'pcre.jit', '0' );
 			ini_set( 'pcre.backtrack_limit', '1' );
 			$this->assertSame( '', $ux::redact_secrets( 'passwordx=public response text' ) );
-			$this->assertSame( PREG_BACKTRACK_LIMIT_ERROR, preg_last_error() );
-			$this->assertSame( 'Placeholder: the response body was hidden because it may contain credentials.', $ux::summarize_body( '<script>var value = 1;</script><p>Ordinary response text</p>' ) );
 			$this->assertSame( PREG_BACKTRACK_LIMIT_ERROR, preg_last_error() );
 		} finally {
 			ini_set( 'pcre.backtrack_limit', $limit );
@@ -295,13 +291,13 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 				'body'        => '<p>Internal error</p>',
 			)
 		);
-		$html = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html( $details );
+		$html    = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::render_html( $details );
 
 		$this->assertFalse( $details['waf_likely'] );
 		$this->assertStringContainsString( '198.51.100.7', $html );
 		$this->assertStringContainsString( 'User-Agent MainWP sends', $html );
 		$this->assertStringContainsString( 'Status: 500', $html );
-		$this->assertStringContainsString( 'Internal error', $html );
+		$this->assertStringNotContainsString( 'Internal error', $html );
 		$this->assertStringNotContainsString( 'Cloudflare / WAF / User-Agent allow', $html );
 	}
 
@@ -380,8 +376,8 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$this->assertSame( '/authorize', $ux::redact_url( '/authorize?ticket=secret#token' ) );
 		$this->assertSame( '', $ux::redact_url( 'https://user:password@example.test:99999/path' ) );
 
-		$headers = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/authorize?ticket=secret#token\r\n";
-		$details = $ux::build_details(
+		$headers  = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/authorize?ticket=secret#token\r\n";
+		$details  = $ux::build_details(
 			array(
 				'http_status' => 302,
 				'headers'     => $headers,
@@ -423,8 +419,8 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	 * Hidden body still keeps Location host/path, with query/fragment removed.
 	 */
 	public function test_hidden_body_still_redacts_location_in_failure_surfaces(): void {
-		$headers = "HTTP/1.1 302 Found\r\nLocation: https://login.example.test/wp-login.php?action=rp&key=qa-secret&rp_key=qa-code&redirect_to=/wp-admin/\r\n";
-		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+		$headers  = "HTTP/1.1 302 Found\r\nLocation: https://login.example.test/wp-login.php?action=rp&key=qa-secret&rp_key=qa-code&redirect_to=/wp-admin/\r\n";
+		$details  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
 			array(
 				'http_status' => 302,
 				'headers'     => $headers,
@@ -458,27 +454,10 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	/**
 	 * Suffix-named credentials are withheld in bodies, headers, and stored UX.
 	 */
-	public function test_suffix_param_names_are_redacted_like_is_sensitive_param(): void {
-		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'csrf_token' ) );
-		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'site_api_key' ) );
-		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'user_password' ) );
-		$this->assertFalse( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'page' ) );
-
-		$body = 'Welcome csrf_token=qa-csrf-secret site_api_key=qa-api-key plugin_password=qa-plugin-secret page=sites';
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-		$this->assertSame( 'Placeholder: the response body was hidden because it may contain credentials.', $text );
-		$this->assertStringNotContainsString( 'qa-csrf-secret', $text );
-		$this->assertStringNotContainsString( 'qa-api-key', $text );
-		$this->assertStringNotContainsString( 'qa-plugin-secret', $text );
-
-		$json = '{"csrf_token":"qa-csrf-secret","plugin_password":"qa-plugin-secret","page":"sites"}';
-		$json_text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $json );
-		$this->assertSame( 'Placeholder: the response body was hidden because it may contain credentials.', $json_text );
-		$this->assertStringNotContainsString( 'qa-csrf-secret', $json_text );
-		$this->assertStringNotContainsString( 'qa-plugin-secret', $json_text );
-
-		$headers = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/cb?csrf_token=qa-csrf-secret&plugin_password=qa-plugin-secret&page=sites\r\nwww-authenticate: Bearer plugin_password=qa-plugin-secret\r\n";
-		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+	public function test_suffix_named_credentials_are_absent_from_failure_surfaces(): void {
+		$body     = 'Welcome csrf_token=qa-csrf-secret site_api_key=qa-api-key plugin_password=qa-plugin-secret page=sites';
+		$headers  = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/cb?csrf_token=qa-csrf-secret&plugin_password=qa-plugin-secret&page=sites\r\nwww-authenticate: Bearer plugin_password=qa-plugin-secret\r\n";
+		$details  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
 			array(
 				'http_status' => 302,
 				'headers'     => $headers,
@@ -497,7 +476,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		);
 
 		foreach ( array( $details['response']['text'], $html, $text_ux, $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'] ) as $surface ) {
-			$this->assertStringContainsString( 'Placeholder: the response body was hidden because it may contain credentials.', $surface );
+			$this->assertStringNotContainsString( 'Welcome', $surface );
 			$this->assertStringNotContainsString( 'qa-csrf-secret', $surface );
 			$this->assertStringNotContainsString( 'qa-api-key', $surface );
 			$this->assertStringNotContainsString( 'qa-plugin-secret', $surface );
@@ -513,21 +492,9 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	 * Comma- and space-containing credentials are withheld in bodies and headers.
 	 */
 	public function test_delimiter_containing_secrets_are_fully_redacted(): void {
-		$body = 'Welcome plugin_password=qa,secret csrf_token=qa space-token page=sites';
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-		$this->assertSame( 'Placeholder: the response body was hidden because it may contain credentials.', $text );
-		$this->assertStringNotContainsString( 'qa,secret', $text );
-		$this->assertStringNotContainsString( ',secret', $text );
-		$this->assertStringNotContainsString( 'qa space-token', $text );
-
-		$json = '{"plugin_password":"qa, secret","csrf_token":"qa space-token","page":"sites"}';
-		$json_text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $json );
-		$this->assertSame( 'Placeholder: the response body was hidden because it may contain credentials.', $json_text );
-		$this->assertStringNotContainsString( 'qa, secret', $json_text );
-		$this->assertStringNotContainsString( 'qa space-token', $json_text );
-
-		$headers = "HTTP/1.1 401 Unauthorized\r\nwww-authenticate: Bearer plugin_password=\"qa,secret\"\r\nLocation: https://sso.example.test/cb?plugin_password=qa,secret&page=sites\r\n";
-		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
+		$body     = 'Welcome plugin_password=qa,secret csrf_token=qa space-token page=sites';
+		$headers  = "HTTP/1.1 401 Unauthorized\r\nwww-authenticate: Bearer plugin_password=\"qa,secret\"\r\nLocation: https://sso.example.test/cb?plugin_password=qa,secret&page=sites\r\n";
+		$details  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
 			array(
 				'http_status' => 401,
 				'headers'     => $headers,
@@ -546,7 +513,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		);
 
 		foreach ( array( $details['response']['text'], $html, $text_ux, $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'] ) as $surface ) {
-			$this->assertStringContainsString( 'Placeholder: the response body was hidden because it may contain credentials.', $surface );
+			$this->assertStringNotContainsString( 'Welcome', $surface );
 			$this->assertStringNotContainsString( 'qa,secret', $surface );
 			$this->assertStringNotContainsString( ',secret', $surface );
 			$this->assertStringNotContainsString( 'qa space-token', $surface );

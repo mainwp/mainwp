@@ -29,6 +29,107 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * A manual click uses the authorized initiator's identity on every run.
+	 *
+	 * @dataProvider manual_owner_cases
+	 * @param bool $deleted Whether the site's former owner was deleted.
+	 * @param bool $existing Whether a stale manual task already exists.
+	 */
+	public function test_b320_manual_initiate_repairs_owner( $deleted, $existing ) {
+		$site_owner = 0;
+		if ( $deleted ) {
+			$site_owner = self::factory()->user->create( array( 'role' => 'administrator' ) );
+			wp_delete_user( $site_owner );
+		}
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
+		$site_id = $this->create_test_site(
+			array(
+				'userid'  => $site_owner,
+				'version' => '6.3',
+			)
+		);
+		if ( $existing ) {
+			$this->manual_task_in_state(
+				$site_id,
+				array(
+					'userid' => $site_owner,
+					'paused' => 1,
+				)
+			);
+		}
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array( 'task_id' => 'b320-manual' ),
+			)
+		);
+		$response = $this->initiate_on_demand( $site_id );
+		$task     = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+		$this->assertSame( 'running', $response['status'] ?? null, 'The manual run must execute instead of queuing behind a scope pause.' );
+		$this->assertSame( $admin, (int) $task->userid, 'Every initiate must re-stamp the authorized user.' );
+		$this->assertSame( 0, (int) $task->paused );
+		$this->assertGreaterThan( 0, (int) $task->last_run );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+		$this->assertNotNull( $progress );
+		$this->assertSame( 'b320-manual', $progress->child_backup_task_id );
+	}
+
+	/**
+	 * New and stale tasks must handle both kinds of missing site owner.
+	 *
+	 * @return array Owner cases.
+	 */
+	public static function manual_owner_cases() {
+		return array(
+			'owner zero, new task'      => array( false, false ),
+			'deleted owner, new task'   => array( true, false ),
+			'owner zero, stale task'    => array( false, true ),
+			'deleted owner, stale task' => array( true, true ),
+		);
+	}
+
+	/**
+	 * A pause before or during a poll must terminate the hidden manual run.
+	 *
+	 * @dataProvider manual_pause_cases
+	 * @param bool $forced Whether the task was already paused.
+	 * @param bool $open Whether the run was already claimed.
+	 */
+	public function test_b320_manual_poll_reports_pause( $forced, $open ) {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id  = $this->create_test_site();
+		$notice   = 'This task was paused because its owner\'s site access changed';
+		$task     = $this->manual_task_in_state(
+			$site_id,
+			array(
+				'userid'         => $forced ? get_current_user_id() : 0,
+				'paused'         => $forced ? 1 : 0,
+				'last_run'       => time() - 60,
+				'completed'      => $open ? 0 : time() - 50,
+				'backup_notices' => $forced ? $notice : '',
+			)
+		);
+		$response = $this->poll_on_demand( $site_id, $open ? (int) $task->last_run : time() - 5 );
+		$this->assertSame( 'failed', $response['status'] ?? null, 'A paused manual run must report a terminal failure.' );
+		$this->assertStringContainsString( $notice, html_entity_decode( $response['error'] ?? '', ENT_QUOTES ) );
+	}
+
+	/**
+	 * Exercise a queued click and a claimed run with existing and new pauses.
+	 *
+	 * @return array Pause cases.
+	 */
+	public static function manual_pause_cases() {
+		return array(
+			'forced, queued' => array( true, false ),
+			'forced, open'   => array( true, true ),
+			'scope, queued'  => array( false, false ),
+			'scope, open'    => array( false, true ),
+		);
+	}
+
+	/**
 	 * Site names that differ by case must retain their separate notices.
 	 */
 	public function test_notice_deduplication_is_case_sensitive() {

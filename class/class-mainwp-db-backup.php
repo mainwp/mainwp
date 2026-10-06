@@ -573,12 +573,12 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * Get-or-create the per-site hidden on-demand backup task and refresh
      * its destinations and retention on every call. The task is a
      * standalone full backup (never incremental) so each on-demand
-     * snapshot restores on its own; it runs as the site owner so the
-     * executor permission check passes; and it stays off the schedule list
+     * snapshot restores on its own; it runs as the authorized initiator,
+     * refreshed on every call; and it stays off the schedule list
      * (template = 1) and out of the schedulers (schedule 'manual',
      * next_run 0), driven only on demand and by the existing continue cron.
      *
-     * @param object $website Child site object (needs id and userid).
+     * @param object $website Authorized child site object (needs id).
      *
      * @return object|false The refreshed task row, or false on failure.
      */
@@ -594,7 +594,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             $suppress = $this->wpdb->suppress_errors();
             try {
                 $created = $this->add_backup_task(
-                    (int) $website->userid,
+                    get_current_user_id(),
                     'On-demand backup',
                     'manual',
                     'full',
@@ -638,6 +638,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $this->update_backup_task_with_values(
             (int) $task->id,
             array(
+                'userid'           => get_current_user_id(),
                 'destinations'     => wp_json_encode( $this->manual_backup_task_destinations( $site_id ) ),
                 'retention_count'  => MainWP_Backup_Settings::get_on_demand_retention_count(),
                 'next_run'         => 0,

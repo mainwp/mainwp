@@ -799,10 +799,10 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         // Drive one step. updateRun = false so the in-flight run is never
         // reset. The cron backstop covers a closed tab between polls.
-        if ( (int) $task->completed < (int) $task->last_run ) {
+        if ( empty( $task->paused ) && (int) $task->completed < (int) $task->last_run ) {
             MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false );
             $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
-        } elseif ( $since > (int) $task->last_run && $since <= time() ) {
+        } elseif ( empty( $task->paused ) && $since > (int) $task->last_run && $since <= time() ) {
             // The click this poll follows never got its run opened: its
             // initiate lost the concurrency-slot race and answered queued,
             // and neither branch above nor the continue cron ever drives a
@@ -824,10 +824,21 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $settle = MainWP_Backup_Settings::get_manual_run_settle_seconds();
             MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle );
             $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
-            if ( $task && (int) $task->completed >= (int) $task->last_run && $since > (int) $task->last_run ) {
+            if ( $task && empty( $task->paused ) && (int) $task->completed >= (int) $task->last_run && $since > (int) $task->last_run ) {
                 wp_send_json( array( 'status' => 'queued' ) );
                 return;
             }
+        }
+
+        if ( ! empty( $task->paused ) ) {
+            $notice = (string) ( $task->backup_notices ?? '' );
+            wp_send_json(
+                array(
+                    'status' => 'failed',
+                    'error'  => '' !== $notice ? static::humanize_backup_errors( $notice ) : esc_html__( 'This task is paused. Resume it before running it.', 'mainwp' ),
+                )
+            );
+            return;
         }
 
         if ( $task && (int) $task->completed < (int) $task->last_run ) {

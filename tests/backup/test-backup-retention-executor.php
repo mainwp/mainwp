@@ -702,6 +702,9 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function test_failed_local_delete_keeps_snapshot_restorable() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root bypasses directory write permissions.' );
+		}
 		list( $base, $base_dir ) = $this->make_snapshot_with_dir();
 		list( $inc, $inc_dir )   = $this->make_snapshot_with_dir(
 			array(
@@ -747,6 +750,9 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function test_failed_local_delete_preserves_cloud_copies_and_upload_rows() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root bypasses directory write permissions.' );
+		}
 		list( $snapshot_id, $dir ) = $this->make_snapshot_with_dir();
 		$this->insert_upload_job( $snapshot_id, 77 );
 		$this->insert_upload_job( $snapshot_id, 88 );

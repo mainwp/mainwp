@@ -231,6 +231,9 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_queue_drain_surfaces_retention_errors() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root bypasses directory write permissions.' );
+		}
 		$task_id = $this->insert_task( array( 'retention_count' => 1 ) );
 		$old     = $this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 200 ) );
 		$new     = $this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 100 ) );

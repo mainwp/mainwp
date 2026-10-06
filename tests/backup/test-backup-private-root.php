@@ -119,6 +119,9 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	 * Writability must be demonstrated before chmod can mask the failure.
 	 */
 	public function test_unwritable_root_is_refused() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root bypasses directory write permissions.' );
+		}
 		mkdir( $this->private_root, 0500 );
 		try {
 			$error = MainWP_Backup_Private_Root::site_dir( 1 );
@@ -383,6 +386,9 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		mkdir( $this->private_root . '/readonly', 0500 );
 		foreach ( $rows as $label => $row ) {
 			list( $selection, $path, $accepted ) = $row;
+			if ( 'unwritable' === $selection && function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+				continue;
+			}
 			if ( in_array( $selection, array( 'default', 'constant', 'filter', 'siblings', 'container' ), true ) ) {
 				// Constants need separate processes; none of these resolutions writes to disk.
 				$resolve = static function ( string $abspath ) use ( $selection ) {

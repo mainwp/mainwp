@@ -280,6 +280,13 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $hidden  = esc_html__( 'Placeholder: the response body was hidden because it may contain credentials.', 'mainwp' );
         $excerpt = '';
 
+        // Drop URL userinfo while the markup is still in place: a tag inside it
+        // separates the password from its URL once tags become spaces.
+        $body = preg_replace( '#://(?:[^\s/?\#@"\'<>]++|<[^>]*+>)++@#', '://', $body );
+        if ( ! is_string( $body ) || PREG_NO_ERROR !== preg_last_error() ) {
+            return $hidden;
+        }
+
         // Check each rendering independently: tags can split a name or glue it to a prior word.
         foreach ( array( false, true ) as $spaced ) {
             $text = self::body_text( $body, $spaced );
@@ -754,7 +761,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Withhold text containing a sensitive name before ':' or '=', or any regex failure.
+     * Withhold text containing a sensitive name before ':' or '=' (raw or URL-encoded), or any regex failure.
      *
      * Names ending in a sensitive name also count. Otherwise, strip URL credentials,
      * queries and fragments while keeping the diagnostic text readable.
@@ -770,9 +777,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         // A zero-width scan checks every position without consuming a prior name or value.
         // The pattern depends only on the fixed names, never on response values.
-        $pattern = '/(?=(?:' . implode( '|', self::SENSITIVE_PARAM_NAMES ) . ')[\'"\]]*\s*[:=])/iu';
-        // Malformed tags can leave angle brackets and spaces inside a sensitive name.
-        $detection = preg_replace( '/[\s<>]+/u', '', $text );
+        $pattern = '/(?=(?:' . implode( '|', self::SENSITIVE_PARAM_NAMES ) . ')[\'"\]]*\s*(?:[:=]|%3[ad]))/iu';
+        // Malformed tags leave angle brackets and spaces inside a sensitive name, and
+        // invisible format or combining characters split it without showing a gap.
+        $detection = preg_replace( '/[\s<>\p{Cf}\p{Mn}]+/u', '', $text );
         if ( ! is_string( $detection ) || PREG_NO_ERROR !== preg_last_error() ) {
             return '';
         }

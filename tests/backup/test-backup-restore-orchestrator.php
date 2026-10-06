@@ -4356,6 +4356,27 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Later failures without a safety backup must not push the only Roll Back out of the list.
+	 */
+	public function test_b194_failed_restore_list_keeps_an_older_rollback_source() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$source = $this->make_job(
+			array( 'pre_snapshot_artifacts' => array( array( 'file' => 'backup-pre.tar.gz' ) ) ),
+			MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT
+		);
+		$ids    = array();
+		for ( $index = 0; $index < 21; ++$index ) {
+			$job   = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED );
+			$ids[] = (int) $job->id;
+		}
+
+		$response = $this->b194_reload_snapshots();
+		$expected = array_merge( array_slice( array_reverse( $ids ), 0, 19 ), array( (int) $source->id ) );
+		$this->assertSame( $expected, array_column( $response['failed_restore_jobs'], 'job_id' ) );
+		$this->assertTrue( $response['failed_restore_jobs'][19]['has_rollback'] );
+	}
+
+	/**
 	 * A fresh request lists this site's failures and their rollback availability.
 	 */
 	public function test_b194_failed_restore_is_listed_after_reload() {

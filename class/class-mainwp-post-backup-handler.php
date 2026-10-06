@@ -276,14 +276,24 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // progress views instead of looking hung while a restore or an
         // on-demand backup carries on in the background.
         global $wpdb;
-        $active_job  = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id );
+        $active_job = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id );
+        // Jobs that still carry a safety backup rank first, so later failures
+        // without one cannot push the only Roll Back out of the capped list.
         $failed_jobs = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
             $wpdb->prepare(
-                'SELECT id, snapshot_id, site_id, status, last_error, checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND status IN ( %s, %s ) ORDER BY id DESC LIMIT 20', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
+                'SELECT id, snapshot_id, site_id, status, last_error, checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND status IN ( %s, %s ) ORDER BY ( checkpoint LIKE %s ) DESC, id DESC LIMIT 20', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
                 $site_id,
                 MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
-                MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED
+                MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED,
+                '%' . $wpdb->esc_like( '"pre_snapshot_artifacts":[{' ) . '%'
             )
+        );
+        $failed_jobs = is_array( $failed_jobs ) ? $failed_jobs : array();
+        usort(
+            $failed_jobs,
+            static function ( $a, $b ) {
+                return (int) $b->id - (int) $a->id;
+            }
         );
         $failed_rows = array();
         foreach ( $failed_jobs as $failed_job ) {

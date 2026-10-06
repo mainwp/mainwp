@@ -955,14 +955,25 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 setPane( false );
                 $( '#mainwp-restore-rollback-btn' ).hide();
                 $( '#mainwp-restore-result-message' ).hide();
+                // A refused or lost request leaves the job as it was, so stop the
+                // spinner and give the Roll Back button back for a retry.
+                function rollbackRefused( message ) {
+                    $( '#mainwp-restore-spinner' ).hide();
+                    $( '#mainwp-restore-status-text' ).text( '' );
+                    $( '#mainwp-restore-rollback-btn' ).show();
+                    $( '#mainwp-restore-result-message' ).removeClass( 'green blue' ).addClass( 'red' ).text( message ).show();
+                }
                 $.post( ajaxurl, { action: 'mainwp_restore_rollback', security: nonces.rollback, job_id: jobId }, function ( response ) {
                     if ( response.error ) {
-                        $( '#mainwp-restore-result-message' ).addClass( 'red' ).text( response.error ).show();
+                        rollbackRefused( response.error );
                         return;
                     }
                     startJobFollow( response.job_id );
                     loadSnapshots( currentSite );
-                }, 'json' );
+                }, 'json' ).fail( function () {
+                    <?php // TODO: Owner to rewrite placeholder copy. ?>
+                    rollbackRefused( '<?php echo esc_js( esc_html__( 'The rollback could not be started. Check the connection and try again.', 'mainwp' ) ); ?>' );
+                } );
             }
 
             $( '#mainwp-restore-rollback-btn' ).on( 'click', function () {

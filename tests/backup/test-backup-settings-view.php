@@ -65,6 +65,26 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * With the key file lost, a refusal means the passphrase did not open the
+	 * stored recovery key, so the banner must ask for the original passphrase.
+	 */
+	public function test_settings_renders_lost_key_passphrase_error() {
+		$enc = MainWP_Backup_Encryption::instance();
+		$enc->set_recovery_passphrase( 'original recovery passphrase' );
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		$_GET['backup_recovery_passphrase_rejected'] = '1';
+		ob_start();
+		try {
+			MainWP_Backup_Settings_View::render_settings();
+		} finally {
+			$output = ob_get_clean();
+			unset( $_GET['backup_recovery_passphrase_rejected'] );
+		}
+		$this->assertStringContainsString( 'enter the original recovery passphrase', $output );
+		$this->assertStringNotContainsString( 'The recovery passphrase must be at least 12 characters.', $output );
+	}
+
+	/**
 	 * Reset the on-demand retention option between tests.
 	 *
 	 * @return void

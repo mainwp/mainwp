@@ -266,6 +266,51 @@ class MainWP_Backup_Encryption_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Re-entering the passphrase after the key file is lost must restore the
+	 * original KEK, not mint a new one that orphans every wrapped DEK.
+	 *
+	 * @return void
+	 */
+	public function test_passphrase_after_lost_key_file_restores_original_kek() {
+		$enc = MainWP_Backup_Encryption::instance();
+		$enc->set_recovery_passphrase( 'recover me from the option' );
+		$kek     = $enc->load_kek();
+		$wrapped = $enc->wrap_dek( $enc->generate_dek(), 7, $kek );
+
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		$blob = $enc->set_recovery_passphrase( 'recover me from the option' );
+
+		$this->assertSame( $kek, $enc->load_kek(), 'The original KEK must be written back to its key file.' );
+		$this->assertSame( $kek, $enc->recover_kek( 'recover me from the option', $blob ) );
+		$this->assertSame( 32, strlen( $enc->unwrap_dek( $wrapped, 7, $enc->load_kek() ) ) );
+	}
+
+	/**
+	 * A passphrase that does not open the stored blob is refused while the key
+	 * file is lost, and the only remaining wrap of the KEK is kept.
+	 *
+	 * @return void
+	 */
+	public function test_wrong_passphrase_after_lost_key_file_keeps_recovery_blob() {
+		$enc = MainWP_Backup_Encryption::instance();
+		$enc->set_recovery_passphrase( 'recover me from the option' );
+		$kek      = $enc->load_kek();
+		$original = $enc->get_recovery_blob();
+
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		try {
+			$enc->set_recovery_passphrase( 'a different passphrase here' );
+			$this->fail( 'A passphrase that does not open the stored blob must be refused.' );
+		} catch ( \InvalidArgumentException $e ) {
+			unset( $e );
+		}
+
+		$this->assertSame( $original, $enc->get_recovery_blob() );
+		$this->assertNull( $enc->load_kek(), 'No replacement KEK may be minted.' );
+		$this->assertSame( $kek, $enc->recover_kek( 'recover me from the option', $enc->get_recovery_blob() ) );
+	}
+
+	/**
 	 * Snapshot encryption metadata carries the cipher markers and a wrapped
 	 * DEK that recovers under the KEK, bound to the snapshot id it was minted
 	 * for.

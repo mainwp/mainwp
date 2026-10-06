@@ -228,19 +228,35 @@ class MainWP_Backup_Encryption { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
-     * Set or change the recovery passphrase. Creates the KEK on first use and
-     * always re-wraps the same KEK; never regenerates it.
+     * Set or change the recovery passphrase. Creates the KEK on first use,
+     * restores it from the stored blob when the key file is lost, and always
+     * re-wraps the same KEK; never regenerates it.
      *
      * @param string $passphrase The operator passphrase.
      *
      * @return array The self-describing recovery blob that was stored.
-     * @throws \InvalidArgumentException When the trimmed passphrase is too short.
+     * @throws \InvalidArgumentException When the trimmed passphrase is too short, or the key file is lost and the passphrase does not open the stored blob.
+     * @throws \RuntimeException When a recovered or new KEK cannot be persisted to its key file.
      */
     public function set_recovery_passphrase( $passphrase ) {
         if ( mb_strlen( trim( (string) $passphrase ), 'UTF-8' ) < self::MIN_PASSPHRASE_LENGTH ) {
             throw new \InvalidArgumentException( esc_html__( 'The recovery passphrase must be at least 12 characters.', 'mainwp' ) );
         }
-        $kek          = $this->get_or_create_kek();
+        $kek      = $this->load_kek();
+        $existing = $this->get_recovery_blob();
+        if ( null === $kek && ! empty( $existing['wrapped_kek'] ) ) {
+            // With the key file lost, the stored blob holds the only copy of the
+            // KEK every wrapped DEK depends on. A new KEK would overwrite it.
+            try {
+                $kek = $this->recover_kek( (string) $passphrase, $existing );
+            } catch ( \Throwable $e ) {
+                throw new \InvalidArgumentException( esc_html__( 'The passphrase does not open the stored recovery key, so the backup encryption key was not replaced.', 'mainwp' ) );
+            }
+            if ( ! MainWP_Keys_Manager::instance()->save_key_file( $this->kek_filename(), $kek ) ) {
+                throw new \RuntimeException( esc_html( 'Could not persist the recovered backup encryption key.' ) );
+            }
+        }
+        $kek          = null !== $kek ? $kek : $this->get_or_create_kek();
         $salt         = random_bytes( 16 );
         $recovery_key = hash_pbkdf2( static::PBKDF2_ALGO, (string) $passphrase, $salt, static::PBKDF2_ITERATIONS, MainWP_Backup_Archive_Cipher::KEY_LEN, true );
         $wrapped      = MainWP_Backup_Archive_Cipher::seal( $kek, $recovery_key, 'wrap:kek' );

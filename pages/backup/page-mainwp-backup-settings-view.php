@@ -226,7 +226,14 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             <div class="ten wide column">
                 <?php if ( $passphraseRejected ) : ?>
                 <div class="ui small red message" style="margin-top: 1em;">
-                    <?php esc_html_e( 'The recovery passphrase must be at least 12 characters.', 'mainwp' ); ?>
+                    <?php
+                    // A lost key file means the save refused a passphrase that does not open the stored blob.
+                    if ( $hasRecoveryPassphrase && null === MainWP_Backup_Encryption::instance()->load_kek() ) {
+                        esc_html_e( 'The backup encryption key file is missing and the passphrase does not match the stored recovery key. To restore the key, enter the original recovery passphrase.', 'mainwp' );
+                    } else {
+                        esc_html_e( 'The recovery passphrase must be at least 12 characters.', 'mainwp' );
+                    }
+                    ?>
                 </div>
                 <?php endif; ?>
                 <input type="password" autocomplete="new-password" name="mainwp_options_backupEncryptionPassphrase" id="mainwp_options_backupEncryptionPassphrase" value="" placeholder="<?php echo $hasRecoveryPassphrase ? esc_attr__( 'A recovery passphrase is set; enter a new one to change it', 'mainwp' ) : esc_attr__( 'Set a recovery passphrase', 'mainwp' ); ?>"/>

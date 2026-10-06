@@ -96,14 +96,22 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 if ( isset( $information['wpversion'] ) ) {
                     $ret['response'] = 'OK';
                 } elseif ( isset( $information['error'] ) ) {
-                    $ret['response'] = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
+                    $ret['response']    = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
+                    $ret['resp_data']   = MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+                    $ret['failure_ux']  = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
                 } else {
-                    $ret['response']  = 'ERROR';
-                    $ret['resp_data'] = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
+                    $ret['response']   = 'ERROR';
+                    $ret['resp_data']  = isset( $output['fetch_data'] ) ? $output['fetch_data'] : MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+                    $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
                 }
             } catch ( MainWP_Exception $e ) {
-                $ret['response']  = $e->getMessage();
-                $ret['resp_data'] = $e->get_data();
+                $ret['response']   = $e->getMessage();
+                $ret['resp_data']  = MainWP_Connect_Failure_Ux::readable_response_from_output( $output, $e );
+                $ret['failure_ux'] = MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( $e, $output ) );
+                if ( 'TIMEOUT' === $e->getMessage() ) {
+                    $ret['timeout_kind'] = $e->get_message_error_code();
+                    $ret['resp_data']    = '';
+                }
             }
         }
         $ret['check_me'] = ( isset( $_POST['check_me'] ) ? intval( $_POST['check_me'] ) : null );
@@ -215,7 +223,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
         if ( '' !== $error ) {
-            $ret['response'] = 'ERROR ' . $error;
+            $ret['response']   = 'ERROR ' . $error;
+            $ret['resp_data']  = isset( $output['fetch_data'] ) ? $output['fetch_data'] : MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+            $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
             die( wp_json_encode( $ret ) );
         }
         $ret['response'] = $message;
@@ -317,9 +327,17 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
                 $note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 $esc_note = MainWP_Utility::esc_content( $note );
-                MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
+                if ( ! MainWP_DB_Common::instance()->update_note( $website->id, $esc_note ) ) {
+                    wp_die(
+                        wp_json_encode(
+                            array(
+                                'error' => esc_html__( 'The note could not be saved. Please try again.', 'mainwp' ),
+                            )
+                        )
+                    );
+                }
 
-                die(
+                wp_die(
                     wp_json_encode(
                         array(
                             'result'           => 'SUCCESS',
@@ -352,6 +370,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             $error = is_array( $info ) && isset( $info['error'] ) ? $info['error'] : '';
             if ( 'NOMAINWP' === $error ) {
                 $error = esc_html__( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
+            } elseif ( 'TIMEOUT' === $error ) {
+                $timeout_kind = is_array( $info ) && isset( $info['timeout_kind'] ) ? $info['timeout_kind'] : 'operation';
+                $error        = MainWP_Error_Helper::get_timeout_error_message( $timeout_kind );
             }
             if ( '' !== $error ) {
                 throw new MainWP_Extra_Exception( 'mainwp_remove_site_error', $error ); //phpcs:ignore -- ok.
@@ -382,6 +403,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
             if ( 'NOMAINWP' === $error ) {
                 $error = esc_html__( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
+            } elseif ( 'TIMEOUT' === $error ) {
+                $timeout_kind = is_array( $result ) && isset( $result['timeout_kind'] ) ? $result['timeout_kind'] : 'operation';
+                $error        = MainWP_Error_Helper::get_timeout_error_message( $timeout_kind );
             }
 
             $resp = array(
@@ -443,6 +467,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                     );
                 } catch ( MainWP_Exception $e ) {
                     $information['error'] = $e->getMessage();
+                    if ( 'TIMEOUT' === $e->getMessage() ) {
+                        $information['timeout_kind'] = $e->get_message_error_code();
+                    }
                 }
             } else {
                 $information['removed'] = true;

@@ -371,16 +371,6 @@ class MainWP_Demo_Handle { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      */
     private function add_demo_none_mainwp_action( $data_rows, $index, $websiteid ) {
         global $wpdb;
-        if ( ! is_array( $data_rows ) || empty( $websiteid ) ) {
-            return;
-        }
-        foreach ( $data_rows as $row ) {
-            if ( isset( $row['action_id'] ) && isset( $row['wpid'] ) && (int) $index === (int) $row['wpid'] ) {
-                unset( $row['action_id'] );
-                $row['wpid'] = $websiteid;
-                $wpdb->insert( MainWP_DB::instance()->get_table_name( 'wp_actions' ), $row );
-            }
-        }
     }
 
     /**

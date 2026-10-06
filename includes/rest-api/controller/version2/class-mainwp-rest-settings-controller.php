@@ -20,6 +20,8 @@ use MainWP\Dashboard\Module\ApiBackups\Api_Backups_Utility;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_Api_Manager;
 use MainWP\Dashboard\MainWP_Connect;
+use MainWP\Dashboard\MainWP_Error_Helper;
+use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Sync;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
@@ -532,7 +534,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     $val = $body[ $key ];
                     $val = $this->cast_field_value( $val, $cast );
                     if ( 'mainwp_widgets' === $key ) {
-                        $show_widgets = get_user_option( 'mainwp_settings_show_widgets', array() );
+                        $show_widgets = get_user_option( 'mainwp_settings_show_widgets' );
                         $val          = array_replace( $show_widgets, (array) $val );
                     }
                     update_user_option( $user_id, $option_name, $val, true );
@@ -584,6 +586,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'rest_invalid_param',
                 /* translators: %s: Error message */ sprintf( __( 'Update general settings error: %s', 'mainwp' ), $e->getMessage() ),
+                array( 'status' => 500 )
             );
         }
 
@@ -660,6 +663,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $update_if_present( 'mainwp_verify_connection_method', 'mainwp_verify_connection_method', 'int' );
             $update_if_present( 'mainwp_force_use_ipv4', 'mainwp_forceUseIPv4', 'int' );
 
+            if ( array_key_exists( 'mainwp_child_request_timeout', $body ) ) {
+                $saved_timeout = MainWP_Connect::save_child_request_timeout_setting( $body['mainwp_child_request_timeout'] );
+                if ( false === $saved_timeout ) {
+                    return new WP_Error(
+                        'invalid_mainwp_child_request_timeout',
+                        __( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default.', 'mainwp' ),
+                        array( 'status' => 400 )
+                    );
+                }
+            }
+
             // Update sync data.
             if ( isset( $body['sync_data'] ) ) {
                 $syncs_data = $this->safe_json_decode( get_option( 'mainwp_settings_sync_data', array() ) ?? '' );
@@ -685,6 +699,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'rest_invalid_param',
                 /* translators: %s: Error message */ sprintf( __( 'Update advanced settings error: %s', 'mainwp' ), $e->getMessage() ),
+                array( 'status' => 500 )
             );
         }
 
@@ -882,12 +897,12 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get mail type.
         $setting = $request->get_param( 'mail_type' );
         if ( empty( $setting ) ) {
-            return new WP_Error( 'invalid_mail_type', __( 'Mail type is not exist.', 'mainwp' ) );
+            return new WP_Error( 'invalid_mail_type', __( 'Mail type is not exist.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         $type = $setting['type'] ?? '';
         if ( empty( $type ) ) {
-            return new WP_Error( 'invalid_mail_type', __( 'Invalid email type.', 'mainwp' ) );
+            return new WP_Error( 'invalid_mail_type', __( 'Invalid email type.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         // Get email settings.
@@ -1061,7 +1076,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Check if product type duplicated.
         if ( isset( $custom_product_types[ $slug ] ) ) {
-            return new WP_Error( 'duplicate_title', __( 'Duplicate product type. Please choose another one.', 'mainwp' ) );
+            return new WP_Error( 'duplicate_title', __( 'Duplicate product type. Please choose another one.', 'mainwp' ), array( 'status' => 400 ) );
         }
         // Map product type.
         $custom_product_types[ $slug ]    = $title;
@@ -1119,7 +1134,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         $slug = $request->get_param( 'slug' );
         if ( empty( $slug ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Invalid product type slug.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Invalid product type slug.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         // Default Product Type.
@@ -1132,7 +1147,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Cannot change title if it's a default product type.
         if ( array_key_exists( $slug, $default_product_types ) && $title !== $default_product_types[ $slug ] ) {
-            return new WP_Error( 'invalid_title', __( 'Cannot change title of default product type.', 'mainwp' ) );
+            return new WP_Error( 'invalid_title', __( 'Cannot change title of default product type.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         // Map product type.
@@ -1182,14 +1197,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $slug = $request->get_param( 'slug' );
 
         if ( empty( $slug ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Invalid product type slug.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Invalid product type slug.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         // Default Product Type.
         $default_product_types = Cost_Tracker_Admin::get_default_product_types();
         // Cannot delete a default product type.
         if ( array_key_exists( $slug, $default_product_types ) ) {
-            return new WP_Error( 'invalid_title', __( 'Cannot delete of default product type.', 'mainwp' ) );
+            return new WP_Error( 'invalid_title', __( 'Cannot delete of default product type.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         // Get all options.
@@ -1200,7 +1215,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         // Check if product type exists.
         if ( ! isset( $custom_product_types[ $slug ] ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Product type does not exist.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Product type does not exist.', 'mainwp' ), array( 'status' => 404 ) );
         }
 
         // Delete product type.
@@ -1250,7 +1265,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $payment_methods = $this->safe_json_decode( $all_opts['custom_payment_methods'] ?? '' );
 
         if ( isset( $payment_methods[ $slug ] ) ) {
-            return new WP_Error( 'duplicate_title', __( 'Duplicate payment method. Please choose another one.', 'mainwp' ) );
+            return new WP_Error( 'duplicate_title', __( 'Duplicate payment method. Please choose another one.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         // Save payment method.
@@ -1301,7 +1316,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get payment methods.
         $payment_methods = $this->safe_json_decode( $all_opts['custom_payment_methods'] ?? '' );
         if ( ! isset( $payment_methods[ $slug ] ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Invalid payment method slug.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Invalid payment method slug.', 'mainwp' ), array( 'status' => 404 ) );
         }
 
         $payment_methods[ $slug ]           = $body['title'];
@@ -1337,7 +1352,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get payment methods.
         $payment_methods = $this->safe_json_decode( $all_opts['custom_payment_methods'] ?? '' );
         if ( ! isset( $payment_methods[ $slug ] ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Invalid payment method slug.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Invalid payment method slug.', 'mainwp' ), array( 'status' => 404 ) );
         }
 
         unset( $payment_methods[ $slug ] );
@@ -1495,7 +1510,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get API slug data.
         $api = $request->get_param( 'api_slug' );
         if ( empty( $api ) ) {
-            return new WP_Error( 'invalid_api_slug', __( 'API backup not exists.', 'mainwp' ) );
+            return new WP_Error( 'invalid_api_slug', __( 'API backup not exists.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         $updated = array();
@@ -1687,15 +1702,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( empty( $destroy_id ) ) {
             return new WP_Error(
                 'missing_destroy_id',
-                __( 'Destroy ID is required.', 'mainwp' )
+                __( 'Destroy ID is required.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
         $destroy_data = get_transient( "mainwp_tool_destroy_job_{$destroy_id}" );
-        if ( ! $destroy_data ) {
+        if ( ! $destroy_data || ! $this->can_access_job_sites( $destroy_data ) ) {
             return new WP_Error(
                 'destroy_session_job_not_found',
-                __( 'Destroy session job not found.', 'mainwp' )
+                __( 'Destroy session job not found.', 'mainwp' ),
+                array( 'status' => 404 )
             );
         }
 
@@ -1730,7 +1747,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
         $website_ids = $destroy_data['websites'];
         $start_index = $destroy_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -1740,7 +1757,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 }
 
                 if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                    $response = MainWP_Connect::fetch_url_authed( $website, 'settings_tools', array( 'action' => 'force_destroy_sessions' ) );
                     ++$destroy_data['processed'];
+                    if ( ! is_array( $response ) || empty( $response['success'] ) ) {
+                        // The error text comes from the Child; cap and clean it before it is stored and served back.
+                        $child_error = is_array( $response ) && isset( $response['error'] ) && is_string( $response['error'] ) ? static::sanitize_batch_error_message( $response['error'] ) : '';
+                        ++$destroy_data['failed'];
+                        $destroy_data['errors'][] = array(
+                            'site_id' => $website_id,
+                            'error'   => '' !== $child_error ? $child_error : __( 'Cannot destroy sessions.', 'mainwp' ),
+                        );
+                    }
                 } else {
                     ++$destroy_data['failed'];
                     ++$destroy_data['processed'];
@@ -1752,9 +1779,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             } catch ( \Exception $e ) {
                 ++$destroy_data['failed'];
                 ++$destroy_data['processed'];
+                // Same cap and cleaning as the Child error above; the NOMAINWP text carries an anchor tag.
+                $error_message            = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e ) : $e->getMessage();
                 $destroy_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => $e->getMessage(),
+                    'error'   => static::sanitize_batch_error_message( $error_message ),
                 );
             }
         }
@@ -1844,17 +1873,19 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( empty( $renew_id ) ) {
             return new WP_Error(
                 'missing_renew_id',
-                __( 'Renew ID is required.', 'mainwp' )
+                __( 'Renew ID is required.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
         // Get disconnect data.
         $renew_data = get_transient( "mainwp_tool_renew_job_{$renew_id}" );
 
-        if ( ! $renew_data ) {
+        if ( ! $renew_data || ! $this->can_access_job_sites( $renew_data ) ) {
             return new WP_Error(
                 'renew_connection_job_not_found',
-                __( 'Renew connection job not found.', 'mainwp' )
+                __( 'Renew connection job not found.', 'mainwp' ),
+                array( 'status' => 404 )
             );
         }
 
@@ -1890,7 +1921,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
         $website_ids = $renew_data['websites'];
         $start_index = $renew_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -2030,7 +2061,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         $website_ids = $disconnect_data['websites'];
         $start_index = $disconnect_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -2071,7 +2102,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array( $disconnect_id )
             );
         } else {
-            wp_schedule_single_event( time() + 3, 'mainwp_disconnect_site_batch', array( $disconnect_id ) );
+            wp_schedule_single_event( time() + 3, 'mainwp_cron_disconnect_batch', array( $disconnect_id ) );
             spawn_cron(); // Run Cron now.
         }
 
@@ -2091,17 +2122,19 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( empty( $disconnect_id ) ) {
             return new WP_Error(
                 'missing_disconnect_id',
-                __( 'Disconnect ID is required.', 'mainwp' )
+                __( 'Disconnect ID is required.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
         // Get disconnect data.
         $disconnect_data = get_transient( "mainwp_tool_disconnect_job_{$disconnect_id}" );
 
-        if ( ! $disconnect_data ) {
+        if ( ! $disconnect_data || ! $this->can_access_job_sites( $disconnect_data ) ) {
             return new WP_Error(
                 'disconnect_job_not_found',
-                __( 'Job not found.', 'mainwp' )
+                __( 'Job not found.', 'mainwp' ),
+                array( 'status' => 404 )
             );
         }
 
@@ -2118,6 +2151,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'completed_at' => $disconnect_data['completed_at'] ?? null,
             )
         );
+    }
+
+    /**
+     * Job totals and errors can disclose sites outside the caller's scope.
+     *
+     * @param array $job Stored job data.
+     * @return bool Whether the complete job roster is accessible.
+     */
+    protected function can_access_job_sites( $job ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        return 'all' === $allowed || ( isset( $job['websites'] ) && is_array( $job['websites'] ) && ! array_diff( $job['websites'], $allowed ) );
     }
 
     /**
@@ -2286,14 +2330,16 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'plugin_automatic_daily_update'       => array(
                 'required'          => false,
                 'description'       => __( 'Plugin automatic daily update.', 'mainwp' ),
-                'type'              => 'boolean',
+                'type'              => 'integer',
+                'enum'              => $val_bool,
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
             ),
             'theme_automatic_daily_update'        => array(
                 'required'          => false,
                 'description'       => __( 'Theme automatic daily update.', 'mainwp' ),
-                'type'              => 'boolean',
+                'type'              => 'integer',
+                'enum'              => $val_bool,
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
             ),
@@ -2570,6 +2616,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
             ),
+            'mainwp_child_request_timeout'              => array(
+                'required'          => false,
+                'description'       => __( 'Child request timeout in seconds. Null, blank, or 72000 clears the stored option (default 72000). A saved value must be at least 300.', 'mainwp' ),
+                'type'              => array( 'integer', 'string', 'null' ),
+                'sanitize_callback' => array( $this, 'sanitize_child_request_timeout' ),
+                'validate_callback' => array( $this, 'validate_child_request_timeout' ),
+            ),
             'mainwp_connect_signature_algo'             => array(
                 'required'          => false,
                 'description'       => __( 'OpenSSL signature algorithm.', 'mainwp' ),
@@ -2717,6 +2770,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                         return new WP_Error(
                             'invalid_email',
                             /* translators: %s: Email address */ sprintf( __( 'Invalid email address: %s.', 'mainwp' ), $value ),
+                            array( 'status' => 400 )
                         );
                     }
                     return true;
@@ -3038,18 +3092,18 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      *
      * @param string $value API slug.
      *
-     * @return string
+     * @return array|WP_Error The API backup definition the slug names, with the slug added to it, or WP_Error for a slug with no definition.
      */
     public function sanitize_api_slug( $value ) {
         if ( empty( $value ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Invalid API slug.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Invalid API slug.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         // Sanitize field.
         $value       = $this->sanitize_field( $value );
         $api_backups = $this->get_api_backup_definitions(); // Get API backup definitions.
         if ( ! array_key_exists( $value, $api_backups ) ) {
-            return new WP_Error( 'invalid_slug', __( 'API slug not exists.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'API slug not exists.', 'mainwp' ), array( 'status' => 400 ) );
         }
         $api_backups[ $value ]['slug'] = $value; // Add slug to API backup definition.
         return $api_backups[ $value ];
@@ -3065,7 +3119,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function validate_api_slug( $value, $request ) {
         if ( empty( $value ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Invalid API slug.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Invalid API slug.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         $value = $this->sanitize_field( $value );
@@ -3073,7 +3127,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Check if API slug exists.
         $api_backups = $this->get_api_backup_definitions();
         if ( ! array_key_exists( $value, $api_backups ) ) {
-            return new WP_Error( 'invalid_slug', __( 'API slug not exists.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'API slug not exists.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         return true;
@@ -3097,7 +3151,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $value  = $this->sanitize_field( $value ); // Sanitize field.
         $symbol = Cost_Tracker_Utility::get_currency_symbol( $value ); // Get currency symbol.
         if ( empty( $symbol ) ) {
-            return new WP_Error( 'invalid_currency', __( 'Invalid currency.', 'mainwp' ) );
+            return new WP_Error( 'invalid_currency', __( 'Invalid currency.', 'mainwp' ), array( 'status' => 400 ) );
         }
         return true;
     }
@@ -3116,7 +3170,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         $value = $this->sanitize_field( $value );
         if ( ! preg_match( '/^#([A-Fa-f0-9]{6})$/', $value ) ) {
-            return new WP_Error( 'invalid_color', __( 'Invalid color. Color must be in the format "#RRGGBB".', 'mainwp' ) );
+            return new WP_Error( 'invalid_color', __( 'Invalid color. Color must be in the format "#RRGGBB".', 'mainwp' ), array( 'status' => 400 ) );
         }
         return true;
     }
@@ -3138,7 +3192,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( ! preg_match( '/^[a-z0-9_\-]+:[a-z0-9_\-\s]+$/i', $value ) ) {
             return new WP_Error(
                 'invalid_icon',
-                __( 'Invalid icon. Icon must be in the format "icon_type:icon_name".', 'mainwp' )
+                __( 'Invalid icon. Icon must be in the format "icon_type:icon_name".', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
         return true;
@@ -3157,7 +3212,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function validate_product_type_slug( $value, $request ) {
         if ( empty( $value ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Invalid product type slug.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Invalid product type slug.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         $value         = $this->sanitize_field( $value );
@@ -3170,7 +3225,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         if ( ! isset( $product_types[ $value ] ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Product type does not exist.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Product type does not exist.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         return true;
@@ -3188,14 +3243,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function validate_payment_method_slug( $value, $request ) { // phpcs:ignore -- NOSONAR - long method.
         if ( empty( $value ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Invalid payment method slug.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Invalid payment method slug.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         $value           = $this->sanitize_field( $value );
         $all_opts        = Cost_Tracker_Utility::get_instance()->get_all_options();
         $payment_methods = $this->safe_json_decode( $all_opts['custom_payment_methods'] ?? '' );
         if ( ! isset( $payment_methods[ $value ] ) ) {
-            return new WP_Error( 'invalid_slug', __( 'Payment method does not exist.', 'mainwp' ) );
+            return new WP_Error( 'invalid_slug', __( 'Payment method does not exist.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         return true;
@@ -3212,7 +3267,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function sanitize_email_type( $value ) { // phpcs:ignore -- NOSONAR - long method.
         if ( empty( $value ) ) {
-            return new WP_Error( 'invalid_mail_type', __( 'Invalid email type.', 'mainwp' ) );
+            return new WP_Error( 'invalid_mail_type', __( 'Invalid email type.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         // Sanitize email type.
@@ -3221,7 +3276,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get default email settings.
         $email_setting = MainWP_Notification_Settings::get_default_emails_fields( $value, '', true );
         if ( empty( $email_setting ) ) {
-            return new WP_Error( 'invalid_mail_type', __( 'Invalid email type.', 'mainwp' ) );
+            return new WP_Error( 'invalid_mail_type', __( 'Invalid email type.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         return array_merge( $email_setting, array( 'type' => $value ) );
@@ -3239,7 +3294,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function validate_email_type( $value, $request ) { // phpcs:ignore -- NOSONAR - long method.
         if ( empty( $value ) ) {
-            return new WP_Error( 'invalid_mail_type', __( 'Invalid email type.', 'mainwp' ) );
+            return new WP_Error( 'invalid_mail_type', __( 'Invalid email type.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         $value = $this->sanitize_field( $value );
@@ -3247,7 +3302,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $notification_emails = MainWP_Notification_Settings::get_notification_types();
 
         if ( ! array_key_exists( $value, $notification_emails ) ) {
-            return new WP_Error( 'invalid_mail_type', __( 'Email type does not exist.', 'mainwp' ) );
+            return new WP_Error( 'invalid_mail_type', __( 'Email type does not exist.', 'mainwp' ), array( 'status' => 400 ) );
         }
 
         return true;
@@ -3268,7 +3323,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         $int_value = (int) $this->sanitize_field( $value );
         if ( $int_value < 1 || $int_value > 12 ) {
-            return new WP_Error( 'invalid_frequency_daily_update', __( 'Invalid frequency daily update. Use 1-12.', 'mainwp' ) );
+            return new WP_Error( 'invalid_frequency_daily_update', __( 'Invalid frequency daily update. Use 1-12.', 'mainwp' ), array( 'status' => 400 ) );
         }
         return true;
     }
@@ -3292,6 +3347,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'invalid_date_format_numeric',
                 __( 'Invalid date format: should not contain digits. Use format characters like F j, Y.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3300,6 +3356,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'invalid_date_format',
                 __( 'Invalid date format. Use valid PHP date format characters like F j, Y.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3309,6 +3366,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'invalid_date_format_render',
                 __( 'Invalid or unsupported date format.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3333,6 +3391,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'invalid_time_format_numeric',
                 __( 'Invalid time format: should not contain digits. Use format characters like g:i a.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3341,6 +3400,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'invalid_time_format',
                 __( 'Invalid time format. Use valid PHP time format characters like g:i a or H:i.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3350,6 +3410,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'invalid_time_format_render',
                 __( 'Invalid or unsupported time format.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3389,6 +3450,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 return new WP_Error(
                     'invalid_timezone_string',
                     __( 'Invalid timezone. Use a valid format like "UTC+0" or its equivalent name, e.g. "Europe/London".', 'mainwp' ),
+                    array( 'status' => 400 )
                 );
             }
 
@@ -3405,6 +3467,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         return new WP_Error(
             'invalid_timezone_string',
             __( 'Invalid timezone. Use a valid format like "UTC+0" or its equivalent name, e.g. "Europe/London".', 'mainwp' ),
+            array( 'status' => 400 )
         );
     }
 
@@ -3439,6 +3502,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         return new WP_Error(
             'invalid_timezone_string',
             __( 'Invalid timezone. Use a valid format like UTC+0 or its equivalent name, e.g. "Europe/London".', 'mainwp' ),
+            array( 'status' => 400 )
         );
     }
 
@@ -3453,11 +3517,12 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( ! is_array( $value ) ) {
             return new WP_Error(
                 'invalid_mainwp_widgets_type',
-                __( 'mainwp_widgets must be an object.', 'mainwp' )
+                __( 'mainwp_widgets must be an object.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
-        $existing = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $existing = get_user_option( 'mainwp_settings_show_widgets' );
         if ( ! is_array( $existing ) ) {
             $existing = array();
         }
@@ -3491,13 +3556,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'invalid_mainwp_widgets_type',
                 __( 'mainwp_widgets must be an object.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
         // Sanitize field data.
         $values = array_map( 'sanitize_text_field', wp_unslash( $value ) );
 
-        $widgets = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $widgets = get_user_option( 'mainwp_settings_show_widgets' );
         $allowed = array_keys( $widgets );
         $keys    = array_keys( $values );
 
@@ -3512,6 +3578,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     esc_html( implode( ', ', $invalid_keys ) ),
                     esc_html( implode( ', ', $allowed ) )
                 ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3520,6 +3587,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 return new WP_Error(
                     'invalid_mainwp_widgets_value_type',
                     /* translators: %s: Widget key name */ sprintf( __( 'Value for "%s" must be 0 or 1.', 'mainwp' ), esc_html( $k ) ),
+                    array( 'status' => 400 )
                 );
             }
             $int = (int) $v;
@@ -3527,6 +3595,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 return new WP_Error(
                     'invalid_mainwp_widgets_value',
                     /* translators: %s: Widget key name */ sprintf( __( 'Invalid value for "%s". Allowed: 0 or 1.', 'mainwp' ), esc_html( $k ) ),
+                    array( 'status' => 400 )
                 );
             }
         }
@@ -3549,7 +3618,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( ! is_array( $value ) ) {
             return new WP_Error(
                 'invalid_status_codes_type',
-                __( 'Status codes must be an array.', 'mainwp' )
+                __( 'Status codes must be an array.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3619,7 +3689,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( ! is_array( $value ) ) {
             return new WP_Error(
                 'invalid_sync_data_type',
-                __( 'Sync data must be an object.', 'mainwp' )
+                __( 'Sync data must be an object.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3656,7 +3727,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( ! is_array( $value ) ) {
             return new WP_Error(
                 'invalid_sync_data_type',
-                __( 'Sync data must be an object.', 'mainwp' )
+                __( 'Sync data must be an object.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
         // Sanitize field data.
@@ -3677,6 +3749,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     esc_html( implode( ', ', $invalid_keys ) ),
                     esc_html( implode( ', ', $allowed ) )
                 ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3685,6 +3758,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 return new WP_Error(
                     'invalid_sync_data_type',
                     /* translators: %s: Sync data key name */ sprintf( __( 'Value for "%s" must be 0 or 1.', 'mainwp' ), esc_html( $k ) ),
+                    array( 'status' => 400 )
                 );
             }
             $int = (int) $v;
@@ -3692,6 +3766,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 return new WP_Error(
                     'invalid_sync_data_type',
                     /* translators: %s: Sync data key name */ sprintf( __( 'Invalid value for "%s". Allowed: 0 or 1.', 'mainwp' ), esc_html( $k ) ),
+                    array( 'status' => 400 )
                 );
             }
         }
@@ -3716,6 +3791,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'invalid_time_update',
                 __( 'Invalid time. Use whole hours in 24h format like 0:00, 9:00, 23:00, etc...', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
 
@@ -3743,6 +3819,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         return new WP_Error(
             'invalid_time_update',
             __( 'Invalid time. Use whole hours in 24h format like 0:00, 9:00, 23:00, etc...', 'mainwp' ),
+            array( 'status' => 400 )
         );
     }
 
@@ -3776,13 +3853,15 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 // When primary backup is module-api-backups, legacy feature must be 0.
                 return new WP_Error(
                     'invalid_backup_config',
-                    __( 'When mainwp_primary_backup is "module-api-backups", mainwp_enable_legacy_backup_feature must be disabled (0).', 'mainwp' )
+                    __( 'When mainwp_primary_backup is "module-api-backups", mainwp_enable_legacy_backup_feature must be disabled (0).', 'mainwp' ),
+                    array( 'status' => 400 )
                 );
             } elseif ( '' === $primary_backup_value && ( null !== $backup_feature && '1' !== (string) $backup_feature && 1 !== (int) $backup_feature ) ) {
                 // When primary backup is not module-api-backups, legacy feature must be 1.
                 return new WP_Error(
                     'invalid_backup_config',
-                    __( 'When mainwp_primary_backup is not "module-api-backups", mainwp_enable_legacy_backup_feature must be enabled (1).', 'mainwp' )
+                    __( 'When mainwp_primary_backup is not "module-api-backups", mainwp_enable_legacy_backup_feature must be enabled (1).', 'mainwp' ),
+                    array( 'status' => 400 )
                 );
             }
         }
@@ -3822,6 +3901,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         return new WP_Error(
             'empty_body',
             __( 'Request body is empty.', 'mainwp' ),
+            array( 'status' => 400 )
         );
     }
 
@@ -3837,6 +3917,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'invalid_content_type',
                 __( 'Invalid content type. Expected application/json.', 'mainwp' ),
+                array( 'status' => 400 )
             );
         }
         return true;
@@ -3869,10 +3950,12 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     private function get_websites() {
         $websites = MainWP_DB::instance()->get_sites();
+        $websites = $this->filter_scoped_sites( $websites );
         if ( empty( $websites ) ) {
             return new WP_Error(
                 'no_website_found',
-                __( 'No website found.', 'mainwp' )
+                __( 'No website found.', 'mainwp' ),
+                array( 'status' => 404 )
             );
         }
         return $websites;
@@ -3889,6 +3972,9 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return object|null
      */
     private function get_website_by_id( $website_id, &$process_data ) {
+        // Workers run from cron as user 0, where the scope check would fail every site;
+        // the site list was scoped when the job was queued and the status routes are
+        // guarded by can_access_job_sites().
         $website = MainWP_DB::instance()->get_website_by_id( $website_id );
         if ( empty( $website ) ) {
             ++$process_data['failed'];
@@ -3900,6 +3986,18 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return null;
         }
         return $website;
+    }
+
+    /**
+     * Sanitize and cap an error stored in a batch job.
+     *
+     * @param string $message Error message.
+     *
+     * @return string
+     */
+    private static function sanitize_batch_error_message( $message ) {
+        $message = function_exists( 'mb_substr' ) ? mb_substr( $message, 0, 500 ) : substr( $message, 0, 500 );
+        return sanitize_text_field( $message );
     }
 
     /**
@@ -3915,6 +4013,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return new WP_Error(
                 'invalid_user',
                 __( 'User not authenticated.', 'mainwp' ),
+                array( 'status' => 401 )
             );
         }
         return $user_id;
@@ -3968,7 +4067,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return true;
         }
         // translators: %s: Missing key.
-        return new WP_Error( 'missing_key', sprintf( __( 'Missing key %s.', 'mainwp' ), esc_html( $key ) ), );
+        return new WP_Error( 'missing_key', sprintf( __( 'Missing key %s.', 'mainwp' ), esc_html( $key ) ), array( 'status' => 400 ) );
     }
 
     /**
@@ -4117,7 +4216,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     protected function get_general_settings_data() {
         // Default Setting.
         $default_setting = MainWP_Settings_Indicator::get_defaults_value();
-        $show_widgets    = get_user_option( 'mainwp_settings_show_widgets', array() );
+        $show_widgets    = get_user_option( 'mainwp_settings_show_widgets' );
+
+        if ( ! is_array( $show_widgets ) ) {
+            $show_widgets = array();
+        }
 
         // Map settings.
         $gmt_offset = (float) get_option( 'gmt_offset', 0 );
@@ -4153,6 +4256,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         $enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
+
+        // get_user_option()'s second argument is a user id, not a default, and the defaults array keys this on the option name rather than the response field name.
+        $sidebar_position = get_user_option( 'mainwp_sidebarPosition' );
+        if ( false === $sidebar_position ) {
+            $sidebar_position = $default_setting['mainwp_sidebarPosition'];
+        }
+
         return array(
             // General settings.
             'time_daily_update'                   => get_option( 'mainwp_timeDailyUpdate', $default_setting['mainwp_timeDailyUpdate'] ),
@@ -4160,7 +4270,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'date_format'                         => get_option( 'date_format', $default_setting['date_format'] ),
             'time_format'                         => get_option( 'time_format', $default_setting['time_format'] ),
             'timezone_string'                     => $tz_string,
-            'sidebar_position'                    => get_user_option( ' mainwp_sidebarPosition', $default_setting['sidebar_position'] ),
+            'sidebar_position'                    => (int) $sidebar_position,
             'hide_update_everything'              => get_option( 'mainwp_hide_update_everything', $default_setting['mainwp_hide_update_everything'] ),
             'mainwp_widgets'                      => $show_widgets,
             'plugin_automatic_daily_update'       => (int) get_option( 'mainwp_pluginAutomaticDailyUpdate', $default_setting['mainwp_pluginAutomaticDailyUpdate'] ),
@@ -4187,6 +4297,68 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'mainwp_notification_on_backup_fail'  => get_option( 'mainwp_notificationOnBackupFail' ),
             'mainwp_notification_on_backup_start' => get_option( 'mainwp_notificationOnBackupStart' ),
             'mainwp_chunked_backup_tasks'         => get_option( 'mainwp_chunkedBackupTasks' ),
+        );
+    }
+
+    /**
+     * Stored child request timeout, or null when the option is unset.
+     *
+     * @return int|null
+     */
+    public static function get_stored_child_request_timeout() {
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( get_option( MainWP_Connect::CHILD_REQUEST_TIMEOUT_OPTION, '' ) );
+        if ( is_int( $normalized ) ) {
+            return $normalized;
+        }
+        return null;
+    }
+
+    /**
+     * Sanitize a child request timeout for the advanced settings route.
+     *
+     * Blank and 72000 become null so the option is deleted. Invalid values are
+     * left for the validator.
+     *
+     * @param mixed $value Submitted value.
+     *
+     * @return mixed
+     */
+    public function sanitize_child_request_timeout( $value ) {
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( $value );
+        if ( 'delete' === $normalized ) {
+            return null;
+        }
+        if ( is_int( $normalized ) ) {
+            return $normalized;
+        }
+        return $value;
+    }
+
+    /**
+     * Validate a child request timeout.
+     *
+     * Omitting the field is handled by WordPress (the argument is not required).
+     * A present null, blank, or 72000 clears the option.
+     *
+     * @param mixed $value Submitted value.
+     *
+     * @return true|WP_Error
+     */
+    public function validate_child_request_timeout( $value ) {
+        if ( null === $value || false === $value || '' === $value ) {
+            return true;
+        }
+        if ( is_string( $value ) && '' === trim( $value ) ) {
+            return true;
+        }
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( $value );
+        if ( 'delete' === $normalized || is_int( $normalized ) ) {
+            return true;
+        }
+        return new WP_Error(
+            'invalid_mainwp_child_request_timeout',
+            __( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default.', 'mainwp' ),
+            array( 'status' => 400 )
         );
     }
 
@@ -4224,6 +4396,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'mainwp_verify_connection_method'           => (int) get_option( 'mainwp_verify_connection_method', $default_setting['mainwp_verify_connection_method'] ),
             'mainwp_connect_signature_algo'             => isset( $sign_algs[ $signature_algo ] ) ? $sign_algs[ $signature_algo ] : $default_setting['mainwp_connect_signature_algo'],
             'mainwp_force_use_ipv4'                     => (int) get_option( 'mainwp_forceUseIPv4', $default_setting['mainwp_forceUseIPv4'] ),
+            'mainwp_child_request_timeout'              => self::get_stored_child_request_timeout(),
             'sync_data'                                 => $sync_data_settings,
         );
     }
@@ -4473,6 +4646,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'mainwp_force_use_ipv4'                    => array(
                     'type'        => 'integer',
                     'description' => __( 'Force use IPv4.', 'mainwp' ),
+                    'context'     => array( 'advanced_view', 'advanced_edit' ),
+                ),
+                'mainwp_child_request_timeout'             => array(
+                    'type'        => array( 'integer', 'null' ),
+                    'description' => __( 'Child request timeout in seconds. Null means the option is unset and the effective default is 72000.', 'mainwp' ),
                     'context'     => array( 'advanced_view', 'advanced_edit' ),
                 ),
                 'sync_data'                                => array(

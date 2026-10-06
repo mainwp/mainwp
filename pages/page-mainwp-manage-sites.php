@@ -719,6 +719,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <div class="sub header"></div>
                             </div>
                         </h2>
+                        <div id="mainwp-test-connection-details" class="mainwp-connect-failure-ux-wrap"></div>
                     </div>
                 </div>
                 <div class="actions">
@@ -805,6 +806,19 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Render note that password, Unique Security ID, or both can authenticate a connection.
+     *
+     * @return void
+     */
+    public static function render_connection_unique_security_id_note() {
+        ?>
+        <div class="ui blue message">
+            <?php esc_html_e( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. Generate or create a new Unique Security ID on the child site under Settings > MainWP Child: enable Require Unique Security ID and click Save Settings.', 'mainwp' ); ?>
+        </div>
+        <?php
+    }
+
+    /**
      * Renders the Add New Site page navigation.
      *
      * Highlights the specified navigation item as active.
@@ -837,6 +851,19 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <?php
             do_action( 'mainwp_add_site_top_navigation', $active, $item_link );
             ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render note that WordPress login 2FA does not block MainWP connection auth.
+     *
+     * @return void
+     */
+    public static function render_connection_2fa_note() {
+        ?>
+        <div class="ui blue message">
+            <?php esc_html_e( 'WordPress admin login two-factor authentication (2FA) does not apply to MainWP connections. MainWP authenticates with the administrator username and password and/or Unique Security ID configured on the Child site, not the WordPress login 2FA challenge.', 'mainwp' ); ?>
         </div>
         <?php
     }
@@ -902,6 +929,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="ui toggle checkbox not-auto-init" id="addsite-uniqueid">
                         <input type="checkbox" id="mainwp-unique-security-id-checkbox-field"><label><?php esc_html_e( 'Unique Security ID', 'mainwp' ); ?></label>
                     </div>
+                    <div class="ui hidden fitted divider"></div>
+                    <?php static::render_connection_unique_security_id_note(); ?>
 
                     <div class="ui fluid accordion" id="mainwp-connection-authentication-accordion" style="margin-top:1em">
                         <div class="title">
@@ -920,13 +949,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <h4 class="ui small header"><?php esc_html_e( 'Toggle Summary', 'mainwp' ); ?></h4>
                             <div class="ui bulleted small list">
                                 <div class="item"><?php esc_html_e( 'Password On → Displays the Password field.', 'mainwp' ); ?></div>
-                                <div class="item"><?php esc_html_e( 'Security Key On → Displays the Security Key field.', 'mainwp' ); ?></div>
+                                <div class="item"><?php esc_html_e( 'Unique Security ID On → Displays the Unique Security ID field.', 'mainwp' ); ?></div>
                                 <div class="item"><?php esc_html_e( 'Both On → Displays both fields.', 'mainwp' ); ?></div>
                                 <div class="item"><?php esc_html_e( 'Both Off → Hides both fields.', 'mainwp' ); ?></div>
                             </div>
                             <span class="ui text"><strong><?php esc_html_e( 'Your settings must match the Child plugin configuration. If unsure, use the default.', 'mainwp' ); ?></strong></span>
                         </div>
                     </div>
+                    <div class="ui hidden fitted divider"></div>
+                    <?php static::render_connection_2fa_note(); ?>
                 </div>
             </div>
             <div id="mainwp-administrator-password-field">
@@ -949,6 +980,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="ui left labeled input">
                             <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
                         </div>
+                        <div class="ui hidden fitted divider"></div>
+                        <span class="ui small text"><?php esc_html_e( 'Copy this from the child site under Settings > MainWP Child. Required only when Require Unique Security ID is enabled there.', 'mainwp' ); ?></span>
                     </div>
                 </div>
             </div>
@@ -1869,7 +1902,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( isset( $_GET['dashboard'] ) ) {
             $websiteid = intval( $_GET['dashboard'] );
 
-            $dashboardWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
+            $dashboardWebsite = MainWP_DB::instance()->get_website_by_id_params( $websiteid, array( 'view_fields' => array( 'child_monitor_data' ) ) );
             if ( MainWP_System_Utility::can_edit_website( $dashboardWebsite ) ) {
                 static::render_dashboard( $dashboardWebsite );
 
@@ -2068,6 +2101,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $ssl_version       = isset( $_POST['mainwp_managesites_edit_ssl_version'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_ssl_version'] ) ) : '';
 
             MainWP_DB::instance()->update_website( $website->id, $url, $current_user->ID, $site_name, $site_admin, $groupids, $groupnames, $newPluginDir, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $verifycertificate, $archiveFormat, $uniqueId, $http_user, $http_pass, $ssl_version, $disableHealthChecking, $healthThreshold, $backup_method );
+
+            $url_locked = isset( $_POST['mainwp_managesites_edit_url_lock'] ) ? 1 : 0;
+            MainWP_Site_Url_Corrector::set_lock( $website, $url_locked );
+            if ( ! $url_locked && $url !== $website->url ) {
+                // Auto-set the lock only when the user actually CHANGED the URL to
+                // something diverging from the child-reported address; saving
+                // unrelated fields must not lock a mismatched site.
+                MainWP_Site_Url_Corrector::after_user_set_url( $website, $url );
+            }
 
             if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
                 $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
@@ -2282,11 +2324,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="item"><?php esc_html_e( 'Enter the username of your Administrator account on the site.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Optionally, enter a custom Site Name, or MainWP will automatically generate a name for it.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Enter the administrator account password. If the requirement is disabled in the MainWP Child plugin settings, leave blank.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'WordPress admin login two-factor authentication (2FA) does not apply to MainWP connections. MainWP authenticates with the administrator username and password and/or Unique Security ID configured on the Child site, not the WordPress login 2FA challenge.', 'mainwp' ); ?></div>
             <?php if ( $is_qsw ) : ?>
             <div class="item"><?php esc_html_e( 'To show additional fields (Tags, Security ID, HTTP Username, HTTP Password, SSL Version, and SSL Verification, click the eye icon at the end of the row.', 'mainwp' ); ?></div>
             <?php endif; ?>
             <div class="item"><?php esc_html_e( 'If needed, you can tag your sites in the Tag field.', 'mainwp' ); ?></div>
-            <div class="item"><?php esc_html_e( 'If you have enabled the Unique Security ID in the MainWP Child plugin settings, enter the Security ID in the corresponding field.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. If Require Unique Security ID is enabled on the child site (Settings > MainWP Child), enter the Unique Security ID. Generate or create a new ID there by enabling Require Unique Security ID and clicking Save Settings.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'If the website you are trying to connect is protected with HTTP Basic Auth, enter the HTTP Username & Password. If not, leave it blank.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Keep the default value of "1" to verify the SSL certificate for your sites, or change it if you prefer not to verify.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Leave the SSL Version as "auto" unless you know the specific version required by the site. The "auto" option typically works for most sites.', 'mainwp' ); ?></div>
@@ -2570,9 +2613,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     public static function render_import_sites_modal( $url, $title_page = null ) {
         ?>
         <div class="ui large modal <?php echo ( 'Import Sites' === $title_page ) ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" data-page-url="<?php echo esc_url( $url ); ?>" >
-        <?php if ( 'Import Sites' !== $title_page ) : ?>
-                <i class="close icon"></i>
-            <?php endif; ?>
+            <i class="close icon" <?php echo 'Import Sites' === $title_page ? 'style="display:none"' : ''; ?> ></i>
             <div class="header"><?php echo esc_html( $title_page ); ?></div>
             <div class="scrolling content">
         <?php MainWP_Manage_Sites_View::render_import_sites(); ?>

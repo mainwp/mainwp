@@ -155,8 +155,9 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @param object $website Child site object.
      * @param array  $information Upgrade information.
+     * @param bool   $is_auto_update Whether the update is automatic.
      */
-    public static function activity_log_upgrade( $website, $information ) {
+    public static function activity_log_upgrade( $website, $information, $is_auto_update = false ) { // phpcs:ignore -- NOSONAR - complex.
         // Implementation for logging upgrade activities.
         $error   = '';
         $success = false;
@@ -183,6 +184,11 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'success'     => $success ? 1 : 0,
             'error'       => $error,
         );
+
+        if ( $is_auto_update ) {
+            MainWP_Updates_Report_Manager::save_update_info( $website, $output_array, 'core' );
+        }
+
         $actions_handler = mainwp_get_actions_handler_instance();
         if ( is_object( $actions_handler ) ) {
             $actions_handler->do_action_mainwp_install_actions( $website, 'updated', $output_array, 'core' );
@@ -1037,6 +1043,17 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 $undefined = true;
 
+                // Keep this for backward compatibility.
+                if ( ! empty( $result['upgrades_started'] ) && is_array( $result['upgrades_started'] ) ) {
+                    foreach ( $result['upgrades_started'] as $k => $v ) {
+                        if ( empty( $v ) ) {
+                            $return_results['result_error'][ rawurlencode( $k ) ] = esc_html__( 'Premium action request failed. Please try again later.', 'mainwp' );
+                        } else {
+                            $return_results['result_started'][ rawurlencode( $k ) ] = esc_html( $v );
+                        }
+                    }
+                }
+
                 if ( isset( $result['upgrades_error'] ) ) {
                     foreach ( $result['upgrades_error'] as $k => $v ) {
                         $return_results['result_error'][ rawurlencode( $k ) ] = esc_html( $v );
@@ -1148,7 +1165,22 @@ class MainWP_Updates_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                     return $return_results;
                 } elseif ( isset( $result['error'] ) ) {
-                    throw new MainWP_Exception( 'WPERROR', esc_html( $result['error'] ) );
+                    $error_message = esc_html( $result['error'] );
+
+                    if ( ! empty( $result['http_code'] ) ) {
+                        $error_message .= ' HTTP code: ' . esc_html( $result['http_code'] ) . '.';
+                    }
+
+                    if ( ! empty( $result['rep_error'] ) ) {
+                        $error_message .= ' Connection error: ' . esc_html( $result['rep_error'] ) . '.';
+                    }
+
+                    if ( ! empty( $result['rep_error_code'] ) ) {
+                        $error_message .= ' Error code: ' . esc_html( $result['rep_error_code'] ) . '.';
+                    }
+
+                    throw new MainWP_Exception( 'WPERROR', $error_message ); // phpcs:ignore --NOSONAR - escaped.
+
                 } elseif ( isset( $result['notices'] ) ) {
                     $noti = $result['notices'];
                     if ( ! empty( $noti ) && is_string( $noti ) ) {

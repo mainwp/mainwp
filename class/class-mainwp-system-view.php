@@ -117,6 +117,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Connection test failed.', esc_html__( 'Connection test failed.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Error message:', esc_html__( 'Error message:', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Received HTTP-code:', esc_html__( 'Received HTTP-code:', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Cloudflare/proxy edge IP', esc_html__( 'Cloudflare/proxy edge IP', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.', esc_html__( 'No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Connection test successful.', esc_html__( 'Connection test successful.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Invalid response from the server, please try again.', esc_html__( 'Invalid response from the server, please try again.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please enter csv file for upload.', esc_html__( 'Please enter csv file for upload.', 'mainwp' ) );
@@ -179,6 +181,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'HTTP error', esc_html__( 'HTTP error', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Error on your child WordPress', esc_html__( 'Error on your child WordPress', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, Please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', esc_html__( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, Please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The child site request timed out. You can raise the Child request timeout in Settings → Advanced Settings. This is not a missing MainWP Child plugin.', esc_html__( 'The child site request timed out. You can raise the Child request timeout in Settings → Advanced Settings. This is not a missing MainWP Child plugin.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The connection to the child site timed out before it opened. Use Test Connection to check whether the site is reachable. This is not a missing MainWP Child plugin.', esc_html__( 'The connection to the child site timed out before it opened. Use Test Connection to check whether the site is reachable. This is not a missing MainWP Child plugin.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The child site request timed out at a gateway or proxy. This is not a missing MainWP Child plugin. Changing the Child request timeout does not fix this response.', esc_html__( 'The child site request timed out at a gateway or proxy. This is not a missing MainWP Child plugin. Changing the Child request timeout does not fix this response.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Remove', esc_html__( 'Remove', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please reconnect to Dropbox', esc_html__( 'Please reconnect to Dropbox', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please wait', esc_html__( 'Please wait', 'mainwp' ) );
@@ -237,6 +242,11 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'is_activated_parent', esc_html__( '%1 could not be deleted. This theme is parent theme for the currently active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'is_activated_theme', esc_html__( '%1 could not be deleted. This theme is active theme.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Change score changed. Click to review changes.', esc_html__( 'Change score changed. Click to review changes.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'No sites to import', esc_html__( 'No sites to import', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'No valid data rows were found in the import file.', esc_html__( 'No valid data rows were found in the import file.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Congratulations!', esc_html__( 'Congratulations!', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'sites imported successfully.', esc_html__( 'sites imported successfully.', 'mainwp' ) );
+
         return $mainwpTranslations;
     }
 
@@ -465,6 +475,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         static::mainwp_tmpfile_check();
 
+        static::render_extension_update_failure_notice();
+
         static::render_notice_config_warning();
 
         static::render_notice_multi_sites();
@@ -486,6 +498,45 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::check_rating_notice();
 
         static::render_browser_extensions_notice();
+
+    }
+
+    /**
+     * Render the repeated Add-on update-check failure notice.
+     */
+    public static function render_extension_update_failure_notice() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            return;
+        }
+
+        $notice_id = MainWP_System_Handler::instance()->get_extension_update_failure_notice_id();
+        if ( '' === $notice_id ) {
+            return;
+        }
+
+        $is_extensions_page = isset( $_GET['page'] ) && 'Extensions' === sanitize_text_field( wp_unslash( $_GET['page'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ( ! $is_extensions_page && ! MainWP_Utility::show_mainwp_message( 'notice', $notice_id ) ) {
+            return;
+        }
+        ?>
+        <div class="ui yellow message mainwp-extension-update-failure-notice" style="margin-bottom:0;">
+            <div class="header"><?php esc_html_e( 'Unable to check for Add-on updates', 'mainwp' ); ?></div>
+            <?php if ( $is_extensions_page ) : ?>
+                <p><?php esc_html_e( 'MainWP is unable to check one or more Add-ons for updates. Retry the check below.', 'mainwp' ); ?></p>
+                <button
+                    type="button"
+                    id="mainwp-extension-update-check-retry"
+                    class="ui mini yellow button"
+                    data-failed-text="<?php esc_attr_e( 'The update check is still failing. Make sure your MainWP Dashboard can connect to mainwp.com, then try again.', 'mainwp' ); ?>"
+                ><?php esc_html_e( 'Retry update checks', 'mainwp' ); ?></button>
+                <span id="mainwp-extension-update-check-retry-status" class="ui small red text" aria-live="polite"></span>
+            <?php else : ?>
+                <p><?php esc_html_e( 'MainWP is unable to check one or more Add-ons for updates. Open the Add-ons page to retry the check.', 'mainwp' ); ?></p>
+                <a class="ui mini yellow button" href="<?php echo esc_url( admin_url( 'admin.php?page=Extensions' ) ); ?>"><?php esc_html_e( 'Review Add-ons', 'mainwp' ); ?></a>
+                <i class="close icon mainwp-notice-dismiss" notice-id="<?php echo esc_attr( $notice_id ); ?>"></i>
+            <?php endif; ?>
+        </div>
+        <?php
     }
 
     /**
@@ -1049,7 +1100,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
                 $class_string .= ' mainwp-individual-client-overview ';
             }
-            if ( isset( $_GET['page'] ) && ( 'CostTrackerSettings' === $_GET['page'] || 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) {
+            if ( isset( $_GET['page'] ) && ( 'CostTrackerSettings' === $_GET['page'] || 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
             if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {

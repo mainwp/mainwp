@@ -273,15 +273,17 @@ class Cost_Tracker_Import {
      */
     public static function handle_cost_import_files() { // phpcs:ignore -- NOSONAR - complex method.
 
-        $tmp_path = '';
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified earlier in the request.
-        $tmp_path = isset( $_FILES['mainwp_cost_tracker_import_file_bulkupload'] ) && isset( $_FILES['mainwp_cost_tracker_import_file_bulkupload']['tmp_name'] ) ? sanitize_text_field( wp_unslash( $_FILES['mainwp_cost_tracker_import_file_bulkupload']['tmp_name'] ) ) : '';
-
-        if ( empty( $tmp_path ) ) {
+        if ( isset( $_FILES['mainwp_cost_tracker_import_file_bulkupload']['error'] ) && UPLOAD_ERR_OK !== $_FILES['mainwp_cost_tracker_import_file_bulkupload']['error'] ) { // phpcs:ignore WordPress.Security.NonceVerification
             return array();
         }
 
-        MainWP_System_Utility::get_wp_file_system();
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified earlier in the request.
+        $tmp_path = isset( $_FILES['mainwp_cost_tracker_import_file_bulkupload']['tmp_name'] ) ? $_FILES['mainwp_cost_tracker_import_file_bulkupload']['tmp_name'] : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( empty( $tmp_path ) || ! is_uploaded_file( $tmp_path ) ) {
+            return array();
+        }
+
+        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
         /**
          * WordPress files system object.
@@ -290,11 +292,25 @@ class Cost_Tracker_Import {
          */
         global $wp_filesystem;
 
+        if ( ! $hasWPFileSystem || empty( $wp_filesystem ) ) {
+            return array();
+        }
+
         $content = $wp_filesystem->get_contents( $tmp_path );
 
-        $content        = str_replace( "\r\n", "\r", $content );
-        $content        = str_replace( "\n", "\r", $content );
-        $lines          = explode( "\r", $content );
+        if ( false === $content ) {
+            return array();
+        }
+
+        $header_line = null;
+        $lines       = array();
+
+        if ( is_string( $content ) ) {
+            $content = str_replace( "\r\n", "\r", $content );
+            $content = str_replace( "\n", "\r", $content );
+            $lines   = explode( "\r", $content );
+        }
+
         $import_data    = array();
         $default_values = array(
             'cost.name'           => '',
@@ -311,7 +327,6 @@ class Cost_Tracker_Import {
         );
 
         if ( is_array( $lines ) && ( ! empty( $lines ) ) ) {
-            $header_line = null;
             foreach ( $lines as $original_line ) {
                 $line = trim( $original_line );
                 if ( \MainWP\Dashboard\MainWP_Utility::starts_with( $line, '#' ) ) {
@@ -359,7 +374,7 @@ class Cost_Tracker_Import {
         }
 
         return array(
-            'header_line' => esc_js( $header_line ),
+            'header_line' => null !== $header_line ? esc_js( $header_line ) : '',
             'data'        => $import_data,
         );
     }

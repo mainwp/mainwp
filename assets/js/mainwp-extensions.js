@@ -4,6 +4,32 @@ jQuery(document).on('click', '.item.extension-inactive', function () {
     return false;
 });
 
+jQuery(document).on('click', '#mainwp-extension-update-check-retry', function () {
+    let button = jQuery(this);
+    let status = jQuery('#mainwp-extension-update-check-retry-status');
+    let failedText = button.data('failed-text');
+
+    button.addClass('loading disabled').prop('disabled', true);
+    status.text('');
+
+    jQuery.post(ajaxurl, mainwp_secure_data({
+        action: 'mainwp_extension_update_check_retry'
+    }), function (response) {
+        if (response && response.result === 'SUCCESS') {
+            location.reload();
+            return;
+        }
+
+        status.text(response && response.error ? response.error : failedText);
+        button.removeClass('loading disabled').prop('disabled', false);
+    }, 'json').fail(function () {
+        status.text(failedText);
+        button.removeClass('loading disabled').prop('disabled', false);
+    });
+
+    return false;
+});
+
 jQuery(document).on('click', '#mainwp-extensions-show-all', function () {
     jQuery(this).addClass('green');
     jQuery('#mainwp-extensions-show-extensions').removeClass('green');

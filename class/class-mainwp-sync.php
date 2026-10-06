@@ -131,6 +131,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         MainWP_Logger::instance()->log_execution_sync( 'init', '', $pWebsite );
         $stats_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $pWebsite );
+        $information    = array();
 
         try {
 
@@ -293,14 +294,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return $return;
         } catch ( MainWP_Exception $e ) {
             MainWP_Execution_Helper::execute_call_track( 'end_point', $pWebsite, array(), $stats_track_id, 'stats site' );
-            $sync_errors = '';
-
-            if ( $e->getMessage() === 'HTTPERROR' ) {
-                $sync_errors = esc_html__( 'HTTP error', 'mainwp' ) . ( ! empty( $e->get_message_extra() ) ? ' - ' . $e->get_message_extra() : '' );
-            } elseif ( $e->getMessage() === 'NOMAINWP' ) {
-                $sync_errors = MainWP_Error_Helper::get_error_not_detected_connect();
-            }
-
+            $fetch_output = ( is_array( $information ) && isset( $information['fetch_url_output'] ) && is_array( $information['fetch_url_output'] ) ) ? $information['fetch_url_output'] : array();
+            $sync_errors  = MainWP_Error_Helper::get_connect_failure_message( $e, $fetch_output );
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
             return static::sync_information_array( $pWebsite, $information, $sync_errors, false, true, $pAllowDisconnect );
         }
@@ -645,6 +640,22 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $done = true;
         }
 
+        if ( isset( $information['premium_updates_results'] ) && is_array( $information['premium_updates_results'] ) ) {
+            foreach ( array( 'plugin', 'theme' ) as $type ) {
+                if ( isset( $information['premium_updates_results'][ $type ] ) ) {
+                    $update_results = $information['premium_updates_results'][ $type ];
+                    if ( is_array( $update_results ) ) {
+                        foreach ( $update_results as $info ) {
+                            if ( is_array( $info ) && isset( $info['other_data'] ) ) {
+                                $output_array = $info['other_data'];
+                                mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $pWebsite, 'updated', $output_array, $type );
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         if ( isset( $information['primaryLasttimeBackup'] ) ) {
             MainWP_DB::instance()->update_website_option( $pWebsite, 'primary_lasttime_backup', $information['primaryLasttimeBackup'] );
             $done = true;
@@ -663,6 +674,16 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         if ( ! empty( $information['changes_logs_data'] ) && class_exists( '\MainWP\Dashboard\Module\Log\Log_Changes_Logs_Helper' ) ) {
             \MainWP\Dashboard\Module\Log\Log_Changes_Logs_Helper::instance()->sync_changes_logs( $pWebsite->id, $information['changes_logs_data'], $pWebsite );
             $done = true;
+        }
+
+        $monitor_data = array();
+        if ( isset( $information['child_monitor_data'] ) && is_array( $information['child_monitor_data'] ) ) {
+            $monitor_data = $information['child_monitor_data'];
+            $done         = true;
+        }
+
+        if ( $done ) {
+            MainWP_DB::instance()->update_website_option( $pWebsite, 'child_monitor_data', wp_json_encode( $monitor_data ) );
         }
 
         if ( ! $done ) {
@@ -688,6 +709,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $error = true;
                 if ( $pAllowDisconnect ) {
                     $sync_errors                      = esc_html__( 'Undefined error! Please, reinstall the MainWP Child plugin on the child site.', 'mainwp' );
+                    $undefined_output                 = ( isset( $information['fetch_url_output'] ) && is_array( $information['fetch_url_output'] ) ) ? $information['fetch_url_output'] : array();
+                    $sync_errors                     .= MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $undefined_output ) );
                     $websiteSyncValues['sync_errors'] = $sync_errors;
                     $_error                           = $sync_errors;
                 }
@@ -801,6 +824,36 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         do_action( 'mainwp_site_sync', $pWebsite, $information, $sync_success, $_error, $post_data );
 
         return ! $error;
+    }
+
+    /**
+     * Method sync_partial_information()
+     *
+     * @param object $pWebsite The website object.
+     * @param array  $information Array contaning information returned from child site.
+     */
+    public static function sync_partial_information( &$pWebsite, &$information ) {
+        $websiteValues = array();
+
+        /**
+         * Filter: mainwp_before_save_partial_sync_result
+         *
+         * Filters partial sync data returned from the child site before saving it to the database.
+         *
+         * @param array  $information Partial sync data returned from the child site.
+         * @param object $pWebsite    Object containing child site data.
+         *
+         * @since 6.2.1
+         */
+        $information = apply_filters( 'mainwp_before_save_partial_sync_result', $information, $pWebsite );
+
+        if ( isset( $information['plugins'] ) ) {
+            $plugins_info             = $information['plugins'];
+            $websiteValues['plugins'] = wp_json_encode( $plugins_info );
+        }
+        if ( ! empty( $websiteValues ) ) {
+            MainWP_DB::instance()->update_website_values( $pWebsite->id, $websiteValues );
+        }
     }
 
 

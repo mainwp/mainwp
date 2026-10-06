@@ -335,7 +335,13 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
 
                 if ( isset( $data['note'] ) ) {
-                    $params['note'] = sanitize_text_field( wp_unslash( $data['note'] ) );
+                    $posted_note = is_string( $data['note'] ) ? wp_unslash( $data['note'] ) : '';
+                    if ( MainWP_Utility::client_note_exceeds_limit( $posted_note ) ) {
+                        return array(
+                            'error' => MainWP_Utility::client_note_length_error(),
+                        );
+                    }
+                    $params['note'] = is_string( $data['note'] ) ? MainWP_Utility::sanitize_client_note( $posted_note ) : '';
                 }
 
                 if ( isset( $data['client_email'] ) ) {
@@ -427,13 +433,20 @@ class MainWP_Client_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     );
                 }
 
+                $posted_note = ( isset( $data['note'] ) && is_string( $data['note'] ) ) ? wp_unslash( $data['note'] ) : '';
+                if ( MainWP_Utility::client_note_exceeds_limit( $posted_note ) ) {
+                    return array(
+                        'error' => MainWP_Utility::client_note_length_error(),
+                    );
+                }
+
                 $params['address_1']        = isset( $data['address_1'] ) ? sanitize_text_field( wp_unslash( $data['address_1'] ) ) : '';
                 $params['address_2']        = isset( $data['address_2'] ) ? sanitize_text_field( wp_unslash( $data['address_2'] ) ) : '';
                 $params['city']             = isset( $data['city'] ) ? sanitize_text_field( wp_unslash( $data['city'] ) ) : '';
                 $params['zip']              = isset( $data['zip'] ) ? sanitize_text_field( wp_unslash( $data['zip'] ) ) : '';
                 $params['state']            = isset( $data['state'] ) ? sanitize_text_field( wp_unslash( $data['state'] ) ) : '';
                 $params['country']          = isset( $data['country'] ) ? sanitize_text_field( wp_unslash( $data['country'] ) ) : '';
-                $params['note']             = isset( $data['note'] ) ? sanitize_text_field( wp_unslash( $data['note'] ) ) : '';
+                $params['note']             = isset( $data['note'] ) && is_string( $data['note'] ) ? MainWP_Utility::sanitize_client_note( $posted_note ) : '';
                 $params['client_email']     = isset( $data['client_email'] ) ? sanitize_text_field( wp_unslash( $data['client_email'] ) ) : '';
                 $params['client_phone']     = isset( $data['client_phone'] ) ? sanitize_text_field( wp_unslash( $data['client_phone'] ) ) : '';
                 $params['client_facebook']  = isset( $data['client_facebook'] ) ? sanitize_text_field( wp_unslash( $data['client_facebook'] ) ) : '';

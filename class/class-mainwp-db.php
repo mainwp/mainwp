@@ -177,9 +177,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Method get_wp_options_join().
      *
-     * @param array  $fields Extra option fields.
-     * @param string $view_query view query.
-     * @param array  $params Additional parameters.
+     * @param array                $fields Extra option fields.
+     * @param string               $view_query view query.
+     * @param array<string, mixed> $params Additional parameters.
 
      *
      * NOTE: This method is used to improve the performance of wp_options view, as the old view with subquery for each field will cause performance issue when there are many sites, and this method will generate the SQL with LEFT JOIN which will be much faster than subquery.
@@ -430,7 +430,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             if ( in_array( 'available_update', $status ) ) {
                 $available_sql = " ( wp.plugin_upgrades <> '' &&  wp.plugin_upgrades <> '[]' ) OR (  wp.theme_upgrades <> '' &&  wp.theme_upgrades <> '[]'  ) OR (  wp.translation_upgrades <> '' &&  wp.translation_upgrades <> '[]' ) OR ( wp.premium_upgrades <> '' &&  wp.premium_upgrades <> '[]' ) ";
                 $table_name    = esc_sql( $this->table_name( 'wp_options' ) );
-                $results       = $this->wpdb->get_results( "SELECT wpid FROM {$table_name} WHERE name = 'wp_upgrades' AND value <> '' AND value <> '[]'" );
+                $results       = $this->wpdb->get_results( "SELECT wpid FROM {$table_name} WHERE name = 'wp_upgrades' AND value <> '' AND value <> '[]'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd; the rest of the query is a literal.
                 if ( $results ) {
                     $wp_ids = array();
                     foreach ( $results as $item ) {
@@ -975,7 +975,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         $table_name = esc_sql( $this->table_name( 'wp_options' ) );
-        $value      = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT value FROM {$table_name} WHERE wpid = %d AND name = %s", $site_id, $option ) );
+        $value      = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT value FROM {$table_name} WHERE wpid = %d AND name = %s", $site_id, $option ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
 
         if ( null === $value && null !== $default_value ) {
             return $default_value;
@@ -1055,7 +1055,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $table_name   = esc_sql( $this->table_name( 'wp_options' ) );
         $placeholders = implode( ',', array_fill( 0, count( $get_options ), '%s' ) );
-        $options_db   = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name, value FROM {$table_name} WHERE wpid = %d AND name IN ({$placeholders})", array_merge( array( $site_id ), $get_options ) ) );
+        $options_db   = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name, value FROM {$table_name} WHERE wpid = %d AND name IN ({$placeholders})", array_merge( array( $site_id ), $get_options ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd; $placeholders is a generated list of %s.
 
         $fill_options = array(
             'primary_lasttime_backup',
@@ -1094,9 +1094,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         $table_name = esc_sql( $this->table_name( 'wp_options' ) );
-        $rslt       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name FROM {$table_name} WHERE wpid = %d AND name = %s", $site_id, $option ) );
+        $rslt       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name FROM {$table_name} WHERE wpid = %d AND name = %s", $site_id, $option ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
         if ( empty( $rslt ) ) {
-            $this->wpdb->insert(
+            $written = $this->wpdb->insert(
                 $this->table_name( 'wp_options' ),
                 array(
                     'wpid'  => $site_id,
@@ -1105,7 +1105,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 )
             );
         } else {
-            $this->wpdb->update(
+            $written = $this->wpdb->update(
                 $this->table_name( 'wp_options' ),
                 array( 'value' => $value ),
                 array(
@@ -1113,6 +1113,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                     'name' => $option,
                 )
             );
+        }
+
+        if ( false !== $written && is_string( $option ) ) {
+            MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( array( $option => $value ) );
         }
     }
 
@@ -1141,7 +1145,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $table_name = esc_sql( $this->table_name( 'wp_options' ) );
         foreach ( $options as $opt ) {
-            $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE wpid=%d AND name=%s", $site_id, $opt ) );
+            $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE wpid=%d AND name=%s", $site_id, $opt ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
         }
     }
 
@@ -1164,7 +1168,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         $table_name = esc_sql( $this->table_name( 'wp_options' ) );
-        $val        = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT value FROM {$table_name} WHERE wpid = %d AND name = %s", 0, $option ) );
+        $val        = $this->wpdb->get_var( $this->wpdb->prepare( "SELECT value FROM {$table_name} WHERE wpid = %d AND name = %s", 0, $option ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
 
         static::$general_options[ $option ] = $val;
         return $val;
@@ -1207,7 +1211,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $table_name   = esc_sql( $this->table_name( 'wp_options' ) );
         $placeholders = implode( ',', array_fill( 0, count( $diff_options ), '%s' ) );
-        $options_db   = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name, value FROM {$table_name} WHERE wpid = %d AND name IN ({$placeholders})", array_merge( array( 0 ), $diff_options ) ) );
+        $options_db   = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name, value FROM {$table_name} WHERE wpid = %d AND name IN ({$placeholders})", array_merge( array( 0 ), $diff_options ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd; $placeholders is a generated list of %s.
 
         foreach ( (array) $options_db as $o ) {
             $return_options[ $o->name ]          = $o->value;
@@ -1240,7 +1244,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         static::$general_options[ $option ] = $value;
 
         $table_name = esc_sql( $this->table_name( 'wp_options' ) );
-        $rslt       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name FROM {$table_name} WHERE wpid = %d AND name = %s", 0, $option ) );
+        $rslt       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT name FROM {$table_name} WHERE wpid = %d AND name = %s", 0, $option ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
 
         if ( empty( $rslt ) ) {
             $this->wpdb->insert(
@@ -1511,7 +1515,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 if ( in_array( 'available_update', $status ) ) {
                     $available_sql = " ( wp.plugin_upgrades <> '' &&  wp.plugin_upgrades <> '[]' ) OR (  wp.theme_upgrades <> '' &&  wp.theme_upgrades <> '[]'  ) OR (  wp.translation_upgrades <> '' &&  wp.translation_upgrades <> '[]' ) OR ( wp.premium_upgrades <> '' &&  wp.premium_upgrades <> '[]' ) ";
                     $options_table = esc_sql( $this->table_name( 'wp_options' ) );
-                    $results       = $this->wpdb->get_results( "SELECT wpid FROM {$options_table} WHERE name = 'wp_upgrades' AND value <> '' AND value <> '[]'" );
+                    $results       = $this->wpdb->get_results( "SELECT wpid FROM {$options_table} WHERE name = 'wp_upgrades' AND value <> '' AND value <> '[]'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd; the rest of the query is a literal.
                     if ( $results ) {
                         $wp_ids = array();
                         foreach ( $results as $item ) {
@@ -1973,21 +1977,24 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
             if ( $full_data ) {
                 $sum_upgrades = 0;
-                if ( '' !== $obj_data->plugin_upgrades ) {
+                // The option-backed columns are SQL NULL until a first sync writes them, and
+                // map_site() copies a null property through, so an '' check alone leaves
+                // json_decode() a null on PHP 8.1+.
+                if ( ! empty( $obj_data->plugin_upgrades ) ) {
                     $plugin_upgrades = json_decode( $obj_data->plugin_upgrades, true );
                     if ( is_array( $plugin_upgrades ) ) {
                         $sum_upgrades += count( $plugin_upgrades );
                     }
                 }
 
-                if ( '' !== $obj_data->theme_upgrades ) {
+                if ( ! empty( $obj_data->theme_upgrades ) ) {
                     $theme_upgrades = json_decode( $obj_data->theme_upgrades, true );
                     if ( is_array( $theme_upgrades ) ) {
                         $sum_upgrades += count( $theme_upgrades );
                     }
                 }
 
-                if ( '' !== $obj_data->wp_upgrades ) {
+                if ( ! empty( $obj_data->wp_upgrades ) ) {
                     $wp_upgrades = json_decode( $obj_data->wp_upgrades, true );
                     if ( is_array( $wp_upgrades ) ) {
                         $sum_upgrades += count( $wp_upgrades );
@@ -2024,6 +2031,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *                      - status (string): 'connected', 'disconnected', 'suspended'
      *                      - tags (array): Array of tag/group IDs to filter by
      *                      - client_id (int): Client ID to filter by.
+     *                      - include (int[]): Site IDs to include; empty means no filter.
      *
      * @return int Count of sites matching the filters.
      */
@@ -2056,6 +2064,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         // Access control for sites.
         $where .= $this->get_sql_where_allow_access_sites( 'wp', 'no' );
+
+        $include = isset( $params['include'] ) && is_array( $params['include'] ) ? array_filter( array_map( 'intval', $params['include'] ) ) : array();
+        if ( ! empty( $include ) ) {
+            $placeholders = implode( ', ', array_fill( 0, count( $include ), '%d' ) );
+            $where       .= " AND wp.id IN ( $placeholders ) ";
+            $sql_params   = array_merge( $sql_params, $include );
+        }
 
         // Status filtering: connected, disconnected, suspended.
         if ( ! empty( $status ) ) {
@@ -2741,6 +2756,22 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Read a site before post-create hooks grant its creator access.
+     *
+     * Callers must authorize access before using this unscoped lookup.
+     *
+     * @param int    $id           Child site ID.
+     * @param bool   $selectGroups Include group fields.
+     * @param array  $extra_view   Extra option fields.
+     * @param string $obj          OBJECT|ARRAY_A.
+     *
+     * @return object|array|null Database row or null when no row is found.
+     */
+    public function get_website_by_id_unscoped( $id, $selectGroups = false, $extra_view = array(), $obj = OBJECT ) {
+        return $this->get_row_result( $this->get_sql_website_by_id_with_access( $id, $selectGroups, $extra_view, '' ), $obj );
+    }
+
+    /**
      * Get child site by id via SQL.
      *
      * @param int   $id           Child site ID.
@@ -2752,7 +2783,20 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
     public function get_sql_website_by_id( $id, $selectGroups = false, $extra_view = array() ) {
+        return $this->get_sql_website_by_id_with_access( $id, $selectGroups, $extra_view, $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' ) );
+    }
 
+    /**
+     * Keep scoped and unscoped lookups consistent in their selected fields and joins.
+     *
+     * @param int    $id           Child site ID.
+     * @param bool   $selectGroups Include group fields.
+     * @param mixed  $extra_view   Extra option fields.
+     * @param string $where        Internally generated access clause, or an empty string.
+     *
+     * @return string|null SQL query or null for an invalid ID.
+     */
+    private function get_sql_website_by_id_with_access( $id, $selectGroups, $extra_view, $where ) {
         if ( ! is_array( $extra_view ) || empty( $extra_view ) ) {
             $extra_view = array( 'favi_icon', 'site_info' );
         }
@@ -2769,23 +2813,26 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $view_joins   = $opts_view['joins'];
             }
 
-            $where = $this->get_sql_where_allow_access_sites( 'wp', 'nocheckstaging' );
             if ( $selectGroups ) {
-                return 'SELECT wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
+                $sql = 'SELECT wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
                 LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
                 JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                 ' . $view_joins . '
-                WHERE wp.id = ' . $id . $where . '
+                WHERE wp.id = %d' . $where . '
                 GROUP BY wp.id, wp_sync.sync_id';
+
+                return $this->wpdb->prepare( $sql, (int) $id ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- selects and joins come from allowlisted option names.
             }
 
-            return 'SELECT wp.*,wp_sync.*' . $view_selects . '
+            $sql = 'SELECT wp.*,wp_sync.*' . $view_selects . '
                     FROM ' . $this->table_name( 'wp' ) . ' wp
                     JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
                     ' . $view_joins . '
-                    WHERE id = ' . $id . $where;
+                    WHERE id = %d' . $where;
+
+            return $this->wpdb->prepare( $sql, (int) $id ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- selects and joins come from allowlisted option names.
         }
 
         return null;
@@ -2983,14 +3030,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $sync_table  = $this->table_name( 'wp_sync' );
 
         return $this->wpdb->get_row(
-            "
-            SELECT
-                COUNT(wp.id) AS total_sites,
-                SUM(CASE WHEN s.sync_errors = '' THEN 1 ELSE 0 END) AS connected_sites,
-                SUM(CASE WHEN s.sync_errors <> '' THEN 1 ELSE 0 END) AS disconnected_sites
-             FROM {$sites_table} wp
-             JOIN {$sync_table} s
-                ON s.wpid = wp.id " .
+            "SELECT COUNT(wp.id) AS total_sites, SUM(CASE WHEN s.sync_errors = '' THEN 1 ELSE 0 END) AS connected_sites, SUM(CASE WHEN s.sync_errors <> '' THEN 1 ELSE 0 END) AS disconnected_sites FROM {$sites_table} wp JOIN {$sync_table} s ON s.wpid = wp.id " . // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names come from table_name(), which is the DB prefix plus a hardcoded suffix.
                 $this->get_sql_where_allow_access_sites( 'wp', $is_staging ),
             ARRAY_A
         );
@@ -3166,7 +3206,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_wp_ip( $wpid ) {
         $table_name = esc_sql( $this->table_name( 'request_log' ) );
-        return $this->wpdb->get_var( $this->wpdb->prepare( "SELECT ip FROM {$table_name} WHERE wpid = %d", $wpid ) );
+        return $this->wpdb->get_var( $this->wpdb->prepare( "SELECT ip FROM {$table_name} WHERE wpid = %d", $wpid ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
     }
 
     /**
@@ -3207,6 +3247,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $sslVersion        = isset( $params['sslVersion'] ) ? $params['sslVersion'] : 0;
         $wpe               = isset( $params['wpe'] ) ? $params['wpe'] : 0;
         $isStaging         = isset( $params['isStaging'] ) ? $params['isStaging'] : 0;
+        // 2 means "use the global mainwp_forceUseIPv4 option" and mainwp_string_to_bool()
+        // collapses it to 0, so it is kept before the boolean conversion. Null or absent
+        // stays null and leaves the NOT NULL column at its default.
+        $force_use_ipv4 = isset( $params['force_use_ipv4'] ) ? ( 2 === (int) $params['force_use_ipv4'] ? 2 : (int) mainwp_string_to_bool( $params['force_use_ipv4'] ) ) : null;
 
         // MWP-1548: encrypt http_user / http_pass at rest. Empty / null
         // values pass through unchanged (encrypt_credential is a no-op
@@ -3267,6 +3311,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'is_staging'            => $isStaging,
             );
 
+            if ( null !== $force_use_ipv4 ) {
+                $values['force_use_ipv4'] = $force_use_ipv4;
+            }
+
             $syncValues = array(
                 'dtsSync'               => 0,
                 'dtsSyncStart'          => 0,
@@ -3313,6 +3361,24 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                         )
                     );
                 }
+
+                // Add primary monitor, use global settings.
+                $success = MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor(
+                    array(
+                        'wpid'   => $websiteid,
+                        'suburl' => '',
+                    )
+                );
+
+                $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $websiteid;
+
+                if ( ! $success ) {
+                    update_option( $opt_name, 1 );
+                    MainWP_Utility::unhide_mainwp_message( 'failed-attempt-create-primary-monitor-' . $websiteid );
+                } elseif ( get_option( $opt_name ) ) {
+                    delete_option( $opt_name );
+                }
+
                 MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
                 return $websiteid;
             }
@@ -3337,8 +3403,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $this->wpdb->delete( $this->table_name( 'wp_sync' ), array( 'wpid' => $websiteid ) );
             $this->wpdb->delete( $this->table_name( 'wp_options' ), array( 'wpid' => $websiteid ) );
             MainWP_Encrypt_Data_Lib::remove_key_file( $websiteid );
-            MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' => $websiteid ) );
+            MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $websiteid );
+            MainWP_DB_Knowledge::instance()->delete_by_scope( 'site', (int) $websiteid );
             MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
+            if ( $nr > 0 ) {
+                MainWP_DB_Common::instance()->delete_widget_saved_filters_for_all_users( 'individual', $websiteid );
+            }
+
             return $nr;
         }
 
@@ -3377,12 +3448,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             // Lock the data stream to prevent other processes from updating at the same time.
             $table_name = esc_sql( $this->table_name( 'wp' ) );
             $sql        = $this->wpdb->prepare(
-                "SELECT * FROM {$table_name} WHERE id = %d FOR UPDATE",
+                "SELECT * FROM {$table_name} WHERE id = %d FOR UPDATE", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
                 $websiteid
             );
             $this->wpdb->get_row( $sql );
 
-            return $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
+            $updated = $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
+            if ( false !== $updated ) {
+                MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( $fields );
+            }
+            return $updated;
         }
 
         return false;
@@ -3601,7 +3676,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
         $wp_table      = esc_sql( $this->table_name( 'wp' ) );
         $wp_sync_table = esc_sql( $this->table_name( 'wp_sync' ) );
-        $results       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT * FROM {$wp_table} wp JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid WHERE wp.url = %s", $url ), OBJECT );
+        $results       = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT * FROM {$wp_table} wp JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid WHERE wp.url = %s", $url ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are esc_sql'd.
         if ( $results ) {
             return $results;
         }
@@ -3615,14 +3690,70 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $url = str_replace( 'http://', 'http://www.', $url );
         }
 
-        $results = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT * FROM {$wp_table} wp JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid WHERE wp.url = %s", $url ), OBJECT );
+        $results = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT * FROM {$wp_table} wp JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid WHERE wp.url = %s", $url ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are esc_sql'd.
         if ( $results ) {
             return $results;
         }
 
         $url = str_replace( array( 'https://www.', 'http://www.', 'https://', 'http://', 'www.' ), array( '', '', '', '', '' ), $url );
 
-        return $this->wpdb->get_results( $this->wpdb->prepare( "SELECT * FROM {$wp_table} wp JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid WHERE replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www.', '') = %s", $url ), OBJECT );
+        return $this->wpdb->get_results( $this->wpdb->prepare( "SELECT * FROM {$wp_table} wp JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid WHERE replace(replace(replace(replace(replace(wp.url, 'https://www.',''), 'http://www.',''), 'https://', ''), 'http://', ''), 'www.', '') = %s", $url ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are esc_sql'd.
+    }
+
+    /**
+     * Get recently-synced child sites whose stored url differs from the
+     * child-reported siteurl.
+     *
+     * The trailing slash must be normalized in SQL: stored urls always end
+     * with a slash while child-reported siteurl values never do, so a plain
+     * inequality would match nearly every site.
+     *
+     * @since 6.2
+     *
+     * @param int $days Freshness gate: only sites synced within this many days.
+     *
+     * @return array|object|null Rows with id, url, siteurl or null on failure.
+     */
+    public function get_websites_with_url_siteurl_mismatch( $days = 30 ) {
+        $wp_table      = esc_sql( $this->table_name( 'wp' ) );
+        $wp_sync_table = esc_sql( $this->table_name( 'wp_sync' ) );
+        $minimum_sync  = time() - intval( $days ) * DAY_IN_SECONDS;
+
+        return $this->wpdb->get_results( $this->wpdb->prepare( "SELECT wp.id, wp.url, wp.siteurl FROM {$wp_table} wp JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid WHERE wp.siteurl <> '' AND TRIM(TRAILING '/' FROM wp.url) <> TRIM(TRAILING '/' FROM wp.siteurl) AND wp_sync.dtsSync >= %d", $minimum_sync ), OBJECT ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are esc_sql'd.
+    }
+
+    /**
+     * Get IDs of child sites that have a non-empty value for a website option.
+     *
+     * @since 6.2
+     *
+     * @param string $option_name Website option name.
+     * @param int    $limit       Maximum number of IDs to return.
+     *
+     * @return array Site IDs.
+     */
+    public function get_website_ids_with_nonempty_option( $option_name, $limit = 3 ) {
+        $options_table = esc_sql( $this->table_name( 'wp_options' ) );
+
+        return $this->wpdb->get_col( $this->wpdb->prepare( "SELECT wpid FROM {$options_table} WHERE name = %s AND value <> '' ORDER BY wpid ASC LIMIT %d", $option_name, max( 1, intval( $limit ) ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+    }
+
+    /**
+     * Get one child site whose stored url exactly matches the given URL,
+     * excluding a site ID. Used as the duplicate guard before a URL correction.
+     *
+     * @since 6.2
+     *
+     * @param string $url        URL to match ( trailing slash enforced ).
+     * @param int    $exclude_id Site ID to exclude.
+     *
+     * @return object|null Matching row ( id, url ) or null.
+     */
+    public function get_website_by_exact_url_excluding_id( $url, $exclude_id ) {
+        $url      = rtrim( (string) $url, '/' );
+        $wp_table = esc_sql( $this->table_name( 'wp' ) );
+
+        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT id, url FROM {$wp_table} WHERE TRIM(TRAILING '/' FROM url) = %s AND id <> %d", $url, intval( $exclude_id ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
     }
 
     /**
@@ -3661,10 +3792,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $view_joins   = $opts_view['joins'];
         }
         return $this->wpdb->get_results( // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $option_view is a validated SQL subquery
-            "SELECT wp.*,wp_sync.* {$view_selects} FROM {$wp_table} wp
-            JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid
-            {$view_joins}
-            WHERE wp.disable_health_check <> 1 AND wp.offline_check_result = 1 AND ( {$where_global_threshold} OR{$where_site_threshold} ) AND wp_sync.health_site_noticed = 0 " .
+            "SELECT wp.*,wp_sync.* {$view_selects} FROM {$wp_table} wp JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid {$view_joins} WHERE wp.disable_health_check <> 1 AND wp.offline_check_result = 1 AND ( {$where_global_threshold} OR{$where_site_threshold} ) AND wp_sync.health_site_noticed = 0 " . // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are esc_sql'd, the view fragments come from get_wp_options_join(), which allowlists option names, and both threshold fragments are literals picked above.
             $where . ' GROUP BY wp.id ',
             OBJECT
         );
@@ -3692,8 +3820,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- is a validated SQL subquery.
         return $this->wpdb->get_results(
-            "SELECT wp.*{$view_selects} FROM {$wp_table} wp
-            {$view_joins}" . ' WHERE wp.suspended = 0 AND wp.http_code_noticed = 0  AND wp.offline_check_result = -1 ' .
+            "SELECT wp.*{$view_selects} FROM {$wp_table} wp {$view_joins}" . ' WHERE wp.suspended = 0 AND wp.http_code_noticed = 0  AND wp.offline_check_result = -1 ' . // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd; the view fragments come from get_wp_options_join(), which allowlists option names.
             $where . ' GROUP BY wp.id ',
             OBJECT
         );
@@ -3944,16 +4071,26 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return mixed Result
      */
     public function insert_lookup_item( $item_name, $item_id, $obj_name, $obj_id ) {
+        // get_lookup_items() and delete_lookup_items() match item_name as given, so a
+        // name that sanitizing would alter is refused instead of being stored under a
+        // value the caller can never read back or delete.
+        if ( ! is_string( $item_name ) || sanitize_text_field( $item_name ) !== $item_name ) {
+            return false;
+        }
         if ( empty( $item_name ) || empty( $item_id ) || empty( $obj_name ) || empty( $obj_id ) ) {
             return false;
         }
         $data = array(
-            'item_name'   => 'cost',
+            'item_name'   => $item_name,
             'item_id'     => $item_id,
             'object_name' => $obj_name,
             'object_id'   => $obj_id,
         );
-        $this->wpdb->insert( $this->table_name( 'lookup_item_objects' ), $data );
+        // wpdb refuses a value past the column length before any SQL runs, and
+        // insert_id would still hold the previous insert's id.
+        if ( false === $this->wpdb->insert( $this->table_name( 'lookup_item_objects' ), $data ) ) {
+            return false;
+        }
         return $this->wpdb->insert_id; // must return lookup id.
     }
 
@@ -4130,7 +4267,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function is_existed_enabled_rest_key() {
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
-        $enabled    = $this->wpdb->get_row( "SELECT * FROM {$table_name} WHERE enabled = 1 LIMIT 1" );
+        $enabled    = $this->wpdb->get_row( "SELECT * FROM {$table_name} WHERE enabled = 1 LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
         return $enabled ? true : false;
     }
 
@@ -4143,7 +4280,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_rest_api_key_by( $id ) {
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
-        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM {$table_name} WHERE key_id = %d", $id ) );
+        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM {$table_name} WHERE key_id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
     }
 
     /**
@@ -4155,7 +4292,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function remove_rest_api_key( $id ) {
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
-        return $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE key_id = %s", $id ) );
+        return $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE key_id = %s", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
     }
 
     /**
@@ -4165,7 +4302,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_rest_api_keys() {
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
-        return $this->wpdb->get_results( "SELECT * FROM {$table_name} ORDER BY key_id DESC" );
+        return $this->wpdb->get_results( "SELECT * FROM {$table_name} ORDER BY key_id DESC" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
     }
 
 
@@ -4237,7 +4374,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_regular_process_by_item_id_type_slug( $item_id, $type, $process_slug ) {
         $table_name = esc_sql( $this->table_name( 'schedule_processes' ) );
-        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT pr.* FROM {$table_name} pr WHERE pr.item_id = %d AND pr.type = %s AND pr.process_slug = %s", $item_id, $type, $process_slug ) );
+        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT pr.* FROM {$table_name} pr WHERE pr.item_id = %d AND pr.type = %s AND pr.process_slug = %s", $item_id, $type, $process_slug ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
     }
 
     /**
@@ -4269,5 +4406,49 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         if ( is_array( $params ) && ! empty( $params['dev_log_query'] ) && ! empty( $sql ) ) {
             do_action( 'mainwp_log_system_query', $params, $sql, $caller );
         }
+    }
+
+    /**
+     * Method get_core_tables().
+     *
+     * Returns the list of core tables used by MainWP for validation data integrity and other purposes.
+     *
+     * @return array Core tables info
+     */
+    public function get_core_tables() {
+
+        $core_tables = array(
+            $this->table_name( 'wp_clients' ),
+            $this->table_name( 'wp_clients_fields' ),
+            $this->table_name( 'wp_clients_field_values' ),
+            $this->table_name( 'wp_clients_contacts' ),
+            $this->table_name( 'monitors' ),
+            $this->table_name( 'monitor_heartbeat' ),
+            $this->table_name( 'monitor_stat_hourly' ),
+            $this->table_name( 'wp' ),
+            $this->table_name( 'wp_sync' ),
+            $this->table_name( 'wp_options' ),
+            $this->table_name( 'wp_settings_backup' ),
+            $this->table_name( 'users' ),
+            $this->table_name( 'wp_status' ),
+            $this->table_name( 'group' ),
+            $this->table_name( 'wp_group' ),
+            $this->table_name( 'lookup_item_objects' ),
+            $this->table_name( 'wp_backup_progress' ),
+            $this->table_name( 'wp_backup' ),
+            $this->table_name( 'api_keys' ),
+            $this->table_name( 'action_log' ),
+            $this->table_name( 'request_log' ),
+            $this->table_name( 'schedule_processes' ),
+            $this->table_name( 'cost_tracker' ),
+        );
+
+        if ( ! defined( 'MAINWP_MODULE_LOG_ENABLED' ) || MAINWP_MODULE_LOG_ENABLED ) {
+            $core_tables[] = $this->table_name( 'wp_logs' );
+            $core_tables[] = $this->table_name( 'wp_logs_meta' );
+            $core_tables[] = $this->table_name( 'wp_logs_meta_archive' );
+        }
+
+        return apply_filters( 'mainwp_database_core_tables', $core_tables );
     }
 }

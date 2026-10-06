@@ -245,8 +245,8 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
       } else {
         error = response.substring(6);
         let err = mainwp_js_get_error_not_detected_connect(error, 'html_msg', false, true);
-        if (true !== err && '' != err) {
-          error = err; // decoded error.
+        if (false !== err && true !== err && '' != err) {
+          error = err; // decoded JSON error. Plain text, including a request timeout, stays as returned.
         }
       }
     } else {

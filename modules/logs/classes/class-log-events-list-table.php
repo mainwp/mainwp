@@ -154,6 +154,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         if ( 'widget-overview' === $this->table_id_prefix ) {
             $columns = array(
                 'created'    => esc_html__( 'Time', 'mainwp' ),
+                'user_id'    => esc_html__( 'User', 'mainwp' ),
                 'log_object' => esc_html__( 'Object', 'mainwp' ),
                 'event'      => esc_html__( 'Event', 'mainwp' ),
                 'name'       => esc_html__( 'Site', 'mainwp' ),
@@ -180,7 +181,6 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         if ( 'widget-overview' === $this->table_id_prefix ) {
             unset( $columns['log_site_name'] );
             unset( $columns['icon'] );
-            unset( $columns['user_id'] );
             unset( $columns['action'] );
             unset( $columns['source'] );
             unset( $columns['col_action'] );
@@ -1041,6 +1041,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
         </div>
             <?php
         }
+        if ( 'widget-overview' !== $this->table_id_prefix ) {
         ?>
         <div id="mainwp-loading-sites">
             <div class="ui active page dimmer">
@@ -1048,7 +1049,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             </div>
         </div>
         <?php
-
+        }
         $table_features = array(
             'searching'     => 'true',
             'paging'        => 'true',
@@ -1102,7 +1103,9 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
 
                         //jQuery( '#mainwp-sites-table-loader' ).hide();
                         $module_log_table = jQuery( manage_tbl_id ).on( 'processing.dt', function ( e, settings, processing ) {
-                            jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
+                            if(jQuery( '#mainwp-loading-sites' ).length){
+                                jQuery( '#mainwp-loading-sites' ).css( 'display', processing ? 'block' : 'none' );
+                            }
                             if (!processing) {
                                 let tb = jQuery( manage_tbl_id );
                                 tb.find( 'th[cell-cls]' ).each( function(){
@@ -1143,26 +1146,45 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                                     } else {
                                         if( 'mainwp_module_log_widget_events_overview_display_rows' === ajax_action ){
                                             data.source = widgetViewSource;
+                                            data.sites =  $( '#mainwp-module-log-filter-sites').length ? $( '#mainwp-module-log-filter-sites').dropdown('get value') : '';
+                                            data.events =  $( '#mainwp-module-log-filter-events').length ? $( '#mainwp-module-log-filter-events').dropdown('get value') : '';
                                         } else if( 'mainwp_module_log_widget_insights_display_rows' === ajax_action ) {
                                             // set recent number for none-manage-events table.
                                             data.recent_number =  $( '#mainwp-widget-filter-events-limit').length ? $( '#mainwp-widget-filter-events-limit').val() : 100;
                                         }
                                     }
 
-                                    if('mainwp_module_log_manage_events_display_rows' === ajax_action ){
-                                        if( ( data.source == '' || data.source == 'allsource' ) &&
-                                            ( data.events == '' || data.events == 'allevents' ) &&
-                                            ( data.sites == '' || data.sites == 'allsites' ) &&
-                                            ( data.group == '' || data.group == 'alltags' ) &&
-                                            ( data.client == '' || data.client == 'allclients' ) &&
-                                            ( data.user == '' || data.user == 'allusers' ) &&
-                                            data.range == 'thismonth' &&
-                                            data.current_client_id == '' &&
-                                            data.current_site_id == ''
-                                        ){
-                                            jQuery('#mainwp-module-log-filters-row').fadeOut(300);
-                                        } else{
-                                            jQuery('#mainwp-module-log-filters-row').fadeIn(300);
+                                    if(jQuery('#mainwp-module-log-filters-row').length){
+                                        let show_filter = true;
+                                        let context = $( '#mainwp-widget-filter-events-context').length ? $( '#mainwp-widget-filter-events-context').val() : '';
+
+                                        if ( 'mainwp_module_log_manage_events_display_rows' === ajax_action ) {
+                                            if (
+                                                ( data.source === '' || data.source === 'allsource' ) &&
+                                                ( data.events === '' || data.events === 'allevents' ) &&
+                                                ( data.sites === '' || data.sites === 'allsites' ) &&
+                                                ( data.group === '' || data.group === 'alltags' ) &&
+                                                ( data.client === 0 || data.client === '' || data.client === 'allclients' ) &&
+                                                ( data.user === 0 || data.user === '' || data.user === '0' || data.user === 'allusers' ) &&
+                                                data.range === 'thismonth' &&
+                                                ( data.current_client_id === 0 || data.current_client_id === '' || data.current_client_id === '0' ) &&
+                                                ( data.current_site_id === 0 || data.current_site_id === '' || data.current_site_id === '0' )
+                                            ) {
+                                                show_filter = false;
+                                            }
+                                        } else if ( 'mainwp_module_log_widget_events_overview_display_rows' === ajax_action ) {
+                                            if (
+                                                ( ( context === 'operations' || context === 'client' ) && ( data.events === '' || data.events === 'allevents' ) && ( data.user === 0 || data.user === '' || data.user === '0' || data.user === 'allusers' ) && ( data.sites === '' || data.sites === 'allsites' ) ) ||
+                                                ( context === 'individual' && ( data.events === '' || data.events === 'allevents' ) && ( data.user === 0 || data.user === '' || data.user === '0' || data.user === 'allusers' ) )
+                                            ) {
+                                                show_filter = false;
+                                            }
+                                        }
+
+                                        if ( show_filter ) {
+                                            jQuery( '#mainwp-module-log-filters-row' ).fadeIn( 300 );
+                                        } else {
+                                            jQuery( '#mainwp-module-log-filters-row' ).fadeOut( 300 );
                                         }
                                     }
 

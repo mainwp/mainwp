@@ -167,10 +167,15 @@ let mainwp_setup_managesites_add = function () {
 
       url = url.replace(/"/g, '&quot;');
 
-      if (response == 'HTTPERROR') {
+      if (res_things.failure_ux) {
+        errors.push(res_things.failure_ux);
+      } else if (response == 'HTTPERROR') {
         errors.push('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review <a href="https://docs.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'); // NOSONAR - noopener - open safe.
       } else if (response == 'NOMAINWP') {
         errors.push(mainwp_js_get_error_not_detected_connect());
+      } else if (response == 'TIMEOUT') {
+        let timeoutKind = res_things && res_things.timeout_kind ? res_things.timeout_kind : 'operation';
+        errors.push(mainwp_js_request_timeout_message(timeoutKind));
       } else if (response.substring(0, 5) == 'ERROR') {
         if (response.length == 5) {
           errors.push('Undefined error occurred. Please try again. If the issue does not resolve, please review <a href="https://docs.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'); // NOSONAR - noopener - open safe.
@@ -228,7 +233,7 @@ let mainwp_setup_managesites_add = function () {
           jQuery('#mainwp-info-zone').hide();
 
           if (response.substring(0, 5) == 'ERROR') {
-            mainwp_set_message_zone('#mainwp-message-zone', response.substring(6), 'red');
+            mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(6), 'red');
           } else {
             //Message the WP was added
             mainwp_set_message_zone('#mainwp-message-zone', response, 'green');

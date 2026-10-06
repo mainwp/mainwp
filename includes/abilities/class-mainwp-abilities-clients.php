@@ -160,6 +160,10 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
      * @return array|\WP_Error Result array or error.
      */
     public static function execute_list_clients( array $input ) {
+        // Restricted callers see the clients whose sites overlap their
+        // allowed set instead of a blanket denial.
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+
         $input = MainWP_Abilities_Util::normalize_input(
             $input,
             array(
@@ -193,6 +197,24 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
 
         if ( ! empty( $input['exclude'] ) ) {
             $args['exclude'] = $input['exclude'];
+        }
+
+        if ( 'all' !== $allowed_sites ) {
+            $accessible = MainWP_Abilities_Util::get_accessible_client_ids( $allowed_sites );
+            $accessible = empty( $args['include'] )
+                ? $accessible
+                : array_values( array_intersect( array_map( 'intval', (array) $args['include'] ), $accessible ) );
+
+            if ( empty( $accessible ) ) {
+                return array(
+                    'items'    => array(),
+                    'page'     => (int) $input['page'],
+                    'per_page' => (int) $input['per_page'],
+                    'total'    => 0,
+                );
+            }
+
+            $args['include'] = $accessible;
         }
 
         $db      = MainWP_DB_Client::instance();
@@ -276,7 +298,19 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
      * @return array|\WP_Error Result array or error.
      */
     public static function execute_count_clients( array $input ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- NOSONAR Required by ability signature.
-        $total = MainWP_DB_Client::instance()->get_wp_clients( array( 'count_only' => true ) );
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+
+        $args = array( 'count_only' => true );
+
+        if ( 'all' !== $allowed_sites ) {
+            $accessible = MainWP_Abilities_Util::get_accessible_client_ids( $allowed_sites );
+            if ( empty( $accessible ) ) {
+                return array( 'total' => 0 );
+            }
+            $args['include'] = $accessible;
+        }
+
+        $total = MainWP_DB_Client::instance()->get_wp_clients( $args );
 
         return array(
             'total' => (int) $total,
@@ -351,6 +385,12 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             return $client;
         }
 
+        // Any-site overlap grants read access.
+        $access = MainWP_Abilities_Util::check_client_access( $client, $input );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+
         return MainWP_Abilities_Util::format_client_for_output( $client );
     }
 
@@ -369,7 +409,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'input_schema'        => self::get_add_client_input_schema(),
                 'output_schema'       => self::get_client_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_add_client' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/add-client-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -419,12 +459,55 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
     }
 
     /**
+     * Reject selected_sites entries outside the caller's allowed set.
+     *
+     * A scoped user must not re-home sites they cannot access onto clients
+     * they control, so any out-of-scope ID fails the whole call rather than
+     * being silently dropped.
+     *
+     * @param array $input Ability input, possibly carrying selected_sites.
+     * @return true|\WP_Error True when in scope, WP_Error otherwise.
+     */
+    public static function check_selected_sites_scope( array $input ) {
+        if ( empty( $input['selected_sites'] ) || ! is_array( $input['selected_sites'] ) ) {
+            return true;
+        }
+
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( 'all' === $allowed_sites ) {
+            return true;
+        }
+
+        $selected     = array_map( 'intval', $input['selected_sites'] );
+        $out_of_scope = array_diff( $selected, $allowed_sites );
+
+        if ( ! empty( $out_of_scope ) ) {
+            // Only a restricted caller reaches this leg, so the unseen site reads as missing.
+            return new \WP_Error(
+                'mainwp_site_not_found',
+                /* translators: %d: site ID */
+                sprintf( __( 'No site found with ID %d.', 'mainwp' ), (int) reset( $out_of_scope ) ),
+                array( 'status' => 404 )
+            );
+        }
+
+        return true;
+    }
+
+    /**
      * Execute add-client ability.
      *
      * @param array $input Validated input parameters.
      * @return array|\WP_Error Result array or error.
      */
     public static function execute_add_client( array $input ) {
+        // Creation stays open to scoped callers, but they cannot attach
+        // sites outside their allowed set.
+        $scope_check = self::check_selected_sites_scope( $input );
+        if ( is_wp_error( $scope_check ) ) {
+            return $scope_check;
+        }
+
         if ( empty( $input['name'] ) ) {
             return new \WP_Error(
                 'mainwp_invalid_input',
@@ -485,7 +568,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'input_schema'        => self::get_update_client_input_schema(),
                 'output_schema'       => self::get_client_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_update_client' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/update-client-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -548,6 +631,44 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             return $client;
         }
 
+        // Any-site overlap grants the update; attaching sites outside the
+        // caller's allowed set is rejected outright.
+        $access = MainWP_Abilities_Util::check_client_access( $client, $input );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+
+        $scope_check = self::check_selected_sites_scope( $input );
+        if ( is_wp_error( $scope_check ) ) {
+            return $scope_check;
+        }
+
+        // Preserve memberships the caller cannot see. update_selected_sites_for_client
+        // replaces the client's whole roster, so a restricted caller submitting
+        // selected_sites would silently detach the client's sites outside their allowed
+        // set. Fold those existing out-of-scope sites back in: a partial manager can add
+        // or remove only sites within their own scope, never detach ones they can't see.
+        if ( isset( $input['selected_sites'] ) && is_array( $input['selected_sites'] ) ) {
+            $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+            if ( 'all' !== $allowed_sites ) {
+                $current_site_ids = array_map(
+                    static fn( $site ) => (int) $site->id,
+                    (array) MainWP_DB_Client::instance()->get_websites_by_client_ids(
+                        (int) $client->client_id,
+                        array( 'no_perm_check' => true )
+                    )
+                );
+                $unseen           = array_diff( $current_site_ids, $allowed_sites );
+                if ( ! empty( $unseen ) ) {
+                    $input['selected_sites'] = array_values(
+                        array_unique(
+                            array_merge( array_map( 'intval', $input['selected_sites'] ), $unseen )
+                        )
+                    );
+                }
+            }
+        }
+
         $data              = $input;
         $data['client_id'] = $client->client_id;
 
@@ -595,7 +716,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'input_schema'        => self::get_delete_client_input_schema(),
                 'output_schema'       => self::get_delete_client_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_delete_client' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/delete-client-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -686,7 +807,10 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             )
         );
 
-        if ( $input['dry_run'] && $input['confirm'] ) {
+        $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+        $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+
+        if ( $dry_run && $confirm ) {
             return new \WP_Error(
                 'mainwp_invalid_input',
                 __( 'Cannot specify both dry_run and confirm. Use dry_run for preview, confirm for actual deletion.', 'mainwp' ),
@@ -700,7 +824,15 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             return $client;
         }
 
-        if ( $input['dry_run'] ) {
+        // Deleting removes the client for every site it covers, so the
+        // caller's allowed set must cover all of them. Any-site overlap is
+        // read access only.
+        $access = MainWP_Abilities_Util::check_client_access( $client, $input, true );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+
+        if ( $dry_run ) {
             $sites       = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id );
             $sites_count = is_array( $sites ) ? count( $sites ) : 0;
 
@@ -729,7 +861,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             );
         }
 
-        if ( ! $input['confirm'] ) {
+        if ( ! $confirm ) {
             return new \WP_Error(
                 'mainwp_confirmation_required',
                 __( 'This is a destructive operation. Set confirm: true or use dry_run: true for preview.', 'mainwp' ),
@@ -821,11 +953,27 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             return $client;
         }
 
-        $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id );
+        $access = MainWP_Abilities_Util::check_client_access( $client, $input );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        $sites         = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+            $client->client_id,
+            array(
+                'no_perm_check' => true,
+                'where'         => 'wp.is_staging = 0',
+            )
+        );
 
         $items = array();
         if ( is_array( $sites ) ) {
             foreach ( $sites as $site ) {
+                // A restricted caller sees only their slice of the client.
+                if ( 'all' !== $allowed_sites && ! in_array( (int) $site->id, $allowed_sites, true ) ) {
+                    continue;
+                }
                 $items[] = MainWP_Abilities_Util::format_site_for_output( $site );
             }
         }
@@ -907,8 +1055,29 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             return $client;
         }
 
-        $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client->client_id );
-        $count = is_array( $sites ) ? count( $sites ) : 0;
+        $access = MainWP_Abilities_Util::check_client_access( $client, $input );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        $sites         = MainWP_DB_Client::instance()->get_websites_by_client_ids(
+            $client->client_id,
+            array(
+                'no_perm_check' => true,
+                'where'         => 'wp.is_staging = 0',
+            )
+        );
+
+        $count = 0;
+        if ( is_array( $sites ) ) {
+            foreach ( $sites as $site ) {
+                if ( 'all' !== $allowed_sites && ! in_array( (int) $site->id, $allowed_sites, true ) ) {
+                    continue;
+                }
+                ++$count;
+            }
+        }
 
         return array(
             'total' => $count,
@@ -1013,6 +1182,11 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
             return $client;
         }
 
+        $access = MainWP_Abilities_Util::check_client_access( $client, $input );
+        if ( is_wp_error( $access ) ) {
+            return $access;
+        }
+
         if ( ! class_exists( 'MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB' ) ) {
             return new \WP_Error(
                 'mainwp_internal_error',
@@ -1022,11 +1196,36 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
         }
 
         $cost_db = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance();
-        $costs   = $cost_db->get_all_cost_trackers_by_clients( array( $client->client_id ) );
+        // The producer returns a client_id => cost[] map, not a flat list.
+        // get_cost_sites makes it stamp cost_sites_ids with the sites+groups+
+        // clients expansion the scope filter below needs.
+        $costs_map = $cost_db->get_all_cost_trackers_by_clients( array( $client->client_id ), array( 'get_cost_sites' => true ) );
+        $costs     = is_array( $costs_map ) ? ( $costs_map[ (int) $client->client_id ] ?? array() ) : array();
+
+        // Any-site overlap grants the client read, but cost aggregates span
+        // all the client's sites. A partial manager only sees cost items
+        // backed by at least one site they can access, and company-wide
+        // items with no site attachment stay unrestricted-only.
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
 
         $items = array();
         if ( is_array( $costs ) ) {
             foreach ( $costs as $cost ) {
+                if ( 'all' !== $allowed_sites ) {
+                    // A cost reached through a group or client attachment
+                    // carries an empty sites column; cost_sites_ids holds the
+                    // resolved site list. Fall back to the raw column only if
+                    // the producer did not stamp it.
+                    if ( isset( $cost->cost_sites_ids ) && is_array( $cost->cost_sites_ids ) ) {
+                        $cost_sites = array_map( 'intval', $cost->cost_sites_ids );
+                    } else {
+                        $cost_sites = ! empty( $cost->sites ) ? json_decode( $cost->sites, true ) : array();
+                        $cost_sites = is_array( $cost_sites ) ? array_map( 'intval', $cost_sites ) : array();
+                    }
+                    if ( empty( array_intersect( $cost_sites, $allowed_sites ) ) ) {
+                        continue;
+                    }
+                }
                 $items[] = MainWP_Abilities_Util::format_cost_for_output( $cost );
             }
         }
@@ -1052,7 +1251,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'input_schema'        => self::get_suspend_client_input_schema(),
                 'output_schema'       => self::get_client_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_suspend_client' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/suspend-client-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -1092,6 +1291,13 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
 
         if ( is_wp_error( $client ) ) {
             return $client;
+        }
+
+        // Suspension affects every site the client covers: full coverage
+        // required, any-site overlap is read access only.
+        $access = MainWP_Abilities_Util::check_client_access( $client, $input, true );
+        if ( is_wp_error( $access ) ) {
+            return $access;
         }
 
         $updated = MainWP_DB_Client::instance()->update_client(
@@ -1137,7 +1343,7 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
                 'input_schema'        => self::get_unsuspend_client_input_schema(),
                 'output_schema'       => self::get_client_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_unsuspend_client' ),
-                'permission_callback' => array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ),
+                'permission_callback' => MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/unsuspend-client-v1', array( MainWP_Abilities_Util::class, 'check_manage_sites_permission' ) ),
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
@@ -1177,6 +1383,13 @@ class MainWP_Abilities_Clients { //phpcs:ignore -- NOSONAR -- class complexity a
 
         if ( is_wp_error( $client ) ) {
             return $client;
+        }
+
+        // Same full-coverage rule as suspend: the flip affects every site
+        // the client covers.
+        $access = MainWP_Abilities_Util::check_client_access( $client, $input, true );
+        if ( is_wp_error( $access ) ) {
+            return $access;
         }
 
         $updated = MainWP_DB_Client::instance()->update_client(

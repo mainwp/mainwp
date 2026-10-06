@@ -110,32 +110,67 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Inline markup keeps secret names joined for redaction.
+	 * Markup around or inside a secret's name or value never lets the value into the excerpt.
+	 *
+	 * Covers both ways tag stripping leaks: a tag between two words glues them onto the name
+	 * when tags are joined, and a tag inside the name splits it when tags are spaced.
+	 *
+	 * @dataProvider data_markup_around_secrets
+	 *
+	 * @param string $body Raw response body.
 	 */
-	public function test_body_excerpt_redacts_secret_with_inline_markup(): void {
-		$body = '<p>pass<strong>word</strong>=supersecret</p>';
+	public function test_body_excerpt_never_shows_a_secret_through_markup( string $body ): void {
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
 
 		$this->assertStringNotContainsString( 'supersecret', $text );
-		$this->assertStringContainsString( 'password=[redacted]', $text );
+		$this->assertStringNotContainsString( 'super secret', $text );
+		$this->assertStringContainsString( '[redacted]', $text );
 	}
 
 	/**
-	 * Adjacent blocks keep secret names separate from preceding words.
+	 * Bodies for test_body_excerpt_never_shows_a_secret_through_markup().
+	 *
+	 * @return array<string,array{0:string}>
 	 */
-	public function test_body_excerpt_redacts_secret_after_adjacent_block(): void {
-		$body = '<div>Access Required</div><div>password=supersecret</div>';
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-
-		$this->assertStringNotContainsString( 'supersecret', $text );
+	public function data_markup_around_secrets(): array {
+		return array(
+			'adjacent title and paragraph'     => array( '<html><title>Attention Required</title><p>password=supersecret</p></html>' ),
+			'adjacent divs'                    => array( '<div>Access Required</div><div>password=supersecret</div>' ),
+			'adjacent obsolete center'         => array( '<center>Access Required</center><center>password=supersecret</center>' ),
+			'details and summary'              => array( '<details><summary>Access Required</summary>password=supersecret</details>' ),
+			'adjacent inline bold'             => array( '<b>Required</b>password=supersecret' ),
+			'adjacent spans'                   => array( '<span>Required</span><span>password=supersecret</span>' ),
+			'adjacent custom element'          => array( '<x-note>Required</x-note>password=supersecret' ),
+			'strong inside the name'           => array( '<p>pass<strong>word</strong>=supersecret</p>' ),
+			'label inside the name'            => array( '<p>pass<label>word</label>=supersecret</p>' ),
+			'script inside the name'           => array( '<p>pass<script>void(0)</script>word=supersecret</p>' ),
+			'comment inside the name'          => array( '<p>pass<!-- x -->word=supersecret</p>' ),
+			'markup inside name and value'     => array( '<p>pass<b>word</b>=super<b>secret</b></p>' ),
+			'quoted value, name split'         => array( '<p>pass<i>word</i>: "supersecret"</p>' ),
+			'suffix name split by markup'      => array( '<p>api<em>_key</em>=supersecret</p>' ),
+			'uppercase tags and name'          => array( '<DIV>Access Required</DIV><DIV>PASSWORD=supersecret</DIV>' ),
+			'line break before the name'       => array( 'Access Required<br>password=supersecret' ),
+			'split name, glued to prior block' => array( '<p>Access Required</p><p>pass<b>word</b>=supersecret</p>' ),
+			'split name, then another pair'    => array( '<p>pass<b>word</b>=supersecret</p><p>uniqueId=abc</p>' ),
+		);
 	}
 
 	/**
-	 * Truncation preserves valid UTF-8 and adds an ellipsis.
+	 * Masking a short value takes whole tokens only and leaves the rest of the excerpt readable.
+	 */
+	public function test_body_excerpt_masks_short_values_as_whole_tokens(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>Error at line 12</p><p>co<b>de</b>=1</p>' );
+
+		$this->assertStringContainsString( 'line 12', $text );
+		$this->assertStringNotContainsString( '=1', $text );
+	}
+
+	/**
+	 * Truncation never splits a multibyte character.
 	 */
 	public function test_body_excerpt_truncates_multibyte_characters_safely(): void {
-		$body = str_repeat( 'é', 1300 );
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+		// One ASCII byte first, so byte 1200 lands inside a two-byte character.
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'a' . str_repeat( 'é', 1300 ) );
 
 		$this->assertTrue( mb_check_encoding( $text, 'UTF-8' ) );
 		$this->assertSame( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::BODY_LIMIT + 3, mb_strlen( $text, 'UTF-8' ) );

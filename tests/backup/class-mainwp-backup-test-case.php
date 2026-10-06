@@ -113,12 +113,8 @@ abstract class MainWP_Backup_Test_Case extends \WP_UnitTestCase {
 
 		for ( $try = 0; $try < 3; $try++ ) {
 			$port = static::find_free_port();
-			$cmd  = sprintf(
-				'%s -S 127.0.0.1:%d %s',
-				escapeshellarg( PHP_BINARY ),
-				$port,
-				escapeshellarg( $docroot )
-			);
+			// An argument array skips the shell, so proc_terminate() signals the server itself.
+			$cmd = array( PHP_BINARY, '-S', '127.0.0.1:' . $port, $docroot );
 
 			$descriptors = array(
 				0 => array( 'file', '/dev/null', 'r' ),

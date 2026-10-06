@@ -75,6 +75,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         'mainwp/update-site-translations-v1' => 'update_translations',
         // Ignore / unignore updates.
         'mainwp/set-ignored-updates-v1'      => 'ignore_unignore_updates',
+        'mainwp/unignore-site-updates-v1'    => 'ignore_unignore_updates',
         'mainwp/ignore-site-core-v1'         => 'ignore_unignore_updates',
         'mainwp/ignore-site-plugins-v1'      => 'ignore_unignore_updates',
         'mainwp/ignore-site-themes-v1'       => 'ignore_unignore_updates',

@@ -230,7 +230,8 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
         $job['errors'] = isset( $job['errors'] ) && is_array( $job['errors'] ) ? $job['errors'] : array();
         $sites         = isset( $job['sites'] ) && is_array( $job['sites'] ) ? $job['sites'] : array();
 
-        $processed_ids = array_merge( $successes, array_column( $job['errors'], 'site_id' ) );
+        $unchanged     = isset( $job['unchanged'] ) && is_array( $job['unchanged'] ) ? $job['unchanged'] : array();
+        $processed_ids = array_merge( $successes, $unchanged, array_column( $job['errors'], 'site_id' ) );
         $remaining     = array_values( array_diff( $sites, $processed_ids ) );
 
         foreach ( $remaining as $site_id ) {
@@ -500,12 +501,15 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
             }
 
             // Normalize result arrays defensively (transient data could be corrupted).
-            $job['updated'] = isset( $job['updated'] ) && is_array( $job['updated'] ) ? $job['updated'] : array();
-            $job['errors']  = isset( $job['errors'] ) && is_array( $job['errors'] ) ? $job['errors'] : array();
+            $job['updated']   = isset( $job['updated'] ) && is_array( $job['updated'] ) ? $job['updated'] : array();
+            $job['errors']    = isset( $job['errors'] ) && is_array( $job['errors'] ) ? $job['errors'] : array();
+            $job['skipped']   = isset( $job['skipped'] ) && is_array( $job['skipped'] ) ? $job['skipped'] : array();
+            $job['unchanged'] = isset( $job['unchanged'] ) && is_array( $job['unchanged'] ) ? $job['unchanged'] : array();
 
             // Calculate already processed site IDs.
             $processed_ids = array_merge(
                 $job['updated'],
+                $job['unchanged'],
                 array_column( $job['errors'], 'site_id' )
             );
 
@@ -548,19 +552,57 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                         continue;
                     }
 
-                    $site_success = true;
-                    $site_errors  = array();
+                    $site_success    = true;
+                    $site_errors     = array();
+                    $site_dispatched = false;
 
                     // Normalize specific_items to avoid TypeError if malformed in transient data.
                     $specific_items = isset( $job['specific_items'] ) && is_array( $job['specific_items'] )
                         ? $job['specific_items']
                         : array();
 
+                    // The restored owner's global lists and current holds are read at dispatch time.
+                    $plan = MainWP_Abilities_Updates::build_update_plan( array( $website ), $job['types'], $specific_items );
+                    if ( ! empty( $plan['errors'] ) ) {
+                        foreach ( $plan['errors'] as $error ) {
+                            $job['errors'][] = array(
+                                'site_id' => $site_id,
+                                'code'    => $error['code'],
+                                'message' => $error['message'],
+                            );
+                        }
+                        ++$job['processed'];
+                        continue;
+                    }
+                    $planned_slugs = array(
+                        'core'        => array(),
+                        'plugin'      => array(),
+                        'theme'       => array(),
+                        'translation' => array(),
+                    );
+                    foreach ( $plan['sites'] as $entry ) {
+                        foreach ( $entry['skipped'] as $item ) {
+                            $job['skipped'][] = array(
+                                'site_id' => $site_id,
+                                'type'    => $item['type'],
+                                'slug'    => $item['slug'],
+                                'reason'  => $item['reason'],
+                            );
+                        }
+                        foreach ( $entry['items'] as $item ) {
+                            $planned_slugs[ $item['type'] ][] = $item['slug'];
+                        }
+                    }
+
                     // Process each update type.
                     foreach ( $job['types'] as $type ) {
                         try {
                             switch ( $type ) {
                                 case 'core':
+                                    if ( empty( $planned_slugs['core'] ) ) {
+                                        break;
+                                    }
+
                                     /**
                                      * Fires before WordPress core update action.
                                      *
@@ -570,7 +612,8 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                      */
                                     do_action( 'mainwp_before_core_update', $website );
 
-                                    $information = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
+                                    $site_dispatched = true;
+                                    $information     = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
 
                                     // Validate response - check for transport failure or API error.
                                     if ( false === $information ) {
@@ -632,7 +675,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     break;
 
                                 case 'plugins':
-                                    $slugs = $this->get_update_slugs_for_site( $website, 'plugin', $specific_items );
+                                    $slugs = $planned_slugs['plugin'];
                                     if ( ! empty( $slugs ) ) {
                                         $slugs_list = implode( ',', $slugs );
 
@@ -647,7 +690,8 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                          */
                                         do_action( 'mainwp_before_plugin_theme_translation_update', 'plugin', $slugs_list, $website );
 
-                                        $information = MainWP_Connect::fetch_url_authed(
+                                        $site_dispatched = true;
+                                        $information     = MainWP_Connect::fetch_url_authed(
                                             $website,
                                             'upgradeplugintheme',
                                             array(
@@ -750,14 +794,15 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     break;
 
                                 case 'themes':
-                                    $slugs = $this->get_update_slugs_for_site( $website, 'theme', $specific_items );
+                                    $slugs = $planned_slugs['theme'];
                                     if ( ! empty( $slugs ) ) {
                                         $slugs_list = implode( ',', $slugs );
 
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
                                         do_action( 'mainwp_before_plugin_theme_translation_update', 'theme', $slugs_list, $website );
 
-                                        $information = MainWP_Connect::fetch_url_authed(
+                                        $site_dispatched = true;
+                                        $information     = MainWP_Connect::fetch_url_authed(
                                             $website,
                                             'upgradeplugintheme',
                                             array(
@@ -851,10 +896,25 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     break;
 
                                 case 'translations':
-                                    /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                    do_action( 'mainwp_before_plugin_theme_translation_update', 'translation', '', $website );
+                                    $slugs = $planned_slugs['translation'];
+                                    if ( empty( $slugs ) ) {
+                                        break;
+                                    }
+                                    $slugs_list = implode( ',', $slugs );
 
-                                    $information = MainWP_Connect::fetch_url_authed( $website, 'upgradetranslation' );
+                                    /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
+                                    do_action( 'mainwp_before_plugin_theme_translation_update', 'translation', $slugs_list, $website );
+
+                                    $site_dispatched = true;
+                                    $information     = MainWP_Connect::fetch_url_authed(
+                                        $website,
+                                        'upgradetranslation',
+                                        array(
+                                            'type' => 'translation',
+                                            'list' => $slugs_list,
+                                        ),
+                                        true
+                                    );
 
                                     // Validate response - check for transport failure or API error.
                                     if ( false === $information ) {
@@ -869,7 +929,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
 
                                         // Fire after-action even on failure so hooks always run.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                        do_action( 'mainwp_after_plugin_theme_translation_update', null, 'translation', '', $website );
+                                        do_action( 'mainwp_after_plugin_theme_translation_update', null, 'translation', $slugs_list, $website );
                                     } elseif ( is_array( $information ) && isset( $information['error'] ) ) {
                                         $site_success  = false;
                                         $site_errors[] = 'translations: ' . $information['error'];
@@ -883,7 +943,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
 
                                         // Fire after-action even on failure so hooks always run.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', '', $website );
+                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', $slugs_list, $website );
                                     } elseif ( ! is_array( $information ) ) {
                                         $site_success  = false;
                                         $site_errors[] = 'translations: ' . __( 'Invalid response from child site.', 'mainwp' );
@@ -897,7 +957,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
 
                                         // Fire after-action even on failure so hooks always run.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                        do_action( 'mainwp_after_plugin_theme_translation_update', null, 'translation', '', $website );
+                                        do_action( 'mainwp_after_plugin_theme_translation_update', null, 'translation', $slugs_list, $website );
                                     } elseif ( isset( $information['upgrades_error'] ) && ! empty( $information['upgrades_error'] ) ) {
                                         // Partial failure - some translations failed to update.
                                         $error_msgs = array();
@@ -916,7 +976,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
 
                                         // Still fire after-action and sync for partial success.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', '', $website );
+                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', $slugs_list, $website );
 
                                         // Sync site data immediately if child returned sync info.
                                         if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
@@ -925,7 +985,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     } else {
                                         // Success - fire after-action and sync.
                                         /** This action is documented in includes/abilities/class-mainwp-abilities-cron.php */
-                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', '', $website );
+                                        do_action( 'mainwp_after_plugin_theme_translation_update', $information, 'translation', $slugs_list, $website );
 
                                         // Sync site data immediately if child returned sync info.
                                         if ( isset( $information['sync'] ) && ! empty( $information['sync'] ) ) {
@@ -944,7 +1004,11 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                     }
 
                     if ( $site_success && empty( $site_errors ) ) {
-                        $job['updated'][] = $site_id;
+                        if ( $site_dispatched ) {
+                            $job['updated'][] = $site_id;
+                        } else {
+                            $job['unchanged'][] = $site_id;
+                        }
                     } else {
                         $job['errors'][] = array(
                             'site_id' => $site_id,
@@ -972,6 +1036,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
             // Recalculate remaining after processing.
             $processed_ids = array_merge(
                 $job['updated'],
+                $job['unchanged'],
                 array_column( $job['errors'], 'site_id' )
             );
             $remaining     = array_values( array_diff( $job['sites'], $processed_ids ) );
@@ -1003,38 +1068,6 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
         } finally {
             wp_set_current_user( $previous_user_id );
         }
-    }
-
-    /**
-     * Get update slugs for a site, optionally filtered by specific items.
-     *
-     * @param object $website        Site object.
-     * @param string $type           Type: 'plugin' or 'theme'.
-     * @param array  $specific_items Optional array of specific slugs to filter.
-     * @return array Array of slugs to update.
-     */
-    private function get_update_slugs_for_site( $website, string $type, array $specific_items = array() ): array {
-        $slugs = array();
-
-        if ( 'plugin' === $type ) {
-            $updates = json_decode( $website->plugin_upgrades, true );
-        } else {
-            $updates = json_decode( $website->theme_upgrades, true );
-        }
-
-        if ( ! is_array( $updates ) ) {
-            $updates = array();
-        }
-
-        foreach ( array_keys( $updates ) as $slug ) {
-            // If specific items provided, filter to only those.
-            if ( ! empty( $specific_items ) && ! in_array( $slug, $specific_items, true ) ) {
-                continue;
-            }
-            $slugs[] = $slug;
-        }
-
-        return $slugs;
     }
 
     /**

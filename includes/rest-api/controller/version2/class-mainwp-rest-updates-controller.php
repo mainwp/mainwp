@@ -889,7 +889,9 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         if ( null !== $ability ) {
             // Build ability input for updating all sites with all update types.
             // Empty arrays mean "all sites" and "all types" respectively.
+            // REST v2 is the caller's explicit update request; its contract is unchanged.
             $ability_input = array(
+                'confirm'             => true,
                 'site_ids_or_domains' => array(),  // All sites.
                 'types'               => array(),  // All types.
             );
@@ -1016,7 +1018,9 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         if ( null !== $ability ) {
             // Build ability input for single-site update.
             // Empty types array means "all types".
+            // REST v2 is the caller's explicit update request; its contract is unchanged.
             $ability_input = array(
+                'confirm'             => true,
                 'site_ids_or_domains' => array( (int) $website->id ),
                 'types'               => array(),  // All types.
             );
@@ -1045,13 +1049,15 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
                 );
             }
 
-            // Transform immediate results - extract first result from results array.
-            $site_result = isset( $result['results'][0] ) ? $result['results'][0] : array();
+            $summary = array();
+            foreach ( array( 'total_skipped', 'total_updated', 'total_errors', 'sites_updated' ) as $key ) {
+                $summary[ $key ] = isset( $result['summary'][ $key ] ) ? (int) $result['summary'][ $key ] : 0;
+            }
             return rest_ensure_response(
                 array(
                     'success'                       => 1,
                     'message'                       => esc_html__( 'Batch updates for the site completed.', 'mainwp' ),
-                    'summary'                       => isset( $site_result['summary'] ) ? $site_result['summary'] : array(),
+                    'summary'                       => $summary,
                     'last_time_start_batch_updates' => mainwp_rest_prepare_date_response( current_time( 'mysql' ) ),
                     'site'                          => $site_filtered,
                 )

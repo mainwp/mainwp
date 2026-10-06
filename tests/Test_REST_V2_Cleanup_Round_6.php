@@ -213,11 +213,13 @@ class Test_REST_V2_Cleanup_Round_6 extends \WP_Test_REST_TestCase {
 	protected function do_authenticated_request( string $method, string $route, array $json_body = [], array $body_params = [], string $raw_body = '', array $query_params = [], string $content_type = '' ): \WP_REST_Response {
 		$original_get    = $_GET;
 		$original_server = $_SERVER;
+		$original_query_vars = $GLOBALS['wp']->query_vars;
 
 		$_GET['consumer_key']    = $this->consumer_key;
 		$_GET['consumer_secret'] = $this->consumer_secret;
 		$_SERVER['HTTPS']        = 'on';
 		$_SERVER['REQUEST_URI']  = '/wp-json' . $route;
+		$GLOBALS['wp']->query_vars['rest_route'] = $route;
 
 		\MainWP_REST_Authentication::$instance = null;
 		$auth                                  = \MainWP_REST_Authentication::get_instance();
@@ -250,6 +252,7 @@ class Test_REST_V2_Cleanup_Round_6 extends \WP_Test_REST_TestCase {
 
 		$_GET    = $original_get;
 		$_SERVER = $original_server;
+		$GLOBALS['wp']->query_vars = $original_query_vars;
 
 		return $response;
 	}

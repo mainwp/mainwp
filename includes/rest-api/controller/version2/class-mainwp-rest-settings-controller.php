@@ -2714,7 +2714,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'required'          => false,
                 'description'       => __( 'Uptime monitoring attempt to bypass page cache.', 'mainwp' ),
                 'type'              => 'integer',
-                'sanitize_callback' => 'intval',
+                // absint accepts the extra REST arguments. intval() throws ArgumentCountError on PHP 8.
+                'sanitize_callback' => 'absint',
             ),
             'mainwp_uptime_monitoring_up_status_codes' => array(
                 'required'          => false,

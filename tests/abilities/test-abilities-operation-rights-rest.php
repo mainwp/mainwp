@@ -19,6 +19,88 @@ use WP_REST_Server;
 
 class Test_Abilities_Operation_Rights_Rest extends MainWP_Abilities_Test_Case {
 
+	public function test_c3_unignore_post_rejected_and_delete_query_slugs_work() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$slugs = [ 'first/plugin.php', 'second/plugin.php' ];
+		$this->set_site_ignored_plugins( $site_id, array_fill_keys( $slugs, [ 'Name' => 'Held', 'ignored_versions' => [ 'all_versions' ] ] ) );
+		$route = '/wp-abilities/v1/abilities/mainwp/unignore-site-updates-v1/run';
+		$response = $this->run_ability( 'mainwp/unignore-site-updates-v1', [ 'site_id_or_domain' => $site_id, 'type' => 'plugin', 'slugs' => $slugs, 'confirm' => true ] );
+		$this->assertSame( 405, $response->get_status() );
+		$this->assertSame( 'rest_ability_invalid_method', $response->get_data()['code'] );
+		foreach ( [ 'preview', 'confirm' ] as $mode ) {
+			$query = http_build_query( [ 'input' => [ 'site_id_or_domain' => $site_id, 'type' => 'plugin', 'slugs' => $slugs, 'dry_run' => 'preview' === $mode ? '1' : '0', 'confirm' => 'confirm' === $mode ? '1' : '0' ] ] );
+			parse_str( $query, $params );
+			$this->assertSame( $slugs, $params['input']['slugs'] );
+			$this->assertIsString( $params['input']['dry_run'] );
+			$this->assertIsString( $params['input']['confirm'] );
+			$request = new WP_REST_Request( 'DELETE', $route );
+			$request->set_body( '' );
+			$request->set_query_params( $params );
+			$response = $this->server->dispatch( $request );
+			$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+			$data = $response->get_data();
+			$this->assertSame( 2, $data['count'] );
+			$this->assertSame( 'preview' === $mode, $data['dry_run'] );
+			$this->assertTrue( rest_validate_value_from_schema( $data, wp_get_ability( 'mainwp/unignore-site-updates-v1' )->get_output_schema() ) );
+			if ( 'preview' === $mode ) {
+				$this->assertSame( $slugs, array_column( $data['would_affect']['holds'], 'slug' ) );
+				$this->assertSame( $slugs, array_keys( json_decode( MainWP_DB::instance()->get_website_by_id( $site_id )->ignored_plugins, true ) ) );
+			} else {
+				$this->assertSame( $slugs, $data['removed'] );
+				$this->assertSame( [], $data['not_held'] );
+				$this->assertSame( [], json_decode( MainWP_DB::instance()->get_website_by_id( $site_id )->ignored_plugins, true ) );
+			}
+		}
+	}
+
+	public function test_c3_unignore_requires_operation_right_and_site_access() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$this->set_site_ignored_plugins( $site_id, [ 'held/plugin.php' => 'Held' ] );
+		$this->withhold_right( 'ignore_unignore_updates' );
+		$request = new WP_REST_Request( 'DELETE', '/wp-abilities/v1/abilities/mainwp/unignore-site-updates-v1/run' );
+		$request->set_body( '' );
+		$request->set_query_params( [ 'input' => [ 'site_id_or_domain' => $site_id, 'type' => 'plugin', 'slugs' => [ 'held/plugin.php' ], 'confirm' => '1' ] ] );
+		$response = $this->server->dispatch( $request );
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'mainwp_insufficient_right', $response->get_data()['code'] );
+		remove_filter( 'mainwp_currentusercan', $this->right_filter, 10 );
+		$this->right_filter = null;
+		$deny = static function () { return false; };
+		add_filter( 'mainwp_check_site_access', $deny );
+		try {
+			$response = $this->server->dispatch( $request );
+		} finally {
+			remove_filter( 'mainwp_check_site_access', $deny );
+		}
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( [ 'held/plugin.php' => 'Held' ], json_decode( MainWP_DB::instance()->get_website_by_id( $site_id )->ignored_plugins, true ) );
+	}
+
+	/** @dataProvider \MainWP\Dashboard\Tests\MainWP_Updates_Abilities_Test::c3_old_remove_paths */
+	public function test_c3_old_hold_add_still_uses_post( $ability, $type, $slug, $input ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$add = $input;
+		$add['action'] = 'mainwp/set-ignored-updates-v1' === $ability ? 'ignore' : 'add';
+		$response = $this->run_ability( $ability, $add + [ 'site_id_or_domain' => $site_id ] );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertTrue( $response->get_data()['success'] );
+		$this->assertTrue( rest_validate_value_from_schema( $response->get_data(), wp_get_ability( $ability )->get_output_schema() ) );
+		$site = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$before = 'core' === $type ? MainWP_DB::instance()->get_website_option( $site, 'ignored_wp_upgrades' ) : $site->{ 'ignored_' . $type . 's' };
+		$response = $this->run_ability( $ability, $input + [ 'site_id_or_domain' => $site_id ] );
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'mainwp_unignore_moved', $response->get_data()['code'] );
+		$this->assertSame( 'mainwp/unignore-site-updates-v1', $response->get_data()['data']['replacement'] );
+		$site = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->assertSame( $before, 'core' === $type ? MainWP_DB::instance()->get_website_option( $site, 'ignored_wp_upgrades' ) : $site->{ 'ignored_' . $type . 's' } );
+	}
+
 	/**
 	 * REST server instance.
 	 *
@@ -206,6 +288,7 @@ class Test_Abilities_Operation_Rights_Rest extends MainWP_Abilities_Test_Case {
 		$allowed = $this->run_ability(
 			'mainwp/run-updates-v1',
 			array(
+				'confirm'             => true,
 				'site_ids_or_domains' => array( (string) $site_id ),
 				'types'               => array( 'themes' ),
 			)

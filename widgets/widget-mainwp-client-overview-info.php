@@ -50,6 +50,10 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param object $client_id Client ID.
      */
     public static function render_client_overview( $client_id ) {  // phpcs:ignore -- NOSONAR - complex function.
+
+        if ( ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! MainWP_Client::has_client_access( $client_id ) ) {
+            return;
+        }
         $params        = array(
             'with_selected_sites' => true,
             'with_tags'           => true,

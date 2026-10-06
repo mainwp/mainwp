@@ -104,6 +104,10 @@ class MainWP_Client_Overview_Sites { // phpcs:ignore Generic.Classes.OpeningBrac
      */
     public function render_websites( $client_id ) {
 
+        if ( ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! MainWP_Client::has_client_access( $client_id ) ) {
+            return;
+        }
+
         $client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A );
 
         ?>

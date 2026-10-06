@@ -131,14 +131,13 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             $newColor = '#cce2ff'; // default.
         }
         $selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'intval', wp_unslash( $_POST['selected_sites'] ) ) : array();
-        $selected_sites = array_filter( $selected_sites );
         // phpcs:enable
-        $success = false;
-        if ( ! empty( $newName ) ) {
-            $success = MainWP_Manage_Groups::add_group_sites( $newName, $selected_sites, $newColor );
-        }
-        if ( ! $success ) {
+        if ( empty( $newName ) ) {
             wp_die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
+        }
+        $success = MainWP_Manage_Groups::add_group_sites( $newName, $selected_sites, $newColor );
+        if ( ! $success ) {
+            wp_die( wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) ) );
         } else {
             wp_die( wp_json_encode( array( 'success' => $success ) ) );
         }

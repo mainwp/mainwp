@@ -85,13 +85,21 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 case 'client_phone':
                     return '<a href="tel:' . esc_attr( $item[ $column_name ] ) . '" class="ui mini icon button" data-tooltip="' . esc_attr( $item[ $column_name ] ) . '" data-inverted="" data-position="left center"><i class="phone grey icon"></i></a>';
                 case 'client_facebook':
-                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="facebook grey icon"></i></a>';
+                    return '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="facebook grey icon"></i></a>';
                 case 'client_twitter':
-                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="twitter grey icon"></i></a>';
+                    return '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="twitter grey icon"></i></a>';
                 case 'client_instagram':
-                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="instagram grey icon"></i></a>';
+                    return '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="instagram grey icon"></i></a>';
                 case 'client_linkedin':
-                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="linkedin grey icon"></i></a>';
+                    return '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="linkedin grey icon"></i></a>';
+                case 'contact_name':
+                case 'address_1':
+                case 'address_2':
+                case 'city':
+                case 'zip':
+                case 'state':
+                case 'country':
+                    return esc_html( $item[ $column_name ] );
                 default:
                     return $item[ $column_name ];
             }
@@ -333,6 +341,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
         }
 
         $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all', null, ARRAY_A, $params );
+
+        $clients = MainWP_Client::filter_viewable_clients( $clients );
 
         $totalRecords = ( $clients ? count( $clients ) : 0 );
 

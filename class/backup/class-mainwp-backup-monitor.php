@@ -985,7 +985,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
-     * Extend only the row this process still owns.
+     * Extend only an unexpired row this process still owns.
      *
      * @param int $lease_seconds Coverage in seconds, floored at LANE_LEASE_SECONDS.
      * @return bool False once ownership has been lost; true outside a lane scope.
@@ -1003,7 +1003,11 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::LANE_LEASE_OPTION )
         );
         $data = json_decode( (string) $held, true );
-        if ( is_array( $data ) && ( $data['token'] ?? '' ) === self::$lane_lease_token ) {
+        // An expired row is already reclaimable, so renewing it would let a holder
+        // that stalled past its lease act alongside a reclaimer. The update compares
+        // the exact bytes checked here, and a reclaimer deletes those same bytes, so
+        // whichever write lands first is the only owner.
+        if ( is_array( $data ) && ( $data['token'] ?? '' ) === self::$lane_lease_token && self::is_lane_live( $data, time() ) ) {
             $data['heartbeat'] = time();
             $data['lease']     = max( self::LANE_LEASE_SECONDS, $lease_seconds );
             $updated           = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-update cannot refresh another owner.
@@ -1053,7 +1057,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Fence a stale holder before it writes task state.
      *
-     * @return bool True outside a lane scope or while the token still owns the row.
+     * @return bool True outside a lane scope or while the token still owns an unexpired row.
      */
     public static function confirm_lane_lease(): bool {
         global $wpdb;
@@ -1068,7 +1072,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", self::LANE_LEASE_OPTION )
         );
         $data = json_decode( (string) $held, true );
-        if ( is_array( $data ) && ( $data['token'] ?? '' ) === self::$lane_lease_token ) {
+        if ( is_array( $data ) && ( $data['token'] ?? '' ) === self::$lane_lease_token && self::is_lane_live( $data, time() ) ) {
             return true;
         }
         self::mark_lane_lease_lost();

@@ -259,7 +259,7 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 	public function test_native_heartbeat_extends_lane_lease() {
 		$token = MainWP_Backup_Monitor::acquire_lane_lease();
 		$this->assertIsString( $token );
-		$this->seed( $token, 700 );
+		$this->seed( $token, 700, 1860 );
 		$before = time();
 		MainWP_Backup_Monitor::touch_native_leases( 1860 );
 		$row = $this->row();
@@ -345,6 +345,43 @@ class MainWP_Backup_Lane_Lease_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $row, $this->row() );
 		$this->assertFalse( MainWP_Backup_Monitor::lane_lease_lost() );
 		$this->assertTrue( MainWP_Backup_Monitor::confirm_lane_lease() );
+	}
+
+	/**
+	 * An expired holder cannot renew its own row, which stays reclaimable.
+	 */
+	public function test_expired_holder_cannot_refresh() {
+		$token = MainWP_Backup_Monitor::acquire_lane_lease();
+		$this->assertIsString( $token );
+		$this->seed( $token, 601 );
+		$before = $this->raw_value();
+		$events = array();
+		$record = static function ( $event ) use ( &$events ) {
+			$events[] = $event;
+		};
+		add_action( 'mainwp_backup_diag_lane', $record );
+		try {
+			$this->assertFalse( MainWP_Backup_Monitor::refresh_lane_lease() );
+			$this->assertSame( $before, $this->raw_value() );
+			$this->assertTrue( MainWP_Backup_Monitor::lane_lease_lost() );
+			$this->assertFalse( MainWP_Backup_Monitor::confirm_lane_lease() );
+			$this->assertSame( array( 'lost' ), $events );
+		} finally {
+			remove_action( 'mainwp_backup_diag_lane', $record );
+		}
+	}
+
+	/**
+	 * An expired holder fails the fence before a reclaimer can join the lane.
+	 */
+	public function test_expired_holder_fails_confirm() {
+		$token = MainWP_Backup_Monitor::acquire_lane_lease();
+		$this->assertIsString( $token );
+		$this->seed( $token, 601 );
+		$before = $this->raw_value();
+		$this->assertFalse( MainWP_Backup_Monitor::confirm_lane_lease() );
+		$this->assertTrue( MainWP_Backup_Monitor::lane_lease_lost() );
+		$this->assertSame( $before, $this->raw_value() );
 	}
 
 	/**

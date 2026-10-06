@@ -544,92 +544,22 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
 
-            $wp_upgrades           = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
-            $ignored_core_upgrades = ! empty( $website->ignored_wp_upgrades ) ? json_decode( $website->ignored_wp_upgrades, true ) : array();
-
-            if ( $website->is_ignoreCoreUpdates || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedDismissedCores, 'core' ) ) {
-                $wp_upgrades = array();
-            }
-
-            if ( is_array( $wp_upgrades ) && ! empty( $wp_upgrades ) ) {
-                ++$total_wp_upgrades;
-            }
-
-            $translation_upgrades = json_decode( $website->translation_upgrades, true );
-
-            if ( ! empty( $website->ignored_trans_updates ) ) {
-                $translation_upgrades = array();
-            }
-
-            $plugin_upgrades = json_decode( $website->plugin_upgrades, true );
-            if ( $website->is_ignorePluginUpdates ) {
-                $plugin_upgrades = array();
-            }
-
-            $theme_upgrades = json_decode( $website->theme_upgrades, true );
-            if ( $website->is_ignoreThemeUpdates ) {
-                $theme_upgrades = array();
-            }
-
             $decodedPremiumUpgrades = MainWP_DB::instance()->get_website_option( $website, 'premium_upgrades' );
-            $decodedPremiumUpgrades = ! empty( $decodedPremiumUpgrades ) ? json_decode( $decodedPremiumUpgrades, true ) : array();
-
-            if ( is_array( $decodedPremiumUpgrades ) ) {
-                foreach ( $decodedPremiumUpgrades as $crrSlug => $premiumUpgrade ) {
-                    $premiumUpgrade['premium'] = true;
-
-                    if ( 'plugin' === $premiumUpgrade['type'] ) {
-                        if ( ! is_array( $plugin_upgrades ) ) {
-                            $plugin_upgrades = array();
-                        }
-                        if ( ! $website->is_ignorePluginUpdates ) {
-                            $premiumUpgrade = array_filter( $premiumUpgrade );
-                            if ( ! isset( $plugin_upgrades[ $crrSlug ] ) ) {
-                                continue; // to fix missing update name.
-                            }
-                            $plugin_upgrades[ $crrSlug ] = array_merge( $plugin_upgrades[ $crrSlug ], $premiumUpgrade );
-                        }
-                    } elseif ( 'theme' === $premiumUpgrade['type'] ) {
-                        if ( ! is_array( $theme_upgrades ) ) {
-                            $theme_upgrades = array();
-                        }
-                        if ( ! $website->is_ignoreThemeUpdates ) {
-                            $theme_upgrades[ $crrSlug ] = $premiumUpgrade;
-                        }
-                    }
-                }
+            if ( empty( $decodedPremiumUpgrades ) ) {
+                $decodedPremiumUpgrades = array();
+            } else {
+                $decodedPremiumUpgrades = json_decode( $decodedPremiumUpgrades, true );
             }
 
-            if ( is_array( $translation_upgrades ) ) {
-                $total_translation_upgrades += count( $translation_upgrades );
-            }
+            $tally = MainWP_Common_Handler::tally_site_available_updates( $website, $userExtension, $decodedDismissedCores, $decodedPremiumUpgrades );
 
-            if ( is_array( $plugin_upgrades ) && ! $website->is_ignorePluginUpdates ) {
-                $_ignored_plugins = json_decode( $website->ignored_plugins, true );
-                if ( is_array( $_ignored_plugins ) ) {
-                    $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $_ignored_plugins );
-                }
-
-                $_ignored_plugins = json_decode( $userExtension->ignored_plugins, true );
-                if ( is_array( $_ignored_plugins ) ) {
-                    $plugin_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $plugin_upgrades, $_ignored_plugins );
-                }
-                $total_plugin_upgrades += count( $plugin_upgrades );
-            }
-
-            if ( is_array( $theme_upgrades ) ) {
-                $_ignored_themes = json_decode( $website->ignored_themes, true );
-                if ( is_array( $_ignored_themes ) ) {
-                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $_ignored_themes );
-                }
-
-                $_ignored_themes = json_decode( $userExtension->ignored_themes, true );
-                if ( is_array( $_ignored_themes ) ) {
-                    $theme_upgrades = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $theme_upgrades, $_ignored_themes );
-                }
-
-                $total_theme_upgrades += count( $theme_upgrades );
-            }
+            $total_wp_upgrades          += $tally['wp'];
+            $total_plugin_upgrades      += $tally['plugins'];
+            $total_translation_upgrades += $tally['translations'];
+            $total_theme_upgrades       += $tally['themes'];
+            $plugin_upgrades             = $tally['plugin_upgrades'];
+            $theme_upgrades              = $tally['theme_upgrades'];
+            $translation_upgrades        = $tally['translation_upgrades'];
 
             $themesIgnoredAbandoned_perSites = array();
             $ignoredAbandoned_themes         = MainWP_DB::instance()->get_website_option( $website, 'themes_outdate_dismissed' );

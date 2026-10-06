@@ -742,8 +742,18 @@ jQuery(document).on('click', '#mainwp-clients-delete-individual-field', function
 
 jQuery(document).on('click', '.mainwp-edit-client-note', function () {
   let id = jQuery(this).attr('id').substring(13);
-  let note = jQuery('#mainwp-notes-' + id + '-note').html();
-  jQuery('#mainwp-notes-html').html(note == '' ? MainWP.I18n.t('No saved notes. Click the Edit button to edit site notes.') : note);
+  let holder = jQuery('#mainwp-notes-' + id + '-note');
+  // data-note is the text shown in the editor. The element's HTML is the display copy.
+  let note = holder.attr('data-note');
+  if (typeof note === 'undefined') {
+    note = holder.text();
+  }
+  let html = holder.html();
+  if (note == '') {
+    jQuery('#mainwp-notes-html').text(MainWP.I18n.t('No saved notes. Click the Edit button to edit site notes.'));
+  } else {
+    jQuery('#mainwp-notes-html').html(html);
+  }
   jQuery('#mainwp-notes-note').val(note);
   jQuery('#mainwp-notes-itemid').val(id);
   jQuery('#mainwp-which-note').val('client'); // to fix conflict.
@@ -766,12 +776,17 @@ let mainwp_notes_client_save = function () {
 
   jQuery.post(ajaxurl, data, function (response) {
     if (response.error != undefined) {
-      jQuery('#mainwp-notes-status').html(response.error).addClass('red');
+      jQuery('#mainwp-notes-status').text(response.error).addClass('red');
     } else if (response.result == 'SUCCESS') {
       jQuery('#mainwp-notes-status').html(MainWP.I18n.t('Note saved successfully.')).addClass('green');
       if (jQuery('#mainwp-notes-' + normalid + '-note').length > 0) {
-        jQuery('#mainwp-notes-' + normalid + '-note').html(response?.esc_note_content??'');
-        jQuery('#mainwp-notes-html').html(response?.esc_note_content??'');
+        let holder = jQuery('#mainwp-notes-' + normalid + '-note');
+        let safeHtml = response?.esc_note_content ?? '';
+        holder.html(safeHtml);
+        if (typeof response.note === 'string') {
+          holder.attr('data-note', response.note);
+        }
+        jQuery('#mainwp-notes-html').html(safeHtml);
       }
     } else {
       jQuery('#mainwp-notes-status').html(MainWP.I18n.t('Undefined error occurred while saving your note!')).addClass('red');

@@ -373,6 +373,9 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 <?php if ( ! empty( $current_wp_id ) && ! empty( $website->sync_errors ) ) : ?>
                     <div class="ui red message" style="margin: 1em;">
                         <?php echo '<strong>' . esc_html( stripslashes( $website->name ) ) . '</strong>' . esc_html__( ' is Disconnected. Click the Reconnect button to establish the connection again.', 'mainwp' ); ?>
+                        <div class="mainwp-connect-failure-ux-wrap" style="margin-top:1em;">
+                            <?php echo wp_kses( $website->sync_errors, MainWP_Connect_Failure_Ux::kses_allowed() ); ?>
+                        </div>
                     </div>
                 <?php endif; ?>
                 <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>

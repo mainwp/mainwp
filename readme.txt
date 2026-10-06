@@ -5,9 +5,9 @@ Author: mainwp
 Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
-Tested up to: 7.1
+Tested up to: 7.1.2
 Requires PHP: 8.3
-Stable tag: 6.1.8
+Stable tag: 6.2.2
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -170,6 +170,25 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Added: One-time authorized download links for backup archives.
 * Added: A backups diagnostics log and a restore preflight that checks storage, disk space, and database privileges before anything on the site changes.
 * Added: A child-version check when a restore starts; a site running an older MainWP Child gets an update prompt instead of a failed restore.
+
+= 6.2.2 - 10-1-2026 =
+
+* Fixed: PHP fatal error when saving Monitoring settings while uptime monitoring is enabled.
+
+= 6.2.1 - 9-30-2026 =
+
+* Fixed: Resolved an issue where enabling global uptime monitoring left monitors for previously added sites disabled.
+* Fixed: Removing a website now also removes its associated monitors and monitoring data.
+* Fixed: Improved database schema comparisons to correctly handle nullable defaults without misinterpreting markers inside quoted SQL values.
+* Fixed: Database upgrades now ensure group records include the required identifier and primary key.
+* Fixed: Resolved an issue affecting tag updates through REST API v2.
+* Fixed: Update rows now leave the version field blank when version information is unavailable.
+* Fixed: Resolved inconsistencies when processing update and synchronization responses.
+* Updated: Improved upgrade status reporting for plugins, themes, and translations, including clearer handling when upgrades begin or cannot proceed.
+* Updated: Strengthened authenticated and renewal request signatures with a longer, cryptographically random nonce.
+* Updated: Missing primary monitors are now repaired automatically, restoring monitoring for affected sites.
+* Updated: Clarified the notices on the “Edit Client” and “Edit User” screens that leaving fields blank preserves their existing values on child sites.
+* Updated: Improved tag readability by validating background colors and automatically selecting contrasting black or white text.
 
 = 6.2 - 9-9-2026 =
 

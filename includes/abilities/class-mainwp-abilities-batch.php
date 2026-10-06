@@ -254,6 +254,24 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
+        // A job ID alone must not grant access to another user's status.
+        // Legacy jobs have no owner stamp and remain readable.
+        $job_owner = isset( $job_data['user_id'] ) ? (int) $job_data['user_id'] : null;
+        if ( null !== $job_owner && get_current_user_id() !== $job_owner ) {
+            if ( 'all' !== MainWP_Abilities_Util::get_allowed_site_ids() ) {
+                return new \WP_Error(
+                    'mainwp_job_not_found',
+                    __( 'Batch job not found. Job may have expired (jobs are kept for 24 hours).', 'mainwp' ),
+                    array( 'status' => 404 )
+                );
+            }
+            return new \WP_Error(
+                'mainwp_permission_denied',
+                __( 'You do not have permission to view this batch job.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
+        }
+
         // Normalize job data fields with defensive fallbacks.
         // This section tolerates partially populated transients to avoid misleading status
         // for malformed or incomplete job data (e.g., from interrupted background processes).

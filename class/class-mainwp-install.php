@@ -74,7 +74,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.27'; // NOSONAR - no IP. Added wp_backup.last_continued, the stamp the five-minute continue lane orders unfinished tasks by so a task that never finishes cannot monopolize the lane. Previous 9.0.2.26 added a nullable unique snapshot run_key so concurrent finishers adopt one snapshot, with hourly retries for failed schema changes. Previous 9.0.2.25 added per-site unique identities for manual backup tasks and active restore jobs, and retried markerless legacy task_id index drops. Previous 9.0.2.24 added the UNIQUE KEY uniq_task_wp (task_id, wp_id) to wp_backup_progress: the pair was never unique, so the executor's read-then-insert could land two progress rows for one site when drivers raced, and every guard that reads the row by pair then read an arbitrary one of them - pre_update_tables() collapses existing duplicates to one row per pair before the key is added (a row naming the child's backup task beats one that does not, then the freshest dtsFetched), ensure_backup_progress_unique_key() re-runs that collapse and hourly retries the key install when the ALTER did not take, and add_backup_task_progress() inserts ON DUPLICATE KEY UPDATE so a losing racer adopts the surviving row instead of failing. Previous 9.0.2.23 added wp_backup_progress.foreign_refused_since to stamp the first consecutive marker-less child already-running refusal on a manual run's progress row; the executor surfaces a foreign collision to the operator only after the refusal persists past FOREIGN_REFUSAL_SURFACE_SECONDS (a same-run create-window reset race re-marks within milliseconds and never accumulates), instead of always yielding it as the generic no-snapshot line. Previous 9.0.2.22 made wp_backup.authorized_sites nullable: NULL is now the never-stamped sentinel (a pre-authorized_sites row, backfilled from live expansion on its first run), while a stamped empty string is authoritative and means the save authorized zero sites - so an empty-saved group can no longer be mistaken for a legacy row and lazily auto-authorize a member added later. Previous 9.0.2.21 added wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against). Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
+    protected $mainwp_db_version = '9.0.2.28'; // NOSONAR - no IP. 9.0.2.28 merges main's 9.0.2.5/9.0.2.6 line (wp_group primary key repair, mainwp_knowledge table) into this one: both lines used 9.0.2.6 for different migrations, so the native backups flag rename and the wp_group repair re-run below 9.0.2.28 and the knowledge table is created on the current-version path. Previous 9.0.2.27 Added wp_backup.last_continued, the stamp the five-minute continue lane orders unfinished tasks by so a task that never finishes cannot monopolize the lane. Previous 9.0.2.26 added a nullable unique snapshot run_key so concurrent finishers adopt one snapshot, with hourly retries for failed schema changes. Previous 9.0.2.25 added per-site unique identities for manual backup tasks and active restore jobs, and retried markerless legacy task_id index drops. Previous 9.0.2.24 added the UNIQUE KEY uniq_task_wp (task_id, wp_id) to wp_backup_progress: the pair was never unique, so the executor's read-then-insert could land two progress rows for one site when drivers raced, and every guard that reads the row by pair then read an arbitrary one of them - pre_update_tables() collapses existing duplicates to one row per pair before the key is added (a row naming the child's backup task beats one that does not, then the freshest dtsFetched), ensure_backup_progress_unique_key() re-runs that collapse and hourly retries the key install when the ALTER did not take, and add_backup_task_progress() inserts ON DUPLICATE KEY UPDATE so a losing racer adopts the surviving row instead of failing. Previous 9.0.2.23 added wp_backup_progress.foreign_refused_since to stamp the first consecutive marker-less child already-running refusal on a manual run's progress row; the executor surfaces a foreign collision to the operator only after the refusal persists past FOREIGN_REFUSAL_SURFACE_SECONDS (a same-run create-window reset race re-marks within milliseconds and never accumulates), instead of always yielding it as the generic no-snapshot line. Previous 9.0.2.22 made wp_backup.authorized_sites nullable: NULL is now the never-stamped sentinel (a pre-authorized_sites row, backfilled from live expansion on its first run), while a stamped empty string is authoritative and means the save authorized zero sites - so an empty-saved group can no longer be mistaken for a legacy row and lazily auto-authorize a member added later. Previous 9.0.2.21 added wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against). Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
 
     /**
      * Protected variable to hold the database option name.
@@ -87,6 +87,11 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
      */
     const BACKUP_PROGRESS_INDEX_REPAIR_PENDING = 'mainwp_backup_progress_index_repair_pending';
+
+    /**
+     * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
+     */
+    const WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING = 'mainwp_wp_group_missing_primary_key_repair_pending';
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -171,6 +176,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
                 $this->repair_backup_site_unique_keys();
             }
+            $this->maybe_retry_repair_wp_group_primary_key();
+            $this->maybe_create_knowledge_table( $currentVersion );
             return;
         }
 
@@ -353,12 +360,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   wpid int(11) NOT NULL,
   groupid int(11) NOT NULL,
   KEY idx_wpid (wpid),
-  KEY idx_groupid (groupid)';
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '8.57', '<=' ) ) {
-            $tbl .= ',
-  PRIMARY KEY  (wp_group_id)  ';
-        }
-        $tbl  .= ') ' . $charset_collate;
+  KEY idx_groupid (groupid),
+  PRIMARY KEY (wp_group_id)
+  ) ' . $charset_collate;
+
         $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'lookup_item_objects' ) . ' (
@@ -813,7 +818,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         // The old option is kept, mirroring the effective value, not deleted: a rollback to a
         // pre-rename dashboard recreates a MISSING flag as enabled on install(), silently
         // re-enabling legacy backups, while a present flag is preserved.
-        if ( version_compare( $currentVersion, '9.0.2.6', '<' ) ) { // NOSONAR - no ip.
+        if ( version_compare( $currentVersion, '9.0.2.28', '<' ) ) { // NOSONAR - no ip.
             $old_flag = get_option( 'mainwp_enableLegacyBackupFeature', false );
             if ( false !== $old_flag ) {
                 if ( false === get_option( 'mainwp_enableNativeBackups', false ) ) {
@@ -821,6 +826,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
                 }
                 MainWP_Backup_Settings::mirror_native_flag_for_rollback();
             }
+        }
+
+        if ( ! empty( $currentVersion ) && version_compare( $currentVersion, '9.0.2.28', '<' ) ) { // NOSONAR - no ip.
+            $this->repair_wp_group_primary_key();
         }
 
         $this->wpdb->suppress_errors( $suppress );
@@ -871,6 +880,108 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             } else {
                 delete_option( 'mainwp_notice_consumer_secret_migration_failed' );
             }
+        }
+    }
+
+    /**
+     * Retry a pending backup progress index repair, no more than once an hour.
+     *
+     * A DB user without ALTER never clears the marker, so an unthrottled retry
+     * would run two SHOW INDEX plus a failing ALTER on every single request.
+     *
+     * @return bool True when a repair attempt was made.
+     */
+    public function maybe_retry_repair_wp_group_primary_key() {
+        $pending = (int) get_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING );
+        if ( empty( $pending ) || time() - $pending < HOUR_IN_SECONDS ) {
+            return false;
+        }
+
+        $suppress = $this->wpdb->suppress_errors();
+        $this->repair_wp_group_primary_key();
+        $this->wpdb->suppress_errors( $suppress );
+
+        return true;
+    }
+
+    /**
+     * Create the knowledge table when the stored DB version already covers it.
+     *
+     * Errors from dbDelta are suppressed and the version is written regardless,
+     * so a failed CREATE TABLE would otherwise leave every knowledge read and
+     * write against a missing table until the next schema bump.
+     *
+     * @param string|false $currentVersion Stored DB version.
+     *
+     * @return bool True when the table had to be created.
+     */
+    public function maybe_create_knowledge_table( $currentVersion ) {
+        $table  = $this->table_name( 'knowledge' );
+        $exists = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $table ) ) );
+        if ( null !== $exists ) {
+            return false;
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $sql      = MainWP_DB_Knowledge::instance()->hook_db_install_tables( array(), $currentVersion, $this->wpdb->get_charset_collate() );
+        $suppress = $this->wpdb->suppress_errors();
+        foreach ( $sql as $query ) {
+            dbDelta( $query );
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        return true;
+    }
+
+    /**
+     * Repair the wp_group table primary key for legacy installations.
+     *
+     * To fix MWP-1794.
+     *
+     * @return void
+     */
+    private function repair_wp_group_primary_key() {
+        $wp_group_table = esc_sql( $this->table_name( 'wp_group' ) );
+
+        $column_exists = $this->wpdb->get_var(
+            "SHOW COLUMNS FROM {$wp_group_table} LIKE 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
+        );
+
+        if ( empty( $column_exists ) ) {
+            $this->wpdb->query(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
+                "ALTER TABLE {$wp_group_table}
+                ADD COLUMN wp_group_id int(11) NOT NULL auto_increment PRIMARY KEY FIRST" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+            );
+        } else {
+            $primary_key = $this->wpdb->get_var(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
+                "SHOW INDEX FROM {$wp_group_table}
+                WHERE Key_name = 'PRIMARY'
+                AND Column_name = 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+            );
+
+            if ( empty( $primary_key ) ) {
+                $this->wpdb->query(
+                    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
+                    "ALTER TABLE {$wp_group_table}
+                    ADD PRIMARY KEY (wp_group_id)" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+                );
+            }
+        }
+
+        $primary_key = $this->wpdb->get_var(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
+            "SHOW INDEX FROM {$wp_group_table}
+            WHERE Key_name = 'PRIMARY'
+            AND Column_name = 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+        );
+
+        if ( ! empty( $primary_key ) ) {
+            delete_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING );
+        } else {
+            // A timestamp, not a formatted date: the retry throttle compares it against time().
+            update_site_option( self::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING, time() );
         }
     }
 

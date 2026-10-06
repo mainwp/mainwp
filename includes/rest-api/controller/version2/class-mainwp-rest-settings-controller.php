@@ -20,6 +20,8 @@ use MainWP\Dashboard\Module\ApiBackups\Api_Backups_Utility;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_Api_Manager;
 use MainWP\Dashboard\MainWP_Connect;
+use MainWP\Dashboard\MainWP_Error_Helper;
+use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Sync;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
@@ -688,6 +690,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $update_if_present( 'mainwp_ssl_verify_certificate', 'mainwp_sslVerifyCertificate', 'int' );
             $update_if_present( 'mainwp_verify_connection_method', 'mainwp_verify_connection_method', 'int' );
             $update_if_present( 'mainwp_force_use_ipv4', 'mainwp_forceUseIPv4', 'int' );
+
+            if ( array_key_exists( 'mainwp_child_request_timeout', $body ) ) {
+                $saved_timeout = MainWP_Connect::save_child_request_timeout_setting( $body['mainwp_child_request_timeout'] );
+                if ( false === $saved_timeout ) {
+                    return new WP_Error(
+                        'invalid_mainwp_child_request_timeout',
+                        __( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default.', 'mainwp' ),
+                        array( 'status' => 400 )
+                    );
+                }
+            }
 
             // Update sync data.
             if ( isset( $body['sync_data'] ) ) {
@@ -1802,7 +1815,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         $destroy_data = get_transient( "mainwp_tool_destroy_job_{$destroy_id}" );
-        if ( ! $destroy_data ) {
+        if ( ! $destroy_data || ! $this->can_access_job_sites( $destroy_data ) ) {
             return new WP_Error(
                 'destroy_session_job_not_found',
                 __( 'Destroy session job not found.', 'mainwp' ),
@@ -1841,7 +1854,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
         $website_ids = $destroy_data['websites'];
         $start_index = $destroy_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -1851,7 +1864,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 }
 
                 if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                    $response = MainWP_Connect::fetch_url_authed( $website, 'settings_tools', array( 'action' => 'force_destroy_sessions' ) );
                     ++$destroy_data['processed'];
+                    if ( ! is_array( $response ) || empty( $response['success'] ) ) {
+                        // The error text comes from the Child; cap and clean it before it is stored and served back.
+                        $child_error = is_array( $response ) && isset( $response['error'] ) && is_string( $response['error'] ) ? static::sanitize_batch_error_message( $response['error'] ) : '';
+                        ++$destroy_data['failed'];
+                        $destroy_data['errors'][] = array(
+                            'site_id' => $website_id,
+                            'error'   => '' !== $child_error ? $child_error : __( 'Cannot destroy sessions.', 'mainwp' ),
+                        );
+                    }
                 } else {
                     ++$destroy_data['failed'];
                     ++$destroy_data['processed'];
@@ -1863,9 +1886,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             } catch ( \Exception $e ) {
                 ++$destroy_data['failed'];
                 ++$destroy_data['processed'];
+                // Same cap and cleaning as the Child error above; the NOMAINWP text carries an anchor tag.
+                $error_message            = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e ) : $e->getMessage();
                 $destroy_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => $e->getMessage(),
+                    'error'   => static::sanitize_batch_error_message( $error_message ),
                 );
             }
         }
@@ -1963,7 +1988,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get disconnect data.
         $renew_data = get_transient( "mainwp_tool_renew_job_{$renew_id}" );
 
-        if ( ! $renew_data ) {
+        if ( ! $renew_data || ! $this->can_access_job_sites( $renew_data ) ) {
             return new WP_Error(
                 'renew_connection_job_not_found',
                 __( 'Renew connection job not found.', 'mainwp' ),
@@ -2003,7 +2028,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
         $website_ids = $renew_data['websites'];
         $start_index = $renew_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -2143,7 +2168,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         $website_ids = $disconnect_data['websites'];
         $start_index = $disconnect_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -2184,7 +2209,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array( $disconnect_id )
             );
         } else {
-            wp_schedule_single_event( time() + 3, 'mainwp_disconnect_site_batch', array( $disconnect_id ) );
+            wp_schedule_single_event( time() + 3, 'mainwp_cron_disconnect_batch', array( $disconnect_id ) );
             spawn_cron(); // Run Cron now.
         }
 
@@ -2212,7 +2237,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get disconnect data.
         $disconnect_data = get_transient( "mainwp_tool_disconnect_job_{$disconnect_id}" );
 
-        if ( ! $disconnect_data ) {
+        if ( ! $disconnect_data || ! $this->can_access_job_sites( $disconnect_data ) ) {
             return new WP_Error(
                 'disconnect_job_not_found',
                 __( 'Job not found.', 'mainwp' ),
@@ -2233,6 +2258,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'completed_at' => $disconnect_data['completed_at'] ?? null,
             )
         );
+    }
+
+    /**
+     * Job totals and errors can disclose sites outside the caller's scope.
+     *
+     * @param array $job Stored job data.
+     * @return bool Whether the complete job roster is accessible.
+     */
+    protected function can_access_job_sites( $job ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        return 'all' === $allowed || ( isset( $job['websites'] ) && is_array( $job['websites'] ) && ! array_diff( $job['websites'], $allowed ) );
     }
 
     /**
@@ -2814,6 +2850,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'type'              => 'boolean',
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
+            ),
+            'mainwp_child_request_timeout'              => array(
+                'required'          => false,
+                'description'       => __( 'Child request timeout in seconds. Null, blank, or 72000 clears the stored option (default 72000). A saved value must be at least 300.', 'mainwp' ),
+                'type'              => array( 'integer', 'string', 'null' ),
+                'sanitize_callback' => array( $this, 'sanitize_child_request_timeout' ),
+                'validate_callback' => array( $this, 'validate_child_request_timeout' ),
             ),
             'mainwp_connect_signature_algo'             => array(
                 'required'          => false,
@@ -4157,6 +4200,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     private function get_websites() {
         $websites = MainWP_DB::instance()->get_sites();
+        $websites = $this->filter_scoped_sites( $websites );
         if ( empty( $websites ) ) {
             return new WP_Error(
                 'no_website_found',
@@ -4178,6 +4222,9 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return object|null
      */
     private function get_website_by_id( $website_id, &$process_data ) {
+        // Workers run from cron as user 0, where the scope check would fail every site;
+        // the site list was scoped when the job was queued and the status routes are
+        // guarded by can_access_job_sites().
         $website = MainWP_DB::instance()->get_website_by_id( $website_id );
         if ( empty( $website ) ) {
             ++$process_data['failed'];
@@ -4189,6 +4236,18 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return null;
         }
         return $website;
+    }
+
+    /**
+     * Sanitize and cap an error stored in a batch job.
+     *
+     * @param string $message Error message.
+     *
+     * @return string
+     */
+    private static function sanitize_batch_error_message( $message ) {
+        $message = function_exists( 'mb_substr' ) ? mb_substr( $message, 0, 500 ) : substr( $message, 0, 500 );
+        return sanitize_text_field( $message );
     }
 
     /**
@@ -4551,6 +4610,68 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Stored child request timeout, or null when the option is unset.
+     *
+     * @return int|null
+     */
+    public static function get_stored_child_request_timeout() {
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( get_option( MainWP_Connect::CHILD_REQUEST_TIMEOUT_OPTION, '' ) );
+        if ( is_int( $normalized ) ) {
+            return $normalized;
+        }
+        return null;
+    }
+
+    /**
+     * Sanitize a child request timeout for the advanced settings route.
+     *
+     * Blank and 72000 become null so the option is deleted. Invalid values are
+     * left for the validator.
+     *
+     * @param mixed $value Submitted value.
+     *
+     * @return mixed
+     */
+    public function sanitize_child_request_timeout( $value ) {
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( $value );
+        if ( 'delete' === $normalized ) {
+            return null;
+        }
+        if ( is_int( $normalized ) ) {
+            return $normalized;
+        }
+        return $value;
+    }
+
+    /**
+     * Validate a child request timeout.
+     *
+     * Omitting the field is handled by WordPress (the argument is not required).
+     * A present null, blank, or 72000 clears the option.
+     *
+     * @param mixed $value Submitted value.
+     *
+     * @return true|WP_Error
+     */
+    public function validate_child_request_timeout( $value ) {
+        if ( null === $value || false === $value || '' === $value ) {
+            return true;
+        }
+        if ( is_string( $value ) && '' === trim( $value ) ) {
+            return true;
+        }
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( $value );
+        if ( 'delete' === $normalized || is_int( $normalized ) ) {
+            return true;
+        }
+        return new WP_Error(
+            'invalid_mainwp_child_request_timeout',
+            __( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default.', 'mainwp' ),
+            array( 'status' => 400 )
+        );
+    }
+
+    /**
      * Get advanced settings data.
      *
      * @uses MainWP_Settings_Indicator::get_defaults_value()
@@ -4584,6 +4705,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'mainwp_verify_connection_method'           => (int) get_option( 'mainwp_verify_connection_method', $default_setting['mainwp_verify_connection_method'] ),
             'mainwp_connect_signature_algo'             => isset( $sign_algs[ $signature_algo ] ) ? $sign_algs[ $signature_algo ] : $default_setting['mainwp_connect_signature_algo'],
             'mainwp_force_use_ipv4'                     => (int) get_option( 'mainwp_forceUseIPv4', $default_setting['mainwp_forceUseIPv4'] ),
+            'mainwp_child_request_timeout'              => self::get_stored_child_request_timeout(),
             'sync_data'                                 => $sync_data_settings,
         );
     }
@@ -4838,6 +4960,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'mainwp_force_use_ipv4'                    => array(
                     'type'        => 'integer',
                     'description' => __( 'Force use IPv4.', 'mainwp' ),
+                    'context'     => array( 'advanced_view', 'advanced_edit' ),
+                ),
+                'mainwp_child_request_timeout'             => array(
+                    'type'        => array( 'integer', 'null' ),
+                    'description' => __( 'Child request timeout in seconds. Null means the option is unset and the effective default is 72000.', 'mainwp' ),
                     'context'     => array( 'advanced_view', 'advanced_edit' ),
                 ),
                 'sync_data'                                => array(

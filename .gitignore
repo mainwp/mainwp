@@ -9,6 +9,10 @@ composer.lock
 # PHPUnit
 .phpunit.result.cache
 
-# Claude Code / Dev tools
-CLAUDE.md
+# Local-only AI / plan files (Dennis approved 2026-09-21 — cloud VMs lack global excludes)
+AGENTS.md
+CLAUDE*.md
+.cursor/
 .mwpdev/
+# review-lessons* is Brain-local only
+review-lessons*

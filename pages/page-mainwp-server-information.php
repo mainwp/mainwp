@@ -859,6 +859,14 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         static::render_row( 'SSL Warnings', '=', '', 'get_ssl_warning', 'empty', '', null );
         static::render_row( 'cURL Extension Enabled', '=', true, 'get_curl_support', '', '', null, null, static::ERROR );
         static::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
+        ?>
+        <tr>
+            <td<?php echo self::get_export_text_attr( 'MainWP Child request timeout' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php esc_html_e( 'MainWP Child request timeout', 'mainwp' ); ?></td>
+            <td><?php esc_html_e( 'Effective plugin limit', 'mainwp' ); ?></td>
+            <td><?php echo esc_html( MainWP_Server_Information_Handler::get_child_request_timeout() . ' ' . __( 'seconds', 'mainwp' ) ); ?></td>
+            <td></td>
+        </tr>
+        <?php
         if ( function_exists( 'curl_version' ) ) {
             $reuire_curl = '7.18.1';
             if ( version_compare( MainWP_Server_Information_Handler::get_php_version(), '8.0.0' ) >= 0 ) {

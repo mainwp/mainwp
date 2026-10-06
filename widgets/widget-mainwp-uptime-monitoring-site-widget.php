@@ -245,6 +245,34 @@ class MainWP_Uptime_Monitoring_Site_Widget {
         }
 
         static::render_top_widget();
+        if ( MainWP_Utility::show_mainwp_message( 'notice', 'failed-attempt-create-primary-monitor-' . $site_id ) ) {
+            $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $site_id;
+            if ( get_option( $opt_name ) ) {
+
+                $settings_url = add_query_arg(
+                    array(
+                        'page' => 'managesites',
+                        'id'   => absint( $site_id ),
+                    ),
+                    admin_url( 'admin.php' )
+                );
+
+                ?>
+                <div class="ui message yellow">
+                    <i class="close icon mainwp-notice-dismiss" notice-id="failed-attempt-create-primary-monitor-<?php echo esc_attr( $site_id ); ?>"></i>
+                    <?php
+                    printf(
+                        /* translators: 1: Opening anchor tag, 2: Closing anchor tag with icon. */
+                        esc_html__( 'Failed to create the primary monitor for this site. Please visit the %1$sSettings%2$s and click "Save Settings" to try again.', 'mainwp' ),
+                        '<a href="' . esc_url( $settings_url ) . '">',
+                        '</a>'
+                    );
+                    ?>
+                </div>
+                <?php
+            }
+        }
+
         ?>
         <div id="mainwp-response-time-message-zone" class="ui message" style="display:none;"></div>
 

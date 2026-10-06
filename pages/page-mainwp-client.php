@@ -653,7 +653,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Edit client', 'mainwp' ); ?></div>
             <div class="scrolling content">
-                <div class="ui info message"><?php esc_html_e( 'Empty fields will not be passed to child sites.', 'mainwp' ); ?></div>
+                <div class="ui info message"><?php esc_html_e( 'Blank fields will not be changed.', 'mainwp' ); ?></div>
                 <form id="update_client_profile" class="ui form">
                     <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <h3 class="ui header"><?php esc_html_e( 'Name', 'mainwp' ); ?></h3>
@@ -979,6 +979,9 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 </div>
                 <div style="clear:both"></div>
             </form>
+            <?php if ( $edit_client ) : ?>
+                <?php MainWP_Knowledge_UI::render_panel( 'client', $client_id ); ?>
+            <?php endif; ?>
         </div>
         <?php
         static::render_footer( $show );
@@ -1097,6 +1100,8 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * Render row HTML import client.
      *
+     * @param array $client_data Import row data.
+     *
      * @return mixed Result or WP_Error.
      */
     public static function render_import_client_row_modal( $client_data = array() ) { // phpcs:ignore -- NOSONAR -complex.
@@ -1170,7 +1175,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
         global $wp_filesystem;
 
-        $lines = array();
+        $lines       = array();
         $header_line = '';
 
         if ( $hasWPFileSystem && ! empty( $wp_filesystem ) ) {
@@ -1429,13 +1434,26 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             return;
         }
 
+        $posted_note = isset( $client_fields['default_field']['client.note'] ) ? $client_fields['default_field']['client.note'] : null;
+        if ( MainWP_Utility::client_note_exceeds_limit( $posted_note ) ) {
+            echo wp_json_encode( array( 'error' => MainWP_Utility::client_note_length_error() ) );
+            return;
+        }
+
         $add_new = true;
 
         $default_client_fields = MainWP_Client_Handler::get_default_client_fields();
         $client_to_add         = array();
         foreach ( $default_client_fields as $field_name => $item ) {
             if ( ! empty( $item['db_field'] ) && isset( $client_fields['default_field'][ $field_name ] ) ) {
-                $client_to_add[ $item['db_field'] ] = sanitize_text_field( wp_unslash( $client_fields['default_field'][ $field_name ] ) );
+                if ( 'note' === $item['db_field'] ) {
+                    // client_fields is already unslashed. A non-string note is stored as empty.
+                    $field_value                        = $client_fields['default_field'][ $field_name ];
+                    $client_to_add[ $item['db_field'] ] = is_string( $field_value ) ? MainWP_Utility::sanitize_client_note( $field_value ) : '';
+                } else {
+                    $field_value                        = wp_unslash( $client_fields['default_field'][ $field_name ] );
+                    $client_to_add[ $item['db_field'] ] = sanitize_text_field( $field_value );
+                }
             }
         }
 
@@ -2076,7 +2094,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         $el_id_fln_1 = $field_name;
                         ?>
                             <div class="editor">
-                            <textarea class="code settings-field-value-change-handler" cols="80" rows="10" id="client_fields[default_field][<?php echo esc_attr( $el_id_fln_1 ); ?>]" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_html( $val ); ?></textarea>
+                            <textarea class="code settings-field-value-change-handler" cols="80" rows="10" id="client_fields[default_field][<?php echo esc_attr( $el_id_fln_1 ); ?>]" name="client_fields[default_field][<?php echo esc_attr( $field_name ); ?>]"><?php echo esc_textarea( MainWP_Utility::client_note_for_editor( (string) $val ) ); ?></textarea>
                             </div>
                             <?php
                     } elseif ( $client_id && 'client.created' === $field_name ) {
@@ -2630,22 +2648,51 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
          */
     public static function save_note() {
         if ( isset( $_POST['clientid'] ) && ! empty( $_POST['clientid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $esc_note = MainWP_Utility::esc_content( $note );
-            $update   = array(
+            $note = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+            if ( ! is_string( $note ) ) {
+                $note = '';
+            }
+            if ( MainWP_Utility::client_note_exceeds_limit( $note ) ) {
+                self::exit_json(
+                    array(
+                        'error' => MainWP_Utility::client_note_length_error(),
+                    )
+                );
+            }
+            $stored = MainWP_Utility::sanitize_client_note( $note );
+            $update = array(
                 'client_id' => intval( $_POST['clientid'] ), // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-                'note'      => $esc_note,
+                'note'      => $stored,
             );
             MainWP_DB_Client::instance()->update_client( $update );
-            die(
-                wp_json_encode(
-                    array(
-                        'result'           => 'SUCCESS',
-                        'esc_note_content' => $esc_note,
-                    )
+            self::exit_json(
+                array(
+                    'result'           => 'SUCCESS',
+                    // The editor shows < and >, not the stored &lt; / &gt; text.
+                    'note'             => MainWP_Utility::client_note_for_editor( $stored ),
+                    'esc_note_content' => MainWP_Utility::client_note_html( $stored ),
                 )
             );
         }
-        die( wp_json_encode( array( 'undefined_error' => true ) ) );
+        self::exit_json( array( 'undefined_error' => true ) );
+    }
+
+    /**
+     * Send a JSON payload and stop the request.
+     *
+     * During an AJAX request this uses wp_die() so the status stays HTTP 200
+     * and the body stays the JSON string. Otherwise it dies with that string.
+     *
+     * Shared by the notes modal and the clients notes AJAX handler.
+     *
+     * @param array $payload Response data.
+     * @return void
+     */
+    public static function exit_json( $payload ) {
+        $json = wp_json_encode( $payload );
+        if ( function_exists( 'wp_doing_ajax' ) && wp_doing_ajax() ) {
+            wp_die( $json ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON response body.
+        }
+        die( $json ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- JSON response body.
     }
 }

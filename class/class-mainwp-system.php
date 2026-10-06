@@ -64,7 +64,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string The plugin current update version.
      */
-    private $check_ver_update = '0.0.5';
+    private $check_ver_update = '0.0.8';
 
     /**
      * Private variable to hold the plugin slug (mainwp/mainwp.php)
@@ -240,6 +240,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         add_action( 'admin_init', array( &$this, 'admin_init' ), 20 );
         add_action( 'admin_init', array( $this, 'hook_admin_update_check' ) );
+        add_action( 'admin_init', array( $this, 'admin_init_update' ) );
         add_action( 'after_setup_theme', array( &$this, 'after_setup_theme' ) );
 
         add_action( 'init', array( &$this, 'parse_init' ) );
@@ -293,6 +294,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Plugins::init();
         MainWP_Updates_Overview::init();
         MainWP_Client::init();
+        MainWP_Knowledge_UI::init();
         MainWP_Rest_Api_Page::init();
         MainWP_Logger::instance();
 
@@ -407,6 +409,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'mainwp_logger_check_daily',
                 'mainwp_site_actions_notification_enable',
                 'mainwp_update_check_version',
+                'mainwp_admin_init_update_data',
                 'mainwp_setting_demo_mode_enabled',
                 'mainwp_log_wait_lasttime',
                 'mainwp_cron_license_deactivated_alert_lasttime',
@@ -840,17 +843,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function hook_admin_update_check() {
         $current_ver = $this->check_ver_update;
-        $saved_ver   = get_option( 'mainwp_update_check_version', false );
-
-        if ( false === $saved_ver ) {
-            return;
-        }
+        $saved_ver   = get_option( 'mainwp_update_check_version', '' );
 
         if ( version_compare( $saved_ver, $current_ver, '=' ) ) {
             return;
         }
 
-        if ( version_compare( $saved_ver, '0.0.4', '<' ) ) {
+        if ( ! empty( $saved_ver ) && version_compare( $saved_ver, '0.0.4', '<' ) ) {
             $sched = wp_next_scheduled( 'mainwp_cronstats_action' );
             if ( ! empty( $sched ) ) {
                 wp_unschedule_event( $sched, 'mainwp_cronstats_action' );
@@ -859,7 +858,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $wpdb->query( 'DELETE FROM ' . $wpdb->usermeta . ' WHERE meta_key = "mainwp_widgets_sorted_toplevel_page_mainwp_tab" OR meta_key="mainwp_settings_show_widgets"' );//phpcs:ignore -- safe.
         }
 
-        if ( version_compare( $saved_ver, '0.0.5', '<' ) ) {
+        if ( ! empty( $saved_ver ) && version_compare( $saved_ver, '0.0.5', '<' ) ) {
             $all_ext = MainWP_Extensions_View::get_available_extensions();
             foreach ( $all_ext as $slug => $info ) {
                 $data = MainWP_Api_Manager::instance()->get_activation_info( $slug );
@@ -872,7 +871,68 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             update_option( 'mainwp_extensions_all_activation_cached', '' );
         }
 
+        if ( version_compare( $saved_ver, '0.0.8', '<' ) ) {
+            static::handle_admin_perform_update( 'attempted_repair_primary_monitors' ); // init attempted repair.
+        }
+
         MainWP_Utility::update_option( 'mainwp_update_check_version', $current_ver );
+    }
+
+
+    /**
+     * Method admin_init_update()
+     */
+    public function admin_init_update() {
+        static::handle_admin_perform_update();
+    }
+
+
+    /**
+     * Method handle_admin_perform_update()
+     *
+     * @param string $action Init action.
+     */
+    public function handle_admin_perform_update( $action = '' ) {
+
+        $update_actions = get_option( 'mainwp_admin_init_update_data' );
+
+        /**
+         * Filters the update actions.
+         *
+         * @param array  $update_actions The available update actions.
+         * @param string $action         The current update action.
+         *
+         * @since 6.2.1
+         *
+         * @return array The filtered update actions.
+         */
+        $update_actions = apply_filters( 'mainwp_admin_init_update_data', $update_actions, $action );
+
+        if ( ! empty( $action ) ) {
+            if ( ! is_array( $update_actions ) ) {
+                $update_actions = array();
+            }
+            if ( 'attempted_repair_primary_monitors' === $action ) {
+                $update_actions['attempted_repair_primary_monitors'] = 0;
+            }
+        }
+
+        if ( is_array( $update_actions ) ) {
+            $update = false;
+            if ( isset( $update_actions['attempted_repair_primary_monitors'] ) ) {
+                $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors( $update_actions['attempted_repair_primary_monitors'] );
+                if ( is_array( $result ) && ! empty( $result['attempted'] ) ) {
+                    $update_actions['attempted_repair_primary_monitors'] = $result['attempted'];
+                } else {
+                    unset( $update_actions['attempted_repair_primary_monitors'] );
+                }
+                $update = true;
+            }
+
+            if ( $update ) {
+                MainWP_Utility::update_option( 'mainwp_admin_init_update_data', $update_actions );
+            }
+        }
     }
 
     /**
@@ -966,6 +1026,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'maximumSyncRequests'              => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
             'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
             'maximumUptimeMonitoringRequests'  => (int) get_option( 'mainwp_maximum_uptime_monitoring_requests', 10 ),
+            'siteRemovalTimeout'               => MainWP_Connect::get_site_removal_ajax_timeout_ms(),
             '_wpnonce'                         => wp_create_nonce( 'mainwp-admin-nonce' ),
             'quickThemeChangeNonce'            => wp_create_nonce( 'mainwp_quick_theme_change' ),
             'demoMode'                         => MainWP_Demo_Handle::is_demo_mode() ? 1 : 0,
@@ -1021,6 +1082,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             remove_action( 'admin_notices', 'update_nag', 3 );
         }
     }
+
 
     /**
      * Method hook_wp_shutdown()
@@ -1213,6 +1275,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_script( 'mainwp-posts', MAINWP_PLUGIN_URL . 'assets/js/mainwp-posts.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-users', MAINWP_PLUGIN_URL . 'assets/js/mainwp-users.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-clients', MAINWP_PLUGIN_URL . 'assets/js/mainwp-clients.js', array(), $this->current_version, true );
+            wp_enqueue_script( 'mainwp-knowledge', MAINWP_PLUGIN_URL . 'assets/js/mainwp-knowledge.js', array( 'jquery', 'fomantic-ui' ), $this->current_version, true );
+            wp_localize_script( 'mainwp-knowledge', 'mainwpKnowledgeStrings', MainWP_Knowledge_UI::js_strings() );
             wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version, true );
             wp_enqueue_script( 'moment' );
             wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), $this->current_version, false );
@@ -2011,7 +2075,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
             <div class="content">
-                <div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
+                <div class="ui info message"><?php esc_html_e( 'This is the readable child/HTTP response from the failed request (status, headers snippet, and body when it is safe to show). Copy it for support if needed.', 'mainwp' ); ?>
                 </div>
             </div>
             <div class="scrolling content content-response" contenteditable="true"></div>
@@ -2120,6 +2184,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function update_install() {
         MainWP_DB_Client::instance();
+        MainWP_DB_Knowledge::instance();
         MainWP_DB_Site_Actions::instance();
         MainWP_Install::instance()->install();
         $this->check_to_updates();

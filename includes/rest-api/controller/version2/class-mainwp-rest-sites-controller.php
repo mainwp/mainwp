@@ -9,6 +9,7 @@
 
 use MainWP\Dashboard\MainWP_Sync;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\MainWP_Manage_Sites_Handler;
 use MainWP\Dashboard\MainWP_Connect;
@@ -685,7 +686,8 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $fields = array_filter(
             $fields,
             function ( $name ) {
-                return 'health_site_status' !== $name && preg_match( '/^[A-Za-z0-9_]+$/', $name );
+                // The raw tag aggregates would bypass the scoped tags field.
+                return ! in_array( $name, array( 'health_site_status', 'wpgroups', 'wpgroupids', 'wpgroups_colors' ), true ) && preg_match( '/^[A-Za-z0-9_]+$/', $name );
             }
         );
 
@@ -915,6 +917,17 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $args_fields        = isset( $args['fields'] ) && is_array( $args['fields'] ) ? $args['fields'] : array();
         $args['fields']     = array_merge( array( 'health_site_status' ), $args_fields );
 
+        $args = $this->scope_site_query_args( $args );
+        if ( null === $args ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 1,
+                    'total'   => 0,
+                    'data'    => array(),
+                )
+            );
+        }
+
         // get data.
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $args );
 
@@ -958,6 +971,17 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $args['extra_view'] = array( 'health_site_status' );
         $args_fields        = isset( $args['fields'] ) && is_array( $args['fields'] ) ? $args['fields'] : array();
         $args['fields']     = array_merge( array( 'health_site_status' ), $args_fields );
+
+        $args = $this->scope_site_query_args( $args );
+        if ( null === $args ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 1,
+                    'total'   => 0,
+                    'data'    => array(),
+                )
+            );
+        }
 
         // get data.
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $args );
@@ -1011,12 +1035,39 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             'status'  => isset( $args['status'] ) ? $args['status'] : array(),
         );
 
+        $params = $this->scope_site_query_args( $params );
+        if ( null === $params ) {
+            return rest_ensure_response( array( 'count' => 0 ) );
+        }
+
         // get data.
         $websites = MainWP_DB::instance()->get_websites_for_current_user( $params );
         $data     = array(
             'count' => count( $websites ),
         );
         return rest_ensure_response( $data );
+    }
+
+    /**
+     * Keep API-key queries within the owner's scope when the DB bypasses its ACL.
+     *
+     * @param array $args Site query arguments.
+     * @return array|null Scoped arguments, or null when no sites are accessible.
+     */
+    private function scope_site_query_args( $args ) {
+        $allowed = MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' === $allowed ) {
+            return $args;
+        }
+
+        $include = ! empty( $args['include'] ) ? array_values( array_intersect( wp_parse_id_list( $args['include'] ), $allowed ) ) : $allowed;
+        // An empty include would remove the DB filter and expose every site.
+        if ( empty( $include ) ) {
+            return null;
+        }
+
+        $args['include'] = $include;
+        return $args;
     }
 
     /**
@@ -1921,6 +1972,15 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         }
 
         // Fallback: Legacy logic when Abilities API is not available.
+        $params = $this->scope_site_query_args( $params );
+        if ( null === $params ) {
+            return rest_ensure_response(
+                array(
+                    'total' => 0,
+                    'data'  => array(),
+                )
+            );
+        }
         $data     = array();
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'no', $params ) );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -1983,6 +2043,15 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             'include' => isset( $args['include'] ) && ! empty( $args['include'] ) ? $args['include'] : array(),
         );
 
+        $params = $this->scope_site_query_args( $params );
+        if ( null === $params ) {
+            return rest_ensure_response(
+                array(
+                    'total' => 0,
+                    'data'  => array(),
+                )
+            );
+        }
         $data     = array();
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'no', $params ) );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) && '' !== $website->sync_errors ) {
@@ -2127,12 +2196,21 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      */
     public function disconnect_sites( $request ) {
 
-        $args     = $this->prepare_objects_query( $request );
-        $params   = array(
+        $args   = $this->prepare_objects_query( $request );
+        $params = array(
             'view'    => 'base_view',
             'exclude' => isset( $args['exclude'] ) && ! empty( $args['exclude'] ) ? $args['exclude'] : array(),
             'include' => isset( $args['include'] ) && ! empty( $args['include'] ) ? $args['include'] : array(),
         );
+        $params = $this->scope_site_query_args( $params );
+        if ( null === $params ) {
+            return rest_ensure_response(
+                array(
+                    'total' => 0,
+                    'data'  => array(),
+                )
+            );
+        }
         $data     = array();
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -2210,11 +2288,20 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function check_items( $request ) {
-        $args     = $this->prepare_objects_query( $request );
-        $params   = array(
+        $args   = $this->prepare_objects_query( $request );
+        $params = array(
             'exclude' => isset( $args['exclude'] ) && ! empty( $args['exclude'] ) ? $args['exclude'] : array(),
             'include' => isset( $args['include'] ) && ! empty( $args['include'] ) ? $args['include'] : array(),
         );
+        $params = $this->scope_site_query_args( $params );
+        if ( null === $params ) {
+            return rest_ensure_response(
+                array(
+                    'total' => 0,
+                    'data'  => array(),
+                )
+            );
+        }
         $data     = array();
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'no', $params ) );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
@@ -2332,7 +2419,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         );
         $costs     = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'site_id', $website->id );
         if ( $costs ) {
-            $data               = Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs );
+            $data               = $this->scope_cost_relationship_fields( Cost_Tracker_Rest_Api_Handle_V1::instance()->prepare_api_costs_data( $costs ) );
             $resp_data['total'] = is_array( $data ) ? count( $data ) : 0;
             $resp_data['data']  = $data;
         } else {
@@ -2390,7 +2477,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                         'sanitize_callback' => 'sanitize_text_field',
                     ),
                 ),
-                'tags'                   => array( // response as tags.
+                'tags'                   => array(
                     'type'        => 'string',
                     'description' => __( 'Site tags.', 'mainwp' ),
                     'context'     => array( 'view' ),
@@ -2682,6 +2769,13 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     'arg_options' => array(
                         'sanitize_callback' => 'absint',
                     ),
+                ),
+                // groupids is validated and sanitized in the database save function
+                // before updating the group associations.
+                'groupids'               => array(
+                    'type'        => 'string',
+                    'description' => __( 'Site tag/group IDs as a comma-separated string.', 'mainwp' ),
+                    'context'     => array( 'edit' ),
                 ),
 
             ),
@@ -3158,9 +3252,13 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $wpgroupids = ! empty( $item->wpgroupids ) ? explode( ',', $item->wpgroupids ) : array();
             $wpgroups   = ! empty( $item->wpgroups ) ? explode( ',', $item->wpgroups ) : array();
 
-            $tags = array();
+            $tags           = array();
+            $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
             if ( is_array( $wpgroupids ) ) {
                 foreach ( $wpgroupids as $gidx => $groupid ) {
+                    if ( 'all' !== $allowed_groups && ! in_array( (int) $groupid, $allowed_groups, true ) ) {
+                        continue; // Hidden tag memberships stay out of API-key responses.
+                    }
                     if ( $groupid && ! isset( $tags[ $groupid ] ) ) {
                         $tags[ $groupid ] = isset( $wpgroups[ $gidx ] ) ? $wpgroups[ $gidx ] : '';
                     }
@@ -3295,10 +3393,19 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $resp_data            = array();
         $resp_data['success'] = 0;
         $site_id              = 0;
-        $url                  = '';
         $data                 = array(); //phpcs:ignore -- NOSONAR - not used data.
         $found_id             = 0;
         try {
+
+            if ( $request->has_param( 'groupids' ) && ! empty( $request['groupids'] ) && false === MainWP_DB_Common::instance()->validate_site_group_ids( $request['groupids'] ) ) {
+                return $this->invalid_groupids_error();
+            }
+
+            $scope = $this->check_site_relationship_scope( $request );
+            if ( is_wp_error( $scope ) ) {
+                return $scope;
+            }
+
             $item = $this->prepare_object_for_database( $request );
 
             if ( empty( $item['name'] ) && ! empty( $item['url'] ) ) {
@@ -3306,8 +3413,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                 $item['name'] = rtrim( $item['name'], '/' );
             }
 
-            $url     = $item['url'];
-            $website = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
+            $website                                      = MainWP_DB::instance()->get_websites_by_url( $item['url'] );
             list( $message, $error, $site_id, $found_id ) = MainWP_Manage_Sites_View::add_wp_site( $website, $item );
 
             if ( ! empty( $site_id ) ) {
@@ -3335,6 +3441,60 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
     }
 
     /**
+     * The 400 both the add route and the scoped edit path answer for a bad groupids value.
+     *
+     * @return WP_Error
+     */
+    private function invalid_groupids_error() {
+        return new \WP_Error(
+            'rest_invalid_param',
+            __( 'The groupids parameter must be a comma-separated string of positive integers.', 'mainwp' ),
+            array( 'status' => 400 )
+        );
+    }
+
+    /**
+     * A restricted key must not attach a site to a hidden client or tag, and an edit
+     * must not drop tag memberships the caller cannot see. The DB tag clause is
+     * bypassed under an API key, so the checks live here, mirroring add-site-v1.
+     *
+     * @param WP_REST_Request $request Request object.
+     * @param object|null     $website Site being edited, null on create.
+     * @return true|WP_Error
+     */
+    private function check_site_relationship_scope( $request, $website = null ) {
+        if ( ! empty( $request['client_id'] ) ) {
+            $client = $this->get_client_by( 'id', (int) $request['client_id'] );
+            if ( is_wp_error( $client ) ) {
+                return $client;
+            }
+        }
+
+        if ( ! $request->has_param( 'groupids' ) || ! is_string( $request['groupids'] ) ) {
+            return true;
+        }
+        $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+        if ( 'all' === $allowed_groups ) {
+            return true;
+        }
+        // Validate before merging, or a malformed value would collapse to an empty list
+        // and strip every tag the caller is allowed to see.
+        $requested = MainWP_DB_Common::instance()->validate_site_group_ids( $request['groupids'] );
+        if ( false === $requested ) {
+            return $this->invalid_groupids_error();
+        }
+        if ( array_diff( $requested, $allowed_groups ) ) {
+            return $this->get_rest_data_error( 'id', 'tag' );
+        }
+        if ( $website ) {
+            $current             = MainWP_DB_Common::instance()->get_groups_by_website_id( $website->id );
+            $hidden              = array_diff( array_map( 'intval', array_keys( (array) $current ) ), $allowed_groups );
+            $request['groupids'] = implode( ',', array_unique( array_merge( $requested, $hidden ) ) );
+        }
+        return true;
+    }
+
+    /**
      * Update site.
      *
      * @param  WP_REST_Request $request Request object.
@@ -3346,11 +3506,44 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         if ( is_wp_error( $website ) ) {
             return $website;
         }
+
+        if ( $request->has_param( 'tags' ) ) {
+            return new \WP_Error(
+                'rest_invalid_param',
+                __( 'The "tags" parameter is not supported for this endpoint.', 'mainwp' ),
+                array(
+                    'status' => 400,
+                )
+            );
+        }
+
+        if ( $request->has_param( 'groupids' ) && ! is_string( $request['groupids'] ) ) {
+            return new \WP_Error(
+                'rest_invalid_param',
+                __( 'The groupids parameter must be a string.', 'mainwp' ),
+                array(
+                    'status' => 400,
+                )
+            );
+        }
+
+        $scope = $this->check_site_relationship_scope( $request, $website );
+        if ( is_wp_error( $scope ) ) {
+            return $scope;
+        }
+
         $resp_data            = array();
         $resp_data['success'] = 0;
         try {
             $item   = $this->prepare_object_for_update( $request );
             $result = MainWP_DB_Common::instance()->rest_api_update_website( $website->id, $item );
+            if ( is_array( $result ) ) {
+                foreach ( array( 'group_updated', 'group_message', 'message' ) as $field ) {
+                    if ( array_key_exists( $field, $result ) ) {
+                        $resp_data[ $field ] = $result[ $field ];
+                    }
+                }
+            }
             if ( is_array( $result ) && ! empty( $result['success'] ) ) {
                     $resp_data['success'] = 1;
                     $params               = array(
@@ -3362,7 +3555,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
                     $websites             = MainWP_DB::instance()->get_websites_for_current_user( $params );
                     $data                 = $websites ? current( $websites ) : array();
                     $resp_data['data']    = $this->prepare_site_item_for_response_context( $data, $request, 'view' );
-            } else {
+            } elseif ( empty( $resp_data['group_message'] ) && empty( $resp_data['message'] ) ) {
                 $resp_data['error'] = esc_html__( 'Update site failed. Please try again.', 'mainwp' );
             }
         } catch ( \Exception $e ) {

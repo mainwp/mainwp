@@ -471,7 +471,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $legacy_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe.
 		$this->assertNotNull( $row );
 		$this->assertNull( $row->run_key );
-		$this->assertSame( '9.0.2.27', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( '9.0.2.28', get_site_option( 'mainwp_db_version' ) );
 		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
 		$wpdb->delete( $table, array( 'id' => $legacy_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- DDL committed this fixture.
 	}
@@ -1074,7 +1074,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
 		$pending = get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
 		try {
-			update_site_option( 'mainwp_db_version', '9.0.2.27' );
+			update_site_option( 'mainwp_db_version', '9.0.2.28' );
 			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN last_continued" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
 			$marked = time() - 60;
 			update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, $marked );
@@ -1791,7 +1791,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
 		$this->assertTrue( $this->index_exists( $upload_job_table, 'uniq_snap_dest_kind' ), 'Fresh install must create the kind-widened upload-job unique key.' );
 
-		$this->assertSame( '9.0.2.27', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
+		$this->assertSame( '9.0.2.28', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
 
 		$property = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
 		$property->setAccessible( true );
@@ -1839,7 +1839,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		);
 
 		$this->assertSame( array( 'repair_backup_progress_index', 'repair_backup_progress_index' ), $installer->calls );
-		$this->assertSame( '9.0.2.27', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( '9.0.2.28', get_site_option( 'mainwp_db_version' ) );
 	}
 
 	/**
@@ -1889,7 +1889,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$saved_pending = get_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
 
 		try {
-			update_site_option( 'mainwp_db_version', '9.0.2.27' );
+			update_site_option( 'mainwp_db_version', '9.0.2.28' );
 			update_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, time() - 2 * HOUR_IN_SECONDS );
 			$installer->install();
 
@@ -2742,5 +2742,66 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			'job sample cap'                 => array( 1, 25, false ),
 			'site sample cap'                => array( 26, 2, false ),
 		);
+	}
+
+	/**
+	 * Main's line also used 9.0.2.6, for the knowledge table, so an install
+	 * upgrading from main's 9.0.2.6 never ran this branch's flag rename.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_from_main_line_9_0_2_6_carries_the_legacy_backups_flag() {
+		try {
+			update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+			delete_option( 'mainwp_enableNativeBackups' );
+			update_site_option( 'mainwp_db_version', '9.0.2.6' );
+
+			MainWP_Install::instance()->install();
+
+			$this->assertSame( 1, (int) get_option( 'mainwp_enableNativeBackups' ) );
+			$this->assertSame( '9.0.2.28', get_site_option( 'mainwp_db_version' ) );
+		} finally {
+			// install()'s DDL committed both flags as enabled, and tear_down's
+			// restore would be rolled back with the test transaction, leaving
+			// native backups on for every later test in the process.
+			if ( false === $this->saved_legacy_flag ) {
+				delete_option( 'mainwp_enableLegacyBackupFeature' );
+			} else {
+				update_option( 'mainwp_enableLegacyBackupFeature', $this->saved_legacy_flag );
+			}
+			if ( false === $this->saved_native_flag ) {
+				delete_option( 'mainwp_enableNativeBackups' );
+			} else {
+				update_option( 'mainwp_enableNativeBackups', $this->saved_native_flag );
+			}
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * Main's wp_group primary key repair is gated on its own 9.0.2.5, which an
+	 * install on this branch's 9.0.2.6-9.0.2.27 line has already passed.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_from_branch_line_9_0_2_27_repairs_the_wp_group_primary_key() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_group' );
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN wp_group_id" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'wp_group_id' ), 'Precondition: column dropped to simulate a damaged install.' );
+
+		try {
+			update_site_option( 'mainwp_db_version', '9.0.2.27' );
+
+			MainWP_Install::instance()->install();
+
+			$this->assertTrue( $this->column_exists( $table, 'wp_group_id' ) );
+			$this->assertSame( array( 'wp_group_id' ), $this->index_columns( $table, 'PRIMARY' ) );
+		} finally {
+			if ( ! $this->column_exists( $table, 'wp_group_id' ) ) {
+				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN wp_group_id int(11) NOT NULL auto_increment PRIMARY KEY FIRST" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- test cleanup, identifiers cannot be prepared.
+			}
+			delete_site_option( MainWP_Install::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING );
+		}
 	}
 }

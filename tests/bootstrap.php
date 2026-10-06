@@ -84,6 +84,7 @@ require $_tests_dir . '/includes/bootstrap.php';
 function _mainwp_install_tables() {
 	// Instantiate DB classes that register table creation hooks.
 	\MainWP\Dashboard\MainWP_DB_Client::instance();
+	\MainWP\Dashboard\MainWP_DB_Knowledge::instance();
 	\MainWP\Dashboard\MainWP_DB_Site_Actions::instance();
 
 	// Run the installation (creates all tables via dbDelta).
@@ -116,3 +117,4 @@ _mainwp_purge_stale_rows();
 // Load custom test case base classes.
 require_once __DIR__ . '/abilities/class-mainwp-abilities-test-case.php';
 require_once __DIR__ . '/backup/class-mainwp-backup-test-case.php';
+require_once __DIR__ . '/fixtures/Site_Fixture.php';

@@ -335,6 +335,10 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public static function start_notification_auto_updates_info( $admin_email_settings, $params = array() ) {
 
+        if ( ! is_array( $admin_email_settings ) || ! empty( $admin_email_settings['disable'] ) ) {
+            return;
+        }
+
         $email        = isset( $admin_email_settings['recipients'] ) ? $admin_email_settings['recipients'] : '';
         $subject      = isset( $admin_email_settings['subject'] ) ? $admin_email_settings['subject'] : '';
         $plain_text   = isset( $params['plain_text'] ) ? $params['plain_text'] : false;

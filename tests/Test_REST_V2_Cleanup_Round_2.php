@@ -64,6 +64,13 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	protected $monitor_id = 0;
 
 	/**
+	 * Child request filter used by destroy-session tests.
+	 *
+	 * @var \Closure|null
+	 */
+	protected $destroy_session_filter;
+
+	/**
 	 * Set up test environment.
 	 *
 	 * Mirrors tests/abilities/test-rest-integration.php: the MainWP REST server
@@ -99,6 +106,12 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 	 */
 	public function tearDown(): void {
 		global $wpdb, $wp_rest_server;
+
+		if ( null !== $this->destroy_session_filter ) {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10 );
+			$this->destroy_session_filter = null;
+		}
+
 		$wp_rest_server = null;
 
 		\MainWP_REST_Authentication::$instance = null;
@@ -122,6 +135,198 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		}
 
 		parent::tearDown();
+	}
+
+	/**
+	 * Send the destroy-session action to the Child.
+	 *
+	 * @return void
+	 */
+	public function test_destroy_session_batch_calls_child_force_destroy_sessions(): void {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( 'destroy_', true );
+		set_transient(
+			"mainwp_tool_destroy_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 1,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id ),
+			),
+			DAY_IN_SECONDS
+		);
+
+		$calls                        = array();
+		$this->destroy_session_filter = static function ( $pre, $website, $what, $params ) use ( &$calls ) {
+			$calls[] = array( (int) $website->id, $what, $params );
+			return array( 'success' => 1 );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10, 4 );
+
+		\MainWP_Rest_Settings_Controller::instance()->process_destroy_session_batch( $id );
+		$job = get_transient( "mainwp_tool_destroy_job_{$id}" );
+
+		$this->assertSame( array( array( $this->monitor_site_id, 'settings_tools', array( 'action' => 'force_destroy_sessions' ) ) ), $calls );
+		$this->assertSame( 'completed', $job['status'] );
+		$this->assertSame( 1, $job['processed'] );
+		$this->assertSame( 0, $job['failed'] );
+	}
+
+	/**
+	 * Record an error returned by the Child.
+	 *
+	 * @return void
+	 */
+	public function test_destroy_session_batch_records_child_error(): void {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( 'destroy_', true );
+		set_transient(
+			"mainwp_tool_destroy_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 1,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id ),
+			),
+			DAY_IN_SECONDS
+		);
+
+		$this->destroy_session_filter = static function () {
+			return array( 'error' => '<b>Cannot destroy sessions</b>' . str_repeat( 'x', 500 ) );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10, 4 );
+
+		\MainWP_Rest_Settings_Controller::instance()->process_destroy_session_batch( $id );
+		$job = get_transient( "mainwp_tool_destroy_job_{$id}" );
+
+		$this->assertSame( 1, $job['failed'] );
+		$this->assertSame( 1, $job['processed'] );
+		$this->assertSame( $this->monitor_site_id, $job['errors'][0]['site_id'] );
+		$this->assertSame( sanitize_text_field( substr( '<b>Cannot destroy sessions</b>' . str_repeat( 'x', 500 ), 0, 500 ) ), $job['errors'][0]['error'] );
+		$this->assertSame( 'completed', $job['status'] );
+	}
+
+	/**
+	 * Record an exception from the Child request.
+	 *
+	 * @return void
+	 */
+	public function test_destroy_session_batch_records_child_exception(): void {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( 'destroy_', true );
+		set_transient(
+			"mainwp_tool_destroy_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 1,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id ),
+			),
+			DAY_IN_SECONDS
+		);
+
+		$this->destroy_session_filter = static function () {
+			throw new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP' );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10, 4 );
+
+		\MainWP_Rest_Settings_Controller::instance()->process_destroy_session_batch( $id );
+		$job = get_transient( "mainwp_tool_destroy_job_{$id}" );
+
+		$this->assertSame( 1, $job['failed'] );
+		$raw = \MainWP\Dashboard\MainWP_Error_Helper::get_error_message( new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP' ) );
+		$this->assertStringContainsString( '<a ', $raw, 'The NOMAINWP text must carry the anchor this test strips.' );
+		$this->assertSame( sanitize_text_field( mb_substr( $raw, 0, 500 ) ), $job['errors'][0]['error'] );
+		$this->assertStringNotContainsString( '<', $job['errors'][0]['error'] );
+	}
+
+	/**
+	 * Schedule the remaining destroy sites after one batch.
+	 *
+	 * @return void
+	 */
+	public function test_destroy_session_batch_reschedules_after_batch_size(): void {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( 'destroy_', true );
+		set_transient(
+			"mainwp_tool_destroy_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 6,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id, -1, -2, -3, -4, -5 ),
+			),
+			DAY_IN_SECONDS
+		);
+		$this->destroy_session_filter = static function () {
+			return array( 'success' => 1 );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10 );
+
+		try {
+			\MainWP_Rest_Settings_Controller::instance()->process_destroy_session_batch( $id );
+			$job = get_transient( "mainwp_tool_destroy_job_{$id}" );
+
+			$this->assertSame( 5, $job['processed'] );
+			$this->assertSame( 'pending', $job['status'] );
+			$this->assertNotFalse( wp_next_scheduled( 'mainwp_cron_destroy_session_batch', array( $id ) ) );
+		} finally {
+			wp_clear_scheduled_hook( 'mainwp_cron_destroy_session_batch', array( $id ) );
+			delete_transient( "mainwp_tool_destroy_job_{$id}" );
+		}
+	}
+
+	/**
+	 * Schedule the remaining disconnect sites after one batch.
+	 *
+	 * @return void
+	 */
+	public function test_disconnect_batch_reschedule_hook_has_listener(): void {
+		$this->authenticate_as_admin();
+		$this->create_monitor_fixture();
+		$id = uniqid( 'disconnect_', true );
+		set_transient(
+			"mainwp_tool_disconnect_job_{$id}",
+			array(
+				'status'     => 'pending',
+				'total'      => 6,
+				'processed'  => 0,
+				'failed'     => 0,
+				'created_at' => time(),
+				'websites'   => array( $this->monitor_site_id, -1, -2, -3, -4, -5 ),
+			),
+			DAY_IN_SECONDS
+		);
+		$this->destroy_session_filter = static function () {
+			return array( 'result' => 'success' );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->destroy_session_filter, 10 );
+
+		try {
+			\MainWP_Rest_Settings_Controller::instance()->process_disconnect_batch( $id );
+			$job = get_transient( "mainwp_tool_disconnect_job_{$id}" );
+
+			$this->assertSame( 5, $job['processed'] );
+			$this->assertSame( 'pending', $job['status'] );
+			$this->assertNotFalse( wp_next_scheduled( 'mainwp_cron_disconnect_batch', array( $id ) ) );
+			$this->assertNotFalse( has_action( 'mainwp_cron_disconnect_batch' ), 'The rescheduled hook must have a listener, or the job hangs at pending.' );
+		} finally {
+			wp_clear_scheduled_hook( 'mainwp_cron_disconnect_batch', array( $id ) );
+			wp_clear_scheduled_hook( 'mainwp_disconnect_site_batch', array( $id ) );
+			delete_transient( "mainwp_tool_disconnect_job_{$id}" );
+		}
 	}
 
 	/**
@@ -2020,6 +2225,36 @@ class Test_REST_V2_Cleanup_Round_2 extends \WP_Test_REST_TestCase {
 		$this->assertSame( 'rest_invalid_param', $data['sites']['sync'][0]['error']['code'] );
 		$this->assertSame( 400, $data['sites']['sync'][0]['error']['data']['status'] );
 		$this->assertSame( PHP_INT_MAX, $data['sites']['sync'][0]['id'] );
+	}
+
+	/**
+	 * The integer schema accepts a signed digit string and WordPress sanitizes
+	 * "+9223372036854775808" to PHP_INT_MAX, so both an id action and an update
+	 * item refuse the signed form before it can address a different item.
+	 */
+	public function test_batch_rejects_a_signed_overflowing_id_on_id_and_update_actions(): void {
+		$this->authenticate_as_admin();
+
+		$response = $this->do_authenticated_request(
+			'POST',
+			'/mainwp/v2/batch',
+			[
+				'sites' => [
+					'sync'   => [ '+9223372036854775808' ],
+					'update' => [ [ 'id' => '+9223372036854775808', 'name' => 'renamed' ] ],
+				],
+			]
+		);
+
+		$data = $response->get_data();
+
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $data ) );
+		$this->assertArrayNotHasKey( 'error', $data['sites'], wp_json_encode( $data ) );
+		foreach ( [ 'sync', 'update' ] as $action ) {
+			$this->assertCount( 1, $data['sites'][ $action ], $action );
+			$this->assertSame( 'rest_invalid_param', $data['sites'][ $action ][0]['error']['code'], $action . ': ' . wp_json_encode( $data ) );
+			$this->assertSame( 400, $data['sites'][ $action ][0]['error']['data']['status'], $action );
+		}
 	}
 
 	/**

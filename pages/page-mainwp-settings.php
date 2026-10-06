@@ -830,6 +830,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_warm_cache_pages_ttl',
             'mainwp_optimize',
             'mainwp_maximum_uptime_monitoring_requests',
+            'mainwp_child_request_timeout',
             'mainwp_chunksitesnumber',
             'mainwp_chunksleepinterval',
             'mainwp_settings_sync_data',
@@ -1617,6 +1618,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
             MainWP_Utility::update_option( 'mainwp_auto_correct_site_url', ( ! isset( $_POST['mainwp_auto_correct_site_url'] ) ? 0 : 1 ) );
             MainWP_Utility::update_option( 'mainwp_maximum_uptime_monitoring_requests', ! empty( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) ? intval( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) : 10 );
+            $child_request_timeout = isset( $_POST['mainwp_child_request_timeout'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_child_request_timeout'] ) ) : '';
+            MainWP_Connect::save_child_request_timeout_setting( $child_request_timeout );
             MainWP_Utility::update_option( 'mainwp_chunksitesnumber', isset( $_POST['mainwp_chunksitesnumber'] ) ? intval( $_POST['mainwp_chunksitesnumber'] ) : 10 );
             MainWP_Utility::update_option( 'mainwp_chunksleepinterval', isset( $_POST['mainwp_chunksleepinterval'] ) ? intval( $_POST['mainwp_chunksleepinterval'] ) : 5 );
 
@@ -1872,6 +1875,32 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <div class="ui input">
                                     <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumUptimeMonitoringRequests" id="mainwp_maximumUptimeMonitoringRequests" value="<?php echo false === get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ? 10 : esc_attr( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ); ?>"/>
                                 </div>
+                            </div>
+                        </div>
+
+                        <h3 class="ui dividing header">
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-child-request' ); ?>
+                            <?php esc_html_e( 'Child request timeout', 'mainwp' ); ?>
+                            <div class="sub header"><?php esc_html_e( 'How long the Dashboard waits for a child site to finish a request.', 'mainwp' ); ?></div>
+                        </h3>
+                        <div class="ui blue message">
+                            <?php esc_html_e( 'Leave this blank to keep the default of 72000 seconds (20 hours). Enter at least 300 seconds to use a different limit. Site removal waits 300 seconds unless this value is higher.', 'mainwp' ); ?>
+                        </div>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-child-request" default-indi-value="">
+                            <label class="six wide column middle aligned">
+                            <?php
+                            $normalized_child_timeout = MainWP_Connect::normalize_child_request_timeout_setting( get_option( 'mainwp_child_request_timeout', '' ) );
+                            if ( is_int( $normalized_child_timeout ) ) {
+                                $child_request_timeout_saved = (string) $normalized_child_timeout;
+                            } else {
+                                $child_request_timeout_saved = '';
+                            }
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_child_request_timeout', $child_request_timeout_saved, true, '' );
+                            esc_html_e( 'Child request timeout (seconds)', 'mainwp' );
+                            ?>
+                            </label>
+                            <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Blank uses 72000 seconds. A saved value must be at least 300 seconds and replaces that default. 72000 clears the override.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <input type="number" class="settings-field-value-change-handler" name="mainwp_child_request_timeout" id="mainwp_child_request_timeout" min="300" step="1" placeholder="72000" value="<?php echo esc_attr( $child_request_timeout_saved ); ?>"/>
                             </div>
                         </div>
 

@@ -8,6 +8,7 @@
  * Author URI: https://mainwp.com
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
+ * Requires at least: 6.2
  * Version:  6.3-beta1
  * Requires PHP: 8.3
  * License: GPLv3 or later
@@ -151,6 +152,7 @@ require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' 
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-tags.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-batch.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-cron.php'; // NOSONAR -- WP compatible.
+require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities-knowledge.php'; // NOSONAR -- WP compatible.
 require_once MAINWP_PLUGIN_DIR . 'includes' . DIRECTORY_SEPARATOR . 'abilities' . DIRECTORY_SEPARATOR . 'class-mainwp-abilities.php'; // NOSONAR -- WP compatible.
 
 // Initialize Abilities API integration (does nothing if Abilities API not available).

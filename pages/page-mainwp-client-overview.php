@@ -278,7 +278,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * When the page loads render the body content.
      */
     public function on_show_page() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainw\mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'client dashboard', 'mainwp' ) );
             return;
         }

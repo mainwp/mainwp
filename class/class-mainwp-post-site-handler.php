@@ -434,7 +434,15 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
 
         $website = MainWP_DB::instance()->get_website_by_id( $website->id );
 
-        die( wp_json_encode( array( 'error' => esc_html( wp_strip_all_tags( $website->sync_errors ) ) ) ) );
+        $error_text = wp_strip_all_tags( $website->sync_errors );
+        die(
+            wp_json_encode(
+                array(
+                    'error'      => esc_html( $error_text ),
+                    'failure_ux' => wp_kses( $website->sync_errors, MainWP_Connect_Failure_Ux::kses_allowed() ),
+                )
+            )
+        );
     }
 
     /**

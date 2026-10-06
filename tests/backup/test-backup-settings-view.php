@@ -34,13 +34,13 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$_POST['mainwp_options_enableBackupEncryption']     = '1';
 		try {
 			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
-			$this->assertTrue( MainWP_Backup_Settings::recovery_passphrase_was_rejected() );
+			$this->assertSame( 'short', MainWP_Backup_Settings::recovery_passphrase_rejection() );
 			$this->assertSame( $original, $enc->get_recovery_blob() );
 			$this->assertSame( 3, (int) get_option( 'mainwp_backupsOnServer' ) );
 			$this->assertTrue( $enc->is_enabled_setting() );
 			$_POST['mainwp_options_backupEncryptionPassphrase'] = '123456789012';
 			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
-			$this->assertFalse( MainWP_Backup_Settings::recovery_passphrase_was_rejected() );
+			$this->assertSame( '', MainWP_Backup_Settings::recovery_passphrase_rejection() );
 			$this->assertNotSame( $original, $enc->get_recovery_blob() );
 			$this->assertSame( $enc->load_kek(), $enc->recover_kek( '123456789012', $enc->get_recovery_blob() ) );
 		} finally {
@@ -53,7 +53,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 	 * The redirect flag must explain why the passphrase was not saved.
 	 */
 	public function test_settings_renders_short_passphrase_error() {
-		$_GET['backup_recovery_passphrase_rejected'] = '1';
+		$_GET['backup_recovery_passphrase_rejected'] = 'short';
 		ob_start();
 		try {
 			MainWP_Backup_Settings_View::render_settings();
@@ -72,7 +72,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$enc = MainWP_Backup_Encryption::instance();
 		$enc->set_recovery_passphrase( 'original recovery passphrase' );
 		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
-		$_GET['backup_recovery_passphrase_rejected'] = '1';
+		$_GET['backup_recovery_passphrase_rejected'] = 'mismatch';
 		ob_start();
 		try {
 			MainWP_Backup_Settings_View::render_settings();
@@ -82,6 +82,40 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		}
 		$this->assertStringContainsString( 'enter the original recovery passphrase', $output );
 		$this->assertStringNotContainsString( 'The recovery passphrase must be at least 12 characters.', $output );
+	}
+
+	/**
+	 * With the key file lost, a too-short passphrase is refused for its length
+	 * before any recovery attempt, and the banner must say so.
+	 */
+	public function test_lost_key_short_passphrase_reports_length_not_mismatch() {
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
+		$enc = MainWP_Backup_Encryption::instance();
+		$enc->set_recovery_passphrase( 'original recovery passphrase' );
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		$_POST['submit']   = '1';
+		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+		try {
+			$_POST['mainwp_options_backupEncryptionPassphrase'] = 'short';
+			MainWP_Backup_Settings::handle_settings_post();
+			$this->assertSame( 'short', MainWP_Backup_Settings::recovery_passphrase_rejection() );
+			$_POST['mainwp_options_backupEncryptionPassphrase'] = 'a wrong but long passphrase';
+			MainWP_Backup_Settings::handle_settings_post();
+			$this->assertSame( 'mismatch', MainWP_Backup_Settings::recovery_passphrase_rejection() );
+		} finally {
+			unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_backupEncryptionPassphrase'] );
+		}
+
+		$_GET['backup_recovery_passphrase_rejected'] = 'short';
+		ob_start();
+		try {
+			MainWP_Backup_Settings_View::render_settings();
+		} finally {
+			$output = ob_get_clean();
+			unset( $_GET['backup_recovery_passphrase_rejected'] );
+		}
+		$this->assertStringContainsString( 'The recovery passphrase must be at least 12 characters.', $output );
+		$this->assertStringNotContainsString( 'enter the original recovery passphrase', $output );
 	}
 
 	/**

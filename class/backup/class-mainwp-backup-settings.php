@@ -36,11 +36,12 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     private static bool $encryption_forced_off = false;
 
     /**
-     * The redirect needs to preserve a passphrase refusal for the settings banner.
+     * The redirect needs to preserve why a passphrase was refused, for the
+     * settings banner: 'short', 'mismatch', or '' when nothing was refused.
      *
-     * @var bool
+     * @var string
      */
-    private static bool $recovery_passphrase_rejected = false;
+    private static string $recovery_passphrase_rejected = '';
 
     /**
      * Method get_class_name()
@@ -250,9 +251,9 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Let the save handler carry the refusal through its redirect.
      *
-     * @return bool Whether the last save rejected a short passphrase.
+     * @return string 'short', 'mismatch', or '' when the last save refused no passphrase.
      */
-    public static function recovery_passphrase_was_rejected(): bool {
+    public static function recovery_passphrase_rejection(): string {
         return self::$recovery_passphrase_rejected;
     }
 
@@ -268,7 +269,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function handle_settings_post(): bool {
         self::$encryption_forced_off        = false;
-        self::$recovery_passphrase_rejected = false;
+        self::$recovery_passphrase_rejected = '';
         if ( MainWP_System_Utility::is_admin() ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
                 if ( isset( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
@@ -330,7 +331,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     try {
                         $encryption->set_recovery_passphrase( $enc_passphrase );
                     } catch ( \InvalidArgumentException $e ) {
-                        self::$recovery_passphrase_rejected = true;
+                        self::$recovery_passphrase_rejected = MainWP_Backup_Encryption::PASSPHRASE_MISMATCH === $e->getCode() ? 'mismatch' : 'short';
                     }
                 }
                 $enableEncryption = ( isset( $_POST['mainwp_options_enableBackupEncryption'] ) && ! empty( $_POST['mainwp_options_enableBackupEncryption'] ) ) ? 1 : 0;

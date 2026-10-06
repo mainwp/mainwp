@@ -53,6 +53,20 @@ class MainWP_Backup_Encryption { // phpcs:ignore Generic.Classes.OpeningBraceSam
     const MIN_PASSPHRASE_LENGTH = 12;
 
     /**
+     * Exception code for a passphrase refused for its length.
+     *
+     * @var int
+     */
+    const PASSPHRASE_TOO_SHORT = 1;
+
+    /**
+     * Exception code for a passphrase that does not open the stored recovery blob.
+     *
+     * @var int
+     */
+    const PASSPHRASE_MISMATCH = 2;
+
+    /**
      * PBKDF2 hash algorithm for passphrase derivation.
      *
      * @var string
@@ -240,7 +254,7 @@ class MainWP_Backup_Encryption { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public function set_recovery_passphrase( $passphrase ) {
         if ( mb_strlen( trim( (string) $passphrase ), 'UTF-8' ) < self::MIN_PASSPHRASE_LENGTH ) {
-            throw new \InvalidArgumentException( esc_html__( 'The recovery passphrase must be at least 12 characters.', 'mainwp' ) );
+            throw new \InvalidArgumentException( esc_html__( 'The recovery passphrase must be at least 12 characters.', 'mainwp' ), self::PASSPHRASE_TOO_SHORT ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped; the sniff misreads the int code.
         }
         $kek      = $this->load_kek();
         $existing = $this->get_recovery_blob();
@@ -250,7 +264,7 @@ class MainWP_Backup_Encryption { // phpcs:ignore Generic.Classes.OpeningBraceSam
             try {
                 $kek = $this->recover_kek( (string) $passphrase, $existing );
             } catch ( \Throwable $e ) {
-                throw new \InvalidArgumentException( esc_html__( 'The passphrase does not open the stored recovery key, so the backup encryption key was not replaced.', 'mainwp' ) );
+                throw new \InvalidArgumentException( esc_html__( 'The passphrase does not open the stored recovery key, so the backup encryption key was not replaced.', 'mainwp' ), self::PASSPHRASE_MISMATCH ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped; the sniff misreads the int code.
             }
             if ( ! MainWP_Keys_Manager::instance()->save_key_file( $this->kek_filename(), $kek ) ) {
                 throw new \RuntimeException( esc_html( 'Could not persist the recovered backup encryption key.' ) );

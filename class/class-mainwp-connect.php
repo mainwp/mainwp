@@ -3367,10 +3367,18 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( CURLE_OK !== $curl_errno ) {
-            // Partial bytes from a confirmed 200/206 stay on disk for the next resume.
+            clearstatcache( true, $file );
+            $partial_size = is_file( $file ) ? (int) filesize( $file ) : 0;
+            if ( 0 === $partial_size ) {
+                $message = esc_html__( 'The backup download was interrupted before completing. No partial data was saved. Try the download again.', 'mainwp' );
+            } elseif ( false !== $expected_size && $partial_size < $expected_size ) {
+                $message = esc_html__( 'The backup download was interrupted before completing. Partial data was kept so the next attempt can resume.', 'mainwp' );
+            } else {
+                $message = esc_html__( 'The backup download was interrupted before completing. Partial data was kept. Try the download again.', 'mainwp' );
+            }
             // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- internal diagnostic context.
             throw new MainWP_Exception(
-                esc_html__( 'The backup download was interrupted before completing. Partial data was kept so the next attempt can resume.', 'mainwp' ),
+                $message,
                 'cURL error ' . $curl_errno . ': ' . $curl_error,
                 static::map_curl_errno_to_backup_error( $curl_errno, $curl_error )
             );

@@ -24,6 +24,45 @@ use MainWP\Dashboard\MainWP_Exception;
 class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 
 	/**
+	 * Transfer failures describe the bytes actually retained for the retry.
+	 *
+	 * @dataProvider interrupted_data_cases
+	 * @param int|false $expected Expected total size.
+	 * @param int       $prefix Existing resumable bytes.
+	 * @param int       $sent Bytes returned before the connection closes.
+	 * @param string    $message Expected failure message.
+	 */
+	public function test_b311_interrupted_download_message( $expected, $prefix, $sent, $message ) {
+		$file = $this->temp_download_path();
+		if ( $prefix > 0 ) {
+			file_put_contents( $file, substr( static::fixture_content( 4096 ), 0, $prefix ) );
+		}
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/partial?size=4096&send=' . $sent ), $file, $expected );
+			$this->fail( 'Expected an interrupted transfer.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( $message, $error->getMessage() );
+			$this->assertNotEmpty( $error->get_message_error_code() );
+		}
+		clearstatcache( true, $file );
+		$this->assertSame( $sent > 0 ? $sent : $prefix, is_file( $file ) ? filesize( $file ) : 0 );
+	}
+
+	/**
+	 * Unknown-size downloads restart even when partial bytes remain on disk.
+	 *
+	 * @return array Message cases.
+	 */
+	public static function interrupted_data_cases() {
+		return array(
+			'no data'       => array( 4096, 0, 0, 'The backup download was interrupted before completing. No partial data was saved. Try the download again.' ),
+			'kept prefix'   => array( 4096, 512, 0, 'The backup download was interrupted before completing. Partial data was kept so the next attempt can resume.' ),
+			'kept new data' => array( 4096, 0, 1024, 'The backup download was interrupted before completing. Partial data was kept so the next attempt can resume.' ),
+			'unknown size'  => array( false, 0, 1024, 'The backup download was interrupted before completing. Partial data was kept. Try the download again.' ),
+		);
+	}
+
+	/**
 	 * Use short timeouts so stall/timeout tests run fast.
 	 *
 	 * @var callable|null

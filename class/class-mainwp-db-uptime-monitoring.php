@@ -713,7 +713,7 @@ KEY idx_wpid_issub (wpid, issub)";
         $sql = $this->wpdb->prepare(
             'SELECT he.* FROM ' . $table_monitor_heartbeat . ' he ' .
             ' WHERE he.monitor_id = %d AND ( he.status = 0 OR he.status = 1 ) AND he.time >= %s ' .
-            ' AND he.importance = 1 ORDER BY he.heartbeat_id ASC ',
+            ' AND he.importance = 1 ORDER BY he.heartbeat_id DESC ', // to fixt DESC to get last heartbeat at first.
             $mo_id,
             $hb_time
         );

@@ -480,7 +480,7 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	public function test_request_follows_one_redirect_to_a_safe_host() {
 		$provider = $this->make_provider(
 			array(
-				$this->response( 301, '', array( 'location' => 'http://127.0.0.1:9000/other-bucket/k.bin' ) ),
+				$this->response( 301, '', array( 'location' => 'https://127.0.0.1:9000/other-bucket/k.bin' ) ),
 				$this->response( 200 ),
 			)
 		);
@@ -488,8 +488,55 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
 
 		$this->assertCount( 2, $this->requests );
-		$this->assertSame( 'http://127.0.0.1:9000/other-bucket/k.bin', $this->requests[1]['url'] );
+		$this->assertSame( 'https://127.0.0.1:9000/other-bucket/k.bin', $this->requests[1]['url'] );
 		$this->assertStringStartsWith( 'AWS4-HMAC-SHA256', $this->requests[1]['args']['headers']['Authorization'] );
+	}
+
+	/**
+	 * An HTTPS request is never re-sent with its body and signature over
+	 * plain HTTP because the endpoint redirected it there.
+	 *
+	 * @return void
+	 */
+	public function test_request_refuses_https_to_http_redirect() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => 'http://127.0.0.1:9000/other-bucket/k.bin' ) ),
+				$this->response( 200 ),
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'An HTTPS to HTTP redirect must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'non-HTTPS', $e->getMessage() );
+		}
+
+		$this->assertCount( 1, $this->requests, 'The follow-up request must not run after a downgrade redirect.' );
+	}
+
+	/**
+	 * An endpoint the operator configured as plain HTTP (self-hosted MinIO)
+	 * still follows a same-scheme redirect.
+	 *
+	 * @return void
+	 */
+	public function test_request_follows_http_redirect_for_http_endpoint() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 301, '', array( 'location' => 'http://127.0.0.1:9000/other-bucket/k.bin' ) ),
+				$this->response( 200 ),
+			),
+			array(
+				'endpoint'   => 'http://127.0.0.1:9000',
+				'path_style' => 1,
+			)
+		);
+
+		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
+		$this->assertCount( 2, $this->requests );
+		$this->assertSame( 'http://127.0.0.1:9000/other-bucket/k.bin', $this->requests[1]['url'] );
 	}
 
 	/**
@@ -501,7 +548,7 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	public function test_request_refuses_redirect_to_unsafe_location() {
 		$provider = $this->make_provider(
 			array(
-				$this->response( 301, '', array( 'location' => 'http://169.254.169.254/latest/meta-data/' ) ),
+				$this->response( 301, '', array( 'location' => 'https://169.254.169.254/latest/meta-data/' ) ),
 			)
 		);
 
@@ -524,8 +571,8 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	public function test_request_follows_at_most_one_redirect_hop() {
 		$provider = $this->make_provider(
 			array(
-				$this->response( 301, '', array( 'location' => 'http://127.0.0.1:9000/hop-a' ) ),
-				$this->response( 301, '', array( 'location' => 'http://127.0.0.1:9000/hop-b' ) ),
+				$this->response( 301, '', array( 'location' => 'https://127.0.0.1:9000/hop-a' ) ),
+				$this->response( 301, '', array( 'location' => 'https://127.0.0.1:9000/hop-b' ) ),
 			)
 		);
 

@@ -315,7 +315,12 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
             $location = (string) wp_remote_retrieve_header( $response, 'location' );
             if ( '' !== $location ) {
                 $redirect_url = \WP_Http::make_absolute_url( $location, $url );
-                $response     = $this->dispatch( $method, $redirect_url, $headers, $body, $extra_args );
+                // The follow-up resends the body and a fresh signature, so an
+                // HTTPS endpoint must not move it onto plain HTTP.
+                if ( 'https' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) && 'https' !== strtolower( (string) wp_parse_url( $redirect_url, PHP_URL_SCHEME ) ) ) {
+                    throw new \RuntimeException( 'Storage endpoint redirected an HTTPS request to a non-HTTPS URL.', 0 );
+                }
+                $response = $this->dispatch( $method, $redirect_url, $headers, $body, $extra_args );
             }
         }
 

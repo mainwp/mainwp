@@ -44,6 +44,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_DB_CONNECTION_LOST = 'mainwp_backup_db_connection_lost';
     const ERR_DB_QUERY_FAILED    = 'mainwp_backup_db_query_failed';
     const ERR_DB_DUMP_EMPTY      = 'mainwp_backup_db_dump_empty';
+    const ERR_DB_WRITE_FAILED    = 'mainwp_backup_db_write_failed';
+    const ERR_DB_RENAME_FAILED   = 'mainwp_backup_db_rename_failed';
 
     // Validation.
     const ERR_FILE_CORRUPT   = 'mainwp_backup_file_corrupt';
@@ -240,6 +242,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_DB_CONNECTION_LOST            => esc_html__( 'The database connection was lost during the backup. The database server may be overloaded. Try running the backup again during low-traffic hours.', 'mainwp' ),
             self::ERR_DB_QUERY_FAILED               => esc_html__( 'Database backup did not complete. The child site may have run out of memory or the database connection was interrupted. Check the child site PHP memory limit and error log.', 'mainwp' ),
             self::ERR_DB_DUMP_EMPTY                 => esc_html__( 'Backup response from the child site did not include the expected files. The child site may need a PHP or MainWP Child plugin update. Verify the child site is running the latest MainWP Child version.', 'mainwp' ),
+            self::ERR_DB_WRITE_FAILED               => esc_html__( 'The database dump could not be written. Check the child site error log and try again.', 'mainwp' ),
+            self::ERR_DB_RENAME_FAILED              => esc_html__( 'The database dump could not be finalized. Check the child site error log and try again.', 'mainwp' ),
             self::ERR_FILE_CORRUPT                  => esc_html__( 'Full site backup did not complete. The child site may have run out of disk space or encountered a file permission issue. Check the child site disk space and error log.', 'mainwp' ),
             self::ERR_FILE_TOO_SMALL                => esc_html__( 'The downloaded backup file is smaller than expected and is likely incomplete. The transfer may have been interrupted. Try running the backup again.', 'mainwp' ),
             self::ERR_HEADER_INVALID                => esc_html__( 'The downloaded backup file does not look like a valid archive. The child site may have returned an error page instead of the backup. Check the child site error log and try again.', 'mainwp' ),

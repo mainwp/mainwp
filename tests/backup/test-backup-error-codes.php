@@ -18,6 +18,32 @@ use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 
 	/**
+	 * Child dump failures need distinct messages instead of the fallback.
+	 *
+	 * @dataProvider database_dump_failure_codes
+	 * @param string $code Child error code.
+	 * @param string $message Child failure message.
+	 */
+	public function test_b312_database_dump_failure_message( $code, $message ) {
+		$actual = MainWP_Backup_Error_Codes::message( $code );
+		$this->assertSame( $message, $actual );
+		$this->assertNotSame( MainWP_Backup_Error_Codes::message( 'unknown_b312_code' ), $actual );
+		$this->assertContains( $code, MainWP_Backup_Error_Codes::get_registered_codes() );
+	}
+
+	/**
+	 * Use the Child's text until the Dashboard copy is finalized.
+	 *
+	 * @return array Dump failure codes and messages.
+	 */
+	public static function database_dump_failure_codes() {
+		return array(
+			'write'  => array( 'mainwp_backup_db_write_failed', 'The database dump could not be written. Check the child site error log and try again.' ),
+			'rename' => array( 'mainwp_backup_db_rename_failed', 'The database dump could not be finalized. Check the child site error log and try again.' ),
+		);
+	}
+
+	/**
 	 * Error codes the child plugin emits; the dashboard registry must know all of them.
 	 *
 	 * @var string[]
@@ -31,6 +57,8 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		'mainwp_backup_db_connection_lost',
 		'mainwp_backup_db_query_failed',
 		'mainwp_backup_db_dump_empty',
+		'mainwp_backup_db_write_failed',
+		'mainwp_backup_db_rename_failed',
 		'mainwp_backup_file_corrupt',
 		'mainwp_backup_file_too_small',
 		'mainwp_backup_zip_failed',

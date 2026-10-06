@@ -111,19 +111,6 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     );
 
     /**
-     * A name followed by a quoted value. Groups: 1 name quote, 2 name, 3 value quote, 4 value.
-     *
-     * Shared by redact_secrets() and sensitive_values() so both find the same pairs.
-     */
-    private const QUOTED_PAIR_PATTERN = '/([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*[:=]\s*([\'"])((?:\\\\.|(?!\3).)*)\3/';
-
-    /**
-     * The unquoted pair of redact_secrets() without its word-start lookbehind, so a name glued
-     * onto the word before it ("12code=", "Requiredpassword=") still matches. Groups: 1 name, 2 value.
-     */
-    private const GLUED_PAIR_PATTERN = '/([A-Za-z0-9_\-]*[A-Za-z_][A-Za-z0-9_\-]*)\s*[:=]\s*(?![\'"])(.+?)(?=(?:\s+|&|;|#)[A-Za-z_][A-Za-z0-9_\-]*\s*[:=]|$)/s';
-
-    /**
      * Markers that mean Cloudflare, another WAF, or a similar edge block.
      *
      * @var array<int,string>
@@ -290,106 +277,51 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
-        // No single way of stripping tags is safe. Spacing every tag stops adjacent elements gluing
-        // a word onto a secret's name ("Requiredpassword="), but splits a name broken by markup
-        // ("pass<strong>word</strong>=", "pass<script></script>word="); joining does the reverse,
-        // and a body can do both at once. Every tag list tried in between leaked one way or the
-        // other. So the excerpt is the spaced text, and every secret the joined text holds, under
-        // a name that is sensitive or ends in a sensitive name, is masked in it before redaction.
-        $text = self::body_text( $body, true );
-        foreach ( self::sensitive_values( self::body_text( $body, false ) ) as $value ) {
-            $chars = preg_split( '//u', (string) preg_replace( '/\s+/u', '', $value ), -1, PREG_SPLIT_NO_EMPTY );
-            if ( empty( $chars ) ) {
-                continue;
-            }
-            // Whitespace between characters, since the spaced text may hold the value split by a tag.
-            // Whole tokens only, so a short value ("code=1") does not eat digits out of other words.
-            $pattern = '/(?<![\p{L}\p{N}_])' . implode( '\s*', array_map( 'preg_quote', $chars, array_fill( 0, count( $chars ), '/' ) ) ) . '(?![\p{L}\p{N}_])/u';
-            $masked  = preg_replace( $pattern, '[redacted]', $text );
-            if ( ! is_string( $masked ) ) {
-                // A value too long to compile as a pattern: withhold the excerpt rather than show it unmasked.
-                return '';
-            }
-            $text = $masked;
-        }
-        $text = self::redact_secrets( $text );
+        $hidden  = esc_html__( 'Placeholder: the response body was hidden because it may contain credentials.', 'mainwp' );
+        $excerpt = '';
 
-        if ( mb_strlen( $text, 'UTF-8' ) > self::BODY_LIMIT ) {
-            $text = mb_substr( $text, 0, self::BODY_LIMIT, 'UTF-8' ) . '...';
+        // Check each rendering independently: tags can split a name or glue it to a prior word.
+        foreach ( array( false, true ) as $spaced ) {
+            $text = self::body_text( $body, $spaced );
+            if ( null === $text ) {
+                return $hidden;
+            }
+            $excerpt = self::redact_secrets( $text );
+            if ( '' !== $text && '' === $excerpt ) {
+                return $hidden;
+            }
         }
 
-        return $text;
+        if ( mb_strlen( $excerpt, 'UTF-8' ) > self::BODY_LIMIT ) {
+            $excerpt = mb_substr( $excerpt, 0, self::BODY_LIMIT, 'UTF-8' ) . '...';
+        }
+
+        return $excerpt;
     }
 
     /**
-     * Plain text of an HTML body, whitespace collapsed.
+     * Plain text of an HTML body, or null if a regex operation fails.
      *
      * @param string $body   Raw response body.
      * @param bool   $spaced True to put a space where each tag was, false to join the text around it.
      *
-     * @return string
+     * @return string|null
      */
     private static function body_text( $body, $spaced ) {
         $html = $spaced ? str_replace( '<', ' <', $body ) : $body;
-        $text = wp_strip_all_tags( $html );
+        // Remove scripts and styles as wp_strip_all_tags() does, checking its regex before stripping.
+        $text = preg_replace( '@<(script|style)[^>]*?>.*?</\\1>@si', '', $html );
+        if ( ! is_string( $text ) || PREG_NO_ERROR !== preg_last_error() ) {
+            return null;
+        }
+        $text = strip_tags( $text ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- wp_strip_all_tags() does not expose script/style regex failures.
         $text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
         $text = preg_replace( '/\s+/u', ' ', $text );
-
-        return trim( (string) $text );
-    }
-
-    /**
-     * Values of name=value / name: value pairs whose name is sensitive or ends in a sensitive name.
-     *
-     * @param string $text Text.
-     *
-     * @return array<int,string>
-     */
-    private static function sensitive_values( $text ) {
-        $values = array();
-        if ( '' === $text ) {
-            return $values;
+        if ( ! is_string( $text ) || PREG_NO_ERROR !== preg_last_error() ) {
+            return null;
         }
 
-        if ( preg_match_all( self::QUOTED_PAIR_PATTERN, $text, $matches, PREG_SET_ORDER ) ) {
-            foreach ( $matches as $match ) {
-                if ( '' !== $match[4] && self::ends_in_sensitive_param( $match[2] ) ) {
-                    $values[] = $match[4];
-                }
-            }
-        }
-
-        if ( preg_match_all( self::GLUED_PAIR_PATTERN, $text, $matches, PREG_SET_ORDER ) ) {
-            foreach ( $matches as $match ) {
-                if ( self::ends_in_sensitive_param( $match[1] ) ) {
-                    $values[] = $match[2];
-                }
-            }
-        }
-
-        return array_values( array_unique( $values ) );
-    }
-
-    /**
-     * Whether a name, or any tail of it, is a sensitive parameter name.
-     *
-     * A name glued onto the word before it ("Requiredpassword") is sensitive by its tail. This
-     * over-matches ordinary words ("monkey"), which costs a masked value, never a shown secret.
-     *
-     * @param string $name Parameter name.
-     *
-     * @return bool
-     */
-    private static function ends_in_sensitive_param( $name ) {
-        $name = (string) $name;
-        $len  = strlen( $name );
-        for ( $i = 0; $i < $len; $i++ ) {
-            if ( self::is_sensitive_param( substr( $name, $i ) ) ) {
-                return true;
-            }
-        }
-
-        return false;
+        return trim( $text );
     }
 
     /**
@@ -822,18 +754,25 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Redact likely secrets from diagnostic text.
+     * Withhold text containing a sensitive name before ':' or '=', or any regex failure.
      *
-     * Quoted values keep their closer so commas, spaces, and similar
-     * characters stay inside the secret. Unquoted values include those
-     * characters and stop at the next name= / name: pair.
+     * Names ending in a sensitive name also count. Otherwise, strip URL credentials,
+     * queries and fragments while keeping the diagnostic text readable.
      *
      * @param string $text Text.
      *
-     * @return string
+     * @return string Safe text, or an empty string when it must be withheld.
      */
     public static function redact_secrets( $text ) {
         if ( ! is_string( $text ) || '' === $text ) {
+            return '';
+        }
+
+        // A zero-width scan checks every position without consuming a prior name or value.
+        // The pattern depends only on the fixed names, never on response values.
+        $pattern = '/(?=(?:' . implode( '|', self::SENSITIVE_PARAM_NAMES ) . ')[\'"]?\s*[:=])/iu';
+        $matched = preg_match( $pattern, $text );
+        if ( false === $matched || PREG_NO_ERROR !== preg_last_error() || 1 === $matched ) {
             return '';
         }
 
@@ -844,36 +783,11 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             },
             $text
         );
-        if ( is_string( $with_urls ) ) {
-            $text = $with_urls;
+        if ( ! is_string( $with_urls ) || PREG_NO_ERROR !== preg_last_error() ) {
+            return '';
         }
 
-        $quoted = preg_replace_callback(
-            self::QUOTED_PAIR_PATTERN,
-            static function ( $matches ) {
-                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $matches[2] ) ) {
-                    return $matches[1] . $matches[2] . $matches[1] . '=[redacted]';
-                }
-                return $matches[0];
-            },
-            $text
-        );
-        if ( is_string( $quoted ) ) {
-            $text = $quoted;
-        }
-
-        $unquoted = preg_replace_callback(
-            '/(?<![A-Za-z0-9_\-])([A-Za-z_][A-Za-z0-9_\-]*)\s*[:=]\s*(?![\'"])(.+?)(?=(?:\s+|&|;|#)[A-Za-z_][A-Za-z0-9_\-]*\s*[:=]|$)/s',
-            static function ( $matches ) {
-                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $matches[1] ) ) {
-                    return $matches[1] . '=[redacted]';
-                }
-                return $matches[0];
-            },
-            $text
-        );
-
-        return is_string( $unquoted ) ? $unquoted : $text;
+        return $with_urls;
     }
 
     /**

@@ -2774,6 +2774,11 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			} else {
 				update_option( 'mainwp_enableNativeBackups', $this->saved_native_flag );
 			}
+			if ( false === $this->saved_db_version ) {
+				delete_site_option( 'mainwp_db_version' );
+			} else {
+				update_site_option( 'mainwp_db_version', $this->saved_db_version );
+			}
 			self::commit_transaction();
 		}
 	}
@@ -2802,6 +2807,12 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN wp_group_id int(11) NOT NULL auto_increment PRIMARY KEY FIRST" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.DirectDatabaseQuery.SchemaChange -- test cleanup, identifiers cannot be prepared.
 			}
 			delete_site_option( MainWP_Install::WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING );
+			if ( false === $this->saved_db_version ) {
+				delete_site_option( 'mainwp_db_version' );
+			} else {
+				update_site_option( 'mainwp_db_version', $this->saved_db_version );
+			}
+			self::commit_transaction();
 		}
 	}
 }

@@ -277,15 +277,23 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
-        // Space before each tag so adjacent elements cannot glue a word onto a secret's
-        // name ("Requiredpassword=") and slip it past redact_secrets().
-        $text = wp_strip_all_tags( str_replace( '<', ' <', $body ) );
+        // Space before block tags only, the way a browser renders the text: adjacent blocks must
+        // not glue a word onto a secret's name ("Requiredpassword="), and inline markup must not
+        // split one ("pass<strong>word</strong>="). Either would slip past redact_secrets().
+        $text = preg_replace(
+            '/<\/?(?:html|head|body|title|p|div|br|hr|li|ul|ol|dl|dt|dd|table|thead|tbody|tfoot|tr|td|th|caption|'
+            . 'h[1-6]|pre|blockquote|section|article|header|footer|nav|aside|main|form|fieldset|legend|address|'
+            . 'figure|figcaption|option|select|textarea|button|label|script|style|noscript)\b/i',
+            ' $0',
+            $body
+        );
+        $text = wp_strip_all_tags( is_string( $text ) ? $text : $body );
         $text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
         $text = preg_replace( '/\s+/u', ' ', $text );
         $text = self::redact_secrets( trim( (string) $text ) );
 
-        if ( strlen( $text ) > self::BODY_LIMIT ) {
-            $text = substr( $text, 0, self::BODY_LIMIT ) . '...';
+        if ( mb_strlen( $text, 'UTF-8' ) > self::BODY_LIMIT ) {
+            $text = mb_substr( $text, 0, self::BODY_LIMIT, 'UTF-8' ) . '...';
         }
 
         return $text;

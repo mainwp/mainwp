@@ -110,6 +110,39 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Inline markup keeps secret names joined for redaction.
+	 */
+	public function test_body_excerpt_redacts_secret_with_inline_markup(): void {
+		$body = '<p>pass<strong>word</strong>=supersecret</p>';
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+
+		$this->assertStringNotContainsString( 'supersecret', $text );
+		$this->assertStringContainsString( 'password=[redacted]', $text );
+	}
+
+	/**
+	 * Adjacent blocks keep secret names separate from preceding words.
+	 */
+	public function test_body_excerpt_redacts_secret_after_adjacent_block(): void {
+		$body = '<div>Access Required</div><div>password=supersecret</div>';
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+
+		$this->assertStringNotContainsString( 'supersecret', $text );
+	}
+
+	/**
+	 * Truncation preserves valid UTF-8 and adds an ellipsis.
+	 */
+	public function test_body_excerpt_truncates_multibyte_characters_safely(): void {
+		$body = str_repeat( 'é', 1300 );
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+
+		$this->assertTrue( mb_check_encoding( $text, 'UTF-8' ) );
+		$this->assertSame( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::BODY_LIMIT + 3, mb_strlen( $text, 'UTF-8' ) );
+		$this->assertStringEndsWith( '...', $text );
+	}
+
+	/**
 	 * Failure HTML labels IPs and always shows outbound IP + User-Agent.
 	 */
 	public function test_failure_html_labels_edge_vs_dashboard_ip_and_user_agent(): void {

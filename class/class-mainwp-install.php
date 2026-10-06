@@ -144,7 +144,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         } elseif ( false === get_option( 'mainwp_enableNativeBackups' ) && false === get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
             // An existing install that never wrote either flag never used backups; default it off,
             // matching a fresh install. A prior legacy-flag value still carries forward via the
-            // <9.0.2.6 migration below, which runs before this option is read again by callers.
+            // <9.0.2.28 migration below, which runs before this option is read again by callers.
             // Mirror the legacy flag here too (via the helper), for the same
             // rollback-window reason as the fresh-install branch above.
             MainWP_Backup_Settings::update_native_backups_option( 0 );

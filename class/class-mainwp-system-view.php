@@ -36,24 +36,26 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      */
     public static function get_mainwp_translations() { // phpcs:ignore -- NOSONAR - complex.
 
-        /**
-         * Method mainwp_add_translation()
-         *
-         * Grab info needed to build the translation array.
-         *
-         * @param mixed $pArray Array of tranlatable text.
-         * @param mixed $pKey Key for each array enty.
-         * @param mixed $pText Text for each array entry.
-         */
-        function mainwp_add_translation( &$pArray, $pKey, $pText ) {
-            if ( ! is_array( $pArray ) ) {
-                $pArray = array();
+        if ( ! function_exists( __NAMESPACE__ . '\\mainwp_add_translation' ) ) {
+            /**
+             * Method mainwp_add_translation()
+             *
+             * Grab info needed to build the translation array.
+             *
+             * @param mixed $pArray Array of tranlatable text.
+             * @param mixed $pKey Key for each array enty.
+             * @param mixed $pText Text for each array entry.
+             */
+            function mainwp_add_translation( &$pArray, $pKey, $pText ) {
+                if ( ! is_array( $pArray ) ) {
+                    $pArray = array();
+                }
+
+                // Keep this normalization aligned with MainWP.I18n.t() in assets/js/mainwp.js.
+                $strippedText = preg_replace( '/[^\p{L}\p{N}_]/u', '_', $pKey );
+
+                $pArray[ $strippedText ] = $pText;
             }
-
-            // Keep this normalization aligned with MainWP.I18n.t() in assets/js/mainwp.js.
-            $strippedText = preg_replace( '/[^\p{L}\p{N}_]/u', '_', $pKey );
-
-            $pArray[ $strippedText ] = $pText;
         }
 
         $mainwpTranslations = array();
@@ -498,7 +500,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::check_rating_notice();
 
         static::render_browser_extensions_notice();
-
     }
 
     /**

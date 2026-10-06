@@ -267,6 +267,37 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
         }
     }
 
+    /** Both post-delete hooks run and success survives throwing listeners. */
+    public function test_review_round_one_delete_site_contains_hook_failures(): void {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $site_id = $this->create_test_site();
+        $fired = array();
+        $on_delete_site = static function ( $site ) use ( &$fired ) {
+            $fired['mainwp_delete_site'] = (int) $site->id;
+            throw new \Error( 'First delete listener failed' );
+        };
+        $on_site_deleted = static function ( $site ) use ( &$fired ) {
+            $fired['mainwp_site_deleted'] = (int) $site->id;
+            throw new \RuntimeException( 'Second delete listener failed' );
+        };
+        add_action( 'mainwp_delete_site', $on_delete_site );
+        add_action( 'mainwp_site_deleted', $on_site_deleted );
+
+        try {
+            $result = $this->execute_ability( 'mainwp/delete-site-v1', array( 'site_id_or_domain' => $site_id, 'confirm' => true ) );
+        } finally {
+            remove_action( 'mainwp_delete_site', $on_delete_site );
+            remove_action( 'mainwp_site_deleted', $on_site_deleted );
+        }
+
+        $this->assertNotWPError( $result );
+        $this->assertTrue( $result['deleted'] );
+        $this->assertFalse( $result['dry_run'] );
+        $this->assertSame( array( 'mainwp_delete_site' => $site_id, 'mainwp_site_deleted' => $site_id ), $fired );
+        $this->assertNull( \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $site_id ) );
+    }
+
     /**
      * Test that a dry-run does not fire deletion hooks or remove the site.
      *

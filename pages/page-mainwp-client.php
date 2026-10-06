@@ -31,6 +31,76 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Check UI scope without the REST session capability requirement.
+     *
+     * @param int  $client_id Client ID.
+     * @param bool $full Require access to every member site.
+     * @return bool Whether the client is in scope.
+     */
+    public static function has_client_access( $client_id, $full = false ) {
+        $allowed = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( 'all' === $allowed ) {
+            return true;
+        }
+        if ( (int) $client_id <= 0 ) {
+            return false;
+        }
+        $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( (int) $client_id, array( 'no_perm_check' => true ) );
+        if ( ! is_array( $sites ) ) {
+            return false;
+        }
+        $ids = array_map( 'intval', wp_list_pluck( $sites, 'id' ) );
+        if ( empty( $ids ) || ! array_intersect( $ids, $allowed ) ) {
+            return false;
+        }
+        return ! $full || ! array_diff( $ids, $allowed );
+    }
+
+    /**
+     * Keep only the clients a restricted user may view: at least one of the client's sites is allowed.
+     *
+     * Judged on the site rows from one batched roster query, never on the GROUP_CONCAT selected_sites
+     * column: MySQL truncates that string at group_concat_max_len, and a cut-off id fragment can match
+     * an allowed site the client does not have.
+     *
+     * @param mixed $clients Client rows, arrays or objects carrying client_id.
+     * @return mixed The input unchanged for unrestricted users or non-arrays, otherwise the visible rows reindexed.
+     */
+    public static function filter_viewable_clients( $clients ) {
+        $allowed = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( 'all' === $allowed || ! is_array( $clients ) ) {
+            return $clients;
+        }
+
+        $client_id = static function ( $client ) {
+            if ( is_array( $client ) ) {
+                return isset( $client['client_id'] ) ? (int) $client['client_id'] : 0;
+            }
+            return is_object( $client ) && isset( $client->client_id ) ? (int) $client->client_id : 0;
+        };
+
+        $visible = array();
+        $ids     = array_filter( array_unique( array_map( $client_id, $clients ) ) );
+        if ( ! empty( $ids ) && ! empty( $allowed ) ) {
+            $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( array_values( $ids ), array( 'no_perm_check' => true ) );
+            foreach ( (array) $sites as $site ) {
+                if ( in_array( (int) $site->id, $allowed, true ) ) {
+                    $visible[ (int) $site->client_id ] = true;
+                }
+            }
+        }
+
+        return array_values(
+            array_filter(
+                $clients,
+                static function ( $client ) use ( $client_id, $visible ) {
+                    return isset( $visible[ $client_id( $client ) ] );
+                }
+            )
+        );
+    }
+
+    /**
      * Current page.
      *
      * @static
@@ -312,6 +382,15 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $client_id     = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
         $delnonce      = isset( $_POST['delnonce'] ) ? sanitize_key( $_POST['delnonce'] ) : '';
 
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ( $client_id && ( ! static::has_client_access( $client_id ) || ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) ) ) ) {
+            static::exit_json(
+                array(
+                    'result' => 'failed',
+                    'error'  => esc_html__( 'Error - insufficient permissions!', 'mainwp' ),
+                )
+            );
+        }
+
         if ( $delete ) {
             if ( ! MainWP_System_Utility::is_valid_custom_nonce( 'client', $iconfile_slug, $delnonce ) ) {
                 die( 'Invalid nonce!' );
@@ -324,10 +403,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'client_id' => $client_id,
                     );
                     MainWP_DB_Client::instance()->update_client( $update );
-                    MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $client->image );
+                    MainWP_Utility::delete_client_image( $client->image );
                 }
             } elseif ( ! empty( $iconfile_slug ) ) {
-                MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $iconfile_slug );
+                MainWP_Utility::delete_client_image( $iconfile_slug );
             }
             wp_die( wp_json_encode( array( 'result' => 'success' ) ) );
         }
@@ -336,7 +415,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $uploaded_icon = 'NOTCHANGE';
-        if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+        if ( is_array( $output ) && isset( $output['filename'] ) && MainWP_Utility::is_valid_client_image_name( $output['filename'] ) ) {
             $uploaded_icon = $output['filename'];
         }
 
@@ -378,6 +457,16 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $contact_id    = isset( $_POST['iconItemId'] ) ? intval( $_POST['iconItemId'] ) : 0;
         $delnonce      = isset( $_POST['delnonce'] ) ? sanitize_key( $_POST['delnonce'] ) : '';
 
+        $contact = $contact_id ? MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $contact_id ) : null;
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ( $contact_id && ( ! $contact || ! static::has_client_access( $contact->contact_client_id ) ) ) ) {
+            static::exit_json(
+                array(
+                    'result' => 'failed',
+                    'error'  => esc_html__( 'Error - insufficient permissions!', 'mainwp' ),
+                )
+            );
+        }
+
         if ( $delete ) {
             if ( ! MainWP_System_Utility::is_valid_custom_nonce( 'contact', $iconfile_slug, $delnonce ) ) {
                 die( 'Invalid nonce!' );
@@ -390,10 +479,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         'contact_id'    => $contact_id,
                     );
                     MainWP_DB_Client::instance()->update_client_contact( $update );
-                    MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $contact_data->contact_image );
+                    MainWP_Utility::delete_client_image( $contact_data->contact_image );
                 }
             } elseif ( ! empty( $iconfile_slug ) ) {
-                MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $iconfile_slug );
+                MainWP_Utility::delete_client_image( $iconfile_slug );
             }
             wp_die( wp_json_encode( array( 'result' => 'success' ) ) );
         }
@@ -402,7 +491,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         $uploaded_icon = 'NOTCHANGE';
-        if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+        if ( is_array( $output ) && isset( $output['filename'] ) && MainWP_Utility::is_valid_client_image_name( $output['filename'] ) ) {
             $uploaded_icon = $output['filename'];
         }
 
@@ -448,6 +537,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
+        if ( $client_id && ( ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! static::has_client_access( $client_id ) ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'client dashboard', 'mainwp' ) );
+            return;
+        }
+
         $params = array(
             'title' => esc_html__( 'Clients', 'mainwp' ),
             'which' => 'overview' === $shownPage ? 'page_clients_overview' : '',
@@ -459,7 +553,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             if ( $client ) {
                 $arr_client      = MainWP_Utility::map_fields( $client, array( 'image', 'selected_icon_info' ), false ); // array map.
                 $client_pic      = MainWP_Client_Handler::get_client_contact_image( $arr_client );
-                $params['title'] = $client_pic . '<div class="content">' . $client->name . '<div class="sub header"><a href="mailto:' . esc_attr( $client->client_email ) . '" target="_blank" style="font-weight:normal!important;">' . $client->client_email . '</a> </div></div>';
+                $params['title'] = $client_pic . '<div class="content">' . esc_html( $client->name ) . '<div class="sub header"><a href="' . esc_url( 'mailto:' . $client->client_email ) . '" target="_blank" style="font-weight:normal!important;">' . esc_html( $client->client_email ) . '</a> </div></div>';
             }
         }
 
@@ -901,15 +995,27 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * Renders the Add New Client form.
      */
     public static function render_add_client() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage clients', 'mainwp' ) );
+            return;
+        }
         $show           = 'Add';
         $client_id      = 0;
         $selected_sites = array();
         $edit_client    = false;
 
         if ( isset( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
-            $show         = 'Edit';
-            $client_id    = intval( $_GET['client_id'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
-            $edit_client  = $client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) : false;
+            $show      = 'Edit';
+            $client_id = intval( $_GET['client_id'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.NonceVerification.Recommended
+            if ( ! static::has_client_access( $client_id ) ) {
+                \mainwp_do_not_have_permissions( esc_html__( 'manage clients', 'mainwp' ) );
+                return;
+            }
+            $edit_client = $client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) : false;
+            if ( ! $edit_client ) {
+                \mainwp_do_not_have_permissions( esc_html__( 'manage clients', 'mainwp' ) );
+                return;
+            }
             $client_sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( $client_id );
 
             if ( $client_sites ) {
@@ -993,6 +1099,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * Renders the Import Client form.
      */
     public static function render_import_clients() {  // phpcs:ignore -- NOSONAR - Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage clients', 'mainwp' ) );
+            return;
+        }
         static::render_header( 'ImportClients' );
         $title_page = esc_html__( 'Import Clients', 'mainwp' );
         // phpcs:disable WordPress.Security.NonceVerification.Missing
@@ -1416,6 +1526,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public static function add_client() { // phpcs:ignore -- NOSONAR -Current complexity is required to achieve desired results. Pull request solutions appreciated.
 
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+            return;
+        }
+
         $selected_sites = ( isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['selected_sites'] ) ) : array(); //phpcs:ignore WordPress.Security.NonceVerification.Missing
         $client_fields  = isset( $_POST['client_fields'] ) ? wp_unslash( $_POST['client_fields'] ) : array(); //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
@@ -1427,6 +1542,47 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
         if ( ! empty( $editing_client_id ) && ! wp_verify_nonce( $_POST['nonce_client_id'], 'editing-client-' . $editing_client_id ) ) { //phpcs:ignore -- NOSONAR - ok.
             die( 'Invalid nonce!' );
+        }
+
+        $current_client = $editing_client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $editing_client_id ) : null;
+        $allowed_sites  = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( ( $editing_client_id && ( ! $current_client || ! static::has_client_access( $editing_client_id ) ) ) || ( 'all' !== $allowed_sites && array_diff( array_map( 'intval', $selected_sites ), $allowed_sites ) ) ) {
+            echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+            return;
+        }
+
+        // Foreign contacts and fields must not authorize a partial client save.
+        $primary_id = isset( $client_fields['default_field']['primary_contact_id'] ) ? intval( $client_fields['default_field']['primary_contact_id'] ) : 0;
+        $primary    = $primary_id ? MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $primary_id ) : null;
+        if ( $primary_id && ( ! $primary || ! $editing_client_id || (int) $primary->contact_client_id !== $editing_client_id ) ) {
+            echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+            return;
+        }
+        foreach ( isset( $client_fields['custom_fields'] ) && is_array( $client_fields['custom_fields'] ) ? $client_fields['custom_fields'] : array() as $field_val ) {
+            $field_id = is_array( $field_val ) ? array_key_first( $field_val ) : 0;
+            $field    = $field_id ? MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id ) : null;
+            if ( ! $field || ( (int) $field->client_id && ( ! $editing_client_id || (int) $field->client_id !== $editing_client_id ) ) ) {
+                echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+                return;
+            }
+        }
+        $contact_ids = isset( $client_fields['contacts_field']['contact_id'] ) && is_array( $client_fields['contacts_field']['contact_id'] ) ? $client_fields['contacts_field']['contact_id'] : array();
+        if ( isset( $client_fields['delele_contacts'] ) && is_array( $client_fields['delele_contacts'] ) ) {
+            $contact_ids = array_merge( $contact_ids, $client_fields['delele_contacts'] );
+        }
+        foreach ( $contact_ids as $contact_id ) {
+            if ( ! $contact_id ) {
+                continue;
+            }
+            $contact = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', intval( $contact_id ) );
+            if ( ! $contact || ! $editing_client_id || (int) $contact->contact_client_id !== $editing_client_id ) {
+                echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+                return;
+            }
+        }
+        if ( $current_client && isset( $client_fields['default_field']['client.suspended'] ) && (int) $client_fields['default_field']['client.suspended'] !== (int) $current_client->suspended && ! static::has_client_access( $editing_client_id, true ) ) {
+            echo wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+            return;
         }
 
         if ( ! isset( $client_fields['default_field']['client.name'] ) || empty( $client_fields['default_field']['client.name'] ) ) {
@@ -1465,8 +1621,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $old_suspended = $new_suspended;
 
         if ( $client_id ) {
-            $current_client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
-            $old_suspended  = $current_client->suspended;
+            $old_suspended = $current_client->suspended;
 
             $client_to_add['client_id'] = $client_id; // update client.
             if ( isset( $client_to_add['created'] ) && ! empty( $client_to_add['created'] ) ) {
@@ -1555,16 +1710,20 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         // compatible with quick setup.
         if ( isset( $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_client_image_uploader']['error']['client_field'] ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $output = MainWP_System_Utility::handle_upload_image( 'client-images', $_FILES['mainwp_client_image_uploader'], 'client_field' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            if ( is_array( $output ) && isset( $output['filename'] ) && ! empty( $output['filename'] ) ) {
+            if ( is_array( $output ) && isset( $output['filename'] ) && MainWP_Utility::is_valid_client_image_name( $output['filename'] ) ) {
                 $client_image = $output['filename'];
             }
         }
 
         $client_data = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id );
+        if ( $client_data && ! MainWP_Utility::is_valid_client_image_name( $client_image ) ) {
+            $client_image = $client_data->image;
+        }
         if ( $client_data && $client_data->image !== $client_image && $client_id ) {
+            // The hidden field is attacker-controlled; only the stored name identifies the old image.
             $old_file = $client_data->image;
             if ( $old_file !== $client_image && ! empty( $old_file ) ) {
-                MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $old_file );
+                MainWP_Utility::delete_client_image( $old_file );
             }
             $update = array(
                 'client_id' => $client_id,
@@ -1640,9 +1799,10 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                         $contact_image = sanitize_text_field( wp_unslash( $_POST['mainwp_add_edit_contact_uploaded_icon_hidden']['contacts_field'][ $indx ] ) ); // phpcs:ignore WordPress.Security.NonceVerification
                     }
                     if ( $contact_data && $contact_data->contact_image !== $contact_image && $contact_id ) {
+                        // The hidden field is attacker-controlled; only the stored name identifies the old image.
                         $old_file = $contact_data->contact_image;
                         if ( $old_file !== $contact_image && ! empty( $old_file ) ) {
-                            MainWP_Utility::instance()->delete_uploaded_icon_file( 'client-images', $old_file );
+                            MainWP_Utility::delete_client_image( $old_file );
                         }
                         $update = array(
                             'contact_id'    => $contact_id,
@@ -2590,6 +2750,19 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         $field_name = isset( $_POST['field_name'] ) ? sanitize_text_field( wp_unslash( $_POST['field_name'] ) ) : '';
         $field_name = trim( $field_name, '[]' );
         // phpcs:enable
+
+        if ( $field_id ) {
+            $owner = MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field_id );
+            if ( ! $owner ) {
+                $return['error'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
+                static::exit_json( $return );
+            }
+            $client_id = (int) $owner->client_id;
+        }
+        if ( $client_id && ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ! static::has_client_access( $client_id ) || ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) ) ) {
+            $return['error'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
+            static::exit_json( $return );
+        }
 
         // update general or individual client field.
         if ( $field_id ) {

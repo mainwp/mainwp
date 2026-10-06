@@ -553,7 +553,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * @param array  $options Email settings.
      * @param object $website Site data.
-     * @param object $current_heartbeat Current heartbeat data.
+     * @param object|false $current_heartbeat Current heartbeat data.
      *
      * @return void.
      */

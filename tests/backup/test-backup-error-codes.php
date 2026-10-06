@@ -18,6 +18,16 @@ use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 
 	/**
+	 * An encryption refusal must reach the UI with its dedicated placeholder.
+	 */
+	public function test_b151_encryption_refusal_is_registered() {
+		$code = 'mainwp_backup_encryption_required';
+		$this->assertContains( $code, MainWP_Backup_Error_Codes::get_registered_codes() );
+		$this->assertSame( 'Placeholder: this backup was created with encryption on, but it could not be encrypted for upload, so it was not uploaded.', MainWP_Backup_Error_Codes::message( $code ) );
+		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( $code ) );
+	}
+
+	/**
 	 * Child dump failures need distinct messages instead of the fallback.
 	 *
 	 * @dataProvider database_dump_failure_codes

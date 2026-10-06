@@ -396,6 +396,32 @@ class MainWP_Backup_Snapshots_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Persist the encryption requirement before enqueue hooks, and retain it
+	 * when a run is replayed after its missing key has been repaired.
+	 */
+	public function test_b151_unarmed_snapshot_keeps_encryption_requirement_on_replay() {
+		update_option( MainWP_Backup_Encryption::ENABLED_OPTION, '1' );
+		$enc = MainWP_Backup_Encryption::instance();
+		$this->assertFalse( $enc->is_armed() );
+		$recorded = array();
+		add_action(
+			'mainwp_backup_snapshot_recorded',
+			function ( $snapshot_id ) use ( &$recorded ) {
+				$recorded[] = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->encryption;
+			}
+		);
+		$id = $this->record( array( 'run_key' => 'b151-unarmed-run' ) );
+		$this->assertGreaterThan( 0, $id );
+		$this->assertSame( array( array( 'required' => 1 ) ), $recorded );
+		$this->assertNull( $enc->load_kek(), 'Recording an unarmed snapshot must not create a replacement KEK.' );
+
+		$enc->set_recovery_passphrase( 'repaired snapshot encryption passphrase' );
+		$this->assertSame( $id, $this->record( array( 'run_key' => 'b151-unarmed-run' ) ) );
+		$this->assertCount( 1, $recorded );
+		$this->assertSame( array( 'required' => 1 ), MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->encryption );
+	}
+
+	/**
 	 * A snapshot's wrapped DEK is bound to its own id: unwrapping it against a
 	 * different snapshot id is rejected, so a catalog-row swap cannot move key
 	 * material between snapshots.

@@ -112,10 +112,11 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_RESTORE_CHILD_UPDATE_REQUIRED = 'mainwp_restore_child_update_required';
 
     // Upload.
-    const ERR_FTP_FAILED     = 'mainwp_backup_ftp_failed';
-    const ERR_DROPBOX_FAILED = 'mainwp_backup_dropbox_failed';
-    const ERR_S3_FAILED      = 'mainwp_backup_s3_failed';
-    const ERR_GCS_FAILED     = 'mainwp_backup_gcs_failed';
+    const ERR_FTP_FAILED          = 'mainwp_backup_ftp_failed';
+    const ERR_DROPBOX_FAILED      = 'mainwp_backup_dropbox_failed';
+    const ERR_S3_FAILED           = 'mainwp_backup_s3_failed';
+    const ERR_GCS_FAILED          = 'mainwp_backup_gcs_failed';
+    const ERR_ENCRYPTION_REQUIRED = 'mainwp_backup_encryption_required';
 
     /**
      * Get all registered error codes.
@@ -277,6 +278,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_DROPBOX_FAILED                => esc_html__( 'Could not upload the backup to Dropbox. Check the Dropbox connection settings and available storage space, then try again.', 'mainwp' ),
             self::ERR_S3_FAILED                     => esc_html__( 'Could not upload the backup to Amazon S3. Check the S3 credentials, bucket name, and permissions, then try again.', 'mainwp' ),
             self::ERR_GCS_FAILED                    => esc_html__( 'Could not upload the backup to Google Cloud Storage. Check the HMAC key, bucket name, and permissions, then try again.', 'mainwp' ),
+            // Placeholder copy for the owner to rewrite.
+            self::ERR_ENCRYPTION_REQUIRED           => esc_html__( 'Placeholder: this backup was created with encryption on, but it could not be encrypted for upload, so it was not uploaded.', 'mainwp' ),
             self::ERR_HASH_MISMATCH                 => esc_html__( 'The downloaded backup file does not match the integrity hash reported by the child site. The file may have been modified or corrupted during the transfer. The local file was removed; try the download again.', 'mainwp' ),
             self::ERR_DL_FILE_NOT_FOUND             => esc_html__( 'The backup file was not found on the child site. It may have been removed by a cleanup. Run a new backup and try again.', 'mainwp' ),
             self::ERR_DL_FILE_CHANGED               => esc_html__( 'The backup file changed on the child site after the download was authorized. Try the download again to get a fresh authorization for the current file.', 'mainwp' ),

@@ -117,6 +117,14 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
 
         $format = array( '%d', '%d', '%s', '%d', '%s', '%s', '%s' );
 
+        // Persist intent with the initial insert, before another finisher or
+        // upload listener can read this row, even when the key is unavailable.
+        $requires_encryption = MainWP_Backup_Encryption::instance()->is_enabled_setting();
+        if ( $requires_encryption ) {
+            $row['encryption'] = '{"required":1}';
+            $format[]          = '%s';
+        }
+
         if ( ! empty( $data['parent_id'] ) ) {
             $row['parent_id'] = (int) $data['parent_id'];
             $format[]         = '%d';
@@ -169,7 +177,7 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
         // it before any upload job can run, so the wrapped DEK is bound to this
         // exact snapshot id. Fail closed: if the metadata cannot be persisted,
         // drop the row so no upload ever ships this snapshot's bytes in clear.
-        if ( MainWP_Backup_Encryption::instance()->is_armed() && ! $this->attach_encryption_meta( $snapshot_id ) ) {
+        if ( $requires_encryption && MainWP_Backup_Encryption::instance()->is_armed() && ! $this->attach_encryption_meta( $snapshot_id ) ) {
             $this->wpdb->delete( $this->table_name( 'wp_backup_snapshot' ), array( 'id' => $snapshot_id ), array( '%d' ) );
             return 0;
         }
@@ -660,8 +668,9 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
      */
     private function attach_encryption_meta( int $snapshot_id ): bool {
         try {
-            $meta = MainWP_Backup_Encryption::instance()->snapshot_encryption_meta( $snapshot_id );
-            $json = wp_json_encode( $meta );
+            $meta             = MainWP_Backup_Encryption::instance()->snapshot_encryption_meta( $snapshot_id );
+            $meta['required'] = 1;
+            $json             = wp_json_encode( $meta );
             if ( false === $json ) {
                 return false;
             }

@@ -1243,6 +1243,163 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Creation-time encryption intent controls uploads even after key repair
+	 * or a setting change. Count every provider PUT, including the manifest.
+	 *
+	 * @dataProvider encryption_creation_states
+	 * @param string $state Encryption state at creation and before upload.
+	 * @param string $outcome Expected upload outcome.
+	 * @param string $mutation Metadata or key damage before upload.
+	 */
+	public function test_b151_encryption_intent_controls_provider_writes( $state, $outcome, $mutation = '' ) {
+		$enc = MainWP_Backup_Encryption::instance();
+		update_option( MainWP_Backup_Encryption::ENABLED_OPTION, 'disabled' === $state ? '' : '1' );
+		if ( 'armed' === $state ) {
+			$this->arm_encryption();
+		}
+
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Encryption intent target',
+				'settings' => array(
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'k',
+					'secret_key' => 's',
+				),
+			)
+		);
+		$task_id = $this->insert_task( array( $dest_id ) );
+		$driver  = MainWP_Backup_Upload_Driver::instance();
+		$driver->init();
+		$snapshot_id = $this->make_snapshot( $this->standard_files(), $task_id );
+		$this->assertGreaterThan( 0, $snapshot_id );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+
+		if ( 'repaired' === $state ) {
+			$enc->set_recovery_passphrase( 'repaired upload encryption passphrase' );
+			$this->assertTrue( $enc->is_armed() );
+		} elseif ( 'toggle-off' === $state ) {
+			update_option( MainWP_Backup_Encryption::ENABLED_OPTION, '' );
+		}
+		if ( '' !== $mutation ) {
+			global $wpdb;
+			$meta             = $snapshot->encryption;
+			$meta['required'] = 1;
+			if ( 'missing-key' === $mutation ) {
+				MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+			} elseif ( 'corrupt-dek' === $mutation ) {
+				$meta['wrapped_dek'] = 'not-valid-base64!';
+			} else {
+				unset( $meta[ $mutation ] );
+			}
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'encryption' => wp_json_encode( $meta ) ), array( 'id' => $snapshot_id ) );
+			$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		}
+
+		$writes  = array();
+		$objects = array();
+		add_filter(
+			'pre_http_request',
+			function ( $pre, $args, $url ) use ( &$writes, &$objects ) {
+				$key    = wp_parse_url( $url, PHP_URL_PATH );
+				$method = strtoupper( $args['method'] );
+				if ( 'PUT' === $method ) {
+					$writes[]        = $key;
+					$objects[ $key ] = $args['body'];
+				}
+				$present = isset( $objects[ $key ] );
+				return array(
+					'headers'  => $present ? array( 'content-length' => (string) strlen( $objects[ $key ] ) ) : array(),
+					'body'     => '',
+					'response' => array(
+						'code'    => $present ? 200 : 404,
+						'message' => $present ? 'OK' : 'Not Found',
+					),
+				);
+			},
+			10,
+			3
+		);
+		$events = array();
+		add_action(
+			'mainwp_backup_upload_failed',
+			function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+
+		$driver->process_pending_jobs( 240 );
+		$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
+		if ( 'refused' === $outcome ) {
+			$this->assertCount( 0, $writes, 'Encryption-required snapshots must refuse before any provider write.' );
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+			$this->assertStringContainsString( '[mainwp_backup_encryption_required]', $job->last_error );
+			$this->assertCount( 1, $events );
+			$this->assertSame( $job->last_error, $events[0]['error'] );
+			$this->assertSame( $snapshot_id, $events[0]['snapshot_id'] );
+			$this->assertSame( 'failed', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+			$this->assertSame( 1, $snapshot->encryption['required'] ?? null );
+			$this->assertSame( $snapshot->encryption, MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->encryption );
+			return;
+		}
+
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status );
+		$this->assertCount( 'encrypted' === $outcome ? 7 : 6, $writes );
+		$this->assertSame( array(), $events );
+		$prefix   = '/4/' . $snapshot_id . '/';
+		$paths    = array_column( $snapshot->archives, 'path', 'file' );
+		$manifest = json_decode( $objects[ $prefix . 'manifest.json' ], true );
+		if ( 'encrypted' === $outcome ) {
+			$this->assertSame( 1, $snapshot->encryption['required'] ?? null );
+			$this->assertSame( 1, $manifest['encryption']['enc'] );
+			$dek = $enc->dek_from_meta( $snapshot->encryption, $snapshot_id, $enc->load_kek() );
+			$this->assertSame( $enc->manifest_hmac( $objects[ $prefix . 'manifest.json' ], $enc->load_kek() ), $objects[ $prefix . 'manifest.json.hmac' ] );
+		} else {
+			$this->assertSame( array(), $snapshot->encryption );
+			$this->assertArrayNotHasKey( 'encryption', $manifest );
+		}
+		foreach ( array( 'small.txt', 'files.list' ) as $file ) {
+			$body = $objects[ $prefix . 'files/' . $file ];
+			if ( 'encrypted' === $outcome ) {
+				$this->assertNotSame( file_get_contents( $paths[ $file ] ), $body );
+				$body = MainWP_Backup_Archive_Cipher::open( $body, $dek, 'snapshot:' . $snapshot_id . ':whole:' . $file );
+			}
+			$this->assertSame( file_get_contents( $paths[ $file ] ), $body );
+		}
+		foreach ( array( 0, 1024, 2048 ) as $offset ) {
+			$slice = substr( file_get_contents( $paths['big.bin'] ), $offset, 1024 );
+			$hash  = hash( MainWP_Backup_Chunker::hash_algo(), $slice );
+			$body  = $objects[ $prefix . 'chunks/' . $hash . '.bin' ];
+			if ( 'encrypted' === $outcome ) {
+				$this->assertNotSame( $slice, $body );
+				$body = MainWP_Backup_Archive_Cipher::open( $body, $dek, 'snapshot:' . $snapshot_id . ':chunk:' . $hash );
+			}
+			$this->assertSame( $slice, $body );
+		}
+	}
+
+	/**
+	 * Encryption state changes must not erase a snapshot's requirement.
+	 *
+	 * @return array Creation states and upload outcomes.
+	 */
+	public static function encryption_creation_states() {
+		return array(
+			'enabled and armed'              => array( 'armed', 'encrypted' ),
+			'enabled and unarmed'            => array( 'unarmed', 'refused' ),
+			'key repaired after creation'    => array( 'repaired', 'refused' ),
+			'disabled at creation'           => array( 'disabled', 'plaintext' ),
+			'toggle disabled after creation' => array( 'toggle-off', 'refused' ),
+			'missing encryption flag'        => array( 'armed', 'refused', 'enc' ),
+			'missing wrapped DEK'            => array( 'armed', 'refused', 'wrapped_dek' ),
+			'corrupt wrapped DEK'            => array( 'armed', 'refused', 'corrupt-dek' ),
+			'key lost before upload'         => array( 'armed', 'refused', 'missing-key' ),
+		);
+	}
+
+	/**
 	 * Two destinations for one snapshot seal under the same per-snapshot DEK,
 	 * so one key recovers the bytes from either copy. The DEK is minted once at
 	 * record time, not per upload job, so the destinations cannot diverge.

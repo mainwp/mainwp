@@ -310,6 +310,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         try {
+            // Check persisted encryption intent before any upload phase can
+            // write archive bytes or a manifest to the provider.
+            $enc = $this->encryption_context_for( $snapshot );
+
             $checkpoint = $job->checkpoint;
             if ( empty( $checkpoint['artifacts'] ) ) {
                 $checkpoint = $this->new_checkpoint( $snapshot );
@@ -330,11 +334,6 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                     return;
                 }
             }
-
-            // Resolve this snapshot's encryption once per tick. An armed
-            // snapshot whose key is unreadable raises here and parks the job
-            // rather than ever uploading its bytes in clear.
-            $enc = $this->encryption_context_for( $snapshot );
 
             $status = $job->status;
 
@@ -826,38 +825,57 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         throw new \RuntimeException( esc_html( 'Chunk bytes are unavailable locally for ' . $artifact['file'] ), 410 );
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- The registry factory returns MainWP_Exception.
     /**
      * Resolve a snapshot's encryption context for a tick: whether to seal, the
      * data key, the dashboard KEK (for the manifest HMAC), and the stored
-     * metadata to echo into the manifest. A plaintext (legacy or unarmed)
-     * snapshot returns a context that seals nothing.
+     * metadata to echo into the manifest. Snapshots with neither a requirement
+     * nor an encrypted marker may use the plaintext context.
      *
      * @param object $snapshot Snapshot row with decoded encryption metadata.
      *
      * @return array
      *
-     * @throws \RuntimeException When the snapshot is encrypted but its key is unreadable.
+     * @throws MainWP_Exception When required encryption metadata or keys are unusable.
      */
     private function encryption_context_for( object $snapshot ): array {
-        $meta = isset( $snapshot->encryption ) ? $snapshot->encryption : array();
-        if ( ! MainWP_Backup_Encryption::meta_is_encrypted( $meta ) ) {
+        $meta      = isset( $snapshot->encryption ) ? $snapshot->encryption : array();
+        $encrypted = MainWP_Backup_Encryption::meta_is_encrypted( $meta );
+        if ( ! $encrypted && empty( $meta['required'] ) ) {
             return array( 'encrypt' => false );
+        }
+
+        if ( ! $encrypted || ! isset( $meta['cipher'], $meta['overhead'], $meta['wrapped_dek'], $meta['kek_version_id'] )
+            || MainWP_Backup_Encryption::CIPHER_ID !== $meta['cipher']
+            || MainWP_Backup_Archive_Cipher::OVERHEAD !== (int) $meta['overhead']
+            || ! is_string( $meta['wrapped_dek'] ) ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
         }
 
         $encryption = MainWP_Backup_Encryption::instance();
         $kek        = $encryption->load_kek();
-        if ( null === $kek ) {
-            throw new \RuntimeException( esc_html( 'Backup encryption key is unavailable; refusing to upload this snapshot in clear.' ) );
+        if ( null === $kek || $encryption->kek_version_id( $kek ) !== $meta['kek_version_id'] ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
+        }
+
+        try {
+            $dek = $encryption->dek_from_meta( $meta, (int) $snapshot->id, $kek );
+        } catch ( \RuntimeException $e ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
+        }
+        if ( MainWP_Backup_Archive_Cipher::KEY_LEN !== strlen( $dek ) ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
         }
 
         return array(
             'encrypt'     => true,
-            'dek'         => $encryption->dek_from_meta( $meta, (int) $snapshot->id, $kek ),
+            'dek'         => $dek,
             'kek'         => $kek,
             'snapshot_id' => (int) $snapshot->id,
             'meta'        => $meta,
         );
     }
+    // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
 
     /**
      * The framing overhead a seal adds, or zero when the context is plaintext.
@@ -933,7 +951,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $store = MainWP_Backup_Upload_Job_Store::instance();
         $code  = (int) $e->getCode();
 
-        $label = self::PRIVATE_ROOT_FAILURE === $code ? MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE : $this->error_code_for_provider( (string) $destination->provider );
+        $label              = self::PRIVATE_ROOT_FAILURE === $code ? MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE : $this->error_code_for_provider( (string) $destination->provider );
+        $encryption_refused = $e instanceof MainWP_Exception && MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED === $e->get_message_error_code();
+        if ( $encryption_refused ) {
+            $label = MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED;
+        }
         $error = '[' . $label . '] ' . $e->getMessage();
 
         // Every outcome write is fenced and checked: a worker whose lease
@@ -948,7 +970,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         $attempts = (int) $job->attempt_count + 1;
-        if ( 410 === $code || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
+        if ( $encryption_refused || 410 === $code || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
             if ( $store->fail_permanent( (int) $job->id, $error, $this->lock_token ) ) {
                 $this->cleanup_staging( $job );
                 $this->fire_upload_failed( $job, $destination, $error );

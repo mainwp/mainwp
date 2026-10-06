@@ -32,6 +32,19 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Reloaded failures use the page's list markup and reopen rollback progress.
+	 */
+	public function test_b194_failed_restore_list_and_rollback_action_present() {
+		$output = $this->render_page();
+		$this->assertStringContainsString( 'id="mainwp-restore-failed-jobs"', $output );
+		$this->assertStringContainsString( 'response.failed_restore_jobs', $output );
+		$this->assertStringContainsString( 'ui divided list', $output );
+		$this->assertStringContainsString( 'mainwp-restore-failed-job', $output );
+		$this->assertStringContainsString( '.text( job.last_error )', $output, 'Failure text must be escaped by jQuery.' );
+		$this->assertStringContainsString( 'startRollback( jobId )', $output );
+	}
+
+	/**
 	 * Upload progress has distinct row and destination labels.
 	 */
 	public function test_upload_status_labels_and_details_present() {

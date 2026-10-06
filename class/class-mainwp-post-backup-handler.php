@@ -275,7 +275,27 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // site, so a freshly loaded page (or a site switch) resumes the
         // progress views instead of looking hung while a restore or an
         // on-demand backup carries on in the background.
+        global $wpdb;
         $active_job  = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id );
+        $failed_jobs = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
+            $wpdb->prepare(
+                'SELECT id, snapshot_id, site_id, status, last_error, checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND status IN ( %s, %s ) ORDER BY id DESC', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
+                $site_id,
+                MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
+                MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED
+            )
+        );
+        $failed_rows = array();
+        foreach ( $failed_jobs as $failed_job ) {
+            $failed_job->checkpoint = json_decode( $failed_job->checkpoint, true );
+            $failed_rows[]          = array(
+                'job_id'       => (int) $failed_job->id,
+                'snapshot_id'  => (int) $failed_job->snapshot_id,
+                'status'       => (string) $failed_job->status,
+                'last_error'   => (string) $failed_job->last_error,
+                'has_rollback' => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $failed_job ),
+            );
+        }
         $manual_task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
         $manual_ids  = MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id );
         sort( $manual_ids, SORT_NUMERIC );
@@ -297,6 +317,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'local_only'            => empty( $manual_ids ),
                 'manual_destinations'   => $manual_destinations,
                 'active_restore_job_id' => null !== $active_job ? (int) $active_job->id : 0,
+                'failed_restore_jobs'   => $failed_rows,
                 'manual_backup_running' => ! empty( $manual_task ) && (int) $manual_task->completed < (int) $manual_task->last_run,
             )
         );
@@ -481,7 +502,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                     'next_retry_at'    => (int) $job->next_retry_at,
                     'artifact_index'   => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
                     'artifact_total'   => count( $plan ),
-                    'has_rollback'     => ! empty( $job->checkpoint['pre_snapshot_artifacts'] ),
+                    'has_rollback'     => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $job ),
                     'cancel_requested' => ! empty( $job->checkpoint['cancel_intent'] ),
                     'sub_type'         => (string) ( $job->checkpoint['sub_type'] ?? '' ),
                     'is_rollback'      => ! empty( $job->checkpoint['is_rollback'] ),

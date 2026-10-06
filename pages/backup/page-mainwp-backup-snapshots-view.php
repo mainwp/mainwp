@@ -138,6 +138,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             <tr><td colspan="<?php echo (int) count( $snapshot_columns ); ?>"><?php echo $locked ? esc_html__( 'Loading backups...', 'mainwp' ) : esc_html__( 'Select a site to list its backups.', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- esc_html__ escapes both branches. ?></td></tr>
                         </tbody>
                     </table>
+                    <div id="mainwp-restore-failed-jobs" style="display:none;">
+                        <?php // TODO: Owner to rewrite placeholder copy. ?>
+                        <h4 class="ui header"><?php esc_html_e( 'Restore history', 'mainwp' ); ?></h4>
+                        <div class="ui divided list"></div>
+                    </div>
                 </div>
 
                 <?php if ( MainWP_Backup_Settings::is_native_backups_enabled() ) : ?>
@@ -580,6 +585,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
                 setSnapshotsPlaceholder( snapshotsPlaceholders.loading );
                 snapshotsTable.clear().draw();
+                $( '#mainwp-restore-failed-jobs' ).hide().find( '.list' ).empty();
                 $.post( ajaxurl, { action: 'mainwp_restore_snapshot_list', security: nonces.list, site_id: siteId }, function ( response ) {
                     if ( siteId !== currentSite ) {
                         return; // A site switch superseded this request; its response must not repaint the newer site's list.
@@ -596,6 +602,26 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     snapshotsTable.clear();
                     snapshotsTable.rows.add( response.snapshots || [] );
                     snapshotsTable.draw();
+
+                    var failedJobs = response.failed_restore_jobs || [];
+                    var $failedList = $( '#mainwp-restore-failed-jobs .list' ).empty();
+                    failedJobs.forEach( function ( job ) {
+                        var $item = $( '<div class="item"></div>' );
+                        if ( job.has_rollback ) {
+                            $( '<div class="right floated content"></div>' ).append(
+                                $( '<button type="button" class="ui mini basic button mainwp-restore-failed-job"></button>' )
+                                    .attr( 'data-job-id', job.job_id )
+                                    .prop( 'disabled', !! response.active_restore_job_id )
+                                    .text( '<?php echo esc_js( esc_html__( 'Roll Back', 'mainwp' ) ); ?>' )
+                            ).appendTo( $item );
+                        }
+                        $( '<div class="content"></div>' ).append(
+                            $( '<div class="header"></div>' ).text( ( statusLabels[ job.status ] || job.status ) + ' #' + job.job_id ),
+                            $( '<div class="description"></div>' ).text( job.last_error )
+                        ).appendTo( $item );
+                        $failedList.append( $item );
+                    } );
+                    $( '#mainwp-restore-failed-jobs' ).toggle( failedJobs.length > 0 );
 
                     // The reload bootstrap: resume what the server says is
                     // running for this site. A restore mid-flight reopens the
@@ -787,7 +813,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     showProgress( data );
                     if ( [ 'completed', 'failed_permanent', 'cancelled' ].indexOf( data.status ) === -1 ) {
                         pollTimer = window.setTimeout( poll, 5000 );
-                    } else if ( 'completed' === data.status ) {
+                    } else if ( 'completed' === data.status || 'failed_permanent' === data.status || 'cancelled' === data.status ) {
                         loadSnapshots( currentSite );
                     }
                 }, 'json' ).fail( function () {
@@ -924,14 +950,31 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }, 'json' );
             } );
 
-            $( '#mainwp-restore-rollback-btn' ).on( 'click', function () {
-                $.post( ajaxurl, { action: 'mainwp_restore_rollback', security: nonces.rollback, job_id: currentJob }, function ( response ) {
+            function startRollback( jobId ) {
+                currentJob = jobId;
+                setPane( false );
+                $( '#mainwp-restore-rollback-btn' ).hide();
+                $( '#mainwp-restore-result-message' ).hide();
+                $.post( ajaxurl, { action: 'mainwp_restore_rollback', security: nonces.rollback, job_id: jobId }, function ( response ) {
                     if ( response.error ) {
                         $( '#mainwp-restore-result-message' ).addClass( 'red' ).text( response.error ).show();
                         return;
                     }
                     startJobFollow( response.job_id );
+                    loadSnapshots( currentSite );
                 }, 'json' );
+            }
+
+            $( '#mainwp-restore-rollback-btn' ).on( 'click', function () {
+                startRollback( currentJob );
+            } );
+
+            $( '#mainwp-restore-failed-jobs' ).on( 'click', '.mainwp-restore-failed-job', function () {
+                var jobId = parseInt( $( this ).attr( 'data-job-id' ), 10 );
+                if ( ! $( '#mainwp-restore-modal' ).modal( 'is active' ) ) {
+                    $( '#mainwp-restore-modal' ).modal( 'show' );
+                }
+                startRollback( jobId );
             } );
 
             $( '#mainwp-restore-close-btn' ).on( 'click', function () {

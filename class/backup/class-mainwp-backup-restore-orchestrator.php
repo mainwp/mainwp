@@ -205,6 +205,38 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Whether this job still owns an available safety backup.
+     *
+     * A successor rollback owns the retry action even when it fails. Its
+     * checkpoint link also prevents a completed rollback from being offered again.
+     *
+     * @param object $job Restore job with a decoded checkpoint.
+     *
+     * @return bool Whether the safety backup is available to this job.
+     */
+    public function has_rollback_source( object $job ): bool {
+        if ( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED === $job->status || empty( $job->checkpoint['pre_snapshot_artifacts'] ) ) {
+            return false;
+        }
+
+        global $wpdb;
+        $checkpoints = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
+            $wpdb->prepare(
+                'SELECT checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND id > %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
+                (int) $job->site_id,
+                (int) $job->id
+            )
+        );
+        foreach ( $checkpoints as $checkpoint_json ) {
+            $checkpoint = json_decode( $checkpoint_json, true );
+            if ( (int) ( $checkpoint['rollback_of'] ?? 0 ) === (int) $job->id ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
      * Start a rollback restore from a completed pre-restore safety
      * backup: its artifacts are still on the child and adopt with zero
      * transfer.
@@ -226,7 +258,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         $artifacts = isset( $failed_job->checkpoint['pre_snapshot_artifacts'] ) ? (array) $failed_job->checkpoint['pre_snapshot_artifacts'] : array();
-        if ( empty( $artifacts ) ) {
+        if ( ! $this->has_rollback_source( $failed_job ) ) {
             throw new MainWP_Exception( esc_html__( 'No pre-restore safety backup is recorded for this restore, so there is nothing to roll back to.', 'mainwp' ) );
         }
 
@@ -246,15 +278,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         $checkpoint = array(
-            'restore_id'  => strtolower( wp_generate_password( 12, false ) ),
-            'sub_type'    => 'full',
-            'is_rollback' => true,
-            'plan'        => $plan,
-            'options'     => array(
+            'restore_id'             => strtolower( wp_generate_password( 12, false ) ),
+            'sub_type'               => 'full',
+            'is_rollback'            => true,
+            'rollback_of'            => (int) $failed_job->id,
+            'pre_snapshot_artifacts' => $artifacts,
+            'plan'                   => $plan,
+            'options'                => array(
                 'pre_snapshot'  => false,
                 'file_rollback' => false,
             ),
-            'transfer'    => array(),
+            'transfer'               => array(),
         );
 
         $job_id = MainWP_Backup_Restore_Job_Store::instance()->create_job( (int) $failed_job->site_id, (int) $failed_job->snapshot_id, $checkpoint );

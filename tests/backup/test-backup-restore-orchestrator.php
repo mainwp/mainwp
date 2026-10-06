@@ -4323,6 +4323,136 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Reload the snapshots list without any popup job state.
+	 *
+	 * @return array Decoded list response.
+	 */
+	private function b194_reload_snapshots() {
+		$nonce                = wp_create_nonce( 'mainwp_restore_snapshot_list' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['site_id']     = (string) $this->site_id;
+		try {
+			return $this->invoke_ajax_handler( 'mainwp_restore_snapshot_list' );
+		} finally {
+			unset( $_POST['security'], $_REQUEST['security'], $_POST['site_id'] );
+		}
+	}
+
+	/**
+	 * A fresh request lists this site's failures and their rollback availability.
+	 */
+	public function test_b194_failed_restore_is_listed_after_reload() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$store     = MainWP_Backup_Restore_Job_Store::instance();
+		$artifacts = array(
+			array(
+				'file' => 'backup-pre.tar.gz',
+				'size' => 1234,
+				'role' => 'full',
+			),
+		);
+		$failed    = $this->make_job(
+			array( 'pre_snapshot_artifacts' => $artifacts ),
+			$store::STATUS_FAILED_PERMANENT,
+			array( 'last_error' => 'Replay failed on table posts' )
+		);
+		$no_source = $this->make_job( array(), $store::STATUS_FAILED_PERMANENT );
+		$foreign   = $store->create_job( $this->create_test_site(), 5, array( 'pre_snapshot_artifacts' => $artifacts ) );
+		$this->assertTrue( $store->fail_permanent( $foreign, 'Foreign failure' ) );
+
+		$response = $this->b194_reload_snapshots();
+		$this->assertArrayHasKey( 'failed_restore_jobs', $response, 'Reload must fetch failed jobs from storage.' );
+		$rows = array_column( $response['failed_restore_jobs'], null, 'job_id' );
+		$this->assertCount( 2, $rows, 'Failures must be scoped to the requested site.' );
+		$this->assertSame( 5, $rows[ $failed->id ]['snapshot_id'] );
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $rows[ $failed->id ]['status'] );
+		$this->assertSame( 'Replay failed on table posts', $rows[ $failed->id ]['last_error'] );
+		$this->assertTrue( $rows[ $failed->id ]['has_rollback'] );
+		$this->assertFalse( $rows[ $no_source->id ]['has_rollback'] );
+		$this->assertSame( 0, $response['active_restore_job_id'] );
+	}
+
+	/**
+	 * A failed rollback retains the safety artifacts and can start another attempt.
+	 */
+	public function test_b194_failed_rollback_keeps_artifacts_and_can_retry() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$store     = MainWP_Backup_Restore_Job_Store::instance();
+		$artifacts = array(
+			array(
+				'file' => 'backup-pre.tar.gz',
+				'size' => 1234,
+				'role' => 'full',
+			),
+		);
+		$failed    = $this->make_job( array( 'pre_snapshot_artifacts' => $artifacts ), $store::STATUS_FAILED_PERMANENT );
+		$id        = $this->orchestrator->initiate_rollback( $failed );
+		$this->assertTrue( $store->set_status( $id, $store::STATUS_RUNNING, array( 'child_task_id' => 'task-rollback' ) ) );
+		$this->responses['restore_task_run'] = array(
+			'task_id'   => 'task-rollback',
+			'phase'     => 'failed',
+			'error'     => 'Rollback replay failed',
+			'sub_state' => array( 'error' => array( 'message' => 'Rollback replay failed' ) ),
+		);
+
+		$rollback = $this->tick( $store->get_job( $id ) );
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $rollback->status );
+		$this->assertSame( $artifacts, $rollback->checkpoint['pre_snapshot_artifacts'] ?? array(), 'The failure path must keep the durable rollback source.' );
+		$response = $this->b194_reload_snapshots();
+		$rows     = array_column( $response['failed_restore_jobs'], null, 'job_id' );
+		$this->assertTrue( $rows[ $id ]['has_rollback'] );
+		$this->assertFalse( $rows[ $failed->id ]['has_rollback'], 'Retry belongs to the failed rollback, not its earlier attempt.' );
+
+		$retry_id = $this->orchestrator->initiate_rollback( $store->get_job( $id ) );
+		$retry    = $store->get_job( $retry_id );
+		$this->assertGreaterThan( $id, $retry_id );
+		$this->assertSame( $artifacts, $retry->checkpoint['pre_snapshot_artifacts'] );
+		$this->assertTrue( $retry->checkpoint['plan'][0]['adopt_only'] );
+		$this->assertSame( 'backup-pre.tar.gz', $retry->checkpoint['plan'][0]['file'] );
+	}
+
+	/**
+	 * Successful rollback removes both its own and its predecessor's actions.
+	 */
+	public function test_b194_successful_rollback_is_not_offered_again() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$store     = MainWP_Backup_Restore_Job_Store::instance();
+		$artifacts = array(
+			array(
+				'file' => 'backup-pre.tar.gz',
+				'size' => 1234,
+				'role' => 'full',
+			),
+		);
+		$failed    = $this->make_job( array( 'pre_snapshot_artifacts' => $artifacts ), $store::STATUS_FAILED_PERMANENT );
+		$id        = $this->orchestrator->initiate_rollback( $failed );
+		$this->assertTrue( $store->set_status( $id, $store::STATUS_VERIFYING ) );
+		$rollback = $this->tick( $store->get_job( $id ) );
+		$this->assertSame( $store::STATUS_COMPLETED, $rollback->status );
+
+		$response = $this->b194_reload_snapshots();
+		$this->assertArrayHasKey( 'failed_restore_jobs', $response );
+		$rows = array_column( $response['failed_restore_jobs'], null, 'job_id' );
+		$this->assertArrayNotHasKey( $id, $rows );
+		$this->assertFalse( $rows[ $failed->id ]['has_rollback'], 'A completed rollback must not revive its predecessor.' );
+		foreach ( array( $failed, $rollback ) as $job ) {
+			$nonce                = wp_create_nonce( 'mainwp_restore_progress' );
+			$_POST['security']    = $nonce;
+			$_REQUEST['security'] = $nonce;
+			$_POST['job_id']      = (string) $job->id;
+			try {
+				$progress = $this->invoke_ajax_handler( 'mainwp_restore_progress' );
+			} finally {
+				unset( $_POST['security'], $_REQUEST['security'], $_POST['job_id'] );
+			}
+			$this->assertFalse( $progress['has_rollback'] );
+		}
+		$this->expectException( MainWP_Exception::class );
+		$this->orchestrator->initiate_rollback( $failed );
+	}
+
+	/**
 	 * A rollback job builds an adopt-only plan from the pre-restore
 	 * safety backup.
 	 */

@@ -63,6 +63,11 @@ class MainWP_Client_Overview_Contacts { // phpcs:ignore Generic.Classes.OpeningB
             return;
         }
 
+        $contact = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'contact_id', $contact_info['contact_id'] );
+        if ( ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! $contact || ! MainWP_Client::has_client_access( $contact->contact_client_id ) ) {
+            return;
+        }
+
         ?>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">

@@ -2331,7 +2331,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         // Check per-site ACLs and filter to allowed sites.
-        $access_check = MainWP_Abilities_Util::check_batch_site_access( $site_ids_or_domains, $input );
+        $access_check            = MainWP_Abilities_Util::check_batch_site_access( $site_ids_or_domains, $input );
+        $access_check['allowed'] = self::unique_update_sites( $access_check['allowed'] );
 
         if ( $dry_run ) {
             return self::get_update_preview(
@@ -3793,7 +3794,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         // Check per-site ACLs and filter to allowed sites.
-        $access_check = MainWP_Abilities_Util::check_batch_site_access( $site_ids_or_domains, $input );
+        $access_check            = MainWP_Abilities_Util::check_batch_site_access( $site_ids_or_domains, $input );
+        $access_check['allowed'] = self::unique_update_sites( $access_check['allowed'] );
 
         if ( $dry_run ) {
             return self::get_update_preview(
@@ -4130,6 +4132,23 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Keep repeated identifiers from counting or dispatching the same site twice.
+     *
+     * @param array $sites Resolved, accessible sites in resolution order.
+     * @return array
+     */
+    private static function unique_update_sites( array $sites ): array {
+        $unique = array();
+        foreach ( $sites as $site ) {
+            $site_id = (int) $site->id;
+            if ( ! isset( $unique[ $site_id ] ) ) {
+                $unique[ $site_id ] = $site;
+            }
+        }
+        return array_values( $unique );
+    }
+
+    /**
      * Build a read-only plan using the execution path's ignore filters.
      *
      * @param array $sites          Resolved, accessible sites in resolution order.
@@ -4139,6 +4158,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function build_update_plan( array $sites, array $types, array $specific_items ): array {
         global $wpdb;
+
+        $sites = self::unique_update_sites( $sites );
 
         // Read the same default global settings as execution, without creating a missing row.
         $table = MainWP_DB_Common::instance()->get_table_name( 'users' );

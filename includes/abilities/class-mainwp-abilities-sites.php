@@ -1915,7 +1915,11 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
          *
          * @since 3.4
          */
-        do_action( 'mainwp_delete_site', $site );
+        try {
+            do_action( 'mainwp_delete_site', $site );
+        } catch ( \Throwable $e ) {
+            MainWP_Logger::instance()->debug( 'mainwp_delete_site listener failed: ' . $e->getMessage() );
+        }
 
         /**
          * Fires immediately after a website is deleted.
@@ -1924,7 +1928,11 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
          *
          * @param object $website Website data.
          */
-        do_action( 'mainwp_site_deleted', $site );
+        try {
+            do_action( 'mainwp_site_deleted', $site );
+        } catch ( \Throwable $e ) {
+            MainWP_Logger::instance()->debug( 'mainwp_site_deleted listener failed: ' . $e->getMessage() );
+        }
 
         return array(
             'dry_run'      => false,

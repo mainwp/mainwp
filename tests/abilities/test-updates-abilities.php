@@ -3828,6 +3828,124 @@ class MainWP_Updates_Abilities_Test extends MainWP_Abilities_Test_Case {
 		return [ [ 'mainwp/run-updates-v1' ], [ 'mainwp/update-all-v1' ] ];
 	}
 
+	public static function duplicate_update_selections(): array {
+		$cases = [];
+		foreach ( self::queued_execution_abilities() as [ $ability ] ) {
+			$cases[ $ability . '-id' ] = [ $ability, false ];
+			$cases[ $ability . '-domain' ] = [ $ability, true ];
+		}
+		return $cases;
+	}
+
+	/** @dataProvider duplicate_update_selections */
+	public function test_update_duplicate_selection_preview_counts_once( $ability, $use_domain ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site( [ 'url' => 'https://test-duplicate.example.org/' ] );
+		$this->seed_gate_updates( $site_id );
+		$result = $this->execute_ability( $ability, [
+			'site_ids_or_domains' => [ $site_id, $use_domain ? 'test-duplicate.example.org' : $site_id ],
+			'types' => [ 'core' ],
+			'dry_run' => true,
+		] );
+		$this->assertNotWPError( $result );
+		$this->assertSame( 1, $result['would_affect']['summary']['site_count'] );
+		$this->assertSame( 1, $result['count'] );
+		$this->assertSame( [ $site_id ], array_column( $result['would_affect']['sites'], 'site_id' ) );
+	}
+
+	/** @dataProvider duplicate_update_selections */
+	public function test_update_duplicate_selection_dispatches_once_in_order( $ability, $use_domain ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$first = $this->create_test_site( [ 'url' => 'https://test-duplicate.example.org/' ] );
+		$second = $this->create_test_site();
+		$this->seed_gate_updates( $first );
+		$this->seed_gate_updates( $second );
+		$calls = &$this->record_update_calls();
+		$result = $this->execute_ability( $ability, [
+			'site_ids_or_domains' => [ $first, $second, $use_domain ? 'test-duplicate.example.org' : $first ],
+			'types' => [ 'core' ],
+			'confirm' => true,
+		] );
+		$this->assertNotWPError( $result );
+		$this->assertSame( [ $first, $second ], array_column( $calls, 'site_id' ) );
+		$this->assertSame( 2, $result['summary']['total_updated'] );
+		$this->assertSame( 2, $result['summary']['sites_updated'] );
+	}
+
+	/** @dataProvider duplicate_update_selections */
+	public function test_update_duplicate_selection_stays_immediate( $ability, $use_domain ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site( [ 'url' => 'https://test-duplicate.example.org/' ] );
+		$this->seed_gate_updates( $site_id );
+		$calls = &$this->record_update_calls();
+		$threshold = static function () { return 1; };
+		add_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		try {
+			$input = [ 'site_ids_or_domains' => [ $site_id, $use_domain ? 'test-duplicate.example.org' : $site_id ], 'types' => [ 'core' ] ];
+			$preview = $this->execute_ability( $ability, $input + [ 'dry_run' => true ] );
+			$this->assertNotWPError( $preview );
+			$this->assertFalse( $preview['would_affect']['summary']['queued'] );
+			$result = $this->execute_ability( $ability, $input + [ 'confirm' => true ] );
+			$this->assertNotWPError( $result );
+			if ( isset( $result['job_id'] ) ) {
+				$this->track_update_job( $result['job_id'] );
+			}
+			$this->assertArrayNotHasKey( 'queued', $result );
+			$this->assertSame( [ $site_id ], array_column( $calls, 'site_id' ) );
+		} finally {
+			remove_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		}
+	}
+
+	/** @dataProvider queued_execution_abilities */
+	public function test_update_duplicate_selection_queues_unique_roster( $ability ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$first = $this->create_test_site( [ 'url' => 'https://test-duplicate.example.org/' ] );
+		$second = $this->create_test_site();
+		$calls = &$this->record_update_calls();
+		$threshold = static function () { return 1; };
+		add_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		try {
+			$result = $this->execute_ability( $ability, [ 'site_ids_or_domains' => [ $second, $first, $second, 'test-duplicate.example.org' ], 'types' => [ 'core' ], 'confirm' => true ] );
+			$this->assertNotWPError( $result );
+			$this->track_update_job( $result['job_id'] );
+			$this->assertTrue( $result['queued'] );
+			$job = get_transient( 'mainwp_update_job_' . $result['job_id'] );
+			$this->assertSame( [ $second, $first ], $job['sites'] );
+			$this->assertSame( 2, $job['total'] );
+			$this->assertSame( 2, $result['updates_queued'] );
+			$this->assertSame( [], $calls );
+		} finally {
+			remove_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		}
+	}
+
+	public function test_update_duplicate_selection_plan_keeps_first_integer_id() {
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site( [ 'name' => 'First Site' ] );
+		$this->seed_gate_updates( $site_id );
+		$site = MainWP_Abilities_Util::resolve_site( $site_id );
+		$duplicate = clone $site;
+		$duplicate->id = (string) $site_id;
+		$duplicate->name = 'Later Duplicate';
+		$threshold = static function () { return 1; };
+		add_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		try {
+			$plan = MainWP_Abilities_Updates::build_update_plan( [ $site, $duplicate ], [ 'core' ], [] );
+			$this->assertSame( 1, $plan['summary']['site_count'] );
+			$this->assertSame( 1, $plan['summary']['item_count'] );
+			$this->assertFalse( $plan['summary']['queued'] );
+			$this->assertCount( 1, $plan['sites'] );
+			$this->assertSame( 'First Site', $plan['sites'][0]['site_name'] );
+		} finally {
+			remove_filter( 'mainwp_abilities_batch_threshold', $threshold );
+		}
+	}
+
 	/** @dataProvider queued_execution_abilities */
 	public function test_update_queued_execution_envelopes_validate( $ability_name ) {
 		$this->skip_if_no_abilities_api();

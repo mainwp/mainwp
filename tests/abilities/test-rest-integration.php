@@ -230,12 +230,14 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 		// Backup superglobals.
 		$original_get    = $_GET;
 		$original_server = $_SERVER;
+		$original_query_vars = $GLOBALS['wp']->query_vars;
 
 		// Set up authentication context.
 		$_GET['consumer_key']    = $this->consumer_key;
 		$_GET['consumer_secret'] = $this->consumer_secret;
 		$_SERVER['HTTPS']        = 'on';            // Simulate SSL for authentication to work.
-		$_SERVER['REQUEST_URI']  = '/wp-json' . $route; // For is_request_to_rest_api() check.
+		$_SERVER['REQUEST_URI']  = '/wp-json' . $route;
+		$GLOBALS['wp']->query_vars['rest_route'] = $route;
 
 		// Reset authentication singleton to force fresh authentication.
 		// This prevents stale state from previous tests from interfering.
@@ -261,6 +263,7 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 		// Restore superglobals.
 		$_GET    = $original_get;
 		$_SERVER = $original_server;
+		$GLOBALS['wp']->query_vars = $original_query_vars;
 
 		return $response;
 	}

@@ -16,6 +16,62 @@ namespace MainWP\Dashboard\Tests;
  */
 class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //phpcs:ignore -- NOSONAR - multi methods.
 
+	public function test_c3_unignore_discovery_and_add_only_annotations() {
+		$this->skip_if_no_abilities_api();
+		$ability = wp_get_ability( 'mainwp/unignore-site-updates-v1' );
+		$this->assertNotNull( $ability );
+		$this->assertSame( 'mainwp-updates', $ability->get_category() );
+		$meta = $ability->get_meta();
+		$this->assertTrue( $meta['show_in_rest'] );
+		$this->assertFalse( $meta['annotations']['readonly'] );
+		$this->assertTrue( $meta['annotations']['destructive'] );
+		$this->assertTrue( $meta['annotations']['idempotent'] );
+		$this->assertStringStartsWith( 'Removes update holds on the Dashboard. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user.', $meta['annotations']['instructions'] );
+		$schema = $ability->get_input_schema();
+		$this->assertSame( [ 'site_id_or_domain', 'type' ], $schema['required'] );
+		$this->assertSame( [ 'core', 'plugin', 'theme' ], $schema['properties']['type']['enum'] );
+		$this->assertSame( 1, $schema['properties']['slugs']['minItems'] );
+		foreach ( [ 'confirm', 'dry_run' ] as $flag ) {
+			$this->assertSame( 'boolean', $schema['properties'][ $flag ]['type'] );
+			$this->assertFalse( $schema['properties'][ $flag ]['default'] );
+		}
+		$output = $ability->get_output_schema();
+		$this->assertCount( 2, $output['oneOf'] );
+		foreach ( [ true, false ] as $index => $value ) {
+			$this->assertSame( $value, $output['oneOf'][ $index ]['properties']['dry_run']['const'] );
+			$this->assertContains( 'dry_run', $output['oneOf'][ $index ]['required'] );
+		}
+		foreach ( [ 'set-ignored-updates', 'ignore-site-core', 'ignore-site-plugins', 'ignore-site-themes' ] as $name ) {
+			$old = wp_get_ability( 'mainwp/' . $name . '-v1' );
+			$annotations = $old->get_meta()['annotations'];
+			$this->assertFalse( $annotations['readonly'] );
+			$this->assertFalse( $annotations['destructive'] );
+			$this->assertTrue( $annotations['idempotent'] );
+			$this->assertStringContainsString( 'mainwp/unignore-site-updates-v1', $annotations['instructions'] );
+			$this->assertSame( 'set-ignored-updates' === $name ? [ 'ignore', 'unignore' ] : [ 'add', 'remove' ], $old->get_input_schema()['properties']['action']['enum'] );
+		}
+	}
+
+	public static function c3_hold_ability_instruction_sentences(): array {
+		$replacement = 'To remove holds, use mainwp/unignore-site-updates-v1.';
+		return [
+			'set-ignored-updates' => [ 'mainwp/set-ignored-updates-v1', $replacement ],
+			'ignore-site-core' => [ 'mainwp/ignore-site-core-v1', $replacement ],
+			'ignore-site-plugins' => [ 'mainwp/ignore-site-plugins-v1', $replacement ],
+			'ignore-site-themes' => [ 'mainwp/ignore-site-themes-v1', $replacement ],
+			'unignore-site-updates' => [ 'mainwp/unignore-site-updates-v1', 'Global holds and whole-site ignore flags remain in effect.' ],
+		];
+	}
+
+	/** @dataProvider c3_hold_ability_instruction_sentences */
+	public function test_c3_hold_ability_description_does_not_repeat_instructions( $name, $sentence ) {
+		$this->skip_if_no_abilities_api();
+		$ability = wp_get_ability( $name );
+		$this->assertNotNull( $ability );
+		$this->assertStringContainsString( strtolower( $sentence ), strtolower( $ability->get_meta()['annotations']['instructions'] ) );
+		$this->assertStringNotContainsString( strtolower( $sentence ), strtolower( $ability->get_description() ) );
+	}
+
 	/**
 	 * Test that all MainWP abilities are discoverable.
 	 *
@@ -33,7 +89,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			}
 		);
 
-		// Verify expected abilities exist (at least these 9).
+		// Verify the expected abilities exist.
 		$expected = [
 			'mainwp/list-sites-v1',
 			'mainwp/get-site-v1',
@@ -44,6 +100,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			'mainwp/run-updates-v1',
 			'mainwp/list-ignored-updates-v1',
 			'mainwp/set-ignored-updates-v1',
+			'mainwp/unignore-site-updates-v1',
 		];
 
 		$ability_names = array_map(
@@ -138,6 +195,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			'mainwp/list-ignored-updates-v1' => [ 'ignored', 'total' ],
 			// Set ignored echoes back the action performed.
 			'mainwp/set-ignored-updates-v1'  => [ 'success', 'action', 'site_id', 'type', 'slug' ],
+			'mainwp/unignore-site-updates-v1' => [ 'dry_run', 'would_affect', 'count', 'warnings', 'errors', 'removed', 'not_held' ],
 		];
 
 		foreach ( $abilities_with_expected_output as $name => $expected_keys ) {
@@ -216,7 +274,16 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 		$write_abilities = [
 			'mainwp/sync-sites-v1'          => true,  // Syncing same sites again has no additional effect.
 			'mainwp/run-updates-v1'         => false, // Each run may apply different updates.
+			'mainwp/update-all-v1'          => false,
+			'mainwp/update-site-core-v1'   => false,
+			'mainwp/update-site-plugins-v1' => false,
+			'mainwp/update-site-themes-v1'  => false,
+			'mainwp/update-site-translations-v1' => false,
 			'mainwp/set-ignored-updates-v1' => true,  // Ignoring same item again has no additional effect.
+			'mainwp/ignore-site-core-v1' => true,
+			'mainwp/ignore-site-plugins-v1' => true,
+			'mainwp/ignore-site-themes-v1' => true,
+			'mainwp/unignore-site-updates-v1' => true,
 		];
 
 		// Check readonly abilities - all should be idempotent.
@@ -252,7 +319,12 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 
 			$annotations = $meta['annotations'];
 			$this->assertFalse( $annotations['readonly'], "Ability {$name} should not be readonly." );
-			$this->assertFalse( $annotations['destructive'], "Ability {$name} should not be destructive." );
+			$expected_destructive = in_array( $name, [
+				'mainwp/run-updates-v1', 'mainwp/update-all-v1', 'mainwp/update-site-core-v1',
+				'mainwp/update-site-plugins-v1', 'mainwp/update-site-themes-v1', 'mainwp/update-site-translations-v1',
+				'mainwp/unignore-site-updates-v1',
+			], true );
+			$this->assertSame( $expected_destructive, $annotations['destructive'], "Ability {$name} destructive annotation should match its update behavior." );
 
 			// Check idempotent flag matches expected value.
 			if ( isset( $annotations['idempotent'] ) ) {
@@ -347,6 +419,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			'mainwp/run-updates-v1',
 			'mainwp/list-ignored-updates-v1',
 			'mainwp/set-ignored-updates-v1',
+			'mainwp/unignore-site-updates-v1',
 		];
 
 		foreach ( $update_abilities as $name ) {

@@ -1016,10 +1016,13 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param mixed $clone_url URL to Clone to.
      * @param bool  $clone_site_id Cloned Site ID.
      *
-     * @return mixed false|array Array => "Success".
+     * @return mixed false|array False when verification, input, or the staging
+     *                          check fails. An error array when the clone is
+     *                          missing or the database delete returned false.
+     *                          Result SUCCESS when the delete did not return
+     *                          false. Zero rows is still success.
      *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::delete_website_favicon()
      */
     public static function hook_delete_clone_site( $pluginFile, $key, $clone_url = '', $clone_site_id = false ) { //phpcs:ignore -- NOSONAR - complex.
         if ( ! static::hook_verify( $pluginFile, $key ) ) {
@@ -1055,27 +1058,21 @@ class MainWP_Extensions_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 return false;
             }
 
-            MainWP_System_Utility::get_wp_file_system();
+            // Same favicon cleanup as the manage-sites handler, still before the DB delete.
+            MainWP_Manage_Sites_Handler::delete_website_favicon( $clone_site );
 
-            /**
-             * WordPress files system object.
-             *
-             * @global object
-             */
-            global $wp_filesystem;
+            $removed = MainWP_DB::instance()->remove_website( $clone_site->id );
 
-            $favi = MainWP_DB::instance()->get_website_option( $clone_site, 'favi_icon', '' );
-            if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $clone_site->id . '-' ) ) ) {
-                $dirs = MainWP_System_Utility::get_icons_dir();
-                if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
-                    $wp_filesystem->delete( $dirs[0] . $favi );
-                }
+            // Same success test as the manage-sites handler and execute_delete_site():
+            // false is a database error. Zero rows still fires the hooks.
+            if ( false === $removed ) {
+                return array( 'error' => esc_html__( 'Failed to delete the clone website', 'mainwp' ) );
             }
-
-            MainWP_DB::instance()->remove_website( $clone_site->id );
 
             /** This action is documented in pages\page-mainwp-manage-sites-handler.php */
             do_action( 'mainwp_delete_site', $clone_site );
+            /** This action is documented in pages\page-mainwp-manage-sites-handler.php */
+            do_action( 'mainwp_site_deleted', $clone_site );
             return array( 'result' => 'SUCCESS' );
         }
 

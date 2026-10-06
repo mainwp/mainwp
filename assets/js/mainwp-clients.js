@@ -48,6 +48,8 @@ jQuery(function () {
       jQuery.post(ajaxurl, data, function (response) {
         if (response.success) {
           rowElement.html('<td colspan="8"><i class="green check icon"></i> ' + response.result + '</td>');
+        } else if (response.error) {
+          mainwp_set_message_zone('#mainwp-message-zone', jQuery('<div>').text(response.error).html(), 'red');
         }
       }, 'json');
     }
@@ -75,6 +77,8 @@ jQuery(function () {
         if (response === 'success') {
             $button.text(new_status === 0 ? MainWP.I18n.t('Suspend Sites') : MainWP.I18n.t('Unsuspend Sites'));
             $button.attr('suspend-status', new_status);
+        } else if (response === 'Error - insufficient permissions!') {
+            mainwp_set_message_zone('#mainwp-message-zone', jQuery('<div>').text(response).html(), 'red');
         }
     });
 });
@@ -170,6 +174,7 @@ let bulkManageClientsMaxThreads = mainwpParams['maximumInstallUpdateRequests'] =
 let bulkManageClientsCurrentThreads = 0;
 let bulkManageClientsTotal = 0;
 let bulkManageClientsFinished = 0;
+let bulkManageClientsFailed = false;
 let bulkManageClientsTaskRunning = false;
 
 // Trigger Manage Bulk Actions
@@ -215,6 +220,11 @@ let mainwp_manageclients_bulk_remove_next = function () {
     mainwp_manageclients_bulk_remove_specific(checkedBox);
   }
   if ((bulkManageClientsTotal > 0) && (bulkManageClientsFinished == bulkManageClientsTotal)) { // NOSONAR -- modified out side the function.
+    bulkManageClientsTaskRunning = false;
+    if (bulkManageClientsFailed) {
+      setHtml('#mainwp-message-zone-client', MainWP.I18n.t("Process completed."));
+      return;
+    }
     setHtml('#mainwp-message-zone-client', MainWP.I18n.t("Process completed. Reloading page..."));
     setTimeout(function () {
         mainwp_forceReload();
@@ -247,16 +257,25 @@ let mainwp_manageclients_bulk_remove_specific = function (pCheckedBox) {
     } else if (response.success == 'SUCCESS') {
       result = MainWP.I18n.t('The client has been removed.');
     }
+    if (error != '' || response.success != 'SUCCESS') {
+      error = error || response.result || response.message || MainWP.I18n.t('Undefined error. Please try again.');
+      bulkManageClientsFailed = true;
+    }
 
     if (error == '') {
         rowObj.html('<td colspan="999"><i class="green check icon"></i> ' + result + '</td>');
     } else {
-        rowObj.html('<td colspan="999"><i class="red times icon"></i> ' + error + '</td>');
+        // Server messages arrive HTML-escaped once; decode the entities in an inert document and insert the result as text so no markup is interpreted.
+        let errorText = new DOMParser().parseFromString(String(error), 'text/html').body.textContent;
+        rowObj.empty().append(jQuery('<td colspan="999"><i class="red times icon"></i> </td>').append(document.createTextNode(errorText)));
     }
 
-    setTimeout(function () {
-      jQuery('tr[clientid=' + id + ']').fadeOut(1000);
-    }, 3000);
+    // A refused delete keeps the client, so its row stays visible with the error.
+    if (error == '') {
+      setTimeout(function () {
+        jQuery('tr[clientid=' + id + ']').fadeOut(1000);
+      }, 3000);
+    }
 
     mainwp_manageclients_bulk_remove_next();
   }, 'json');
@@ -269,6 +288,7 @@ let manageclients_bulk_init = function () {
     bulkManageClientsCurrentThreads = 0;
     bulkManageClientsTotal = 0;
     bulkManageClientsFinished = 0;
+    bulkManageClientsFailed = false;
     jQuery('#mainwp-manage-sites-body-table .check-column INPUT:checkbox').each(function () {
       jQuery(this).attr('status', 'queue')
     });
@@ -471,10 +491,11 @@ jQuery(document).on('click', '#bulk_add_multi_create_client', function (e) {
     jQuery.post(ajaxurl, data, function (response) {
       if (response?.success) {
         mainwp_forceReload('admin.php?page=mainwp-setup&step=monitoring&message=1');
-      } else if (response?.error) {
-        mainwp_set_message_zone('#mainwp-message-zone', response.error, 'red');
       } else {
-        mainwp_set_message_zone('#mainwp-message-zone', MainWP.I18n.t('Undefined error. Please try again.'), 'red');
+        const error = typeof response?.data === 'string' && response.data.trim() !== '' ? response.data : response?.error || MainWP.I18n.t('Undefined error. Please try again.');
+        // The handler escapes its messages and strips tags in its catch; escaping again would show translated quotes as entities.
+        mainwp_set_message_zone('#mainwp-message-zone', error, 'red');
+        mainwp_set_message_zone('#mainwp-message-zone-client', '');
       }
       jQuery('#bulk_add_multi_create_client').attr('disabled', false); // enable button
     });

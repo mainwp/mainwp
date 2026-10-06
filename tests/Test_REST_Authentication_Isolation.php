@@ -34,8 +34,10 @@ class Test_REST_Authentication_Isolation extends \WP_UnitTestCase {
 		// Consider adding a reset() helper method to MainWP_REST_Authentication in future.
 		\MainWP_REST_Authentication::$instance = null;
 
-		// Set up the request URI.
-		$_SERVER['REQUEST_URI'] = $request_uri;
+		// The classifier reads the route WordPress dispatches, which for these URIs is the
+		// path after the REST prefix.
+		$_SERVER['REQUEST_URI']                  = $request_uri;
+		$GLOBALS['wp']->query_vars['rest_route'] = 0 === strpos( $request_uri, '/wp-json/' ) ? substr( $request_uri, strlen( '/wp-json' ) ) : '';
 
 		$auth       = \MainWP_REST_Authentication::get_instance();
 		$reflection = new \ReflectionMethod( $auth, 'is_request_to_rest_api' );
@@ -48,7 +50,7 @@ class Test_REST_Authentication_Isolation extends \WP_UnitTestCase {
 	 * Clean up after each test.
 	 */
 	public function tearDown(): void {
-		unset( $_SERVER['REQUEST_URI'] );
+		unset( $_SERVER['REQUEST_URI'], $GLOBALS['wp']->query_vars['rest_route'] );
 		\MainWP_REST_Authentication::$instance = null;
 		parent::tearDown();
 	}
@@ -155,6 +157,21 @@ class Test_REST_Authentication_Isolation extends \WP_UnitTestCase {
 			$this->is_mainwp_rest_request( '' ),
 			'Empty REQUEST_URI should return false'
 		);
+	}
+
+	/**
+	 * Test that a MainWP-looking REQUEST_URI is ignored when WordPress is not dispatching a REST route.
+	 */
+	public function test_mainwp_request_uri_without_rest_route_is_not_recognized(): void {
+		\MainWP_REST_Authentication::$instance = null;
+		$_SERVER['REQUEST_URI']                  = '/wp-admin/admin-ajax.php?x=/wp-json/mainwp/v2/sites';
+		$GLOBALS['wp']->query_vars['rest_route'] = '';
+
+		$auth       = \MainWP_REST_Authentication::get_instance();
+		$reflection = new \ReflectionMethod( $auth, 'is_request_to_rest_api' );
+		$reflection->setAccessible( true );
+
+		$this->assertFalse( $reflection->invoke( $auth ), 'REQUEST_URI alone must not classify a request as MainWP REST' );
 	}
 
 	/**

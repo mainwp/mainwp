@@ -17,6 +17,18 @@ use MainWP\Dashboard\MainWP_Abilities_Util;
 
 class Test_Abilities_Operation_Rights_Util extends \WP_UnitTestCase {
 
+	public function test_c3_unignore_maps_to_ignore_unignore_right() {
+		$map = MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS;
+		$this->assertArrayHasKey( 'mainwp/unignore-site-updates-v1', $map );
+		$this->assertSame( 'ignore_unignore_updates', $map['mainwp/unignore-site-updates-v1'] );
+		$this->assertSame( [ 'ignore_unignore_updates' ], MainWP_Abilities_Util::required_rights_for_ability( 'mainwp/unignore-site-updates-v1' ) );
+		$this->withhold_right( 'ignore_unignore_updates' );
+		$callback = MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/unignore-site-updates-v1', static function () { return true; } );
+		$result = $callback( [ 'confirm' => true ] );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_insufficient_right', $result->get_error_code() );
+	}
+
 	/**
 	 * The exact right filter callback added by this test, for targeted removal.
 	 * Never remove_all_filters on a shared hook (destabilises unrelated tests).

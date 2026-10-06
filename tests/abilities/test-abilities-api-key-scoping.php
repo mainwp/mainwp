@@ -149,7 +149,7 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $outside = $this->create_test_site();
         $this->restrict_ability_layer_only( array() );
 
-        $result = $this->execute_ability( $ability_name, array() );
+        $result = $this->execute_ability( $ability_name, 'mainwp/sync-sites-v1' === $ability_name ? array() : array( 'confirm' => true ) );
 
         $this->assertNotWPError( $result );
         $this->assertIsArray( $result );
@@ -1250,6 +1250,49 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertWPError( $method->invoke( $controller ) );
     }
 
+    public static function gate_rest_starts(): array {
+        return array( 'all' => array( false ), 'per-site' => array( true ) );
+    }
+
+    /** @dataProvider gate_rest_starts */
+    public function test_update_gate_rest_v2_starts_confirm_and_execute( $single ) {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $allowed = $this->create_test_site();
+        $outside = $this->create_test_site();
+        foreach ( array( $allowed, $outside ) as $id ) {
+            $this->set_site_plugin_upgrades( $id, array( 'sample/plugin.php' => array( 'Name' => 'Sample', 'Version' => '1.0', 'new_version' => '1.1' ) ) );
+        }
+        $this->restrict_ability_layer_only( array( $allowed ) );
+        update_option( 'mainwp_batch_updates_is_running', 0 );
+        update_option( 'mainwp_batch_individual_updates_is_running', 0 );
+        $inputs = array();
+        $capture = static function ( $name, $input ) use ( &$inputs ) {
+            if ( 'mainwp/run-updates-v1' === $name ) { $inputs[] = $input; }
+        };
+        $calls = array();
+        $mock = static function ( $result, $site, $what, $params ) use ( &$calls ) {
+            $calls[] = (int) $site->id;
+            return array( 'upgrades' => array( 'sample/plugin.php' => true ) );
+        };
+        add_action( 'wp_before_execute_ability', $capture, 10, 2 );
+        add_filter( 'mainwp_fetch_url_authed_pre', $mock, 10, 4 );
+        try {
+            $controller = new \MainWP_Rest_Updates_Controller();
+            $request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates' );
+            $request->set_param( 'id_domain', $allowed );
+            $response = $single ? $controller->update_all_items_inidividual_site_start( $request ) : $controller->update_all_items_start( $request );
+            $this->assertNotWPError( $response );
+            $this->assertSame( true, $inputs[0]['confirm'] ?? null, 'REST v2 must confirm its explicit update request in-process.' );
+            $this->assertSame( array( $allowed ), $calls );
+            $this->assertSame( 1, $response->get_data()['success'] );
+            $this->assertNotEmpty( MainWP_DB::instance()->get_website_by_id( $outside )->plugin_upgrades );
+        } finally {
+            remove_action( 'wp_before_execute_ability', $capture, 10 );
+            remove_filter( 'mainwp_fetch_url_authed_pre', $mock, 10 );
+        }
+    }
+
     public function test_rest_update_all_legacy_scopes_queued_sites() {
         $this->set_current_user_as_admin();
         $allowed = $this->create_test_site( array( 'plugin_upgrades' => '[]', 'theme_upgrades' => '[]' ) );
@@ -1263,6 +1306,90 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
             $this->assertGreaterThan( 0, (int) MainWP_DB::instance()->get_website_by_id( $allowed )->dtsAutomaticSyncStart );
             $this->assertSame( 0, (int) MainWP_DB::instance()->get_website_by_id( $outside )->dtsAutomaticSyncStart );
         } );
+    }
+
+    private function start_site_updates( $site ) {
+        $request = new \WP_REST_Request( 'POST', '/mainwp/v2/updates/' . $site . '/update' );
+        $request->set_param( 'id_domain', $site );
+        $response = ( new \MainWP_Rest_Updates_Controller() )->update_all_items_inidividual_site_start( $request );
+        $this->assertNotWPError( $response );
+        return $response->get_data();
+    }
+
+    public function test_rest_site_update_immediate_returns_summary_counts() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $site     = $this->create_test_site();
+        $upgrades = array();
+        foreach ( array( 'a', 'b', 'c', 'd', 'e', 'f' ) as $slug ) {
+            $upgrades[ $slug . '/plugin.php' ] = array( 'Name' => 'Plugin ' . $slug, 'Version' => '1.0', 'new_version' => '1.1' );
+        }
+        $this->set_site_plugin_upgrades( $site, $upgrades );
+        $this->set_site_ignored_plugins( $site, array( 'e/plugin.php' => 'Held', 'f/plugin.php' => 'Held' ) );
+        update_option( 'mainwp_batch_individual_updates_is_running', 0 );
+        $mock = static function () {
+            return array(
+                'upgrades'       => array( 'a/plugin.php' => true, 'b/plugin.php' => true, 'c/plugin.php' => true ),
+                'upgrades_error' => array( 'd/plugin.php' => 'Update failed.' ),
+            );
+        };
+        add_filter( 'mainwp_fetch_url_authed_pre', $mock, 10, 4 );
+        try {
+            $data = $this->start_site_updates( $site );
+        } finally {
+            remove_filter( 'mainwp_fetch_url_authed_pre', $mock, 10 );
+        }
+        $this->assertSame( array( 'success', 'message', 'summary', 'last_time_start_batch_updates', 'site' ), array_keys( $data ) );
+        $this->assertSame( 'Batch updates for the site completed.', $data['message'] );
+        $this->assertSame(
+            array( 'total_skipped' => 2, 'total_updated' => 3, 'total_errors' => 1, 'sites_updated' => 1 ),
+            $data['summary']
+        );
+        $this->assertSame( '{"total_skipped":2,"total_updated":3,"total_errors":1,"sites_updated":1}', wp_json_encode( $data['summary'] ) );
+    }
+
+    public function test_rest_site_update_queued_and_legacy_responses_keep_their_shape() {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+        $site  = $this->create_test_site( array( 'plugin_upgrades' => '[]', 'theme_upgrades' => '[]' ) );
+        $calls = 0;
+        $mock  = static function () use ( &$calls ) {
+            ++$calls;
+            return array( 'upgrades' => array() );
+        };
+        add_filter( 'mainwp_fetch_url_authed_pre', $mock, 10, 4 );
+        try {
+            $start = time();
+            update_option( 'mainwp_batch_individual_updates_is_running', 1 );
+            update_option( 'mainwp_batch_updates_individual_start_time', $start );
+            MainWP_DB::instance()->update_website_option( MainWP_DB::instance()->get_website_by_id( $site ), 'batch_individual_queue_time', $start );
+            $data = $this->start_site_updates( $site );
+            $this->assertSame( array( 'success', 'message', 'last_time_start_batch_updates', 'site' ), array_keys( $data ) );
+            $this->assertSame( 1, $data['success'] );
+            $this->assertSame( 'A batch updates for the site are queuing to run.', $data['message'] );
+
+            update_option( 'mainwp_batch_individual_updates_is_running', 0 );
+            add_filter( 'mainwp_abilities_batch_threshold', '__return_zero' );
+            try {
+                $data = $this->start_site_updates( $site );
+            } finally {
+                remove_filter( 'mainwp_abilities_batch_threshold', '__return_zero' );
+            }
+            $this->assertSame( array( 'success', 'message', 'job_id', 'last_time_start_batch_updates', 'site' ), array_keys( $data ) );
+            $this->assertSame( 1, $data['success'] );
+            $this->assertSame( 'Batch updates for the site queued successfully.', $data['message'] );
+            $this->assertNotEmpty( $data['job_id'] );
+
+            $data = $this->without_ability( 'mainwp/run-updates-v1', function () use ( $site ) {
+                return $this->start_site_updates( $site );
+            } );
+            $this->assertSame( array( 'success', 'message', 'last_time_start_batch_updates', 'site' ), array_keys( $data ) );
+            $this->assertSame( 1, $data['success'] );
+            $this->assertSame( 'Batch updates for the site started successfully. Please wait to completed.', $data['message'] );
+            $this->assertSame( 0, $calls );
+        } finally {
+            remove_filter( 'mainwp_fetch_url_authed_pre', $mock, 10 );
+        }
     }
 
     public function test_rest_site_add_and_edit_reject_hidden_client() {

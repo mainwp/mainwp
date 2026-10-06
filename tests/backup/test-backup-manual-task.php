@@ -113,6 +113,8 @@ class MainWP_Backup_Manual_Task_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function test_ensure_creates_hidden_manual_task() {
+		$initiator = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $initiator );
 		$task = MainWP_DB_Backup::instance()->ensure_manual_backup_task( $this->website( 7 ) );
 
 		$this->assertIsObject( $task );
@@ -120,7 +122,7 @@ class MainWP_Backup_Manual_Task_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'manual', $task->schedule );
 		$this->assertSame( 'full', $task->type, 'Manual snapshots must be standalone full backups, never incremental.' );
 		$this->assertSame( (string) $this->site_id, (string) $task->sites );
-		$this->assertSame( 7, (int) $task->userid, 'Manual task must run as the site owner for the multi-user permission check.' );
+		$this->assertSame( $initiator, (int) $task->userid, 'Manual task must run as the authorized initiator.' );
 		$this->assertSame( 'On-demand backup', $task->name );
 		$this->assertSame( 0, (int) $task->next_run, 'next_run must stay 0 so the schedulers never auto-run it.' );
 	}

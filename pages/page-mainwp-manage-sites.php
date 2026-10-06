@@ -299,7 +299,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             if ( 'new' === $_REQUEST['do'] || 'bulknew' === $_REQUEST['do'] ) {
                 return;
             }
-        } elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['monitor_wpid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
+        } elseif ( isset( $_GET['id'] ) || isset( $_GET['knowledgeid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['monitor_wpid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
             return;
         }
         // phpcs:enable
@@ -1718,6 +1718,20 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Render the Knowledge page for one child site.
+     *
+     * @param object $website Child Site.
+     *
+     * @return void
+     */
+    public static function render_knowledge( $website ) {
+        MainWP_System_Utility::set_current_wpid( $website->id );
+        static::render_header( 'ManageSitesKnowledge' );
+        MainWP_Manage_Sites_View::render_knowledge( $website );
+        static::render_footer();
+    }
+
+    /**
      * Method render_backup_site()
      *
      * Render Manage Sites Backups.
@@ -1910,6 +1924,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             }
         }
 
+        if ( isset( $_GET['knowledgeid'] ) ) {
+            $websiteid        = intval( $_GET['knowledgeid'] );
+            $knowledgeWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
+            if ( MainWP_System_Utility::can_edit_website( $knowledgeWebsite ) ) {
+                static::render_knowledge( $knowledgeWebsite );
+                return;
+            }
+        }
+
         if ( isset( $_GET['updateid'] ) ) {
             $websiteid      = intval( $_GET['updateid'] );
             $updatesWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
@@ -1922,9 +1945,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( ( isset( $_GET['action'] ) && 'add_submonitor' === $_GET['action'] ) || ! empty( $_GET['sub_monitor_id'] ) ) {
             $websiteid = isset( $_GET['monitor_wpid'] ) ? intval( $_GET['monitor_wpid'] ) : 0;
             $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            // Show modal.
-            static::render_monitor_site( $website );
-            return;
+            if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                // Show modal.
+                static::render_monitor_site( $website );
+                return;
+            }
         }
 
         if ( ! empty( $_GET['emailsettingsid'] ) ) {

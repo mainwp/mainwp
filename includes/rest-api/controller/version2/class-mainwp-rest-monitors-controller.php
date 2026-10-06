@@ -301,7 +301,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_global_monitoring_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_global_monitor_settings_allowed_fields(),
                 ),
             )

@@ -176,6 +176,8 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $site_id = intval( $_GET['updateid'] );
         } elseif ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) {
             $site_id = intval( $_GET['dashboard'] );
+        } elseif ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) {
+            $site_id = intval( $_GET['knowledgeid'] );
         } elseif ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) {
             $site_id = intval( $_GET['scanid'] );
         } elseif ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) {
@@ -224,6 +226,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'href'   => 'admin.php?page=managesites&id=' . $site_id,
                 'title'  => esc_html__( 'Settings', 'mainwp' ),
                 'access' => \mainwp_current_user_can( 'dashboard', 'edit_sites' ),
+            ),
+            'ManageSitesKnowledge' => array(
+                'href'   => 'admin.php?page=managesites&knowledgeid=' . $site_id,
+                'title'  => esc_html__( 'Knowledge', 'mainwp' ),
+                'access' => \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ),
             ),
             'ManageSitesUpdates'   => array(
                 'href'        => 'admin.php?page=managesites&updateid=' . $site_id,
@@ -700,12 +707,25 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
             global $screen_layout_columns;
 
             MainWP_Overview::render_dashboard_body( array( $website ) );
-
-            // The edit page needs edit_sites; this page is the one a user holding only the read right can open, and the list handler decides per request whether the panel offers write controls.
-            MainWP_Knowledge_UI::render_panel( 'site', $website->id );
             ?>
         </div>
         <?php
+    }
+
+    /**
+     * Render the Knowledge page for one child site.
+     *
+     * @param object $website Child Site.
+     *
+     * @return void
+     */
+    public static function render_knowledge( $website ) {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'access_individual_dashboard' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'individual dashboard', 'mainwp' ) );
+            return;
+        }
+
+        MainWP_Knowledge_UI::render_panel( 'site', $website->id );
     }
 
     /**
@@ -1494,7 +1514,6 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 <input type="submit" name="submit" id="submit" class="ui button green big" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>"/>
                 <input type="button" name="submit_remove_website" id="mainwp-managesites-remove-site" class="ui button red big floated right" value="<?php esc_attr_e( 'Remove Site', 'mainwp' ); ?>"/>
             </form>
-            <?php MainWP_Knowledge_UI::render_panel( 'site', $website->id ); ?>
         </div>
         <div class="ui modal" id="mainwp-test-connection-modal">
             <i class="close icon"></i>

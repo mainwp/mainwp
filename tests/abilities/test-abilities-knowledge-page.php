@@ -1,0 +1,225 @@
+<?php
+/**
+ * Knowledge page access and navigation tests.
+ *
+ * @package MainWP\Dashboard\Tests
+ */
+
+namespace MainWP\Dashboard\Tests;
+
+use MainWP\Dashboard\MainWP_Knowledge;
+use MainWP\Dashboard\MainWP_Knowledge_UI;
+use MainWP\Dashboard\MainWP_Menu;
+
+class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
+
+	private $filters = array();
+	private $previous_globals = array();
+	private $previous_get;
+
+	public function setUp(): void {
+		parent::setUp();
+		$this->set_current_user_as_admin();
+		$this->previous_get = $_GET;
+		foreach ( array( 'submenu', 'mainwp_leftmenu', 'mainwp_sub_leftmenu', '_mainwp_menu_active_slugs', 'plugin_page', 'current_screen', '_registered_pages', '_parent_pages', '_wp_submenu_nopriv' ) as $key ) {
+			$this->previous_globals[ $key ] = $GLOBALS[ $key ] ?? null;
+		}
+		$GLOBALS['current_screen'] = \WP_Screen::get( 'mainwp_page_Knowledge' );
+		$GLOBALS['submenu'] = array();
+		$GLOBALS['mainwp_leftmenu'] = array();
+		$GLOBALS['mainwp_sub_leftmenu'] = array();
+		$GLOBALS['_mainwp_menu_active_slugs'] = array();
+		$GLOBALS['plugin_page'] = 'Knowledge';
+		$_GET['page'] = 'Knowledge';
+	}
+
+	public function tearDown(): void {
+		foreach ( $this->filters as $filter ) {
+			remove_filter( $filter[0], $filter[1], 10 );
+		}
+		remove_action( 'admin_footer', array( MainWP_Knowledge_UI::class, 'render_modal' ) );
+		foreach ( $this->previous_globals as $key => $value ) {
+			$GLOBALS[ $key ] = $value;
+		}
+		$_GET = $this->previous_get;
+		parent::tearDown();
+	}
+
+	private function filter( string $hook, callable $callback, int $args = 1 ): void {
+		add_filter( $hook, $callback, 10, $args );
+		$this->filters[] = array( $hook, $callback );
+	}
+
+	private function restrict_sites(): void {
+		$this->filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );
+	}
+
+	private function withhold_clients(): void {
+		$this->filter( 'mainwp_currentusercan', static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'manage_clients' === $right ? false : $allowed;
+		}, 3 );
+	}
+
+	private function register_menu(): void {
+		// Isolating the new entry avoids unrelated page setup and keeps the production registration path under test.
+		$this->filter( 'mainwp_init_primary_menu_items', static function ( $items ) {
+			return array_values( array_filter( $items, static function ( $item ) {
+				return 'Knowledge' === $item['slug'];
+			} ) );
+		} );
+		MainWP_Menu::init_mainwp_menus();
+	}
+
+	private function render( string $tab = 'review' ): string {
+		$_GET['tab'] = $tab;
+		ob_start();
+		try {
+			MainWP_Knowledge::render();
+			if ( has_action( 'admin_footer', array( MainWP_Knowledge_UI::class, 'render_modal' ) ) ) {
+				MainWP_Knowledge_UI::render_modal();
+			}
+		} finally {
+			$html = ob_get_clean();
+		}
+		return $html;
+	}
+
+	private function assert_menu(): void {
+		$this->register_menu();
+		$menus = $GLOBALS['submenu']['mainwp_tab'];
+		$this->assertContains( 'Knowledge', array_column( $menus, 2 ) );
+		$entry = $menus[ array_search( 'Knowledge', array_column( $menus, 2 ), true ) ];
+		$this->assertSame( 'manage_options', $entry[1] );
+		$this->assertContains( 'Knowledge', array_column( $GLOBALS['mainwp_leftmenu']['leftbar'], 1 ) );
+		$this->assertNotFalse( has_action( get_plugin_page_hookname( 'Knowledge', 'mainwp_tab' ), array( MainWP_Knowledge::class, 'render' ) ) );
+	}
+
+	public function test_knowledge_menu_and_page_admit_unrestricted_users(): void {
+		$this->assert_menu();
+		$review = $this->render();
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review"', $review );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-page" class="ui padded segment"', $review );
+		$agency = $this->render( 'agency' );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-page" class="ui padded segment"', $agency );
+		$this->assertStringContainsString( 'data-scope-type="agency" data-scope-id="0" data-can-write="1"', $agency );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-required"', $agency );
+		$this->assertStringContainsString( 'Records at a more specific level cannot override a required record. Only a Dashboard user can edit or delete it.', $agency );
+		$this->assertStringContainsString( 'class="ui blue message" id="mainwp-knowledge-required-help" style="display:none"', $agency );
+		$this->assertLessThan( strpos( $agency, 'id="mainwp-knowledge-type"' ), strpos( $agency, 'id="mainwp-knowledge-required-help"' ) );
+		$this->assertStringContainsString( 'Agency records reach the AI agents working on every site in this Dashboard.', $agency );
+		$this->assertStringContainsString( '<div class="ui blue message">', $agency );
+		$this->assertStringContainsString( 'class="close icon mainwp-notice-dismiss" notice-id="mainwp-knowledge-agency-info-message"', $agency );
+		$this->assertDoesNotMatchRegularExpression( '/<h2[^>]*>\s*Agency knowledge/s', $agency );
+		$this->assertStringNotContainsString( 'Only users with client management rights and access to every site can change agency records.', $agency );
+	}
+
+	public function test_knowledge_menu_and_page_admit_site_restricted_users_read_only(): void {
+		$this->restrict_sites();
+		$this->assert_menu();
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review"', $this->render() );
+		$agency = $this->render( 'agency' );
+		$this->assertStringContainsString( 'data-can-write="0"', $agency );
+		$this->assertStringNotContainsString( 'id="mainwp-knowledge-required"', $agency );
+		$this->assertStringNotContainsString( 'mainwp-knowledge-add', $agency );
+		$this->assertStringContainsString( 'Only users with client management rights and access to every site can change agency records.', $agency );
+	}
+
+	public function test_knowledge_all_sites_without_manage_clients_has_read_only_agency_and_no_required(): void {
+		$this->withhold_clients();
+		$this->assert_menu();
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review"', $this->render() );
+		$agency = $this->render( 'agency' );
+		$this->assertStringContainsString( 'data-can-write="0"', $agency );
+		$this->assertStringNotContainsString( 'id="mainwp-knowledge-required"', $agency );
+		$this->assertStringNotContainsString( 'mainwp-knowledge-add', $agency );
+	}
+
+	public function test_knowledge_menu_and_page_refuse_non_mainwp_admin_with_the_base_capability(): void {
+		$id = self::factory()->user->create( array( 'role' => 'editor' ) );
+		$user = get_userdata( $id );
+		$user->add_cap( 'manage_options' );
+		wp_set_current_user( $id );
+		$this->register_menu();
+		MainWP_Knowledge::init_menu();
+		$this->assertNotContains( 'Knowledge', array_column( $GLOBALS['submenu']['mainwp_tab'] ?? array(), 2 ) );
+		$this->assertNotContains( 'Knowledge', array_column( $GLOBALS['mainwp_leftmenu']['leftbar'] ?? array(), 1 ) );
+		foreach ( array( 'review', 'agency' ) as $tab ) {
+			$html = $this->render( $tab );
+			$this->assertStringContainsString( 'You do not have permission to access this knowledge.', $html );
+			$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $html );
+			$this->assertStringNotContainsString( 'id="mainwp-knowledge-review"', $html );
+		}
+		foreach ( array( 'render_left_menu', 'render_mobile_menu' ) as $method ) {
+			ob_start();
+			MainWP_Menu::$method();
+			$html = ob_get_clean();
+			$this->assertStringNotContainsString( 'page=Knowledge', $html, $method );
+		}
+	}
+
+	public function test_knowledge_menu_and_page_refuse_missing_base_capability(): void {
+		$this->set_current_user_as_subscriber();
+		$this->register_menu();
+		$this->assertNotContains( 'Knowledge', array_column( $GLOBALS['mainwp_leftmenu']['leftbar'] ?? array(), 1 ) );
+		foreach ( array( 'review', 'agency' ) as $tab ) {
+			$html = $this->render( $tab );
+			$this->assertStringContainsString( 'You do not have permission to access this knowledge.', $html );
+			$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $html );
+			$this->assertStringNotContainsString( 'id="mainwp-knowledge-review"', $html );
+		}
+	}
+
+	public function test_knowledge_navigation_renders_for_restricted_and_unrestricted_users(): void {
+		$this->register_menu();
+		foreach ( array( false, true ) as $restricted ) {
+			if ( $restricted ) {
+				$this->restrict_sites();
+				$this->withhold_clients();
+			}
+			foreach ( array( 'render_left_menu', 'render_mobile_menu' ) as $method ) {
+				ob_start();
+				MainWP_Menu::$method();
+				$html = ob_get_clean();
+				$this->assertMatchesRegularExpression( '/href="[^"]*admin.php\?page=Knowledge&(?:#038;)?tab=review"[^>]*>\s*<i class="book icon"><\/i>\s*(?:<span class="ui small text">)?Knowledge(?:<\/span>)?\s*<\/a>/', $html, $method );
+				foreach ( array( 'review' => 'Review', 'agency' => 'Agency' ) as $tab => $label ) {
+					$this->assertMatchesRegularExpression( '/href="[^"]*admin.php\?page=Knowledge&#038;tab=' . $tab . '"[^>]*>\s*' . $label . '\s*<\/a>/', $html, $method );
+				}
+			}
+		}
+	}
+
+	public function test_knowledge_review_is_default_and_has_filters_and_a_panel_free_modal(): void {
+		$html = $this->render( 'unknown' );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review"', $html );
+		$this->assertStringNotContainsString( 'mainwp-knowledge-review-table', $html );
+		$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $html );
+		$this->assertSame( 1, substr_count( $html, 'id="mainwp-knowledge-modal"' ) );
+		foreach ( array( 'Status', 'Unverified', 'Verified', 'All', 'Level', 'All levels', 'Nothing to review yet', 'Knowledge records saved by AI agents will appear here until a person reviews them.', 'No knowledge records match the selected filters.', 'No matching records', 'Context', 'Skills', 'Memory' ) as $copy ) {
+			$this->assertStringContainsString( $copy, $html );
+		}
+		$this->assertStringContainsString( 'class="mainwp-actions-bar" id="mainwp-knowledge-review-filters"', $html );
+		$this->assertStringContainsString( 'class="ui blue message"', $html );
+		$this->assertStringContainsString( 'class="close icon mainwp-notice-dismiss" notice-id="mainwp-knowledge-review-info-message"', $html );
+		$this->assertStringContainsString( 'Check each record, then verify, edit, or delete it.', $html );
+		$this->assertStringContainsString( 'class="ui two column row"', $html );
+		$this->assertStringContainsString( 'class="left aligned middle aligned column"', $html );
+		$this->assertStringContainsString( 'class="right aligned middle aligned column"', $html );
+		$this->assertStringNotContainsString( '<label for="mainwp-knowledge-filter-', $html );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-filter-status" class="ui mini selection dropdown" aria-label="Status"', $html );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-filter-level" class="ui mini selection dropdown" aria-label="Level"', $html );
+		$this->assertStringNotContainsString( 'id="mainwp-knowledge-filter-type"', $html );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review" style="padding:0!important;"', $html );
+		$this->assertLessThan( strpos( $html, 'mainwp-knowledge-review-info-message' ), strpos( $html, 'id="mainwp-knowledge-review-filters"' ) );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review-empty"', $html );
+		$this->assertStringContainsString( 'data-emoji=":bulb:"', $html );
+		$this->assertStringContainsString( 'admin.php?page=Knowledge', $html );
+		$this->assertStringContainsString( esc_url( 'admin.php?page=Knowledge&tab=agency' ), $html );
+		$this->assertMatchesRegularExpression( '/<option value="unverified"\s+selected/', $html );
+		$this->assertSame( 1, preg_match_all( '/<option value="all"\s+selected/', $html ) );
+		$this->assertStringContainsString( 'mainwp-knowledge-review-sections', $html );
+		$this->assertSame( 3, substr_count( $html, 'mainwp-knowledge-review-section" data-type=' ) );
+		$this->assertSame( 3, substr_count( $html, 'ui styled fluid accordion mainwp-knowledge-records' ) );
+		$this->assertStringNotContainsString( 'mainwp-knowledge-review-pagination', $html );
+		$this->assertStringContainsString( 'class="ui segment mainwp-widget mainwp-knowledge-section-box"', $html );
+	}
+}

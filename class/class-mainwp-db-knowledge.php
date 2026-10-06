@@ -42,7 +42,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      *
      * @var string[]
      */
-    const SCOPE_TYPES = array( 'site', 'client' );
+    const SCOPE_TYPES = array( 'agency', 'site', 'client' );
 
     /**
      * Allowed record types.
@@ -64,6 +64,20 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      * @var int
      */
     const BODY_MAX_LENGTH = 10000;
+
+    /**
+     * Maximum skill description length in characters.
+     *
+     * @var int
+     */
+    const DESCRIPTION_MAX_LENGTH = 1024;
+
+    /**
+     * Number of body characters returned for table previews.
+     *
+     * @var int
+     */
+    const BODY_PREVIEW_LENGTH = 100;
 
     /**
      * Maximum caller note length in characters.
@@ -120,10 +134,11 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     public function hook_db_install_tables( $sql, $currentVersion, $charset_collate ) {
         $tbl = 'CREATE TABLE ' . $this->table_name( 'knowledge' ) . " (
     id bigint(20) unsigned NOT NULL auto_increment,
-    scope_type enum('site','client') NOT NULL,
+    scope_type enum('agency','site','client') NOT NULL,
     scope_id bigint(20) unsigned NOT NULL,
     `type` enum('context','skill','memory') NOT NULL,
     title varchar(200) NOT NULL,
+    description varchar(1024) NOT NULL DEFAULT '',
     body longtext NOT NULL,
     created_by bigint(20) unsigned NOT NULL DEFAULT 0,
     updated_by bigint(20) unsigned NOT NULL DEFAULT 0,
@@ -133,6 +148,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     source enum('ui','ability') NOT NULL,
     caller_note varchar(200) NOT NULL DEFAULT '',
     verified tinyint(1) NOT NULL DEFAULT 0,
+    required tinyint(1) NOT NULL DEFAULT 0,
     KEY scope_type_id_type (scope_type,scope_id,`type`)";
 
         // dbDelta cannot re-add a primary key to an existing table, so only the run that creates it declares one. Keyed on the table, not the stored schema version: an install whose version already passed this table's release (a beta line with a higher number, or a run whose dbDelta failed) would otherwise never get the key, and MySQL refuses an auto_increment column that is not a key.
@@ -167,39 +183,48 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      * @return bool|\WP_Error True when allowed, WP_Error otherwise.
      */
     public function can_write( object $record ) {
-        return $this->check_record_access( $record, 'site' === $record->scope_type ? 'edit_sites' : 'manage_clients' );
+        return $this->check_record_access( $record, 'site' === $record->scope_type ? 'edit_sites' : 'manage_clients', true );
     }
 
     /**
      * Scope leg first, then the Team Control right.
      *
-     * The util errors are returned unchanged: they already give restricted
-     * callers a 404 so out-of-scope objects are indistinguishable from
-     * missing ones. The right leg runs only once the object is in scope, so
-     * its 403 leaks nothing.
+     * Out-of-scope objects keep the helper's 404 so they remain indistinguishable
+     * from missing ones. Partial client coverage uses the same denial as a
+     * missing write right because client records affect every assigned site.
      *
-     * @param object $record Record or stub.
-     * @param string $right  Dashboard right slug.
+     * @param object $record                Record or stub.
+     * @param string $right                 Dashboard right slug.
+     * @param bool   $require_full_coverage Whether access must cover every client site.
      *
      * @return bool|\WP_Error True when allowed, WP_Error otherwise.
      */
-    private function check_record_access( object $record, string $right ) {
+    private function check_record_access( object $record, string $right, bool $require_full_coverage = false ) {
         $scope_id = isset( $record->scope_id ) ? (int) $record->scope_id : 0;
         $type     = $record->scope_type ?? '';
 
-        if ( 'site' === $type ) {
+        if ( 'agency' === $type ) {
+            $base = MainWP_Abilities_Util::check_rest_api_permission();
+            if ( is_wp_error( $base ) || ! $require_full_coverage ) {
+                return $base;
+            }
+            $scope = MainWP_Abilities_Util::check_unrestricted_access();
+        } elseif ( 'site' === $type ) {
             $scope = MainWP_Abilities_Util::check_site_access( $scope_id );
         } elseif ( 'client' === $type ) {
-            $scope = MainWP_Abilities_Util::check_client_access( $scope_id );
+            $scope = $this->guard_read( static fn() => MainWP_Abilities_Util::check_client_access( $scope_id, null, $require_full_coverage ) );
         } else {
             return $this->invalid( 'scope_type' );
         }
 
         if ( is_wp_error( $scope ) ) {
-            return $scope;
+            $partial_client_write = 'client' === $type && $require_full_coverage && 'mainwp_access_denied' === $scope->get_error_code();
+            if ( ! $partial_client_write ) {
+                return $scope;
+            }
         }
 
-        if ( ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
+        if ( is_wp_error( $scope ) || ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
             return new \WP_Error(
                 'mainwp_access_denied',
                 __( 'You do not have permission to access this knowledge record.', 'mainwp' ),
@@ -250,13 +275,20 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             }
             foreach ( (array) $candidates as $client_id ) {
                 $client_id = (int) $client_id;
-                if ( $client_id > 0 && true === MainWP_Abilities_Util::check_client_access( $client_id ) ) {
-                    $clients[] = $client_id;
+                if ( $client_id > 0 ) {
+                    $access = $this->guard_read( static fn() => MainWP_Abilities_Util::check_client_access( $client_id ) );
+                    if ( is_wp_error( $access ) && 'mainwp_knowledge_db_error' === $access->get_error_code() ) {
+                        return $access;
+                    }
+                    if ( true === $access ) {
+                        $clients[] = $client_id;
+                    }
                 }
             }
         }
 
         return array(
+            'agency'  => true === MainWP_Abilities_Util::check_rest_api_permission(),
             'sites'   => array_values( array_unique( $sites ) ),
             'clients' => array_values( array_unique( $clients ) ),
         );
@@ -294,6 +326,12 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         $parts  = array();
         $values = array();
 
+        if ( $scopes['agency'] ) {
+            $parts[]  = '(scope_type = %s AND scope_id = %d)';
+            $values[] = 'agency';
+            $values[] = 0;
+        }
+
         $lists = array(
             'site'   => $scopes['sites'],
             'client' => $scopes['clients'],
@@ -313,7 +351,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * List records visible to the current user.
      *
-     * @param array $args Optional scope_type, scope_id, type, search, limit, offset, with_body (default true).
+     * @param array $args Optional scope_type, scope_id, type, search, order, limit, offset, with_body (default true), and with_body_preview.
      *
      * @return object[]|\WP_Error Records, or a read error.
      */
@@ -329,12 +367,20 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * List and count with one visibility walk for the current user.
      *
-     * @param array $args Optional scope_type, scope_id, type, search, limit, offset, with_body (default true).
+     * @param array $args Optional scope_type, scope_id, type, search, order, limit, offset, with_body (default true), with_body_preview, and with_unfiltered_total.
      *
-     * @return array{items: object[], total: int}|\WP_Error Records and total before pagination, or a read error.
+     * @return array{items: object[], total: int, unfiltered_total?: int}|\WP_Error Records and total before pagination, or a read error.
      */
     public function get_records_page( array $args = array() ) {
-        $where = $this->records_where_template( $args );
+        $scope = null;
+        if ( ! empty( $args['with_unfiltered_total'] ) ) {
+            $scope = $this->scope_where_template();
+            if ( is_wp_error( $scope ) ) {
+                return $scope;
+            }
+        }
+
+        $where = $this->records_where_template( $args, $scope );
         if ( is_wp_error( $where ) ) {
             return $where;
         }
@@ -349,10 +395,19 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             return $total;
         }
 
-        return array(
+        $page = array(
             'items' => $items,
             'total' => $total,
         );
+        if ( null !== $scope ) {
+            $unfiltered_total = $this->count_records_from_template( $scope[0], $scope[1] );
+            if ( is_wp_error( $unfiltered_total ) ) {
+                return $unfiltered_total;
+            }
+            $page['unfiltered_total'] = $unfiltered_total;
+        }
+
+        return $page;
     }
 
     /**
@@ -365,8 +420,9 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      * @return object[]|\WP_Error Records, or a read error.
      */
     private function get_records_from_template( string $template, array $values, array $args ) {
+        $order = isset( $args['order'] ) && 'updated_asc' === $args['order'] ? 'ASC' : 'DESC';
         // nosec -- the template contains only fixed strings and counted placeholders; every value is bound below.
-        $sql    = 'SELECT ' . $this->records_columns( $args ) . ' FROM %i WHERE ' . $template . ' ORDER BY updated_at DESC, id DESC';
+        $sql    = 'SELECT ' . $this->records_columns( $args ) . ' FROM %i WHERE ' . $template . ' ORDER BY updated_at ' . $order . ', id ' . $order;
         $values = array_merge( array( $this->table_name( 'knowledge' ) ), $values );
 
         $limit = isset( $args['limit'] ) ? absint( $args['limit'] ) : 0;
@@ -394,7 +450,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      *
      * @param string $scope_type Site or client.
      * @param int    $scope_id   Scope identifier.
-     * @param array  $args       Optional type and with_body (default true).
+     * @param array  $args       Optional type, with_body (default true), and with_body_preview.
      *
      * @return object[]|\WP_Error Records, or the scope's access or read error.
      */
@@ -435,16 +491,79 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Count a rendered set together so widgets and tables do not count per row.
+     *
+     * @param string $scope_type Site or client.
+     * @param int[]  $scope_ids  Scope identifiers on the current page.
+     *
+     * @return array|\WP_Error Counts keyed by readable scope id, or a read error.
+     */
+    public function get_scope_counts( string $scope_type, array $scope_ids ) {
+        if ( ! in_array( $scope_type, array( 'site', 'client' ), true ) ) {
+            return $this->invalid( 'scope_type' );
+        }
+        $scope_ids = array_unique( array_map( 'intval', array_filter( $scope_ids, 'is_numeric' ) ) );
+        $counts    = array();
+        foreach ( $scope_ids as $scope_id ) {
+            if ( $scope_id < 1 ) {
+                continue;
+            }
+            $access = $this->can_read(
+                (object) array(
+                    'scope_type' => $scope_type,
+                    'scope_id'   => $scope_id,
+                )
+            );
+            if ( is_wp_error( $access ) && 'mainwp_knowledge_db_error' === $access->get_error_code() ) {
+                return $access;
+            }
+            if ( true === $access ) {
+                $counts[ $scope_id ] = array(
+                    'context'    => 0,
+                    'skill'      => 0,
+                    'memory'     => 0,
+                    'total'      => 0,
+                    'unverified' => 0,
+                );
+            }
+        }
+        if ( empty( $counts ) ) {
+            return $counts;
+        }
+
+        $placeholders           = implode( ',', array_fill( 0, count( $counts ), '%d' ) );
+        $sql                    = "SELECT scope_id, SUM(type = 'context') AS context, SUM(type = 'skill') AS skill, SUM(type = 'memory') AS memory, COUNT(*) AS total, SUM(verified = 0) AS unverified FROM %i WHERE scope_type = %s AND scope_id IN ({$placeholders}) GROUP BY scope_id";
+        $values                 = array_merge( array( $this->table_name( 'knowledge' ), $scope_type ), array_keys( $counts ) );
+        $this->wpdb->last_error = '';
+        $rows                   = $this->wpdb->get_results( $this->wpdb->prepare( $sql, $values ) );
+        if ( '' !== $this->wpdb->last_error ) {
+            return $this->db_read_error();
+        }
+        foreach ( (array) $rows as $row ) {
+            foreach ( array_keys( $counts[ (int) $row->scope_id ] ) as $key ) {
+                $counts[ (int) $row->scope_id ][ $key ] = (int) $row->$key;
+            }
+        }
+        return $counts;
+    }
+
+    /**
      * Keep both list paths on the same projection.
      *
-     * @param array $args Optional with_body.
+     * @param array $args Optional with_body and with_body_preview.
      *
      * @return string Fixed column list.
      */
     private function records_columns( array $args ): string {
-        return isset( $args['with_body'] ) && false === $args['with_body']
-            ? 'id, scope_type, scope_id, `type`, title, created_by, updated_by, created_at, updated_at, revision, source, caller_note, verified'
-            : '*';
+        if ( ! isset( $args['with_body'] ) || false !== $args['with_body'] ) {
+            return '*';
+        }
+
+        $preview = ! empty( $args['with_body_preview'] )
+            ? ', LEFT(body, ' . ( self::BODY_PREVIEW_LENGTH + 1 ) . ') AS body_preview'
+            : '';
+
+        return 'id, scope_type, scope_id, `type`, title, description' . $preview . ', created_by, updated_by, created_at, updated_at, revision, source, caller_note, verified, required';
     }
 
     /**
@@ -487,12 +606,13 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * Keep listing and counting on the same filters and value order.
      *
-     * @param array $args Filters.
+     * @param array      $args  Filters.
+     * @param array|null $scope Optional precomputed visibility template and values.
      *
      * @return array|\WP_Error SQL template and ordered values, or the scope read error.
      */
-    private function records_where_template( array $args ) {
-        $scope = $this->scope_where_template();
+    private function records_where_template( array $args, ?array $scope = null ) {
+        $scope = null === $scope ? $this->scope_where_template() : $scope;
         if ( is_wp_error( $scope ) ) {
             return $scope;
         }
@@ -511,9 +631,14 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             $where[]  = '`type` = %s';
             $values[] = (string) $args['type'];
         }
+        if ( array_key_exists( 'verified', $args ) ) {
+            $where[]  = 'verified = %d';
+            $values[] = (int) $args['verified'];
+        }
         if ( isset( $args['search'] ) && is_string( $args['search'] ) && '' !== $args['search'] ) {
             $like     = '%' . $this->wpdb->esc_like( $args['search'] ) . '%';
-            $where[]  = '(title LIKE %s OR body LIKE %s)';
+            $where[]  = '(title LIKE %s OR description LIKE %s OR body LIKE %s)';
+            $values[] = $like;
             $values[] = $like;
             $values[] = $like;
         }
@@ -580,7 +705,33 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             return $this->invalid( 'origin' );
         }
 
-        $data = $this->validate_input( $input );
+        $row = null;
+        if ( array_key_exists( 'id', $input ) ) {
+            $id = filter_var( $input['id'], FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) );
+            if ( false === $id || is_bool( $input['id'] ) ) {
+                return $this->invalid( 'id' );
+            }
+            $row = $this->get_by_id( $id );
+            if ( null === $row ) {
+                return $this->not_found( $id );
+            }
+            if ( is_wp_error( $row ) ) {
+                return $row;
+            }
+
+            // Authorize before normalizing so a validation error cannot reveal a hidden record's type or description.
+            $access = $this->can_write( $row );
+            if ( is_wp_error( $access ) ) {
+                return $this->mask_not_found( $access, $id );
+            }
+        }
+
+        $required_access = $this->check_required_write( $input, $origin, $row );
+        if ( is_wp_error( $required_access ) ) {
+            return $required_access;
+        }
+
+        $data = $this->validate_input( $this->normalize_input( $input, $row ) );
         if ( is_wp_error( $data ) ) {
             return $data;
         }
@@ -612,7 +763,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             $inserted = $this->wpdb->insert(
                 $table,
                 $data,
-                array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%d', '%d', '%d', '%d', '%d' )
+                array( '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%d', '%d', '%d', '%d', '%d', '%d' )
             );
             if ( false === $inserted ) {
                 return $this->db_error();
@@ -625,25 +776,6 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
                 return $this->normalize_row( (object) ( array( 'id' => $id ) + $data ) );
             }
             return $saved ?? $this->not_found( $id );
-        }
-
-        $id = filter_var( $input['id'], FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) );
-        if ( false === $id || is_bool( $input['id'] ) ) {
-            return $this->invalid( 'id' );
-        }
-
-        $row = $this->get_by_id( $id );
-        if ( null === $row ) {
-            return $this->not_found( $id );
-        }
-        if ( is_wp_error( $row ) ) {
-            return $row;
-        }
-
-        // Access comes before the scope and revision checks so a restricted caller cannot tell an out-of-scope row from a missing one by the error it gets back.
-        $access = $this->can_write( $row );
-        if ( is_wp_error( $access ) ) {
-            return $this->mask_not_found( $access, $id );
         }
 
         if ( $row->scope_type !== $data['scope_type'] || $row->scope_id !== $data['scope_id'] ) {
@@ -660,24 +792,29 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         // The revision guard lives in the WHERE so two concurrent saves of the same revision cannot both win.
         $updated = $this->wpdb->query(
             $this->wpdb->prepare(
-                'UPDATE ' . esc_sql( $table ) . ' SET `type` = %s, title = %s, body = %s, caller_note = %s, source = %s, verified = %d, updated_by = %d, updated_at = %d, revision = revision + 1 WHERE id = %d AND revision = %d',
+                // nosec -- only the table identifier from table_name() is concatenated; every value, including the origin pair, is a bound placeholder.
+                'UPDATE ' . esc_sql( $table ) . ' SET `type` = %s, title = %s, description = %s, body = %s, caller_note = %s, source = %s, verified = %d, required = %d, updated_by = %d, updated_at = %d, revision = revision + 1 WHERE id = %d AND revision = %d AND ( %s = %s OR required = 0 )',
                 $data['type'],
                 $data['title'],
+                $data['description'],
                 $data['body'],
                 $data['caller_note'],
                 $data['source'],
                 $data['verified'],
+                $data['required'],
                 $data['updated_by'],
                 $data['updated_at'],
                 $id,
-                $expected_revision
+                $expected_revision,
+                $origin,
+                self::ORIGIN_UI
             )
         );
         if ( false === $updated ) {
             return $this->db_error();
         }
         if ( 0 === (int) $updated ) {
-            return $this->stale_write_error( $id );
+            return $this->stale_write_error( $id, $origin );
         }
 
         // A concurrent delete can land between the UPDATE and this read.
@@ -694,10 +831,11 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      *
      * @param int      $id                Record ID.
      * @param int|null $expected_revision Revision the caller last saw; null skips the check.
+     * @param string   $origin            Trusted UI origin, otherwise an ability write.
      *
      * @return true|\WP_Error True on success, WP_Error otherwise.
      */
-    public function delete( int $id, ?int $expected_revision = null ) {
+    public function delete( int $id, ?int $expected_revision = null, string $origin = self::ORIGIN_ABILITY ) {
         $row = $this->get_by_id( $id );
         if ( null === $row ) {
             return $this->not_found( $id );
@@ -709,6 +847,11 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         $access = $this->can_write( $row );
         if ( is_wp_error( $access ) ) {
             return $this->mask_not_found( $access, $id );
+        }
+
+        $required_access = $this->check_required_write( array(), $origin, $row );
+        if ( is_wp_error( $required_access ) ) {
+            return $required_access;
         }
 
         // The revision rides in the WHERE so a delete issued from a stale list
@@ -723,12 +866,18 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             $format[]          = '%d';
         }
 
+        if ( self::ORIGIN_UI !== $origin ) {
+            // This also protects an originless delete if another writer makes the row required after the read.
+            $where['required'] = 0;
+            $format[]          = '%d';
+        }
+
         $deleted = $this->wpdb->delete( $this->table_name( 'knowledge' ), $where, $format );
         if ( false === $deleted ) {
             return $this->db_error();
         }
         if ( 0 === $deleted ) {
-            return $this->stale_write_error( $id );
+            return $this->stale_write_error( $id, $origin );
         }
 
         return true;
@@ -737,11 +886,12 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * Explain a guarded write that matched no row: the row is gone, or another writer moved its revision.
      *
-     * @param int $id Record ID.
+     * @param int    $id     Record ID.
+     * @param string $origin Trusted write origin.
      *
      * @return \WP_Error Not-found, conflict, or the read error of the re-read.
      */
-    private function stale_write_error( int $id ): \WP_Error {
+    private function stale_write_error( int $id, string $origin ): \WP_Error {
         $current = $this->get_by_id( $id );
         if ( null === $current ) {
             return $this->not_found( $id );
@@ -749,7 +899,8 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
         if ( is_wp_error( $current ) ) {
             return $current;
         }
-        return $this->conflict( (int) $current->revision );
+        $required_access = $this->check_required_write( array(), $origin, $current );
+        return is_wp_error( $required_access ) ? $required_access : $this->conflict( (int) $current->revision );
     }
 
     /**
@@ -761,10 +912,10 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      * @param string $scope_type site|client.
      * @param int    $scope_id   Site or client ID.
      *
-     * @return void
+     * @return true|\WP_Error True on success, or a database error.
      */
-    public function delete_by_scope( string $scope_type, int $scope_id ): void {
-        $this->wpdb->delete(
+    public function delete_by_scope( string $scope_type, int $scope_id ) {
+        $deleted = $this->wpdb->delete(
             $this->table_name( 'knowledge' ),
             array(
                 'scope_type' => $scope_type,
@@ -772,6 +923,28 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             ),
             array( '%s', '%d' )
         );
+
+        return false === $deleted ? $this->db_error() : true;
+    }
+
+    /**
+     * Preserve omitted fields while applying the type's description rule to a raw patch.
+     *
+     * @param array       $input  Raw writable fields.
+     * @param object|null $record Authorized existing record, or null for a create.
+     * @return array Resulting fields, before validation.
+     */
+    public function normalize_input( array $input, ?object $record = null ): array {
+        $description_supplied = array_key_exists( 'description', $input );
+        $fields               = array_merge( (array) $record, array( 'caller_note' => '' ), $input );
+        // An omitted description must not carry skill-only text into a type the UI cannot display it for.
+        if ( null !== $record && 'skill' === $record->type && isset( $input['type'] ) && 'skill' !== $input['type'] && ! $description_supplied ) {
+            $fields['description'] = '';
+        }
+        if ( 'agency' === ( $fields['scope_type'] ?? '' ) && ! array_key_exists( 'scope_id', $input ) ) {
+            unset( $fields['scope_id'] );
+        }
+        return $fields;
     }
 
     /**
@@ -787,12 +960,22 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             return $this->invalid( 'scope_type' );
         }
 
-        $scope_id = $input['scope_id'] ?? null;
-        $scope_id = ( is_int( $scope_id ) || is_string( $scope_id ) )
-            ? filter_var( $scope_id, FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) )
-            : false;
-        if ( false === $scope_id ) {
-            return $this->invalid( 'scope_id' );
+        if ( 'agency' === $scope_type ) {
+            if ( array_key_exists( 'scope_id', $input ) ) {
+                return $this->invalid( 'scope_id', __( 'Agency records apply to every site, so leave out scope_id.', 'mainwp' ) );
+            }
+            $scope_id = 0;
+        } else {
+            if ( ! array_key_exists( 'scope_id', $input ) ) {
+                return $this->invalid( 'scope_id', __( 'Site and client records need a scope_id, the site or client the record belongs to.', 'mainwp' ) );
+            }
+            $scope_id = $input['scope_id'];
+            $scope_id = ( is_int( $scope_id ) || is_string( $scope_id ) )
+                ? filter_var( $scope_id, FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 1 ) ) )
+                : false;
+            if ( false === $scope_id ) {
+                return $this->invalid( 'scope_id' );
+            }
         }
 
         $type = $input['type'] ?? null;
@@ -800,10 +983,19 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             return $this->invalid( 'type' );
         }
 
+        $required = $input['required'] ?? false;
+        if ( ! in_array( $required, array( true, false, 0, 1, '0', '1' ), true ) ) {
+            return $this->invalid( 'required' );
+        }
+        $required = (int) $required;
+        if ( $required && ( 'site' === $scope_type || 'memory' === $type ) ) {
+            return $this->invalid( 'required', __( 'Only agency and client context and skills can be required.', 'mainwp' ) );
+        }
+
         // Plain text kept verbatim like the body: sanitize_text_field() stored "<" as "&lt;" and dropped tag-shaped text.
         $title = $input['title'] ?? null;
         // \p{Cc} covers C0, DEL and the C1 range (U+0080-U+009F, e.g. NEXT LINE), which a byte-range class misses.
-        if ( ! is_string( $title ) || ! mb_check_encoding( $title, 'UTF-8' ) || preg_match( '/\p{Cc}/u', $title ) ) {
+        if ( ! is_string( $title ) || ! $this->is_valid_utf8( $title ) || preg_match( '/\p{Cc}/u', $title ) ) {
             return $this->invalid( 'title' );
         }
         $title = trim( $title );
@@ -812,10 +1004,24 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             return $this->invalid( 'title' );
         }
 
+        $description = array_key_exists( 'description', $input ) ? $input['description'] : '';
+        if ( ! is_string( $description ) || ! $this->is_valid_utf8( $description ) ) {
+            return $this->invalid( 'description' );
+        }
+        if ( mb_strlen( $description ) > self::DESCRIPTION_MAX_LENGTH ) {
+            return $this->invalid( 'description', __( 'The description can be at most 1024 characters.', 'mainwp' ) );
+        }
+        if ( 'skill' === $type && '' === trim( $description ) ) {
+            return $this->invalid( 'description', __( 'A skill needs a description that says when an AI agent should use it.', 'mainwp' ) );
+        }
+        if ( 'skill' !== $type && '' !== $description ) {
+            return $this->invalid( 'description', __( 'Only skills have a description. Remove it, or change the type to Skill.', 'mainwp' ) );
+        }
+
         // Body is plain text kept byte for byte; escaping belongs to whoever renders it.
         $body = $input['body'] ?? null;
         // Invalid UTF-8 would pass the length check and then fail in wpdb's charset stripping as a 500.
-        if ( ! is_string( $body ) || ! mb_check_encoding( $body, 'UTF-8' ) ) {
+        if ( ! is_string( $body ) || ! $this->is_valid_utf8( $body ) ) {
             return $this->invalid( 'body' );
         }
         $len = mb_strlen( $body );
@@ -837,9 +1043,43 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             'scope_id'    => (int) $scope_id,
             'type'        => $type,
             'title'       => $title,
+            'description' => $description,
             'body'        => $body,
             'caller_note' => $caller_note,
+            'required'    => $required,
         );
+    }
+
+    /**
+     * Required rules need a person's review; previews must enforce the same restriction as writes.
+     *
+     * @param array       $input  Raw input, before stored fields are merged.
+     * @param string      $origin Trusted write origin.
+     * @param object|null $record Stored row, when updating or deleting.
+     * @return true|\WP_Error Whether this origin may touch Required.
+     */
+    public function check_required_write( array $input, string $origin, ?object $record = null ) {
+        if ( self::ORIGIN_UI !== $origin && array_key_exists( 'required', $input ) ) {
+            return $this->invalid( 'required', __( 'Leave out required. Only a person using the Dashboard can mark a record as required.', 'mainwp' ) );
+        }
+        if ( ! empty( $record->required ) && self::ORIGIN_UI !== $origin ) {
+            return $this->invalid( 'required', __( 'This is a required record. Only a person using the Dashboard can change or delete it.', 'mainwp' ) );
+        }
+        $required_changed = array_key_exists( 'required', $input ) && (int) ( $record->required ?? 0 ) !== (int) $input['required'];
+        if ( $required_changed || ! empty( $record->required ) ) {
+            return MainWP_Abilities_Util::check_unrestricted_access();
+        }
+        return true;
+    }
+
+    /**
+     * Servers without mbstring must still reject malformed text before storage.
+     *
+     * @param string $value Text to validate.
+     * @return bool Whether the bytes form valid UTF-8.
+     */
+    private function is_valid_utf8( string $value ): bool {
+        return function_exists( 'mb_check_encoding' ) ? mb_check_encoding( $value, 'UTF-8' ) : 1 === preg_match( '//u', $value );
     }
 
     /**
@@ -851,10 +1091,15 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      * @return bool|\WP_Error Whether it exists, or a read error.
      */
     private function scope_exists( string $scope_type, int $scope_id ) {
+        if ( 'agency' === $scope_type ) {
+            return 0 === $scope_id;
+        }
         if ( 'site' === $scope_type ) {
             $sql = 'SELECT id FROM ' . esc_sql( $this->table_name( 'wp' ) ) . ' WHERE id = %d';
-        } else {
+        } elseif ( 'client' === $scope_type ) {
             $sql = 'SELECT client_id FROM ' . esc_sql( $this->table_name( 'wp_clients' ) ) . ' WHERE client_id = %d';
+        } else {
+            return false;
         }
 
         $this->wpdb->last_error = '';
@@ -874,7 +1119,9 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      * @return object Row.
      */
     private function normalize_row( object $row ): object {
-        foreach ( array( 'id', 'scope_id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'revision', 'verified' ) as $field ) {
+        $row->description = $row->description ?? '';
+        $row->required    = $row->required ?? 0;
+        foreach ( array( 'id', 'scope_id', 'created_by', 'updated_by', 'created_at', 'updated_at', 'revision', 'verified', 'required' ) as $field ) {
             if ( isset( $row->$field ) ) {
                 $row->$field = (int) $row->$field;
             }
@@ -918,15 +1165,16 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * Validation error naming the offending field.
      *
-     * @param string $field Field name.
+     * @param string $field   Field name.
+     * @param string $message Optional explanation of the type rule.
      *
      * @return \WP_Error
      */
-    private function invalid( string $field ): \WP_Error {
+    private function invalid( string $field, string $message = '' ): \WP_Error {
         return new \WP_Error(
             'mainwp_knowledge_invalid',
             /* translators: %s: field name */
-            sprintf( __( 'Invalid knowledge record field: %s.', 'mainwp' ), $field ),
+            '' !== $message ? $message : sprintf( __( 'Invalid knowledge record field: %s.', 'mainwp' ), $field ),
             array( 'status' => 400 )
         );
     }

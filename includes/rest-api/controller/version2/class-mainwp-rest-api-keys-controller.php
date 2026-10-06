@@ -82,7 +82,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => WP_REST_Server::READABLE,
                     'callback'            => array( $this, 'list_keys' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->rest_api_list_keys_allowed_fields(),
                 ),
             )
@@ -95,7 +95,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => WP_REST_Server::CREATABLE,
                     'callback'            => array( $this, 'create_new_key' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->rest_api_add_key_allowed_fields(),
                 ),
             )
@@ -108,7 +108,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'edit_key' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->rest_api_edit_key_allowed_fields(),
                 ),
             )
@@ -121,7 +121,7 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => WP_REST_Server::DELETABLE,
                     'callback'            => array( $this, 'delete_key' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_api_allowed_id_field(),
                 ),
             )

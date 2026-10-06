@@ -33,6 +33,13 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
     protected $column_headers;
 
     /**
+     * Counts stay with the prepared rows so rendering does not query per client.
+     *
+     * @var array|\WP_Error
+     */
+    private $knowledge_counts = array();
+
+    /**
      * MainWP_Client_List_Table constructor.
      *
      * Run each time the class is called.
@@ -144,6 +151,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
             'client_instagram' => '<i class="instagram grey icon"></i>',
             'client_linkedin'  => '<i class="linkedin grey icon"></i>',
             'websites'         => esc_html__( 'Websites', 'mainwp' ),
+            'knowledge'        => esc_html__( 'Knowledge', 'mainwp' ),
             'address_1'        => esc_html__( 'Address 1', 'mainwp' ),
             'address_2'        => esc_html__( 'Address 2', 'mainwp' ),
             'city'             => esc_html__( 'City', 'mainwp' ),
@@ -346,6 +354,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 }
             }
         }
+
+        $this->knowledge_counts = MainWP_DB_Knowledge::instance()->get_scope_counts( 'client', $clients_ids );
 
         // for compatible.
         $optimize = $optimize ? true : false;
@@ -591,7 +601,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 $class[] = 'collapsing';
             }
 
-            if ( 'websites' === $column_client_key ) {
+            if ( 'websites' === $column_client_key || 'knowledge' === $column_client_key ) {
                 $class[] = 'collapsing';
             }
 
@@ -791,6 +801,21 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 <?php echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                     <a class="ui mini grey button" href="admin.php?page=managesites&client=<?php echo intval( $item['client_id'] ); ?>"><i class="wordpress icon"></i><?php echo intval( $count ); ?></a>
                 <?php echo '</td>'; ?>
+                <?php
+            } elseif ( 'knowledge' === $column_name ) {
+                ?>
+                <td class="<?php echo esc_attr( $classes ); ?>">
+                    <?php if ( is_wp_error( $this->knowledge_counts ) ) : ?>
+                        <?php $strings = MainWP_Knowledge_UI::js_strings(); ?>
+                        <span><?php echo esc_html( $strings['failed'] ); ?></span>
+                    <?php elseif ( isset( $this->knowledge_counts[ (int) $item['client_id'] ] ) ) : ?>
+                        <?php $count = $this->knowledge_counts[ (int) $item['client_id'] ]; ?>
+                        <a class="ui mini grey button" href="<?php echo esc_url( admin_url( 'admin.php?page=ManageClients&client_id=' . (int) $item['client_id'] ) ); ?>" data-tooltip="<?php esc_attr_e( 'Client knowledge records', 'mainwp' ); ?>" data-inverted=""><i class="book icon"></i><?php echo (int) $count['total']; ?></a>
+                        <?php if ( $count['unverified'] ) : ?>
+                        <span class="ui mini yellow label" data-tooltip="<?php esc_attr_e( 'Saved by AI agents and not yet reviewed by a person.', 'mainwp' ); ?>" data-inverted=""><?php /* translators: %d: record count */ echo esc_html( sprintf( _n( '%d unverified', '%d unverified', $count['unverified'], 'mainwp' ), $count['unverified'] ) ); ?></span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </td>
                 <?php
             } elseif ( 'notes' === $column_name ) {
                 $note     = isset( $item['note'] ) ? (string) $item['note'] : '';

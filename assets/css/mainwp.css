@@ -1009,35 +1009,183 @@ table.mainwp-manage-wpsites-table .error a {
 /* Knowledge panel */
 
 .mainwp-knowledge-section,
-#mainwp-knowledge-inherited {
+.mainwp-knowledge-inherited,
+.mainwp-knowledge-site-section {
     margin-bottom: 2em;
 }
 
-/* Fixed widths, so the same column starts at the same place in every table of the panel. */
-#mainwp-knowledge-panel table th.mainwp-knowledge-type-cell {
-    width: 9em;
+.mainwp-widget.mainwp-knowledge-section-box {
+    padding: 1em !important;
+    overflow: visible !important;
 }
 
-/* Wide enough for the longest relative time on one line; a narrower column grows with its content and shifts the others. */
-#mainwp-knowledge-panel table th.mainwp-knowledge-updated-cell {
-    width: 11em;
+#mainwp-knowledge-review-filters {
+    margin: 0 0 1em !important;
 }
 
-#mainwp-knowledge-panel table th.mainwp-knowledge-editor-cell,
-#mainwp-knowledge-panel table th.mainwp-knowledge-actions-cell {
-    width: 12em;
+.mainwp-knowledge-section-box .mainwp-widget-header,
+.mainwp-knowledge-section-box .mainwp-widget-footer {
+    padding: 0 !important;
 }
 
-#mainwp-knowledge-panel table td.mainwp-knowledge-updated-cell,
-#mainwp-knowledge-panel table td.mainwp-knowledge-actions-cell {
-    white-space: nowrap;
+.mainwp-knowledge-section-box .mainwp-widget-header {
+    margin-bottom: 1em;
 }
 
-#mainwp-knowledge-panel table td.mainwp-knowledge-editor-cell {
+.mainwp-knowledge-section-title {
+    display: flex;
+    align-items: center;
+    gap: .5em;
+}
+
+.mainwp-knowledge-section-title > .icon {
+    width: auto;
+    margin: 0 !important;
+}
+
+.mainwp-knowledge-records.ui.styled.accordion {
+    width: 100%;
+    box-shadow: none;
+    margin-bottom: 2em;
+}
+
+.mainwp-ui .mainwp-knowledge-section-box .mainwp-knowledge-records.ui.styled.accordion,
+.mainwp-ui .mainwp-knowledge-section-box .mainwp-knowledge-records.ui.accordion .mainwp-knowledge-record-title,
+.mainwp-ui .mainwp-knowledge-section-box .mainwp-knowledge-records.ui.accordion .mainwp-knowledge-record-content {
+    background: transparent !important;
+}
+
+.mainwp-knowledge-records.ui.accordion .mainwp-knowledge-record-title {
+    display: flex;
+    align-items: center;
+    gap: .5em;
+    min-width: 0;
+    border-top: 1px solid var(--mainwp-border, rgba(34, 36, 38, .15));
+    padding: 1em !important;
+}
+
+.mainwp-knowledge-records.ui.accordion .mainwp-knowledge-record-title:first-child {
+    border-top: 0;
+}
+
+.mainwp-knowledge-required-indicator {
+    flex: 0 0 auto;
+    margin-right: .5em;
+}
+
+.mainwp-knowledge-required-indicator .ui.checkbox label {
+    font-size: .78571429rem;
+}
+
+.mainwp-knowledge-required-indicator .ui.disabled.checkbox label {
+    color: var(--mainwp-text-secondary, rgba(0, 0, 0, .4)) !important;
+}
+
+.mainwp-knowledge-record-chevron {
+    flex: 0 0 auto;
+}
+
+.mainwp-knowledge-record-name {
+    flex: 1 1 auto;
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 12em;
+}
+
+.mainwp-knowledge-record-level {
+    flex: 0 1 auto;
+    max-width: 40%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.mainwp-knowledge-record-chevron {
+    margin-left: auto !important;
+    transition: transform .2s ease;
+}
+
+.mainwp-knowledge-record-title.active .mainwp-knowledge-record-chevron {
+    transform: rotate(90deg);
+}
+
+.mainwp-knowledge-records.ui.accordion .mainwp-knowledge-record-content {
+    padding: 0 1em 1em !important;
+}
+
+.mainwp-knowledge-record-value {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.mainwp-knowledge-record-body {
+    max-height: 350px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.mainwp-knowledge-record-card.ui.cards {
+    width: 100%;
+    margin: 0;
+}
+
+.mainwp-knowledge-record-card.ui.cards > .card {
+    width: 100%;
+    margin: 0;
+}
+
+.mainwp-ui .mainwp-knowledge-record-card.ui.cards > .card > .mainwp-knowledge-record-body,
+.mainwp-ui .mainwp-knowledge-record-card.ui.cards > .card > .extra.content {
+    background: var(--mainwp-element-background-secondary, rgba(0, 0, 0, .03)) !important;
+}
+
+.mainwp-knowledge-record-actions.ui.grid {
+    width: 100%;
+    margin: 0 !important;
+}
+
+.mainwp-knowledge-record-actions.ui.grid > .column {
+    padding: 0 !important;
+}
+
+.mainwp-knowledge-record-actions.ui.grid > .right.column {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .5em;
+}
+
+.mainwp-knowledge-record-actions.ui.grid > .right.column > .button {
+    flex: 0 0 auto;
+    display: inline-flex !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    white-space: nowrap;
+}
+
+.mainwp-knowledge-empty,
+.mainwp-knowledge-inherited-empty,
+.mainwp-knowledge-site-empty {
+    padding: 1em;
+}
+
+.mainwp-knowledge-empty {
+    margin-bottom: 2em;
+}
+
+.mainwp-knowledge-add {
+    margin-top: 1em !important;
+}
+
+.mainwp-knowledge-read-only-widget .mainwp-knowledge-add,
+.mainwp-knowledge-read-only-widget .mainwp-knowledge-edit,
+.mainwp-knowledge-read-only-widget .mainwp-knowledge-delete,
+.mainwp-knowledge-read-only-widget .mainwp-knowledge-view {
+    display: none !important;
 }
 
 /* Manage Cliens Table */

@@ -299,7 +299,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 array(
                     'methods'             => WP_REST_Server::CREATABLE,
                     'callback'            => array( $this, 'create_client_fields' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->create_client_fields_allowed_fields(),
                 ),
             )
@@ -312,7 +312,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'edit_client_fields' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->edit_client_fields_allowed_fields(),
                 ),
             )
@@ -324,7 +324,7 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
                 array(
                     'methods'             => WP_REST_Server::DELETABLE,
                     'callback'            => array( $this, 'delete_client_fields' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                 ),
             )
         );
@@ -492,7 +492,8 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
         $clients = MainWP_DB_Client::instance()->get_wp_clients( $prepared_args );
         $clients = $this->filter_scoped_clients( $clients );
         if ( 'all' !== $allowed && $page > 0 && $per_page > 0 ) {
-            $clients = array_slice( $clients, ( $page - 1 ) * $per_page, $per_page );
+            // A huge page number would overflow the offset to a float.
+            $clients = $page - 1 < ceil( count( $clients ) / $per_page ) ? array_slice( $clients, ( $page - 1 ) * $per_page, $per_page ) : array();
         }
         $data = array();
         if ( is_array( $clients ) ) {

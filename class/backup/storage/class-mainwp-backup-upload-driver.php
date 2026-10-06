@@ -45,6 +45,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     private const PRIVATE_ROOT_FAILURE = 10001;
 
     /**
+     * A KEK read failure can recover without changing the snapshot's key version.
+     *
+     * @var int
+     */
+    private const KEK_UNAVAILABLE = 10002;
+
+    /**
      * Maximum jobs attempted in one tick.
      *
      * @var int
@@ -837,6 +844,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @return array
      *
      * @throws MainWP_Exception When required encryption metadata or keys are unusable.
+     * @throws \RuntimeException When the KEK cannot be read for this attempt.
      */
     private function encryption_context_for( object $snapshot ): array {
         $meta      = isset( $snapshot->encryption ) ? $snapshot->encryption : array();
@@ -854,7 +862,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $encryption = MainWP_Backup_Encryption::instance();
         $kek        = $encryption->load_kek();
-        if ( null === $kek || $encryption->kek_version_id( $kek ) !== $meta['kek_version_id'] ) {
+        if ( null === $kek ) {
+            throw new \RuntimeException( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED ), self::KEK_UNAVAILABLE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
+        }
+        if ( $encryption->kek_version_id( $kek ) !== $meta['kek_version_id'] ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
         }
 
@@ -953,7 +964,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $label              = self::PRIVATE_ROOT_FAILURE === $code ? MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE : $this->error_code_for_provider( (string) $destination->provider );
         $encryption_refused = $e instanceof MainWP_Exception && MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED === $e->get_message_error_code();
-        if ( $encryption_refused ) {
+        if ( $encryption_refused || self::KEK_UNAVAILABLE === $code ) {
             $label = MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED;
         }
         $error = '[' . $label . '] ' . $e->getMessage();

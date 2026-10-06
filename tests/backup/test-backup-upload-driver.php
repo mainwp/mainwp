@@ -1289,6 +1289,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			$meta['required'] = 1;
 			if ( 'missing-key' === $mutation ) {
 				MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+			} elseif ( 'key-version' === $mutation ) {
+				$meta['kek_version_id'] = 'different-key-version';
 			} elseif ( 'corrupt-dek' === $mutation ) {
 				$meta['wrapped_dek'] = 'not-valid-base64!';
 			} else {
@@ -1296,6 +1298,19 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			}
 			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'encryption' => wp_json_encode( $meta ) ), array( 'id' => $snapshot_id ) );
 			$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		}
+
+		$staging = $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id;
+		if ( in_array( $mutation, array( 'missing-key', 'key-version' ), true ) ) {
+			wp_mkdir_p( $staging );
+			file_put_contents( $staging . '/partial.bin', 'existing staged chunk' );
+			$this->assertFileExists( $staging . '/partial.bin' );
+			if ( 'missing-key' === $mutation ) {
+				$this->assertNull( $enc->load_kek(), 'The key must be unreadable at upload time.' );
+			} else {
+				$this->assertNotNull( $enc->load_kek() );
+				$this->assertNotSame( $snapshot->encryption['kek_version_id'], $enc->kek_version_id( $enc->load_kek() ) );
+			}
 		}
 
 		$writes  = array();
@@ -1332,14 +1347,22 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 
 		$driver->process_pending_jobs( 240 );
 		$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0];
-		if ( 'refused' === $outcome ) {
+		if ( 'refused' === $outcome || 'retryable' === $outcome ) {
 			$this->assertCount( 0, $writes, 'Encryption-required snapshots must refuse before any provider write.' );
-			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
 			$this->assertStringContainsString( '[mainwp_backup_encryption_required]', $job->last_error );
-			$this->assertCount( 1, $events );
-			$this->assertSame( $job->last_error, $events[0]['error'] );
-			$this->assertSame( $snapshot_id, $events[0]['snapshot_id'] );
-			$this->assertSame( 'failed', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+			if ( 'retryable' === $outcome ) {
+				$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+				$this->assertGreaterThan( time(), (int) $job->next_retry_at );
+				$this->assertSame( 'existing staged chunk', file_get_contents( $staging . '/partial.bin' ) );
+				$this->assertSame( array(), $events );
+			} else {
+				$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+				$this->assertDirectoryDoesNotExist( $staging );
+				$this->assertCount( 1, $events );
+				$this->assertSame( $job->last_error, $events[0]['error'] );
+				$this->assertSame( $snapshot_id, $events[0]['snapshot_id'] );
+				$this->assertSame( 'failed', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->offsite_state );
+			}
 			$this->assertSame( 1, $snapshot->encryption['required'] ?? null );
 			$this->assertSame( $snapshot->encryption, MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->encryption );
 			return;
@@ -1395,7 +1418,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			'missing encryption flag'        => array( 'armed', 'refused', 'enc' ),
 			'missing wrapped DEK'            => array( 'armed', 'refused', 'wrapped_dek' ),
 			'corrupt wrapped DEK'            => array( 'armed', 'refused', 'corrupt-dek' ),
-			'key lost before upload'         => array( 'armed', 'refused', 'missing-key' ),
+			'key unreadable before upload'   => array( 'armed', 'retryable', 'missing-key' ),
+			'key version mismatch'           => array( 'armed', 'refused', 'key-version' ),
 		);
 	}
 

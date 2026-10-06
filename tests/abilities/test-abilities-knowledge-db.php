@@ -662,6 +662,10 @@ class Test_Abilities_Knowledge_DB extends MainWP_Abilities_Test_Case {
 			$this->assertSame( $this->db->count_records( $args ), $page['total'] );
 			$this->assertSame( empty( $args ) ? 8 : 2, $page['total'] );
 		}
+		$page = $this->db->get_records_page( $filters + array( 'with_unfiltered_total' => true ) );
+		$this->assertSame( array( 'items', 'total', 'unfiltered_total' ), array_keys( $page ) );
+		$this->assertSame( 2, $page['total'] );
+		$this->assertSame( 8, $page['unfiltered_total'] );
 	}
 
 	public function test_update_checks_expected_revision() {

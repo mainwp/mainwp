@@ -351,7 +351,7 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * List records visible to the current user.
      *
-     * @param array $args Optional scope_type, scope_id, type, search, limit, offset, with_body (default true), and with_body_preview.
+     * @param array $args Optional scope_type, scope_id, type, search, order, limit, offset, with_body (default true), and with_body_preview.
      *
      * @return object[]|\WP_Error Records, or a read error.
      */
@@ -367,12 +367,20 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * List and count with one visibility walk for the current user.
      *
-     * @param array $args Optional scope_type, scope_id, type, search, limit, offset, with_body (default true), and with_body_preview.
+     * @param array $args Optional scope_type, scope_id, type, search, order, limit, offset, with_body (default true), with_body_preview, and with_unfiltered_total.
      *
-     * @return array{items: object[], total: int}|\WP_Error Records and total before pagination, or a read error.
+     * @return array{items: object[], total: int, unfiltered_total?: int}|\WP_Error Records and total before pagination, or a read error.
      */
     public function get_records_page( array $args = array() ) {
-        $where = $this->records_where_template( $args );
+        $scope = null;
+        if ( ! empty( $args['with_unfiltered_total'] ) ) {
+            $scope = $this->scope_where_template();
+            if ( is_wp_error( $scope ) ) {
+                return $scope;
+            }
+        }
+
+        $where = $this->records_where_template( $args, $scope );
         if ( is_wp_error( $where ) ) {
             return $where;
         }
@@ -387,10 +395,19 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
             return $total;
         }
 
-        return array(
+        $page = array(
             'items' => $items,
             'total' => $total,
         );
+        if ( null !== $scope ) {
+            $unfiltered_total = $this->count_records_from_template( $scope[0], $scope[1] );
+            if ( is_wp_error( $unfiltered_total ) ) {
+                return $unfiltered_total;
+            }
+            $page['unfiltered_total'] = $unfiltered_total;
+        }
+
+        return $page;
     }
 
     /**
@@ -403,8 +420,9 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
      * @return object[]|\WP_Error Records, or a read error.
      */
     private function get_records_from_template( string $template, array $values, array $args ) {
+        $order = isset( $args['order'] ) && 'updated_asc' === $args['order'] ? 'ASC' : 'DESC';
         // nosec -- the template contains only fixed strings and counted placeholders; every value is bound below.
-        $sql    = 'SELECT ' . $this->records_columns( $args ) . ' FROM %i WHERE ' . $template . ' ORDER BY updated_at DESC, id DESC';
+        $sql    = 'SELECT ' . $this->records_columns( $args ) . ' FROM %i WHERE ' . $template . ' ORDER BY updated_at ' . $order . ', id ' . $order;
         $values = array_merge( array( $this->table_name( 'knowledge' ) ), $values );
 
         $limit = isset( $args['limit'] ) ? absint( $args['limit'] ) : 0;
@@ -588,12 +606,13 @@ class MainWP_DB_Knowledge extends MainWP_DB { // phpcs:ignore Generic.Classes.Op
     /**
      * Keep listing and counting on the same filters and value order.
      *
-     * @param array $args Filters.
+     * @param array      $args  Filters.
+     * @param array|null $scope Optional precomputed visibility template and values.
      *
      * @return array|\WP_Error SQL template and ordered values, or the scope read error.
      */
-    private function records_where_template( array $args ) {
-        $scope = $this->scope_where_template();
+    private function records_where_template( array $args, ?array $scope = null ) {
+        $scope = null === $scope ? $this->scope_where_template() : $scope;
         if ( is_wp_error( $scope ) ) {
             return $scope;
         }

@@ -935,8 +935,9 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertGreaterThan( $knowledge, $panel );
 		$this->assertSame( 1, substr_count( $html, 'mainwp-knowledge-panel ' ) );
 		$this->assertStringContainsString( 'class="ui dimmer mainwp-knowledge-loader"', $html );
-		$this->assertStringNotContainsString( '<th class="mainwp-knowledge-type-cell">', $html );
-		$this->assertStringNotContainsString( '<th class="mainwp-knowledge-updated-cell">', $html );
+		$this->assertStringContainsString( 'class="ui three column stackable grid mainwp-knowledge-sections"', $html );
+		$this->assertSame( 3, substr_count( $html, 'class="ui segment mainwp-widget mainwp-knowledge-section-box"' ) );
+		$this->assertSame( 3, substr_count( $html, 'class="ui styled fluid accordion mainwp-knowledge-records"' ) );
 
 		preg_match_all( '/<div class="ui basic accordion mainwp-blank-accordion mainwp-sidebar-accordion" id="([^"]+)">/', $html, $accordions );
 		$this->assertSame( 'mainwp-knowledge-accordion', end( $accordions[1] ) );
@@ -944,6 +945,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 
 	public function test_panel_uses_singular_types_and_separate_add_strings(): void {
 		$this->assertSame( array( 'context' => 'Context', 'skill' => 'Skill', 'memory' => 'Memory' ), MainWP_Knowledge_UI::type_labels() );
+		$this->assertSame( array( 'context' => 'info circle', 'skill' => 'wrench', 'memory' => 'history' ), MainWP_Knowledge_UI::type_icons() );
 		$messages = array();
 		$this->track_filter( 'gettext', static function ( $translated, $text, $domain ) use ( &$messages ) {
 			if ( 'mainwp' === $domain ) {
@@ -953,7 +955,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		}, 10, 3 );
 		$html = $this->render_site_knowledge();
 		$this->assertStringContainsString( '<option value="skill">Skill</option>', $html );
-		$this->assertMatchesRegularExpression( '/data-type="skill">.*?<div class="ui small header">\s*Skills\s*<div/s', $html );
+		$this->assertMatchesRegularExpression( '/data-type="skill">.*?<div class="ui header">\s*<div class="mainwp-knowledge-section-title">\s*<i class="wrench icon"><\/i>\s*<span>Skills<\/span>\s*<\/div>\s*<div class="sub header">/s', $html );
 		foreach ( array( 'Add Context', 'Add Skill', 'Add Memory' ) as $label ) {
 			$this->assertContains( $label, $messages );
 			$this->assertStringContainsString( $label, $html );
@@ -968,10 +970,11 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 
 	public function test_panel_copy_uses_ai_agent_and_the_review_hint(): void {
 		$strings = MainWP_Knowledge_UI::js_strings();
-		$this->assertSame( 'Saved by an AI agent and not yet reviewed by a person. AI agents treat it as information only until you review and save it.', $strings['unverifiedHint'] );
+		$this->assertSame( 'AI-submitted and not yet reviewed. Review and verify this record to mark it as trusted.', $strings['unverifiedHint'] );
 		$this->assertSame( 'Delete this knowledge record? Connected AI agents lose it immediately.', $strings['confirmDelete'] );
 		$site = $this->render_site_knowledge();
-		$this->assertStringContainsString( '<div class="ui info message">', $site );
+		$this->assertStringContainsString( '<div class="ui blue message">', $site );
+		$this->assertStringContainsString( 'class="close icon mainwp-notice-dismiss" notice-id="mainwp-knowledge-site-info-message"', $site );
 		foreach ( array(
 			'Facts an AI agent should know before it acts on this site: hosting, stack, constraints, known quirks.',
 			'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.',
@@ -991,11 +994,16 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( 'AI client', $site . $client );
 	}
 
-	public function test_only_the_combined_inherited_table_has_a_type_column(): void {
+	public function test_site_panel_uses_type_accordions_for_own_and_inherited_records(): void {
 		$html = $this->render_site_knowledge();
-		$this->assertSame( 1, substr_count( $html, '<th class="mainwp-knowledge-type-cell">' ) );
-		$this->assertSame( 4, substr_count( $html, '<th class="mainwp-knowledge-editor-cell collapsing">' ) );
-		$this->assertSame( 4, substr_count( $html, '<th class="mainwp-knowledge-actions-cell no-sort collapsing">' ) );
+		$this->assertSame( 6, substr_count( $html, 'class="ui styled fluid accordion mainwp-knowledge-records"' ) );
+		$this->assertSame( 6, substr_count( $html, 'class="ui segment mainwp-widget mainwp-knowledge-section-box"' ) );
+		$this->assertSame( 6, substr_count( $html, 'class="mainwp-empty-widget-placeholder"' ) );
+		$this->assertStringContainsString( 'Knowledge records will appear here when they are added.', $html );
+		$this->assertStringContainsString( 'data-emoji=":bulb:"', $html );
+		$this->assertStringContainsString( 'class="ui three column stackable grid mainwp-knowledge-sections"', $html );
+		$this->assertStringContainsString( 'class="ui three column stackable grid mainwp-knowledge-inherited-sections"', $html );
+		$this->assertStringNotContainsString( '<table', $html );
 	}
 
 	public function test_list_site_answers_db_error_when_the_client_lookup_fails(): void {
@@ -1132,6 +1140,55 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	public function test_required_title_toggle_preserves_content_and_updates_revision(): void {
+		foreach ( array( 'context', 'skill' ) as $type ) {
+			$record = $this->create_record( array( 'type' => $type ) );
+			$set = $this->call(
+				'mainwp_knowledge_required',
+				array(
+					'id'       => $record->id,
+					'revision' => 1,
+					'required' => 1,
+				)
+			);
+			$this->assertTrue( $set['success'] );
+			$this->assertSame( 1, $set['data']['record']['required'] );
+			$this->assertSame( 2, $set['data']['record']['revision'] );
+			$this->assertSame( $record->title, $set['data']['record']['title'] );
+			$this->assertSame( $record->description, $set['data']['record']['description'] );
+			$this->assertSame( $record->body, $set['data']['record']['body'] );
+
+			$clear = $this->call(
+				'mainwp_knowledge_required',
+				array(
+					'id'       => $record->id,
+					'revision' => 2,
+					'required' => 0,
+				)
+			);
+			$this->assertTrue( $clear['success'] );
+			$this->assertSame( 0, $clear['data']['record']['required'] );
+			$this->assertSame( 3, $clear['data']['record']['revision'] );
+		}
+	}
+
+	public function test_required_title_toggle_validates_request_and_browser_session(): void {
+		$record = $this->create_record();
+		foreach ( array(
+			array( 'revision' => 1, 'required' => 1 ),
+			array( 'id' => $record->id, 'required' => 1 ),
+			array( 'id' => $record->id, 'revision' => 1 ),
+			array( 'id' => $record->id, 'revision' => 1, 'required' => 2 ),
+		) as $input ) {
+			$this->assert_error( $this->call( 'mainwp_knowledge_required', $input ), 'mainwp_knowledge_invalid', 400 );
+		}
+
+		unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
+		$response = $this->call( 'mainwp_knowledge_required', array( 'id' => $record->id, 'revision' => 1, 'required' => 1 ) );
+		$this->assert_error( $response, 'mainwp_knowledge_browser_session_required', 403 );
+		$this->assertSame( 0, $this->db->get_by_id( $record->id )->required );
+	}
+
 	public function test_required_ajax_restricted_user_cannot_write_edit_or_delete(): void {
 		$record = $this->create_record( array( 'scope_type' => 'agency', 'required' => true ) );
 		$this->restrict_to_other_site();
@@ -1139,6 +1196,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		foreach ( array( $input, $input + array( 'id' => $record->id, 'revision' => 1 ) ) as $fields ) {
 			$this->assert_error( $this->call( 'mainwp_knowledge_save', $fields ), 'mainwp_restricted_account', 403 );
 		}
+		$this->assert_error( $this->call( 'mainwp_knowledge_verify', array( 'id' => $record->id, 'revision' => 1 ) ), 'mainwp_restricted_account', 403 );
 		$this->assert_error( $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) ), 'mainwp_restricted_account', 403 );
 		$list = $this->call( 'mainwp_knowledge_list', array( 'scope_type' => 'agency' ) );
 		$this->assertTrue( $list['success'] );
@@ -1265,7 +1323,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$cases = array(
 			array( array(), array( $agency->id, $client->id ) ),
 			array( array( 'status' => 'verified' ), array( $site->id ) ),
-			array( array( 'status' => 'all' ), array( $agency->id, $client->id, $site->id ) ),
+			array( array( 'status' => 'all', 'level' => 'all' ), array( $agency->id, $client->id, $site->id ) ),
 			array( array( 'type' => 'skill' ), array( $agency->id ) ),
 			array( array( 'level' => 'client' ), array( $client->id ) ),
 			array( array( 'status' => 'all', 'type' => 'context', 'level' => 'site' ), array( $site->id ) ),
@@ -1275,7 +1333,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			$response = $this->call( 'mainwp_knowledge_review', $case[0] );
 			$this->assertEqualsCanonicalizing( $case[1], array_column( $response['data'], 'id' ) );
 			$this->assertSame( count( $case[1] ), $response['recordsFiltered'] );
-			$this->assertSame( count( $case[1] ), $response['recordsTotal'] );
+			$this->assertSame( 3, $response['recordsTotal'] );
 		}
 	}
 
@@ -1287,12 +1345,16 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->review_record( array(), true );
 		$page = $this->call( 'mainwp_knowledge_review', array( 'draw' => '7', 'start' => '2', 'length' => '2' ) );
 		$this->assertSame( 7, $page['draw'] );
-		$this->assertSame( 5, $page['recordsTotal'] );
+		$this->assertSame( 6, $page['recordsTotal'] );
 		$this->assertSame( 5, $page['recordsFiltered'] );
-		$this->assertSame( array_reverse( array_slice( $ids, 1, 2 ) ), array_column( $page['data'], 'id' ) );
+		$this->assertSame( array_slice( $ids, 2, 2 ), array_column( $page['data'], 'id' ) );
 		$empty = $this->call( 'mainwp_knowledge_review', array( 'start' => '8', 'length' => '2' ) );
 		$this->assertSame( 5, $empty['recordsFiltered'] );
 		$this->assertSame( array(), $empty['data'] );
+		$unpaginated = $this->call( 'mainwp_knowledge_review', array() );
+		$this->assertSame( 5, $unpaginated['recordsFiltered'] );
+		$this->assertCount( 5, $unpaginated['data'] );
+		$this->assertSame( $ids, array_column( $unpaginated['data'], 'id' ) );
 	}
 
 	public function test_review_restricted_visibility_matches_knowledge_list_in_sql(): void {
@@ -1311,7 +1373,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$all = $this->call( 'mainwp_knowledge_review', array( 'length' => '10' ) );
 		$this->assertEqualsCanonicalizing( array( $agency->id, $client->id, $site->id ), array_column( $all['data'], 'id' ) );
 		$ability = \MainWP\Dashboard\MainWP_Abilities_Knowledge::execute_list_knowledge( array() );
-		$this->assertSame( array_column( $ability['items'], 'id' ), array_column( $all['data'], 'id' ) );
+		$this->assertEqualsCanonicalizing( array_column( $ability['items'], 'id' ), array_column( $all['data'], 'id' ) );
 		$this->withhold_right( 'manage_clients' );
 		$this->track_filter( 'mainwp_check_site_access', '__return_false' );
 		$agency_only = $this->call( 'mainwp_knowledge_review', array() );
@@ -1334,22 +1396,80 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		}
 	}
 
-	public function test_review_rows_escape_copy_and_show_agent_provenance(): void {
+	public function test_review_records_return_structured_summary_and_agent_provenance(): void {
 		$record = $this->review_record( array( 'scope_type' => 'agency', 'type' => 'skill', 'title' => '<script>Rule</script>' ) );
 		$page = $this->call( 'mainwp_knowledge_review', array() );
 		$row = $page['data'][0];
 		$this->assertSame( $record->id, $row['id'] );
-		$this->assertStringContainsString( '&lt;script&gt;Rule&lt;/script&gt;', $row['title'] );
-		$this->assertStringContainsString( 'Use &lt;staging&gt; &amp; check the deployment.', $row['title'] );
-		$this->assertStringContainsString( 'Unverified', $row['status'] );
-		$this->assertSame( 'AI agent via ' . esc_html( wp_get_current_user()->display_name ), $row['editor'] );
-		$this->assertStringContainsString( 'mainwp-knowledge-open', $row['actions'] );
-		$this->assertStringContainsString( 'Open', $row['actions'] );
+		$this->assertSame( '<script>Rule</script>', $row['title'] );
+		$this->assertSame( 'Use <staging> & check the deployment.', $row['description'] );
+		$this->assertSame( 0, $row['verified'] );
+		$this->assertSame( 'Agency', $row['level_label'] );
+		$this->assertSame( '', $row['level_url'] );
+		$this->assertSame( 'AI agent via ' . wp_get_current_user()->display_name, $row['updated_by_name'] );
+		$this->assertTrue( $row['can_write'] );
 		$this->assertArrayNotHasKey( 'body', $row );
 		$required = $this->create_record( array( 'scope_type' => 'agency', 'type' => 'skill', 'title' => '<b>Required rule</b>', 'required' => true ) );
 		$page = $this->call( 'mainwp_knowledge_review', array( 'status' => 'verified' ) );
 		$this->assertSame( $required->id, $page['data'][0]['id'] );
-		$this->assertSame( '&lt;b&gt;Required rule&lt;/b&gt; <span class="ui mini label">Required</span><div class="ui small text">' . esc_html( $required->description ) . '</div>', $page['data'][0]['title'] );
+		$this->assertSame( '<b>Required rule</b>', $page['data'][0]['title'] );
+		$this->assertSame( 1, $page['data'][0]['required'] );
+		$this->assertSame( $required->description, $page['data'][0]['description'] );
+	}
+
+	public function test_review_records_link_to_client_and_site_knowledge_pages(): void {
+		$client = $this->review_record();
+		$site   = $this->review_record( $this->site_input() );
+		$page   = $this->call( 'mainwp_knowledge_review', array() );
+		$rows   = array_column( $page['data'], null, 'id' );
+		$this->assertSame( admin_url( 'admin.php?page=ClientAddNew&client_id=' . $this->client_id ), $rows[ $client->id ]['level_url'] );
+		$this->assertSame( admin_url( 'admin.php?page=managesites&knowledgeid=' . $this->site_id ), $rows[ $site->id ]['level_url'] );
+	}
+
+	public function test_review_verify_marks_the_current_revision_verified_without_changing_content(): void {
+		$record   = $this->review_record( array( 'title' => 'Review me', 'body' => 'Keep this body unchanged.' ) );
+		$response = $this->call(
+			'mainwp_knowledge_verify',
+			array(
+				'id'       => $record->id,
+				'revision' => $record->revision,
+			)
+		);
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( 1, $response['data']['record']['verified'] );
+		$this->assertSame( $record->revision + 1, $response['data']['record']['revision'] );
+		$this->assertSame( 'Review me', $response['data']['record']['title'] );
+		$this->assertSame( 'Keep this body unchanged.', $response['data']['record']['body'] );
+		$this->assertSame( MainWP_DB_Knowledge::ORIGIN_UI, $response['data']['record']['source'] );
+		$this->assertSame( array(), $this->call( 'mainwp_knowledge_review', array() )['data'] );
+		$this->assert_error(
+			$this->call(
+				'mainwp_knowledge_verify',
+				array(
+					'id'       => $record->id,
+					'revision' => $record->revision,
+				)
+			),
+			'mainwp_knowledge_conflict',
+			409
+		);
+	}
+
+	public function test_review_verify_validates_the_revision_and_requires_a_browser_session(): void {
+		$record = $this->review_record();
+		foreach ( array( array(), array( 'id' => $record->id ), array( 'revision' => $record->revision ) ) as $input ) {
+			$this->assert_error( $this->call( 'mainwp_knowledge_verify', $input ), 'mainwp_knowledge_invalid', 400 );
+		}
+		unset( $_COOKIE[ LOGGED_IN_COOKIE ] );
+		$response = $this->call(
+			'mainwp_knowledge_verify',
+			array(
+				'id'       => $record->id,
+				'revision' => $record->revision,
+			)
+		);
+		$this->assert_error( $response, 'mainwp_knowledge_browser_session_required', 403 );
+		$this->assertSame( 0, $this->db->get_by_id( $record->id )->verified );
 	}
 
 	public function test_review_database_failure_is_an_error_not_an_empty_queue(): void {
@@ -1367,13 +1487,17 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$get = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
 		$this->assertSame( 'Unknown user', $get['data']['record']['updated_by_name'] );
 		$page = $this->call( 'mainwp_knowledge_review', array() );
-		$this->assertSame( 'Unknown user', $page['data'][0]['editor'] );
+		$this->assertSame( 'Unknown user', $page['data'][0]['updated_by_name'] );
 	}
 
-	public function test_review_handler_is_registered_with_its_nonce(): void {
+	public function test_review_verify_and_required_handlers_are_registered_with_their_nonces(): void {
 		MainWP_Knowledge_UI::init();
 		$this->assertContains( 'mainwp_knowledge_review', MainWP_Knowledge_UI::ACTIONS );
+		$this->assertContains( 'mainwp_knowledge_verify', MainWP_Knowledge_UI::ACTIONS );
+		$this->assertContains( 'mainwp_knowledge_required', MainWP_Knowledge_UI::ACTIONS );
 		$this->assertNotFalse( has_action( 'wp_ajax_mainwp_knowledge_review', array( MainWP_Knowledge_UI::instance(), 'ajax_review' ) ) );
+		$this->assertNotFalse( has_action( 'wp_ajax_mainwp_knowledge_verify', array( MainWP_Knowledge_UI::instance(), 'ajax_verify' ) ) );
+		$this->assertNotFalse( has_action( 'wp_ajax_mainwp_knowledge_required', array( MainWP_Knowledge_UI::instance(), 'ajax_required' ) ) );
 	}
 
 	private function client_overview_widget(): string {
@@ -1409,14 +1533,15 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		return array( $boxes, $html );
 	}
 
-	public function test_client_overview_widget_is_enabled_and_editable_for_unrestricted_user(): void {
+	public function test_client_overview_widget_is_enabled_and_read_only_for_unrestricted_user(): void {
 		list( $boxes, $options ) = $this->client_overview_registration();
 		$this->assertArrayHasKey( 'knowledge', $boxes );
 		$this->assertSame( array( -1, -1, 6, 40 ), $boxes['knowledge']['layout'] );
 		$this->assertStringContainsString( 'id="mainwp_show_widget_knowledge"', $options );
 		$html = $this->client_overview_widget();
-		$this->assertStringContainsString( 'data-scope-type="client" data-scope-id="' . $this->client_id . '" data-can-write="1"', $html );
-		$this->assertStringContainsString( 'mainwp-knowledge-add', $html );
+		$this->assertStringContainsString( 'mainwp-knowledge-read-only-widget', $html );
+		$this->assertStringContainsString( 'data-scope-type="client" data-scope-id="' . $this->client_id . '" data-can-write="0" data-read-only="1"', $html );
+		$this->assertStringNotContainsString( 'mainwp-knowledge-add', $html );
 		$this->assertSame( 1, preg_match_all( '/<h2\b[^>]*>\s*Knowledge\s*<div/', $html ) );
 		$this->assertStringContainsString( 'Context, skills, and memories that AI agents receive for this client and its sites.', $html );
 		$this->assertStringNotContainsString( 'Add context, skills, and memories that connected AI agents can use when working for this client.', $html );
@@ -1426,7 +1551,10 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( 'ui padded segment dimmable mainwp-knowledge-panel', $html );
 		$this->assertStringContainsString( '<div class="dimmable mainwp-knowledge-site-list"', $html );
 		$this->assertStringNotContainsString( 'ui basic segment dimmable mainwp-knowledge-site-list', $html );
-		$this->assertStringContainsString( '<thead><tr><th>Title</th><th class="collapsing">Type</th><th class="collapsing">Last edited by</th><th class="collapsing"></th></tr></thead>', $html );
+		$this->assertStringContainsString( 'class="mainwp-knowledge-site-sections"', $html );
+		$this->assertStringContainsString( 'class="mainwp-knowledge-site-section" data-type="context"', $html );
+		$this->assertStringContainsString( 'class="mainwp-knowledge-site-section" data-type="skill"', $html );
+		$this->assertStringContainsString( 'class="mainwp-knowledge-site-section" data-type="memory"', $html );
 		$this->assertStringNotContainsString( 'id="mainwp-knowledge-modal"', $html );
 		$this->assertNotFalse( has_action( 'admin_footer', array( MainWP_Knowledge_UI::class, 'render_modal' ) ) );
 	}
@@ -1436,9 +1564,8 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->create_record( $this->site_input( array( 'title' => 'Loaded only on expansion' ) ) );
 		$this->restrict_to_own_site();
 		$html = $this->client_overview_widget();
-		$this->assertStringContainsString( 'data-scope-type="client" data-scope-id="' . $this->client_id . '" data-can-write="0"', $html );
+		$this->assertStringContainsString( 'data-scope-type="client" data-scope-id="' . $this->client_id . '" data-can-write="0" data-read-only="1"', $html );
 		$this->assertStringNotContainsString( 'mainwp-knowledge-add', $html );
-		$this->assertStringContainsString( 'You can view these records. Editing client records needs client management rights and access to every site of this client.', $html );
 		$this->assertStringContainsString( 'data-site-id="' . $this->site_id . '"', $html );
 		$this->assertStringNotContainsString( 'data-site-id="' . $hidden . '"', $html );
 		$this->assertStringContainsString( 'Context: 1', $html );
@@ -1533,8 +1660,9 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( '<div class="ui info message">', $html );
 		$this->assertStringNotContainsString( 'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.', $html );
 		$this->assertStringNotContainsString( 'Client records apply to every site assigned to this client. Site records belong to the site and stay with it if the site is moved to another client.', $html );
-		$this->assertSame( 3, substr_count( $html, '<th class="mainwp-knowledge-editor-cell collapsing">' ) );
-		$this->assertSame( 3, substr_count( $html, '<th class="mainwp-knowledge-actions-cell no-sort collapsing">' ) );
+		$this->assertStringContainsString( 'class="ui one column stackable grid mainwp-knowledge-sections"', $html );
+		$this->assertSame( 3, substr_count( $html, 'class="ui styled fluid accordion mainwp-knowledge-records"' ) );
+		$this->assertStringNotContainsString( '<table', $html );
 		$this->assertStringContainsString( '<div class="dimmable mainwp-knowledge-panel" data-scope-type="client"', $html );
 		$this->assertStringNotContainsString( 'ui basic segment dimmable mainwp-knowledge-panel', $html );
 		$this->assertStringNotContainsString( 'ui padded segment dimmable mainwp-knowledge-panel', $html );
@@ -1542,6 +1670,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		MainWP_Knowledge_UI::render_panel( 'client', $this->client_id );
 		$full = ob_get_clean();
 		$this->assertStringContainsString( '<div class="ui padded segment dimmable mainwp-knowledge-panel" data-scope-type="client"', $full );
+		$this->assertStringContainsString( 'class="ui three column stackable grid mainwp-knowledge-sections"', $full );
 	}
 
 	public function test_scope_counts_group_types_and_unverified_once_per_visible_set(): void {

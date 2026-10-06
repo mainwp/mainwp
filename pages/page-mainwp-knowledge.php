@@ -93,10 +93,12 @@ class MainWP_Knowledge {
         ?>
         <div id="mainwp-knowledge-page" class="ui padded segment">
             <?php if ( 'agency' === $tab ) : ?>
-            <h2 class="ui header">
-                <?php esc_html_e( 'Agency knowledge', 'mainwp' ); ?>
-                <div class="sub header"><?php esc_html_e( 'Agency records reach the AI agents working on every site in this Dashboard. Every Dashboard user can read them, so keep client-specific details on the client.', 'mainwp' ); ?></div>
-            </h2>
+                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-knowledge-agency-info-message' ) ) : ?>
+                    <div class="ui blue message">
+                        <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-knowledge-agency-info-message"></i>
+                        <?php esc_html_e( 'Agency records reach the AI agents working on every site in this Dashboard. Every Dashboard user can read them, so keep client-specific details on the client.', 'mainwp' ); ?>
+                    </div>
+                <?php endif; ?>
                 <?php MainWP_Knowledge_UI::render_panel( 'agency', 0 ); ?>
             <?php else : ?>
                 <?php self::render_review(); ?>
@@ -109,7 +111,7 @@ class MainWP_Knowledge {
     }
 
     /**
-     * Review controls use mini sizing beside the table.
+     * Render the review filters, empty states, and grouped record accordions.
      *
      * @return void
      */
@@ -118,19 +120,15 @@ class MainWP_Knowledge {
             'status' => array(
                 'label'   => __( 'Status', 'mainwp' ),
                 'options' => array(
+                    'all'        => __( 'All', 'mainwp' ),
                     'unverified' => __( 'Unverified', 'mainwp' ),
                     'verified'   => __( 'Verified', 'mainwp' ),
-                    'all'        => __( 'All', 'mainwp' ),
                 ),
-            ),
-            'type'   => array(
-                'label'   => __( 'Type', 'mainwp' ),
-                'options' => array( '' => __( 'All types', 'mainwp' ) ) + MainWP_Knowledge_UI::type_labels(),
             ),
             'level'  => array(
                 'label'   => __( 'Level', 'mainwp' ),
                 'options' => array(
-                    ''       => __( 'All levels', 'mainwp' ),
+                    'all'    => __( 'All levels', 'mainwp' ),
                     'agency' => __( 'Agency', 'mainwp' ),
                     'client' => __( 'Client', 'mainwp' ),
                     'site'   => __( 'Site', 'mainwp' ),
@@ -138,40 +136,51 @@ class MainWP_Knowledge {
             ),
         );
         ?>
-        <p><?php esc_html_e( 'Records saved by AI agents stay unverified until a person reviews them. Open a record, check it, and save it to mark it as verified, or delete it.', 'mainwp' ); ?></p>
-        <div class="ui mini form" id="mainwp-knowledge-review-filters">
-            <div class="fields">
-                <?php foreach ( $filters as $key => $filter ) : ?>
-                <div class="field">
-                    <label for="mainwp-knowledge-filter-<?php echo esc_attr( $key ); ?>"><?php echo esc_html( $filter['label'] ); ?></label>
-                    <select id="mainwp-knowledge-filter-<?php echo esc_attr( $key ); ?>" class="ui selection mini dropdown">
-                        <?php foreach ( $filter['options'] as $value => $label ) : ?>
-                        <option value="<?php echo esc_attr( $value ); ?>" <?php selected( 'status' === $key ? 'unverified' : '', $value ); ?>><?php echo esc_html( $label ); ?></option>
+        <div class="mainwp-actions-bar" id="mainwp-knowledge-review-filters">
+            <div class="ui mini form stackable grid">
+                <div class="ui two column row">
+                    <div class="left aligned middle aligned column">
+                        <?php foreach ( $filters as $key => $filter ) : ?>
+                        <select id="mainwp-knowledge-filter-<?php echo esc_attr( $key ); ?>" class="ui mini selection dropdown" aria-label="<?php echo esc_attr( $filter['label'] ); ?>">
+                            <?php foreach ( $filter['options'] as $value => $label ) : ?>
+                            <option value="<?php echo esc_attr( $value ); ?>" <?php selected( 'status' === $key ? 'unverified' : 'all', $value ); ?>><?php echo esc_html( $label ); ?></option>
+                            <?php endforeach; ?>
+                        </select>
                         <?php endforeach; ?>
-                    </select>
+                    </div>
+                    <div class="right aligned middle aligned column"></div>
                 </div>
-                <?php endforeach; ?>
             </div>
         </div>
+        <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-knowledge-review-info-message' ) ) : ?>
+            <div class="ui blue message">
+                <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-knowledge-review-info-message"></i>
+                <?php esc_html_e( 'Records saved by AI agents stay unverified until a person reviews them. Check each record, then verify, edit, or delete it.', 'mainwp' ); ?>
+            </div>
+        <?php endif; ?>
         <div class="ui hidden message" id="mainwp-knowledge-review-message"></div>
-        <div class="ui dimmable segment" id="mainwp-knowledge-review">
+        <div class="hidden" id="mainwp-knowledge-review-empty" aria-hidden="true">
+            <?php MainWP_UI::render_empty_page_placeholder( __( 'Nothing to review yet', 'mainwp' ), __( 'Knowledge records saved by AI agents will appear here until a person reviews them.', 'mainwp' ), '<em data-emoji=":bulb:" class="big"></em>' ); ?>
+        </div>
+        <div class="ui dimmable segment" id="mainwp-knowledge-review" style="padding:0!important;" data-empty-filtered="<?php esc_attr_e( 'No knowledge records match the selected filters.', 'mainwp' ); ?>">
             <div class="ui dimmer mainwp-knowledge-loader" aria-hidden="true">
                 <div class="ui loader" role="status" aria-label="<?php esc_attr_e( 'Loading...', 'mainwp' ); ?>"></div>
             </div>
-            <table class="ui table" id="mainwp-knowledge-review-table" data-empty-default="<?php esc_attr_e( 'Nothing to review. Records saved by AI agents appear here until a person reviews them.', 'mainwp' ); ?>" data-empty-filtered="<?php esc_attr_e( 'No records match these filters.', 'mainwp' ); ?>">
-                <thead>
-                    <tr>
-                        <th class="collapsing"><?php esc_html_e( 'Level', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Type', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Title', 'mainwp' ); ?></th>
-                        <th class="collapsing"><?php esc_html_e( 'Status', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th>
-                        <th><?php esc_html_e( 'Updated', 'mainwp' ); ?></th>
-                        <th scope="col" class="collapsing"><span class="screen-reader-text"><?php esc_html_e( 'Actions', 'mainwp' ); ?></span></th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <div class="hidden" id="mainwp-knowledge-review-filtered-empty" aria-hidden="true">
+                <?php MainWP_UI::render_empty_element_placeholder( __( 'No matching records', 'mainwp' ), __( 'Try changing the status or level filters.', 'mainwp' ), '<em data-emoji=":mag:" class="medium"></em>' ); ?>
+            </div>
+            <?php
+            MainWP_Knowledge_UI::render_sections(
+                'review',
+                array(
+                    'container_class'   => 'mainwp-knowledge-review-sections',
+                    'section_class'     => 'mainwp-knowledge-review-section',
+                    'show_add'          => false,
+                    'empty_title'       => __( 'No matching records', 'mainwp' ),
+                    'empty_description' => __( 'No records of this type match the selected filters.', 'mainwp' ),
+                )
+            );
+            ?>
         </div>
         <?php
     }

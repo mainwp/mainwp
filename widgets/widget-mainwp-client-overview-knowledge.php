@@ -12,7 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Shares client permissions and the editor with the existing knowledge panel.
+ * Displays client and site knowledge in a read-only overview widget.
  */
 class MainWP_Client_Overview_Knowledge {
 
@@ -32,7 +32,7 @@ class MainWP_Client_Overview_Knowledge {
     }
 
     /**
-     * The widget shares the client editor while site records stay read-only here.
+     * The widget keeps both client and site records read-only.
      *
      * @return void
      */
@@ -41,13 +41,6 @@ class MainWP_Client_Overview_Knowledge {
             return;
         }
         $client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- can_read() validated the page selection.
-        $db        = MainWP_DB_Knowledge::instance();
-        $can_write = true === $db->can_write(
-            (object) array(
-                'scope_type' => 'client',
-                'scope_id'   => $client_id,
-            )
-        );
         ?>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">
@@ -55,11 +48,8 @@ class MainWP_Client_Overview_Knowledge {
                 <div class="sub header"><?php esc_html_e( 'Context, skills, and memories that AI agents receive for this client and its sites.', 'mainwp' ); ?></div>
             </h2>
         </div>
-        <div class="mainwp-widget-client-card mainwp-scrolly-overflow">
-            <?php if ( ! $can_write ) : ?>
-            <div class="ui message"><?php esc_html_e( 'You can view these records. Editing client records needs client management rights and access to every site of this client.', 'mainwp' ); ?></div>
-            <?php endif; ?>
-            <?php MainWP_Knowledge_UI::render_panel( 'client', $client_id, false, false ); ?>
+        <div class="mainwp-widget-client-card mainwp-scrolly-overflow mainwp-knowledge-read-only-widget">
+            <?php MainWP_Knowledge_UI::render_panel( 'client', $client_id, false, false, true ); ?>
             <?php static::render_sites( $client_id ); ?>
         </div>
         <?php
@@ -74,13 +64,28 @@ class MainWP_Client_Overview_Knowledge {
      */
     private static function render_sites( $client_id ) {
         global $wpdb;
-        $db     = MainWP_DB_Knowledge::instance();
-        $sites  = $db->guard_read(
+        $db             = MainWP_DB_Knowledge::instance();
+        $sites          = $db->guard_read(
             static function () use ( $wpdb, $client_id ) {
                 return $wpdb->get_results( $wpdb->prepare( 'SELECT id, name FROM %i WHERE client_id = %d ORDER BY name', $wpdb->prefix . 'mainwp_wp', $client_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- one roster query avoids loading a site separately for each row.
             }
         );
-        $counts = is_wp_error( $sites ) ? $sites : $db->get_scope_counts( 'site', array_column( $sites, 'id' ) );
+        $counts         = is_wp_error( $sites ) ? $sites : $db->get_scope_counts( 'site', array_column( $sites, 'id' ) );
+        $icons          = MainWP_Knowledge_UI::type_icons();
+        $section_labels = array(
+            'context' => array(
+                'label' => __( 'Context', 'mainwp' ),
+                'icon'  => $icons['context'],
+            ),
+            'skill'   => array(
+                'label' => __( 'Skills', 'mainwp' ),
+                'icon'  => $icons['skill'],
+            ),
+            'memory'  => array(
+                'label' => __( 'Memory', 'mainwp' ),
+                'icon'  => $icons['memory'],
+            ),
+        );
         ?>
         <div class="ui small header">
             <?php esc_html_e( 'Site knowledge', 'mainwp' ); ?>
@@ -132,10 +137,23 @@ class MainWP_Client_Overview_Knowledge {
                                 <div class="ui loader" role="status" aria-label="<?php esc_attr_e( 'Loading...', 'mainwp' ); ?>"></div>
                             </div>
                             <div class="ui hidden message mainwp-knowledge-message"></div>
-                            <table class="ui compact table">
-                                <thead><tr><th><?php esc_html_e( 'Title', 'mainwp' ); ?></th><th class="collapsing"><?php esc_html_e( 'Type', 'mainwp' ); ?></th><th class="collapsing"><?php esc_html_e( 'Last edited by', 'mainwp' ); ?></th><th class="collapsing"></th></tr></thead>
-                                <tbody></tbody>
-                            </table>
+                            <div class="mainwp-knowledge-site-empty" style="display:none"></div>
+                            <div class="mainwp-knowledge-site-sections">
+                                <?php foreach ( $section_labels as $type => $section ) : ?>
+                                <div class="mainwp-knowledge-site-section" data-type="<?php echo esc_attr( $type ); ?>">
+                                    <div class="ui tiny header">
+                                        <div class="mainwp-knowledge-section-title">
+                                            <i class="<?php echo esc_attr( $section['icon'] ); ?> icon"></i>
+                                            <span><?php echo esc_html( $section['label'] ); ?></span>
+                                        </div>
+                                    </div>
+                                    <div class="mainwp-knowledge-empty" style="display:none">
+                                        <?php MainWP_UI::render_empty_element_placeholder( __( 'Nothing recorded yet', 'mainwp' ), __( 'Knowledge records will appear here when they are added.', 'mainwp' ), '<em data-emoji=":bulb:" class="medium"></em>' ); ?>
+                                    </div>
+                                    <div class="ui styled fluid accordion mainwp-knowledge-records"></div>
+                                </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     </td>
                 </tr>

@@ -97,21 +97,26 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 	public function test_knowledge_menu_and_page_admit_unrestricted_users(): void {
 		$this->assert_menu();
 		$review = $this->render();
-		$this->assertStringContainsString( 'id="mainwp-knowledge-review-table"', $review );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review"', $review );
 		$this->assertStringContainsString( 'id="mainwp-knowledge-page" class="ui padded segment"', $review );
 		$agency = $this->render( 'agency' );
 		$this->assertStringContainsString( 'id="mainwp-knowledge-page" class="ui padded segment"', $agency );
 		$this->assertStringContainsString( 'data-scope-type="agency" data-scope-id="0" data-can-write="1"', $agency );
 		$this->assertStringContainsString( 'id="mainwp-knowledge-required"', $agency );
 		$this->assertStringContainsString( 'Records at a more specific level cannot override a required record. Only a Dashboard user can edit or delete it.', $agency );
+		$this->assertStringContainsString( 'class="ui blue message" id="mainwp-knowledge-required-help" style="display:none"', $agency );
+		$this->assertLessThan( strpos( $agency, 'id="mainwp-knowledge-type"' ), strpos( $agency, 'id="mainwp-knowledge-required-help"' ) );
 		$this->assertStringContainsString( 'Agency records reach the AI agents working on every site in this Dashboard.', $agency );
+		$this->assertStringContainsString( '<div class="ui blue message">', $agency );
+		$this->assertStringContainsString( 'class="close icon mainwp-notice-dismiss" notice-id="mainwp-knowledge-agency-info-message"', $agency );
+		$this->assertDoesNotMatchRegularExpression( '/<h2[^>]*>\s*Agency knowledge/s', $agency );
 		$this->assertStringNotContainsString( 'Only users with client management rights and access to every site can change agency records.', $agency );
 	}
 
 	public function test_knowledge_menu_and_page_admit_site_restricted_users_read_only(): void {
 		$this->restrict_sites();
 		$this->assert_menu();
-		$this->assertStringContainsString( 'id="mainwp-knowledge-review-table"', $this->render() );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review"', $this->render() );
 		$agency = $this->render( 'agency' );
 		$this->assertStringContainsString( 'data-can-write="0"', $agency );
 		$this->assertStringNotContainsString( 'id="mainwp-knowledge-required"', $agency );
@@ -122,7 +127,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 	public function test_knowledge_all_sites_without_manage_clients_has_read_only_agency_and_no_required(): void {
 		$this->withhold_clients();
 		$this->assert_menu();
-		$this->assertStringContainsString( 'id="mainwp-knowledge-review-table"', $this->render() );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review"', $this->render() );
 		$agency = $this->render( 'agency' );
 		$this->assertStringContainsString( 'data-can-write="0"', $agency );
 		$this->assertStringNotContainsString( 'id="mainwp-knowledge-required"', $agency );
@@ -142,7 +147,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 			$html = $this->render( $tab );
 			$this->assertStringContainsString( 'You do not have permission to access this knowledge.', $html );
 			$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $html );
-			$this->assertStringNotContainsString( 'mainwp-knowledge-review-table', $html );
+			$this->assertStringNotContainsString( 'id="mainwp-knowledge-review"', $html );
 		}
 		foreach ( array( 'render_left_menu', 'render_mobile_menu' ) as $method ) {
 			ob_start();
@@ -160,7 +165,7 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 			$html = $this->render( $tab );
 			$this->assertStringContainsString( 'You do not have permission to access this knowledge.', $html );
 			$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $html );
-			$this->assertStringNotContainsString( 'mainwp-knowledge-review-table', $html );
+			$this->assertStringNotContainsString( 'id="mainwp-knowledge-review"', $html );
 		}
 	}
 
@@ -185,18 +190,36 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 
 	public function test_knowledge_review_is_default_and_has_filters_and_a_panel_free_modal(): void {
 		$html = $this->render( 'unknown' );
-		$this->assertStringContainsString( 'id="mainwp-knowledge-review-table"', $html );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review"', $html );
+		$this->assertStringNotContainsString( 'mainwp-knowledge-review-table', $html );
 		$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $html );
 		$this->assertSame( 1, substr_count( $html, 'id="mainwp-knowledge-modal"' ) );
-		foreach ( array( 'Status', 'Unverified', 'Verified', 'All', 'Type', 'All types', 'Level', 'All levels', 'Actions', 'Nothing to review. Records saved by AI agents appear here until a person reviews them.', 'No records match these filters.' ) as $copy ) {
+		foreach ( array( 'Status', 'Unverified', 'Verified', 'All', 'Level', 'All levels', 'Nothing to review yet', 'Knowledge records saved by AI agents will appear here until a person reviews them.', 'No knowledge records match the selected filters.', 'No matching records', 'Context', 'Skills', 'Memory' ) as $copy ) {
 			$this->assertStringContainsString( $copy, $html );
 		}
+		$this->assertStringContainsString( 'class="mainwp-actions-bar" id="mainwp-knowledge-review-filters"', $html );
+		$this->assertStringContainsString( 'class="ui blue message"', $html );
+		$this->assertStringContainsString( 'class="close icon mainwp-notice-dismiss" notice-id="mainwp-knowledge-review-info-message"', $html );
+		$this->assertStringContainsString( 'Check each record, then verify, edit, or delete it.', $html );
+		$this->assertStringContainsString( 'class="ui two column row"', $html );
+		$this->assertStringContainsString( 'class="left aligned middle aligned column"', $html );
+		$this->assertStringContainsString( 'class="right aligned middle aligned column"', $html );
+		$this->assertStringNotContainsString( '<label for="mainwp-knowledge-filter-', $html );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-filter-status" class="ui mini selection dropdown" aria-label="Status"', $html );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-filter-level" class="ui mini selection dropdown" aria-label="Level"', $html );
+		$this->assertStringNotContainsString( 'id="mainwp-knowledge-filter-type"', $html );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review" style="padding:0!important;"', $html );
+		$this->assertLessThan( strpos( $html, 'mainwp-knowledge-review-info-message' ), strpos( $html, 'id="mainwp-knowledge-review-filters"' ) );
+		$this->assertStringContainsString( 'id="mainwp-knowledge-review-empty"', $html );
+		$this->assertStringContainsString( 'data-emoji=":bulb:"', $html );
 		$this->assertStringContainsString( 'admin.php?page=Knowledge', $html );
 		$this->assertStringContainsString( esc_url( 'admin.php?page=Knowledge&tab=agency' ), $html );
 		$this->assertMatchesRegularExpression( '/<option value="unverified"\s+selected/', $html );
-		$this->assertStringContainsString( '<th class="collapsing">Level</th>', $html );
-		$this->assertStringContainsString( '<th class="collapsing">Status</th>', $html );
-		$this->assertStringContainsString( '<th scope="col" class="collapsing"><span class="screen-reader-text">Actions</span></th>', $html );
-		$this->assertStringNotContainsString( '<th>Open</th>', $html );
+		$this->assertSame( 1, preg_match_all( '/<option value="all"\s+selected/', $html ) );
+		$this->assertStringContainsString( 'mainwp-knowledge-review-sections', $html );
+		$this->assertSame( 3, substr_count( $html, 'mainwp-knowledge-review-section" data-type=' ) );
+		$this->assertSame( 3, substr_count( $html, 'ui styled fluid accordion mainwp-knowledge-records' ) );
+		$this->assertStringNotContainsString( 'mainwp-knowledge-review-pagination', $html );
+		$this->assertStringContainsString( 'class="ui segment mainwp-widget mainwp-knowledge-section-box"', $html );
 	}
 }

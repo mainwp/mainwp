@@ -19,6 +19,7 @@ jQuery(function ($) {
     const descriptionField = $('#mainwp-knowledge-description');
     const bodyField = $('#mainwp-knowledge-body');
     const requiredField = $('#mainwp-knowledge-required');
+    const requiredHelp = $('#mainwp-knowledge-required-help');
     const idField = $('#mainwp-knowledge-id');
     const revisionField = $('#mainwp-knowledge-revision');
     const saveButton = $('#mainwp-knowledge-save');
@@ -52,6 +53,7 @@ jQuery(function ($) {
         $('#mainwp-knowledge-description-help').toggle(!readOnly);
         const eligible = scope && ['agency', 'client'].includes(scope.scope_type) && ['context', 'skill'].includes(typeField.val());
         $('#mainwp-knowledge-required-field').toggle(!!eligible && canWrite && !readOnly);
+        requiredHelp.toggle(!!eligible && canWrite && !readOnly);
         requiredField.prop('disabled', !eligible || !canWrite || readOnly);
     };
     const fill = (record) => {
@@ -214,64 +216,229 @@ jQuery(function ($) {
         });
     };
 
+    const reviewLevel = (record, classes) => {
+        const level = record.level_url ? $('<a></a>').attr('href', record.level_url) : $('<span></span>');
+        if (record.level_url) {
+            level.on('click keydown', (event) => event.stopPropagation());
+        }
+        return level.addClass(classes).text(record.level_label || '');
+    };
+    const recordPair = (record, canEdit = false, siteUrl = '', options = {}) => {
+        const recordCanEdit = options.review ? !!record.can_write : canEdit;
+        const title = $('<div class="title mainwp-knowledge-record-title"></div>')
+            .attr('data-id', record.id)
+            .attr('data-revision', record.revision)
+            .data('can-edit', recordCanEdit)
+            .attr({ role: 'button', tabindex: '0', 'aria-expanded': 'false' });
+        const requiredEligible = ['agency', 'client'].includes(record.scope_type) && ['context', 'skill'].includes(record.type);
+        if (requiredEligible) {
+            const checkboxId = `mainwp-knowledge-required-record-${record.id}`;
+            const required = $('<span class="mainwp-knowledge-required-indicator"></span>').on('click keydown', (event) => event.stopPropagation());
+            const checkbox = $('<span class="ui checkbox"></span>').toggleClass('disabled', !recordCanEdit);
+            checkbox.append($('<input type="checkbox" class="mainwp-knowledge-required-toggle">').attr('id', checkboxId).prop('checked', !!record.required).prop('disabled', !recordCanEdit));
+            checkbox.append($('<label></label>').attr('for', checkboxId).text(strings.required));
+            title.append(required.append(checkbox));
+        }
+        if (!record.verified) {
+            title.append($('<span class="ui mini yellow label"></span>').attr('data-tooltip', strings.unverifiedHint).attr('data-inverted', '').text(strings.unverified));
+        } else if (options.review) {
+            title.append($('<span class="ui mini green label"></span>').text(strings.verified));
+        }
+        title.append($('<span class="mainwp-knowledge-record-name"></span>').text(record.title));
+        if (options.review && record.level_label) {
+            title.append(reviewLevel(record, 'ui mini basic label mainwp-knowledge-record-level'));
+        }
+        title.append($('<i class="chevron right grey icon mainwp-knowledge-record-chevron"></i>').attr('aria-hidden', 'true'));
+
+        const content = $('<div class="content mainwp-knowledge-record-content"></div>')
+            .attr('data-id', record.id)
+            .attr('data-revision', record.revision)
+            .attr('aria-hidden', 'true')
+            .data('can-edit', !!recordCanEdit)
+            .data('review', !!options.review)
+            .attr('data-site-url', siteUrl || '');
+        content.append($('<div class="ui active centered inline loader"></div>'));
+        return [title, content];
+    };
+    const loadRecordDetails = (content) => {
+        if (content.data('loaded') || content.data('loading')) {
+            return;
+        }
+        content.data('loading', true);
+        post('mainwp_knowledge_get', { id: content.data('id') }).done((response) => {
+            if (!response.success) {
+                content.empty().append($('<div class="ui yellow message"></div>').text(errorText(response)));
+                return;
+            }
+            const record = response.data.record;
+            const details = $('<div class="mainwp-knowledge-record-details"></div>');
+            const recordCards = $('<div class="ui one cards mainwp-knowledge-record-card"></div>');
+            const recordCard = $('<div class="card"></div>');
+            if (content.data('review') && record.level_label) {
+                recordCard.append($('<div class="content mainwp-knowledge-record-heading"></div>')
+                    .append($('<div class="ui small header"></div>').append(reviewLevel(record, 'mainwp-knowledge-record-level-link'))));
+            }
+            const bodyContent = $('<div class="content mainwp-knowledge-record-body"></div>')
+                .attr({ role: 'region', tabindex: '0', 'aria-label': strings.body });
+            bodyContent.append($('<div class="description mainwp-knowledge-record-value"></div>').text(record.body || ''));
+            const descriptionContent = $('<div class="extra content mainwp-knowledge-record-description"></div>');
+            if ('skill' === record.type) {
+                descriptionContent
+                    .append($('<div class="ui tiny header"></div>').text(strings.description))
+                    .append($('<div class="mainwp-knowledge-record-value"></div>').text(record.description || ''));
+            }
+            const footerContent = $('<div class="extra content mainwp-knowledge-record-footer"></div>');
+            const actions = $('<div class="ui two column middle aligned grid mainwp-knowledge-record-actions"></div>');
+            const leftActions = $('<div class="eight wide left aligned column"></div>');
+            const rightActions = $('<div class="eight wide right aligned column"></div>');
+            leftActions.append($('<span class="ui small text mainwp-knowledge-record-meta"></span>').text(`${strings.editedBy} ${record.updated_by_name} ${record.updated_ago}`));
+            const inReadOnlyWidget = !!content.closest('.mainwp-knowledge-read-only-widget').length;
+            const canEdit = !inReadOnlyWidget && !!content.data('can-edit') && !!response.data.can_write;
+            if (canEdit) {
+                if (content.data('review') && !record.verified) {
+                    rightActions.append($('<button type="button" class="ui mini green button mainwp-knowledge-verify"></button>').text(strings.verify));
+                }
+                rightActions.append($('<button type="button" class="ui mini basic button mainwp-knowledge-edit"></button>').text(strings.edit));
+                rightActions.append($('<button type="button" class="ui mini basic red button mainwp-knowledge-delete"></button>').text(strings.remove));
+            } else if (!inReadOnlyWidget) {
+                rightActions.append($('<button type="button" class="ui mini basic button mainwp-knowledge-view"></button>').text(strings.view));
+            }
+            const siteUrl = content.attr('data-site-url');
+            if (siteUrl) {
+                rightActions.append($('<a class="ui mini basic button"></a>').attr('href', siteUrl).text(strings.viewOnSite));
+            }
+            footerContent.append(actions.append(leftActions, rightActions));
+            if ('skill' === record.type) {
+                recordCard.append(descriptionContent);
+            }
+            recordCard.append(bodyContent);
+            recordCard.append(footerContent);
+            recordCards.append(recordCard);
+            details.append(recordCards);
+            content.empty().append(details).data('loaded', true);
+        }).fail(() => {
+            content.empty().append($('<div class="ui red message"></div>').text(strings.failed));
+        }).always(() => content.data('loading', false));
+    };
+    const initializeRecordAccordions = (container) => {
+        container.find('.mainwp-knowledge-records').each(function () {
+            const accordion = $(this);
+            accordion.accordion({
+                exclusive: false,
+                onOpening: function () {
+                    $(this).attr('aria-hidden', 'false').prev('.mainwp-knowledge-record-title').attr('aria-expanded', 'true');
+                    loadRecordDetails($(this));
+                },
+                onClosing: function () {
+                    $(this).attr('aria-hidden', 'true').prev('.mainwp-knowledge-record-title').attr('aria-expanded', 'false');
+                },
+            });
+            // Do not let the surrounding Client Edit accordion process this nested accordion click too.
+            accordion.off('click.mainwpKnowledge').on('click.mainwpKnowledge', '.mainwp-knowledge-record-title', (event) => event.stopPropagation());
+            accordion.off('keydown.mainwpKnowledge').on('keydown.mainwpKnowledge', '.mainwp-knowledge-record-title', function (event) {
+                if ($(event.target).is('input, label, button, a')) {
+                    return;
+                }
+                if (['Enter', ' '].includes(event.key)) {
+                    event.preventDefault();
+                    $(this).trigger('click');
+                }
+            });
+        });
+    };
+    const renderRecordSet = (target, records, emptyText, canEdit = false, siteUrl = '', options = {}) => {
+        const placeholder = target.siblings('.mainwp-knowledge-empty');
+        const sectionBox = target.closest('.mainwp-knowledge-section-box');
+        const footer = sectionBox.children('.mainwp-widget-footer');
+        const addButton = sectionBox.find('.mainwp-knowledge-add').first();
+        target.empty();
+        placeholder.hide().attr('aria-hidden', 'true');
+        if (!records.length) {
+            if (placeholder.length && (emptyText === strings.empty || options.usePlaceholder)) {
+                target.hide().attr('aria-hidden', 'true');
+                placeholder.show().attr('aria-hidden', 'false');
+                addButton.appendTo(placeholder.find('.mainwp-empty-widget-placeholder'));
+                footer.hide();
+            } else {
+                target.show().attr('aria-hidden', 'false').append($('<div class="mainwp-knowledge-empty"></div>').append($('<em></em>').text(emptyText)));
+                footer.hide();
+            }
+        } else {
+            target.show().attr('aria-hidden', 'false');
+            addButton.appendTo(footer);
+            footer.toggle(canEdit);
+            records.forEach((record) => {
+                const pair = recordPair(record, canEdit, siteUrl, options);
+                target.append(pair[0], pair[1]);
+            });
+        }
+        initializeRecordAccordions(target.parent());
+    };
+    const recordContainer = (element) => element.closest('[data-id]');
+    const updateRequired = (checkbox, message, refresh) => {
+        const checkboxUi = checkbox.closest('.ui.checkbox');
+        const record = checkbox.closest('.mainwp-knowledge-record-title');
+        const next = checkbox.prop('checked');
+        const restore = () => {
+            checkbox.prop('checked', !next).prop('disabled', false);
+            checkboxUi.removeClass('disabled').removeAttr('aria-busy');
+        };
+        if (!record.data('can-edit') || checkbox.prop('disabled')) {
+            restore();
+            return;
+        }
+        checkbox.prop('disabled', true);
+        checkboxUi.addClass('disabled').attr('aria-busy', 'true');
+        post('mainwp_knowledge_required', { id: record.data('id'), revision: record.data('revision'), required: next ? 1 : 0 }).done((response) => {
+            if (response.success) {
+                checkbox.prop('disabled', false);
+                checkboxUi.removeClass('disabled').removeAttr('aria-busy');
+                refresh();
+                return;
+            }
+            restore();
+            showMessage(message, errorText(response), 'yellow');
+            if (response.data && ['mainwp_knowledge_conflict', 'mainwp_knowledge_not_found'].includes(response.data.code)) {
+                refresh(true);
+            }
+        }).fail(() => {
+            restore();
+            showMessage(message, strings.failed, 'red');
+        });
+    };
+
     $('.mainwp-knowledge-panel').each(function () {
         const panel = $(this);
         const panelScope = recordScope({ scope_type: panel.data('scope-type'), scope_id: panel.data('scope-id') });
+        const panelReadOnly = '1' === panel.attr('data-read-only') || !!panel.closest('.mainwp-knowledge-read-only-widget').length;
+        if (panelReadOnly) {
+            panelScope.read_only = 1;
+        }
         const message = panel.find('.mainwp-knowledge-message');
         const loader = panel.children('.mainwp-knowledge-loader');
         const inheritedBlock = panel.find('.mainwp-knowledge-inherited');
         let panelCanWrite = false;
-        const row = (record, inherited = false) => {
-            const tr = $('<tr></tr>').attr('data-id', record.id).attr('data-revision', record.revision);
-            const canEdit = panelCanWrite && !inherited;
-            const title = $('<td></td>');
-            if (!record.verified) {
-                title.append($('<span class="ui mini yellow label"></span>').attr('data-tooltip', strings.unverifiedHint).attr('data-inverted', '').text(strings.unverified)).append(' ');
-            }
-            if (record.required) {
-                title.append($('<span class="ui mini label"></span>').text(strings.required)).append(' ');
-            }
-            title.append($('<a href="#"></a>').addClass(canEdit ? 'mainwp-knowledge-edit' : 'mainwp-knowledge-view').text(record.title));
-            title.append($('<br>')).append($('<span class="ui small text"></span>').text(record.body_preview));
-            tr.append(title);
-            if (inherited) {
-                tr.append($('<td class="mainwp-knowledge-type-cell"></td>').append($('<span class="ui mini label"></span>').text(record.type_label)));
-            }
-            tr.append($('<td class="mainwp-knowledge-editor-cell"></td>')
-                .append($('<span></span>').text(record.updated_by_name)).append($('<br>'))
-                .append($('<span class="ui small text"></span>').text(record.updated_ago)));
-            const actions = $('<td class="mainwp-knowledge-actions-cell right aligned"></td>');
-            if (canEdit) {
-                actions.append($('<button type="button" class="ui mini basic button mainwp-knowledge-edit"></button>').text(strings.edit)).append(' ');
-                actions.append($('<button type="button" class="ui mini basic red button mainwp-knowledge-delete"></button>').text(strings.remove));
-            } else {
-                actions.append($('<button type="button" class="ui mini basic button mainwp-knowledge-view"></button>').text(strings.view));
-            }
-            return tr.append(actions);
-        };
         const renderInherited = (inherited) => {
             if (!inherited) {
-                inheritedBlock.hide().find('tbody').empty();
+                inheritedBlock.hide().find('.mainwp-knowledge-records').empty();
                 return;
             }
             inheritedBlock.find('.mainwp-knowledge-inherited-title').text(strings.inheritedFrom.replace('%s', () => inherited.client_name));
             inheritedBlock.find('.mainwp-knowledge-inherited-link').attr('href', inherited.client_url);
-            const body = inheritedBlock.find('tbody').empty();
-            if (!inherited.records.length) {
-                body.append($('<tr></tr>').append($('<td colspan="4"></td>').append($('<em></em>').text(strings.inheritedEmpty))));
-            }
-            inherited.records.forEach((record) => body.append(row(record, true)));
+            inheritedBlock.find('.mainwp-knowledge-inherited-empty').toggle(!inherited.records.length).text(inherited.records.length ? '' : strings.inheritedEmpty);
+            inheritedBlock.find('.mainwp-knowledge-inherited-sections').toggle(!!inherited.records.length);
+            inheritedBlock.find('.mainwp-knowledge-inherited-section').each(function () {
+                const section = $(this);
+                const records = inherited.records.filter((record) => record.type === section.data('type'));
+                renderRecordSet(section.find('.mainwp-knowledge-records'), records, strings.empty);
+            });
             inheritedBlock.show();
         };
         const render = (records, denied) => {
             panel.find('.mainwp-knowledge-section').each(function () {
                 const section = $(this);
-                const body = section.find('tbody').empty();
                 const own = records.filter((record) => record.type === section.data('type'));
-                if (!own.length) {
-                    body.append($('<tr></tr>').append($('<td colspan="3"></td>').append($('<em></em>').text(denied ? strings.noAccess : strings.empty))));
-                }
-                own.forEach((record) => body.append(row(record)));
+                renderRecordSet(section.find('.mainwp-knowledge-records'), own, denied ? strings.noAccess : strings.empty, panelCanWrite);
                 section.find('.mainwp-knowledge-add').toggle(panelCanWrite);
             });
         };
@@ -279,7 +446,7 @@ jQuery(function ($) {
             loader.addClass('active').attr('aria-hidden', 'false');
             post('mainwp_knowledge_list', panelScope).done((response) => {
                 if (response.success) {
-                    panelCanWrite = !!response.data.can_write;
+                    panelCanWrite = !panelReadOnly && !!response.data.can_write;
                     if (!preserveMessage) {
                         hideMessage(message);
                     }
@@ -299,8 +466,14 @@ jQuery(function ($) {
             });
         };
         const panelOwner = { message: message, refresh: load };
+        panel.on('change', '.mainwp-knowledge-required-toggle', function () {
+            if (panelReadOnly) {
+                return;
+            }
+            updateRequired($(this), message, load);
+        });
         panel.on('click', '.mainwp-knowledge-add', function () {
-            if (!panelCanWrite) {
+            if (panelReadOnly || !panelCanWrite) {
                 return;
             }
             begin(panelOwner);
@@ -311,12 +484,15 @@ jQuery(function ($) {
         });
         panel.on('click', '.mainwp-knowledge-edit, .mainwp-knowledge-view', function (event) {
             event.preventDefault();
-            openRecord($(this).closest('tr').data('id'), $(this).hasClass('mainwp-knowledge-view') ? 'view' : 'edit', panelOwner);
+            openRecord(recordContainer($(this)).data('id'), panelReadOnly || $(this).hasClass('mainwp-knowledge-view') ? 'view' : 'edit', panelOwner);
         });
         panel.on('click', '.mainwp-knowledge-delete', function () {
-            const tr = $(this).closest('tr');
+            if (panelReadOnly) {
+                return;
+            }
+            const record = recordContainer($(this));
             mainwp_confirm(strings.confirmDelete, () => {
-                post('mainwp_knowledge_delete', { id: tr.data('id'), revision: tr.data('revision') }).done((response) => {
+                post('mainwp_knowledge_delete', { id: record.data('id'), revision: record.data('revision') }).done((response) => {
                     if (response.success) {
                         load();
                     } else {
@@ -334,11 +510,12 @@ jQuery(function ($) {
         const siteScope = recordScope({ scope_type: 'site', scope_id: list.data('scope-id') });
         const message = list.children('.mainwp-knowledge-message');
         const loader = list.children('.mainwp-knowledge-loader');
-        const body = list.find('tbody');
+        const sections = list.find('.mainwp-knowledge-site-sections');
+        const empty = list.find('.mainwp-knowledge-site-empty');
         let request = 0;
         const load = (preserveMessage = false) => {
             const current = ++request;
-            body.empty();
+            list.find('.mainwp-knowledge-records').empty();
             loader.addClass('active').attr('aria-hidden', 'false');
             post('mainwp_knowledge_list', $.extend({}, siteScope, { read_only: 1 })).done((response) => {
                 if (current !== request) {
@@ -351,21 +528,13 @@ jQuery(function ($) {
                 if (!preserveMessage) {
                     hideMessage(message);
                 }
-                if (!response.data.records.length) {
-                    body.append($('<tr></tr>').append($('<td colspan="4"></td>').append($('<em></em>').text(strings.noRecords))));
-                }
-                response.data.records.forEach((record) => {
-                    const title = $('<td></td>');
-                    if (!record.verified) {
-                        title.append($('<span class="ui mini yellow label"></span>').attr('data-tooltip', strings.unverifiedHint).attr('data-inverted', '').text(strings.unverified)).append($('<br>'));
-                    }
-                    title.append($('<a href="#" class="mainwp-knowledge-view"></a>').text(record.title));
-                    title.append($('<br>')).append($('<span class="ui small text"></span>').text(record.body_preview));
-                    body.append($('<tr></tr>').attr('data-id', record.id)
-                        .append(title)
-                        .append($('<td></td>').text(record.type_label))
-                        .append($('<td></td>').append($('<span></span>').text(record.updated_by_name)).append($('<br>')).append($('<span class="ui small text"></span>').text(record.updated_ago)))
-                        .append($('<td class="right aligned"></td>').append($('<a class="ui mini basic button"></a>').attr('href', list.data('site-url')).text(strings.viewOnSite))));
+                const hasRecords = !!response.data.records.length;
+                empty.toggle(!hasRecords).text(hasRecords ? '' : strings.noRecords);
+                sections.toggle(hasRecords);
+                list.find('.mainwp-knowledge-site-section').each(function () {
+                    const section = $(this);
+                    const records = response.data.records.filter((record) => record.type === section.data('type'));
+                    renderRecordSet(section.find('.mainwp-knowledge-records'), records, strings.empty, false, list.data('site-url'));
                 });
             }).fail(() => {
                 if (current === request) {
@@ -381,7 +550,7 @@ jQuery(function ($) {
         list.data('knowledge-owner', siteOwner);
         list.on('click', '.mainwp-knowledge-view', function (event) {
             event.preventDefault();
-            openRecord($(this).closest('tr').data('id'), 'view', siteOwner);
+            openRecord(recordContainer($(this)).data('id'), 'view', siteOwner);
         });
     });
     $('.mainwp-knowledge-site-accordion').each(function () {
@@ -398,65 +567,106 @@ jQuery(function ($) {
         });
     });
 
-    const review = $('#mainwp-knowledge-review-table');
+    const review = $('#mainwp-knowledge-review');
     if (review.length) {
         const message = $('#mainwp-knowledge-review-message');
-        const loader = $('#mainwp-knowledge-review').children('.mainwp-knowledge-loader');
+        const emptyState = $('#mainwp-knowledge-review-empty');
+        const filteredEmpty = $('#mainwp-knowledge-review-filtered-empty');
+        const sections = review.find('.mainwp-knowledge-review-sections');
+        const loader = review.children('.mainwp-knowledge-loader');
         const filters = $('#mainwp-knowledge-review-filters');
         let request = 0;
-        const table = review.DataTable({
-            serverSide: true,
-            ordering: false,
-            searching: false,
-            pageLength: 25,
-            lengthMenu: [10, 25, 50, 100],
-            language: { emptyTable: review.data('empty-default'), zeroRecords: review.data('empty-default') },
-            columns: ['level', 'type', 'title', 'status', 'editor', 'updated', 'actions'].map((key) => ({
-                data: key,
-                className: ['level', 'status', 'actions'].includes(key) ? 'collapsing' : '',
-            })),
-            ajax: (data, callback, settings) => {
-                const current = ++request;
-                const status = $('#mainwp-knowledge-filter-status').val();
-                const type = $('#mainwp-knowledge-filter-type').val();
-                const level = $('#mainwp-knowledge-filter-level').val();
-                const empty = review.data('unverified' === status && !type && !level ? 'empty-default' : 'empty-filtered');
-                settings.oLanguage.sEmptyTable = settings.oLanguage.sZeroRecords = empty;
-                loader.addClass('active').attr('aria-hidden', 'false');
-                post('mainwp_knowledge_review', $.extend({}, data, { status: status, type: type, level: level })).done((response) => {
-                    if (current !== request) {
-                        return;
-                    }
-                    if (response.success === false) {
-                        showMessage(message, errorText(response), 'yellow');
-                        settings.oLanguage.sEmptyTable = settings.oLanguage.sZeroRecords = errorText(response);
-                        callback({ draw: data.draw, data: [], recordsTotal: 0, recordsFiltered: 0 });
-                        return;
-                    }
-                    hideMessage(message);
-                    callback(response);
-                }).fail(() => {
-                    if (current === request) {
-                        showMessage(message, strings.failed, 'red');
-                        settings.oLanguage.sEmptyTable = settings.oLanguage.sZeroRecords = strings.failed;
-                        callback({ draw: data.draw, data: [], recordsTotal: 0, recordsFiltered: 0 });
-                    }
-                }).always(() => {
-                    if (current === request) {
-                        loader.removeClass('active').attr('aria-hidden', 'true');
-                    }
-                });
-            },
-        });
-        filters.find('select').dropdown().on('change', () => table.ajax.reload());
-        review.on('click', '.mainwp-knowledge-open', function () {
-            openRecord($(this).data('id'), 'edit', { message: message, refresh: (preserveMessage) => {
+        const clearRecords = () => review.find('.mainwp-knowledge-records').empty();
+        const renderRecords = (records) => {
+            review.find('.mainwp-knowledge-review-section').each(function () {
+                const section = $(this);
+                const typeRecords = records.filter((record) => record.type === section.data('type'));
+                renderRecordSet(section.find('.mainwp-knowledge-records'), typeRecords, strings.noRecords, true, '', { review: true, usePlaceholder: true });
+            });
+        };
+        const load = (preserveMessage = false) => {
+            const current = ++request;
+            const data = {
+                draw: current,
+                status: $('#mainwp-knowledge-filter-status').val(),
+                level: $('#mainwp-knowledge-filter-level').val(),
+            };
+            loader.addClass('active').attr('aria-hidden', 'false');
+            post('mainwp_knowledge_review', data).done((response) => {
+                if (current !== request) {
+                    return;
+                }
+                if (response.success === false) {
+                    showMessage(message, errorText(response), 'yellow');
+                    clearRecords();
+                    return;
+                }
                 if (!preserveMessage) {
                     hideMessage(message);
                 }
-                table.ajax.reload();
-            } });
+                const total = Number(response.recordsTotal);
+                const filtered = Number(response.recordsFiltered);
+                const hasRecords = total > 0;
+                const hasFilteredRecords = filtered > 0;
+                filters.toggleClass('hidden', !hasRecords).attr('aria-hidden', hasRecords ? 'false' : 'true');
+                review.toggleClass('hidden', !hasRecords).attr('aria-hidden', hasRecords ? 'false' : 'true');
+                emptyState.toggleClass('hidden', hasRecords).attr('aria-hidden', hasRecords ? 'true' : 'false');
+                sections.toggleClass('hidden', !hasFilteredRecords).attr('aria-hidden', hasFilteredRecords ? 'false' : 'true');
+                filteredEmpty.toggleClass('hidden', !hasRecords || hasFilteredRecords).attr('aria-hidden', hasRecords && !hasFilteredRecords ? 'false' : 'true');
+                clearRecords();
+                if (hasFilteredRecords) {
+                    renderRecords(response.data);
+                }
+            }).fail(() => {
+                if (current === request) {
+                    showMessage(message, strings.failed, 'red');
+                    clearRecords();
+                }
+            }).always(() => {
+                if (current === request) {
+                    loader.removeClass('active').attr('aria-hidden', 'true');
+                }
+            });
+        };
+        const reviewOwner = { message: message, refresh: load };
+        filters.find('select').dropdown().on('change', () => load());
+        review.on('change', '.mainwp-knowledge-required-toggle', function () {
+            updateRequired($(this), message, load);
         });
+        review.on('click', '.mainwp-knowledge-edit, .mainwp-knowledge-view', function (event) {
+            event.preventDefault();
+            openRecord(recordContainer($(this)).data('id'), $(this).hasClass('mainwp-knowledge-view') ? 'view' : 'edit', reviewOwner);
+        });
+        review.on('click', '.mainwp-knowledge-verify', function () {
+            const button = $(this);
+            const record = recordContainer(button);
+            button.prop('disabled', true).addClass('loading disabled');
+            post('mainwp_knowledge_verify', { id: record.data('id'), revision: record.data('revision') }).done((response) => {
+                if (response.success) {
+                    load();
+                } else {
+                    showMessage(message, errorText(response), 'yellow');
+                    load(true);
+                }
+            }).fail(() => {
+                button.prop('disabled', false).removeClass('loading disabled');
+                showMessage(message, strings.failed, 'red');
+            });
+        });
+        review.on('click', '.mainwp-knowledge-delete', function () {
+            const record = recordContainer($(this));
+            mainwp_confirm(strings.confirmDelete, () => {
+                post('mainwp_knowledge_delete', { id: record.data('id'), revision: record.data('revision') }).done((response) => {
+                    if (response.success) {
+                        load();
+                    } else {
+                        showMessage(message, errorText(response), 'yellow');
+                        load(true);
+                    }
+                }).fail(() => showMessage(message, strings.failed, 'red'));
+            });
+        });
+        load();
     }
 
     modal.modal({ closable: false, onHide: () => {

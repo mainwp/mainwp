@@ -540,6 +540,19 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $no_id = isset( $_POST['notice_id'] ) ? sanitize_text_field( wp_unslash( $_POST['notice_id'] ) ) : false;
+
+        if ( ! empty( $_POST['short_term'] ) ) {
+            if ( empty( $no_id ) ) {
+                die( 'invalid' );
+            }
+
+            $keys = explode( ';', $no_id );
+            foreach ( $keys as $key ) {
+                MainWP_Utility::dismiss_short_term_notice( $key );
+            }
+            die( 'dismissed' );
+        }
+
         if ( 'mail_failed' === $no_id ) {
             MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
             die( 'ok' );
@@ -1126,13 +1139,44 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     /**
      * Method mainwp_clients_notes_save()
      *
-     * Post handler for save notes on,
-     * Page: Manage Sites.
+     * Post handler for saving a client note.
      *
-     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::save_note()
+     * Requires the same page-level permission the Clients screen enforces,
+     * and an existing client. Per-client scoping is left to Team Control.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Client::save_note()
      */
     public function mainwp_clients_notes_save() {
         $this->secure_request( 'mainwp_clients_notes_save' );
+
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            MainWP_Client::exit_json(
+                array(
+                    'error' => sprintf(
+                        /* translators: %s: page name. */
+                        esc_html__( 'You do not have sufficient permissions to access this page (%s).', 'mainwp' ),
+                        /* translators: Page name shown when client note access is denied. */
+                        esc_html__( 'Manage Clients', 'mainwp' )
+                    ),
+                )
+            );
+        }
+
+        // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- nonce verified in secure_request().
+        $client_id = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
+        // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+
+        $client = $client_id ? MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) : null;
+        if ( empty( $client ) ) {
+            /* translators: Error when the client id does not match a client. */
+            $missing_client = esc_html__( 'Client not found. Please try again.', 'mainwp' );
+            MainWP_Client::exit_json(
+                array(
+                    'error' => $missing_client,
+                )
+            );
+        }
+
         MainWP_Client::save_note();
     }
 
@@ -1146,6 +1190,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      */
     public function mainwp_clients_suspend_client() {
         $this->secure_request( 'mainwp_clients_suspend_client' );
+
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            wp_die( 'Error - insufficient permissions!' );
+        }
+
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $clientid  = isset( $_POST['clientid'] ) ? intval( $_POST['clientid'] ) : 0;
         $suspended = isset( $_POST['suspend_status'] ) && ! empty( $_POST['suspend_status'] ) ? 1 : 0;

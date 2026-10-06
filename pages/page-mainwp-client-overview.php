@@ -278,7 +278,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * When the page loads render the body content.
      */
     public function on_show_page() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainw\mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'client dashboard', 'mainwp' ) );
             return;
         }
@@ -319,7 +319,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 <?php endif; ?>
                 <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
                 <?php do_action( 'mainwp_module_log_render_db_update_notice' ); ?>
-                <?php do_action( 'mainwp_module_log_render_db_size_notice' ); ?>
+                <?php do_action( 'mainwp_module_log_render_db_size_notice', 300, 'client_overview' ); ?>
                 <?php
                 /**
                  * Action: mainwp_before_overview_widgets

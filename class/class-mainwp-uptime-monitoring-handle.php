@@ -178,7 +178,9 @@ class MainWP_Uptime_Monitoring_Handle { // phpcs:ignore Generic.Classes.OpeningB
         }
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
+        // If this is the primary monitor, delete all monitors for the site.
         $deleted = MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'monitor_id' => $monitor_id ) );
+
         if ( $deleted ) {
             die( wp_json_encode( array( 'success' => 1 ) ) );
         }

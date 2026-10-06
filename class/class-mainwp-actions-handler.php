@@ -71,8 +71,9 @@ class MainWP_Actions_Handler { //phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param string $type action type.
      * @param mixed  $post_data post data (option).
      * @param bool   $upload true|false: install by upload (option).
+     * @param bool   $is_auto_update true|false: is auto update (option).
      */
-    public function do_action_mainwp_install_actions( $websites, $pAction, $output, $type, $post_data = array(), $upload = false ) {
+    public function do_action_mainwp_install_actions( $websites, $pAction, $output, $type, $post_data = array(), $upload = false, $is_auto_update = false ) {
 
         if ( ! in_array( $pAction, array( 'install', 'updated' ), true ) ) {
             return;
@@ -96,12 +97,16 @@ class MainWP_Actions_Handler { //phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
         }
 
+        if ( 'updated' === $pAction && $is_auto_update ) {
+            MainWP_Updates_Report_Manager::save_update_info( $website, $data, $type );
+        }
+
         /**
          * Fires immediately after install action.
          *
          * @since 4.5.1.1
          */
-        do_action( 'mainwp_install_update_actions', $website, $pAction, $data, $type, $post_data, $upload );
+        do_action( 'mainwp_install_update_actions', $website, $pAction, $data, $type, $post_data, $upload, $is_auto_update );
     }
 
     /**

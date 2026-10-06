@@ -161,7 +161,7 @@ class Log_Manager {
 
         if ( $this->admin instanceof Log_Admin ) {
             if ( ! empty( $this->settings->options['enabled'] ) ) {
-                add_action( 'mainwp_module_log_render_db_size_notice', array( $this->admin, 'render_logs_db_notice' ), 10, 1 );
+                add_action( 'mainwp_module_log_render_db_size_notice', array( $this->admin, 'render_logs_db_notice' ), 10, 2 );
             }
             add_action( 'mainwp_module_log_render_db_update_notice', array( $this->admin, 'render_update_db_notice' ), 10, 1 );
         }

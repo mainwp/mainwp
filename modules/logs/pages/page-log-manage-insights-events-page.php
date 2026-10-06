@@ -330,8 +330,9 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
             $filter_groups_ids = isset( $filters_saved['groups_ids'] ) && ! empty( $filters_saved['groups_ids'] ) ? $filters_saved['groups_ids'] : '';
             $filter_client_ids = isset( $filters_saved['client_ids'] ) && ! empty( $filters_saved['client_ids'] ) ? $filters_saved['client_ids'] : false;
             $filter_user_ids   = isset( $filters_saved['user_ids'] ) && ! empty( $filters_saved['user_ids'] ) ? $filters_saved['user_ids'] : '';
-            $filter_dtsstart   = isset( $filters_saved['dtsstart'] ) && ! empty( $filters_saved['dtsstart'] ) ? $filters_saved['dtsstart'] : '';
-            $filter_dtsstop    = isset( $filters_saved['dtsstop'] ) && ! empty( $filters_saved['dtsstop'] ) ? $filters_saved['dtsstop'] : '';
+
+            $filter_dtsstart = isset( $filters_saved['dtsstart'] ) && ! empty( $filters_saved['dtsstart'] ) ? $filters_saved['dtsstart'] : '';
+            $filter_dtsstop  = isset( $filters_saved['dtsstop'] ) && ! empty( $filters_saved['dtsstop'] ) ? $filters_saved['dtsstop'] : '';
 
             $filter_source = isset( $filters_saved['source'] ) && ! empty( $filters_saved['source'] ) ? $filters_saved['source'] : '';
             $filter_sites  = isset( $filters_saved['sites'] ) && ! empty( $filters_saved['sites'] ) ? $filters_saved['sites'] : '';
@@ -378,6 +379,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
         }
 
         if ( ! empty( $filter_user_ids ) ) {
+            $filter_user_ids             = static::convert_legacy_users_filters_values( $filter_user_ids );
             $array_usersfilter_sites_ids = explode( ',', $filter_user_ids ); // convert to array.
             if ( in_array( 'allusers', $array_usersfilter_sites_ids, true ) ) {
                 $array_usersfilter_sites_ids = false;
@@ -497,6 +499,40 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                 'array_source_list'
             )
         );
+    }
+
+    /**
+     * Convert legacy Dashboard user filter values to the current format.
+     *
+     * Legacy Dashboard user filter values may contain a site ID in the format
+     * `{user_id}-{site_id}-1`. Replace the site ID with `xxx` so the user filter
+     * remains independent of site IDs.
+     *
+     * @param string $filter_user_ids Comma-separated Dashboard user filter values.
+     * @return string Converted comma-separated Dashboard user filter values.
+     */
+    public static function convert_legacy_users_filters_values( $filter_user_ids ) {
+        // Fix legacy user filter values.
+        if ( ! empty( $filter_user_ids ) ) {
+            $filter_user_ids = implode(
+                ',',
+                array_map(
+                    static function ( $user_id ) {
+                        $parts = explode( '-', trim( $user_id ) );
+
+                        if ( 3 === count( $parts ) && is_numeric( $parts[1] ) && '1' === $parts[2] ) {
+                            $parts[1] = 'xxx';
+                            return implode( '-', $parts );
+                        }
+
+                        return trim( $user_id );
+                    },
+                    explode( ',', $filter_user_ids )
+                )
+            );
+        }
+
+        return $filter_user_ids;
     }
 
     /**
@@ -638,15 +674,21 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                     <?php if ( ! $optimize ) { ?>
                     <div class="two wide middle aligned column">
                         <div id="mainwp-module-log-filter-users" class="ui selection multiple fluid dropdown seg_users">
-                            <input type="hidden" value="<?php echo esc_html( $filter_user_ids ); ?>">
+                            <input type="hidden" value="<?php echo esc_attr( $filter_user_ids ); ?>">
                             <i class="dropdown icon"></i>
                             <div class="default text"><?php esc_html_e( 'All users', 'mainwp' ); ?></div>
                             <div class="menu">
                                 <?php
                                 $users = $manager->admin->get_all_users();
                                 foreach ( $users as $item ) {
+                                    $filter_users = intval( $item['id'] );
+                                    if ( ! empty( $item['is_dashboard_user'] ) ) {
+                                        $filter_users .= '-xxx-1'; // Dashboard users are independent of sites.
+                                    } else {
+                                        $filter_users .= '-' . (int) $item['site_id'] . '-0';
+                                    }
                                     ?>
-                                    <div class="item" data-value="<?php echo intval( $item['id'] ) . '-' . (int) $item['site_id'] . '-' . ( ! empty( $item['is_dashboard_user'] ) ? 1 : 0 ); ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>
+                                    <div class="item" data-value="<?php echo esc_attr( $filter_users ); ?>"><?php echo ( ! empty( $item['login'] ) ? esc_html( $item['login'] ) : esc_html( $item['nicename'] ) ) . ' (' . esc_html( $item['source'] ) . ')'; ?></div>
                                     <?php
                                 }
                                 ?>
@@ -720,7 +762,7 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
                                 $websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( array( 'select_wp_fields' => $wpsite_fields ) ) );
                                 while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                                     ?>
-                                    <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ) ) ); ?></div>
+                                    <div class="item" data-value="<?php echo esc_attr( $website->id ); ?>"><?php echo esc_html( MainWP_Utility::get_nice_url( stripslashes( $website->name ), false, true ) ); ?></div>
                                     <?php
                                 }
                                 MainWP_DB::free_result( $websites );

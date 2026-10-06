@@ -477,7 +477,7 @@ class MainWP_Connection_Status { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'status'             => $status,
             'offset'             => $start,
             'rowcount'           => $perPage,
-            'orderby'            => 'wp.url asc',
+            'orderby'            => 'wp.url',
             'view'               => 'custom_view',
             'others_fields'      => array(),
         );

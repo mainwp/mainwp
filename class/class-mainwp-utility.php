@@ -22,6 +22,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Prefix for short-term notice options.
+     */
+    const SHORT_TERM_NOTICE_OPTION_PREFIX = '_mainwp_temp_notice_';
+
+
+    /**
+     * Prefix for per-user short-term notice options.
+     */
+    const USER_SHORT_TERM_NOTICE_OPTION_PREFIX = '_mainwp_user_temp_notice_';
+
+
+    /**
+     * New short term notice TTL.
+     */
+    const SHORT_TERM_NOTICE_TTL = MONTH_IN_SECONDS;
+
+    /**
+     * Longest client note that may be saved, in characters.
+     *
+     * A longer note is rejected on write. Display escapes it instead of
+     * tokenizing it. The count is characters, not bytes.
+     */
+    const CLIENT_NOTE_MAX_LENGTH = 10000;
+
+
+    /**
      * Yoast SEO is enabled return true else return null.
      *
      * @static
@@ -116,28 +142,27 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
-     * Method get_nice_url()
+     * Get a nice URL.
      *
-     * Grab url.
+     * @param string $pUrl                         Website URL.
+     * @param bool   $showHttp                     Whether to show HTTP.
+     * @param bool   $removeTrailingSlash  Whether to removev the trailing slash.
      *
-     * @param string $pUrl Website URL.
-     * @param bool   $showHttp Show HTTP.
-     *
-     * @return string $url.
+     * @return string The formatted URL.
      */
-    public static function get_nice_url( $pUrl, $showHttp = false ) {
+    public static function get_nice_url( $pUrl, $showHttp = false, $removeTrailingSlash = false ) {
         $url = $pUrl;
 
         if ( static::starts_with( $url, 'http://' ) ) {
             if ( ! $showHttp ) {
                 $url = substr( $url, 7 );
             }
-        } elseif ( static::starts_with( $pUrl, 'https://' ) ) {
+        } elseif ( static::starts_with( $url, 'https://' ) ) {
             if ( ! $showHttp ) {
                 $url = substr( $url, 8 );
             }
         } elseif ( $showHttp ) {
-                $url = 'http://' . $url;
+            $url = 'http://' . $url; // phpcs:ignore -- NOSONAR -compatible.
         }
 
         if ( static::ends_with( $url, '/' ) ) {
@@ -145,7 +170,11 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $url = substr( $url, 0, strlen( $url ) - 1 );
             }
         } else {
-            $url = $url . '/';
+            $url .= '/';
+        }
+
+        if ( $removeTrailingSlash ) {
+            $url = rtrim( $url, '/' );
         }
 
         return $url;
@@ -863,6 +892,20 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Method delete_user_option()
+     *
+     * @param string $option_name Option name.
+     *
+     * @return void.
+     */
+    public static function delete_user_option( $option_name ) {
+        $user = wp_get_current_user();
+        if ( $user ) {
+            delete_user_option( $user->ID, $option_name );
+        }
+    }
+
+    /**
      * Method remove_preslash_spaces()
      *
      * Remove spaces before slashes.
@@ -927,6 +970,767 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
 
     /**
+     * Whether a note is longer than the save cap.
+     *
+     * Counted in characters so a multibyte note matches the error message.
+     *
+     * @param mixed $note Note field.
+     * @return bool
+     */
+    public static function client_note_exceeds_limit( $note ) {
+        if ( ! is_string( $note ) ) {
+            return false;
+        }
+        return mb_strlen( $note, 'UTF-8' ) > self::CLIENT_NOTE_MAX_LENGTH;
+    }
+
+    /**
+     * Error shown when a note is too long to save.
+     *
+     * @return string
+     */
+    public static function client_note_length_error() {
+        return sprintf(
+            /* translators: %d: maximum number of characters allowed in a client note. */
+            esc_html__( 'Client notes cannot be longer than %d characters.', 'mainwp' ),
+            self::CLIENT_NOTE_MAX_LENGTH
+        );
+    }
+
+    /**
+     * Sanitize a client note for storage.
+     *
+     * Raw markup is kept only for a complete, well-formed tag on the note
+     * allowlist whose attributes are allowed. Every other < and > is stored
+     * as &lt; and &gt;. A typed ampersand is stored as &amp; and is not
+     * decoded, so "&copy;" and "&lt;p&gt;" stay text. A non-string is stored
+     * as empty. A note over the length cap is escaped without tokenizing.
+     * The cap counts the typed text, which is the string passed here.
+     *
+     * @param mixed $note Note field.
+     * @return string Sanitized note.
+     */
+    public static function sanitize_client_note( $note ) {
+        if ( ! is_string( $note ) ) {
+            return '';
+        }
+
+        if ( self::client_note_exceeds_limit( $note ) ) {
+            return self::client_note_fail_closed( $note );
+        }
+
+        return self::client_note_tokenize( $note );
+    }
+
+    /**
+     * Note text shown in the editor.
+     *
+     * Inverts only &amp; &lt; &gt;, once, and does not rescan. "&amp;lt;"
+     * becomes "&lt;". "&quot;" and "&#039;" stay typed, so a stored
+     * code sample is not rewritten into a quote character. "&copy;" is
+     * left as typed.
+     *
+     * @param mixed $note Stored note.
+     * @return string
+     */
+    public static function client_note_for_editor( $note ) {
+        return self::client_note_plain_text( $note );
+    }
+
+    /**
+     * Stored note for a plain-text context.
+     *
+     * HTML, REST, and abilities keep the stored string. Plain text (a
+     * plain-text email, a CSV cell, or a text-only report token) needs this
+     * so "&amp;" is shown as "&". The decode is the same one the editor uses.
+     *
+     * @param mixed $note Stored note.
+     * @return string
+     */
+    public static function client_note_plain_text( $note ) {
+        if ( ! is_string( $note ) ) {
+            return '';
+        }
+        return self::client_note_decode_storage_entities( $note );
+    }
+
+    /**
+     * Escape editor text for an HTML attribute.
+     *
+     * Attribute escaping decodes &lt; before encoding, so a typed "&lt;"
+     * would show up as "<" in the modal. Ampersands are protected first.
+     *
+     * @param string $note Editor text.
+     * @return string
+     */
+    public static function client_note_editor_attr( $note ) {
+        if ( ! is_string( $note ) ) {
+            return '';
+        }
+        return self::client_note_esc_attr( $note );
+    }
+
+    /**
+     * Format a client note for HTML display.
+     *
+     * The length cap uses the typed length, matching a save. Kept tags keep
+     * the quotes and spacing the user typed, so that length does not grow.
+     * An accepted note whose stored form is longer only because brackets
+     * were encoded still renders its allowlisted tags. A typed note over
+     * the cap is escaped, with line breaks, and is not tokenized.
+     *
+     * @param mixed $note Note field.
+     * @return string HTML-safe note.
+     */
+    public static function client_note_html( $note ) {
+        if ( ! is_string( $note ) ) {
+            return '';
+        }
+
+        $typed = self::client_note_for_editor( $note );
+        if ( self::client_note_exceeds_limit( $typed ) ) {
+            return nl2br( esc_html( $note ), false );
+        }
+
+        return self::sanitize_client_note( $typed );
+    }
+
+    /**
+     * Plain tooltip text for a displayed client note.
+     *
+     * Tags are removed first, then entities are decoded once, then the text
+     * is cut to 100 characters. Cutting the encoded HTML on bytes splits a
+     * UTF-8 character or an entity.
+     *
+     * @param string $html Display HTML from client_note_html().
+     * @return string
+     */
+    public static function client_note_tooltip_text( $html ) {
+        if ( ! is_string( $html ) ) {
+            return '';
+        }
+        $text = wp_strip_all_tags( $html );
+        $text = html_entity_decode( $text, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        return mb_substr( $text, 0, 100, 'UTF-8' );
+    }
+
+    /**
+     * Decode entities until the text stops changing.
+     *
+     * One decode is not enough for a value that was encoded more than once.
+     * "& a<b." is not an entity and is left unchanged.
+     *
+     * @param string $note Note text.
+     * @return string
+     */
+    private static function decode_client_note_entities( $note ) {
+        $previous = null;
+        for ( $pass = 0; $pass < 16 && $note !== $previous; $pass++ ) {
+            $previous = $note;
+            $note     = html_entity_decode( $note, ENT_QUOTES | ENT_HTML5, 'UTF-8' );
+        }
+        return $note;
+    }
+
+    /**
+     * Encode every bracket that is not a verified allowlisted tag.
+     *
+     * @param string $note Typed note. Ampersands are encoded, not decoded.
+     * @return string
+     */
+    private static function client_note_tokenize( $note ) {
+        $out    = '';
+        $length = strlen( $note );
+        $offset = 0;
+
+        while ( $offset < $length ) {
+            if ( '<' !== $note[ $offset ] ) {
+                $next = strpos( $note, '<', $offset );
+                if ( false === $next ) {
+                    $out .= self::client_note_encode_text( substr( $note, $offset ) );
+                    break;
+                }
+                $out   .= self::client_note_encode_text( substr( $note, $offset, $next - $offset ) );
+                $offset = $next;
+                continue;
+            }
+
+            $tag = self::client_note_read_tag( $note, $offset );
+            if ( null === $tag ) {
+                $out .= '&lt;';
+                ++$offset;
+                continue;
+            }
+
+            if ( ! empty( $tag['incomplete'] ) ) {
+                $out .= self::client_note_encode_text( substr( $note, $offset ) );
+                break;
+            }
+
+            if ( self::client_note_tag_is_safe( $tag ) ) {
+                $out .= self::client_note_emit_safe_tag( $tag );
+            } else {
+                $out .= self::client_note_encode_text( $tag['raw'] );
+            }
+            $offset = (int) $tag['end'];
+        }
+
+        return $out;
+    }
+
+    /**
+     * Read one well-formed tag, or null when the "<" is ordinary text.
+     *
+     * An unfinished tag at the end of the string is incomplete and must be
+     * encoded. A "<" that does not begin a complete tag is ordinary text.
+     *
+     * @param string $note   Note text.
+     * @param int    $offset Offset of the "<".
+     * @return array<string, mixed>|null
+     */
+    private static function client_note_read_tag( $note, $offset ) {
+        $length = strlen( $note );
+        $cursor = $offset + 1;
+        $closer = false;
+
+        if ( $cursor < $length && '/' === $note[ $cursor ] ) {
+            $closer = true;
+            ++$cursor;
+        }
+
+        if ( $cursor >= $length || ! self::client_note_is_name_start( $note[ $cursor ] ) ) {
+            return null;
+        }
+
+        $name_start = $cursor;
+        ++$cursor;
+        while ( $cursor < $length && self::client_note_is_name_char( $note[ $cursor ] ) ) {
+            ++$cursor;
+        }
+
+        if ( $cursor >= $length ) {
+            return array( 'incomplete' => true );
+        }
+
+        $name  = substr( $note, $name_start, $cursor - $name_start );
+        $attrs = array();
+
+        if ( ! $closer ) {
+            $parsed = self::client_note_read_attributes( $note, $cursor );
+            if ( null === $parsed ) {
+                return null;
+            }
+            if ( ! empty( $parsed['incomplete'] ) ) {
+                return array( 'incomplete' => true );
+            }
+            $attrs  = $parsed['attrs'];
+            $cursor = $parsed['offset'];
+        } else {
+            $cursor += strspn( $note, " \t\n\r\f", $cursor );
+        }
+
+        if ( $cursor >= $length ) {
+            return array( 'incomplete' => true );
+        }
+
+        if ( ! $closer && '/' === $note[ $cursor ] ) {
+            ++$cursor;
+            if ( $cursor >= $length ) {
+                return array( 'incomplete' => true );
+            }
+            $cursor += strspn( $note, " \t\n\r\f", $cursor );
+            if ( $cursor >= $length ) {
+                return array( 'incomplete' => true );
+            }
+        }
+
+        if ( '>' !== $note[ $cursor ] ) {
+            return null;
+        }
+
+        $end = $cursor + 1;
+        foreach ( $attrs as $index => $attr ) {
+            if ( ! isset( $attr['value_start'] ) ) {
+                continue;
+            }
+            $attrs[ $index ]['value_start'] -= $offset;
+            $attrs[ $index ]['value_end']   -= $offset;
+        }
+        return array(
+            'incomplete' => false,
+            'raw'        => substr( $note, $offset, $end - $offset ),
+            'name'       => $name,
+            'closer'     => $closer,
+            'attrs'      => $attrs,
+            'end'        => $end,
+        );
+    }
+
+    /**
+     * Read the attributes of an opening tag.
+     *
+     * @param string $note   Note text.
+     * @param int    $cursor Offset after the tag name.
+     * @return array<string, mixed>|null Null when the tag is not well-formed.
+     */
+    private static function client_note_read_attributes( $note, $cursor ) {
+        $length = strlen( $note );
+        $attrs  = array();
+
+        while ( $cursor < $length ) {
+            $whitespace = strspn( $note, " \t\n\r\f", $cursor );
+            if ( 0 === $whitespace ) {
+                break;
+            }
+            $cursor += $whitespace;
+            if ( $cursor >= $length ) {
+                return array( 'incomplete' => true );
+            }
+            if ( '>' === $note[ $cursor ] || '/' === $note[ $cursor ] ) {
+                break;
+            }
+            if ( ! self::client_note_is_attr_start( $note[ $cursor ] ) ) {
+                return null;
+            }
+
+            $name_start = $cursor;
+            ++$cursor;
+            while ( $cursor < $length && self::client_note_is_attr_char( $note[ $cursor ] ) ) {
+                ++$cursor;
+            }
+            if ( $cursor >= $length ) {
+                return array( 'incomplete' => true );
+            }
+
+            $attr_name = substr( $note, $name_start, $cursor - $name_start );
+            $cursor   += strspn( $note, " \t\n\r\f", $cursor );
+            if ( $cursor >= $length ) {
+                return array( 'incomplete' => true );
+            }
+
+            $value = null;
+            if ( '=' === $note[ $cursor ] ) {
+                ++$cursor;
+                $cursor += strspn( $note, " \t\n\r\f", $cursor );
+                if ( $cursor >= $length ) {
+                    return array( 'incomplete' => true );
+                }
+                $parsed = self::client_note_read_attribute_value( $note, $cursor );
+                if ( null === $parsed ) {
+                    return null;
+                }
+                if ( ! empty( $parsed['incomplete'] ) ) {
+                    return array( 'incomplete' => true );
+                }
+                $value  = $parsed['value'];
+                $cursor = $parsed['offset'];
+            }
+
+            $attr = array(
+                'name'  => $attr_name,
+                'value' => $value,
+            );
+            if ( null !== $value ) {
+                $attr['quote']       = $parsed['quote'];
+                $attr['value_start'] = $parsed['value_start'];
+                $attr['value_end']   = $parsed['value_end'];
+            }
+            $attrs[] = $attr;
+        }
+
+        return array(
+            'incomplete' => false,
+            'attrs'      => $attrs,
+            'offset'     => $cursor,
+        );
+    }
+
+    /**
+     * Read one attribute value.
+     *
+     * @param string $note   Note text.
+     * @param int    $cursor Offset of the value.
+     * @return array<string, mixed>|null
+     */
+    private static function client_note_read_attribute_value( $note, $cursor ) {
+        $length = strlen( $note );
+        $quote  = $note[ $cursor ];
+
+        if ( '"' === $quote || "'" === $quote ) {
+            ++$cursor;
+            $end = strpos( $note, $quote, $cursor );
+            if ( false === $end ) {
+                return array( 'incomplete' => true );
+            }
+            return array(
+                'incomplete'  => false,
+                'value'       => substr( $note, $cursor, $end - $cursor ),
+                'offset'      => $end + 1,
+                'quote'       => $quote,
+                'value_start' => $cursor,
+                'value_end'   => $end,
+            );
+        }
+
+        if ( false !== strpos( " \t\n\r\f\"'=<>", $quote ) ) {
+            return null;
+        }
+
+        $start = $cursor;
+        ++$cursor;
+        while ( $cursor < $length && false === strpos( " \t\n\r\f\"'=<>", $note[ $cursor ] ) ) {
+            ++$cursor;
+        }
+        if ( $cursor >= $length ) {
+            return array( 'incomplete' => true );
+        }
+
+        return array(
+            'incomplete'  => false,
+            'value'       => substr( $note, $start, $cursor - $start ),
+            'offset'      => $cursor,
+            'quote'       => '',
+            'value_start' => $start,
+            'value_end'   => $cursor,
+        );
+    }
+
+    /**
+     * Whether a parsed tag may be stored as markup.
+     *
+     * @param array<string, mixed> $tag Parsed tag.
+     * @return bool
+     */
+    private static function client_note_tag_is_safe( $tag ) {
+        $allowed = self::client_note_allowed_html();
+        $name    = strtolower( $tag['name'] );
+        if ( ! isset( $allowed[ $name ] ) ) {
+            return false;
+        }
+
+        if ( ! empty( $tag['closer'] ) ) {
+            return empty( $tag['attrs'] );
+        }
+
+        foreach ( $tag['attrs'] as $attr ) {
+            $attr_name = strtolower( $attr['name'] );
+            if ( ! isset( $allowed[ $name ][ $attr_name ] ) ) {
+                return false;
+            }
+            if ( self::client_note_attribute_is_unsafe( $attr_name, $attr['value'] ) ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Encode &, <, and > in text.
+     *
+     * @param string $text Plain text.
+     * @return string
+     */
+    private static function client_note_encode_text( $text ) {
+        return str_replace(
+            array( '&', '<', '>' ),
+            array( '&amp;', '&lt;', '&gt;' ),
+            $text
+        );
+    }
+
+    /**
+     * Write one allowlisted tag without changing its quotes or spacing.
+     *
+     * Attribute values encode &, <, and > only. Each value keeps a quote
+     * character it does not contain, preferring the one the user typed.
+     * An unquoted value stays unquoted. A value that contains both quotes
+     * encodes only the wrapper quote. A "<" typed inside title="..." is encoded.
+     *
+     * @param array<string, mixed> $tag Parsed tag.
+     * @return string
+     */
+    private static function client_note_emit_safe_tag( $tag ) {
+        $raw = $tag['raw'];
+        if ( empty( $tag['attrs'] ) ) {
+            return $raw;
+        }
+
+        $out    = '';
+        $cursor = 0;
+        foreach ( $tag['attrs'] as $attr ) {
+            if ( null === $attr['value'] || ! isset( $attr['value_start'] ) ) {
+                continue;
+            }
+            $quote = isset( $attr['quote'] ) ? $attr['quote'] : '';
+            $start = (int) $attr['value_start'];
+            $end   = (int) $attr['value_end'];
+            if ( '' !== $quote ) {
+                --$start;
+                ++$end;
+            }
+            $out   .= substr( $raw, $cursor, $start - $cursor );
+            $out   .= self::client_note_format_attribute_value( $attr['value'], $quote );
+            $cursor = $end;
+        }
+        return $out . substr( $raw, $cursor );
+    }
+
+    /**
+     * Encode one attribute value and wrap it in a quote it does not contain.
+     *
+     * &, <, and > are encoded. Quotes are left as typed unless the value
+     * contains the wrapper quote, in which case only that quote is encoded.
+     * An existing &quot; or &#039; is kept, so a re-save does not turn it
+     * into &amp;quot; or a raw quote. No stand-in byte is used. An unquoted
+     * value is returned without added quotes.
+     *
+     * @param string $value Attribute value.
+     * @param string $quote Double quote, single quote, or empty when unquoted.
+     * @return string
+     */
+    private static function client_note_format_attribute_value( $value, $quote ) {
+        $encoded = self::client_note_encode_attribute_text( $value );
+        if ( '' === $quote ) {
+            return $encoded;
+        }
+
+        $wrapper = self::client_note_attribute_wrapper( $encoded, $quote );
+        if ( '"' === $wrapper ) {
+            $encoded = str_replace( '"', '&quot;', $encoded );
+        } else {
+            $encoded = str_replace( "'", '&#039;', $encoded );
+        }
+        return $wrapper . $encoded . $wrapper;
+    }
+
+    /**
+     * Quote character for an attribute value.
+     *
+     * Prefer a quote the value does not contain. When it contains neither,
+     * or both, keep the quote the user typed.
+     *
+     * @param string $encoded Value after & < > encoding.
+     * @param string $quote   Quote the user typed.
+     * @return string
+     */
+    private static function client_note_attribute_wrapper( $encoded, $quote ) {
+        $has_double = false !== strpos( $encoded, '"' );
+        $has_single = false !== strpos( $encoded, "'" );
+        if ( $has_double && ! $has_single ) {
+            return "'";
+        }
+        if ( $has_single && ! $has_double ) {
+            return '"';
+        }
+        if ( '"' === $quote || "'" === $quote ) {
+            return $quote;
+        }
+        return '"';
+    }
+
+    /**
+     * Encode &, <, and > in an attribute value without a stand-in byte.
+     *
+     * &quot; and &#039; are kept whole. A typed ESC byte is not a marker
+     * and is left in the value.
+     *
+     * @param string $value Attribute value.
+     * @return string
+     */
+    private static function client_note_encode_attribute_text( $value ) {
+        $encoded = preg_replace_callback(
+            '/&(?:quot|#039);|&|<|>/',
+            array( self::class, 'client_note_encode_attribute_character' ),
+            $value
+        );
+        return is_string( $encoded ) ? $encoded : $value;
+    }
+
+    /**
+     * Encode one character from an attribute value, or keep a quote entity.
+     *
+     * @param array<int, string> $entity Regex match. Index 0 is the text.
+     * @return string
+     */
+    private static function client_note_encode_attribute_character( $entity ) {
+        if ( '&quot;' === $entity[0] || '&#039;' === $entity[0] ) {
+            return $entity[0];
+        }
+        if ( '&' === $entity[0] ) {
+            return '&amp;';
+        }
+        if ( '<' === $entity[0] ) {
+            return '&lt;';
+        }
+        return '&gt;';
+    }
+
+    /**
+     * Escape an attribute value without decoding entities the user typed.
+     *
+     * Attribute escaping decodes &amp; and &lt; before it encodes. A marker
+     * keeps a typed ampersand as text, so "&copy;" is stored as "&amp;copy;".
+     *
+     * @param string $value Attribute value.
+     * @return string
+     */
+    private static function client_note_esc_attr( $value ) {
+        $marker = "\x1A";
+        if ( false !== strpos( $value, $marker ) ) {
+            return htmlspecialchars( $value, ENT_QUOTES, 'UTF-8', true );
+        }
+
+        $escaped = esc_attr( str_replace( '&', $marker, $value ) );
+        return str_replace( $marker, '&amp;', $escaped );
+    }
+
+    /**
+     * Invert one level of &amp; &lt; &gt; and nothing else.
+     *
+     * "&amp;lt;" becomes "&lt;", not "<". "&quot;" and "&#039;" are not
+     * storage entities: a note that already contains those spellings keeps
+     * them. "&copy;" is left as typed. The search does not rescan.
+     *
+     * @param string $note Stored note.
+     * @return string
+     */
+    private static function client_note_decode_storage_entities( $note ) {
+        $decoded = preg_replace_callback(
+            '/&(?:amp|lt|gt);/',
+            array( self::class, 'client_note_replace_storage_entity' ),
+            $note
+        );
+        return is_string( $decoded ) ? $decoded : $note;
+    }
+
+    /**
+     * Replace one storage entity. The search does not rescan the replacement.
+     *
+     * @param array<int, string> $entity Regex match. Index 0 is the entity.
+     * @return string
+     */
+    private static function client_note_replace_storage_entity( $entity ) {
+        if ( '&amp;' === $entity[0] ) {
+            return '&';
+        }
+        if ( '&lt;' === $entity[0] ) {
+            return '<';
+        }
+        return '>';
+    }
+
+    /**
+     * Whether a byte can start an HTML tag name.
+     *
+     * @param string $byte One byte.
+     * @return bool
+     */
+    private static function client_note_is_name_start( $byte ) {
+        return ( $byte >= 'A' && $byte <= 'Z' ) || ( $byte >= 'a' && $byte <= 'z' );
+    }
+
+    /**
+     * Whether a byte can continue an HTML tag name.
+     *
+     * @param string $byte One byte.
+     * @return bool
+     */
+    private static function client_note_is_name_char( $byte ) {
+        return self::client_note_is_name_start( $byte ) || ( $byte >= '0' && $byte <= '9' );
+    }
+
+    /**
+     * Whether a byte can start an attribute name.
+     *
+     * @param string $byte One byte.
+     * @return bool
+     */
+    private static function client_note_is_attr_start( $byte ) {
+        return self::client_note_is_name_start( $byte ) || '_' === $byte || ':' === $byte;
+    }
+
+    /**
+     * Whether a byte can continue an attribute name.
+     *
+     * @param string $byte One byte.
+     * @return bool
+     */
+    private static function client_note_is_attr_char( $byte ) {
+        return self::client_note_is_attr_start( $byte ) || ( $byte >= '0' && $byte <= '9' ) || '.' === $byte || '-' === $byte;
+    }
+
+    /**
+     * Tags and attributes a client note may contain.
+     *
+     * @return array<string, array<string, array>>
+     */
+    private static function client_note_allowed_html() {
+        return array(
+            'a'      => array(
+                'href'  => array(),
+                'title' => array(),
+            ),
+            'br'     => array(),
+            'em'     => array(),
+            'strong' => array(),
+            'p'      => array(),
+            'hr'     => array(),
+            'ul'     => array(),
+            'ol'     => array(),
+            'li'     => array(),
+            'h1'     => array(),
+            'h2'     => array(),
+        );
+    }
+
+    /**
+     * Whether an attribute is a style, an event handler, or an unsafe URL.
+     *
+     * @param string $name  Lowercase attribute name.
+     * @param mixed  $value Attribute value. Null is a boolean attribute.
+     * @return bool
+     */
+    private static function client_note_attribute_is_unsafe( $name, $value ) {
+        if ( 'style' === $name || 0 === strpos( $name, 'on' ) ) {
+            return true;
+        }
+
+        $urls = array(
+            'href',
+            'src',
+            'action',
+            'formaction',
+            'poster',
+            'cite',
+            'background',
+            'data',
+            'codebase',
+            'srcset',
+            'dynsrc',
+            'lowsrc',
+            'xlink:href',
+        );
+        if ( ! in_array( $name, $urls, true ) || ! is_string( $value ) ) {
+            return false;
+        }
+
+        $value = self::decode_client_note_entities( $value );
+        return wp_kses_bad_protocol( $value, wp_allowed_protocols() ) !== $value;
+    }
+
+    /**
+     * Escape a note that is too long to tokenize.
+     *
+     * @param string $note Note text.
+     * @return string
+     */
+    private static function client_note_fail_closed( $note ) {
+        $note = wp_strip_all_tags( $note );
+        return self::client_note_encode_text( $note );
+    }
+
+    /**
      * Method esc_content()
      *
      * Escape content,
@@ -945,22 +1749,7 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( 'note' === $type ) {
 
-            $allowed_html = array(
-                'a'      => array(
-                    'href'  => array(),
-                    'title' => array(),
-                ),
-                'br'     => array(),
-                'em'     => array(),
-                'strong' => array(),
-                'p'      => array(),
-                'hr'     => array(),
-                'ul'     => array(),
-                'ol'     => array(),
-                'li'     => array(),
-                'h1'     => array(),
-                'h2'     => array(),
-            );
+            $allowed_html = self::client_note_allowed_html();
 
             if ( is_array( $more_allowed ) && ! empty( $more_allowed ) ) {
                 $allowed_html = array_merge( $allowed_html, $more_allowed );
@@ -1190,6 +1979,36 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     }
 
     /**
+     * Un-hide a MainWP message for the current user.
+     *
+     * Removes the notice ID from the saved notice status so the message
+     * can be displayed again.
+     *
+     * @param mixed $notice_id Notice ID.
+     *
+     * @return bool True if the notice was un-hidden, otherwise false.
+     */
+    public static function unhide_mainwp_message( $notice_id ) {
+        $status = get_user_option( 'mainwp_notice_saved_status' );
+
+        if ( ! is_array( $status ) || ! isset( $status[ $notice_id ] ) ) {
+            return false;
+        }
+
+        unset( $status[ $notice_id ] );
+
+        if ( empty( $status ) ) {
+            return delete_user_option( get_current_user_id(), 'mainwp_notice_saved_status' );
+        }
+
+        return update_user_option(
+            get_current_user_id(),
+            'mainwp_notice_saved_status',
+            $status
+        );
+    }
+
+    /**
      * Method get_hide_notice_status()
      *
      * Check whenther or not to show the MainWP Message.
@@ -1233,6 +2052,239 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             static::update_user_option( 'mainwp_flash_messages', $flash_messages );
         }
         return $content;
+    }
+
+    /**
+     * Method set_short_term_notice()
+     *
+     * Set new temporary notice.
+     *
+     * @param string $monitor Monitor.
+     * @param string $noti_key Notice key.
+     * @param int    $checked_at Notice checked at.
+     *
+     * @return void.
+     */
+    public static function set_short_term_notice( $monitor, $noti_key, $checked_at ) {
+        if ( empty( $monitor ) || empty( $noti_key ) ) {
+            return;
+        }
+        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $noti_key;
+        static::update_option( $noti_handle_name, $checked_at );
+    }
+
+
+    /**
+     * Method is_short_term_notice()
+     *
+     * Check whether the short-term notice is still active.
+     *
+     * @param string $monitor Monitor name.
+     * @param string $noti_key Notice key.
+     *
+     * @return boolean true|false.
+     */
+    public static function is_short_term_notice( $monitor, $noti_key ) {
+
+        if ( empty( $monitor ) || empty( $noti_key ) ) {
+            return false;
+        }
+
+        $noti_handle_name = static::SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $noti_key;
+
+        $notice_time = get_option( $noti_handle_name );
+
+        if ( false === $notice_time ) {
+            return false;
+        }
+
+        if ( ! is_numeric( $notice_time ) ) {
+            delete_option( $noti_handle_name );
+        }
+
+        if ( time() - (int) $notice_time < self::SHORT_TERM_NOTICE_TTL ) {
+            if ( static::is_short_term_dismissed_notice( $monitor, $noti_key ) ) {
+                return false;
+            }
+            return true;
+        } else {
+            delete_option( $noti_handle_name );
+        }
+        return false;
+    }
+
+
+    /**
+     * Method is_short_term_dismissed_notice()
+     *
+     * Check whether the short-term notice is user dismissed.
+     *
+     * @param string $monitor Monitor.
+     * @param string $noti_key Notice key.
+     *
+     * @return boolean true|false.
+     */
+    public static function is_short_term_dismissed_notice( $monitor, $noti_key ) {
+        if ( empty( $monitor ) || empty( $noti_key ) ) {
+            return false;
+        }
+        $user_noti_handle = static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $noti_key;
+        $user             = wp_get_current_user();
+        if ( $user && ! empty( $user->ID ) ) {
+            return 'dismissed' === get_option( $user_noti_handle . '_user_' . $user->ID );
+        }
+        return false;
+    }
+
+
+    /**
+     * Purge short-term notices.
+     *
+     * @param string $monitor                  Optional monitor name. When provided, only
+     *                                         notices for the specified monitor are purged.
+     * @param bool   $expired_only             Whether to purge only expired notices.
+     *
+     * @return void
+     */
+    public static function purge_short_term_notices( $monitor = '', $expired_only = true ) { // phpcs:ignore -- NOSONAR - complex.
+
+        $opt_prefix = self::SHORT_TERM_NOTICE_OPTION_PREFIX;
+
+        $prefix = '' !== $monitor ? $monitor . '_' : '';
+
+        $timeout = time() - self::SHORT_TERM_NOTICE_TTL;
+
+        $db = MainWP_DB::instance()->get_wpdb_instance();
+
+        $sql = $db->prepare(
+            "
+            SELECT option_name
+            FROM {$db->options}
+            WHERE option_name LIKE %s
+            ",
+            $db->esc_like( $opt_prefix . (string) $prefix ) . '%',
+        );
+
+        if ( $expired_only ) {
+            $sql .= $db->prepare(
+                ' AND CAST(option_value AS UNSIGNED) <= %d ',
+                $timeout
+            );
+        }
+
+        $options = $db->get_col( $sql );
+
+        foreach ( $options as $option_name ) {
+            delete_option( $option_name );
+        }
+    }
+
+
+    /**
+     * Purge short-term notices for a specific issue.
+     *
+     * @param string $monitor    Monitor name.
+     * @param string $issue_code Issue code.
+     *
+     * @return bool True if the operation completed, false if the input is invalid.
+     */
+    public static function delete_short_term_notices_for_issue( $monitor, $issue_code ) {
+
+        if ( empty( $monitor ) || empty( $issue_code ) ) {
+            return false;
+        }
+
+        $opt_prefix = self::SHORT_TERM_NOTICE_OPTION_PREFIX;
+        $prefix     = $monitor . '_' . $issue_code;
+
+        $db = MainWP_DB::instance()->get_wpdb_instance();
+
+        $sql = $db->prepare(
+            "
+        SELECT option_name
+        FROM {$db->options}
+        WHERE option_name LIKE %s
+        ",
+            $db->esc_like( $opt_prefix . $prefix ) . '%'
+        );
+
+        $options = $db->get_col( $sql );
+
+        foreach ( $options as $option_name ) {
+            delete_option( $option_name ); // Delete options and cache.
+        }
+
+        return true;
+    }
+
+    /**
+     * Method dismiss_short_term_notice()
+     *
+     * Hide short term notice.
+     *
+     * @param string $monitor_noti_key Notice key.
+     *
+     * @return void.
+     */
+    public static function dismiss_short_term_notice( $monitor_noti_key ) {
+        $noti_handle_name = static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor_noti_key;
+        $user             = wp_get_current_user();
+        if ( $user && ! empty( $user->ID ) ) {
+            static::update_option( $noti_handle_name . '_user_' . $user->ID, 'dismissed' );
+        }
+    }
+
+    /**
+     * Delete user short-term notice options for the specified monitor.
+     *
+     * Optionally preserves the dismissed state for the specified issue codes.
+     *
+     * @param string $monitor          Monitor name.
+     * @param array  $preserved_issues Issue codes whose dismissed state should be preserved.
+     *
+     * @return void
+     */
+    public static function delete_short_term_notice_options( $monitor, $preserved_issues = array() ) {
+
+        if ( empty( $monitor ) ) {
+            return;
+        }
+
+        $db = MainWP_DB::instance()->get_wpdb_instance();
+
+        $sql = "
+            SELECT option_name
+            FROM {$db->options}
+            WHERE option_name LIKE %s
+        ";
+
+        $args = array(
+            $db->esc_like(
+                static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_'
+            ) . '%',
+        );
+
+        // Preserve the user's dismissed state for the specified issues.
+        if ( ! empty( $preserved_issues ) && is_array( $preserved_issues ) ) {
+            foreach ( $preserved_issues as $issue_code ) {
+                $sql   .= ' AND option_name NOT LIKE %s';
+                $args[] = $db->esc_like(
+                    static::USER_SHORT_TERM_NOTICE_OPTION_PREFIX . $monitor . '_' . $issue_code . '_user_'
+                ) . '%';
+            }
+        }
+
+        $option_names = $db->get_col(
+            $db->prepare( $sql, ...$args )
+        );
+
+        if ( empty( $option_names ) ) {
+            return;
+        }
+
+        foreach ( $option_names as $option_name ) {
+            delete_option( $option_name );
+        }
     }
 
     /**
@@ -2333,5 +3385,14 @@ class MainWP_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     public static function get_decoded_array( $data ) {
         $decoded = ! empty( $data ) ? json_decode( $data, true ) : array();
         return is_array( $decoded ) ? $decoded : array();
+    }
+
+    /**
+     * Method get_use_cron()
+     *
+     * @return bool Whether use cron.
+     */
+    public static function get_use_cron() {
+        return ( get_option( 'mainwp_wp_cron' ) === false ) || ( (int) get_option( 'mainwp_wp_cron' ) === 1 ) ? 1 : 0;
     }
 }

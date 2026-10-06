@@ -5,10 +5,10 @@ Last Updated: 2025-12-03
 
 ## Overview
 
-The MainWP Abilities API provides a standardized, schema-validated interface for managing MainWP child sites, updates, clients, and tags. Built on WordPress's Abilities API (introduced in WP 6.9), it enables secure, discoverable operations for MCP tools, REST API consumers, and extensions.
+The MainWP Abilities API provides a standardized, schema-validated interface for managing MainWP child sites, updates, clients, tags, batch operations, and knowledge records. Built on WordPress's Abilities API (introduced in WP 6.9), it enables secure, discoverable operations for MCP tools, REST API consumers, and extensions.
 
 **Key Features:**
-- 62 abilities across 5 categories
+- 69 abilities across 6 categories
 - JSON Schema validation for inputs (outputs documented but not enforced)
 - Permission callbacks with per-site ACLs
 - Batch operation support with automatic queuing
@@ -25,7 +25,7 @@ The MainWP Abilities API provides a standardized, schema-validated interface for
    - When Abilities API is available: hook into `wp_abilities_api_categories_init` and `wp_abilities_api_init`
 
 2. **Category Registration** (`MainWP_Abilities::register_categories()`)
-   - Register 5 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch
+   - Register 6 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge
    - Each category has label and description for discoverability
 
 3. **Ability Registration** (`MainWP_Abilities::register_abilities()`)
@@ -48,9 +48,26 @@ includes/abilities/
 ├── class-mainwp-abilities-updates.php  # 13 update abilities
 ├── class-mainwp-abilities-clients.php  # 11 client abilities
 ├── class-mainwp-abilities-tags.php     # 7 tag abilities
+├── class-mainwp-abilities-knowledge.php # 7 knowledge abilities
 ├── class-mainwp-abilities-batch.php    # 1 batch job status ability
 └── README.md                           # This file
 ```
+
+## Knowledge
+
+The `mainwp-knowledge` category provides seven abilities:
+
+- `mainwp/get-site-knowledge-v1`: full context, bodyless skills and memories, and authorized client knowledge.
+- `mainwp/get-client-knowledge-v1`: the client's own context and bodyless items.
+- `mainwp/get-knowledge-record-v1`: one full record by ID.
+- `mainwp/list-knowledge-v1`: visible records without bodies, with filters, pagination, and a matching total.
+- `mainwp/create-knowledge-record-v1`: preview or create a record.
+- `mainwp/update-knowledge-record-v1`: preview or update at the expected revision.
+- `mainwp/delete-knowledge-record-v1`: preview or delete at the expected revision.
+
+Every knowledge ability requires an authenticated user with `manage_options`, like every other ability. A userless WP-CLI or API-key request (user 0) is denied even in machine context. Pass `--user` when using WP-CLI. Site and client scope checks and the applicable Dashboard rights also apply.
+
+Each write's `caller_note` describes that write. Omitting it on update clears the stored note. Ability writes store `source=ability` and `verified=false`; only a Dashboard UI save sets `verified=true`. The three writes require `confirm: true` or `dry_run: true`. Records cannot override these gates or grant permission.
 
 ## Registration Patterns
 

@@ -35,6 +35,157 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     const MIN_CHILD_VERSION_FOR_ABILITIES = '4.0.0';
 
     /**
+     * Ability → granular Team Control dashboard right required to run it.
+     *
+     * Read-only abilities (list/get/count) are intentionally absent: they are
+     * gated by manage_options plus site scoping and are out of scope for
+     * granular rights.
+     *
+     * The update family (run-updates / update-all) is intentionally absent
+     * here: it needs per-type rights derived from its `types` input, handled
+     * in required_rights_for_ability().
+     *
+     * @since 6.0.0
+     * @var array<string,string>
+     */
+    const ABILITY_OPERATION_RIGHTS = array(
+        // Site lifecycle.
+        'mainwp/add-site-v1'                 => 'add_sites',
+        'mainwp/update-site-v1'              => 'edit_sites',
+        'mainwp/delete-site-v1'              => 'delete_sites',
+        'mainwp/reconnect-site-v1'           => 'edit_sites',
+        'mainwp/reconnect-sites-v1'          => 'edit_sites',
+        'mainwp/disconnect-site-v1'          => 'edit_sites',
+        'mainwp/disconnect-sites-v1'         => 'edit_sites',
+        'mainwp/suspend-site-v1'             => 'edit_sites',
+        'mainwp/suspend-sites-v1'            => 'edit_sites',
+        'mainwp/unsuspend-site-v1'           => 'edit_sites',
+        'mainwp/check-site-v1'               => 'edit_sites',
+        'mainwp/check-sites-v1'              => 'edit_sites',
+        // Plugins / themes on a site.
+        'mainwp/activate-site-plugins-v1'    => 'activate_deactivate_plugins',
+        'mainwp/deactivate-site-plugins-v1'  => 'activate_deactivate_plugins',
+        'mainwp/delete-site-plugins-v1'      => 'delete_plugins',
+        'mainwp/activate-site-theme-v1'      => 'activate_themes',
+        'mainwp/delete-site-themes-v1'       => 'delete_themes',
+        // Per-type single-site updates.
+        'mainwp/update-site-core-v1'         => 'update_wordpress',
+        'mainwp/update-site-plugins-v1'      => 'update_plugins',
+        'mainwp/update-site-themes-v1'       => 'update_themes',
+        'mainwp/update-site-translations-v1' => 'update_translations',
+        // Ignore / unignore updates.
+        'mainwp/set-ignored-updates-v1'      => 'ignore_unignore_updates',
+        'mainwp/ignore-site-core-v1'         => 'ignore_unignore_updates',
+        'mainwp/ignore-site-plugins-v1'      => 'ignore_unignore_updates',
+        'mainwp/ignore-site-themes-v1'       => 'ignore_unignore_updates',
+        // Clients.
+        'mainwp/add-client-v1'               => 'manage_clients',
+        'mainwp/update-client-v1'            => 'manage_clients',
+        'mainwp/delete-client-v1'            => 'manage_clients',
+        'mainwp/suspend-client-v1'           => 'manage_clients',
+        'mainwp/unsuspend-client-v1'         => 'manage_clients',
+        // Tags (groups).
+        'mainwp/add-tag-v1'                  => 'manage_groups',
+        'mainwp/update-tag-v1'               => 'manage_groups',
+        'mainwp/delete-tag-v1'               => 'manage_groups',
+    );
+
+    /**
+     * Update-type → dashboard right for the multi-type update abilities.
+     *
+     * @since 6.0.0
+     * @var array<string,string>
+     */
+    const UPDATE_TYPE_RIGHTS = array(
+        'core'         => 'update_wordpress',
+        'plugins'      => 'update_plugins',
+        'themes'       => 'update_themes',
+        'translations' => 'update_translations',
+    );
+
+    /**
+     * Test seam for machine-context detection: WP_CLI / MAINWP_REST_API_DOING
+     * cannot be defined per-test, so tests force this via reflection. Never
+     * set in production code; null means real constant detection.
+     *
+     * @var bool|null
+     */
+    private static $machine_context_override = null;
+
+    /**
+     * Whether this request runs in WP_CLI or API-key REST.
+     *
+     * On its own this is NOT a bypass: current_user_has_operation_right()
+     * additionally requires that no user is authenticated. DOING_CRON is
+     * deliberately absent: the batch worker restores the job owner via
+     * wp_set_current_user() and wants real evaluation of that owner's rights.
+     *
+     * @return bool True in a machine execution context.
+     */
+    private static function is_machine_execution_context(): bool {
+        if ( null !== self::$machine_context_override ) {
+            return self::$machine_context_override;
+        }
+
+        if ( defined( 'WP_CLI' ) && WP_CLI ) {
+            return true;
+        }
+
+        return defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING;
+    }
+
+    /**
+     * Whether the current user holds a granular Team Control dashboard right.
+     *
+     * The global rights wrapper bypasses checks under DOING_CRON, so queued
+     * jobs need the direct filter to enforce their owner's rights.
+     * Without Team Control the filter defaults to true.
+     *
+     * Team Control denies an empty current user. Allowing machine requests
+     * without a user preserves WP-CLI automation. API-key REST authenticates
+     * as the key owner, whose Team Control rights must still apply.
+     *
+     * @param string $right Dashboard right slug (delete_sites, update_plugins, ...).
+     * @return bool True when the operation right is held.
+     */
+    public static function current_user_has_operation_right( string $right ): bool {
+        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
+            return true;
+        }
+
+        return (bool) apply_filters( 'mainwp_currentusercan', true, 'dashboard', $right );
+    }
+
+    /**
+     * Resolve the granular rights an ability requires, including the update
+     * family's per-type derivation from its `types` input (empty or missing
+     * types means every type).
+     *
+     * @param string $ability_name Ability id being executed.
+     * @param mixed  $input        Ability input (read for the update family's types).
+     * @return string[] Required right slugs; empty for unmapped/read-only abilities.
+     */
+    public static function required_rights_for_ability( string $ability_name, $input = array() ): array {
+        $required = array();
+
+        if ( isset( self::ABILITY_OPERATION_RIGHTS[ $ability_name ] ) ) {
+            $required[] = self::ABILITY_OPERATION_RIGHTS[ $ability_name ];
+        } elseif ( 'mainwp/run-updates-v1' === $ability_name || 'mainwp/update-all-v1' === $ability_name ) {
+            $types = ( is_array( $input ) && ! empty( $input['types'] ) && is_array( $input['types'] ) )
+                ? array_map( 'strval', $input['types'] )
+                : array_keys( self::UPDATE_TYPE_RIGHTS ); // Empty means every type.
+
+            foreach ( $types as $type ) {
+                if ( isset( self::UPDATE_TYPE_RIGHTS[ $type ] ) ) {
+                    $required[] = self::UPDATE_TYPE_RIGHTS[ $type ];
+                }
+            }
+        }
+
+        return array_values( array_unique( $required ) );
+    }
+
+    /**
      * Check if current request has REST API permission.
      *
      * Prioritizes REST API key authentication; falls back to session-based
@@ -98,6 +249,273 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Check that the current user has unrestricted access to all sites.
+     *
+     * The mainwp_currentuserallowedaccesssites filter is applied directly here
+     * rather than through MainWP_DB::get_sql_where_allow_access_sites(), which
+     * skips the filter while DOING_CRON, WP_CLI, or MAINWP_REST_API_DOING is
+     * defined. Going through that wrapper would turn this guard into a no-op on
+     * the REST and MCP surfaces it exists to cover.
+     *
+     * @param mixed $_input The ability input (unused but required by callback signature).
+     * @return true|\WP_Error True when unrestricted, WP_Error otherwise.
+     */
+    public static function check_unrestricted_access( $_input = null ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.Found -- Required by callback signature NOSONAR .
+        $allowed_sites = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
+
+        if ( 'all' !== $allowed_sites ) {
+            return new \WP_Error(
+                'mainwp_restricted_account',
+                __( 'This action is not available for accounts restricted to a subset of sites.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the current user's allowed site IDs.
+     *
+     * Applies the mainwp_currentuserallowedaccesssites filter directly,
+     * not through MainWP_DB::get_sql_where_allow_access_sites(), which
+     * skips the filter entirely while DOING_CRON, WP_CLI, or
+     * MAINWP_REST_API_DOING is defined. Every scoping check below builds on
+     * this helper so REST/MCP surfaces stay covered.
+     *
+     * @return string|int[] 'all' when unrestricted, otherwise a (possibly
+     *                      empty) unique int list. Unexpected filter shapes
+     *                      fail closed to an empty list.
+     */
+    public static function get_allowed_site_ids() {
+        $allowed = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
+
+        if ( 'all' === $allowed ) {
+            return 'all';
+        }
+
+        if ( is_array( $allowed ) ) {
+            $allowed = array_map( 'intval', array_filter( $allowed, 'is_numeric' ) );
+            $allowed = array_filter( $allowed, static fn( $id ) => $id > 0 );
+            return array_values( array_unique( $allowed ) );
+        }
+
+        return array();
+    }
+
+    /**
+     * Preserve userless CLI and REST access when Team Control denies user zero.
+     * API-key requests carry a user whose site restrictions still apply.
+     *
+     * @return int[]|string Allowed site IDs, or 'all' for unrestricted access.
+     */
+    public static function get_scoped_site_ids_or_all() {
+        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
+            return 'all';
+        }
+
+        return self::get_allowed_site_ids();
+    }
+
+    /**
+     * Preserve userless CLI and REST access when Team Control denies user zero.
+     *
+     * @return int[]|string Allowed group IDs, or 'all' for unrestricted access.
+     */
+    public static function get_scoped_group_ids_or_all() {
+        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
+            return 'all';
+        }
+
+        return self::get_allowed_group_ids();
+    }
+
+    /**
+     * Get the current user's allowed group (tag) IDs.
+     *
+     * Same direct-filter contract as get_allowed_site_ids(), for the
+     * mainwp_currentuserallowedaccessgroups filter Team Control hooks
+     * alongside the sites one.
+     *
+     * @return string|int[] 'all' when unrestricted, otherwise a (possibly
+     *                      empty) unique int list.
+     */
+    public static function get_allowed_group_ids() {
+        $allowed = apply_filters( 'mainwp_currentuserallowedaccessgroups', 'all' );
+
+        if ( 'all' === $allowed ) {
+            return 'all';
+        }
+
+        if ( is_array( $allowed ) ) {
+            return array_values( array_unique( array_map( 'intval', array_filter( $allowed, 'is_numeric' ) ) ) );
+        }
+
+        return array();
+    }
+
+    /**
+     * Get the site IDs attached to a client, ignoring per-user scoping.
+     *
+     * Full coverage checks need the complete roster, including sites hidden
+     * from the caller by the DB layer's permission filter.
+     *
+     * @param int $client_id Client ID.
+     *
+     * @return int[] Site IDs attached to the client.
+     */
+    private static function get_client_site_ids( $client_id ) {
+        $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( (int) $client_id, array( 'no_perm_check' => true ) );
+
+        if ( ! is_array( $sites ) ) {
+            return array();
+        }
+
+        return array_map( static fn( $site ) => (int) $site->id, $sites );
+    }
+
+    /**
+     * Check if the current user can access a specific client.
+     *
+     * A client is accessible when at least one of its sites is in the
+     * caller's allowed set. Destructive operations (delete, suspend,
+     * unsuspend) pass $require_full_coverage to demand the allowed set cover
+     * all the client's sites: partial managers can read but not act on
+     * sites they cannot see.
+     *
+     * @param int|object $client                Client ID or client object.
+     * @param mixed      $input                 The ability input (unused, callback signature).
+     * @param bool       $require_full_coverage Whether every client site must be allowed.
+     *
+     * @return true|\WP_Error True on success, WP_Error on failure.
+     */
+    public static function check_client_access( $client, $input = null, $require_full_coverage = false ) {
+        $base_check = self::check_rest_api_permission( $input );
+        if ( is_wp_error( $base_check ) ) {
+            return $base_check;
+        }
+
+        $allowed = self::get_allowed_site_ids();
+        if ( 'all' === $allowed ) {
+            return true;
+        }
+
+        $client_id = is_object( $client ) ? (int) $client->client_id : (int) $client;
+        $site_ids  = self::get_client_site_ids( $client_id );
+        $overlap   = array_intersect( $site_ids, $allowed );
+
+        if ( empty( $overlap ) ) {
+            $identifier = $input['client_id_or_email'] ?? $client_id;
+            return new \WP_Error(
+                'mainwp_client_not_found',
+                is_numeric( $identifier )
+                    /* translators: %d: client ID */
+                    ? sprintf( __( 'No client found with ID %d.', 'mainwp' ), (int) $identifier )
+                    /* translators: %s: email address */
+                    : sprintf( __( 'No client found with email "%s".', 'mainwp' ), $identifier ),
+                array( 'status' => 404 )
+            );
+        }
+
+        $accessible = $require_full_coverage
+            ? ( ! empty( $site_ids ) && count( $overlap ) === count( $site_ids ) )
+            : ! empty( $overlap );
+
+        if ( ! $accessible ) {
+            return new \WP_Error(
+                'mainwp_access_denied',
+                __( 'You do not have permission to access this client.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Check client access and return boolean.
+     *
+     * @param int|object $client Client ID or client object.
+     * @param mixed      $input  The ability input.
+     *
+     * @return bool True if access allowed, false otherwise.
+     */
+    public static function can_access_client( $client, $input = null ): bool {
+        return true === self::check_client_access( $client, $input );
+    }
+
+    /**
+     * Check if the current user can access a specific tag (group).
+     *
+     * Rides the groups filter rather than deriving from the tag's sites:
+     * Team Control grants groups as their own dimension, and a freshly
+     * created tag with no sites must stay visible to the users granted it.
+     * Per-site data inside tag responses still needs trimming against
+     * get_allowed_site_ids() separately, since a group grant does not imply every
+     * member site is allowed.
+     *
+     * @param int|object $tag   Tag ID or tag object.
+     * @param mixed      $input The ability input (unused, callback signature).
+     *
+     * @return true|\WP_Error True on success, WP_Error on failure.
+     */
+    public static function check_tag_access( $tag, $input = null ) {
+        $base_check = self::check_rest_api_permission( $input );
+        if ( is_wp_error( $base_check ) ) {
+            return $base_check;
+        }
+
+        $allowed = self::get_allowed_group_ids();
+        if ( 'all' === $allowed ) {
+            return true;
+        }
+
+        $tag_id = is_object( $tag ) ? (int) $tag->id : (int) $tag;
+
+        if ( ! in_array( $tag_id, $allowed, true ) ) {
+            return new \WP_Error(
+                'mainwp_tag_not_found',
+                /* translators: %d: tag ID */
+                sprintf( __( 'No tag found with ID %d.', 'mainwp' ), $tag_id ),
+                array( 'status' => 404 )
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Get the client IDs reachable from a set of site IDs.
+     *
+     * Backs list/count client abilities for restricted callers: a client is
+     * listed when at least one of its sites is in the caller's allowed set.
+     *
+     * @param int[] $site_ids Allowed site IDs.
+     *
+     * @return int[] Client IDs with at least one site in the set.
+     */
+    public static function get_accessible_client_ids( array $site_ids ) {
+        global $wpdb;
+
+        $site_ids = array_values( array_unique( array_map( 'intval', array_filter( $site_ids, 'is_numeric' ) ) ) );
+        if ( empty( $site_ids ) ) {
+            return array();
+        }
+
+        $placeholders = implode( ',', array_fill( 0, count( $site_ids ), '%d' ) );
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Direct lookup for the client scope map; placeholder list is a counted %d fill, values bound via prepare(), table name from $wpdb->prefix.
+        $client_ids = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT client_id FROM {$wpdb->prefix}mainwp_wp WHERE client_id > 0 AND id IN ({$placeholders})",
+                $site_ids
+            )
+        );
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+        return array_map( 'intval', is_array( $client_ids ) ? $client_ids : array() );
+    }
+
+    /**
      * Check if current user can manage sites (write operations).
      *
      * Currently a wrapper over check_rest_api_permission() which already verifies
@@ -124,6 +542,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * This enforces per-site ACLs beyond the basic REST API permission check.
      * Use this for all site-specific operations (get, sync, update, plugins, themes).
+     * Restricted callers get not-found errors to prevent object existence probes.
      *
      * IMPORTANT: Returns true on success or WP_Error on failure.
      * For execute callbacks that need a boolean check, use the helper method below.
@@ -141,16 +560,15 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
         $site_id = is_object( $site ) ? (int) $site->id : (int) $site;
 
-        // Use MainWP's existing per-site access control.
-        if ( class_exists( 'MainWP_System' ) ) {
-            $system = MainWP_System::instance();
-            if ( method_exists( $system, 'check_site_access' ) && ! $system->check_site_access( $site_id ) ) {
-                return new \WP_Error(
-                    'mainwp_access_denied',
-                    __( 'You do not have permission to access this site.', 'mainwp' ),
-                    array( 'status' => 403 )
-                );
-            }
+        // The DB layer bypasses scoping under REST, cron and CLI, so check
+        // the allowed-sites filter directly on these execution paths.
+        $allowed_sites = self::get_allowed_site_ids();
+        if ( 'all' !== $allowed_sites && ! in_array( $site_id, $allowed_sites, true ) ) {
+            return new \WP_Error(
+                'mainwp_site_not_found',
+                self::site_not_found_message( $input['site_id_or_domain'] ?? $site_id ),
+                array( 'status' => 404 )
+            );
         }
 
         /**
@@ -167,6 +585,13 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         $can_access = apply_filters( 'mainwp_check_site_access', true, $site_id, $input );
 
         if ( ! $can_access ) {
+            if ( 'all' !== $allowed_sites ) {
+                return new \WP_Error(
+                    'mainwp_site_not_found',
+                    self::site_not_found_message( $input['site_id_or_domain'] ?? $site_id ),
+                    array( 'status' => 404 )
+                );
+            }
             return new \WP_Error(
                 'mainwp_access_denied',
                 __( 'You do not have permission to access this site.', 'mainwp' ),
@@ -175,6 +600,20 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         return true;
+    }
+
+    /**
+     * Keep denied and missing lookups indistinguishable for existence probes.
+     *
+     * @param int|string $identifier Site ID or domain supplied by the caller.
+     * @return string Not-found message.
+     */
+    private static function site_not_found_message( $identifier ): string {
+        return is_numeric( $identifier )
+            /* translators: %d: site ID */
+            ? sprintf( __( 'No site found with ID %d.', 'mainwp' ), (int) $identifier )
+            /* translators: %s: domain or URL */
+            : sprintf( __( 'No site found matching "%s".', 'mainwp' ), $identifier );
     }
 
     /**
@@ -273,7 +712,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
                 $denied[]   = array(
                     'identifier' => $identifier,
                     'code'       => $access_check->get_error_code(),
-                    'message'    => $access_check->get_error_message(),
+                    'message'    => 'mainwp_site_not_found' === $access_check->get_error_code() ? self::site_not_found_message( $identifier ) : $access_check->get_error_message(),
                     'status'     => isset( $error_data['status'] ) ? $error_data['status'] : null,
                 );
                 continue;
@@ -734,6 +1173,48 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
+     * Wrap a permission callback with the granular operation-right check for
+     * a mutating ability.
+     *
+     * Mirrors make_site_permission_callback: registration passes the ability
+     * name so the callback can resolve the required rights (including the
+     * update family's per-type derivation from the input the Abilities API
+     * hands every permission callback). The base callback runs first so
+     * authentication/site-scope errors keep their existing codes; the rights
+     * check then denies with mainwp_insufficient_right before any execute
+     * callback can touch a site. Only an unauthenticated machine context
+     * (WP_CLI with no --user) bypasses inside
+     * current_user_has_operation_right().
+     *
+     * @param string   $ability_name Ability id the callback guards.
+     * @param callable $base         Base permission callback to run first.
+     * @return callable Permission callback closure.
+     */
+    public static function make_operation_permission_callback( string $ability_name, callable $base ): callable {
+        return function ( $input = null ) use ( $ability_name, $base ) {
+            $base_check = $base( $input );
+            if ( is_wp_error( $base_check ) || true !== $base_check ) {
+                return $base_check;
+            }
+
+            foreach ( self::required_rights_for_ability( $ability_name, $input ) as $right ) {
+                if ( ! self::current_user_has_operation_right( $right ) ) {
+                    return new \WP_Error(
+                        'mainwp_insufficient_right',
+                        __( 'Your role does not permit this operation.', 'mainwp' ),
+                        array(
+                            'status' => 403,
+                            'right'  => $right,
+                        )
+                    );
+                }
+            }
+
+            return true;
+        };
+    }
+
+    /**
      * Map a site object to the standard output format.
      *
      * @param object $site          Site object from database.
@@ -874,17 +1355,19 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         // Structure aligns with REST v2 job status endpoint expectations.
         // Status values: 'queued' -> 'processing' -> 'completed' | 'failed'.
         $job_data = array(
-            'job_type'  => 'sync',                  // Distinguishes from 'update' jobs.
-            'sites'     => $site_ids,
-            'status'    => 'queued',                // queued | processing | completed | failed.
-            'created'   => time(),
-            'started'   => null,
-            'completed' => null,
-            'synced'    => array(),                 // Successfully synced sites.
-            'errors'    => array(),                 // Failed syncs array.
-            'progress'  => 0,                       // 0-100 percentage.
-            'total'     => count( $site_ids ),      // Total sites to process.
-            'processed' => 0,                       // Sites processed so far.
+            'job_type'        => 'sync',                  // Distinguishes from 'update' jobs.
+            'user_id'         => get_current_user_id(),   // Polling must enforce ownership.
+            'sites'           => $site_ids,
+            'required_rights' => array(),                 // Sync has no mapped operation right.
+            'status'          => 'queued',                // queued | processing | completed | failed.
+            'created'         => time(),
+            'started'         => null,
+            'completed'       => null,
+            'synced'          => array(),                 // Successfully synced sites.
+            'errors'          => array(),                 // Failed syncs array.
+            'progress'        => 0,                       // 0-100 percentage.
+            'total'           => count( $site_ids ),      // Total sites to process.
+            'processed'       => 0,                       // Sites processed so far.
         );
 
         set_transient( 'mainwp_sync_job_' . $job_id, $job_data, DAY_IN_SECONDS );
@@ -960,19 +1443,22 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         // Structure aligns with REST v2 job status endpoint expectations.
         // Status values: 'queued' -> 'processing' -> 'completed' | 'failed'.
         $job_data = array(
-            'job_type'       => 'update',            // Distinguishes from 'sync' jobs.
-            'sites'          => $site_ids,
-            'types'          => $types,
-            'specific_items' => $specific_items,
-            'status'         => 'queued',            // queued | processing | completed | failed.
-            'created'        => time(),
-            'started'        => null,
-            'completed'      => null,
-            'updated'        => array(),             // Successful updates array.
-            'errors'         => array(),             // Failed updates array.
-            'progress'       => 0,                   // 0-100 percentage.
-            'total'          => count( $site_ids ),  // Total sites to process.
-            'processed'      => 0,                   // Sites processed so far.
+            'job_type'        => 'update',            // Distinguishes from 'sync' jobs.
+            'user_id'         => get_current_user_id(), // Polling must enforce ownership.
+            'sites'           => $site_ids,
+            'types'           => $types,
+            'specific_items'  => $specific_items,
+            // Rights can change between chunks; empty types require every update right.
+            'required_rights' => self::required_rights_for_ability( 'mainwp/run-updates-v1', array( 'types' => $types ) ),
+            'status'          => 'queued',            // queued | processing | completed | failed.
+            'created'         => time(),
+            'started'         => null,
+            'completed'       => null,
+            'updated'         => array(),             // Successful updates array.
+            'errors'          => array(),             // Failed updates array.
+            'progress'        => 0,                   // 0-100 percentage.
+            'total'           => count( $site_ids ),  // Total sites to process.
+            'processed'       => 0,                   // Sites processed so far.
         );
 
         set_transient( 'mainwp_update_job_' . $job_id, $job_data, DAY_IN_SECONDS );
@@ -1042,17 +1528,20 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         // Store job data in transient (expires in 24 hours).
         // Status values: 'queued' -> 'processing' -> 'completed' | 'failed'.
         $job_data = array(
-            'job_type'   => $operation_type,
-            'sites'      => $site_ids,
-            'status'     => 'queued',
-            'created'    => time(),
-            'started'    => null,
-            'completed'  => null,
-            'successful' => array(),  // Successfully processed sites.
-            'errors'     => array(),  // Failed operations array.
-            'progress'   => 0,        // 0-100 percentage.
-            'total'      => count( $site_ids ),
-            'processed'  => 0,        // Sites processed so far.
+            'job_type'        => $operation_type,
+            'user_id'         => get_current_user_id(), // Polling must enforce ownership.
+            'sites'           => $site_ids,
+            // Site-edit rights can change between chunks.
+            'required_rights' => array( 'edit_sites' ),
+            'status'          => 'queued',
+            'created'         => time(),
+            'started'         => null,
+            'completed'       => null,
+            'successful'      => array(),  // Successfully processed sites.
+            'errors'          => array(),  // Failed operations array.
+            'progress'        => 0,        // 0-100 percentage.
+            'total'           => count( $site_ids ),
+            'processed'       => 0,        // Sites processed so far.
         );
 
         set_transient( 'mainwp_batch_job_' . $job_id, $job_data, DAY_IN_SECONDS );
@@ -1162,6 +1651,18 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         return $defaults;
+    }
+
+    /**
+     * Schema validation does not coerce boolean inputs.
+     * Read strings "false" and "0" as false instead of using PHP truthiness.
+     *
+     * @param array  $input Input parameters.
+     * @param string $key   Boolean parameter key.
+     * @return bool Sanitized boolean value.
+     */
+    public static function get_boolean_input( array $input, string $key ): bool {
+        return isset( $input[ $key ] ) && rest_sanitize_boolean( $input[ $key ] );
     }
 
     /**

@@ -1,0 +1,782 @@
+<?php
+/**
+ * Tests for knowledge AJAX responses and access checks.
+ *
+ * @package MainWP\Dashboard\Tests
+ */
+
+namespace MainWP\Dashboard\Tests;
+
+use MainWP\Dashboard\MainWP_DB_Knowledge;
+use MainWP\Dashboard\MainWP_Knowledge_UI;
+
+class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
+
+	private $added_filters = array();
+	private $db;
+	private $client_id;
+	private $site_id;
+	private $suppressed_errors = null;
+
+	public function setUp(): void {
+		parent::setUp();
+		$this->set_current_user_as_admin();
+		$this->db        = MainWP_DB_Knowledge::instance();
+		$this->client_id = $this->create_test_client();
+		$this->site_id   = $this->create_test_site( array( 'client_id' => $this->client_id ) );
+	}
+
+	public function tearDown(): void {
+		global $wpdb;
+		foreach ( $this->added_filters as $filter ) {
+			remove_filter( $filter[0], $filter[1], $filter[2] );
+		}
+		$this->added_filters = array();
+		if ( null !== $this->suppressed_errors ) {
+			$wpdb->suppress_errors( $this->suppressed_errors );
+			$this->suppressed_errors = null;
+		}
+		parent::tearDown();
+	}
+
+	private function track_filter( string $hook, callable $callback, int $priority = 10, int $args = 1 ): void {
+		add_filter( $hook, $callback, $priority, $args );
+		$this->added_filters[] = array( $hook, $callback, $priority );
+	}
+
+	/**
+	 * Point SELECTs on one table at a table that does not exist, so they fail the way a lock timeout or lost connection does.
+	 *
+	 * @param string $table             Table name without the WordPress prefix, e.g. mainwp_knowledge.
+	 * @param bool   $client_scope_only Only fail the SELECTs that read client-scope rows.
+	 */
+	private function fail_selects_on( string $table, bool $client_scope_only = false ): void {
+		global $wpdb;
+		if ( null === $this->suppressed_errors ) {
+			$this->suppressed_errors = $wpdb->suppress_errors( true );
+		}
+		$name = $wpdb->prefix . $table;
+		// Boundaries keep mainwp_wp from matching mainwp_wp_clients; the query may quote the name with backticks or not.
+		$pattern = '/(?<![A-Za-z0-9_])' . preg_quote( $name, '/' ) . '(?![A-Za-z0-9_])/';
+		$this->track_filter(
+			'query',
+			static function ( $sql ) use ( $pattern, $name, $client_scope_only ) {
+				if ( 0 !== stripos( ltrim( $sql ), 'SELECT' ) || ( $client_scope_only && false === strpos( $sql, "scope_type = 'client'" ) ) ) {
+					return $sql;
+				}
+				return preg_replace( $pattern, $name . '_missing', $sql );
+			}
+		);
+	}
+
+	private function call( string $action, array $post ): array {
+		$_POST['security'] = $_REQUEST['security'] = wp_create_nonce( $action );
+		foreach ( $post as $key => $value ) {
+			$_POST[ $key ] = is_string( $value ) ? wp_slash( $value ) : $value;
+		}
+		// A supplied security value exercises a nonce created for the wrong action.
+		$_REQUEST['security'] = $_POST['security'];
+
+		$this->track_filter( 'wp_doing_ajax', '__return_true' );
+		$this->track_filter( 'wp_die_ajax_handler', array( $this, 'get_wp_die_handler' ) );
+		ob_start();
+		try {
+			$method = 'ajax_' . substr( $action, strlen( 'mainwp_knowledge_' ) );
+			MainWP_Knowledge_UI::instance()->$method();
+		} catch ( \WPDieException $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedCatch -- wp_send_json ends in wp_die; the body is what matters.
+			// Expected: every handler exit goes through wp_die.
+		} finally {
+			$body = ob_get_clean();
+			remove_filter( 'wp_die_ajax_handler', array( $this, 'get_wp_die_handler' ) );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			foreach ( array_merge( array( 'security' ), array_keys( $post ) ) as $key ) {
+				unset( $_POST[ $key ] );
+			}
+			unset( $_REQUEST['security'] );
+		}
+
+		$decoded = json_decode( $body, true );
+		$this->assertIsArray( $decoded, 'Expected a JSON response, got: ' . $body );
+		return $decoded;
+	}
+
+	private function input( array $overrides = array() ): array {
+		return array_merge(
+			array(
+				'scope_type' => 'client',
+				'scope_id'   => $this->client_id,
+				'type'       => 'context',
+				'title'      => "Client's knowledge",
+				'body'       => "Keep client's C:\\notes verbatim.\nSecond line.",
+			),
+			$overrides
+		);
+	}
+
+	private function create_record( array $overrides = array() ): object {
+		$record = $this->db->save( $this->input( $overrides ), MainWP_DB_Knowledge::ORIGIN_UI );
+		$this->assertNotWPError( $record );
+		return $record;
+	}
+
+	private function row_count(): int {
+		global $wpdb;
+		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}mainwp_knowledge" );
+	}
+
+	private function assert_error( array $response, string $code, int $status ): void {
+		$this->assertFalse( $response['success'] );
+		$this->assertSame( $code, $response['data']['code'] );
+		$this->assertSame( $status, $response['data']['status'] );
+	}
+
+	private function restrict_to_other_site(): void {
+		$site_id = $this->create_test_site();
+		$this->track_filter(
+			'mainwp_currentuserallowedaccesssites',
+			static function () use ( $site_id ) {
+				return array( $site_id );
+			}
+		);
+	}
+
+	private function withhold_right( string $right ): void {
+		$this->track_filter(
+			'mainwp_currentusercan',
+			static function ( $allowed, $cap_type, $cap ) use ( $right ) {
+				return 'dashboard' === $cap_type && $right === $cap ? false : $allowed;
+			},
+			10,
+			3
+		);
+	}
+
+	public function test_list_client_summaries(): void {
+		$context  = $this->create_record();
+		$memory   = $this->create_record( array( 'type' => 'memory' ) );
+		$response = $this->call( 'mainwp_knowledge_list', $this->input() );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertTrue( $response['data']['can_write'] );
+		$this->assertCount( 2, $response['data']['records'] );
+		$this->assertEqualsCanonicalizing( array( $context->id, $memory->id ), array_column( $response['data']['records'], 'id' ) );
+		$this->assertEqualsCanonicalizing( array( 'context', 'memory' ), array_column( $response['data']['records'], 'type' ) );
+		foreach ( $response['data']['records'] as $record ) {
+			foreach ( array( 'id', 'type', 'type_label', 'title', 'revision', 'updated_by_name', 'updated_ago', 'updated_display' ) as $key ) {
+				$this->assertArrayHasKey( $key, $record );
+			}
+			$this->assertArrayNotHasKey( 'body', $record );
+		}
+	}
+
+	public function test_get_record_body(): void {
+		$record   = $this->create_record();
+		$response = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( $record->id, $response['data']['record']['id'] );
+		$this->assertSame( $record->body, $response['data']['record']['body'] );
+	}
+
+	public function test_save_creates_ui_record(): void {
+		$before   = $this->row_count();
+		$input    = $this->input();
+		$response = $this->call( 'mainwp_knowledge_save', $input );
+
+		$this->assertTrue( $response['success'] );
+		$record = $response['data']['record'];
+		$this->assertSame( 1, $record['revision'] );
+		$this->assertSame( 'ui', $record['source'] );
+		$this->assertSame( 1, $record['verified'] );
+		$stored = $this->db->get_by_id( $record['id'] );
+		$this->assertNotNull( $stored );
+		$this->assertSame( $input['title'], $stored->title );
+		$this->assertSame( $input['body'], $stored->body );
+		$this->assertSame( $before + 1, $this->row_count() );
+	}
+
+	public function test_save_updates_matching_revision(): void {
+		$record   = $this->create_record();
+		$response = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => $record->id, 'revision' => 1, 'title' => 'Edited' ) ) );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( 2, $response['data']['record']['revision'] );
+		$this->assertSame( 'Edited', $response['data']['record']['title'] );
+		$this->assertSame( 2, $this->db->get_by_id( $record->id )->revision );
+		$this->assertSame( 'Edited', $this->db->get_by_id( $record->id )->title );
+	}
+
+	public function test_save_rejects_stale_revision(): void {
+		$record = $this->create_record();
+		$stored = $this->db->save( $this->input( array( 'id' => $record->id, 'title' => 'Other writer' ) ), MainWP_DB_Knowledge::ORIGIN_UI, 1 );
+		$this->assertNotWPError( $stored );
+		$this->assertSame( 2, $stored->revision );
+		$response = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => $record->id, 'revision' => 1, 'title' => 'Stale writer' ) ) );
+
+		$this->assert_error( $response, 'mainwp_knowledge_conflict', 409 );
+		$this->assertSame( $stored->revision, $response['data']['revision'] );
+		$this->assertEquals( $stored, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_save_rejects_missing_revision(): void {
+		$record   = $this->create_record();
+		$response = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => $record->id, 'title' => 'No revision' ) ) );
+
+		$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_save_rejects_invalid_type(): void {
+		$before   = $this->row_count();
+		$response = $this->call( 'mainwp_knowledge_save', $this->input( array( 'type' => 'note' ) ) );
+
+		$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
+		$this->assertSame( $before, $this->row_count() );
+	}
+
+	public function test_delete_removes_record(): void {
+		$record   = $this->create_record();
+		$response = $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => $record->revision ) );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( $record->id, $response['data']['id'] );
+		$this->assertNull( $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_restricted_delete_with_wrong_revision_matches_missing_id(): void {
+		$records = array( $this->create_record(), $this->create_record( $this->site_input() ) );
+		$this->restrict_to_other_site();
+		foreach ( $records as $record ) {
+			$existing = $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => $record->revision + 1 ) );
+			$missing = $this->call( 'mainwp_knowledge_delete', array( 'id' => 999999, 'revision' => $record->revision + 1 ) );
+			$this->assert_error( $existing, 'mainwp_knowledge_not_found', 404 );
+			$this->assert_error( $missing, 'mainwp_knowledge_not_found', 404 );
+			$this->assertSame( $missing['data']['code'], $existing['data']['code'] );
+			$this->assertSame( $missing['data']['status'], $existing['data']['status'] );
+			$this->assertArrayNotHasKey( 'revision', $existing['data'] );
+			$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+		}
+	}
+
+	public function test_delete_rejects_stale_revision(): void {
+		$record = $this->create_record();
+		$stored = $this->db->save( $this->input( array( 'id' => $record->id, 'title' => 'Other writer' ) ), MainWP_DB_Knowledge::ORIGIN_UI, 1 );
+		$this->assertNotWPError( $stored );
+		$response = $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) );
+
+		$this->assert_error( $response, 'mainwp_knowledge_conflict', 409 );
+		$this->assertSame( $stored->revision, $response['data']['revision'] );
+		$this->assertEquals( $stored, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_delete_rejects_missing_revision(): void {
+		$record   = $this->create_record();
+		$response = $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id ) );
+
+		$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_list_bad_nonce_and_save_write_prevention(): void {
+		$this->create_record();
+		$input    = $this->input( array( 'security' => wp_create_nonce( 'wrong_action' ) ) );
+		$response = $this->call( 'mainwp_knowledge_list', $input );
+
+		$this->assert_error( $response, 'mainwp_knowledge_insecure', 403 );
+		$this->assertArrayNotHasKey( 'records', $response['data'] );
+		$before = $this->row_count();
+		$this->assert_error( $this->call( 'mainwp_knowledge_save', $input ), 'mainwp_knowledge_insecure', 403 );
+		$this->assertSame( $before, $this->row_count() );
+	}
+
+	public function test_list_restricted_client(): void {
+		$this->create_record();
+		$this->restrict_to_other_site();
+		$response = $this->call( 'mainwp_knowledge_list', $this->input() );
+
+		$this->assert_error( $response, 'mainwp_client_not_found', 404 );
+		$this->assertArrayNotHasKey( 'records', $response['data'] );
+		$this->assertArrayNotHasKey( 'can_write', $response['data'] );
+	}
+
+	public function test_get_restricted_record_matches_missing_id(): void {
+		$record = $this->create_record();
+		$this->restrict_to_other_site();
+		$hidden  = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+		$missing = $this->call( 'mainwp_knowledge_get', array( 'id' => PHP_INT_MAX ) );
+
+		$this->assert_error( $hidden, 'mainwp_knowledge_not_found', 404 );
+		$this->assert_error( $missing, $hidden['data']['code'], $hidden['data']['status'] );
+		$this->assertArrayNotHasKey( 'record', $hidden['data'] );
+		$this->assertArrayNotHasKey( 'body', $hidden['data'] );
+	}
+
+	public function test_save_restricted_client_and_delete_preserves_record(): void {
+		$record = $this->create_record();
+		$before = $this->row_count();
+		$this->restrict_to_other_site();
+
+		$this->assert_error( $this->call( 'mainwp_knowledge_save', $this->input() ), 'mainwp_client_not_found', 404 );
+		$this->assertSame( $before, $this->row_count() );
+		$this->assert_error( $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => $record->revision ) ), 'mainwp_knowledge_not_found', 404 );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_list_read_only_site(): void {
+		$input  = array( 'scope_type' => 'site', 'scope_id' => $this->create_test_site() );
+		$record = $this->create_record( $input );
+		$this->withhold_right( 'edit_sites' );
+		$response = $this->call( 'mainwp_knowledge_list', $input );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertFalse( $response['data']['can_write'] );
+		$this->assertSame( array( $record->id ), array_column( $response['data']['records'], 'id' ) );
+	}
+
+	public function test_save_read_only_site_and_delete_preserves_record(): void {
+		$input  = $this->input( array( 'scope_type' => 'site', 'scope_id' => $this->create_test_site() ) );
+		$record = $this->create_record( $input );
+		$before = $this->row_count();
+		$this->withhold_right( 'edit_sites' );
+
+		$this->assert_error( $this->call( 'mainwp_knowledge_save', $input ), 'mainwp_access_denied', 403 );
+		$this->assertSame( $before, $this->row_count() );
+		$this->assert_error( $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => $record->revision ) ), 'mainwp_access_denied', 403 );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_list_client_without_manage_clients(): void {
+		$this->create_record();
+		$this->withhold_right( 'manage_clients' );
+		$response = $this->call( 'mainwp_knowledge_list', $this->input() );
+
+		$this->assert_error( $response, 'mainwp_access_denied', 403 );
+		$this->assertArrayNotHasKey( 'records', $response['data'] );
+	}
+
+	public function test_list_subscriber_and_get_save_delete_denied(): void {
+		$record = $this->create_record();
+		$before = $this->row_count();
+		$this->set_current_user_as_subscriber();
+
+		$list = $this->call( 'mainwp_knowledge_list', $this->input() );
+		$this->assert_error( $list, 'mainwp_permission_denied', 403 );
+		$this->assertArrayNotHasKey( 'records', $list['data'] );
+		$get = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+		$this->assert_error( $get, 'mainwp_permission_denied', 403 );
+		$this->assertArrayNotHasKey( 'record', $get['data'] );
+		$this->assert_error( $this->call( 'mainwp_knowledge_get', array( 'id' => PHP_INT_MAX ) ), $get['data']['code'], $get['data']['status'] );
+		$this->assert_error( $this->call( 'mainwp_knowledge_save', $this->input() ), 'mainwp_permission_denied', 403 );
+		$this->assertSame( $before, $this->row_count() );
+		$this->assert_error( $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id ) ), 'mainwp_permission_denied', 403 );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+		$this->assert_error( $this->call( 'mainwp_knowledge_delete', array( 'id' => PHP_INT_MAX ) ), 'mainwp_permission_denied', 403 );
+	}
+
+	public function test_save_preserves_plain_text_title(): void {
+		$title    = 'Keep PHP < 8 & <staging>';
+		$response = $this->call( 'mainwp_knowledge_save', $this->input( array( 'title' => $title ) ) );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( $title, $response['data']['record']['title'] );
+		$this->assertSame( $title, $this->db->get_by_id( $response['data']['record']['id'] )->title );
+	}
+
+	public function test_malformed_ids_do_not_touch_record(): void {
+		$record = $this->create_record();
+		$before = $this->db->get_by_id( $record->id );
+		foreach ( array( 'get', 'delete', 'save' ) as $action ) {
+			foreach ( array( '-1', '1.5', array( 'x' ) ) as $id ) {
+				$response = $this->call( 'mainwp_knowledge_' . $action, $this->input( array( 'id' => $id, 'revision' => $record->revision, 'title' => 'Changed' ) ) );
+				$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
+				$this->assertEquals( $before, $this->db->get_by_id( $record->id ) );
+			}
+		}
+	}
+
+	public function test_save_rejects_negative_revision(): void {
+		$record   = $this->create_record();
+		$response = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => $record->id, 'revision' => '-1' ) ) );
+
+		$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_list_rejects_negative_scope_id(): void {
+		$response = $this->call( 'mainwp_knowledge_list', $this->input( array( 'scope_id' => '-1' ) ) );
+		$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
+	}
+
+	public function test_subscriber_update_matches_missing_id(): void {
+		$record = $this->create_record();
+		$this->set_current_user_as_subscriber();
+		$existing = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => $record->id, 'revision' => $record->revision, 'title' => 'Changed' ) ) );
+		$missing  = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => PHP_INT_MAX, 'revision' => $record->revision, 'title' => 'Changed' ) ) );
+
+		$this->assert_error( $existing, 'mainwp_permission_denied', 403 );
+		$this->assert_error( $missing, $existing['data']['code'], $existing['data']['status'] );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_restricted_update_and_delete_match_missing_id(): void {
+		$record = $this->create_record();
+		$this->restrict_to_other_site();
+		foreach ( array( 'save', 'delete' ) as $action ) {
+			$existing = $this->call( 'mainwp_knowledge_' . $action, $this->input( array( 'id' => $record->id, 'revision' => $record->revision, 'title' => 'Changed' ) ) );
+			$missing  = $this->call( 'mainwp_knowledge_' . $action, $this->input( array( 'id' => PHP_INT_MAX, 'revision' => $record->revision, 'title' => 'Changed' ) ) );
+
+			$this->assert_error( $existing, 'mainwp_knowledge_not_found', 404 );
+			$this->assert_error( $missing, $existing['data']['code'], $existing['data']['status'] );
+			$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+		}
+	}
+
+	public function test_get_site_requires_dashboard_access(): void {
+		$record = $this->create_record( array( 'scope_type' => 'site', 'scope_id' => $this->create_test_site() ) );
+		$this->withhold_right( 'access_individual_dashboard' );
+		$response = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+
+		$this->assert_error( $response, 'mainwp_access_denied', 403 );
+		$this->assertArrayNotHasKey( 'record', $response['data'] );
+	}
+
+	public function test_get_site_without_edit_right_succeeds(): void {
+		$record = $this->create_record( array( 'scope_type' => 'site', 'scope_id' => $this->create_test_site() ) );
+		$this->withhold_right( 'edit_sites' );
+		$response = $this->call( 'mainwp_knowledge_get', array( 'id' => $record->id ) );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( $record->id, $response['data']['record']['id'] );
+		$this->assertSame( $record->body, $response['data']['record']['body'] );
+	}
+
+	private function site_input( array $overrides = array() ): array {
+		return $this->input( array_merge( array( 'scope_type' => 'site', 'scope_id' => $this->site_id, 'title' => 'Site knowledge' ), $overrides ) );
+	}
+
+	private function restrict_to_own_site(): void {
+		$site_id = $this->site_id;
+		$this->track_filter(
+			'mainwp_currentuserallowedaccesssites',
+			static function () use ( $site_id ) {
+				return array( $site_id );
+			}
+		);
+	}
+
+	public function test_list_site_returns_inherited_client_records(): void {
+		$own    = $this->create_record( $this->site_input() );
+		$client = $this->create_record();
+		$skill  = $this->create_record( array( 'type' => 'skill' ) );
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertTrue( $response['data']['can_write'] );
+		$this->assertSame( array( $own->id ), array_column( $response['data']['records'], 'id' ) );
+		$inherited = $response['data']['inherited'];
+		$this->assertSame( $this->client_id, $inherited['client_id'] );
+		$this->assertStringStartsWith( 'Test Client ', $inherited['client_name'] );
+		$this->assertStringContainsString( 'page=ClientAddNew&client_id=' . $this->client_id, $inherited['client_url'] );
+		$this->assertEqualsCanonicalizing( array( $client->id, $skill->id ), array_column( $inherited['records'], 'id' ) );
+		$this->assertSame( array( 'client' ), array_values( array_unique( array_column( $inherited['records'], 'scope_type' ) ) ) );
+		foreach ( $inherited['records'] as $record ) {
+			$this->assertArrayNotHasKey( 'body', $record );
+		}
+		// The write flag describes the site only; the inherited block carries none.
+		$this->assertArrayNotHasKey( 'can_write', $inherited );
+	}
+
+	public function test_list_site_with_client_without_records_returns_empty_inherited(): void {
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( $this->client_id, $response['data']['inherited']['client_id'] );
+		$this->assertSame( array(), $response['data']['inherited']['records'] );
+	}
+
+	public function test_list_site_without_client_has_no_inherited(): void {
+		$this->create_record();
+		$input  = $this->site_input( array( 'scope_id' => $this->create_test_site() ) );
+		$record = $this->create_record( $input );
+
+		$response = $this->call( 'mainwp_knowledge_list', $input );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( array( $record->id ), array_column( $response['data']['records'], 'id' ) );
+		$this->assertArrayHasKey( 'inherited', $response['data'] );
+		$this->assertNull( $response['data']['inherited'] );
+	}
+
+	public function test_list_site_with_deleted_client_has_no_inherited(): void {
+		$site_id = $this->create_test_site( array( 'client_id' => PHP_INT_MAX >> 33 ) );
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input( array( 'scope_id' => $site_id ) ) );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertNull( $response['data']['inherited'] );
+	}
+
+	public function test_list_site_without_manage_clients_hides_inherited(): void {
+		$own = $this->create_record( $this->site_input() );
+		$this->create_record();
+		$this->withhold_right( 'manage_clients' );
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertTrue( $response['data']['can_write'] );
+		$this->assertSame( array( $own->id ), array_column( $response['data']['records'], 'id' ) );
+		$this->assertNull( $response['data']['inherited'] );
+	}
+
+	public function test_list_client_scope_has_no_inherited(): void {
+		$this->create_record();
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->input() );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertNull( $response['data']['inherited'] );
+	}
+
+	public function test_list_site_read_only_user_sees_inherited_without_write(): void {
+		$own    = $this->create_record( $this->site_input() );
+		$client = $this->create_record();
+		$this->withhold_right( 'edit_sites' );
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertFalse( $response['data']['can_write'] );
+		$this->assertSame( array( $own->id ), array_column( $response['data']['records'], 'id' ) );
+		$this->assertSame( array( $client->id ), array_column( $response['data']['inherited']['records'], 'id' ) );
+	}
+
+	public function test_list_site_restricted_user_in_scope(): void {
+		$own    = $this->create_record( $this->site_input() );
+		$client = $this->create_record();
+		$this->restrict_to_own_site();
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( array( $own->id ), array_column( $response['data']['records'], 'id' ) );
+		$this->assertSame( array( $client->id ), array_column( $response['data']['inherited']['records'], 'id' ) );
+	}
+
+	public function test_list_site_restricted_user_out_of_scope(): void {
+		$this->create_record( $this->site_input() );
+		$this->create_record();
+		$this->restrict_to_other_site();
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		$this->assert_error( $response, 'mainwp_site_not_found', 404 );
+		$this->assertArrayNotHasKey( 'records', $response['data'] );
+		$this->assertArrayNotHasKey( 'inherited', $response['data'] );
+		$missing = $this->call( 'mainwp_knowledge_list', $this->site_input( array( 'scope_id' => PHP_INT_MAX >> 33 ) ) );
+		$this->assert_error( $missing, $response['data']['code'], $response['data']['status'] );
+	}
+
+	public function test_list_site_without_dashboard_access(): void {
+		$this->create_record( $this->site_input() );
+		$this->create_record();
+		$this->withhold_right( 'access_individual_dashboard' );
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		$this->assert_error( $response, 'mainwp_access_denied', 403 );
+		$this->assertArrayNotHasKey( 'records', $response['data'] );
+		$this->assertArrayNotHasKey( 'inherited', $response['data'] );
+	}
+
+	public function test_save_site_record_as_admin_and_restricted_user(): void {
+		$created = $this->call( 'mainwp_knowledge_save', $this->site_input() );
+		$this->assertTrue( $created['success'] );
+		$this->assertSame( 'site', $created['data']['record']['scope_type'] );
+		$this->assertSame( $this->site_id, $created['data']['record']['scope_id'] );
+
+		$this->restrict_to_own_site();
+		$updated = $this->call( 'mainwp_knowledge_save', $this->site_input( array( 'id' => $created['data']['record']['id'], 'revision' => 1, 'title' => 'Edited' ) ) );
+		$this->assertTrue( $updated['success'] );
+		$this->assertSame( 2, $updated['data']['record']['revision'] );
+	}
+
+	public function test_save_and_delete_site_record_out_of_scope(): void {
+		$record = $this->create_record( $this->site_input() );
+		$before = $this->row_count();
+		$this->restrict_to_other_site();
+
+		$this->assert_error( $this->call( 'mainwp_knowledge_save', $this->site_input() ), 'mainwp_site_not_found', 404 );
+		$this->assertSame( $before, $this->row_count() );
+		$this->assert_error( $this->call( 'mainwp_knowledge_save', $this->site_input( array( 'id' => $record->id, 'revision' => $record->revision, 'title' => 'Changed' ) ) ), 'mainwp_knowledge_not_found', 404 );
+		$this->assert_error( $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => $record->revision ) ), 'mainwp_knowledge_not_found', 404 );
+		$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_save_and_delete_site_record_stale_revision(): void {
+		$record = $this->create_record( $this->site_input() );
+		$stored = $this->db->save( $this->site_input( array( 'id' => $record->id, 'title' => 'Other writer' ) ), MainWP_DB_Knowledge::ORIGIN_UI, 1 );
+		$this->assertNotWPError( $stored );
+
+		$save = $this->call( 'mainwp_knowledge_save', $this->site_input( array( 'id' => $record->id, 'revision' => 1, 'title' => 'Stale writer' ) ) );
+		$this->assert_error( $save, 'mainwp_knowledge_conflict', 409 );
+		$this->assertSame( $stored->revision, $save['data']['revision'] );
+		$delete = $this->call( 'mainwp_knowledge_delete', array( 'id' => $record->id, 'revision' => 1 ) );
+		$this->assert_error( $delete, 'mainwp_knowledge_conflict', 409 );
+		$this->assertEquals( $stored, $this->db->get_by_id( $record->id ) );
+	}
+
+	public function test_site_scope_cannot_edit_inherited_record(): void {
+		$client = $this->create_record();
+
+		// The panel posts its own scope with every request, so an inherited id arrives with the site scope.
+		$response = $this->call( 'mainwp_knowledge_save', $this->site_input( array( 'id' => $client->id, 'revision' => $client->revision, 'title' => 'Changed from the site' ) ) );
+
+		$this->assert_error( $response, 'mainwp_knowledge_invalid', 400 );
+		$this->assertEquals( $client, $this->db->get_by_id( $client->id ) );
+	}
+
+	public function test_site_editor_without_manage_clients_cannot_write_inherited_record(): void {
+		$client = $this->create_record();
+		$this->withhold_right( 'manage_clients' );
+
+		$site_scope   = $this->call( 'mainwp_knowledge_save', $this->site_input( array( 'id' => $client->id, 'revision' => $client->revision, 'title' => 'Changed' ) ) );
+		$client_scope = $this->call( 'mainwp_knowledge_save', $this->input( array( 'id' => $client->id, 'revision' => $client->revision, 'title' => 'Changed' ) ) );
+		$delete       = $this->call( 'mainwp_knowledge_delete', array( 'id' => $client->id, 'revision' => $client->revision ) );
+		$get          = $this->call( 'mainwp_knowledge_get', array( 'id' => $client->id ) );
+
+		foreach ( array( $site_scope, $client_scope, $delete, $get ) as $response ) {
+			$this->assert_error( $response, 'mainwp_access_denied', 403 );
+			$this->assertArrayNotHasKey( 'record', $response['data'] );
+		}
+		$this->assertEquals( $client, $this->db->get_by_id( $client->id ) );
+	}
+
+	public function test_list_nonce_cannot_get_or_delete_record(): void {
+		$record = $this->create_record();
+		$input  = array( 'id' => $record->id, 'security' => wp_create_nonce( 'mainwp_knowledge_list' ) );
+		foreach ( array( 'get', 'delete' ) as $action ) {
+			$response = $this->call( 'mainwp_knowledge_' . $action, $input );
+			$this->assert_error( $response, 'mainwp_knowledge_insecure', 403 );
+			$this->assertArrayNotHasKey( 'record', $response['data'] );
+			$this->assertEquals( $record, $this->db->get_by_id( $record->id ) );
+		}
+	}
+
+	private function render_site_overview(): string {
+		$site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		// set_current_screen() fires current_screen, where the Dashboard sends headers; the render only reads the screen id.
+		$previous                  = $GLOBALS['current_screen'] ?? null;
+		$GLOBALS['current_screen'] = \WP_Screen::get( 'mainwp_page_managesites' );
+		ob_start();
+		try {
+			\MainWP\Dashboard\MainWP_Manage_Sites_View::render_dashboard( $site );
+		} finally {
+			$html                      = ob_get_clean();
+			$GLOBALS['current_screen'] = $previous;
+		}
+		return $html;
+	}
+
+	public function test_site_overview_mounts_the_panel_without_the_edit_right(): void {
+		$this->withhold_right( 'edit_sites' );
+
+		$this->assertStringContainsString(
+			'id="mainwp-knowledge-panel" data-scope-type="site" data-scope-id="' . $this->site_id . '"',
+			$this->render_site_overview()
+		);
+	}
+
+	public function test_site_overview_modal_carries_the_view_hooks(): void {
+		$this->withhold_right( 'edit_sites' );
+
+		// The panel script reads these by name; a missing one leaves the View button or the read-only modal without text.
+		$html = $this->render_site_overview();
+		$this->assertStringContainsString( 'data-view="View knowledge record"', $html );
+		$this->assertStringContainsString( 'data-close="Close"', $html );
+		$this->assertStringContainsString( '<input type="text" id="mainwp-knowledge-type-view" readonly>', $html );
+		$this->assertSame( 'View', \MainWP\Dashboard\MainWP_Knowledge_UI::js_strings()['view'] );
+	}
+
+	public function test_site_overview_without_dashboard_access_has_no_panel(): void {
+		$this->withhold_right( 'access_individual_dashboard' );
+
+		$this->assertStringNotContainsString( 'mainwp-knowledge-panel', $this->render_site_overview() );
+	}
+
+	public function test_list_site_answers_db_error_when_the_client_lookup_fails(): void {
+		global $wpdb;
+		$this->create_record( $this->site_input() );
+		$this->create_record();
+		$this->suppressed_errors = $wpdb->suppress_errors( true );
+		$name = $wpdb->prefix . 'mainwp_wp_clients';
+		$lookup = 'SELECT wc.*, cc.*  FROM ' . $name . ' wc ';
+		$failed_queries = 0;
+		$this->track_filter(
+			'query',
+			static function ( $sql ) use ( $name, $lookup, &$failed_queries ) {
+				if ( 0 === strpos( ltrim( $sql ), $lookup ) ) {
+					++$failed_queries;
+					return str_replace( 'FROM ' . $name . ' wc ', 'FROM ' . $name . '_missing wc ', $sql );
+				}
+				return $sql;
+			}
+		);
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		$this->assertSame( 1, $failed_queries );
+		$this->assert_error( $response, 'mainwp_knowledge_db_error', 500 );
+		$this->assertArrayNotHasKey( 'inherited', $response['data'] );
+	}
+
+	public function test_list_site_answers_db_error_when_the_site_lookup_for_the_client_block_fails(): void {
+		global $wpdb;
+		$this->create_record( $this->site_input() );
+		$this->create_record();
+		$this->suppressed_errors = $wpdb->suppress_errors( true );
+		$name           = $wpdb->prefix . 'mainwp_wp';
+		$failed_queries = 0;
+		// Only the site row lookup fails: scope_exists() reads the same table first, so a table-wide fault never reaches inherited_client().
+		$this->track_filter(
+			'query',
+			static function ( $sql ) use ( $name, &$failed_queries ) {
+				if ( 0 !== strpos( ltrim( $sql ), 'SELECT wp.*,wp_sync.*' ) ) {
+					return $sql;
+				}
+				++$failed_queries;
+				return preg_replace( '/FROM ' . preg_quote( $name, '/' ) . ' wp\b/', 'FROM ' . $name . '_missing wp', $sql );
+			}
+		);
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		$this->assertSame( 1, $failed_queries );
+		$this->assert_error( $response, 'mainwp_knowledge_db_error', 500 );
+		$this->assertArrayNotHasKey( 'inherited', $response['data'] );
+	}
+
+	public function test_list_site_answers_db_error_when_the_knowledge_select_fails(): void {
+		$this->create_record( $this->site_input() );
+		$this->create_record();
+		$this->fail_selects_on( 'mainwp_knowledge' );
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		$this->assert_error( $response, 'mainwp_knowledge_db_error', 500 );
+		$this->assertArrayNotHasKey( 'records', $response['data'] );
+	}
+
+	public function test_list_site_fails_whole_when_only_the_inherited_client_read_fails(): void {
+		$this->create_record( $this->site_input() );
+		$this->create_record();
+		$this->fail_selects_on( 'mainwp_knowledge', true );
+
+		$response = $this->call( 'mainwp_knowledge_list', $this->site_input() );
+
+		// An empty or missing client block would read as "this client has no knowledge".
+		$this->assert_error( $response, 'mainwp_knowledge_db_error', 500 );
+		$this->assertArrayNotHasKey( 'inherited', $response['data'] );
+	}
+}

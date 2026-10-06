@@ -32,6 +32,74 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Private_Root_Fixture;
 
 	/**
+	 * An exact-size retry file must pass the downloaded archive validation.
+	 *
+	 * @dataProvider exact_size_archive_cases
+	 * @param string $role Archive role.
+	 * @param bool   $valid Whether the cached archive is valid.
+	 */
+	public function test_b155_exact_size_archive_retry( $role, $valid ) {
+		list( $site_id, $task ) = $this->site_and_task( array( 'type' => 'incremental' ) );
+		$content                = "PK\x03\x04" . str_repeat( 'x', 4092 );
+		$child_task_id          = 'b155-' . $site_id;
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => $child_task_id ) );
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id'   => $child_task_id,
+				'phase'     => 'completed',
+				'artifacts' => array(
+					array(
+						'file' => 'cached.zip',
+						'size' => strlen( $content ),
+						'role' => $role,
+					),
+				),
+			)
+		);
+		$run_dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-' . $child_task_id . '/';
+		wp_mkdir_p( $run_dir );
+		$local = $run_dir . 'cached.zip';
+		file_put_contents( $local, $valid ? $content : str_repeat( 'x', strlen( $content ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+		$downloads = 0;
+		$download  = function ( $pre, $url, $file ) use ( &$downloads, $content, $local ) {
+			++$downloads;
+			$this->assertSame( $local, $file );
+			$this->assertFileDoesNotExist( $file, 'Discard the invalid archive before downloading it again.' );
+			file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+			return true;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		try {
+			$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $download );
+		}
+		$this->assertSame( $valid ? 0 : 1, $downloads, 'Only a validated cached archive may skip the download.' );
+		$this->assertSame( $content, file_get_contents( $local ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_get_contents -- test fixture.
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$this->assertNotNull( $snapshot );
+		$this->assertSame( $local, $snapshot->archives[0]['path'] );
+	}
+
+	/**
+	 * Cached archives use the same validation for every archive role.
+	 *
+	 * @return array Retry cases.
+	 */
+	public static function exact_size_archive_cases() {
+		return array(
+			'valid full'   => array( 'full', true ),
+			'invalid full' => array( 'full', false ),
+			'valid part'   => array( 'part', true ),
+			'invalid part' => array( 'part', false ),
+			'valid db'     => array( 'db', true ),
+			'invalid db'   => array( 'db', false ),
+		);
+	}
+
+	/**
 	 * A pre-write storage failure must reach the normal task error path.
 	 */
 	public function test_unusable_private_root_fails_without_artifacts() {

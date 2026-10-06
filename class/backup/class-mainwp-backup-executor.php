@@ -2021,11 +2021,24 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             $allow_empty      = 'tombstones' === $role && isset( $artifact['size'] ) && 0 === $size;
             $already_complete = file_exists( $local ) && (int) filesize( $local ) === $size && ( $size > 0 || $allow_empty );
+            $invalid_archive  = false;
+            if ( $already_complete && in_array( $role, array( 'part', 'db', 'full' ), true ) ) {
+                try {
+                    MainWP_Backup_File_Manager::validate_backup_file( $local, $size );
+                } catch ( MainWP_Exception $e ) {
+                    $already_complete = false;
+                    $invalid_archive  = true;
+                }
+            }
             if ( ! $already_complete && ! MainWP_Backup_File_Manager::acquire_download_lock( $local, $website->id, $pTask->id ) ) {
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $local ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
             $manifest_error = null;
             try {
+                if ( $invalid_archive ) {
+                    // The downloader skips exact-size files, so discard this one while holding its lock.
+                    wp_delete_file( $local );
+                }
                 if ( ! $already_complete ) {
                     try {
                         MainWP_Backup_File_Manager::download_backup_artifact( $website, $remote, $local, $size, $http_user_plain, $http_pass_plain, $allow_empty );

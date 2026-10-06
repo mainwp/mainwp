@@ -4541,6 +4541,56 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Refusals distinguish sources that remain retryable from permanent refusals.
+	 *
+	 * @dataProvider rollback_refusal_states
+	 * @param string $state Refusal trigger.
+	 * @param bool   $retryable Whether the same source can be retried.
+	 */
+	public function test_rollback_handler_refusal_shapes( $state, $retryable ) {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$store      = MainWP_Backup_Restore_Job_Store::instance();
+		$checkpoint = array( 'pre_snapshot_artifacts' => array( array( 'file' => 'backup-pre.tar.gz' ) ) );
+		$status     = 'completed' === $state ? $store::STATUS_COMPLETED : $store::STATUS_FAILED_PERMANENT;
+		$source     = $this->make_job( 'no-source' === $state ? array() : $checkpoint, $status );
+		if ( 'busy' === $state ) {
+			$this->make_job();
+		} elseif ( 'consumed' === $state || 'successor-running' === $state ) {
+			$this->make_job( array( 'rollback_of' => (int) $source->id ), 'consumed' === $state ? $store::STATUS_COMPLETED : $store::STATUS_PENDING );
+		}
+		$nonce                = wp_create_nonce( 'mainwp_restore_rollback' );
+		$_POST['security']    = $nonce;
+		$_REQUEST['security'] = $nonce;
+		$_POST['job_id']      = 'missing' === $state ? '0' : (string) $source->id;
+		try {
+			$response = $this->invoke_ajax_handler( 'mainwp_restore_rollback' );
+		} finally {
+			unset( $_POST['security'], $_REQUEST['security'], $_POST['job_id'] );
+		}
+		$this->assertNotEmpty( $response['error'] );
+		$this->assertArrayNotHasKey( 'job_id', $response );
+		$this->assertArrayHasKey( 'retryable', $response );
+		$this->assertSame( $retryable, $response['retryable'] );
+		$this->assertSame( $status, $store->get_job( (int) $source->id )->status );
+	}
+
+	/**
+	 * A running unrelated restore leaves a source available for a later attempt.
+	 *
+	 * @return array Refusal states.
+	 */
+	public static function rollback_refusal_states() {
+		return array(
+			'busy site'           => array( 'busy', true ),
+			'completed restore'   => array( 'completed', false ),
+			'no safety backup'    => array( 'no-source', false ),
+			'consumed source'     => array( 'consumed', false ),
+			'successor in flight' => array( 'successor-running', false ),
+			'missing restore job' => array( 'missing', false ),
+		);
+	}
+
+	/**
 	 * A rollback job builds an adopt-only plan from the pre-restore
 	 * safety backup.
 	 */

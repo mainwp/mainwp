@@ -607,7 +607,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
         if ( null === $job ) {
-            wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
+            wp_send_json(
+                array(
+                    'error'     => esc_html__( 'Restore job not found.', 'mainwp' ),
+                    'retryable' => false,
+                )
+            );
             return;
         }
 
@@ -618,10 +623,15 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         try {
             $rollback_id = MainWP_Backup_Restore_Orchestrator::instance()->initiate_rollback( $job );
         } catch ( MainWP_Exception $e ) {
+            $job       = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
+            $retryable = null !== $job
+                && in_array( $job->status, array( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED ), true )
+                && MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $job );
             wp_send_json(
                 array(
                     'error'      => $e->getMessage(),
                     'error_code' => $e->get_message_error_code(),
+                    'retryable'  => $retryable,
                 )
             );
             return;

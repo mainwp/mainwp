@@ -294,6 +294,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var showRemovedSnapshots = false;
             var currentSnapshot = 0;
             var currentJob = 0;
+            var rollbackRequestPending = false;
             var pollTimer = null;
             var restorePollRetries = 0;
             var backupPollTimer = null;
@@ -681,7 +682,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-spinner' ).toggle( ! terminal );
                 $( '#mainwp-restore-cancel-btn' ).toggle( ! terminal && ! cancelPending && [ 'pending', 'pre_snapshot', 'staging', 'transferring', 'failed_retryable', 'running' ].indexOf( data.status ) !== -1 );
                 $( '#mainwp-restore-cancel-warning' ).toggle( 'running' === data.status && ! cancelPending );
-                $( '#mainwp-restore-rollback-btn' ).toggle( ( 'failed_permanent' === data.status || 'cancelled' === data.status ) && !! data.has_rollback );
+                $( '#mainwp-restore-rollback-btn' ).toggle( ! rollbackRequestPending && ( 'failed_permanent' === data.status || 'cancelled' === data.status ) && !! data.has_rollback );
 
                 // Surface the safety backup whenever one exists for this run,
                 // so the safety net is visible and not implied (L4).
@@ -951,28 +952,43 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             } );
 
             function startRollback( jobId ) {
+                if ( rollbackRequestPending ) {
+                    return;
+                }
+                rollbackRequestPending = true;
                 currentJob = jobId;
                 setPane( false );
-                $( '#mainwp-restore-rollback-btn' ).hide();
+                $( '#mainwp-restore-rollback-btn' ).prop( 'disabled', true ).hide();
+                $( '.mainwp-restore-failed-job' ).prop( 'disabled', true );
                 $( '#mainwp-restore-result-message' ).hide();
-                // A refused or lost request leaves the job as it was, so stop the
-                // spinner and give the Roll Back button back for a retry.
-                function rollbackRefused( message ) {
+                function rollbackRefused( message, retryable ) {
                     $( '#mainwp-restore-spinner' ).hide();
                     $( '#mainwp-restore-status-text' ).text( '' );
-                    $( '#mainwp-restore-rollback-btn' ).show();
+                    $( '#mainwp-restore-rollback-btn' ).toggle( retryable === true );
                     $( '#mainwp-restore-result-message' ).removeClass( 'green blue' ).addClass( 'red' ).text( message ).show();
+                    if ( retryable !== true ) {
+                        currentJob = 0;
+                    }
+                    loadSnapshots( currentSite );
+                }
+                function rollbackResponseLost() {
+                    <?php // TODO: Owner to rewrite placeholder copy. ?>
+                    rollbackRefused( '<?php echo esc_js( esc_html__( 'Placeholder: rollback response lost. Reloading the list.', 'mainwp' ) ); ?>', false );
                 }
                 $.post( ajaxurl, { action: 'mainwp_restore_rollback', security: nonces.rollback, job_id: jobId }, function ( response ) {
-                    if ( response.error ) {
-                        rollbackRefused( response.error );
+                    if ( response && response.error ) {
+                        rollbackRefused( response.error, response.retryable );
+                        return;
+                    }
+                    if ( ! response || ! response.job_id ) {
+                        rollbackResponseLost();
                         return;
                     }
                     startJobFollow( response.job_id );
                     loadSnapshots( currentSite );
-                }, 'json' ).fail( function () {
-                    <?php // TODO: Owner to rewrite placeholder copy. ?>
-                    rollbackRefused( '<?php echo esc_js( esc_html__( 'The rollback could not be started. Check the connection and try again.', 'mainwp' ) ); ?>' );
+                }, 'json' ).fail( rollbackResponseLost ).always( function () {
+                    rollbackRequestPending = false;
+                    $( '#mainwp-restore-rollback-btn' ).prop( 'disabled', false );
                 } );
             }
 

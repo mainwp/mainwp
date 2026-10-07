@@ -110,6 +110,74 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A title glued to the next paragraph must not swallow the password name.
+	 */
+	public function test_adjacent_title_and_paragraph_keep_password_name(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body(
+			'<html><title>Attention Required</title><p>password=supersecret uniqueId=abc123</p></html>'
+		);
+
+		$this->assertStringContainsString( 'Attention Required', $text );
+		$this->assertStringContainsString( 'password=[redacted]', $text );
+		$this->assertStringContainsString( 'uniqueId=[redacted]', $text );
+		$this->assertStringNotContainsString( 'supersecret', $text );
+		$this->assertStringNotContainsString( 'Requiredpassword', $text );
+	}
+
+	/**
+	 * Table cells must not glue the label onto password=.
+	 */
+	public function test_table_cells_do_not_glue_password(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<td>Login</td><td>password=hunter2</td>' );
+
+		$this->assertStringContainsString( 'password=[redacted]', $text );
+		$this->assertStringNotContainsString( 'hunter2', $text );
+		$this->assertStringNotContainsString( 'Loginpassword', $text );
+	}
+
+	/**
+	 * Div cells must redact a pwd: label instead of gluing it to the previous word.
+	 */
+	public function test_div_cells_redact_pwd_label(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<div>Error</div><div>pwd: hunter2</div>' );
+
+		$this->assertStringContainsString( 'pwd=[redacted]', $text );
+		$this->assertStringNotContainsString( 'hunter2', $text );
+		$this->assertStringNotContainsString( 'Errorpwd', $text );
+	}
+
+	/**
+	 * Names that end in password with no underscore are still secrets.
+	 */
+	public function test_unsuffixed_password_names_are_redacted(): void {
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'adminpassword' ) );
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'dbpassword' ) );
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'dbpasswd' ) );
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'mypwd' ) );
+
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'adminpassword=hunter2 dbpassword=x' );
+
+		$this->assertStringContainsString( 'adminpassword=[redacted]', $text );
+		$this->assertStringContainsString( 'dbpassword=[redacted]', $text );
+		$this->assertStringNotContainsString( 'hunter2', $text );
+		$this->assertStringNotContainsString( 'dbpassword=x', $text );
+	}
+
+	/**
+	 * key and code stay underscore-only so ordinary words remain visible.
+	 */
+	public function test_ordinary_words_ending_in_key_or_code_stay_visible(): void {
+		$this->assertFalse( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'monkey' ) );
+		$this->assertFalse( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'keycode' ) );
+
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'monkey=banana keycode=visible page=sites' );
+
+		$this->assertStringContainsString( 'monkey=banana', $text );
+		$this->assertStringContainsString( 'keycode=visible', $text );
+		$this->assertStringContainsString( 'page=sites', $text );
+	}
+
+	/**
 	 * Failure HTML labels IPs and always shows outbound IP + User-Agent.
 	 */
 	public function test_failure_html_labels_edge_vs_dashboard_ip_and_user_agent(): void {

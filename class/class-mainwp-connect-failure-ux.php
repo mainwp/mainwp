@@ -51,6 +51,8 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * Compared case-insensitively. Names ending in _token, _code, _key, _nonce,
      * _secret, _signature, _password, _passwd, or _pwd are also treated as sensitive.
+     * password, passwd, and pwd match without an underscore (adminpassword).
+     * key, code, token, nonce, and secret still require the underscore.
      *
      * @var array<int,string>
      */
@@ -105,6 +107,21 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         'nonce',
         'secret',
         'signature',
+        'password',
+        'passwd',
+        'pwd',
+    );
+
+    /**
+     * Suffixes that are sensitive even with no leading underscore.
+     *
+     * Password, passwd, and pwd are specific enough for adminpassword and
+     * dbpassword. Key, code, token, nonce, and secret stay underscore-only
+     * so ordinary words such as monkey and keycode stay visible.
+     *
+     * @var array<int,string>
+     */
+    const SENSITIVE_PARAM_BARE_SUFFIXES = array(
         'password',
         'passwd',
         'pwd',
@@ -277,7 +294,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
-        $text = wp_strip_all_tags( $body );
+        // wp_strip_all_tags() deletes tags without whitespace, so
+        // </title><p>password= becomes Requiredpassword and misses the name check.
+        $text = str_replace( '<', ' <', $body );
+        $text = wp_strip_all_tags( $text );
         $text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
         $text = preg_replace( '/\s+/u', ' ', $text );
         $text = self::redact_secrets( trim( (string) $text ) );
@@ -625,6 +645,13 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $needle = '_' . $suffix;
             $len    = strlen( $needle );
             if ( strlen( $name ) > $len && substr( $name, -$len ) === $needle ) {
+                return true;
+            }
+        }
+
+        foreach ( self::SENSITIVE_PARAM_BARE_SUFFIXES as $suffix ) {
+            $len = strlen( $suffix );
+            if ( strlen( $name ) > $len && substr( $name, -$len ) === $suffix ) {
                 return true;
             }
         }

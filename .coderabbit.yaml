@@ -19,6 +19,7 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+    auto_pause_after_reviewed_commits: 1  # pause automatic incremental reviews early; post @coderabbitai review when the branch is ready
     ignore_title_keywords:
       - "WIP"
       - "DO NOT MERGE"

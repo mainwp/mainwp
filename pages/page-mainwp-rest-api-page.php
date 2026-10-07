@@ -1974,7 +1974,6 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @param string $context Either 'modal' or 'notice'. Both can be on the page at once, so it keeps tab names unique.
      */
     protected static function render_ai_client_setup( $context ) {
-        $context = 'modal' === $context ? 'modal' : 'notice';
         $user    = wp_get_current_user();
         $clients = array(
             'claude-code' => 'Claude Code',

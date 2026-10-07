@@ -184,12 +184,17 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	 * WordPress password field names (user_pass, pass1, http_pass) are secrets too.
 	 */
 	public function test_wordpress_pass_field_names_are_redacted(): void {
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '{"user_pass":"hash111","pass1":"p222","http_pass":"h333"} bypass=visible' );
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '{"user_pass":"hash111","pass1":"p222","pass2":"q444","pass":"r555","http_pass":"h333"} bypass=visible' );
 
-		foreach ( array( 'hash111', 'p222', 'h333' ) as $secret ) {
+		foreach ( array( 'hash111', 'p222', 'q444', 'r555', 'h333' ) as $secret ) {
 			$this->assertStringNotContainsString( $secret, $text );
 		}
 		$this->assertStringContainsString( 'bypass=visible', $text );
+
+		// A bare underscore suffix used as the whole name is still a secret.
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '_pass=u666 _token=t777' );
+		$this->assertStringNotContainsString( 'u666', $text );
+		$this->assertStringNotContainsString( 't777', $text );
 	}
 
 	/**
@@ -200,6 +205,13 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 
 		$this->assertNotSame( '', esc_html( $text ) );
 		$this->assertSame( 1, preg_match( '//u', $text ) );
+		$this->assertSame( str_repeat( 'a', 1199 ) . "\u{00E9}...", $text );
+
+		// The limit counts characters: exactly 1200, or 700 two-byte characters, stays whole.
+		$exact = str_repeat( 'b', 1200 );
+		$this->assertSame( $exact, \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $exact ) );
+		$wide = str_repeat( "\u{00E9}", 700 );
+		$this->assertSame( $wide, \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $wide ) );
 	}
 
 	/**

@@ -649,7 +649,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         foreach ( self::SENSITIVE_PARAM_SUFFIXES as $suffix ) {
             $needle = '_' . $suffix;
             $len    = strlen( $needle );
-            if ( strlen( $name ) > $len && substr( $name, -$len ) === $needle ) {
+            if ( strlen( $name ) >= $len && substr( $name, -$len ) === $needle ) {
                 return true;
             }
         }

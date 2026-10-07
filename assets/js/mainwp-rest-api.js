@@ -131,7 +131,22 @@ const init_application_passwords = ($) => {
             this.querySelectorAll("code[data-snippet]").forEach((code) => {
                 code.textContent = snippets[code.getAttribute("data-snippet")] || "";
             });
-            $(this).find(".tabular.menu .item").tab({ context: $(this) });
+            const tabs = $(this).find(".tabular.menu .item");
+            tabs.tab({
+                context: $(this),
+                onVisible: function (tabPath) {
+                    tabs.each(function () {
+                        this.setAttribute("aria-selected", this.getAttribute("data-tab") === tabPath ? "true" : "false");
+                    });
+                },
+            });
+            // Fomantic binds tab activation to click only, and these anchors have no href.
+            tabs.on("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    $(this).trigger("click");
+                }
+            });
         });
     };
 

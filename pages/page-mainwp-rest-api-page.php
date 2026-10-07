@@ -1996,9 +1996,9 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 ?>
                 <?php esc_html_e( 'Requires Node.js 20.19 or later on the computer that runs your AI tool.', 'mainwp' ); ?>
             </p>
-            <div class="ui top attached tabular menu">
+            <div class="ui top attached tabular menu" role="tablist">
                 <?php foreach ( $clients as $client => $label ) : ?>
-                    <a class="item<?php echo 'claude-code' === $client ? ' active' : ''; ?>" data-tab="<?php echo esc_attr( 'mainwp-ai-setup-' . $context . '-' . $client ); ?>"><?php echo esc_html( $label ); ?></a>
+                    <a class="item<?php echo 'claude-code' === $client ? ' active' : ''; ?>" role="tab" tabindex="0" aria-selected="<?php echo 'claude-code' === $client ? 'true' : 'false'; ?>" data-tab="<?php echo esc_attr( 'mainwp-ai-setup-' . $context . '-' . $client ); ?>"><?php echo esc_html( $label ); ?></a>
                 <?php endforeach; ?>
             </div>
             <?php foreach ( $clients as $client => $label ) : ?>

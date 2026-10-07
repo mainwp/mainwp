@@ -215,6 +215,38 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A tag inside a parameter name must not hide the name from redaction.
+	 */
+	public function test_tag_inside_name_is_still_redacted(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>pass<strong>word=s111</strong></p><span>pass</span><span>word</span>=s222 <i>to</i>ken=s333 sig<b>nature</b>: s444 pa<b>ss</b>wo<i>rd</i>=s777' );
+
+		foreach ( array( 's111', 's222', 's333', 's444', 's777' ) as $secret ) {
+			$this->assertStringNotContainsString( $secret, $text );
+		}
+
+		// Words that are not a sensitive name keep their spacing and values.
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<td>Login</td><td>password=s555</td>' );
+		$this->assertStringNotContainsString( 's555', $text );
+		$this->assertStringContainsString( 'Login password=', $text );
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>Site name: Example Blog</p>' );
+		$this->assertSame( 'Site name: Example Blog', $text );
+	}
+
+	/**
+	 * Rejoining split names stays linear on large bodies and still redacts at the end.
+	 */
+	public function test_rejoin_is_fast_on_large_bodies(): void {
+		$words = str_repeat( 'Lorem ipsum dolor sit amet ', 8000 );
+
+		$start = microtime( true );
+		\MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( $words );
+		$this->assertLessThan( 2.0, microtime( true ) - $start );
+
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( $words . 'pass word=s666' );
+		$this->assertStringNotContainsString( 's666', $text );
+	}
+
+	/**
 	 * key and code stay underscore-only so ordinary words remain visible.
 	 */
 	public function test_ordinary_words_ending_in_key_or_code_stay_visible(): void {

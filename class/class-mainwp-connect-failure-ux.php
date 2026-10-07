@@ -777,6 +777,28 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $text = $with_urls;
         }
 
+        // The tag split in summarize_body() turns pass<b></b>word= into "pass word=".
+        // Rejoin up to four words before = or : when their tail forms a sensitive name.
+        // The repeat is bounded and possessive so large bodies stay linear.
+        $rejoined = preg_replace_callback(
+            '/(?<![A-Za-z0-9_\-])((?:[A-Za-z0-9_\-]++\s++){1,3}[A-Za-z0-9_\-]++)\s*+([:=])/',
+            static function ( $found ) {
+                $parts = preg_split( '/\s+/', $found[1] );
+                for ( $start = count( $parts ) - 1; $start >= 0; --$start ) {
+                    $candidate = implode( '', array_slice( $parts, $start ) );
+                    if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $candidate ) ) {
+                        $prefix = implode( ' ', array_slice( $parts, 0, $start ) );
+                        return ( '' !== $prefix ? $prefix . ' ' : '' ) . $candidate . $found[2];
+                    }
+                }
+                return $found[0];
+            },
+            $text
+        );
+        if ( is_string( $rejoined ) ) {
+            $text = $rejoined;
+        }
+
         $quoted = preg_replace_callback(
             '/([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*[:=]\s*([\'"])((?:\\\\.|(?!\3).)*)\3/',
             static function ( $match ) {

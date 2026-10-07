@@ -7,6 +7,7 @@
 
 use MainWP\Dashboard\MainWP_Notification;
 use MainWP\Dashboard\MainWP_Notification_Settings;
+use MainWP\Dashboard\MainWP_Updates_Handler;
 use MainWP\Dashboard\MainWP_Updates_Report_Manager;
 
 /**
@@ -907,6 +908,306 @@ class Test_MainWP_Updates_Report_Manager extends WP_UnitTestCase {
         $this->assertSame( 'auto-updates@example.com', $this->captured_mail[0]['to'] );
         $this->assertSame( 'Enabled subject', $this->captured_mail[0]['subject'] );
         $this->assertStringContainsString( 'summary body', $this->captured_mail[0]['message'] );
+    }
+
+    /**
+     * Caller-shaped core data keeps a successful result when no upgrade key is present.
+     */
+    public function test_save_update_info_core_caller_shape_success() {
+        $website = (object) array(
+            'id' => 15,
+        );
+
+        $result = MainWP_Updates_Report_Manager::save_update_info(
+            $website,
+            array(
+                'old_version' => '6.4.2',
+                'version'     => '6.8.1',
+                'success'     => 1,
+                'error'       => '',
+            ),
+            'core'
+        );
+
+        $this->assertTrue( $result );
+
+        $core = MainWP_Updates_Report_Manager::get(
+            MainWP_Updates_Report_Manager::TYPE_CORE
+        );
+
+        $this->assertCount( 1, $core );
+        $this->assertSame( 1, $core[0]['success'] );
+        $this->assertSame( '6.4.2', $core[0]['old_version'] );
+        $this->assertSame( '6.8.1', $core[0]['version'] );
+        $this->assertSame( 15, $core[0]['site_id'] );
+        $this->assertArrayNotHasKey( 'upgrade', $core[0] );
+    }
+
+    /**
+     * Caller-shaped core data keeps a failed result.
+     */
+    public function test_save_update_info_core_caller_shape_failure() {
+        $website = (object) array(
+            'id' => 16,
+        );
+
+        $result = MainWP_Updates_Report_Manager::save_update_info(
+            $website,
+            array(
+                'old_version' => '6.4.2',
+                'version'     => '6.8.1',
+                'success'     => 0,
+                'error'       => 'Update failed.',
+            ),
+            'core'
+        );
+
+        $this->assertTrue( $result );
+
+        $core = MainWP_Updates_Report_Manager::get(
+            MainWP_Updates_Report_Manager::TYPE_CORE
+        );
+
+        $this->assertCount( 1, $core );
+        $this->assertSame( 0, $core[0]['success'] );
+        $this->assertSame( '6.4.2', $core[0]['old_version'] );
+        $this->assertSame( '6.8.1', $core[0]['version'] );
+    }
+
+    /**
+     * An explicit success flag wins over a conflicting upgrade value.
+     */
+    public function test_save_update_info_core_success_precedes_failed_upgrade() {
+        $website = (object) array(
+            'id' => 17,
+        );
+
+        MainWP_Updates_Report_Manager::save_update_info(
+            $website,
+            array(
+                'old_version' => '6.4.2',
+                'version'     => '6.8.1',
+                'success'     => 1,
+                'upgrade'     => 'FAILED',
+                'error'       => '',
+            ),
+            'core'
+        );
+
+        $core = MainWP_Updates_Report_Manager::get(
+            MainWP_Updates_Report_Manager::TYPE_CORE
+        );
+
+        $this->assertCount( 1, $core );
+        $this->assertSame( 1, $core[0]['success'] );
+        $this->assertSame( 'FAILED', $core[0]['upgrade'] );
+    }
+
+    /**
+     * Without a success flag, the raw child upgrade result is still stored.
+     */
+    public function test_save_update_info_core_missing_success_falls_back_to_upgrade() {
+        $website = (object) array(
+            'id' => 18,
+        );
+
+        MainWP_Updates_Report_Manager::save_update_info(
+            $website,
+            array(
+                'upgrade'     => 'SUCCESS',
+                'old_version' => '6.3.0',
+                'version'     => '6.3.1',
+            ),
+            'core'
+        );
+
+        $core = MainWP_Updates_Report_Manager::get(
+            MainWP_Updates_Report_Manager::TYPE_CORE
+        );
+
+        $this->assertCount( 1, $core );
+        $this->assertSame( 1, $core[0]['success'] );
+        $this->assertSame( 'SUCCESS', $core[0]['upgrade'] );
+        $this->assertSame( '6.3.1', $core[0]['version'] );
+    }
+
+    /**
+     * A successful core auto-update is included in the Auto Updates email.
+     */
+    public function test_send_auto_update_info_includes_core_caller_shape() {
+        $site_id = $this->create_notice_site( 'Core Email Site', 'https://core-email.example/' );
+        $website = (object) array(
+            'id' => $site_id,
+        );
+
+        $saved = MainWP_Updates_Report_Manager::save_update_info(
+            $website,
+            array(
+                'old_version' => '6.4.3',
+                'version'     => '6.8.4',
+                'success'     => 1,
+                'error'       => '',
+            ),
+            'core'
+        );
+        $this->assertTrue( $saved );
+
+        $this->save_email_settings(
+            array(
+                'disable'    => 0,
+                'recipients' => 'auto-updates@example.com',
+                'subject'    => 'Core auto update',
+                'heading'    => 'Core auto update heading',
+            )
+        );
+
+        MainWP_Updates_Report_Manager::send_auto_update_info();
+
+        $this->assertCount( 1, $this->captured_mail );
+        $message = $this->captured_mail[0]['message'];
+        $this->assertStringContainsString( 'WordPress Core', $message );
+        $this->assertStringContainsString( '6.4.3', $message );
+        $this->assertStringContainsString( '6.8.4', $message );
+    }
+
+    /**
+     * A core-only email renders the core table and does not read missing update types.
+     *
+     * Stored with save() so the template still runs when save_update_info() would
+     * record the core item as failed.
+     */
+    public function test_core_only_auto_update_email_renders_without_warnings() {
+        $site_id = $this->create_notice_site( 'Core Only Site', 'https://core-only.example/' );
+
+        MainWP_Updates_Report_Manager::save(
+            MainWP_Updates_Report_Manager::TYPE_CORE,
+            array(
+                'old_version' => '6.5.1',
+                'version'     => '6.8.5',
+                'success'     => 1,
+                'error'       => '',
+                'site_id'     => $site_id,
+            )
+        );
+
+        $this->save_email_settings(
+            array(
+                'disable'    => 0,
+                'recipients' => 'auto-updates@example.com',
+                'subject'    => 'Core only',
+                'heading'    => 'Core only heading',
+            )
+        );
+
+        set_error_handler(
+            static function ( $errno, $errstr ) {
+                if ( 0 === ( error_reporting() & $errno ) ) {
+                    return false;
+                }
+                throw new \ErrorException( $errstr, 0, $errno );
+            },
+            E_WARNING | E_NOTICE | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED | E_USER_DEPRECATED
+        );
+
+        try {
+            MainWP_Updates_Report_Manager::send_auto_update_info();
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount( 1, $this->captured_mail );
+        $message = $this->captured_mail[0]['message'];
+        $this->assertStringContainsString( 'WordPress Core', $message );
+        $this->assertStringContainsString( '6.5.1', $message );
+        $this->assertStringContainsString( '6.8.5', $message );
+        $this->assertStringNotContainsString( 'Plugin Updates', $message );
+        $this->assertStringNotContainsString( 'Theme Updates', $message );
+        $this->assertStringNotContainsString( 'Translation Updates', $message );
+    }
+
+    /**
+     * Core and plugin updates for one site both render in the email.
+     */
+    public function test_mixed_core_and_plugin_auto_update_email_renders_both_tables() {
+        $site_id = $this->create_notice_site( 'Mixed Site', 'https://mixed.example/' );
+        $website = (object) array(
+            'id' => $site_id,
+        );
+
+        MainWP_Updates_Report_Manager::save_update_info(
+            $website,
+            array(
+                'old_version' => '6.6.0',
+                'version'     => '6.8.6',
+                'success'     => 1,
+                'error'       => '',
+            ),
+            'core'
+        );
+        MainWP_Updates_Report_Manager::save_update_info(
+            $website,
+            array(
+                'updated_data' => array(
+                    array(
+                        'name'        => 'Hello Dolly',
+                        'old_version' => '1.7.2',
+                        'version'     => '1.7.3',
+                        'success'     => 1,
+                    ),
+                ),
+            ),
+            'plugin'
+        );
+
+        $this->save_email_settings(
+            array(
+                'disable'    => 0,
+                'recipients' => 'auto-updates@example.com',
+                'subject'    => 'Mixed updates',
+                'heading'    => 'Mixed updates heading',
+            )
+        );
+
+        MainWP_Updates_Report_Manager::send_auto_update_info();
+
+        $this->assertCount( 1, $this->captured_mail );
+        $message = $this->captured_mail[0]['message'];
+        $this->assertStringContainsString( 'WordPress Core', $message );
+        $this->assertStringContainsString( '6.6.0', $message );
+        $this->assertStringContainsString( '6.8.6', $message );
+        $this->assertStringContainsString( 'Plugin Updates', $message );
+        $this->assertStringContainsString( 'Hello Dolly', $message );
+        $this->assertStringContainsString( '1.7.2', $message );
+        $this->assertStringContainsString( '1.7.3', $message );
+    }
+
+    /**
+     * The production auto-update logger stores one successful core item.
+     */
+    public function test_activity_log_upgrade_records_successful_core_auto_update() {
+        $website = (object) array(
+            'id' => 42,
+        );
+
+        MainWP_Updates_Handler::activity_log_upgrade(
+            $website,
+            array(
+                'upgrade'     => 'SUCCESS',
+                'old_version' => '6.7.1',
+                'version'     => '6.8.2',
+            ),
+            true
+        );
+
+        $core = MainWP_Updates_Report_Manager::get(
+            MainWP_Updates_Report_Manager::TYPE_CORE
+        );
+
+        $this->assertCount( 1, $core );
+        $this->assertSame( 1, $core[0]['success'] );
+        $this->assertSame( '6.7.1', $core[0]['old_version'] );
+        $this->assertSame( '6.8.2', $core[0]['version'] );
+        $this->assertSame( 42, $core[0]['site_id'] );
     }
 
     /**

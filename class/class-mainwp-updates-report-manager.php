@@ -121,9 +121,21 @@ class MainWP_Updates_Report_Manager {
                 return false;
             }
         } elseif ( self::TYPE_CORE === $type ) {
-            $item            = MainWP_Utility::instance()->sanitize_data( $data );
-            $item['success'] = isset( $item['upgrade'] ) && 'SUCCESS' === $item['upgrade'] ? 1 : 0;
-            $save_items[]    = $item;
+            $item = MainWP_Utility::instance()->sanitize_data( $data );
+            // Keep a success flag the caller already computed. The raw child upgrade
+            // value is only a fallback for callers that still pass that shape.
+            if ( isset( $item['success'] ) ) {
+                if ( ! empty( $item['success'] ) ) {
+                    $item['success'] = 1;
+                } else {
+                    $item['success'] = 0;
+                }
+            } elseif ( isset( $item['upgrade'] ) && 'SUCCESS' === $item['upgrade'] ) {
+                $item['success'] = 1;
+            } else {
+                $item['success'] = 0;
+            }
+            $save_items[] = $item;
 
         } else {
             return false;

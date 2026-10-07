@@ -24,6 +24,7 @@ class Test_MWP_1789_Unique_Security_ID_Copy extends \WP_UnitTestCase {
 		$text = wp_specialchars_decode( $html, ENT_QUOTES );
 
 		$this->assertStringContainsString( 'ui blue message', $html );
+		$this->assertStringContainsString( 'Settings &gt; MainWP Child', $html, 'The note must stay HTML-escaped on output.' );
 		$this->assertStringContainsString( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. Generate or create a new Unique Security ID on the child site under Settings > MainWP Child: enable Require Unique Security ID and click Save Settings.', $text );
 	}
 
@@ -36,6 +37,7 @@ class Test_MWP_1789_Unique_Security_ID_Copy extends \WP_UnitTestCase {
 		$html = ob_get_clean();
 		$text = wp_specialchars_decode( $html, ENT_QUOTES );
 
+		$this->assertStringContainsString( '(Settings &gt; MainWP Child)', $html, 'The import instructions must stay HTML-escaped on output.' );
 		$this->assertStringContainsString( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. If Require Unique Security ID is enabled on the child site (Settings > MainWP Child), enter the Unique Security ID. Generate or create a new ID there by enabling Require Unique Security ID and clicking Save Settings.', $text );
 	}
 }

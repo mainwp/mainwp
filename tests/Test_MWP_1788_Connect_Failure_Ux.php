@@ -147,6 +147,23 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Opening and inline tags must not glue text onto a name that only matches exactly.
+	 */
+	public function test_opening_and_inline_tags_do_not_glue_exact_names(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body(
+			'Login<br>signature=sig111 <b>Note</b>nonce=non222 <span>x</span>token=tok333 Error<!-- c -->uniqueId=uid444'
+		);
+
+		$this->assertStringContainsString( 'signature=[redacted]', $text );
+		$this->assertStringContainsString( 'nonce=[redacted]', $text );
+		$this->assertStringContainsString( 'token=[redacted]', $text );
+		$this->assertStringContainsString( 'uniqueId=[redacted]', $text );
+		foreach ( array( 'sig111', 'non222', 'tok333', 'uid444' ) as $secret ) {
+			$this->assertStringNotContainsString( $secret, $text );
+		}
+	}
+
+	/**
 	 * Names that end in password with no underscore are still secrets.
 	 */
 	public function test_unsuffixed_password_names_are_redacted(): void {
@@ -161,6 +178,28 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'dbpassword=[redacted]', $text );
 		$this->assertStringNotContainsString( 'hunter2', $text );
 		$this->assertStringNotContainsString( 'dbpassword=x', $text );
+	}
+
+	/**
+	 * WordPress password field names (user_pass, pass1, http_pass) are secrets too.
+	 */
+	public function test_wordpress_pass_field_names_are_redacted(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '{"user_pass":"hash111","pass1":"p222","http_pass":"h333"} bypass=visible' );
+
+		foreach ( array( 'hash111', 'p222', 'h333' ) as $secret ) {
+			$this->assertStringNotContainsString( $secret, $text );
+		}
+		$this->assertStringContainsString( 'bypass=visible', $text );
+	}
+
+	/**
+	 * Truncation cuts on a character boundary so the escaped response is not blanked.
+	 */
+	public function test_truncation_keeps_valid_utf8(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( str_repeat( 'a', 1199 ) . "\u{00E9}tail" );
+
+		$this->assertNotSame( '', esc_html( $text ) );
+		$this->assertSame( 1, preg_match( '//u', $text ) );
 	}
 
 	/**

@@ -50,7 +50,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Query/body parameter names whose values must not appear in failure diagnostics.
      *
      * Compared case-insensitively. Names ending in _token, _code, _key, _nonce,
-     * _secret, _signature, _password, _passwd, or _pwd are also treated as sensitive.
+     * _secret, _signature, _password, _passwd, _pwd, or _pass are also treated as sensitive.
      * password, passwd, and pwd match without an underscore (adminpassword).
      * key, code, token, nonce, and secret still require the underscore.
      *
@@ -60,6 +60,9 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         'password',
         'passwd',
         'pwd',
+        'pass',
+        'pass1',
+        'pass2',
         'adminpwd',
         'uniqueid',
         'unique_id',
@@ -110,6 +113,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         'password',
         'passwd',
         'pwd',
+        'pass',
     );
 
     /**
@@ -302,8 +306,9 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $text = preg_replace( '/\s+/u', ' ', $text );
         $text = self::redact_secrets( trim( (string) $text ) );
 
-        if ( strlen( $text ) > self::BODY_LIMIT ) {
-            $text = substr( $text, 0, self::BODY_LIMIT ) . '...';
+        if ( mb_strlen( $text, 'UTF-8' ) > self::BODY_LIMIT ) {
+            // Cut on a character boundary: a split UTF-8 sequence makes esc_html() return ''.
+            $text = mb_substr( $text, 0, self::BODY_LIMIT, 'UTF-8' ) . '...';
         }
 
         return $text;

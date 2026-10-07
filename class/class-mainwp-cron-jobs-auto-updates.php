@@ -391,11 +391,9 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                         continue;
                     }
 
-                    if ( is_array( $pluginInfo ) && empy( $pluginInfo['slug'] ) ) {
-                        $pluginInfo['slug'] = $pluginSlug; // to fix: add more required plugin info.
-                    }
+                    $ref_count = 0;
 
-                    if ( MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $decodedIgnoredPlugins, 'plugin' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $websiteDecodedIgnoredPlugins, 'plugin' ) ) {
+                    if ( MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $decodedIgnoredPlugins, 'plugin', $ref_count, $pluginSlug ) || MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $websiteDecodedIgnoredPlugins, 'plugin', $ref_count, $pluginSlug ) ) {
                         continue;
                     }
 

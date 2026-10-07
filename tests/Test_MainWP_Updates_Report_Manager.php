@@ -1004,6 +1004,35 @@ class Test_MainWP_Updates_Report_Manager extends WP_UnitTestCase {
     }
 
     /**
+     * An explicit failure wins over a successful raw upgrade value.
+     */
+    public function test_save_update_info_core_failure_precedes_successful_upgrade() {
+        $website = (object) array(
+            'id' => 19,
+        );
+
+        MainWP_Updates_Report_Manager::save_update_info(
+            $website,
+            array(
+                'old_version' => '6.4.2',
+                'version'     => '6.8.1',
+                'success'     => 0,
+                'upgrade'     => 'SUCCESS',
+                'error'       => 'Update failed.',
+            ),
+            'core'
+        );
+
+        $core = MainWP_Updates_Report_Manager::get(
+            MainWP_Updates_Report_Manager::TYPE_CORE
+        );
+
+        $this->assertCount( 1, $core );
+        $this->assertSame( 0, $core[0]['success'] );
+        $this->assertSame( 'SUCCESS', $core[0]['upgrade'] );
+    }
+
+    /**
      * Without a success flag, the raw child upgrade result is still stored.
      */
     public function test_save_update_info_core_missing_success_falls_back_to_upgrade() {
@@ -1120,6 +1149,66 @@ class Test_MainWP_Updates_Report_Manager extends WP_UnitTestCase {
         $this->assertStringContainsString( 'WordPress Core', $message );
         $this->assertStringContainsString( '6.5.1', $message );
         $this->assertStringContainsString( '6.8.5', $message );
+        $this->assertStringNotContainsString( 'Plugin Updates', $message );
+        $this->assertStringNotContainsString( 'Theme Updates', $message );
+        $this->assertStringNotContainsString( 'Translation Updates', $message );
+    }
+
+    /**
+     * A raw core result with no version keys still renders the core table.
+     */
+    public function test_core_email_renders_raw_shape_without_version_keys() {
+        $site_id = $this->create_notice_site( 'Raw Core Site', 'https://raw-core.example/' );
+        $website = (object) array(
+            'id' => $site_id,
+        );
+
+        $saved = MainWP_Updates_Report_Manager::save_update_info(
+            $website,
+            array(
+                'upgrade' => 'SUCCESS',
+            ),
+            'core'
+        );
+        $this->assertTrue( $saved );
+
+        $core = MainWP_Updates_Report_Manager::get(
+            MainWP_Updates_Report_Manager::TYPE_CORE
+        );
+        $this->assertCount( 1, $core );
+        $this->assertSame( 1, $core[0]['success'] );
+        $this->assertArrayNotHasKey( 'old_version', $core[0] );
+        $this->assertArrayNotHasKey( 'version', $core[0] );
+
+        $this->save_email_settings(
+            array(
+                'disable'    => 0,
+                'recipients' => 'auto-updates@example.com',
+                'subject'    => 'Raw core',
+                'heading'    => 'Raw core heading',
+            )
+        );
+
+        set_error_handler(
+            static function ( $errno, $errstr ) {
+                if ( 0 === ( error_reporting() & $errno ) ) {
+                    return false;
+                }
+                throw new \ErrorException( $errstr, 0, $errno );
+            },
+            E_WARNING | E_NOTICE | E_USER_WARNING | E_USER_NOTICE | E_DEPRECATED | E_USER_DEPRECATED
+        );
+
+        try {
+            MainWP_Updates_Report_Manager::send_auto_update_info();
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount( 1, $this->captured_mail );
+        $message = $this->captured_mail[0]['message'];
+        $this->assertStringContainsString( 'WordPress Core', $message );
+        $this->assertStringContainsString( 'Success', $message );
         $this->assertStringNotContainsString( 'Plugin Updates', $message );
         $this->assertStringNotContainsString( 'Theme Updates', $message );
         $this->assertStringNotContainsString( 'Translation Updates', $message );

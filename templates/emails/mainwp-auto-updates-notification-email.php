@@ -87,8 +87,8 @@ $auto_updated_items = isset( $auto_updated_items ) && is_array( $auto_updated_it
                                                         }
                                                         ?>
                                                     <tr>
-                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo esc_html( $item['old_version'] ); ?></td>
-                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><a href="#" style="color:#7fb100;"><?php echo esc_html( $item['version'] ); ?></a></td>
+                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo esc_html( isset( $item['old_version'] ) ? $item['old_version'] : '' ); ?></td>
+                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><a href="#" style="color:#7fb100;"><?php echo esc_html( isset( $item['version'] ) ? $item['version'] : '' ); ?></a></td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo $item['success'] ? '<span style="background:#7fb100;padding:3px 7px;color:#fff;">Success</span>' : '<span style="background:#444;padding:3px 7px;color:#fff;">Failed</span>'; ?></td>
                                                     </tr>
                                                 <?php endforeach; ?>

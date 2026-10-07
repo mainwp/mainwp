@@ -3787,6 +3787,87 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A site whose wp-content sits outside the WordPress core folder refuses
+	 * the full safety backup; that refusal is final, and a database-only
+	 * restore tells the user how to run without the safety backup.
+	 *
+	 * @dataProvider unsupported_layout_safety_backup_cases
+	 *
+	 * @param string $sub_type     Restore sub-type.
+	 * @param string $message_part Expected fragment of the stored error.
+	 */
+	public function test_pre_snapshot_refused_for_unsupported_layout_is_permanent( $sub_type, $message_part ) {
+		$this->responses['backup_preflight']   = array(
+			'disk_free'       => 10 * GB_IN_BYTES,
+			'dir_writable'    => true,
+			'db_connected'    => true,
+			'zip_support'     => true,
+			'gz_support'      => true,
+			'backup_dir_hash' => 'abc123def456gh78',
+			'task_spine'      => 1,
+		);
+		$this->responses['backup_task_create'] = array(
+			'error'      => 'MainWP backups cannot run on this site yet.',
+			'error_code' => MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT,
+		);
+		$job                                   = $this->make_job(
+			array(
+				'sub_type' => $sub_type,
+				'options'  => array(
+					'pre_snapshot'  => true,
+					'file_rollback' => false,
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PREFLIGHT
+		);
+		$job                                   = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertStringContainsString( $message_part, $job->last_error );
+	}
+
+	/**
+	 * A layout refusal thrown anywhere in a slice is final; other coded throws still retry.
+	 *
+	 * @dataProvider thrown_code_retry_cases
+	 *
+	 * @param string $code   Error code carried by the thrown exception.
+	 * @param string $status Expected job status.
+	 */
+	public function test_loop_catch_treats_unsupported_layout_as_permanent( $code, $status ) {
+		$this->responses['backup_task_run'] = array( new MainWP_Exception( 'Refused.', null, $code ) );
+		$job                                = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'task-7-pre' ) );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+
+		$this->assertSame( $status, $job->status );
+	}
+
+	/**
+	 * Thrown codes and the status each must leave.
+	 *
+	 * @return array[]
+	 */
+	public function thrown_code_retry_cases() {
+		return array(
+			'unsupported layout' => array( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT ),
+			'transient'          => array( MainWP_Backup_Error_Codes::ERR_TIMEOUT, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE ),
+		);
+	}
+
+	/**
+	 * Restore sub-types and the message fragment each must store.
+	 *
+	 * @return array[]
+	 */
+	public function unsupported_layout_safety_backup_cases() {
+		return array(
+			'database only' => array( 'db', 'safety backup turned off' ),
+			'files'         => array( 'files', 'backups your host provides' ),
+		);
+	}
+
+	/**
 	 * Stored safety-backup errors reach the restore modal and must not expose its secret directory.
 	 */
 	public function test_pre_snapshot_failure_redacts_backup_directory_in_last_error() {

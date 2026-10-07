@@ -81,6 +81,8 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		'mainwp_backup_dl_file_not_found',
 		'mainwp_backup_dl_file_changed',
 		'mainwp_backup_dl_token_invalid',
+		'mainwp_backup_unsupported_layout',
+		'mainwp_restore_target_not_writable',
 	);
 
 	/**

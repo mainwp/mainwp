@@ -585,7 +585,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
         } catch ( \Throwable $e ) {
             $code = ( $e instanceof MainWP_Exception ) ? $e->get_message_error_code() : '';
-            $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), true, $code );
+            // The site layout does not change between retries.
+            $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT !== $code, $code );
         } finally {
             remove_filter( 'mainwp_fetch_url_site_timeout', $cap_timeout );
             $store->release_lock( $job_id, $token );
@@ -709,6 +710,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * run child-side as the restore task starts.
      *
      * @param object $job Job row.
+     *
+     * @throws MainWP_Exception When the safety backup cannot start for a reason other than the site layout.
      */
     private function phase_preflight( object $job ): void {
         $store = MainWP_Backup_Restore_Job_Store::instance();
@@ -725,7 +728,21 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( ! empty( $job->checkpoint['options']['pre_snapshot'] ) ) {
-            $task_id = MainWP_Backup_Executor::trigger_backup( (int) $job->site_id, 'full', (string) $job->id );
+            try {
+                $task_id = MainWP_Backup_Executor::trigger_backup( (int) $job->site_id, 'full', (string) $job->id );
+            } catch ( MainWP_Exception $e ) {
+                if ( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT !== $e->get_message_error_code() ) {
+                    throw $e;
+                }
+                // The safety backup is always a full backup, which the child refuses
+                // on this layout. A database-only restore still works without it.
+                // No apostrophes: the restore modal prints last_error as stored.
+                $message = 'db' === ( $job->checkpoint['sub_type'] ?? '' )
+                    ? esc_html__( 'The safety backup cannot run on this site because this site stores its wp-content folder outside the WordPress core folder. The restore was not started and nothing on the site was changed. To restore only the database, start the restore again with the safety backup turned off.', 'mainwp' )
+                    : MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT );
+                $this->record_failure( $job, $message, false, MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT );
+                return;
+            }
             $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $task_id ), $this->lock_token );
             return;
         }

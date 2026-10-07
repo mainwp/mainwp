@@ -39,6 +39,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_DIR_NOT_WRITABLE         = 'mainwp_backup_dir_not_writable';
     const ERR_PRIVATE_ROOT_UNAVAILABLE = 'mainwp_backup_private_root_unavailable';
     const ERR_MISSING_EXTENSION        = 'mainwp_backup_missing_extension';
+    const ERR_UNSUPPORTED_LAYOUT       = 'mainwp_backup_unsupported_layout';
 
     // Database.
     const ERR_DB_CONNECTION_LOST = 'mainwp_backup_db_connection_lost';
@@ -85,6 +86,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_RESTORE_DISK_FULL       = 'mainwp_restore_disk_full';
     const ERR_RESTORE_DECRYPT_CORRUPT = 'mainwp_restore_decrypt_corrupt';
     const ERR_RESTORE_DECRYPT_KEY     = 'mainwp_restore_decrypt_key';
+
+    // Restore apply.
+    const ERR_RESTORE_TARGET_NOT_WRITABLE = 'mainwp_restore_target_not_writable';
 
     // WooCommerce preserve-orders gate. The same codes the child's
     // apply-phase gate emits, so an initiate-time refusal and a late
@@ -240,6 +244,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_DIR_NOT_WRITABLE              => esc_html__( 'The backup directory is not writable. Set the directory permissions to allow the web server to write, or contact your hosting provider.', 'mainwp' ),
             self::ERR_PRIVATE_ROOT_UNAVAILABLE      => esc_html__( 'Private backup storage could not be set up. The Dashboard needs a writable directory outside the web root for backup archives. Set MAINWP_BACKUP_PRIVATE_DIR in wp-config.php to such a directory and try again.', 'mainwp' ),
             self::ERR_MISSING_EXTENSION             => esc_html__( 'A required PHP extension is not available. Ask your host to enable the missing extension, such as cURL, OpenSSL, or ZipArchive.', 'mainwp' ),
+            self::ERR_UNSUPPORTED_LAYOUT            => esc_html__( 'MainWP backups cannot run on this site yet. Its wp-content folder is stored outside the WordPress core folder. Some managed hosts, such as Pressable and WordPress.com, and Bedrock installs use this layout. No backup or restore was started and nothing on the site was changed. Use the backups your host provides for this site for now.', 'mainwp' ),
             self::ERR_DB_CONNECTION_LOST            => esc_html__( 'The database connection was lost during the backup. The database server may be overloaded. Try running the backup again during low-traffic hours.', 'mainwp' ),
             self::ERR_DB_QUERY_FAILED               => esc_html__( 'Database backup did not complete. The child site may have run out of memory or the database connection was interrupted. Check the child site PHP memory limit and error log.', 'mainwp' ),
             self::ERR_DB_DUMP_EMPTY                 => esc_html__( 'Backup response from the child site did not include the expected files. The child site may need a PHP or MainWP Child plugin update. Verify the child site is running the latest MainWP Child version.', 'mainwp' ),
@@ -265,6 +270,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_RESTORE_DISK_FULL             => esc_html__( 'There is not enough free disk space on the dashboard to stage this backup file. Free up disk space on the dashboard server and try the restore again.', 'mainwp' ),
             self::ERR_RESTORE_DECRYPT_CORRUPT       => esc_html__( 'The backup file is truncated and could not be decrypted. This is not a key problem; the stored file itself is incomplete or corrupted. Run a fresh backup for this site, then restore again.', 'mainwp' ),
             self::ERR_RESTORE_DECRYPT_KEY           => esc_html__( 'The backup file could not be decrypted. The encryption key may be wrong, or the file is corrupted. Check the encryption key in Settings and try again.', 'mainwp' ),
+            self::ERR_RESTORE_TARGET_NOT_WRITABLE   => esc_html__( 'The restore stopped because a folder on the site is not writable. Files restored before that point may already have been replaced. Ask your host to give the web server write access to the site files, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_WOO_LEGACY_ORDERS     => esc_html__( 'Keeping live orders needs both this store and the backup to use the WooCommerce High-Performance Order Storage tables, and one of them still uses the older post-based order storage. Run the restore again without the keep-orders option, or move the store to High-Performance Order Storage and use a backup taken afterwards.', 'mainwp' ),
             self::ERR_RESTORE_WOO_SYNC_MODE         => esc_html__( 'Keeping live orders needs the WooCommerce High-Performance Order Storage tables to be the only source of orders, and this store still synchronizes orders to the older posts table. Turn off the WooCommerce orders-table synchronization setting, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_WOO_VERSION_SKEW      => esc_html__( 'Keeping live orders needs the store to run the same WooCommerce version as the backup, and the WooCommerce version changed since this backup was taken. Run the restore again without the keep-orders option, or use a backup from the current WooCommerce version.', 'mainwp' ),

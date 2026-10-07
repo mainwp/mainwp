@@ -21,12 +21,10 @@ class Test_MWP_1789_Unique_Security_ID_Copy extends \WP_UnitTestCase {
 		ob_start();
 		\MainWP\Dashboard\MainWP_Manage_Sites::render_connection_unique_security_id_note();
 		$html = ob_get_clean();
+		$text = wp_specialchars_decode( $html, ENT_QUOTES );
 
 		$this->assertStringContainsString( 'ui blue message', $html );
-		$this->assertStringContainsString( 'Administrator password only, Unique Security ID only, or both are valid', $html );
-		$this->assertStringContainsString( 'Settings > MainWP Child', $html );
-		$this->assertStringContainsString( 'Require Unique Security ID', $html );
-		$this->assertStringContainsString( 'Save Settings', $html );
+		$this->assertStringContainsString( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. Generate or create a new Unique Security ID on the child site under Settings > MainWP Child: enable Require Unique Security ID and click Save Settings.', $text );
 	}
 
 	/**
@@ -36,9 +34,8 @@ class Test_MWP_1789_Unique_Security_ID_Copy extends \WP_UnitTestCase {
 		ob_start();
 		\MainWP\Dashboard\MainWP_Manage_Sites::mainwp_managesites_information_import_sites();
 		$html = ob_get_clean();
+		$text = wp_specialchars_decode( $html, ENT_QUOTES );
 
-		$this->assertStringContainsString( 'Administrator password only, Unique Security ID only, or both are valid', $html );
-		$this->assertStringContainsString( 'Settings > MainWP Child', $html );
-		$this->assertStringContainsString( 'Require Unique Security ID', $html );
+		$this->assertStringContainsString( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. If Require Unique Security ID is enabled on the child site (Settings > MainWP Child), enter the Unique Security ID. Generate or create a new ID there by enabling Require Unique Security ID and clicking Save Settings.', $text );
 	}
 }

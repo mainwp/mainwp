@@ -176,7 +176,7 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
         );
 
         // Delete primary monitor.
-        MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' =>  $site_id ) );
+        MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $site_id );
 
         $primary_monitor = $this->get_primary_monitor( $site_id );
 
@@ -228,9 +228,7 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
         );
 
         // Delete primary monitor.
-        MainWP_DB_Uptime_Monitoring::instance()->delete_monitor(
-            array( 'wpid' => $site_id )
-        );
+        MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $site_id );
 
         $primary_monitor = $this->get_primary_monitor( $site_id );
 
@@ -269,7 +267,7 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
         );
 
          // Delete primary monitor.
-        MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' =>  $site_id ) );
+        MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $site_id );
 
         // Run recovery twice.
         $this->repair_missing_monitor(
@@ -306,7 +304,7 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
         );
 
         // Delete primaryy monitor.
-        MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' =>  $site_id ) );
+        MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $site_id );
 
         // Repair the missing primary monitor.
         $this->repair_missing_monitor(

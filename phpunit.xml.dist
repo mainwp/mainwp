@@ -17,6 +17,7 @@
         <testsuite name="MainWP Dashboard Test Suite">
             <directory suffix=".php">tests</directory>
             <exclude>tests/abilities</exclude>
+            <exclude>tests/test-case.php</exclude>
         </testsuite>
         <testsuite name="Abilities">
             <directory suffix=".php">tests/abilities</directory>

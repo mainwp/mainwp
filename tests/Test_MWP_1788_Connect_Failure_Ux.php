@@ -233,6 +233,35 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A tag between every character of a sensitive name, or a quoted split name, is still redacted.
+	 */
+	public function test_name_split_into_many_fragments_is_still_redacted(): void {
+		$bodies = array(
+			's888' => '<p>pa<b>s</b>s<b>w</b>ord=s888</p>',
+			's999' => '{"pa<b>ss</b>word": "s999"}',
+			's000' => "'to<b>k</b>en'='s000'",
+			's123' => '{"pa<b>ss</b>wo<b>rd</b>": "s123"}',
+			's456' => '{"pa<b>ss</b>word" : "s456"}',
+		);
+		foreach ( $bodies as $secret => $body ) {
+			$this->assertStringNotContainsString( $secret, \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body ) );
+		}
+
+		$names = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::SENSITIVE_PARAM_NAMES;
+		foreach ( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::SENSITIVE_PARAM_SUFFIXES as $suffix ) {
+			$names[] = 'x_' . $suffix;
+		}
+		foreach ( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::SENSITIVE_PARAM_BARE_SUFFIXES as $suffix ) {
+			$names[] = 'db' . $suffix;
+		}
+		foreach ( $names as $name ) {
+			$split = implode( '<span></span>', str_split( $name ) );
+			$text  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>Login ' . $split . '=q7q7</p>' );
+			$this->assertStringNotContainsString( 'q7q7', $text, $name );
+		}
+	}
+
+	/**
 	 * Rejoining split names stays linear on large bodies and still redacts at the end.
 	 */
 	public function test_rejoin_is_fast_on_large_bodies(): void {
@@ -244,6 +273,10 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( $words . 'pass word=s666' );
 		$this->assertStringNotContainsString( 's666', $text );
+
+		$start = microtime( true );
+		\MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( str_repeat( 'a b c d e f g h i j k l m n o ": ', 3000 ) );
+		$this->assertLessThan( 2.0, microtime( true ) - $start );
 	}
 
 	/**

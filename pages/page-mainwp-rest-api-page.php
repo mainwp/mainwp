@@ -1984,12 +1984,13 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         ?>
         <div class="mainwp-ai-client-setup" data-setup-context="<?php echo esc_attr( $context ); ?>"
             data-dashboard-url="<?php echo esc_attr( untrailingslashit( home_url() ) ); ?>"
-            data-username="<?php echo esc_attr( $user->user_login ); ?>">
+            data-username="<?php echo esc_attr( $user->user_login ); ?>"
+            data-vscode-password-prompt="<?php esc_attr_e( 'MainWP Application Password', 'mainwp' ); ?>">
             <h4 class="ui dividing header"><?php esc_html_e( 'Connect an AI tool', 'mainwp' ); ?></h4>
             <p>
                 <?php
                 if ( 'modal' === $context ) {
-                    esc_html_e( 'Add the MainWP MCP server to your AI tool while this password is still on screen. Your Dashboard URL, username, and the new password are already filled in.', 'mainwp' );
+                    esc_html_e( 'Add the MainWP MCP server to your AI tool while this password is still on screen. Your Dashboard URL and username are already filled in, and so is the new password for Claude Code and Cursor.', 'mainwp' );
                 } else {
                     esc_html_e( 'After you create an Application Password, this setup is shown again with the password filled in.', 'mainwp' );
                 }
@@ -2006,13 +2007,13 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     <p>
                         <?php
                         if ( 'claude-code' === $client ) {
-                            esc_html_e( 'Run this command in a terminal.', 'mainwp' );
+                            esc_html_e( 'Run this command in a terminal. Claude Code saves the password in its own settings file, and the command stays in your shell history.', 'mainwp' );
                         } elseif ( 'cursor' === $client ) {
                             /* translators: %s: Cursor's global MCP configuration file path. */
-                            printf( esc_html__( 'Add this to %s, then restart Cursor. A project\'s .cursor/mcp.json can end up in Git with the password in it.', 'mainwp' ), '<code>~/.cursor/mcp.json</code>' );
+                            printf( esc_html__( 'Add this to %s, then restart Cursor. Use this global file rather than a project\'s .cursor/mcp.json, which can end up in Git with the password in it.', 'mainwp' ), '<code>~/.cursor/mcp.json</code>' );
                         } else {
                             /* translators: %s: VS Code's project MCP configuration file path. */
-                            printf( esc_html__( 'Add this to %s in your project. VS Code asks for the Application Password when the server first starts, so the password is not saved in the file.', 'mainwp' ), '<code>.vscode/mcp.json</code>' );
+                            printf( esc_html__( 'Add this to %s in your project. VS Code asks for the Application Password the first time the server starts and does not save it in the file, so keep a copy of the password.', 'mainwp' ), '<code>.vscode/mcp.json</code>' );
                         }
                         ?>
                     </p>

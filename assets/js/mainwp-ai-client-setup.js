@@ -29,6 +29,8 @@
         const dashboardUrl = String( args.dashboardUrl || '' ).replace( /\/+$/, '' );
         const username = String( args.username || '' );
         const password = args.password ? String( args.password ) : PASSWORD_PLACEHOLDER;
+        // Translated on the PHP side; VS Code shows it as the password prompt.
+        const vscodePasswordPrompt = String( args.vscodePasswordPrompt || '' );
 
         const env = {
             MAINWP_URL: dashboardUrl,
@@ -37,7 +39,8 @@
         };
 
         const claudeCode = [
-            'claude mcp add --transport stdio mainwp',
+            // The default local scope registers the server for the current directory only.
+            'claude mcp add --transport stdio --scope user mainwp',
             '  --env MAINWP_URL=' + shellQuote( dashboardUrl ),
             '  --env MAINWP_USER=' + shellQuote( username ),
             '  --env MAINWP_APP_PASSWORD=' + shellQuote( password ),
@@ -55,7 +58,7 @@
                 {
                     type: 'promptString',
                     id: VSCODE_PASSWORD_INPUT,
-                    description: 'MainWP Application Password',
+                    description: vscodePasswordPrompt,
                     password: true
                 }
             ],

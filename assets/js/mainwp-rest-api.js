@@ -126,6 +126,7 @@ const init_application_passwords = ($) => {
                 dashboardUrl: this.getAttribute("data-dashboard-url"),
                 username: this.getAttribute("data-username"),
                 password: password,
+                vscodePasswordPrompt: this.getAttribute("data-vscode-password-prompt"),
             });
             this.querySelectorAll("code[data-snippet]").forEach((code) => {
                 code.textContent = snippets[code.getAttribute("data-snippet")] || "";

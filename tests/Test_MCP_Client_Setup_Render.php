@@ -66,6 +66,7 @@ class Test_MCP_Client_Setup_Render extends \WP_UnitTestCase {
 		$this->assertSame( untrailingslashit( home_url() ), $container->getAttribute( 'data-dashboard-url' ) );
 		$this->assertSame( self::HOSTILE_LOGIN, $container->getAttribute( 'data-username' ) );
 		$this->assertSame( 0, $xpath->query( '//script' )->length, 'The login must stay inside its attribute.' );
+		$this->assertSame( __( 'MainWP Application Password', 'mainwp' ), $container->getAttribute( 'data-vscode-password-prompt' ), 'The VS Code prompt text comes from PHP so it can be translated.' );
 
 		$snippets = array();
 		foreach ( $xpath->query( './/code[@data-snippet]', $container ) as $code ) {

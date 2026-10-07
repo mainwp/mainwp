@@ -12,7 +12,8 @@ assert.equal( typeof setup.PASSWORD_PLACEHOLDER, 'string' );
 assert.ok( setup.PASSWORD_PLACEHOLDER.length > 0 );
 
 const password = 'abcd EFGH ijkl MNOP qrst UVWX';
-const filled = setup.buildSnippets( { dashboardUrl: 'https://dash.example.com/', username: 'admin', password: password } );
+const prompt = 'MainWP Application Password';
+const filled = setup.buildSnippets( { dashboardUrl: 'https://dash.example.com/', username: 'admin', password: password, vscodePasswordPrompt: prompt } );
 assert.deepEqual( Object.keys( filled ).sort(), [ 'claude-code', 'cursor', 'vscode' ] );
 
 // Run the Claude Code command through a real POSIX shell with `claude` swapped
@@ -27,8 +28,10 @@ function shellArgs( command ) {
     return out.replace( /\n$/, '' ).split( '\n' );
 }
 
+// The default local scope would register the server for the current directory only.
+assert.ok( filled[ 'claude-code' ].startsWith( 'claude mcp add --transport stdio --scope user mainwp ' ) );
 assert.deepEqual( shellArgs( filled[ 'claude-code' ] ), [
-    'mcp', 'add', '--transport', 'stdio', 'mainwp',
+    'mcp', 'add', '--transport', 'stdio', '--scope', 'user', 'mainwp',
     '--env', 'MAINWP_URL=https://dash.example.com',
     '--env', 'MAINWP_USER=admin',
     '--env', 'MAINWP_APP_PASSWORD=' + password,
@@ -50,7 +53,7 @@ assert.deepEqual( cursor, {
 // password must never be written into .vscode/mcp.json.
 const vscode = JSON.parse( filled.vscode );
 assert.ok( ! filled.vscode.includes( password ) );
-assert.deepEqual( vscode.inputs, [ { type: 'promptString', id: 'mainwp_password', description: 'MainWP Application Password', password: true } ] );
+assert.deepEqual( vscode.inputs, [ { type: 'promptString', id: 'mainwp_password', description: prompt, password: true } ] );
 assert.deepEqual( vscode.servers.mainwp, {
     type: 'stdio',
     command: 'npx',
@@ -60,7 +63,7 @@ assert.deepEqual( vscode.servers.mainwp, {
 
 // Placeholder form, used by the onboarding notice before any password exists.
 for ( const missing of [ undefined, null, '' ] ) {
-    const placeholder = setup.buildSnippets( { dashboardUrl: 'https://dash.example.com', username: 'admin', password: missing } );
+    const placeholder = setup.buildSnippets( { dashboardUrl: 'https://dash.example.com', username: 'admin', password: missing, vscodePasswordPrompt: prompt } );
     assert.ok( shellArgs( placeholder[ 'claude-code' ] ).includes( 'MAINWP_APP_PASSWORD=' + setup.PASSWORD_PLACEHOLDER ) );
     assert.equal( JSON.parse( placeholder.cursor ).mcpServers.mainwp.env.MAINWP_APP_PASSWORD, setup.PASSWORD_PLACEHOLDER );
     assert.equal( JSON.parse( placeholder.vscode ).servers.mainwp.env.MAINWP_APP_PASSWORD, '${input:mainwp_password}' );
@@ -70,10 +73,11 @@ for ( const missing of [ undefined, null, '' ] ) {
 const hostile = {
     dashboardUrl: 'https://dash.example.com/a$(touch pwned)`touch pwned2`',
     username: "o'neil \"x\" </script><b>",
-    password: "p'w $HOME"
+    password: "p'w $HOME",
+    vscodePasswordPrompt: 'Mot de passe "d\'application" </script>'
 };
 const hostileSnippets = setup.buildSnippets( hostile );
-assert.deepEqual( shellArgs( hostileSnippets[ 'claude-code' ] ).slice( 6, 12 ), [
+assert.deepEqual( shellArgs( hostileSnippets[ 'claude-code' ] ).slice( 8, 14 ), [
     'MAINWP_URL=' + hostile.dashboardUrl, '--env',
     'MAINWP_USER=' + hostile.username, '--env',
     'MAINWP_APP_PASSWORD=' + hostile.password, '--'
@@ -84,6 +88,8 @@ assert.deepEqual( JSON.parse( hostileSnippets.cursor ).mcpServers.mainwp.env, {
     MAINWP_APP_PASSWORD: hostile.password
 } );
 assert.equal( JSON.parse( hostileSnippets.vscode ).servers.mainwp.env.MAINWP_USER, hostile.username );
+// The prompt text is a translated string, so it goes through JSON.stringify like any other value.
+assert.equal( JSON.parse( hostileSnippets.vscode ).inputs[ 0 ].description, hostile.vscodePasswordPrompt );
 
 // The page script must insert snippets as text, never as markup.
 const page = fs.readFileSync( 'assets/js/mainwp-rest-api.js', 'utf8' );
@@ -93,6 +99,7 @@ assert.ok( start > 0 && end > start, 'fill_ai_client_setup must exist' );
 const fill = page.slice( start, end );
 assert.match( fill, /MainWPAIClientSetup\.buildSnippets\(/ );
 assert.match( fill, /\.textContent = / );
+assert.match( fill, /vscodePasswordPrompt: this\.getAttribute\( ?"data-vscode-password-prompt" ?\)/ );
 assert.doesNotMatch( fill, /\.html\(|innerHTML|outerHTML|insertAdjacentHTML|\.append\(/ );
 
 console.log( 'test-ai-client-setup: ok' );

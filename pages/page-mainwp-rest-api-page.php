@@ -1955,10 +1955,73 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         </button>
                     </div>
                 </div>
+                <?php static::render_ai_client_setup( 'modal' ); ?>
             </div>
             <div class="actions">
                 <div class="ui green ok button"><?php esc_html_e( 'Done', 'mainwp' ); ?></div>
             </div>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render the per-client setup for the MainWP MCP server.
+     *
+     * The snippets are left empty here and filled by mainwp-rest-api.js: the
+     * success modal fills them with the one-time password, which only exists in
+     * the create response, and the notice fills them with a placeholder.
+     *
+     * @param string $context Either 'modal' or 'notice'. Both can be on the page at once, so it keeps tab names unique.
+     */
+    protected static function render_ai_client_setup( $context ) {
+        $context = 'modal' === $context ? 'modal' : 'notice';
+        $user    = wp_get_current_user();
+        $clients = array(
+            'claude-code' => 'Claude Code',
+            'cursor'      => 'Cursor',
+            'vscode'      => 'VS Code',
+        );
+        ?>
+        <div class="mainwp-ai-client-setup" data-setup-context="<?php echo esc_attr( $context ); ?>"
+            data-dashboard-url="<?php echo esc_attr( untrailingslashit( home_url() ) ); ?>"
+            data-username="<?php echo esc_attr( $user->user_login ); ?>">
+            <h4 class="ui dividing header"><?php esc_html_e( 'Connect an AI tool', 'mainwp' ); ?></h4>
+            <p>
+                <?php
+                if ( 'modal' === $context ) {
+                    esc_html_e( 'Add the MainWP MCP server to your AI tool while this password is still on screen. Your Dashboard URL, username, and the new password are already filled in.', 'mainwp' );
+                } else {
+                    esc_html_e( 'After you create an Application Password, this setup is shown again with the password filled in.', 'mainwp' );
+                }
+                ?>
+                <?php esc_html_e( 'Requires Node.js 20.19 or later on the computer that runs your AI tool.', 'mainwp' ); ?>
+            </p>
+            <div class="ui top attached tabular menu">
+                <?php foreach ( $clients as $client => $label ) : ?>
+                    <a class="item<?php echo 'claude-code' === $client ? ' active' : ''; ?>" data-tab="<?php echo esc_attr( 'mainwp-ai-setup-' . $context . '-' . $client ); ?>"><?php echo esc_html( $label ); ?></a>
+                <?php endforeach; ?>
+            </div>
+            <?php foreach ( $clients as $client => $label ) : ?>
+                <div class="ui bottom attached tab segment<?php echo 'claude-code' === $client ? ' active' : ''; ?>" data-tab="<?php echo esc_attr( 'mainwp-ai-setup-' . $context . '-' . $client ); ?>" data-client="<?php echo esc_attr( $client ); ?>">
+                    <p>
+                        <?php
+                        if ( 'claude-code' === $client ) {
+                            esc_html_e( 'Run this command in a terminal.', 'mainwp' );
+                        } elseif ( 'cursor' === $client ) {
+                            /* translators: %s: Cursor's global MCP configuration file path. */
+                            printf( esc_html__( 'Add this to %s, then restart Cursor. A project\'s .cursor/mcp.json can end up in Git with the password in it.', 'mainwp' ), '<code>~/.cursor/mcp.json</code>' );
+                        } else {
+                            /* translators: %s: VS Code's project MCP configuration file path. */
+                            printf( esc_html__( 'Add this to %s in your project. VS Code asks for the Application Password when the server first starts, so the password is not saved in the file.', 'mainwp' ), '<code>.vscode/mcp.json</code>' );
+                        }
+                        ?>
+                    </p>
+                    <pre class="mainwp-ai-client-setup-snippet"><code data-snippet="<?php echo esc_attr( $client ); ?>"></code></pre>
+                    <button type="button" class="ui green basic button mainwp-ai-client-setup-copy">
+                        <i class="copy icon"></i> <?php esc_html_e( 'Copy', 'mainwp' ); ?>
+                    </button>
+                </div>
+            <?php endforeach; ?>
         </div>
         <?php
     }
@@ -2336,6 +2399,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         </p>
                         <p><?php esc_html_e( 'Create a new Application Password (recommended: name it after the client/tool), then use it as the credential when connecting.', 'mainwp' ); ?>
                         </p>
+                        <?php static::render_ai_client_setup( 'notice' ); ?>
                     </div>
                     <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-app-passwords-welcome-message"></i>
                 </div>

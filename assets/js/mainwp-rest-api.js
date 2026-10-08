@@ -114,6 +114,45 @@ const init_application_passwords = ($) => {
     const message_zone = $("#mainwp-message-zone-app-passwords");
 
     /**
+     * Fill the AI client setup snippets. The password goes in through
+     * textContent only, so nothing in it or in the username can become markup.
+     */
+    const fill_ai_client_setup = (containers, password) => {
+        if (typeof MainWPAIClientSetup === "undefined") {
+            return;
+        }
+        containers.each(function () {
+            const snippets = MainWPAIClientSetup.buildSnippets({
+                dashboardUrl: this.getAttribute("data-dashboard-url"),
+                username: this.getAttribute("data-username"),
+                password: password,
+                vscodePasswordPrompt: this.getAttribute("data-vscode-password-prompt"),
+            });
+            this.querySelectorAll("code[data-snippet]").forEach((code) => {
+                code.textContent = snippets[code.getAttribute("data-snippet")] || "";
+            });
+            const tabs = $(this).find(".tabular.menu .item");
+            tabs.tab({
+                context: $(this),
+                onVisible: function (tabPath) {
+                    tabs.each(function () {
+                        this.setAttribute("aria-selected", this.getAttribute("data-tab") === tabPath ? "true" : "false");
+                    });
+                },
+            });
+            // Fomantic binds tab activation to click only, and these anchors have no href.
+            tabs.on("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    $(this).trigger("click");
+                }
+            });
+        });
+    };
+
+    fill_ai_client_setup($('.mainwp-ai-client-setup[data-setup-context="notice"]'), null);
+
+    /**
      * Helper function to escape HTML
      */
     const escape_html = (text) => {
@@ -425,6 +464,7 @@ const init_application_passwords = ($) => {
                     // Show success modal with password
                     $("#app-pass-success-name").text(response.data.item.name);
                     $("#app-pass-success-value").val(response.data.password);
+                    fill_ai_client_setup(success_modal.find(".mainwp-ai-client-setup"), response.data.password);
 
                     success_modal
                         .modal({
@@ -478,6 +518,41 @@ const init_application_passwords = ($) => {
         setTimeout(() => {
             button.html(original_text);
         }, 2000);
+    });
+
+    /**
+     * Copy an AI client setup snippet. Without clipboard access (plain HTTP)
+     * the snippet is selected instead, so the user can copy it by hand.
+     */
+    $(document).on("click", ".mainwp-ai-client-setup-copy", function () {
+        const button = $(this);
+        const code = button.closest(".tab").find("code[data-snippet]").get(0);
+        if (!code) {
+            return;
+        }
+
+        const select_snippet = () => {
+            const range = document.createRange();
+            range.selectNodeContents(code);
+            const selection = globalThis.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        };
+
+        if (!navigator.clipboard || !globalThis.isSecureContext) {
+            select_snippet();
+            return;
+        }
+
+        navigator.clipboard.writeText(code.textContent).then(() => {
+            if (!button.data("original-label")) {
+                button.data("original-label", button.html());
+            }
+            button.html('<i class="check icon"></i> ' + MainWP.I18n.t("Copied!"));
+            setTimeout(() => {
+                button.html(button.data("original-label"));
+            }, 2000);
+        }, select_snippet);
     });
 
     /**

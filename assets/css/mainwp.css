@@ -2107,3 +2107,33 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 .mainwp-connect-failure-ux code {
     word-break: break-all;
 }
+
+.mainwp-ai-client-setup {
+    margin-top: 1.5em;
+}
+
+/* mainwp-fomantic.css underlines every link inside a message with !important, tab items included. */
+.mainwp-ui .ui.message .mainwp-ai-client-setup .tabular.menu a.item {
+    text-decoration: none !important;
+}
+
+.mainwp-ai-client-setup pre.mainwp-ai-client-setup-snippet code {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: inherit;
+    white-space: inherit;
+}
+
+.mainwp-ai-client-setup pre.mainwp-ai-client-setup-snippet {
+    margin: 0 0 1em;
+    padding: 1em;
+    overflow-x: auto;
+    white-space: pre;
+    text-align: left;
+    font-size: 12px;
+    color: var(--mainwp-text, var(--font-color, rgba(0, 0, 0, .87)));
+    background: var(--mainwp-element-background-secondary, var(--background-color-3, rgba(0, 0, 0, .03)));
+    border: 1px solid var(--mainwp-border, var(--border-color, rgba(34, 36, 38, .15)));
+    border-radius: var(--input-radius, 5px);
+}

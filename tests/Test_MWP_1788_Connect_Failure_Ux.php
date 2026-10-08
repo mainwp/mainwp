@@ -519,6 +519,10 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			'single quotes'           => 'x-cache: password=&#39;abc page=qa-hdr-four&#39;',
 			'double encoded'          => 'x-cache: password=&amp;#34;abc page=qa-hdr-five&amp;#34;',
 			'percent encoded name'    => 'x-cache: %75serpwd=qa-hdr-six',
+			'nbsp inside name'        => "x-cache: [userp\u{00A0}wd] => qa-hdr-seven",
+			'entity nbsp inside name' => 'x-cache: [userp&nbsp;wd] => qa-hdr-eight',
+			'percent zwsp inside name' => 'x-cache: userp%E2%80%8Bwd=qa-hdr-nine',
+			'percent nbsp inside name' => 'x-cache: userp%C2%A0wd=qa-hdr-ten',
 		);
 		foreach ( $cases as $label => $header ) {
 			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( "HTTP/1.1 403 Forbidden\r\n" . $header . "\r\n" );
@@ -537,6 +541,10 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 
 		$this->assertStringNotContainsString( 'qa-status-secret', $text );
 		$this->assertStringContainsString( 'HTTP/1.1 403 [redacted]', $text );
+
+		$encoded_status = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( "HTTP/1.1 403 p&#97;ssword=qa-status-two\r\n" );
+		$this->assertStringNotContainsString( 'qa-status-two', $encoded_status );
+		$this->assertStringContainsString( 'HTTP/1.1 403 [redacted]', $encoded_status );
 		$this->assertStringNotContainsString( 'qa-digest-nonce', $text );
 		$this->assertStringContainsString( 'www-authenticate: Digest [redacted]', $text );
 		$this->assertStringContainsString( 'location: https://example.test/price$5', $text );

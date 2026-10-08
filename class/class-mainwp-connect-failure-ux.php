@@ -56,6 +56,8 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @var array<int,string>
      */
+    const SENSITIVE_STEMS = array( 'password', 'passwd', 'pwd', 'uniqueid', 'mainwpsignature', 'secret', 'token', 'nonce', 'apikey' );
+
     const SENSITIVE_PARAM_NAMES = array(
         'password',
         'passwd',
@@ -953,26 +955,38 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Whether any name-like token in the text, as written or percent-decoded, is sensitive.
+     * Whether the text names a secret, as written or after entity and percent decoding.
      *
-     * Fails closed: a normalization error counts as a match.
+     * Checks each name-like token, then core stems in a copy with every separator
+     * removed, because a space or invisible character inside a name splits it into
+     * harmless-looking tokens. Fails closed: a normalization error counts as a match.
      *
      * @param string $text Text to check.
      *
      * @return bool
      */
     private static function mentions_sensitive_name( $text ) {
-        $text = preg_replace( '/\p{Cf}+/u', '', (string) $text );
-        if ( ! is_string( $text ) ) {
-            return true;
-        }
+        $text = (string) $text;
         foreach ( array( $text, rawurldecode( $text ) ) as $candidate ) {
+            $candidate = preg_replace( '/\p{Cf}+/u', '', html_entity_decode( $candidate, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+            if ( ! is_string( $candidate ) ) {
+                return true;
+            }
             $tokens = preg_split( '/[^A-Za-z0-9_\-]+/', $candidate, -1, PREG_SPLIT_NO_EMPTY );
             if ( false === $tokens ) {
                 return true;
             }
             foreach ( $tokens as $token ) {
                 if ( self::is_sensitive_param( $token ) ) {
+                    return true;
+                }
+            }
+            $squeezed = preg_replace( '/[\s\p{Zs}]+/u', '', strtolower( $candidate ) );
+            if ( ! is_string( $squeezed ) ) {
+                return true;
+            }
+            foreach ( self::SENSITIVE_STEMS as $stem ) {
+                if ( false !== strpos( $squeezed, $stem ) ) {
                     return true;
                 }
             }

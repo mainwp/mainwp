@@ -340,9 +340,9 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	public function test_reflected_register_params_are_redacted_on_every_surface(): void {
 		$bodies = array(
 			'query'  => 'user=admin&function=register&mainwpver=6.3&pubkey=qa-pubkey-value&server=https://dash.example.test&uniqueId=qa-uniqueid-value&userpwd=qa-userpwd-value&page=sites&monkey=1',
-			'spaced' => 'user=admin function=register uniqueId=qa-uniqueid-value userpwd=qa-userpwd-value page=sites monkey=1',
-			'json'   => '{"user":"admin","function":"register","uniqueId":"qa-uniqueid-value","userpwd":"qa-userpwd-value","page":"sites","monkey":"1"}',
-			'glued'  => '<td>x</td><td>userpwd=qa-userpwd-value</td><td>uniqueId=qa-uniqueid-value</td><td>page=sites</td><td>monkey=1</td>',
+			'spaced' => 'user=admin function=register pubkey=qa-pubkey-value uniqueId=qa-uniqueid-value userpwd=qa-userpwd-value page=sites monkey=1',
+			'json'   => '{"user":"admin","function":"register","pubkey":"qa-pubkey-value","uniqueId":"qa-uniqueid-value","userpwd":"qa-userpwd-value","page":"sites","monkey":"1"}',
+			'glued'  => '<td>x</td><td>pubkey=qa-pubkey-value</td><td>userpwd=qa-userpwd-value</td><td>uniqueId=qa-uniqueid-value</td><td>page=sites</td><td>monkey=1</td>',
 		);
 
 		foreach ( $bodies as $form => $body ) {
@@ -371,9 +371,9 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 
 		$bodies = array(
 			'query'  => 'function=sync&mainwpsignature=qa-legacy-sig&nonce=qa-nonce-value&data_signature=qa-data-sig&mainwpsignature_adv=qa-adv-sig&page=sites&monkey=1',
-			'spaced' => 'mainwpsignature_adv=qa-adv-sig page=sites monkey=1',
-			'json'   => '{"mainwpsignature_adv":"qa-adv-sig","page":"sites","monkey":"1"}',
-			'glued'  => '<td>x</td><td>mainwpsignature_adv=qa-adv-sig</td><td>page=sites</td><td>monkey=1</td>',
+			'spaced' => 'mainwpsignature=qa-legacy-sig nonce=qa-nonce-value data_signature=qa-data-sig mainwpsignature_adv=qa-adv-sig page=sites monkey=1',
+			'json'   => '{"mainwpsignature":"qa-legacy-sig","nonce":"qa-nonce-value","data_signature":"qa-data-sig","mainwpsignature_adv":"qa-adv-sig","page":"sites","monkey":"1"}',
+			'glued'  => '<td>x</td><td>mainwpsignature=qa-legacy-sig</td><td>nonce=qa-nonce-value</td><td>data_signature=qa-data-sig</td><td>mainwpsignature_adv=qa-adv-sig</td><td>page=sites</td><td>monkey=1</td>',
 		);
 
 		foreach ( $bodies as $form => $body ) {
@@ -392,34 +392,119 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * print_r() and var_dump() style array dumps redact sensitive keys only.
+	 * print_r() and var_dump() dumps hide everything after a sensitive key; earlier keys stay.
 	 */
 	public function test_print_r_style_dumps_redact_sensitive_keys(): void {
-		$dump = "<pre>Array\n(\n    [user] => admin\n    [function] => register\n    [userpwd] => qa-userpwd value\n    [password] => qa-password-value\n    [mainwpsignature_adv] => qa-adv-sig\n    [page] => sites\n    [monkey] => 1\n)\n</pre><p>Error establishing a connection</p>";
+		$dump = "<pre>Array\n(\n    [user] => admin\n    [function] => register\n    [page] => sites\n    [monkey] => 1\n    [userpwd] => qa-userpwd value\n    [password] => qa-password-value\n)\n</pre><p>Error establishing a connection</p>";
 
 		$surfaces = $this->failure_surfaces( $dump );
 		foreach ( $surfaces as $surface_name => $surface ) {
 			$plain = html_entity_decode( $surface, ENT_QUOTES );
-			foreach ( array( 'qa-userpwd', 'qa-password-value', 'qa-adv-sig' ) as $secret ) {
+			foreach ( array( 'qa-userpwd', 'qa-password-value' ) as $secret ) {
 				$this->assertStringNotContainsString( $secret, $plain, $surface_name );
 			}
 			$this->assertStringContainsString( '[user] => admin', $plain, $surface_name );
 			$this->assertStringContainsString( '[page] => sites', $plain, $surface_name );
 			$this->assertStringContainsString( '[monkey] => 1', $plain, $surface_name );
-			$this->assertStringContainsString( 'Error establishing a connection', $plain, $surface_name );
+			// Text after the first sensitive key is dropped on purpose.
+			$this->assertStringNotContainsString( 'Error establishing a connection', $plain, $surface_name );
 		}
+		$this->assertStringContainsString( '[userpwd] => [redacted]', $surfaces['response_body'] );
+		$this->assertStringContainsString( '[userpwd] => [redacted]', $surfaces['failure_ux_text'] );
+
 		foreach ( array( 'userpwd', 'password', 'mainwpsignature_adv' ) as $name ) {
-			$this->assertStringContainsString( '[' . $name . '] => [redacted]', $surfaces['response_body'], $name );
-			$this->assertStringContainsString( '[' . $name . '] => [redacted]', $surfaces['failure_ux_text'], $name );
+			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'Array ( [page] => sites [' . $name . '] => qa-dump-secret )' );
+			$this->assertStringNotContainsString( 'qa-dump-secret', $text, $name );
+			$this->assertStringContainsString( '[page] => sites [' . $name . '] => [redacted]', $text, $name );
 		}
 
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '["userpwd"]=> string(9) "qa-dumped" ["page"]=> string(5) "sites"' );
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'array(2) { ["page"]=> string(5) "sites" ["userpwd"]=> string(9) "qa-dumped" }' );
 		$this->assertStringNotContainsString( 'qa-dumped', $text );
 		$this->assertStringContainsString( '["page"]=> string(5) "sites"', $text );
 
-		// Bracketed text that is not an array key stays as written.
+		// Bracketed text that is not followed by => stays as written.
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '[password] reset link sent. [monkey] => banana' );
 		$this->assertSame( '[password] reset link sent. [monkey] => banana', $text );
+	}
+
+	/**
+	 * Delimiters inside a dumped secret must not end the redaction early.
+	 */
+	public function test_dump_secret_containing_delimiters_is_fully_hidden(): void {
+		$bodies = array(
+			'print_r bracket' => "<pre>Array\n(\n    [userpwd] => P [x] => qa-tail-one\n    [page] => sites\n)\n</pre>",
+			'print_r paren'   => "<pre>Array\n(\n    [userpwd] => P ) qa-tail-two\n    [page] => sites\n)\n</pre>",
+			'var_dump bracket' => "<pre>array(2) {\n  [\"userpwd\"]=>\n  string(22) \"P [x] => qa-tail-three\"\n  [\"page\"]=>\n  string(5) \"sites\"\n}\n</pre>",
+			'var_dump paren'  => "<pre>array(2) {\n  [\"userpwd\"]=>\n  string(16) \"P ) qa-tail-four\"\n  [\"page\"]=>\n  string(5) \"sites\"\n}\n</pre>",
+		);
+		foreach ( $bodies as $label => $body ) {
+			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+			$this->assertStringNotContainsString( 'qa-tail-', $text, $label );
+			$this->assertStringContainsString( '[redacted]', $text, $label );
+		}
+	}
+
+	/**
+	 * Bracket keys with spaces, quotes, tag splits, or no spaces around => are still classified.
+	 */
+	public function test_unusual_dump_keys_are_redacted(): void {
+		$split = implode( '<span></span>', str_split( 'mainwpsignature_adv' ) );
+		$bodies = array(
+			'spaced key'    => 'Array ( [user password] => qa-key-one [page] => sites )',
+			'quote in key'  => "Array ( [db'password] => qa-key-two [page] => sites )",
+			'tag-split key' => '<p>[' . $split . '] => qa-key-three [page] => sites</p>',
+			'no spaces'     => 'Array ( [userpwd]=>qa-key-four [page] => sites )',
+		);
+		foreach ( $bodies as $label => $body ) {
+			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+			$this->assertStringNotContainsString( 'qa-key-', $text, $label );
+			$this->assertStringContainsString( '[redacted]', $text, $label );
+		}
+	}
+
+	/**
+	 * A huge benign tail after a dumped secret must not undo the redaction.
+	 */
+	public function test_large_dump_tail_keeps_secret_hidden(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '[userpwd] => qa-big-secret [page] => ' . str_repeat( 'a', 1048576 ) );
+
+		$this->assertStringNotContainsString( 'qa-big-secret', $text );
+		$this->assertStringContainsString( '[userpwd] => [redacted]', $text );
+	}
+
+	/**
+	 * A PCRE failure hides the whole value instead of returning partly redacted text.
+	 */
+	public function test_redaction_fails_closed_when_pcre_fails(): void {
+		$limit = ini_get( 'pcre.backtrack_limit' );
+		ini_set( 'pcre.backtrack_limit', '1' ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- forces a PCRE failure; restored below.
+		try {
+			$redacted = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( 'Login failed password=qa-pcre-secret page=sites' );
+			$body     = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>Login failed password=qa-pcre-secret page=sites</p>' );
+		} finally {
+			ini_set( 'pcre.backtrack_limit', $limit ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- restores the original limit.
+		}
+
+		$this->assertSame( '[response content hidden: it could not be safely redacted]', $redacted );
+		foreach ( array( 'qa-pcre-secret', 'Login', 'page=sites' ) as $fragment ) {
+			$this->assertStringNotContainsString( $fragment, $body, $fragment );
+		}
+	}
+
+	/**
+	 * Long whitespace runs in a header value do not make redaction quadratic.
+	 */
+	public function test_header_whitespace_runs_stay_fast(): void {
+		$spaces  = str_repeat( ' ', 65536 );
+		$headers = "HTTP/1.1 401 Unauthorized\r\nwww-authenticate: Bearer [userpwd] => qa-hdr-one" . $spaces . "x\r\nx-cache: password=qa-hdr-two" . $spaces . "x\r\n";
+
+		$start   = microtime( true );
+		$snippet = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
+		$this->assertLessThan( 0.2, microtime( true ) - $start );
+
+		$this->assertStringNotContainsString( 'qa-hdr-one', $snippet );
+		$this->assertStringNotContainsString( 'qa-hdr-two', $snippet );
+		$this->assertStringContainsString( 'www-authenticate:', $snippet );
 	}
 
 	/**

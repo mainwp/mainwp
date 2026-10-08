@@ -266,7 +266,9 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
             $name = strtolower( trim( $parts[0] ) );
             if ( in_array( $name, $wanted, true ) ) {
-                $value = trim( $parts[1] );
+                // Header values only get trim() otherwise, and long whitespace
+                // runs make the unquoted-value pattern in redact_secrets() quadratic.
+                $value = trim( (string) preg_replace( '/\s+/', ' ', $parts[1] ) );
                 if ( 'location' === $name ) {
                     $value = self::redact_url( $value );
                 }
@@ -756,7 +758,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * Quoted values keep their closer so commas, spaces, and similar
      * characters stay inside the secret. Unquoted values include those
-     * characters and stop at the next name= / name: pair.
+     * characters and stop at the next name= / name: pair. If any pattern
+     * fails (a PCRE backtrack limit, for example), the whole text is replaced
+     * with a fixed placeholder, because a skipped pass would leave its
+     * secrets in place.
      *
      * @param string $text Text.
      *
@@ -767,6 +772,8 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
+        $text = self::redact_dump_tail( $text );
+
         $with_urls = preg_replace_callback(
             '#(?:https?://[^\s\'"<>]+|/[^\s\'"<>]*\?[^\s\'"<>]+)#i',
             static function ( $match ) {
@@ -774,9 +781,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             },
             $text
         );
-        if ( is_string( $with_urls ) ) {
-            $text = $with_urls;
+        if ( ! is_string( $with_urls ) ) {
+            return self::unredactable_text();
         }
+        $text = $with_urls;
 
         // The tag split in summarize_body() turns pass<b></b>word= into "pass word=".
         // Rejoin up to 19 words before = or : (or before a closing quote and
@@ -784,11 +792,13 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         // ends in a sensitive name of at most 19 characters (mainwpsignature_adv),
         // so even one tag per character is covered. The repeat is bounded and
         // possessive so large bodies stay linear.
-        $rejoined = preg_replace_callback(
+        $split_failed = false;
+        $rejoined     = preg_replace_callback(
             '/(?<![A-Za-z0-9_\-])((?:[A-Za-z0-9_\-]++\s++){1,18}[A-Za-z0-9_\-]++)\s*+([\'"]?\s*+[:=])/',
-            static function ( $found ) {
+            static function ( $found ) use ( &$split_failed ) {
                 $parts = preg_split( '/\s+/', $found[1] );
                 if ( ! is_array( $parts ) ) {
+                    $split_failed = true;
                     return $found[0];
                 }
                 for ( $start = count( $parts ) - 1; $start >= 0; --$start ) {
@@ -802,25 +812,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             },
             $text
         );
-        if ( is_string( $rejoined ) ) {
-            $text = $rejoined;
+        if ( ! is_string( $rejoined ) || $split_failed ) {
+            return self::unredactable_text();
         }
-
-        // print_r() and var_dump() write [key] => value and ["key"]=> value.
-        // A value runs to the next [key] => or to the array's closing ")".
-        $dumped = preg_replace_callback(
-            '/\[\s*([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*\]\s*=>\s*(.*?)(?=\s+\[\s*[\'"]?[A-Za-z0-9_\-]*[\'"]?\s*\]\s*=>|\s+\)(?:\s|$)|$)/s',
-            static function ( $found ) {
-                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $found[2] ) ) {
-                    return '[' . $found[1] . $found[2] . $found[1] . '] => [redacted]';
-                }
-                return $found[0];
-            },
-            $text
-        );
-        if ( is_string( $dumped ) ) {
-            $text = $dumped;
-        }
+        $text = $rejoined;
 
         $quoted = preg_replace_callback(
             '/([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*[:=]\s*([\'"])((?:\\\\.|(?!\3).)*)\3/',
@@ -832,9 +827,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             },
             $text
         );
-        if ( is_string( $quoted ) ) {
-            $text = $quoted;
+        if ( ! is_string( $quoted ) ) {
+            return self::unredactable_text();
         }
+        $text = $quoted;
 
         $unquoted = preg_replace_callback(
             '/(?<![A-Za-z0-9_\-])([A-Za-z_][A-Za-z0-9_\-]*)\s*[:=]\s*(?![\'"])(.+?)(?=(?:\s+|&|;|#)[A-Za-z_][A-Za-z0-9_\-]*\s*[:=]|$)/s',
@@ -847,7 +843,66 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $text
         );
 
-        return is_string( $unquoted ) ? $unquoted : $text;
+        return is_string( $unquoted ) ? $unquoted : self::unredactable_text();
+    }
+
+    /**
+     * Hide everything after the first sensitive print_r() or var_dump() key.
+     *
+     * A dumped value can contain "[x] =>", ")" or a quote, so no delimiter can
+     * be trusted to end it. Cutting to the end of the text over-redacts on
+     * purpose, including any page text that followed the dump. The scan uses
+     * strpos() rather than a pattern so it stays linear and cannot hit a PCRE
+     * limit.
+     *
+     * @param string $text Text.
+     *
+     * @return string
+     */
+    private static function redact_dump_tail( $text ) {
+        $from  = 0;
+        $close = strpos( $text, ']' );
+        while ( false !== $close ) {
+            $open = strrpos( substr( $text, $from, $close - $from ), '[' );
+            if ( false !== $open ) {
+                $key   = substr( $text, $from + $open + 1, $close - $from - $open - 1 );
+                $arrow = $close + 1 + strspn( $text, " \t\r\n", $close + 1 );
+                if ( '=>' === substr( $text, $arrow, 2 ) && self::is_sensitive_dump_key( $key ) ) {
+                    return substr( $text, 0, $arrow + 2 ) . ' [redacted]';
+                }
+            }
+            $from  = $close + 1;
+            $close = strpos( $text, ']', $from );
+        }
+
+        return $text;
+    }
+
+    /**
+     * Whether a print_r() / var_dump() array key names a secret.
+     *
+     * Tag splitting in summarize_body() leaves spaces inside a key such as
+     * [pass word], so the key is also tried with spaces removed and with
+     * spaces as underscores.
+     *
+     * @param string $key Text between the brackets.
+     *
+     * @return bool
+     */
+    private static function is_sensitive_dump_key( $key ) {
+        $key        = trim( trim( $key ), '\'"' );
+        $whitespace = array( ' ', "\t", "\r", "\n" );
+
+        return self::is_sensitive_param( str_replace( $whitespace, '', $key ) ) || self::is_sensitive_param( str_replace( $whitespace, '_', $key ) );
+    }
+
+    /**
+     * Placeholder shown when a value could not be redacted.
+     *
+     * @return string
+     */
+    private static function unredactable_text() {
+        return __( '[response content hidden: it could not be safely redacted]', 'mainwp' );
     }
 
     /**

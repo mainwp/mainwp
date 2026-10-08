@@ -22,7 +22,7 @@ class MainWP_Knowledge {
      * @return void
      */
     public static function init_menu() {
-        if ( ! MainWP_System_Utility::is_admin() || true !== MainWP_Abilities_Util::check_rest_api_permission() ) {
+        if ( ! MainWP_System_Utility::is_admin() || true !== MainWP_Abilities_Util::check_rest_api_permission() || MainWP_Menu::is_disable_menu_item( 2, 'ai' ) ) {
             return;
         }
         add_submenu_page(
@@ -35,33 +35,14 @@ class MainWP_Knowledge {
         );
         MainWP_Menu::add_left_menu(
             array(
-                'title'      => esc_html__( 'Knowledge', 'mainwp' ),
-                'parent_key' => 'mainwp_tab',
-                'slug'       => 'Knowledge',
-                'href'       => 'admin.php?page=Knowledge&tab=review',
-                'icon'       => '<i class="book icon"></i>',
+                'title'                => esc_html__( 'Knowledge', 'mainwp' ),
+                'parent_key'           => 'ai',
+                'slug'                 => 'Knowledge',
+                'href'                 => 'admin.php?page=Knowledge',
+                'leftsub_order_level2' => 1,
             ),
-            0
+            2
         );
-        $sub_items = array(
-            array(
-                'title'         => esc_html__( 'Review', 'mainwp' ),
-                'parent_key'    => 'Knowledge',
-                'slug'          => 'Knowledge',
-                'href'          => 'admin.php?page=Knowledge&tab=review',
-                'active_params' => array( 'tab' => 'review' ),
-            ),
-            array(
-                'title'         => esc_html__( 'Agency', 'mainwp' ),
-                'parent_key'    => 'Knowledge',
-                'slug'          => 'KnowledgeAgency',
-                'href'          => 'admin.php?page=Knowledge&tab=agency',
-                'active_params' => array( 'tab' => 'agency' ),
-            ),
-        );
-        foreach ( $sub_items as $item ) {
-            MainWP_Menu::add_left_menu( $item, 2 );
-        }
     }
 
     /**
@@ -76,20 +57,7 @@ class MainWP_Knowledge {
         }
         $tab = isset( $_GET['tab'] ) && is_string( $_GET['tab'] ) && 'agency' === sanitize_key( wp_unslash( $_GET['tab'] ) ) ? 'agency' : 'review'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Navigation is read-only.
         MainWP_UI::render_top_header( array( 'title' => esc_html__( 'Knowledge', 'mainwp' ) ) );
-        MainWP_UI::render_page_navigation(
-            array(
-                array(
-                    'title'  => esc_html__( 'Review', 'mainwp' ),
-                    'href'   => 'admin.php?page=Knowledge&tab=review',
-                    'active' => 'review' === $tab,
-                ),
-                array(
-                    'title'  => esc_html__( 'Agency', 'mainwp' ),
-                    'href'   => 'admin.php?page=Knowledge&tab=agency',
-                    'active' => 'agency' === $tab,
-                ),
-            )
-        );
+        self::render_navigation( $tab );
         ?>
         <div id="mainwp-knowledge-page" class="ui padded segment">
             <?php if ( 'agency' === $tab ) : ?>
@@ -108,6 +76,28 @@ class MainWP_Knowledge {
         add_action( 'admin_footer', array( MainWP_Knowledge_UI::class, 'render_modal' ) );
         // The shared header opens the page container, as on the Tags page.
         echo '</div>';
+    }
+
+    /**
+     * Render the Knowledge page tabular navigation.
+     *
+     * @param string $active Active tab.
+     *
+     * @return void
+     */
+    private static function render_navigation( $active ) {
+        ?>
+        <div class="ui labeled icon inverted menu mainwp-sub-submenu" id="mainwp-knowledge-tabular-menu">
+            <a class="item <?php echo esc_attr( 'review' === $active ? 'active' : '' ); ?>" data-tab="review" href="<?php echo esc_url( 'admin.php?page=Knowledge&tab=review' ); ?>">
+                <i class="check circle icon"></i>
+                <?php esc_html_e( 'Review', 'mainwp' ); ?>
+            </a>
+            <a class="item <?php echo esc_attr( 'agency' === $active ? 'active' : '' ); ?>" data-tab="agency" href="<?php echo esc_url( 'admin.php?page=Knowledge&tab=agency' ); ?>">
+                <i class="building icon"></i>
+                <?php esc_html_e( 'Agency', 'mainwp' ); ?>
+            </a>
+        </div>
+        <?php
     }
 
     /**

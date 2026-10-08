@@ -112,6 +112,10 @@ const init_application_passwords = ($) => {
     const has_user_col = $('#mainwp-application-password-table thead th.mainwp-col-user').length > 0;
     const current_user_name = $('#rest-application-passwords-settings').data('current-user-name') || '';
     const message_zone = $("#mainwp-message-zone-app-passwords");
+    const is_inline_creator = app_pass_section.data("inline-creator") === true;
+    const default_name = app_pass_section.data("default-name") || "";
+    const password_target = app_pass_section.data("password-target") || "";
+    const create_submit_button = $("#mainwp-create-app-password-submit");
 
     /**
      * Fill the AI client setup snippets. The password goes in through
@@ -404,9 +408,9 @@ const init_application_passwords = ($) => {
      * Open create modal
      */
     $("#mainwp-create-application-password-button-top, #mainwp-create-application-password-button").on("click", () => {
-        app_pass_name_input.val("");
-        const submit_btn = $("#mainwp-create-app-password-submit");
-        submit_btn.addClass("disabled");
+        app_pass_name_input.val(default_name);
+        const submit_btn = create_submit_button;
+        submit_btn.toggleClass("disabled", app_pass_name_input.val().trim().length === 0);
 
         app_pass_name_input.off("input.create_modal").on("input.create_modal", () => {
             if (app_pass_name_input.val().trim().length > 0) {
@@ -466,11 +470,22 @@ const init_application_passwords = ($) => {
                     $("#app-pass-success-value").val(response.data.password);
                     fill_ai_client_setup(success_modal.find(".mainwp-ai-client-setup"), response.data.password);
 
+                    if (password_target) {
+                        const target = $(password_target);
+                        const current_value = target.val();
+
+                        if (target.length && typeof current_value === "string") {
+                            target.val(current_value.replace("paste-application-password-here", response.data.password));
+                        }
+                    }
+
                     success_modal
                         .modal({
                             closable: false,
                             onHidden: () => {
-                                location.reload();
+                                if (!is_inline_creator) {
+                                    location.reload();
+                                }
                             },
                         })
                         .modal("show");
@@ -509,6 +524,9 @@ const init_application_passwords = ($) => {
 
         if (navigator.clipboard && globalThis.isSecureContext) {
             navigator.clipboard.writeText(value);
+        } else {
+            input.trigger("focus").trigger("select");
+            document.execCommand("copy");
         }
 
         const button = $(this);
@@ -695,7 +713,7 @@ const init_application_passwords = ($) => {
     app_pass_name_input.on("keypress", (e) => {
         if (e.which === 13) {
             e.preventDefault();
-            create_button.trigger("click");
+            create_submit_button.trigger("click");
         }
     });
 };

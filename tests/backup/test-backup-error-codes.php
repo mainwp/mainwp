@@ -23,7 +23,7 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	public function test_b151_encryption_refusal_is_registered() {
 		$code = 'mainwp_backup_encryption_required';
 		$this->assertContains( $code, MainWP_Backup_Error_Codes::get_registered_codes() );
-		$this->assertSame( 'Placeholder: this backup was created with encryption on, but it could not be encrypted for upload, so it was not uploaded.', MainWP_Backup_Error_Codes::message( $code ) );
+		$this->assertSame( 'Backup encryption is on, but this backup could not be encrypted, so it was not uploaded. Check the encryption key in the Backups settings, then run the backup again.', MainWP_Backup_Error_Codes::message( $code ) );
 		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( $code ) );
 	}
 
@@ -48,8 +48,8 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	 */
 	public static function database_dump_failure_codes() {
 		return array(
-			'write'  => array( 'mainwp_backup_db_write_failed', 'The database dump could not be written. Check the child site error log and try again.' ),
-			'rename' => array( 'mainwp_backup_db_rename_failed', 'The database dump could not be finalized. Check the child site error log and try again.' ),
+			'write'  => array( 'mainwp_backup_db_write_failed', 'The database dump could not be written on the child site. Check free disk space and folder permissions there, then try again.' ),
+			'rename' => array( 'mainwp_backup_db_rename_failed', 'The database dump could not be finalized on the child site. Check free disk space and folder permissions there, then try again.' ),
 		);
 	}
 

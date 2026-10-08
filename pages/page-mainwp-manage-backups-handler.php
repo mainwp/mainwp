@@ -1381,14 +1381,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
                 $output .= '<br />Backup details:<br /><br />';
                 $output .= '<strong>Backup task</strong> - ' . $task->name . '<br />';
-                if ( 'db' === $task->type ) {
-                    $type_label = 'DATABASE BACKUP';
-                } elseif ( 'files' === $task->type ) {
-                    $type_label = 'FILES BACKUP';
-                } else {
-                    $type_label = 'FULL BACKUP';
-                }
-                $output .= '<strong>Backup type</strong> - ' . $type_label . '<br />';
+                $output .= '<strong>Backup type</strong> - ' . MainWP_Backup_Page::backup_type_label( $task->type ) . '<br />';
                 $output .= '<strong>Backup schedule</strong> - ' . strtoupper( $task->schedule ) . '<br />';
 
                 $mail_title       = 'A Scheduled Backup has been Started - MainWP';

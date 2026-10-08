@@ -274,7 +274,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $lines[] = esc_html__( 'Headers: none captured.', 'mainwp' );
         }
 
-        $lines[] = esc_html__( 'Placeholder: response body omitted.', 'mainwp' );
+        $lines[] = esc_html__( 'The response body is not shown because it can contain private data from the child site.', 'mainwp' );
 
         return array(
             'status'      => $status_text,

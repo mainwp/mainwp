@@ -179,7 +179,7 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
 
         if ( '' !== $manual ) {
             if ( ! hash_equals( static::normalize_fingerprint( $manual ), static::normalize_fingerprint( $offered ) ) ) {
-                throw new \RuntimeException( esc_html( 'The SFTP server\'s host key does not match the pinned fingerprint. Pinned: ' . $manual . ' - offered: ' . $offered . '. If the server key was intentionally rotated, update the fingerprint in the destination settings.' ), 401 );
+                throw new \RuntimeException( esc_html( 'The host key offered by the SFTP server does not match the pinned fingerprint. Pinned: ' . $manual . ' - offered: ' . $offered . '. If the server key was intentionally rotated, update the fingerprint in the destination settings.' ), 401 );
             }
             return;
         }
@@ -207,7 +207,7 @@ class MainWP_Backup_Storage_SFTP implements MainWP_Backup_Storage_Provider { // 
         }
 
         if ( ! hash_equals( static::normalize_fingerprint( (string) $known[ $destination_id ] ), static::normalize_fingerprint( $offered ) ) ) {
-            throw new \RuntimeException( esc_html( 'The SFTP server\'s host key changed. Known: ' . $known[ $destination_id ] . ' - offered: ' . $offered . '. This can mean the connection is being intercepted; if the server key was intentionally rotated, enter its new fingerprint in the destination\'s Host key fingerprint field.' ), 401 );
+            throw new \RuntimeException( esc_html( 'The SFTP server host key changed. Known: ' . $known[ $destination_id ] . ' - offered: ' . $offered . '. This can mean the connection is being intercepted. If the server key was intentionally rotated, enter its new fingerprint in the Host key fingerprint field of the destination settings.' ), 401 );
         }
     }
 

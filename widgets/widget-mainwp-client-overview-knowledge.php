@@ -42,6 +42,13 @@ class MainWP_Client_Overview_Knowledge {
         }
         $client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- can_read() validated the page selection.
         ?>
+        <!-- Local recording adjustment: compact only the client Knowledge widget. -->
+        <style>
+            .mainwp-knowledge-read-only-widget .mainwp-knowledge-section,
+            .mainwp-knowledge-read-only-widget .mainwp-knowledge-records.ui.styled.accordion {
+                margin-bottom: 0;
+            }
+        </style>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Knowledge', 'mainwp' ); ?>

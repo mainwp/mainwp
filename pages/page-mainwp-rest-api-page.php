@@ -1897,6 +1897,37 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     }
 
     /**
+     * Render the reusable inline application password creation flow.
+     *
+     * @param string $default_name    Default name for the new application password.
+     * @param string $password_target Optional selector for an input that should receive the generated password.
+     */
+    public static function render_inline_application_password_creator( $default_name, $password_target = '' ) {
+        if ( ! MainWP_Application_Passwords::can_create_application_passwords() ) {
+            ?>
+            <div class="ui yellow message">
+                <?php esc_html_e( 'You are not allowed to create application passwords.', 'mainwp' ); ?>
+            </div>
+            <?php
+            return;
+        }
+        ?>
+        <div id="rest-application-passwords-settings" class="mainwp-inline-application-password-creator"
+            data-inline-creator="true"
+            data-default-name="<?php echo esc_attr( $default_name ); ?>"
+            data-password-target="<?php echo esc_attr( $password_target ); ?>">
+            <div id="mainwp-message-zone-app-passwords" aria-live="polite" style="display:none;"></div>
+            <button type="button" class="ui small green button" id="mainwp-create-application-password-button">
+                <i class="key icon"></i>
+                <?php esc_html_e( 'Create Application Password', 'mainwp' ); ?>
+            </button>
+            <?php static::create_application_password_modal(); ?>
+            <?php static::success_application_password_modal(); ?>
+        </div>
+        <?php
+    }
+
+    /**
      * Render create application password modal.
      */
     public static function create_application_password_modal() {

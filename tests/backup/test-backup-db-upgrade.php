@@ -2815,4 +2815,49 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			self::commit_transaction();
 		}
 	}
+
+	/**
+	 * Main and this line number their migrations independently, so a site on
+	 * main can already be past a backup table's version gate without ever
+	 * having had that table. The table must still come with its primary key:
+	 * an auto_increment id without one fails the whole CREATE.
+	 *
+	 * @dataProvider data_backup_tables_created_after_main_version
+	 *
+	 * @param string $table_key Table key for get_table_name().
+	 * @return void
+	 */
+	public function test_backup_table_created_with_primary_key_when_main_version_passed_its_gate( $table_key ) {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( $table_key );
+
+		$this->with_real_tables(
+			function () use ( $wpdb, $table ) {
+				$wpdb->query( "DROP TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.RestrictedFunctions -- test fixture, identifiers cannot be prepared.
+				$this->assertFalse( $this->table_exists( $table ), 'Precondition: a main-line install never had this table.' );
+
+				update_site_option( 'mainwp_db_version', '9.0.2.11' );
+
+				MainWP_Install::instance()->install();
+			}
+		);
+
+		$this->assertTrue( $this->table_exists( $table ), "{$table_key} must be created for a site coming from main's version line." );
+		$this->assertSame( array( 'id' ), $this->index_columns( $table, 'PRIMARY' ), "{$table_key} must be created with its id primary key." );
+	}
+
+	/**
+	 * Backup tables whose primary key clause was gated on this line's version.
+	 *
+	 * @return array
+	 */
+	public function data_backup_tables_created_after_main_version() {
+		return array(
+			'snapshot'    => array( 'wp_backup_snapshot' ),
+			'storage'     => array( 'wp_backup_storage' ),
+			'upload job'  => array( 'wp_backup_upload_job' ),
+			'restore job' => array( 'wp_backup_restore_job' ),
+		);
+	}
 }

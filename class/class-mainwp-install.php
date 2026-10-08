@@ -74,7 +74,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.28'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line.
+    protected $mainwp_db_version = '9.0.2.28'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
 
     /**
      * Protected variable to hold the database option name.
@@ -502,7 +502,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   KEY idx_parent (parent_id),
   KEY idx_offsite_state (offsite_state),
   KEY idx_test_restore_state (test_restore_state)";
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.8', '<' ) ) { // NOSONAR - none IP.
+        if ( empty( $currentVersion ) || $this->is_table_missing( 'wp_backup_snapshot' ) ) {
             $tbl .= ',
   PRIMARY KEY  (id)  ';
         }
@@ -518,7 +518,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   created int(11) NOT NULL DEFAULT 0,
   updated int(11) NOT NULL DEFAULT 0,
   KEY idx_provider (provider)";
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.9', '<' ) ) { // NOSONAR - none IP.
+        if ( empty( $currentVersion ) || $this->is_table_missing( 'wp_backup_storage' ) ) {
             $tbl .= ',
   PRIMARY KEY  (id)  ';
         }
@@ -543,7 +543,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   updated int(11) NOT NULL DEFAULT 0,
   UNIQUE KEY uniq_snap_dest_kind (snapshot_id, destination_id, kind),
   KEY idx_status_retry (status, next_retry_at)";
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.9', '<' ) ) { // NOSONAR - none IP.
+        if ( empty( $currentVersion ) || $this->is_table_missing( 'wp_backup_upload_job' ) ) {
             $tbl .= ',
   PRIMARY KEY  (id)  ';
         }
@@ -570,7 +570,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   UNIQUE KEY uniq_active_site (active_site_id),
   KEY idx_site (site_id),
   KEY idx_status_retry (status, next_retry_at)";
-        if ( empty( $currentVersion ) || version_compare( $currentVersion, '9.0.2.11', '<' ) ) { // NOSONAR - none IP.
+        if ( empty( $currentVersion ) || $this->is_table_missing( 'wp_backup_restore_job' ) ) {
             $tbl .= ',
   PRIMARY KEY  (id)  ';
         }
@@ -674,6 +674,23 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         } else {
             update_site_option( $this->option_db_key, $this->mainwp_db_version );
         }
+    }
+
+    /**
+     * Whether a table still has to be created.
+     *
+     * The native backup tables decide on table state, not the stored version:
+     * main numbers its migrations independently, so a site on main can be past
+     * a version gate without having the table, and creating an auto_increment
+     * id without its primary key fails the whole CREATE.
+     *
+     * @param string $table_key Table key for table_name().
+     *
+     * @return bool
+     */
+    private function is_table_missing( $table_key ) {
+        $table = $this->table_name( $table_key );
+        return null === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $table ) ) );
     }
 
     /**

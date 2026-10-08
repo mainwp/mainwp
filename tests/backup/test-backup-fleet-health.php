@@ -361,7 +361,7 @@ class MainWP_Backup_Fleet_Health_Test extends \WP_UnitTestCase {
 		$output = ob_get_clean();
 		delete_option( 'mainwp_enableNativeBackups' );
 
-		$this->assertStringContainsString( 'class="ui two column grid" id="mainwp-backup-health-counts"', $output );
+		$this->assertStringContainsString( 'class="ui two column padded grid" id="mainwp-backup-health-counts"', $output );
 		$this->assertStringNotContainsString( 'mainwp-scrolly-overflow', $output );
 		$this->assertSame( 4, substr_count( $output, 'status=backup_health_' ) );
 		foreach ( array( 'Protected', 'At Risk', 'Critical', 'No Backup' ) as $label ) {

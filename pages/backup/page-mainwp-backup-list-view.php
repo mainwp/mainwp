@@ -143,7 +143,8 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
         <?php
         foreach ( array_keys( $columns ) as $column_name ) {
             if ( method_exists( $this, 'column_' . $column_name ) ) {
-                echo '<td>';
+                // The actions cell holds a button and the menu side by side.
+                echo 'actions' === $column_name ? '<td class="collapsing">' : '<td>';
                 echo call_user_func( array( $this, 'column_' . $column_name ), $item ); // phpcs:ignore WordPress.Security.EscapeOutput
                 echo '</td>';
             } else {

@@ -158,7 +158,7 @@ class MainWP_Backup_Fleet_Health { // phpcs:ignore Generic.Classes.OpeningBraceS
             </div>
         </div>
         <?php // A two by two grid keeps all four counts inside the widget height; stacked cards pushed two of them below an inner scroll. ?>
-        <div class="ui two column grid" id="mainwp-backup-health-counts">
+        <div class="ui two column padded grid" id="mainwp-backup-health-counts">
             <?php foreach ( static::buckets() as $bucket ) : ?>
                 <div class="column">
                     <span class="ui large text"><i class="<?php echo esc_attr( $bucket['icon'] ); ?> <?php echo esc_attr( $bucket['color'] ); ?> icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $counts[ $bucket['key'] ] ) ); ?></span>

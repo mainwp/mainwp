@@ -523,6 +523,10 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			'entity nbsp inside name' => 'x-cache: [userp&nbsp;wd] => qa-hdr-eight',
 			'percent zwsp inside name' => 'x-cache: userp%E2%80%8Bwd=qa-hdr-nine',
 			'percent nbsp inside name' => 'x-cache: userp%C2%A0wd=qa-hdr-ten',
+			'split privkey'           => 'x-cache: [pri&nbsp;vkey] => qa-hdr-eleven',
+			'split pass1'             => "x-cache: pa\u{00A0}ss1=qa-hdr-twelve",
+			'split signature'         => 'x-cache: signa%C2%A0ture=qa-hdr-thirteen',
+			'split authorization'     => "x-cache: author\u{00A0}ization=qa-hdr-fourteen",
 		);
 		foreach ( $cases as $label => $header ) {
 			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( "HTTP/1.1 403 Forbidden\r\n" . $header . "\r\n" );

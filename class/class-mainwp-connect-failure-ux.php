@@ -982,9 +982,16 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 }
             }
             $squeezed = preg_replace( '/[\s\p{Zs}]+/u', '', strtolower( $candidate ) );
-            if ( ! is_string( $squeezed ) ) {
+            $tokens   = is_string( $squeezed ) ? preg_split( '/[^a-z0-9_\-]+/', $squeezed, -1, PREG_SPLIT_NO_EMPTY ) : false;
+            if ( false === $tokens ) {
                 return true;
             }
+            foreach ( $tokens as $token ) {
+                if ( self::is_sensitive_param( $token ) ) {
+                    return true;
+                }
+            }
+            // The stems also catch a name glued to its value once separators are gone.
             foreach ( self::SENSITIVE_STEMS as $stem ) {
                 if ( false !== strpos( $squeezed, $stem ) ) {
                     return true;

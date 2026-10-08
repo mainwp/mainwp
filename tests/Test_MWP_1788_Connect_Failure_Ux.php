@@ -463,6 +463,28 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Object property keys with a visibility suffix are classified by the property name.
+	 */
+	public function test_object_dump_keys_with_visibility_are_redacted(): void {
+		$bodies = array(
+			'print_r protected'  => 'Some\Class Object ( [page] => sites [userpwd:protected] => qa-obj-one )',
+			'print_r private'    => 'Some\Class Object ( [page] => sites [userpwd:Some\Class:private] => qa-obj-two )',
+			'var_dump protected' => 'object(Some\Class)#1 (2) { ["page"]=> string(5) "sites" ["userpwd":protected]=> string(12) "qa-obj-three" }',
+			'var_dump private'   => 'object(Some\Class)#1 (2) { ["page"]=> string(5) "sites" ["userpwd":"Some\Class":private]=> string(11) "qa-obj-four" }',
+		);
+		foreach ( $bodies as $label => $body ) {
+			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+			$this->assertStringNotContainsString( 'qa-obj-', $text, $label );
+			$this->assertStringContainsString( '[redacted]', $text, $label );
+			$this->assertStringContainsString( 'sites', $text, $label );
+		}
+
+		// A visibility suffix on an ordinary property keeps its value.
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'Some\Class Object ( [monkey:protected] => banana )' );
+		$this->assertSame( 'Some\Class Object ( [monkey:protected] => banana )', $text );
+	}
+
+	/**
 	 * A huge benign tail after a dumped secret must not undo the redaction.
 	 */
 	public function test_large_dump_tail_keeps_secret_hidden(): void {

@@ -883,13 +883,20 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * Tag splitting in summarize_body() leaves spaces inside a key such as
      * [pass word], so the key is also tried with spaces removed and with
-     * spaces as underscores.
+     * spaces as underscores. Object dumps append the visibility to the
+     * property name ([pwd:protected], ["pwd":"Some\Class":private]), and
+     * only the name before the first colon is classified.
      *
      * @param string $key Text between the brackets.
      *
      * @return bool
      */
     private static function is_sensitive_dump_key( $key ) {
+        $key   = trim( $key );
+        $lower = strtolower( $key );
+        if ( ':protected' === substr( $lower, -10 ) || ':private' === substr( $lower, -8 ) ) {
+            $key = substr( $key, 0, strpos( $key, ':' ) );
+        }
         $key        = trim( trim( $key ), '\'"' );
         $whitespace = array( ' ', "\t", "\r", "\n" );
 

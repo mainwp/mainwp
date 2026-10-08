@@ -154,11 +154,11 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 == Changelog ==
 
-= 6.3-beta1 - 9-23-2026 =
+= 6.3-beta1 - 10-8-2026 =
 
 * Added: Native Backups (beta): schedule or run full, database-only, files-only, and incremental backups of child sites from the Dashboard, with resumable transfers that survive timeouts and slow hosts.
 * Added: Storage destinations for backups: S3-compatible storage, Google Cloud Storage, Dropbox, SFTP, and a local directory on the Dashboard server, with per-task destination selection and retention that covers cloud copies.
-* Added: Snapshots & Restore page: restore any recorded backup, including any point in an incremental chain, with an optional safety backup taken first and a Roll Back button if the restore fails.
+* Added: Snapshots & Restore page: restore any recorded backup, including any point in an incremental chain, with an optional safety backup taken first and a Roll Back button to return to it.
 * Added: Restores load the database into temporary tables and switch to them in one step, so the site never runs on a half-restored database. Tables linked by foreign keys are restored in place while the site is in maintenance mode.
 * Added: Restores keep the site connected to the Dashboard by preserving the child's connection identity across the restored database.
 * Added: Restoring a full or files-only backup removes files added to the site after that backup was taken. A files-only restore keeps uploads, because the database still refers to them. A backup needs a file list for this: backups made before this version have none, and the restore result says so when a list is missing.
@@ -170,6 +170,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Added: One-time authorized download links for backup archives.
 * Added: A backups diagnostics log and a restore preflight that checks storage, disk space, and database privileges before anything on the site changes.
 * Added: A child-version check when a restore starts; a site running an older MainWP Child gets an update prompt instead of a failed restore.
+* Note: File backups and restores are refused on sites whose wp-content folder lives outside the WordPress core folder, such as some Pressable, WordPress.com, and Bedrock installs. Database-only backups and restores still work there.
 
 = 6.2.2 - 10-1-2026 =
 

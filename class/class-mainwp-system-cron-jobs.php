@@ -1668,7 +1668,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     }
 
                     // Stamp before the run so a task whose run dies or whose children always fail
-                    // still rotates to the back: starvation was seen on dev.mainwps.com 2026-09-25.
+                    // still rotates to the back; otherwise one such task starves the others.
                     if ( MainWP_Install::backup_task_last_continued_ready() ) {
                         MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'last_continued' => time() ) );
                     }

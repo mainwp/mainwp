@@ -116,6 +116,9 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             "colReorder" : true,
                             "stateSave":  true,
                             "scrollX": true,
+                            // Widths measured at init ignore the wrapped cells and
+                            // pushed the actions menu past the container edge.
+                            "autoWidth": false,
                             "pagingType": "full_numbers",
                             "order": [],
                             "columnDefs": [ {

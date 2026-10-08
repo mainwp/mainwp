@@ -50,20 +50,28 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Query/body parameter names whose values must not appear in failure diagnostics.
      *
      * Compared case-insensitively. Names ending in _token, _code, _key, _nonce,
-     * _secret, _signature, _password, _passwd, or _pwd are also treated as sensitive.
+     * _secret, _signature, _password, _passwd, _pwd, or _pass are also treated as sensitive.
+     * password, passwd, and pwd match without an underscore (adminpassword).
+     * key, code, token, nonce, and secret still require the underscore.
      *
      * @var array<int,string>
      */
+    const SENSITIVE_STEMS = array( 'password', 'passwd', 'pwd', 'uniqueid', 'mainwpsignature', 'secret', 'token', 'nonce', 'apikey' );
+
     const SENSITIVE_PARAM_NAMES = array(
         'password',
         'passwd',
         'pwd',
+        'pass',
+        'pass1',
+        'pass2',
         'adminpwd',
         'uniqueid',
         'unique_id',
         'privkey',
         'pubkey',
         'mainwpsignature',
+        'mainwpsignature_adv',
         'authorization',
         'token',
         'code',
@@ -105,6 +113,22 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         'nonce',
         'secret',
         'signature',
+        'password',
+        'passwd',
+        'pwd',
+        'pass',
+    );
+
+    /**
+     * Suffixes that are sensitive even with no leading underscore.
+     *
+     * Password, passwd, and pwd are specific enough for adminpassword and
+     * dbpassword. Key, code, token, nonce, and secret stay underscore-only
+     * so ordinary words such as monkey and keycode stay visible.
+     *
+     * @var array<int,string>
+     */
+    const SENSITIVE_PARAM_BARE_SUFFIXES = array(
         'password',
         'passwd',
         'pwd',
@@ -236,6 +260,9 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
             if ( 0 === stripos( $line, 'HTTP/' ) ) {
                 $status = $line;
+                if ( self::mentions_sensitive_name( $line ) ) {
+                    $status = ( preg_match( '/^HTTP\/\S+\s+\d{3}/', $line, $code ) ? $code[0] . ' ' : '' ) . '[redacted]';
+                }
                 continue;
             }
             $parts = explode( ':', $line, 2 );
@@ -244,12 +271,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
             $name = strtolower( trim( $parts[0] ) );
             if ( in_array( $name, $wanted, true ) ) {
-                $value = trim( $parts[1] );
-                if ( 'location' === $name ) {
-                    $value = self::redact_url( $value );
-                }
-                $value  = self::redact_secrets( $value );
-                $kept[] = $name . ': ' . $value;
+                $kept[] = $name . ': ' . self::header_value_for_display( $parts[1], $name );
             }
         }
 
@@ -277,13 +299,17 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
-        $text = wp_strip_all_tags( $body );
+        // wp_strip_all_tags() deletes tags without whitespace, so
+        // </title><p>password= becomes Requiredpassword and misses the name check.
+        $text = str_replace( '<', ' <', $body );
+        $text = wp_strip_all_tags( $text );
         $text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
         $text = preg_replace( '/\s+/u', ' ', $text );
         $text = self::redact_secrets( trim( (string) $text ) );
 
-        if ( strlen( $text ) > self::BODY_LIMIT ) {
-            $text = substr( $text, 0, self::BODY_LIMIT ) . '...';
+        if ( mb_strlen( $text, 'UTF-8' ) > self::BODY_LIMIT ) {
+            // Cut on a character boundary: a split UTF-8 sequence makes esc_html() return ''.
+            $text = mb_substr( $text, 0, self::BODY_LIMIT, 'UTF-8' ) . '...';
         }
 
         return $text;
@@ -624,7 +650,14 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         foreach ( self::SENSITIVE_PARAM_SUFFIXES as $suffix ) {
             $needle = '_' . $suffix;
             $len    = strlen( $needle );
-            if ( strlen( $name ) > $len && substr( $name, -$len ) === $needle ) {
+            if ( strlen( $name ) >= $len && substr( $name, -$len ) === $needle ) {
+                return true;
+            }
+        }
+
+        foreach ( self::SENSITIVE_PARAM_BARE_SUFFIXES as $suffix ) {
+            $len = strlen( $suffix );
+            if ( strlen( $name ) > $len && substr( $name, -$len ) === $suffix ) {
                 return true;
             }
         }
@@ -723,7 +756,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * Quoted values keep their closer so commas, spaces, and similar
      * characters stay inside the secret. Unquoted values include those
-     * characters and stop at the next name= / name: pair.
+     * characters and stop at the next name= / name: pair. If any pattern
+     * fails (a PCRE backtrack limit, for example), the whole text is replaced
+     * with a fixed placeholder, because a skipped pass would leave its
+     * secrets in place.
      *
      * @param string $text Text.
      *
@@ -734,6 +770,8 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
+        $text = self::redact_dump_tail( $text );
+
         $with_urls = preg_replace_callback(
             '#(?:https?://[^\s\'"<>]+|/[^\s\'"<>]*\?[^\s\'"<>]+)#i',
             static function ( $match ) {
@@ -741,9 +779,41 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             },
             $text
         );
-        if ( is_string( $with_urls ) ) {
-            $text = $with_urls;
+        if ( ! is_string( $with_urls ) ) {
+            return self::unredactable_text();
         }
+        $text = $with_urls;
+
+        // The tag split in summarize_body() turns pass<b></b>word= into "pass word=".
+        // Rejoin up to 19 words before = or : (or before a closing quote and
+        // = or :) when their tail forms a sensitive name. Every sensitive name
+        // ends in a sensitive name of at most 19 characters (mainwpsignature_adv),
+        // so even one tag per character is covered. The repeat is bounded and
+        // possessive so large bodies stay linear.
+        $split_failed = false;
+        $rejoined     = preg_replace_callback(
+            '/(?<![A-Za-z0-9_\-])((?:[A-Za-z0-9_\-]++\s++){1,18}[A-Za-z0-9_\-]++)\s*+([\'"]?\s*+[:=])/',
+            static function ( $found ) use ( &$split_failed ) {
+                $parts = preg_split( '/\s+/', $found[1] );
+                if ( ! is_array( $parts ) ) {
+                    $split_failed = true;
+                    return $found[0];
+                }
+                for ( $start = count( $parts ) - 1; $start >= 0; --$start ) {
+                    $candidate = implode( '', array_slice( $parts, $start ) );
+                    if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $candidate ) ) {
+                        $prefix = implode( ' ', array_slice( $parts, 0, $start ) );
+                        return ( '' !== $prefix ? $prefix . ' ' : '' ) . $candidate . $found[2];
+                    }
+                }
+                return $found[0];
+            },
+            $text
+        );
+        if ( ! is_string( $rejoined ) || $split_failed ) {
+            return self::unredactable_text();
+        }
+        $text = $rejoined;
 
         $quoted = preg_replace_callback(
             '/([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*[:=]\s*([\'"])((?:\\\\.|(?!\3).)*)\3/',
@@ -755,9 +825,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             },
             $text
         );
-        if ( is_string( $quoted ) ) {
-            $text = $quoted;
+        if ( ! is_string( $quoted ) ) {
+            return self::unredactable_text();
         }
+        $text = $quoted;
 
         $unquoted = preg_replace_callback(
             '/(?<![A-Za-z0-9_\-])([A-Za-z_][A-Za-z0-9_\-]*)\s*[:=]\s*(?![\'"])(.+?)(?=(?:\s+|&|;|#)[A-Za-z_][A-Za-z0-9_\-]*\s*[:=]|$)/s',
@@ -770,7 +841,164 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $text
         );
 
-        return is_string( $unquoted ) ? $unquoted : $text;
+        return is_string( $unquoted ) ? $unquoted : self::unredactable_text();
+    }
+
+    /**
+     * Hide everything after the first sensitive print_r() or var_dump() key.
+     *
+     * A dumped value can contain "[x] =>", ")" or a quote, so no delimiter can
+     * be trusted to end it. Cutting to the end of the text over-redacts on
+     * purpose, including any page text that followed the dump. The scan uses
+     * strpos() rather than a pattern so it stays linear and cannot hit a PCRE
+     * limit.
+     *
+     * @param string $text Text.
+     *
+     * @return string
+     */
+    private static function redact_dump_tail( $text ) {
+        $from  = 0;
+        $close = strpos( $text, ']' );
+        while ( false !== $close ) {
+            $open = strrpos( substr( $text, $from, $close - $from ), '[' );
+            if ( false !== $open ) {
+                $key    = substr( $text, $from + $open + 1, $close - $from - $open - 1 );
+                $equals = $close + 1 + strspn( $text, " \t\r\n", $close + 1 );
+                // Tag stripping turns =<b></b>> into "= >", so space is allowed inside the arrow.
+                $arrow = $equals + 1 + strspn( $text, " \t\r\n", $equals + 1 );
+                if ( '=' === substr( $text, $equals, 1 ) && '>' === substr( $text, $arrow, 1 ) && self::is_sensitive_dump_key( $key ) ) {
+                    return substr( $text, 0, $arrow + 1 ) . ' [redacted]';
+                }
+            }
+            $from  = $close + 1;
+            $close = strpos( $text, ']', $from );
+        }
+
+        return $text;
+    }
+
+    /**
+     * Whether a print_r() / var_dump() array key names a secret.
+     *
+     * Tag splitting in summarize_body() leaves spaces inside a key such as
+     * [pass word], so the key is also tried with spaces removed and with
+     * spaces as underscores. Object dumps append the visibility to the
+     * property name ([pwd:protected], ["pwd":"Some\Class":private]), and
+     * only the name before the first colon is classified. Zero-width and
+     * other format characters are invisible on screen but break the name
+     * match, so they are dropped, and Unicode spaces such as U+00A0 count as
+     * spaces. A key that cannot be normalized counts as sensitive.
+     *
+     * @param string $key Text between the brackets.
+     *
+     * @return bool
+     */
+    private static function is_sensitive_dump_key( $key ) {
+        $key = preg_replace( '/\p{Cf}+/u', '', $key );
+        if ( is_string( $key ) ) {
+            $key = preg_replace( '/[\s\p{Zs}]+/u', ' ', $key );
+        }
+        if ( ! is_string( $key ) ) {
+            return true;
+        }
+
+        $key     = trim( $key );
+        $compact = strtolower( str_replace( ' ', '', $key ) );
+        if ( ':protected' === substr( $compact, -10 ) || ':private' === substr( $compact, -8 ) ) {
+            $key = substr( $key, 0, strpos( $key, ':' ) );
+        }
+        $key = trim( trim( $key ), '\'"' );
+
+        return self::is_sensitive_param( str_replace( ' ', '', $key ) ) || self::is_sensitive_param( str_replace( ' ', '_', $key ) );
+    }
+
+    /**
+     * Placeholder shown when a value could not be redacted.
+     *
+     * @return string
+     */
+    private static function unredactable_text() {
+        return __( '[response content hidden: it could not be safely redacted]', 'mainwp' );
+    }
+
+    /**
+     * Prepare one kept header value for display.
+     *
+     * A header value that names a secret anywhere is hidden whole instead of
+     * redacted piece by piece: entity- or percent-encoded quotes can move a
+     * value's boundary, and every redaction order loses to one of them.
+     *
+     * @param string $value Header value.
+     * @param string $name  Lowercased header name.
+     *
+     * @return string
+     */
+    private static function header_value_for_display( $value, $name ) {
+        $value = preg_replace( '/[\s\p{Zs}]+/u', ' ', html_entity_decode( (string) $value, ENT_QUOTES, 'UTF-8' ) );
+        if ( ! is_string( $value ) ) {
+            return self::unredactable_text();
+        }
+        $value = trim( $value );
+        if ( 'location' === $name ) {
+            $value = self::redact_url( $value );
+        }
+        if ( ! self::mentions_sensitive_name( $value ) ) {
+            return $value;
+        }
+        // Keep a known auth scheme so the challenge type stays recognizable. A fixed
+        // list, because the classifier treats "bearer" as a sensitive name.
+        if ( 'www-authenticate' === $name && preg_match( '/^(Basic|Bearer|Digest|Negotiate|NTLM)(?=\s|$)/i', $value, $scheme ) ) {
+            return $scheme[1] . ' [redacted]';
+        }
+        return '[redacted]';
+    }
+
+    /**
+     * Whether the text names a secret, as written or after entity and percent decoding.
+     *
+     * Checks each name-like token, then core stems in a copy with every separator
+     * removed, because a space or invisible character inside a name splits it into
+     * harmless-looking tokens. Fails closed: a normalization error counts as a match.
+     *
+     * @param string $text Text to check.
+     *
+     * @return bool
+     */
+    private static function mentions_sensitive_name( $text ) {
+        $text = (string) $text;
+        foreach ( array( $text, rawurldecode( $text ) ) as $candidate ) {
+            $candidate = preg_replace( '/\p{Cf}+/u', '', html_entity_decode( $candidate, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+            if ( ! is_string( $candidate ) ) {
+                return true;
+            }
+            $tokens = preg_split( '/[^A-Za-z0-9_\-]+/', $candidate, -1, PREG_SPLIT_NO_EMPTY );
+            if ( false === $tokens ) {
+                return true;
+            }
+            foreach ( $tokens as $token ) {
+                if ( self::is_sensitive_param( $token ) ) {
+                    return true;
+                }
+            }
+            $squeezed = preg_replace( '/[\s\p{Zs}]+/u', '', strtolower( $candidate ) );
+            $tokens   = is_string( $squeezed ) ? preg_split( '/[^a-z0-9_\-]+/', $squeezed, -1, PREG_SPLIT_NO_EMPTY ) : false;
+            if ( false === $tokens ) {
+                return true;
+            }
+            foreach ( $tokens as $token ) {
+                if ( self::is_sensitive_param( $token ) ) {
+                    return true;
+                }
+            }
+            // The stems also catch a name glued to its value once separators are gone.
+            foreach ( self::SENSITIVE_STEMS as $stem ) {
+                if ( false !== strpos( $squeezed, $stem ) ) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

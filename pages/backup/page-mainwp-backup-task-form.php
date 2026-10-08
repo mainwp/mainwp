@@ -158,7 +158,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             <option value="<?php echo intval( $destination->id ); ?>" <?php echo in_array( (int) $destination->id, $selected, true ) ? 'selected' : ''; ?>><?php echo esc_html( $destination->name ); ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <em><?php esc_html_e( 'Completed backups upload to the selected destinations. With nothing selected they stay on this dashboard.', 'mainwp' ); ?></em>
+                    <div><em><?php esc_html_e( 'Completed backups upload to the selected destinations. With nothing selected they stay on this dashboard.', 'mainwp' ); ?></em></div>
                 <?php endif; ?>
             </div>
         </div>
@@ -425,7 +425,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             ?>
                             selected<?php endif; ?>><?php esc_html_e( 'Tar BZip2', 'mainwp' ); ?></option>
                     </select>
-                    <em class="mainwp-archive-format-note"><?php esc_html_e( 'For large sites, Tar GZip is the safer choice. Zip rewrites the whole archive after every slice, so it gets slower as the backup grows and needs as much free disk as the archive itself. Tar GZip appends instead.', 'mainwp' ); ?></em>
+                    <div><em class="mainwp-archive-format-note"><?php esc_html_e( 'For large sites, Tar GZip is the safer choice. Zip rewrites the whole archive after every slice, so it gets slower as the backup grows and needs as much free disk as the archive itself. Tar GZip appends instead.', 'mainwp' ); ?></em></div>
                 </div>
             </div>
             <?php $zip_override_style = 'zip' === $archiveFormat ? '' : 'style="display:none"'; ?>
@@ -448,38 +448,20 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Known backup locations', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
                         <input type="checkbox" id="mainwp-known-backup-locations" <?php echo( ! isset( $task ) || 1 === (int) $task->excludebackup ? 'checked' : '' ); ?>>
-                    </div>
-                </div>
-                <div class="ui grid field">
-                    <label class="six wide column middle aligned"></label>
-                    <div class="ten wide column ui toggle checkbox">
-                        <textarea id="mainwp-kbl-content" disabled></textarea><br />
                         <em><?php esc_html_e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to time out.', 'mainwp' ); ?></em>
                     </div>
                 </div>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Known cache locations', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
-                        <input type="checkbox" id="mainwp-known-cache-locations" <?php echo( ! isset( $task ) || 1 === (int) $task->excludecache ? 'checked' : '' ); ?>><br />
-                    </div>
-                </div>
-                <div class="ui grid field">
-                    <label class="six wide column middle aligned"></label>
-                    <div class="ten wide column ui toggle checkbox">
-                        <textarea id="mainwp-kcl-content" disabled></textarea><br />
+                        <input type="checkbox" id="mainwp-known-cache-locations" <?php echo( ! isset( $task ) || 1 === (int) $task->excludecache ? 'checked' : '' ); ?>>
                         <em><?php esc_html_e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to time out. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
                     </div>
                 </div>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Non-WordPress folders', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
-                        <input type="checkbox" id="mainwp-non-wordpress-folders" <?php echo( ! isset( $task ) || 1 === (int) $task->excludenonwp ? 'checked' : '' ); ?>><br />
-                    </div>
-                </div>
-                <div class="ui grid field">
-                    <label class="six wide column middle aligned"></label>
-                    <div class="ten wide column ui toggle checkbox">
-                        <textarea id="mainwp-nwl-content" disabled></textarea><br />
+                        <input type="checkbox" id="mainwp-non-wordpress-folders" <?php echo( ! isset( $task ) || 1 === (int) $task->excludenonwp ? 'checked' : '' ); ?>>
                         <em><?php esc_html_e( 'This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp' ); ?></em>
                     </div>
                 </div>

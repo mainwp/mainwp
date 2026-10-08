@@ -245,6 +245,8 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'notice-id="mainwp-backup-tasks-info-message"', $output );
 		$this->assertStringContainsString( 'id="mainwp-backup-tasks-empty"', $output );
+		$this->assertStringContainsString( 'mainwp-empty-page-placeholder', $output, 'The empty state uses the core placeholder.' );
+		$this->assertStringNotContainsString( 'ui placeholder segment', $output );
 		$this->assertStringContainsString( 'page=ManageBackupsAddNew', $output );
 		$this->assertStringContainsString( 'page=ManageBackupsStorage', $output );
 		$this->assertStringNotContainsString( 'Did you know that MainWP has extensions', $output );

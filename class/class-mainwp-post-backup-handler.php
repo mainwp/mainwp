@@ -289,13 +289,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                     'last_error'     => mb_substr( (string) $job->last_error, 0, 200 ),
                 );
             }
-            $archives   = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
-            $size_bytes = (int) array_sum( array_column( $archives, 'size' ) );
-            $rows[]     = array(
+            $archives        = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
+            $size_bytes      = (int) array_sum( array_column( $archives, 'size' ) );
+            $test_restore_at = isset( $entry['snapshot']->test_restore_at ) ? (int) $entry['snapshot']->test_restore_at : 0;
+            $rows[]          = array(
                 'id'                 => (int) $entry['snapshot']->id,
                 'task_id'            => (int) $entry['snapshot']->task_id,
                 'type'               => (string) $entry['snapshot']->type,
                 'created'            => (int) $entry['snapshot']->created,
+                // Formatted here so the page uses the Dashboard date and time
+                // settings, as the task list does, not the browser locale.
+                'created_label'      => MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $entry['snapshot']->created ) ),
                 'age_days'           => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
                 'status'             => (string) $entry['snapshot']->status,
                 'offsite_state'      => isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
@@ -305,7 +309,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'restore_reason'     => (string) $entry['restore_reason'],
                 'size_label'         => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
                 'test_restore_state' => isset( $entry['snapshot']->test_restore_state ) ? (string) $entry['snapshot']->test_restore_state : '',
-                'test_restore_at'    => isset( $entry['snapshot']->test_restore_at ) ? (int) $entry['snapshot']->test_restore_at : 0,
+                'test_restore_at'    => $test_restore_at,
+                'test_restore_label' => $test_restore_at > 0 ? MainWP_Utility::format_date( MainWP_Utility::get_timestamp( $test_restore_at ) ) : '',
             );
         }
         // The reload bootstrap: the server knows what is running for this
@@ -317,7 +322,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // An available safety backup ranks first; a successor rollback owns its source.
         $failed_jobs = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
             $wpdb->prepare(
-                'SELECT failed.id, failed.snapshot_id, failed.site_id, failed.status, failed.last_error, failed.checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' failed WHERE failed.site_id = %d AND failed.status IN ( %s, %s ) ORDER BY ( failed.checkpoint LIKE %s AND NOT EXISTS ( SELECT 1 FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' successor WHERE successor.site_id = failed.site_id AND successor.id > failed.id AND successor.checkpoint REGEXP CONCAT( %s, failed.id, %s ) ) ) DESC, failed.id DESC LIMIT 20', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
+                'SELECT failed.id, failed.snapshot_id, failed.site_id, failed.status, failed.last_error, failed.checkpoint, failed.created FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' failed WHERE failed.site_id = %d AND failed.status IN ( %s, %s ) ORDER BY ( failed.checkpoint LIKE %s AND NOT EXISTS ( SELECT 1 FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' successor WHERE successor.site_id = failed.site_id AND successor.id > failed.id AND successor.checkpoint REGEXP CONCAT( %s, failed.id, %s ) ) ) DESC, failed.id DESC LIMIT 20', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
                 $site_id,
                 MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
                 MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED,
@@ -327,6 +332,24 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             )
         );
         $failed_jobs = is_array( $failed_jobs ) ? $failed_jobs : array();
+        // A completed restore keeps its safety backup until the next one
+        // completes, so its Roll Back has to survive a reload too. Normally
+        // only the newest completed restore still has one.
+        $completed_jobs = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
+            $wpdb->prepare(
+                'SELECT id, snapshot_id, site_id, status, last_error, checkpoint, created FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND status = %s AND checkpoint LIKE %s AND checkpoint NOT LIKE %s ORDER BY id DESC LIMIT 5', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
+                $site_id,
+                MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED,
+                '%' . $wpdb->esc_like( '"pre_snapshot_artifacts":[{' ) . '%',
+                '%' . $wpdb->esc_like( '"pre_snapshot_pruned":true' ) . '%'
+            )
+        );
+        foreach ( is_array( $completed_jobs ) ? $completed_jobs : array() as $completed_job ) {
+            $completed_job->checkpoint = json_decode( $completed_job->checkpoint, true );
+            if ( is_array( $completed_job->checkpoint ) && MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $completed_job ) ) {
+                $failed_jobs[] = $completed_job;
+            }
+        }
         usort(
             $failed_jobs,
             static function ( $a, $b ) {
@@ -335,11 +358,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         );
         $failed_rows = array();
         foreach ( $failed_jobs as $failed_job ) {
-            $failed_job->checkpoint = json_decode( $failed_job->checkpoint, true );
-            $failed_rows[]          = array(
+            if ( ! is_array( $failed_job->checkpoint ) ) {
+                $failed_job->checkpoint = json_decode( (string) $failed_job->checkpoint, true );
+            }
+            $failed_rows[] = array(
                 'job_id'       => (int) $failed_job->id,
                 'snapshot_id'  => (int) $failed_job->snapshot_id,
                 'status'       => (string) $failed_job->status,
+                'date_label'   => (int) $failed_job->created > 0 ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $failed_job->created ) ) : '',
                 'last_error'   => (string) $failed_job->last_error,
                 'error_code'   => (string) ( $failed_job->checkpoint['last_error_code'] ?? '' ),
                 'has_rollback' => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $failed_job ),
@@ -557,6 +583,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                     'error_code'       => isset( $job->checkpoint['last_error_code'] ) ? (string) $job->checkpoint['last_error_code'] : '',
                     'attempt_count'    => (int) $job->attempt_count,
                     'next_retry_at'    => (int) $job->next_retry_at,
+                    'next_retry_label' => (int) $job->next_retry_at > 0 ? MainWP_Utility::format_time( MainWP_Utility::get_timestamp( (int) $job->next_retry_at ) ) : '',
                     'artifact_index'   => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
                     'artifact_total'   => count( $plan ),
                     'has_rollback'     => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $job ),
@@ -917,12 +944,16 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             // fabricated future `since` from re-claiming on every poll -
             // a real one is the initiate's own server-side stamp.
             //
-            // This claim can OPEN a run, so it honors the same restore
-            // refusal as the initiate handler: a poll left over from a
-            // stale tab (or carrying another site's since after a switch)
-            // must not start a backup under a live restore.
+            // This claim can OPEN a run, so it honors the same restore and
+            // disconnected-site refusals as the initiate handler: a poll left
+            // over from a stale tab (or carrying another site's since after
+            // a switch) must not start a backup the initiate would refuse.
             if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
                 wp_send_json( array( 'error' => esc_html__( 'A restore is in progress for this site. Try again once it finishes.', 'mainwp' ) ) );
+                return;
+            }
+            if ( static::site_is_disconnected( $website ) ) {
+                wp_send_json( array( 'error' => static::disconnected_site_error() ) );
                 return;
             }
             $settle = MainWP_Backup_Settings::get_manual_run_settle_seconds();

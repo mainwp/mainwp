@@ -170,7 +170,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Added: One-time authorized download links for backup archives.
 * Added: A backups diagnostics log and a restore preflight that checks storage, disk space, and database privileges before anything on the site changes.
 * Added: A child-version check when a restore starts; a site running an older MainWP Child gets an update prompt instead of a failed restore.
-* Note: File backups and restores are refused on sites whose wp-content folder lives outside the WordPress core folder, such as some Pressable, WordPress.com, and Bedrock installs. Database-only backups and restores still work there.
+* Note: File backups and restores are refused on sites whose wp-content folder lives outside the WordPress core folder, such as some Pressable, WordPress.com, and Bedrock installs. Database-only backups and restores still work there. A restored site keeps its last pre-restore safety backup on its own server until its next restore, and that backup stays there if the site is removed from the Dashboard.
 
 = 6.2.2 - 10-1-2026 =
 

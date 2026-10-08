@@ -75,13 +75,29 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 
     /**
+     * Display names for the provider slugs, shared by the table and the form.
+     *
+     * @return array Provider slug => escaped label.
+     */
+    private static function provider_labels(): array {
+        return array(
+            's3'      => esc_html__( 'S3 Compatible Storage', 'mainwp' ),
+            'gcs'     => esc_html__( 'Google Cloud Storage', 'mainwp' ),
+            'dropbox' => esc_html__( 'Dropbox', 'mainwp' ),
+            'sftp'    => esc_html__( 'SFTP', 'mainwp' ),
+            'local'   => esc_html__( 'Local Path', 'mainwp' ),
+        );
+    }
+
+    /**
      * Render the destinations table. Settings never load here, so no
      * secret can reach the page.
      *
      * @return void
      */
     public static function render_list_table(): void {
-        $destinations = MainWP_Backup_Storage_Destinations::instance()->list_destinations();
+        $destinations    = MainWP_Backup_Storage_Destinations::instance()->list_destinations();
+        $provider_labels = static::provider_labels();
         ?>
         <h3 class="ui header"><?php esc_html_e( 'Storage Destinations', 'mainwp' ); ?></h3>
         <table class="ui single line table" id="mainwp-storage-destinations-table">
@@ -102,7 +118,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 <?php foreach ( $destinations as $destination ) : ?>
                 <tr data-destination-id="<?php echo intval( $destination->id ); ?>" data-provider="<?php echo esc_attr( $destination->provider ); ?>" data-name="<?php echo esc_attr( $destination->name ); ?>">
                     <td><?php echo esc_html( $destination->name ); ?></td>
-                    <td><?php echo esc_html( $destination->provider ); ?></td>
+                    <td><?php echo $provider_labels[ $destination->provider ] ?? esc_html( $destination->provider ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- labels escaped in provider_labels(). ?></td>
                     <td>
                         <?php if ( ! empty( $destination->is_default ) ) : ?>
                             <span class="ui small green label"><?php esc_html_e( 'Default', 'mainwp' ); ?></span>
@@ -113,7 +129,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     <td class="collapsing">
                         <button type="button" class="ui mini button mainwp-storage-edit"><?php esc_html_e( 'Edit', 'mainwp' ); ?></button>
                         <button type="button" class="ui mini button mainwp-storage-test"><?php esc_html_e( 'Test', 'mainwp' ); ?></button>
-                        <button type="button" class="ui mini basic red button mainwp-storage-delete"><?php esc_html_e( 'Delete', 'mainwp' ); ?></button>
+                        <button type="button" class="ui mini icon basic button mainwp-storage-delete" aria-label="<?php esc_attr_e( 'Delete', 'mainwp' ); ?>" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete this destination.', 'mainwp' ); ?>"><i class="trash icon"></i></button>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -145,11 +161,9 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Provider', 'mainwp' ); ?></label>
                     <div class="ten wide column">
                         <select id="mainwp-storage-provider" class="ui dropdown">
-                            <option value="s3"><?php esc_html_e( 'S3 Compatible Storage', 'mainwp' ); ?></option>
-                            <option value="gcs"><?php esc_html_e( 'Google Cloud Storage', 'mainwp' ); ?></option>
-                            <option value="dropbox"><?php esc_html_e( 'Dropbox', 'mainwp' ); ?></option>
-                            <option value="sftp"><?php esc_html_e( 'SFTP', 'mainwp' ); ?></option>
-                            <option value="local"><?php esc_html_e( 'Local Path', 'mainwp' ); ?></option>
+                            <?php foreach ( static::provider_labels() as $provider => $provider_label ) : ?>
+                            <option value="<?php echo esc_attr( $provider ); ?>"><?php echo $provider_label; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in provider_labels(). ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
@@ -201,7 +215,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                                 <option value="AES256"><?php esc_html_e( 'SSE-S3 (AES-256)', 'mainwp' ); ?></option>
                                 <option value="aws:kms"><?php esc_html_e( 'SSE-KMS (account default key)', 'mainwp' ); ?></option>
                             </select>
-                            <em><?php esc_html_e( 'Ask the S3 service to encrypt objects at rest. Archives are already encrypted before they leave the dashboard, so this adds a second layer at the bucket. Leave it on None for MinIO and other S3 compatible services that reject the header.', 'mainwp' ); ?></em>
+                            <div><em><?php esc_html_e( 'Ask the S3 service to encrypt objects at rest. Archives are already encrypted before they leave the dashboard, so this adds a second layer at the bucket. Leave it on None for MinIO and other S3 compatible services that reject the header.', 'mainwp' ); ?></em></div>
                         </div>
                     </div>
                 </div>
@@ -335,8 +349,8 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     </div>
                 </div>
                 <div class="ui divider"></div>
-                <?php // Inside .ui.form a message stays hidden until it also has the visible class, which feedback adds. ?>
-                <div class="ui message" id="mainwp-storage-form-message-zone" style="display:none"></div>
+                <?php // Inside .ui.form a message stays hidden unless it also has the visible class. ?>
+                <div class="ui visible message" id="mainwp-storage-form-message-zone" style="display:none"></div>
                 <button type="button" class="ui green button" id="mainwp-storage-save"><?php esc_html_e( 'Test Connection & Save', 'mainwp' ); ?></button>
                 <button type="button" class="ui button" id="mainwp-storage-test-only"><?php esc_html_e( 'Test Connection', 'mainwp' ); ?></button>
                 <button type="button" class="ui basic button" id="mainwp-storage-reset" style="display:none"><?php esc_html_e( 'Cancel Edit', 'mainwp' ); ?></button>
@@ -354,14 +368,21 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         ?>
         <script type="text/javascript">
         jQuery( function () {
+            // Core feedback() writes HTML and clears only green, yellow and red,
+            // so the plain-text messages are escaped and blue is cleared here.
+            let showFeedback = function ( zone, message, color ) {
+                jQuery( '#' + zone ).removeClass( 'blue' );
+                feedback( zone, jQuery( '<div>' ).text( message ).html(), color );
+            };
+
             let feedbackZone = function ( message, color ) {
-                jQuery( '#mainwp-storage-message-zone' ).attr( 'class', 'ui ' + color + ' message' ).text( message ).show();
+                showFeedback( 'mainwp-storage-message-zone', message, color );
             };
 
             // Results of the form's own buttons land next to those buttons; the
             // top zone sits a full page above them.
             let formFeedback = function ( message, color ) {
-                jQuery( '#mainwp-storage-form-message-zone' ).attr( 'class', 'ui visible ' + color + ' message' ).text( message ).show();
+                showFeedback( 'mainwp-storage-form-message-zone', message, color );
             };
 
             let busy = function ( button, on ) {

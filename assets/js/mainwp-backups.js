@@ -15,28 +15,6 @@ jQuery(function () {
         backupDownloadRunning = false;
         mainwpPopup('#managesite-backup-status-box').close(true);
     });
-
-    // Keep each known-location exclude textarea hidden until its toggle is on,
-    // so an empty box is not shown as a large blank area (L2).
-    [
-        { box: '#mainwp-known-backup-locations', area: '#mainwp-kbl-content' },
-        { box: '#mainwp-known-cache-locations', area: '#mainwp-kcl-content' },
-        { box: '#mainwp-non-wordpress-folders', area: '#mainwp-nwl-content' }
-    ].forEach(function (pair) {
-        let $box = jQuery(pair.box);
-        let $row = jQuery(pair.area).closest('.field');
-        if (!$box.length || !$row.length) {
-            return;
-        }
-        let sync = function () {
-            let on = $box.is(':checked');
-            $row.toggle(on);
-            jQuery(pair.area).prop('disabled', !on);
-        };
-        sync();
-        $box.on('change', sync);
-    });
-
 });
 let backup = function () {
     backupError = false;
@@ -354,8 +332,6 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
                     // The error HTML already states what failed, with severity and
                     // a diagnostic code; no generic "Backup failed" line on top.
                     appendToDiv(backsprocessContentEl, mainwp_backup_error_html(response.error));
-
-                    jQuery('#managesite-backup-status-close').prop('value', MainWP.I18n.t('Close'));
                     return;
                 }
 
@@ -377,7 +353,6 @@ backup_download_file = function (pSiteId, type, url, file, regexfile, size, subf
             backupDownloadRunning = false;
             backupError = true;
             appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">' + MainWP.I18n.t('ERROR') + ': ' + MainWP.I18n.t('The download from the child site failed. Check that the site is reachable and try again.') + '</span>');
-            jQuery('#managesite-backup-status-close').prop('value', MainWP.I18n.t('Close'));
         },
         dataType: 'json'
     });
@@ -394,7 +369,6 @@ backup_upload_file = function (pSiteId, pFile, pRegexFile, pSubfolder, pRemoteDe
     let backsprocessContentEl = mainwpPopup('#managesite-backup-status-box').getContentEl();
     backupCompleted = true;
     appendToDiv(backsprocessContentEl, MainWP.I18n.t('Backup completed!'));
-    jQuery('#managesite-backup-status-close').prop('value', MainWP.I18n.t('Close'));
     // The archive list refreshes in place when the user closes the modal
     // (see the init callback), so do not auto-close or reload the page.
 };

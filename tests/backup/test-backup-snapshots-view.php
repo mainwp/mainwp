@@ -38,9 +38,9 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$output = $this->render_page();
 		$this->assertStringContainsString( 'id="mainwp-restore-failed-jobs"', $output );
 		$this->assertStringContainsString( 'response.failed_restore_jobs', $output );
-		$this->assertStringContainsString( 'ui divided list', $output );
+		$this->assertStringContainsString( 'id="mainwp-restore-history-table"', $output );
 		$this->assertStringContainsString( 'mainwp-restore-failed-job', $output );
-		$this->assertStringContainsString( '.text( ( job.error_code && restoreOutcomeMessages[ job.error_code ] ) || job.last_error )', $output, 'Failure text must be escaped by jQuery.' );
+		$this->assertStringContainsString( "\$( '<td></td>' ).text( jobMessage )", $output, 'Failure text must be escaped by jQuery.' );
 		$this->assertStringContainsString( 'startRollback( jobId )', $output );
 	}
 
@@ -176,7 +176,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 			'A cancelled restore must count as finished.'
 		);
 		$this->assertMatchesRegularExpression(
-			"/#mainwp-restore-rollback-btn'\s*\)\.toggle\([^;]*terminal && safetyBackup/s",
+			"/#mainwp-restore-rollback-btn'\s*\)\.toggle\([^;]*terminal && \( safetyBackup/s",
 			$output,
 			'The rollback button must be offered for finished restores with a safety backup.'
 		);
@@ -496,7 +496,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertMatchesRegularExpression( "/'unavailable' === snap\.test_restore_state/s", $output, 'An unavailable snapshot must be handled.' );
 		$this->assertMatchesRegularExpression( "/ui mini green label[^']*check icon/s", $output, 'A pass must render a green checked label.' );
 		$this->assertStringContainsString( 'ui mini red label', $output, 'A fail must render a red label.' );
-		$this->assertMatchesRegularExpression( '/snap\.test_restore_at \* 1000/s', $output, 'A pass must show the test-restore date.' );
+		$this->assertStringContainsString( 'snap.test_restore_label', $output, 'A pass must show the test-restore date.' );
 	}
 
 	/**
@@ -737,9 +737,9 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A rollback job reports itself as a rollback: its own status labels, no
-	 * safety-backup note, and no Roll Back of the rollback, in the modal and
-	 * in the restore history.
+	 * A rollback job reports itself as a rollback: its own status labels and
+	 * no safety-backup note. A failed rollback that still has its source
+	 * offers Retry rollback, in the modal and in the restore history.
 	 */
 	public function test_rollback_job_reads_as_rollback() {
 		$output = $this->render_page();
@@ -748,7 +748,11 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'rollbackStatusLabels[ data.status ]', $output );
 		$this->assertStringContainsString( 'var safetyBackup = !! data.has_rollback && ! isRollback;', $output );
 		$this->assertStringContainsString( "#mainwp-restore-safety-note' ).toggle( safetyBackup )", $output );
-		$this->assertStringContainsString( 'job.has_rollback && ! job.is_rollback', $output );
+		$this->assertStringContainsString( 'var retryRollback = !! data.has_rollback && isRollback;', $output );
+		$this->assertStringContainsString( "'Retry rollback'", $output );
+		$this->assertStringContainsString( 'job.is_rollback ? rollbackActionLabels.retry : rollbackActionLabels.rollBack', $output );
+		$this->assertStringContainsString( 'retryRollback ? rollbackActionLabels.retry : rollbackActionLabels.rollBack', $output );
+		$this->assertStringNotContainsString( 'job.has_rollback && ! job.is_rollback', $output );
 		$this->assertStringContainsString( 'job.is_rollback ? rollbackStatusLabels : statusLabels', $output );
 	}
 
@@ -781,8 +785,9 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	public function test_restore_history_heading_and_mapped_messages() {
 		$output = $this->render_page();
 
-		$this->assertStringContainsString( 'Failed and cancelled restores', $output );
-		$this->assertStringNotContainsString( 'Restore history', $output );
+		$this->assertStringContainsString( 'Recent restores', $output );
+		$this->assertStringNotContainsString( 'Failed and cancelled restores', $output );
+		$this->assertStringContainsString( "if ( 'completed' === job.status && ! jobMessage )", $output );
 		$this->assertStringContainsString( 'restoreOutcomeMessages[ job.error_code ] ) || job.last_error', $output );
 		$this->assertStringNotContainsString( 'TODO', $output );
 		$this->assertStringNotContainsString( 'Placeholder:', $output );
@@ -884,5 +889,30 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertMatchesRegularExpression( '/class="ui mini green button disabled" id="mainwp-native-backup-now-btn"\s+disabled/', $output );
 		$this->assertStringContainsString( 'var siteDisconnected = true;', $output );
 		$this->assertStringContainsString( "( siteDisconnected ? ' disabled' : '' )", $output );
+		$this->assertMatchesRegularExpression( '/class="ui mini basic button disabled" id="mainwp-snapshots-cleanup-btn"\s+disabled/', $output );
+		$this->assertStringContainsString( "#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled || siteDisconnected )", $output );
+	}
+
+	/**
+	 * Snapshot and retry times use the Dashboard date and time settings sent
+	 * by the server, not the browser locale.
+	 */
+	public function test_dates_use_dashboard_format() {
+		$output = $this->render_page();
+
+		$this->assertStringNotContainsString( 'toLocale', $output );
+		$this->assertStringContainsString( 'snap.created_label', $output );
+		$this->assertStringContainsString( 'data.next_retry_label', $output );
+	}
+
+	/**
+	 * The theme draws the icon on colored messages, so the markup adds none.
+	 */
+	public function test_colored_messages_carry_no_inline_icon() {
+		$output = $this->render_page();
+
+		// The dismiss control is a close icon, which the theme does not draw.
+		$this->assertDoesNotMatchRegularExpression( '/class="ui (?:small )?(?:yellow|info|blue|red|green) message"[^>]*>\s*<i (?!class="close)/', $output );
+		$this->assertStringNotContainsString( 'window.confirm', $output );
 	}
 }

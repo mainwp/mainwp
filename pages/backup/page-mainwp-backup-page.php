@@ -522,20 +522,16 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * Empty task list: point at the two things a first backup needs.
      */
     private static function render_task_list_empty_state(): void {
+        $actions = '';
+        if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
+            $actions .= '<a class="ui mini green button" href="' . esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ) . '">' . esc_html__( 'Create your first backup task', 'mainwp' ) . '</a> ';
+        }
+        if ( \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
+            $actions .= '<a class="ui mini basic button" href="' . esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ) . '">' . esc_html__( 'Add a storage destination', 'mainwp' ) . '</a>';
+        }
         ?>
-        <div class="ui placeholder segment" id="mainwp-backup-tasks-empty">
-            <div class="ui icon header">
-                <i class="hdd outline icon"></i>
-                <?php esc_html_e( 'No backup tasks yet', 'mainwp' ); ?>
-            </div>
-            <div class="inline">
-                <?php if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) : ?>
-                    <a class="ui mini green button" href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ); ?>"><?php esc_html_e( 'Create your first backup task', 'mainwp' ); ?></a>
-                <?php endif; ?>
-                <?php if ( \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) : ?>
-                    <a class="ui mini basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ); ?>"><?php esc_html_e( 'Add a storage destination', 'mainwp' ); ?></a>
-                <?php endif; ?>
-            </div>
+        <div id="mainwp-backup-tasks-empty">
+            <?php MainWP_UI::render_empty_page_placeholder( esc_html__( 'No backup tasks yet', 'mainwp' ), '' !== $actions ? $actions : esc_html__( 'Ask a Dashboard administrator to create a backup task.', 'mainwp' ), '<i class="massive hdd outline icon"></i>' ); ?>
         </div>
         <?php
     }

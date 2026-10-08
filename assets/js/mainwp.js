@@ -4283,18 +4283,6 @@ jQuery.mwp_strCut = function (i, l, s, w) {
     return o;
 };
 
-globalThis.updateExcludedFolders = function () {
-    let excludedBackupFiles = jQuery('#excludedBackupFiles').html();
-    jQuery('#mainwp-kbl-content').val(excludedBackupFiles == undefined ? '' : excludedBackupFiles);
-
-    let excludedCacheFiles = jQuery('#excludedCacheFiles').html();
-    jQuery('#mainwp-kcl-content').val(excludedCacheFiles == undefined ? '' : excludedCacheFiles);
-
-    let excludedNonWPFiles = jQuery('#excludedNonWPFiles').html();
-    jQuery('#mainwp-nwl-content').val(excludedNonWPFiles == undefined ? '' : excludedNonWPFiles);
-};
-
-
 jQuery(document).on('click', '.mainwp-events-notice-dismiss', function () {
     let notice = jQuery(this).attr('notice');
     jQuery(this).closest('.ui.message').fadeOut(500);

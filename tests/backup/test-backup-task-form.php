@@ -477,4 +477,21 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 		);
 		$this->assertSame( 0, (int) $db->get_backup_task_by_id( $added->id )->zip_force_override );
 	}
+
+	/**
+	 * The exclude toggles carry their help text; no empty textarea follows
+	 * them, and help under a dropdown sits on its own line.
+	 */
+	public function test_exclude_toggles_have_no_empty_textareas() {
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( null, 'Tar GZip', 'site', false, true );
+		$output = ob_get_clean();
+
+		foreach ( array( 'mainwp-kbl-content', 'mainwp-kcl-content', 'mainwp-nwl-content' ) as $area ) {
+			$this->assertStringNotContainsString( $area, $output );
+		}
+		$this->assertMatchesRegularExpression( '/id="mainwp-known-backup-locations"[^>]*>\s*<em>This adds known backup locations/', $output );
+		$this->assertStringContainsString( 'id="excluded_folders_list"', $output );
+		$this->assertStringContainsString( '<div><em class="mainwp-archive-format-note">', $output );
+	}
 }

@@ -1540,7 +1540,32 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		$this->assertNotFalse( $zone );
 		$this->assertGreaterThan( strpos( $output, 'id="mainwp-storage-form"' ), $zone );
 		$this->assertLessThan( strpos( $output, 'id="mainwp-storage-test-only"' ), $zone );
-		$this->assertStringContainsString( "'ui visible ' + color + ' message'", $output );
+		$this->assertStringContainsString( 'class="ui visible message" id="mainwp-storage-form-message-zone"', $output );
+		$this->assertStringContainsString( "feedback( zone, jQuery( '<div>' ).text( message ).html(), color );", $output, 'Messages reach the core HTML sink escaped.' );
 		$this->assertMatchesRegularExpression( "/#mainwp-storage-test-only' \\).on\\( 'click'[^}]*busy\\( button, true \\);[^}]*formFeedback\\(/s", $output );
+	}
+
+	/**
+	 * The destinations table names each provider the way the form does, and
+	 * Delete is an icon button that reads in both themes.
+	 */
+	public function test_destination_table_shows_provider_label_and_icon_delete() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$saved = MainWP_Backup_Storage_Handler::save_destination(
+			array(
+				'id'       => 0,
+				'provider' => 'local',
+				'name'     => 'Label test',
+				'settings' => array( 'base_path' => $this->make_temp_dir() ),
+			)
+		);
+		$this->assertArrayNotHasKey( 'error', $saved );
+		ob_start();
+		MainWP_Backup_Storage_View::render();
+		$output = ob_get_clean();
+
+		$this->assertMatchesRegularExpression( '/data-name="Label test">\s*<td>Label test<\/td>\s*<td>Local Path<\/td>/', $output );
+		$this->assertStringContainsString( 'class="ui mini icon basic button mainwp-storage-delete"', $output );
+		$this->assertStringNotContainsString( 'basic red button', $output );
 	}
 }

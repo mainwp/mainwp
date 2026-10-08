@@ -62,6 +62,21 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const BACKUP_SITE_UNIQ_KEYS_REPAIR_REASONS = 'mainwp_backup_site_uniq_keys_repair_reasons';
 
     /**
+     * Network-scoped time() of the last check for missing native backup
+     * tables on a current install, so the check runs at most hourly.
+     *
+     * @var string
+     */
+    const NATIVE_BACKUP_TABLES_CHECKED = 'mainwp_native_backup_tables_checked';
+
+    /**
+     * The native backup tables, in creation order.
+     *
+     * @var string[]
+     */
+    const NATIVE_BACKUP_TABLES = array( 'wp_backup_snapshot', 'wp_backup_storage', 'wp_backup_upload_job', 'wp_backup_restore_job' );
+
+    /**
      * MySQL advisory lock name serializing the wp_backup_progress duplicate
      * collapse.
      *
@@ -187,6 +202,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_backup_progress_unique_key();
             $this->maybe_retry_backup_snapshot_run_key();
             $this->maybe_retry_backup_task_last_continued();
+            $this->maybe_retry_native_backup_tables();
             $pending = (int) get_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
             if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
                 $this->repair_backup_site_unique_keys();
@@ -480,102 +496,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $tbl  .= ') ' . $charset_collate;
         $sql[] = $tbl;
 
-        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_snapshot' ) . " (
-  id bigint(20) unsigned NOT NULL auto_increment,
-  task_id int(11) NOT NULL,
-  site_id int(11) NOT NULL,
-  type varchar(20) NOT NULL,
-  parent_id bigint(20) unsigned NULL DEFAULT NULL,
-  run_key varchar(191) NULL DEFAULT NULL,
-  created int(11) NOT NULL DEFAULT 0,
-  archives text NOT NULL DEFAULT '',
-  manifest_path text NOT NULL DEFAULT '',
-  status varchar(20) NOT NULL DEFAULT 'complete',
-  offsite_state varchar(20) NOT NULL DEFAULT '',
-  verified_at int(11) NOT NULL DEFAULT 0,
-  encryption text NOT NULL DEFAULT '',
-  woo_meta text NOT NULL DEFAULT '',
-  test_restore_state varchar(20) NOT NULL DEFAULT '',
-  test_restore_at int(11) NOT NULL DEFAULT 0,
-  UNIQUE KEY uniq_run_key (run_key),
-  KEY idx_site_task (site_id, task_id),
-  KEY idx_parent (parent_id),
-  KEY idx_offsite_state (offsite_state),
-  KEY idx_test_restore_state (test_restore_state)";
-        if ( empty( $currentVersion ) || $this->is_table_missing( 'wp_backup_snapshot' ) ) {
-            $tbl .= ',
-  PRIMARY KEY  (id)  ';
+        foreach ( self::NATIVE_BACKUP_TABLES as $table_key ) {
+            $sql[] = $this->native_backup_table_sql( $table_key, $currentVersion, $charset_collate );
         }
-        $tbl  .= ') ' . $charset_collate;
-        $sql[] = $tbl;
-
-        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_storage' ) . " (
-  id int(11) NOT NULL auto_increment,
-  provider varchar(32) NOT NULL DEFAULT '',
-  name varchar(255) NOT NULL DEFAULT '',
-  settings longtext NOT NULL,
-  is_default tinyint(1) NOT NULL DEFAULT 0,
-  created int(11) NOT NULL DEFAULT 0,
-  updated int(11) NOT NULL DEFAULT 0,
-  KEY idx_provider (provider)";
-        if ( empty( $currentVersion ) || $this->is_table_missing( 'wp_backup_storage' ) ) {
-            $tbl .= ',
-  PRIMARY KEY  (id)  ';
-        }
-        $tbl  .= ') ' . $charset_collate;
-        $sql[] = $tbl;
-
-        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_upload_job' ) . " (
-  id bigint(20) unsigned NOT NULL auto_increment,
-  snapshot_id bigint(20) unsigned NOT NULL,
-  destination_id int(11) NOT NULL,
-  kind varchar(10) NOT NULL DEFAULT 'upload',
-  provider varchar(20) NOT NULL DEFAULT '',
-  status varchar(32) NOT NULL DEFAULT 'pending',
-  attempt_count int(11) NOT NULL DEFAULT 0,
-  reclaim_count int(11) NOT NULL DEFAULT 0,
-  next_retry_at int(11) NOT NULL DEFAULT 0,
-  locked_until int(11) NOT NULL DEFAULT 0,
-  locked_by varchar(64) NOT NULL DEFAULT '',
-  checkpoint longtext NOT NULL,
-  last_error text NOT NULL DEFAULT '',
-  created int(11) NOT NULL DEFAULT 0,
-  updated int(11) NOT NULL DEFAULT 0,
-  UNIQUE KEY uniq_snap_dest_kind (snapshot_id, destination_id, kind),
-  KEY idx_status_retry (status, next_retry_at)";
-        if ( empty( $currentVersion ) || $this->is_table_missing( 'wp_backup_upload_job' ) ) {
-            $tbl .= ',
-  PRIMARY KEY  (id)  ';
-        }
-        $tbl  .= ') ' . $charset_collate;
-        $sql[] = $tbl;
-
-        $tbl = 'CREATE TABLE ' . $this->table_name( 'wp_backup_restore_job' ) . " (
-  id bigint(20) unsigned NOT NULL auto_increment,
-  site_id int(11) NOT NULL,
-  active_site_id bigint unsigned NULL,
-  snapshot_id bigint(20) unsigned NOT NULL,
-  status varchar(32) NOT NULL DEFAULT 'pending',
-  child_task_id varchar(64) NOT NULL DEFAULT '',
-  pre_snapshot_task_id varchar(64) NOT NULL DEFAULT '',
-  checkpoint longtext NOT NULL,
-  last_error text NOT NULL DEFAULT '',
-  attempt_count int(11) NOT NULL DEFAULT 0,
-  reclaim_count int(11) NOT NULL DEFAULT 0,
-  next_retry_at int(11) NOT NULL DEFAULT 0,
-  locked_until int(11) NOT NULL DEFAULT 0,
-  locked_by varchar(64) NOT NULL DEFAULT '',
-  created int(11) NOT NULL DEFAULT 0,
-  updated int(11) NOT NULL DEFAULT 0,
-  UNIQUE KEY uniq_active_site (active_site_id),
-  KEY idx_site (site_id),
-  KEY idx_status_retry (status, next_retry_at)";
-        if ( empty( $currentVersion ) || $this->is_table_missing( 'wp_backup_restore_job' ) ) {
-            $tbl .= ',
-  PRIMARY KEY  (id)  ';
-        }
-        $tbl  .= ') ' . $charset_collate;
-        $sql[] = $tbl;
 
         $tbl = 'CREATE TABLE ' . $this->table_name( 'api_keys' ) . ' (
     key_id bigint(20) unsigned NOT NULL auto_increment,
@@ -691,6 +614,133 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     private function is_table_missing( $table_key ) {
         $table = $this->table_name( $table_key );
         return null === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $table ) ) );
+    }
+
+    /**
+     * Re-create a native backup table dbDelta failed to create.
+     *
+     * The version is stamped even when a CREATE fails, so without this a
+     * missing table would never be created again. The current-version path
+     * runs on every request, so the check itself runs at most hourly.
+     *
+     * @return bool Whether a missing table was found and creation was retried.
+     */
+    public function maybe_retry_native_backup_tables() {
+        $checked = (int) get_site_option( self::NATIVE_BACKUP_TABLES_CHECKED );
+        if ( $checked && time() - $checked < HOUR_IN_SECONDS ) {
+            return false;
+        }
+        update_site_option( self::NATIVE_BACKUP_TABLES_CHECKED, time() );
+
+        $missing = array_filter( self::NATIVE_BACKUP_TABLES, array( $this, 'is_table_missing' ) );
+        if ( empty( $missing ) ) {
+            return false;
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php'; // NOSONAR - WP compatible.
+        $charset_collate = $this->wpdb->get_charset_collate();
+        $current_version = get_site_option( $this->option_db_key );
+        $suppress        = $this->wpdb->suppress_errors();
+        foreach ( $missing as $table_key ) {
+            dbDelta( $this->native_backup_table_sql( $table_key, $current_version, $charset_collate ) );
+            if ( $this->is_table_missing( $table_key ) ) {
+                // Install runs before the mainwp_log_warning listeners are registered; use the logger directly.
+                MainWP_Logger::instance()->warning( sprintf( 'Native backup table %s could not be created: %s', $this->table_name( $table_key ), $this->wpdb->last_error ) );
+            }
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        return true;
+    }
+
+    /**
+     * CREATE TABLE statement for one native backup table.
+     *
+     * Shared by install() and the current-version retry, because dbDelta
+     * failures do not hold back the version stamp.
+     *
+     * @param string       $table_key       One of NATIVE_BACKUP_TABLES.
+     * @param string|false $current_version Stored DB version, false on a fresh install.
+     * @param string       $charset_collate Charset and collation clause.
+     *
+     * @return string
+     */
+    private function native_backup_table_sql( $table_key, $current_version, $charset_collate ) {
+        $columns = array(
+            'wp_backup_snapshot'    => "  id bigint(20) unsigned NOT NULL auto_increment,
+  task_id int(11) NOT NULL,
+  site_id int(11) NOT NULL,
+  type varchar(20) NOT NULL,
+  parent_id bigint(20) unsigned NULL DEFAULT NULL,
+  run_key varchar(191) NULL DEFAULT NULL,
+  created int(11) NOT NULL DEFAULT 0,
+  archives text NOT NULL DEFAULT '',
+  manifest_path text NOT NULL DEFAULT '',
+  status varchar(20) NOT NULL DEFAULT 'complete',
+  offsite_state varchar(20) NOT NULL DEFAULT '',
+  verified_at int(11) NOT NULL DEFAULT 0,
+  encryption text NOT NULL DEFAULT '',
+  woo_meta text NOT NULL DEFAULT '',
+  test_restore_state varchar(20) NOT NULL DEFAULT '',
+  test_restore_at int(11) NOT NULL DEFAULT 0,
+  UNIQUE KEY uniq_run_key (run_key),
+  KEY idx_site_task (site_id, task_id),
+  KEY idx_parent (parent_id),
+  KEY idx_offsite_state (offsite_state),
+  KEY idx_test_restore_state (test_restore_state)",
+            'wp_backup_storage'     => "  id int(11) NOT NULL auto_increment,
+  provider varchar(32) NOT NULL DEFAULT '',
+  name varchar(255) NOT NULL DEFAULT '',
+  settings longtext NOT NULL,
+  is_default tinyint(1) NOT NULL DEFAULT 0,
+  created int(11) NOT NULL DEFAULT 0,
+  updated int(11) NOT NULL DEFAULT 0,
+  KEY idx_provider (provider)",
+            'wp_backup_upload_job'  => "  id bigint(20) unsigned NOT NULL auto_increment,
+  snapshot_id bigint(20) unsigned NOT NULL,
+  destination_id int(11) NOT NULL,
+  kind varchar(10) NOT NULL DEFAULT 'upload',
+  provider varchar(20) NOT NULL DEFAULT '',
+  status varchar(32) NOT NULL DEFAULT 'pending',
+  attempt_count int(11) NOT NULL DEFAULT 0,
+  reclaim_count int(11) NOT NULL DEFAULT 0,
+  next_retry_at int(11) NOT NULL DEFAULT 0,
+  locked_until int(11) NOT NULL DEFAULT 0,
+  locked_by varchar(64) NOT NULL DEFAULT '',
+  checkpoint longtext NOT NULL,
+  last_error text NOT NULL DEFAULT '',
+  created int(11) NOT NULL DEFAULT 0,
+  updated int(11) NOT NULL DEFAULT 0,
+  UNIQUE KEY uniq_snap_dest_kind (snapshot_id, destination_id, kind),
+  KEY idx_status_retry (status, next_retry_at)",
+            'wp_backup_restore_job' => "  id bigint(20) unsigned NOT NULL auto_increment,
+  site_id int(11) NOT NULL,
+  active_site_id bigint unsigned NULL,
+  snapshot_id bigint(20) unsigned NOT NULL,
+  status varchar(32) NOT NULL DEFAULT 'pending',
+  child_task_id varchar(64) NOT NULL DEFAULT '',
+  pre_snapshot_task_id varchar(64) NOT NULL DEFAULT '',
+  checkpoint longtext NOT NULL,
+  last_error text NOT NULL DEFAULT '',
+  attempt_count int(11) NOT NULL DEFAULT 0,
+  reclaim_count int(11) NOT NULL DEFAULT 0,
+  next_retry_at int(11) NOT NULL DEFAULT 0,
+  locked_until int(11) NOT NULL DEFAULT 0,
+  locked_by varchar(64) NOT NULL DEFAULT '',
+  created int(11) NOT NULL DEFAULT 0,
+  updated int(11) NOT NULL DEFAULT 0,
+  UNIQUE KEY uniq_active_site (active_site_id),
+  KEY idx_site (site_id),
+  KEY idx_status_retry (status, next_retry_at)",
+        );
+
+        $tbl = 'CREATE TABLE ' . $this->table_name( $table_key ) . ' (
+' . $columns[ $table_key ];
+        if ( empty( $current_version ) || $this->is_table_missing( $table_key ) ) {
+            $tbl .= ',
+  PRIMARY KEY  (id)  ';
+        }
+        return $tbl . ') ' . $charset_collate;
     }
 
     /**

@@ -112,7 +112,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             <button type="button" class="ui mini button" id="mainwp-native-backup-cancel-btn" style="display: none;">
                                 <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
                             </button>
-                            <button type="button" class="ui mini basic button<?php echo $site_id > 0 ? '' : ' disabled'; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( 0, $site_id ); ?>>
+                            <button type="button" class="ui mini basic button<?php echo $controls_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $controls_off ); ?>>
                                 <i class="broom icon"></i><?php esc_html_e( 'Clean Up', 'mainwp' ); ?>
                             </button>
                         </div>
@@ -151,7 +151,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             </div>
 
             <div class="ui yellow message" id="mainwp-snapshots-disconnected"<?php echo $disconnected ? '' : ' style="display: none;"'; ?>>
-                <i class="exclamation triangle icon"></i>
                 <?php esc_html_e( 'This site is disconnected from the Dashboard, so Back Up Now and Restore are turned off until it reconnects.', 'mainwp' ); ?>
                 <a href="<?php echo esc_url( $reconnect_url ); ?>" id="mainwp-snapshots-reconnect-link"><?php esc_html_e( 'Reconnect the site', 'mainwp' ); ?></a>
             </div>
@@ -162,7 +161,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( ! $locked && '' !== $test_restore_notice ) :
                     ?>
                 <div class="ui small info message">
-                    <i class="info circle icon"></i>
                     <?php echo esc_html( $test_restore_notice ); ?>
                 </div>
                 <?php endif; ?>
@@ -200,8 +198,19 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     </tbody>
                 </table>
                 <div id="mainwp-restore-failed-jobs" style="display:none;">
-                    <h4 class="ui header"><?php esc_html_e( 'Failed and cancelled restores', 'mainwp' ); ?></h4>
-                    <div class="ui divided list"></div>
+                    <h4 class="ui header"><?php esc_html_e( 'Recent restores', 'mainwp' ); ?></h4>
+                    <table class="ui table" id="mainwp-restore-history-table">
+                        <thead>
+                            <tr>
+                                <th scope="col" class="collapsing"><?php esc_html_e( 'Restore', 'mainwp' ); ?></th>
+                                <th scope="col" class="collapsing"><?php esc_html_e( 'Started', 'mainwp' ); ?></th>
+                                <th scope="col" class="collapsing"><?php esc_html_e( 'Result', 'mainwp' ); ?></th>
+                                <th scope="col"><?php esc_html_e( 'Details', 'mainwp' ); ?></th>
+                                <th scope="col" class="collapsing"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -211,7 +220,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             <div class="content">
                 <div id="mainwp-restore-confirm-pane">
                     <div class="ui yellow message">
-                        <i class="warning circle icon"></i>
                         <span id="mainwp-restore-warning-text"><?php esc_html_e( 'Restoring replaces the site\'s files and database with the contents of this backup. Anything changed since the backup was taken will be overwritten.', 'mainwp' ); ?></span>
                     </div>
                     <div class="ui form">
@@ -316,6 +324,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             };
             var statusLabels = <?php echo wp_json_encode( $labels ); ?>;
             var rollbackStatusLabels = <?php echo wp_json_encode( $rollback_labels ); ?>;
+            var rollbackActionLabels = {
+                rollBack: '<?php echo esc_js( esc_html__( 'Roll Back', 'mainwp' ) ); ?>',
+                retry: '<?php echo esc_js( esc_html__( 'Retry rollback', 'mainwp' ) ); ?>'
+            };
+            var historyStatusColors = { completed: 'green', failed_permanent: 'red', cancelled: 'grey' };
+            var safetyNoteText = '<?php echo esc_js( esc_html__( 'A safety backup was taken before this restore. If the result looks wrong, you can roll back to it.', 'mainwp' ) ); ?>';
             var siteDisconnected = <?php echo $disconnected ? 'true' : 'false'; ?>;
             var backupTypeLabels = <?php echo wp_json_encode( $type_labels ); ?>;
             var currentSite = <?php echo (int) $site_id; ?>;
@@ -461,11 +475,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             // Back Up Now and Clean Up act on the selected site, so they follow
-            // the list: never left disabled by a reload that failed. Back Up Now
-            // also stays off while the site is disconnected; the server refuses
-            // it then anyway.
+            // the list: never left disabled by a reload that failed. Both also
+            // stay off while the site is disconnected; the server refuses Back
+            // Up Now then anyway.
             function enableSnapshotControls( enabled ) {
-                $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled ).toggleClass( 'disabled', ! enabled );
+                $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled || siteDisconnected ).toggleClass( 'disabled', ! enabled || siteDisconnected );
                 $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', ! enabled || siteDisconnected ).toggleClass( 'disabled', ! enabled || siteDisconnected );
             }
 
@@ -479,7 +493,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function testRestoreCell( snap ) {
                 if ( 'pass' === snap.test_restore_state ) {
-                    var testedOn = snap.test_restore_at > 0 ? ' ' + new Date( snap.test_restore_at * 1000 ).toLocaleDateString() : '';
+                    var testedOn = snap.test_restore_label ? ' ' + escAttr( snap.test_restore_label ) : '';
                     return '<span class="ui mini green label"><i class="check icon"></i>' + testRestoreLabels.pass + '</span>' + testedOn;
                 }
                 if ( 'fail' === snap.test_restore_state ) {
@@ -519,8 +533,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     },
                     {
                         "data": "created",
-                        "render": function ( data, type ) {
-                            return ( 'display' === type || 'filter' === type ) ? new Date( data * 1000 ).toLocaleString() : ( parseInt( data, 10 ) || 0 );
+                        "render": function ( data, type, snap ) {
+                            return ( 'display' === type || 'filter' === type ) ? escAttr( snap.created_label || '' ) : ( parseInt( data, 10 ) || 0 );
                         }
                     },
                     {
@@ -630,7 +644,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
                 setSnapshotsPlaceholder( snapshotsPlaceholders.loading );
                 snapshotsTable.clear().draw();
-                $( '#mainwp-restore-failed-jobs' ).hide().find( '.list' ).empty();
+                $( '#mainwp-restore-failed-jobs' ).hide().find( 'tbody' ).empty();
                 $.post( ajaxurl, { action: 'mainwp_restore_snapshot_list', security: nonces.list, site_id: siteId }, function ( response ) {
                     if ( siteId !== currentSite ) {
                         return; // A site switch superseded this request; its response must not repaint the newer site's list.
@@ -652,25 +666,32 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     snapshotsTable.draw();
 
                     var failedJobs = response.failed_restore_jobs || [];
-                    var $failedList = $( '#mainwp-restore-failed-jobs .list' ).empty();
+                    var $history = $( '#mainwp-restore-history-table tbody' ).empty();
                     failedJobs.forEach( function ( job ) {
-                        var $item = $( '<div class="item"></div>' );
                         var jobLabels = job.is_rollback ? rollbackStatusLabels : statusLabels;
-                        // A failed rollback offers no Roll Back of its own: rolling
-                        // back a rollback is not something the user can reason about.
-                        if ( job.has_rollback && ! job.is_rollback ) {
-                            $( '<div class="right floated content"></div>' ).append(
-                                $( '<button type="button" class="ui mini basic button mainwp-restore-failed-job"></button>' )
-                                    .attr( 'data-job-id', job.job_id )
-                                    .prop( 'disabled', !! response.active_restore_job_id || siteDisconnected )
-                                    .text( '<?php echo esc_js( esc_html__( 'Roll Back', 'mainwp' ) ); ?>' )
-                            ).appendTo( $item );
+                        var jobMessage = ( job.error_code && restoreOutcomeMessages[ job.error_code ] ) || job.last_error;
+                        if ( 'completed' === job.status && ! jobMessage ) {
+                            jobMessage = safetyNoteText;
                         }
-                        $( '<div class="content"></div>' ).append(
-                            $( '<div class="header"></div>' ).text( ( jobLabels[ job.status ] || statusLabels[ job.status ] || job.status ) + ' #' + job.job_id ),
-                            $( '<div class="description"></div>' ).text( ( job.error_code && restoreOutcomeMessages[ job.error_code ] ) || job.last_error )
-                        ).appendTo( $item );
-                        $failedList.append( $item );
+                        var $action = $( '<td class="collapsing"></td>' );
+                        // A failed rollback still holds the safety backup it
+                        // restores from, so it offers another attempt.
+                        if ( job.has_rollback ) {
+                            $( '<button type="button" class="ui mini basic button mainwp-restore-failed-job"></button>' )
+                                .attr( 'data-job-id', job.job_id )
+                                .prop( 'disabled', !! response.active_restore_job_id || siteDisconnected )
+                                .text( job.is_rollback ? rollbackActionLabels.retry : rollbackActionLabels.rollBack )
+                                .appendTo( $action );
+                        }
+                        $( '<tr></tr>' ).append(
+                            $( '<td class="collapsing"></td>' ).text( '#' + job.job_id ),
+                            $( '<td class="collapsing"></td>' ).text( job.date_label || '' ),
+                            $( '<td class="collapsing"></td>' ).append(
+                                $( '<span class="ui small label"></span>' ).addClass( historyStatusColors[ job.status ] || 'grey' ).text( jobLabels[ job.status ] || statusLabels[ job.status ] || job.status )
+                            ),
+                            $( '<td></td>' ).text( jobMessage ),
+                            $action
+                        ).appendTo( $history );
                     } );
                     $( '#mainwp-restore-failed-jobs' ).toggle( failedJobs.length > 0 );
 
@@ -733,11 +754,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-spinner' ).toggle( ! terminal );
                 $( '#mainwp-restore-cancel-btn' ).toggle( ! terminal && ! cancelPending && [ 'pending', 'pre_snapshot', 'staging', 'transferring', 'failed_retryable', 'running' ].indexOf( data.status ) !== -1 );
                 // A rollback job carries the safety backup it restores from, but
-                // that backup is not a way back from the rollback itself.
+                // that backup is not a way back from the rollback itself. A
+                // failed rollback still holds it, so it can be tried again.
                 var safetyBackup = !! data.has_rollback && ! isRollback;
+                var retryRollback = !! data.has_rollback && isRollback;
                 $( '#mainwp-restore-cancel-warning' ).toggle( 'running' === data.status && ! cancelPending );
                 $( '#mainwp-restore-cancel-rollback-note' ).toggle( safetyBackup );
-                $( '#mainwp-restore-rollback-btn' ).toggle( ! rollbackRequestPending && terminal && safetyBackup );
+                $( '#mainwp-restore-rollback-btn' ).text( retryRollback ? rollbackActionLabels.retry : rollbackActionLabels.rollBack );
+                $( '#mainwp-restore-rollback-btn' ).toggle( ! rollbackRequestPending && terminal && ( safetyBackup || retryRollback ) );
 
                 // Surface the safety backup whenever one exists for this run,
                 // so the safety net is visible and not implied (L4).
@@ -755,10 +779,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
 
                 var retryingAbout = '';
-                if ( 'failed_retryable' === data.status && data.next_retry_at ) {
+                if ( 'failed_retryable' === data.status && data.next_retry_label ) {
                     // A 40-minute backoff without a clock reads as hung; say
                     // when the next attempt comes.
-                    retryingAbout = ' <?php echo esc_js( esc_html__( 'Retrying automatically about', 'mainwp' ) ); ?> ' + new Date( data.next_retry_at * 1000 ).toLocaleTimeString( [], { hour: '2-digit', minute: '2-digit' } ) + '.';
+                    retryingAbout = ' <?php echo esc_js( esc_html__( 'Retrying automatically about', 'mainwp' ) ); ?> ' + ( data.next_retry_label || '' ) + '.';
                 }
 
                 if ( terminal ) {
@@ -1290,7 +1314,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             } );
 
             $( '#mainwp-snapshots-cleanup-btn' ).on( 'click', function () {
-                if ( ! ( currentSite > 0 ) ) {
+                if ( $( this ).hasClass( 'disabled' ) || ! ( currentSite > 0 ) ) {
                     return;
                 }
                 var runCleanup = function () {
@@ -1316,11 +1340,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     } );
                 };
                 var confirmMsg = '<?php echo esc_js( esc_html__( 'Clean up this site\'s backups? Leftover files from interrupted backups are removed, and old on-demand backups beyond the retention count are pruned. Pruned backups can no longer be restored.', 'mainwp' ) ); ?>';
-                if ( 'function' === typeof mainwp_confirm ) {
-                    mainwp_confirm( confirmMsg, runCleanup );
-                } else if ( window.confirm( confirmMsg ) ) {
-                    runCleanup();
-                }
+                mainwp_confirm( confirmMsg, runCleanup );
             } );
 
             if ( currentSite > 0 ) {

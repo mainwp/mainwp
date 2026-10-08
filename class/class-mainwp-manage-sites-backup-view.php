@@ -116,7 +116,6 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         }
         ?>
         <div class="ui alt segment">
-            <div class="mainwp-main-content">
             <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
             <?php if ( $native_backups ) : ?>
                 <?php // Collapsed so the snapshot list above stays the page's one backup action. ?>
@@ -140,7 +139,6 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
                 static::render_backup_options( $website->id );
                 ?>
             <?php endif; ?>
-            </div>
         </div>
 
         <div class="ui modal" id="managesite-backup-status-box">
@@ -150,7 +148,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             <div class="scrolling content mainwp-modal-content">
             </div>
             <div class="actions mainwp-modal-actions">
-                <input id="managesite-backup-status-close" type="button" name="Close" value="<?php esc_attr_e( 'Cancel', 'mainwp' ); ?>" class="button" />
+                <input id="managesite-backup-status-close" type="button" name="Close" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>" class="ui button" />
             </div>
         </div>
 
@@ -289,38 +287,20 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Known backup locations', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox">
                             <input type="checkbox" id="mainwp-known-backup-locations">
-                        </div>
-                    </div>
-                    <div class="ui grid field">
-                        <label class="six wide column middle aligned"></label>
-                        <div class="ten wide column ui toggle checkbox">
-                            <textarea id="mainwp-kbl-content" disabled></textarea><br />
                             <em><?php esc_html_e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to time out.', 'mainwp' ); ?></em>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Known cache locations', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox">
-                            <input type="checkbox" id="mainwp-known-cache-locations"><br />
-                        </div>
-                    </div>
-                    <div class="ui grid field">
-                        <label class="six wide column middle aligned"></label>
-                        <div class="ten wide column ui toggle checkbox">
-                            <textarea id="mainwp-kcl-content" disabled></textarea><br />
+                            <input type="checkbox" id="mainwp-known-cache-locations">
                             <em><?php esc_html_e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to time out. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Non-WordPress folders', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox">
-                            <input type="checkbox" id="mainwp-non-wordpress-folders"><br />
-                        </div>
-                    </div>
-                    <div class="ui grid field">
-                        <label class="six wide column middle aligned"></label>
-                        <div class="ten wide column ui toggle checkbox">
-                            <textarea id="mainwp-nwl-content" disabled></textarea><br />
+                            <input type="checkbox" id="mainwp-non-wordpress-folders">
                             <em><?php esc_html_e( 'This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp' ); ?></em>
                         </div>
                     </div>

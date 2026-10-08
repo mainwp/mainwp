@@ -2107,3 +2107,8 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
 .mainwp-connect-failure-ux code {
     word-break: break-all;
 }
+
+/* WordPress core gives .card a 255px min-width, which pushes the two-per-row Backup Health cards onto four rows in a one-third widget. */
+.mainwp-ui #mainwp-backup-health-counts.ui.cards > .card {
+    min-width: 0;
+}

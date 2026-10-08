@@ -74,10 +74,11 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 
 		// A failed table-level test can leave a table missing for later
 		// tests; rerun the installer against an older stored version first.
-		$snapshot_table   = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
-		$storage_table    = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
-		$upload_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
-		if ( ! $this->table_exists( $snapshot_table ) || ! $this->table_exists( $storage_table ) || ! $this->table_exists( $upload_job_table ) ) {
+		$snapshot_table    = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$storage_table     = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$upload_job_table  = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$restore_job_table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		if ( ! $this->table_exists( $snapshot_table ) || ! $this->table_exists( $storage_table ) || ! $this->table_exists( $upload_job_table ) || ! $this->table_exists( $restore_job_table ) ) {
 			$this->with_real_tables(
 				function () {
 					update_site_option( 'mainwp_db_version', '9.0.2.7' );
@@ -180,6 +181,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		delete_site_option( MainWP_Install::BACKUP_PROGRESS_UNIQ_KEY_REPAIR_PENDING );
 		delete_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
 		delete_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
+		delete_site_option( MainWP_Install::NATIVE_BACKUP_TABLES_CHECKED );
 
 		if ( false === $this->saved_db_version ) {
 			delete_site_option( 'mainwp_db_version' );
@@ -2814,6 +2816,42 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			}
 			self::commit_transaction();
 		}
+	}
+
+	/**
+	 * install() stamps the version even when dbDelta could not create a
+	 * native backup table, so a current install re-creates a missing one,
+	 * at most once an hour.
+	 *
+	 * @dataProvider data_backup_tables_created_after_main_version
+	 *
+	 * @param string $table_key Table key for get_table_name().
+	 * @return void
+	 */
+	public function test_current_install_recreates_missing_native_backup_table_hourly( $table_key ) {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( $table_key );
+
+		$this->with_real_tables(
+			function () use ( $wpdb, $table ) {
+				$wpdb->query( "DROP TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.RestrictedFunctions -- test fixture, identifiers cannot be prepared.
+				update_site_option( 'mainwp_db_version', '9.0.2.28' );
+
+				$checked = time() - 60;
+				update_site_option( MainWP_Install::NATIVE_BACKUP_TABLES_CHECKED, $checked );
+				MainWP_Install::instance()->install();
+				$this->assertFalse( $this->table_exists( $table ), 'A check within the hour must not run again.' );
+				$this->assertSame( $checked, (int) get_site_option( MainWP_Install::NATIVE_BACKUP_TABLES_CHECKED ) );
+
+				update_site_option( MainWP_Install::NATIVE_BACKUP_TABLES_CHECKED, time() - HOUR_IN_SECONDS - 1 );
+				MainWP_Install::instance()->install();
+			}
+		);
+
+		$this->assertTrue( $this->table_exists( $table ), "{$table_key} must be re-created on a current install." );
+		$this->assertSame( array( 'id' ), $this->index_columns( $table, 'PRIMARY' ), "{$table_key} must be re-created with its id primary key." );
+		$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( MainWP_Install::NATIVE_BACKUP_TABLES_CHECKED ) );
 	}
 
 	/**

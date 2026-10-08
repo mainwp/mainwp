@@ -6408,7 +6408,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$earlier = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED, array( 'pre_snapshot_task_id' => 'task-earlier-pre' ) );
 		$later   = $this->make_job( $this->safety_checkpoint(), $store::STATUS_VERIFYING, array( 'pre_snapshot_task_id' => 'task-later-pre' ) );
 
-		$later = $this->tick( $later );
+		$this->responses['backup_task_prune'] = $this->prune_answer( 'pruned' );
+		$later                                = $this->tick( $later );
 		$this->assertSame( $store::STATUS_COMPLETED, $later->status );
 
 		$prunes = array_values(
@@ -6433,6 +6434,178 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$third       = $this->make_job( array(), $store::STATUS_VERIFYING );
 		$this->tick( $third );
 		$this->assertSame( array( '["task-later-pre"]' ), array_column( array_column( $this->calls, 'params' ), 'task_ids' ) );
+	}
+
+	/**
+	 * The child's answer to a one-task prune request.
+	 *
+	 * @param string $outcome pruned, active or missing.
+	 *
+	 * @return array Child response.
+	 */
+	private function prune_answer( $outcome ) {
+		$answer = array(
+			'result'  => 'ok',
+			'pruned'  => 0,
+			'active'  => 0,
+			'missing' => 0,
+		);
+		++$answer[ $outcome ];
+		return $answer;
+	}
+
+	/**
+	 * A rollback of the earlier restore cannot start while the completing
+	 * restore removes that restore's safety backup, so no rollback is left
+	 * pointing at artifacts the child is deleting.
+	 */
+	public function test_rollback_of_earlier_restore_is_refused_while_its_safety_backup_is_pruned() {
+		$store   = MainWP_Backup_Restore_Job_Store::instance();
+		$earlier = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED, array( 'pre_snapshot_task_id' => 'task-earlier-pre' ) );
+		$later   = $this->make_job( $this->safety_checkpoint(), $store::STATUS_VERIFYING, array( 'pre_snapshot_task_id' => 'task-later-pre' ) );
+
+		$this->responses['backup_task_prune'] = $this->prune_answer( 'pruned' );
+		$refusal                              = null;
+		$during_prune                         = function ( $pre, $website, $what ) use ( &$refusal, $store, $earlier ) {
+			if ( 'backup_task_prune' === $what && null === $refusal ) {
+				$refusal = $this->rollback_refusal( $store->get_job( (int) $earlier->id ) );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $during_prune, 5, 3 );
+		try {
+			$later = $this->tick( $later );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $during_prune, 5 );
+		}
+
+		$this->assertSame( $store::STATUS_COMPLETED, $later->status );
+		$this->assertSame( 'A restore is already running for this site. Wait for it to finish before rolling back.', $refusal, 'The completing restore must still hold the site while it prunes.' );
+		$this->assertTrue( $store->get_job( (int) $earlier->id )->checkpoint['pre_snapshot_pruned'] );
+		$this->assertNull( $store->get_active_job_for_site( $this->site_id ), 'No rollback was created.' );
+	}
+
+	/**
+	 * A failed rollback of the earlier restore still restores from that
+	 * safety backup, so a later completion leaves it on the site.
+	 */
+	public function test_prune_keeps_safety_backup_a_failed_rollback_can_retry() {
+		$store    = MainWP_Backup_Restore_Job_Store::instance();
+		$earlier  = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED, array( 'pre_snapshot_task_id' => 'task-earlier-pre' ) );
+		$rollback = $this->make_job(
+			$this->safety_checkpoint() + array(
+				'is_rollback' => true,
+				'rollback_of' => (int) $earlier->id,
+			),
+			$store::STATUS_FAILED_PERMANENT
+		);
+		$later    = $this->make_job( $this->safety_checkpoint(), $store::STATUS_VERIFYING, array( 'pre_snapshot_task_id' => 'task-later-pre' ) );
+
+		$this->responses['backup_task_prune'] = $this->prune_answer( 'pruned' );
+		$this->assertSame( $store::STATUS_COMPLETED, $this->tick( $later )->status );
+
+		$this->assertNotContains( 'backup_task_prune', array_column( $this->calls, 'what' ) );
+		$this->assertArrayNotHasKey( 'pre_snapshot_pruned', $store->get_job( (int) $earlier->id )->checkpoint );
+		$this->assertTrue( $this->orchestrator->has_rollback_source( $store->get_job( (int) $rollback->id ) ) );
+	}
+
+	/**
+	 * Only a confirmed removal retires a safety backup: the child answers per
+	 * task, and anything it did not confirm stays for the next completion.
+	 *
+	 * @dataProvider data_prune_answers
+	 *
+	 * @param mixed $answer  Child response, or a Throwable it throws.
+	 * @param bool  $retired Whether the earlier safety backup counts as removed.
+	 */
+	public function test_prune_marks_only_confirmed_removals( $answer, $retired ) {
+		$store   = MainWP_Backup_Restore_Job_Store::instance();
+		$earlier = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED, array( 'pre_snapshot_task_id' => 'task-earlier-pre' ) );
+		$later   = $this->make_job( $this->safety_checkpoint(), $store::STATUS_VERIFYING, array( 'pre_snapshot_task_id' => 'task-later-pre' ) );
+
+		$this->responses['backup_task_prune'] = is_string( $answer ) ? $this->prune_answer( $answer ) : $answer;
+		$this->assertSame( $store::STATUS_COMPLETED, $this->tick( $later )->status );
+
+		$earlier = $store->get_job( (int) $earlier->id );
+		$this->assertSame( $retired, ! empty( $earlier->checkpoint['pre_snapshot_pruned'] ) );
+		$this->assertFalse( $this->orchestrator->has_rollback_source( $earlier ), 'The later completion supersedes it either way.' );
+	}
+
+	/**
+	 * A completed restore followed by a later completed one offers no
+	 * rollback even without a recorded prune, as for restores that completed
+	 * before the prune was recorded.
+	 */
+	public function test_superseded_completed_restore_offers_no_rollback() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$store   = MainWP_Backup_Restore_Job_Store::instance();
+		$earlier = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED );
+		$later   = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED );
+
+		$this->assertFalse( $this->orchestrator->has_rollback_source( $earlier ) );
+		$this->assertTrue( $this->orchestrator->has_rollback_source( $later ) );
+		$this->assertSame( 'The safety backup from this restore was removed after a later restore finished, so there is nothing to roll back to.', $this->rollback_refusal( $earlier ) );
+		$this->assertSame( array( (int) $later->id ), array_column( $this->b194_reload_snapshots()['failed_restore_jobs'], 'job_id' ) );
+	}
+
+	/**
+	 * Child answers to a prune request.
+	 *
+	 * @return array
+	 */
+	public function data_prune_answers() {
+		return array(
+			'pruned'          => array( 'pruned', true ),
+			'already missing' => array( 'missing', true ),
+			'still active'    => array( 'active', false ),
+			'no counts'       => array( array( 'result' => 'ok' ), false ),
+			'error envelope'  => array( array( 'error' => 'Denied' ), false ),
+			'unreachable'     => array( new MainWP_Exception( 'Site unreachable.' ), false ),
+		);
+	}
+
+	/**
+	 * A safety backup the child kept because its task was still active is
+	 * retried by the next completed restore.
+	 */
+	public function test_unconfirmed_prune_is_retried_by_next_completion() {
+		$store   = MainWP_Backup_Restore_Job_Store::instance();
+		$earlier = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED, array( 'pre_snapshot_task_id' => 'task-earlier-pre' ) );
+		$later   = $this->make_job( $this->safety_checkpoint(), $store::STATUS_VERIFYING, array( 'pre_snapshot_task_id' => 'task-later-pre' ) );
+
+		$this->responses['backup_task_prune'] = $this->prune_answer( 'active' );
+		$this->tick( $later );
+
+		$this->calls                          = array();
+		$this->responses['backup_task_prune'] = $this->prune_answer( 'pruned' );
+		$third                                = $this->make_job( array(), $store::STATUS_VERIFYING );
+		$this->tick( $third );
+
+		$this->assertSame( array( '["task-earlier-pre"]', '["task-later-pre"]' ), array_column( array_column( $this->calls, 'params' ), 'task_ids' ) );
+		$this->assertTrue( $store->get_job( (int) $earlier->id )->checkpoint['pre_snapshot_pruned'] );
+	}
+
+	/**
+	 * After a reload the restore history still offers Roll Back for a
+	 * completed restore whose safety backup is on the site, and leaves out
+	 * completed restores that no longer have one.
+	 */
+	public function test_restore_list_offers_rollback_for_completed_restore_with_safety_backup() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$store     = MainWP_Backup_Restore_Job_Store::instance();
+		$pruned    = $this->make_job( $this->safety_checkpoint() + array( 'pre_snapshot_pruned' => true ), $store::STATUS_COMPLETED );
+		$no_backup = $this->make_job( array(), $store::STATUS_COMPLETED );
+		$failed    = $this->make_job( $this->safety_checkpoint(), $store::STATUS_FAILED_PERMANENT );
+		$completed = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED );
+
+		$rows = $this->b194_reload_snapshots()['failed_restore_jobs'];
+		$this->assertSame( array( (int) $completed->id, (int) $failed->id ), array_column( $rows, 'job_id' ) );
+		$this->assertSame( $store::STATUS_COMPLETED, $rows[0]['status'] );
+		$this->assertTrue( $rows[0]['has_rollback'] );
+		$this->assertFalse( $rows[0]['is_rollback'] );
+		$this->assertNotSame( '', $rows[0]['date_label'] );
+		$this->assertNotContains( (int) $pruned->id, array_column( $rows, 'job_id' ) );
+		$this->assertNotContains( (int) $no_backup->id, array_column( $rows, 'job_id' ) );
 	}
 
 	/**
@@ -6516,6 +6689,19 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( $refusal, $backup['error'] );
 		$this->assertEmpty( MainWP_DB_Backup::instance()->get_manual_backup_task( $this->site_id ), 'A refused Back Up Now must not prepare a task.' );
 
+		// A poll for a click whose run never opened would open it, so it
+		// takes the same refusal as the initiate.
+		$task = MainWP_DB_Backup::instance()->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) );
+		$poll = $this->post_ajax(
+			'mainwp_native_backup_progress',
+			array(
+				'site_id' => (string) $this->site_id,
+				'since'   => (string) time(),
+			)
+		);
+		$this->assertSame( $refusal, $poll['error'] );
+		$this->assertSame( (int) $task->last_run, (int) MainWP_DB_Backup::instance()->get_manual_backup_task( $this->site_id )->last_run, 'The refused poll must not open a run.' );
+
 		$restore = $this->post_ajax(
 			'mainwp_restore_initiate',
 			array(
@@ -6546,7 +6732,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$response = $this->post_ajax( 'mainwp_restore_initiate', array( 'site_id' => (string) $this->site_id ) );
 
-		$this->assertStringContainsString( 'Settings > Backups', $response['error'] );
+		$this->assertStringContainsString( 'Settings > General', $response['error'] );
 		$this->assertStringNotContainsString( '&gt;', $response['error'] );
 	}
 }

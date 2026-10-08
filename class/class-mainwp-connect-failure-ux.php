@@ -69,6 +69,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         'privkey',
         'pubkey',
         'mainwpsignature',
+        'mainwpsignature_adv',
         'authorization',
         'token',
         'code',
@@ -778,13 +779,13 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         // The tag split in summarize_body() turns pass<b></b>word= into "pass word=".
-        // Rejoin up to 15 words before = or : (or before a closing quote and
+        // Rejoin up to 19 words before = or : (or before a closing quote and
         // = or :) when their tail forms a sensitive name. Every sensitive name
-        // ends in a sensitive name of at most 15 characters (mainwpsignature),
+        // ends in a sensitive name of at most 19 characters (mainwpsignature_adv),
         // so even one tag per character is covered. The repeat is bounded and
         // possessive so large bodies stay linear.
         $rejoined = preg_replace_callback(
-            '/(?<![A-Za-z0-9_\-])((?:[A-Za-z0-9_\-]++\s++){1,14}[A-Za-z0-9_\-]++)\s*+([\'"]?\s*+[:=])/',
+            '/(?<![A-Za-z0-9_\-])((?:[A-Za-z0-9_\-]++\s++){1,18}[A-Za-z0-9_\-]++)\s*+([\'"]?\s*+[:=])/',
             static function ( $found ) {
                 $parts = preg_split( '/\s+/', $found[1] );
                 if ( ! is_array( $parts ) ) {
@@ -803,6 +804,22 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         );
         if ( is_string( $rejoined ) ) {
             $text = $rejoined;
+        }
+
+        // print_r() and var_dump() write [key] => value and ["key"]=> value.
+        // A value runs to the next [key] => or to the array's closing ")".
+        $dumped = preg_replace_callback(
+            '/\[\s*([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*\]\s*=>\s*(.*?)(?=\s+\[\s*[\'"]?[A-Za-z0-9_\-]*[\'"]?\s*\]\s*=>|\s+\)(?:\s|$)|$)/s',
+            static function ( $found ) {
+                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $found[2] ) ) {
+                    return '[' . $found[1] . $found[2] . $found[1] . '] => [redacted]';
+                }
+                return $found[0];
+            },
+            $text
+        );
+        if ( is_string( $dumped ) ) {
+            $text = $dumped;
         }
 
         $quoted = preg_replace_callback(

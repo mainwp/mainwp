@@ -294,6 +294,135 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Every failure surface built from a reflected child response body.
+	 *
+	 * @param string $body Raw response body.
+	 *
+	 * @return array<string,string>
+	 */
+	private function failure_surfaces( $body ): array {
+		set_transient(
+			'mainwp_public_dashboard_ip_data',
+			array(
+				'value'           => '203.0.113.10',
+				'status'          => 'pass',
+				'community_value' => 'Detected',
+			),
+			HOUR_IN_SECONDS
+		);
+		$_SERVER['SERVER_ADDR'] = '10.0.0.1';
+
+		$ux       = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+		$context  = array(
+			'http_status'      => 403,
+			'body'             => $body,
+			'skip_outbound_ip' => true,
+		);
+		$enriched = $ux::enrich_output( array(), $context );
+		$raw      = array(
+			'http_status'   => 403,
+			'response_body' => $body,
+		);
+
+		return array(
+			'response_body'     => $enriched['response_body'],
+			'response_readable' => $enriched['response_readable'],
+			'failure_ux'        => $enriched['failure_ux'],
+			'failure_ux_text'   => $enriched['failure_ux_text'],
+			'readable_raw'      => $ux::readable_response_from_output( $raw ),
+			'error_helper'      => \MainWP\Dashboard\MainWP_Error_Helper::get_connect_failure_message( null, $raw ),
+		);
+	}
+
+	/**
+	 * A reflected register request (get_post_data_not_authed) never shows userpwd or uniqueId.
+	 */
+	public function test_reflected_register_params_are_redacted_on_every_surface(): void {
+		$bodies = array(
+			'query'  => 'user=admin&function=register&mainwpver=6.3&pubkey=qa-pubkey-value&server=https://dash.example.test&uniqueId=qa-uniqueid-value&userpwd=qa-userpwd-value&page=sites&monkey=1',
+			'spaced' => 'user=admin function=register uniqueId=qa-uniqueid-value userpwd=qa-userpwd-value page=sites monkey=1',
+			'json'   => '{"user":"admin","function":"register","uniqueId":"qa-uniqueid-value","userpwd":"qa-userpwd-value","page":"sites","monkey":"1"}',
+			'glued'  => '<td>x</td><td>userpwd=qa-userpwd-value</td><td>uniqueId=qa-uniqueid-value</td><td>page=sites</td><td>monkey=1</td>',
+		);
+
+		foreach ( $bodies as $form => $body ) {
+			$surfaces = $this->failure_surfaces( $body );
+			foreach ( $surfaces as $surface_name => $surface ) {
+				$label = $form . ' / ' . $surface_name;
+				$this->assertStringNotContainsString( 'qa-userpwd-value', $surface, $label );
+				$this->assertStringNotContainsString( 'qa-uniqueid-value', $surface, $label );
+				$this->assertStringNotContainsString( 'qa-pubkey-value', $surface, $label );
+				$this->assertStringContainsString( 'json' === $form ? '"page":"sites"' : 'page=sites', html_entity_decode( $surface, ENT_QUOTES ), $label );
+				$this->assertStringContainsString( 'json' === $form ? '"monkey":"1"' : 'monkey=1', html_entity_decode( $surface, ENT_QUOTES ), $label );
+			}
+			foreach ( array( 'response_body', 'failure_ux_text' ) as $surface_name ) {
+				$name_prefix = 'json' === $form ? '"' : '';
+				$this->assertStringContainsString( $name_prefix . 'userpwd' . $name_prefix . '=[redacted]', $surfaces[ $surface_name ], $form . ' / ' . $surface_name );
+				$this->assertStringContainsString( $name_prefix . 'uniqueId' . $name_prefix . '=[redacted]', $surfaces[ $surface_name ], $form . ' / ' . $surface_name );
+			}
+		}
+	}
+
+	/**
+	 * Authed requests send mainwpsignature_adv next to mainwpsignature; both are secrets.
+	 */
+	public function test_mainwpsignature_adv_is_redacted_on_every_surface(): void {
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'mainwpsignature_adv' ) );
+
+		$bodies = array(
+			'query'  => 'function=sync&mainwpsignature=qa-legacy-sig&nonce=qa-nonce-value&data_signature=qa-data-sig&mainwpsignature_adv=qa-adv-sig&page=sites&monkey=1',
+			'spaced' => 'mainwpsignature_adv=qa-adv-sig page=sites monkey=1',
+			'json'   => '{"mainwpsignature_adv":"qa-adv-sig","page":"sites","monkey":"1"}',
+			'glued'  => '<td>x</td><td>mainwpsignature_adv=qa-adv-sig</td><td>page=sites</td><td>monkey=1</td>',
+		);
+
+		foreach ( $bodies as $form => $body ) {
+			$surfaces = $this->failure_surfaces( $body );
+			foreach ( $surfaces as $surface_name => $surface ) {
+				$label = $form . ' / ' . $surface_name;
+				foreach ( array( 'qa-legacy-sig', 'qa-nonce-value', 'qa-data-sig', 'qa-adv-sig' ) as $secret ) {
+					$this->assertStringNotContainsString( $secret, $surface, $label );
+				}
+				$this->assertStringContainsString( 'json' === $form ? '"page":"sites"' : 'page=sites', html_entity_decode( $surface, ENT_QUOTES ), $label );
+				$this->assertStringContainsString( 'json' === $form ? '"monkey":"1"' : 'monkey=1', html_entity_decode( $surface, ENT_QUOTES ), $label );
+			}
+			$name_prefix = 'json' === $form ? '"' : '';
+			$this->assertStringContainsString( $name_prefix . 'mainwpsignature_adv' . $name_prefix . '=[redacted]', $surfaces['failure_ux_text'], $form );
+		}
+	}
+
+	/**
+	 * print_r() and var_dump() style array dumps redact sensitive keys only.
+	 */
+	public function test_print_r_style_dumps_redact_sensitive_keys(): void {
+		$dump = "<pre>Array\n(\n    [user] => admin\n    [function] => register\n    [userpwd] => qa-userpwd value\n    [password] => qa-password-value\n    [mainwpsignature_adv] => qa-adv-sig\n    [page] => sites\n    [monkey] => 1\n)\n</pre><p>Error establishing a connection</p>";
+
+		$surfaces = $this->failure_surfaces( $dump );
+		foreach ( $surfaces as $surface_name => $surface ) {
+			$plain = html_entity_decode( $surface, ENT_QUOTES );
+			foreach ( array( 'qa-userpwd', 'qa-password-value', 'qa-adv-sig' ) as $secret ) {
+				$this->assertStringNotContainsString( $secret, $plain, $surface_name );
+			}
+			$this->assertStringContainsString( '[user] => admin', $plain, $surface_name );
+			$this->assertStringContainsString( '[page] => sites', $plain, $surface_name );
+			$this->assertStringContainsString( '[monkey] => 1', $plain, $surface_name );
+			$this->assertStringContainsString( 'Error establishing a connection', $plain, $surface_name );
+		}
+		foreach ( array( 'userpwd', 'password', 'mainwpsignature_adv' ) as $name ) {
+			$this->assertStringContainsString( '[' . $name . '] => [redacted]', $surfaces['response_body'], $name );
+			$this->assertStringContainsString( '[' . $name . '] => [redacted]', $surfaces['failure_ux_text'], $name );
+		}
+
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '["userpwd"]=> string(9) "qa-dumped" ["page"]=> string(5) "sites"' );
+		$this->assertStringNotContainsString( 'qa-dumped', $text );
+		$this->assertStringContainsString( '["page"]=> string(5) "sites"', $text );
+
+		// Bracketed text that is not an array key stays as written.
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '[password] reset link sent. [monkey] => banana' );
+		$this->assertSame( '[password] reset link sent. [monkey] => banana', $text );
+	}
+
+	/**
 	 * Failure HTML labels IPs and always shows outbound IP + User-Agent.
 	 */
 	public function test_failure_html_labels_edge_vs_dashboard_ip_and_user_agent(): void {

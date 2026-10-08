@@ -913,6 +913,8 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 		);
 
 		$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/run-updates-v1' ) );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( [ 'input' => [ 'confirm' => true ] ] ) );
 		$response = rest_do_request( $request );
 
 		$this->assertEquals(
@@ -1262,12 +1264,14 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 
 		// list-updates-v1 with only page param, missing per_page and types.
 		$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/run-updates-v1' ) );
-		$request->set_body_params( [
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( [
 			'input' => [
+				'confirm' => true,
 				'types' => [ 'plugins' ],
 				// site_ids_or_domains defaults to all sites.
 			],
-		] );
+		] ) );
 
 		$response = rest_do_request( $request );
 
@@ -1680,6 +1684,8 @@ class MainWP_REST_API_Execution_Test extends \WP_Test_REST_TestCase {
 		] );
 
 		$request = new WP_REST_Request( 'POST', $this->ability_run_url( 'mainwp/run-updates-v1' ) );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( [ 'input' => [ 'confirm' => true ] ] ) );
 		$response = rest_do_request( $request );
 
 		$this->assertEquals( 200, $response->get_status(), 'run-updates-v1 should return 200 OK.' );

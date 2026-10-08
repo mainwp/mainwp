@@ -1885,6 +1885,13 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'name' => MainWP_Utility::remove_http_prefix( (string) $site->name, true ),
         );
 
+        // Same favicon cleanup, and the same point relative to the DB delete,
+        // as MainWP_Manage_Sites_Handler::remove_website(). The file name is the
+        // stored favi_icon option. A missing file or a cleanup failure must not
+        // change this response. remove_website() itself is not called: it
+        // deactivates the child plugin over the network.
+        MainWP_Manage_Sites_Handler::delete_website_favicon( $site );
+
         $result = MainWP_DB::instance()->remove_website( $site->id );
 
         if ( false === $result ) {
@@ -1898,26 +1905,33 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
         // Same hooks, argument, and order as MainWP_Manage_Sites_Handler::remove_website().
         // That handler is not called here: it deactivates the child plugin over the network
         // and applies can_edit_website(), which would change this ability's contract.
-        // Demo sites are skipped, matching the handler. Hooks run only after a successful
-        // delete so a failed removal does not tell extensions to drop their per-site rows.
-        if ( ! MainWP_Demo_Handle::get_instance()->is_demo_website( $site ) ) {
-            /**
-             * Fires after a child site has been removed from the MainWP Dashboard.
-             *
-             * @param object $website Object containing child site data.
-             *
-             * @since 3.4
-             */
+        // Demo sites fire the same hooks (still with no remote deactivate) so extension
+        // rows are removed. Hooks run only after a successful delete so a failed removal
+        // does not tell extensions to drop their per-site rows.
+        /**
+         * Fires after a child site has been removed from the MainWP Dashboard.
+         *
+         * @param object $website Object containing child site data.
+         *
+         * @since 3.4
+         */
+        try {
             do_action( 'mainwp_delete_site', $site );
+        } catch ( \Throwable $e ) {
+            MainWP_Logger::instance()->debug( 'mainwp_delete_site listener failed: ' . $e->getMessage() );
+        }
 
-            /**
-             * Fires immediately after a website is deleted.
-             *
-             * @since 4.5.1.1
-             *
-             * @param object $website Website data.
-             */
+        /**
+         * Fires immediately after a website is deleted.
+         *
+         * @since 4.5.1.1
+         *
+         * @param object $website Website data.
+         */
+        try {
             do_action( 'mainwp_site_deleted', $site );
+        } catch ( \Throwable $e ) {
+            MainWP_Logger::instance()->debug( 'mainwp_site_deleted listener failed: ' . $e->getMessage() );
         }
 
         return array(

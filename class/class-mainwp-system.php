@@ -635,7 +635,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public static function is_mainwp_site_page() {
         $is_page = false;
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) ) {
+        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) ) {
             $is_page = true;
         }
         //phpcs:enable
@@ -2267,8 +2267,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public static function get_selected_sites_with_allowed_sites( $selected_ids, $current_sites_ids = array() ) {
 
-        $allowed_sites = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
-        if ( 'all' === $allowed_sites ) {
+        $allowed_ids = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( 'all' === $allowed_ids ) {
             return $selected_ids;
         }
 
@@ -2280,20 +2280,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $current_sites_ids = array();
         }
 
-        $allowed_sites = MainWP_DB::instance()->get_websites_for_current_user();
-        if ( empty( $allowed_sites ) ) {
-            return array();
-        }
-
-        $allowed_ids = array_values(
-            array_map(
-                function ( $item ) {
-                    return $item->id;
-                },
-                $allowed_sites
-            )
-        );
-
         $client_site_ids = array();
         foreach ( $selected_ids as $id ) {
             if ( in_array( $id, $allowed_ids ) ) {
@@ -2301,6 +2287,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
         }
 
+        // Team Control cannot remove memberships outside the caller's site grants.
         foreach ( $current_sites_ids as $id ) {
             if ( ! in_array( $id, $selected_ids ) && ! in_array( $id, $allowed_ids ) ) { // If it’s not in the allowed site IDs, the user is not permitted to change it.
                 $client_site_ids[] = $id; // keep this site ids.

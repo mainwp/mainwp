@@ -50,6 +50,10 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
      */
     public static function render_addition_info( $client_id ) {
 
+        if ( ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! MainWP_Client::has_client_access( $client_id ) ) {
+            return;
+        }
+
         $client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A );
 
         $note      = '';
@@ -119,9 +123,8 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
                 <div class="column">
                 <?php if ( empty( $note ) ) : ?>
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui button mini" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>"><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
-                <?php else :
-                    $el_id_cl_id_1 = $client_info['client_id'];
-                    ?>
+                <?php else : ?>
+                    <?php $el_id_cl_id_1 = $client_info['client_id']; ?>
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini button" id="mainwp-notes-<?php echo esc_attr( $el_id_cl_id_1 ); ?>"><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
                 <?php endif; ?>
                 </div>

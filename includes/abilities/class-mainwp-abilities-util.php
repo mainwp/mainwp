@@ -75,6 +75,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         'mainwp/update-site-translations-v1' => 'update_translations',
         // Ignore / unignore updates.
         'mainwp/set-ignored-updates-v1'      => 'ignore_unignore_updates',
+        'mainwp/unignore-site-updates-v1'    => 'ignore_unignore_updates',
         'mainwp/ignore-site-core-v1'         => 'ignore_unignore_updates',
         'mainwp/ignore-site-plugins-v1'      => 'ignore_unignore_updates',
         'mainwp/ignore-site-themes-v1'       => 'ignore_unignore_updates',
@@ -106,32 +107,35 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Test seam for machine-context detection: WP_CLI / MAINWP_REST_API_DOING
      * cannot be defined per-test, so tests force this via reflection. Never
-     * set in production code; null means real constant detection.
+     * set in production code; true simulates CLI, 'rest' simulates REST,
+     * false disables machine context, and null uses real constant detection.
      *
-     * @var bool|null
+     * @var bool|string|null
      */
     private static $machine_context_override = null;
 
     /**
-     * Whether this request runs in WP_CLI or API-key REST.
-     *
-     * On its own this is NOT a bypass: current_user_has_operation_right()
-     * additionally requires that no user is authenticated. DOING_CRON is
+     * A WP-CLI run is a trusted local operator, so user zero there keeps full
+     * scope. Under API-key REST a key always runs as its owner; user zero means
+     * the owner is gone, and that request must get nothing. DOING_CRON is
      * deliberately absent: the batch worker restores the job owner via
      * wp_set_current_user() and wants real evaluation of that owner's rights.
      *
-     * @return bool True in a machine execution context.
+     * @return string 'cli', 'rest', or an empty string for other contexts.
      */
-    private static function is_machine_execution_context(): bool {
+    private static function get_machine_execution_context(): string {
+        if ( 'rest' === self::$machine_context_override ) {
+            return 'rest';
+        }
         if ( null !== self::$machine_context_override ) {
-            return self::$machine_context_override;
+            return self::$machine_context_override ? 'cli' : '';
         }
 
         if ( defined( 'WP_CLI' ) && WP_CLI ) {
-            return true;
+            return 'cli';
         }
 
-        return defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING;
+        return defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ? 'rest' : '';
     }
 
     /**
@@ -142,15 +146,16 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * Without Team Control the filter defaults to true.
      *
      * Team Control denies an empty current user. Allowing machine requests
-     * without a user preserves WP-CLI automation. API-key REST authenticates
-     * as the key owner, whose Team Control rights must still apply.
+     * without a user preserves WP-CLI automation. Userless REST is denied;
+     * authenticated API-key owners retain their Team Control rights.
      *
      * @param string $right Dashboard right slug (delete_sites, update_plugins, ...).
      * @return bool True when the operation right is held.
      */
     public static function current_user_has_operation_right( string $right ): bool {
-        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
-            return true;
+        $machine_context = self::get_machine_execution_context();
+        if ( '' !== $machine_context && 0 === get_current_user_id() ) {
+            return 'cli' === $machine_context;
         }
 
         return (bool) apply_filters( 'mainwp_currentusercan', true, 'dashboard', $right );
@@ -304,27 +309,29 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
-     * Preserve userless CLI and REST access when Team Control denies user zero.
+     * Preserve userless CLI automation; userless REST has no site scope.
      * API-key requests carry a user whose site restrictions still apply.
      *
      * @return int[]|string Allowed site IDs, or 'all' for unrestricted access.
      */
     public static function get_scoped_site_ids_or_all() {
-        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
-            return 'all';
+        $machine_context = self::get_machine_execution_context();
+        if ( '' !== $machine_context && 0 === get_current_user_id() ) {
+            return 'cli' === $machine_context ? 'all' : array();
         }
 
         return self::get_allowed_site_ids();
     }
 
     /**
-     * Preserve userless CLI and REST access when Team Control denies user zero.
+     * Preserve userless CLI automation; userless REST has no group scope.
      *
      * @return int[]|string Allowed group IDs, or 'all' for unrestricted access.
      */
     public static function get_scoped_group_ids_or_all() {
-        if ( self::is_machine_execution_context() && 0 === get_current_user_id() ) {
-            return 'all';
+        $machine_context = self::get_machine_execution_context();
+        if ( '' !== $machine_context && 0 === get_current_user_id() ) {
+            return 'cli' === $machine_context ? 'all' : array();
         }
 
         return self::get_allowed_group_ids();
@@ -362,10 +369,17 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      *
      * @param int $client_id Client ID.
      *
-     * @return int[] Site IDs attached to the client.
+     * @return int[]|false Site IDs attached to the client, or false on a roster read failure.
      */
     private static function get_client_site_ids( $client_id ) {
+        global $wpdb;
         $sites = MainWP_DB_Client::instance()->get_websites_by_client_ids( (int) $client_id, array( 'no_perm_check' => true ) );
+
+        // The roster query bypasses wpdb; knowledge's read guard needs its driver error.
+        if ( $wpdb->dbh instanceof \mysqli && 0 !== $wpdb->dbh->errno ) {
+            $wpdb->last_error = $wpdb->dbh->error;
+            return false;
+        }
 
         if ( ! is_array( $sites ) ) {
             return array();
@@ -401,7 +415,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         $client_id = is_object( $client ) ? (int) $client->client_id : (int) $client;
-        $site_ids  = self::get_client_site_ids( $client_id );
+        $site_ids  = (array) self::get_client_site_ids( $client_id );
         $overlap   = array_intersect( $site_ids, $allowed );
 
         if ( empty( $overlap ) ) {
@@ -513,6 +527,42 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
 
         return array_map( 'intval', is_array( $client_ids ) ? $client_ids : array() );
+    }
+
+    /**
+     * Batch form of check_client_access( $id, null, true ) for every client the
+     * sites reach: one query instead of a roster read per client. Staging sites
+     * are left out, as the roster read leaves them out.
+     *
+     * @param int[] $site_ids Allowed site IDs.
+     * @return int[] Client IDs whose every site is allowed; empty on a database error.
+     */
+    public static function get_fully_covered_client_ids( array $site_ids ) {
+        global $wpdb;
+
+        $site_ids   = array_values( array_unique( array_map( 'intval', array_filter( $site_ids, 'is_numeric' ) ) ) );
+        $client_ids = self::get_accessible_client_ids( $site_ids );
+        if ( empty( $client_ids ) ) {
+            return array();
+        }
+
+        $client_placeholders = implode( ',', array_fill( 0, count( $client_ids ), '%d' ) );
+        $site_placeholders   = implode( ',', array_fill( 0, count( $site_ids ), '%d' ) );
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- Direct lookup for the client scope map; placeholder lists are counted %d fills, values bound via prepare(), table name from $wpdb->prefix.
+        $partial = $wpdb->get_col(
+            $wpdb->prepare(
+                "SELECT DISTINCT client_id FROM {$wpdb->prefix}mainwp_wp WHERE is_staging = 0 AND client_id IN ({$client_placeholders}) AND id NOT IN ({$site_placeholders})",
+                array_merge( $client_ids, $site_ids )
+            )
+        );
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
+
+        // A failed query returns no rows, which would read as "every client fully covered".
+        if ( '' !== $wpdb->last_error || ! is_array( $partial ) ) {
+            return array();
+        }
+
+        return array_values( array_diff( $client_ids, array_map( 'intval', $partial ) ) );
     }
 
     /**

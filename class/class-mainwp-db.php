@@ -3446,19 +3446,26 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *
      * @param int $websiteid Child site ID.
      *
-     * @return int|boolean Return child site ID that was removed or false on failure.
+     * @return int|boolean Row count from the site-table delete, or false when the id is
+     *                     invalid or that delete fails. Zero is a row count, not a failure.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
     public function remove_website( $websiteid ) {
         if ( MainWP_Utility::ctype_digit( $websiteid ) ) {
             $nr = $this->wpdb->delete( $this->table_name( 'wp' ), array( 'id' => $websiteid ) );
+            if ( false === $nr ) {
+                return false;
+            }
             $this->wpdb->delete( $this->table_name( 'wp_group' ), array( 'wpid' => $websiteid ) );
             $this->wpdb->delete( $this->table_name( 'wp_sync' ), array( 'wpid' => $websiteid ) );
             $this->wpdb->delete( $this->table_name( 'wp_options' ), array( 'wpid' => $websiteid ) );
             MainWP_Encrypt_Data_Lib::remove_key_file( $websiteid );
             MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $websiteid );
-            MainWP_DB_Knowledge::instance()->delete_by_scope( 'site', (int) $websiteid );
+            $knowledge_deleted = MainWP_DB_Knowledge::instance()->delete_by_scope( 'site', (int) $websiteid );
+            if ( is_wp_error( $knowledge_deleted ) ) {
+                MainWP_Logger::instance()->warning( sprintf( 'Knowledge cleanup failed for site %d: %s', (int) $websiteid, $knowledge_deleted->get_error_message() ) );
+            }
             MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
             if ( $nr > 0 ) {
                 MainWP_DB_Common::instance()->delete_widget_saved_filters_for_all_users( 'individual', $websiteid );
@@ -3703,23 +3710,6 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
                 // remove groups.
                 $this->wpdb->delete( $this->table_name( 'wp_group' ), array( 'wpid' => $websiteid ) );
-                // Remove GA stats.
-                $showErrors = $this->wpdb->hide_errors();
-
-                /**
-                 * Action: mainwp_ga_delete_site
-                 *
-                 * Fires upon site removal process in order to delete Google Analytics data.
-                 *
-                 * @param int $websiteid Child site ID.
-                 *
-                 * @since Unknown
-                 */
-                do_action( 'mainwp_ga_delete_site', $websiteid );
-
-                if ( $showErrors ) {
-                    $this->wpdb->show_errors();
-                }
                 // add groups with groupnames.
                 foreach ( $groupnames as $groupname ) {
                     if ( $this->wpdb->insert(
@@ -4366,8 +4356,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return array
      */
     public function update_rest_api_key( $key_id, $scope, $description, $enabled = 1 ) {
+        $key = $this->get_rest_api_key_by( $key_id );
+
         $permissions = in_array( $scope, array( 'read', 'write', 'delete', 'read_write' ), true ) ? sanitize_text_field( $scope ) : 'read';
-        return $this->wpdb->update(
+        $updated     = $this->wpdb->update(
             $this->table_name( 'api_keys' ),
             array(
                 'description' => $description,
@@ -4378,6 +4370,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 'key_id' => $key_id,
             )
         );
+        if ( $key ) {
+            \MainWP_REST_Authentication::delete_api_key_cache( $key->consumer_key );
+        }
+        return $updated;
     }
 
 
@@ -4416,10 +4412,33 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @return array
      */
     public function remove_rest_api_key( $id ) {
+        $key        = $this->get_rest_api_key_by( $id );
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
-        return $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE key_id = %s", $id ) );
+        $deleted = $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE key_id = %d", $id ) );
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        if ( $key ) {
+            \MainWP_REST_Authentication::delete_api_key_cache( $key->consumer_key );
+        }
+        return $deleted;
+    }
+
+    /**
+     * Delete a user's REST API keys and return their stored consumer keys.
+     *
+     * @param int         $user_id    Owner ID.
+     * @param string|null $table_name Key table. Defaults to MainWP's captured table.
+     * @return array Removed key rows containing consumer_key.
+     */
+    public function remove_rest_api_keys_by_user( $user_id, $table_name = null ) {
+        $table_name = esc_sql( null === $table_name ? $this->table_name( 'api_keys' ) : $table_name );
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
+        // nosec - $table_name is MainWP's own api_keys table name, never request input.
+        $rows = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT consumer_key FROM {$table_name} WHERE user_id = %d", $user_id ) );
+        // nosec - $table_name is MainWP's own api_keys table name, never request input.
+        $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE user_id = %d", $user_id ) );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+        return $rows;
     }
 
     /**

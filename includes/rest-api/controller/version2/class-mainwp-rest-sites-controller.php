@@ -703,6 +703,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      */
     public function get_item( $request ) { // phpcs:ignore -- NOSONAR - complex method.
 
+        $item = $this->get_site_item( $request );
+        if ( is_wp_error( $item ) ) {
+            return $item;
+        }
+
         $value = isset( $request['id_domain'] ) ? $request['id_domain'] : '';
         $by    = 'domain';
 
@@ -730,9 +735,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $result = $ability->execute( $ability_input );
 
             if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
+                return $this->ability_error_to_rest_error( $result );
             }
 
             // DESIGN NOTE: The ability is used for ID discovery and access verification only.
@@ -854,9 +857,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $result = $ability->execute( $ability_input );
 
             if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
+                return $this->ability_error_to_rest_error( $result );
             }
 
             // DESIGN NOTE: The ability is used for filtering, pagination, and access verification.
@@ -1097,9 +1098,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $result = $ability->execute( $ability_input );
 
             if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
+                return $this->ability_error_to_rest_error( $result );
             }
 
             // Transform ability output to REST response format.
@@ -1247,9 +1246,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $result = $ability->execute( $ability_input );
 
             if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
+                return $this->ability_error_to_rest_error( $result );
             }
 
             // Transform ability output to REST response format.
@@ -1549,9 +1546,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $result = $ability->execute( $ability_input );
 
             if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
+                return $this->ability_error_to_rest_error( $result );
             }
 
             // Transform ability output to REST response format.
@@ -1907,9 +1902,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             $result = $ability->execute( $ability_input );
 
             if ( is_wp_error( $result ) ) {
-                $error_data = $result->get_error_data();
-                $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
-                return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
+                return $this->ability_error_to_rest_error( $result );
             }
 
             // Check if sync was queued for background processing.
@@ -3407,6 +3400,39 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
             }
 
             $item = $this->prepare_object_for_database( $request );
+            unset( $item['group_creation_ui'] );
+
+            // Filters can supply names and ids after the public numeric-only input check
+            // and the request-level scope check, so the final tag set is checked here.
+            $allowed_groups = MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+            $groupnames     = array();
+            foreach ( isset( $item['groupids'] ) && is_array( $item['groupids'] ) ? $item['groupids'] : array() as $group ) {
+                if ( ! is_numeric( $group ) ) {
+                    $groupnames[] = trim( $group );
+                    continue;
+                }
+                $existing_group = MainWP_DB_Common::instance()->get_group_by_id( $group );
+                if ( ! $existing_group || ( 'all' !== $allowed_groups && ! in_array( (int) $existing_group->id, $allowed_groups, true ) ) ) {
+                    return new WP_Error( 'rest_forbidden', __( 'Error - insufficient permissions!', 'mainwp' ), array( 'status' => 403 ) );
+                }
+            }
+            if ( ! empty( $item['groupnames_import'] ) ) {
+                $groupnames = array_merge( $groupnames, preg_split( '/[;,]/', $item['groupnames_import'] ) );
+            }
+            global $wpdb;
+            $table_group = MainWP_DB_Common::instance()->get_table_name( 'group' );
+            foreach ( array_unique( array_map( 'trim', $groupnames ) ) as $groupname ) {
+                if ( '' === $groupname ) {
+                    continue;
+                }
+                $group = MainWP_DB_Common::instance()->get_row_result( $wpdb->prepare( 'SELECT * FROM %i WHERE name IN (%s, %s)', $table_group, MainWP_DB_Common::instance()->escape( $groupname ), MainWP_DB_Common::instance()->escape( htmlspecialchars( $groupname ) ) ) );
+                if ( $group && 'all' !== $allowed_groups && ! in_array( (int) $group->id, $allowed_groups, true ) ) {
+                    return new WP_Error( 'rest_forbidden', __( 'Error - insufficient permissions!', 'mainwp' ), array( 'status' => 403 ) );
+                }
+                if ( ! $group && ! MainWP_Abilities_Util::current_user_has_operation_right( 'manage_groups' ) ) {
+                    return new WP_Error( 'rest_forbidden', __( 'Error - insufficient permissions!', 'mainwp' ), array( 'status' => 403 ) );
+                }
+            }
 
             if ( empty( $item['name'] ) && ! empty( $item['url'] ) ) {
                 $item['name'] = MainWP_Utility::remove_http_prefix( $item['url'], true );
@@ -3438,6 +3464,21 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         }
 
         return rest_ensure_response( $resp_data );
+    }
+
+    /**
+     * WP_Ability::execute() returns its permission denial without a status, which would otherwise surface as a 500.
+     *
+     * @param WP_Error $result Ability error.
+     * @return WP_Error
+     */
+    private function ability_error_to_rest_error( $result ) {
+        $error_data = $result->get_error_data();
+        $status     = isset( $error_data['status'] ) ? $error_data['status'] : 500;
+        if ( 'ability_invalid_permissions' === $result->get_error_code() ) {
+            $status = 403;
+        }
+        return new WP_Error( $result->get_error_code(), $result->get_error_message(), array( 'status' => $status ) );
     }
 
     /**

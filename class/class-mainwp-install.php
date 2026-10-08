@@ -74,7 +74,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.28'; // NOSONAR - no IP. 9.0.2.28 merges main's 9.0.2.5/9.0.2.6 line (wp_group primary key repair, mainwp_knowledge table) into this one: both lines used 9.0.2.6 for different migrations, so the native backups flag rename and the wp_group repair re-run below 9.0.2.28 and the knowledge table is created on the current-version path. Previous 9.0.2.27 Added wp_backup.last_continued, the stamp the five-minute continue lane orders unfinished tasks by so a task that never finishes cannot monopolize the lane. Previous 9.0.2.26 added a nullable unique snapshot run_key so concurrent finishers adopt one snapshot, with hourly retries for failed schema changes. Previous 9.0.2.25 added per-site unique identities for manual backup tasks and active restore jobs, and retried markerless legacy task_id index drops. Previous 9.0.2.24 added the UNIQUE KEY uniq_task_wp (task_id, wp_id) to wp_backup_progress: the pair was never unique, so the executor's read-then-insert could land two progress rows for one site when drivers raced, and every guard that reads the row by pair then read an arbitrary one of them - pre_update_tables() collapses existing duplicates to one row per pair before the key is added (a row naming the child's backup task beats one that does not, then the freshest dtsFetched), ensure_backup_progress_unique_key() re-runs that collapse and hourly retries the key install when the ALTER did not take, and add_backup_task_progress() inserts ON DUPLICATE KEY UPDATE so a losing racer adopts the surviving row instead of failing. Previous 9.0.2.23 added wp_backup_progress.foreign_refused_since to stamp the first consecutive marker-less child already-running refusal on a manual run's progress row; the executor surfaces a foreign collision to the operator only after the refusal persists past FOREIGN_REFUSAL_SURFACE_SECONDS (a same-run create-window reset race re-marks within milliseconds and never accumulates), instead of always yielding it as the generic no-snapshot line. Previous 9.0.2.22 made wp_backup.authorized_sites nullable: NULL is now the never-stamped sentinel (a pre-authorized_sites row, backfilled from live expansion on its first run), while a stamped empty string is authoritative and means the save authorized zero sites - so an empty-saved group can no longer be mistaken for a legacy row and lazily auto-authorize a member added later. Previous 9.0.2.21 added wp_backup.authorized_sites, the site set that passed authorize_task_scope() at save time; the scheduled runner backs up only that set (cron has no user context to authorize a group's later additions against). Previous 9.0.2.20 bump made pre_update_tables() drop the legacy unnamed UNIQUE (task_id) key from wp_backup_progress - a leftover of the <= 8.53 CREATE clause that capped the table at one per-site progress row per task, so the second add_backup_task_progress() insert on a multi-site run died on a duplicate key. Previous 9.0.2.19 bump added reclaim_count to wp_backup_upload_job and wp_backup_restore_job, the stale-lease-reclaim counter that lets acquire_next_job() route a job whose worker keeps dying mid-run to fail_permanent instead of reclaiming it forever. Previous 9.0.2.18 bump added wp_backup_snapshot.woo_meta, the Woo order-storage facts a database-bearing backup captured at dump time, read by the restore initiate handler's preserve-orders gate; 9.0.2.17 bump added wp_backup.backup_notices, the informational-notes channel that keeps run notes (like the large-site ZIP auto-switch) out of backup_errors; 9.0.2.16 added wp_backup.zip_force_override for the large-site ZIP auto-switch override; 9.0.2.15 added wp_backup_snapshot.test_restore_state/test_restore_at for the verified-restore (sandbox test-restore) result; 9.0.2.14 added wp_backup_snapshot.encryption for the per-snapshot archive-encryption metadata.
+    protected $mainwp_db_version = '9.0.2.28'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line.
 
     /**
      * Protected variable to hold the database option name.
@@ -92,6 +92,21 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
      */
     const WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING = 'mainwp_wp_group_missing_primary_key_repair_pending';
+
+    /**
+     * Network-scoped like mainwp_db_version. Once set, the per-request schema check stops querying.
+     */
+    const KNOWLEDGE_SCHEMA_CONFIRMED = 'mainwp_knowledge_schema_confirmed';
+
+    /**
+     * A description-only confirmation cannot vouch for agency support or required rules.
+     */
+    const KNOWLEDGE_SCHEMA_REVISION = 'agency-required-description-1';
+
+    /**
+     * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
+     */
+    const KNOWLEDGE_SCHEMA_REPAIR_PENDING = 'mainwp_knowledge_schema_repair_pending';
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -178,6 +193,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             }
             $this->maybe_retry_repair_wp_group_primary_key();
             $this->maybe_create_knowledge_table( $currentVersion );
+            $this->maybe_repair_knowledge_table();
             return;
         }
 
@@ -648,6 +664,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
         $wpdb->suppress_errors( $suppress );
 
+        $this->maybe_repair_knowledge_table();
         $this->post_update();
 
         do_action( 'mainwp_db_after_update', $currentVersion, $this->mainwp_db_version ); // new version: $this->mainwp_db_version.
@@ -931,6 +948,65 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $this->wpdb->suppress_errors( $suppress );
 
         return true;
+    }
+
+    /**
+     * Retry knowledge schema changes that may have failed before the version was saved.
+     *
+     * The current-version path of install() runs on every request, so a confirmed
+     * schema is remembered and a failing ALTER (a DB user without ALTER) is retried at
+     * most hourly instead of logging an error on each request.
+     *
+     * @return bool Whether a missing schema component was repaired.
+     */
+    public function maybe_repair_knowledge_table() {
+        if ( self::KNOWLEDGE_SCHEMA_REVISION === get_site_option( self::KNOWLEDGE_SCHEMA_CONFIRMED ) ) {
+            return false;
+        }
+        $pending = (int) get_site_option( self::KNOWLEDGE_SCHEMA_REPAIR_PENDING );
+        if ( ! empty( $pending ) && time() - $pending < HOUR_IN_SECONDS ) {
+            return false;
+        }
+
+        $table    = $this->table_name( 'knowledge' );
+        $suppress = $this->wpdb->suppress_errors();
+        if ( null === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $table ) ) ) ) {
+            $this->wpdb->suppress_errors( $suppress );
+            return false;
+        }
+        $columns = $this->wpdb->get_results( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i', $table ), OBJECT_K );
+        $repairs = array();
+        if ( ! empty( $columns ) ) {
+            // dbDelta can add columns but does not reliably expand an enum, including on beta installs with a higher version.
+            if ( isset( $columns['scope_type'] ) && false === strpos( $columns['scope_type']->Type, "'agency'" ) ) {
+                $repairs[] = "ALTER TABLE %i MODIFY scope_type enum('agency','site','client') NOT NULL";
+            }
+            if ( ! isset( $columns['required'] ) ) {
+                $repairs[] = 'ALTER TABLE %i ADD COLUMN required tinyint(1) NOT NULL DEFAULT 0 AFTER verified';
+            }
+            if ( ! isset( $columns['description'] ) ) {
+                $repairs[] = "ALTER TABLE %i ADD COLUMN description varchar(1024) NOT NULL DEFAULT '' AFTER title";
+            }
+        }
+        $confirmed = ! empty( $columns ) && isset( $columns['scope_type'] );
+        $repaired  = false;
+        foreach ( $repairs as $sql ) {
+            $success   = false !== $this->wpdb->query( $this->wpdb->prepare( $sql, $table ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed schema statements above, with the table identifier bound.
+            $confirmed = $confirmed && $success;
+            $repaired  = $repaired || $success;
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        if ( $confirmed ) {
+            update_site_option( self::KNOWLEDGE_SCHEMA_CONFIRMED, self::KNOWLEDGE_SCHEMA_REVISION );
+            delete_site_option( 'mainwp_knowledge_description_column_confirmed' );
+            delete_site_option( 'mainwp_knowledge_description_column_repair_pending' );
+            delete_site_option( self::KNOWLEDGE_SCHEMA_REPAIR_PENDING );
+        } else {
+            // A timestamp, not a formatted date: the retry throttle compares it against time().
+            update_site_option( self::KNOWLEDGE_SCHEMA_REPAIR_PENDING, time() );
+        }
+        return $repaired;
     }
 
     /**

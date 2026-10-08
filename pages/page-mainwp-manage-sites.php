@@ -299,7 +299,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             if ( 'new' === $_REQUEST['do'] || 'bulknew' === $_REQUEST['do'] ) {
                 return;
             }
-        } elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['monitor_wpid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
+        } elseif ( isset( $_GET['id'] ) || isset( $_GET['knowledgeid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['monitor_wpid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
             return;
         }
         // phpcs:enable
@@ -1074,7 +1074,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
             <?php
             if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-                $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+                $clients = MainWP_Client::filter_viewable_clients( MainWP_DB_Client::instance()->get_wp_client_by( 'all' ) );
                 ?>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
@@ -1718,6 +1718,20 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Render the Knowledge page for one child site.
+     *
+     * @param object $website Child Site.
+     *
+     * @return void
+     */
+    public static function render_knowledge( $website ) {
+        MainWP_System_Utility::set_current_wpid( $website->id );
+        static::render_header( 'ManageSitesKnowledge' );
+        MainWP_Manage_Sites_View::render_knowledge( $website );
+        static::render_footer();
+    }
+
+    /**
      * Method render_backup_site()
      *
      * Render Manage Sites Backups.
@@ -1912,6 +1926,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             }
         }
 
+        if ( isset( $_GET['knowledgeid'] ) ) {
+            $websiteid        = intval( $_GET['knowledgeid'] );
+            $knowledgeWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
+            if ( MainWP_System_Utility::can_edit_website( $knowledgeWebsite ) ) {
+                static::render_knowledge( $knowledgeWebsite );
+                return;
+            }
+        }
+
         if ( isset( $_GET['updateid'] ) ) {
             $websiteid      = intval( $_GET['updateid'] );
             $updatesWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
@@ -1925,6 +1948,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $websiteid = isset( $_GET['monitor_wpid'] ) ? intval( $_GET['monitor_wpid'] ) : 0;
             $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $website ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
+                // Show modal.
                 static::render_monitor_site( $website );
                 return;
             }
@@ -2055,11 +2079,33 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $updated = false;
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+            $can_manage_clients = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
+            $new_client_id      = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
+            if ( $new_client_id && ( ! $can_manage_clients || ! MainWP_Client::has_client_access( $new_client_id ) || ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $new_client_id ) ) ) {
+                return false;
+            }
             // update site.
             $groupids   = array();
             $groupnames = array();
             if ( isset( $_POST['mainwp_managesites_edit_addgroups'] ) && ! empty( $_POST['mainwp_managesites_edit_addgroups'] ) ) {
                 $groupids = explode( ',', sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_addgroups'] ) ) );
+            }
+
+            $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+            foreach ( $groupids as $groupid ) {
+                $group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
+                if ( ! $group || ( 'all' !== $allowed_groups && ! in_array( (int) $group->id, $allowed_groups, true ) ) ) {
+                    return false;
+                }
+            }
+            // A site edit may only replace memberships in the caller's granted groups.
+            if ( 'all' !== $allowed_groups ) {
+                $existing_groups = MainWP_DB_Common::instance()->get_groups_by_website_id( $website->id );
+                foreach ( (array) $existing_groups as $existing_group ) {
+                    if ( ! in_array( (int) $existing_group->id, $allowed_groups, true ) ) {
+                        $groupids[] = $existing_group->id;
+                    }
+                }
             }
 
             // to fix update staging site.
@@ -2114,8 +2160,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 MainWP_Site_Url_Corrector::after_user_set_url( $website, $url );
             }
 
-            if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-                $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
+            if ( $can_manage_clients ) {
                 if ( $website->client_id !== $new_client_id ) {
                     $update = array(
                         'client_id' => $new_client_id,

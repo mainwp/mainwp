@@ -3,7 +3,7 @@
  * Operation-right checks must enforce Team Control permissions across abilities
  * and queued jobs.
  *
- * Machine requests may bypass rights only without an authenticated user. Cron
+ * CLI requests may bypass rights only without an authenticated user. Cron
  * restores the job owner so that their rights remain enforceable.
  *
  * @package MainWP\Dashboard\Tests
@@ -16,6 +16,18 @@ use MainWP\Dashboard\MainWP_Abilities_Util;
 // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 
 class Test_Abilities_Operation_Rights_Util extends \WP_UnitTestCase {
+
+	public function test_c3_unignore_maps_to_ignore_unignore_right() {
+		$map = MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS;
+		$this->assertArrayHasKey( 'mainwp/unignore-site-updates-v1', $map );
+		$this->assertSame( 'ignore_unignore_updates', $map['mainwp/unignore-site-updates-v1'] );
+		$this->assertSame( [ 'ignore_unignore_updates' ], MainWP_Abilities_Util::required_rights_for_ability( 'mainwp/unignore-site-updates-v1' ) );
+		$this->withhold_right( 'ignore_unignore_updates' );
+		$callback = MainWP_Abilities_Util::make_operation_permission_callback( 'mainwp/unignore-site-updates-v1', static function () { return true; } );
+		$result = $callback( [ 'confirm' => true ] );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_insufficient_right', $result->get_error_code() );
+	}
 
 	/**
 	 * The exact right filter callback added by this test, for targeted removal.
@@ -54,7 +66,7 @@ class Test_Abilities_Operation_Rights_Util extends \WP_UnitTestCase {
 	 * Set the private machine-context override seam (constants cannot be
 	 * defined per-test, so the bypass leg is tested through the seam).
 	 *
-	 * @param bool|null $value Override value, null to restore real detection.
+	 * @param bool|string|null $value True for CLI, 'rest' for REST, false for neither, null for real detection.
 	 */
 	private function set_machine_context_override( $value ) {
 		$prop = new \ReflectionProperty( MainWP_Abilities_Util::class, 'machine_context_override' );
@@ -161,6 +173,18 @@ class Test_Abilities_Operation_Rights_Util extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Userless REST must deny access even when filters default to unrestricted.
+	 */
+	public function test_userless_rest_context_denies_scope_and_operation_rights() {
+		wp_set_current_user( 0 );
+		$this->set_machine_context_override( 'rest' );
+
+		$this->assertSame( array(), MainWP_Abilities_Util::get_scoped_site_ids_or_all() );
+		$this->assertSame( array(), MainWP_Abilities_Util::get_scoped_group_ids_or_all() );
+		$this->assertFalse( MainWP_Abilities_Util::current_user_has_operation_right( 'delete_sites' ) );
+	}
+
+	/**
 	 * A denying mainwp_currentusercan filter withholds the right.
 	 */
 	public function test_denying_filter_withholds_right() {
@@ -181,6 +205,8 @@ class Test_Abilities_Operation_Rights_Util extends \WP_UnitTestCase {
 		$this->set_machine_context_override( true );
 
 		$this->assertTrue( MainWP_Abilities_Util::current_user_has_operation_right( 'delete_sites' ) );
+		$this->assertSame( 'all', MainWP_Abilities_Util::get_scoped_site_ids_or_all() );
+		$this->assertSame( 'all', MainWP_Abilities_Util::get_scoped_group_ids_or_all() );
 	}
 
 	/**

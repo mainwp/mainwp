@@ -167,8 +167,8 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
-     * Cost objects are not scoped, but their site, tag and client id lists are:
-     * a restricted caller must not learn hidden ids through a cost record.
+     * Visible costs can still link to hidden sites, tags or clients, so their
+     * relationship lists must not disclose those IDs.
      *
      * @param array|object $costs Cost rows or formatted cost items.
      * @return array|object The same structure with hidden relationship ids removed.
@@ -1487,6 +1487,29 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $valid = \MainWP_REST_Authentication::get_instance()->is_valid_permissions( $request );
         if ( is_wp_error( $valid ) ) {
             return $valid;
+        }
+        return true;
+    }
+
+    /**
+     * Shared settings cannot be limited to a caller's allowed sites or tags.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     * @return true|WP_Error
+     */
+    public function get_unrestricted_permissions_check( $request ) {
+        $valid = $this->get_rest_permissions_check( $request );
+        if ( true !== $valid ) {
+            return $valid;
+        }
+        $sites  = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        $groups = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+        if ( 'all' !== $sites || 'all' !== $groups ) {
+            return new WP_Error(
+                'mainwp_restricted_account',
+                __( 'This action is not available for accounts restricted to a subset of sites or tags.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
         }
         return true;
     }

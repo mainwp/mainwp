@@ -476,6 +476,10 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         $client_id = isset( $data['client_id'] ) ? (int) $data['client_id'] : 0;
 
+        if ( array_key_exists( 'image', $data ) && ! MainWP_Utility::is_valid_client_image_name( $data['image'] ) ) {
+            $data['image'] = '';
+        }
+
         if ( isset( $data['client_email'] ) && ! empty( $data['client_email'] ) ) {
             $client_existed = $this->get_wp_client_by( 'client_email', $data['client_email'], ARRAY_A );
             if ( is_array( $client_existed ) && isset( $client_existed['client_id'] ) && ( empty( $client_id ) || $client_id !== (int) $client_existed['client_id'] ) ) {
@@ -513,6 +517,10 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         $contact_id = isset( $data['contact_id'] ) ? (int) $data['contact_id'] : 0;
+
+        if ( array_key_exists( 'contact_image', $data ) && ! MainWP_Utility::is_valid_client_image_name( $data['contact_image'] ) ) {
+            $data['contact_image'] = '';
+        }
 
         $contact_email = isset( $data['contact_email'] ) ? $data['contact_email'] : '';
         if ( ! empty( $contact_email ) ) {
@@ -605,10 +613,7 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $table_contacts = esc_sql( $this->table_name( 'wp_clients_contacts' ) );
         if ( $current && $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . $table_contacts . ' WHERE contact_client_id=%d AND contact_id = %d', $client_id, $contact_id ) ) ) {
             if ( ! empty( $current->contact_image ) ) {
-                $dirs     = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
-                $base_dir = $dirs[0];
-                $old_file = $base_dir . '/' . $current->contact_image;
-                MainWP_Utility::delete_file( $old_file );
+                MainWP_Utility::delete_client_image( $current->contact_image );
             }
             return true;
         }
@@ -1057,15 +1062,15 @@ class MainWP_DB_Client extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             }
 
             if ( ! empty( $current->image ) ) {
-                $dirs     = MainWP_System_Utility::get_mainwp_dir( 'client-images', true );
-                $base_dir = $dirs[0];
-                $old_file = $base_dir . '/' . $current->image;
-                MainWP_Utility::delete_file( $old_file );
+                MainWP_Utility::delete_client_image( $current->image );
             }
 
             $this->delete_client_contacts_by_client_id( $client_id );
 
-            MainWP_DB_Knowledge::instance()->delete_by_scope( 'client', (int) $client_id );
+            $knowledge_deleted = MainWP_DB_Knowledge::instance()->delete_by_scope( 'client', (int) $client_id );
+            if ( is_wp_error( $knowledge_deleted ) ) {
+                MainWP_Logger::instance()->warning( sprintf( 'Knowledge cleanup failed for client %d: %s', (int) $client_id, $knowledge_deleted->get_error_message() ) );
+            }
 
             MainWP_DB_Common::instance()->delete_widget_saved_filters_for_all_users( 'client', $client_id );
 

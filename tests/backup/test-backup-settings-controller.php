@@ -140,13 +140,16 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 	 * @return \WP_REST_Response Response object.
 	 */
 	protected function do_authenticated_request( string $method, string $route, array $body = array() ): \WP_REST_Response {
-		$original_get    = $_GET;
-		$original_server = $_SERVER;
+		$original_get        = $_GET;
+		$original_server     = $_SERVER;
+		$original_query_vars = $GLOBALS['wp']->query_vars;
 
 		$_GET['consumer_key']    = $this->consumer_key;
 		$_GET['consumer_secret'] = $this->consumer_secret;
 		$_SERVER['HTTPS']        = 'on';
 		$_SERVER['REQUEST_URI']  = '/wp-json' . $route;
+		// API key auth only runs for the route WordPress is dispatching.
+		$GLOBALS['wp']->query_vars['rest_route'] = $route;
 
 		\MainWP_REST_Authentication::$instance = null;
 		$auth                                  = \MainWP_REST_Authentication::get_instance();
@@ -160,8 +163,9 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 
 		$response = rest_do_request( $request );
 
-		$_GET    = $original_get;
-		$_SERVER = $original_server;
+		$_GET                      = $original_get;
+		$_SERVER                   = $original_server;
+		$GLOBALS['wp']->query_vars = $original_query_vars;
 
 		return $response;
 	}

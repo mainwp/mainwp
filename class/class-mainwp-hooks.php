@@ -395,10 +395,12 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
      *
      * @param bool $site_id Child site ID.
      *
-     * @return bool|array Return false if empty and return array error - Site not found | result - SUCCESS.
+     * @return bool|array False when the id is empty. An error array when the site
+     *                    is missing or the database delete returned false.
+     *                    Result SUCCESS when the delete did not return false.
+     *                    Zero rows is still success.
      *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::delete_website_favicon()
      */
     public function hook_delete_site( $site_id = false ) {
 
@@ -413,29 +415,22 @@ class MainWP_Hooks { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conten
         if ( empty( $site ) ) {
             return array( 'error' => esc_html__( 'Not found the website', 'mainwp' ) );
         }
-        $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
-        /**
-         * WordPress files system object.
-         *
-         * @global object
-         */
-        global $wp_filesystem;
+        // Same favicon cleanup as the manage-sites handler, still before the DB delete.
+        MainWP_Manage_Sites_Handler::delete_website_favicon( $site );
 
-        if ( $hasWPFileSystem ) {
-            $favi = MainWP_DB::instance()->get_website_option( $site, 'favi_icon', '' );
-            if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $site->id . '-' ) ) ) {
-                $dirs = MainWP_System_Utility::get_icons_dir();
-                if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
-                    $wp_filesystem->delete( $dirs[0] . $favi );
-                }
-            }
+        $removed = MainWP_DB::instance()->remove_website( $site->id );
+
+        // Same success test as the manage-sites handler and execute_delete_site():
+        // false is a database error. Zero rows still fires the hooks.
+        if ( false === $removed ) {
+            return array( 'error' => esc_html__( 'Failed to delete the website', 'mainwp' ) );
         }
-
-        MainWP_DB::instance()->remove_website( $site->id );
 
         /** This action is documented in pages\page-mainwp-manage-sites-handler.php */
         do_action( 'mainwp_delete_site', $site );
+        /** This action is documented in pages\page-mainwp-manage-sites-handler.php */
+        do_action( 'mainwp_site_deleted', $site );
         return array( 'result' => 'SUCCESS' );
     }
 

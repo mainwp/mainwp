@@ -296,11 +296,12 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	/**
 	 * Every failure surface built from a reflected child response body.
 	 *
-	 * @param string $body Raw response body.
+	 * @param string $body    Raw response body.
+	 * @param string $headers Raw response headers.
 	 *
 	 * @return array<string,string>
 	 */
-	private function failure_surfaces( $body ): array {
+	private function failure_surfaces( $body, $headers = '' ): array {
 		set_transient(
 			'mainwp_public_dashboard_ip_data',
 			array(
@@ -315,13 +316,15 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$ux       = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
 		$context  = array(
 			'http_status'      => 403,
+			'headers'          => $headers,
 			'body'             => $body,
 			'skip_outbound_ip' => true,
 		);
 		$enriched = $ux::enrich_output( array(), $context );
 		$raw      = array(
-			'http_status'   => 403,
-			'response_body' => $body,
+			'http_status'      => 403,
+			'response_headers' => $headers,
+			'response_body'    => $body,
 		);
 
 		return array(
@@ -482,6 +485,26 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		// A visibility suffix on an ordinary property keeps its value.
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'Some\Class Object ( [monkey:protected] => banana )' );
 		$this->assertSame( 'Some\Class Object ( [monkey:protected] => banana )', $text );
+	}
+
+	/**
+	 * Tag-split arrows, spaced visibility, invisible characters, and entity-encoded headers still redact.
+	 */
+	public function test_split_and_encoded_dump_syntax_is_redacted_on_every_surface(): void {
+		$cases = array(
+			'arrow split'       => array( '<p>[userpwd] =<b></b>> qa-split-one</p>', '' ),
+			'spaced visibility' => array( '<p>["userpwd":<b>protected</b>] => qa-split-two</p>', '' ),
+			'zwsp key'          => array( "<p>[userpwd\u{200B}] => qa-split-three</p>", '' ),
+			'nbsp header key'   => array( '', "HTTP/1.1 403 Forbidden\r\nx-cache: [userpwd\u{00A0}] => qa-split-four\r\n" ),
+			'encoded header'    => array( '', "HTTP/1.1 403 Forbidden\r\nx-cache: &#91;userpwd&#93; =&gt; qa-split-five\r\n" ),
+		);
+		foreach ( $cases as $label => $case ) {
+			$surfaces = $this->failure_surfaces( $case[0], $case[1] );
+			foreach ( $surfaces as $surface_name => $surface ) {
+				$this->assertStringNotContainsString( 'qa-split-', $surface, $label . ' / ' . $surface_name );
+			}
+			$this->assertStringContainsString( '[redacted]', $surfaces['failure_ux_text'], $label );
+		}
 	}
 
 	/**

@@ -266,9 +266,11 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
             $name = strtolower( trim( $parts[0] ) );
             if ( in_array( $name, $wanted, true ) ) {
-                // Header values only get trim() otherwise, and long whitespace
-                // runs make the unquoted-value pattern in redact_secrets() quadratic.
-                $value = trim( (string) preg_replace( '/\s+/', ' ', $parts[1] ) );
+                // Decode entities as summarize_body() does, so &#91;userpwd&#93; =&gt;
+                // reaches the dump check. Long whitespace runs make the
+                // unquoted-value pattern in redact_secrets() quadratic.
+                $value = preg_replace( '/\s+/', ' ', html_entity_decode( $parts[1], ENT_QUOTES, 'UTF-8' ) );
+                $value = is_string( $value ) ? trim( $value ) : self::unredactable_text();
                 if ( 'location' === $name ) {
                     $value = self::redact_url( $value );
                 }
@@ -865,10 +867,12 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         while ( false !== $close ) {
             $open = strrpos( substr( $text, $from, $close - $from ), '[' );
             if ( false !== $open ) {
-                $key   = substr( $text, $from + $open + 1, $close - $from - $open - 1 );
-                $arrow = $close + 1 + strspn( $text, " \t\r\n", $close + 1 );
-                if ( '=>' === substr( $text, $arrow, 2 ) && self::is_sensitive_dump_key( $key ) ) {
-                    return substr( $text, 0, $arrow + 2 ) . ' [redacted]';
+                $key    = substr( $text, $from + $open + 1, $close - $from - $open - 1 );
+                $equals = $close + 1 + strspn( $text, " \t\r\n", $close + 1 );
+                // Tag stripping turns =<b></b>> into "= >", so space is allowed inside the arrow.
+                $arrow = $equals + 1 + strspn( $text, " \t\r\n", $equals + 1 );
+                if ( '=' === substr( $text, $equals, 1 ) && '>' === substr( $text, $arrow, 1 ) && self::is_sensitive_dump_key( $key ) ) {
+                    return substr( $text, 0, $arrow + 1 ) . ' [redacted]';
                 }
             }
             $from  = $close + 1;
@@ -885,22 +889,32 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * [pass word], so the key is also tried with spaces removed and with
      * spaces as underscores. Object dumps append the visibility to the
      * property name ([pwd:protected], ["pwd":"Some\Class":private]), and
-     * only the name before the first colon is classified.
+     * only the name before the first colon is classified. Zero-width and
+     * other format characters are invisible on screen but break the name
+     * match, so they are dropped, and Unicode spaces such as U+00A0 count as
+     * spaces. A key that cannot be normalized counts as sensitive.
      *
      * @param string $key Text between the brackets.
      *
      * @return bool
      */
     private static function is_sensitive_dump_key( $key ) {
-        $key   = trim( $key );
-        $lower = strtolower( $key );
-        if ( ':protected' === substr( $lower, -10 ) || ':private' === substr( $lower, -8 ) ) {
+        $key = preg_replace( '/\p{Cf}+/u', '', $key );
+        if ( is_string( $key ) ) {
+            $key = preg_replace( '/[\s\p{Zs}]+/u', ' ', $key );
+        }
+        if ( ! is_string( $key ) ) {
+            return true;
+        }
+
+        $key     = trim( $key );
+        $compact = strtolower( str_replace( ' ', '', $key ) );
+        if ( ':protected' === substr( $compact, -10 ) || ':private' === substr( $compact, -8 ) ) {
             $key = substr( $key, 0, strpos( $key, ':' ) );
         }
-        $key        = trim( trim( $key ), '\'"' );
-        $whitespace = array( ' ', "\t", "\r", "\n" );
+        $key = trim( trim( $key ), '\'"' );
 
-        return self::is_sensitive_param( str_replace( $whitespace, '', $key ) ) || self::is_sensitive_param( str_replace( $whitespace, '_', $key ) );
+        return self::is_sensitive_param( str_replace( ' ', '', $key ) ) || self::is_sensitive_param( str_replace( ' ', '_', $key ) );
     }
 
     /**

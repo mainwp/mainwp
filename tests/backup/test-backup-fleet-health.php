@@ -13,6 +13,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Backup_Fleet_Health;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 
@@ -346,5 +347,25 @@ class MainWP_Backup_Fleet_Health_Test extends \WP_UnitTestCase {
 			array(),
 			MainWP_Backup_Snapshots::instance()->get_health_map_for_current_user()
 		);
+	}
+
+	/**
+	 * The widget lays all four counts out in one grid, with no inner scroll
+	 * hiding half of them.
+	 */
+	public function test_widget_renders_all_four_counts_in_one_grid() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		ob_start();
+		MainWP_Backup_Fleet_Health::render_fleet_health();
+		$output = ob_get_clean();
+		delete_option( 'mainwp_enableNativeBackups' );
+
+		$this->assertStringContainsString( 'class="ui two column grid" id="mainwp-backup-health-counts"', $output );
+		$this->assertStringNotContainsString( 'mainwp-scrolly-overflow', $output );
+		$this->assertSame( 4, substr_count( $output, 'status=backup_health_' ) );
+		foreach ( array( 'Protected', 'At Risk', 'Critical', 'No Backup' ) as $label ) {
+			$this->assertStringContainsString( '<strong>' . $label . '</strong>', $output );
+		}
 	}
 }

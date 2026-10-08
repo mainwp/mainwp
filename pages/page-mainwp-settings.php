@@ -1123,6 +1123,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </label>
                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will check if full backups exists before updating.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_backup_before_upgrade" id="mainwp_backup_before_upgrade" <?php echo 1 === (int) $backup_before_upgrade ? 'checked="true"' : ''; ?>/>
+                            <label for="mainwp_backup_before_upgrade"><?php esc_html_e( 'Applies to updates started from Manage Sites.', 'mainwp' ); ?></label>
                         </div>
                     </div>
                     <div class="ui grid field mainwp-child-field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="7" <?php echo 1 === (int) $backup_before_upgrade ? '' : 'style="display:none"'; ?> >

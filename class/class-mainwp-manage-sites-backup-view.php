@@ -46,15 +46,18 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             $output      .= '<div class="ui grid field">';
             $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
             $restoreLink  = $native_backups ? '' : '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . esc_attr( basename( $fullBackup ) ) . '">' . esc_html__( 'Restore', 'mainwp' ) . '</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
-            $output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . esc_attr( basename( $fullBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" class="button">' . esc_html__( 'Download', 'mainwp' ) . '</a>' . $restoreLink;
+            $output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . esc_attr( basename( $fullBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" class="ui mini basic button">' . esc_html__( 'Download', 'mainwp' ) . '</a>' . $restoreLink;
             $output      .= '</div>';
             $output      .= '</div>';
         }
 
+        // Under native backups this list sits in an accordion whose title
+        // already names it, so only the note stays.
         ?>
-        <h3 class="ui dividing header"><?php echo $native_backups ? esc_html__( 'Downloadable archives', 'mainwp' ) : esc_html__( 'Backup Details', 'mainwp' ); ?></h3>
         <?php if ( $native_backups ) : ?>
         <p><?php esc_html_e( 'These are one-off archives you can download. They are separate from the restorable snapshot history shown above and are not restored from this list.', 'mainwp' ); ?></p>
+        <?php else : ?>
+        <h3 class="ui dividing header"><?php esc_html_e( 'Backup Details', 'mainwp' ); ?></h3>
         <?php endif; ?>
         <h3 class="header"><?php echo '' === $output ? esc_html__( 'No full backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your files', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></h3>
         <?php
@@ -65,7 +68,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             $private      = ! is_wp_error( $private_root ) && MainWP_Backup_File_Manager::path_is_confined_to( $dbBackup, $private_root );
             $downloadLink = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $dbBackup ) . ( $private ? '&root=private&mwpdl=' : '&mwpdl=' ) . rawurlencode( $private ? substr( realpath( $dbBackup ), strlen( $private_root ) ) : str_replace( $mwpDir, '', $dbBackup ) ) );
             $output      .= '<div class="ui grid field">';
-            $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $dbBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $dbBackup ) ) . '</label><div class="ten wide column ui toggle checkbox"><a title="' . esc_attr( basename( $dbBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" download class="button">' . esc_html__( 'Download', 'mainwp' ) . '</a></div>';
+            $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $dbBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $dbBackup ) ) . '</label><div class="ten wide column ui toggle checkbox"><a title="' . esc_attr( basename( $dbBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" download class="ui mini basic button">' . esc_html__( 'Download', 'mainwp' ) . '</a></div>';
             $output      .= '</div>';
         }
         ?>
@@ -107,17 +110,36 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
 
         // Native restore lives on its own surface so the per-site Backups tab
         // reaches the working snapshot restore flow, not the legacy per-file link.
-        if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
+        $native_backups = MainWP_Backup_Settings::is_native_backups_enabled();
+        if ( $native_backups ) {
             MainWP_Backup_Snapshots_View::render_restore_surface( (int) $website->id, true );
         }
         ?>
         <div class="ui alt segment">
             <div class="mainwp-main-content">
             <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
-            <?php
-            static::render_backup_details( $website->id );
-            static::render_backup_options( $website->id );
-            ?>
+            <?php if ( $native_backups ) : ?>
+                <?php // Collapsed so the snapshot list above stays the page's one backup action. ?>
+                <div class="ui basic accordion mainwp-blank-accordion" id="mainwp-downloadable-archives-accordion">
+                    <h3 class="ui dividing header title"><i class="dropdown icon"></i><?php esc_html_e( 'Downloadable archives (not restorable from the Dashboard)', 'mainwp' ); ?></h3>
+                    <div class="content">
+                        <?php
+                        static::render_backup_details( $website->id );
+                        static::render_backup_options( $website->id );
+                        ?>
+                    </div>
+                </div>
+                <script type="text/javascript">
+                    jQuery( function () {
+                        jQuery( '#mainwp-downloadable-archives-accordion' ).accordion();
+                    } );
+                </script>
+            <?php else : ?>
+                <?php
+                static::render_backup_details( $website->id );
+                static::render_backup_options( $website->id );
+                ?>
+            <?php endif; ?>
             </div>
         </div>
 
@@ -315,7 +337,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
                         </div>
                     </div>
                 </div>
-                <input type="button" name="backup_btnSubmit" id="backup_btnSubmit" class="ui button green big floated" value="<?php echo $native_backups ? esc_attr__( 'Create downloadable archive', 'mainwp' ) : esc_attr__( 'Backup Now', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput -- esc_attr__ output. ?>"/>
+                <input type="button" name="backup_btnSubmit" id="backup_btnSubmit" class="<?php echo $native_backups ? 'ui basic button' : 'ui button green big floated'; ?>" value="<?php echo $native_backups ? esc_attr__( 'Create downloadable archive', 'mainwp' ) : esc_attr__( 'Backup Now', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput -- esc_attr__ output. ?>"/>
             </form>
         <?php
     }

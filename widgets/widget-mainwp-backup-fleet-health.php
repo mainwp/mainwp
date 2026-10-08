@@ -157,22 +157,14 @@ class MainWP_Backup_Fleet_Health { // phpcs:ignore Generic.Classes.OpeningBraceS
                 </div>
             </div>
         </div>
-        <div class="mainwp-scrolly-overflow">
-            <div class="ui mainwp-cards small cards">
-                <?php foreach ( static::buckets() as $bucket ) : ?>
-                    <div class="ui card">
-                        <div class="content">
-                            <div class="header">
-                                <span class="ui large text"><i class="<?php echo esc_attr( $bucket['icon'] ); ?> <?php echo esc_attr( $bucket['color'] ); ?> icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $counts[ $bucket['key'] ] ) ); ?></span>
-                            </div>
-                            <div class="description"><strong><?php echo esc_html( $bucket['label'] ); ?></strong><br/><span class="ui small text"><?php echo esc_html( $bucket['description'] ); ?></span></div>
-                        </div>
-                        <div class="extra content">
-                            <a href="<?php echo esc_url( static::filter_url( $bucket['key'] ) ); ?>" class="ui mini basic button"><?php esc_html_e( 'View Sites', 'mainwp' ); ?></a>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
+        <?php // A two by two grid keeps all four counts inside the widget height; stacked cards pushed two of them below an inner scroll. ?>
+        <div class="ui two column grid" id="mainwp-backup-health-counts">
+            <?php foreach ( static::buckets() as $bucket ) : ?>
+                <div class="column">
+                    <span class="ui large text"><i class="<?php echo esc_attr( $bucket['icon'] ); ?> <?php echo esc_attr( $bucket['color'] ); ?> icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $counts[ $bucket['key'] ] ) ); ?></span>
+                    <div><a href="<?php echo esc_url( static::filter_url( $bucket['key'] ) ); ?>" data-tooltip="<?php echo esc_attr( $bucket['description'] ); ?>" data-inverted="" data-position="bottom left"><strong><?php echo esc_html( $bucket['label'] ); ?></strong></a></div>
+                </div>
+            <?php endforeach; ?>
         </div>
         <div class="ui two column grid mainwp-widget-footer">
             <div class="left aligned middle aligned column"></div>

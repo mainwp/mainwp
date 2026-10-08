@@ -1525,4 +1525,22 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 			$instance->setValue( null, $store );
 		}
 	}
+
+	/**
+	 * The form's Test Connection result shows next to its buttons, and the
+	 * clicked button shows a loading state while the request runs.
+	 */
+	public function test_form_test_result_renders_beside_the_buttons() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		ob_start();
+		MainWP_Backup_Storage_View::render();
+		$output = ob_get_clean();
+
+		$zone = strpos( $output, 'id="mainwp-storage-form-message-zone"' );
+		$this->assertNotFalse( $zone );
+		$this->assertGreaterThan( strpos( $output, 'id="mainwp-storage-form"' ), $zone );
+		$this->assertLessThan( strpos( $output, 'id="mainwp-storage-test-only"' ), $zone );
+		$this->assertStringContainsString( "'ui visible ' + color + ' message'", $output );
+		$this->assertMatchesRegularExpression( "/#mainwp-storage-test-only' \\).on\\( 'click'[^}]*busy\\( button, true \\);[^}]*formFeedback\\(/s", $output );
+	}
 }

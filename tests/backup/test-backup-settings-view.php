@@ -296,6 +296,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$output = ob_get_clean();
 
 		$this->assertStringContainsString( 'mainwp_options_onDemandRetentionCount', $output );
+		$this->assertStringContainsString( 'Counts the backups made with Back Up Now on the Snapshots &amp; Restore page, per site.', $output );
 	}
 
 	/**

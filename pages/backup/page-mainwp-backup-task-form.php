@@ -66,6 +66,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
         MainWP_Backup_Page::render_header( 'AddNew' );
         ?>
         <div class="ui alt segment">
+            <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-task-add-info-message', __( 'A backup task backs up the sites you select on a schedule and copies each backup to the storage destinations you pick.', 'mainwp' ) ); ?>
             <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
             <form method="POST" action="" id="mainwp-backup-task-form" class="ui form">
                 <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>

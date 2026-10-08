@@ -145,6 +145,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </label>
             <div class="ten wide column">
                 <span data-tooltip="<?php esc_attr_e( 'How many on-demand (Back up now) snapshots to keep per site before the oldest are pruned. Minimum 1.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_onDemandRetentionCount" value="<?php echo intval( $onDemandRetentionCount ); ?>"/></span>
+                <em><?php esc_html_e( 'Counts the backups made with Back Up Now on the Snapshots & Restore page, per site.', 'mainwp' ); ?></em>
             </div>
         </div>
 

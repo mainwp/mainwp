@@ -38,6 +38,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         MainWP_Backup_Page::render_header( 'Storage' );
         ?>
         <div class="ui alt segment" id="mainwp-backup-storage">
+            <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-storage-info-message', __( 'Storage destinations are where backup tasks copy their backups after each run. Choose them on each backup task.', 'mainwp' ) ); ?>
             <?php static::render_oauth_notice(); ?>
             <?php if ( ! empty( $_GET['sftp_trust_reset'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only save notice. ?>
                 <div class="ui yellow message"><?php echo esc_html( MainWP_Backup_Storage_Handler::sftp_trust_reset_notice() ); ?></div>
@@ -334,6 +335,8 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     </div>
                 </div>
                 <div class="ui divider"></div>
+                <?php // Inside .ui.form a message stays hidden until it also has the visible class, which feedback adds. ?>
+                <div class="ui message" id="mainwp-storage-form-message-zone" style="display:none"></div>
                 <button type="button" class="ui green button" id="mainwp-storage-save"><?php esc_html_e( 'Test Connection & Save', 'mainwp' ); ?></button>
                 <button type="button" class="ui button" id="mainwp-storage-test-only"><?php esc_html_e( 'Test Connection', 'mainwp' ); ?></button>
                 <button type="button" class="ui basic button" id="mainwp-storage-reset" style="display:none"><?php esc_html_e( 'Cancel Edit', 'mainwp' ); ?></button>
@@ -353,6 +356,16 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         jQuery( function () {
             let feedbackZone = function ( message, color ) {
                 jQuery( '#mainwp-storage-message-zone' ).attr( 'class', 'ui ' + color + ' message' ).text( message ).show();
+            };
+
+            // Results of the form's own buttons land next to those buttons; the
+            // top zone sits a full page above them.
+            let formFeedback = function ( message, color ) {
+                jQuery( '#mainwp-storage-form-message-zone' ).attr( 'class', 'ui visible ' + color + ' message' ).text( message ).show();
+            };
+
+            let busy = function ( button, on ) {
+                jQuery( button ).toggleClass( 'loading disabled', on );
             };
 
             let collectSettings = function () {
@@ -417,37 +430,57 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 jQuery( '.mainwp-storage-fields[data-provider="' + provider + '"]' ).show();
             } );
 
+            let requestFailed = '<?php echo esc_js( __( 'The request did not reach the Dashboard. Check your connection and try again.', 'mainwp' ) ); ?>';
+
             jQuery( '#mainwp-storage-dropbox-connect' ).on( 'click', function () {
-                feedbackZone( '<?php echo esc_js( __( 'Connecting to Dropbox...', 'mainwp' ) ); ?>', 'green' );
+                let button = this;
+                busy( button, true );
+                formFeedback( '<?php echo esc_js( __( 'Connecting to Dropbox...', 'mainwp' ) ); ?>', 'green' );
                 jQuery.post( ajaxurl, destinationData( 'mainwp_dropbox_oauth_start' ), function ( response ) {
                     if ( response && response.authorize_url ) {
                         location.href = response.authorize_url;
                     } else {
-                        feedbackZone( response && response.error ? response.error : '<?php echo esc_js( __( 'The Dropbox connection could not be started.', 'mainwp' ) ); ?>', 'red' );
+                        busy( button, false );
+                        formFeedback( response && response.error ? response.error : '<?php echo esc_js( __( 'The Dropbox connection could not be started.', 'mainwp' ) ); ?>', 'red' );
                     }
-                }, 'json' );
+                }, 'json' ).fail( function () {
+                    busy( button, false );
+                    formFeedback( requestFailed, 'red' );
+                } );
             } );
 
             jQuery( '#mainwp-storage-save' ).on( 'click', function () {
-                feedbackZone( '<?php echo esc_js( __( 'Testing the connection and saving...', 'mainwp' ) ); ?>', 'green' );
+                let button = this;
+                busy( button, true );
+                formFeedback( '<?php echo esc_js( __( 'Testing the connection and saving...', 'mainwp' ) ); ?>', 'green' );
                 jQuery.post( ajaxurl, destinationData( 'mainwp_storage_save' ), function ( response ) {
                     if ( response && response.error ) {
-                        feedbackZone( response.error, 'red' );
+                        busy( button, false );
+                        formFeedback( response.error, 'red' );
                     } else {
                         location.href = location.pathname + location.search.replace( /&saved=1|&sftp_trust_reset=1/g, '' ) + '&saved=1' + ( response && response.notice ? '&sftp_trust_reset=1' : '' );
                     }
-                }, 'json' );
+                }, 'json' ).fail( function () {
+                    busy( button, false );
+                    formFeedback( requestFailed, 'red' );
+                } );
             } );
 
             jQuery( '#mainwp-storage-test-only' ).on( 'click', function () {
-                feedbackZone( '<?php echo esc_js( __( 'Testing the connection...', 'mainwp' ) ); ?>', 'green' );
+                let button = this;
+                busy( button, true );
+                formFeedback( '<?php echo esc_js( __( 'Testing the connection...', 'mainwp' ) ); ?>', 'green' );
                 jQuery.post( ajaxurl, destinationData( 'mainwp_storage_test' ), function ( response ) {
                     if ( response && ( response.error || ! response.ok ) ) {
-                        feedbackZone( response.error || '<?php echo esc_js( __( 'Connection test failed.', 'mainwp' ) ); ?>', 'red' );
+                        formFeedback( response.error || '<?php echo esc_js( __( 'Connection test failed.', 'mainwp' ) ); ?>', 'red' );
                     } else {
-                        feedbackZone( '<?php echo esc_js( __( 'Connection test passed.', 'mainwp' ) ); ?>', 'green' );
+                        formFeedback( '<?php echo esc_js( __( 'Connection test passed.', 'mainwp' ) ); ?>', 'green' );
                     }
-                }, 'json' );
+                }, 'json' ).fail( function () {
+                    formFeedback( requestFailed, 'red' );
+                } ).always( function () {
+                    busy( button, false );
+                } );
             } );
 
             jQuery( '#mainwp-storage-reset' ).on( 'click', function () {
@@ -514,15 +547,17 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     jQuery( '#mainwp-storage-path-style' ).prop( 'checked', !! parseInt( settings.path_style || 0 ) );
                     jQuery( '#mainwp-storage-is-default' ).prop( 'checked', !! response.is_default );
                     if ( response.credentials_invalid ) {
-                        feedbackZone( '<?php echo esc_js( __( 'The saved credentials can no longer be read. Re-enter every setting for this destination.', 'mainwp' ) ); ?>', 'yellow' );
+                        formFeedback( '<?php echo esc_js( __( 'The saved credentials can no longer be read. Re-enter every setting for this destination.', 'mainwp' ) ); ?>', 'yellow' );
                     }
                 }, 'json' );
 
-                feedbackZone( '<?php echo esc_js( __( 'Secret fields are never displayed. Leave a secret field empty to keep its saved value.', 'mainwp' ) ); ?>', 'blue' );
+                formFeedback( '<?php echo esc_js( __( 'Secret fields are never displayed. Leave a secret field empty to keep its saved value.', 'mainwp' ) ); ?>', 'blue' );
             } );
 
             jQuery( '.mainwp-storage-test' ).on( 'click', function () {
+                let button = this;
                 let row = jQuery( this ).closest( 'tr' );
+                busy( button, true );
                 feedbackZone( '<?php echo esc_js( __( 'Testing the connection...', 'mainwp' ) ); ?>', 'green' );
                 jQuery.post( ajaxurl, mainwp_secure_data( {
                     action: 'mainwp_storage_test',
@@ -535,7 +570,11 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     } else {
                         feedbackZone( '<?php echo esc_js( __( 'Connection test passed.', 'mainwp' ) ); ?>', 'green' );
                     }
-                }, 'json' );
+                }, 'json' ).fail( function () {
+                    feedbackZone( requestFailed, 'red' );
+                } ).always( function () {
+                    busy( button, false );
+                } );
             } );
 
             let deleteDestination = function ( id, confirmed ) {

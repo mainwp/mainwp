@@ -201,6 +201,43 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
+     * Whether the Dashboard's last contact with a site failed.
+     *
+     * A site with sync errors cannot take a backup or a restore: the request
+     * would fail partway, after a safety backup or a transfer had already
+     * spent its time. The UI turns the actions off and the endpoints refuse.
+     *
+     * @param object|null $website Website row.
+     *
+     * @return bool
+     */
+    public static function site_is_disconnected( $website ): bool {
+        return ! empty( $website ) && '' !== trim( (string) ( $website->sync_errors ?? '' ) );
+    }
+
+    /**
+     * The refusal sent when a backup or restore targets a disconnected site.
+     *
+     * @return string
+     */
+    public static function disconnected_site_error(): string {
+        return __( 'This site is disconnected from the Dashboard. Reconnect it, then try again.', 'mainwp' );
+    }
+
+    /**
+     * Turn a pre-escaped message into plain text for the JSON responses the
+     * restore page writes with jQuery .text(), which escapes on its own.
+     * Without this, an apostrophe or a ">" shows up as an HTML entity.
+     *
+     * @param string $message Message escaped for HTML.
+     *
+     * @return string Plain text.
+     */
+    private static function plain_text( string $message ): string {
+        return wp_specialchars_decode( $message, ENT_QUOTES );
+    }
+
+    /**
      * Whether a restore must be explicitly confirmed before it runs.
      *
      * A restore that rewrites the database - anything but a files-only
@@ -304,7 +341,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'snapshot_id'  => (int) $failed_job->snapshot_id,
                 'status'       => (string) $failed_job->status,
                 'last_error'   => (string) $failed_job->last_error,
+                'error_code'   => (string) ( $failed_job->checkpoint['last_error_code'] ?? '' ),
                 'has_rollback' => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $failed_job ),
+                'is_rollback'  => ! empty( $failed_job->checkpoint['is_rollback'] ),
             );
         }
         $manual_task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
@@ -329,6 +368,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'manual_destinations'   => $manual_destinations,
                 'active_restore_job_id' => null !== $active_job ? (int) $active_job->id : 0,
                 'failed_restore_jobs'   => $failed_rows,
+                'site_disconnected'     => static::site_is_disconnected( $website ),
+                'reconnect_url'         => admin_url( 'admin.php?page=managesites&dashboard=' . (int) $website->id ),
                 'manual_backup_running' => ! empty( $manual_task ) && (int) $manual_task->completed < (int) $manual_task->last_run,
             )
         );
@@ -379,7 +420,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             wp_send_json(
                 array(
-                    'error'      => MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ),
+                    'error'      => static::plain_text( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ) ),
                     'error_code' => MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED,
                 )
             );
@@ -395,6 +436,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         $website = $this->authorize_restore_site( $site_id );
         if ( null === $website ) {
+            return;
+        }
+
+        if ( static::site_is_disconnected( $website ) ) {
+            wp_send_json( array( 'error' => static::disconnected_site_error() ) );
             return;
         }
 
@@ -432,7 +478,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             if ( null !== $refusal ) {
                 wp_send_json(
                     array(
-                        'error'      => MainWP_Backup_Error_Codes::message( $refusal ),
+                        'error'      => static::plain_text( MainWP_Backup_Error_Codes::message( $refusal ) ),
                         'error_code' => $refusal,
                     )
                 );
@@ -454,7 +500,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         } catch ( MainWP_Exception $e ) {
             wp_send_json(
                 array(
-                    'error'      => $e->getMessage(),
+                    'error'      => static::plain_text( $e->getMessage() ),
                     'error_code' => $e->get_message_error_code(),
                 )
             );
@@ -589,7 +635,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         } catch ( MainWP_Exception $e ) {
             wp_send_json(
                 array(
-                    'error'      => $e->getMessage(),
+                    'error'      => static::plain_text( $e->getMessage() ),
                     'error_code' => $e->get_message_error_code(),
                 )
             );
@@ -599,7 +645,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
-     * Start a rollback restore from a failed job's safety backup.
+     * Start a rollback restore from a finished job's safety backup.
      */
     public function mainwp_restore_rollback() {
         $this->secure_request( 'mainwp_restore_rollback' );
@@ -616,7 +662,18 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
-        if ( null === $this->authorize_restore_site( (int) $job->site_id ) ) {
+        $website = $this->authorize_restore_site( (int) $job->site_id );
+        if ( null === $website ) {
+            return;
+        }
+
+        if ( static::site_is_disconnected( $website ) ) {
+            wp_send_json(
+                array(
+                    'error'     => static::disconnected_site_error(),
+                    'retryable' => true,
+                )
+            );
             return;
         }
 
@@ -625,11 +682,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         } catch ( MainWP_Exception $e ) {
             $job       = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
             $retryable = null !== $job
-                && in_array( $job->status, array( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED ), true )
+                && in_array( $job->status, array( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED ), true )
                 && MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $job );
             wp_send_json(
                 array(
-                    'error'      => $e->getMessage(),
+                    'error'      => static::plain_text( $e->getMessage() ),
                     'error_code' => $e->get_message_error_code(),
                     'retryable'  => $retryable,
                 )
@@ -659,6 +716,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         $website = $this->authorize_restore_site( $site_id );
         if ( null === $website ) {
+            return;
+        }
+
+        if ( static::site_is_disconnected( $website ) ) {
+            wp_send_json( array( 'error' => static::disconnected_site_error() ) );
             return;
         }
 
@@ -1204,17 +1266,20 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
     /**
      * Flatten the task's stored HTML backup_errors into a readable single
-     * line. The errors are stored as an HTML list, so block boundaries are
-     * turned into spaces before the tags are stripped; without this the
-     * site name and the message run together (e.g. "child6-4.localRequired").
+     * line of plain text. The errors are stored as an HTML list, so block
+     * boundaries are turned into spaces before the tags are stripped;
+     * without this the site name and the message run together. Entities are
+     * decoded last: every caller sends the result as JSON to a jQuery .text()
+     * sink, which escapes on its own, so an encoded quote would show as
+     * "&quot;".
      *
      * @param string $errors Stored backup_errors HTML.
      *
-     * @return string A flattened, space-separated message.
+     * @return string A flattened, space-separated plain-text message.
      */
     public static function humanize_backup_errors( $errors ) {
         $spaced = str_replace( array( '<br>', '<br/>', '<br />', '</li>', '<li>', '</ol>', '<ol>' ), ' ', (string) $errors );
-        return trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $spaced ) ) );
+        return wp_specialchars_decode( trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( $spaced ) ) ), ENT_QUOTES );
     }
 
     /*

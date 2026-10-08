@@ -120,7 +120,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
              *
              * <div class="item"><a href="Your custom URL">Your custom text</a></div>
              *
-             * @since 7.0
+             * @since 6.3
              */
             do_action( 'mainwp_backups_help_item' );
             ?>
@@ -155,6 +155,25 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     }
 
     /**
+     * Render a page's dismissible intro message, the way core list pages
+     * open.
+     *
+     * @param string $notice_id Per-user dismissal key.
+     * @param string $text      Plain message text.
+     */
+    public static function render_intro_message( string $notice_id, string $text ): void {
+        if ( ! MainWP_Utility::show_mainwp_message( 'notice', $notice_id ) ) {
+            return;
+        }
+        ?>
+        <div class="ui info message">
+            <i class="close icon mainwp-notice-dismiss" notice-id="<?php echo esc_attr( $notice_id ); ?>"></i>
+            <?php echo esc_html( $text ); ?>
+        </div>
+        <?php
+    }
+
+    /**
      * Instantiate the Backups Menu.
      *
      * @return void
@@ -171,7 +190,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
          *
          * Filters subpages for the Backups page.
          *
-         * @since Unknown
+         * @since 4.0.7.2
          */
         $customPage = apply_filters_deprecated( 'mainwp-getcustompage-backups', array( false ), '4.0.7.2', 'mainwp_getcustompage_backups' ); // @deprecated Use 'mainwp_getcustompage_backups' instead. NOSONAR - not IP.
         $customPage = apply_filters( 'mainwp_getcustompage_backups', $customPage );
@@ -202,6 +221,11 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 add_submenu_page( 'mainwp_tab', esc_html__( 'Snapshots & Restore', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Snapshots', 'mainwp' ) . '</div>', 'read', 'ManageBackupsSnapshots', array( MainWP_Backup_Snapshots_View::class, 'render' ) );
             }
         } else {
+            // Bookmarks, emails and help links point at Manage Backups, so it
+            // stays reachable and explains how to turn the feature on instead
+            // of answering with the WordPress permission error. The other
+            // backup pages stay unregistered.
+            add_submenu_page( 'mainwp_tab', esc_html__( 'Backups', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Backups', 'mainwp' ) . '</div>', 'read', 'ManageBackups', array( static::get_class_name(), 'render_manager' ) );
             return;
         }
 
@@ -357,6 +381,11 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::validate_backup_tasks()
      */
     public static function render_manager(): void {  //phpcs:ignore -- NOSONAR - complex.
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            static::render_native_backups_off();
+            return;
+        }
+
         $backupTask = null;
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
         // The edit screen is addressed by `task_id`; a bare `id` also switches
@@ -380,17 +409,17 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $backupTask = null;
             }
 
+            // Back Up Now keeps one hidden task per site. It is not in the
+            // list and has no schedule, so the schedule form must not open
+            // it: saving that form would turn it into a daily task.
+            if ( ! empty( $backupTask ) && ! empty( $backupTask->template ) ) {
+                static::render_on_demand_task_refusal( $backupTask );
+                return;
+            }
+
             if ( ! empty( $backupTask ) && ! MainWP_Manage_Backups_Handler::validate_backup_tasks( array( $backupTask ) ) ) {
                 $backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
             }
-        }
-
-        $primary_methods      = array();
-        $primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead. NOSONAR - not IP.
-        $primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
-
-        if ( ! is_array( $primaryBackupMethods ) ) {
-            $primaryBackupMethods = array();
         }
 
         if ( null === $backupTask ) {
@@ -402,10 +431,8 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
             static::render_header( '' );
             ?>
-            <?php if ( 0 === count( $primaryBackupMethods ) ) { ?>
-                <div class="ui blue message"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Did you know that MainWP has extensions for working with popular backup plugins? Visit the %1$sextensions site%2$s for options.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
-            <?php } ?>
             <div class="ui alt segment">
+                <?php static::render_intro_message( 'mainwp-backup-tasks-info-message', __( 'Scheduled backup tasks run from this Dashboard on the child sites you pick. To back up one site right away, use Back Up Now on the Snapshots & Restore page.', 'mainwp' ) ); ?>
                 <div id="mainwp_managebackups_add_message" class="ui green message" style="display:
                 <?php
                 if ( isset( $_GET['a'] ) && '1' === $_GET['a'] ) {
@@ -422,6 +449,9 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 ?>
                     </div>
 
+                <?php if ( empty( $backup_items ) ) : ?>
+                    <?php static::render_task_list_empty_state(); ?>
+                <?php else : ?>
                 <form method="post" class="mainwp-table-container">
                     <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                     <?php
@@ -429,13 +459,14 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     MainWP_Backup_List_View::instance()->display( $backup_items );
                     ?>
                 </form>
+                <?php endif; ?>
             </div>
 
             <div class="ui modal" id="managebackups-task-status-box" tabindex="0">
                 <div class="header"><?php esc_html_e( 'Running Task', 'mainwp' ); ?></div>
                     <div class="content mainwp-modal-content"></div>
                     <div class="actions mainwp-modal-actions">
-                        <input id="managebackups-task-status-close" type="button" name="Close" value="<?php esc_attr_e( 'Cancel', 'mainwp' ); ?>" class="button" />
+                        <input id="managebackups-task-status-close" type="button" name="Close" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>" class="ui button" />
                     </div>
                 </div>
             <?php
@@ -444,6 +475,69 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             MainWP_Backup_Task_Form::render_edit( $backupTask );
         }
         //phpcs:enable
+    }
+
+    /**
+     * Manage Backups with native backups turned off: a pointer to the
+     * setting in place of the task list.
+     */
+    public static function render_native_backups_off(): void {
+        MainWP_UI::render_top_header( array( 'title' => esc_html__( 'Backups', 'mainwp' ) ) );
+        ?>
+        <div class="ui alt segment">
+            <div class="ui yellow message" id="mainwp-native-backups-off-message">
+                <?php esc_html_e( 'Native backups are turned off.', 'mainwp' ); ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) : ?>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=Settings#mainwp_options_enableNativeBackups' ) ); ?>"><?php esc_html_e( 'Turn them on in the Backup Settings', 'mainwp' ); ?></a>
+                <?php else : ?>
+                    <?php esc_html_e( 'Ask a Dashboard administrator to turn them on in the Backup Settings.', 'mainwp' ); ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
+        static::render_footer( '' );
+    }
+
+    /**
+     * Refuse to open Back Up Now's hidden per-site task in the schedule form.
+     *
+     * @param object $task Hidden on-demand task row.
+     */
+    private static function render_on_demand_task_refusal( $task ): void {
+        $site_id = (int) strtok( (string) $task->sites, ',' );
+        $url     = admin_url( 'admin.php?page=ManageBackupsSnapshots' . ( $site_id > 0 ? '&site_id=' . $site_id : '' ) );
+        static::render_header( 'ManageBackupsEdit' );
+        ?>
+        <div class="ui alt segment">
+            <div class="ui yellow message" id="mainwp-backup-task-on-demand-refusal">
+                <?php esc_html_e( 'This task holds the backups made with Back Up Now. It has no schedule to edit.', 'mainwp' ); ?>
+                <a href="<?php echo esc_url( $url ); ?>"><?php esc_html_e( 'Go to Snapshots & Restore', 'mainwp' ); ?></a>
+            </div>
+        </div>
+        <?php
+        static::render_footer( 'ManageBackupsEdit' );
+    }
+
+    /**
+     * Empty task list: point at the two things a first backup needs.
+     */
+    private static function render_task_list_empty_state(): void {
+        ?>
+        <div class="ui placeholder segment" id="mainwp-backup-tasks-empty">
+            <div class="ui icon header">
+                <i class="hdd outline icon"></i>
+                <?php esc_html_e( 'No backup tasks yet', 'mainwp' ); ?>
+            </div>
+            <div class="inline">
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) : ?>
+                    <a class="ui mini green button" href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ); ?>"><?php esc_html_e( 'Create your first backup task', 'mainwp' ); ?></a>
+                <?php endif; ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) : ?>
+                    <a class="ui mini basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ); ?>"><?php esc_html_e( 'Add a storage destination', 'mainwp' ); ?></a>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php
     }
 
     /**

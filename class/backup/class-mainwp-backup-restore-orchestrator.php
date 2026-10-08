@@ -209,13 +209,19 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *
      * A successor rollback owns the retry action even when it fails. Its
      * checkpoint link also prevents a completed rollback from being offered again.
+     * A completed restore keeps its safety backup on the site until a later
+     * restore of the same site completes, so the user can still undo a restore
+     * of the wrong snapshot. A completed rollback has used its safety backup.
      *
      * @param object $job Restore job with a decoded checkpoint.
      *
      * @return bool Whether the safety backup is available to this job.
      */
     public function has_rollback_source( object $job ): bool {
-        if ( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED === $job->status || empty( $job->checkpoint['pre_snapshot_artifacts'] ) ) {
+        if ( empty( $job->checkpoint['pre_snapshot_artifacts'] ) ) {
+            return false;
+        }
+        if ( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED === $job->status && ( ! empty( $job->checkpoint['is_rollback'] ) || ! empty( $job->checkpoint['pre_snapshot_pruned'] ) ) ) {
             return false;
         }
 
@@ -242,16 +248,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * backup: its artifacts are still on the child and adopt with zero
      * transfer.
      *
-     * @param object $failed_job Failed restore job carrying
-     *                           pre_snapshot_artifacts in its checkpoint.
+     * @param object $failed_job Finished (failed, cancelled, or completed)
+     *                           restore job carrying pre_snapshot_artifacts
+     *                           in its checkpoint.
      *
      * @throws MainWP_Exception When the job has no rollback source.
      *
      * @return int New job id.
      */
     public function initiate_rollback( object $failed_job ): int {
-        if ( ! in_array( $failed_job->status, array( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED ), true ) ) {
-            throw new MainWP_Exception( esc_html__( 'Only failed or cancelled restores can be rolled back.', 'mainwp' ), '', 'mainwp_restore_rollback_status' );
+        if ( ! in_array( $failed_job->status, array( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED ), true ) ) {
+            throw new MainWP_Exception( esc_html__( 'Only finished restores can be rolled back.', 'mainwp' ), '', 'mainwp_restore_rollback_status' );
         }
 
         if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( (int) $failed_job->site_id ) ) {
@@ -260,7 +267,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         $artifacts = isset( $failed_job->checkpoint['pre_snapshot_artifacts'] ) ? (array) $failed_job->checkpoint['pre_snapshot_artifacts'] : array();
         if ( ! $this->has_rollback_source( $failed_job ) ) {
-            throw new MainWP_Exception( esc_html__( 'No pre-restore safety backup is recorded for this restore, so there is nothing to roll back to.', 'mainwp' ) );
+            if ( empty( $artifacts ) ) {
+                throw new MainWP_Exception( esc_html__( 'No safety backup was taken before this restore, so there is nothing to roll back to.', 'mainwp' ) );
+            }
+            if ( ! empty( $failed_job->checkpoint['pre_snapshot_pruned'] ) ) {
+                throw new MainWP_Exception( esc_html__( 'The safety backup from this restore was removed after a later restore finished, so there is nothing to roll back to.', 'mainwp' ) );
+            }
+            throw new MainWP_Exception( esc_html__( 'A rollback has already been started for this restore, so it cannot be rolled back again.', 'mainwp' ) );
         }
 
         $plan = array();
@@ -537,7 +550,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             foreach ( $store->find_jobs_over_reclaim_ceiling( $store::active_statuses(), $now, $only_job_id ) as $expired_job ) {
                 $this->record_terminal_failure(
                     $expired_job,
-                    sprintf( 'Reclaimed %d times without completing a phase; the worker keeps dying on this restore, so it is stopped instead of retried forever.', $store::RECLAIM_CEILING ),
+                    sprintf(
+                        /* translators: %d: number of times the restore was interrupted. */
+                        esc_html__( 'The restore was interrupted %d times without finishing a step, so it was stopped. Run the restore again. If it stops again, check the PHP error log on the Dashboard server.', 'mainwp' ),
+                        $store::RECLAIM_CEILING
+                    ),
                     '',
                     null
                 );
@@ -1149,7 +1166,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return;
         }
         MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
-        $this->prune_pre_snapshot( $job );
+        $this->prune_superseded_pre_snapshots( $job );
 
         /**
          * Fires after a restore completes and the site responds.
@@ -1642,30 +1659,58 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Best-effort retirement of the pre-restore safety backup after a
-     * verified restore.
+     * Best-effort retirement of the safety backups that earlier completed
+     * restores of this site kept for rollback.
      *
-     * @param object $job Job row.
+     * A completed restore keeps its own safety backup so it can still be
+     * rolled back; the next completed restore of the site supersedes it. That
+     * bounds the child to one retained safety backup from completed restores.
+     * A failed or cancelled restore keeps its safety backup, as before.
+     *
+     * @param object $job Job that just completed.
      */
-    private function prune_pre_snapshot( object $job ): void {
-        if ( empty( $job->pre_snapshot_task_id ) ) {
+    private function prune_superseded_pre_snapshots( object $job ): void {
+        global $wpdb;
+        $earlier = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+            $wpdb->prepare(
+                'SELECT id, pre_snapshot_task_id, checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND id < %d AND status = %s AND pre_snapshot_task_id <> %s AND checkpoint NOT LIKE %s', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
+                (int) $job->site_id,
+                (int) $job->id,
+                MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED,
+                '',
+                '%' . $wpdb->esc_like( '"pre_snapshot_pruned":true' ) . '%'
+            )
+        );
+        if ( empty( $earlier ) ) {
             return;
         }
+
+        $store = MainWP_Backup_Restore_Job_Store::instance();
         try {
             $website = $this->website( $job );
             MainWP_Connect::fetch_url_authed(
                 $website,
                 'backup_task_prune',
                 array(
-                    'task_ids' => wp_json_encode( array( (string) $job->pre_snapshot_task_id ) ),
+                    'task_ids' => wp_json_encode( array_values( array_map( 'strval', array_column( $earlier, 'pre_snapshot_task_id' ) ) ) ),
                     'sweep'    => 0,
                 ),
                 false,
                 false,
                 false
             );
-        } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- best-effort cleanup never blocks completion.
+        } catch ( \Throwable $e ) {
+            // Best effort: completion never waits on cleanup, and the next
+            // completed restore retries the prune.
             return;
+        }
+
+        foreach ( $earlier as $row ) {
+            $checkpoint = json_decode( (string) $row->checkpoint, true );
+            $checkpoint = is_array( $checkpoint ) ? $checkpoint : array();
+
+            $checkpoint['pre_snapshot_pruned'] = true;
+            $store->save_checkpoint( (int) $row->id, $checkpoint );
         }
     }
 

@@ -40,7 +40,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'response.failed_restore_jobs', $output );
 		$this->assertStringContainsString( 'ui divided list', $output );
 		$this->assertStringContainsString( 'mainwp-restore-failed-job', $output );
-		$this->assertStringContainsString( '.text( job.last_error )', $output, 'Failure text must be escaped by jQuery.' );
+		$this->assertStringContainsString( '.text( ( job.error_code && restoreOutcomeMessages[ job.error_code ] ) || job.last_error )', $output, 'Failure text must be escaped by jQuery.' );
 		$this->assertStringContainsString( 'startRollback( jobId )', $output );
 	}
 
@@ -171,9 +171,14 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$output = $this->render_page();
 
 		$this->assertMatchesRegularExpression(
-			"/#mainwp-restore-rollback-btn'\s*\)\.toggle\([^;]*'cancelled'/s",
+			"/var terminal = \([^;]*'cancelled'/s",
 			$output,
-			'The rollback button must be offered for cancelled restores with a safety backup.'
+			'A cancelled restore must count as finished.'
+		);
+		$this->assertMatchesRegularExpression(
+			"/#mainwp-restore-rollback-btn'\s*\)\.toggle\([^;]*terminal && safetyBackup/s",
+			$output,
+			'The rollback button must be offered for finished restores with a safety backup.'
 		);
 	}
 
@@ -729,5 +734,155 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 			remove_filter( 'mainwp_is_single_user', '__return_true' );
 			delete_option( 'mainwp_enableNativeBackups' );
 		}
+	}
+
+	/**
+	 * A rollback job reports itself as a rollback: its own status labels, no
+	 * safety-backup note, and no Roll Back of the rollback, in the modal and
+	 * in the restore history.
+	 */
+	public function test_rollback_job_reads_as_rollback() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'Rollback failed', $output );
+		$this->assertStringContainsString( 'rollbackStatusLabels[ data.status ]', $output );
+		$this->assertStringContainsString( 'var safetyBackup = !! data.has_rollback && ! isRollback;', $output );
+		$this->assertStringContainsString( "#mainwp-restore-safety-note' ).toggle( safetyBackup )", $output );
+		$this->assertStringContainsString( 'job.has_rollback && ! job.is_rollback', $output );
+		$this->assertStringContainsString( 'job.is_rollback ? rollbackStatusLabels : statusLabels', $output );
+	}
+
+	/**
+	 * A completed restore offers Roll Back and marks the progress bar as done.
+	 */
+	public function test_completed_restore_offers_rollback_and_success_bar() {
+		$output = $this->render_page();
+
+		$this->assertMatchesRegularExpression( "/var terminal = \\( 'completed' === data\\.status/", $output );
+		$this->assertStringContainsString( "toggleClass( 'success', 'completed' === data.status )", $output );
+	}
+
+	/**
+	 * The cancel warning only promises a rollback when a safety backup exists.
+	 */
+	public function test_cancel_warning_mentions_rollback_only_with_safety_backup() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'Cancelling now stops the restore partway through. Files already copied stay in place and the previous database tables are kept aside.', $output );
+		$this->assertStringNotContainsString( 'so a rollback from the safety backup remains available', $output );
+		$this->assertMatchesRegularExpression( '/<span id="mainwp-restore-cancel-rollback-note" style="display:none;">You can roll back to the safety backup afterwards\.<\/span>/', $output );
+		$this->assertStringContainsString( "#mainwp-restore-cancel-rollback-note' ).toggle( safetyBackup )", $output );
+	}
+
+	/**
+	 * The history heading says what it lists, and its messages go through
+	 * the same outcome map as the modal.
+	 */
+	public function test_restore_history_heading_and_mapped_messages() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'Failed and cancelled restores', $output );
+		$this->assertStringNotContainsString( 'Restore history', $output );
+		$this->assertStringContainsString( 'restoreOutcomeMessages[ job.error_code ] ) || job.last_error', $output );
+		$this->assertStringNotContainsString( 'TODO', $output );
+		$this->assertStringNotContainsString( 'Placeholder:', $output );
+	}
+
+	/**
+	 * Restore is styled as a destructive action, not the primary positive one.
+	 */
+	public function test_restore_buttons_use_destructive_styles() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'ui mini basic button mainwp-restore-snapshot', $output );
+		$this->assertStringContainsString( 'class="ui red disabled button" id="mainwp-restore-start-btn"', $output );
+		$this->assertStringNotContainsString( 'ui mini green button mainwp-restore-snapshot', $output );
+	}
+
+	/**
+	 * A database-only restore gets a safety-backup label that does not talk
+	 * about files.
+	 */
+	public function test_db_restore_safety_label_drops_files_sentence() {
+		$output = $this->render_page();
+
+		$this->assertStringContainsString( 'It stays on the site, and you can roll back to it if the restored database turns out wrong.', $output );
+		$this->assertStringContainsString( "'db' === snapType ? safetyBackupLabels.db", $output );
+	}
+
+	/**
+	 * Back Up Now sits in the toolbar beside the site selector, before the
+	 * snapshot table, and the page uses theme classes for the error color.
+	 */
+	public function test_back_up_now_sits_beside_site_selector() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$output = $this->render_page();
+		delete_option( 'mainwp_enableNativeBackups' );
+
+		$toolbar = strpos( $output, 'id="mainwp-backup-snapshots-toolbar"' );
+		$this->assertNotFalse( $toolbar );
+		$this->assertGreaterThan( $toolbar, strpos( $output, 'id="mainwp-restore-site-selector"' ) );
+		$this->assertGreaterThan( strpos( $output, 'id="mainwp-native-backup-now-btn"' ), strpos( $output, 'id="mainwp-restore-snapshots-table"' ) );
+		$this->assertStringNotContainsString( '#AD0000', $output );
+		$this->assertStringNotContainsString( '--mainwp-text-color', $output );
+		$this->assertStringContainsString( "toggleClass( 'ui red text', !! isError )", $output );
+	}
+
+	/**
+	 * A site whose last sync failed opens with the reconnect message and the
+	 * backup actions turned off.
+	 */
+	public function test_disconnected_site_renders_message_and_disables_actions() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		global $wpdb;
+		$user_id = $this->factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$wpdb->prefix . 'mainwp_wp',
+			array(
+				'userid'               => $user_id,
+				'url'                  => 'https://halted-' . wp_generate_uuid4() . '.example.com/',
+				'name'                 => 'Halted test site',
+				'adminname'            => 'admin',
+				'pubkey'               => 'test-pubkey',
+				'privkey'              => 'test-privkey',
+				'ssl_version'          => 0,
+				'http_user'            => '',
+				'http_pass'            => '',
+				'suspended'            => 0,
+				'offline_check_result' => 1,
+				'client_id'            => 0,
+				'is_staging'           => 0,
+				'plugin_upgrades'      => '',
+				'theme_upgrades'       => '',
+				'translation_upgrades' => '',
+				'premium_upgrades'     => '',
+			)
+		);
+		$site_id = (int) $wpdb->insert_id;
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$wpdb->prefix . 'mainwp_wp_sync',
+			array(
+				'wpid'        => $site_id,
+				'version'     => '5.0.0',
+				'sync_errors' => 'HTTP error 500',
+			)
+		);
+		$_GET['site_id'] = (string) $site_id;
+		try {
+			ob_start();
+			MainWP_Backup_Snapshots_View::render();
+			$output = ob_get_clean();
+		} finally {
+			unset( $_GET['site_id'] );
+			MainWP_DB::instance()->remove_website( $site_id );
+			delete_option( 'mainwp_enableNativeBackups' );
+		}
+
+		$this->assertMatchesRegularExpression( '/<div class="ui yellow message" id="mainwp-snapshots-disconnected">/', $output );
+		$this->assertStringContainsString( 'page=managesites&#038;dashboard=' . $site_id, $output );
+		$this->assertMatchesRegularExpression( '/class="ui mini green button disabled" id="mainwp-native-backup-now-btn"\s+disabled/', $output );
+		$this->assertStringContainsString( 'var siteDisconnected = true;', $output );
+		$this->assertStringContainsString( "( siteDisconnected ? ' disabled' : '' )", $output );
 	}
 }

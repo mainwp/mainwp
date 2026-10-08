@@ -461,11 +461,12 @@ managebackups_run_now = function (el) {
     const UPLOAD_LIMIT_MS = 10 * 60 * 1000;
     el = jQuery(el);
     clearTimeout(manageBackupsPollTimer);
-    el.hide();
-    el.parent().find('.backup_run_loading').show();
+    el.addClass('loading disabled');
     let content = mainwpPopup('#managebackups-task-status-box').getContentEl();
     content.html(dateToHMS(new Date()) + ' ' + MainWP.I18n.t('Starting the backup task...'));
-    jQuery('#managebackups-task-status-close').prop('value', MainWP.I18n.t('Cancel'));
+    // Closing only stops following the run; the backup keeps going, so the
+    // button never says Cancel.
+    jQuery('#managebackups-task-status-close').prop('value', MainWP.I18n.t('Close'));
     mainwpPopup('#managebackups-task-status-box').init({
         title: MainWP.I18n.t('Running task'), callback: function () {
             clearTimeout(manageBackupsPollTimer);
@@ -485,9 +486,7 @@ managebackups_run_now = function (el) {
     let rows = {};
     let waiting = jQuery('<div>').appendTo(content);
     let restoreLink = function () {
-        el.parent().find('.backup_run_loading').hide();
-        el.show();
-        jQuery('#managebackups-task-status-close').prop('value', MainWP.I18n.t('Close'));
+        el.removeClass('loading disabled');
     };
     let startFailed = function (error) {
         restoreLink();
@@ -495,8 +494,7 @@ managebackups_run_now = function (el) {
     };
     let statusFailed = function (error) {
         waiting.empty();
-        el.parent().find('.backup_run_loading').hide();
-        jQuery('#managebackups-task-status-close').prop('value', MainWP.I18n.t('Close'));
+        el.removeClass('loading disabled');
         appendToDiv(content, mainwp_backup_error_html(error || MainWP.I18n.t('The backup status could not be read. The backup may still be running. Reload the page to check its status.')));
     };
     let schedulePoll = function () {
@@ -592,14 +590,8 @@ managebackups_run_now = function (el) {
         if (response.notices) {
             jQuery('<div>').text(response.notices).appendTo(content);
         }
-        if (response.status === 'completed' && !uploadsPending) {
-            manageBackupsPollTimer = setTimeout(function () {
-                if (generation !== manageBackupsPollGeneration) {
-                    return;
-                }
-                mainwpPopup('#managebackups-task-status-box').close(true);
-            }, 3000);
-        }
+        // The dialog stays open so the result and upload counts can be read;
+        // closing it reloads the list.
     };
     let poll = function () {
         if (generation !== manageBackupsPollGeneration) {
@@ -901,8 +893,9 @@ managebackups_resume = function (element) {
             jQuery('#task-status-' + id).html('');
 
             if (error == '') {
-                jQuery(pElement).after('<a href="#" task_id="' + pId + '" onClick="return managebackups_pause(this)">' + MainWP.I18n.t('Pause') + '</a>');
-                jQuery(pElement).remove();
+                // The row's Paused label, next run and visible action all
+                // change, so redraw the list rather than patch one link.
+                location.reload();
             }
         }
     }(element, id), 'json');
@@ -939,8 +932,9 @@ managebackups_pause = function (element) {
             }
             jQuery('#task-status-' + id).html('');
             if (error == '') {
-                jQuery(pElement).after('<a href="#" task_id="' + pId + '" onClick="return managebackups_resume(this)">' + MainWP.I18n.t('Resume') + '</a>');
-                jQuery(pElement).remove();
+                // The row's Paused label, next run and visible action all
+                // change, so redraw the list rather than patch one link.
+                location.reload();
             }
         }
     }(element, id), 'json');

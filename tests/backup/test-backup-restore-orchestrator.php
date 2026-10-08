@@ -1419,14 +1419,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			remove_filter( 'query', $refuse );
 			$job = $this->tick( $job );
 			$this->assertSame( 'completed', $job->status );
-			$this->assertSame( array( 'backup_task_prune' ), array_column( $this->calls, 'what' ) );
-			$this->assertSame(
-				array(
-					'task_ids' => '["task-7-pre"]',
-					'sweep'    => 0,
-				),
-				$this->calls[0]['params']
-			);
+			$this->assertSame( array(), $this->calls, 'A completed restore keeps its own safety backup so it can still be rolled back.' );
 			$this->assertFileDoesNotExist( $staging . 'backup.zip' );
 			$this->assertCount( 1, $events );
 			$this->assertSame( (int) $job->id, $events[0]['job_id'] );
@@ -3282,7 +3275,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertNotContains( 'restore_task_run', array_column( $this->calls, 'what' ) );
 		$fresh = $store->get_job( (int) $job->id );
 		$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
-		$this->assertStringContainsString( $sweep ? 'Reclaimed' : 'Original replay failure', $fresh->last_error );
+		$this->assertStringContainsString( $sweep ? 'The restore was interrupted' : 'Original replay failure', $fresh->last_error );
 	}
 
 	/**
@@ -4056,7 +4049,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$fresh = $store->get_job( (int) $job->id );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $fresh->status );
-		$this->assertStringContainsString( sprintf( 'Reclaimed %d times', $store::RECLAIM_CEILING ), $fresh->last_error );
+		$this->assertSame( sprintf( 'The restore was interrupted %d times without finishing a step, so it was stopped. Run the restore again. If it stops again, check the PHP error log on the Dashboard server.', $store::RECLAIM_CEILING ), $fresh->last_error );
 		$this->assertSame( '', $fresh->checkpoint['last_error_code'] );
 		$this->assertSame(
 			array(
@@ -4633,7 +4626,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$store      = MainWP_Backup_Restore_Job_Store::instance();
 		$checkpoint = array( 'pre_snapshot_artifacts' => array( array( 'file' => 'backup-pre.tar.gz' ) ) );
 		$status     = 'completed' === $state ? $store::STATUS_COMPLETED : $store::STATUS_FAILED_PERMANENT;
-		$source     = $this->make_job( 'no-source' === $state ? array() : $checkpoint, $status );
+		$source     = $this->make_job( 'no-source' === $state ? array() : ( 'completed' === $state ? $checkpoint + array( 'pre_snapshot_pruned' => true ) : $checkpoint ), $status );
 		if ( 'busy' === $state ) {
 			$this->make_job();
 		} elseif ( 'consumed' === $state || 'successor-running' === $state ) {
@@ -4764,7 +4757,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Rollback is only available after a failed or cancelled restore.
+	 * Rollback is only available once a restore has finished.
 	 *
 	 * @dataProvider rollback_status_cases
 	 * @param string $status Original job status.
@@ -4805,13 +4798,14 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Completed and active restores must not be replaced by rollback jobs.
+	 * Active restores must not be replaced by rollback jobs; a completed
+	 * restore still holds its safety backup and can be rolled back.
 	 *
 	 * @return array
 	 */
 	public static function rollback_status_cases() {
 		return array(
-			'completed' => array( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, false ),
+			'completed' => array( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, true ),
 			'running'   => array( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, false ),
 			'cancelled' => array( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, true ),
 		);
@@ -6329,5 +6323,230 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( '', $job->checkpoint['plan'][0]['sha256'] );
 		$this->assertSame( 'task-existing', $job->child_task_id );
 		$this->assertEmpty( $this->calls );
+	}
+
+	/**
+	 * Safety artifacts recorded on a job, shared by the rollback tests below.
+	 *
+	 * @return array Checkpoint fragment.
+	 */
+	private function safety_checkpoint() {
+		return array(
+			'pre_snapshot_artifacts' => array(
+				array(
+					'file' => 'backup-pre.tar.gz',
+					'size' => 1234,
+					'role' => 'full',
+				),
+			),
+		);
+	}
+
+	/**
+	 * Start a rollback and return the refusal message.
+	 *
+	 * @param object $job Job to roll back.
+	 *
+	 * @return string Exception message, or '' when the rollback started.
+	 */
+	private function rollback_refusal( $job ) {
+		try {
+			$this->orchestrator->initiate_rollback( $job );
+		} catch ( MainWP_Exception $e ) {
+			return $e->getMessage();
+		}
+		return '';
+	}
+
+	/**
+	 * A restore that ran without a safety backup says so.
+	 */
+	public function test_rollback_refusal_without_safety_backup_says_none_was_taken() {
+		$failed = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT );
+
+		$this->assertSame( 'No safety backup was taken before this restore, so there is nothing to roll back to.', $this->rollback_refusal( $failed ) );
+	}
+
+	/**
+	 * A restore whose safety backup already has a rollback says that instead
+	 * of claiming no safety backup exists.
+	 */
+	public function test_rollback_refusal_after_started_rollback_says_already_started() {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$failed = $this->make_job( $this->safety_checkpoint(), $store::STATUS_FAILED_PERMANENT );
+		$this->make_job( array( 'rollback_of' => (int) $failed->id ), $store::STATUS_FAILED_PERMANENT );
+
+		$this->assertSame( 'A rollback has already been started for this restore, so it cannot be rolled back again.', $this->rollback_refusal( $failed ) );
+	}
+
+	/**
+	 * A completed restore keeps its safety backup and offers a rollback to it.
+	 */
+	public function test_completed_restore_keeps_safety_backup_for_rollback() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( $this->safety_checkpoint(), $store::STATUS_VERIFYING, array( 'pre_snapshot_task_id' => 'task-own-pre' ) );
+
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_COMPLETED, $job->status );
+		$this->assertNotContains( 'backup_task_prune', array_column( $this->calls, 'what' ), 'The safety backup stays on the site after a completed restore.' );
+		$this->assertTrue( $this->orchestrator->has_rollback_source( $job ) );
+
+		$rollback_id = $this->orchestrator->initiate_rollback( $job );
+		$rollback    = $store->get_job( $rollback_id );
+		$this->assertTrue( $rollback->checkpoint['is_rollback'] );
+		$this->assertSame( (int) $job->id, $rollback->checkpoint['rollback_of'] );
+		$this->assertTrue( $rollback->checkpoint['plan'][0]['adopt_only'] );
+		$this->assertFalse( $this->orchestrator->has_rollback_source( $job ), 'Its rollback now owns the safety backup.' );
+	}
+
+	/**
+	 * The next completed restore on the site removes the earlier restore's
+	 * safety backup, so the child keeps at most one from completed restores.
+	 */
+	public function test_later_completed_restore_prunes_earlier_safety_backup() {
+		$store   = MainWP_Backup_Restore_Job_Store::instance();
+		$earlier = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED, array( 'pre_snapshot_task_id' => 'task-earlier-pre' ) );
+		$later   = $this->make_job( $this->safety_checkpoint(), $store::STATUS_VERIFYING, array( 'pre_snapshot_task_id' => 'task-later-pre' ) );
+
+		$later = $this->tick( $later );
+		$this->assertSame( $store::STATUS_COMPLETED, $later->status );
+
+		$prunes = array_values(
+			array_filter(
+				$this->calls,
+				static function ( $call ) {
+					return 'backup_task_prune' === $call['what'];
+				}
+			)
+		);
+		$this->assertCount( 1, $prunes );
+		$this->assertSame( '["task-earlier-pre"]', $prunes[0]['params']['task_ids'] );
+
+		$earlier = $store->get_job( (int) $earlier->id );
+		$this->assertTrue( $earlier->checkpoint['pre_snapshot_pruned'] );
+		$this->assertFalse( $this->orchestrator->has_rollback_source( $earlier ) );
+		$this->assertSame( 'The safety backup from this restore was removed after a later restore finished, so there is nothing to roll back to.', $this->rollback_refusal( $earlier ) );
+		$this->assertTrue( $this->orchestrator->has_rollback_source( $later ), 'The newest completed restore keeps its own safety backup.' );
+
+		// A second completion must not prune the same safety backup again.
+		$this->calls = array();
+		$third       = $this->make_job( array(), $store::STATUS_VERIFYING );
+		$this->tick( $third );
+		$this->assertSame( array( '["task-later-pre"]' ), array_column( array_column( $this->calls, 'params' ), 'task_ids' ) );
+	}
+
+	/**
+	 * The restore history marks rollback jobs so the page can label them as
+	 * rollbacks, and carries the stable error code for the mapped message.
+	 */
+	public function test_failed_restore_list_marks_rollback_jobs_and_error_codes() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$store    = MainWP_Backup_Restore_Job_Store::instance();
+		$failed   = $this->make_job( $this->safety_checkpoint() + array( 'last_error_code' => 'mainwp_restore_rolled_back' ), $store::STATUS_FAILED_PERMANENT );
+		$rollback = $this->make_job( $this->safety_checkpoint() + array( 'is_rollback' => true, 'rollback_of' => (int) $failed->id ), $store::STATUS_FAILED_PERMANENT ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- test fixture.
+
+		$rows = array_column( $this->b194_reload_snapshots()['failed_restore_jobs'], null, 'job_id' );
+		$this->assertFalse( $rows[ $failed->id ]['is_rollback'] );
+		$this->assertTrue( $rows[ $rollback->id ]['is_rollback'] );
+		$this->assertSame( 'mainwp_restore_rolled_back', $rows[ $failed->id ]['error_code'] );
+		$this->assertSame( '', $rows[ $rollback->id ]['error_code'] );
+	}
+
+	/**
+	 * The halted-restore reason goes through translation.
+	 */
+	public function test_reclaim_ceiling_message_is_translatable() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job();
+		$this->expire_job_at_reclaim_ceiling( (int) $job->id );
+		$seen      = array();
+		$translate = static function ( $translation, $text, $domain ) use ( &$seen ) {
+			if ( 'mainwp' === $domain ) {
+				$seen[] = $text;
+			}
+			return $translation;
+		};
+		add_filter( 'gettext', $translate, 10, 3 );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30 );
+		} finally {
+			remove_filter( 'gettext', $translate, 10 );
+		}
+
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $store->get_job( (int) $job->id )->status );
+		$this->assertContains( 'The restore was interrupted %d times without finishing a step, so it was stopped. Run the restore again. If it stops again, check the PHP error log on the Dashboard server.', $seen );
+	}
+
+	/**
+	 * Post one AJAX request with its nonce and return the decoded response.
+	 *
+	 * @param string $action Handler method and nonce action.
+	 * @param array  $fields POST fields.
+	 *
+	 * @return array|null Decoded response.
+	 */
+	private function post_ajax( $action, array $fields ) {
+		$nonce                = wp_create_nonce( $action );
+		$_POST                = array_merge( $_POST, $fields, array( 'security' => $nonce ) );
+		$_REQUEST['security'] = $nonce;
+		try {
+			return $this->invoke_ajax_handler( $action );
+		} finally {
+			foreach ( array_keys( $fields ) as $field ) {
+				unset( $_POST[ $field ] );
+			}
+			unset( $_POST['security'], $_REQUEST['security'] );
+		}
+	}
+
+	/**
+	 * A site whose last sync failed is flagged on the list and refuses Back
+	 * Up Now, restore, and rollback on the server, not only in the buttons.
+	 */
+	public function test_disconnected_site_refuses_backup_restore_and_rollback() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		MainWP_DB::instance()->update_website_sync_values( $this->site_id, array( 'sync_errors' => 'HTTP error 500' ) );
+		$refusal = 'This site is disconnected from the Dashboard. Reconnect it, then try again.';
+
+		$list = $this->post_ajax( 'mainwp_restore_snapshot_list', array( 'site_id' => (string) $this->site_id ) );
+		$this->assertTrue( $list['site_disconnected'] );
+		$this->assertStringContainsString( 'page=managesites&dashboard=' . $this->site_id, $list['reconnect_url'] );
+
+		$backup = $this->post_ajax( 'mainwp_native_backup_initiate', array( 'site_id' => (string) $this->site_id ) );
+		$this->assertSame( $refusal, $backup['error'] );
+		$this->assertEmpty( MainWP_DB_Backup::instance()->get_manual_backup_task( $this->site_id ), 'A refused Back Up Now must not prepare a task.' );
+
+		$restore = $this->post_ajax(
+			'mainwp_restore_initiate',
+			array(
+				'site_id'             => (string) $this->site_id,
+				'snapshot_id'         => '5',
+				'confirm_destructive' => '1',
+			)
+		);
+		$this->assertSame( $refusal, $restore['error'] );
+
+		$failed   = $this->make_job( $this->safety_checkpoint(), MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT );
+		$rollback = $this->post_ajax( 'mainwp_restore_rollback', array( 'job_id' => (string) $failed->id ) );
+		$this->assertSame( $refusal, $rollback['error'] );
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
+
+		MainWP_DB::instance()->update_website_sync_values( $this->site_id, array( 'sync_errors' => '' ) );
+		$list = $this->post_ajax( 'mainwp_restore_snapshot_list', array( 'site_id' => (string) $this->site_id ) );
+		$this->assertFalse( $list['site_disconnected'] );
+	}
+
+	/**
+	 * Restore refusals reach the page as plain text, so a ">" in the
+	 * registry message is not shown as an entity by the page's .text() sink.
+	 */
+	public function test_restore_initiate_refusal_is_plain_text() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		delete_option( 'mainwp_enableNativeBackups' );
+
+		$response = $this->post_ajax( 'mainwp_restore_initiate', array( 'site_id' => (string) $this->site_id ) );
+
+		$this->assertStringContainsString( 'Settings > Backups', $response['error'] );
+		$this->assertStringNotContainsString( '&gt;', $response['error'] );
 	}
 }

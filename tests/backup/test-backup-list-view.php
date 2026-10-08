@@ -253,4 +253,57 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 		$this->assertInstanceOf( MainWP_Backup_List_View::class, $first );
 		$this->assertSame( $first, $second );
 	}
+
+	/**
+	 * A paused task says so and does not advertise its stored next run.
+	 */
+	public function test_paused_task_shows_paused_and_no_next_run() {
+		$view = new MainWP_Backup_List_View();
+		$item = $this->make_item(
+			array(
+				'paused'            => 1,
+				'next_run'          => time() + YEAR_IN_SECONDS,
+				'last_run'          => time() - DAY_IN_SECONDS,
+				'last_run_manually' => 0,
+				'completed'         => time() - DAY_IN_SECONDS,
+				'the_sites'         => array( 1 ),
+				'backup_errors'     => '',
+				'backup_notices'    => '',
+			)
+		);
+
+		$this->assertStringContainsString( '<span class="ui small grey label">Paused</span>', $view->column_schedule( $item ) );
+		$details = $view->column_details( $item );
+		$this->assertStringContainsString( '<strong>Next run:</strong> Paused', $details );
+		$this->assertStringNotContainsString( gmdate( 'Y', time() + YEAR_IN_SECONDS ), $details );
+	}
+
+	/**
+	 * Run Now is a mini button in the actions cell, Resume replaces it on a
+	 * paused row, and the broken loader image is gone.
+	 */
+	public function test_row_actions_use_mini_buttons() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$view = new MainWP_Backup_List_View();
+
+		$running = $view->column_actions( $this->make_item() );
+		$this->assertStringContainsString( 'class="ui mini button backup_run_now"', $running );
+		$this->assertStringNotContainsString( 'loader.gif', $running );
+
+		$paused = $view->column_actions( $this->make_item( array( 'paused' => 1 ) ) );
+		$this->assertStringContainsString( 'class="ui mini basic button" task_id="1" onClick="return managebackups_resume(this)"', $paused );
+		$this->assertStringNotContainsString( 'backup_run_now', $paused );
+	}
+
+	/**
+	 * A task with no sites flags the count with a theme label, not inline red.
+	 */
+	public function test_zero_sites_uses_red_label() {
+		$view = new MainWP_Backup_List_View();
+		ob_start();
+		$view->column_websites( $this->make_item( array( 'the_sites' => array() ) ) );
+		$output = ob_get_clean();
+
+		$this->assertSame( '<span class="ui small red label">0</span>', $output );
+	}
 }

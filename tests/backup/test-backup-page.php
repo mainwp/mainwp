@@ -12,6 +12,8 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Page;
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_System_Utility;
 
 /**
@@ -141,5 +143,111 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'directory is not writable', $output );
 		$this->assertSame( 0500, fileperms( $this->private_dir ) & 0777 );
 		$this->assertSame( array( '.', '..' ), scandir( $this->private_dir ) );
+	}
+
+	/**
+	 * Render Manage Backups as an administrator.
+	 *
+	 * @param array $get Query args for the request.
+	 *
+	 * @return string Page output.
+	 */
+	private function render_manager( array $get = array() ) {
+		$saved = $_GET;
+		$_GET  = array_merge( $_GET, $get ); // phpcs:ignore WordPress.Security.NonceVerification -- test request.
+		ob_start();
+		try {
+			MainWP_Backup_Page::render_manager();
+		} finally {
+			$output = ob_get_clean();
+			$_GET   = $saved;
+		}
+		return $output;
+	}
+
+	/**
+	 * With native backups off, Manage Backups explains how to turn them on
+	 * instead of answering with the WordPress permission error.
+	 */
+	public function test_manage_backups_with_native_off_points_to_the_setting() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+
+		$output = $this->render_manager();
+
+		$this->assertStringContainsString( 'id="mainwp-native-backups-off-message"', $output );
+		$this->assertStringContainsString( 'Native backups are turned off.', $output );
+		$this->assertStringContainsString( 'page=Settings#mainwp_options_enableNativeBackups', $output );
+		$this->assertStringNotContainsString( 'mainwp-backups-table', $output );
+	}
+
+	/**
+	 * With native backups off only Manage Backups is registered; the other
+	 * backup pages stay gated.
+	 */
+	public function test_menu_registers_only_manage_backups_with_native_off() {
+		global $_registered_pages;
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		$saved = $_registered_pages;
+		foreach ( array( 'ManageBackups', 'ManageBackupsAddNew', 'ManageBackupsStorage', 'ManageBackupsSnapshots' ) as $slug ) {
+			unset( $_registered_pages[ get_plugin_page_hookname( $slug, 'mainwp_tab' ) ] ); // Earlier tests may have registered them.
+		}
+		try {
+			MainWP_Backup_Page::init_menu();
+			$this->assertArrayHasKey( get_plugin_page_hookname( 'ManageBackups', 'mainwp_tab' ), $_registered_pages );
+			foreach ( array( 'ManageBackupsAddNew', 'ManageBackupsStorage', 'ManageBackupsSnapshots' ) as $slug ) {
+				$this->assertArrayNotHasKey( get_plugin_page_hookname( $slug, 'mainwp_tab' ), $_registered_pages, $slug . ' must stay gated.' );
+			}
+		} finally {
+			$_registered_pages = $saved; // phpcs:ignore WordPress.WP.GlobalVariablesOverride -- restore test global.
+			delete_option( 'mainwp_enableNativeBackups' );
+		}
+	}
+
+	/**
+	 * The edit URL refuses Back Up Now's hidden per-site task.
+	 */
+	public function test_edit_url_refuses_hidden_on_demand_task() {
+		$user_id = $this->factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user_id );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$task = MainWP_DB_Backup::instance()->ensure_manual_backup_task(
+			(object) array(
+				'id'     => 887731,
+				'userid' => $user_id,
+			)
+		);
+		try {
+			$output = $this->render_manager( array( 'task_id' => (string) $task->id ) );
+		} finally {
+			MainWP_DB_Backup::instance()->remove_backup_task( (int) $task->id );
+			delete_option( 'mainwp_enableNativeBackups' );
+		}
+
+		$this->assertStringContainsString( 'id="mainwp-backup-task-on-demand-refusal"', $output );
+		$this->assertStringContainsString( 'page=ManageBackupsSnapshots&#038;site_id=887731', $output );
+		$this->assertStringNotContainsString( 'mainwp_managebackups_update', $output, 'The schedule form must not open.' );
+	}
+
+	/**
+	 * An empty task list shows the intro, an empty state with the two first
+	 * steps, and the Run Now dialog closes with a Close button.
+	 */
+	public function test_empty_task_list_shows_intro_and_empty_state() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		try {
+			$output = $this->render_manager();
+		} finally {
+			delete_option( 'mainwp_enableNativeBackups' );
+		}
+
+		$this->assertStringContainsString( 'notice-id="mainwp-backup-tasks-info-message"', $output );
+		$this->assertStringContainsString( 'id="mainwp-backup-tasks-empty"', $output );
+		$this->assertStringContainsString( 'page=ManageBackupsAddNew', $output );
+		$this->assertStringContainsString( 'page=ManageBackupsStorage', $output );
+		$this->assertStringNotContainsString( 'Did you know that MainWP has extensions', $output );
+		$this->assertMatchesRegularExpression( '/id="managebackups-task-status-close"[^>]*value="Close" class="ui button"/', $output );
 	}
 }

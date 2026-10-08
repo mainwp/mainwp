@@ -258,6 +258,9 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
             if ( 0 === stripos( $line, 'HTTP/' ) ) {
                 $status = $line;
+                if ( self::mentions_sensitive_name( $line ) ) {
+                    $status = ( preg_match( '/^HTTP\/\S+\s+\d{3}/', $line, $code ) ? $code[0] . ' ' : '' ) . '[redacted]';
+                }
                 continue;
             }
             $parts = explode( ':', $line, 2 );
@@ -266,13 +269,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
             $name = strtolower( trim( $parts[0] ) );
             if ( in_array( $name, $wanted, true ) ) {
-                // Redact before and after decoding entities. Before, because a decoded
-                // &#34; can close a quoted value early and let the rest of it through;
-                // after, because &#91;userpwd&#93; =&gt; only reaches the dump check once
-                // decoded.
-                $value  = self::redact_header_value( $parts[1], $name );
-                $value  = self::redact_header_value( html_entity_decode( $value, ENT_QUOTES, 'UTF-8' ), $name );
-                $kept[] = $name . ': ' . $value;
+                $kept[] = $name . ': ' . self::header_value_for_display( $parts[1], $name );
             }
         }
 
@@ -924,18 +921,19 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Collapse whitespace in one header value and redact it.
+     * Prepare one kept header value for display.
      *
-     * Long whitespace runs make the unquoted-value pattern in redact_secrets()
-     * quadratic, so they are collapsed first.
+     * A header value that names a secret anywhere is hidden whole instead of
+     * redacted piece by piece: entity- or percent-encoded quotes can move a
+     * value's boundary, and every redaction order loses to one of them.
      *
      * @param string $value Header value.
      * @param string $name  Lowercased header name.
      *
      * @return string
      */
-    private static function redact_header_value( $value, $name ) {
-        $value = preg_replace( '/\s+/', ' ', (string) $value );
+    private static function header_value_for_display( $value, $name ) {
+        $value = preg_replace( '/[\s\p{Zs}]+/u', ' ', html_entity_decode( (string) $value, ENT_QUOTES, 'UTF-8' ) );
         if ( ! is_string( $value ) ) {
             return self::unredactable_text();
         }
@@ -943,7 +941,43 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( 'location' === $name ) {
             $value = self::redact_url( $value );
         }
-        return self::redact_secrets( $value );
+        if ( ! self::mentions_sensitive_name( $value ) ) {
+            return $value;
+        }
+        // Keep a known auth scheme so the challenge type stays recognizable. A fixed
+        // list, because the classifier treats "bearer" as a sensitive name.
+        if ( 'www-authenticate' === $name && preg_match( '/^(Basic|Bearer|Digest|Negotiate|NTLM)(?=\s|$)/i', $value, $scheme ) ) {
+            return $scheme[1] . ' [redacted]';
+        }
+        return '[redacted]';
+    }
+
+    /**
+     * Whether any name-like token in the text, as written or percent-decoded, is sensitive.
+     *
+     * Fails closed: a normalization error counts as a match.
+     *
+     * @param string $text Text to check.
+     *
+     * @return bool
+     */
+    private static function mentions_sensitive_name( $text ) {
+        $text = preg_replace( '/\p{Cf}+/u', '', (string) $text );
+        if ( ! is_string( $text ) ) {
+            return true;
+        }
+        foreach ( array( $text, rawurldecode( $text ) ) as $candidate ) {
+            $tokens = preg_split( '/[^A-Za-z0-9_\-]+/', $candidate, -1, PREG_SPLIT_NO_EMPTY );
+            if ( false === $tokens ) {
+                return true;
+            }
+            foreach ( $tokens as $token ) {
+                if ( self::is_sensitive_param( $token ) ) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     /**

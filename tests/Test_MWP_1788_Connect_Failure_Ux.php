@@ -509,6 +509,52 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A header value that names a secret in any encoding is hidden whole, so quote games cannot leak part of it.
+	 */
+	public function test_header_values_naming_a_secret_are_hidden_whole(): void {
+		$cases = array(
+			'encoded inner quote'     => 'x-cache: password="abc&#34; page=qa-hdr-one"',
+			'encoded enclosing quote' => 'x-cache: password=&quot;abc page=qa-hdr-two&quot;',
+			'hex quote'               => 'x-cache: password=&#x22;abc page=qa-hdr-three&#x22;',
+			'single quotes'           => 'x-cache: password=&#39;abc page=qa-hdr-four&#39;',
+			'double encoded'          => 'x-cache: password=&amp;#34;abc page=qa-hdr-five&amp;#34;',
+			'percent encoded name'    => 'x-cache: %75serpwd=qa-hdr-six',
+		);
+		foreach ( $cases as $label => $header ) {
+			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( "HTTP/1.1 403 Forbidden\r\n" . $header . "\r\n" );
+			$this->assertStringNotContainsString( 'qa-hdr-', $text, $label );
+			$this->assertStringContainsString( 'x-cache: [redacted]', $text, $label );
+		}
+	}
+
+	/**
+	 * The status line, Digest challenges and ordinary Location paths stay readable.
+	 */
+	public function test_header_summary_keeps_ordinary_diagnostics(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers(
+			"HTTP/1.1 403 userpwd=qa-status-secret\r\nwww-authenticate: Digest realm=\"x\", nonce=\"qa-digest-nonce\"\r\nlocation: https://example.test/price&#36;5\r\nserver: nginx\r\n"
+		);
+
+		$this->assertStringNotContainsString( 'qa-status-secret', $text );
+		$this->assertStringContainsString( 'HTTP/1.1 403 [redacted]', $text );
+		$this->assertStringNotContainsString( 'qa-digest-nonce', $text );
+		$this->assertStringContainsString( 'www-authenticate: Digest [redacted]', $text );
+		$this->assertStringContainsString( 'location: https://example.test/price$5', $text );
+		$this->assertStringContainsString( 'server: nginx', $text );
+	}
+
+	/**
+	 * An encoded dump with a long tail is summarized in linear time.
+	 */
+	public function test_encoded_header_dump_with_long_tail_is_fast(): void {
+		$start = microtime( true );
+		$text  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( 'x-cache: &#91;userpwd&#93; =&gt; qa-tail-secret ' . str_repeat( 'x', 65536 ) );
+
+		$this->assertLessThan( 0.5, microtime( true ) - $start );
+		$this->assertStringNotContainsString( 'qa-tail-secret', $text );
+	}
+
+	/**
 	 * A huge benign tail after a dumped secret must not undo the redaction.
 	 */
 	public function test_large_dump_tail_keeps_secret_hidden(): void {
@@ -835,8 +881,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		}
 
 		$header_snip = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
-		$this->assertStringContainsString( 'www-authenticate:', $header_snip );
-		$this->assertStringContainsString( 'plugin_password=[redacted]', $header_snip );
+		$this->assertStringContainsString( 'www-authenticate: Bearer [redacted]', $header_snip );
 		$this->assertStringNotContainsString( 'qa-plugin-secret', $header_snip );
 	}
 
@@ -888,8 +933,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		}
 
 		$header_snip = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
-		$this->assertStringContainsString( 'www-authenticate:', $header_snip );
-		$this->assertStringContainsString( 'plugin_password=[redacted]', $header_snip );
+		$this->assertStringContainsString( 'www-authenticate: Bearer [redacted]', $header_snip );
 		$this->assertStringNotContainsString( 'qa,secret', $header_snip );
 		$this->assertStringNotContainsString( ',secret', $header_snip );
 	}

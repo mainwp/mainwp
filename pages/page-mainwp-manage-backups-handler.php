@@ -311,6 +311,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
                 return esc_html__( 'A restore is in progress for this site. Try again once it finishes.', 'mainwp' );
             }
+            // Back Up Now's hidden task targets one site, so a disconnected site
+            // refuses here like the Back Up Now button does. A scheduled task
+            // still runs its connected sites; a disconnected one fails on its own.
+            if ( 1 === (int) $task->template && MainWP_Post_Backup_Handler::site_is_disconnected( $website ) ) {
+                return esc_html( MainWP_Post_Backup_Handler::disconnected_site_error() );
+            }
         }
         return '';
     }

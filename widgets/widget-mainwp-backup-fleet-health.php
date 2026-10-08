@@ -165,7 +165,7 @@ class MainWP_Backup_Fleet_Health { // phpcs:ignore Generic.Classes.OpeningBraceS
                                 <div class="header">
                                     <span class="ui large text"><i class="<?php echo esc_attr( $bucket['icon'] ); ?> <?php echo esc_attr( $bucket['color'] ); ?> icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $counts[ $bucket['key'] ] ) ); ?></span>
                                 </div>
-                                <div class="description"><a href="<?php echo esc_url( static::filter_url( $bucket['key'] ) ); ?>" data-tooltip="<?php echo esc_attr( $bucket['description'] ); ?>" data-inverted="" data-position="bottom left"><strong><?php echo esc_html( $bucket['label'] ); ?></strong></a></div>
+                                <div class="description"><a href="<?php echo esc_url( static::filter_url( $bucket['key'] ) ); ?>" data-tooltip="<?php echo esc_attr( $bucket['description'] ); ?>" data-inverted="" data-position="bottom left"><strong><?php echo esc_html( $bucket['label'] ); ?></strong><span class="screen-reader-text"> <?php echo esc_html( $bucket['description'] ); ?></span></a></div>
                             </div>
                         </div>
                     <?php endforeach; ?>

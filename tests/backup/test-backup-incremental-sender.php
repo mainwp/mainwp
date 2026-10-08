@@ -4275,6 +4275,43 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Back Up Now's hidden task cannot be reopened through Run Now or a queued
+	 * status poll for a site the Dashboard knows is disconnected.
+	 *
+	 * @return void
+	 */
+	public function test_hidden_on_demand_task_refuses_disconnected_site() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup', array( 'template' => 1 ), array( 'id' => $task->id ) );
+		\MainWP\Dashboard\MainWP_DB::instance()->update_website_sync_values( $site_id, array( 'sync_errors' => 'Connection failed' ) );
+
+		$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$this->assertSame( 'This site is disconnected from the Dashboard. Reconnect it, then try again.', $start['error'] );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, (int) $task->last_run, time() );
+		$this->assertSame( 'This site is disconnected from the Dashboard. Reconnect it, then try again.', $status['error'] );
+		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $task->last_run, $after->last_run );
+		$this->assertSame( array(), $this->child_calls );
+	}
+
+	/**
+	 * A scheduled task keeps running for its connected sites; one disconnected
+	 * site fails on its own during the run instead of blocking the whole task.
+	 *
+	 * @return void
+	 */
+	public function test_visible_task_start_guard_ignores_disconnected_site() {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		\MainWP\Dashboard\MainWP_DB::instance()->update_website_sync_values( $site_id, array( 'sync_errors' => 'Connection failed' ) );
+
+		$guard = new \ReflectionMethod( MainWP_Manage_Backups_Handler::class, 'manual_task_start_error' );
+		$guard->setAccessible( true );
+		$this->assertSame( '', $guard->invoke( null, MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) ) );
+	}
+
+	/**
 	 * Pausing a queued task prevents its next poll from opening a run.
 	 *
 	 * @return void

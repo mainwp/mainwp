@@ -497,6 +497,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			'zwsp key'          => array( "<p>[userpwd\u{200B}] => qa-split-three</p>", '' ),
 			'nbsp header key'   => array( '', "HTTP/1.1 403 Forbidden\r\nx-cache: [userpwd\u{00A0}] => qa-split-four\r\n" ),
 			'encoded header'    => array( '', "HTTP/1.1 403 Forbidden\r\nx-cache: &#91;userpwd&#93; =&gt; qa-split-five\r\n" ),
+			'encoded quote'     => array( '', "HTTP/1.1 403 Forbidden\r\nx-cache: password=\"abc&#34; page=qa-split-six\"\r\n" ),
 		);
 		foreach ( $cases as $label => $case ) {
 			$surfaces = $this->failure_surfaces( $case[0], $case[1] );

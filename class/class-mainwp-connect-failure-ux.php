@@ -266,15 +266,12 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
             $name = strtolower( trim( $parts[0] ) );
             if ( in_array( $name, $wanted, true ) ) {
-                // Decode entities as summarize_body() does, so &#91;userpwd&#93; =&gt;
-                // reaches the dump check. Long whitespace runs make the
-                // unquoted-value pattern in redact_secrets() quadratic.
-                $value = preg_replace( '/\s+/', ' ', html_entity_decode( $parts[1], ENT_QUOTES, 'UTF-8' ) );
-                $value = is_string( $value ) ? trim( $value ) : self::unredactable_text();
-                if ( 'location' === $name ) {
-                    $value = self::redact_url( $value );
-                }
-                $value  = self::redact_secrets( $value );
+                // Redact before and after decoding entities. Before, because a decoded
+                // &#34; can close a quoted value early and let the rest of it through;
+                // after, because &#91;userpwd&#93; =&gt; only reaches the dump check once
+                // decoded.
+                $value  = self::redact_header_value( $parts[1], $name );
+                $value  = self::redact_header_value( html_entity_decode( $value, ENT_QUOTES, 'UTF-8' ), $name );
                 $kept[] = $name . ': ' . $value;
             }
         }
@@ -924,6 +921,29 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     private static function unredactable_text() {
         return __( '[response content hidden: it could not be safely redacted]', 'mainwp' );
+    }
+
+    /**
+     * Collapse whitespace in one header value and redact it.
+     *
+     * Long whitespace runs make the unquoted-value pattern in redact_secrets()
+     * quadratic, so they are collapsed first.
+     *
+     * @param string $value Header value.
+     * @param string $name  Lowercased header name.
+     *
+     * @return string
+     */
+    private static function redact_header_value( $value, $name ) {
+        $value = preg_replace( '/\s+/', ' ', (string) $value );
+        if ( ! is_string( $value ) ) {
+            return self::unredactable_text();
+        }
+        $value = trim( $value );
+        if ( 'location' === $name ) {
+            $value = self::redact_url( $value );
+        }
+        return self::redact_secrets( $value );
     }
 
     /**

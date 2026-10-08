@@ -361,7 +361,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             array(
                 'methods'             => 'PUT, PATCH',
                 'callback'            => array( $this, 'update_backup_settings' ),
-                'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                 'args'                => $this->get_update_backup_allowed_fields(),
                 'validate_callback'   => array( $this, 'validate_update_general_params' ),
             ),

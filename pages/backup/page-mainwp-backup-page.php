@@ -431,7 +431,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
             static::render_header( '' );
             if ( ! empty( $backup_items ) ) {
-                static::render_task_list_actions_bar();
+                self::render_task_list_actions_bar();
             }
             ?>
             <div class="ui padded segment">

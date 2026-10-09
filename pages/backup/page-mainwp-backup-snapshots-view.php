@@ -79,9 +79,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             ?>
         <div id="mainwp-backup-snapshots" class="ui alt segment">
             <h3 class="ui dividing header" style="scroll-margin-top: 6em;"><?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?></h3>
-            <?php static::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
+            <?php self::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
         <?php else : ?>
-            <?php static::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
+            <?php self::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
         <div id="mainwp-backup-snapshots" class="ui padded segment">
             <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-snapshots-info-message', __( 'Pick a site to see its backups. From here you can back the site up right now or restore it to one of its backups.', 'mainwp' ) ); ?>
         <?php endif; ?>

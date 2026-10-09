@@ -35,6 +35,24 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     const CHILD_INCOMPATIBLE_CODE = 'child_plugin_incompatible';
 
     /**
+     * Shared capability names keep negotiation and diagnostics in sync.
+     *
+     * @var array<string, string>
+     */
+    public const NEGOTIATED_CAPABILITY_FLAGS = array(
+        'task_spine_support'                 => 'task_spine',
+        'download_token_support'             => 'download_token',
+        'incremental_support'                => 'incremental',
+        'manifest_chunk_support'             => 'manifest_chunk',
+        'manifest_writer_identity_support'   => 'manifest_writer_identity',
+        'restore_create_idempotency_support' => 'restore_create_idempotency',
+        'restore_files_support'              => 'restore_files',
+        'cloud_restore_pull_support'         => 'cloud_restore_pull',
+        'child_is_multisite'                 => 'is_multisite',
+        'restore_multisite_support'          => 'restore_multisite',
+    );
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -487,18 +505,6 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     protected static function record_negotiated_capabilities( object $website, array $preflight ): void {
         global $wpdb;
-        $flags = array(
-            'task_spine_support'                 => 'task_spine',
-            'download_token_support'             => 'download_token',
-            'incremental_support'                => 'incremental',
-            'manifest_chunk_support'             => 'manifest_chunk',
-            'manifest_writer_identity_support'   => 'manifest_writer_identity',
-            'restore_create_idempotency_support' => 'restore_create_idempotency',
-            'restore_files_support'              => 'restore_files',
-            'cloud_restore_pull_support'         => 'cloud_restore_pull',
-            'child_is_multisite'                 => 'is_multisite',
-            'restore_multisite_support'          => 'restore_multisite',
-        );
 
         // An absent capability is stored as '0' rather than ''. WordPress core's
         // wpdb::get_var() ends with "isset( $values[ $x ] ) && '' !== $values[ $x ]",
@@ -506,7 +512,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // site that has never been negotiated. The restore gate has to tell those
         // apart: unknown re-probes the child, a recorded '0' refuses. Every reader
         // compares against '1', so the stored '0' behaves exactly as '' did.
-        foreach ( $flags as $option => $reported ) {
+        foreach ( self::NEGOTIATED_CAPABILITY_FLAGS as $option => $reported ) {
             MainWP_DB::instance()->update_website_option( $website, $option, empty( $preflight[ $reported ] ) ? '0' : '1' );
             if ( 'manifest_writer_identity_support' === $option && ( '' !== $wpdb->last_error || ( empty( $preflight[ $reported ] ) ? '0' : '1' ) !== MainWP_DB::instance()->get_website_option( (int) $website->id, $option ) ) ) {
                 throw new MainWP_Exception( esc_html__( 'Could not save the child manifest capability.', 'mainwp' ) );

@@ -508,10 +508,10 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
      * @param int    $snapshot_id Snapshot id.
      * @param string $status      New status, e.g. 'pruned'.
      *
-     * @return void
+     * @return bool False when the status write fails.
      */
-    public function set_status( int $snapshot_id, string $status ): void {
-        $this->wpdb->update(
+    public function set_status( int $snapshot_id, string $status ): bool {
+        return false !== $this->wpdb->update(
             $this->table_name( 'wp_backup_snapshot' ),
             array( 'status' => $status ),
             array( 'id' => $snapshot_id ),

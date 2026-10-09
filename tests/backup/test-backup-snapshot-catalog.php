@@ -229,6 +229,32 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Missing files must not imply that retention removed a complete backup.
+	 */
+	public function test_unavailable_reason_distinguishes_missing_files_from_retention() {
+		$this->make_snapshot(
+			array( array( 'file' => 'missing-complete.tar.gz', 'role' => 'full', 'missing' => true ) ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+		);
+		$this->make_snapshot(
+			array( array( 'file' => 'missing-pruned.tar.gz', 'role' => 'full', 'missing' => true ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+			array( 'site_id' => 9902, 'status' => 'pruned' ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+		);
+
+		$catalog = MainWP_Backup_Snapshot_Catalog::instance();
+		$missing = $catalog->list_snapshots_for_site( 9901 );
+		$pruned  = $catalog->list_snapshots_for_site( 9902 );
+
+		$this->assertCount( 1, $missing );
+		$this->assertSame( 'unavailable', $missing[0]['source'] );
+		$this->assertFalse( $missing[0]['restorable'] );
+		$this->assertSame( 'The backup files are missing from this Dashboard and no cloud copy finished uploading, so it cannot be restored.', $missing[0]['restore_reason'] );
+		$this->assertCount( 1, $pruned );
+		$this->assertSame( 'unavailable', $pruned[0]['source'] );
+		$this->assertFalse( $pruned[0]['restorable'] );
+		$this->assertSame( 'Removed by retention; no copy survives locally or in cloud storage.', $pruned[0]['restore_reason'] );
+	}
+
+	/**
 	 * Resolution refuses a snapshot that belongs to a different site than
 	 * the caller is authorized for: a user scoped to one site cannot
 	 * restore another site's backup by passing its snapshot id. With no

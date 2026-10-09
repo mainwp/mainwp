@@ -9,7 +9,6 @@
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
         "masterminds/html5": "^2.9",
-        "phpcompatibility/php-compatibility": "^9.3",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^9.6",

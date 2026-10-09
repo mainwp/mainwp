@@ -49,6 +49,7 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
      * @param string $content_type Ignored for local storage.
      *
      * @return bool
+     * @throws \RuntimeException When the base path is refused.
      */
     public function put_object( string $key, string $body, string $content_type = 'application/octet-stream' ): bool {
         unset( $content_type );
@@ -85,6 +86,7 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
      * @param string $key Object key.
      *
      * @return array|false
+     * @throws \RuntimeException When the base path is refused.
      */
     public function head_object( string $key ) {
         $path = $this->resolve( $key );
@@ -103,6 +105,7 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
      * @param string $local_path Target file path.
      *
      * @return bool
+     * @throws \RuntimeException When the base path is refused.
      */
     public function get_object( string $key, string $local_path ): bool {
         $path = $this->resolve( $key );
@@ -119,6 +122,7 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
      * @param string $key Object key.
      *
      * @return bool
+     * @throws \RuntimeException When the base path is refused.
      */
     public function delete_object( string $key ): bool {
         $path = $this->resolve( $key );
@@ -144,9 +148,17 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
      * @param string|null $token  Ignored.
      *
      * @return array
+     * @throws \RuntimeException When the base path is refused.
      */
     public function list_objects( string $prefix = '', ?string $token = null ): array {
         unset( $token );
+
+        if ( '' !== $this->base_path ) {
+            $reason = MainWP_Backup_Private_Root::served_tree_refusal( $this->base_path );
+            if ( '' !== $reason ) {
+                throw new \RuntimeException( esc_html( $reason ) );
+            }
+        }
 
         $objects = array();
 
@@ -194,6 +206,16 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
      * @return array
      */
     public function connection_test(): array {
+        if ( '' !== $this->base_path ) {
+            $reason = MainWP_Backup_Private_Root::served_tree_refusal( $this->base_path );
+            if ( '' !== $reason ) {
+                return array(
+                    'ok'    => false,
+                    'error' => $reason,
+                );
+            }
+        }
+
         if ( '' === $this->base_path || ! is_dir( $this->base_path ) ) {
             return array(
                 'ok'    => false,
@@ -223,10 +245,16 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
      * @param string $key Object key.
      *
      * @return string|false
+     * @throws \RuntimeException When the base path is refused.
      */
     private function resolve( string $key ) {
         if ( '' === $this->base_path || '' === $key ) {
             return false;
+        }
+
+        $reason = MainWP_Backup_Private_Root::served_tree_refusal( $this->base_path );
+        if ( '' !== $reason ) {
+            throw new \RuntimeException( esc_html( $reason ) );
         }
 
         $key = str_replace( '\\', '/', $key );

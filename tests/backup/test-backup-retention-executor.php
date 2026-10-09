@@ -517,6 +517,83 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A failed status write must not report success or prune the chain's base.
+	 *
+	 * @dataProvider data_status_write_failure_paths
+	 *
+	 * @param string $path Retention entry point.
+	 *
+	 * @return void
+	 */
+	public function test_failed_status_write_does_not_count_snapshot_as_pruned( $path ) {
+		global $wpdb;
+
+		list( $base ) = $this->make_snapshot_with_dir();
+		list( $leaf ) = $this->make_snapshot_with_dir( array( 'parent_id' => $base, 'type' => 'incremental' ) ); // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+		$table        = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$failed       = false;
+		$fail         = static function ( $query ) use ( $table, &$failed ) {
+			if ( str_starts_with( $query, 'UPDATE `' . $table . '` SET ' ) && str_contains( $query, '`status`' ) ) {
+				$failed = true;
+				return str_replace( '`status`', '`missing_status_column`', $query );
+			}
+			return $query;
+		};
+		$events       = array();
+		$capture      = static function ( $event ) use ( &$events ) {
+			$events[] = $event;
+		};
+		$suppress     = $wpdb->suppress_errors( true );
+		add_filter( 'query', $fail );
+		add_action( 'mainwp_backup_pruned', $capture );
+		try {
+			$executor = MainWP_Backup_Retention_Executor::instance();
+			if ( 'cleanup' === $path ) {
+				$result = $executor->cleanup_site_backups( $this->site_id );
+			} else {
+				$result = $executor->run_prune(
+					array(
+						array(
+							'snapshot_ids' => array( $base, $leaf ),
+							'reason'       => 'count',
+						),
+					),
+					$this->make_task( array( 'delete_cloud_copies' => 0 ) ),
+					false
+				);
+			}
+		} finally {
+			remove_filter( 'query', $fail );
+			remove_action( 'mainwp_backup_pruned', $capture );
+			$wpdb->suppress_errors( $suppress );
+		}
+
+		$this->assertTrue( $failed, 'The fixture must reach the failing status UPDATE.' );
+		$this->assertSame( 0, $result['snapshots_pruned'] );
+		$this->assertSame( 0, $result['pruned'] );
+		$this->assertNotEmpty( $result['errors'], 'A failed status write must be reported.' );
+		$this->assertStringContainsString( 'could not be marked as removed', implode( ' ', $result['errors'] ) );
+		$this->assertSame( array(), $events, 'An unrecorded prune must not emit a successful prune event.' );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $leaf )->status );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
+		if ( 'cleanup' === $path ) {
+			$this->assertSame( 0, $result['bytes_pruned'], 'Unrecorded prunes must not contribute reclaimed bytes.' );
+		}
+	}
+
+	/**
+	 * Both retention entry points must report failed status writes.
+	 *
+	 * @return array
+	 */
+	public static function data_status_write_failure_paths() {
+		return array(
+			'scheduled retention' => array( 'run_prune' ),
+			'site cleanup'        => array( 'cleanup' ),
+		);
+	}
+
+	/**
 	 * Without delete_cloud_copies no delete jobs are enqueued, but upload
 	 * rows still purge.
 	 *

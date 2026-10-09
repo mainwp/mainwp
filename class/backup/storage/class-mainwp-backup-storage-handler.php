@@ -530,6 +530,13 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             }
         }
 
+        if ( 'local' === $provider && '' !== (string) ( $settings['base_path'] ?? '' ) ) {
+            $reason = MainWP_Backup_Private_Root::served_tree_refusal( (string) $settings['base_path'] );
+            if ( '' !== $reason ) {
+                return array( 'error' => $reason );
+            }
+        }
+
         $existing_settings = ( $id > 0 && isset( $existing ) && is_array( $existing->settings ) ) ? $existing->settings : array();
         $decision          = static::sftp_pin_decision( $id, $id > 0 ? (string) $existing->provider : '', $provider, $settings, $existing_settings );
 

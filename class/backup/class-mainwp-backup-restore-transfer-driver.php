@@ -658,7 +658,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             );
         }
 
-        if ( ! $provider->get_object( $entry['remote_key'], $temp ) ) {
+        try {
+            $downloaded = $provider->get_object( $entry['remote_key'], $temp );
+        } catch ( \RuntimeException $e ) {
+            $downloaded = false;
+        }
+        if ( ! $downloaded ) {
+            wp_delete_file( $temp );
             return $this->stage_state(
                 'error',
                 sprintf(
@@ -825,7 +831,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             $key   = $entry['chunk_prefix'] . 'chunks/' . $chunk['hash'] . '.bin';
             $piece = $staging . $entry['file'] . '.chunk';
 
-            if ( ! $provider->get_object( $key, $piece ) ) {
+            try {
+                $downloaded = $provider->get_object( $key, $piece );
+            } catch ( \RuntimeException $e ) {
+                $downloaded = false;
+            }
+            if ( ! $downloaded ) {
+                wp_delete_file( $piece );
                 $entry['reassembly'] = $cursor;
                 return $this->stage_state(
                     'error',
@@ -953,7 +965,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         $entry['chunk_prefix'] = $site_id . '/' . (int) $entry['snapshot_id'] . '/';
 
         $temp = $staging . 'manifest-' . (int) $entry['snapshot_id'] . '.json';
-        if ( ! $provider->get_object( $entry['chunk_prefix'] . 'manifest.json', $temp ) ) {
+        try {
+            $downloaded = $provider->get_object( $entry['chunk_prefix'] . 'manifest.json', $temp );
+        } catch ( \RuntimeException $e ) {
+            $downloaded = false;
+        }
+        if ( ! $downloaded ) {
+            wp_delete_file( $temp );
             return null;
         }
 

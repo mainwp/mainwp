@@ -195,6 +195,158 @@ class MainWP_Backup_Storage_Local_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Existing destinations must not expose or modify bytes in a served tree.
+	 *
+	 * @dataProvider served_base_operations
+	 * @param string $boundary Served directory.
+	 * @param string $operation Provider operation.
+	 * @return void
+	 */
+	public function test_operations_refuse_served_base_path( string $boundary, string $operation ) {
+		$base = untrailingslashit( $boundary ) . '/mainwp-local-refusal-' . uniqid();
+		mkdir( $base, 0755, true );
+		$this->temp_dirs[] = $base;
+		file_put_contents( $base . '/existing.bin', 'keep' );
+		$provider = new MainWP_Backup_Storage_Local( array( 'base_path' => $base ) );
+		$error    = null;
+		try {
+			if ( 'put_object' === $operation ) {
+				$provider->put_object( 'new.bin', 'blocked' );
+			} elseif ( 'get_object' === $operation ) {
+				$provider->get_object( 'existing.bin', $base . '/downloaded.bin' );
+			} elseif ( 'list_objects' === $operation ) {
+				$provider->list_objects();
+			} else {
+				$provider->$operation( 'existing.bin' );
+			}
+		} catch ( \RuntimeException $e ) {
+			$error = $e->getMessage();
+		}
+		$this->assertIsString( $error, $operation . ' must report a served-directory refusal.' );
+		$this->assertStringContainsString( $base, $error );
+		$this->assertStringContainsString( 'outside the WordPress and wp-content folders', $error );
+		$this->assertSame( 'keep', file_get_contents( $base . '/existing.bin' ) );
+		$this->assertSame( array( '.', '..', 'existing.bin' ), scandir( $base ) );
+	}
+
+	/**
+	 * Both served trees need the same protection for every object operation.
+	 *
+	 * @return array
+	 */
+	public static function served_base_operations() {
+		$cases      = array();
+		$boundaries = array(
+			'wordpress' => ABSPATH,
+			'content'   => WP_CONTENT_DIR,
+		);
+		foreach ( $boundaries as $name => $boundary ) {
+			foreach ( array( 'put_object', 'head_object', 'get_object', 'delete_object', 'list_objects' ) as $operation ) {
+				$cases[ $name . ':' . $operation ] = array( $boundary, $operation );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * A writable directory is insufficient when the web server serves it.
+	 *
+	 * @return void
+	 */
+	public function test_connection_test_refuses_served_base_path() {
+		foreach ( array( ABSPATH, WP_CONTENT_DIR ) as $boundary ) {
+			$base = untrailingslashit( $boundary ) . '/mainwp-local-probe-refusal-' . uniqid();
+			mkdir( $base, 0755, true );
+			$this->temp_dirs[] = $base;
+			$provider          = new MainWP_Backup_Storage_Local( array( 'base_path' => $base ) );
+			$result            = $provider->connection_test();
+			$this->assertFalse( $result['ok'] );
+			$this->assertStringContainsString( $base, $result['error'] );
+			$this->assertStringContainsString( 'outside the WordPress and wp-content folders', $result['error'] );
+			$this->assertSame( array( '.', '..' ), scandir( $base ) );
+		}
+	}
+
+	/**
+	 * A missing descendant must retain its existing ancestor's served location.
+	 *
+	 * @return void
+	 */
+	public function test_put_refuses_symlinked_served_ancestor() {
+		$this->make_provider();
+		$link              = $this->temp_dirs[0] . '/wordpress';
+		$folder            = 'mainwp-local-alias-refusal-' . uniqid();
+		$base              = $link . '/' . $folder . '/nested';
+		$this->temp_dirs[] = ABSPATH . $folder;
+		$this->assertTrue( symlink( ABSPATH, $link ) );
+		$provider = new MainWP_Backup_Storage_Local( array( 'base_path' => $base ) );
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessage( $base );
+		try {
+			$provider->put_object( 'blocked.bin', 'blocked' );
+		} finally {
+			unlink( $link );
+		}
+	}
+
+	/**
+	 * A base path that is a symlink to storage outside WordPress keeps working.
+	 *
+	 * @return void
+	 */
+	public function test_put_accepts_symlinked_base_outside_served_trees() {
+		$this->make_provider();
+		$this->make_provider();
+		$link = $this->temp_dirs[0] . '/alias';
+		$this->assertTrue( symlink( $this->temp_dirs[1], $link ) );
+		$provider = new MainWP_Backup_Storage_Local( array( 'base_path' => $link ) );
+		try {
+			$this->assertTrue( $provider->put_object( '4/42/files/a.bin', 'outside' ) );
+			$this->assertSame( 'outside', file_get_contents( $this->temp_dirs[1] . '/4/42/files/a.bin' ) );
+		} finally {
+			unlink( $link );
+		}
+	}
+
+	/**
+	 * A base path that is itself a symlink into WordPress is refused.
+	 *
+	 * @return void
+	 */
+	public function test_put_refuses_symlinked_base_into_served_tree() {
+		$this->make_provider();
+		$target = ABSPATH . 'mainwp-local-link-refusal-' . uniqid();
+		mkdir( $target, 0755, true );
+		$this->temp_dirs[] = $target;
+		$link              = $this->temp_dirs[0] . '/served-alias';
+		$this->assertTrue( symlink( $target, $link ) );
+		$provider = new MainWP_Backup_Storage_Local( array( 'base_path' => $link ) );
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessage( $link );
+		try {
+			$provider->put_object( 'blocked.bin', 'blocked' );
+		} finally {
+			unlink( $link );
+			$this->assertSame( array( '.', '..' ), scandir( $target ) );
+		}
+	}
+
+	/**
+	 * Parent segments cannot disguise a served base path.
+	 *
+	 * @return void
+	 */
+	public function test_put_refuses_parent_segments_in_base_path() {
+		$base = ABSPATH . 'mainwp-local-parent-refusal-' . uniqid();
+		mkdir( $base, 0755, true );
+		$this->temp_dirs[] = $base;
+		$provider          = new MainWP_Backup_Storage_Local( array( 'base_path' => $base . '/../' . basename( $base ) ) );
+		$this->expectException( \RuntimeException::class );
+		$this->expectExceptionMessage( 'outside the WordPress and wp-content folders' );
+		$provider->put_object( 'blocked.bin', 'blocked' );
+	}
+
+	/**
 	 * The connection test proves the base path is writable.
 	 *
 	 * @return void

@@ -470,7 +470,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      *
      * @return bool True when the phase finished; false on deadline.
      *
-     * @throws \RuntimeException When a source artifact disappeared.
+     * @throws \RuntimeException When a source artifact disappeared or could not be read or staged.
      */
     private function phase_chunking( object $job, array &$checkpoint, float $deadline ): bool {
         $store = MainWP_Backup_Upload_Job_Store::instance();
@@ -491,7 +491,15 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
             $chunks = MainWP_Backup_Chunker::plan_artifact( $artifact['path'], $this->staging_dir( $job ), (int) $checkpoint['chunk_size'] );
             if ( false === $chunks ) {
-                throw new \RuntimeException( esc_html( 'Backup artifact is missing locally: ' . $artifact['file'] ), 410 );
+                if ( ! is_file( $artifact['path'] ) ) {
+                    throw new \RuntimeException(
+                        esc_html( sprintf( /* translators: %s: artifact file name. */ __( 'Backup file is missing from this Dashboard: %s', 'mainwp' ), basename( $artifact['file'] ) ) ),
+                        410
+                    );
+                }
+                throw new \RuntimeException(
+                    esc_html( sprintf( /* translators: %s: artifact file name. */ __( 'Backup file could not be read or prepared for upload: %s', 'mainwp' ), basename( $artifact['file'] ) ) )
+                );
             }
 
             foreach ( $chunks as &$chunk ) {
@@ -542,7 +550,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                     return false;
                 }
                 if ( ! is_file( $artifact['path'] ) ) {
-                    throw new \RuntimeException( esc_html( 'Backup artifact is missing locally: ' . $artifact['file'] ), 410 );
+                    throw new \RuntimeException( esc_html( 'Backup file is missing from this Dashboard: ' . $artifact['file'] ), 410 );
                 }
                 $hash                                        = hash_file( 'sha256', $artifact['path'] );
                 $artifact['sha256']                          = is_string( $hash ) ? $hash : '';
@@ -695,13 +703,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      *
      * @return void
      *
-     * @throws \RuntimeException When the source file disappeared.
+     * @throws \RuntimeException When the source file disappeared or could not be read.
      */
     private function upload_whole_artifact( array $artifact, string $prefix, MainWP_Backup_Storage_Provider $provider, array $enc ): void {
         $key = $prefix . 'files/' . $artifact['file'];
 
         if ( ! is_file( $artifact['path'] ) ) {
-            throw new \RuntimeException( esc_html( 'Backup artifact is missing locally: ' . $artifact['file'] ), 410 );
+            throw new \RuntimeException( esc_html( 'Backup file is missing from this Dashboard: ' . $artifact['file'] ), 410 );
         }
 
         clearstatcache( true, $artifact['path'] );
@@ -718,7 +726,9 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $body = file_get_contents( $artifact['path'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- local artifact read.
         if ( false === $body ) {
-            throw new \RuntimeException( esc_html( 'Could not read backup artifact for upload: ' . $artifact['file'] ), 410 );
+            // The file passed is_file() above, so a failed read can be transient;
+            // a file that is really gone hits the 410 check on the next attempt.
+            throw new \RuntimeException( esc_html( 'Could not read backup artifact for upload: ' . $artifact['file'] ) );
         }
 
         $body = $this->maybe_seal_whole( $body, $enc, (string) $artifact['file'] );
@@ -829,7 +839,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             }
         }
 
-        throw new \RuntimeException( esc_html( 'Chunk bytes are unavailable locally for ' . $artifact['file'] ), 410 );
+        // Only a missing or shortened source can never supply these bytes again;
+        // a source that still covers the chunk failed to read and is worth a retry.
+        clearstatcache( true, $artifact['path'] );
+        $covers = is_file( $artifact['path'] ) && (int) filesize( $artifact['path'] ) >= (int) $chunk['offset'] + (int) $chunk['length'];
+        throw new \RuntimeException( esc_html( 'Chunk bytes are unavailable locally for ' . $artifact['file'] ), $covers ? 0 : 410 );
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- The registry factory returns MainWP_Exception.

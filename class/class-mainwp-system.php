@@ -538,6 +538,20 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     }
 
     /**
+     * Method mainwp_cronbackups_prune_action()
+     *
+     * Run the daily backups prune from the system cron script.
+     *
+     * @uses \MainWP\Dashboard\MainWP_System_Cron_Jobs::cron_backups_prune()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Diagnostics::prune()
+     */
+    public function mainwp_cronbackups_prune_action() {
+        MainWP_System_Cron_Jobs::instance()->cron_backups_prune();
+        // Under WP-Cron the diagnostics prune rides the same hook; this script calls the lane directly, so prune here too.
+        MainWP_Backup_Diagnostics::instance()->prune();
+    }
+
+    /**
      * Method mainwp_cronbackups_action()
      *
      * Run cron backups action.

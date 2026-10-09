@@ -742,6 +742,278 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Existing artifacts must stay retryable when chunk staging fails.
+	 *
+	 * @return void
+	 */
+	public function test_chunk_staging_failure_schedules_retry() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$artifact        = $snapshot->archives[0];
+		$hash            = hash( MainWP_Backup_Chunker::hash_algo(), substr( file_get_contents( $artifact['path'] ), 0, 1024 ) );
+		$staging         = $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id;
+		$blocked         = $staging . '/' . $hash . '.bin';
+		mkdir( $blocked, 0755, true );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		$warnings = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- The expected filesystem warning must not interrupt the failure-state assertion.
+			static function ( $severity, $message ) use ( $blocked, &$warnings ) {
+				if ( E_WARNING === $severity && false !== strpos( $message, 'rename(' ) && false !== strpos( $message, $blocked ) ) {
+					$warnings[] = $message;
+					return true;
+				}
+				return false;
+			}
+		);
+		$now = time();
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+		} finally {
+			restore_error_handler();
+		}
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertCount( 1, $warnings, 'The fixture must fail while promoting a staged chunk.' );
+		$this->assertFileExists( $artifact['path'] );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( 1, (int) $job->attempt_count );
+		$this->assertSame( $now + 300, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'could not be read or prepared for upload: large.zip', $job->last_error );
+		$this->assertStringNotContainsString( $artifact['path'], $job->last_error );
+		$this->assertStringNotContainsString( 'is missing from this Dashboard', $job->last_error );
+	}
+
+	/**
+	 * Missing source files still fail permanently without scheduling retries.
+	 *
+	 * @return void
+	 */
+	public function test_missing_chunked_artifact_fails_permanent_with_410() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		unlink( $snapshot->archives[0]['path'] );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$driver     = MainWP_Backup_Upload_Driver::instance();
+		$build      = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking   = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$checkpoint = $build->invoke( $driver, $snapshot );
+		$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
+		try {
+			$chunking->invokeArgs( $driver, $args );
+			$this->fail( 'A missing artifact must throw before upload.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 410, $e->getCode() );
+		}
+
+		$driver->process_pending_jobs( 240 );
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 0, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'is missing from this Dashboard: large.zip', $job->last_error );
+	}
+
+	/**
+	 * A whole-file artifact that exists but cannot be read stays retryable.
+	 *
+	 * @return void
+	 */
+	public function test_unreadable_whole_artifact_schedules_retry() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root ignores file permissions, so the artifact cannot be made unreadable.' );
+		}
+
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'small.txt' => array(
+					'size' => 100,
+					'role' => 'db',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$path            = $snapshot->archives[0]['path'];
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+
+		$warnings = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- The expected filesystem warning must not interrupt the failure-state assertion.
+			static function ( $severity, $message ) use ( $path, &$warnings ) {
+				// The whole-file hash runs first and trips over the same permission error.
+				if ( E_WARNING === $severity && false !== strpos( $message, $path ) && ( 0 === strpos( $message, 'file_get_contents(' ) || 0 === strpos( $message, 'hash_file(' ) ) ) {
+					$warnings[] = $message;
+					return true;
+				}
+				return false;
+			}
+		);
+		$now = time();
+		chmod( $path, 0000 );
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+		} finally {
+			chmod( $path, 0644 );
+			restore_error_handler();
+		}
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertNotEmpty(
+			array_filter(
+				$warnings,
+				static function ( $message ) {
+					return 0 === strpos( $message, 'file_get_contents(' );
+				}
+			),
+			'The fixture must fail while reading the whole artifact.'
+		);
+		$this->assertFileExists( $path );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( 1, (int) $job->attempt_count );
+		$this->assertSame( $now + 300, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'Could not read backup artifact for upload', $job->last_error );
+	}
+
+	/**
+	 * A chunk whose staged copy is gone and whose source still covers it but
+	 * cannot be read stays retryable.
+	 *
+	 * @return void
+	 */
+	public function test_unreadable_chunk_source_schedules_retry() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root ignores file permissions, so the artifact cannot be made unreadable.' );
+		}
+
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$path            = $snapshot->archives[0]['path'];
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$driver     = MainWP_Backup_Upload_Driver::instance();
+		$build      = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking   = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$checkpoint = $build->invoke( $driver, $snapshot );
+		$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
+		$this->assertTrue( $chunking->invokeArgs( $driver, $args ) );
+
+		// Hash up front so the permission error lands on the chunk read alone.
+		$checkpoint['artifacts'][0]['sha256'] = hash_file( 'sha256', $path );
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+
+		$staged = glob( $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id . '/*.bin' );
+		$this->assertNotEmpty( $staged, 'Chunking must stage chunk bytes.' );
+		foreach ( $staged as $file ) {
+			unlink( $file );
+		}
+
+		$warnings = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- The expected filesystem warning must not interrupt the failure-state assertion.
+			static function ( $severity, $message ) use ( $path, &$warnings ) {
+				if ( E_WARNING === $severity && 0 === strpos( $message, 'fopen(' ) && false !== strpos( $message, $path ) ) {
+					$warnings[] = $message;
+					return true;
+				}
+				return false;
+			}
+		);
+		$now = time();
+		chmod( $path, 0000 );
+		try {
+			$driver->process_pending_jobs( 240, $now );
+		} finally {
+			chmod( $path, 0644 );
+			restore_error_handler();
+		}
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertCount( 1, $warnings, 'The fixture must fail while opening the source slice.' );
+		$this->assertFileExists( $path );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( 1, (int) $job->attempt_count );
+		$this->assertSame( $now + 300, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'Chunk bytes are unavailable locally', $job->last_error );
+	}
+
+	/**
+	 * A chunk whose staged copy is gone and whose source was cut short can
+	 * never be rebuilt, so the job fails permanently.
+	 *
+	 * @return void
+	 */
+	public function test_truncated_chunk_source_fails_permanent() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$path            = $snapshot->archives[0]['path'];
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$driver     = MainWP_Backup_Upload_Driver::instance();
+		$build      = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking   = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$checkpoint = $build->invoke( $driver, $snapshot );
+		$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
+		$this->assertTrue( $chunking->invokeArgs( $driver, $args ) );
+
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+
+		$staged = glob( $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id . '/*.bin' );
+		$this->assertNotEmpty( $staged, 'Chunking must stage chunk bytes.' );
+		foreach ( $staged as $file ) {
+			unlink( $file );
+		}
+
+		// Shorter than the first chunk's offset plus length (0 + 1024).
+		file_put_contents( $path, substr( file_get_contents( $path ), 0, 500 ) );
+		clearstatcache();
+
+		$driver->process_pending_jobs( 240, time() );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 0, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'Chunk bytes are unavailable locally', $job->last_error );
+	}
+
+	/**
 	 * Exhausted attempts go permanent.
 	 *
 	 * @return void

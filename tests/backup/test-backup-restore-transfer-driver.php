@@ -18,6 +18,43 @@ use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
 use MainWP\Dashboard\MainWP_DB;
 
 /**
+ * Model cloud transport failures after a partial download.
+ */
+class Restore_Throwing_Storage_Local extends MainWP_Backup_Storage_Local {
+
+	/**
+	 * Object whose download fails.
+	 *
+	 * @var string
+	 */
+	public $throw_key = '';
+
+	/**
+	 * Partial downloads that must be removed before failover completes.
+	 *
+	 * @var string[]
+	 */
+	public $failed_paths = array();
+
+	/**
+	 * Leave partial bytes as a transport failure can.
+	 *
+	 * @param string $key        Object key.
+	 * @param string $local_path Target file path.
+	 * @return bool Download result.
+	 * @throws \RuntimeException When the selected download fails.
+	 */
+	public function get_object( string $key, string $local_path ): bool {
+		if ( $key === $this->throw_key ) {
+			file_put_contents( $local_path, 'partial download' );
+			$this->failed_paths[] = $local_path;
+			throw new \RuntimeException( 'Transport failed with private provider details.', 503 );
+		}
+		return parent::get_object( $key, $local_path );
+	}
+}
+
+/**
  * Driver with the remote destination pinned to a local-provider stub.
  */
 class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Driver {
@@ -65,6 +102,13 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
 	 * @var array<int,string>
 	 */
 	public $destination_bases = array();
+
+	/**
+	 * Provider overrides for transport failures Local cannot produce.
+	 *
+	 * @var array<int,\MainWP\Dashboard\MainWP_Backup_Storage_Provider>
+	 */
+	public $destination_providers = array();
 
 	/**
 	 * Destination ids the failover loop tried, in order.
@@ -118,6 +162,9 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
 	 */
 	protected function provider_for_destination( int $destination_id ): ?\MainWP\Dashboard\MainWP_Backup_Storage_Provider {
 		$this->resolved_destinations[] = $destination_id;
+		if ( isset( $this->destination_providers[ $destination_id ] ) ) {
+			return $this->destination_providers[ $destination_id ];
+		}
 		if ( ! isset( $this->destination_bases[ $destination_id ] ) ) {
 			return null;
 		}
@@ -1777,6 +1824,98 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 		$this->assertTrue( $outcome['done'] );
 		$this->assertSame( hash( 'sha256', 'replica-two-bytes' ), $plan[0]['sha256'] );
 		$this->assertSame( array( 21, 22 ), $this->driver->resolved_destinations );
+	}
+
+	/**
+	 * Cloud transport exceptions must not prevent a healthy replica restoring.
+	 */
+	public function test_stage_fails_over_when_primary_download_throws() {
+		$base_a = $this->dir . '/dest-a';
+		$base_b = $this->dir . '/dest-b';
+		mkdir( $base_a );
+		$this->put_object( $base_b, 'replica-two-bytes' );
+		$provider            = new Restore_Throwing_Storage_Local( array( 'base_path' => $base_a ) );
+		$provider->throw_key = '4/8/files/db.tar.gz';
+
+		$this->driver->destination_providers[21] = $provider;
+		$this->driver->destination_bases[22]     = $base_b;
+
+		$sha  = hash( 'sha256', 'replica-two-bytes' );
+		$plan = array(
+			$this->remote_entry( array( $this->candidate( 21, false, $sha ), $this->candidate( 22, false, $sha ) ) ),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertNull( $outcome['error'] );
+		$this->assertSame( 'replica-two-bytes', file_get_contents( $plan[0]['staged_path'] ) );
+		$this->assertSame( $sha, $plan[0]['sha256'] );
+		$this->assertSame( array( 21, 22 ), $this->driver->resolved_destinations );
+		$this->assertCount( 1, $provider->failed_paths );
+		$this->assertFileDoesNotExist( $provider->failed_paths[0] );
+	}
+
+	/**
+	 * A manifest transport failure must allow the next chunked replica.
+	 */
+	public function test_stage_fails_over_when_primary_manifest_download_throws() {
+		$content             = 'chunked-replica-bytes';
+		$entry               = $this->make_chunked_remote( $content, false, 'sha256', true );
+		$base                = $this->dir . '/remote';
+		$provider            = new Restore_Throwing_Storage_Local( array( 'base_path' => $base ) );
+		$provider->throw_key = '0/44/manifest.json';
+
+		$this->driver->destination_providers[21] = $provider;
+		$this->driver->destination_bases[22]     = $base;
+
+		$sha  = hash( 'sha256', $content );
+		$plan = array(
+			array_merge(
+				$this->remote_entry( array( $this->candidate( 21, true, $sha ), $this->candidate( 22, true, $sha ) ), 'remote_chunked' ),
+				$entry
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertNull( $outcome['error'] );
+		$this->assertSame( $content, file_get_contents( $plan[0]['staged_path'] ) );
+		$this->assertSame( $sha, $plan[0]['sha256'] );
+		$this->assertSame( array( 21, 22 ), $this->driver->resolved_destinations );
+		$this->assertCount( 1, $provider->failed_paths );
+		$this->assertFileDoesNotExist( $provider->failed_paths[0] );
+	}
+
+	/**
+	 * A chunk transport failure must discard partial bytes before failover.
+	 */
+	public function test_stage_fails_over_when_primary_chunk_download_throws() {
+		$content             = 'chunked-replica-bytes';
+		$entry               = $this->make_chunked_remote( $content, false, 'sha256', true );
+		$base                = $this->dir . '/remote';
+		$provider            = new Restore_Throwing_Storage_Local( array( 'base_path' => $base ) );
+		$chunk_hash          = hash( 'sha256', substr( $content, 0, (int) ( strlen( $content ) / 2 ) ) );
+		$provider->throw_key = '0/44/chunks/' . $chunk_hash . '.bin';
+
+		$this->driver->destination_providers[21] = $provider;
+		$this->driver->destination_bases[22]     = $base;
+
+		$sha  = hash( 'sha256', $content );
+		$plan = array(
+			array_merge(
+				$this->remote_entry( array( $this->candidate( 21, true, $sha ), $this->candidate( 22, true, $sha ) ), 'remote_chunked' ),
+				$entry
+			),
+		);
+
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertNull( $outcome['error'] );
+		$this->assertSame( $content, file_get_contents( $plan[0]['staged_path'] ) );
+		$this->assertSame( $sha, $plan[0]['sha256'] );
+		$this->assertSame( array( 21, 22 ), $this->driver->resolved_destinations );
+		$this->assertCount( 1, $provider->failed_paths );
+		$this->assertFileDoesNotExist( $provider->failed_paths[0] );
 	}
 
 	/**

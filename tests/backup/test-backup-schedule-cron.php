@@ -11,15 +11,22 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_Backup_Private_Root;
+use MainWP\Dashboard\MainWP_System;
 use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 
 /**
  * Class MainWP_Backup_Schedule_Cron_Test
  */
 class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
+
+	use Backup_Private_Root_Fixture;
 
 	/**
 	 * The minutely slice event follows the native-backup toggle.
@@ -41,6 +48,75 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 		delete_option( 'mainwp_cron_last_backups_slice' );
 		$cron->cron_backups_slice();
 		$this->assertFalse( get_option( 'mainwp_cron_last_backups_slice' ), 'A disabled tick never enters the slice.' );
+	}
+
+	/**
+	 * System cron needs a daily retention entry point when WP-Cron is off.
+	 *
+	 * @return void
+	 */
+	public function test_system_prune_action_runs_retention_sweep() {
+		global $wpdb;
+
+		$this->set_up_private_root();
+		$site_id      = $this->create_test_site();
+		$task_id      = $this->insert_task( array( 'retention_days' => 1 ) );
+		$table        = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$now          = time();
+		$snapshot_ids = array();
+		$paths        = array();
+		try {
+			$dir = MainWP_Backup_Private_Root::site_dir( $site_id );
+			$this->assertIsString( $dir );
+			foreach ( array( $now - 2 * DAY_IN_SECONDS, $now ) as $index => $created ) {
+				$path = $dir . 'cron-retention-' . $index . '.tar';
+				file_put_contents( $path, str_repeat( 'x', 100 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+				$this->assertSame(
+					1,
+					$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+						$table,
+						array(
+							'task_id'       => $task_id,
+							'site_id'       => $site_id,
+							'type'          => 'full',
+							'parent_id'     => null,
+							'created'       => $created,
+							'archives'      => wp_json_encode( array( array( 'file' => basename( $path ), 'size' => 100, 'role' => 'full', 'path' => $path ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+							'manifest_path' => '',
+							'status'        => 'complete',
+						)
+					)
+				);
+				$snapshot_ids[] = (int) $wpdb->insert_id;
+				$paths[]        = $path;
+			}
+
+			delete_option( 'mainwp_cron_last_backups_prune' );
+			update_option( 'mainwp_enableNativeBackups', 0 );
+			MainWP_System::instance()->mainwp_cronbackups_prune_action();
+			$this->assertFalse( get_option( 'mainwp_cron_last_backups_prune' ), 'Disabled native backups must not enter retention.' );
+			foreach ( $snapshot_ids as $snapshot_id ) {
+				$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status );
+			}
+
+			update_option( 'mainwp_enableNativeBackups', 1 );
+			$before = time();
+			MainWP_System::instance()->mainwp_cronbackups_prune_action();
+
+			$this->assertGreaterThanOrEqual( $before, (int) get_option( 'mainwp_cron_last_backups_prune' ) );
+			$this->assertLessThanOrEqual( time(), (int) get_option( 'mainwp_cron_last_backups_prune' ) );
+			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_ids[0] )->status );
+			$this->assertFileDoesNotExist( $paths[0] );
+			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_ids[1] )->status, 'The newest complete unit must survive retention.' );
+			$this->assertFileExists( $paths[1] );
+		} finally {
+			foreach ( $snapshot_ids as $snapshot_id ) {
+				$wpdb->delete( $table, array( 'id' => $snapshot_id ), array( '%d' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test cleanup.
+			}
+			delete_option( 'mainwp_cron_last_backups_prune' );
+			delete_option( 'mainwp_enableNativeBackups' );
+			$this->tear_down_private_root();
+		}
 	}
 
 	/**
@@ -537,20 +613,21 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function test_advance_next_run_after_run_started() {
-		$old_last_run = time() - 5 * HOUR_IN_SECONDS;
+		$now          = time();
+		$old_last_run = $now - 5 * HOUR_IN_SECONDS;
 		$id           = $this->insert_task(
 			array(
 				'schedule'       => 'interval',
 				'interval_hours' => 4,
-				'last_run'       => time(), // The run just stamped last_run.
-				'next_run'       => time() - 60,
+				'last_run'       => $now, // The run just stamped last_run.
+				'next_run'       => $now - 60,
 			)
 		);
 
 		MainWP_System_Cron_Jobs::instance()->maybe_advance_backup_next_run( $id, $old_last_run );
 
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
-		$this->assertSame( time() + 4 * HOUR_IN_SECONDS, (int) $task->next_run, 'next_run projects one interval past the fresh last_run.' );
+		$this->assertSame( $now + 4 * HOUR_IN_SECONDS, (int) $task->next_run, 'next_run projects one interval past the fresh last_run.' );
 	}
 
 	/**

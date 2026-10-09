@@ -60,7 +60,9 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
 
             $reason = '';
             if ( 'unavailable' === $source ) {
-                $reason = __( 'Removed by retention; no copy survives locally or in cloud storage.', 'mainwp' );
+                $reason = 'complete' !== $snapshot->status
+                    ? __( 'Removed by retention; no copy survives locally or in cloud storage.', 'mainwp' )
+                    : __( 'The backup files are missing from this Dashboard and no cloud copy finished uploading, so it cannot be restored.', 'mainwp' );
             } elseif ( 'files' === $snapshot->type && ! $files_restorable ) {
                 $reason = __( 'Update the MainWP Child plugin on the site to restore files-only backups.', 'mainwp' );
             } elseif ( $multisite_gated ) {

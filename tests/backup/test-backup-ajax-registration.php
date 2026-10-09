@@ -86,9 +86,6 @@ class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 			'mainwp_pausebackup'               => 'pause_resume_backup_tasks',
 			'mainwp_resumebackup'              => 'pause_resume_backup_tasks',
 			'mainwp_native_backup_task_reset'  => 'pause_resume_backup_tasks',
-			'mainwp_backuptask_get_sites'      => 'run_backup_tasks',
-			'mainwp_backuptask_run_site'       => 'run_backup_tasks',
-			'mainwp_backup_task_progress'      => 'run_backup_tasks',
 			'mainwp_backup_run_site'           => 'run_backup_tasks',
 			'mainwp_backup'                    => 'execute_backups',
 			'mainwp_backup_checkpid'           => 'execute_backups',
@@ -166,6 +163,18 @@ class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 		}
 
 		$this->assertSame( array(), $missing, 'Actions not registered although the capability is allowed: ' . implode( ', ', $missing ) );
+	}
+
+	/**
+	 * Retired endpoints must stay unavailable even to backup-capable users.
+	 *
+	 * @return void
+	 */
+	public function test_orphaned_backup_actions_are_not_registered() {
+		foreach ( array( 'mainwp_backuptask_get_sites', 'mainwp_backuptask_run_site', 'mainwp_backup_task_progress' ) as $action ) {
+			$this->assertFalse( $this->action_registered_with_denied_cap( $action, '' ), $action . ' must not be registered.' );
+			$this->assertFalse( method_exists( MainWP_Post_Backup_Handler::class, $action ), $action . ' must not retain a callable handler.' );
+		}
 	}
 
 	/**

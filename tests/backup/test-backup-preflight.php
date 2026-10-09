@@ -14,7 +14,6 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Executor;
-use MainWP\Dashboard\MainWP_Backup_Handler;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
@@ -1339,54 +1338,6 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 			'override cannot help' => array( true, 1, 'zip', 'tar.gz', true ),
 			'both unavailable'     => array( false, 0, 'zip', 'zip', false ),
 			'already using tar.gz' => array( true, 0, 'tar.gz', 'tar.gz', false ),
-		);
-	}
-
-	/**
-	 * The deprecated MainWP_Backup_Handler shim takes the extension by value,
-	 * so its callers can never receive a negotiated format. It must therefore
-	 * negotiate warn-only: logging "was switched" while the legacy caller
-	 * keeps sending ZIP would make the log lie about what went on the wire.
-	 *
-	 * @return void
-	 */
-	public function test_deprecated_shim_negotiates_warn_only() {
-		$this->setExpectedDeprecated( 'MainWP\Dashboard\MainWP_Backup_Handler::negotiate_backup_preflight' );
-
-		$site_id = $this->create_test_site();
-		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
-
-		$this->mock_child_actions(
-			array( 'backup_preflight' => $this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ) )
-		);
-
-		$captured = array();
-		add_action(
-			'mainwp_log_warning',
-			function ( $message ) use ( &$captured ) {
-				$captured[] = $message;
-			}
-		);
-
-		MainWP_Backup_Handler::negotiate_backup_preflight( $website, 'zip' );
-
-		$this->assertEmpty(
-			array_filter(
-				$captured,
-				function ( $message ) {
-					return false !== stripos( $message, 'switched' );
-				}
-			),
-			'The shim must not log a switch its caller cannot receive.'
-		);
-		$this->assertNotEmpty(
-			array_filter(
-				$captured,
-				function ( $message ) {
-					return false !== stripos( $message, 'not recommended' );
-				}
-			),
-			'The shim still warns about ZIP on a large site.'
 		);
 	}
 

@@ -231,12 +231,33 @@ class MainWP_Backup_Private_Root {
     }
 
     /**
+     * Backup destinations need the same location checks as private storage.
+     *
+     * @param string $path Candidate directory.
+     * @return string Empty when accepted, otherwise an operator-facing refusal.
+     */
+    public static function served_tree_refusal( string $path ): string {
+        // A destination may be a symlink to another disk; only where it resolves matters.
+        $reason = self::refusal_reason( $path, true );
+        if ( '' === $reason ) {
+            return '';
+        }
+        return sprintf(
+            /* translators: 1: Directory path, 2: Failure reason. */
+            __( 'Backup directory "%1$s" cannot be used (%2$s). Choose a folder outside the WordPress and wp-content folders that the web server can write to.', 'mainwp' ),
+            str_replace( "\0", '[NUL]', $path ),
+            $reason
+        );
+    }
+
+    /**
      * Refuse invalid paths and paths inside WordPress or its content directory.
      *
-     * @param mixed $candidate Selected directory.
+     * @param mixed $candidate     Selected directory.
+     * @param bool  $allow_symlink Accept a symlinked directory that resolves outside both trees.
      * @return string Empty when accepted.
      */
-    private static function refusal_reason( $candidate ): string {
+    private static function refusal_reason( $candidate, bool $allow_symlink = false ): string {
         if ( ! is_string( $candidate ) || '' === trim( $candidate ) || false !== strpos( $candidate, "\0" ) ) {
             return 'expected a non-empty path without NUL bytes';
         }
@@ -247,7 +268,7 @@ class MainWP_Backup_Private_Root {
         if ( in_array( '..', explode( '/', $candidate ), true ) ) {
             return "expected a path without '..' segments";
         }
-        if ( is_link( $candidate ) ) {
+        if ( ! $allow_symlink && is_link( $candidate ) ) {
             return 'directory is a symlink';
         }
         foreach ( array( ABSPATH, WP_CONTENT_DIR ) as $boundary ) {

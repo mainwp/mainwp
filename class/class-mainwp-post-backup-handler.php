@@ -76,11 +76,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_native_backup_task_reset', array( &$this, 'mainwp_native_backup_task_reset' ) );
         }
         if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
-            $this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) );
             $this->add_action( 'mainwp_backuptask_run_now', array( &$this, 'mainwp_backuptask_run_now' ) );
             $this->add_action( 'mainwp_backuptask_run_status', array( &$this, 'mainwp_backuptask_run_status' ) );
-            $this->add_action( 'mainwp_backuptask_run_site', array( &$this, 'mainwp_backuptask_run_site' ) );
-            $this->add_action( 'mainwp_backup_task_progress', array( &$this, 'mainwp_backup_task_progress' ) );
         }
         // Page: backup.
         if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
@@ -1367,32 +1364,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
-     * Method mainwp_backup_task_progress()
-     *
-     * Report the recorded progress of a running scheduled backup for one
-     * site from the local progress row - no child round trip.
-     *
-     * @return void
-     */
-    public function mainwp_backup_task_progress() {
-        $this->secure_request( 'mainwp_backup_task_progress' );
-        $task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification -- verified by secure_request.
-        $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification -- verified by secure_request.
-
-        if ( empty( $task_id ) || empty( $site_id ) ) {
-            wp_send_json( array( 'error' => esc_html__( 'Invalid request. Please reload the page and try again.', 'mainwp' ) ) );
-        }
-
-        if ( null === $this->authorize_restore_site( $site_id ) ) {
-            return;
-        }
-
-        $row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
-
-        wp_send_json( array( 'result' => static::build_task_progress_response( $row ) ) );
-    }
-
-    /**
      * Method build_task_progress_response()
      *
      * Shape a progress row into the poll response: the human label
@@ -1869,54 +1840,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             delete_transient( $baseline_key );
         }
         wp_send_json( $response );
-    }
-
-    /**
-     * Method mainwp_backuptask_get_sites()
-     *
-     * Get sites of backup task.
-     *
-     * @throws MainWP_Exception On errors.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Exception
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::get_backup_task_sites()
-     */
-    public function mainwp_backuptask_get_sites() {
-        try {
-            $this->secure_request( 'mainwp_backuptask_get_sites' );
-
-            $taskID = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-
-            wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::get_backup_task_sites( $taskID ) ) );
-        } catch ( MainWP_Exception $e ) {
-            $this->die_exception_error( $e );
-        }
-    }
-
-    /**
-     * Method mainwp_backuptask_run_site()
-     *
-     * Run backup task of site.
-     *
-     * @throws MainWP_Exception On errors.
-     *
-     * @uses \MainWP\Dashboard\MainWP_Exception
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::backup()
-     */
-    public function mainwp_backuptask_run_site() {
-        try {
-            $this->secure_request( 'mainwp_backuptask_run_site' );
-            $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $task_id = isset( $_POST['task_id'] ) ? intval( $_POST['task_id'] ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            if ( ! $site_id || ! $task_id ) {
-                throw new MainWP_Exception( esc_html__( 'Site ID or backup task ID not found. Please reload the page and try again.', 'mainwp' ) );
-            }
-
-            $fileNameUID = isset( $_POST['fileNameUID'] ) ? sanitize_text_field( wp_unslash( $_POST['fileNameUID'] ) ) : false; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            wp_send_json( array( 'result' => MainWP_Manage_Backups_Handler::backup( $task_id, $site_id, $fileNameUID ) ) );
-        } catch ( MainWP_Exception $e ) {
-            $this->die_exception_error( $e );
-        }
     }
 
     /**

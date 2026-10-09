@@ -114,19 +114,20 @@ class MainWP_Backup_Retention_Query_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_chain_groups_under_base() {
-		$base = $this->insert_snapshot( array( 'created' => time() - 300 ) );
+		$now  = time();
+		$base = $this->insert_snapshot( array( 'created' => $now - 300 ) );
 		$inc1 = $this->insert_snapshot(
 			array(
 				'type'      => 'incremental',
 				'parent_id' => $base,
-				'created'   => time() - 200,
+				'created'   => $now - 200,
 			)
 		);
 		$inc2 = $this->insert_snapshot(
 			array(
 				'type'      => 'incremental',
 				'parent_id' => $inc1,
-				'created'   => time() - 100,
+				'created'   => $now - 100,
 			)
 		);
 
@@ -136,7 +137,7 @@ class MainWP_Backup_Retention_Query_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $units[0]['is_complete'] );
 		$this->assertSame( array( $base, $inc1, $inc2 ), array_map( 'intval', wp_list_pluck( $units[0]['snapshots'], 'id' ) ) );
 		$this->assertSame( 3000, $units[0]['size_bytes'] );
-		$this->assertSame( time() - 100, $units[0]['newest_created'] );
+		$this->assertSame( $now - 100, $units[0]['newest_created'] );
 	}
 
 	/**

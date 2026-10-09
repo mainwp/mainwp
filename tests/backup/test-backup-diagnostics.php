@@ -21,6 +21,7 @@ use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
+use MainWP\Dashboard\MainWP_System;
 
 /**
  * Class MainWP_Backup_Diagnostics_Test
@@ -1900,6 +1901,70 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFileDoesNotExist( $old, 'Files past the age limit must be pruned.' );
 		$this->assertFileDoesNotExist( $big_a, 'The oldest file must go first when the directory exceeds the size cap.' );
 		$this->assertFileExists( $big_b, 'The newest file must survive the size-cap prune.' );
+	}
+
+	/**
+	 * Files recorded before diagnostics was disabled still need to expire.
+	 *
+	 * @return void
+	 */
+	public function test_retention_hook_prunes_when_diagnostics_disabled() {
+		$recorder = MainWP_Backup_Diagnostics::instance();
+		update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, '0' );
+		remove_action( 'mainwp_cronbackups_prune_action', array( $recorder, 'prune' ) );
+		$recorder->init();
+
+		$old   = $this->diag_dir . '/disabled-old.jsonl';
+		$fresh = $this->diag_dir . '/disabled-fresh.jsonl';
+		file_put_contents( $old, "{}\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		file_put_contents( $fresh, "{}\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		touch( $old, time() - ( MainWP_Backup_Diagnostics::RETENTION_DAYS + 1 ) * DAY_IN_SECONDS );
+
+		do_action( 'mainwp_cronbackups_prune_action' );
+
+		$this->assertFileDoesNotExist( $old, 'Disabled recording must not prevent retention cleanup.' );
+		$this->assertFileExists( $fresh, 'Files within the retention window must survive.' );
+	}
+
+	/**
+	 * The system cron prune script calls the lane directly instead of firing
+	 * the WP-Cron hook, so it must prune diagnostics files itself.
+	 *
+	 * @return void
+	 */
+	public function test_system_cron_prune_script_prunes_diagnostics() {
+		update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, '0' );
+		remove_all_actions( 'mainwp_cronbackups_prune_action' );
+
+		$old   = $this->diag_dir . '/system-cron-old.jsonl';
+		$fresh = $this->diag_dir . '/system-cron-fresh.jsonl';
+		file_put_contents( $old, "{}\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		file_put_contents( $fresh, "{}\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		touch( $old, time() - ( MainWP_Backup_Diagnostics::RETENTION_DAYS + 1 ) * DAY_IN_SECONDS );
+
+		MainWP_System::instance()->mainwp_cronbackups_prune_action();
+
+		$this->assertFileDoesNotExist( $old, 'The system cron prune must expire old diagnostics files.' );
+		$this->assertFileExists( $fresh, 'Files within the retention window must survive.' );
+	}
+
+	/**
+	 * Manifest provenance must remain visible in diagnostics for each site.
+	 *
+	 * @return void
+	 */
+	public function test_sites_section_includes_manifest_writer_identity_capability() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option( $website, 'manifest_writer_identity_support', '1' );
+
+		$reader   = new \ReflectionMethod( MainWP_Backup_Diagnostics::class, 'bundle_sections' );
+		$sections = $reader->invoke( MainWP_Backup_Diagnostics::instance(), $this->diag_dir, array( $site_id ) );
+
+		$this->assertArrayHasKey( 'env', $sections );
+		$this->assertCount( 1, $sections['sites'] );
+		$this->assertArrayHasKey( 'manifest_writer_identity_support', $sections['sites'][0]['capabilities'] );
+		$this->assertSame( '1', $sections['sites'][0]['capabilities']['manifest_writer_identity_support'] );
 	}
 
 	/**

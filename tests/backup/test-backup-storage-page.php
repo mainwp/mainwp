@@ -141,6 +141,106 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Saving and testing must reject writable folders in either served tree.
+	 *
+	 * @dataProvider served_local_directories
+	 * @param string $boundary Served directory.
+	 * @return void
+	 */
+	public function test_save_and_test_destination_refuse_served_directories( string $boundary ) {
+		$base = untrailingslashit( $boundary ) . '/mainwp-storage-refusal-' . uniqid();
+		mkdir( $base, 0755, true );
+		$this->temp_dirs[] = $base;
+		$input             = array(
+			'id'       => 0,
+			'provider' => 'local',
+			'name'     => 'Served backup folder',
+			'settings' => array( 'base_path' => $base ),
+		);
+		foreach ( array( 'save_destination', 'test_saved_or_submitted' ) as $method ) {
+			$result = MainWP_Backup_Storage_Handler::$method( $input );
+			$this->assertArrayHasKey( 'error', $result, $method );
+			$this->assertStringContainsString( $base, $result['error'] );
+			$this->assertStringContainsString( 'outside the WordPress and wp-content folders', $result['error'] );
+			$this->assertEmpty( $result['ok'] ?? false );
+		}
+		$this->assertSame( array(), MainWP_Backup_Storage_Destinations::instance()->list_destinations() );
+		$this->assertSame( array( '.', '..' ), scandir( $base ) );
+	}
+
+	/**
+	 * wp-content can be outside the WordPress installation.
+	 *
+	 * @return array
+	 */
+	public static function served_local_directories() {
+		return array(
+			'wordpress' => array( ABSPATH ),
+			'content'   => array( WP_CONTENT_DIR ),
+		);
+	}
+
+	/**
+	 * Stored settings must not bypass location checks when testing an old row.
+	 *
+	 * @return void
+	 */
+	public function test_stored_local_destination_in_served_tree_is_refused() {
+		$base = ABSPATH . 'mainwp-storage-stored-refusal-' . uniqid();
+		mkdir( $base, 0755, true );
+		$this->temp_dirs[] = $base;
+		$id                = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Old served folder',
+				'settings' => array( 'base_path' => $base ),
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		$input = array(
+			'id'       => $id,
+			'provider' => 'local',
+			'name'     => 'Old served folder',
+		);
+		foreach ( array( 'save_destination', 'test_saved_or_submitted' ) as $method ) {
+			$result = MainWP_Backup_Storage_Handler::$method( $input );
+			$this->assertArrayHasKey( 'error', $result, $method );
+			$this->assertStringContainsString( $base, $result['error'] );
+			$this->assertStringContainsString( 'outside the WordPress and wp-content folders', $result['error'] );
+		}
+		$this->assertSame( array( '.', '..' ), scandir( $base ) );
+	}
+
+	/**
+	 * Missing folders beneath a served symlink must be classified before probing.
+	 *
+	 * @return void
+	 */
+	public function test_destination_refuses_missing_path_beneath_served_symlink() {
+		$link = $this->make_temp_dir() . '/wordpress';
+		$base = $link . '/mainwp-storage-missing-' . uniqid() . '/nested';
+		$this->assertTrue( symlink( ABSPATH, $link ) );
+		try {
+			$input = array(
+				'id'       => 0,
+				'provider' => 'local',
+				'name'     => 'Missing served folder',
+				'settings' => array( 'base_path' => $base ),
+			);
+			foreach ( array( 'save_destination', 'test_saved_or_submitted' ) as $method ) {
+				$result = MainWP_Backup_Storage_Handler::$method( $input );
+				$this->assertArrayHasKey( 'error', $result, $method );
+				$this->assertStringContainsString( $base, $result['error'] );
+				$this->assertStringContainsString( 'outside the WordPress and wp-content folders', $result['error'] );
+			}
+			$this->assertDirectoryDoesNotExist( $base );
+			$this->assertSame( array(), MainWP_Backup_Storage_Destinations::instance()->list_destinations() );
+		} finally {
+			unlink( $link );
+		}
+	}
+
+	/**
 	 * Ordinary edits must not make the next connection trust an unknown key.
 	 *
 	 * @dataProvider b13_unchanged_sftp_settings

@@ -338,6 +338,133 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Capture the legacy request without creating or downloading an archive.
+	 *
+	 * @param string       $site_setting Site load setting.
+	 * @param string|false $load_setting Request load setting.
+	 * @param string|false $auto_setting Request descriptor setting.
+	 * @return array Child request parameters.
+	 */
+	private function capture_legacy_backup_request( $site_setting, $load_setting = false, $auto_setting = false ) {
+		$site_id = $this->create_test_site( array( 'loadFilesBeforeZip' => $site_setting ) );
+		$this->assertSame( $site_setting, MainWP_DB::instance()->get_website_by_id( $site_id )->loadFilesBeforeZip );
+		$this->mock_child_action(
+			'backup_preflight',
+			array(
+				'task_spine'  => 1,
+				'zip_support' => true,
+			)
+		);
+		$captured = array();
+		$capture  = static function ( $result, $website, $what, $params ) use ( &$captured ) {
+			if ( 'backup' === $what ) {
+				$captured = $params;
+				return array(
+					'error'      => 'Request captured.',
+					'error_code' => 'settings_capture',
+				);
+			}
+			return $result;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $capture, 20, 4 );
+		try {
+			MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 1, 1, 1, 1, null, '', 'zip', '1', $auto_setting, 150, $load_setting );
+			$this->fail( 'The capture response must stop the backup.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( 'settings_capture', $error->get_message_error_code() );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $capture, 20 );
+		}
+		$this->assertNotEmpty( $captured, 'The backup must reach the child request.' );
+		return $captured;
+	}
+
+	/**
+	 * DB and POST strings must preserve explicit settings and global inheritance.
+	 *
+	 * @dataProvider legacy_load_setting_cases
+	 * @param string       $site_setting Site load setting.
+	 * @param string|false $load_setting Request load setting.
+	 * @param string|false $global_setting Global setting, or false for a missing option.
+	 * @param bool         $expected Expected child setting.
+	 * @return void
+	 */
+	public function test_legacy_backup_honors_string_load_settings( $site_setting, $load_setting, $global_setting, $expected ) {
+		$original = get_option( 'mainwp_options_loadFilesBeforeZip' );
+		if ( false === $global_setting ) {
+			delete_option( 'mainwp_options_loadFilesBeforeZip' );
+		} else {
+			update_option( 'mainwp_options_loadFilesBeforeZip', $global_setting );
+		}
+		try {
+			$params = $this->capture_legacy_backup_request( $site_setting, $load_setting );
+			$this->assertSame( $expected, $params['loadFilesBeforeZip'] );
+		} finally {
+			if ( false === $original ) {
+				delete_option( 'mainwp_options_loadFilesBeforeZip' );
+			} else {
+				update_option( 'mainwp_options_loadFilesBeforeZip', $original );
+			}
+		}
+	}
+
+	/**
+	 * Disabled and missing global options verify both inheritance outcomes.
+	 *
+	 * @return array Load setting cases.
+	 */
+	public static function legacy_load_setting_cases() {
+		return array(
+			'site enabled'         => array( '2', false, '0', true ),
+			'POST enabled'         => array( '0', '2', '0', true ),
+			'site global enabled'  => array( '1', false, '1', true ),
+			'POST global enabled'  => array( '0', '1', '1', true ),
+			'site global disabled' => array( '1', false, '0', false ),
+			'POST global disabled' => array( '2', '1', '0', false ),
+			'site global missing'  => array( '1', false, false, true ),
+			'POST global missing'  => array( '0', '1', false, true ),
+			'site disabled'        => array( '0', false, '1', false ),
+			'POST disabled'        => array( '2', '0', '1', false ),
+		);
+	}
+
+	/**
+	 * The POST string must enable the child's automatic descriptor limit.
+	 *
+	 * @return void
+	 */
+	public function test_legacy_backup_honors_string_descriptor_auto_setting() {
+		$params = $this->capture_legacy_backup_request( '0', '0', '1' );
+		$this->assertTrue( $params['file_descriptors_auto'] );
+	}
+
+	/**
+	 * JSON errors need plain text because the browser escapes them with .text().
+	 *
+	 * @return void
+	 */
+	public function test_manual_task_start_error_preserves_literal_apostrophe() {
+		$this->skip_when_capabilities_bypassed();
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'Restricted site task', 'manual', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		$deny = static function ( $allowed, $cap_type, $cap ) use ( $site_id ) {
+			return 'site' === $cap_type && (int) $cap === $site_id ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			$start  = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+		}
+		$expected = "You are not allowed to run backups for one or more of this task's sites.";
+		$this->assertSame( $expected, $start['error'] );
+		$this->assertSame( $expected, $status['error'] );
+	}
+
+	/**
 	 * Child error responses carry their error code through to the exception.
 	 *
 	 * @return void

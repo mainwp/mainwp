@@ -301,30 +301,30 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     private static function manual_task_start_error( object $task, array &$stale_sites = array() ): string {
         if ( ! empty( $task->paused ) ) {
-            return esc_html__( 'This task is paused. Resume it before running it.', 'mainwp' );
+            return __( 'This task is paused. Resume it before running it.', 'mainwp' );
         }
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
-            return esc_html__( 'Native backups are not enabled.', 'mainwp' );
+            return __( 'Native backups are not enabled.', 'mainwp' );
         }
         $sites = static::resolve_task_run_sites( $task, $stale_sites );
         if ( empty( $sites ) ) {
             return ! empty( $stale_sites )
-                ? esc_html__( 'No existing sites remain in this backup task. Re-save the task to select sites.', 'mainwp' )
-                : esc_html__( 'No sites are selected for this backup task. Edit the task and select sites.', 'mainwp' );
+                ? __( 'No existing sites remain in this backup task. Re-save the task to select sites.', 'mainwp' )
+                : __( 'No sites are selected for this backup task. Edit the task and select sites.', 'mainwp' );
         }
         foreach ( $sites as $site_id ) {
             $website = MainWP_DB::instance()->get_website_by_id( $site_id );
             if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
-                return esc_html__( 'You are not allowed to run backups for one or more of this task\'s sites.', 'mainwp' );
+                return __( 'You are not allowed to run backups for one or more of this task\'s sites.', 'mainwp' );
             }
             if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
-                return esc_html__( 'A restore is in progress for this site. Try again once it finishes.', 'mainwp' );
+                return __( 'A restore is in progress for this site. Try again once it finishes.', 'mainwp' );
             }
             // Back Up Now's hidden task targets one site, so a disconnected site
             // refuses here like the Back Up Now button does. A scheduled task
             // still runs its connected sites; a disconnected one fails on its own.
             if ( 1 === (int) $task->template && MainWP_Post_Backup_Handler::site_is_disconnected( $website ) ) {
-                return esc_html( MainWP_Post_Backup_Handler::disconnected_site_error() );
+                return MainWP_Post_Backup_Handler::disconnected_site_error();
             }
         }
         return '';

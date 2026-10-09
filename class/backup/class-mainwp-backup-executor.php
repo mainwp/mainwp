@@ -2407,7 +2407,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
             }
         } elseif ( ( 'global' !== $pArchiveFormat ) && ( 1 === (int) $pMaximumFileDescriptorsOverride ) ) {
-            $maximumFileDescriptorsAuto = ( 1 === $pMaximumFileDescriptorsAuto );
+            $maximumFileDescriptorsAuto = ( 1 === (int) $pMaximumFileDescriptorsAuto );
             $maximumFileDescriptors     = $pMaximumFileDescriptors;
         } else {
             $maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
@@ -2437,18 +2437,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         // Normal flow: check site settings & fallback to global.
         if ( false === $pLoadFilesBeforeZip ) {
-            $loadFilesBeforeZip = $website->loadFilesBeforeZip;
+            $loadFilesBeforeZip = (int) $website->loadFilesBeforeZip;
             if ( 1 === $loadFilesBeforeZip ) {
                 $loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
-                $loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
+                $loadFilesBeforeZip = ( 1 === (int) $loadFilesBeforeZip || false === $loadFilesBeforeZip );
             } else {
                 $loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
             }
-        } elseif ( 'global' === $pArchiveFormat || 1 === $pLoadFilesBeforeZip ) { // Overridden flow: only fallback to global.
+        } elseif ( 'global' === $pArchiveFormat || 1 === (int) $pLoadFilesBeforeZip ) { // Overridden flow: only fallback to global.
             $loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
-            $loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
+            $loadFilesBeforeZip = ( 1 === (int) $loadFilesBeforeZip || false === $loadFilesBeforeZip );
         } else {
-            $loadFilesBeforeZip = ( 2 === $pLoadFilesBeforeZip );
+            $loadFilesBeforeZip = ( 2 === (int) $pLoadFilesBeforeZip );
         }
 
         // Normal flow: check site settings & fallback to global.

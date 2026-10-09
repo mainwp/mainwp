@@ -521,12 +521,16 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
 
             $store->purge_upload_jobs_for_snapshot( $snapshot_id );
 
+            if ( ! $snapshots->set_status( $snapshot_id, 'pruned' ) ) {
+                /* translators: %d: Snapshot ID. */
+                $result['errors'][] = sprintf( __( 'Snapshot %d: the files were deleted but the backup could not be marked as removed. The next daily cleanup will try again.', 'mainwp' ), $snapshot_id );
+                break;
+            }
+
             $child_task_id = $this->child_task_id_for( $snapshot );
             if ( '' !== $child_task_id ) {
                 $child_task_ids[] = $child_task_id;
             }
-
-            $snapshots->set_status( $snapshot_id, 'pruned' );
 
             $pruned_ids[] = $snapshot_id;
             ++$result['snapshots_pruned'];

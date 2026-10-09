@@ -1320,6 +1320,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $cron_jobs[ esc_html__( 'Start scheduled backups', 'mainwp' ) ]  = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' );
             $cron_jobs[ esc_html__( 'Continue running backups', 'mainwp' ) ] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', esc_html__( 'Once every five minutes (maintenance)', 'mainwp' ), '5minutely' );
             $cron_jobs[ esc_html__( 'Run backup steps', 'mainwp' ) ]         = array( 'mainwp_cron_last_backups_slice', 'mainwp_cronbackups_slice_action', esc_html__( 'Once every minute', 'mainwp' ), 'minutely' );
+            $cron_jobs[ esc_html__( 'Clean up old backups', 'mainwp' ) ]     = array( 'mainwp_cron_last_backups_prune', 'mainwp_cronbackups_prune_action', esc_html__( 'Once daily', 'mainwp' ), 'daily' );
         }
 
         $cron_jobs = apply_filters( 'mainwp_info_schedules_cron_listing', $cron_jobs );

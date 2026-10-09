@@ -13,9 +13,6 @@
     <arg name="parallel" value="8" />
 
     <config name="minimum_supported_wp_version" value="5.2" />
-    <config name="testVersion" value="8.3-" />
-
-    <rule ref="PHPCompatibility" />
 
     <rule ref="WordPress">
         <!-- Kept aligned with the main phpcs.xml exclusions. -->

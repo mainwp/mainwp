@@ -78,14 +78,15 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Subscribe to the pipeline seams. Recording registers nothing when
      * the setting is off, so a disabled recorder costs nothing on the hot
-     * path - but the task-delete purge stays registered regardless:
-     * cleanup is not recording, and files written while diagnostics was
-     * on must still leave with their task after it is switched off.
+     * path. Both the task-delete purge and retention cleanup hooks stay
+     * registered so files written before diagnostics was switched off
+     * still leave with their task or expire.
      *
      * @return void
      */
     public function init(): void {
         add_action( 'mainwp_backup_task_snapshots_purged', array( $this, 'purge_task_files' ), 10, 1 );
+        add_action( 'mainwp_cronbackups_prune_action', array( $this, 'prune' ) );
 
         if ( ! static::is_enabled() ) {
             return;
@@ -115,9 +116,6 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         // Guardrail/advisory messages, filtered to backup-related ones.
         add_action( 'mainwp_log_warning', array( $this, 'on_log_warning' ), 10, 3 );
         add_action( 'mainwp_log_info', array( $this, 'on_log_info' ), 10, 3 );
-
-        // Retention rides the existing daily backups prune cron.
-        add_action( 'mainwp_cronbackups_prune_action', array( $this, 'prune' ) );
     }
 
     /**
@@ -1274,17 +1272,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         // Per-site provenance: the deployed child plugin version (sync data)
         // and the negotiated backup capability flags. Confirming what a site
         // actually runs required behavioral inference without these.
-        $flag_names = array(
-            'task_spine_support',
-            'download_token_support',
-            'incremental_support',
-            'manifest_chunk_support',
-            'restore_create_idempotency_support',
-            'restore_files_support',
-            'cloud_restore_pull_support',
-            'child_is_multisite',
-            'restore_multisite_support',
-        );
+        $flag_names = array_keys( MainWP_Backup_Monitor::NEGOTIATED_CAPABILITY_FLAGS );
 
         $wp_table      = MainWP_DB::instance()->get_table_name( 'wp' );
         $sync_table    = MainWP_DB::instance()->get_table_name( 'wp_sync' );

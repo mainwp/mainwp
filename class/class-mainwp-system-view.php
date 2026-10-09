@@ -113,7 +113,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Please select websites or tags to add a backup task.', esc_html__( 'Please select websites or tags to add a backup task.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Adding the task to MainWP', esc_html__( 'Adding the task to MainWP', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please select websites or tags.', esc_html__( 'Please select websites or tags.', 'mainwp' ) );
-        mainwp_add_translation( $mainwpTranslations, 'Are you sure you want to delete this backup task? Its existing backups and cloud copies will be removed too.', esc_html__( 'Are you sure you want to delete this backup task? Its existing backups and cloud copies will be removed too.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Are you sure you want to delete this backup task?', esc_html__( 'Are you sure you want to delete this backup task?', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, "Also delete this task's snapshots", esc_html__( "Also delete this task's snapshots", 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Unticked, the snapshots stay in Snapshots & Restore until you delete them with Clean Up.', esc_html__( 'Unticked, the snapshots stay in Snapshots & Restore until you delete them with Clean Up.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Removing the task..', esc_html__( 'Removing the task..', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'The task has been removed', esc_html__( 'The task has been removed', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'An unspecified error occurred', esc_html__( 'An unspecified error occurred', 'mainwp' ) );

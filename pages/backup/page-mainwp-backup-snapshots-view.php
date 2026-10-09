@@ -1363,7 +1363,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         setBackupStatus( '<?php echo esc_js( esc_html__( 'Cleanup failed. Please try again.', 'mainwp' ) ); ?>', true );
                     } );
                 };
-                var confirmMsg = '<?php echo esc_js( esc_html__( 'Clean up this site\'s backups? Leftover files from interrupted backups are removed, and old on-demand backups beyond the retention count are pruned. Pruned backups can no longer be restored.', 'mainwp' ) ); ?>';
+                var confirmMsg = '<?php echo esc_js( esc_html__( 'Clean up this site\'s backups? This removes leftover files from interrupted backups, prunes old on-demand backups beyond the retention count, and deletes snapshots whose backup task was deleted. Pruned and deleted backups can no longer be restored.', 'mainwp' ) ); ?>';
                 mainwp_confirm( confirmMsg, runCleanup );
             } );
 

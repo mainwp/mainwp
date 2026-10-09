@@ -801,12 +801,20 @@ managebackups_remove = function (element) {
     let id = jQuery(element).attr('task_id');
     managebackups_init();
 
-    let msg = MainWP.I18n.t('Are you sure you want to delete this backup task? Its existing backups and cloud copies will be removed too.');
+    let msg = MainWP.I18n.t('Are you sure you want to delete this backup task?') +
+        '<div class="ui form" style="margin-top: 1em;"><div class="field">' +
+        '<div class="ui checkbox"><input type="checkbox" id="mainwp-backup-task-delete-snapshots" checked="checked">' +
+        '<label for="mainwp-backup-task-delete-snapshots">' + MainWP.I18n.t("Also delete this task's snapshots") + '</label></div>' +
+        '<div><em>' + MainWP.I18n.t('Unticked, the snapshots stay in Snapshots & Restore until you delete them with Clean Up.') + '</em></div>' +
+        '</div></div>';
     mainwp_confirm(msg, function () {
+        // Read before the modal is reused: the checkbox lives in its content.
+        let deleteSnapshots = jQuery('#mainwp-backup-task-delete-snapshots').is(':checked') ? 1 : 0;
         jQuery('#task-status-' + id).html(MainWP.I18n.t('Removing the task...'));
         let data = mainwp_secure_data({
             action: 'mainwp_removebackup',
-            id: id
+            id: id,
+            delete_snapshots: deleteSnapshots
         });
         jQuery.post(ajaxurl, data, function (pElement) {
             return function (response) {

@@ -14,6 +14,7 @@ use MainWP\Dashboard\MainWP_Backup_Snapshots_View;
 use MainWP\Dashboard\MainWP_Backup_Storage_View;
 use MainWP\Dashboard\MainWP_Backup_Task_Form;
 use MainWP\Dashboard\MainWP_DB_Backup;
+use MainWP\Dashboard\MainWP_System_View;
 
 /**
  * Class MainWP_Backup_Actions_Bar_Test
@@ -189,6 +190,27 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 		$this->assertSame( 'ui mini green button', $xp->query( '//*[@id="mainwp-storage-add-new"]' )->item( 0 )->getAttribute( 'class' ) );
 		$this->assertSame( 1, $xp->query( '//div[' . $this->has_class( 'mainwp-actions-bar' ) . ']/following-sibling::div[@id="mainwp-backup-storage"][' . $this->has_class( 'padded' ) . ']//table[@id="mainwp-storage-destinations-table"]' )->length, 'The destinations table sits in the segment after the bar.' );
 		$this->assertMatchesRegularExpression( "/#mainwp-storage-add-new' \\)\\.on\\( 'click'[^}]*resetForm\\(\\)/s", $output );
+	}
+
+	/**
+	 * Clean Up's confirmation says it also removes the snapshots a deleted
+	 * task left behind.
+	 */
+	public function test_cleanup_confirmation_mentions_deleted_task_snapshots() {
+		$output = $this->render( array( MainWP_Backup_Snapshots_View::class, 'render' ) );
+
+		$this->assertStringContainsString( 'and deletes snapshots whose backup task was deleted.', $output );
+	}
+
+	/**
+	 * The delete-task confirmation strings reach the browser translated.
+	 */
+	public function test_delete_task_confirmation_strings_are_registered() {
+		$translations = MainWP_System_View::get_mainwp_translations();
+
+		$this->assertSame( 'Are you sure you want to delete this backup task?', $translations['Are_you_sure_you_want_to_delete_this_backup_task_'] );
+		$this->assertSame( 'Also delete this task&#039;s snapshots', $translations['Also_delete_this_task_s_snapshots'] );
+		$this->assertSame( 'Unticked, the snapshots stay in Snapshots &amp; Restore until you delete them with Clean Up.', $translations['Unticked__the_snapshots_stay_in_Snapshots___Restore_until_you_delete_them_with_Clean_Up_'] );
 	}
 
 	/**

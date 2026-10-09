@@ -275,6 +275,11 @@ class MainWP_Backup_Private_Root {
             $boundary = untrailingslashit( wp_normalize_path( $boundary ) );
             foreach ( array( $boundary, self::canonical_path( $boundary ) ) as $served ) {
                 foreach ( array( $candidate, self::canonical_path( $candidate ) ) as $private ) {
+                    // These platforms can resolve case variants to the same served directory.
+                    if ( 'Darwin' === PHP_OS_FAMILY || 'Windows' === PHP_OS_FAMILY ) {
+                        $private = strtolower( $private );
+                        $served  = strtolower( $served );
+                    }
                     if ( $private === $served || str_starts_with( $private, $served . '/' ) ) {
                         return 'directory is inside WordPress or its content directory';
                     }

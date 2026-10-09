@@ -67,6 +67,13 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
 	public $remote_base = '';
 
 	/**
+	 * Legacy plans need the same transport failures as candidate plans.
+	 *
+	 * @var \MainWP\Dashboard\MainWP_Backup_Storage_Provider|null
+	 */
+	public $snapshot_provider = null;
+
+	/**
 	 * Scripted chunk responses (consumed in order); null falls through
 	 * to the real sender.
 	 *
@@ -147,6 +154,9 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
 	 * @return \MainWP\Dashboard\MainWP_Backup_Storage_Provider|null Provider.
 	 */
 	protected function provider_for_snapshot( int $snapshot_id ): ?\MainWP\Dashboard\MainWP_Backup_Storage_Provider {
+		if ( null !== $this->snapshot_provider ) {
+			return $this->snapshot_provider;
+		}
 		if ( '' === $this->remote_base ) {
 			return null;
 		}
@@ -540,6 +550,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
 		$this->assertFalse( $outcome['done'] );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL, $outcome['error_code'] );
+		$this->assertFalse( ! empty( $outcome['retryable'] ) );
 		$this->assertFileDoesNotExist( $this->driver->staging_dir( 777001 ) . 'db.tar.gz' );
 		$this->assertFileDoesNotExist( $this->driver->staging_dir( 777001 ) . 'db.tar.gz.downloading' );
 	}
@@ -660,6 +671,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
 		$this->assertFalse( $outcome['done'] );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL, $outcome['error_code'] );
+		$this->assertFalse( ! empty( $outcome['retryable'] ) );
 		$this->assertFileDoesNotExist( $this->driver->staging_dir( 777001 ) . 'big.zip.assembling' );
 	}
 
@@ -1827,6 +1839,73 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 	}
 
 	/**
+	 * Exhausting replicas must retain transport retryability without provider details.
+	 *
+	 * @dataProvider failed_staging_sources
+	 * @param string $failure Download that fails.
+	 * @param bool   $legacy Whether the plan predates candidates.
+	 * @param bool   $throws Whether the provider throws.
+	 * @param bool   $second Whether a missing second replica is tried.
+	 */
+	public function test_failed_staging_classifies_provider_exceptions( string $failure, bool $legacy, bool $throws, bool $second ) {
+		$base = $this->dir . '/remote';
+		if ( 'whole' === $failure ) {
+			mkdir( $base );
+			$entry = $this->remote_entry( array( $this->candidate( 21, false, '' ) ) );
+			$key   = $entry['remote_key'];
+		} else {
+			$content = 'chunked-replica-bytes';
+			$entry   = $this->make_chunked_remote( $content );
+
+			$entry['remote_candidates'] = array( $this->candidate( 21, true, '' ) );
+
+			$key = 'manifest' === $failure ? '0/44/manifest.json' : '0/44/chunks/' . hash( 'sha256', substr( $content, 0, (int) ( strlen( $content ) / 2 ) ) ) . '.bin';
+		}
+		$provider            = new Restore_Throwing_Storage_Local( array( 'base_path' => $base ) );
+		$provider->throw_key = $throws ? $key : '';
+
+		$this->driver->destination_providers[21] = $provider;
+		if ( $legacy ) {
+			unset( $entry['remote_candidates'] );
+			$this->driver->snapshot_provider = $provider;
+		}
+		if ( $second ) {
+			$entry['remote_candidates'][]        = $this->candidate( 22, false, '' );
+			$this->driver->destination_bases[22] = $base;
+		}
+		$plan    = array( $entry );
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertNotNull( $outcome['error'] );
+		$this->assertSame( $throws, ! empty( $outcome['retryable'] ), 'Provider exceptions must remain retryable after replicas are exhausted.' );
+		$this->assertArrayNotHasKey( 'candidate_index', $plan[0] );
+		$this->assertArrayNotHasKey( 'retryable', $plan[0] );
+		$this->assertStringNotContainsString( 'private provider details', wp_json_encode( array( $outcome, $plan ) ) );
+		$this->assertSame( $legacy ? array() : ( $second ? array( 21, 22 ) : array( 21 ) ), $this->driver->resolved_destinations );
+		foreach ( $provider->failed_paths as $path ) {
+			$this->assertFileDoesNotExist( $path );
+		}
+	}
+
+	/**
+	 * Manifest and chunk failures also occur in plans saved before failover existed.
+	 *
+	 * @return array
+	 */
+	public static function failed_staging_sources() {
+		return array(
+			'single whole throw'    => array( 'whole', false, true, false ),
+			'throw then false'      => array( 'whole', false, true, true ),
+			'false only'            => array( 'whole', false, false, false ),
+			'single manifest throw' => array( 'manifest', false, true, false ),
+			'single chunk throw'    => array( 'chunk', false, true, false ),
+			'legacy whole throw'    => array( 'whole', true, true, false ),
+			'legacy manifest throw' => array( 'manifest', true, true, false ),
+			'legacy chunk throw'    => array( 'chunk', true, true, false ),
+		);
+	}
+
+	/**
 	 * Cloud transport exceptions must not prevent a healthy replica restoring.
 	 */
 	public function test_stage_fails_over_when_primary_download_throws() {
@@ -2040,6 +2119,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
 		$this->assertFalse( $outcome['done'] );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL, $outcome['error_code'] );
+		$this->assertFalse( ! empty( $outcome['retryable'] ) );
 		$this->assertSame( array( 21 ), $this->driver->resolved_destinations );
 	}
 

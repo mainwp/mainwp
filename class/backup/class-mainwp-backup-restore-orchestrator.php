@@ -1062,7 +1062,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
             if ( null !== $outcome['error'] ) {
-                $this->record_failure( $job, (string) $outcome['error'], false, isset( $outcome['error_code'] ) ? (string) $outcome['error_code'] : '' );
+                $this->record_failure( $job, (string) $outcome['error'], ! empty( $outcome['retryable'] ), isset( $outcome['error_code'] ) ? (string) $outcome['error_code'] : '' );
                 return;
             }
             if ( ! $outcome['done'] ) {

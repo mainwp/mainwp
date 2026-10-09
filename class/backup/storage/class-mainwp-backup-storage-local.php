@@ -264,6 +264,12 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
             }
         }
 
-        return $this->base_path . DIRECTORY_SEPARATOR . str_replace( '/', DIRECTORY_SEPARATOR, $key );
+        $path   = $this->base_path . DIRECTORY_SEPARATOR . str_replace( '/', DIRECTORY_SEPARATOR, $key );
+        $reason = MainWP_Backup_Private_Root::served_tree_refusal( $path );
+        if ( '' !== $reason ) {
+            throw new \RuntimeException( esc_html( $reason ) );
+        }
+
+        return $path;
     }
 }

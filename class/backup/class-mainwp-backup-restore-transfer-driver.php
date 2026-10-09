@@ -431,7 +431,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      *                        sha256 are filled in).
      * @param float $deadline Slice deadline (epoch).
      *
-     * @return array { done: bool, error: string|null }
+     * @return array { done: bool, error: string|null, retryable?: bool }
      */
     public function stage_artifacts( int $job_id, array &$plan, float $deadline ): array {
         $staging = '';
@@ -463,6 +463,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                     'done'       => false,
                     'error'      => $outcome['error'],
                     'error_code' => isset( $outcome['error_code'] ) ? $outcome['error_code'] : null,
+                    'retryable'  => ! empty( $outcome['retryable'] ),
                 );
             }
             if ( 'pending' === $outcome['state'] ) {
@@ -538,9 +539,10 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 : $this->stage_from_remote( $staging, $entry );
         }
 
-        $total = count( $candidates );
-        $start = isset( $entry['candidate_index'] ) ? min( max( 0, (int) $entry['candidate_index'] ), $total - 1 ) : 0;
-        $last  = null;
+        $total     = count( $candidates );
+        $start     = isset( $entry['candidate_index'] ) ? min( max( 0, (int) $entry['candidate_index'] ), $total - 1 ) : 0;
+        $last      = null;
+        $retryable = false;
 
         for ( $i = $start; $i < $total; $i++ ) {
             $candidate = (array) $candidates[ $i ];
@@ -577,11 +579,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
 
             // Clear this candidate's resume state before trying the next.
             unset( $entry['reassembly'], $entry['chunks'], $entry['chunk_prefix'] );
-            $last = $outcome;
+            $retryable = $retryable || ! empty( $outcome['retryable'] );
+            $last      = $outcome;
         }
 
         unset( $entry['candidate_index'] );
         if ( null !== $last ) {
+            $last['retryable'] = $retryable;
             return $last;
         }
         // No candidate destination resolved at all. Defer to the legacy
@@ -658,10 +662,12 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             );
         }
 
+        $retryable = false;
         try {
             $downloaded = $provider->get_object( $entry['remote_key'], $temp );
         } catch ( \RuntimeException $e ) {
             $downloaded = false;
+            $retryable  = true;
         }
         if ( ! $downloaded ) {
             wp_delete_file( $temp );
@@ -671,7 +677,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                     /* translators: %s: artifact file name. */
                     __( 'Downloading the backup file from cloud storage failed: %s', 'mainwp' ),
                     $entry['file']
-                )
+                ),
+                null,
+                $retryable
             );
         }
         if ( ! rename( $temp, $final ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- atomic promote of the staged download.
@@ -767,7 +775,8 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         }
 
         if ( empty( $entry['chunks'] ) ) {
-            $manifest = $this->fetch_manifest( $provider, $entry, $staging );
+            $retryable = false;
+            $manifest  = $this->fetch_manifest( $provider, $entry, $staging, $retryable );
             if ( null === $manifest ) {
                 return $this->stage_state(
                     'error',
@@ -775,7 +784,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                         /* translators: %s: artifact file name. */
                         __( 'The cloud copy of this backup has no readable manifest: %s', 'mainwp' ),
                         $entry['file']
-                    )
+                    ),
+                    null,
+                    $retryable
                 );
             }
             $entry['chunks']     = $manifest['chunks'];
@@ -831,10 +842,12 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             $key   = $entry['chunk_prefix'] . 'chunks/' . $chunk['hash'] . '.bin';
             $piece = $staging . $entry['file'] . '.chunk';
 
+            $retryable = false;
             try {
                 $downloaded = $provider->get_object( $key, $piece );
             } catch ( \RuntimeException $e ) {
                 $downloaded = false;
+                $retryable  = true;
             }
             if ( ! $downloaded ) {
                 wp_delete_file( $piece );
@@ -846,7 +859,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                         __( 'A piece of the cloud copy could not be downloaded: %1$s (chunk %2$s).', 'mainwp' ),
                         $entry['file'],
                         $chunk['hash']
-                    )
+                    ),
+                    null,
+                    $retryable
                 );
             }
 
@@ -953,10 +968,12 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @param array                          $entry    Plan entry (by reference;
      *                                                 chunk_prefix is recorded).
      * @param string                         $staging  Staging dir.
+     * @param bool                           $retryable Whether the provider failed transiently (by reference).
      *
      * @return array|null { chunks: array, size: int } or null.
      */
-    protected function fetch_manifest( MainWP_Backup_Storage_Provider $provider, array &$entry, string $staging ): ?array {
+    protected function fetch_manifest( MainWP_Backup_Storage_Provider $provider, array &$entry, string $staging, bool &$retryable = false ): ?array {
+        $retryable = false;
         // The manifest lives beside the artifact's chunks under the
         // snapshot prefix, which the remote key scheme encodes as
         // {site}/{snapshot}/.
@@ -969,6 +986,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             $downloaded = $provider->get_object( $entry['chunk_prefix'] . 'manifest.json', $temp );
         } catch ( \RuntimeException $e ) {
             $downloaded = false;
+            $retryable  = true;
         }
         if ( ! $downloaded ) {
             wp_delete_file( $temp );
@@ -1041,14 +1059,16 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      * @param string|null $error      Error text.
      * @param string|null $error_code Stable error code, when the caller
      *                                needs to classify the failure.
+     * @param bool        $retryable  Whether a later download can succeed.
      *
      * @return array State.
      */
-    private function stage_state( string $state, ?string $error = null, ?string $error_code = null ): array {
+    private function stage_state( string $state, ?string $error = null, ?string $error_code = null, bool $retryable = false ): array {
         return array(
             'state'      => $state,
             'error'      => $error,
             'error_code' => $error_code,
+            'retryable'  => $retryable,
         );
     }
 

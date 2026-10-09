@@ -54,6 +54,62 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Filesystem aliases must not let private storage share a served directory.
+	 *
+	 * @dataProvider served_tree_paths
+	 * @param string $variant Path variant.
+	 * @param bool   $refused Expected refusal.
+	 */
+	public function test_served_tree_refusal_path_variants( string $variant, bool $refused ) {
+		$root  = $this->private_root . '/wp';
+		$child = $root . '/wp-content/backups';
+		mkdir( $child, 0700, true );
+		$paths = array(
+			'exact'          => $root,
+			'child'          => $child,
+			'uppercase-all'  => strtoupper( $child ),
+			'uppercase-root' => strtoupper( $root ) . '/wp-content/backups',
+			'mixed-content'  => $root . '/Wp-CoNtEnT/backups',
+			'sibling'        => $root . '-backups',
+			'missing-child'  => $child . '/not-created',
+		);
+		$path  = $paths[ $variant ];
+		if ( in_array( $variant, array( 'uppercase-all', 'uppercase-root', 'mixed-content' ), true ) && ! is_dir( $path ) ) {
+			$this->markTestSkipped( 'This filesystem does not resolve the case variant to the same directory.' );
+		}
+		// Constants need an isolated process to exercise a temporary WordPress tree.
+		// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_var_export -- PHP literals preserve filesystem paths in the isolated process.
+		$script = 'define("ABSPATH", ' . var_export( $root . '/', true ) . '); define("WP_CONTENT_DIR", ' . var_export( $root . '/wp-content', true ) . ');'
+			. 'function wp_normalize_path($p) { return str_replace(chr(92), "/", $p); } function untrailingslashit($p) { return rtrim($p, "/"); }'
+			. 'function path_is_absolute($p) { return $p[0] === "/" || $p[1] === ":"; } function __($value, $domain) { return $value; }'
+			. 'require ' . var_export( dirname( __DIR__, 2 ) . '/class/backup/class-mainwp-backup-private-root.php', true ) . ';'
+			. 'echo json_encode(MainWP\\Dashboard\\MainWP_Backup_Private_Root::served_tree_refusal(' . var_export( $path, true ) . '));';
+		// phpcs:enable WordPress.PHP.DevelopmentFunctions.error_log_var_export
+		$result = shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) );
+		$this->assertIsString( $result );
+		$result = json_decode( $result, true );
+		$this->assertIsString( $result );
+		$this->assertSame( $refused, '' !== $result, $variant . ' must retain its served-tree classification.' );
+	}
+
+	/**
+	 * Missing descendants and case aliases inherit the served-tree restriction.
+	 *
+	 * @return array
+	 */
+	public static function served_tree_paths() {
+		return array(
+			'exact'          => array( 'exact', true ),
+			'child'          => array( 'child', true ),
+			'uppercase-all'  => array( 'uppercase-all', true ),
+			'uppercase-root' => array( 'uppercase-root', true ),
+			'mixed-content'  => array( 'mixed-content', true ),
+			'sibling'        => array( 'sibling', false ),
+			'missing-child'  => array( 'missing-child', true ),
+		);
+	}
+
+	/**
 	 * The filter sees the default, and a successful root is cached.
 	 */
 	public function test_default_filter_and_cache() {

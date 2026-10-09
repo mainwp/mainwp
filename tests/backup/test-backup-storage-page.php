@@ -219,7 +219,9 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	public function test_destination_refuses_missing_path_beneath_served_symlink() {
 		$link = $this->make_temp_dir() . '/wordpress';
 		$base = $link . '/mainwp-storage-missing-' . uniqid() . '/nested';
-		$this->assertTrue( symlink( ABSPATH, $link ) );
+		if ( ! @symlink( ABSPATH, $link ) ) {
+			$this->markTestSkipped( 'This platform cannot create the directory symlink.' );
+		}
 		try {
 			$input = array(
 				'id'       => 0,

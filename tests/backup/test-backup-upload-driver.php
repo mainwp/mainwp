@@ -965,6 +965,78 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A complete staged copy must survive a read failure after the original is gone.
+	 *
+	 * @dataProvider staged_chunk_sources
+	 * @param string $staged_state Staged copy condition.
+	 * @param int    $expected_code Failure classification.
+	 */
+	public function test_missing_original_classifies_staged_chunk( string $staged_state, int $expected_code ) {
+		if ( 'unreadable' === $staged_state && function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root ignores file permissions, so the chunk cannot be made unreadable.' );
+		}
+		mkdir( $this->private_root );
+		$staged   = $this->private_root . '/chunk.bin';
+		$artifact = array(
+			'path' => $this->private_root . '/missing.zip',
+			'file' => 'missing.zip',
+		);
+		$chunk    = array(
+			'offset' => 1024,
+			'length' => 4,
+		);
+		if ( 'absent' !== $staged_state ) {
+			file_put_contents( $staged, 'unreadable' === $staged_state ? 'data' : 'bad' );
+		}
+		$warnings = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- The expected read warning must not replace the classified exception.
+			static function ( $severity, $message ) use ( $staged, &$warnings ) {
+				if ( E_WARNING === $severity && str_starts_with( $message, 'file_get_contents(' ) && str_contains( $message, $staged ) ) {
+					$warnings[] = $message;
+					return true;
+				}
+				return false;
+			}
+		);
+		if ( 'unreadable' === $staged_state ) {
+			chmod( $staged, 0000 );
+		}
+		$code = null;
+		try {
+			$driver = MainWP_Backup_Upload_Driver::instance();
+			$read   = new \ReflectionMethod( $driver, 'read_chunk_bytes' );
+			try {
+				$read->invoke( $driver, $artifact, $chunk, $staged );
+			} catch ( \RuntimeException $e ) {
+				$code = $e->getCode();
+			}
+		} finally {
+			if ( 'unreadable' === $staged_state ) {
+				chmod( $staged, 0644 );
+			}
+			restore_error_handler();
+		}
+		$this->assertCount( 'unreadable' === $staged_state ? 1 : 0, $warnings );
+		$this->assertSame( $expected_code, $code, 'A complete staged chunk must remain retryable when its read fails.' );
+		if ( 'unreadable' === $staged_state ) {
+			$this->assertSame( 'data', file_get_contents( $staged ) );
+		}
+	}
+
+	/**
+	 * Missing or short staged copies cannot replace the lost original.
+	 *
+	 * @return array
+	 */
+	public static function staged_chunk_sources() {
+		return array(
+			'unreadable complete copy' => array( 'unreadable', 0 ),
+			'absent copy'              => array( 'absent', 410 ),
+			'wrong size copy'          => array( 'wrong-size', 410 ),
+		);
+	}
+
+	/**
 	 * A chunk whose staged copy is gone and whose source was cut short can
 	 * never be rebuilt, so the job fails permanently.
 	 *

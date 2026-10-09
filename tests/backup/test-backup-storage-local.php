@@ -268,6 +268,64 @@ class MainWP_Backup_Storage_Local_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A safe base must not permit object I/O through a served directory alias.
+	 *
+	 * @dataProvider symlink_object_operations
+	 * @param string $operation Provider operation.
+	 */
+	public function test_operations_refuse_served_symlink_inside_base( string $operation ) {
+		$provider = $this->make_provider();
+		$target   = ABSPATH . 'mainwp-local-object-refusal-' . uniqid();
+		mkdir( $target . '/42/files', 0755, true );
+		$this->temp_dirs[] = $target;
+		file_put_contents( $target . '/42/files/existing.zip', 'keep' );
+		$link = $this->temp_dirs[0] . '/4';
+		if ( ! @symlink( $target, $link ) ) {
+			$this->markTestSkipped( 'This platform cannot create the directory symlink.' );
+		}
+		$error = null;
+		try {
+			$this->assertTrue( $provider->put_object( '5/42/files/normal.zip', 'normal' ) );
+			$this->assertSame( array( 'size' => 6 ), $provider->head_object( '5/42/files/normal.zip' ) );
+			$this->assertTrue( $provider->get_object( '5/42/files/normal.zip', $this->temp_dirs[0] . '/normal-download.zip' ) );
+			$this->assertSame( 'normal', file_get_contents( $this->temp_dirs[0] . '/normal-download.zip' ) );
+			$this->assertTrue( $provider->delete_object( '5/42/files/normal.zip' ) );
+			try {
+				if ( 'put_object' === $operation ) {
+					$provider->put_object( '4/42/new/files/x.zip', 'blocked' );
+				} elseif ( 'get_object' === $operation ) {
+					$provider->get_object( '4/42/files/existing.zip', $this->temp_dirs[0] . '/blocked-download.zip' );
+				} else {
+					$provider->$operation( '4/42/files/existing.zip' );
+				}
+			} catch ( \RuntimeException $e ) {
+				$error = $e->getMessage();
+			}
+		} finally {
+			unlink( $link );
+		}
+		$this->assertIsString( $error, $operation . ' must refuse an object inside a served tree.' );
+		$this->assertStringContainsString( 'outside the WordPress and wp-content folders', $error );
+		$this->assertSame( 'keep', file_get_contents( $target . '/42/files/existing.zip' ) );
+		$this->assertDirectoryDoesNotExist( $target . '/42/new' );
+		$this->assertFileDoesNotExist( $this->temp_dirs[0] . '/blocked-download.zip' );
+	}
+
+	/**
+	 * Every object operation follows the same resolver before touching bytes.
+	 *
+	 * @return array
+	 */
+	public static function symlink_object_operations() {
+		return array(
+			'put'    => array( 'put_object' ),
+			'head'   => array( 'head_object' ),
+			'get'    => array( 'get_object' ),
+			'delete' => array( 'delete_object' ),
+		);
+	}
+
+	/**
 	 * A missing descendant must retain its existing ancestor's served location.
 	 *
 	 * @return void

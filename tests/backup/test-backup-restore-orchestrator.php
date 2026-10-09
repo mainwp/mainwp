@@ -431,6 +431,57 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A provider outage must keep the staging phase available for a later retry.
+	 */
+	public function test_staging_provider_exception_schedules_retry() {
+		$driver   = new class() extends MainWP_Backup_Restore_Transfer_Driver {
+			/**
+			 * Cloud providers throw when transport fails.
+			 *
+			 * @param int $snapshot_id Snapshot id.
+			 * @return \MainWP\Dashboard\MainWP_Backup_Storage_Provider|null
+			 */
+			protected function provider_for_snapshot( int $snapshot_id ): ?\MainWP\Dashboard\MainWP_Backup_Storage_Provider {
+				return new class( array() ) extends \MainWP\Dashboard\MainWP_Backup_Storage_Local {
+					// phpcs:disable Squiz.Commenting.FunctionComment.InvalidNoReturn -- Transport fails before a bool can be returned.
+					/**
+					 * Credentials in transport errors must never reach stored state.
+					 *
+					 * @param string $key Object key.
+					 * @param string $local_path Download target.
+					 * @return bool
+					 * @throws \RuntimeException When transport fails.
+					 */
+					public function get_object( string $key, string $local_path ): bool {
+						throw new \RuntimeException( 'Transport failed with private provider details.' );
+					}
+					// phpcs:enable Squiz.Commenting.FunctionComment.InvalidNoReturn
+				};
+			}
+		};
+		$instance = new \ReflectionProperty( MainWP_Backup_Restore_Transfer_Driver::class, 'instance' );
+		$original = $instance->getValue();
+		$instance->setValue( null, $driver );
+		$job                                 = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$checkpoint                          = $job->checkpoint;
+		$checkpoint['plan'][0]['source']     = 'remote';
+		$checkpoint['plan'][0]['remote_key'] = '4/5/files/db.zip';
+		MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
+		remove_filter( 'mainwp_backup_retry_delay', '__return_zero' );
+		try {
+			$job = $this->tick( $job );
+		} finally {
+			$instance->setValue( null, $original );
+		}
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->checkpoint['resume_status'] );
+		$this->assertSame( 1, (int) $job->attempt_count );
+		$this->assertGreaterThan( time(), (int) $job->next_retry_at );
+		$this->assertStringNotContainsString( 'private provider details', $job->last_error . wp_json_encode( $job->checkpoint ) );
+		$this->assertArrayNotHasKey( 'retryable', $job->checkpoint['plan'][0] );
+	}
+
+	/**
 	 * A lost acknowledgement must retain the identity persisted before create.
 	 *
 	 * @test

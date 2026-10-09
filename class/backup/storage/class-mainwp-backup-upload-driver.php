@@ -839,10 +839,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             }
         }
 
-        // Only a missing or shortened source can never supply these bytes again;
-        // a source that still covers the chunk failed to read and is worth a retry.
+        // Only a source that can never supply these bytes again is permanent. A
+        // full-length staged chunk (possibly the last copy once the archive is
+        // gone) or an archive that still covers the chunk failed to read, so retry.
         clearstatcache( true, $artifact['path'] );
-        $covers = is_file( $artifact['path'] ) && (int) filesize( $artifact['path'] ) >= (int) $chunk['offset'] + (int) $chunk['length'];
+        clearstatcache( true, $staged );
+        $covers = ( is_file( $staged ) && (int) filesize( $staged ) === (int) $chunk['length'] )
+            || ( is_file( $artifact['path'] ) && (int) filesize( $artifact['path'] ) >= (int) $chunk['offset'] + (int) $chunk['length'] );
         throw new \RuntimeException( esc_html( 'Chunk bytes are unavailable locally for ' . $artifact['file'] ), $covers ? 0 : 410 );
     }
 

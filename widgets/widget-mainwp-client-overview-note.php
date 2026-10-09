@@ -50,7 +50,8 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
      */
     public static function render_addition_info( $client_id ) {
 
-        if ( ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! MainWP_Client::has_client_access( $client_id ) ) {
+        $can_manage_clients = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
+        if ( ( ! $can_manage_clients && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! MainWP_Client::has_client_access( $client_id ) ) {
             return;
         }
 
@@ -119,6 +120,7 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
                 do_action( 'mainwp_clients_overview_note_widget_bottom', $client_info );
                 ?>
             </div>
+            <?php if ( $can_manage_clients ) : ?>
             <div class="ui two columns grid mainwp-widget-footer">
                 <div class="column">
                 <?php if ( empty( $note ) ) : ?>
@@ -130,7 +132,10 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
                 </div>
                 <div class="column"></div>
             </div>
+            <?php endif; ?>
             <?php
-            MainWP_UI::render_modal_edit_notes();
+            if ( $can_manage_clients ) {
+                MainWP_UI::render_modal_edit_notes();
+            }
     }
 }

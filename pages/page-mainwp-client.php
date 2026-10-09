@@ -199,7 +199,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'mainwp_tab',
             esc_html__( 'Clients', 'mainwp' ),
             '<div class="mainwp-hidden">' . esc_html__( 'Client Fields', 'mainwp' ) . '</div>',
-            'read',
+            'manage_options',
             'ClientAddField',
             array(
                 static::get_class_name(),
@@ -282,7 +282,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientImport' ) ) { ?>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientImport' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Import Clients', 'mainwp' ); ?></a>
                     <?php } ?>
-                    <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ClientAddField' ) ) { ?>
+                    <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'ClientAddField' ) ) { ?>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=ClientAddField' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Client Properties', 'mainwp' ); ?></a>
                     <?php } ?>
                     <?php
@@ -355,7 +355,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 'parent_key'           => 'ManageClients',
                 'href'                 => 'admin.php?page=ClientAddField',
                 'slug'                 => 'ClientAddField',
-                'right'                => '',
+                'right'                => 'manage_clients',
                 'leftsub_order_level2' => 4,
             ),
         );
@@ -1357,6 +1357,11 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * Renders the Add New Client Fields form.
      */
     public static function render_client_fields() { // phpcs:ignore -- NOSONAR - Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage clients', 'mainwp' ) );
+            return;
+        }
 
         $fields        = MainWP_DB_Client::instance()->get_client_fields();
         $has_no_fields = empty( $fields );
@@ -2759,7 +2764,7 @@ class MainWP_Client { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
             $client_id = (int) $owner->client_id;
         }
-        if ( $client_id && ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ! static::has_client_access( $client_id ) || ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) ) ) {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) || ( $client_id && ( ! static::has_client_access( $client_id ) || ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id ) ) ) ) {
             $return['error'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
             static::exit_json( $return );
         }

@@ -1353,6 +1353,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         var summary = '<?php echo esc_js( esc_html__( 'Cleanup finished: removed %1$s leftover folder(s), pruned %2$s old backup(s).', 'mainwp' ) ); ?>'
                             .replace( '%1$s', String( parseInt( response.orphan_dirs_removed, 10 ) || 0 ) )
                             .replace( '%2$s', String( parseInt( response.snapshots_pruned, 10 ) || 0 ) );
+                        var orphanedPruned = parseInt( response.orphaned_snapshots_pruned, 10 ) || 0;
+                        if ( orphanedPruned > 0 ) {
+                            summary += ' ' + '<?php /* translators: %s: number of pruned snapshots that belonged to deleted backup tasks. */ echo esc_js( esc_html__( '%s of them belonged to deleted backup tasks.', 'mainwp' ) ); ?>'.replace( '%s', String( orphanedPruned ) );
+                        }
+                        if ( response.bytes_pruned_label ) {
+                            summary += ' ' + '<?php /* translators: %s: total size of the pruned backups, e.g. "1.2 GB". */ echo esc_js( esc_html__( 'Space freed: %s.', 'mainwp' ) ); ?>'.replace( '%s', String( response.bytes_pruned_label ) );
+                        }
                         if ( response.errors && response.errors.length ) {
                             summary += ' <?php echo esc_js( esc_html__( 'Some items could not be removed.', 'mainwp' ) ); ?>';
                         }
@@ -1363,7 +1370,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         setBackupStatus( '<?php echo esc_js( esc_html__( 'Cleanup failed. Please try again.', 'mainwp' ) ); ?>', true );
                     } );
                 };
-                var confirmMsg = '<?php echo esc_js( esc_html__( 'Clean up this site\'s backups? This removes leftover files from interrupted backups, prunes old on-demand backups beyond the retention count, and deletes snapshots whose backup task was deleted. Pruned and deleted backups can no longer be restored.', 'mainwp' ) ); ?>';
+                var confirmMsg = '<?php echo esc_js( esc_html__( 'Clean up this site\'s backups? Leftover files from interrupted backups are removed, and old on-demand backups beyond the retention count are pruned. Clean Up also deletes snapshots whose backup task was deleted, including their copies in remote storage. Pruned and deleted backups can no longer be restored.', 'mainwp' ) ); ?>';
                 mainwp_confirm( confirmMsg, runCleanup );
             } );
 

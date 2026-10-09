@@ -194,12 +194,16 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 
 	/**
 	 * Clean Up's confirmation says it also removes the snapshots a deleted
-	 * task left behind.
+	 * task left behind, remote copies included, and the result reports
+	 * them with the space freed.
 	 */
 	public function test_cleanup_confirmation_mentions_deleted_task_snapshots() {
 		$output = $this->render( array( MainWP_Backup_Snapshots_View::class, 'render' ) );
 
-		$this->assertStringContainsString( 'and deletes snapshots whose backup task was deleted.', $output );
+		$this->assertStringContainsString( 'Clean Up also deletes snapshots whose backup task was deleted, including their copies in remote storage.', $output );
+		$this->assertStringContainsString( 'response.orphaned_snapshots_pruned', $output );
+		$this->assertStringContainsString( '%s of them belonged to deleted backup tasks.', $output );
+		$this->assertStringContainsString( "'Space freed: %s.'.replace( '%s', String( response.bytes_pruned_label ) )", $output );
 	}
 
 	/**

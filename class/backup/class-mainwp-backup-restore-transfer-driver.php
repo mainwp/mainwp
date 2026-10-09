@@ -539,72 +539,108 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 : $this->stage_from_remote( $staging, $entry );
         }
 
-        $total = count( $candidates );
-        $start = isset( $entry['candidate_index'] ) ? min( max( 0, (int) $entry['candidate_index'] ), $total - 1 ) : 0;
-        $last  = null;
-        // A replica that threw before a pending slice is skipped on resume,
-        // so its retryability rides on the entry until the loop settles.
-        $retryable = isset( $entry['candidate_index'] ) && ! empty( $entry['candidate_retryable'] );
-        unset( $entry['candidate_retryable'] );
+        // candidate_index names the source that owns the entry's resume
+        // state: candidate i, or $total for the snapshot-level fallback. A
+        // pending tick resumes that same source, because a reassembly cursor
+        // is only valid against the objects it was read from. A replica that
+        // threw before a pending tick is not retried on resume, so its
+        // retryability rides on the entry while the index persists.
+        $total     = count( $candidates );
+        $resuming  = isset( $entry['candidate_index'] );
+        $start     = $resuming ? min( max( 0, (int) $entry['candidate_index'] ), $total ) : 0;
+        $retryable = $resuming && ! empty( $entry['candidate_retryable'] );
+        $outcome   = null;
 
         for ( $i = $start; $i < $total; $i++ ) {
             $candidate = (array) $candidates[ $i ];
             $provider  = $this->provider_for_destination( isset( $candidate['destination_id'] ) ? (int) $candidate['destination_id'] : 0 );
             if ( null === $provider ) {
-                continue; // Destination deleted or unbuildable; another replica may still serve.
+                // Destination deleted or unbuildable. Another replica may
+                // still serve, but never from the owner's chunk list or cursor.
+                $this->drop_resume_state( $staging, $entry );
+                continue;
             }
 
-            // The entry describes the candidate being tried, so the staging
-            // routines and any persisted resume state stay self-consistent.
             $entry['candidate_index'] = $i;
             if ( isset( $candidate['key'] ) && '' !== (string) $candidate['key'] ) {
                 $entry['remote_key'] = (string) $candidate['key'];
             }
             $entry['expected_sha256'] = isset( $candidate['sha256'] ) ? (string) $candidate['sha256'] : '';
 
-            $outcome = ! empty( $candidate['chunked'] )
+            $outcome   = ! empty( $candidate['chunked'] )
                 ? $this->stage_from_remote_chunked( $staging, $entry, $deadline, $provider )
                 : $this->stage_from_remote( $staging, $entry, $provider );
-
-            if ( 'staged' === $outcome['state'] ) {
-                unset( $entry['candidate_index'] );
-                return $outcome;
-            }
-            if ( 'pending' === $outcome['state'] ) {
-                // The next tick resumes this same candidate; its reassembly
-                // cursor is only valid against this destination's objects.
-                if ( $retryable ) {
-                    $entry['candidate_retryable'] = true;
-                }
-                return $outcome;
-            }
-
-            if ( isset( $outcome['error_code'] ) && MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL === $outcome['error_code'] ) {
-                return $outcome;
-            }
-
-            // Clear this candidate's resume state before trying the next.
-            unset( $entry['reassembly'], $entry['chunks'], $entry['chunk_prefix'] );
             $retryable = $retryable || ! empty( $outcome['retryable'] );
-            $last      = $outcome;
+            if ( ! $this->is_replica_failure( $outcome ) ) {
+                break;
+            }
+            $this->drop_resume_state( $staging, $entry );
         }
 
-        unset( $entry['candidate_index'] );
-        if ( null !== $last ) {
-            $last['retryable'] = $retryable;
-            return $last;
+        if ( null === $outcome ) {
+            // No candidate destination resolved at all. Defer to the legacy
+            // snapshot-level resolution: it scans the same jobs, so production
+            // fails identically, and callers that override that seam keep
+            // working. It can still find a replica before the resume index.
+            $entry['candidate_index'] = $total;
+
+            $outcome   = 'remote_chunked' === $entry['source']
+                ? $this->stage_from_remote_chunked( $staging, $entry, $deadline )
+                : $this->stage_from_remote( $staging, $entry );
+            $retryable = $retryable || ! empty( $outcome['retryable'] );
         }
-        // No candidate destination resolved at all. Defer to the legacy
-        // snapshot-level resolution: it scans the same jobs, so production
-        // fails identically, and callers that override that seam keep
-        // working.
-        $outcome = 'remote_chunked' === $entry['source']
-            ? $this->stage_from_remote_chunked( $staging, $entry, $deadline )
-            : $this->stage_from_remote( $staging, $entry );
-        if ( $retryable && 'error' === $outcome['state'] && MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL !== ( $outcome['error_code'] ?? null ) ) {
-            $outcome['retryable'] = true;
+
+        unset( $entry['candidate_retryable'] );
+        if ( 'pending' === $outcome['state'] ) {
+            if ( $retryable ) {
+                $entry['candidate_retryable'] = true;
+            }
+            return $outcome;
+        }
+
+        // Staged, disk full or exhausted: the attempt is over, and a retry
+        // starts again from the first candidate with nothing carried over.
+        unset( $entry['candidate_index'] );
+        $this->drop_resume_state( $staging, $entry );
+        if ( $this->is_replica_failure( $outcome ) ) {
+            $outcome['retryable'] = $retryable;
         }
         return $outcome;
+    }
+
+    /**
+     * Whether a staging outcome is a failure another replica could fix.
+     * Disk exhaustion is host-side, so it is not.
+     *
+     * @param array $outcome Stage state.
+     *
+     * @return bool
+     */
+    private function is_replica_failure( array $outcome ): bool {
+        return 'error' === $outcome['state'] && MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL !== ( $outcome['error_code'] ?? null );
+    }
+
+    /**
+     * Forget a chunked reassembly in progress, including its partial file.
+     *
+     * @param string $staging Staging dir.
+     * @param array  $entry   Plan entry (by reference).
+     */
+    private function drop_resume_state( string $staging, array &$entry ): void {
+        unset( $entry['reassembly'], $entry['chunks'], $entry['chunk_prefix'] );
+        wp_delete_file( $this->assembly_path( $staging, $entry ) );
+    }
+
+    /**
+     * Path of the partial file a chunked reassembly appends to.
+     *
+     * @param string $staging Staging dir.
+     * @param array  $entry   Plan entry.
+     *
+     * @return string
+     */
+    private function assembly_path( string $staging, array $entry ): string {
+        return $staging . $entry['file'] . '.assembling';
     }
 
     /**
@@ -803,7 +839,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             $entry['total_size'] = $manifest['size'];
         }
 
-        $assembly = $staging . $entry['file'] . '.assembling';
+        $assembly = $this->assembly_path( $staging, $entry );
         $cursor   = isset( $entry['reassembly'] ) ? (array) $entry['reassembly'] : array(
             'next'  => 0,
             'bytes' => 0,

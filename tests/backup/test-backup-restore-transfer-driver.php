@@ -1906,57 +1906,254 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 	}
 
 	/**
-	 * A replica that threw keeps the restore retryable when failover to the
-	 * next replica spans a pending slice and that replica then fails.
+	 * Every exit of the failover loop leaves the entry in one documented
+	 * state: the outcome's retryability, the candidate index and carried
+	 * history, and the chunked resume state. Rows M1-M18 are the input
+	 * matrix in the D65 findings section.
 	 *
-	 * @dataProvider failover_across_slices
-	 * @param bool $throws Whether the first replica throws (else it has no copy).
+	 * @dataProvider failover_exit_matrix
+	 * @param string $source     Primary classification; picks the legacy fallback routine.
+	 * @param array  $candidates Destination id => behaviour, in candidate order.
+	 * @param string $fallback   Snapshot-level fallback: chunked or nocopy.
+	 * @param array  $ticks      Each tick: mutations, deadline (past|open), expected result.
 	 */
-	public function test_failover_retryability_survives_pending_slice( bool $throws ) {
+	public function test_failover_exit_matrix( string $source, array $candidates, string $fallback, array $ticks ) {
 		$content = str_repeat( 'slice-data-', 20 );
 		$entry   = $this->make_chunked_remote( $content );
-		$base    = $this->dir . '/remote';
+		$remote  = $this->dir . '/remote';
+		$empty   = $this->dir . '/empty';
+		$whole   = $this->dir . '/whole';
+		mkdir( $empty );
+		$this->put_object( $whole, $content );
 
-		$provider            = new Restore_Throwing_Storage_Local( array( 'base_path' => $base ) );
-		$provider->throw_key = $throws ? '4/8/files/db.tar.gz' : '';
+		$entry['source']            = $source;
+		$entry['remote_key']        = '4/8/files/db.tar.gz';
+		$entry['remote_candidates'] = array();
+		foreach ( $candidates as $dest_id => $behaviour ) {
+			$entry['remote_candidates'][] = $this->candidate( $dest_id, in_array( $behaviour, array( 'chunked', 'throw_manifest' ), true ), '' );
+			if ( 'throw' === $behaviour || 'throw_manifest' === $behaviour ) {
+				$provider            = new Restore_Throwing_Storage_Local( array( 'base_path' => 'throw' === $behaviour ? $empty : $remote ) );
+				$provider->throw_key = 'throw' === $behaviour ? '4/8/files/db.tar.gz' : '0/44/manifest.json';
 
-		$this->driver->destination_providers[21] = $provider;
-		$this->driver->destination_bases[22]     = $base;
+				$this->driver->destination_providers[ $dest_id ] = $provider;
+			} elseif ( 'gone' !== $behaviour ) {
+				$bases = array(
+					'whole'   => $whole,
+					'chunked' => $remote,
+					'nocopy'  => $empty,
+				);
 
-		$entry['source']            = 'remote';
-		$entry['remote_candidates'] = array(
-			$this->candidate( 21, false, '' ),
-			$this->candidate( 22, true, '' ),
-		);
-		$plan                       = array( $entry );
-
-		// Slice 1: replica 21 fails, replica 22 fetches its manifest and yields.
-		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) - 1 );
-		$this->assertFalse( $outcome['done'] );
-		$this->assertNull( $outcome['error'] );
-		$this->assertSame( 1, $plan[0]['candidate_index'] );
-
-		// Slice 2: replica 22 has lost its chunks.
-		foreach ( (array) glob( $base . '/0/44/chunks/*.bin' ) as $chunk ) {
-			unlink( $chunk ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+				$this->driver->destination_bases[ $dest_id ] = $bases[ $behaviour ];
+			}
 		}
-		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
-		$this->assertFalse( $outcome['done'] );
-		$this->assertNotNull( $outcome['error'] );
-		$this->assertSame( $throws, ! empty( $outcome['retryable'] ) );
-		$this->assertArrayNotHasKey( 'candidate_index', $plan[0] );
-		$this->assertArrayNotHasKey( 'candidate_retryable', $plan[0] );
+		if ( 'nocopy' === $fallback ) {
+			$this->driver->snapshot_provider = new MainWP_Backup_Storage_Local( array( 'base_path' => $empty ) );
+		}
+
+		$plan     = array( $entry );
+		$assembly = $this->driver->staging_dir( 777001 ) . 'big.zip.assembling';
+		foreach ( $ticks as $tick => $spec ) {
+			list( $mutations, $deadline, $expect ) = $spec;
+			foreach ( $mutations as $mutation ) {
+				if ( 0 === strpos( $mutation, 'gone:' ) ) {
+					$gone = (int) substr( $mutation, 5 );
+					unset( $this->driver->destination_bases[ $gone ], $this->driver->destination_providers[ $gone ] );
+				} elseif ( 'lose_chunks' === $mutation ) {
+					foreach ( (array) glob( $remote . '/0/44/chunks/*.bin' ) as $chunk ) {
+						unlink( $chunk ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+					}
+				} elseif ( 'disk_full' === $mutation ) {
+					$this->driver->fake_free_bytes = 1;
+				} elseif ( 'partial_assembly' === $mutation ) {
+					// The previous tick appended the first chunk before yielding.
+					$length = (int) $plan[0]['chunks'][0]['length'];
+					file_put_contents( $assembly, substr( $content, 0, $length ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+					$plan[0]['reassembly'] = array(
+						'next'  => 1,
+						'bytes' => $length,
+					);
+				}
+			}
+
+			$outcome = $this->driver->stage_artifacts( 777001, $plan, 'past' === $deadline ? microtime( true ) - 1 : microtime( true ) + 60 );
+			$label   = 'tick ' . ( $tick + 1 );
+			$state   = $outcome['done'] ? 'staged' : ( null === $outcome['error'] ? 'pending' : 'error' );
+			$code    = isset( $outcome['error_code'] ) ? $outcome['error_code'] : null;
+
+			$this->assertSame( $expect['state'], $state, $label );
+			$this->assertSame( $expect['retryable'], ! empty( $outcome['retryable'] ), $label . ' retryable' );
+			$this->assertSame( $expect['disk_full'], MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL === $code, $label . ' disk full' );
+			$this->assertSame( $expect['index'], $plan[0]['candidate_index'] ?? null, $label . ' candidate_index' );
+			$this->assertSame( $expect['history'], array_key_exists( 'candidate_retryable', $plan[0] ), $label . ' candidate_retryable' );
+			foreach ( array( 'reassembly', 'chunks', 'chunk_prefix' ) as $key ) {
+				$this->assertSame( $expect['resume'], isset( $plan[0][ $key ] ), $label . ' ' . $key );
+			}
+			if ( ! $expect['resume'] ) {
+				$this->assertFileDoesNotExist( $assembly, $label . ' assembly file' );
+			}
+		}
 	}
 
 	/**
-	 * First-replica outcomes for the cross-slice failover test.
+	 * The failover exit matrix (D65 findings section, rows M1-M18).
 	 *
 	 * @return array
 	 */
-	public static function failover_across_slices() {
+	public static function failover_exit_matrix() {
+		$expect = static function ( $state, $retryable, $index, $history, $resume, $disk_full = false ) {
+			return array(
+				'state'     => $state,
+				'retryable' => $retryable,
+				'index'     => $index,
+				'history'   => $history,
+				'resume'    => $resume,
+				'disk_full' => $disk_full,
+			);
+		};
+
+		$pending_after_throw = array( array(), 'past', $expect( 'pending', false, 1, true, true ) );
+		$fallback_yields     = array( array( 'gone:22' ), 'past', $expect( 'pending', false, 2, true, true ) );
+
 		return array(
-			'first replica threw'       => array( true ),
-			'first replica had no copy' => array( false ),
+			'M1 first replica stages'                  => array( 'remote', array( 21 => 'whole' ), 'chunked', array( array( array(), 'open', $expect( 'staged', false, null, false, false ) ) ) ),
+			'M2 chunked replica yields'                => array( 'remote', array( 21 => 'chunked' ), 'chunked', array( array( array(), 'past', $expect( 'pending', false, 0, false, true ) ) ) ),
+			'M3 throw then a chunked replica yields'   => array(
+				'remote',
+				array(
+					21 => 'throw',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( $pending_after_throw ),
+			),
+			'M4 resumed replica stages'                => array(
+				'remote',
+				array(
+					21 => 'throw',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( $pending_after_throw, array( array(), 'open', $expect( 'staged', false, null, false, false ) ) ),
+			),
+			'M5 resumed replica fails after a throw'   => array(
+				'remote',
+				array(
+					21 => 'throw',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( $pending_after_throw, array( array( 'lose_chunks' ), 'open', $expect( 'error', true, null, false, false ) ) ),
+			),
+			'M6 resumed replica fails after no copy'   => array(
+				'remote',
+				array(
+					21 => 'nocopy',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( array( array(), 'past', $expect( 'pending', false, 1, false, true ) ), array( array( 'lose_chunks' ), 'open', $expect( 'error', false, null, false, false ) ) ),
+			),
+			'M7 every replica fails, none threw'       => array(
+				'remote',
+				array(
+					21 => 'nocopy',
+					22 => 'nocopy',
+				),
+				'chunked',
+				array( array( array(), 'open', $expect( 'error', false, null, false, false ) ) ),
+			),
+			'M8 throw then no copy'                    => array(
+				'remote',
+				array(
+					21 => 'throw',
+					22 => 'nocopy',
+				),
+				'chunked',
+				array( array( array(), 'open', $expect( 'error', true, null, false, false ) ) ),
+			),
+			'M9 throw then disk full'                  => array(
+				'remote',
+				array(
+					21 => 'throw_manifest',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( array( array( 'disk_full' ), 'open', $expect( 'error', false, null, false, false, true ) ) ),
+			),
+			'M10 skip between tried replicas'          => array(
+				'remote',
+				array(
+					21 => 'nocopy',
+					22 => 'gone',
+					23 => 'whole',
+				),
+				'chunked',
+				array( array( array(), 'open', $expect( 'staged', false, null, false, false ) ) ),
+			),
+			'M11 skip after a throw'                   => array(
+				'remote',
+				array(
+					21 => 'throw',
+					22 => 'gone',
+				),
+				'chunked',
+				array( array( array(), 'open', $expect( 'error', true, null, false, false ) ) ),
+			),
+			'M12 skip before a chunked replica yields' => array(
+				'remote',
+				array(
+					21 => 'gone',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( array( array(), 'past', $expect( 'pending', false, 1, false, true ) ) ),
+			),
+			'M13 skipped resume drops its cursor'      => array(
+				'remote',
+				array(
+					21 => 'chunked',
+					22 => 'whole',
+				),
+				'chunked',
+				array( array( array(), 'past', $expect( 'pending', false, 0, false, true ) ), array( array( 'partial_assembly', 'gone:21' ), 'open', $expect( 'staged', false, null, false, false ) ) ),
+			),
+			'M14 fallback errors with history'         => array(
+				'remote',
+				array(
+					21 => 'throw',
+					22 => 'chunked',
+				),
+				'nocopy',
+				array( $pending_after_throw, array( array( 'gone:22' ), 'open', $expect( 'error', true, null, false, false ) ) ),
+			),
+			'M15 fallback errors without history'      => array( 'remote', array( 21 => 'gone' ), 'nocopy', array( array( array(), 'open', $expect( 'error', false, null, false, false ) ) ) ),
+			'M16 fallback yields then fails, history'  => array(
+				'remote_chunked',
+				array(
+					21 => 'throw',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( $pending_after_throw, $fallback_yields, array( array( 'gone:21', 'lose_chunks' ), 'open', $expect( 'error', true, null, false, false ) ) ),
+			),
+			'M17 fallback yields then stages'          => array(
+				'remote_chunked',
+				array(
+					21 => 'throw',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( $pending_after_throw, $fallback_yields, array( array( 'gone:21' ), 'open', $expect( 'staged', false, null, false, false ) ) ),
+			),
+			'M18 fallback disk full'                   => array(
+				'remote_chunked',
+				array(
+					21 => 'throw',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( $pending_after_throw, array( array( 'gone:22', 'disk_full' ), 'open', $expect( 'error', false, null, false, false, true ) ) ),
+			),
 		);
 	}
 

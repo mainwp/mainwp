@@ -210,23 +210,36 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * A successor rollback owns the retry action even when it fails. Its
      * checkpoint link also prevents a completed rollback from being offered again.
      * A completed restore keeps its safety backup on the site until a later
-     * restore of the same site completes, so the user can still undo a restore
-     * of the wrong snapshot. A completed rollback has used its safety backup.
-     * A later completion supersedes it even before its prune is confirmed, and
-     * restores completed before the prune existed never recorded one.
+     * restore of the same site takes a new one or completes, so the user can
+     * still undo a restore of the wrong snapshot. A completed rollback has used
+     * its safety backup. A later completion supersedes it even before its prune
+     * is confirmed, and restores completed before the prune existed never
+     * recorded one. A safety backup the child confirmed removing is gone
+     * whatever the restore's outcome.
      *
      * @param object $job Restore job with a decoded checkpoint.
      *
      * @return bool Whether the safety backup is available to this job.
      */
     public function has_rollback_source( object $job ): bool {
-        if ( empty( $job->checkpoint['pre_snapshot_artifacts'] ) ) {
+        if ( empty( $job->checkpoint['pre_snapshot_artifacts'] ) || ! empty( $job->checkpoint['pre_snapshot_pruned'] ) ) {
             return false;
         }
-        if ( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED === $job->status && ( ! empty( $job->checkpoint['is_rollback'] ) || ! empty( $job->checkpoint['pre_snapshot_pruned'] ) || $this->superseded_by_later_completion( $job ) ) ) {
+        if ( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED === $job->status && ( ! empty( $job->checkpoint['is_rollback'] ) || $this->superseded_by_later_completion( $job ) ) ) {
             return false;
         }
 
+        return ! $this->rollback_started_for( $job );
+    }
+
+    /**
+     * Whether a later rollback names this job as its source.
+     *
+     * @param object $job Restore job.
+     *
+     * @return bool
+     */
+    private function rollback_started_for( object $job ): bool {
         global $wpdb;
         $checkpoints = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
             $wpdb->prepare(
@@ -239,10 +252,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         foreach ( $checkpoints as $checkpoint_json ) {
             $checkpoint = json_decode( $checkpoint_json, true );
             if ( (int) ( $checkpoint['rollback_of'] ?? 0 ) === (int) $job->id ) {
-                return false;
+                return true;
             }
         }
-        return true;
+        return false;
     }
 
     /**
@@ -291,8 +304,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( empty( $artifacts ) ) {
                 throw new MainWP_Exception( esc_html__( 'No safety backup was taken before this restore, so there is nothing to roll back to.', 'mainwp' ) );
             }
+            // A completed rollback also retires its source, so ask about the
+            // rollback first or its own success would read as a replacement.
+            if ( $this->rollback_started_for( $failed_job ) ) {
+                throw new MainWP_Exception( esc_html__( 'A rollback has already been started for this restore, so it cannot be rolled back again.', 'mainwp' ) );
+            }
             if ( ! empty( $failed_job->checkpoint['pre_snapshot_pruned'] ) || ( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED === $failed_job->status && empty( $failed_job->checkpoint['is_rollback'] ) && $this->superseded_by_later_completion( $failed_job ) ) ) {
-                throw new MainWP_Exception( esc_html__( 'The safety backup from this restore was removed after a later restore finished, so there is nothing to roll back to.', 'mainwp' ) );
+                throw new MainWP_Exception( esc_html__( 'The safety backup from this restore was replaced by a later restore, so there is nothing to roll back to.', 'mainwp' ) );
             }
             throw new MainWP_Exception( esc_html__( 'A rollback has already been started for this restore, so it cannot be rolled back again.', 'mainwp' ) );
         }
@@ -836,13 +854,27 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 }
                 $checkpoint                           = $job->checkpoint;
                 $checkpoint['pre_snapshot_artifacts'] = $artifacts;
-                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                $recorded                             = $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
                 // A persisted handle would short-circuit the NEXT restore's
                 // trigger_backup() into reusing this finished task, and its
                 // later success would prune an artifact this job still counts
                 // on for rollback.
                 $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
+
+                // The site keeps one safety backup. Older ones go only once
+                // this one is durably recorded, and while this job still holds
+                // the site, so no rollback of an older restore can start.
+                if ( $recorded ) {
+                    $this->prune_superseded_pre_snapshots(
+                        $job,
+                        array(
+                            MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED,
+                            MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
+                            MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED,
+                        )
+                    );
+                }
 
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), $this->lock_token );
                 return;
@@ -1184,7 +1216,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // Prune while this job still holds the site's active reservation: a
         // rollback of an earlier restore is refused until it ends, so none can
         // start from a safety backup the child is about to delete.
-        $this->prune_superseded_pre_snapshots( $job );
+        $this->prune_superseded_pre_snapshots( $job, array( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED ) );
+        if ( ! empty( $checkpoint['is_rollback'] ) ) {
+            $this->retire_rollback_source( $job, $checkpoint );
+        }
 
         if ( ! $store->complete_job( (int) $job->id, $this->lock_token ) ) {
             // Already terminal, or this worker's lease was reclaimed - the
@@ -1512,7 +1547,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // A deleted site can leave its job behind. Throwing here inside a
         // catch block would prevent the failure event below from firing.
         if ( ! empty( $job->pre_snapshot_task_id ) && ! empty( $website ) ) {
-            $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
+            // Every later phase starts after the child reported the safety
+            // backup finished, so only this phase can leave it running.
+            if ( $store::STATUS_PRE_SNAPSHOT === $phase ) {
+                $this->stop_unrecorded_pre_snapshot( $website, $job );
+            } else {
+                $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
+            }
         }
 
         /**
@@ -1684,39 +1725,39 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Best-effort retirement of the safety backups that earlier completed
-     * restores of this site kept for rollback.
+     * Best-effort retirement of the safety backups earlier restores of this
+     * site kept for rollback.
      *
-     * A completed restore keeps its own safety backup so it can still be
-     * rolled back; the next completed restore of the site supersedes it. That
-     * bounds the child to one retained safety backup from completed restores.
-     * A failed or cancelled restore keeps its safety backup, as before, and so
-     * does a completed restore whose failed rollback can still be retried.
+     * Once a restore's own safety backup is confirmed, every older one goes,
+     * whatever that restore's outcome, so the child keeps one per site. A
+     * completion also retires earlier completed restores' safety backups, for
+     * a restore that ran without one. A safety backup that a failed rollback
+     * can still retry from stays.
      *
      * The child reports counts, not per-task outcomes, so each task goes in
      * its own request. Only a task the child pruned or no longer has counts as
      * removed; an active task, an unreadable answer or an unreachable site
-     * leaves the row for the next completed restore to retry.
+     * leaves the row for the next pass to retry.
      *
-     * @param object $job Job that is completing; it still holds the site.
+     * @param object $job      Job that holds the site.
+     * @param array  $statuses Statuses of the earlier jobs to retire.
      */
-    private function prune_superseded_pre_snapshots( object $job ): void {
+    private function prune_superseded_pre_snapshots( object $job, array $statuses ): void {
         global $wpdb;
         $earlier = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
             $wpdb->prepare(
-                'SELECT id, site_id, status, pre_snapshot_task_id, checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND id < %d AND status = %s AND pre_snapshot_task_id <> %s AND checkpoint NOT LIKE %s ORDER BY id', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
-                (int) $job->site_id,
-                (int) $job->id,
-                MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED,
-                '',
-                '%' . $wpdb->esc_like( '"pre_snapshot_pruned":true' ) . '%'
+                'SELECT id, site_id, status, pre_snapshot_task_id, checkpoint FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND id < %d AND status IN ( ' . implode( ', ', array_fill( 0, count( $statuses ), '%s' ) ) . ' ) AND pre_snapshot_task_id <> %s AND checkpoint NOT LIKE %s ORDER BY id', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- table name from trusted DB helper; one placeholder per status.
+                array_merge(
+                    array( (int) $job->site_id, (int) $job->id ),
+                    $statuses,
+                    array( '', '%' . $wpdb->esc_like( '"pre_snapshot_pruned":true' ) . '%' )
+                )
             )
         );
         if ( empty( $earlier ) ) {
             return;
         }
 
-        $store = MainWP_Backup_Restore_Job_Store::instance();
         try {
             $website = $this->website( $job );
         } catch ( \Throwable $e ) {
@@ -1729,34 +1770,127 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( $this->safety_backup_held_by_rollback( $row, $checkpoint ) ) {
                 continue;
             }
-
-            try {
-                $answer = MainWP_Connect::fetch_url_authed(
-                    $website,
-                    'backup_task_prune',
-                    array(
-                        'task_ids' => wp_json_encode( array( (string) $row->pre_snapshot_task_id ) ),
-                        'sweep'    => 0,
-                    ),
-                    false,
-                    false,
-                    false
-                );
-            } catch ( \Throwable $e ) {
-                // Best effort: completion never waits on cleanup, and an
-                // unreachable site will not answer the next task either.
+            if ( null === $this->prune_safety_backup( $website, (int) $row->id, (string) $row->pre_snapshot_task_id, $checkpoint ) ) {
+                // Best effort: an unreachable site will not answer the next task either.
                 return;
             }
+        }
+    }
 
-            $removed = is_array( $answer ) && 'ok' === ( $answer['result'] ?? '' )
-                && isset( $answer['pruned'], $answer['missing'] )
-                && ( (int) $answer['pruned'] + (int) $answer['missing'] ) > 0;
-            if ( ! $removed ) {
-                continue;
+    /**
+     * Retire the safety backup a completing rollback restored from.
+     *
+     * A retried rollback points at the failed rollback before it, so the
+     * chain is walked back to the restore that took the safety backup. The
+     * completing rollback is the only one left that could restore from it,
+     * so no rollback-hold check applies.
+     *
+     * @param object $job        Rollback job that is completing.
+     * @param array  $checkpoint Its checkpoint.
+     */
+    private function retire_rollback_source( object $job, array $checkpoint ): void {
+        $store  = MainWP_Backup_Restore_Job_Store::instance();
+        $source = null;
+        $seen   = array( (int) $job->id => true );
+        $next   = (int) ( $checkpoint['rollback_of'] ?? 0 );
+        while ( $next > 0 && ! isset( $seen[ $next ] ) ) {
+            $seen[ $next ] = true;
+            $candidate     = $store->get_job( $next );
+            if ( null === $candidate || (int) $candidate->site_id !== (int) $job->site_id ) {
+                return;
             }
+            if ( empty( $candidate->checkpoint['is_rollback'] ) ) {
+                $source = $candidate;
+                break;
+            }
+            $next = (int) ( $candidate->checkpoint['rollback_of'] ?? 0 );
+        }
+        if ( null === $source || '' === (string) $source->pre_snapshot_task_id || ! empty( $source->checkpoint['pre_snapshot_pruned'] ) ) {
+            return;
+        }
 
+        try {
+            $website = $this->website( $job );
+        } catch ( \Throwable $e ) {
+            return;
+        }
+        $this->prune_safety_backup( $website, (int) $source->id, (string) $source->pre_snapshot_task_id, (array) $source->checkpoint );
+    }
+
+    /**
+     * Ask the child to prune one safety-backup task and record a confirmed
+     * removal on the restore job that took it.
+     *
+     * @param object $website    Website object.
+     * @param int    $job_id     Restore job that took the safety backup.
+     * @param string $task_id    Its pre-snapshot task id.
+     * @param array  $checkpoint That job's decoded checkpoint.
+     *
+     * @return bool|null Whether the child confirmed the removal, or null when
+     *                   the request threw.
+     */
+    private function prune_safety_backup( object $website, int $job_id, string $task_id, array $checkpoint ): ?bool {
+        try {
+            $answer = MainWP_Connect::fetch_url_authed(
+                $website,
+                'backup_task_prune',
+                array(
+                    'task_ids' => wp_json_encode( array( $task_id ) ),
+                    'sweep'    => 0,
+                ),
+                false,
+                false,
+                false
+            );
+        } catch ( \Throwable $e ) {
+            return null;
+        }
+
+        $removed = is_array( $answer ) && 'ok' === ( $answer['result'] ?? '' )
+            && isset( $answer['pruned'], $answer['missing'] )
+            && ( (int) $answer['pruned'] + (int) $answer['missing'] ) > 0;
+        if ( $removed ) {
             $checkpoint['pre_snapshot_pruned'] = true;
-            $store->save_checkpoint( (int) $row->id, $checkpoint );
+            MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( $job_id, $checkpoint );
+        }
+        return $removed;
+    }
+
+    /**
+     * Stop a safety backup that is still running when its restore ends.
+     *
+     * The handle is released when the child reports the safety backup
+     * finished, so a handle this job still owns means the Dashboard never
+     * recorded it. Without a recorded artifact no rollback can use it, so a
+     * task the child already finished is pruned instead. Best effort: the
+     * handle is released whatever the child answers.
+     *
+     * @param object $website Website object.
+     * @param object $job     Restore job that just ended.
+     */
+    private function stop_unrecorded_pre_snapshot( object $website, object $job ): void {
+        $task_id = (string) $job->pre_snapshot_task_id;
+        $owner   = (string) $job->id;
+        $handle  = json_decode( (string) MainWP_DB::instance()->get_website_option( (int) $website->id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
+        $owned   = is_array( $handle ) && isset( $handle['task_id'], $handle['owner'] ) && is_scalar( $handle['task_id'] ) && is_scalar( $handle['owner'] )
+            && (string) $handle['task_id'] === $task_id && (string) $handle['owner'] === $owner;
+        if ( ! $owned ) {
+            return;
+        }
+
+        $answer = null;
+        try {
+            $answer = MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $task_id ), false, false, false );
+        } catch ( \Throwable $e ) {
+            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its safety backup: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
+        } finally {
+            $this->release_pre_snapshot_handle( $website, $task_id, $owner );
+        }
+
+        if ( is_array( $answer ) && 'already_terminal' === ( $answer['result'] ?? '' ) && empty( $job->checkpoint['pre_snapshot_artifacts'] ) ) {
+            // The failure path stamped its error code after $job was read.
+            $fresh = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+            $this->prune_safety_backup( $website, (int) $job->id, $task_id, (array) ( null !== $fresh ? $fresh->checkpoint : $job->checkpoint ) );
         }
     }
 

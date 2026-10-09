@@ -1740,6 +1740,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$no_child_failure  = array( 'failed_permanent', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, array(), true, $later, null, null );
 		$no_child_original = array( 'failed_permanent', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, array(), true, $original, null, null );
 
+		// A failure while the safety backup runs stops that backup too.
+		$pre_snapshot_failure  = array( 'failed_permanent', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, array( 'backup_task_cancel' ), true, $later, null, null );
+		$pre_snapshot_original = array( 'failed_permanent', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, array( 'backup_task_cancel' ), true, $original, null, null );
+
 		$no_child_cancel = array( 'cancelled', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, array( 'backup_task_cancel' ), true, null, null, null );
 		$unowned_cancel  = array( 'cancelled', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, array(), true, null, null, null );
 
@@ -2630,8 +2634,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'preflight//failure without probe'             => array( 'preflight', '', 'threw', 'none', false, $no_child_failure, null ),
 			'preflight//stored failure without probe'      => array( 'preflight', '', 'completed', 'failure', false, $no_child_original, null ),
 			'preflight//intent without probe'              => array( 'preflight', '', 'threw', 'intent', false, array( 'cancelled', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, array( 'backup_task_cancel' ), true, null, null, null ), 'cancelled' ),
-			'pre_snapshot//failure without probe'          => array( 'pre_snapshot', '', 'threw', 'none', false, $no_child_failure, null ),
-			'pre_snapshot//stored failure without probe'   => array( 'pre_snapshot', '', 'completed', 'failure', false, $no_child_original, null ),
+			'pre_snapshot//failure without probe'          => array( 'pre_snapshot', '', 'threw', 'none', false, $pre_snapshot_failure, null ),
+			'pre_snapshot//stored failure without probe'   => array( 'pre_snapshot', '', 'completed', 'failure', false, $pre_snapshot_original, null ),
 			'pre_snapshot//intent without probe'           => array( 'pre_snapshot', '', 'threw', 'intent', false, array( 'cancelled', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, array( 'backup_task_cancel' ), true, null, null, null ), 'cancelled' ),
 			'verifying/stored failure completion checkpoint refused' => array( 'verifying', '', 'threw', 'failure', 'checkpoint', array( 'verifying', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_DEFERRED, array(), false, null, $original, null ), null ),
 			'verifying//failure without probe'             => array( 'verifying', '', 'threw', 'none', false, $no_child_failure, null ),
@@ -2643,8 +2647,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'failed_retryable/preflight/failure without probe' => array( 'failed_retryable', 'preflight', 'threw', 'none', false, $no_child_failure, null ),
 			'failed_retryable/preflight/stored failure without probe' => array( 'failed_retryable', 'preflight', 'completed', 'failure', false, $no_child_original, null ),
 			'failed_retryable/preflight/intent without probe' => array( 'failed_retryable', 'preflight', 'threw', 'intent', false, array( 'cancelled', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, array( 'backup_task_cancel' ), true, null, null, null ), 'cancelled' ),
-			'failed_retryable/pre_snapshot/failure without probe' => array( 'failed_retryable', 'pre_snapshot', 'threw', 'none', false, $no_child_failure, null ),
-			'failed_retryable/pre_snapshot/stored failure without probe' => array( 'failed_retryable', 'pre_snapshot', 'completed', 'failure', false, $no_child_original, null ),
+			'failed_retryable/pre_snapshot/failure without probe' => array( 'failed_retryable', 'pre_snapshot', 'threw', 'none', false, $pre_snapshot_failure, null ),
+			'failed_retryable/pre_snapshot/stored failure without probe' => array( 'failed_retryable', 'pre_snapshot', 'completed', 'failure', false, $pre_snapshot_original, null ),
 			'failed_retryable/pre_snapshot/intent without probe' => array( 'failed_retryable', 'pre_snapshot', 'threw', 'intent', false, array( 'cancelled', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, array( 'backup_task_cancel' ), true, null, null, null ), 'cancelled' ),
 			'failed_retryable/verifying/failure without probe' => array( 'failed_retryable', 'verifying', 'threw', 'none', false, $no_child_failure, null ),
 			'failed_retryable/verifying/stored failure without probe' => array( 'failed_retryable', 'verifying', 'completed', 'failure', false, array( 'failed_retryable', MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_DRIVE_ON, array(), false, null, false, null ), null ),
@@ -4062,7 +4066,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$events
 		);
 		$this->assertSame( $owned ? null : $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
-		$this->assertSame( array(), $this->calls );
+		// The interrupted job never recorded its safety backup, so it is stopped on a site that still exists.
+		$this->assertSame( $owned && ! $deleted ? array( 'backup_task_cancel' ) : array(), array_column( $this->calls, 'what' ) );
 	}
 
 	/**
@@ -6426,7 +6431,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$earlier = $store->get_job( (int) $earlier->id );
 		$this->assertTrue( $earlier->checkpoint['pre_snapshot_pruned'] );
 		$this->assertFalse( $this->orchestrator->has_rollback_source( $earlier ) );
-		$this->assertSame( 'The safety backup from this restore was removed after a later restore finished, so there is nothing to roll back to.', $this->rollback_refusal( $earlier ) );
+		$this->assertSame( 'The safety backup from this restore was replaced by a later restore, so there is nothing to roll back to.', $this->rollback_refusal( $earlier ) );
 		$this->assertTrue( $this->orchestrator->has_rollback_source( $later ), 'The newest completed restore keeps its own safety backup.' );
 
 		// A second completion must not prune the same safety backup again.
@@ -6544,7 +6549,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$this->assertFalse( $this->orchestrator->has_rollback_source( $earlier ) );
 		$this->assertTrue( $this->orchestrator->has_rollback_source( $later ) );
-		$this->assertSame( 'The safety backup from this restore was removed after a later restore finished, so there is nothing to roll back to.', $this->rollback_refusal( $earlier ) );
+		$this->assertSame( 'The safety backup from this restore was replaced by a later restore, so there is nothing to roll back to.', $this->rollback_refusal( $earlier ) );
 		$this->assertSame( array( (int) $later->id ), array_column( $this->b194_reload_snapshots()['failed_restore_jobs'], 'job_id' ) );
 	}
 
@@ -6583,6 +6588,238 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$this->assertSame( array( '["task-earlier-pre"]', '["task-later-pre"]' ), array_column( array_column( $this->calls, 'params' ), 'task_ids' ) );
 		$this->assertTrue( $store->get_job( (int) $earlier->id )->checkpoint['pre_snapshot_pruned'] );
+	}
+
+	/**
+	 * The task_ids of every prune request sent so far, in order.
+	 *
+	 * @return array
+	 */
+	private function prune_requests() {
+		$prunes = array();
+		foreach ( $this->calls as $call ) {
+			if ( 'backup_task_prune' === $call['what'] ) {
+				$prunes[] = $call['params']['task_ids'];
+			}
+		}
+		return $prunes;
+	}
+
+	/**
+	 * Script a completed safety backup and return a job in pre_snapshot.
+	 *
+	 * @param string $task_id Safety backup task id.
+	 *
+	 * @return object Job row.
+	 */
+	private function make_pre_snapshot_job( $task_id ) {
+		$this->responses['backup_task_run'] = array(
+			'task_id'   => $task_id,
+			'phase'     => 'completed',
+			'artifacts' => array(
+				array(
+					'file' => 'backup-new.tar.gz',
+					'size' => 1234,
+					'role' => 'full',
+				),
+			),
+		);
+		return $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $task_id ) );
+	}
+
+	/**
+	 * Once a restore's new safety backup is confirmed, every older safety
+	 * backup on the site goes, whatever the older restore's outcome, and none
+	 * of those restores offers Roll Back any more.
+	 */
+	public function test_confirmed_safety_backup_retires_older_ones_of_any_outcome() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$store     = MainWP_Backup_Restore_Job_Store::instance();
+		$completed = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED, array( 'pre_snapshot_task_id' => 'task-completed-pre' ) );
+		$failed    = $this->make_job( $this->safety_checkpoint(), $store::STATUS_FAILED_PERMANENT, array( 'pre_snapshot_task_id' => 'task-failed-pre' ) );
+		$cancelled = $this->make_job( $this->safety_checkpoint(), $store::STATUS_CANCELLED, array( 'pre_snapshot_task_id' => 'task-cancelled-pre' ) );
+		$this->assertTrue( $this->orchestrator->has_rollback_source( $failed ) );
+		$this->assertTrue( $this->orchestrator->has_rollback_source( $cancelled ) );
+
+		$this->responses['backup_task_prune'] = $this->prune_answer( 'pruned' );
+		$job                                  = $this->tick( $this->make_pre_snapshot_job( 'task-new-pre' ) );
+
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertSame( array( '["task-completed-pre"]', '["task-failed-pre"]', '["task-cancelled-pre"]' ), $this->prune_requests(), 'One task id per request, oldest first.' );
+		// End the new restore so the refusal below is about the source, not the busy site.
+		$this->assertTrue( $store->set_status( (int) $job->id, $store::STATUS_FAILED_PERMANENT ) );
+		foreach ( array( $completed, $failed, $cancelled ) as $earlier ) {
+			$earlier = $store->get_job( (int) $earlier->id );
+			$this->assertTrue( $earlier->checkpoint['pre_snapshot_pruned'] );
+			$this->assertFalse( $this->orchestrator->has_rollback_source( $earlier ) );
+			$this->assertSame( 'The safety backup from this restore was replaced by a later restore, so there is nothing to roll back to.', $this->rollback_refusal( $earlier ) );
+		}
+
+		$rows = array_column( $this->b194_reload_snapshots()['failed_restore_jobs'], null, 'job_id' );
+		$this->assertFalse( $rows[ $failed->id ]['has_rollback'] );
+		$this->assertFalse( $rows[ $cancelled->id ]['has_rollback'] );
+		$this->assertArrayNotHasKey( (int) $completed->id, $rows );
+	}
+
+	/**
+	 * A safety backup the child did not confirm removing stays offered and is
+	 * retried by the next confirmed safety backup.
+	 *
+	 * @dataProvider data_prune_answers
+	 *
+	 * @param mixed $answer  Child response, or a Throwable it throws.
+	 * @param bool  $retired Whether the earlier safety backup counts as removed.
+	 */
+	public function test_confirmed_safety_backup_marks_only_confirmed_removals( $answer, $retired ) {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$failed = $this->make_job( $this->safety_checkpoint(), $store::STATUS_FAILED_PERMANENT, array( 'pre_snapshot_task_id' => 'task-failed-pre' ) );
+
+		$this->responses['backup_task_prune'] = is_string( $answer ) ? $this->prune_answer( $answer ) : $answer;
+		$this->assertSame( $store::STATUS_STAGING, $this->tick( $this->make_pre_snapshot_job( 'task-new-pre' ) )->status );
+
+		$failed = $store->get_job( (int) $failed->id );
+		$this->assertSame( $retired, ! empty( $failed->checkpoint['pre_snapshot_pruned'] ) );
+		$this->assertSame( ! $retired, $this->orchestrator->has_rollback_source( $failed ) );
+	}
+
+	/**
+	 * A failed rollback can still be retried from its safety backup, so a
+	 * new safety backup leaves that one on the site.
+	 */
+	public function test_confirmed_safety_backup_keeps_one_a_failed_rollback_can_retry() {
+		$store    = MainWP_Backup_Restore_Job_Store::instance();
+		$failed   = $this->make_job( $this->safety_checkpoint(), $store::STATUS_FAILED_PERMANENT, array( 'pre_snapshot_task_id' => 'task-failed-pre' ) );
+		$rollback = $this->make_job(
+			$this->safety_checkpoint() + array(
+				'is_rollback' => true,
+				'rollback_of' => (int) $failed->id,
+			),
+			$store::STATUS_FAILED_PERMANENT
+		);
+
+		$this->responses['backup_task_prune'] = $this->prune_answer( 'pruned' );
+		$this->assertSame( $store::STATUS_STAGING, $this->tick( $this->make_pre_snapshot_job( 'task-new-pre' ) )->status );
+
+		$this->assertSame( array(), $this->prune_requests() );
+		$this->assertArrayNotHasKey( 'pre_snapshot_pruned', $store->get_job( (int) $failed->id )->checkpoint );
+		$this->assertTrue( $this->orchestrator->has_rollback_source( $store->get_job( (int) $rollback->id ) ) );
+	}
+
+	/**
+	 * A completed rollback retires the safety backup it restored from, also
+	 * when it retried an earlier failed rollback.
+	 *
+	 * @dataProvider data_rollback_chain_lengths
+	 *
+	 * @param int $failed_rollbacks Failed rollbacks before the one that completes.
+	 */
+	public function test_completed_rollback_retires_its_safety_backup( $failed_rollbacks ) {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$failed = $this->make_job( $this->safety_checkpoint(), $store::STATUS_FAILED_PERMANENT, array( 'pre_snapshot_task_id' => 'task-source-pre' ) );
+		$source = $failed;
+		for ( $i = 0; $i < $failed_rollbacks; ++$i ) {
+			$id = $this->orchestrator->initiate_rollback( $source );
+			$this->assertTrue( $store->set_status( $id, $store::STATUS_FAILED_PERMANENT ) );
+			$source = $store->get_job( $id );
+		}
+		$rollback_id = $this->orchestrator->initiate_rollback( $source );
+		$this->assertTrue( $store->set_status( $rollback_id, $store::STATUS_VERIFYING ) );
+
+		$this->responses['backup_task_prune'] = $this->prune_answer( 'pruned' );
+		$rollback                             = $this->tick( $store->get_job( $rollback_id ) );
+
+		$this->assertSame( $store::STATUS_COMPLETED, $rollback->status );
+		$this->assertSame( array( '["task-source-pre"]' ), $this->prune_requests() );
+		$this->assertTrue( $store->get_job( (int) $failed->id )->checkpoint['pre_snapshot_pruned'] );
+		$this->assertFalse( $this->orchestrator->has_rollback_source( $store->get_job( (int) $failed->id ) ) );
+		$this->assertFalse( $this->orchestrator->has_rollback_source( $rollback ) );
+	}
+
+	/**
+	 * Rollback chains: a direct rollback, and one retried after a failure.
+	 *
+	 * @return array
+	 */
+	public static function data_rollback_chain_lengths() {
+		return array(
+			'direct rollback'  => array( 0 ),
+			'retried rollback' => array( 1 ),
+		);
+	}
+
+	/**
+	 * A restore that ends while its safety backup still runs on the child
+	 * cancels that backup; one the child already finished is pruned, since no
+	 * rollback can ever use it.
+	 *
+	 * @dataProvider data_running_safety_backup_cancel_answers
+	 *
+	 * @param array $answer Child answer to the cancel.
+	 * @param array $prunes Expected prune requests.
+	 */
+	public function test_terminal_failure_cancels_running_safety_backup( $answer, $prunes ) {
+		$this->responses['backup_task_run']    = array( 'fetch_url_output' => 'Service Unavailable' );
+		$this->responses['backup_task_cancel'] = $answer;
+		$this->responses['backup_task_prune']  = $this->prune_answer( 'pruned' );
+		$job                                   = $this->make_job(
+			array(),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array(
+				'pre_snapshot_task_id' => 'task-7-pre',
+				'attempt_count'        => MainWP_Backup_Backoff::MAX_ATTEMPTS - 1,
+			)
+		);
+		MainWP_DB::instance()->update_website_option(
+			$this->site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id' => 'task-7-pre',
+					'owner'   => (string) $job->id,
+				)
+			)
+		);
+		$job = $this->tick( $job );
+
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$cancels = array_values(
+			array_filter(
+				$this->calls,
+				static function ( $call ) {
+					return 'backup_task_cancel' === $call['what'];
+				}
+			)
+		);
+		$this->assertCount( 1, $cancels );
+		$this->assertSame( 'task-7-pre', $cancels[0]['params']['task_id'] );
+		$this->assertSame( $prunes, $this->prune_requests() );
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+	}
+
+	/**
+	 * Child answers to cancelling a safety backup.
+	 *
+	 * @return array
+	 */
+	public function data_running_safety_backup_cancel_answers() {
+		return array(
+			'cancelled'      => array(
+				array(
+					'result' => 'ok',
+					'phase'  => 'failed',
+				),
+				array(),
+			),
+			'already done'   => array(
+				array(
+					'result' => 'already_terminal',
+					'phase'  => 'completed',
+				),
+				array( '["task-7-pre"]' ),
+			),
+			'error envelope' => array( array( 'error' => 'Backup task not found.' ), array() ),
+			'unreachable'    => array( new MainWP_Exception( 'Site unreachable.' ), array() ),
+		);
 	}
 
 	/**

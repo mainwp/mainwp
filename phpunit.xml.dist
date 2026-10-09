@@ -22,6 +22,7 @@
             <exclude>tests/integration</exclude>
             <!-- Playwright/TypeScript only today; excluded so a future stray .php helper can't get picked up silently. -->
             <exclude>tests/e2e</exclude>
+            <exclude>tests/test-case.php</exclude>
         </testsuite>
         <testsuite name="Abilities">
             <directory suffix=".php">tests/abilities</directory>

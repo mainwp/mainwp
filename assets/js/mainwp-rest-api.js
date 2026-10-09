@@ -112,6 +112,49 @@ const init_application_passwords = ($) => {
     const has_user_col = $('#mainwp-application-password-table thead th.mainwp-col-user').length > 0;
     const current_user_name = $('#rest-application-passwords-settings').data('current-user-name') || '';
     const message_zone = $("#mainwp-message-zone-app-passwords");
+    const is_inline_creator = app_pass_section.data("inline-creator") === true;
+    const default_name = app_pass_section.data("default-name") || "";
+    const password_target = app_pass_section.data("password-target") || "";
+    const create_submit_button = $("#mainwp-create-app-password-submit");
+
+    /**
+     * Fill the AI client setup snippets. The password goes in through
+     * textContent only, so nothing in it or in the username can become markup.
+     */
+    const fill_ai_client_setup = (containers, password) => {
+        if (typeof MainWPAIClientSetup === "undefined") {
+            return;
+        }
+        containers.each(function () {
+            const snippets = MainWPAIClientSetup.buildSnippets({
+                dashboardUrl: this.getAttribute("data-dashboard-url"),
+                username: this.getAttribute("data-username"),
+                password: password,
+                vscodePasswordPrompt: this.getAttribute("data-vscode-password-prompt"),
+            });
+            this.querySelectorAll("code[data-snippet]").forEach((code) => {
+                code.textContent = snippets[code.getAttribute("data-snippet")] || "";
+            });
+            const tabs = $(this).find(".tabular.menu .item");
+            tabs.tab({
+                context: $(this),
+                onVisible: function (tabPath) {
+                    tabs.each(function () {
+                        this.setAttribute("aria-selected", this.getAttribute("data-tab") === tabPath ? "true" : "false");
+                    });
+                },
+            });
+            // Fomantic binds tab activation to click only, and these anchors have no href.
+            tabs.on("keydown", function (event) {
+                if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    $(this).trigger("click");
+                }
+            });
+        });
+    };
+
+    fill_ai_client_setup($('.mainwp-ai-client-setup[data-setup-context="notice"]'), null);
 
     /**
      * Helper function to escape HTML
@@ -365,9 +408,9 @@ const init_application_passwords = ($) => {
      * Open create modal
      */
     $("#mainwp-create-application-password-button-top, #mainwp-create-application-password-button").on("click", () => {
-        app_pass_name_input.val("");
-        const submit_btn = $("#mainwp-create-app-password-submit");
-        submit_btn.addClass("disabled");
+        app_pass_name_input.val(default_name);
+        const submit_btn = create_submit_button;
+        submit_btn.toggleClass("disabled", app_pass_name_input.val().trim().length === 0);
 
         app_pass_name_input.off("input.create_modal").on("input.create_modal", () => {
             if (app_pass_name_input.val().trim().length > 0) {
@@ -425,12 +468,24 @@ const init_application_passwords = ($) => {
                     // Show success modal with password
                     $("#app-pass-success-name").text(response.data.item.name);
                     $("#app-pass-success-value").val(response.data.password);
+                    fill_ai_client_setup(success_modal.find(".mainwp-ai-client-setup"), response.data.password);
+
+                    if (password_target) {
+                        const target = $(password_target);
+                        const current_value = target.val();
+
+                        if (target.length && typeof current_value === "string") {
+                            target.val(current_value.replace("paste-application-password-here", response.data.password));
+                        }
+                    }
 
                     success_modal
                         .modal({
                             closable: false,
                             onHidden: () => {
-                                location.reload();
+                                if (!is_inline_creator) {
+                                    location.reload();
+                                }
                             },
                         })
                         .modal("show");
@@ -469,6 +524,9 @@ const init_application_passwords = ($) => {
 
         if (navigator.clipboard && globalThis.isSecureContext) {
             navigator.clipboard.writeText(value);
+        } else {
+            input.trigger("focus").trigger("select");
+            document.execCommand("copy");
         }
 
         const button = $(this);
@@ -478,6 +536,41 @@ const init_application_passwords = ($) => {
         setTimeout(() => {
             button.html(original_text);
         }, 2000);
+    });
+
+    /**
+     * Copy an AI client setup snippet. Without clipboard access (plain HTTP)
+     * the snippet is selected instead, so the user can copy it by hand.
+     */
+    $(document).on("click", ".mainwp-ai-client-setup-copy", function () {
+        const button = $(this);
+        const code = button.closest(".tab").find("code[data-snippet]").get(0);
+        if (!code) {
+            return;
+        }
+
+        const select_snippet = () => {
+            const range = document.createRange();
+            range.selectNodeContents(code);
+            const selection = globalThis.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+        };
+
+        if (!navigator.clipboard || !globalThis.isSecureContext) {
+            select_snippet();
+            return;
+        }
+
+        navigator.clipboard.writeText(code.textContent).then(() => {
+            if (!button.data("original-label")) {
+                button.data("original-label", button.html());
+            }
+            button.html('<i class="check icon"></i> ' + MainWP.I18n.t("Copied!"));
+            setTimeout(() => {
+                button.html(button.data("original-label"));
+            }, 2000);
+        }, select_snippet);
     });
 
     /**
@@ -620,7 +713,7 @@ const init_application_passwords = ($) => {
     app_pass_name_input.on("keypress", (e) => {
         if (e.which === 13) {
             e.preventDefault();
-            create_button.trigger("click");
+            create_submit_button.trigger("click");
         }
     });
 };

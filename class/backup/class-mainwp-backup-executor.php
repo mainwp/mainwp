@@ -1118,13 +1118,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             throw $e;
                         }
                         // Flag before delete, as for the full archive below.
+                        $before             = $backupTaskProgress;
                         $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
                         $advanced           = true;
 
-                        try {
-                            MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['db'] ) );
-                        } catch ( \Exception $e ) {
-                            MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed after a validated download: ' . $e->getMessage() );
+                        if ( self::download_recorded( $backupTaskProgress, $before, 'downloadedDB', $localBackupFile ) ) {
+                            try {
+                                MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['db'] ) );
+                            } catch ( \Exception $e ) {
+                                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed after a validated download: ' . $e->getMessage() );
+                            }
+                        } else {
+                            $backupTaskProgress = self::keep_child_copy_of_unrecorded_download( $website, $before, 'downloadedDB', $localBackupFile );
                         }
                     } finally {
                         MainWP_Backup_File_Manager::release_download_lock( $localBackupFile );
@@ -1213,15 +1218,20 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         // leaves a validated resumable download, and no other
                         // driver can slip in after the remote artifact is
                         // gone and destroy the local copy with a re-download.
+                        $before             = $backupTaskProgress;
                         $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULLComplete' => 1 ) );
                         $advanced           = true;
 
-                        try {
-                            MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
-                        } catch ( \Exception $e ) {
-                            // Child-side litter, not a run failure: the
-                            // artifact is already validated locally.
-                            MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed after a validated download: ' . $e->getMessage() );
+                        if ( self::download_recorded( $backupTaskProgress, $before, 'downloadedFULL', $localBackupFile ) ) {
+                            try {
+                                MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['full'] ) );
+                            } catch ( \Exception $e ) {
+                                // Child-side litter, not a run failure: the
+                                // artifact is already validated locally.
+                                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed after a validated download: ' . $e->getMessage() );
+                            }
+                        } else {
+                            $backupTaskProgress = self::keep_child_copy_of_unrecorded_download( $website, $before, 'downloadedFULL', $localBackupFile );
                         }
                     } finally {
                         MainWP_Backup_File_Manager::release_download_lock( $localBackupFile );
@@ -2877,17 +2887,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $status = self::map_task_status( $payload );
         } while ( 'running' === $status['status'] && time() < $deadline );
 
+        $downloaded = '';
         if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {
             $type  = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
             $local = self::build_local_backup_file( $website, $type, $status['meta']['file'] );
             MainWP_Backup_File_Manager::backup_download_file( $site_id, $type, $status['meta']['file'], $local );
-            try {
-                MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $status['meta']['file'] ) );
-            } catch ( \Exception $e ) {
-                // The archive is already local; a child error must not skip
-                // the completion hook or leave the ad-hoc handle set.
-                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed after a validated download: ' . $e->getMessage() );
-            }
+            $downloaded              = (string) $status['meta']['file'];
             $status['meta']['local'] = $local;
         }
 
@@ -2923,6 +2928,19 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
 
             MainWP_DB::instance()->update_website_option( $website, self::ADHOC_TASK_OPTION, '' );
+        }
+
+        // An ad-hoc run keeps no progress row; the completion hook and the
+        // handle clear are what record the download. update_website_option()
+        // reports no result, so the handle is read back: while it still names
+        // this task, the next call resumes it and downloads the archive again,
+        // and the child copy has to be there for that.
+        if ( '' !== $downloaded && ( self::read_adhoc_task( $website )['task_id'] ?? '' ) !== $task_id ) {
+            try {
+                MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $downloaded ) );
+            } catch ( \Exception $e ) {
+                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed after a validated download: ' . $e->getMessage() );
+            }
         }
 
         return $status;
@@ -3165,6 +3183,54 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $prefix  = MainWP_Backup_Type::DATABASE === $type ? 'db-' : 'full-';
 
         return MainWP_Backup_File_Manager::normalize_filename( $dir . $prefix . $clean_url . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $remote_file ) );
+    }
+
+    /**
+     * Whether the progress row re-read after the complete-flag write shows
+     * this run's download as recorded.
+     *
+     * The progress helper ignores the write result and returns whatever the
+     * re-read finds, so a failed write looks like a row without the flag.
+     * A row another run reset, or one naming another local file, does not
+     * confirm this download either.
+     *
+     * @param object|null $row         Row re-read after the write.
+     * @param object      $before      This run's row before the write.
+     * @param string      $path_column downloadedDB or downloadedFULL.
+     * @param string      $local       Validated local file.
+     * @return bool
+     */
+    private static function download_recorded( $row, $before, string $path_column, string $local ): bool {
+        $flag = $path_column . 'Complete';
+        return ! empty( $row )
+            && 1 === (int) $row->$flag
+            && (string) $row->$path_column === $local
+            && (int) $row->dtsFetched === (int) $before->dtsFetched
+            && (string) $row->child_backup_task_id === (string) $before->child_backup_task_id;
+    }
+
+    /**
+     * Keep the child copy of a download the progress row does not show, and
+     * let the run record its snapshot from this run's own view.
+     *
+     * If the run fails after this point, its retry reads the row without
+     * the flag and downloads the archive again, so it needs the child copy.
+     * Retention's child prune removes the copy later through the snapshot's
+     * run key.
+     *
+     * @param object $website     Website.
+     * @param object $before      This run's row before the write.
+     * @param string $path_column downloadedDB or downloadedFULL.
+     * @param string $local       Validated local file.
+     * @return object
+     */
+    private static function keep_child_copy_of_unrecorded_download( $website, $before, string $path_column, string $local ) {
+        MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'A validated download could not be marked complete, so its copy stays on the child site until retention removes it.' );
+        $flag                   = $path_column . 'Complete';
+        $progress               = clone $before;
+        $progress->$path_column = $local;
+        $progress->$flag        = 1;
+        return $progress;
     }
 
     /**

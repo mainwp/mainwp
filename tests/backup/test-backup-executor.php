@@ -1044,6 +1044,100 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A complete flag the re-read row does not confirm leaves the child copy
+	 * in place, and the run still records its snapshot and completes. The
+	 * snapshot's run key names the child task, which is how retention's
+	 * child prune removes the copy later.
+	 *
+	 * @dataProvider data_unrecorded_download_types
+	 *
+	 * @param string $type   Task type.
+	 * @param string $remote Child archive name.
+	 * @param string $flag   Progress column holding the complete flag.
+	 * @param string $write  How the flag write goes wrong: dropped, or landing on a row another run reset.
+	 */
+	public function test_child_archive_kept_when_download_is_unrecorded( $type, $remote, $flag, $write ) {
+		list( $site_id, $task ) = $this->site_and_task( array( 'type' => $type ) );
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$child_task_id          = 'unrecorded-' . $site_id;
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => $child_task_id,
+				'fetchResult'          => wp_json_encode(
+					array(
+						'full' => 'db' === $type ? false : $remote,
+						'db'   => 'db' === $type ? $remote : false,
+						'size' => strlen( $content ),
+					)
+				),
+			)
+		);
+		$deletes = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what, $params ) use ( &$deletes ) {
+				unset( $website );
+				if ( 'delete_backup' !== $what ) {
+					return $result;
+				}
+				$deletes[] = $params['del'] ?? null;
+				return array( 'result' => 'ok' );
+			},
+			10,
+			4
+		);
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				$this->snapshot_files[] = $file;
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+		$break_flag = static function ( $query ) use ( $flag, $write ) {
+			if ( ! str_starts_with( $query, 'UPDATE ' ) || ! str_contains( $query, 'mainwp_wp_backup_progress' ) || ! preg_match( "/`{$flag}` = '?1'?/", $query ) ) {
+				return $query;
+			}
+			return 'dropped' === $write ? $query . ' AND 1 = 0' : preg_replace( "/(`{$flag}` = '?1'?)/", '$1, `dtsFetched` = 1', $query );
+		};
+		add_filter( 'query', $break_flag );
+		try {
+			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+		} finally {
+			remove_filter( 'query', $break_flag );
+		}
+
+		$this->assertNotFalse( $result, 'The run completes on its validated local copy.' );
+		$this->assertSame( array(), $deletes, 'The child copy must stay while the row does not show the download.' );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$this->assertNotNull( $snapshot, 'The snapshot is recorded from the validated download.' );
+		$this->assertSame( $type, $snapshot->type );
+		$this->assertSame( $site_id . ':' . $task->id . ':c:' . $child_task_id, $snapshot->run_key );
+		$this->assertFileExists( $snapshot->archives[0]['path'] );
+	}
+
+	/**
+	 * Download slots whose complete flag gates the child delete, and the two
+	 * ways the re-read row can fail to confirm it.
+	 *
+	 * @return array
+	 */
+	public function data_unrecorded_download_types() {
+		return array(
+			'database archive, write dropped' => array( 'db', 'backup-db.sql.zip', 'downloadedDBComplete', 'dropped' ),
+			'full archive, write dropped'     => array( 'full', 'backup-file.zip', 'downloadedFULLComplete', 'dropped' ),
+			'files archive, write dropped'    => array( 'files', 'backup-file.zip', 'downloadedFULLComplete', 'dropped' ),
+			'database archive, other run'     => array( 'db', 'backup-db.sql.zip', 'downloadedDBComplete', 'other run' ),
+			'full archive, other run'         => array( 'full', 'backup-file.zip', 'downloadedFULLComplete', 'other run' ),
+		);
+	}
+
+	/**
 	 * Isolate record failure from archive download and validation failures.
 	 *
 	 * @return string Archive bytes.

@@ -573,6 +573,88 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * An ad-hoc handle that cannot be cleared keeps the child copy: the next
+	 * call resumes the same task and downloads the archive again, and deletes
+	 * the child copy once the handle is gone.
+	 *
+	 * @return void
+	 */
+	public function test_get_backup_task_status_keeps_child_archive_until_handle_clears() {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->give_site_real_privkey( $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'task-adhoc',
+					'type'    => 'full',
+					'started' => time() - 60,
+				)
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id' => 'task-adhoc',
+				'phase'   => 'completed',
+				'type'    => 'full',
+				'file'    => 'backup-1749600000.tar.gz',
+				'size'    => 66,
+			)
+		);
+		$deletes = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $site, $what, $params ) use ( &$deletes ) {
+				unset( $site );
+				if ( 'delete_backup' !== $what ) {
+					return $result;
+				}
+				$deletes[] = $params['del'] ?? null;
+				return array( 'result' => 'ok' );
+			},
+			10,
+			4
+		);
+		$this->stub_download_with_valid_gzip();
+		$keep_handle = static function ( $query ) {
+			return str_starts_with( $query, 'UPDATE ' ) && str_contains( $query, 'mainwp_wp_options' ) && str_contains( $query, "`value` = ''" ) && str_contains( $query, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ? $query . ' AND 1 = 0' : $query;
+		};
+
+		$ob_level = ob_get_level();
+		ob_start();
+		add_filter( 'query', $keep_handle );
+		try {
+			$first = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'task-adhoc', 60 );
+		} finally {
+			remove_filter( 'query', $keep_handle );
+			while ( ob_get_level() > $ob_level ) {
+				ob_end_clean();
+			}
+		}
+
+		$this->assertSame( 'completed', $first['status'] );
+		$this->assertFileExists( $first['meta']['local'] );
+		$this->assertSame( array(), $deletes, 'The child copy must stay while the handle still names the task.' );
+		$this->assertSame( 'task-adhoc', json_decode( (string) MainWP_DB::instance()->get_website_option( $website, 'adhoc_backup_task' ), true )['task_id'] );
+
+		ob_start();
+		try {
+			$second = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'task-adhoc', 60 );
+		} finally {
+			while ( ob_get_level() > $ob_level ) {
+				ob_end_clean();
+			}
+		}
+
+		$this->assertSame( 'completed', $second['status'] );
+		$this->assertSame( array( 'backup-1749600000.tar.gz' ), $deletes, 'The child copy goes once the handle is cleared.' );
+		$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $website, 'adhoc_backup_task' ) );
+	}
+
+	/**
 	 * A failed task reports failed status, fires the completion hook with
 	 * success false, and clears the persisted ad-hoc handle.
 	 *

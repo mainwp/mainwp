@@ -2639,27 +2639,28 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $file_descriptors      = ( false === $file_descriptors ? 150 : $file_descriptors );
         }
 
-        $information = MainWP_Connect::fetch_url_authed(
-            $website,
-            'backup_task_create',
-            array(
-                'type'                  => $type,
-                'exclude'               => '',
-                'excludebackup'         => 0,
-                'excludecache'          => 0,
-                'excludenonwp'          => 0,
-                'excludezip'            => 0,
-                'ext'                   => $archive_ext,
-                'file_descriptors_auto' => $file_descriptors_auto,
-                'file_descriptors'      => $file_descriptors,
-                'loadFilesBeforeZip'    => false,
-                'pid'                   => time(),
-                'f'                     => '',
-            ),
-            false,
-            false,
-            false
+        $create = array(
+            'type'                  => $type,
+            'exclude'               => '',
+            'excludebackup'         => 0,
+            'excludecache'          => 0,
+            'excludenonwp'          => 0,
+            'excludezip'            => 0,
+            'ext'                   => $archive_ext,
+            'file_descriptors_auto' => $file_descriptors_auto,
+            'file_descriptors'      => $file_descriptors,
+            'loadFilesBeforeZip'    => false,
+            'pid'                   => time(),
+            'f'                     => '',
         );
+        if ( '' !== $owner ) {
+            // A restore owns this run: its safety backup stays on the Child
+            // for rollback, so the Child's expiry of uncollected backups must
+            // skip it. Older Children ignore the unknown param.
+            $create['purpose'] = 'pre_restore';
+        }
+
+        $information = MainWP_Connect::fetch_url_authed( $website, 'backup_task_create', $create, false, false, false );
 
         if ( isset( $information['error'] ) ) {
             throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped

@@ -2269,7 +2269,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // Dropping the task would strand them, and a purge would race the
         // run's own download, so the run has to end first.
         if ( (int) $task->completed < (int) $task->last_run ) {
-            return array( 'error' => esc_html__( 'This backup task is still running. Delete it after the run finishes, or after you reset a stalled run.', 'mainwp' ) );
+            return array( 'error' => esc_html__( 'This backup task is still running. Wait for the run to finish, or use Reset if it is stuck, then delete the task.', 'mainwp' ) );
         }
 
         if ( ! $delete_snapshots ) {

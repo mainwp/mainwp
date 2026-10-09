@@ -805,7 +805,7 @@ managebackups_remove = function (element) {
         '<div class="ui form" style="margin-top: 1em;"><div class="field">' +
         '<div class="ui checkbox"><input type="checkbox" id="mainwp-backup-task-delete-snapshots" checked="checked">' +
         '<label for="mainwp-backup-task-delete-snapshots">' + MainWP.I18n.t("Also delete this task's snapshots") + '</label></div>' +
-        '<div><em>' + MainWP.I18n.t('Unticked, the snapshots stay in Snapshots & Restore until you delete them with Clean Up.') + '</em></div>' +
+        '<div><em>' + MainWP.I18n.t('Leave this unticked to keep the snapshots. They stay in Snapshots & Restore until you delete them with Clean Up.') + '</em></div>' +
         '</div></div>';
     mainwp_confirm(msg, function () {
         // Read before the modal is reused: the checkbox lives in its content.

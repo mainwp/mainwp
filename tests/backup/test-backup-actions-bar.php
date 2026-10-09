@@ -226,7 +226,7 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 	public function test_cleanup_confirmation_mentions_deleted_task_snapshots() {
 		$output = $this->render( array( MainWP_Backup_Snapshots_View::class, 'render' ) );
 
-		$this->assertStringContainsString( 'Clean Up also deletes snapshots whose backup task was deleted, including their copies in remote storage.', $output );
+		$this->assertStringContainsString( 'Clean Up also deletes snapshots whose backup task was deleted, including their cloud copies.', $output );
 		$this->assertStringContainsString( 'response.orphaned_snapshots_pruned', $output );
 		$this->assertStringContainsString( '%s of them belonged to deleted backup tasks.', $output );
 		$this->assertStringContainsString( "'Space freed: %s.'.replace( '%s', String( response.bytes_pruned_label ) )", $output );
@@ -240,7 +240,7 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 
 		$this->assertSame( 'Are you sure you want to delete this backup task?', $translations['Are_you_sure_you_want_to_delete_this_backup_task_'] );
 		$this->assertSame( 'Also delete this task&#039;s snapshots', $translations['Also_delete_this_task_s_snapshots'] );
-		$this->assertSame( 'Unticked, the snapshots stay in Snapshots &amp; Restore until you delete them with Clean Up.', $translations['Unticked__the_snapshots_stay_in_Snapshots___Restore_until_you_delete_them_with_Clean_Up_'] );
+		$this->assertSame( 'Leave this unticked to keep the snapshots. They stay in Snapshots &amp; Restore until you delete them with Clean Up.', $translations['Leave_this_unticked_to_keep_the_snapshots__They_stay_in_Snapshots___Restore_until_you_delete_them_with_Clean_Up_'] );
 	}
 
 	/**

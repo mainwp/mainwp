@@ -409,7 +409,7 @@ class MainWP_Backup_Task_Delete_Auth_Test extends MainWP_Abilities_Test_Case {
 
 			$response = MainWP_Manage_Backups_Handler::remove_backup_result( $task->id, $delete_snapshots );
 
-			$this->assertSame( 'This backup task is still running. Delete it after the run finishes, or after you reset a stalled run.', $response['error'] ?? null );
+			$this->assertSame( 'This backup task is still running. Wait for the run to finish, or use Reset if it is stuck, then delete the task.', $response['error'] ?? null );
 			$this->assertNotNull( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
 			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status );
 			$this->assertFileExists( $path );

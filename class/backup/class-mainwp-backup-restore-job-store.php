@@ -35,6 +35,20 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     const STATUS_CANCELLED        = 'cancelled';
 
     /**
+     * A row that only holds the site's restore slot: restore admission
+     * while it validates its source, or Clean Up while it deletes a
+     * snapshot. Never driven, never listed, and it lapses at locked_until
+     * so a crashed holder cannot block the site.
+     */
+    const STATUS_RESERVED = 'reserved';
+
+    /**
+     * How long a reservation holds the site before another caller may
+     * clear it, seconds.
+     */
+    const RESERVATION_SECONDS = 600;
+
+    /**
      * Expired-lease reclaims allowed before a job is routed to
      * fail_permanent instead of being handed out again. A reclaim means
      * the previous worker died mid-restore (a hard fatal, not a caught
@@ -109,11 +123,12 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * @param int   $snapshot_id Snapshot id.
      * @param array $checkpoint  Initial checkpoint (plan + options).
      *
-     * @return int Job id (> 0) on insert; 0 when an active job already holds
-     *             the site; -1 on a database error (kept distinct so a real
+     * @return int Job id (> 0) on insert; 0 when an active job or a
+     *             reservation already holds the site; -1 on a database error (kept distinct so a real
      *             failure is never read as a benign duplicate).
      */
     public function create_job( int $site_id, int $snapshot_id, array $checkpoint ): int {
+        $this->clear_lapsed_reservations( $site_id );
         $now          = time();
         $statuses     = self::active_statuses();
         $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
@@ -130,9 +145,106 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             $this->wpdb->suppress_errors( $suppress );
         }
         if ( false === $result ) {
-            return null !== $this->get_active_job_for_site( $site_id ) ? 0 : -1;
+            return null !== $this->get_active_job_for_site( $site_id ) || $this->site_is_reserved( $site_id ) ? 0 : -1;
         }
         return 1 === (int) $result ? (int) $this->wpdb->insert_id : 0;
+    }
+
+    /**
+     * Take the site's restore slot without creating a job.
+     *
+     * The slot is the same unique active_site_id that create_job() claims,
+     * so a reservation and an active restore exclude each other.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return int Reservation id, or 0 when an active restore or another
+     *             reservation holds the site.
+     */
+    public function reserve_site( int $site_id ): int {
+        $this->clear_lapsed_reservations( $site_id );
+        $now          = time();
+        $statuses     = self::active_statuses();
+        $placeholders = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
+
+        $suppress = $this->wpdb->suppress_errors();
+        try {
+            $result = $this->wpdb->query(
+                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted array.
+                    'INSERT INTO ' . $this->table() . ' ( site_id, active_site_id, snapshot_id, status, checkpoint, locked_until, created, updated ) SELECT %d, %d, 0, %s, %s, %d, %d, %d FROM DUAL WHERE NOT EXISTS ( SELECT 1 FROM ' . $this->table() . " WHERE site_id = %d AND status IN ( {$placeholders} ) LIMIT 1 )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list built from a counted array; table name from trusted helper.
+                    array_merge( array( $site_id, $site_id, self::STATUS_RESERVED, '{}', $now + self::RESERVATION_SECONDS, $now, $now, $site_id ), $statuses )
+                )
+            );
+        } finally {
+            $this->wpdb->suppress_errors( $suppress );
+        }
+        return 1 === (int) $result ? (int) $this->wpdb->insert_id : 0;
+    }
+
+    /**
+     * Turn a held reservation into a pending restore job, keeping the slot.
+     *
+     * @param int   $reservation_id Reservation id from reserve_site().
+     * @param int   $snapshot_id    Snapshot id.
+     * @param array $checkpoint     Initial checkpoint (plan + options).
+     *
+     * @return int Job id, or 0 when the reservation lapsed and was cleared.
+     */
+    public function promote_reservation( int $reservation_id, int $snapshot_id, array $checkpoint ): int {
+        $now     = time();
+        $updated = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table() . ' SET status = %s, snapshot_id = %d, checkpoint = %s, locked_until = 0, created = %d, updated = %d WHERE id = %d AND status = %s',
+                self::STATUS_PENDING,
+                $snapshot_id,
+                wp_json_encode( $checkpoint ),
+                $now,
+                $now,
+                $reservation_id,
+                self::STATUS_RESERVED
+            )
+        );
+        return 1 === (int) $updated ? $reservation_id : 0;
+    }
+
+    /**
+     * Give the site's slot back.
+     *
+     * @param int $reservation_id Reservation id from reserve_site().
+     *
+     * @return void
+     */
+    public function release_reservation( int $reservation_id ): void {
+        $this->wpdb->query(
+            $this->wpdb->prepare( 'DELETE FROM ' . $this->table() . ' WHERE id = %d AND status = %s', $reservation_id, self::STATUS_RESERVED )
+        );
+    }
+
+    /**
+     * Whether a live reservation holds the site.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return bool
+     */
+    public function site_is_reserved( int $site_id ): bool {
+        return null !== $this->wpdb->get_var(
+            $this->wpdb->prepare( 'SELECT id FROM ' . $this->table() . ' WHERE site_id = %d AND status = %s AND locked_until >= %d LIMIT 1', $site_id, self::STATUS_RESERVED, time() )
+        );
+    }
+
+    /**
+     * Drop reservations whose holder outlived its hold, so a crashed
+     * request cannot keep the site's slot.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return void
+     */
+    private function clear_lapsed_reservations( int $site_id ): void {
+        $this->wpdb->query(
+            $this->wpdb->prepare( 'DELETE FROM ' . $this->table() . ' WHERE site_id = %d AND status = %s AND locked_until < %d', $site_id, self::STATUS_RESERVED, time() )
+        );
     }
 
     /**

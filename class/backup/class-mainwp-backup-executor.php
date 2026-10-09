@@ -2574,6 +2574,37 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
     }
 
+    /**
+     * Whether a Child answer to a one-task backup_task_prune confirms the
+     * task is gone.
+     *
+     * The Child answers counts, not per-task outcomes. Only a clean answer
+     * that accounts for exactly the one target as pruned or missing counts;
+     * an error envelope, a still-active task or a malformed count is
+     * unconfirmed and the caller retries later.
+     *
+     * @param mixed $answer Child response.
+     *
+     * @return bool
+     */
+    public static function child_prune_confirmed( $answer ): bool {
+        if ( ! is_array( $answer ) || array_key_exists( 'error', $answer ) || 'ok' !== ( $answer['result'] ?? null ) ) {
+            return false;
+        }
+        $counts = array();
+        foreach ( array( 'pruned', 'active', 'missing' ) as $key ) {
+            $value = $answer[ $key ] ?? null;
+            if ( is_int( $value ) && $value >= 0 ) {
+                $counts[ $key ] = $value;
+            } elseif ( is_string( $value ) && '' !== $value && ctype_digit( $value ) ) {
+                $counts[ $key ] = (int) $value;
+            } else {
+                return false;
+            }
+        }
+        return 0 === $counts['active'] && 1 === $counts['pruned'] + $counts['missing'];
+    }
+
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     /**
      * Method trigger_backup()

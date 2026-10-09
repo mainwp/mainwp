@@ -753,6 +753,23 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 			),
 			'error envelope' => array( array( 'error' => 'Denied' ) ),
 			'no counts'      => array( array( 'result' => 'ok' ) ),
+			'junk counts'    => array(
+				array(
+					'result'  => 'ok',
+					'pruned'  => array( 'junk' ),
+					'active'  => 1,
+					'missing' => 0,
+				),
+			),
+			'ok with error'  => array(
+				array(
+					'result'  => 'ok',
+					'error'   => 'Denied',
+					'pruned'  => 1,
+					'active'  => 0,
+					'missing' => 0,
+				),
+			),
 		);
 	}
 

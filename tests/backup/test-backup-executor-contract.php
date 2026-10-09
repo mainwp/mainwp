@@ -189,6 +189,62 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A one-task prune counts as confirmed only when a clean answer accounts
+	 * for exactly that task as pruned or missing.
+	 *
+	 * @dataProvider data_prune_answer_shapes
+	 *
+	 * @param mixed $answer    Child answer.
+	 * @param bool  $confirmed Expected verdict.
+	 *
+	 * @return void
+	 */
+	public function test_child_prune_confirmed( $answer, $confirmed ) {
+		$this->assertSame( $confirmed, MainWP_Backup_Executor::child_prune_confirmed( $answer ) );
+	}
+
+	/**
+	 * Prune answers and their verdicts.
+	 *
+	 * @return array
+	 */
+	public static function data_prune_answer_shapes() {
+		$answer = static function ( $over ) {
+			return array_merge(
+				array(
+					'result'  => 'ok',
+					'pruned'  => 1,
+					'active'  => 0,
+					'missing' => 0,
+				),
+				$over
+			);
+		};
+		return array(
+			'pruned'              => array( $answer( array() ), true ),
+			'missing'             => array( $answer( array( 'pruned' => 0, 'missing' => 1 ) ), true ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- compact fixture.
+			'digit strings'       => array( $answer( array( 'pruned' => '1', 'active' => '0', 'missing' => '0' ) ), true ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- compact fixture.
+			'still active'        => array( $answer( array( 'pruned' => 0, 'active' => 1 ) ), false ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- compact fixture.
+			'array count'         => array( $answer( array( 'pruned' => array( 'junk' ) ) ), false ),
+			'negative count'      => array( $answer( array( 'pruned' => -1, 'missing' => 2 ) ), false ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- compact fixture.
+			'two targets'         => array( $answer( array( 'pruned' => 2 ) ), false ),
+			'pruned and active'   => array( $answer( array( 'active' => 1 ) ), false ),
+			'error key'           => array( $answer( array( 'error' => 'Denied' ) ), false ),
+			'missing count'       => array(
+				array(
+					'result' => 'ok',
+					'pruned' => 1,
+				),
+				false,
+			),
+			'result not ok'       => array( $answer( array( 'result' => 'OK' ) ), false ),
+			'float count'         => array( $answer( array( 'pruned' => 1.0 ) ), false ),
+			'signed digit string' => array( $answer( array( 'pruned' => '+1' ) ), false ),
+			'not an array'        => array( 'ok', false ),
+		);
+	}
+
+	/**
 	 * Triggering again while an ad-hoc task is persisted reuses the handle
 	 * instead of colliding with the active task on the child.
 	 *

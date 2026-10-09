@@ -1855,10 +1855,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return false;
         }
 
-        $removed = is_array( $information ) && 'ok' === ( $information['result'] ?? '' )
-            && isset( $information['pruned'], $information['missing'] )
-            && ( (int) $information['pruned'] + (int) $information['missing'] ) > 0;
-        if ( ! $removed ) {
+        if ( ! MainWP_Backup_Executor::child_prune_confirmed( $information ) ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'The child did not confirm pruning a finished backup task (child task: ' . $child_task_id . '); a later pass retries it.' );
             return false;
         }
@@ -2266,6 +2263,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             if ( '' !== $history_error ) {
                 return array( 'error' => $history_error );
             }
+        }
+
+        // An open run holds Child task handles only its progress rows know.
+        // Dropping the task would strand them, and a purge would race the
+        // run's own download, so the run has to end first.
+        if ( (int) $task->completed < (int) $task->last_run ) {
+            return array( 'error' => esc_html__( 'This backup task is still running. Delete it after the run finishes, or after you reset a stalled run.', 'mainwp' ) );
         }
 
         if ( ! $delete_snapshots ) {

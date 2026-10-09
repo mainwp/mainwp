@@ -239,8 +239,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @return void
      */
     private function purge_orphaned_task_snapshots( int $site_id, array &$result ): void {
-        $query  = MainWP_Backup_Retention_Query::instance();
-        $before = $result['snapshots_pruned'];
+        $query    = MainWP_Backup_Retention_Query::instance();
+        $restores = MainWP_Backup_Restore_Job_Store::instance();
+        $before   = $result['snapshots_pruned'];
         foreach ( $query->list_orphaned_task_ids_for_site( $site_id ) as $task_id ) {
             $task = (object) array(
                 'id'                  => $task_id,
@@ -250,15 +251,30 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 $snapshot_ids = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
                 sort( $snapshot_ids, SORT_NUMERIC );
 
-                $pruned = $this->prune_candidate(
-                    array(
-                        'snapshot_ids' => $snapshot_ids,
-                        'reason'       => 'task_deleted',
-                        'size_bytes'   => (int) $unit['size_bytes'],
-                    ),
-                    $task,
-                    $result
-                );
+                // Restore admission takes the same slot before it resolves a
+                // snapshot, so holding it from the active-restore check to the
+                // last delete keeps a restore from adopting files mid-delete.
+                $reservation = $restores->reserve_site( $site_id );
+                if ( $reservation <= 0 ) {
+                    $result['errors'][] = sprintf(
+                        'Snapshots %s: a restore holds this site, so they are kept; run Clean Up again after it finishes.',
+                        implode( ',', $snapshot_ids )
+                    );
+                    continue;
+                }
+                try {
+                    $pruned = $this->prune_candidate(
+                        array(
+                            'snapshot_ids' => $snapshot_ids,
+                            'reason'       => 'task_deleted',
+                            'size_bytes'   => (int) $unit['size_bytes'],
+                        ),
+                        $task,
+                        $result
+                    );
+                } finally {
+                    $restores->release_reservation( $reservation );
+                }
                 if ( $pruned ) {
                     ++$result['pruned'];
                 }

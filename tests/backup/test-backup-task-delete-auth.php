@@ -380,4 +380,41 @@ class MainWP_Backup_Task_Delete_Auth_Test extends MainWP_Abilities_Test_Case {
 			$this->tear_down_private_root();
 		}
 	}
+
+	/**
+	 * A task with a run in flight cannot be deleted either way: its Child
+	 * task handles live only in the progress rows the delete would drop.
+	 *
+	 * @dataProvider data_delete_snapshot_choices
+	 *
+	 * @param bool $delete_snapshots Whether the delete also removes the snapshots.
+	 *
+	 * @return void
+	 */
+	public function test_delete_refuses_a_running_task( $delete_snapshots ) {
+		$this->set_up_private_root();
+		try {
+			$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+			wp_set_current_user( $user );
+			$site_id = $this->create_test_site( array( 'userid' => $user ) );
+			$task    = $this->create_task( $site_id );
+			MainWP_DB_Backup::instance()->update_backup_task_with_values(
+				(int) $task->id,
+				array(
+					'last_run'  => time() - 100,
+					'completed' => time() - 500,
+				)
+			);
+			list( $snapshot_id, $path ) = $this->record_local_snapshot( (int) $task->id, $site_id );
+
+			$response = MainWP_Manage_Backups_Handler::remove_backup_result( $task->id, $delete_snapshots );
+
+			$this->assertSame( 'This backup task is still running. Delete it after the run finishes, or after you reset a stalled run.', $response['error'] ?? null );
+			$this->assertNotNull( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
+			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status );
+			$this->assertFileExists( $path );
+		} finally {
+			$this->tear_down_private_root();
+		}
+	}
 }

@@ -382,6 +382,52 @@ class MainWP_Backup_Task_Delete_Auth_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Clean Up on a site with sync errors still prunes the Dashboard's copies
+	 * and answers without an error: the Child prune fails like it would for
+	 * an unreachable site, and that failure is only logged.
+	 *
+	 * @return void
+	 */
+	public function test_cleanup_on_disconnected_site_prunes_without_error() {
+		global $wpdb;
+		$this->set_up_private_root();
+		$prunes = array();
+		$refuse = static function ( $result, $website, $what ) use ( &$prunes ) {
+			unset( $website );
+			if ( 'backup_task_prune' !== $what ) {
+				return $result;
+			}
+			$prunes[] = $what;
+			throw new \MainWP\Dashboard\MainWP_Exception( 'HTTPERROR', 'cURL error 7: Failed to connect' );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $refuse, 10, 3 );
+		try {
+			$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+			wp_set_current_user( $user );
+			$site_id                  = $this->create_test_site( array( 'userid' => $user ) );
+			$deleted                  = $this->create_task( $site_id );
+			list( $orphan_id, $path ) = $this->record_local_snapshot( (int) $deleted->id, $site_id );
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'run_key' => $site_id . ':' . $deleted->id . ':c:task-on-child' ), array( 'id' => $orphan_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$this->assertSame( 'SUCCESS', MainWP_Manage_Backups_Handler::remove_backup_result( $deleted->id, false )['result'] ?? null );
+			$wpdb->update( $wpdb->prefix . 'mainwp_wp_sync', array( 'sync_errors' => 'HTTP error 500' ), array( 'wpid' => $site_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$this->assertTrue( MainWP_Post_Backup_Handler::site_is_disconnected( MainWP_DB::instance()->get_website_by_id( $site_id ) ), 'Precondition: the site has sync errors.' );
+
+			$response = $this->post_snapshots_ajax( 'mainwp_snapshots_cleanup', array( 'site_id' => (string) $site_id ) );
+
+			$this->assertSame( 'ok', $response['result'] ?? null );
+			$this->assertArrayNotHasKey( 'error', $response );
+			$this->assertSame( array(), $response['errors'] );
+			$this->assertSame( 1, $response['snapshots_pruned'] );
+			$this->assertSame( array( 'backup_task_prune' ), $prunes, 'The Child prune was tried and failed.' );
+			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $orphan_id )->status );
+			$this->assertFileDoesNotExist( $path );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $refuse, 10 );
+			$this->tear_down_private_root();
+		}
+	}
+
+	/**
 	 * A task with a run in flight cannot be deleted either way: its Child
 	 * task handles live only in the progress rows the delete would drop.
 	 *

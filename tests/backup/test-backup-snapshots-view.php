@@ -834,10 +834,11 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A site whose last sync failed opens with the reconnect message and the
-	 * backup actions turned off.
+	 * A site whose last sync failed opens with the reconnect message, Back Up
+	 * Now and Restore turned off, and Clean Up still on, on both the Snapshots
+	 * & Restore page and the per-site Backups tab.
 	 */
-	public function test_disconnected_site_renders_message_and_disables_actions() {
+	public function test_disconnected_site_renders_message_and_disables_backup_and_restore() {
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		global $wpdb;
 		$user_id = $this->factory()->user->create( array( 'role' => 'administrator' ) );
@@ -874,23 +875,35 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 			)
 		);
 		$_GET['site_id'] = (string) $site_id;
+		$outputs         = array();
+		$buffer_level    = ob_get_level();
 		try {
 			ob_start();
 			MainWP_Backup_Snapshots_View::render();
-			$output = ob_get_clean();
+			$outputs['snapshots page'] = ob_get_clean();
+			ob_start();
+			MainWP_Backup_Snapshots_View::render_restore_surface( $site_id, true );
+			$outputs['per-site tab'] = ob_get_clean();
 		} finally {
+			while ( ob_get_level() > $buffer_level ) {
+				ob_end_clean();
+			}
 			unset( $_GET['site_id'] );
 			MainWP_DB::instance()->remove_website( $site_id );
 			delete_option( 'mainwp_enableNativeBackups' );
 		}
 
-		$this->assertMatchesRegularExpression( '/<div class="ui yellow message" id="mainwp-snapshots-disconnected">/', $output );
-		$this->assertStringContainsString( 'page=managesites&#038;dashboard=' . $site_id, $output );
-		$this->assertMatchesRegularExpression( '/class="ui mini green button disabled" id="mainwp-native-backup-now-btn"\s+disabled/', $output );
-		$this->assertStringContainsString( 'var siteDisconnected = true;', $output );
-		$this->assertStringContainsString( "( siteDisconnected ? ' disabled' : '' )", $output );
-		$this->assertMatchesRegularExpression( '/class="ui mini basic button disabled" id="mainwp-snapshots-cleanup-btn"\s+disabled/', $output );
-		$this->assertStringContainsString( "#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled || siteDisconnected )", $output );
+		foreach ( $outputs as $surface => $output ) {
+			$this->assertMatchesRegularExpression( '/<div class="ui yellow message" id="mainwp-snapshots-disconnected">/', $output, $surface );
+			$this->assertStringContainsString( 'so Back Up Now and Restore are turned off until it reconnects.', $output, $surface );
+			$this->assertStringContainsString( 'page=managesites&#038;dashboard=' . $site_id, $output, $surface );
+			$this->assertMatchesRegularExpression( '/class="ui mini green button disabled" id="mainwp-native-backup-now-btn"\s+disabled/', $output, $surface );
+			$this->assertStringContainsString( 'var siteDisconnected = true;', $output, $surface );
+			$this->assertStringContainsString( "( siteDisconnected ? ' disabled' : '' )", $output, $surface );
+			$this->assertMatchesRegularExpression( '/class="ui mini basic button" id="mainwp-snapshots-cleanup-btn"\s+>/', $output, $surface . ': Clean Up starts enabled.' );
+			$this->assertStringContainsString( "#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled ).toggleClass( 'disabled', ! enabled )", $output, $surface );
+			$this->assertStringContainsString( "#mainwp-native-backup-now-btn' ).prop( 'disabled', ! enabled || siteDisconnected )", $output, $surface );
+		}
 	}
 
 	/**

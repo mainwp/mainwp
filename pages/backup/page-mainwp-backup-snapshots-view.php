@@ -235,9 +235,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
      * @param int  $site_id        Preselected or locked site id; 0 = none.
      * @param bool $locked         Per-site surface: no site picker.
      * @param bool $native_enabled Whether Back Up Now and Clean Up apply.
-     * @param bool $controls_off   Whether Back Up Now and Clean Up start disabled.
+     * @param bool $controls_off   Whether Back Up Now starts disabled.
      */
     private static function render_actions_bar( int $site_id, bool $locked, bool $native_enabled, bool $controls_off ): void {
+        // Clean Up works on the Dashboard's copies, so a disconnected site
+        // keeps it; its Child prune just fails and is logged.
+        $cleanup_off = 0 === $site_id;
         // The per-site tab hosts the bar inside the surface's own segment,
         // which already insets it; the theme's !important side margins
         // would inset it a second time, past the tables' edges. Inline
@@ -275,7 +278,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             <button type="button" class="ui mini button" id="mainwp-native-backup-cancel-btn" style="display: none;">
                                 <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
                             </button>
-                            <button type="button" class="ui mini basic button<?php echo $controls_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $controls_off ); ?>>
+                            <button type="button" class="ui mini basic button<?php echo $cleanup_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $cleanup_off ); ?>>
                                 <i class="broom icon"></i><?php esc_html_e( 'Clean Up', 'mainwp' ); ?>
                             </button>
                             <?php endif; ?>
@@ -494,11 +497,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             // Back Up Now and Clean Up act on the selected site, so they follow
-            // the list: never left disabled by a reload that failed. Both also
-            // stay off while the site is disconnected; the server refuses Back
-            // Up Now then anyway.
+            // the list: never left disabled by a reload that failed. Back Up
+            // Now also stays off while the site is disconnected; the server
+            // refuses it then anyway. Clean Up stays on, since it frees the
+            // Dashboard's disk even when the Child cannot be reached.
             function enableSnapshotControls( enabled ) {
-                $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled || siteDisconnected ).toggleClass( 'disabled', ! enabled || siteDisconnected );
+                $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled ).toggleClass( 'disabled', ! enabled );
                 $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', ! enabled || siteDisconnected ).toggleClass( 'disabled', ! enabled || siteDisconnected );
             }
 

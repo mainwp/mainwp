@@ -505,6 +505,62 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Saving or testing an S3 destination whose http:// endpoint is on a
+	 * public address fails with the use-https error and sends nothing; the
+	 * same endpoint on the LAN still saves.
+	 *
+	 * @return void
+	 */
+	public function test_save_and_test_refuse_public_http_s3_endpoint() {
+		$sent = array();
+		add_filter(
+			'pre_http_request',
+			function ( $pre, $args, $url ) use ( &$sent ) {
+				$sent[] = $url;
+				return array(
+					'headers'  => array( 'content-length' => '22' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => 200,
+						'message' => 'OK',
+					),
+				);
+			},
+			10,
+			3
+		);
+		$input = function ( $endpoint ) {
+			return array(
+				'id'       => 0,
+				'provider' => 's3',
+				'name'     => 'MinIO',
+				'settings' => array(
+					'endpoint'   => $endpoint,
+					'path_style' => '1',
+					'bucket'     => 'b',
+					'region'     => 'us-east-1',
+					'access_key' => 'AKIA-MINIO',
+					'secret_key' => 'minio-secret',
+				),
+			);
+		};
+
+		$saved = MainWP_Backup_Storage_Handler::save_destination( $input( 'http://203.0.113.10:9000' ) );
+		$this->assertArrayHasKey( 'error', $saved );
+		$this->assertStringContainsString( 'https://', $saved['error'] );
+		$this->assertSame( array(), MainWP_Backup_Storage_Destinations::instance()->list_destinations() );
+
+		$tested = MainWP_Backup_Storage_Handler::test_saved_or_submitted( $input( 'http://203.0.113.10:9000' ) );
+		$this->assertFalse( $tested['ok'] );
+		$this->assertStringContainsString( 'https://', $tested['error'] );
+		$this->assertSame( array(), $sent, 'Nothing may be sent to a public http:// endpoint.' );
+
+		$lan = MainWP_Backup_Storage_Handler::save_destination( $input( 'http://192.168.1.50:9000' ) );
+		$this->assertArrayNotHasKey( 'error', $lan );
+		$this->assertNotEmpty( $sent );
+	}
+
+	/**
 	 * Editing with a blank secret keeps the stored secret.
 	 *
 	 * @return void

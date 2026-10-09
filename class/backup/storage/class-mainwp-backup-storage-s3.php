@@ -56,8 +56,9 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
     private $signer;
 
     /**
-     * Hosts whose SSRF re-check has already run this operation, so a chunked
-     * upload does not repeat the DNS lookup on every request.
+     * Scheme and host pairs whose outbound check has already run this
+     * operation, so a chunked upload does not repeat the DNS lookup on every
+     * request.
      *
      * @var array<string,bool>
      */
@@ -286,7 +287,7 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
 
     /**
      * Send a signed request through the transport, following at most one
-     * redirect hop of its own accord.
+     * same-host redirect hop of its own accord.
      *
      * WP's HTTP layer is told never to follow redirects itself (see
      * dispatch()): a 3xx response is instead followed here, one hop only,
@@ -294,7 +295,9 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
      * request. This closes the gap where a compromised or malicious
      * S3-compatible endpoint could 3xx a signed request onward to a
      * link-local / cloud-metadata address without the SSRF guard ever
-     * seeing that target. A second consecutive 3xx is returned as-is and
+     * seeing that target. The follow-up resends the backup body, so a
+     * Location on another scheme, host or port is refused rather than
+     * trusted with it. A second consecutive 3xx is returned as-is and
      * rejected by the caller's expect_status().
      *
      * @param string      $method     HTTP method.
@@ -319,6 +322,21 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
                 // HTTPS endpoint must not move it onto plain HTTP.
                 if ( 'https' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) && 'https' !== strtolower( (string) wp_parse_url( $redirect_url, PHP_URL_SCHEME ) ) ) {
                     throw new \RuntimeException( 'Storage endpoint redirected an HTTPS request to a non-HTTPS URL.', 0 );
+                }
+                // Guard first so a metadata or public-HTTP target reports its
+                // own reason; dispatch() re-runs it from the per-host cache.
+                $this->guard_outbound_host( $redirect_url );
+                if ( self::origin( $redirect_url ) !== self::origin( $url ) ) {
+                    throw new \RuntimeException(
+                        esc_html(
+                            sprintf(
+                                /* translators: %s: host name the storage endpoint redirected to. */
+                                __( 'The storage endpoint redirected the request to a different server (%s), so nothing was sent there. Check the endpoint, bucket and region settings.', 'mainwp' ),
+                                (string) wp_parse_url( $redirect_url, PHP_URL_HOST )
+                            )
+                        ),
+                        0
+                    );
                 }
                 $response = $this->dispatch( $method, $redirect_url, $headers, $body, $extra_args );
             }
@@ -380,25 +398,59 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
 
     /**
      * Re-check the request host right before connecting so a DNS rebind cannot
-     * redirect the transfer to a link-local / cloud-metadata address. The
-     * result is cached per host for the operation's lifetime, since a chunked
-     * upload hits the same host many times.
+     * redirect the transfer to a link-local / cloud-metadata address, and
+     * refuse plain HTTP unless the host is on this machine or the private
+     * network. The result is cached per scheme and host for the operation's
+     * lifetime, since a chunked upload hits the same host many times.
      *
      * @param string $url Request URL.
      *
      * @return void
      *
-     * @throws \RuntimeException When the host resolves to a blocked address.
+     * @throws \RuntimeException When the host resolves to a blocked address, or a non-HTTPS URL leaves the private network.
      */
     private function guard_outbound_host( string $url ): void {
-        $host = (string) wp_parse_url( $url, PHP_URL_HOST );
-        if ( '' === $host || isset( $this->ssrf_checked_hosts[ $host ] ) ) {
+        $host      = (string) wp_parse_url( $url, PHP_URL_HOST );
+        $scheme    = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+        $cache_key = $scheme . '://' . $host;
+        if ( '' === $host || isset( $this->ssrf_checked_hosts[ $cache_key ] ) ) {
             return;
         }
         if ( ! MainWP_Backup_Storage_Destinations::is_safe_host( $host ) ) {
             throw new \RuntimeException( 'Storage destination host resolves to a link-local or cloud-metadata address: ' . esc_html( $host ), 0 );
         }
-        $this->ssrf_checked_hosts[ $host ] = true;
+        if ( 'https' !== $scheme && ! MainWP_Backup_Storage_Destinations::is_private_network_host( $host ) ) {
+            throw new \RuntimeException(
+                esc_html(
+                    sprintf(
+                        /* translators: %s: storage endpoint host name. */
+                        __( 'The storage endpoint %s needs https://. Plain http:// would send your backups unencrypted, so it only works for local and private network addresses such as 127.0.0.1 or 192.168.x.x. Change the endpoint to start with https://.', 'mainwp' ),
+                        $host
+                    )
+                ),
+                0
+            );
+        }
+        $this->ssrf_checked_hosts[ $cache_key ] = true;
+    }
+
+    /**
+     * The scheme, host and port a URL connects to, normalized so case, a
+     * trailing dot or an explicit default port do not count as a different
+     * server.
+     *
+     * @param string $url URL.
+     *
+     * @return string
+     */
+    private static function origin( string $url ): string {
+        $scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
+        $host   = rtrim( strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) ), '.' );
+        $port   = (int) wp_parse_url( $url, PHP_URL_PORT );
+        if ( 0 === $port ) {
+            $port = 'http' === $scheme ? 80 : 443;
+        }
+        return $scheme . '://' . $host . ':' . $port;
     }
 
     /**

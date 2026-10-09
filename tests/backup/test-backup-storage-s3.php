@@ -472,15 +472,17 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A single 3xx with a Location header is followed exactly once: the
-	 * redirect target is re-guarded and re-signed as its own request.
+	 * A single 3xx to the same scheme, host and port is followed exactly
+	 * once: the redirect target is re-guarded and re-signed as its own
+	 * request. Host case and an explicit default port do not make it a
+	 * different host.
 	 *
 	 * @return void
 	 */
-	public function test_request_follows_one_redirect_to_a_safe_host() {
+	public function test_request_follows_one_same_host_redirect() {
 		$provider = $this->make_provider(
 			array(
-				$this->response( 301, '', array( 'location' => 'https://127.0.0.1:9000/other-bucket/k.bin' ) ),
+				$this->response( 301, '', array( 'location' => 'https://EXAMPLE-BUCKET.s3.amazonaws.com:443/other/k.bin' ) ),
 				$this->response( 200 ),
 			)
 		);
@@ -488,7 +490,7 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
 
 		$this->assertCount( 2, $this->requests );
-		$this->assertSame( 'https://127.0.0.1:9000/other-bucket/k.bin', $this->requests[1]['url'] );
+		$this->assertSame( 'https://EXAMPLE-BUCKET.s3.amazonaws.com:443/other/k.bin', $this->requests[1]['url'] );
 		$this->assertStringStartsWith( 'AWS4-HMAC-SHA256', $this->requests[1]['args']['headers']['Authorization'] );
 	}
 
@@ -571,8 +573,8 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	public function test_request_follows_at_most_one_redirect_hop() {
 		$provider = $this->make_provider(
 			array(
-				$this->response( 301, '', array( 'location' => 'https://127.0.0.1:9000/hop-a' ) ),
-				$this->response( 301, '', array( 'location' => 'https://127.0.0.1:9000/hop-b' ) ),
+				$this->response( 301, '', array( 'location' => 'https://example-bucket.s3.amazonaws.com/hop-a' ) ),
+				$this->response( 301, '', array( 'location' => 'https://example-bucket.s3.amazonaws.com/hop-b' ) ),
 			)
 		);
 
@@ -598,5 +600,211 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		$provider->put_object( 'k.bin', 'x' );
 
 		$this->assertSame( 0, $this->requests[0]['args']['redirection'] );
+	}
+
+	/**
+	 * A redirect to another host is refused before anything is sent there:
+	 * the follow-up would carry the backup body and a fresh signature to a
+	 * server the admin never configured.
+	 *
+	 * @return void
+	 */
+	public function test_request_refuses_redirect_to_a_different_host() {
+		add_filter(
+			'mainwp_backup_resolved_host_ips',
+			function () {
+				return array( '203.0.113.10' );
+			}
+		);
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => 'https://collector.example.test/k.bin' ) ),
+				$this->response( 200 ),
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'A cross-host redirect must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'different server', $e->getMessage() );
+		}
+
+		$this->assertCount( 1, $this->requests, 'No request may reach the redirect target.' );
+	}
+
+	/**
+	 * A port change is a different server too, even on the same host name.
+	 *
+	 * @return void
+	 */
+	public function test_request_refuses_redirect_to_a_different_port() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 301, '', array( 'location' => 'http://127.0.0.1:9001/example-bucket/k.bin' ) ),
+				$this->response( 200 ),
+			),
+			array(
+				'endpoint'   => 'http://127.0.0.1:9000',
+				'path_style' => 1,
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'A redirect to another port must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'different server', $e->getMessage() );
+		}
+
+		$this->assertCount( 1, $this->requests );
+	}
+
+	/**
+	 * An http:// endpoint on a public address is refused before any signed
+	 * request or backup body leaves the dashboard.
+	 *
+	 * @return void
+	 */
+	public function test_public_http_endpoint_is_refused() {
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array(
+				'endpoint'   => 'http://203.0.113.10:9000',
+				'path_style' => 1,
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'A public http:// endpoint must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'https://', $e->getMessage() );
+			$this->assertStringContainsString( '203.0.113.10', $e->getMessage() );
+			$this->assertSame( 0, $e->getCode() );
+		}
+
+		$this->assertCount( 0, $this->requests, 'The transport must not run for a public http:// endpoint.' );
+	}
+
+	/**
+	 * A hostname that resolves to a public address is public, however
+	 * internal its name looks.
+	 *
+	 * @return void
+	 */
+	public function test_public_http_hostname_is_refused() {
+		add_filter(
+			'mainwp_backup_resolved_host_ips',
+			function () {
+				return array( '203.0.113.10' );
+			}
+		);
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array(
+				'endpoint'   => 'http://minio.example.test',
+				'path_style' => 1,
+			)
+		);
+
+		$result = $provider->connection_test();
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertStringContainsString( 'https://', $result['error'] );
+		$this->assertCount( 0, $this->requests );
+	}
+
+	/**
+	 * Endpoints for local and private network storage.
+	 *
+	 * @return array
+	 */
+	public function data_private_http_endpoints() {
+		return array(
+			'loopback MinIO' => array( 'http://127.0.0.1:9000' ),
+			'192.168 NAS'    => array( 'http://192.168.1.50:9000' ),
+			'10/8 LAN'       => array( 'http://10.0.0.5' ),
+			'IPv6 ULA'       => array( 'http://[fd12:3456:789a::1]:9000' ),
+			'LAN hostname'   => array( 'http://nas.lan:9000' ),
+		);
+	}
+
+	/**
+	 * Plain HTTP keeps working for self-hosted storage on this machine or
+	 * the private network.
+	 *
+	 * @dataProvider data_private_http_endpoints
+	 *
+	 * @param string $endpoint Endpoint setting.
+	 *
+	 * @return void
+	 */
+	public function test_private_http_endpoint_is_allowed( $endpoint ) {
+		add_filter(
+			'mainwp_backup_resolved_host_ips',
+			function ( $ips, $host ) {
+				return 'nas.lan' === $host ? array( '192.168.1.20' ) : $ips;
+			},
+			10,
+			2
+		);
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array(
+				'endpoint'   => $endpoint,
+				'path_style' => 1,
+			)
+		);
+
+		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
+		$this->assertSame( $endpoint . '/example-bucket/k.bin', $this->requests[0]['url'] );
+	}
+
+	/**
+	 * An endpoint without a scheme is addressed over HTTPS.
+	 *
+	 * @return void
+	 */
+	public function test_scheme_less_endpoint_uses_https() {
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array(
+				'endpoint'   => 'storage.example.com',
+				'path_style' => 1,
+			)
+		);
+
+		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
+		$this->assertSame( 'https://storage.example.com/example-bucket/k.bin', $this->requests[0]['url'] );
+	}
+
+	/**
+	 * A LAN http:// endpoint cannot redirect the request onto a public
+	 * http:// host: the target gets the same check as the endpoint.
+	 *
+	 * @return void
+	 */
+	public function test_lan_http_endpoint_refuses_redirect_to_public_http() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => 'http://203.0.113.10/example-bucket/k.bin' ) ),
+				$this->response( 200 ),
+			),
+			array(
+				'endpoint'   => 'http://192.168.1.50:9000',
+				'path_style' => 1,
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'A redirect to a public http:// host must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'https://', $e->getMessage() );
+			$this->assertStringContainsString( '203.0.113.10', $e->getMessage() );
+		}
+
+		$this->assertCount( 1, $this->requests, 'No request may reach the public http:// target.' );
 	}
 }

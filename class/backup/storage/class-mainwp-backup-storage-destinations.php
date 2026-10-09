@@ -456,6 +456,66 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     }
 
     /**
+     * Whether plain HTTP to a storage host stays on this machine or the
+     * private network: every address must be loopback, RFC1918 or IPv6 ULA.
+     * Self-hosted MinIO and LAN NAS endpoints are often HTTP-only, while a
+     * public http:// endpoint would carry signed requests and backup bodies
+     * in cleartext. Unlike is_safe_host() this fails closed, so a host that
+     * does not resolve is not private.
+     *
+     * @param string $host Hostname or IP literal; IPv6 may be bracketed as wp_parse_url returns it.
+     *
+     * @return bool
+     */
+    public static function is_private_network_host( string $host ): bool {
+        $host = trim( trim( $host ), '[]' );
+        if ( '' === $host ) {
+            return false;
+        }
+
+        $ips = filter_var( $host, FILTER_VALIDATE_IP ) ? array( $host ) : self::resolve_host_ips( $host );
+        if ( empty( $ips ) ) {
+            return false;
+        }
+
+        foreach ( $ips as $ip ) {
+            if ( ! self::is_private_ip( (string) $ip ) ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Whether an IP is loopback (127.0.0.0/8, ::1), RFC1918 (10/8,
+     * 172.16/12, 192.168/16) or IPv6 ULA (fc00::/7), including the
+     * IPv4-mapped IPv6 form of the IPv4 ranges.
+     *
+     * @param string $ip IP literal.
+     *
+     * @return bool
+     */
+    private static function is_private_ip( string $ip ): bool {
+        $packed = @inet_pton( $ip ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a malformed literal is treated as not private.
+        if ( false === $packed ) {
+            return false;
+        }
+
+        if ( 16 === strlen( $packed ) && "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF" === substr( $packed, 0, 12 ) ) {
+            $packed = substr( $packed, 12 );
+        }
+
+        if ( 4 === strlen( $packed ) ) {
+            $first  = ord( $packed[0] );
+            $second = ord( $packed[1] );
+            return 127 === $first || 10 === $first || ( 172 === $first && $second >= 16 && $second <= 31 ) || ( 192 === $first && 168 === $second );
+        }
+
+        return inet_pton( '::1' ) === $packed || 0xFC === ( ord( $packed[0] ) & 0xFE );
+    }
+
+    /**
      * Resolve a hostname to its IPv4 and IPv6 addresses.
      *
      * When the DNS query yields nothing, gethostbynamel() runs as a fallback:

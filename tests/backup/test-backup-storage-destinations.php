@@ -552,4 +552,48 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 
 		$this->assertTrue( $safe, 'The skip filter allows an otherwise-blocked address.' );
 	}
+
+	/**
+	 * Plain HTTP to storage is allowed only when the host stays on this
+	 * machine or the private network: loopback, RFC1918 and IPv6 ULA,
+	 * including bracketed IPv6 literals as wp_parse_url returns them.
+	 *
+	 * @return void
+	 */
+	public function test_is_private_network_host_accepts_loopback_rfc1918_and_ula() {
+		foreach ( array( '127.0.0.1', '::1', '10.0.0.5', '172.16.4.4', '172.31.255.1', '192.168.1.50', 'fd12:3456:789a::1', '[fd12:3456:789a::1]', '::ffff:10.0.0.1' ) as $host ) {
+			$this->assertTrue( MainWP_Backup_Storage_Destinations::is_private_network_host( $host ), $host . ' is a private network address.' );
+		}
+	}
+
+	/**
+	 * Public addresses, the ranges next to RFC1918, and hosts that do not
+	 * resolve are not private: the check fails closed, unlike is_safe_host().
+	 *
+	 * @return void
+	 */
+	public function test_is_private_network_host_refuses_public_and_unresolvable() {
+		foreach ( array( '8.8.8.8', '172.32.0.1', '192.169.0.1', '11.0.0.1', '2001:4860:4860::8888', '', 'no-such-host.invalid' ) as $host ) {
+			$this->assertFalse( MainWP_Backup_Storage_Destinations::is_private_network_host( $host ), '"' . $host . '" is not a private network address.' );
+		}
+	}
+
+	/**
+	 * A hostname is private only when every address it resolves to is: one
+	 * public record is enough to send the request over the internet.
+	 *
+	 * @return void
+	 */
+	public function test_is_private_network_host_uses_every_resolved_address() {
+		$resolver = function ( $ips, $host ) {
+			return 'nas.lan' === $host ? array( '192.168.1.20' ) : array( '192.168.1.20', '203.0.113.10' );
+		};
+		add_filter( 'mainwp_backup_resolved_host_ips', $resolver, 10, 2 );
+		$lan   = MainWP_Backup_Storage_Destinations::is_private_network_host( 'nas.lan' );
+		$mixed = MainWP_Backup_Storage_Destinations::is_private_network_host( 'mixed.example.test' );
+		remove_filter( 'mainwp_backup_resolved_host_ips', $resolver );
+
+		$this->assertTrue( $lan, 'A hostname resolving only to a LAN address is private.' );
+		$this->assertFalse( $mixed, 'A hostname with any public address is not private.' );
+	}
 }

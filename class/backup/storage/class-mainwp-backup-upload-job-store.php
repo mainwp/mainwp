@@ -268,6 +268,30 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
     }
 
     /**
+     * Upload workers protect their source with job leases rather than site reservations.
+     *
+     * @param int[] $snapshot_ids Snapshot ids forming one restorable unit.
+     *
+     * @return bool True when an upload owns a live lease for one of them.
+     */
+    public function has_live_upload_lease( array $snapshot_ids ): bool {
+        $snapshot_ids = array_values( array_filter( array_map( 'intval', $snapshot_ids ) ) );
+        if ( empty( $snapshot_ids ) ) {
+            return false;
+        }
+
+        $snapshot_holders = implode( ',', array_fill( 0, count( $snapshot_ids ), '%d' ) );
+        $found            = $this->wpdb->get_var(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- snapshot placeholders and bind array grow together.
+                'SELECT id FROM ' . $this->table() . " WHERE snapshot_id IN ( {$snapshot_holders} ) AND kind = %s AND locked_by <> '' AND locked_until >= %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- placeholder list built from the counted snapshot array.
+                array_merge( $snapshot_ids, array( self::KIND_UPLOAD, time() ) )
+            )
+        );
+
+        return null !== $found;
+    }
+
+    /**
      * Enqueue a cloud delete job for a pruned snapshot at one destination.
      * Idempotent: a delete job that already exists for the pair is left
      * untouched.

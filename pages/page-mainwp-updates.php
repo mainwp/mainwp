@@ -426,9 +426,9 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
              * indicator. A site whose newest complete, database-bearing
              * snapshot is older than this shows as unprotected.
              *
-             * @param int $days Default 7.
+             * @param int $days Configured update-gate window, or 7 when unset or invalid.
              */
-            $max_age_days = (int) apply_filters( 'mainwp_updates_native_backup_max_age_days', 7 );
+            $max_age_days = (int) apply_filters( 'mainwp_updates_native_backup_max_age_days', MainWP_Updates_Overview::get_backup_before_upgrade_days() );
         }
 
         $max_age_days = (int) $max_age_days;

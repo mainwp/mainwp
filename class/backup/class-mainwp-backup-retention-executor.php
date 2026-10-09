@@ -477,6 +477,17 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             return false;
         }
 
+        // An upload worker holds a job lease, not the site reservation. Only a
+        // live lease holds the unit: a pending or retrying upload must not,
+        // or a broken destination would block pruning for days.
+        if ( MainWP_Backup_Upload_Job_Store::instance()->has_live_upload_lease( (array) $candidate['snapshot_ids'] ) ) {
+            $result['errors'][] = sprintf(
+                'Snapshots %s: an upload in progress uses this backup; it is kept and the prune will retry on a later run.',
+                implode( ',', array_map( 'intval', (array) $candidate['snapshot_ids'] ) )
+            );
+            return false;
+        }
+
         $snapshots           = MainWP_Backup_Snapshots::instance();
         $store               = MainWP_Backup_Upload_Job_Store::instance();
         $delete_cloud_copies = ! empty( $task->delete_cloud_copies );
@@ -519,7 +530,11 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 break;
             }
 
+            $upload_jobs = $store->get_jobs_for_snapshot( $snapshot_id, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD );
             $store->purge_upload_jobs_for_snapshot( $snapshot_id );
+            foreach ( $upload_jobs as $upload_job ) {
+                MainWP_Backup_Upload_Driver::instance()->cleanup_staging_for( $snapshot_id, (int) $upload_job->destination_id );
+            }
 
             if ( ! $snapshots->set_status( $snapshot_id, 'pruned' ) ) {
                 /* translators: %d: Snapshot ID. */

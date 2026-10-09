@@ -501,6 +501,42 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Resolver differences must not let numeric spellings bypass the metadata guard.
+	 *
+	 * @dataProvider data_ip_like_host_safety
+	 *
+	 * @param string $host Host as received.
+	 * @param bool   $safe Expected safety verdict.
+	 *
+	 * @return void
+	 */
+	public function test_is_safe_host_rejects_noncanonical_ips_without_dns( $host, $safe ) {
+		add_filter( 'mainwp_backup_resolved_host_ips', '__return_empty_array' );
+		try {
+			$this->assertSame( $safe, MainWP_Backup_Storage_Destinations::is_safe_host( $host ), $host . ' must not depend on resolver support for numeric spellings.' );
+		} finally {
+			remove_filter( 'mainwp_backup_resolved_host_ips', '__return_empty_array' );
+		}
+	}
+
+	/**
+	 * Ordinary storage names and LAN addresses remain supported alongside the guard.
+	 *
+	 * @return array
+	 */
+	public function data_ip_like_host_safety() {
+		return array(
+			'dotted hex metadata' => array( '0xa9.0xfe.0xa9.0xfe', false ),
+			'octal metadata'      => array( '0251.0376.0251.0376', false ),
+			'decimal metadata'    => array( '2852039166', false ),
+			'hex metadata'        => array( '0xa9fea9fe', false ),
+			'dotted metadata'     => array( '169.254.169.254', false ),
+			'hostname'            => array( 'storage.example.test', true ),
+			'LAN address'         => array( '192.168.1.10', true ),
+		);
+	}
+
+	/**
 	 * An unresolvable host fails open: a DNS blip is not evidence of a rebind,
 	 * and blocking on it would turn a transient failure into a permanent one.
 	 * An empty host is a no-op the transport handles.

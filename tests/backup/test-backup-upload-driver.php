@@ -742,6 +742,33 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Tooltips escape at output, so a Local refusal must retain its quotes in storage.
+	 *
+	 * @return void
+	 */
+	public function test_refused_local_destination_stores_plain_text_error() {
+		$dest_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Refused Local destination',
+				'settings' => array( 'base_path' => WP_CONTENT_DIR . '/mainwp-refused-upload-' . uniqid() ),
+			)
+		);
+		$this->assertGreaterThan( 0, $dest_id );
+
+		$snapshot_id = $this->make_snapshot( $this->standard_files() );
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+
+		$jobs = $store->get_jobs_for_snapshot( $snapshot_id );
+		$this->assertCount( 1, $jobs );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $jobs[0]->status );
+		$this->assertStringContainsString( 'Backup directory "', $jobs[0]->last_error );
+		$this->assertStringNotContainsString( '&quot;', $jobs[0]->last_error );
+	}
+
+	/**
 	 * Existing artifacts must stay retryable when chunk staging fails.
 	 *
 	 * @return void

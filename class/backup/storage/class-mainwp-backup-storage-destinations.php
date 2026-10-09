@@ -435,6 +435,11 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             return true;
         }
 
+        // Transports accept numeric IPv4 spellings that DNS may fail to classify.
+        if ( self::is_ip_like( $host ) && ! filter_var( $host, FILTER_VALIDATE_IP ) ) {
+            return false;
+        }
+
         // An IP literal is validated directly: dns_get_record() on an IP
         // returns nothing, which would otherwise fail open on a raw metadata IP.
         if ( filter_var( $host, FILTER_VALIDATE_IP ) ) {
@@ -453,6 +458,19 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         }
 
         return true;
+    }
+
+    /**
+     * Whether a host is an IP literal, including the IPv4 spellings
+     * FILTER_VALIDATE_IP rejects but inet_aton-style resolvers accept
+     * (10.1.2, 012.01.02.03, 0xa.1.2.3, 167837698).
+     *
+     * @param string $host Normalized host.
+     *
+     * @return bool
+     */
+    public static function is_ip_like( string $host ): bool {
+        return false !== filter_var( $host, FILTER_VALIDATE_IP ) || 1 === preg_match( '/^(0x[0-9a-f]*|[0-9]+)(\.(0x[0-9a-f]*|[0-9]+))*$/i', $host );
     }
 
     /**

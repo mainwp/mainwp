@@ -509,7 +509,7 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
 
         $endpoint      = $this->endpoint_url();
         $endpoint_host = $this->endpoint_host();
-        if ( '' === $endpoint_host || self::is_ip_like( $endpoint_host ) ) {
+        if ( '' === $endpoint_host || MainWP_Backup_Storage_Destinations::is_ip_like( $endpoint_host ) ) {
             return false;
         }
 
@@ -529,19 +529,6 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
             $allowed[] = $bucket . '.' . $endpoint_host . $port;
         }
         return in_array( self::server( $redirect_url ), $allowed, true );
-    }
-
-    /**
-     * Whether a host is an IP literal, including the IPv4 spellings
-     * FILTER_VALIDATE_IP rejects but inet_aton-style resolvers accept
-     * (10.1.2, 012.01.02.03, 0xa.1.2.3, 167837698).
-     *
-     * @param string $host Normalized host.
-     *
-     * @return bool
-     */
-    private static function is_ip_like( string $host ): bool {
-        return false !== filter_var( $host, FILTER_VALIDATE_IP ) || 1 === preg_match( '/^(0x[0-9a-f]*|[0-9]+)(\.(0x[0-9a-f]*|[0-9]+))*$/i', $host );
     }
 
     /**
@@ -642,7 +629,7 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
 
         $bucket = isset( $this->settings['bucket'] ) ? (string) $this->settings['bucket'] : '';
 
-        if ( ! empty( $this->settings['path_style'] ) || 'localhost' === $endpoint_host || self::is_ip_like( $endpoint_host ) ) {
+        if ( ! empty( $this->settings['path_style'] ) || 'localhost' === $endpoint_host || MainWP_Backup_Storage_Destinations::is_ip_like( $endpoint_host ) ) {
             return $endpoint . '/' . $bucket;
         }
 

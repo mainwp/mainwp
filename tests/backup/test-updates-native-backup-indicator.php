@@ -38,6 +38,7 @@ class MainWP_Updates_Native_Backup_Indicator_Test extends MainWP_Abilities_Test_
 	public function tearDown(): void {
 		delete_option( 'mainwp_enableNativeBackups' );
 		delete_option( 'mainwp_enableLegacyBackupFeature' );
+		delete_option( 'mainwp_backup_before_upgrade_days' );
 		parent::tearDown();
 	}
 
@@ -82,6 +83,27 @@ class MainWP_Updates_Native_Backup_Indicator_Test extends MainWP_Abilities_Test_
 		$html = MainWP_Updates::get_native_backup_indicator( (object) array( 'id' => $site_id ), 7 );
 
 		$this->assertStringContainsString( 'grey', $html, 'A stale snapshot is not a recent backup.' );
+	}
+
+	/**
+	 * A ready badge must agree with the configured pre-update backup window.
+	 *
+	 * @return void
+	 */
+	public function test_indicator_uses_backup_before_upgrade_days_setting() {
+		$site_id = $this->create_test_site();
+		$this->record_native_snapshot( $site_id, array( 'created' => time() - 5 * DAY_IN_SECONDS ) );
+		$website = (object) array( 'id' => $site_id );
+
+		update_option( 'mainwp_backup_before_upgrade_days', '3' );
+		$html = MainWP_Updates::get_native_backup_indicator( $website );
+		$this->assertStringContainsString( 'grey label', $html, 'A five-day-old backup is stale under the three-day gate window.' );
+		$this->assertStringNotContainsString( 'Backup ready', $html );
+
+		update_option( 'mainwp_backup_before_upgrade_days', '7' );
+		$html = MainWP_Updates::get_native_backup_indicator( $website );
+		$this->assertStringContainsString( 'green label', $html, 'The same backup is recent under the seven-day gate window.' );
+		$this->assertStringContainsString( 'Backup ready', $html );
 	}
 
 	/**

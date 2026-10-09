@@ -16,6 +16,7 @@ namespace MainWP\Dashboard\Tests;
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Backup_Private_Root;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Retention_Executor;
 use MainWP\Dashboard\MainWP_Backup_Retention_Query;
@@ -322,6 +323,149 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertDirectoryDoesNotExist( $target_dir );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $held )->status );
 		$this->assertDirectoryExists( $held_dir );
+	}
+
+	/**
+	 * Purged jobs must not leave a second archive copy in upload staging.
+	 *
+	 * @return void
+	 */
+	public function test_prune_removes_upload_staging_for_purged_jobs() {
+		list( $snapshot_id ) = $this->make_snapshot_with_dir();
+		$store               = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( 77, 88 ) );
+		$staging_dirs = array();
+		foreach ( array( 77, 88 ) as $destination_id ) {
+			$dir = MainWP_Backup_Private_Root::staging_dir( 'upload-staging', $snapshot_id . '-' . $destination_id );
+			$this->assertNotWPError( $dir );
+			file_put_contents( $dir . 'chunk.bin', 'staged archive bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+			$staging_dirs[] = $dir;
+		}
+
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+			array(
+				array(
+					'snapshot_ids' => array( $snapshot_id ),
+					'reason'       => 'count',
+					'size_bytes'   => 100,
+				),
+			),
+			$this->make_task( array( 'delete_cloud_copies' => 0 ) )
+		);
+
+		$this->assertSame( 1, $result['snapshots_pruned'] );
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $snapshot_id ) );
+		foreach ( $staging_dirs as $dir ) {
+			$this->assertDirectoryDoesNotExist( $dir );
+		}
+	}
+
+	/**
+	 * A destination waiting for work or a retry must not block disk recovery.
+	 *
+	 * @dataProvider unleased_upload_statuses
+	 * @param string $status Upload status.
+	 * @return void
+	 */
+	public function test_prune_does_not_hold_for_unleased_pending_upload( string $status ) {
+		list( $snapshot_id, $dir ) = $this->make_snapshot_with_dir();
+		$store                     = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( 77 ) );
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertTrue( $store->set_status( (int) $job->id, $status ) );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $status, $job->status );
+		$this->assertSame( '', $job->locked_by );
+		$this->assertSame( 0, (int) $job->locked_until );
+
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+			array(
+				array(
+					'snapshot_ids' => array( $snapshot_id ),
+					'reason'       => 'count',
+					'size_bytes'   => 100,
+				),
+			),
+			$this->make_task( array( 'delete_cloud_copies' => 0 ) )
+		);
+
+		$this->assertSame( 1, $result['snapshots_pruned'] );
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status );
+		$this->assertDirectoryDoesNotExist( $dir );
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $snapshot_id ) );
+	}
+
+	/**
+	 * Both waiting states can persist indefinitely at a broken destination.
+	 *
+	 * @return array
+	 */
+	public static function unleased_upload_statuses(): array {
+		return array(
+			'pending'   => array( MainWP_Backup_Upload_Job_Store::STATUS_PENDING ),
+			'retryable' => array( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE ),
+		);
+	}
+
+	/**
+	 * An upload using a chain member must keep the whole recovery source.
+	 *
+	 * @return void
+	 */
+	public function test_prune_holds_unit_while_upload_lease_is_live() {
+		global $wpdb;
+
+		list( $base, $base_dir ) = $this->make_snapshot_with_dir();
+		list( $inc, $inc_dir )   = $this->make_snapshot_with_dir(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		$store                   = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $base, array( 77 ) );
+		$job = $store->acquire_next_job( 'tok', 300 );
+		$this->assertNotNull( $job );
+		$this->assertTrue( $store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING, 'tok' ) );
+		$staging_dir = MainWP_Backup_Private_Root::staging_dir( 'upload-staging', $base . '-77' );
+		$this->assertNotWPError( $staging_dir );
+		file_put_contents( $staging_dir . 'chunk.bin', 'upload in progress' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		$candidates = array(
+			array(
+				'snapshot_ids' => array( $base, $inc ),
+				'reason'       => 'count',
+				'size_bytes'   => 200,
+			),
+		);
+		$task       = $this->make_task( array( 'delete_cloud_copies' => 0 ) );
+
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task );
+
+		$this->assertSame( 0, $result['snapshots_pruned'] );
+		$this->assertSame( 0, $result['pruned'] );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $inc )->status );
+		$this->assertFileExists( $base_dir . '/artifact.tar' );
+		$this->assertFileExists( $inc_dir . '/artifact.tar' );
+		$this->assertFileExists( $staging_dir . 'chunk.bin' );
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $base ) );
+		$this->assertSame( 'tok', $store->get_job( (int) $job->id )->locked_by );
+		$this->assertStringContainsString( 'upload in progress', $result['errors'][0] );
+
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- expire the fixture lease without waiting.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array( 'locked_until' => time() - 1 ),
+			array( 'id' => (int) $job->id )
+		);
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task );
+
+		$this->assertSame( 2, $result['snapshots_pruned'] );
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertDirectoryDoesNotExist( $base_dir );
+		$this->assertDirectoryDoesNotExist( $inc_dir );
+		$this->assertDirectoryDoesNotExist( $staging_dir );
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $base ) );
 	}
 
 	/**

@@ -844,7 +844,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         );
 
         foreach ( array_map( 'intval', is_array( $jobs ) ? $jobs : array() ) as $job_id ) {
-            MainWP_Backup_Upload_Job_Store::instance()->fail_permanent( $job_id, esc_html__( 'Storage destination was deleted.', 'mainwp' ) );
+            MainWP_Backup_Upload_Job_Store::instance()->fail_permanent( $job_id, __( 'Storage destination was deleted.', 'mainwp' ) );
         }
     }
 }

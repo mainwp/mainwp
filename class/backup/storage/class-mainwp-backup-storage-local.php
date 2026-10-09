@@ -156,7 +156,7 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
         if ( '' !== $this->base_path ) {
             $reason = MainWP_Backup_Private_Root::served_tree_refusal( $this->base_path );
             if ( '' !== $reason ) {
-                throw new \RuntimeException( esc_html( $reason ) );
+                throw new \RuntimeException( $reason ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Consumers escape the plain-text refusal at output.
             }
         }
 
@@ -254,7 +254,7 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
 
         $reason = MainWP_Backup_Private_Root::served_tree_refusal( $this->base_path );
         if ( '' !== $reason ) {
-            throw new \RuntimeException( esc_html( $reason ) );
+            throw new \RuntimeException( $reason ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Consumers escape the plain-text refusal at output.
         }
 
         $key = str_replace( '\\', '/', $key );
@@ -267,7 +267,7 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
         $path   = $this->base_path . DIRECTORY_SEPARATOR . str_replace( '/', DIRECTORY_SEPARATOR, $key );
         $reason = MainWP_Backup_Private_Root::served_tree_refusal( $path );
         if ( '' !== $reason ) {
-            throw new \RuntimeException( esc_html( $reason ) );
+            throw new \RuntimeException( $reason ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Consumers escape the plain-text refusal at output.
         }
 
         return $path;

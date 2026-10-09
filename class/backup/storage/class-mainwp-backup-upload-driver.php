@@ -493,12 +493,12 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             if ( false === $chunks ) {
                 if ( ! is_file( $artifact['path'] ) ) {
                     throw new \RuntimeException(
-                        esc_html( sprintf( /* translators: %s: artifact file name. */ __( 'Backup file is missing from this Dashboard: %s', 'mainwp' ), basename( $artifact['file'] ) ) ),
+                        sprintf( /* translators: %s: artifact file name. */ __( 'Backup file is missing from this Dashboard: %s', 'mainwp' ), basename( $artifact['file'] ) ), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
                         410
                     );
                 }
                 throw new \RuntimeException(
-                    esc_html( sprintf( /* translators: %s: artifact file name. */ __( 'Backup file could not be read or prepared for upload: %s', 'mainwp' ), basename( $artifact['file'] ) ) )
+                    sprintf( /* translators: %s: artifact file name. */ __( 'Backup file could not be read or prepared for upload: %s', 'mainwp' ), basename( $artifact['file'] ) ) // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
                 );
             }
 
@@ -550,7 +550,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                     return false;
                 }
                 if ( ! is_file( $artifact['path'] ) ) {
-                    throw new \RuntimeException( esc_html( 'Backup file is missing from this Dashboard: ' . $artifact['file'] ), 410 );
+                    throw new \RuntimeException( 'Backup file is missing from this Dashboard: ' . $artifact['file'], 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
                 }
                 $hash                                        = hash_file( 'sha256', $artifact['path'] );
                 $artifact['sha256']                          = is_string( $hash ) ? $hash : '';
@@ -709,7 +709,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $key = $prefix . 'files/' . $artifact['file'];
 
         if ( ! is_file( $artifact['path'] ) ) {
-            throw new \RuntimeException( esc_html( 'Backup file is missing from this Dashboard: ' . $artifact['file'] ), 410 );
+            throw new \RuntimeException( 'Backup file is missing from this Dashboard: ' . $artifact['file'], 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
         }
 
         clearstatcache( true, $artifact['path'] );
@@ -728,7 +728,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         if ( false === $body ) {
             // The file passed is_file() above, so a failed read can be transient;
             // a file that is really gone hits the 410 check on the next attempt.
-            throw new \RuntimeException( esc_html( 'Could not read backup artifact for upload: ' . $artifact['file'] ) );
+            throw new \RuntimeException( 'Could not read backup artifact for upload: ' . $artifact['file'] ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
         }
 
         $body = $this->maybe_seal_whole( $body, $enc, (string) $artifact['file'] );
@@ -797,7 +797,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     private function confirm_remote_object( MainWP_Backup_Storage_Provider $provider, string $key, int $expected_size ): void {
         $head = $provider->head_object( $key );
         if ( ! is_array( $head ) || ! isset( $head['size'] ) || (int) $head['size'] !== $expected_size ) {
-            throw new \RuntimeException( esc_html( 'Upload verification failed; the destination did not confirm ' . $key . ' at the expected size.' ) );
+            throw new \RuntimeException( 'Upload verification failed; the destination did not confirm ' . $key . ' at the expected size.' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
         }
     }
 
@@ -846,7 +846,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         clearstatcache( true, $staged );
         $covers = ( is_file( $staged ) && (int) filesize( $staged ) === (int) $chunk['length'] )
             || ( is_file( $artifact['path'] ) && (int) filesize( $artifact['path'] ) >= (int) $chunk['offset'] + (int) $chunk['length'] );
-        throw new \RuntimeException( esc_html( 'Chunk bytes are unavailable locally for ' . $artifact['file'] ), $covers ? 0 : 410 );
+        throw new \RuntimeException( 'Chunk bytes are unavailable locally for ' . $artifact['file'], $covers ? 0 : 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- The registry factory returns MainWP_Exception.
@@ -1096,7 +1096,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
     private function staging_dir( object $job ): string {
         $dir = MainWP_Backup_Private_Root::staging_dir( 'upload-staging', (int) $job->snapshot_id . '-' . (int) $job->destination_id );
         if ( is_wp_error( $dir ) ) {
-            throw new \RuntimeException( esc_html( $dir->get_error_message() ), self::PRIVATE_ROOT_FAILURE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped; the constant is an integer exception code.
+            throw new \RuntimeException( $dir->get_error_message(), self::PRIVATE_ROOT_FAILURE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
         }
         return untrailingslashit( $dir );
     }
@@ -1109,7 +1109,19 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @return void
      */
     private function cleanup_staging( object $job ): void {
-        $name   = (int) $job->snapshot_id . '-' . (int) $job->destination_id;
+        $this->cleanup_staging_for( (int) $job->snapshot_id, (int) $job->destination_id );
+    }
+
+    /**
+     * Discard staged chunks once the upload no longer needs them.
+     *
+     * @param int $snapshot_id    Snapshot id.
+     * @param int $destination_id Storage destination id.
+     *
+     * @return void
+     */
+    public function cleanup_staging_for( int $snapshot_id, int $destination_id ): void {
+        $name   = $snapshot_id . '-' . $destination_id;
         $upload = apply_filters( 'mainwp_get_wp_upload_dir', wp_upload_dir( null, false ), null, false );
         $legacy = trailingslashit( $upload['basedir'] ) . 'mainwp/upload-staging/' . $name . '/';
         foreach ( array( MainWP_Backup_Private_Root::staging_path( 'upload-staging', $name ), $legacy ) as $dir ) {

@@ -240,6 +240,11 @@ let backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, 
                 } else {
                     appendToDiv(backsprocessContentEl, ' <span class="mainwp-red">' + MainWP.I18n.t('ERROR') + ': ' + MainWP.I18n.t('The backup timed out before the child site finished responding. The site may be overloaded, or the host may be limiting long-running requests.') + ' <a href="https://mainwp.com/help/docs/mainwp-introduction/resolving-system-requirement-issues/">' + MainWP.I18n.t('See this help document for possible fixes.') + '</a> (mainwp_backup_timeout)</span>'); // NOSONAR - noopener - open safe.
                 }
+            } else if (response.error && response.status == undefined) {
+                backupCreateRunning = false;
+
+                let error = typeof response.error === 'object' ? response.error.message : response.error;
+                appendToDiv(backsprocessContentEl, ' ' + mainwp_backup_error_html(error));
             } else {
                 // busy or other.
                 setTimeout(function () {

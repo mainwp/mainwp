@@ -730,6 +730,38 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Numeric aliases must not reach the transport without the admin opt-out.
+	 *
+	 * @dataProvider data_non_canonical_ipv4_endpoints
+	 *
+	 * @param string $endpoint Endpoint setting.
+	 * @param string $location Redirect target.
+	 *
+	 * @return void
+	 */
+	public function test_non_canonical_ipv4_endpoint_is_refused_before_transport( $endpoint, $location ) {
+		$this->resolve_hostnames_publicly();
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => $location ) ),
+				$this->response( 200 ),
+			),
+			array(
+				'endpoint'   => $endpoint,
+				'path_style' => 1,
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'A non-canonical IPv4 endpoint must be refused before transport.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'Storage destination host resolves to a link-local or cloud-metadata address:', $e->getMessage() );
+		}
+		$this->assertCount( 0, $this->requests, 'The outbound guard must refuse the endpoint before any request.' );
+	}
+
+	/**
 	 * A non-canonical IPv4 endpoint is still an IP endpoint: no parent
 	 * domain is derived from its trailing octets, so no cross-host redirect
 	 * is followed.
@@ -754,11 +786,15 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 			)
 		);
 
+		// These rows exercise the admin opt-out, the only path for non-canonical IPs to reach transport.
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
 		try {
 			$provider->put_object( 'k.bin', 'x' );
 			$this->fail( 'A cross-host redirect from a non-canonical IP endpoint must throw.' );
 		} catch ( \RuntimeException $e ) {
 			$this->assertStringContainsString( 'different server', $e->getMessage() );
+		} finally {
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
 		}
 
 		$this->assertCount( 1, $this->requests );
@@ -1181,13 +1217,19 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 			)
 		);
 
-		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
-		$provider->list_objects( 'p/' );
+		// These rows exercise the admin opt-out, the only path for non-canonical IPs to reach transport.
+		add_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		try {
+			$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
+			$provider->list_objects( 'p/' );
 
-		$this->assertSame( $endpoint . '/example-bucket/k.bin', $this->requests[0]['url'] );
-		$this->assertStringStartsWith( $endpoint . '/example-bucket?', $this->requests[1]['url'] );
-		$this->assertStringStartsWith( $endpoint . '/example-bucket/k.bin?', $provider->presigned_get_url( 'k.bin', 60 ) );
-		$this->assertSame( $host, $provider->object_host() );
+			$this->assertSame( $endpoint . '/example-bucket/k.bin', $this->requests[0]['url'] );
+			$this->assertStringStartsWith( $endpoint . '/example-bucket?', $this->requests[1]['url'] );
+			$this->assertStringStartsWith( $endpoint . '/example-bucket/k.bin?', $provider->presigned_get_url( 'k.bin', 60 ) );
+			$this->assertSame( $host, $provider->object_host() );
+		} finally {
+			remove_filter( 'mainwp_backup_skip_ssrf_check', '__return_true' );
+		}
 	}
 
 	/**

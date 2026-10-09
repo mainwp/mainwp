@@ -598,10 +598,7 @@ class MainWP_Cron_Jobs_Auto_Updates { // phpcs:ignore Generic.Classes.OpeningBra
                         continue;
                     }
 
-                    $mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
-                    if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
-                        $mainwp_backup_before_upgrade_days = 7;
-                    }
+                    $mainwp_backup_before_upgrade_days = MainWP_Updates_Overview::get_backup_before_upgrade_days();
 
                     $verdict = MainWP_Backup_Executor::evaluate_update_backup_gate( (int) $siteId, (int) $mainwp_backup_before_upgrade_days );
 

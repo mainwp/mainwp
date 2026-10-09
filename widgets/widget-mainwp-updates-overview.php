@@ -1376,6 +1376,19 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
+     * The badge and update gates must use the same configured freshness window.
+     *
+     * @return int
+     */
+    public static function get_backup_before_upgrade_days(): int {
+        $days = get_option( 'mainwp_backup_before_upgrade_days' );
+        if ( empty( $days ) || ! ctype_digit( $days ) ) {
+            $days = 7;
+        }
+        return (int) $days;
+    }
+
+    /**
      * Method checkbackups()
      *
      * Check if Child Site needs to be backed up before updates.
@@ -1395,10 +1408,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $primaryBackup                = MainWP_System_Utility::get_primary_backup();
         $global_backup_before_upgrade = get_option( 'mainwp_backup_before_upgrade' );
 
-        $mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
-        if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
-            $mainwp_backup_before_upgrade_days = 7;
-        }
+        $mainwp_backup_before_upgrade_days = self::get_backup_before_upgrade_days();
 
         $output = array();
         if ( isset( $_POST['sites'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

@@ -170,4 +170,25 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
 
         return array_map( 'intval', $site_ids );
     }
+
+    /**
+     * Task ids a site still has complete snapshots for whose task row is
+     * gone: a task deleted while keeping its snapshots, or removed outside
+     * the purge path. Retention only walks live tasks, so nothing else
+     * revisits these.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return int[] Task ids.
+     */
+    public function list_orphaned_task_ids_for_site( int $site_id ): array {
+        $task_ids = $this->wpdb->get_col(
+            $this->wpdb->prepare(
+                'SELECT DISTINCT snapshot.task_id FROM ' . $this->table_name( 'wp_backup_snapshot' ) . ' snapshot LEFT JOIN ' . $this->table_name( 'wp_backup' ) . " task ON task.id = snapshot.task_id WHERE snapshot.site_id = %d AND snapshot.status = 'complete' AND task.id IS NULL",
+                $site_id
+            )
+        );
+
+        return array_map( 'intval', $task_ids );
+    }
 }

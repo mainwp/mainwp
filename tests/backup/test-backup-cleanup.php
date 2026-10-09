@@ -194,14 +194,15 @@ class MainWP_Backup_Cleanup_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * The orphan sweep removes an idle rowless dir, spares a dir a
 	 * complete row protects, and spares a dir written too recently -
-	 * that one may still have a live run writing into it. With no
-	 * on-demand task the prune pass is a no-op and the complete row
-	 * survives untouched.
+	 * that one may still have a live run writing into it. The complete row
+	 * belongs to a live task within its keep-count, so it survives
+	 * untouched.
 	 *
 	 * @return void
 	 */
 	public function test_cleanup_sweeps_orphans_and_spares_protected_and_fresh() {
-		list( $snapshot_id, $protected_dir ) = $this->make_snapshot_with_dir();
+		$task                                = $this->make_manual_task();
+		list( $snapshot_id, $protected_dir ) = $this->make_snapshot_with_dir( array( 'task_id' => (int) $task->id ) );
 		list( $orphan_dir )                  = $this->make_dir_with_artifact( 7 * HOUR_IN_SECONDS );
 		list( $fresh_dir )                   = $this->make_dir_with_artifact();
 

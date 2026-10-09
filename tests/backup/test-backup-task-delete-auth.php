@@ -17,15 +17,22 @@
 
 namespace MainWP\Dashboard\Tests;
 
+require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+
+use MainWP\Dashboard\MainWP_Backup_Private_Root;
+use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
+use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
 /**
  * Class MainWP_Backup_Task_Delete_Auth_Test
  */
 class MainWP_Backup_Task_Delete_Auth_Test extends MainWP_Abilities_Test_Case {
+
+	use Backup_Private_Root_Fixture;
 
 	/**
 	 * Created fixture dirs for cleanup.
@@ -210,6 +217,167 @@ class MainWP_Backup_Task_Delete_Auth_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			remove_action( 'mainwp_backup_task_snapshots_purged', $listener );
 			unlink( $outside ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
+		}
+	}
+
+	/**
+	 * Record a complete full snapshot whose archive sits in the site's shared
+	 * folder under the private root, as production writes it.
+	 *
+	 * @param int $task_id Task id.
+	 * @param int $site_id Site id.
+	 *
+	 * @return array{0: int, 1: string} Snapshot id and archive path.
+	 */
+	private function record_local_snapshot( $task_id, $site_id ) {
+		global $wpdb;
+		$dir = MainWP_Backup_Private_Root::site_dir( $site_id );
+		wp_mkdir_p( $dir );
+		$path = $dir . 'full-example.test-08-10-2026-' . uniqid() . '.tar.gz';
+		file_put_contents( $path, str_repeat( 'x', 2048 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+
+		$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'task_id'  => $task_id,
+				'site_id'  => $site_id,
+				'type'     => 'full',
+				'created'  => time(),
+				'archives' => wp_json_encode( array( array( 'file' => basename( $path ), 'size' => 2048, 'role' => 'full', 'path' => $path ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+				'status'   => 'complete',
+			)
+		);
+		return array( (int) $wpdb->insert_id, $path );
+	}
+
+	/**
+	 * Run a snapshots-page AJAX handler with its nonce and return the decoded response.
+	 *
+	 * @param string $action Handler method and nonce action.
+	 * @param array  $fields POST fields.
+	 *
+	 * @return array|null Decoded response.
+	 */
+	private function post_snapshots_ajax( $action, array $fields ) {
+		$nonce                = wp_create_nonce( $action );
+		$_POST                = array_merge( $_POST, $fields, array( 'security' => $nonce ) );
+		$_REQUEST['security'] = $nonce;
+		$throw                = static function () {
+			return static function () {
+				throw new \RuntimeException( 'wp_die' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $throw );
+		ob_start();
+		try {
+			MainWP_Post_Backup_Handler::instance()->{$action}();
+		} catch ( \RuntimeException $e ) {
+			unset( $e ); // wp_send_json ended the request as designed.
+		} finally {
+			$raw = ob_get_clean();
+			remove_filter( 'wp_die_ajax_handler', $throw );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			foreach ( array_keys( $fields ) as $field ) {
+				unset( $_POST[ $field ] );
+			}
+			unset( $_POST['security'], $_REQUEST['security'] );
+		}
+		return json_decode( $raw, true );
+	}
+
+	/**
+	 * Deleting a task can keep its snapshots: the task row goes, the
+	 * snapshots stay complete with their files, and Snapshots & Restore
+	 * still lists them as restorable. Without the choice the delete purges
+	 * as before.
+	 *
+	 * @dataProvider data_delete_snapshot_choices
+	 *
+	 * @param bool $delete_snapshots Whether the delete also removes the snapshots.
+	 *
+	 * @return void
+	 */
+	public function test_delete_can_keep_the_task_snapshots( $delete_snapshots ) {
+		$this->set_up_private_root();
+		try {
+			$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+			wp_set_current_user( $user );
+			$site_id                    = $this->create_test_site( array( 'userid' => $user ) );
+			$task                       = $this->create_task( $site_id );
+			list( $snapshot_id, $path ) = $this->record_local_snapshot( (int) $task->id, $site_id );
+
+			$response = MainWP_Manage_Backups_Handler::remove_backup_result( $task->id, $delete_snapshots );
+
+			$this->assertSame( 'SUCCESS', $response['result'] ?? null );
+			$this->assertNull( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
+			$this->assertSame( $delete_snapshots ? 'pruned' : 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status );
+			$this->assertSame( ! $delete_snapshots, file_exists( $path ) );
+			if ( $delete_snapshots ) {
+				return;
+			}
+
+			$rows = array_column( $this->post_snapshots_ajax( 'mainwp_restore_snapshot_list', array( 'site_id' => (string) $site_id ) )['snapshots'], null, 'id' );
+			$this->assertArrayHasKey( $snapshot_id, $rows, 'A kept snapshot is still listed.' );
+			$this->assertTrue( $rows[ $snapshot_id ]['restorable'] );
+			$this->assertSame( 'local', $rows[ $snapshot_id ]['source'] );
+			$this->assertTrue( MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id, $site_id )['ok'] );
+		} finally {
+			$this->tear_down_private_root();
+		}
+	}
+
+	/**
+	 * Delete choices.
+	 *
+	 * @return array
+	 */
+	public static function data_delete_snapshot_choices() {
+		return array(
+			'delete snapshots' => array( true ),
+			'keep snapshots'   => array( false ),
+		);
+	}
+
+	/**
+	 * Clean Up removes the site's snapshots no task owns any more, through
+	 * the task purge path, and reports how many and how much; snapshots of
+	 * a live task stay, and the earlier response keys are unchanged.
+	 *
+	 * @return void
+	 */
+	public function test_cleanup_removes_snapshots_of_deleted_tasks() {
+		$this->set_up_private_root();
+		try {
+			$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+			wp_set_current_user( $user );
+			$site_id                      = $this->create_test_site( array( 'userid' => $user ) );
+			$deleted                      = $this->create_task( $site_id );
+			$live                         = $this->create_task( $site_id );
+			list( $orphan_id, $orphan )   = $this->record_local_snapshot( (int) $deleted->id, $site_id );
+			list( $orphan2_id, $orphan2 ) = $this->record_local_snapshot( (int) $deleted->id, $site_id );
+			list( $live_id, $live_path )  = $this->record_local_snapshot( (int) $live->id, $site_id );
+			$this->assertSame( 'SUCCESS', MainWP_Manage_Backups_Handler::remove_backup_result( $deleted->id, false )['result'] ?? null );
+
+			$response = $this->post_snapshots_ajax( 'mainwp_snapshots_cleanup', array( 'site_id' => (string) $site_id ) );
+
+			$this->assertSame( 'ok', $response['result'] );
+			foreach ( array( 'orphan_dirs_removed', 'units_pruned', 'snapshots_pruned', 'errors' ) as $key ) {
+				$this->assertArrayHasKey( $key, $response );
+			}
+			$this->assertSame( array(), $response['errors'] );
+			$this->assertSame( 2, $response['orphaned_snapshots_pruned'] );
+			$this->assertSame( 4096, $response['bytes_pruned'] );
+			$this->assertSame( 2, $response['snapshots_pruned'] );
+			foreach ( array( $orphan_id, $orphan2_id ) as $id ) {
+				$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+			}
+			$this->assertFileDoesNotExist( $orphan );
+			$this->assertFileDoesNotExist( $orphan2 );
+			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $live_id )->status );
+			$this->assertFileExists( $live_path );
+		} finally {
+			$this->tear_down_private_root();
 		}
 	}
 }

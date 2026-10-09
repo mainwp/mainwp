@@ -403,8 +403,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
     /**
      * Clean up a site's backups: sweep orphaned snapshot directories left
-     * by interrupted runs, then prune the on-demand snapshots down to a
-     * keep-count.
+     * by interrupted runs, remove snapshots whose task was deleted, then
+     * prune the on-demand snapshots down to a keep-count.
      *
      * Runs the same guarded deletion sequence retention uses, but
      * synchronously - a low-traffic dashboard whose WP-Cron rarely fires
@@ -428,11 +428,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         wp_send_json(
             array(
-                'result'              => 'ok',
-                'orphan_dirs_removed' => (int) $result['orphan_dirs_removed'],
-                'units_pruned'        => (int) $result['pruned'],
-                'snapshots_pruned'    => (int) $result['snapshots_pruned'],
-                'errors'              => array_map( 'esc_html', (array) $result['errors'] ),
+                'result'                    => 'ok',
+                'orphan_dirs_removed'       => (int) $result['orphan_dirs_removed'],
+                'units_pruned'              => (int) $result['pruned'],
+                'snapshots_pruned'          => (int) $result['snapshots_pruned'],
+                'orphaned_snapshots_pruned' => (int) $result['orphaned_snapshots_pruned'],
+                'bytes_pruned'              => (int) $result['bytes_pruned'],
+                'bytes_pruned_label'        => (int) $result['bytes_pruned'] > 0 ? MainWP_Utility::human_filesize( (int) $result['bytes_pruned'] ) : '',
+                'errors'                    => array_map( 'esc_html', (array) $result['errors'] ),
             )
         );
     }

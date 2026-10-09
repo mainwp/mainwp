@@ -2209,8 +2209,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * leaves its backups orphaned and their storage leaking.
      */
     public static function remove_backup() {
-        $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified by the AJAX router.
-        die( wp_json_encode( static::remove_backup_result( $id ) ) );
+        //phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified by the AJAX router.
+        $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+        // Only an explicit 0 keeps the snapshots; older clients send nothing and purge as before.
+        $delete_snapshots = ! isset( $_POST['delete_snapshots'] ) || '0' !== sanitize_text_field( wp_unslash( $_POST['delete_snapshots'] ) );
+        //phpcs:enable WordPress.Security.NonceVerification.Missing
+        die( wp_json_encode( static::remove_backup_result( $id, $delete_snapshots ) ) );
     }
 
     /**
@@ -2219,7 +2223,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * Split from remove_backup() so the authorization and purge-failure
      * handling are testable without the die().
      *
-     * @param int $id Task id.
+     * Kept snapshots stay complete with their files and cloud copies; they
+     * remain restorable, and Clean Up on the Snapshots page removes them
+     * later as snapshots no task owns.
+     *
+     * @param int  $id               Task id.
+     * @param bool $delete_snapshots Whether to purge the task's snapshots too.
      *
      * @return array Response payload: result | error | notask.
      *
@@ -2227,7 +2236,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses \MainWP\Dashboard\MainWP_Backup_Retention_Executor::purge_snapshots_for_task()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::remove_backup_task()
      */
-    public static function remove_backup_result( $id ) {
+    public static function remove_backup_result( $id, $delete_snapshots = true ) {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $id );
         if ( ! static::can_edit_backuptask( $task ) ) {
             return array( 'notask' => true );
@@ -2257,6 +2266,14 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             if ( '' !== $history_error ) {
                 return array( 'error' => $history_error );
             }
+        }
+
+        if ( ! $delete_snapshots ) {
+            // The task's diagnostics leave with it; the snapshots-purged
+            // event would claim a purge that did not happen.
+            MainWP_Backup_Diagnostics::instance()->purge_task_files( (int) $task->id );
+            MainWP_DB_Backup::instance()->remove_backup_task( $task->id );
+            return array( 'result' => 'SUCCESS' );
         }
 
         $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );

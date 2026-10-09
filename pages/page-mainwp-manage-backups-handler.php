@@ -34,6 +34,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     const PENDING_CANCEL_MAX_ATTEMPTS = 10;
 
     /**
+     * Backups a new scheduled task keeps per site when the request does not
+     * say. Applied in code, not as the column default, so existing tasks keep
+     * the value they were saved with.
+     *
+     * @var int
+     */
+    const NEW_TASK_RETENTION_COUNT = 7;
+
+    /**
      * Instance variable.
      *
      * @var null $instance.
@@ -1031,7 +1040,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $destinations = isset( $_POST['destinations'] ) && is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['destinations'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified.
             MainWP_Backup_Storage_Handler::save_task_destinations( $task->id, $destinations );
             static::save_task_schedule_fields( $task->id );
-            static::save_task_retention_fields( $task->id );
+            static::save_task_retention_fields( $task->id, true );
 
             do_action( 'mainwp_add_backuptask', $task->id );
 
@@ -1100,19 +1109,21 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
     /**
      * Save the retention policy fields posted with a task. Zero means no
-     * limit; absent or junk values save as zero, and the cloud copies
+     * limit; absent or junk values save as zero, except an absent count on
+     * a new task, which keeps NEW_TASK_RETENTION_COUNT. The cloud copies
      * toggle persists explicitly so unchecking it sticks.
      *
-     * @param int $task_id Task id.
+     * @param int  $task_id  Task id.
+     * @param bool $new_task Whether the task is being created.
      *
      * @return array The saved column values.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
      */
-    public static function save_task_retention_fields( $task_id ) {
+    public static function save_task_retention_fields( $task_id, $new_task = false ) {
         //phpcs:disable WordPress.Security.NonceVerification.Missing -- caller verified.
         $values = array(
-            'retention_count'      => isset( $_POST['retention_count'] ) ? absint( $_POST['retention_count'] ) : 0,
+            'retention_count'      => isset( $_POST['retention_count'] ) ? absint( $_POST['retention_count'] ) : ( $new_task ? static::NEW_TASK_RETENTION_COUNT : 0 ),
             'retention_days'       => isset( $_POST['retention_days'] ) ? absint( $_POST['retention_days'] ) : 0,
             'retention_storage_mb' => isset( $_POST['retention_storage_mb'] ) ? absint( $_POST['retention_storage_mb'] ) : 0,
             'delete_cloud_copies'  => empty( $_POST['delete_cloud_copies'] ) ? 0 : 1,

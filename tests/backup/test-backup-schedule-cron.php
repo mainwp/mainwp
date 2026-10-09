@@ -495,6 +495,43 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A new scheduled task keeps the last 7 backups unless the request says
+	 * otherwise; an explicit 0 or a cleared field still keeps everything.
+	 *
+	 * @dataProvider data_new_task_retention_counts
+	 *
+	 * @param string|null $posted   Posted retention_count, or null when absent.
+	 * @param int         $expected Saved retention_count.
+	 *
+	 * @return void
+	 */
+	public function test_new_task_retention_count_defaults_to_seven( $posted, $expected ) {
+		$id = $this->insert_task();
+		if ( null !== $posted ) {
+			$_POST['retention_count'] = $posted;
+		}
+
+		MainWP_Manage_Backups_Handler::save_task_retention_fields( $id, true );
+
+		$this->assertSame( $expected, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->retention_count );
+		$this->assertSame( 7, MainWP_Manage_Backups_Handler::NEW_TASK_RETENTION_COUNT );
+	}
+
+	/**
+	 * Posted retention counts for a new task.
+	 *
+	 * @return array
+	 */
+	public static function data_new_task_retention_counts() {
+		return array(
+			'absent'        => array( null, 7 ),
+			'explicit zero' => array( '0', 0 ),
+			'cleared field' => array( '', 0 ),
+			'explicit 12'   => array( '12', 12 ),
+		);
+	}
+
+	/**
 	 * A run that started advances next_run past the stored slot.
 	 *
 	 * @return void

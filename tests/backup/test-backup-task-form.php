@@ -12,6 +12,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Task_Form;
 use MainWP\Dashboard\MainWP_DB_Backup;
+use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 
 /**
  * Class MainWP_Backup_Task_Form_Test
@@ -281,6 +282,26 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'mainwp-backup-retention-storage-mb', $output );
 		$this->assertStringContainsString( 'id="mainwp-backup-delete-cloud-copies" checked', $output );
 		$this->assertStringContainsString( 'No limit', $output );
+	}
+
+	/**
+	 * A new task form pre-fills Keep last with the new-task default; an
+	 * existing task saved with no limit still shows no limit.
+	 *
+	 * @return void
+	 */
+	public function test_retention_count_prefill_new_task_only() {
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( null, 'Tar GZip', 'site', false, true );
+		$new_form = ob_get_clean();
+
+		ob_start();
+		MainWP_Backup_Task_Form::render_task_details( $this->make_task( array( 'retention_count' => 0 ) ), 'Tar GZip', 'site', false, true );
+		$existing = ob_get_clean();
+
+		$this->assertSame( 7, MainWP_Manage_Backups_Handler::NEW_TASK_RETENTION_COUNT );
+		$this->assertMatchesRegularExpression( '/id="mainwp-backup-retention-count"[^>]*value="7"/', $new_form );
+		$this->assertMatchesRegularExpression( '/id="mainwp-backup-retention-count"[^>]*value=""/', $existing );
 	}
 
 	/**

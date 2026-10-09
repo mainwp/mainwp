@@ -166,16 +166,16 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
-     * Render the retention policy fields. Zero means no limit; the
-     * defaults keep everything, matching the behavior before retention
-     * existed.
+     * Render the retention policy fields. Zero means no limit. A new task
+     * starts with Keep last at the new-task default; an existing task shows
+     * what it saved, so a task saved with no limit keeps showing none.
      *
      * @param object|null $task The task being edited, if any.
      *
      * @return void
      */
     public static function render_retention_fields( $task ): void {
-        $retention_count      = isset( $task->retention_count ) ? (int) $task->retention_count : 0;
+        $retention_count      = isset( $task->retention_count ) ? (int) $task->retention_count : MainWP_Manage_Backups_Handler::NEW_TASK_RETENTION_COUNT;
         $retention_days       = isset( $task->retention_days ) ? (int) $task->retention_days : 0;
         $retention_storage_mb = isset( $task->retention_storage_mb ) ? (int) $task->retention_storage_mb : 0;
         $delete_cloud_copies  = ! isset( $task->delete_cloud_copies ) || 1 === (int) $task->delete_cloud_copies;

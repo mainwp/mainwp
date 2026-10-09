@@ -419,7 +419,7 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      *              resolves to a link-local / cloud-metadata address.
      */
     public static function is_safe_host( string $host ): bool {
-        $host = trim( $host );
+        $host = self::normalize_host( $host );
         if ( '' === $host ) {
             return true;
         }
@@ -456,6 +456,26 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     }
 
     /**
+     * Reduce a host to the form the checks classify: wp_parse_url() leaves
+     * brackets on IPv6 literals, and a trailing dot or an IPv4-mapped IPv6
+     * spelling must not let a metadata address skip the IP-literal branch.
+     *
+     * @param string $host Hostname or IP literal as received.
+     *
+     * @return string
+     */
+    private static function normalize_host( string $host ): string {
+        $host = rtrim( trim( trim( $host ), '[]' ), '.' );
+
+        $packed = filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ? @inet_pton( $host ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- validated just above.
+        if ( is_string( $packed ) && "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF" === substr( $packed, 0, 12 ) ) {
+            return (string) inet_ntop( substr( $packed, 12 ) );
+        }
+
+        return $host;
+    }
+
+    /**
      * Whether plain HTTP to a storage host stays on this machine or the
      * private network: every address must be loopback, RFC1918, CGNAT or
      * IPv6 ULA, and none may be an address is_blocked_ip() refuses.
@@ -469,7 +489,7 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @return bool
      */
     public static function is_private_network_host( string $host ): bool {
-        $host = trim( trim( $host ), '[]' );
+        $host = self::normalize_host( $host );
         if ( '' === $host ) {
             return false;
         }

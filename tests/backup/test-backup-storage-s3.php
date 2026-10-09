@@ -562,8 +562,8 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 
 	/**
 	 * AWS answers a new bucket outside us-east-1 with a 307 to the regional
-	 * host for up to a day; that redirect stays under the endpoint's parent
-	 * domain and is followed, re-signed for the new host.
+	 * host for up to a day; a redirect to the configured bucket's regional
+	 * host is followed, re-signed for the new host.
 	 *
 	 * @return void
 	 */
@@ -594,11 +594,14 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 			'no dot boundary'       => array( 'https://evilamazonaws.com/k.bin' ),
 			'other domain'          => array( 'https://evil.com/k.bin' ),
 			'regional host on http' => array( 'http://example-bucket.s3.eu-west-1.amazonaws.com/k.bin' ),
+			'other bucket on AWS'   => array( 'https://other-bucket.s3.eu-west-1.amazonaws.com/k.bin' ),
+			'any amazonaws host'    => array( 'https://evil.amazonaws.com/k.bin' ),
+			'bucket on non-S3 AWS'  => array( 'https://example-bucket.execute-api.amazonaws.com/k.bin' ),
 		);
 	}
 
 	/**
-	 * Only the regional-host shape of a cross-host redirect is trusted.
+	 * Under an AWS endpoint only the configured bucket's S3 hosts are trusted.
 	 *
 	 * @dataProvider data_untrusted_cross_host_redirects
 	 *
@@ -623,6 +626,142 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		}
 
 		$this->assertCount( 1, $this->requests, 'No request may reach the redirect target.' );
+	}
+
+	/**
+	 * AWS can also point a path-style request at the regional service host.
+	 *
+	 * @return void
+	 */
+	public function test_request_follows_aws_regional_path_style_redirect() {
+		$this->resolve_hostnames_publicly();
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => 'https://s3.eu-west-1.amazonaws.com/example-bucket/k.bin' ) ),
+				$this->response( 200 ),
+			)
+		);
+
+		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
+		$this->assertCount( 2, $this->requests );
+	}
+
+	/**
+	 * A custom endpoint trusts its own host and the bucket subdomain of it.
+	 *
+	 * @return void
+	 */
+	public function test_custom_endpoint_follows_bucket_subdomain_redirect() {
+		$this->resolve_hostnames_publicly();
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => 'https://example-bucket.minio.storage.example.com/k.bin' ) ),
+				$this->response( 200 ),
+			),
+			array(
+				'endpoint'   => 'https://minio.storage.example.com',
+				'path_style' => 1,
+			)
+		);
+
+		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
+		$this->assertCount( 2, $this->requests );
+		$this->assertSame( 'https://example-bucket.minio.storage.example.com/k.bin', $this->requests[1]['url'] );
+	}
+
+	/**
+	 * Redirect targets a custom endpoint must not trust: a sibling under the
+	 * same parent domain, another bucket, or the right host on another port.
+	 *
+	 * @return array
+	 */
+	public function data_custom_endpoint_untrusted_redirects() {
+		return array(
+			'sibling subdomain'    => array( 'https://attacker.storage.example.com/k.bin' ),
+			'other bucket'         => array( 'https://other-bucket.minio.storage.example.com/k.bin' ),
+			'bucket on other port' => array( 'https://example-bucket.minio.storage.example.com:8443/k.bin' ),
+		);
+	}
+
+	/**
+	 * A custom endpoint follows no redirect beyond its own host and bucket.
+	 *
+	 * @dataProvider data_custom_endpoint_untrusted_redirects
+	 *
+	 * @param string $location Redirect target.
+	 *
+	 * @return void
+	 */
+	public function test_custom_endpoint_refuses_untrusted_redirect( $location ) {
+		$this->resolve_hostnames_publicly();
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => $location ) ),
+				$this->response( 200 ),
+			),
+			array(
+				'endpoint'   => 'https://minio.storage.example.com',
+				'path_style' => 1,
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'An untrusted redirect must throw: ' . $location );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'different server', $e->getMessage() );
+		}
+
+		$this->assertCount( 1, $this->requests );
+	}
+
+	/**
+	 * IPv4 literals in forms FILTER_VALIDATE_IP rejects but the resolver
+	 * accepts: short, octal and decimal.
+	 *
+	 * @return array
+	 */
+	public function data_non_canonical_ipv4_endpoints() {
+		return array(
+			'short'   => array( 'https://10.1.2:9000', 'https://203.0.1.2:9000/example-bucket/k.bin' ),
+			'octal'   => array( 'https://012.01.02.03:9000', 'https://203.01.02.03:9000/example-bucket/k.bin' ),
+			'decimal' => array( 'https://167837698:9000', 'https://1.167837698:9000/example-bucket/k.bin' ),
+		);
+	}
+
+	/**
+	 * A non-canonical IPv4 endpoint is still an IP endpoint: no parent
+	 * domain is derived from its trailing octets, so no cross-host redirect
+	 * is followed.
+	 *
+	 * @dataProvider data_non_canonical_ipv4_endpoints
+	 *
+	 * @param string $endpoint Endpoint setting.
+	 * @param string $location Redirect target.
+	 *
+	 * @return void
+	 */
+	public function test_non_canonical_ipv4_endpoint_never_follows_cross_host_redirect( $endpoint, $location ) {
+		$this->resolve_hostnames_publicly();
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => $location ) ),
+				$this->response( 200 ),
+			),
+			array(
+				'endpoint'   => $endpoint,
+				'path_style' => 1,
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'A cross-host redirect from a non-canonical IP endpoint must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'different server', $e->getMessage() );
+		}
+
+		$this->assertCount( 1, $this->requests );
 	}
 
 	/**

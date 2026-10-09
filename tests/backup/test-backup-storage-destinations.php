@@ -554,6 +554,48 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Hosts as wp_parse_url() and admins hand them over: bracketed IPv6,
+	 * IPv4-mapped IPv6 in either notation, and a trailing dot.
+	 *
+	 * @return array
+	 */
+	public function data_blocked_host_spellings() {
+		return array(
+			'bracketed mapped metadata'     => array( '[::ffff:169.254.169.254]' ),
+			'bracketed hex mapped metadata' => array( '[::ffff:a9fe:a9fe]' ),
+			'bracketed link-local'          => array( '[fe80::1]' ),
+			'bracketed AWS IPv6 metadata'   => array( '[fd00:ec2::254]' ),
+			'trailing dot metadata'         => array( '169.254.169.254.' ),
+			'hex mapped metadata'           => array( '::ffff:a9fe:a9fe' ),
+		);
+	}
+
+	/**
+	 * Every spelling of a metadata or link-local address is blocked, so the
+	 * S3, SFTP and Dropbox guards cannot be walked around by notation.
+	 *
+	 * @dataProvider data_blocked_host_spellings
+	 *
+	 * @param string $host Host as received.
+	 *
+	 * @return void
+	 */
+	public function test_is_safe_host_blocks_every_spelling( $host ) {
+		$this->assertFalse( MainWP_Backup_Storage_Destinations::is_safe_host( $host ), $host . ' must be blocked.' );
+	}
+
+	/**
+	 * Normalizing the notation does not block ordinary bracketed addresses.
+	 *
+	 * @return void
+	 */
+	public function test_is_safe_host_allows_bracketed_ordinary_addresses() {
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '[::1]' ) );
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '[2001:4860:4860::8888]' ) );
+		$this->assertTrue( MainWP_Backup_Storage_Destinations::is_safe_host( '[::ffff:10.0.0.5]' ) );
+	}
+
+	/**
 	 * Plain HTTP to storage is allowed only when the host stays on this
 	 * machine or the private network: loopback, RFC1918 and IPv6 ULA,
 	 * including bracketed IPv6 literals as wp_parse_url returns them.

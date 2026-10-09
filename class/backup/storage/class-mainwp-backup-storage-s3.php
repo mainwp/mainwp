@@ -442,11 +442,22 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
      * @return string
      */
     private static function server( string $url ): string {
+        return self::normalize_host( (string) wp_parse_url( $url, PHP_URL_HOST ) ) . ':' . self::effective_port( $url );
+    }
+
+    /**
+     * The port a URL connects to, with the scheme's default filled in.
+     *
+     * @param string $url URL.
+     *
+     * @return int
+     */
+    private static function effective_port( string $url ): int {
         $port = (int) wp_parse_url( $url, PHP_URL_PORT );
         if ( 0 === $port ) {
             $port = 'http' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) ? 80 : 443;
         }
-        return self::normalize_host( (string) wp_parse_url( $url, PHP_URL_HOST ) ) . ':' . $port;
+        return $port;
     }
 
     /**
@@ -461,14 +472,18 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
     }
 
     /**
-     * Whether a redirect to another server may carry the request. AWS sends
-     * a new bucket outside us-east-1 a 307 to bucket.s3.<region>.amazonaws.com
-     * for up to a day, so an https:// target under the configured endpoint's
-     * parent domain (amazonaws.com for s3.amazonaws.com) is followed. The
-     * match is on dot boundaries, so amazonaws.com.evil.test never passes.
-     * An IP-literal endpoint has no domain and follows no cross-host
-     * redirect. A one-label parent (minio.lan gives "lan") is too broad, so
-     * the endpoint host itself is the boundary then.
+     * Whether a redirect to another server may carry the request. Only an
+     * https:// target the configured bucket legitimately lives on is
+     * trusted:
+     *  - AWS endpoints (the default, s3.amazonaws.com, s3.<region>.amazonaws.com):
+     *    <bucket>.s3.amazonaws.com, <bucket>.s3.<region>.amazonaws.com or
+     *    s3.<region>.amazonaws.com. AWS sends a new bucket outside us-east-1
+     *    a 307 to its regional host for up to a day.
+     *  - Any other endpoint: its own host or <bucket>.<endpoint host>, on the
+     *    endpoint's port. A sibling under the same parent domain may belong
+     *    to someone else.
+     * An IP endpoint, including short, octal, hex or decimal IPv4 forms the
+     * resolver accepts, has no domain and follows no cross-host redirect.
      *
      * @param string $redirect_url Absolute redirect target.
      *
@@ -484,16 +499,39 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
             $endpoint = 'https://' . $endpoint;
         }
         $endpoint_host = self::normalize_host( trim( (string) wp_parse_url( $endpoint, PHP_URL_HOST ), '[]' ) );
-        if ( '' === $endpoint_host || filter_var( $endpoint_host, FILTER_VALIDATE_IP ) ) {
+        if ( '' === $endpoint_host || self::is_ip_like( $endpoint_host ) ) {
             return false;
         }
 
-        $dot    = strpos( $endpoint_host, '.' );
-        $parent = false === $dot ? '' : substr( $endpoint_host, $dot + 1 );
-        $base   = false !== strpos( $parent, '.' ) ? $parent : $endpoint_host;
+        $bucket = strtolower( isset( $this->settings['bucket'] ) ? (string) $this->settings['bucket'] : '' );
         $target = self::normalize_host( (string) wp_parse_url( $redirect_url, PHP_URL_HOST ) );
 
-        return $target === $base || substr( $target, -strlen( '.' . $base ) ) === '.' . $base;
+        if ( preg_match( '/^s3(\.[a-z0-9-]+)?\.amazonaws\.com$/', $endpoint_host ) ) {
+            if ( preg_match( '/^s3\.[a-z0-9-]+\.amazonaws\.com$/', $target ) ) {
+                return true;
+            }
+            return '' !== $bucket && 1 === preg_match( '/^' . preg_quote( $bucket, '/' ) . '\.s3(\.[a-z0-9-]+)?\.amazonaws\.com$/', $target );
+        }
+
+        $port    = ':' . self::effective_port( $endpoint );
+        $allowed = array( $endpoint_host . $port );
+        if ( '' !== $bucket ) {
+            $allowed[] = $bucket . '.' . $endpoint_host . $port;
+        }
+        return in_array( self::server( $redirect_url ), $allowed, true );
+    }
+
+    /**
+     * Whether a host is an IP literal, including the IPv4 spellings
+     * FILTER_VALIDATE_IP rejects but inet_aton-style resolvers accept
+     * (10.1.2, 012.01.02.03, 0xa.1.2.3, 167837698).
+     *
+     * @param string $host Normalized host.
+     *
+     * @return bool
+     */
+    private static function is_ip_like( string $host ): bool {
+        return false !== filter_var( $host, FILTER_VALIDATE_IP ) || 1 === preg_match( '/^(0x[0-9a-f]*|[0-9]+)(\.(0x[0-9a-f]*|[0-9]+))*$/i', $host );
     }
 
     /**

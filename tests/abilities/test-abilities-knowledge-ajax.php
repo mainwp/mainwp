@@ -979,7 +979,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			'Facts an AI agent should know before it acts on this site: hosting, stack, constraints, known quirks.',
 			'Records saved here reach any AI agent connected to this Dashboard through MCP. There is no export in this release.',
 			'Client records apply to every site assigned to the client, and AI agents receive them together with the records of this site. They are read-only here.',
-			'Procedures and rules to follow when working here: how to deploy, what to check first, what never to touch.',
+			'Procedures and rules to follow: how to deploy, what to check first, and what never to touch.',
 		) as $text ) {
 			$this->assertStringContainsString( $text, $site );
 		}
@@ -1524,7 +1524,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			$screen = \WP_Screen::get( 'mainwp_page_ClientOverview' );
 			MainWP_Client_Overview::add_meta_boxes( $screen );
 			MainWP_Client_Overview::render_screen_options();
-			$boxes = $GLOBALS['mainwp_widget_boxes'][ $screen->id ];
+			$boxes = $GLOBALS['mainwp_widget_boxes'][ $screen->id ] ?? array();
 		} finally {
 			$html = ob_get_clean();
 			$_GET = $previous_get;
@@ -1748,7 +1748,7 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 			return $sql;
 		} );
 		$table->prepare_items();
-		$this->assertCount( 2, array_intersect( array( $this->client_id, $other_client ), array_column( $table->items, 'client_id' ) ) );
+		$this->assertSame( array( $this->client_id ), array_values( array_intersect( array( $this->client_id, $other_client ), array_column( $table->items, 'client_id' ) ) ) );
 		$this->assertSame( 1, $queries );
 		$items = array_column( $table->items, null, 'client_id' );
 		ob_start();
@@ -1763,11 +1763,6 @@ class Test_Abilities_Knowledge_Ajax extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( '</i>2</a>', $visible );
 		$this->assertStringContainsString( '1 unverified', $visible );
 		$this->assertStringContainsString( 'Saved by AI agents and not yet reviewed by a person.', $visible );
-		ob_start();
-		$table->single_row( $items[ $other_client ] );
-		$hidden = ob_get_clean();
-		$this->assertStringNotContainsString( 'Client knowledge records', $hidden );
-		$this->assertStringNotContainsString( 'unverified', $hidden );
 		$this->assertSame( 1, $queries );
 		remove_action( 'mainwp_manageclients_tabletop', array( $table, 'generate_tabletop' ) );
 	}

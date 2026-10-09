@@ -1715,8 +1715,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * a real child task id leaves that task ACTIVE on the child until its
      * wall-clock deadline (~48 minutes), refusing every backup on the
      * site for the duration - so the mark fires a best-effort precise-id
-     * cancel. A creating marker is never cancelled: it is not an id the
-     * child knows, and an empty-id cancel would auto-resolve to whatever
+     * cancel. A task the child already finished is pruned instead: no
+     * snapshot will ever name this run, so retention never would, and its
+     * archive would stay on the site. A creating marker is never
+     * cancelled: it is not an id the child knows, and an empty-id cancel
+     * would auto-resolve to whatever
      * backup the child is running, possibly the foreign one this run just
      * collided with. The row is cleared either way (the child task id
      * dropped, the phase stamped terminal), because a phase-less row with
@@ -1737,9 +1740,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $child_task_id  = (string) $progress->child_backup_task_id;
         $child_phase    = MainWP_Backup_Task_Phase::tryFrom( (string) $progress->child_phase );
         $child_terminal = MainWP_Backup_Task_Phase::COMPLETED === $child_phase || MainWP_Backup_Task_Phase::FAILED === $child_phase;
-        if ( ! $child_terminal && ! MainWP_Backup_Executor::is_creating_marker( $child_task_id ) ) {
+        if ( ! MainWP_Backup_Executor::is_creating_marker( $child_task_id ) ) {
             $website = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
-            if ( ! empty( $website ) && ! static::send_child_task_cancel( $website, $child_task_id ) ) {
+            $landed  = empty( $website ) || ( $child_terminal ? static::send_child_task_prune( $website, $child_task_id ) : static::send_child_task_cancel( $website, $child_task_id ) );
+            if ( ! $landed ) {
+                // The owed cancel converges either way: a cancel of a finished
+                // task answers already terminal, which prunes it.
                 static::record_pending_child_cancel( $website, $child_task_id );
             }
         }
@@ -1765,7 +1771,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * an unreachable child - report failure and earn a retry.
      *
      * Landed means the child answered about the task with an explicit
-     * non-busy result (cancelled, already terminal, nothing active). An error
+     * non-busy result (cancelled, nothing active), or answered already
+     * terminal and then confirmed pruning it: a task that finished after the
+     * Dashboard gave up still holds its archive. An error
      * payload or a malformed response proves nothing about the task - the
      * other cancel callers in this codebase read those as failures too - so
      * it stays owed, and the bounded retry absorbs the case where the error
@@ -1796,7 +1804,55 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return false;
         }
 
+        if ( 'already_terminal' === $information['result'] ) {
+            return static::send_child_task_prune( $website, $child_task_id );
+        }
+
         MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Backup cancelled on the child (child task: ' . $child_task_id . ')' );
+        return true;
+    }
+
+    /**
+     * Ask the child to delete a finished task the Dashboard abandoned, with
+     * its artifacts, and report whether the task is gone.
+     *
+     * The child answers counts, not per-task outcomes, so the request names
+     * one task. Only pruned or missing counts as gone; an active task, an
+     * error or an unreadable answer is retried by a later pass. The sweep
+     * stays off: it is housekeeping for retention's prune, not this run's.
+     *
+     * @param object $website       Website row.
+     * @param string $child_task_id Child task id to prune.
+     *
+     * @return bool True when the child no longer holds the task.
+     */
+    protected static function send_child_task_prune( $website, $child_task_id ) {
+        try {
+            $information = MainWP_Connect::fetch_url_authed(
+                $website,
+                'backup_task_prune',
+                array(
+                    'task_ids' => wp_json_encode( array( (string) $child_task_id ) ),
+                    'sweep'    => 0,
+                ),
+                false,
+                false,
+                false
+            );
+        } catch ( \Exception $e ) {
+            MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child prune did not land: ' . $e->getMessage() );
+            return false;
+        }
+
+        $removed = is_array( $information ) && 'ok' === ( $information['result'] ?? '' )
+            && isset( $information['pruned'], $information['missing'] )
+            && ( (int) $information['pruned'] + (int) $information['missing'] ) > 0;
+        if ( ! $removed ) {
+            MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'The child did not confirm pruning a finished backup task (child task: ' . $child_task_id . '); a later pass retries it.' );
+            return false;
+        }
+
+        MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Finished backup removed from the child (child task: ' . $child_task_id . ')' );
         return true;
     }
 

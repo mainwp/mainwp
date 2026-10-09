@@ -1117,8 +1117,15 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             }
                             throw $e;
                         }
+                        // Flag before delete, as for the full archive below.
                         $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDBComplete' => 1 ) );
                         $advanced           = true;
+
+                        try {
+                            MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $information['db'] ) );
+                        } catch ( \Exception $e ) {
+                            MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed after a validated download: ' . $e->getMessage() );
+                        }
                     } finally {
                         MainWP_Backup_File_Manager::release_download_lock( $localBackupFile );
                     }
@@ -2843,8 +2850,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $type  = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
             $local = self::build_local_backup_file( $website, $type, $status['meta']['file'] );
             MainWP_Backup_File_Manager::backup_download_file( $site_id, $type, $status['meta']['file'], $local );
-            if ( 'full' === $type ) {
+            try {
                 MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $status['meta']['file'] ) );
+            } catch ( \Exception $e ) {
+                // The archive is already local; a child error must not skip
+                // the completion hook or leave the ad-hoc handle set.
+                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed after a validated download: ' . $e->getMessage() );
             }
             $status['meta']['local'] = $local;
         }

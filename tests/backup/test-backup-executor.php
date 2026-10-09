@@ -958,6 +958,92 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A database-only archive leaves the child after its validated download,
+	 * like a full one; a child that fails the delete does not fail the run.
+	 *
+	 * @dataProvider data_db_delete_answers
+	 *
+	 * @param mixed $answer Child answer to delete_backup, or an exception it throws.
+	 */
+	public function test_completed_db_run_deletes_child_archive( $answer ) {
+		list( $site_id, $task ) = $this->site_and_task( array( 'type' => 'db' ) );
+		$content                = 'PK' . "\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'fetchResult'          => wp_json_encode(
+					array(
+						'full' => false,
+						'db'   => 'backup-db.sql.zip',
+						'size' => strlen( $content ),
+					)
+				),
+				'downloadedDB'         => '',
+				'downloadedDBComplete' => 0,
+			)
+		);
+		$deletes = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what, $params ) use ( &$deletes, $answer, $task, $site_id ) {
+				unset( $website );
+				if ( 'delete_backup' !== $what ) {
+					return $result;
+				}
+				$deletes[] = array(
+					'del'      => $params['del'] ?? null,
+					'complete' => (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->downloadedDBComplete,
+				);
+				if ( $answer instanceof \Throwable ) {
+					throw $answer;
+				}
+				return $answer;
+			},
+			10,
+			4
+		);
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				$this->snapshot_files[] = $file;
+				file_put_contents( $file, $content ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			3
+		);
+
+		$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+
+		$this->assertNotFalse( $result );
+		$this->assertSame(
+			array(
+				array(
+					'del'      => 'backup-db.sql.zip',
+					'complete' => 1,
+				),
+			),
+			$deletes,
+			'One delete, sent after the complete flag is stored.'
+		);
+		$this->assertNotNull( MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ) );
+	}
+
+	/**
+	 * Child answers to the post-download delete.
+	 *
+	 * @return array
+	 */
+	public function data_db_delete_answers() {
+		return array(
+			'deleted'     => array( array( 'result' => 'ok' ) ),
+			'child error' => array( new MainWP_Exception( 'The child site is busy.' ) ),
+		);
+	}
+
+	/**
 	 * Isolate record failure from archive download and validation failures.
 	 *
 	 * @return string Archive bytes.

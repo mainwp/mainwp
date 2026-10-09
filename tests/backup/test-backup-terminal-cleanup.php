@@ -49,6 +49,20 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 	private $cancel_response = array( 'result' => 'ok' );
 
 	/**
+	 * Captured backup_task_prune calls, one params array per call.
+	 *
+	 * @var array[]
+	 */
+	private $prune_calls = array();
+
+	/**
+	 * What the stubbed child answers a backup_task_prune with.
+	 *
+	 * @var array
+	 */
+	private $prune_response = array();
+
+	/**
 	 * Set up: enable native backups and capture child cancel calls.
 	 *
 	 * @return void
@@ -59,6 +73,13 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 
 		$this->cancel_calls    = array();
 		$this->cancel_response = array( 'result' => 'ok' );
+		$this->prune_calls     = array();
+		$this->prune_response  = array(
+			'result'  => 'ok',
+			'pruned'  => 1,
+			'active'  => 0,
+			'missing' => 0,
+		);
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
 			function ( $result, $website, $what, $params ) {
@@ -66,6 +87,10 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 				if ( 'backup_task_cancel' === $what ) {
 					$this->cancel_calls[] = is_array( $params ) ? $params : array();
 					return $this->cancel_response;
+				}
+				if ( 'backup_task_prune' === $what ) {
+					$this->prune_calls[] = is_array( $params ) ? $params : array();
+					return $this->prune_response;
 				}
 				return $result;
 			},
@@ -637,5 +662,123 @@ class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertCount( 1, $this->cancel_calls, 'The final attempt still goes out.' );
 		$this->assertSame( array(), $this->pending_cancel( $site_id ), 'At the cap the owed cancel is dropped instead of retried forever.' );
+	}
+
+	/**
+	 * A run the Dashboard gave up on after the child already finished it
+	 * leaves a finished archive nobody will download, so the terminal mark
+	 * prunes that child task instead of skipping it.
+	 *
+	 * @dataProvider data_finished_child_phases
+	 *
+	 * @param string $phase Child phase on the progress row.
+	 *
+	 * @return void
+	 */
+	public function test_terminal_mark_prunes_a_child_task_that_already_finished( $phase ) {
+		list( $site_id, $task ) = $this->site_and_open_task();
+		$this->seed_progress(
+			(int) $task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 'task-finished-1',
+				'child_phase'          => $phase,
+			)
+		);
+
+		MainWP_Manage_Backups_Handler::close_child_task_after_terminal_mark( (int) $task->id, $site_id );
+
+		$this->assertCount( 0, $this->cancel_calls, 'A finished child task has nothing to cancel.' );
+		$this->assertCount( 1, $this->prune_calls );
+		$this->assertSame( '["task-finished-1"]', $this->prune_calls[0]['task_ids'] ?? null, 'The prune names only this child task.' );
+		$this->assertSame( array(), $this->pending_cancel( $site_id ) );
+
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( '', (string) $progress->child_backup_task_id );
+		$this->assertSame( 'failed', (string) $progress->child_phase );
+	}
+
+	/**
+	 * Terminal child phases.
+	 *
+	 * @return array
+	 */
+	public static function data_finished_child_phases() {
+		return array(
+			'completed' => array( 'completed' ),
+			'failed'    => array( 'failed' ),
+		);
+	}
+
+	/**
+	 * A prune the child did not confirm stays owed, like a refused cancel.
+	 *
+	 * @dataProvider data_unconfirmed_prune_answers
+	 *
+	 * @param mixed $answer Child answer to the prune.
+	 *
+	 * @return void
+	 */
+	public function test_unconfirmed_prune_of_finished_child_task_is_owed( $answer ) {
+		list( $site_id, $task ) = $this->site_and_open_task();
+		$this->seed_progress(
+			(int) $task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 'task-finished-2',
+				'child_phase'          => 'completed',
+			)
+		);
+		$this->prune_response = $answer;
+
+		MainWP_Manage_Backups_Handler::close_child_task_after_terminal_mark( (int) $task->id, $site_id );
+
+		$this->assertArrayHasKey( 'task-finished-2', $this->pending_cancel( $site_id ) );
+	}
+
+	/**
+	 * Prune answers that do not confirm the task is gone.
+	 *
+	 * @return array
+	 */
+	public static function data_unconfirmed_prune_answers() {
+		return array(
+			'still active'   => array(
+				array(
+					'result'  => 'ok',
+					'pruned'  => 0,
+					'active'  => 1,
+					'missing' => 0,
+				),
+			),
+			'error envelope' => array( array( 'error' => 'Denied' ) ),
+			'no counts'      => array( array( 'result' => 'ok' ) ),
+		);
+	}
+
+	/**
+	 * An owed cancel whose task finished in the meantime is pruned, so the
+	 * finished archive goes too, and stops being owed once the child confirms.
+	 *
+	 * @return void
+	 */
+	public function test_owed_cancel_of_a_task_that_finished_prunes_it() {
+		list( $site_id ) = $this->site_and_open_task();
+		$website         = MainWP_DB::instance()->get_website_by_id( (int) $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION,
+			wp_json_encode( array( 'task-late-5' => 0 ) )
+		);
+		$this->cancel_response = array(
+			'result' => 'already_terminal',
+			'phase'  => 'completed',
+		);
+
+		MainWP_Manage_Backups_Handler::flush_pending_child_cancel( $website );
+
+		$this->assertCount( 1, $this->cancel_calls );
+		$this->assertSame( array( '["task-late-5"]' ), array_column( $this->prune_calls, 'task_ids' ) );
+		$this->assertSame( array(), $this->pending_cancel( $site_id ) );
 	}
 }

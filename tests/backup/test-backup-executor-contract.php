@@ -430,6 +430,93 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A database-only ad-hoc backup also leaves the child after its download,
+	 * and a child that fails the delete still gets the completion hook and
+	 * the cleared handle.
+	 *
+	 * @dataProvider data_adhoc_delete_answers
+	 *
+	 * @param string $type   Backup type the child reports.
+	 * @param string $file   Archive name.
+	 * @param mixed  $answer Child answer to delete_backup, or an exception it throws.
+	 *
+	 * @return void
+	 */
+	public function test_get_backup_task_status_deletes_child_archive( $type, $file, $answer ) {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$this->give_site_real_privkey( $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'task-adhoc',
+					'type'    => $type,
+					'started' => time() - 60,
+				)
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'task_id' => 'task-adhoc',
+				'phase'   => 'completed',
+				'type'    => $type,
+				'file'    => $file,
+				'size'    => 66,
+			)
+		);
+		$this->mock_child_action( 'delete_backup', $answer );
+		$deletes = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $site, $what, $params ) use ( &$deletes ) {
+				unset( $site );
+				if ( 'delete_backup' === $what ) {
+					$deletes[] = $params['del'] ?? null;
+				}
+				return $result;
+			},
+			5,
+			4
+		);
+		$this->stub_download_with_valid_gzip();
+
+		$events = array();
+		$this->record_completion_hook( $events );
+
+		$ob_level = ob_get_level();
+		ob_start();
+		try {
+			$status = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'task-adhoc', 60 );
+		} finally {
+			while ( ob_get_level() > $ob_level ) {
+				ob_end_clean();
+			}
+		}
+
+		$this->assertSame( 'completed', $status['status'] );
+		$this->assertSame( array( $file ), $deletes );
+		$this->assertCount( 1, $events );
+		$this->assertTrue( $events[0]['success'] );
+		$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $website, 'adhoc_backup_task' ), 'A terminal task must clear the persisted handle.' );
+	}
+
+	/**
+	 * Archive types and child answers to the delete.
+	 *
+	 * @return array
+	 */
+	public function data_adhoc_delete_answers() {
+		return array(
+			'database archive'      => array( 'db', 'dbBackup-1749600000.sql.tar.gz', array( 'result' => 'ok' ) ),
+			'full archive, error'   => array( 'full', 'backup-1749600000.tar.gz', new MainWP_Exception( 'The child site is busy.' ) ),
+			'database archive, err' => array( 'db', 'dbBackup-1749600000.sql.tar.gz', new MainWP_Exception( 'The child site is busy.' ) ),
+		);
+	}
+
+	/**
 	 * A failed task reports failed status, fires the completion hook with
 	 * success false, and clears the persisted ad-hoc handle.
 	 *

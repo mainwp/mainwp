@@ -413,16 +413,29 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
             return;
         }
         if ( ! MainWP_Backup_Storage_Destinations::is_safe_host( $host ) ) {
-            throw new \RuntimeException( 'Storage destination host resolves to a link-local or cloud-metadata address: ' . esc_html( $host ), 0 );
+            throw new \RuntimeException( 'Storage destination host resolves to a link-local or cloud-metadata address: ' . esc_html( $this->host_for_message( $host ) ), 0 );
         }
         // A DNS rebind after this check is the same accepted residual window as is_safe_host(); no transport pinning.
         if ( 'https' !== $scheme && ! MainWP_Backup_Storage_Destinations::is_private_network_host( $host ) ) {
+            // Only reached on the refusal path, so the second lookup costs nothing on a working destination.
+            if ( ! MainWP_Backup_Storage_Destinations::host_resolves( $host ) ) {
+                throw new \RuntimeException(
+                    esc_html(
+                        sprintf(
+                            /* translators: %s: storage endpoint host name. */
+                            __( 'The storage endpoint %s could not be resolved, so nothing was sent. Check the endpoint address. If the server does not support bucket subdomains, turn on path-style addressing.', 'mainwp' ),
+                            $this->host_for_message( $host )
+                        )
+                    ),
+                    0
+                );
+            }
             throw new \RuntimeException(
                 esc_html(
                     sprintf(
                         /* translators: %s: storage endpoint host name. */
                         __( 'The storage endpoint %s needs https://. Plain http:// would send your backups unencrypted, so it only works for local and private network addresses such as 127.0.0.1 or 192.168.x.x. Change the endpoint to start with https://.', 'mainwp' ),
-                        $host
+                        $this->host_for_message( $host )
                     )
                 ),
                 0
@@ -494,11 +507,8 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
             return false;
         }
 
-        $endpoint = isset( $this->settings['endpoint'] ) && '' !== $this->settings['endpoint'] ? (string) $this->settings['endpoint'] : static::DEFAULT_ENDPOINT;
-        if ( false === strpos( $endpoint, '://' ) ) {
-            $endpoint = 'https://' . $endpoint;
-        }
-        $endpoint_host = self::normalize_host( trim( (string) wp_parse_url( $endpoint, PHP_URL_HOST ), '[]' ) );
+        $endpoint      = $this->endpoint_url();
+        $endpoint_host = $this->endpoint_host();
         if ( '' === $endpoint_host || self::is_ip_like( $endpoint_host ) ) {
             return false;
         }
@@ -577,20 +587,62 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
     }
 
     /**
-     * The URL of the bucket root, per addressing style.
+     * The configured endpoint as a URL: the AWS default when empty, https://
+     * when typed without a scheme, no trailing slash.
      *
      * @return string
      */
-    private function bucket_url(): string {
+    private function endpoint_url(): string {
         $endpoint = isset( $this->settings['endpoint'] ) && '' !== $this->settings['endpoint'] ? (string) $this->settings['endpoint'] : static::DEFAULT_ENDPOINT;
         if ( false === strpos( $endpoint, '://' ) ) {
             $endpoint = 'https://' . $endpoint;
         }
-        $endpoint = rtrim( $endpoint, '/' );
+        return rtrim( $endpoint, '/' );
+    }
+
+    /**
+     * The configured endpoint's host, normalized and without IPv6 brackets.
+     *
+     * @return string
+     */
+    private function endpoint_host(): string {
+        return self::normalize_host( trim( (string) wp_parse_url( $this->endpoint_url(), PHP_URL_HOST ), '[]' ) );
+    }
+
+    /**
+     * The host to name in an error: the endpoint as the admin typed it when
+     * the request host is that endpoint or its bucket subdomain, since the
+     * bucket-prefixed form is not something they entered. A redirect target
+     * is named as is.
+     *
+     * @param string $host Request host.
+     *
+     * @return string
+     */
+    private function host_for_message( string $host ): string {
+        $normalized    = self::normalize_host( trim( $host, '[]' ) );
+        $endpoint_host = $this->endpoint_host();
+        $bucket        = strtolower( isset( $this->settings['bucket'] ) ? (string) $this->settings['bucket'] : '' );
+        if ( $normalized === $endpoint_host || ( '' !== $bucket && $normalized === $bucket . '.' . $endpoint_host ) ) {
+            return (string) wp_parse_url( $this->endpoint_url(), PHP_URL_HOST );
+        }
+        return $host;
+    }
+
+    /**
+     * The URL of the bucket root, per addressing style. An IP or localhost
+     * endpoint is always path-style: <bucket>.127.0.0.1 never resolves, so
+     * the setting cannot be honored there.
+     *
+     * @return string
+     */
+    private function bucket_url(): string {
+        $endpoint      = $this->endpoint_url();
+        $endpoint_host = $this->endpoint_host();
 
         $bucket = isset( $this->settings['bucket'] ) ? (string) $this->settings['bucket'] : '';
 
-        if ( ! empty( $this->settings['path_style'] ) ) {
+        if ( ! empty( $this->settings['path_style'] ) || 'localhost' === $endpoint_host || self::is_ip_like( $endpoint_host ) ) {
             return $endpoint . '/' . $bucket;
         }
 

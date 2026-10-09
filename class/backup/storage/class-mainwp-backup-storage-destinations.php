@@ -509,6 +509,22 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     }
 
     /**
+     * Whether a host is an IP literal or resolves to at least one address,
+     * so a refusal can tell an unreachable name from a public one.
+     *
+     * @param string $host Hostname or IP literal.
+     *
+     * @return bool
+     */
+    public static function host_resolves( string $host ): bool {
+        $host = self::normalize_host( $host );
+        if ( '' === $host ) {
+            return false;
+        }
+        return filter_var( $host, FILTER_VALIDATE_IP ) || ! empty( self::resolve_host_ips( $host ) );
+    }
+
+    /**
      * Whether an IP is loopback (127.0.0.0/8, ::1), RFC1918 (10/8,
      * 172.16/12, 192.168/16), CGNAT 100.64.0.0/10 (Tailscale and similar
      * VPNs) or IPv6 ULA (fc00::/7), including the IPv4-mapped IPv6 form of

@@ -814,7 +814,8 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		$result = $provider->connection_test();
 
 		$this->assertFalse( $result['ok'] );
-		$this->assertStringContainsString( 'needs https://', $result['error'] );
+		$this->assertStringContainsString( 'could not be resolved', $result['error'] );
+		$this->assertStringNotContainsString( 'needs https://', $result['error'] );
 		$this->assertCount( 0, $this->requests );
 	}
 
@@ -1133,5 +1134,111 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		}
 
 		$this->assertCount( 1, $this->requests, 'No request may reach the public http:// target.' );
+	}
+
+	/**
+	 * Endpoints whose host is an IP literal or localhost, and the object
+	 * URL each must produce with path-style left off.
+	 *
+	 * @return array
+	 */
+	public function data_ip_endpoints_without_path_style() {
+		return array(
+			'IPv4 loopback' => array( 'http://127.0.0.1:9000', '127.0.0.1' ),
+			'IPv6 loopback' => array( 'http://[::1]:9000', '[::1]' ),
+			'localhost'     => array( 'http://localhost:9000', 'localhost' ),
+			'short IPv4'    => array( 'http://10.1.2:9000', '10.1.2' ),
+		);
+	}
+
+	/**
+	 * Virtual-hosted addressing cannot work on an IP or localhost, so those
+	 * endpoints use path-style whatever the setting says, for uploads,
+	 * listing, presigned URLs and the reported object host alike.
+	 *
+	 * @dataProvider data_ip_endpoints_without_path_style
+	 *
+	 * @param string $endpoint Endpoint setting.
+	 * @param string $host     Host the URLs must address.
+	 *
+	 * @return void
+	 */
+	public function test_ip_endpoint_uses_path_style_without_the_setting( $endpoint, $host ) {
+		add_filter(
+			'mainwp_backup_resolved_host_ips',
+			function ( $ips, $resolved ) {
+				return in_array( $resolved, array( 'localhost', '10.1.2' ), true ) ? array( '127.0.0.1' ) : $ips;
+			},
+			10,
+			2
+		);
+		$list_xml = '<?xml version="1.0"?><ListBucketResult><IsTruncated>false</IsTruncated></ListBucketResult>';
+		$provider = $this->make_provider(
+			array( $this->response( 200 ), $this->response( 200, $list_xml ) ),
+			array(
+				'endpoint'   => $endpoint,
+				'path_style' => 0,
+			)
+		);
+
+		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
+		$provider->list_objects( 'p/' );
+
+		$this->assertSame( $endpoint . '/example-bucket/k.bin', $this->requests[0]['url'] );
+		$this->assertStringStartsWith( $endpoint . '/example-bucket?', $this->requests[1]['url'] );
+		$this->assertStringStartsWith( $endpoint . '/example-bucket/k.bin?', $provider->presigned_get_url( 'k.bin', 60 ) );
+		$this->assertSame( $host, $provider->object_host() );
+	}
+
+	/**
+	 * A virtual-hosted LAN endpoint whose bucket subdomain does not resolve
+	 * is refused with a resolution message naming the endpoint, not the
+	 * https one: the fix is the address or the path-style setting.
+	 *
+	 * @return void
+	 */
+	public function test_unresolvable_virtual_hosted_lan_endpoint_gets_resolution_message() {
+		add_filter(
+			'mainwp_backup_resolved_host_ips',
+			function ( $ips, $host ) {
+				return 'minio.lan' === $host ? array( '192.168.1.20' ) : array();
+			},
+			10,
+			2
+		);
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array( 'endpoint' => 'http://minio.lan:9000' )
+		);
+
+		$result = $provider->connection_test();
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertStringContainsString( 'could not be resolved', $result['error'] );
+		$this->assertStringContainsString( 'path-style', $result['error'] );
+		$this->assertStringContainsString( 'minio.lan', $result['error'] );
+		$this->assertStringNotContainsString( 'example-bucket.minio.lan', $result['error'] );
+		$this->assertStringNotContainsString( 'needs https://', $result['error'] );
+		$this->assertCount( 0, $this->requests );
+	}
+
+	/**
+	 * The https error names the endpoint the admin typed, not the
+	 * bucket-prefixed host the request was built for.
+	 *
+	 * @return void
+	 */
+	public function test_public_http_endpoint_message_names_the_endpoint() {
+		$this->resolve_hostnames_publicly();
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array( 'endpoint' => 'http://s3.example.com' )
+		);
+
+		$result = $provider->connection_test();
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertStringContainsString( 'The storage endpoint s3.example.com needs https://', $result['error'] );
+		$this->assertStringNotContainsString( 'example-bucket.s3.example.com', $result['error'] );
 	}
 }

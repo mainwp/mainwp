@@ -200,6 +200,8 @@ class Connector_Installer extends Log_Connector {
                 'version'     => isset( $data['version'] ) ? $data['version'] : '',
                 'old_version' => isset( $data['old_version'] ) ? $data['old_version'] : '',
                 'error'       => isset( $data['error'] ) ? $data['error'] : '',
+                'slug'        => 'wordpress', // phpcs:ignore -slug.
+                'success'     => ! empty( $data['success'] ) ? 1 : 0,
             );
             $logs_args[] = $args;
 
@@ -220,7 +222,9 @@ class Connector_Installer extends Log_Connector {
             }
 
             $state = 1;
-            if ( isset( $args['extra_info'] ) && is_array( $args['extra_info'] ) ) {
+            if ( isset( $args['success'] ) ) {
+                $state = $args['success'] ? 1 : 0;
+            } elseif ( isset( $args['extra_info'] ) && is_array( $args['extra_info'] ) ) {
                 if ( isset( $args['extra_info']['success'] ) ) {
                     $state = ! empty( $args['extra_info']['success'] ) ? 1 : 0;
                 }

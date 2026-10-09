@@ -28,8 +28,10 @@ require_once $_tests_dir . '/includes/functions.php';
  * The log module tries to create archive tables from `wp_logs` during plugins_loaded,
  * but this fires BEFORE _mainwp_install_tables() runs, so the base table doesn't exist.
  * Enabling the module would require modifying the module to handle test environments.
+ *
+ * Fixed.
  */
-define( 'MAINWP_MODULE_LOG_ENABLED', false );
+
 
 /**
  * Enable testing mode to allow test hooks.

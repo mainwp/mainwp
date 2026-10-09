@@ -1908,7 +1908,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 	/**
 	 * Every exit of the failover loop leaves the entry in one documented
 	 * state: the outcome's retryability, the candidate index and carried
-	 * history, and the chunked resume state. Rows M1-M18 are the input
+	 * history, and the chunked resume state. Rows M1-M21 are the input
 	 * matrix in the D65 findings section.
 	 *
 	 * @dataProvider failover_exit_matrix
@@ -1929,6 +1929,11 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 		$entry['source']            = $source;
 		$entry['remote_key']        = '4/8/files/db.tar.gz';
 		$entry['remote_candidates'] = array();
+		$bases                      = array(
+			'whole'   => $whole,
+			'chunked' => $remote,
+			'nocopy'  => $empty,
+		);
 		foreach ( $candidates as $dest_id => $behaviour ) {
 			$entry['remote_candidates'][] = $this->candidate( $dest_id, in_array( $behaviour, array( 'chunked', 'throw_manifest' ), true ), '' );
 			if ( 'throw' === $behaviour || 'throw_manifest' === $behaviour ) {
@@ -1937,12 +1942,6 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 
 				$this->driver->destination_providers[ $dest_id ] = $provider;
 			} elseif ( 'gone' !== $behaviour ) {
-				$bases = array(
-					'whole'   => $whole,
-					'chunked' => $remote,
-					'nocopy'  => $empty,
-				);
-
 				$this->driver->destination_bases[ $dest_id ] = $bases[ $behaviour ];
 			}
 		}
@@ -1958,6 +1957,11 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				if ( 0 === strpos( $mutation, 'gone:' ) ) {
 					$gone = (int) substr( $mutation, 5 );
 					unset( $this->driver->destination_bases[ $gone ], $this->driver->destination_providers[ $gone ] );
+				} elseif ( 0 === strpos( $mutation, 'serve:' ) ) {
+					// A destination comes back holding a whole file or no copy.
+					list( , $back, $mode ) = explode( ':', $mutation );
+					unset( $this->driver->destination_providers[ (int) $back ] );
+					$this->driver->destination_bases[ (int) $back ] = $bases[ $mode ];
 				} elseif ( 'lose_chunks' === $mutation ) {
 					foreach ( (array) glob( $remote . '/0/44/chunks/*.bin' ) as $chunk ) {
 						unlink( $chunk ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
@@ -1995,7 +1999,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 	}
 
 	/**
-	 * The failover exit matrix (D65 findings section, rows M1-M18).
+	 * The failover exit matrix (D65 findings section, rows M1-M21).
 	 *
 	 * @return array
 	 */
@@ -2015,9 +2019,9 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 		$fallback_yields     = array( array( 'gone:22' ), 'past', $expect( 'pending', false, 2, true, true ) );
 
 		return array(
-			'M1 first replica stages'                  => array( 'remote', array( 21 => 'whole' ), 'chunked', array( array( array(), 'open', $expect( 'staged', false, null, false, false ) ) ) ),
-			'M2 chunked replica yields'                => array( 'remote', array( 21 => 'chunked' ), 'chunked', array( array( array(), 'past', $expect( 'pending', false, 0, false, true ) ) ) ),
-			'M3 throw then a chunked replica yields'   => array(
+			'M1 first replica stages'                     => array( 'remote', array( 21 => 'whole' ), 'chunked', array( array( array(), 'open', $expect( 'staged', false, null, false, false ) ) ) ),
+			'M2 chunked replica yields'                   => array( 'remote', array( 21 => 'chunked' ), 'chunked', array( array( array(), 'past', $expect( 'pending', false, 0, false, true ) ) ) ),
+			'M3 throw then a chunked replica yields'      => array(
 				'remote',
 				array(
 					21 => 'throw',
@@ -2026,7 +2030,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( $pending_after_throw ),
 			),
-			'M4 resumed replica stages'                => array(
+			'M4 resumed replica stages'                   => array(
 				'remote',
 				array(
 					21 => 'throw',
@@ -2035,7 +2039,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( $pending_after_throw, array( array(), 'open', $expect( 'staged', false, null, false, false ) ) ),
 			),
-			'M5 resumed replica fails after a throw'   => array(
+			'M5 resumed replica fails after a throw'      => array(
 				'remote',
 				array(
 					21 => 'throw',
@@ -2044,7 +2048,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( $pending_after_throw, array( array( 'lose_chunks' ), 'open', $expect( 'error', true, null, false, false ) ) ),
 			),
-			'M6 resumed replica fails after no copy'   => array(
+			'M6 resumed replica fails after no copy'      => array(
 				'remote',
 				array(
 					21 => 'nocopy',
@@ -2053,7 +2057,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( array( array(), 'past', $expect( 'pending', false, 1, false, true ) ), array( array( 'lose_chunks' ), 'open', $expect( 'error', false, null, false, false ) ) ),
 			),
-			'M7 every replica fails, none threw'       => array(
+			'M7 every replica fails, none threw'          => array(
 				'remote',
 				array(
 					21 => 'nocopy',
@@ -2062,7 +2066,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( array( array(), 'open', $expect( 'error', false, null, false, false ) ) ),
 			),
-			'M8 throw then no copy'                    => array(
+			'M8 throw then no copy'                       => array(
 				'remote',
 				array(
 					21 => 'throw',
@@ -2071,7 +2075,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( array( array(), 'open', $expect( 'error', true, null, false, false ) ) ),
 			),
-			'M9 throw then disk full'                  => array(
+			'M9 throw then disk full'                     => array(
 				'remote',
 				array(
 					21 => 'throw_manifest',
@@ -2080,7 +2084,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( array( array( 'disk_full' ), 'open', $expect( 'error', false, null, false, false, true ) ) ),
 			),
-			'M10 skip between tried replicas'          => array(
+			'M10 skip between tried replicas'             => array(
 				'remote',
 				array(
 					21 => 'nocopy',
@@ -2090,7 +2094,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( array( array(), 'open', $expect( 'staged', false, null, false, false ) ) ),
 			),
-			'M11 skip after a throw'                   => array(
+			'M11 skip after a throw'                      => array(
 				'remote',
 				array(
 					21 => 'throw',
@@ -2099,7 +2103,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( array( array(), 'open', $expect( 'error', true, null, false, false ) ) ),
 			),
-			'M12 skip before a chunked replica yields' => array(
+			'M12 skip before a chunked replica yields'    => array(
 				'remote',
 				array(
 					21 => 'gone',
@@ -2108,7 +2112,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( array( array(), 'past', $expect( 'pending', false, 1, false, true ) ) ),
 			),
-			'M13 skipped resume drops its cursor'      => array(
+			'M13 skipped resume drops its cursor'         => array(
 				'remote',
 				array(
 					21 => 'chunked',
@@ -2117,7 +2121,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( array( array(), 'past', $expect( 'pending', false, 0, false, true ) ), array( array( 'partial_assembly', 'gone:21' ), 'open', $expect( 'staged', false, null, false, false ) ) ),
 			),
-			'M14 fallback errors with history'         => array(
+			'M14 fallback errors with history'            => array(
 				'remote',
 				array(
 					21 => 'throw',
@@ -2126,8 +2130,8 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'nocopy',
 				array( $pending_after_throw, array( array( 'gone:22' ), 'open', $expect( 'error', true, null, false, false ) ) ),
 			),
-			'M15 fallback errors without history'      => array( 'remote', array( 21 => 'gone' ), 'nocopy', array( array( array(), 'open', $expect( 'error', false, null, false, false ) ) ) ),
-			'M16 fallback yields then fails, history'  => array(
+			'M15 fallback errors without history'         => array( 'remote', array( 21 => 'gone' ), 'nocopy', array( array( array(), 'open', $expect( 'error', false, null, false, false ) ) ) ),
+			'M16 fallback yields then fails, history'     => array(
 				'remote_chunked',
 				array(
 					21 => 'throw',
@@ -2136,7 +2140,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( $pending_after_throw, $fallback_yields, array( array( 'gone:21', 'lose_chunks' ), 'open', $expect( 'error', true, null, false, false ) ) ),
 			),
-			'M17 fallback yields then stages'          => array(
+			'M17 fallback yields then stages'             => array(
 				'remote_chunked',
 				array(
 					21 => 'throw',
@@ -2145,7 +2149,7 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				'chunked',
 				array( $pending_after_throw, $fallback_yields, array( array( 'gone:21' ), 'open', $expect( 'staged', false, null, false, false ) ) ),
 			),
-			'M18 fallback disk full'                   => array(
+			'M18 fallback disk full'                      => array(
 				'remote_chunked',
 				array(
 					21 => 'throw',
@@ -2153,6 +2157,33 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				),
 				'chunked',
 				array( $pending_after_throw, array( array( 'gone:22', 'disk_full' ), 'open', $expect( 'error', false, null, false, false, true ) ) ),
+			),
+			'M19 fallback fails, an earlier replica is back' => array(
+				'remote_chunked',
+				array(
+					21 => 'throw',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( $pending_after_throw, $fallback_yields, array( array( 'partial_assembly', 'lose_chunks', 'serve:21:whole' ), 'open', $expect( 'staged', false, null, false, false ) ) ),
+			),
+			'M20 fallback keeps its claim over a replica' => array(
+				'remote_chunked',
+				array(
+					21 => 'throw',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( $pending_after_throw, $fallback_yields, array( array( 'serve:21:nocopy' ), 'open', $expect( 'staged', false, null, false, false ) ) ),
+			),
+			'M21 fallback and the replica back both fail' => array(
+				'remote_chunked',
+				array(
+					21 => 'throw',
+					22 => 'chunked',
+				),
+				'chunked',
+				array( $pending_after_throw, $fallback_yields, array( array( 'lose_chunks', 'serve:21:nocopy' ), 'open', $expect( 'error', true, null, false, false ) ) ),
 			),
 		);
 	}

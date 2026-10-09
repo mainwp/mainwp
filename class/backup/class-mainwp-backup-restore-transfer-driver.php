@@ -541,15 +541,27 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
 
         // candidate_index names the source that owns the entry's resume
         // state: candidate i, or $total for the snapshot-level fallback. A
-        // pending tick resumes that same source, because a reassembly cursor
-        // is only valid against the objects it was read from. A replica that
-        // threw before a pending tick is not retried on resume, so its
-        // retryability rides on the entry while the index persists.
+        // pending tick resumes that same source first, because a reassembly
+        // cursor is only valid against the objects it was read from. A
+        // replica that threw before a pending tick is not retried on resume,
+        // so its retryability rides on the entry while the index persists.
         $total     = count( $candidates );
         $resuming  = isset( $entry['candidate_index'] );
         $start     = $resuming ? min( max( 0, (int) $entry['candidate_index'] ), $total ) : 0;
         $retryable = $resuming && ! empty( $entry['candidate_retryable'] );
         $outcome   = null;
+
+        if ( $total === $start ) {
+            // The fallback re-resolves its destination every tick and stages
+            // in the primary's mode, so when it can no longer carry on, every
+            // candidate gets a fresh try in its own mode.
+            $outcome   = $this->stage_from_fallback( $staging, $entry, $deadline, $total );
+            $retryable = $retryable || ! empty( $outcome['retryable'] );
+            if ( $this->is_replica_failure( $outcome ) ) {
+                $this->drop_resume_state( $staging, $entry );
+                $start = 0;
+            }
+        }
 
         for ( $i = $start; $i < $total; $i++ ) {
             $candidate = (array) $candidates[ $i ];
@@ -582,11 +594,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             // snapshot-level resolution: it scans the same jobs, so production
             // fails identically, and callers that override that seam keep
             // working. It can still find a replica before the resume index.
-            $entry['candidate_index'] = $total;
-
-            $outcome   = 'remote_chunked' === $entry['source']
-                ? $this->stage_from_remote_chunked( $staging, $entry, $deadline )
-                : $this->stage_from_remote( $staging, $entry );
+            $outcome   = $this->stage_from_fallback( $staging, $entry, $deadline, $total );
             $retryable = $retryable || ! empty( $outcome['retryable'] );
         }
 
@@ -606,6 +614,24 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             $outcome['retryable'] = $retryable;
         }
         return $outcome;
+    }
+
+    /**
+     * Stage through the snapshot-level resolution, which owns the entry's
+     * resume state while it is pending.
+     *
+     * @param string $staging  Staging dir.
+     * @param array  $entry    Plan entry (by reference).
+     * @param float  $deadline Slice deadline (epoch).
+     * @param int    $owner    Candidate index that names the fallback.
+     *
+     * @return array Stage state.
+     */
+    private function stage_from_fallback( string $staging, array &$entry, float $deadline, int $owner ): array {
+        $entry['candidate_index'] = $owner;
+        return 'remote_chunked' === $entry['source']
+            ? $this->stage_from_remote_chunked( $staging, $entry, $deadline )
+            : $this->stage_from_remote( $staging, $entry );
     }
 
     /**

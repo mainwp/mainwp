@@ -539,10 +539,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 : $this->stage_from_remote( $staging, $entry );
         }
 
-        $total     = count( $candidates );
-        $start     = isset( $entry['candidate_index'] ) ? min( max( 0, (int) $entry['candidate_index'] ), $total - 1 ) : 0;
-        $last      = null;
-        $retryable = false;
+        $total = count( $candidates );
+        $start = isset( $entry['candidate_index'] ) ? min( max( 0, (int) $entry['candidate_index'] ), $total - 1 ) : 0;
+        $last  = null;
+        // A replica that threw before a pending slice is skipped on resume,
+        // so its retryability rides on the entry until the loop settles.
+        $retryable = isset( $entry['candidate_index'] ) && ! empty( $entry['candidate_retryable'] );
+        unset( $entry['candidate_retryable'] );
 
         for ( $i = $start; $i < $total; $i++ ) {
             $candidate = (array) $candidates[ $i ];
@@ -570,6 +573,9 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             if ( 'pending' === $outcome['state'] ) {
                 // The next tick resumes this same candidate; its reassembly
                 // cursor is only valid against this destination's objects.
+                if ( $retryable ) {
+                    $entry['candidate_retryable'] = true;
+                }
                 return $outcome;
             }
 
@@ -592,9 +598,13 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         // snapshot-level resolution: it scans the same jobs, so production
         // fails identically, and callers that override that seam keep
         // working.
-        return 'remote_chunked' === $entry['source']
+        $outcome = 'remote_chunked' === $entry['source']
             ? $this->stage_from_remote_chunked( $staging, $entry, $deadline )
             : $this->stage_from_remote( $staging, $entry );
+        if ( $retryable && 'error' === $outcome['state'] && MainWP_Backup_Error_Codes::ERR_RESTORE_DISK_FULL !== ( $outcome['error_code'] ?? null ) ) {
+            $outcome['retryable'] = true;
+        }
+        return $outcome;
     }
 
     /**

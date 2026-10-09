@@ -1906,6 +1906,61 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 	}
 
 	/**
+	 * A replica that threw keeps the restore retryable when failover to the
+	 * next replica spans a pending slice and that replica then fails.
+	 *
+	 * @dataProvider failover_across_slices
+	 * @param bool $throws Whether the first replica throws (else it has no copy).
+	 */
+	public function test_failover_retryability_survives_pending_slice( bool $throws ) {
+		$content = str_repeat( 'slice-data-', 20 );
+		$entry   = $this->make_chunked_remote( $content );
+		$base    = $this->dir . '/remote';
+
+		$provider            = new Restore_Throwing_Storage_Local( array( 'base_path' => $base ) );
+		$provider->throw_key = $throws ? '4/8/files/db.tar.gz' : '';
+
+		$this->driver->destination_providers[21] = $provider;
+		$this->driver->destination_bases[22]     = $base;
+
+		$entry['source']            = 'remote';
+		$entry['remote_candidates'] = array(
+			$this->candidate( 21, false, '' ),
+			$this->candidate( 22, true, '' ),
+		);
+		$plan                       = array( $entry );
+
+		// Slice 1: replica 21 fails, replica 22 fetches its manifest and yields.
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) - 1 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertNull( $outcome['error'] );
+		$this->assertSame( 1, $plan[0]['candidate_index'] );
+
+		// Slice 2: replica 22 has lost its chunks.
+		foreach ( (array) glob( $base . '/0/44/chunks/*.bin' ) as $chunk ) {
+			unlink( $chunk ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		}
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertNotNull( $outcome['error'] );
+		$this->assertSame( $throws, ! empty( $outcome['retryable'] ) );
+		$this->assertArrayNotHasKey( 'candidate_index', $plan[0] );
+		$this->assertArrayNotHasKey( 'candidate_retryable', $plan[0] );
+	}
+
+	/**
+	 * First-replica outcomes for the cross-slice failover test.
+	 *
+	 * @return array
+	 */
+	public static function failover_across_slices() {
+		return array(
+			'first replica threw'       => array( true ),
+			'first replica had no copy' => array( false ),
+		);
+	}
+
+	/**
 	 * Cloud transport exceptions must not prevent a healthy replica restoring.
 	 */
 	public function test_stage_fails_over_when_primary_download_throws() {

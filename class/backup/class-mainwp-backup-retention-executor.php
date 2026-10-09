@@ -527,16 +527,25 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     * The child-side task id a snapshot's run used, recovered from its
-     * local directory name (snapshot-{child_task_id}). Runs downloaded
-     * through the legacy flow use other directory layouts and have no
-     * child task row to clean.
+     * The child-side task id a snapshot's run used.
+     *
+     * The run key ({site}:{task}:c:{child_task_id}) names it for every
+     * backup type; full and database archives share the site folder, so the
+     * folder name only identifies incremental runs. The folder is the
+     * fallback for rows recorded before the run key existed. Legacy-flow
+     * runs (an :l: run key) have no child task row to clean.
      *
      * @param object $snapshot Snapshot row with decoded archives.
      *
      * @return string Child task id, or '' when none applies.
      */
     private function child_task_id_for( object $snapshot ): string {
+        $run_key = isset( $snapshot->run_key ) ? (string) $snapshot->run_key : '';
+        if ( '' !== $run_key ) {
+            $prefix = (int) $snapshot->site_id . ':' . (int) $snapshot->task_id . ':c:';
+            return 0 === strpos( $run_key, $prefix ) ? substr( $run_key, strlen( $prefix ) ) : '';
+        }
+
         $path = '';
         foreach ( (array) $snapshot->archives as $archive ) {
             if ( ! empty( $archive['path'] ) ) {

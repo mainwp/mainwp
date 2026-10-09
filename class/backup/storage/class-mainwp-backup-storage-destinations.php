@@ -435,6 +435,11 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             return true;
         }
 
+        // The transport decodes percent-escapes in the host; this check would classify the encoded form.
+        if ( false !== strpos( $host, '%' ) ) {
+            return false;
+        }
+
         // Transports accept numeric IPv4 spellings that DNS may fail to classify.
         if ( self::is_ip_like( $host ) && ! filter_var( $host, FILTER_VALIDATE_IP ) ) {
             return false;

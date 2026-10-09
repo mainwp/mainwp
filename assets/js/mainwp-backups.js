@@ -243,8 +243,7 @@ let backup_retry_fail = function (siteId, pData, remoteDestinations, pid, type, 
             } else if (response.error && response.status == undefined) {
                 backupCreateRunning = false;
 
-                let error = typeof response.error === 'object' ? response.error.message : response.error;
-                appendToDiv(backsprocessContentEl, ' ' + mainwp_backup_error_html(error));
+                appendToDiv(backsprocessContentEl, ' ' + mainwp_backup_error_html(response.error));
             } else {
                 // busy or other.
                 setTimeout(function () {

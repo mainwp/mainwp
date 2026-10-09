@@ -14,6 +14,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Updates;
+use MainWP\Dashboard\MainWP_Updates_Overview;
 
 /**
  * Class MainWP_Updates_Native_Backup_Indicator_Test
@@ -104,6 +105,24 @@ class MainWP_Updates_Native_Backup_Indicator_Test extends MainWP_Abilities_Test_
 		$html = MainWP_Updates::get_native_backup_indicator( $website );
 		$this->assertStringContainsString( 'green label', $html, 'The same backup is recent under the seven-day gate window.' );
 		$this->assertStringContainsString( 'Backup ready', $html );
+	}
+
+	/**
+	 * Integer options retain the configured window for the gate and badge.
+	 *
+	 * @return void
+	 */
+	public function test_indicator_uses_integer_backup_before_upgrade_days_setting() {
+		$site_id = $this->create_test_site();
+		$this->record_native_snapshot( $site_id, array( 'created' => time() - 5 * DAY_IN_SECONDS ) );
+		$website = (object) array( 'id' => $site_id );
+
+		update_option( 'mainwp_backup_before_upgrade_days', 3 );
+		$this->assertSame( 3, MainWP_Updates_Overview::get_backup_before_upgrade_days(), 'An integer option keeps the three-day window.' );
+
+		$html = MainWP_Updates::get_native_backup_indicator( $website );
+		$this->assertStringContainsString( 'grey label', $html, 'A five-day-old backup is stale under the three-day gate window.' );
+		$this->assertStringNotContainsString( 'Backup ready', $html );
 	}
 
 	/**

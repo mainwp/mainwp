@@ -1382,7 +1382,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public static function get_backup_before_upgrade_days(): int {
         $days = get_option( 'mainwp_backup_before_upgrade_days' );
-        if ( empty( $days ) || ! ctype_digit( $days ) ) {
+        if ( empty( $days ) || ! ctype_digit( (string) $days ) ) {
             $days = 7;
         }
         return (int) $days;

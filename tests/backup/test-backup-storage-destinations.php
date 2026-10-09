@@ -526,13 +526,16 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 	 */
 	public function data_ip_like_host_safety() {
 		return array(
-			'dotted hex metadata' => array( '0xa9.0xfe.0xa9.0xfe', false ),
-			'octal metadata'      => array( '0251.0376.0251.0376', false ),
-			'decimal metadata'    => array( '2852039166', false ),
-			'hex metadata'        => array( '0xa9fea9fe', false ),
-			'dotted metadata'     => array( '169.254.169.254', false ),
-			'hostname'            => array( 'storage.example.test', true ),
-			'LAN address'         => array( '192.168.1.10', true ),
+			'dotted hex metadata'   => array( '0xa9.0xfe.0xa9.0xfe', false ),
+			'octal metadata'        => array( '0251.0376.0251.0376', false ),
+			'decimal metadata'      => array( '2852039166', false ),
+			'hex metadata'          => array( '0xa9fea9fe', false ),
+			'dotted metadata'       => array( '169.254.169.254', false ),
+			'percent-encoded dots'  => array( '169%2e254%2e169%2e254', false ),
+			'percent-encoded octet' => array( '%31%36%39.254.169.254', false ),
+			'percent-encoded hex'   => array( '0xa9%2e0xfe%2e0xa9%2e0xfe', false ),
+			'hostname'              => array( 'storage.example.test', true ),
+			'LAN address'           => array( '192.168.1.10', true ),
 		);
 	}
 

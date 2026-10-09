@@ -1964,8 +1964,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * The artifacts a completed safety backup reported, when they can serve
      * as a rollback source.
      *
-     * The answer must be about the task this job started and name at least
-     * one plain file; anything else is an unusable safety backup.
+     * The answer must be about the task this job started, carry no error,
+     * name only plain files, and include the full archive itself (the role
+     * the Child gives a full backup's archive) with a size above zero. A
+     * manifest alone cannot restore the site, so anything else is an
+     * unusable safety backup.
      *
      * @param mixed  $payload Child response to backup_task_run.
      * @param string $task_id Safety-backup task id this job started.
@@ -1973,7 +1976,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @return array Artifact entries, or empty when the answer is unusable.
      */
     private function safety_backup_artifacts( $payload, string $task_id ): array {
-        if ( ! is_array( $payload ) || '' === $task_id || ! isset( $payload['task_id'] ) || ! is_string( $payload['task_id'] ) || $payload['task_id'] !== $task_id ) {
+        if ( ! is_array( $payload ) || array_key_exists( 'error', $payload ) || '' === $task_id || ! isset( $payload['task_id'] ) || ! is_string( $payload['task_id'] ) || $payload['task_id'] !== $task_id ) {
             return array();
         }
 
@@ -1988,13 +1991,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             );
         }
 
+        $has_archive = false;
         foreach ( $artifacts as $artifact ) {
             $file = is_array( $artifact ) && isset( $artifact['file'] ) && is_string( $artifact['file'] ) ? $artifact['file'] : '';
             if ( '' === $file || basename( $file ) !== $file || in_array( $file, array( '.', '..' ), true ) ) {
                 return array();
             }
+            if ( 'full' === ( $artifact['role'] ?? null ) && isset( $artifact['size'] ) && is_numeric( $artifact['size'] ) && (int) $artifact['size'] > 0 ) {
+                $has_archive = true;
+            }
         }
-        return $artifacts;
+        return $has_archive ? $artifacts : array();
     }
 
     /**

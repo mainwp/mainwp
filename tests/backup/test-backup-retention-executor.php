@@ -280,16 +280,18 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A restore on a DIFFERENT chain holds nothing - the guard is a
-	 * membership check, not a site-wide freeze.
+	 * Any restore on the site holds every prune there: restore admission
+	 * takes the same site slot, so a prune cannot race a restore being
+	 * admitted for the snapshot it is deleting. The unit is skipped, and
+	 * the next run prunes it once the restore settles.
 	 *
 	 * @return void
 	 */
-	public function test_prune_proceeds_when_restore_references_other_chain() {
+	public function test_prune_waits_while_a_restore_holds_the_site() {
 		list( $held, $held_dir )     = $this->make_snapshot_with_dir();
 		list( $target, $target_dir ) = $this->make_snapshot_with_dir();
 
-		MainWP_Backup_Restore_Job_Store::instance()->create_job(
+		$job_id = MainWP_Backup_Restore_Job_Store::instance()->create_job(
 			$this->site_id,
 			$held,
 			array( 'restore_id' => 'm5aother0001' )
@@ -303,10 +305,19 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 				'newest_created' => time(),
 			),
 		);
+		$task       = $this->make_task( array( 'delete_cloud_copies' => 0 ) );
 
-		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $this->make_task( array( 'delete_cloud_copies' => 0 ) ), false );
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, false );
 
-		$this->assertSame( 1, $result['snapshots_pruned'], 'An unrelated restore must not freeze the whole site.' );
+		$this->assertSame( 0, $result['snapshots_pruned'] );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $target )->status );
+		$this->assertDirectoryExists( $target_dir );
+		$this->assertStringContainsString( 'restore in progress', $result['errors'][0] );
+
+		MainWP_Backup_Restore_Job_Store::instance()->cancel_job( $job_id );
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, false );
+
+		$this->assertSame( 1, $result['snapshots_pruned'], 'The next run prunes once the restore settles.' );
 		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $target )->status );
 		$this->assertDirectoryDoesNotExist( $target_dir );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $held )->status );

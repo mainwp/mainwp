@@ -239,9 +239,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @return void
      */
     private function purge_orphaned_task_snapshots( int $site_id, array &$result ): void {
-        $query    = MainWP_Backup_Retention_Query::instance();
-        $restores = MainWP_Backup_Restore_Job_Store::instance();
-        $before   = $result['snapshots_pruned'];
+        $query  = MainWP_Backup_Retention_Query::instance();
+        $before = $result['snapshots_pruned'];
         foreach ( $query->list_orphaned_task_ids_for_site( $site_id ) as $task_id ) {
             $task = (object) array(
                 'id'                  => $task_id,
@@ -251,30 +250,15 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 $snapshot_ids = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
                 sort( $snapshot_ids, SORT_NUMERIC );
 
-                // Restore admission takes the same slot before it resolves a
-                // snapshot, so holding it from the active-restore check to the
-                // last delete keeps a restore from adopting files mid-delete.
-                $reservation = $restores->reserve_site( $site_id );
-                if ( $reservation <= 0 ) {
-                    $result['errors'][] = sprintf(
-                        'Snapshots %s: a restore holds this site, so they are kept; run Clean Up again after it finishes.',
-                        implode( ',', $snapshot_ids )
-                    );
-                    continue;
-                }
-                try {
-                    $pruned = $this->prune_candidate(
-                        array(
-                            'snapshot_ids' => $snapshot_ids,
-                            'reason'       => 'task_deleted',
-                            'size_bytes'   => (int) $unit['size_bytes'],
-                        ),
-                        $task,
-                        $result
-                    );
-                } finally {
-                    $restores->release_reservation( $reservation );
-                }
+                $pruned = $this->prune_candidate(
+                    array(
+                        'snapshot_ids' => $snapshot_ids,
+                        'reason'       => 'task_deleted',
+                        'size_bytes'   => (int) $unit['size_bytes'],
+                    ),
+                    $task,
+                    $result
+                );
                 if ( $pruned ) {
                     ++$result['pruned'];
                 }
@@ -433,10 +417,53 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @param array  $result    Result accumulator, modified in place.
      *
      * @return bool True when at least one snapshot in the unit was pruned;
-     *              false when the unit was held (active restore) or the first
-     *              leaf could not be removed, so nothing was deleted.
+     *              false when the unit was held (a restore or another
+     *              backup action holds the site) or the first leaf could not
+     *              be removed, so nothing was deleted.
      */
     private function prune_candidate( array $candidate, object $task, array &$result ): bool {
+        $site_id = 0;
+        foreach ( (array) $candidate['snapshot_ids'] as $snapshot_id ) {
+            $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot_id );
+            if ( null !== $snapshot ) {
+                $site_id = (int) $snapshot->site_id;
+                break;
+            }
+        }
+        if ( $site_id <= 0 ) {
+            return false;
+        }
+
+        // Restore admission takes the same site slot before it resolves a
+        // snapshot, so holding it from the active-restore check to the last
+        // delete keeps a restore from adopting files mid-delete. A held site
+        // skips the unit; the next run retries it.
+        $restores    = MainWP_Backup_Restore_Job_Store::instance();
+        $reservation = $restores->reserve_site( $site_id );
+        if ( $reservation <= 0 ) {
+            $result['errors'][] = sprintf(
+                'Snapshots %s: a restore in progress or another backup action holds this site; they are kept and the prune will retry on a later sweep.',
+                implode( ',', array_map( 'intval', (array) $candidate['snapshot_ids'] ) )
+            );
+            return false;
+        }
+        try {
+            return $this->prune_reserved_candidate( $candidate, $task, $result );
+        } finally {
+            $restores->release_reservation( $reservation );
+        }
+    }
+
+    /**
+     * Prune one candidate unit while its site's restore slot is held.
+     *
+     * @param array  $candidate Candidate: snapshot_ids (base first), reason, size_bytes.
+     * @param object $task      Task row.
+     * @param array  $result    Result accumulator, modified in place.
+     *
+     * @return bool As prune_candidate().
+     */
+    private function prune_reserved_candidate( array $candidate, object $task, array &$result ): bool {
         // A restore mid-flight stages its artifacts from this chain: pruning
         // any member destroys the recovery source, so the whole unit is held
         // for this sweep and revisited once the restore settles. This also

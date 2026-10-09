@@ -7090,6 +7090,146 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Clean Up's on-demand keep-count prune takes the site slot too, so a
+	 * restore cannot be admitted for the on-demand snapshot it is deleting.
+	 */
+	public function test_cleanup_keep_count_prune_and_restore_admission_exclude_each_other() {
+		global $wpdb;
+		$website = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		$task    = MainWP_DB_Backup::instance()->ensure_manual_backup_task( $website );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			(int) $task->id,
+			array(
+				'retention_count'     => 1,
+				'delete_cloud_copies' => 0,
+			)
+		);
+		$dir = MainWP_Backup_Private_Root::site_dir( $this->site_id );
+		wp_mkdir_p( $dir );
+		$ids = array();
+		foreach ( array( 200, 100 ) as $age ) {
+			$path = $dir . 'db-ondemand-' . uniqid() . '.sql.zip';
+			file_put_contents( $path, 'on-demand-db-bytes' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+				MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+				array(
+					'task_id'  => (int) $task->id,
+					'site_id'  => $this->site_id,
+					'type'     => 'db',
+					'created'  => time() - $age,
+					'archives' => wp_json_encode( array( array( 'file' => basename( $path ), 'size' => 18, 'role' => 'db', 'path' => $path ) ) ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
+					'status'   => 'complete',
+				)
+			);
+			$ids[]                      = (int) $wpdb->insert_id;
+			$this->chain_snapshot_ids[] = (int) $wpdb->insert_id;
+		}
+		$older = $ids[0];
+
+		$admitted = null;
+		$race     = function ( $sql ) use ( &$admitted, $older ) {
+			if ( null === $admitted && false !== strpos( $sql, 'WHERE snapshot_id IN' ) ) {
+				$admitted = 'checking';
+				try {
+					$admitted = $this->orchestrator->initiate_restore( $this->site_id, $older );
+				} catch ( MainWP_Exception $e ) {
+					$admitted = $e->getMessage();
+				}
+			}
+			return $sql;
+		};
+		add_filter( 'query', $race );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $this->site_id );
+		} finally {
+			remove_filter( 'query', $race );
+			MainWP_DB_Backup::instance()->remove_backup_task( (int) $task->id );
+		}
+
+		$this->assertSame( 'Another backup action is working on this site. Try again in a minute.', $admitted );
+		$this->assertSame( 1, $result['snapshots_pruned'] );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $older )->status );
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
+	}
+
+	/**
+	 * A completed safety backup that does not carry the full archive itself
+	 * (a manifest alone, an empty archive, an error envelope) is unusable:
+	 * the restore fails before any older safety backup is pruned.
+	 *
+	 * @dataProvider data_safety_backup_answers_without_archive
+	 *
+	 * @param array $payload Child answer to backup_task_run.
+	 */
+	public function test_safety_backup_without_full_archive_fails_the_restore( $payload ) {
+		$this->test_unusable_safety_backup_completion_fails_the_restore( $payload );
+	}
+
+	/**
+	 * Completed answers with no usable full archive.
+	 *
+	 * @return array
+	 */
+	public static function data_safety_backup_answers_without_archive() {
+		$base = array(
+			'task_id' => 'task-new-pre',
+			'phase'   => 'completed',
+		);
+		return array(
+			'manifest only'      => array(
+				$base + array(
+					'artifacts' => array(
+						array(
+							'file' => 'files.list',
+							'role' => 'manifest',
+							'size' => 20,
+						),
+					),
+				),
+			),
+			'empty full archive' => array(
+				$base + array(
+					'artifacts' => array(
+						array(
+							'file' => 'backup-new.tar.gz',
+							'role' => 'full',
+							'size' => 0,
+						),
+					),
+				),
+			),
+			'no role'            => array(
+				$base + array(
+					'artifacts' => array(
+						array(
+							'file' => 'backup-new.tar.gz',
+							'size' => 1234,
+						),
+					),
+				),
+			),
+			'error envelope'     => array(
+				$base + array(
+					'error'     => 'Disk full.',
+					'artifacts' => array(
+						array(
+							'file' => 'backup-new.tar.gz',
+							'role' => 'full',
+							'size' => 1234,
+						),
+					),
+				),
+			),
+			'legacy empty file'  => array(
+				$base + array(
+					'file' => 'backup-new.tar.gz',
+					'size' => 0,
+				),
+			),
+		);
+	}
+
+	/**
 	 * Clean Up and restore admission take the same site slot, so a restore
 	 * cannot be admitted for a snapshot Clean Up is deleting.
 	 */

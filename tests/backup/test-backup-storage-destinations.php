@@ -596,4 +596,32 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $lan, 'A hostname resolving only to a LAN address is private.' );
 		$this->assertFalse( $mixed, 'A hostname with any public address is not private.' );
 	}
+
+	/**
+	 * CGNAT 100.64.0.0/10 counts as private: Tailscale and similar VPNs hand
+	 * out these addresses, and plain-HTTP storage over them is supported.
+	 * The neighbors on either side of the /10 stay public.
+	 *
+	 * @return void
+	 */
+	public function test_is_private_network_host_accepts_cgnat_range_only() {
+		foreach ( array( '100.64.0.1', '100.100.1.2', '100.127.255.254', '::ffff:100.64.0.1' ) as $host ) {
+			$this->assertTrue( MainWP_Backup_Storage_Destinations::is_private_network_host( $host ), $host . ' is in 100.64.0.0/10.' );
+		}
+		foreach ( array( '100.63.255.255', '100.128.0.1', '::ffff:8.8.8.8' ) as $host ) {
+			$this->assertFalse( MainWP_Backup_Storage_Destinations::is_private_network_host( $host ), $host . ' is public.' );
+		}
+	}
+
+	/**
+	 * The metadata and link-local addresses the SSRF guard blocks are never
+	 * eligible for HTTP, even fd00:ec2::254 inside ULA space.
+	 *
+	 * @return void
+	 */
+	public function test_is_private_network_host_refuses_blocked_addresses() {
+		foreach ( array( 'fd00:ec2::254', '[fd00:ec2::254]', '169.254.169.254', 'fe80::1', '::ffff:169.254.169.254' ) as $host ) {
+			$this->assertFalse( MainWP_Backup_Storage_Destinations::is_private_network_host( $host ), $host . ' is not eligible for HTTP.' );
+		}
+	}
 }

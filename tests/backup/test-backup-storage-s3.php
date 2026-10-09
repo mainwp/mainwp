@@ -503,19 +503,205 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	public function test_request_refuses_https_to_http_redirect() {
 		$provider = $this->make_provider(
 			array(
-				$this->response( 307, '', array( 'location' => 'http://127.0.0.1:9000/other-bucket/k.bin' ) ),
+				$this->response( 307, '', array( 'location' => 'http://203.0.113.10:9000/example-bucket/k.bin' ) ),
+				$this->response( 200 ),
+			),
+			array(
+				'endpoint'   => 'https://203.0.113.10:9000',
+				'path_style' => 1,
+			)
+		);
+
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'An HTTPS to HTTP redirect on a public host must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'needs https://', $e->getMessage() );
+		}
+
+		$this->assertCount( 1, $this->requests, 'The follow-up request must not run after a downgrade redirect.' );
+	}
+
+	/**
+	 * A same-host downgrade to plain HTTP is allowed when the host is on the
+	 * private network, the same rule an http:// endpoint gets.
+	 *
+	 * @return void
+	 */
+	public function test_request_follows_same_host_downgrade_on_private_host() {
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => 'http://192.168.1.50:9000/example-bucket/k.bin' ) ),
+				$this->response( 200 ),
+			),
+			array(
+				'endpoint'   => 'https://192.168.1.50:9000',
+				'path_style' => 1,
+			)
+		);
+
+		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
+		$this->assertCount( 2, $this->requests );
+		$this->assertSame( 'http://192.168.1.50:9000/example-bucket/k.bin', $this->requests[1]['url'] );
+	}
+
+	/**
+	 * Stub name resolution to a public address so redirect tests do not
+	 * depend on live DNS.
+	 *
+	 * @return void
+	 */
+	private function resolve_hostnames_publicly() {
+		add_filter(
+			'mainwp_backup_resolved_host_ips',
+			function () {
+				return array( '203.0.113.10' );
+			}
+		);
+	}
+
+	/**
+	 * AWS answers a new bucket outside us-east-1 with a 307 to the regional
+	 * host for up to a day; that redirect stays under the endpoint's parent
+	 * domain and is followed, re-signed for the new host.
+	 *
+	 * @return void
+	 */
+	public function test_request_follows_aws_regional_redirect() {
+		$this->resolve_hostnames_publicly();
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => 'https://example-bucket.s3.eu-west-1.amazonaws.com/k.bin' ) ),
+				$this->response( 200 ),
+			)
+		);
+
+		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
+		$this->assertCount( 2, $this->requests );
+		$this->assertSame( 'https://example-bucket.s3.eu-west-1.amazonaws.com/k.bin', $this->requests[1]['url'] );
+		$this->assertStringStartsWith( 'AWS4-HMAC-SHA256', $this->requests[1]['args']['headers']['Authorization'] );
+	}
+
+	/**
+	 * Redirect targets that only look like the endpoint's domain, or that
+	 * leave HTTPS, are refused.
+	 *
+	 * @return array
+	 */
+	public function data_untrusted_cross_host_redirects() {
+		return array(
+			'suffix lookalike'      => array( 'https://example-bucket.s3.amazonaws.com.evil.test/k.bin' ),
+			'no dot boundary'       => array( 'https://evilamazonaws.com/k.bin' ),
+			'other domain'          => array( 'https://evil.com/k.bin' ),
+			'regional host on http' => array( 'http://example-bucket.s3.eu-west-1.amazonaws.com/k.bin' ),
+		);
+	}
+
+	/**
+	 * Only the regional-host shape of a cross-host redirect is trusted.
+	 *
+	 * @dataProvider data_untrusted_cross_host_redirects
+	 *
+	 * @param string $location Redirect target.
+	 *
+	 * @return void
+	 */
+	public function test_request_refuses_untrusted_cross_host_redirect( $location ) {
+		$this->resolve_hostnames_publicly();
+		$provider = $this->make_provider(
+			array(
+				$this->response( 307, '', array( 'location' => $location ) ),
 				$this->response( 200 ),
 			)
 		);
 
 		try {
 			$provider->put_object( 'k.bin', 'x' );
-			$this->fail( 'An HTTPS to HTTP redirect must throw.' );
+			$this->fail( 'An untrusted cross-host redirect must throw.' );
 		} catch ( \RuntimeException $e ) {
-			$this->assertStringContainsString( 'non-HTTPS', $e->getMessage() );
+			$this->assertMatchesRegularExpression( '/different server|needs https:\/\//', $e->getMessage() );
 		}
 
-		$this->assertCount( 1, $this->requests, 'The follow-up request must not run after a downgrade redirect.' );
+		$this->assertCount( 1, $this->requests, 'No request may reach the redirect target.' );
+	}
+
+	/**
+	 * An IP-literal endpoint has no domain to stay under, so no cross-host
+	 * redirect is ever followed from it.
+	 *
+	 * @return void
+	 */
+	public function test_ip_literal_endpoint_never_follows_cross_host_redirect() {
+		$this->resolve_hostnames_publicly();
+		foreach ( array( 'https://203.0.113.11:9000/example-bucket/k.bin', 'https://s3.example.com/example-bucket/k.bin' ) as $location ) {
+			$this->requests = array();
+			$provider       = $this->make_provider(
+				array(
+					$this->response( 307, '', array( 'location' => $location ) ),
+					$this->response( 200 ),
+				),
+				array(
+					'endpoint'   => 'https://203.0.113.10:9000',
+					'path_style' => 1,
+				)
+			);
+
+			try {
+				$provider->put_object( 'k.bin', 'x' );
+				$this->fail( 'A cross-host redirect from an IP endpoint must throw: ' . $location );
+			} catch ( \RuntimeException $e ) {
+				$this->assertStringContainsString( 'different server', $e->getMessage() );
+			}
+			$this->assertCount( 1, $this->requests );
+		}
+	}
+
+	/**
+	 * An http:// endpoint whose name does not resolve is refused: HTTP
+	 * eligibility fails closed.
+	 *
+	 * @return void
+	 */
+	public function test_unresolvable_http_hostname_is_refused() {
+		add_filter( 'mainwp_backup_resolved_host_ips', '__return_empty_array' );
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array(
+				'endpoint'   => 'http://minio.lan:9000',
+				'path_style' => 1,
+			)
+		);
+
+		$result = $provider->connection_test();
+
+		$this->assertFalse( $result['ok'] );
+		$this->assertStringContainsString( 'needs https://', $result['error'] );
+		$this->assertCount( 0, $this->requests );
+	}
+
+	/**
+	 * An http:// hostname with one public answer among private ones is
+	 * refused.
+	 *
+	 * @return void
+	 */
+	public function test_mixed_answer_http_hostname_is_refused() {
+		add_filter(
+			'mainwp_backup_resolved_host_ips',
+			function () {
+				return array( '192.168.1.20', '203.0.113.10' );
+			}
+		);
+		$provider = $this->make_provider(
+			array( $this->response( 200 ) ),
+			array(
+				'endpoint'   => 'http://minio.lan:9000',
+				'path_style' => 1,
+			)
+		);
+
+		$this->assertFalse( $provider->connection_test()['ok'] );
+		$this->assertCount( 0, $this->requests );
 	}
 
 	/**
@@ -722,11 +908,13 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	 */
 	public function data_private_http_endpoints() {
 		return array(
-			'loopback MinIO' => array( 'http://127.0.0.1:9000' ),
-			'192.168 NAS'    => array( 'http://192.168.1.50:9000' ),
-			'10/8 LAN'       => array( 'http://10.0.0.5' ),
-			'IPv6 ULA'       => array( 'http://[fd12:3456:789a::1]:9000' ),
-			'LAN hostname'   => array( 'http://nas.lan:9000' ),
+			'loopback MinIO'  => array( 'http://127.0.0.1:9000' ),
+			'192.168 NAS'     => array( 'http://192.168.1.50:9000' ),
+			'10/8 LAN'        => array( 'http://10.0.0.5' ),
+			'IPv6 ULA'        => array( 'http://[fd12:3456:789a::1]:9000' ),
+			'LAN hostname'    => array( 'http://minio.lan:9000' ),
+			'Tailscale CGNAT' => array( 'http://100.100.1.2:9000' ),
+			'IPv4-mapped'     => array( 'http://[::ffff:10.0.0.5]:9000' ),
 		);
 	}
 
@@ -744,7 +932,7 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 		add_filter(
 			'mainwp_backup_resolved_host_ips',
 			function ( $ips, $host ) {
-				return 'nas.lan' === $host ? array( '192.168.1.20' ) : $ips;
+				return 'minio.lan' === $host ? array( '192.168.1.20' ) : $ips;
 			},
 			10,
 			2

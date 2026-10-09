@@ -287,7 +287,7 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
 
     /**
      * Send a signed request through the transport, following at most one
-     * same-host redirect hop of its own accord.
+     * redirect hop of its own accord.
      *
      * WP's HTTP layer is told never to follow redirects itself (see
      * dispatch()): a 3xx response is instead followed here, one hop only,
@@ -296,9 +296,9 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
      * S3-compatible endpoint could 3xx a signed request onward to a
      * link-local / cloud-metadata address without the SSRF guard ever
      * seeing that target. The follow-up resends the backup body, so a
-     * Location on another scheme, host or port is refused rather than
-     * trusted with it. A second consecutive 3xx is returned as-is and
-     * rejected by the caller's expect_status().
+     * Location on another host or port is followed only under the rule in
+     * is_trusted_redirect_host(). A second consecutive 3xx is returned as-is
+     * and rejected by the caller's expect_status().
      *
      * @param string      $method     HTTP method.
      * @param string      $url        Request URL.
@@ -318,15 +318,11 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
             $location = (string) wp_remote_retrieve_header( $response, 'location' );
             if ( '' !== $location ) {
                 $redirect_url = \WP_Http::make_absolute_url( $location, $url );
-                // The follow-up resends the body and a fresh signature, so an
-                // HTTPS endpoint must not move it onto plain HTTP.
-                if ( 'https' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) && 'https' !== strtolower( (string) wp_parse_url( $redirect_url, PHP_URL_SCHEME ) ) ) {
-                    throw new \RuntimeException( 'Storage endpoint redirected an HTTPS request to a non-HTTPS URL.', 0 );
-                }
                 // Guard first so a metadata or public-HTTP target reports its
-                // own reason; dispatch() re-runs it from the per-host cache.
+                // own reason, which also stops a downgrade to http:// unless
+                // the host is private; dispatch() re-runs it from the cache.
                 $this->guard_outbound_host( $redirect_url );
-                if ( self::origin( $redirect_url ) !== self::origin( $url ) ) {
+                if ( self::server( $redirect_url ) !== self::server( $url ) && ! $this->is_trusted_redirect_host( $redirect_url ) ) {
                     throw new \RuntimeException(
                         esc_html(
                             sprintf(
@@ -419,6 +415,7 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
         if ( ! MainWP_Backup_Storage_Destinations::is_safe_host( $host ) ) {
             throw new \RuntimeException( 'Storage destination host resolves to a link-local or cloud-metadata address: ' . esc_html( $host ), 0 );
         }
+        // A DNS rebind after this check is the same accepted residual window as is_safe_host(); no transport pinning.
         if ( 'https' !== $scheme && ! MainWP_Backup_Storage_Destinations::is_private_network_host( $host ) ) {
             throw new \RuntimeException(
                 esc_html(
@@ -435,22 +432,68 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
     }
 
     /**
-     * The scheme, host and port a URL connects to, normalized so case, a
-     * trailing dot or an explicit default port do not count as a different
-     * server.
+     * The host and port a URL connects to, normalized so case, a trailing
+     * dot or an explicit default port do not count as a different server.
+     * The scheme is left out on purpose: a same-server downgrade to http://
+     * is decided by guard_outbound_host(), not here.
      *
      * @param string $url URL.
      *
      * @return string
      */
-    private static function origin( string $url ): string {
-        $scheme = strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) );
-        $host   = rtrim( strtolower( (string) wp_parse_url( $url, PHP_URL_HOST ) ), '.' );
-        $port   = (int) wp_parse_url( $url, PHP_URL_PORT );
+    private static function server( string $url ): string {
+        $port = (int) wp_parse_url( $url, PHP_URL_PORT );
         if ( 0 === $port ) {
-            $port = 'http' === $scheme ? 80 : 443;
+            $port = 'http' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) ? 80 : 443;
         }
-        return $scheme . '://' . $host . ':' . $port;
+        return self::normalize_host( (string) wp_parse_url( $url, PHP_URL_HOST ) ) . ':' . $port;
+    }
+
+    /**
+     * Lowercase a host and drop a trailing dot.
+     *
+     * @param string $host Host name.
+     *
+     * @return string
+     */
+    private static function normalize_host( string $host ): string {
+        return rtrim( strtolower( $host ), '.' );
+    }
+
+    /**
+     * Whether a redirect to another server may carry the request. AWS sends
+     * a new bucket outside us-east-1 a 307 to bucket.s3.<region>.amazonaws.com
+     * for up to a day, so an https:// target under the configured endpoint's
+     * parent domain (amazonaws.com for s3.amazonaws.com) is followed. The
+     * match is on dot boundaries, so amazonaws.com.evil.test never passes.
+     * An IP-literal endpoint has no domain and follows no cross-host
+     * redirect. A one-label parent (minio.lan gives "lan") is too broad, so
+     * the endpoint host itself is the boundary then.
+     *
+     * @param string $redirect_url Absolute redirect target.
+     *
+     * @return bool
+     */
+    private function is_trusted_redirect_host( string $redirect_url ): bool {
+        if ( 'https' !== strtolower( (string) wp_parse_url( $redirect_url, PHP_URL_SCHEME ) ) ) {
+            return false;
+        }
+
+        $endpoint = isset( $this->settings['endpoint'] ) && '' !== $this->settings['endpoint'] ? (string) $this->settings['endpoint'] : static::DEFAULT_ENDPOINT;
+        if ( false === strpos( $endpoint, '://' ) ) {
+            $endpoint = 'https://' . $endpoint;
+        }
+        $endpoint_host = self::normalize_host( trim( (string) wp_parse_url( $endpoint, PHP_URL_HOST ), '[]' ) );
+        if ( '' === $endpoint_host || filter_var( $endpoint_host, FILTER_VALIDATE_IP ) ) {
+            return false;
+        }
+
+        $dot    = strpos( $endpoint_host, '.' );
+        $parent = false === $dot ? '' : substr( $endpoint_host, $dot + 1 );
+        $base   = false !== strpos( $parent, '.' ) ? $parent : $endpoint_host;
+        $target = self::normalize_host( (string) wp_parse_url( $redirect_url, PHP_URL_HOST ) );
+
+        return $target === $base || substr( $target, -strlen( '.' . $base ) ) === '.' . $base;
     }
 
     /**

@@ -457,11 +457,12 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
 
     /**
      * Whether plain HTTP to a storage host stays on this machine or the
-     * private network: every address must be loopback, RFC1918 or IPv6 ULA.
-     * Self-hosted MinIO and LAN NAS endpoints are often HTTP-only, while a
-     * public http:// endpoint would carry signed requests and backup bodies
-     * in cleartext. Unlike is_safe_host() this fails closed, so a host that
-     * does not resolve is not private.
+     * private network: every address must be loopback, RFC1918, CGNAT or
+     * IPv6 ULA, and none may be an address is_blocked_ip() refuses.
+     * Self-hosted MinIO, LAN NAS and Tailscale endpoints are often HTTP-only,
+     * while a public http:// endpoint would carry signed requests and backup
+     * bodies in cleartext. Unlike is_safe_host() this fails closed, so a host
+     * that does not resolve, or has any public answer, is not private.
      *
      * @param string $host Hostname or IP literal; IPv6 may be bracketed as wp_parse_url returns it.
      *
@@ -479,7 +480,7 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         }
 
         foreach ( $ips as $ip ) {
-            if ( ! self::is_private_ip( (string) $ip ) ) {
+            if ( self::is_blocked_ip( (string) $ip ) || ! self::is_private_ip( (string) $ip ) ) {
                 return false;
             }
         }
@@ -489,8 +490,9 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
 
     /**
      * Whether an IP is loopback (127.0.0.0/8, ::1), RFC1918 (10/8,
-     * 172.16/12, 192.168/16) or IPv6 ULA (fc00::/7), including the
-     * IPv4-mapped IPv6 form of the IPv4 ranges.
+     * 172.16/12, 192.168/16), CGNAT 100.64.0.0/10 (Tailscale and similar
+     * VPNs) or IPv6 ULA (fc00::/7), including the IPv4-mapped IPv6 form of
+     * the IPv4 ranges.
      *
      * @param string $ip IP literal.
      *
@@ -509,7 +511,11 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         if ( 4 === strlen( $packed ) ) {
             $first  = ord( $packed[0] );
             $second = ord( $packed[1] );
-            return 127 === $first || 10 === $first || ( 172 === $first && $second >= 16 && $second <= 31 ) || ( 192 === $first && 168 === $second );
+            return 127 === $first
+                || 10 === $first
+                || ( 172 === $first && $second >= 16 && $second <= 31 )
+                || ( 192 === $first && 168 === $second )
+                || ( 100 === $first && $second >= 64 && $second <= 127 );
         }
 
         return inet_pton( '::1' ) === $packed || 0xFC === ( ord( $packed[0] ) & 0xFE );

@@ -75,80 +75,45 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         $disconnected   = $site_id > 0 && MainWP_Post_Backup_Handler::site_is_disconnected( MainWP_DB::instance()->get_website_by_id( $site_id ) );
         $reconnect_url  = $site_id > 0 ? admin_url( 'admin.php?page=managesites&dashboard=' . $site_id ) : '';
         $controls_off   = 0 === $site_id || $disconnected;
-        ?>
+        if ( $locked ) :
+            ?>
         <div id="mainwp-backup-snapshots" class="ui alt segment">
-            <?php if ( $locked ) : ?>
-                <h3 class="ui dividing header" style="scroll-margin-top: 6em;"><?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?></h3>
-            <?php else : ?>
-                <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-snapshots-info-message', __( 'Pick a site to see its backups. From here you can back the site up right now or restore it to one of its backups.', 'mainwp' ) ); ?>
-            <?php endif; ?>
-            <div class="ui mini form" id="mainwp-backup-snapshots-toolbar">
-                <div class="ui stackable grid">
-                    <div class="middle aligned row">
-                        <?php if ( ! $locked ) : ?>
-                        <div class="seven wide column">
-                            <div class="inline field">
-                                <label for="mainwp-restore-site-selector"><?php esc_html_e( 'Site', 'mainwp' ); ?></label>
-                                <select id="mainwp-restore-site-selector" class="ui search selection mini dropdown">
-                                    <option value="0"><?php esc_html_e( 'Select a site', 'mainwp' ); ?></option>
-                                    <?php
-                                    $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
-                                    while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition -- standard MainWP result loop.
-                                        ?>
-                                        <option value="<?php echo (int) $website->id; ?>" <?php selected( $site_id, (int) $website->id ); ?>><?php echo esc_html( stripslashes( $website->name ) ); ?></option>
-                                        <?php
-                                    }
-                                    MainWP_DB::free_result( $websites );
-                                    ?>
-                                </select>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                        <?php if ( $native_enabled ) : ?>
-                        <div class="<?php echo $locked ? 'sixteen wide column' : 'nine wide right aligned column'; ?> mainwp-native-backup-now-row">
-                            <button type="button" class="ui mini green button<?php echo $controls_off ? ' disabled' : ''; ?>" id="mainwp-native-backup-now-btn" <?php disabled( true, $controls_off ); ?>>
-                                <i class="cloud upload alternate icon"></i><?php esc_html_e( 'Back Up Now', 'mainwp' ); ?>
-                            </button>
-                            <button type="button" class="ui mini button" id="mainwp-native-backup-cancel-btn" style="display: none;">
-                                <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
-                            </button>
-                            <button type="button" class="ui mini basic button<?php echo $controls_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $controls_off ); ?>>
-                                <i class="broom icon"></i><?php esc_html_e( 'Clean Up', 'mainwp' ); ?>
-                            </button>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-                <?php
-                if ( $native_enabled ) :
-                    $manual_ids = $site_id > 0 ? MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) : array();
-                    sort( $manual_ids, SORT_NUMERIC );
-                    $destination_names = array();
-                    foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
-                        $destination_names[ (int) $destination->id ] = (string) $destination->name;
-                    }
-                    $manual_destinations = array();
-                    foreach ( $manual_ids as $destination_id ) {
-                        $manual_destinations[] = $destination_names[ $destination_id ] ?? sprintf(
-                            /* translators: %d: storage destination ID. */
-                            __( 'Destination #%d (removed)', 'mainwp' ),
-                            $destination_id
-                        );
-                    }
-                    $backup_now_local_only = $site_id > 0 && empty( $manual_ids );
-                    $destinations_note     = sprintf(
-                        /* translators: %s: comma-separated storage destination names. */
-                        __( 'Back Up Now saves this backup to the destinations of the scheduled backup tasks that include this site: %s.', 'mainwp' ),
-                        implode( ', ', $manual_destinations )
+            <h3 class="ui dividing header" style="scroll-margin-top: 6em;"><?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?></h3>
+            <?php static::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
+        <?php else : ?>
+            <?php static::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
+        <div id="mainwp-backup-snapshots" class="ui padded segment">
+            <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-snapshots-info-message', __( 'Pick a site to see its backups. From here you can back the site up right now or restore it to one of its backups.', 'mainwp' ) ); ?>
+        <?php endif; ?>
+            <?php
+            if ( $native_enabled ) :
+                $manual_ids = $site_id > 0 ? MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) : array();
+                sort( $manual_ids, SORT_NUMERIC );
+                $destination_names = array();
+                foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
+                    $destination_names[ (int) $destination->id ] = (string) $destination->name;
+                }
+                $manual_destinations = array();
+                foreach ( $manual_ids as $destination_id ) {
+                    $manual_destinations[] = $destination_names[ $destination_id ] ?? sprintf(
+                        /* translators: %d: storage destination ID. */
+                        __( 'Destination #%d (removed)', 'mainwp' ),
+                        $destination_id
                     );
-                    ?>
-                <div id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" aria-live="polite" style="margin-top: .5em;"></div>
-                <div id="mainwp-native-backup-now-note" class="mainwp-native-backup-now-note" data-local-only="<?php echo $backup_now_local_only ? '1' : '0'; ?>" style="margin-top: .5em; opacity: .8;<?php echo $site_id > 0 ? '' : ' display: none;'; ?>">
-                    <i class="info circle icon"></i><span class="mainwp-backup-local-note"<?php echo $backup_now_local_only ? '' : ' style="display: none;"'; ?>><?php esc_html_e( 'No backup destination is configured for this site, so this backup will be kept on the dashboard.', 'mainwp' ); ?></span>
-                    <span class="mainwp-backup-destinations-note"<?php echo $backup_now_local_only ? ' style="display: none;"' : ''; ?>><?php echo esc_html( $destinations_note ); ?></span>
-                </div>
-                <?php endif; ?>
+                }
+                $backup_now_local_only = $site_id > 0 && empty( $manual_ids );
+                $destinations_note     = sprintf(
+                    /* translators: %s: comma-separated storage destination names. */
+                    __( 'Back Up Now saves this backup to the destinations of the scheduled backup tasks that include this site: %s.', 'mainwp' ),
+                    implode( ', ', $manual_destinations )
+                );
+                ?>
+            <div id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" aria-live="polite" style="margin-top: .5em;"></div>
+            <div id="mainwp-native-backup-now-note" class="mainwp-native-backup-now-note" data-local-only="<?php echo $backup_now_local_only ? '1' : '0'; ?>" style="margin-top: .5em; opacity: .8;<?php echo $site_id > 0 ? '' : ' display: none;'; ?>">
+                <i class="info circle icon"></i><span class="mainwp-backup-local-note"<?php echo $backup_now_local_only ? '' : ' style="display: none;"'; ?>><?php esc_html_e( 'No backup destination is configured for this site, so this backup will be kept on the dashboard.', 'mainwp' ); ?></span>
+                <span class="mainwp-backup-destinations-note"<?php echo $backup_now_local_only ? ' style="display: none;"' : ''; ?>><?php echo esc_html( $destinations_note ); ?></span>
             </div>
+            <?php endif; ?>
 
             <div class="ui yellow message" id="mainwp-snapshots-disconnected"<?php echo $disconnected ? '' : ' style="display: none;"'; ?>>
                 <?php esc_html_e( 'This site is disconnected from the Dashboard, so Back Up Now and Restore are turned off until it reconnects.', 'mainwp' ); ?>
@@ -180,11 +145,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     'actions'      => '',
                 );
                 ?>
-                <div class="ui toggle checkbox" style="margin-bottom: 1em;">
-                    <input type="checkbox" id="mainwp-snapshots-show-removed">
-                    <label for="mainwp-snapshots-show-removed"><?php esc_html_e( 'Show removed backups', 'mainwp' ); ?></label>
-                </div>
-
                 <table class="ui table" id="mainwp-restore-snapshots-table">
                     <thead>
                         <tr>
@@ -266,6 +226,61 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         </div>
         <?php
         static::render_script( $site_id, $disconnected );
+    }
+
+    /**
+     * Page-level controls in the core actions bar: what to list on the left,
+     * what to do with the selected site on the right.
+     *
+     * @param int  $site_id        Preselected or locked site id; 0 = none.
+     * @param bool $locked         Per-site surface: no site picker.
+     * @param bool $native_enabled Whether Back Up Now and Clean Up apply.
+     * @param bool $controls_off   Whether Back Up Now and Clean Up start disabled.
+     */
+    private static function render_actions_bar( int $site_id, bool $locked, bool $native_enabled, bool $controls_off ): void {
+        ?>
+        <div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar">
+            <div class="ui mini form">
+                <div class="ui stackable grid">
+                    <div class="ui two column row">
+                        <div class="middle aligned column">
+                            <?php if ( ! $locked ) : ?>
+                            <select id="mainwp-restore-site-selector" class="ui search selection mini dropdown" aria-label="<?php esc_attr_e( 'Site', 'mainwp' ); ?>">
+                                <option value="0"><?php esc_html_e( 'Select a site', 'mainwp' ); ?></option>
+                                <?php
+                                $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
+                                while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) { // phpcs:ignore Generic.CodeAnalysis.AssignmentInCondition -- standard MainWP result loop.
+                                    ?>
+                                    <option value="<?php echo (int) $website->id; ?>" <?php selected( $site_id, (int) $website->id ); ?>><?php echo esc_html( stripslashes( $website->name ) ); ?></option>
+                                    <?php
+                                }
+                                MainWP_DB::free_result( $websites );
+                                ?>
+                            </select>
+                            <?php endif; ?>
+                            <div class="ui toggle checkbox"<?php echo $locked ? '' : ' style="margin-left: 1rem;"'; ?>>
+                                <input type="checkbox" id="mainwp-snapshots-show-removed">
+                                <label for="mainwp-snapshots-show-removed"><?php esc_html_e( 'Show removed backups', 'mainwp' ); ?></label>
+                            </div>
+                        </div>
+                        <div class="right aligned middle aligned column">
+                            <?php if ( $native_enabled ) : ?>
+                            <button type="button" class="ui mini green button<?php echo $controls_off ? ' disabled' : ''; ?>" id="mainwp-native-backup-now-btn" <?php disabled( true, $controls_off ); ?>>
+                                <i class="cloud upload alternate icon"></i><?php esc_html_e( 'Back Up Now', 'mainwp' ); ?>
+                            </button>
+                            <button type="button" class="ui mini button" id="mainwp-native-backup-cancel-btn" style="display: none;">
+                                <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
+                            </button>
+                            <button type="button" class="ui mini basic button<?php echo $controls_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $controls_off ); ?>>
+                                <i class="broom icon"></i><?php esc_html_e( 'Clean Up', 'mainwp' ); ?>
+                            </button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
     }
 
     /**
@@ -491,19 +506,22 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-snapshots-disconnected' ).toggle( siteDisconnected );
             }
 
+            // The label and the date may sit on separate lines, but neither
+            // breaks inside: the hyphen in "Test-restored" and the spaces in
+            // the Dashboard's long date format would otherwise split them.
             function testRestoreCell( snap ) {
                 if ( 'pass' === snap.test_restore_state ) {
-                    var testedOn = snap.test_restore_label ? ' ' + escAttr( snap.test_restore_label ) : '';
-                    return '<span class="ui mini green label"><i class="check icon"></i>' + testRestoreLabels.pass + '</span>' + testedOn;
+                    var testedOn = snap.test_restore_label ? ' <span style="white-space: nowrap;">' + escAttr( snap.test_restore_label ) + '</span>' : '';
+                    return '<span class="ui mini green label" style="white-space: nowrap;"><i class="check icon"></i>' + testRestoreLabels.pass + '</span>' + testedOn;
                 }
                 if ( 'fail' === snap.test_restore_state ) {
-                    return '<span class="ui mini red label">' + testRestoreLabels.fail + '</span>';
+                    return '<span class="ui mini red label" style="white-space: nowrap;">' + testRestoreLabels.fail + '</span>';
                 }
                 if ( 'unsupported' === snap.test_restore_state ) {
-                    return '<span class="ui mini grey label">' + testRestoreLabels.unsupported + '</span>';
+                    return '<span class="ui mini grey label" style="white-space: nowrap;">' + testRestoreLabels.unsupported + '</span>';
                 }
                 if ( 'unavailable' === snap.test_restore_state ) {
-                    return '<span class="ui mini grey label">' + testRestoreLabels.unavailable + '</span>';
+                    return '<span class="ui mini grey label" style="white-space: nowrap;">' + testRestoreLabels.unavailable + '</span>';
                 }
                 return '&mdash;';
             }
@@ -591,6 +609,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                 },
                 "order": [ [ 2, 'desc' ] ],
+                // The columns' narrowest layout is wider than the content
+                // area at 768px; scroll inside the page like Manage Sites.
+                // Widths measured at init see an empty table and would clip
+                // the Restore column once rows arrive.
+                "scrollX": true,
+                "autoWidth": false,
                 "pageLength": 10,
                 "pagingType": "full_numbers",
                 "stateSave": true,

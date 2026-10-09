@@ -37,7 +37,19 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
         MainWP_Backup_Page::render_header( 'Storage' );
         ?>
-        <div class="ui alt segment" id="mainwp-backup-storage">
+        <div class="mainwp-actions-bar">
+            <div class="ui mini form">
+                <div class="ui stackable grid">
+                    <div class="ui two column row">
+                        <div class="middle aligned column">
+                            <button type="button" class="ui mini green button" id="mainwp-storage-add-new"><?php esc_html_e( 'Add Destination', 'mainwp' ); ?></button>
+                        </div>
+                        <div class="right aligned middle aligned column"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="ui padded segment" id="mainwp-backup-storage">
             <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-storage-info-message', __( 'Storage destinations are where backup tasks copy their backups after each run. Choose them on each backup task.', 'mainwp' ) ); ?>
             <?php static::render_oauth_notice(); ?>
             <?php if ( ! empty( $_GET['sftp_trust_reset'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only save notice. ?>
@@ -504,7 +516,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 } );
             } );
 
-            jQuery( '#mainwp-storage-reset' ).on( 'click', function () {
+            let resetForm = function () {
                 jQuery( '#mainwp-storage-id' ).val( 0 );
                 jQuery( '#mainwp-storage-provider' ).dropdown( 'set selected', String( 's3' ) );
                 jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path, #mainwp-storage-sftp-host-fingerprint' ).val( '' );
@@ -513,7 +525,18 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 // underlying value would leave the previous choice on screen.
                 jQuery( '#mainwp-storage-sse' ).dropdown( 'restore defaults' );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Add Storage Destination', 'mainwp' ) ); ?>' );
-                jQuery( this ).hide();
+                jQuery( '#mainwp-storage-reset' ).hide();
+            };
+
+            jQuery( '#mainwp-storage-reset' ).on( 'click', resetForm );
+
+            // The add form is always on the page below the list, so the bar
+            // button leaves any edit in progress and takes the user to it.
+            jQuery( '#mainwp-storage-add-new' ).on( 'click', function () {
+                resetForm();
+                jQuery( '#mainwp-storage-form-message-zone' ).hide();
+                jQuery( '#mainwp-storage-form' )[0].scrollIntoView( { behavior: 'smooth', block: 'start' } );
+                document.getElementById( 'mainwp-storage-name' ).focus( { preventScroll: true } );
             } );
 
             let settingsFieldMap = {

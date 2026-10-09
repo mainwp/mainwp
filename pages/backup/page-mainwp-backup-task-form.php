@@ -436,7 +436,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <input type="checkbox" name="mainwp_zip_force_override" id="mainwp-backup-zip-force-override" value="1" <?php echo( isset( $task->zip_force_override ) && 1 === (int) $task->zip_force_override ? 'checked' : '' ); ?>>
                         <label><?php esc_html_e( 'Keep Zip even when the site is large', 'mainwp' ); ?></label>
                     </div>
-                    <em><?php esc_html_e( 'A large site on Zip is switched to Tar GZip so the backup can finish across timeouts. Enable this to keep Zip anyway.', 'mainwp' ); ?></em>
+                    <div><em><?php esc_html_e( 'A large site on Zip is switched to Tar GZip so the backup can finish across timeouts. Enable this to keep Zip anyway.', 'mainwp' ); ?></em></div>
                 </div>
             </div>
             <?php

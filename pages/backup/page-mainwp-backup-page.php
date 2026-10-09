@@ -430,8 +430,11 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             }
 
             static::render_header( '' );
+            if ( ! empty( $backup_items ) ) {
+                static::render_task_list_actions_bar();
+            }
             ?>
-            <div class="ui alt segment">
+            <div class="ui padded segment">
                 <?php static::render_intro_message( 'mainwp-backup-tasks-info-message', __( 'Scheduled backup tasks run from this Dashboard on the child sites you pick. To back up one site right away, use Back Up Now on the Snapshots & Restore page.', 'mainwp' ) ); ?>
                 <div id="mainwp_managebackups_add_message" class="ui green message" style="display:
                 <?php
@@ -516,6 +519,31 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         </div>
         <?php
         static::render_footer( 'ManageBackupsEdit' );
+    }
+
+    /**
+     * Page-level controls above the task list, in the core actions bar.
+     * The empty list leaves it out: its own first-step buttons already
+     * offer a new task.
+     */
+    private static function render_task_list_actions_bar(): void {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) || MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) {
+            return;
+        }
+        ?>
+        <div class="mainwp-actions-bar">
+            <div class="ui mini form">
+                <div class="ui stackable grid">
+                    <div class="ui two column row">
+                        <div class="middle aligned column">
+                            <a class="ui mini green button" id="mainwp-backup-add-new-task" href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ); ?>"><?php esc_html_e( 'Add New Task', 'mainwp' ); ?></a>
+                        </div>
+                        <div class="right aligned middle aligned column"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
     }
 
     /**

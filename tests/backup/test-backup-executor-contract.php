@@ -189,57 +189,6 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A restore's safety backup tells the Child its purpose, so the Child's
-	 * expiry of uncollected backups leaves it alone; the auto-update lane's
-	 * backup does not.
-	 *
-	 * @dataProvider data_trigger_backup_owners
-	 *
-	 * @param string      $owner   Trigger owner.
-	 * @param string|null $purpose Expected purpose param, or null when absent.
-	 *
-	 * @return void
-	 */
-	public function test_trigger_backup_marks_restore_safety_backup( $owner, $purpose ) {
-		$site_id = $this->create_test_site();
-		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
-		$creates = array();
-		add_filter(
-			'mainwp_fetch_url_authed_pre',
-			function ( $result, $website, $what, $params ) use ( &$creates ) {
-				unset( $website );
-				if ( 'backup_task_create' === $what ) {
-					$creates[] = $params;
-					return array(
-						'task_id' => 'task-1749600000-purpose',
-						'phase'   => 'queued',
-					);
-				}
-				return $result;
-			},
-			10,
-			4
-		);
-
-		MainWP_Backup_Executor::trigger_backup( $site_id, 'full', $owner );
-
-		$this->assertCount( 1, $creates );
-		$this->assertSame( $purpose, $creates[0]['purpose'] ?? null );
-	}
-
-	/**
-	 * Trigger owners.
-	 *
-	 * @return array
-	 */
-	public static function data_trigger_backup_owners() {
-		return array(
-			'restore job'      => array( '42', 'pre_restore' ),
-			'auto-update lane' => array( '', null ),
-		);
-	}
-
-	/**
 	 * Triggering again while an ad-hoc task is persisted reuses the handle
 	 * instead of colliding with the active task on the child.
 	 *

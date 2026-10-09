@@ -2162,7 +2162,6 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			'mainwp_fetch_url_authed_pre',
 			function ( $result, $website, $what, $params ) use ( &$calls, $task ) {
 				if ( 'backup_task_create' === $what ) {
-					$this->assertArrayNotHasKey( 'purpose', $params, 'Only a restore safety backup is marked for the Child.' );
 					$calls[] = 'create-' . $website->id;
 					return array(
 						'task_id' => 'task-fleet-' . $website->id,

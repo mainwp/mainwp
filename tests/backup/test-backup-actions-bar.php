@@ -138,6 +138,32 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * On the per-site Backups tab the bar already sits inside the surface's
+	 * own segment, so it drops the theme's side margins and lines up with
+	 * the tables below it. The standalone page keeps the core margins.
+	 */
+	public function test_per_site_bar_shares_the_table_edges() {
+		$locked     = $this->render(
+			function () {
+				MainWP_Backup_Snapshots_View::render_restore_surface( 0, true );
+			}
+		);
+		$standalone = $this->render( array( MainWP_Backup_Snapshots_View::class, 'render' ) );
+
+		$this->assertStringContainsString( '<div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar" style="margin-left: 0 !important; margin-right: 0 !important;">', $locked );
+		$this->assertStringContainsString( '<div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar">', $standalone );
+	}
+
+	/**
+	 * The Created date and time stay on one line.
+	 */
+	public function test_created_cell_keeps_date_and_time_on_one_line() {
+		$output = $this->render( array( MainWP_Backup_Snapshots_View::class, 'render' ) );
+
+		$this->assertStringContainsString( "'<span style=\"white-space: nowrap;\">' + escAttr( snap.created_label || '' ) + '</span>'", $output );
+	}
+
+	/**
 	 * With no site picked, the bar still holds Back Up Now and Clean Up,
 	 * turned off.
 	 */

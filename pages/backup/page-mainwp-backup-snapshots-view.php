@@ -238,8 +238,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
      * @param bool $controls_off   Whether Back Up Now and Clean Up start disabled.
      */
     private static function render_actions_bar( int $site_id, bool $locked, bool $native_enabled, bool $controls_off ): void {
+        // The per-site tab hosts the bar inside the surface's own segment,
+        // which already insets it; the theme's !important side margins
+        // would inset it a second time, past the tables' edges. Inline
+        // !important is the only override that outranks them.
         ?>
-        <div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar">
+        <div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar"<?php echo $locked ? ' style="margin-left: 0 !important; margin-right: 0 !important;"' : ''; ?>>
             <div class="ui mini form">
                 <div class="ui stackable grid">
                     <div class="ui two column row">
@@ -552,7 +556,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     {
                         "data": "created",
                         "render": function ( data, type, snap ) {
-                            return ( 'display' === type || 'filter' === type ) ? escAttr( snap.created_label || '' ) : ( parseInt( data, 10 ) || 0 );
+                            // The Dashboard's long date format would break
+                            // the time off onto its own line.
+                            if ( 'display' === type ) {
+                                return '<span style="white-space: nowrap;">' + escAttr( snap.created_label || '' ) + '</span>';
+                            }
+                            return 'filter' === type ? escAttr( snap.created_label || '' ) : ( parseInt( data, 10 ) || 0 );
                         }
                     },
                     {

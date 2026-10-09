@@ -575,11 +575,16 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * An ad-hoc handle that cannot be cleared keeps the child copy: the next
 	 * call resumes the same task and downloads the archive again, and deletes
-	 * the child copy once the handle is gone.
+	 * the child copy once the handle is gone. A read-back that errors proves
+	 * nothing about the handle, so it keeps the child copy too.
+	 *
+	 * @dataProvider data_handle_clear_failures
+	 *
+	 * @param bool $read_fails Whether the read-back of the handle errors as well.
 	 *
 	 * @return void
 	 */
-	public function test_get_backup_task_status_keeps_child_archive_until_handle_clears() {
+	public function test_get_backup_task_status_keeps_child_archive_until_handle_clears( $read_fails ) {
 		$site_id = $this->create_test_site();
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		$this->give_site_real_privkey( $site_id );
@@ -619,8 +624,14 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 			4
 		);
 		$this->stub_download_with_valid_gzip();
-		$keep_handle = static function ( $query ) {
-			return str_starts_with( $query, 'UPDATE ' ) && str_contains( $query, 'mainwp_wp_options' ) && str_contains( $query, "`value` = ''" ) && str_contains( $query, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ? $query . ' AND 1 = 0' : $query;
+		$keep_handle = static function ( $query ) use ( $read_fails ) {
+			if ( ! str_contains( $query, 'mainwp_wp_options' ) || ! str_contains( $query, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ) {
+				return $query;
+			}
+			if ( str_starts_with( $query, 'UPDATE ' ) && str_contains( $query, "`value` = ''" ) ) {
+				return $query . ' AND 1 = 0';
+			}
+			return $read_fails && str_starts_with( $query, 'SELECT value ' ) ? $query . ' AND no_such_column = 1' : $query;
 		};
 
 		$ob_level = ob_get_level();
@@ -652,6 +663,18 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'completed', $second['status'] );
 		$this->assertSame( array( 'backup-1749600000.tar.gz' ), $deletes, 'The child copy goes once the handle is cleared.' );
 		$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $website, 'adhoc_backup_task' ) );
+	}
+
+	/**
+	 * Ways the handle clear can go unconfirmed.
+	 *
+	 * @return array
+	 */
+	public function data_handle_clear_failures() {
+		return array(
+			'clear write fails'                => array( false ),
+			'clear write and read-back failed' => array( true ),
+		);
 	}
 
 	/**

@@ -2935,7 +2935,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         // reports no result, so the handle is read back: while it still names
         // this task, the next call resumes it and downloads the archive again,
         // and the child copy has to be there for that.
-        if ( '' !== $downloaded && ( self::read_adhoc_task( $website )['task_id'] ?? '' ) !== $task_id ) {
+        if ( '' !== $downloaded && self::adhoc_handle_released( (int) $website->id, $task_id ) ) {
             try {
                 MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $downloaded ) );
             } catch ( \Exception $e ) {
@@ -3277,6 +3277,34 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function run_dir_name( string $child_backup_task_id ): string {
         return 'snapshot-' . MainWP_Utility::sanitize_file_name( $child_backup_task_id );
+    }
+
+    /**
+     * Whether a fresh read shows the ad-hoc handle no longer naming a task.
+     *
+     * Unlike read_adhoc_task(), a failed read counts as not released. The
+     * option helper cannot be used here: its get_var() answers null for a
+     * database error, a missing row and an empty value alike. The clear
+     * always leaves a row, so a missing row is not a release either.
+     *
+     * @param int    $site_id Site id.
+     * @param string $task_id Task handle the caller downloaded.
+     * @return bool
+     */
+    private static function adhoc_handle_released( int $site_id, string $task_id ): bool {
+        global $wpdb;
+        $table = MainWP_DB::instance()->get_table_name( 'wp_options' );
+        $rows  = $wpdb->get_results( $wpdb->prepare( "SELECT value FROM {$table} WHERE wpid = %d AND name = %s", $site_id, self::ADHOC_TASK_OPTION ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- table name from the database helper; the read must report its own failure.
+        if ( '' !== $wpdb->last_error || empty( $rows ) ) {
+            return false;
+        }
+        foreach ( $rows as $row ) {
+            $handle = json_decode( (string) $row->value, true );
+            if ( is_array( $handle ) && (string) ( $handle['task_id'] ?? '' ) === $task_id ) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**

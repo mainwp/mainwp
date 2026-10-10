@@ -535,6 +535,51 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
+     * An unleased cancellation must not overwrite a worker's newer checkpoint.
+     *
+     * @param int         $job_id     Job id.
+     * @param string      $outcome    Cancellation confirmation outcome.
+     * @param string|null $lock_token Worker lease token, or null for an unleased cancellation.
+     *
+     * @return bool True when the outcome is recorded on an active row.
+     */
+    public function set_cancel_confirmation_outcome( int $job_id, string $outcome, ?string $lock_token = null ): bool {
+        for ( $attempt = 0; $attempt < 5; $attempt++ ) {
+            $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+            );
+            if ( null === $row || ! in_array( $row->status, self::active_statuses(), true ) || ( null !== $lock_token && $row->locked_by !== $lock_token ) ) {
+                return false;
+            }
+
+            $stored  = (string) $row->checkpoint;
+            $decoded = json_decode( $stored, true );
+            $decoded = is_array( $decoded ) ? $decoded : array();
+            if ( ( $decoded['cancel_confirmation']['outcome'] ?? null ) === $outcome ) {
+                return true;
+            }
+            $decoded['cancel_confirmation']['outcome'] = $outcome;
+
+            $fence = '';
+            $binds = array( wp_json_encode( $decoded ), time(), $job_id, $stored, $row->status );
+            if ( null !== $lock_token ) {
+                $fence   = ' AND locked_by = %s';
+                $binds[] = $lock_token;
+            }
+            $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the exact stored value.
+                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional lease fence adds its bind.
+                    'UPDATE ' . $this->table() . " SET checkpoint = %s, updated = %d WHERE id = %d AND checkpoint = %s AND status = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
+                    $binds
+                )
+            );
+            if ( 1 === $swapped ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Keep the failure and its cancel intent indivisible across worker crashes.
      *
      * @param int         $job_id     Job id.

@@ -439,7 +439,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
          */
         global $current_user;
 
-        return (int) $task->userid === (int) $current_user->ID;
+        return (int) $current_user->ID > 0 && (int) $task->userid === (int) $current_user->ID;
     }
 
     /**

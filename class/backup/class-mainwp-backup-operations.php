@@ -160,7 +160,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( ! $task || ! empty( $task->template ) || ( ! self::userless_cli() && ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) ) ) {
             return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
         }
-        foreach ( MainWP_Manage_Backups_Handler::expand_task_site_ids( $task->sites, $task->groups ) as $site_id ) {
+        $expanded = MainWP_Manage_Backups_Handler::expand_task_site_ids( empty( $task->groups ) ? $task->sites : '', $task->groups );
+        // A scoped existence check would hide an existing site that must be refused.
+        $existing = MainWP_DB::instance()->get_existing_website_ids( $expanded );
+        foreach ( array_intersect( $expanded, $existing ) as $site_id ) {
             if ( is_wp_error( self::authorize_site( $site_id, $right ) ) ) {
                 return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
             }
@@ -231,6 +234,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $website = self::authorize_site( $site_id, 'execute_backups' );
         if ( is_wp_error( $website ) ) {
             return $website;
+        }
+
+        if ( self::userless_cli() ) {
+            return new \WP_Error( 'mainwp_permission_denied', esc_html__( 'Starting a backup from WP-CLI needs a Dashboard administrator. Run the command again with --user set to one.', 'mainwp' ), array( 'status' => 401 ) );
         }
 
         if ( MainWP_Post_Backup_Handler::site_is_disconnected( $website ) ) {
@@ -430,10 +437,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return $task;
         }
         if ( (int) $task->completed >= (int) $task->last_run ) {
-            return new \WP_Error( 'mainwp_invalid_input', esc_html__( 'This task is not currently running.', 'mainwp' ), array( 'status' => 409 ) );
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_NOT_STALLED, esc_html__( 'This task is not currently running.', 'mainwp' ), array( 'status' => 409 ) );
         }
         if ( time() - (int) $task->last_run <= MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS ) {
-            return new \WP_Error( 'mainwp_invalid_input', esc_html__( 'This task is still within its normal run window and cannot be reset yet.', 'mainwp' ), array( 'status' => 409 ) );
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_NOT_STALLED, esc_html__( 'This task is still within its normal run window and cannot be reset yet.', 'mainwp' ), array( 'status' => 409 ) );
         }
         $db          = MainWP_DB_Backup::instance();
         $cancelled   = 0;
@@ -499,7 +506,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error Cancellation evidence.
      */
     public static function cancel_restore( int $restore_job_id ) {
-        $job = self::authorize_restore_job( $restore_job_id, 'execute_backups' );
+        $job = self::authorize_restore_job( $restore_job_id );
         if ( is_wp_error( $job ) ) {
             return $job;
         }

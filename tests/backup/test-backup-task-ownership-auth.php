@@ -371,4 +371,58 @@ class MainWP_Backup_Task_Ownership_Auth_Test extends MainWP_Abilities_Test_Case 
 			remove_filter( 'mainwp_is_single_user', '__return_false' );
 		}
 	}
+
+	/**
+	 * An anonymous caller cannot own an ownerless task.
+	 *
+	 * @return void
+	 */
+	public function test_multi_user_filter_refuses_user_zero_for_ownerless_task() {
+		$task = $this->create_task( 0, $this->create_test_site() );
+		wp_set_current_user( 0 );
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		try {
+			$this->assertFalse( MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) );
+		} finally {
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+		}
+	}
+
+	/**
+	 * Backup-before-update uses the run right even when restore access is denied.
+	 *
+	 * @return void
+	 */
+	public function test_run_site_authorization_uses_run_backup_tasks_right() {
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$deny    = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'execute_backups' === $right ? false : $allowed;
+		};
+		$throw   = static function () {
+			return static function () {
+				throw new \RuntimeException( 'wp_die' );
+			};
+		};
+		$method  = new \ReflectionMethod( \MainWP\Dashboard\MainWP_Post_Backup_Handler::class, 'authorize_restore_site' );
+		$method->setAccessible( true );
+		$website = null;
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $throw );
+		ob_start();
+		try {
+			$website = $method->invoke( \MainWP\Dashboard\MainWP_Post_Backup_Handler::instance(), $site_id, 'run_backup_tasks' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'wp_die', $e->getMessage() );
+		} finally {
+			$output = ob_get_clean();
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			remove_filter( 'wp_die_ajax_handler', $throw );
+		}
+		$this->assertStringNotContainsString( 'You are not allowed to manage backups for this site.', $output );
+		$this->assertIsObject( $website );
+		$this->assertSame( $site_id, (int) $website->id );
+	}
 }

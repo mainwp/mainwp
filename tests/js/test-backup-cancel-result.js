@@ -2,9 +2,9 @@
 const assert = require( 'node:assert/strict' );
 global.mainwpBackupCancelMessages = {
     cancelled: 'Backup cancelled.',
-    already_finished: 'Backup finished. Collecting files...',
-    already_failed: 'Backup failed. Checking the result...',
-    busy: 'Backup is busy. Try again shortly.',
+    already_finished: 'Backup already finished. Collecting files...',
+    already_failed: 'Backup already failed. Checking the result...',
+    busy: 'The backup is still starting or mid-step, so it could not be cancelled yet. Try again in a moment.',
     no_active_on_site: 'No active backup found. Checking the run...',
     not_running: 'No backup is running.',
     failed: 'Could not cancel the backup. Try again.'

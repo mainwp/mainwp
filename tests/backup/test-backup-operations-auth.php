@@ -207,6 +207,15 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 			$this->assertFalse( is_wp_error( MainWP_Backup_Operations::authorize_task( 987671, 'run_backup_tasks' ) ) );
 			$this->assertContains( $this->site_id, MainWP_Backup_Operations::authorized_site_ids( '' ) );
 			$this->assertContains( $this->site_id, MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) );
+			global $wpdb;
+			$table  = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+			$before = $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A );
+			$result = MainWP_Backup_Operations::start_site_backup( $this->site_id, 'cli' );
+			$this->assertSame( $before, $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A ), 'A userless CLI start must leave every task row unchanged.' );
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_permission_denied', $result->get_error_code() );
+			$this->assertSame( 401, $result->get_error_data()['status'] );
+			$this->assertSame( 'Starting a backup from WP-CLI needs a Dashboard administrator. Run the command again with --user set to one.', $result->get_error_message() );
 		} finally {
 			remove_filter( 'mainwp_currentusercan', '__return_false' );
 			remove_filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );

@@ -145,4 +145,118 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $store->arm_cancel_intent( 987674 ) );
 		$this->assertSame( 'pending', $store->get_job( 987674 )->checkpoint['cancel_confirmation']['outcome'] );
 	}
+
+	/**
+	 * A worker checkpoint can change before either the outcome read or its swap.
+	 *
+	 * @return array Race positions.
+	 */
+	public static function checkpoint_race_positions() {
+		return array(
+			'before read' => array( 'read' ),
+			'before swap' => array( 'swap' ),
+		);
+	}
+
+	/**
+	 * A UI cancellation must retain the worker's newer rollback source.
+	 *
+	 * @dataProvider checkpoint_race_positions
+	 * @param string $position Concurrent write position.
+	 * @return void
+	 */
+	public function test_ui_cancel_preserves_concurrent_checkpoint_write( $position ) {
+		global $wpdb;
+		$table     = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$artifacts = array(
+			array(
+				'file' => 'safety.zip',
+				'role' => 'full',
+				'size' => 1024,
+			),
+		);
+		$wpdb->update(
+			$table,
+			array(
+				'status'        => 'pending',
+				'child_task_id' => '',
+				'checkpoint'    => '{"cancel_intent":true}',
+				'locked_by'     => 'worker-token',
+			),
+			array( 'id' => 987674 )
+		);
+		$injected = false;
+		$race     = static function ( $sql ) use ( $wpdb, $table, $artifacts, $position, &$injected ) {
+			if ( $injected || false === strpos( $sql, $table ) || false === strpos( $sql, 'id = 987674' ) ) {
+				return $sql;
+			}
+			$functions = array_column( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 'function' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- the query hook must target the persistence seam.
+			$cas       = in_array( 'set_cancel_confirmation_outcome', $functions, true );
+			$target    = 'read' === $position ? 'SELECT checkpoint, status, locked_by' : 'UPDATE ';
+			$legacy    = in_array( 'record_terminal_failure', $functions, true ) && 0 === strpos( $sql, 'UPDATE ' ) && false !== strpos( $sql, 'SET checkpoint = IF(' );
+			if ( ! ( ( $cas && 0 === strpos( $sql, $target ) ) || $legacy ) ) {
+				return $sql;
+			}
+			$injected                             = true;
+			$store                                = MainWP_Backup_Restore_Job_Store::instance();
+			$checkpoint                           = $store->get_job( 987674 )->checkpoint;
+			$checkpoint['pre_snapshot_artifacts'] = $artifacts;
+			$store->save_checkpoint( 987674, $checkpoint, 'worker-token' );
+			return $sql;
+		};
+		add_filter( 'query', $race );
+		try {
+			$response = MainWP_Backup_Operations::cancel_restore( 987674 );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$this->assertTrue( $injected, 'The concurrent worker write must land inside outcome persistence.' );
+		$this->assertSame( 'cancelled', $response['result'] );
+		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( 987674 );
+		$this->assertSame( $artifacts, $job->checkpoint['pre_snapshot_artifacts'] ?? null, 'UI cancellation must preserve the newer rollback source.' );
+		$this->assertSame( 'not_needed', $job->checkpoint['cancel_confirmation']['outcome'] );
+		$this->assertTrue( $job->checkpoint['cancel_intent'] );
+	}
+
+	/**
+	 * Outcome persistence must respect active status and worker ownership.
+	 *
+	 * @return void
+	 */
+	public function test_cancel_confirmation_outcome_respects_status_and_fence() {
+		global $wpdb;
+		$store      = MainWP_Backup_Restore_Job_Store::instance();
+		$table      = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$checkpoint = array(
+			'cancel_intent'       => true,
+			'cancel_confirmation' => array(
+				'outcome'       => 'pending',
+				'attempt_count' => 3,
+			),
+			'terminal_failure'    => array(
+				'error'      => 'Original failure',
+				'error_code' => 'mainwp_restore_artifact_missing',
+			),
+			'transfer'            => array( 'offset' => 42 ),
+		);
+		$wpdb->update(
+			$table,
+			array(
+				'status'     => 'running',
+				'locked_by'  => 'worker-token',
+				'checkpoint' => wp_json_encode( $checkpoint ),
+			),
+			array( 'id' => 987674 )
+		);
+		$this->assertFalse( $store->set_cancel_confirmation_outcome( 987674, 'confirmed', 'foreign-token' ) );
+		$this->assertSame( $checkpoint, $store->get_job( 987674 )->checkpoint );
+		$this->assertTrue( $store->set_cancel_confirmation_outcome( 987674, 'confirmed', 'worker-token' ) );
+		$checkpoint['cancel_confirmation']['outcome'] = 'confirmed';
+		$this->assertSame( $checkpoint, $store->get_job( 987674 )->checkpoint );
+		$this->assertTrue( $store->set_cancel_confirmation_outcome( 987674, 'confirmed', 'worker-token' ) );
+		$wpdb->update( $table, array( 'status' => 'cancelled' ), array( 'id' => 987674 ) );
+		$this->assertFalse( $store->set_cancel_confirmation_outcome( 987674, 'not_needed' ) );
+		$this->assertSame( $checkpoint, $store->get_job( 987674 )->checkpoint );
+		$this->assertFalse( $store->set_cancel_confirmation_outcome( 999999999, 'not_needed' ) );
+	}
 }

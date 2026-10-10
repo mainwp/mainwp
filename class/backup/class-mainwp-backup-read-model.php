@@ -329,13 +329,14 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Restore admission can refuse a copy that the cheap list flag accepts.
      *
-     * @param int $site_id Website identity.
+     * @param int  $site_id Website identity.
+     * @param bool $with_admission Whether the caller needs full restore admission.
      * @return array[] Snapshot evidence.
      */
-    public static function list_backup_snapshots( int $site_id ): array {
+    public static function list_backup_snapshots( int $site_id, bool $with_admission = true ): array {
         $entries = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
         foreach ( $entries as &$entry ) {
-            $entry = self::snapshot_evidence( $entry, $site_id );
+            $entry = self::snapshot_evidence( $entry, $site_id, $with_admission );
         }
         unset( $entry );
         return $entries;
@@ -365,17 +366,20 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param array $entry Catalog row.
      * @param int   $site_id Expected owner site.
+     * @param bool  $with_admission Whether the caller needs full restore admission.
      * @return array Neutral evidence with the existing UI admission preserved.
      */
-    private static function snapshot_evidence( array $entry, int $site_id ): array {
-        $admission                       = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( (int) $entry['snapshot']->id, $site_id );
+    private static function snapshot_evidence( array $entry, int $site_id, bool $with_admission = true ): array {
         $entry['catalog_restorable']     = $entry['restorable'];
         $entry['catalog_restore_reason'] = $entry['restore_reason'];
-        $entry['restorable']             = $admission['ok'];
-        $entry['restore_reason']         = $admission['ok'] ? null : self::error_value( $admission['error'], $admission['code'] );
-        $entry['restore']                = $admission;
-        $snapshot                        = $entry['snapshot'];
-        $checks                          = array( 'files_extracted', 'db_imported', 'db_has_rows' );
+        if ( $with_admission ) {
+            $admission               = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( (int) $entry['snapshot']->id, $site_id );
+            $entry['restorable']     = $admission['ok'];
+            $entry['restore_reason'] = $admission['ok'] ? null : self::error_value( $admission['error'], $admission['code'] );
+            $entry['restore']        = $admission;
+        }
+        $snapshot = $entry['snapshot'];
+        $checks   = array( 'files_extracted', 'db_imported', 'db_has_rows' );
         if ( 'files' === $snapshot->type ) {
             $checks = array( 'files_extracted' );
         } elseif ( 'db' === $snapshot->type ) {

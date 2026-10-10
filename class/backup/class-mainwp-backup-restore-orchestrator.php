@@ -1614,14 +1614,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( $can_cancel || null === $error ) {
-            $fresh = $store->get_job( (int) $job->id );
-            if ( null === $fresh ) {
-                return self::TERMINAL_OUTCOME_TERMINAL;
-            }
-            $checkpoint                                   = $fresh->checkpoint;
-            $checkpoint['cancel_confirmation']['outcome'] = $can_cancel ? ( in_array( $outcome, array( 'ok', 'failed' ), true ) ? 'confirmed' : 'unconfirmed' ) : 'not_needed';
+            $confirmation = $can_cancel ? ( in_array( $outcome, array( 'ok', 'failed' ), true ) ? 'confirmed' : 'unconfirmed' ) : 'not_needed';
             // Terminal status must never become visible before its stop evidence.
-            if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $lock_token ) ) {
+            if ( ! $store->set_cancel_confirmation_outcome( (int) $job->id, $confirmation, $lock_token ) ) {
                 return self::TERMINAL_OUTCOME_DEFERRED;
             }
         }

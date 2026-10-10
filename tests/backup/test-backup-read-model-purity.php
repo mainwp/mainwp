@@ -57,7 +57,10 @@ class MainWP_Backup_Read_Model_Purity_Test extends MainWP_Abilities_Test_Case {
 				return MainWP_Backup_Read_Model::get_restore_job( 987674 );
 			},
 			'list_backup_snapshots'    => function () {
-				return MainWP_Backup_Read_Model::list_backup_snapshots( $this->site_id );
+				return array(
+					MainWP_Backup_Read_Model::list_backup_snapshots( $this->site_id ),
+					MainWP_Backup_Read_Model::list_backup_snapshots( $this->site_id, false ),
+				);
 			},
 			'get_backup_snapshot'      => static function () {
 				return MainWP_Backup_Read_Model::get_backup_snapshot( 987673 );

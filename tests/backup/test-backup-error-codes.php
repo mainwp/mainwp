@@ -18,6 +18,36 @@ use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 
 	/**
+	 * Refusals need the approved recovery instructions in the message registry.
+	 *
+	 * @dataProvider recovery_messages
+	 * @param string $code Registry code.
+	 * @param string $message Expected copy.
+	 * @return void
+	 */
+	public function test_recovery_message_copy( $code, $message ) {
+		$this->assertSame( $message, wp_specialchars_decode( MainWP_Backup_Error_Codes::message( $code ), ENT_QUOTES ) );
+	}
+
+	/**
+	 * Exact strings keep error recovery guidance consistent across callers.
+	 *
+	 * @return array Registry messages.
+	 */
+	public static function recovery_messages() {
+		return array(
+			array( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND, 'The backup was not found, or your account cannot access it. Reload the backups list and try again.' ),
+			array( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND, 'The restore job was not found. It may not have started yet, or your account cannot access it. Check the site\'s backups page for recent restores.' ),
+			array( MainWP_Backup_Error_Codes::ERR_NOT_STALLED, 'This backup run is not stalled, so it cannot be reset. Wait for it to finish, or try again later if it is still open.' ),
+			array( MainWP_Backup_Error_Codes::ERR_DESTINATION_CREDENTIALS_REQUIRED, 'This change needs the destination\'s credentials, which can only be entered on the Backup Storage page. Edit the destination there, then try again.' ),
+			array( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED, 'This update was blocked because the site has no recent backup, or its latest backup has not reached offsite storage yet. Back the site up or wait for the upload to finish, then try again.' ),
+			array( MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR, 'The operation ran into an unexpected problem and did not complete. Check the dashboard and child site error logs for details, then try again.' ),
+			array( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_FILES_CHILD_OUTDATED, 'This files-only backup cannot be restored because the site\'s MainWP Child plugin is too old for files-only restore. Update the MainWP Child plugin on the site, then try again.' ),
+			array( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_MULTISITE_CHILD_OUTDATED, 'This backup cannot be restored because the site runs WordPress Multisite and its MainWP Child plugin is too old for network-wide restore. Update the MainWP Child plugin on the site, then try again.' ),
+		);
+	}
+
+	/**
 	 * An encryption refusal must reach the UI with its dedicated placeholder.
 	 */
 	public function test_b151_encryption_refusal_is_registered() {

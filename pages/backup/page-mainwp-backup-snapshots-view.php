@@ -77,9 +77,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             'mainwpBackupCancelMessages',
             array(
                 'cancelled'         => __( 'Backup cancelled.', 'mainwp' ),
-                'already_finished'  => __( 'Backup finished. Collecting files...', 'mainwp' ),
-                'already_failed'    => __( 'Backup failed. Checking the result...', 'mainwp' ),
-                'busy'              => __( 'Backup is busy. Try again shortly.', 'mainwp' ),
+                'already_finished'  => __( 'Backup already finished. Collecting files...', 'mainwp' ),
+                'already_failed'    => __( 'Backup already failed. Checking the result...', 'mainwp' ),
+                'busy'              => __( 'The backup is still starting or mid-step, so it could not be cancelled yet. Try again in a moment.', 'mainwp' ),
                 'no_active_on_site' => __( 'No active backup found. Checking the run...', 'mainwp' ),
                 'not_running'       => __( 'No backup is running.', 'mainwp' ),
                 'failed'            => __( 'Could not cancel the backup. Try again.', 'mainwp' ),
@@ -1371,7 +1371,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( siteId !== currentSite ) {
                         return;
                     }
-                    setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not cancel the backup. Please try again.', 'mainwp' ) ); ?>', true );
+                    setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not cancel the backup. Try again.', 'mainwp' ) ); ?>', true );
                     $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                 } );
             } );

@@ -204,9 +204,114 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertIsArray( $response );
 		$this->assertArrayHasKey( 'error', $response );
+		$error = \MainWP\Dashboard\MainWP_Backup_Operations::reset_task_run( (int) $task->id );
+		$this->assertWPError( $error );
+		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_NOT_STALLED, $error->get_error_code() );
+		$this->assertSame( 409, $error->get_error_data()['status'] );
+		$this->assertSame( 'This task is still within its normal run window and cannot be reset yet.', $error->get_error_message() );
 
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertLessThan( (int) $task->last_run, (int) $task->completed, 'A not-yet-stale run must stay open.' );
+	}
+
+	/**
+	 * A closed run must expose the same refusal code as a healthy open run.
+	 *
+	 * @return void
+	 */
+	public function test_reset_refuses_task_not_running_with_not_stalled_code() {
+		$this->set_current_user_as_admin();
+		$task = $this->create_running_task( $this->create_test_site(), 2 * HOUR_IN_SECONDS );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
+		$error = \MainWP\Dashboard\MainWP_Backup_Operations::reset_task_run( (int) $task->id );
+		$this->assertWPError( $error );
+		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_NOT_STALLED, $error->get_error_code() );
+		$this->assertSame( 409, $error->get_error_data()['status'] );
+		$this->assertSame( 'This task is not currently running.', $error->get_error_message() );
+	}
+
+	/**
+	 * Deleted selections must not prevent closing the surviving site's run.
+	 *
+	 * @return void
+	 */
+	public function test_reset_allows_task_with_deleted_site() {
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$site_a = $this->create_test_site();
+		$site_b = $this->create_test_site();
+		$task   = $this->create_running_task( array( $site_a, $site_b ), 2 * HOUR_IN_SECONDS );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, $site_a, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, $site_a, array( 'child_backup_task_id' => 'surviving-child' ) );
+		$this->assertSame( 1, $wpdb->delete( \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' ), array( 'id' => $site_b ) ) );
+		$response = $this->invoke_reset( $task->id );
+		$this->assertSame( 'reset', $response['status'] ?? null );
+		$this->assertSame( 1, $response['cancelled'] );
+		$this->assertSame( $site_a, $this->child_calls[0]['site'] );
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThanOrEqual( (int) $fresh->last_run, (int) $fresh->completed );
+	}
+
+	/**
+	 * A group run must ignore stale selections in its unused sites column.
+	 *
+	 * @return void
+	 */
+	public function test_reset_allows_group_task_with_deleted_site_selection() {
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$deleted = $this->create_test_site();
+		$task    = $this->create_running_task( $deleted, 2 * HOUR_IN_SECONDS );
+		$table   = $wpdb->prefix . 'mainwp_wp_group';
+		$this->assertNotFalse(
+			$wpdb->insert(
+				$table,
+				array(
+					'wpid'    => $site_id,
+					'groupid' => 424242,
+				)
+			)
+		);
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'groups' => '424242' ) );
+		MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, $site_id, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, $site_id, array( 'child_backup_task_id' => 'group-child' ) );
+		$this->assertSame( 1, $wpdb->delete( \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' ), array( 'id' => $deleted ) ) );
+		try {
+			$response = $this->invoke_reset( $task->id );
+		} finally {
+			$wpdb->delete( $table, array( 'groupid' => 424242 ) );
+		}
+		$this->assertSame( 'reset', $response['status'] ?? null );
+		$this->assertSame( 1, $response['cancelled'] );
+		$this->assertSame( 0, $response['uncancelled'] );
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThanOrEqual( (int) $fresh->last_run, (int) $fresh->completed );
+	}
+
+	/**
+	 * An existing denied site must never be mistaken for a deleted selection.
+	 *
+	 * @return void
+	 */
+	public function test_reset_refuses_existing_out_of_scope_site() {
+		$this->set_current_user_as_admin();
+		$allowed = $this->create_test_site();
+		$denied  = $this->create_test_site();
+		$task    = $this->create_running_task( array( $allowed, $denied ), 2 * HOUR_IN_SECONDS );
+		$scope   = static function () use ( $allowed ) {
+			return array( $allowed );
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		try {
+			$error = \MainWP\Dashboard\MainWP_Backup_Operations::reset_task_run( (int) $task->id );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		}
+		$this->assertWPError( $error );
+		$this->assertSame( 'mainwp_backup_task_not_found', $error->get_error_code() );
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $task->completed, $fresh->completed );
 	}
 
 	/**

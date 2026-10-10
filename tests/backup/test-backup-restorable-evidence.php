@@ -129,4 +129,32 @@ class MainWP_Backup_Restorable_Evidence_Test extends MainWP_Abilities_Test_Case 
 			$this->assertEquals( $admission, $reading['restore'], 'The restore preview uses the same full admission evidence.' );
 		}
 	}
+
+	/**
+	 * The AJAX list only needs the catalog flag even when admission would refuse.
+	 *
+	 * @return void
+	 */
+	public function test_snapshot_list_without_admission_preserves_catalog_flags() {
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'type'      => 'incremental',
+				'parent_id' => 987679,
+			),
+			array( 'id' => 987673 )
+		);
+		$catalog = MainWP_Backup_Snapshot_Catalog::instance();
+		$this->assertFalse( $catalog->resolve_restorable_chain( 987673, $this->site_id )['ok'] );
+		$entries = MainWP_Backup_Read_Model::list_backup_snapshots( $this->site_id, false );
+		$this->assertNotEmpty( $entries );
+		foreach ( $entries as $entry ) {
+			$this->assertArrayNotHasKey( 'restore', $entry );
+			$this->assertTrue( $entry['restorable'] );
+			$this->assertSame( $entry['catalog_restorable'], $entry['restorable'] );
+			$this->assertSame( $entry['catalog_restore_reason'], $entry['restore_reason'] );
+		}
+		$this->assertFalse( MainWP_Backup_Read_Model::get_backup_snapshot( 987673 )['restorable'] );
+	}
 }

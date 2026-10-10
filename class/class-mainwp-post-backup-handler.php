@@ -184,12 +184,13 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * a per-site check, a user could act on any site by passing its id. Sends a
      * JSON error and returns null when access is denied.
      *
-     * @param int $site_id Child site id.
+     * @param int    $site_id Child site id.
+     * @param string $right Operation right for the calling endpoint.
      *
      * @return object|null The website object when authorized, null otherwise.
      */
-    private function authorize_restore_site( $site_id ) {
-        $website = MainWP_Backup_Operations::authorize_site( (int) $site_id, 'execute_backups' );
+    private function authorize_restore_site( $site_id, string $right = 'execute_backups' ) {
+        $website = MainWP_Backup_Operations::authorize_site( (int) $site_id, $right );
         if ( is_wp_error( $website ) ) {
             wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) );
             return null;
@@ -265,7 +266,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
-        $entries   = MainWP_Backup_Read_Model::list_backup_snapshots( $site_id );
+        $entries   = MainWP_Backup_Read_Model::list_backup_snapshots( $site_id, false );
         $multisite = MainWP_Backup_Monitor::child_is_multisite( $website );
         $rows      = array();
 
@@ -1016,7 +1017,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             if ( ! $site_id ) {
                 throw new MainWP_Exception( 'Site ID not found. Please reload the page and try again.', 'mainwp' );
             }
-            if ( null === $this->authorize_restore_site( $site_id ) ) {
+            if ( null === $this->authorize_restore_site( $site_id, 'run_backup_tasks' ) ) {
                 return;
             }
 

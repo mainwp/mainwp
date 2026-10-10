@@ -209,8 +209,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_backup_progress_unique_key();
             $this->maybe_retry_backup_snapshot_run_key();
             $this->maybe_retry_backup_task_last_continued();
-            $this->maybe_retry_backup_snapshot_test_restore_result_at();
             $this->maybe_retry_native_backup_tables();
+            $this->maybe_retry_backup_snapshot_test_restore_result_at();
             $pending = (int) get_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
             if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
                 $this->repair_backup_site_unique_keys();

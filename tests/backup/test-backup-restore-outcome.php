@@ -537,7 +537,7 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 		$statuses = array( 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'failed_retryable' );
 		foreach ( $statuses as $status ) {
 			$rows[ 'C' . ( ++$id ) ] = array( $status, array( 'pending' ), $answers, 'any', 'cancel_pending', 200 );
-			$rows[ 'C' . ( ++$id ) ] = array( $status, $other, $answers, 'any', 'not_cancellable', 200 );
+			$rows[ 'C' . ( ++$id ) ] = array( $status, $other, $answers, 'changed', 'not_cancellable', 200 );
 			$rows[ 'C' . ( ++$id ) ] = array( $status, $all, array( 'exception' ), 'unchanged', 'mainwp_operation_failed', 502 );
 			$rows[ 'C' . ( ++$id ) ] = array( $status, array( 'pending' ), array( 'exception' ), 'changed', 'cancel_pending', 200 );
 			$rows[ 'C' . ( ++$id ) ] = array( $status, $other, array( 'exception' ), 'changed', 'not_cancellable', 200 );
@@ -554,6 +554,13 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 		) as $terminal ) {
 			$rows[ 'C' . ( ++$id ) ] = array( $terminal[0], $terminal[1], $answers, 'any', $terminal[2], 200 );
 		}
+		$child_statuses = array( 'staging', 'transferring', 'running', 'failed_retryable' );
+		foreach ( $child_statuses as $offset => $status ) {
+			$rows[ 'C' . ( 46 + $offset ) ]          = array( $status, $other, array( 'cancel_pending unwritten' ), 'unchanged', 'mainwp_operation_failed', 502 );
+			$rows[ 'C' . ( 16 + 5 * $offset ) ][2][] = 'cancel_pending unwritten';
+		}
+		$rows['C50'] = array( $statuses, $all, array( 'exception' ), 'lease only', 'mainwp_operation_failed', 502 );
+		$rows['C51'] = array( $child_statuses, $other, array( 'cancel_pending unwritten' ), 'lease only', 'mainwp_operation_failed', 502 );
 		return $rows;
 	}
 
@@ -561,36 +568,65 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 	 * A concurrent writer can invalidate either a call answer or its exception.
 	 *
 	 * @dataProvider cancel_restore_result_matrix
-	 * @param string $status        Re-read status.
-	 * @param array  $confirmations Stored confirmation cases.
-	 * @param array  $answers       Call outcome cases.
-	 * @param string $change        Whether the persisted job changed.
-	 * @param string $expected      Result enum or error code.
-	 * @param int    $http          Expected HTTP status.
+	 * @param string|array $status        Re-read status cases.
+	 * @param array        $confirmations Stored confirmation cases.
+	 * @param array        $answers       Call outcome cases.
+	 * @param string       $change        Whether the persisted job changed.
+	 * @param string       $expected      Result enum or error code.
+	 * @param int          $http          Expected HTTP status.
 	 * @return void
 	 */
 	public function test_cancel_restore_result_matrix( $status, $confirmations, $answers, $change, $expected, $http ) {
 		global $wpdb;
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
-		foreach ( $confirmations as $confirmation ) {
+		$cases = array();
+		foreach ( (array) $status as $case_status ) {
+			foreach ( $confirmations as $confirmation ) {
+				$cases[] = array( $case_status, $confirmation );
+			}
+		}
+		foreach ( $cases as $case ) {
+			list( $status, $confirmation ) = $case;
 			foreach ( $answers as $answer ) {
+				$unwritten  = 'cancel_pending unwritten' === $answer;
 				$checkpoint = null === $confirmation ? array() : array( 'cancel_confirmation' => array( 'outcome' => $confirmation ) );
-				$initial    = 'exception' === $answer && 'any' !== $change ? $status : ( 'not called' === $answer ? 'verifying' : 'running' );
+				if ( $unwritten && 'failed_retryable' === $status ) {
+					$checkpoint['resume_status'] = 'running';
+				}
+				if ( $unwritten && 'pending' === $confirmation ) {
+					$checkpoint['cancel_intent'] = true;
+				}
+				$initial = $unwritten || ( 'exception' === $answer && 'any' !== $change ) ? $status : ( 'not called' === $answer ? 'verifying' : 'running' );
 				$this->assertNotFalse(
 					$wpdb->update(
 						$table,
 						array(
 							'status'        => $initial,
 							'checkpoint'    => wp_json_encode( (object) $checkpoint ),
-							'child_task_id' => 'cancel_pending' === $answer ? 'owned-restore' : '',
+							'child_task_id' => $unwritten || 'cancel_pending' === $answer ? 'owned-restore' : '',
 							'last_error'    => '',
 							'locked_by'     => '',
+							'locked_until'  => 1700000000,
+							'updated'       => 1700000000,
 						),
 						array( 'id' => 987674 )
 					)
 				);
-				$fired = 0;
-				$hook  = static function ( $sql ) use ( $wpdb, $table, $status, $checkpoint, $answer, $change, &$fired ) {
+				$fired   = 0;
+				$blocked = array(
+					'defer_terminal_failure' => 0,
+					'arm_cancel_intent'      => 0,
+				);
+				$hook    = static function ( $sql ) use ( $wpdb, $table, $status, $checkpoint, $answer, $change, $unwritten, &$fired, &$blocked ) {
+					if ( $unwritten && 0 === strpos( $sql, 'UPDATE ' . $table . ' SET ' ) ) {
+						$frames = array_column( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 'function' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- only cancellation-intent writes must be refused.
+						foreach ( array_keys( $blocked ) as $writer ) {
+							if ( in_array( $writer, $frames, true ) ) {
+								++$blocked[ $writer ];
+								return $sql . ' AND 1 = 0';
+							}
+						}
+					}
 					if ( $fired || 0 !== strpos( $sql, 'SELECT * FROM ' . $table . ' WHERE id = 987674' ) ) {
 						return $sql;
 					}
@@ -599,32 +635,53 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 						return $sql;
 					}
 					$in_cancel = in_array( 'cancel_job', $frames, true );
-					if ( ( 'exception' === $answer ) !== $in_cancel ) {
+					if ( ( 'exception' === $answer || $unwritten ) !== $in_cancel ) {
 						return $sql;
 					}
 					++$fired;
 					if ( 'changed' === $change ) {
 						$checkpoint['worker_tick'] = 1;
 					}
-					$wpdb->update(
-						$table,
-						array(
-							'status'     => $status,
-							'checkpoint' => wp_json_encode( (object) $checkpoint ),
-						),
-						array( 'id' => 987674 )
-					);
+					if ( 'lease only' === $change ) {
+						$wpdb->update(
+							$table,
+							array(
+								'locked_until' => 1700000060,
+								'updated'      => 1700000001,
+							),
+							array( 'id' => 987674 )
+						);
+					} elseif ( ! $unwritten ) {
+						$wpdb->update(
+							$table,
+							array(
+								'status'     => $status,
+								'checkpoint' => wp_json_encode( (object) $checkpoint ),
+							),
+							array( 'id' => 987674 )
+						);
+					}
 					if ( 'exception' === $answer && 'any' !== $change ) {
 						throw new MainWP_Exception( 'Cancellation interrupted.' );
 					}
 					return $sql;
 				};
-				$stub  = static function ( $value, $site, $what ) {
+				$stub    = static function ( $value, $site, $what ) {
 					return 'restore_task_cancel' === $what ? array( 'result' => 'busy' ) : $value;
 				};
 				add_filter( 'query', $hook );
 				add_filter( 'mainwp_fetch_url_authed_pre', $stub, 10, 3 );
 				try {
+					if ( $unwritten ) {
+						$store  = MainWP_Backup_Restore_Job_Store::instance();
+						$before = $store->get_job( 987674 );
+						$this->assertSame( 'cancel_pending', MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( 987674 ), 'Refused intent writes must return a deferred cancellation.' );
+						$this->assertSame( get_object_vars( $before ), get_object_vars( $store->get_job( 987674 ) ), 'The deferred answer must leave the row untouched.' );
+						$this->assertGreaterThan( 0, $blocked['defer_terminal_failure'] );
+						if ( 'pending' !== $confirmation ) {
+							$this->assertGreaterThan( 0, $blocked['arm_cancel_intent'] );
+						}
+					}
 					$response = MainWP_Backup_Operations::cancel_restore( 987674 );
 				} finally {
 					remove_filter( 'query', $hook );
@@ -632,6 +689,13 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				}
 				$case = $status . ' / ' . ( $confirmation ?? 'absent' ) . ' / ' . $answer . ' / ' . $change;
 				$this->assertSame( 1, $fired, $case . ': the concurrent write must land.' );
+				if ( 'lease only' === $change ) {
+					$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( 987674 );
+					$this->assertSame( $initial, $job->status, $case );
+					$this->assertSame( $checkpoint, $job->checkpoint, $case );
+					$this->assertSame( 1700000060, (int) $job->locked_until, $case );
+					$this->assertSame( 1700000001, (int) $job->updated, $case );
+				}
 				if ( 502 === $http ) {
 					$this->assertWPError( $response, $case );
 					$this->assertSame( $expected, $response->get_error_code(), $case );

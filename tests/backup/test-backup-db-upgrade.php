@@ -2974,6 +2974,12 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			} else {
 				update_site_option( $marker, $pending );
 			}
+			if ( false === $this->saved_db_version ) {
+				delete_site_option( 'mainwp_db_version' );
+			} else {
+				update_site_option( 'mainwp_db_version', $this->saved_db_version );
+			}
+			self::commit_transaction();
 		}
 	}
 }

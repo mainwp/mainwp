@@ -260,6 +260,18 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Duplicate synchronization rows must not inflate the authorized fleet.
+	 *
+	 * @return void
+	 */
+	public function test_authorized_site_ids_deduplicates_sync_rows() {
+		$this->insert_read_fixture( 'wp_sync', array( 'wpid' => $this->site_id ) );
+		$authorized = MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' );
+		$this->assertContains( $this->site_id, $authorized );
+		$this->assertSame( array( $this->site_id ), array_values( array_filter( $authorized, fn( $id ) => $this->site_id === $id ) ) );
+	}
+
+	/**
 	 * A different user or right must not inherit an earlier fleet scope.
 	 *
 	 * @return void

@@ -140,9 +140,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $authorized = array();
         foreach ( $sites as $site ) {
             if ( self::site_is_authorized( $site ) ) {
-                $authorized[] = (int) $site->id;
+                $authorized[ (int) $site->id ] = (int) $site->id;
             }
         }
+        $authorized                             = array_values( $authorized );
         self::$authorized_site_ids_memo[ $key ] = $authorized;
         return $authorized;
     }
@@ -531,8 +532,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $before ) ) {
             return $before;
         }
+        $attempted     = in_array( $before->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $before->status;
         $cancel_failed = false;
-        if ( in_array( $before->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $before->status ) {
+        if ( $attempted ) {
             try {
                 MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $restore_job_id );
             } catch ( MainWP_Exception $e ) {
@@ -546,7 +548,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         $confirmation = $job->checkpoint['cancel_confirmation']['outcome'] ?? '';
         $cancellable  = in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $job->status;
-        $result       = 'not_cancellable';
+        // Lease renewals do not record cancellation evidence.
+        $unchanged = $before->status === $job->status && $before->checkpoint === $job->checkpoint;
+        $result    = 'not_cancellable';
         if ( in_array( $job->status, array( 'cancelled', 'failed_permanent' ), true ) && 'unconfirmed' === $confirmation ) {
             $result = 'cancel_unconfirmed';
         } elseif ( 'cancelled' === $job->status ) {
@@ -554,7 +558,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         } elseif ( 'failed_permanent' === $job->status && 'confirmed' === $confirmation ) {
             $result = 'ended_failed';
         } elseif ( $cancellable ) {
-            if ( $cancel_failed && get_object_vars( $before ) === get_object_vars( $job ) ) {
+            if ( $attempted && $unchanged && ( $cancel_failed || 'pending' !== $confirmation ) ) {
                 return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
             }
             if ( 'pending' === $confirmation ) {

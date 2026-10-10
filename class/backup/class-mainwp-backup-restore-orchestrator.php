@@ -1541,7 +1541,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * or a row that reached verification or a terminal status during the request,
      * and for a successful terminal write or an unfenced terminal refusal.
      * Deferred covers refused decision writes, replies within the timeout,
-     * refused completion checkpoint writes and fenced terminal refusals.
+     * refused completion checkpoint writes, fenced terminal refusals and a
+     * terminal write that kept losing its compare-and-swap (the UI lane arms
+     * the intent first so the next drive finishes it).
      * Drive_on means the completion checkpoint cleared successfully.
      *
      * @param object      $job        Job row.
@@ -1613,26 +1615,45 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return $store->save_checkpoint( (int) $job->id, $checkpoint, $lock_token, true ) ? self::TERMINAL_OUTCOME_DRIVE_ON : self::TERMINAL_OUTCOME_DEFERRED;
         }
 
-        if ( $can_cancel || null === $error ) {
-            $confirmation = $can_cancel ? ( in_array( $outcome, array( 'ok', 'failed' ), true ) ? 'confirmed' : 'unconfirmed' ) : 'not_needed';
-            // Terminal status must never become visible before its stop evidence.
-            if ( ! $store->set_cancel_confirmation_outcome( (int) $job->id, $confirmation, $lock_token ) ) {
-                return self::TERMINAL_OUTCOME_DEFERRED;
-            }
+        $cancelled    = null === $error;
+        $confirmation = null;
+        if ( $can_cancel ) {
+            $confirmation = in_array( $outcome, array( 'ok', 'failed' ), true ) ? 'confirmed' : 'unconfirmed';
+        } elseif ( $cancelled ) {
+            $confirmation = 'not_needed';
         }
-
-        if ( null === $error ) {
-            if ( $store->cancel_job( (int) $job->id, $lock_token ) ) {
-                MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
-                $this->cancel_owned_pre_snapshot_handle( $job );
+        // Terminal status and its stop evidence land together, so no
+        // concurrent checkpoint write can separate them.
+        $written = $store->finish_with_cancel_confirmation(
+            (int) $job->id,
+            $cancelled ? $store::STATUS_CANCELLED : $store::STATUS_FAILED_PERMANENT,
+            $error,
+            $error_code,
+            $confirmation,
+            $lock_token
+        );
+        if ( 'written' !== $written ) {
+            if ( 'contended' === $written && null === $lock_token ) {
+                // The UI lane holds no lease to retry with; a durable intent
+                // lets the next drive finish the cancel.
+                $store->arm_cancel_intent(
+                    (int) $job->id,
+                    $cancelled ? array() : array(
+                        'error'      => $error,
+                        'error_code' => $error_code,
+                    )
+                );
+            }
+            if ( 'terminal' === $written || ( 'refused' === $written && null === $lock_token ) ) {
                 return self::TERMINAL_OUTCOME_TERMINAL;
             }
-            return null === $lock_token ? self::TERMINAL_OUTCOME_TERMINAL : self::TERMINAL_OUTCOME_DEFERRED;
+            return self::TERMINAL_OUTCOME_DEFERRED;
         }
 
-        $this->stamp_error_code( $job, $error_code, $lock_token );
-        if ( ! $store->fail_permanent( (int) $job->id, $error, $lock_token ) ) {
-            return null === $lock_token ? self::TERMINAL_OUTCOME_TERMINAL : self::TERMINAL_OUTCOME_DEFERRED;
+        if ( $cancelled ) {
+            MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
+            $this->cancel_owned_pre_snapshot_handle( $job );
+            return self::TERMINAL_OUTCOME_TERMINAL;
         }
 
         MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
@@ -1797,25 +1818,6 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         return $now['artifact_index'] > $mark_index
             || ( $now['artifact_index'] === $mark_index && $now['offset'] > $mark_offset );
-    }
-
-    /**
-     * Persist the error code that matches the job's current last_error.
-     *
-     * Rides in the checkpoint JSON so the restore progress poll can report a
-     * stable code without a schema change. Reads the row fresh so a concurrent
-     * checkpoint from the failed phase is not clobbered.
-     *
-     * @param object      $job        Job row.
-     * @param string      $error_code Error code, or '' when the failure carried none.
-     * @param string|null $lock_token Worker lease token, or null for an expired-lease sweep.
-     */
-    private function stamp_error_code( object $job, string $error_code, ?string $lock_token ): void {
-        $store                         = MainWP_Backup_Restore_Job_Store::instance();
-        $fresh                         = $store->get_job( (int) $job->id );
-        $checkpoint                    = null !== $fresh ? $fresh->checkpoint : $job->checkpoint;
-        $checkpoint['last_error_code'] = $error_code;
-        $store->save_checkpoint( (int) $job->id, $checkpoint, $lock_token );
     }
 
     /**

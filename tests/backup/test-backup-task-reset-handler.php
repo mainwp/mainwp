@@ -315,6 +315,179 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Rows of the task authorization matrix. Sites are roles a, b, c created per case.
+	 *
+	 * Keys: sites and groups (column members), snapshot (authorized_sites; null = legacy
+	 * row), deleted and denied (roles removed from the site table or from the caller's
+	 * scope), template, missing.
+	 *
+	 * @return array
+	 */
+	public static function authorize_task_matrix() {
+		return array(
+			'A1 missing task'                    => array(
+				array(
+					'sites'   => array( 'a' ),
+					'missing' => true,
+				),
+				false,
+			),
+			'A1 hidden template task'            => array(
+				array(
+					'sites'    => array( 'a' ),
+					'template' => true,
+				),
+				false,
+			),
+			'A3 every site reachable'            => array(
+				array(
+					'sites'    => array( 'a', 'b' ),
+					'snapshot' => array( 'a', 'b' ),
+				),
+				true,
+			),
+			'A4 one site deleted'                => array(
+				array(
+					'sites'    => array( 'a', 'b' ),
+					'snapshot' => array( 'a', 'b' ),
+					'deleted'  => array( 'b' ),
+				),
+				true,
+			),
+			'A5 one existing site out of scope'  => array(
+				array(
+					'sites'    => array( 'a', 'b' ),
+					'snapshot' => array( 'a', 'b' ),
+					'denied'   => array( 'b' ),
+				),
+				false,
+			),
+			'A6 deleted id left in sites column' => array(
+				array(
+					'sites'    => array( 'b' ),
+					'groups'   => array( 'a' ),
+					'snapshot' => array( 'a' ),
+					'deleted'  => array( 'b' ),
+				),
+				true,
+			),
+			'A6 denied id left in sites column'  => array(
+				array(
+					'sites'    => array( 'b' ),
+					'groups'   => array( 'a' ),
+					'snapshot' => array( 'a' ),
+					'denied'   => array( 'b' ),
+				),
+				true,
+			),
+			'A7 group member deleted'            => array(
+				array(
+					'groups'   => array( 'a', 'b' ),
+					'snapshot' => array( 'a', 'b' ),
+					'deleted'  => array( 'b' ),
+				),
+				true,
+			),
+			'A8 member added after the snapshot' => array(
+				array(
+					'groups'   => array( 'a', 'c' ),
+					'snapshot' => array( 'a' ),
+					'denied'   => array( 'c' ),
+				),
+				true,
+			),
+			'A9 legacy row, member out of scope' => array(
+				array(
+					'groups'   => array( 'a', 'c' ),
+					'snapshot' => null,
+					'denied'   => array( 'c' ),
+				),
+				false,
+			),
+			'A10 every site deleted'             => array(
+				array(
+					'sites'    => array( 'a', 'b' ),
+					'snapshot' => array( 'a', 'b' ),
+					'deleted'  => array( 'a', 'b' ),
+				),
+				true,
+			),
+		);
+	}
+
+	/**
+	 * Task authorization checks exactly the sites the task acts on.
+	 *
+	 * @dataProvider authorize_task_matrix
+	 * @param array $spec    Task shape.
+	 * @param bool  $allowed Whether the task is returned.
+	 * @return void
+	 */
+	public function test_authorize_task_site_matrix( $spec, $allowed ) {
+		global $wpdb;
+		$this->set_current_user_as_admin();
+		$ids   = array(
+			'a' => $this->create_test_site(),
+			'b' => $this->create_test_site(),
+			'c' => $this->create_test_site(),
+		);
+		$pick  = static function ( $roles ) use ( $ids ) {
+			return array_map(
+				static function ( $role ) use ( $ids ) {
+					return $ids[ $role ];
+				},
+				$roles ?? array()
+			);
+		};
+		$task  = $this->create_running_task( $pick( $spec['sites'] ?? array() ), 2 * HOUR_IN_SECONDS );
+		$table = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$group = $wpdb->prefix . 'mainwp_wp_group';
+		foreach ( $pick( $spec['groups'] ?? array() ) as $member ) {
+			$wpdb->insert(
+				$group,
+				array(
+					'wpid'    => $member,
+					'groupid' => 424243,
+				)
+			);
+		}
+		$wpdb->update(
+			$table,
+			array(
+				'groups'   => empty( $spec['groups'] ) ? '' : '424243',
+				'template' => empty( $spec['template'] ) ? 0 : 1,
+			),
+			array( 'id' => $task->id )
+		);
+		if ( array_key_exists( 'snapshot', $spec ) && null === $spec['snapshot'] ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET authorized_sites = NULL WHERE id = %d", $task->id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from the DB helper.
+		} elseif ( isset( $spec['snapshot'] ) ) {
+			$wpdb->update( $table, array( 'authorized_sites' => implode( ',', $pick( $spec['snapshot'] ) ) ), array( 'id' => $task->id ) );
+		}
+		foreach ( $pick( $spec['deleted'] ?? array() ) as $gone ) {
+			$wpdb->delete( \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp' ), array( 'id' => $gone ) );
+		}
+		$denied = $pick( $spec['denied'] ?? array() );
+		$scope  = static function () use ( $ids, $denied ) {
+			return array_values( array_diff( array_values( $ids ), $denied ) );
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		try {
+			$result = \MainWP\Dashboard\MainWP_Backup_Operations::authorize_task( empty( $spec['missing'] ) ? (int) $task->id : 999999999, 'pause_resume_backup_tasks' );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+			$wpdb->delete( $group, array( 'groupid' => 424243 ) );
+		}
+		if ( $allowed ) {
+			$this->assertIsObject( $result );
+			$this->assertSame( (int) $task->id, (int) $result->id );
+			return;
+		}
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_backup_task_not_found', $result->get_error_code() );
+	}
+
+	/**
 	 * A Team Control site restriction refuses the reset even for a stale
 	 * task, the same per-site authorization the snapshots-view cancel
 	 * enforces via authorize_restore_site().

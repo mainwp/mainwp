@@ -160,10 +160,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( ! $task || ! empty( $task->template ) || ( ! self::userless_cli() && ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) ) ) {
             return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
         }
-        $expanded = MainWP_Manage_Backups_Handler::expand_task_site_ids( empty( $task->groups ) ? $task->sites : '', $task->groups );
-        // A scoped existence check would hide an existing site that must be refused.
-        $existing = MainWP_DB::instance()->get_existing_website_ids( $expanded );
-        foreach ( array_intersect( $expanded, $existing ) as $site_id ) {
+        // Only the run set is checked: no task action touches a deleted site
+        // or a group member added after the authorized snapshot.
+        foreach ( MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ) as $site_id ) {
             if ( is_wp_error( self::authorize_site( $site_id, $right ) ) ) {
                 return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
             }
@@ -529,7 +528,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $result = 'cancelled';
         } elseif ( 'failed_permanent' === $read['status'] && 'confirmed' === ( $read['cancel_confirmation'] ) ) {
             $result = 'ended_failed';
-        } elseif ( 'cancel_pending' === $answer || 'pending' === ( $read['cancel_confirmation'] ) ) {
+        } elseif ( 'cancel_pending' === $answer || ( 'pending' === $read['cancel_confirmation'] && in_array( $read['status'], MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) ) {
             $result = 'cancel_pending';
         }
         return array(

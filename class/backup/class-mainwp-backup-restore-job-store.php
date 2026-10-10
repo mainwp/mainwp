@@ -535,48 +535,81 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
-     * An unleased cancellation must not overwrite a worker's newer checkpoint.
+     * Write a terminal status together with its stop evidence.
      *
-     * @param int         $job_id     Job id.
-     * @param string      $outcome    Cancellation confirmation outcome.
-     * @param string|null $lock_token Worker lease token, or null for an unleased cancellation.
+     * The UI cancel holds no lease, and a worker can save a checkpoint or
+     * re-defer the cancel at any moment. Written separately, the confirmation
+     * and the terminal status let either of those land in between and revert
+     * the confirmation, so both go in one compare-and-swap on the stored row.
+     * A null confirmation records not_needed only when a cancel was ever
+     * requested; an ordinary failure carries no confirmation at all.
      *
-     * @return bool True when the outcome is recorded on an active row.
+     * @param int         $job_id       Job id.
+     * @param string      $status       STATUS_CANCELLED or STATUS_FAILED_PERMANENT.
+     * @param string|null $error        Failure text for a failed job; null keeps last_error.
+     * @param string      $error_code   Code stored as last_error_code alongside $error.
+     * @param string|null $confirmation confirmed, unconfirmed or not_needed; null derives it from the row.
+     * @param string|null $lock_token   Worker lease token, or null for an unleased cancellation.
+     *
+     * @return string written; terminal when the row is missing or another writer
+     *                finished it; fenced when the lease was lost; refused when the
+     *                write failed on an unchanged row; contended when the row
+     *                kept changing under the swap.
      */
-    public function set_cancel_confirmation_outcome( int $job_id, string $outcome, ?string $lock_token = null ): bool {
+    public function finish_with_cancel_confirmation( int $job_id, string $status, ?string $error, string $error_code, ?string $confirmation, ?string $lock_token = null ): string {
+        $missed = null;
         for ( $attempt = 0; $attempt < 5; $attempt++ ) {
             $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
                 $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
             );
-            if ( null === $row || ! in_array( $row->status, self::active_statuses(), true ) || ( null !== $lock_token && $row->locked_by !== $lock_token ) ) {
-                return false;
+            if ( null === $row || ! in_array( $row->status, self::active_statuses(), true ) ) {
+                return 'terminal';
+            }
+            if ( null !== $lock_token && $row->locked_by !== $lock_token ) {
+                return 'fenced';
+            }
+            // A miss against a row nobody changed is a failed write, not a race.
+            if ( null !== $missed && $missed === array( (string) $row->checkpoint, $row->status, $row->locked_by ) ) {
+                return 'refused';
             }
 
             $stored  = (string) $row->checkpoint;
             $decoded = json_decode( $stored, true );
             $decoded = is_array( $decoded ) ? $decoded : array();
-            if ( ( $decoded['cancel_confirmation']['outcome'] ?? null ) === $outcome ) {
-                return true;
+            $outcome = $confirmation;
+            if ( null === $outcome && ( ! empty( $decoded['cancel_intent'] ) || isset( $decoded['cancel_confirmation'] ) ) ) {
+                $outcome = 'not_needed';
             }
-            $decoded['cancel_confirmation']['outcome'] = $outcome;
+            if ( null !== $outcome ) {
+                $decoded['cancel_confirmation']['outcome'] = $outcome;
+            }
+            $set   = "`status` = %s, locked_until = 0, locked_by = '', active_site_id = NULL, updated = %d";
+            $binds = array( $status, time() );
+            if ( null !== $error ) {
+                $decoded['last_error_code'] = $error_code;
+                $set                       .= ', last_error = %s';
+                $binds[]                    = $error;
+            }
+            $set .= ', checkpoint = %s';
+            array_push( $binds, wp_json_encode( $decoded ), $job_id, $stored, $row->status );
 
             $fence = '';
-            $binds = array( wp_json_encode( $decoded ), time(), $job_id, $stored, $row->status );
             if ( null !== $lock_token ) {
                 $fence   = ' AND locked_by = %s';
                 $binds[] = $lock_token;
             }
             $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the exact stored value.
-                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional lease fence adds its bind.
-                    'UPDATE ' . $this->table() . " SET checkpoint = %s, updated = %d WHERE id = %d AND checkpoint = %s AND status = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
+                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional columns and fence add their binds.
+                    'UPDATE ' . $this->table() . " SET {$set} WHERE id = %d AND checkpoint = %s AND status = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed SQL fragments; every value binds via placeholder.
                     $binds
                 )
             );
             if ( 1 === $swapped ) {
-                return true;
+                return 'written';
             }
+            $missed = array( $stored, $row->status, $row->locked_by );
         }
-        return false;
+        return 'contended';
     }
 
     /**

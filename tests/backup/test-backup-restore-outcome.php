@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_Backup_Read_Model;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
+use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_DB;
 
 require_once __DIR__ . '/class-mainwp-backup-read-fixtures.php';
@@ -147,27 +148,279 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A worker checkpoint can change before either the outcome read or its swap.
+	 * Rows of the terminal-write matrix: setup, call, concurrent write and the stored result.
 	 *
-	 * @return array Race positions.
+	 * Setup keys: status, child (Child task id), intent (stored cancel intent), prior (stored
+	 * failure), expired (confirmation window elapsed), token (row lease holder).
+	 * Call keys: error and code (null error is a user cancellation), token (caller lease), reply.
+	 * Race: none, or array( position: read|swap, write: defer|save|terminal|foreign|contend ).
+	 * Expect keys: result, status, confirmation (null = key absent), code (null = not checked),
+	 * artifacts (worker checkpoint kept), intent (cancel intent on the row).
+	 *
+	 * @return array
 	 */
-	public static function checkpoint_race_positions() {
+	public static function terminal_write_matrix() {
+		$cancel = array(
+			'error' => null,
+			'code'  => '',
+			'token' => null,
+		);
+		$fail   = array(
+			'error' => 'Disk full on the site.',
+			'code'  => 'mainwp_restore_disk_full',
+			'token' => 'worker-token',
+		);
 		return array(
-			'before read' => array( 'read' ),
-			'before swap' => array( 'swap' ),
+			'T1 cancel without a Child task'       => array(
+				array( 'status' => 'pending' ),
+				$cancel + array( 'reply' => '' ),
+				'none',
+				array(
+					'result'       => 'terminal',
+					'status'       => 'cancelled',
+					'confirmation' => 'not_needed',
+				),
+			),
+			'T2 cancel confirmed by ok'            => array(
+				array(
+					'status' => 'running',
+					'child'  => 'owned-restore',
+				),
+				$cancel + array( 'reply' => 'ok' ),
+				'none',
+				array(
+					'result'       => 'terminal',
+					'status'       => 'cancelled',
+					'confirmation' => 'confirmed',
+				),
+			),
+			'T3 cancel confirmed by failed phase'  => array(
+				array(
+					'status' => 'running',
+					'child'  => 'owned-restore',
+				),
+				$cancel + array( 'reply' => 'failed' ),
+				'none',
+				array(
+					'result'       => 'terminal',
+					'status'       => 'cancelled',
+					'confirmation' => 'confirmed',
+				),
+			),
+			'T4 cancel unconfirmed at timeout'     => array(
+				array(
+					'status'  => 'running',
+					'child'   => 'owned-restore',
+					'expired' => true,
+				),
+				$cancel + array( 'reply' => 'busy' ),
+				'none',
+				array(
+					'result'       => 'terminal',
+					'status'       => 'failed_permanent',
+					'confirmation' => 'unconfirmed',
+					'code'         => 'mainwp_restore_cancel_unconfirmed',
+				),
+			),
+			'T5 stored failure, stop confirmed'    => array(
+				array(
+					'status' => 'running',
+					'child'  => 'owned-restore',
+					'prior'  => true,
+				),
+				$cancel + array( 'reply' => 'ok' ),
+				'none',
+				array(
+					'result'       => 'terminal',
+					'status'       => 'failed_permanent',
+					'confirmation' => 'confirmed',
+					'code'         => 'mainwp_restore_artifact_missing',
+				),
+			),
+			'T6 stored failure, unconfirmed'       => array(
+				array(
+					'status'  => 'running',
+					'child'   => 'owned-restore',
+					'prior'   => true,
+					'expired' => true,
+				),
+				$cancel + array( 'reply' => 'busy' ),
+				'none',
+				array(
+					'result'       => 'terminal',
+					'status'       => 'failed_permanent',
+					'confirmation' => 'unconfirmed',
+					'code'         => 'mainwp_restore_artifact_missing',
+				),
+			),
+			'T7 worker failure, no cancel'         => array(
+				array(
+					'status' => 'pending',
+					'token'  => 'worker-token',
+				),
+				$fail + array( 'reply' => '' ),
+				'none',
+				array(
+					'result'       => 'terminal',
+					'status'       => 'failed_permanent',
+					'confirmation' => null,
+					'code'         => 'mainwp_restore_disk_full',
+				),
+			),
+			'T8 worker failure after a cancel'     => array(
+				array(
+					'status' => 'pending',
+					'token'  => 'worker-token',
+					'intent' => true,
+				),
+				$fail + array( 'reply' => '' ),
+				'none',
+				array(
+					'result'       => 'terminal',
+					'status'       => 'failed_permanent',
+					'confirmation' => 'not_needed',
+					'code'         => 'mainwp_restore_disk_full',
+				),
+			),
+			'T9 re-deferral lands before the swap' => array(
+				array(
+					'status'  => 'running',
+					'child'   => 'owned-restore',
+					'prior'   => true,
+					'expired' => true,
+					'token'   => 'worker-token',
+				),
+				$cancel + array( 'reply' => 'busy' ),
+				array( 'swap', 'defer' ),
+				array(
+					'result'       => 'terminal',
+					'status'       => 'failed_permanent',
+					'confirmation' => 'unconfirmed',
+					'code'         => 'mainwp_restore_artifact_missing',
+				),
+			),
+			'T10 worker save before the read'      => array(
+				array(
+					'status' => 'pending',
+					'token'  => 'worker-token',
+					'intent' => true,
+				),
+				$cancel + array( 'reply' => '' ),
+				array( 'read', 'save' ),
+				array(
+					'result'       => 'terminal',
+					'status'       => 'cancelled',
+					'confirmation' => 'not_needed',
+					'artifacts'    => true,
+				),
+			),
+			'T10 worker save before the swap'      => array(
+				array(
+					'status' => 'pending',
+					'token'  => 'worker-token',
+					'intent' => true,
+				),
+				$cancel + array( 'reply' => '' ),
+				array( 'swap', 'save' ),
+				array(
+					'result'       => 'terminal',
+					'status'       => 'cancelled',
+					'confirmation' => 'not_needed',
+					'artifacts'    => true,
+				),
+			),
+			'T11 another writer finished it'       => array(
+				array( 'status' => 'pending' ),
+				$cancel + array( 'reply' => '' ),
+				array( 'read', 'terminal' ),
+				array(
+					'result'       => 'terminal',
+					'status'       => 'failed_permanent',
+					'confirmation' => null,
+				),
+			),
+			'T12 worker lost its lease'            => array(
+				array(
+					'status' => 'pending',
+					'token'  => 'worker-token',
+				),
+				$fail + array( 'reply' => '' ),
+				array( 'read', 'foreign' ),
+				array(
+					'result'       => 'deferred',
+					'status'       => 'pending',
+					'confirmation' => null,
+				),
+			),
+			'T13 UI cancel keeps losing the swap'  => array(
+				array(
+					'status' => 'pending',
+					'token'  => 'worker-token',
+				),
+				$cancel + array( 'reply' => '' ),
+				array( 'swap', 'contend' ),
+				array(
+					'result'       => 'deferred',
+					'status'       => 'pending',
+					'confirmation' => 'pending',
+					'intent'       => true,
+				),
+			),
+			'T14 worker keeps losing the swap'     => array(
+				array(
+					'status' => 'pending',
+					'token'  => 'worker-token',
+				),
+				$fail + array( 'reply' => '' ),
+				array( 'swap', 'contend' ),
+				array(
+					'result'       => 'deferred',
+					'status'       => 'pending',
+					'confirmation' => null,
+					'intent'       => false,
+				),
+			),
 		);
 	}
 
 	/**
-	 * A UI cancellation must retain the worker's newer rollback source.
+	 * The terminal status and its stop evidence are one write under every concurrent writer.
 	 *
-	 * @dataProvider checkpoint_race_positions
-	 * @param string $position Concurrent write position.
+	 * @dataProvider terminal_write_matrix
+	 * @param array        $setup  Stored row.
+	 * @param array        $call   record_terminal_failure() arguments and the Child reply.
+	 * @param string|array $race   Concurrent write and where it lands.
+	 * @param array        $expect Result and stored row.
 	 * @return void
 	 */
-	public function test_ui_cancel_preserves_concurrent_checkpoint_write( $position ) {
+	public function test_terminal_write_matrix( $setup, $call, $race, $expect ) {
 		global $wpdb;
-		$table     = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$table      = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$store      = MainWP_Backup_Restore_Job_Store::instance();
+		$checkpoint = array();
+		if ( ! empty( $setup['intent'] ) ) {
+			$checkpoint['cancel_intent'] = true;
+		}
+		if ( ! empty( $setup['expired'] ) ) {
+			$checkpoint['cancel_confirmation'] = array( 'first_attempt_at' => time() - MainWP_Backup_Restore_Job_Store::CANCEL_CONFIRMATION_TIMEOUT_SECONDS );
+		}
+		if ( ! empty( $setup['prior'] ) ) {
+			$checkpoint['terminal_failure'] = array(
+				'error'      => 'Original missing artifact',
+				'error_code' => 'mainwp_restore_artifact_missing',
+			);
+		}
+		$wpdb->update(
+			$table,
+			array(
+				'status'        => $setup['status'],
+				'child_task_id' => $setup['child'] ?? '',
+				'checkpoint'    => wp_json_encode( (object) $checkpoint ),
+				'last_error'    => '',
+				'locked_by'     => $setup['token'] ?? '',
+			),
+			array( 'id' => 987674 )
+		);
 		$artifacts = array(
 			array(
 				'file' => 'safety.zip',
@@ -175,88 +428,97 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				'size' => 1024,
 			),
 		);
-		$wpdb->update(
-			$table,
-			array(
-				'status'        => 'pending',
-				'child_task_id' => '',
-				'checkpoint'    => '{"cancel_intent":true}',
-				'locked_by'     => 'worker-token',
-			),
-			array( 'id' => 987674 )
-		);
-		$injected = false;
-		$race     = static function ( $sql ) use ( $wpdb, $table, $artifacts, $position, &$injected ) {
-			if ( $injected || false === strpos( $sql, $table ) || false === strpos( $sql, 'id = 987674' ) ) {
+		$fired     = 0;
+		$hook      = static function ( $sql ) use ( $wpdb, $table, $store, $race, $artifacts, &$fired ) {
+			if ( ! is_array( $race ) || false === strpos( $sql, $table ) ) {
 				return $sql;
 			}
-			$functions = array_column( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 'function' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- the query hook must target the persistence seam.
-			$cas       = in_array( 'set_cancel_confirmation_outcome', $functions, true );
-			$target    = 'read' === $position ? 'SELECT checkpoint, status, locked_by' : 'UPDATE ';
-			$legacy    = in_array( 'record_terminal_failure', $functions, true ) && 0 === strpos( $sql, 'UPDATE ' ) && false !== strpos( $sql, 'SET checkpoint = IF(' );
-			if ( ! ( ( $cas && 0 === strpos( $sql, $target ) ) || $legacy ) ) {
+			$frames = array_column( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 'function' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- the hook must land inside the terminal write.
+			if ( ! in_array( 'finish_with_cancel_confirmation', $frames, true ) || in_array( 'save_checkpoint', $frames, true ) || in_array( 'defer_terminal_failure', $frames, true ) ) {
 				return $sql;
 			}
-			$injected                             = true;
-			$store                                = MainWP_Backup_Restore_Job_Store::instance();
-			$checkpoint                           = $store->get_job( 987674 )->checkpoint;
-			$checkpoint['pre_snapshot_artifacts'] = $artifacts;
-			$store->save_checkpoint( 987674, $checkpoint, 'worker-token' );
+			$at = 'read' === $race[0] ? 'SELECT checkpoint, status, locked_by' : 'UPDATE ';
+			if ( 0 !== strpos( $sql, $at ) || ( $fired > 0 && 'contend' !== $race[1] ) ) {
+				return $sql;
+			}
+			++$fired;
+			switch ( $race[1] ) {
+				case 'defer':
+					$store->defer_terminal_failure( 987674, 'Original missing artifact', 'mainwp_restore_artifact_missing', 'worker-token' );
+					break;
+				case 'save':
+					$current                           = $store->get_job( 987674 )->checkpoint;
+					$current['pre_snapshot_artifacts'] = $artifacts;
+					$store->save_checkpoint( 987674, $current, 'worker-token' );
+					break;
+				case 'contend':
+					$current         = $store->get_job( 987674 )->checkpoint;
+					$current['tick'] = $fired;
+					$store->save_checkpoint( 987674, $current, 'worker-token' );
+					break;
+				case 'terminal':
+					$wpdb->update( $table, array( 'status' => 'failed_permanent' ), array( 'id' => 987674 ) );
+					break;
+				case 'foreign':
+					$wpdb->update( $table, array( 'locked_by' => 'other-worker' ), array( 'id' => 987674 ) );
+					break;
+			}
 			return $sql;
 		};
-		add_filter( 'query', $race );
+		$reply     = $call['reply'];
+		$stub      = static function ( $value, $site, $what ) use ( $reply ) {
+			if ( 'restore_task_cancel' !== $what ) {
+				return $value;
+			}
+			return 'failed' === $reply ? array(
+				'result' => 'already_terminal',
+				'phase'  => 'failed',
+			) : array( 'result' => $reply );
+		};
+		add_filter( 'query', $hook );
+		add_filter( 'mainwp_fetch_url_authed_pre', $stub, 10, 3 );
 		try {
-			$response = MainWP_Backup_Operations::cancel_restore( 987674 );
+			$method = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
+			$method->setAccessible( true );
+			$result = $method->invoke( MainWP_Backup_Restore_Orchestrator::instance(), $store->get_job( 987674 ), $call['error'], $call['code'], $call['token'] );
 		} finally {
-			remove_filter( 'query', $race );
+			remove_filter( 'query', $hook );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $stub, 10 );
 		}
-		$this->assertTrue( $injected, 'The concurrent worker write must land inside outcome persistence.' );
-		$this->assertSame( 'cancelled', $response['result'] );
-		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( 987674 );
-		$this->assertSame( $artifacts, $job->checkpoint['pre_snapshot_artifacts'] ?? null, 'UI cancellation must preserve the newer rollback source.' );
-		$this->assertSame( 'not_needed', $job->checkpoint['cancel_confirmation']['outcome'] );
-		$this->assertTrue( $job->checkpoint['cancel_intent'] );
+
+		if ( is_array( $race ) ) {
+			$this->assertGreaterThan( 0, $fired, 'The concurrent write must land inside the terminal write.' );
+		}
+		$this->assertSame( $expect['result'], $result );
+		$job = $store->get_job( 987674 );
+		$this->assertSame( $expect['status'], $job->status );
+		$this->assertSame( $expect['confirmation'], $job->checkpoint['cancel_confirmation']['outcome'] ?? null );
+		if ( isset( $expect['code'] ) ) {
+			$this->assertSame( $expect['code'], $job->checkpoint['last_error_code'] ?? null );
+		}
+		if ( ! empty( $expect['artifacts'] ) ) {
+			$this->assertSame( $artifacts, $job->checkpoint['pre_snapshot_artifacts'] ?? null, 'The worker checkpoint written meanwhile must survive.' );
+		}
+		if ( isset( $expect['intent'] ) ) {
+			$this->assertSame( $expect['intent'], ! empty( $job->checkpoint['cancel_intent'] ) );
+		}
 	}
 
 	/**
-	 * Outcome persistence must respect active status and worker ownership.
+	 * A pending confirmation left on a finished job is not a cancel still in flight.
 	 *
 	 * @return void
 	 */
-	public function test_cancel_confirmation_outcome_respects_status_and_fence() {
+	public function test_pending_confirmation_on_finished_job_is_not_cancel_pending() {
 		global $wpdb;
-		$store      = MainWP_Backup_Restore_Job_Store::instance();
-		$table      = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
-		$checkpoint = array(
-			'cancel_intent'       => true,
-			'cancel_confirmation' => array(
-				'outcome'       => 'pending',
-				'attempt_count' => 3,
-			),
-			'terminal_failure'    => array(
-				'error'      => 'Original failure',
-				'error_code' => 'mainwp_restore_artifact_missing',
-			),
-			'transfer'            => array( 'offset' => 42 ),
-		);
 		$wpdb->update(
-			$table,
+			MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
 			array(
-				'status'     => 'running',
-				'locked_by'  => 'worker-token',
-				'checkpoint' => wp_json_encode( $checkpoint ),
+				'status'     => 'completed',
+				'checkpoint' => '{"cancel_intent":true,"cancel_confirmation":{"outcome":"pending"}}',
 			),
 			array( 'id' => 987674 )
 		);
-		$this->assertFalse( $store->set_cancel_confirmation_outcome( 987674, 'confirmed', 'foreign-token' ) );
-		$this->assertSame( $checkpoint, $store->get_job( 987674 )->checkpoint );
-		$this->assertTrue( $store->set_cancel_confirmation_outcome( 987674, 'confirmed', 'worker-token' ) );
-		$checkpoint['cancel_confirmation']['outcome'] = 'confirmed';
-		$this->assertSame( $checkpoint, $store->get_job( 987674 )->checkpoint );
-		$this->assertTrue( $store->set_cancel_confirmation_outcome( 987674, 'confirmed', 'worker-token' ) );
-		$wpdb->update( $table, array( 'status' => 'cancelled' ), array( 'id' => 987674 ) );
-		$this->assertFalse( $store->set_cancel_confirmation_outcome( 987674, 'not_needed' ) );
-		$this->assertSame( $checkpoint, $store->get_job( 987674 )->checkpoint );
-		$this->assertFalse( $store->set_cancel_confirmation_outcome( 999999999, 'not_needed' ) );
+		$this->assertNotSame( 'cancel_pending', MainWP_Backup_Operations::cancel_restore( 987674 )['result'] );
 	}
 }

@@ -13,6 +13,13 @@ defined( 'ABSPATH' ) || exit;
 class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Repeated fleet reads must not multiply site queries within a request.
+     *
+     * @var array<string,int[]>
+     */
+    private static $authorized_site_ids_memo = array();
+
+    /**
      * Only registered codes select messages sent to agents.
      *
      * @param string $code Registered error code.
@@ -119,19 +126,34 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return int[]
      */
     public static function authorized_site_ids( string $right ): array {
+        $key = get_current_user_id() . ':' . (int) self::userless_cli() . ':' . (int) ( defined( 'MAINWP_REST_API_DOING' ) && MAINWP_REST_API_DOING ) . ':' . $right;
+        if ( isset( self::$authorized_site_ids_memo[ $key ] ) ) {
+            return self::$authorized_site_ids_memo[ $key ];
+        }
         if ( is_wp_error( self::authorize_base( $right ) ) ) {
+            self::$authorized_site_ids_memo[ $key ] = array();
             return array();
         }
         global $wpdb;
-        $ids        = $wpdb->get_col( 'SELECT id FROM ' . MainWP_DB::instance()->get_table_name( 'wp' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- the roster must precede caller scoping.
+        $db         = MainWP_DB::instance();
+        $sites      = $wpdb->get_results( 'SELECT wp.* FROM ' . $db->get_table_name( 'wp' ) . ' wp JOIN ' . $db->get_table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid ORDER BY wp.id' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- the roster must precede caller scoping; the join retains the single-site lookup's existence rule.
         $authorized = array();
-        foreach ( $ids as $id ) {
-            $site = MainWP_DB::instance()->get_website_by_id( (int) $id );
-            if ( $site && self::site_is_authorized( $site ) ) {
-                $authorized[] = (int) $id;
+        foreach ( $sites as $site ) {
+            if ( self::site_is_authorized( $site ) ) {
+                $authorized[] = (int) $site->id;
             }
         }
+        self::$authorized_site_ids_memo[ $key ] = $authorized;
         return $authorized;
+    }
+
+    /**
+     * Isolated tests can change sites and permissions within one PHP request.
+     *
+     * @return void
+     */
+    public static function reset_authorized_site_ids_memo(): void {
+        self::$authorized_site_ids_memo = array();
     }
 
     /**
@@ -505,35 +527,43 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error Cancellation evidence.
      */
     public static function cancel_restore( int $restore_job_id ) {
-        $job = self::authorize_restore_job( $restore_job_id );
-        if ( is_wp_error( $job ) ) {
-            return $job;
+        $before = self::authorize_restore_job( $restore_job_id );
+        if ( is_wp_error( $before ) ) {
+            return $before;
         }
-        $answer = '';
-        if ( in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $job->status ) {
+        $cancel_failed = false;
+        if ( in_array( $before->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $before->status ) {
             try {
-                $answer = MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $restore_job_id );
+                MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $restore_job_id );
             } catch ( MainWP_Exception $e ) {
-                return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
+                // Another lane can finish after admission, so the exception cannot decide the result.
+                $cancel_failed = true;
             }
         }
-        $read = MainWP_Backup_Read_Model::get_restore_job( $restore_job_id );
-        if ( is_wp_error( $read ) ) {
-            return $read;
+        $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
+        if ( null === $job || 'reserved' === $job->status ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND );
         }
-        $result = 'not_cancellable';
-        if ( 'cancel_unconfirmed' === $read['outcome'] ) {
+        $confirmation = $job->checkpoint['cancel_confirmation']['outcome'] ?? '';
+        $cancellable  = in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $job->status;
+        $result       = 'not_cancellable';
+        if ( in_array( $job->status, array( 'cancelled', 'failed_permanent' ), true ) && 'unconfirmed' === $confirmation ) {
             $result = 'cancel_unconfirmed';
-        } elseif ( 'cancelled' === $read['status'] ) {
+        } elseif ( 'cancelled' === $job->status ) {
             $result = 'cancelled';
-        } elseif ( 'failed_permanent' === $read['status'] && 'confirmed' === ( $read['cancel_confirmation'] ) ) {
+        } elseif ( 'failed_permanent' === $job->status && 'confirmed' === $confirmation ) {
             $result = 'ended_failed';
-        } elseif ( 'cancel_pending' === $answer || ( 'pending' === $read['cancel_confirmation'] && in_array( $read['status'], MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) ) {
-            $result = 'cancel_pending';
+        } elseif ( $cancellable ) {
+            if ( $cancel_failed && get_object_vars( $before ) === get_object_vars( $job ) ) {
+                return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
+            }
+            if ( 'pending' === $confirmation ) {
+                $result = 'cancel_pending';
+            }
         }
         return array(
             'restore_job_id' => $restore_job_id,
-            'status'         => $read['status'],
+            'status'         => $job->status,
             'result'         => $result,
         );
     }

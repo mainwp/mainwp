@@ -43,6 +43,7 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		$this->seed_read_fixtures();
 	}
 
@@ -52,6 +53,7 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tear_down() {
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		$this->clear_read_fixtures();
 		parent::tear_down();
 	}
@@ -107,11 +109,13 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 			return 'dashboard' === $type ? false : $allowed;
 		};
 		add_filter( 'mainwp_currentusercan', $deny, 10, 2 );
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		try {
 			$this->assertSame( 'mainwp_insufficient_right', MainWP_Backup_Operations::authorize_site( $this->site_id, 'execute_backups' )->get_error_code() );
 			$this->assertSame( array(), MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) );
 		} finally {
 			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		}
 	}
 
@@ -149,6 +153,7 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 			global $wpdb;
 			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'userid' => get_current_user_id() + 1000 ), array( 'id' => $this->site_id ) );
 		}
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		try {
 			$this->assertSame( 'mainwp_site_not_found', MainWP_Backup_Operations::authorize_site( $this->site_id, 'execute_backups' )->get_error_code() );
 			$this->assertNotContains( $this->site_id, MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) );
@@ -157,6 +162,7 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 			remove_filter( 'mainwp_is_single_user', '__return_false' );
 			remove_filter( 'mainwp_check_site_access', $deny, 10 );
 			remove_filter( 'mainwp_currentusercan', $right, 10 );
+			MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		}
 	}
 
@@ -177,6 +183,7 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 		try {
 			foreach ( array( false, 'rest' ) as $context ) {
 				$machine->setValue( null, $context );
+				MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 				$this->assertContains( $this->site_id, MainWP_Backup_Operations::authorized_site_ids( '' ) );
 				$this->assertIsObject( MainWP_Backup_Operations::authorize_site( $this->site_id, '' ) );
 			}
@@ -186,6 +193,7 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			$machine->setValue( null, $original );
 			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		}
 	}
 
@@ -249,5 +257,63 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 		$this->assertWPError( $result );
 		$this->assertSame( 'mainwp_invalid_input', $result->get_error_code() );
 		$this->assertSame( 400, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * A different user or right must not inherit an earlier fleet scope.
+	 *
+	 * @return void
+	 */
+	public function test_authorized_site_ids_memoizes_one_roster_per_user_and_right() {
+		$first_user = get_current_user_id();
+		$other_user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$other_site = $this->create_test_site(
+			array(
+				'name' => 'Other owner',
+				'url'  => 'https://other-owner.example.org/',
+			)
+		);
+		$sites      = array(
+			$first_user => array( $this->site_id ),
+			$other_user => array( $other_site ),
+		);
+		$scope      = static function () use ( $sites ) {
+			return $sites[ get_current_user_id() ];
+		};
+		$right      = static function ( $allowed, $type, $key ) {
+			return 'dashboard' === $type && 'run_backup_tasks' === $key ? false : $allowed;
+		};
+		$table      = MainWP_DB::instance()->get_table_name( 'wp' );
+		$queries    = 0;
+		$count      = static function ( $sql ) use ( $table, &$queries ) {
+			if ( preg_match( '/^SELECT\b/i', $sql ) && preg_match( '/\b(?:FROM|JOIN)\s+`?' . preg_quote( $table, '/' ) . '`?(?:\s|$)/i', $sql ) ) {
+				++$queries;
+			}
+			return $sql;
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		add_filter( 'mainwp_currentusercan', $right, 10, 3 );
+		add_filter( 'query', $count );
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
+		try {
+			$this->assertSame( $sites[ $first_user ], MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) );
+			$this->assertSame( 1, $queries, 'The first fleet read must load the roster in one query.' );
+			$this->assertSame( $sites[ $first_user ], MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) );
+			$this->assertSame( 1, $queries, 'The second fleet read must issue no further site query.' );
+			$this->assertSame( array(), MainWP_Backup_Operations::authorized_site_ids( 'run_backup_tasks' ), 'A different right must retain its own denial.' );
+			wp_set_current_user( $other_user );
+			$this->assertSame( $sites[ $other_user ], MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ), 'A user switch must not reuse another owner\'s set.' );
+			$this->assertSame( 2, $queries, 'The second user must load one roster.' );
+			$this->assertSame( $sites[ $other_user ], MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) );
+			$this->assertSame( 2, $queries, 'The second user must also reuse their own set.' );
+			wp_set_current_user( $first_user );
+			$this->assertSame( $sites[ $first_user ], MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) );
+			$this->assertSame( 2, $queries, 'Returning to the first user may reuse only that user\'s set.' );
+		} finally {
+			remove_filter( 'query', $count );
+			remove_filter( 'mainwp_currentusercan', $right, 10 );
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+			MainWP_Backup_Operations::reset_authorized_site_ids_memo();
+		}
 	}
 }

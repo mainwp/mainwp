@@ -50,6 +50,13 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING = 'mainwp_backup_task_last_continued_repair_pending';
 
     /**
+     * Result writes need this column even after a failed migration stamps the version.
+     *
+     * @var string
+     */
+    const BACKUP_SNAPSHOT_TEST_RESTORE_RESULT_AT_REPAIR_PENDING = 'mainwp_backup_snapshot_test_restore_result_at_repair_pending';
+
+    /**
      * Retry failed per-site identity migrations after the version is stamped.
      *
      * @var string
@@ -202,6 +209,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_backup_progress_unique_key();
             $this->maybe_retry_backup_snapshot_run_key();
             $this->maybe_retry_backup_task_last_continued();
+            $this->maybe_retry_backup_snapshot_test_restore_result_at();
             $this->maybe_retry_native_backup_tables();
             $pending = (int) get_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
             if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
@@ -589,6 +597,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         $this->maybe_repair_knowledge_table();
         $this->post_update();
+        $this->ensure_backup_snapshot_test_restore_result_at();
 
         do_action( 'mainwp_db_after_update', $currentVersion, $this->mainwp_db_version ); // new version: $this->mainwp_db_version.
 
@@ -1781,6 +1790,44 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $pending = (int) get_site_option( static::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
         if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
             $this->ensure_backup_task_last_continued();
+        }
+    }
+
+    /**
+     * A failed dbDelta must not leave every test-restore result write unusable.
+     *
+     * @return bool Whether the column exists.
+     */
+    public function ensure_backup_snapshot_test_restore_result_at(): bool {
+        $suppress = $this->wpdb->suppress_errors();
+        $table    = esc_sql( $this->table_name( 'wp_backup_snapshot' ) );
+        $column   = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'test_restore_result_at'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table escaped via esc_sql.
+        $error    = '';
+        if ( empty( $column ) ) {
+            $this->wpdb->query( "ALTER TABLE {$table} ADD COLUMN test_restore_result_at int(11) NOT NULL DEFAULT 0" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table escaped via esc_sql.
+            $error  = $this->wpdb->last_error;
+            $column = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'test_restore_result_at'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table escaped via esc_sql.
+        }
+        $this->wpdb->suppress_errors( $suppress );
+        if ( empty( $column ) ) {
+            // Install precedes the warning listeners, so the logger must receive this directly.
+            MainWP_Logger::instance()->warning( sprintf( 'Backup snapshot test_restore_result_at repair deferred for %s: %s', $table, $error ) );
+            update_site_option( static::BACKUP_SNAPSHOT_TEST_RESTORE_RESULT_AT_REPAIR_PENDING, time() );
+            return false;
+        }
+        delete_site_option( static::BACKUP_SNAPSHOT_TEST_RESTORE_RESULT_AT_REPAIR_PENDING );
+        return true;
+    }
+
+    /**
+     * Denied ALTER statements must not run on every request.
+     *
+     * @return void
+     */
+    public function maybe_retry_backup_snapshot_test_restore_result_at(): void {
+        $pending = (int) get_site_option( static::BACKUP_SNAPSHOT_TEST_RESTORE_RESULT_AT_REPAIR_PENDING );
+        if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
+            $this->ensure_backup_snapshot_test_restore_result_at();
         }
     }
 

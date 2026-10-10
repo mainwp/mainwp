@@ -12,6 +12,7 @@ use MainWP\Dashboard\MainWP_Backup_Read_Model;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Exception;
 
 require_once __DIR__ . '/class-mainwp-backup-read-fixtures.php';
 
@@ -520,5 +521,135 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 			array( 'id' => 987674 )
 		);
 		$this->assertNotSame( 'cancel_pending', MainWP_Backup_Operations::cancel_restore( 987674 )['result'] );
+	}
+
+	/**
+	 * A call answer can be stale by the time its job is re-read.
+	 *
+	 * @return array
+	 */
+	public static function cancel_restore_result_matrix() {
+		$all      = array( null, 'pending', 'confirmed', 'unconfirmed', 'not_needed' );
+		$other    = array( null, 'confirmed', 'unconfirmed', 'not_needed' );
+		$answers  = array( 'not called', 'cancel_pending', 'cancelled' );
+		$rows     = array();
+		$id       = 0;
+		$statuses = array( 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'failed_retryable' );
+		foreach ( $statuses as $status ) {
+			$rows[ 'C' . ( ++$id ) ] = array( $status, array( 'pending' ), $answers, 'any', 'cancel_pending', 200 );
+			$rows[ 'C' . ( ++$id ) ] = array( $status, $other, $answers, 'any', 'not_cancellable', 200 );
+			$rows[ 'C' . ( ++$id ) ] = array( $status, $all, array( 'exception' ), 'unchanged', 'mainwp_operation_failed', 502 );
+			$rows[ 'C' . ( ++$id ) ] = array( $status, array( 'pending' ), array( 'exception' ), 'changed', 'cancel_pending', 200 );
+			$rows[ 'C' . ( ++$id ) ] = array( $status, $other, array( 'exception' ), 'changed', 'not_cancellable', 200 );
+		}
+		$answers[] = 'exception';
+		foreach ( array(
+			array( 'verifying', $all, 'not_cancellable' ),
+			array( 'completed', $all, 'not_cancellable' ),
+			array( 'cancelled', array( 'unconfirmed' ), 'cancel_unconfirmed' ),
+			array( 'cancelled', array( null, 'pending', 'confirmed', 'not_needed' ), 'cancelled' ),
+			array( 'failed_permanent', array( 'unconfirmed' ), 'cancel_unconfirmed' ),
+			array( 'failed_permanent', array( 'confirmed' ), 'ended_failed' ),
+			array( 'failed_permanent', array( null, 'pending', 'not_needed' ), 'not_cancellable' ),
+		) as $terminal ) {
+			$rows[ 'C' . ( ++$id ) ] = array( $terminal[0], $terminal[1], $answers, 'any', $terminal[2], 200 );
+		}
+		return $rows;
+	}
+
+	/**
+	 * A concurrent writer can invalidate either a call answer or its exception.
+	 *
+	 * @dataProvider cancel_restore_result_matrix
+	 * @param string $status        Re-read status.
+	 * @param array  $confirmations Stored confirmation cases.
+	 * @param array  $answers       Call outcome cases.
+	 * @param string $change        Whether the persisted job changed.
+	 * @param string $expected      Result enum or error code.
+	 * @param int    $http          Expected HTTP status.
+	 * @return void
+	 */
+	public function test_cancel_restore_result_matrix( $status, $confirmations, $answers, $change, $expected, $http ) {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		foreach ( $confirmations as $confirmation ) {
+			foreach ( $answers as $answer ) {
+				$checkpoint = null === $confirmation ? array() : array( 'cancel_confirmation' => array( 'outcome' => $confirmation ) );
+				$initial    = 'exception' === $answer && 'any' !== $change ? $status : ( 'not called' === $answer ? 'verifying' : 'running' );
+				$this->assertNotFalse(
+					$wpdb->update(
+						$table,
+						array(
+							'status'        => $initial,
+							'checkpoint'    => wp_json_encode( (object) $checkpoint ),
+							'child_task_id' => 'cancel_pending' === $answer ? 'owned-restore' : '',
+							'last_error'    => '',
+							'locked_by'     => '',
+						),
+						array( 'id' => 987674 )
+					)
+				);
+				$fired = 0;
+				$hook  = static function ( $sql ) use ( $wpdb, $table, $status, $checkpoint, $answer, $change, &$fired ) {
+					if ( $fired || 0 !== strpos( $sql, 'SELECT * FROM ' . $table . ' WHERE id = 987674' ) ) {
+						return $sql;
+					}
+					$frames = array_column( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 'function' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- the race must occur after admission.
+					if ( ! in_array( 'cancel_restore', $frames, true ) || in_array( 'authorize_restore_job', $frames, true ) ) {
+						return $sql;
+					}
+					$in_cancel = in_array( 'cancel_job', $frames, true );
+					if ( ( 'exception' === $answer ) !== $in_cancel ) {
+						return $sql;
+					}
+					++$fired;
+					if ( 'changed' === $change ) {
+						$checkpoint['worker_tick'] = 1;
+					}
+					$wpdb->update(
+						$table,
+						array(
+							'status'     => $status,
+							'checkpoint' => wp_json_encode( (object) $checkpoint ),
+						),
+						array( 'id' => 987674 )
+					);
+					if ( 'exception' === $answer && 'any' !== $change ) {
+						throw new MainWP_Exception( 'Cancellation interrupted.' );
+					}
+					return $sql;
+				};
+				$stub  = static function ( $value, $site, $what ) {
+					return 'restore_task_cancel' === $what ? array( 'result' => 'busy' ) : $value;
+				};
+				add_filter( 'query', $hook );
+				add_filter( 'mainwp_fetch_url_authed_pre', $stub, 10, 3 );
+				try {
+					$response = MainWP_Backup_Operations::cancel_restore( 987674 );
+				} finally {
+					remove_filter( 'query', $hook );
+					remove_filter( 'mainwp_fetch_url_authed_pre', $stub, 10 );
+				}
+				$case = $status . ' / ' . ( $confirmation ?? 'absent' ) . ' / ' . $answer . ' / ' . $change;
+				$this->assertSame( 1, $fired, $case . ': the concurrent write must land.' );
+				if ( 502 === $http ) {
+					$this->assertWPError( $response, $case );
+					$this->assertSame( $expected, $response->get_error_code(), $case );
+					$this->assertSame( $http, $response->get_error_data()['status'], $case );
+				} else {
+					$this->assertIsArray( $response, $case );
+					$this->assertSame(
+						array(
+							'restore_job_id' => 987674,
+							'status'         => $status,
+							'result'         => $expected,
+						),
+						$response,
+						$case
+					);
+					$this->assertSame( $http, rest_ensure_response( $response )->get_status(), $case );
+				}
+			}
+		}
 	}
 }

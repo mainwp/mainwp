@@ -2926,4 +2926,54 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	public function test_fresh_schema_has_test_restore_result_time() {
 		$this->assertTrue( $this->column_exists( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), 'test_restore_result_at' ), 'Fresh install must include test_restore_result_at.' );
 	}
+
+	/**
+	 * A denied migration must remain repairable after the version stamp.
+	 *
+	 * @return void
+	 */
+	public function test_failed_test_restore_result_time_upgrade_retries_on_current_version() {
+		global $wpdb;
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$marker  = 'mainwp_backup_snapshot_test_restore_result_at_repair_pending';
+		$pending = get_site_option( $marker );
+		$blocked = 0;
+		$deny    = static function ( $sql ) use ( $table, &$blocked ) {
+			if ( 0 === stripos( $sql, 'ALTER TABLE ' . $table ) && preg_match( '/ADD(?: COLUMN)? `?test_restore_result_at`?/i', $sql ) ) {
+				++$blocked;
+				return 'SELECT mainwp_test_restore_result_at_forced_failure';
+			}
+			return $sql;
+		};
+		MainWP_Install::instance()->install();
+		add_filter( 'mainwp_log_do_to_db', '__return_false' );
+		try {
+			$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} DROP COLUMN test_restore_result_at" ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- old-schema fixture.
+			update_site_option( 'mainwp_db_version', '9.0.2.28' );
+			add_filter( 'query', $deny );
+			MainWP_Install::instance()->install();
+			$this->assertGreaterThan( 0, $blocked, 'The upgrade must attempt the denied column addition.' );
+			$this->assertFalse( $this->column_exists( $table, 'test_restore_result_at' ) );
+			$this->assertSame( '9.0.2.29', get_site_option( 'mainwp_db_version' ) );
+			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( $marker ), 'The failed column addition must arm a repair marker.' );
+			remove_filter( 'query', $deny );
+			MainWP_Install::instance()->install();
+			$this->assertFalse( $this->column_exists( $table, 'test_restore_result_at' ), 'The fresh marker must throttle the retry.' );
+			update_site_option( $marker, time() - HOUR_IN_SECONDS - 1 );
+			MainWP_Install::instance()->install();
+			$this->assertTrue( $this->column_exists( $table, 'test_restore_result_at' ), 'An overdue retry must add the column on the current version.' );
+			$this->assertFalse( get_site_option( $marker ), 'A successful repair must clear its marker.' );
+		} finally {
+			remove_filter( 'query', $deny );
+			remove_filter( 'mainwp_log_do_to_db', '__return_false' );
+			if ( ! $this->column_exists( $table, 'test_restore_result_at' ) ) {
+				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN test_restore_result_at int(11) NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL survives transaction rollback.
+			}
+			if ( false === $pending ) {
+				delete_site_option( $marker );
+			} else {
+				update_site_option( $marker, $pending );
+			}
+		}
+	}
 }

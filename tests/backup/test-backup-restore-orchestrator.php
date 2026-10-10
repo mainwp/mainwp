@@ -945,7 +945,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'phase'   => 'queued',
 		);
 
-		$job_id = $this->orchestrator->initiate_restore( $this->site_id, $inc2_id );
+		$job_id = $this->orchestrator->initiate_restore( $this->site_id, $inc2_id, array( 'confirm_destructive' => true ) );
 		$store  = MainWP_Backup_Restore_Job_Store::instance();
 		$job    = $store->get_job( $job_id );
 
@@ -4373,7 +4373,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'db',
 			array( array( 'file' => 'db.zip', 'role' => 'db' ) ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
 		);
-		$job_id      = $this->orchestrator->initiate_restore( $this->site_id, $snapshot_id );
+		$job_id      = $this->orchestrator->initiate_restore( $this->site_id, $snapshot_id, array( 'confirm_destructive' => true ) );
 		$job         = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
 
 		$this->assertGreaterThan( 0, $job_id );
@@ -4422,7 +4422,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'db',
 			array( array( 'file' => 'db.zip', 'role' => 'db' ) ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing -- compact fixture.
 		);
-		$job_id      = $this->orchestrator->initiate_restore( $this->site_id, $snapshot_id );
+		$job_id      = $this->orchestrator->initiate_restore( $this->site_id, $snapshot_id, array( 'confirm_destructive' => true ) );
 		$job         = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
 
 		$this->assertGreaterThan( 0, $job_id );
@@ -7184,7 +7184,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			if ( null === $admitted && false !== strpos( $sql, 'WHERE snapshot_id IN' ) ) {
 				$admitted = 'checking';
 				try {
-					$admitted = $this->orchestrator->initiate_restore( $this->site_id, $older );
+					$admitted = $this->orchestrator->initiate_restore( $this->site_id, $older, array( 'confirm_destructive' => true ) );
 				} catch ( MainWP_Exception $e ) {
 					$admitted = $e->getMessage();
 				}
@@ -7311,7 +7311,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			if ( null === $admitted && false !== strpos( $sql, 'WHERE snapshot_id IN' ) ) {
 				$admitted = 'checking';
 				try {
-					$admitted = $this->orchestrator->initiate_restore( $this->site_id, $snapshot_id );
+					$admitted = $this->orchestrator->initiate_restore( $this->site_id, $snapshot_id, array( 'confirm_destructive' => true ) );
 				} catch ( MainWP_Exception $e ) {
 					$admitted = $e->getMessage();
 				}

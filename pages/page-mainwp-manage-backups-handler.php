@@ -171,12 +171,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * | 34 | Poll, scheduled clean close at baseline within settle | Queued, never adopt |
      * | 35 | Poll, manual close at baseline older than settle | Claim again, running |
      *
-     * @param int $task_id Task id.
+     * @param int    $task_id Task id.
+     * @param string $context Calling transport; only browser clicks need a baseline transient.
      * @return array Job handle or error.
      */
-    public static function run_backup_task_now( int $task_id ): array {
+    public static function run_backup_task_now( int $task_id, string $context = 'ui' ): array {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
-        if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
+        if ( empty( $task ) || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
         }
         $stale_sites = array();
@@ -195,22 +196,27 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             );
         }
 
-        $click         = time();
-        $baseline      = (int) $task->last_run;
-        $initiation_id = wp_generate_uuid4();
-        $baseline_key  = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id() . '_' . $initiation_id;
-        set_transient(
-            $baseline_key,
-            array(
-                'baseline' => $baseline,
-                'click'    => $click,
-            ),
-            30 * MINUTE_IN_SECONDS
-        );
-        $run                  = static::claim_manual_task_run( $task, $click, $baseline );
-        $run['initiation_id'] = $initiation_id;
-        if ( 'queued' !== ( $run['status'] ?? '' ) ) {
-            delete_transient( $baseline_key );
+        $click    = time();
+        $baseline = (int) $task->last_run;
+        // Only the browser poll needs to retain a click that could not claim a slot.
+        if ( 'ui' === $context ) {
+            $initiation_id = wp_generate_uuid4();
+            $baseline_key  = 'mainwp_backup_click_' . $task_id . '_' . get_current_user_id() . '_' . $initiation_id;
+            set_transient(
+                $baseline_key,
+                array(
+                    'baseline' => $baseline,
+                    'click'    => $click,
+                ),
+                30 * MINUTE_IN_SECONDS
+            );
+        }
+        $run = static::claim_manual_task_run( $task, $click, $baseline );
+        if ( 'ui' === $context ) {
+            $run['initiation_id'] = $initiation_id;
+            if ( 'queued' !== ( $run['status'] ?? '' ) ) {
+                delete_transient( $baseline_key );
+            }
         }
         MainWP_Post_Backup_Handler::kick_backup_continuation();
         return isset( $run['error'] ) ? $run : array_merge(
@@ -789,220 +795,139 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task()
      */
-    public static function update_backup() {  //phpcs:ignore -- NOSONAR - complex.
-
-        /**
-         * Current user global.
-         *
-         * @global string
-         */
-        global $current_user;
-
-        //phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified.
-        $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
-
-        if ( '' === $name ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
-        }
-
-        $backupId = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
-        $task     = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupId );
-
-        if ( ! static::can_edit_backuptask( $task ) ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) ) );
-        }
-
-        $schedule = isset( $_POST['schedule'] ) ? sanitize_text_field( wp_unslash( $_POST['schedule'] ) ) : '';
-        $type     = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
-
-        if ( ! in_array( $type, array( 'full', 'db', 'incremental', 'files' ), true ) ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup type. Select Full, Database, Incremental, or Files Only and try again.', 'mainwp' ) ) ) );
-        }
-
-        $excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
-        $excludedFolder = explode( "\n", $excludedFolder );
-        $excludedFolder = array_map( array( MainWP_Utility::get_class_name(), 'trim_slashes' ), $excludedFolder );
-        $excludedFolder = array_map( 'htmlentities', $excludedFolder );
-        $excludedFolder = MainWP_Backup_Settings::sanitize_exclude_list( $excludedFolder );
-        $sites          = '';
-        $groups         = '';
-
-        if ( isset( $_POST['sites'] ) && is_array( $_POST['sites'] ) ) {
-            foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) as $site ) {
-                if ( '' !== $sites ) {
-                    $sites .= ',';
-                }
-                $sites .= $site;
-            }
-        }
-
-        if ( isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ) {
-            foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) as $group ) {
-                if ( '' !== $groups ) {
-                    $groups .= ',';
-                }
-                $groups .= $group;
-            }
-        }
-
-        // Authorize the pre-edit scope as well as the replacement: a caller
-        // who cannot reach the task's current sites must not be able to
-        // re-scope it to sites they can reach and then delete it to launder
-        // the per-site purge gate (the purge enumerates the task's historical
-        // sites, not just the current selection).
-        $scope_error = static::authorize_task_update_scope( $task->sites, $task->groups, $sites, $groups );
-        if ( '' !== $scope_error ) {
-            die( wp_json_encode( array( 'error' => $scope_error ) ) );
-        }
-
-        do_action( 'mainwp_update_backuptask', $task->id );
-
-        $archiveFormat                  = isset( $_POST['archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['archiveFormat'] ) ) : 'site';
-        $maximumFileDescriptorsOverride = isset( $_POST['maximumFileDescriptorsOverride'] ) && 1 === (int) $_POST['maximumFileDescriptorsOverride'];
-        $maximumFileDescriptorsAuto     = isset( $_POST['maximumFileDescriptorsAuto'] ) && 1 === (int) $_POST['maximumFileDescriptorsAuto'];
-        $maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) ? intval( $_POST['maximumFileDescriptors'] ) : 150;
-        $loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
-        $zipForceOverride               = ( isset( $_POST['zipForceOverride'] ) && 1 === (int) $_POST['zipForceOverride'] ) ? 1 : 0;
-
-        $subfolder     = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
-        $filename      = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
-        $excludebackup = isset( $_POST['excludebackup'] ) ? sanitize_text_field( wp_unslash( $_POST['excludebackup'] ) ) : '';
-        $excludecache  = isset( $_POST['excludecache'] ) ? sanitize_text_field( wp_unslash( $_POST['excludecache'] ) ) : '';
-        $excludenonwp  = isset( $_POST['excludenonwp'] ) ? sanitize_text_field( wp_unslash( $_POST['excludenonwp'] ) ) : '';
-        $excludezip    = isset( $_POST['excludezip'] ) ? sanitize_text_field( wp_unslash( $_POST['excludezip'] ) ) : '';
-
-        //phpcs:enable.Missing
-
-        if ( MainWP_DB_Backup::instance()->update_backup_task( $task->id, $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $zipForceOverride ) === false ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ) ) ) );
-        } else {
-            static::stamp_task_scope_snapshot( $task->id, $sites, $groups );
-            $destinations = isset( $_POST['destinations'] ) && is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['destinations'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified.
-            MainWP_Backup_Storage_Handler::save_task_destinations( $task->id, $destinations );
-            static::save_task_schedule_fields( $task->id );
-            static::save_task_retention_fields( $task->id );
-            die( wp_json_encode( array( 'result' => esc_html__( 'Task updated successfully.', 'mainwp' ) ) ) );
-        }
+    public static function update_backup() {
+        $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by the AJAX router.
+        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::update_task( $id, static::posted_task_fields(), 'ui' ), 'update', $id ) );
     }
 
     /** Add backup task. */
-    public static function add_backup() {  //phpcs:ignore -- NOSONAR - complex.
-
-        /**
-         * Current user global.
-         *
-         * @global string
-         */
-        global $current_user;
-
-        //phpcs:disable WordPress.Security.NonceVerification -- ok.
-        $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
-
-        if ( empty( $name ) ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' ) ) ) );
-        }
-
-        $schedule = isset( $_POST['schedule'] ) ? sanitize_text_field( wp_unslash( $_POST['schedule'] ) ) : '';
-        $type     = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
-
-        if ( ! in_array( $type, array( 'full', 'db', 'incremental', 'files' ), true ) ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Invalid backup type. Select Full, Database, Incremental, or Files Only and try again.', 'mainwp' ) ) ) );
-        }
-
-        $excludedFolder = isset( $_POST['exclude'] ) ? trim( wp_unslash( $_POST['exclude'] ), "\n" ) : ''; //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- ok.
-        $excludedFolder = explode( "\n", $excludedFolder );
-        $excludedFolder = array_map( array( MainWP_Utility::get_class_name(), 'trim_slashes' ), $excludedFolder );
-        $excludedFolder = array_map( 'htmlentities', $excludedFolder );
-        $excludedFolder = MainWP_Backup_Settings::sanitize_exclude_list( $excludedFolder );
-
-        $sites  = '';
-        $groups = '';
-
-        if ( isset( $_POST['sites'] ) ) {
-            foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['sites'] ) ) as $site ) {
-                if ( '' !== $sites ) {
-                    $sites .= ',';
-                }
-                $sites .= $site;
-            }
-        }
-
-        if ( isset( $_POST['groups'] ) ) {
-            foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) as $group ) {
-                if ( '' !== $groups ) {
-                    $groups .= ',';
-                }
-                $groups .= $group;
-            }
-        }
-
-        $scope_error = static::authorize_task_scope( $sites, $groups );
-        if ( '' !== $scope_error ) {
-            die( wp_json_encode( array( 'error' => $scope_error ) ) );
-        }
-
-        $archiveFormat                  = isset( $_POST['archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['archiveFormat'] ) ) : 'site';
-        $maximumFileDescriptorsOverride = isset( $_POST['maximumFileDescriptorsOverride'] ) && 1 === (int) $_POST['maximumFileDescriptorsOverride'];
-        $maximumFileDescriptorsAuto     = isset( $_POST['maximumFileDescriptorsAuto'] ) && 1 === (int) $_POST['maximumFileDescriptorsAuto'];
-        $maximumFileDescriptors         = isset( $_POST['maximumFileDescriptors'] ) ? intval( $_POST['maximumFileDescriptors'] ) : 150;
-        $loadFilesBeforeZip             = isset( $_POST['loadFilesBeforeZip'] ) ? 1 : 0;
-        $zipForceOverride               = ( isset( $_POST['zipForceOverride'] ) && 1 === (int) $_POST['zipForceOverride'] ) ? 1 : 0;
-
-        $subfolder     = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
-        $filename      = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
-        $excludebackup = isset( $_POST['excludebackup'] ) ? sanitize_text_field( wp_unslash( $_POST['excludebackup'] ) ) : '';
-        $excludecache  = isset( $_POST['excludecache'] ) ? sanitize_text_field( wp_unslash( $_POST['excludecache'] ) ) : '';
-        $excludenonwp  = isset( $_POST['excludenonwp'] ) ? sanitize_text_field( wp_unslash( $_POST['excludenonwp'] ) ) : '';
-        $excludezip    = isset( $_POST['excludezip'] ) ? sanitize_text_field( wp_unslash( $_POST['excludezip'] ) ) : '';
-        //phpcs:enable
-
-        $task = MainWP_DB_Backup::instance()->add_backup_task( $current_user->ID, htmlentities( $name ), $schedule, $type, $excludedFolder, $sites, $groups, $subfolder, $filename, 0, $excludebackup, $excludecache, $excludenonwp, $excludezip, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $zipForceOverride );
-
-        if ( ! $task ) {
-            die( wp_json_encode( array( 'error' => esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ) ) ) );
-        } else {
-            static::stamp_task_scope_snapshot( $task->id, $sites, $groups );
-            $destinations = isset( $_POST['destinations'] ) && is_array( $_POST['destinations'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['destinations'] ) ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce verified.
-            MainWP_Backup_Storage_Handler::save_task_destinations( $task->id, $destinations );
-            static::save_task_schedule_fields( $task->id );
-            static::save_task_retention_fields( $task->id, true );
-
-            do_action( 'mainwp_add_backuptask', $task->id );
-
-            die( wp_json_encode( array( 'result' => esc_html__( 'Task created successfully.', 'mainwp' ) ) ) );
-        }
+    public static function add_backup() {
+        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::create_task( static::posted_task_fields(), 'ui' ), 'create' ) );
     }
 
     /**
-     * Validate and save the schedule fields posted with a task, and store
+     * The form posts inactive schedule fields too; only its active fields become inputs.
+     *
+     * @return array Service fields with raw selection elements preserved.
+     */
+    private static function posted_task_fields(): array {
+        // phpcs:disable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the router verifies the nonce; the service validates raw selections before coercion.
+        $input  = wp_unslash( $_POST );
+        $fields = array(
+            'name'            => $input['name'] ?? '',
+            'type'            => $input['type'] ?? '',
+            'schedule'        => $input['schedule'] ?? '',
+            'site_ids'        => array_key_exists( 'sites', $input ) ? $input['sites'] : array(),
+            'group_ids'       => array_key_exists( 'groups', $input ) ? $input['groups'] : array(),
+            'destination_ids' => array_key_exists( 'destinations', $input ) ? $input['destinations'] : array(),
+            'archive_format'  => $input['archiveFormat'] ?? 'site',
+            'exclude'         => $input['exclude'] ?? '',
+            'subfolder'       => $input['subfolder'] ?? '',
+            'filename'        => $input['filename'] ?? '',
+            'exclude_flags'   => array(
+                'backup_archives' => ! empty( $input['excludebackup'] ),
+                'cache'           => ! empty( $input['excludecache'] ),
+                'non_wp_folders'  => ! empty( $input['excludenonwp'] ),
+                'zip_archives'    => ! empty( $input['excludezip'] ),
+            ),
+            'archive_tuning'  => array(
+                'max_file_descriptors_override' => isset( $input['maximumFileDescriptorsOverride'] ) && 1 === (int) $input['maximumFileDescriptorsOverride'],
+                'max_file_descriptors_auto'     => isset( $input['maximumFileDescriptorsAuto'] ) && 1 === (int) $input['maximumFileDescriptorsAuto'],
+                'max_file_descriptors'          => isset( $input['maximumFileDescriptors'] ) ? intval( $input['maximumFileDescriptors'] ) : 150,
+                'load_files_before_zip'         => isset( $input['loadFilesBeforeZip'] ),
+                'zip_force_override'            => isset( $input['zipForceOverride'] ) && 1 === (int) $input['zipForceOverride'],
+            ),
+            'retention'       => array(
+                'days'                => isset( $input['retention_days'] ) ? absint( $input['retention_days'] ) : 0,
+                'storage_mb'          => isset( $input['retention_storage_mb'] ) ? absint( $input['retention_storage_mb'] ) : 0,
+                'delete_cloud_copies' => ! empty( $input['delete_cloud_copies'] ),
+                'max_chain_length'    => isset( $input['max_chain_length'] ) ? absint( $input['max_chain_length'] ) : 0,
+            ),
+        );
+        if ( isset( $input['retention_count'] ) ) {
+            $fields['retention']['count'] = absint( $input['retention_count'] );
+        } elseif ( isset( $input['id'] ) ) {
+            $fields['retention']['count'] = 0;
+        }
+        if ( 'interval' === $fields['schedule'] && isset( $input['schedule_interval_hours'] ) ) {
+            $fields['interval_hours'] = max( 1, min( 8760, absint( $input['schedule_interval_hours'] ) ) );
+        }
+        if ( in_array( $fields['schedule'], array( 'daily', 'weekly', 'monthly' ), true ) ) {
+            $time = $input['schedule_time_of_day'] ?? '';
+            if ( is_string( $time ) && preg_match( '/^(\d{1,2}):(\d{1,2})$/D', $time, $matches ) && (int) $matches[1] <= 23 && (int) $matches[2] <= 59 ) {
+                $time = sprintf( '%02d:%02d', $matches[1], $matches[2] );
+            }
+            $fields['time_of_day'] = $time;
+        }
+        if ( 'weekly' === $fields['schedule'] ) {
+            $fields['day_of_week'] = isset( $input['schedule_day_of_week'] ) ? min( 6, absint( $input['schedule_day_of_week'] ) ) : 0;
+        } elseif ( 'monthly' === $fields['schedule'] ) {
+            $fields['day_of_month'] = isset( $input['schedule_day_of_month'] ) ? max( 1, min( 28, absint( $input['schedule_day_of_month'] ) ) ) : 1;
+        }
+        // phpcs:enable WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        return $fields;
+    }
+
+    /**
+     * Keep legacy response values at the AJAX boundary.
+     *
+     * @param array|\WP_Error $result Service result.
+     * @param string          $action Task action.
+     * @param int             $task_id Existing task identity.
+     * @return array AJAX response.
+     */
+    private static function task_ajax_result( $result, string $action, int $task_id = 0 ): array {
+        if ( ! is_wp_error( $result ) ) {
+            if ( 'create' === $action || 'update' === $action ) {
+                return array( 'result' => 'create' === $action ? esc_html__( 'Task created successfully.', 'mainwp' ) : esc_html__( 'Task updated successfully.', 'mainwp' ) );
+            }
+            return $result;
+        }
+        $code = $result->get_error_code();
+        if ( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND === $code ) {
+            if ( 'pause' === $action || 'resume' === $action ) {
+                return array( 'notask' => true );
+            }
+            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+            if ( ! $task || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
+                return 'remove' === $action ? array( 'notask' => true ) : array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
+            }
+        }
+        if ( 'mainwp_site_not_found' === $code || MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND === $code ) {
+            return array( 'error' => esc_html__( 'You are not allowed to schedule backups for one or more of the selected sites.', 'mainwp' ) );
+        }
+        return array( 'error' => $result->get_error_message() );
+    }
+
+    /**
+     * Validate and save the schedule fields supplied with a task, and store
      * the computed next_run.
      *
-     * Reads schedule_interval_hours, schedule_time_of_day,
+     * Uses schedule_interval_hours, schedule_time_of_day,
      * schedule_day_of_week and schedule_day_of_month from the request the
-     * caller already nonce-verified. Interval hours only apply to interval
+     * caller supplied. Interval hours only apply to interval
      * tasks; a time of day only applies to daily, weekly and monthly tasks
      * and must match HH:MM. A task without either drops back to legacy
      * elapsed mode with next_run = 0.
      *
-     * @param int $task_id Task id, already saved with its schedule.
+     * @param int   $task_id Task id, already saved with its schedule.
+     * @param array $fields  Schedule form values.
      *
      * @return array The saved column values.
      *
      * @uses \MainWP\Dashboard\MainWP_Backup_Schedule_Calculator::compute_next_run()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
      */
-    public static function save_task_schedule_fields( $task_id ) {
+    public static function save_task_schedule_fields( $task_id, array $fields ) {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) ) {
             return array();
         }
 
-        //phpcs:disable WordPress.Security.NonceVerification.Missing -- caller verified.
-        $interval_hours = isset( $_POST['schedule_interval_hours'] ) ? absint( $_POST['schedule_interval_hours'] ) : 0;
-        $time_raw       = isset( $_POST['schedule_time_of_day'] ) ? sanitize_text_field( wp_unslash( $_POST['schedule_time_of_day'] ) ) : '';
-        $day_of_week    = isset( $_POST['schedule_day_of_week'] ) ? min( 6, absint( $_POST['schedule_day_of_week'] ) ) : 0;
-        $day_of_month   = isset( $_POST['schedule_day_of_month'] ) ? max( 1, min( 28, absint( $_POST['schedule_day_of_month'] ) ) ) : 1;
-        //phpcs:enable
+        $interval_hours = isset( $fields['schedule_interval_hours'] ) ? absint( $fields['schedule_interval_hours'] ) : 0;
+        $time_raw       = isset( $fields['schedule_time_of_day'] ) ? sanitize_text_field( $fields['schedule_time_of_day'] ) : '';
+        $day_of_week    = isset( $fields['schedule_day_of_week'] ) ? min( 6, absint( $fields['schedule_day_of_week'] ) ) : 0;
+        $day_of_month   = isset( $fields['schedule_day_of_month'] ) ? max( 1, min( 28, absint( $fields['schedule_day_of_month'] ) ) ) : 1;
 
         $interval_hours = 'interval' === $task->schedule ? max( 1, min( 8760, $interval_hours ) ) : 0;
 
@@ -1033,28 +958,27 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /**
-     * Save the retention policy fields posted with a task. Zero means no
+     * Save the retention policy fields supplied with a task. Zero means no
      * limit; absent or junk values save as zero, except an absent count on
      * a new task, which keeps NEW_TASK_RETENTION_COUNT. The cloud copies
      * toggle persists explicitly so unchecking it sticks.
      *
-     * @param int  $task_id  Task id.
-     * @param bool $new_task Whether the task is being created.
+     * @param int   $task_id  Task id.
+     * @param array $fields   Retention form values.
+     * @param bool  $new_task Whether the task is being created.
      *
      * @return array The saved column values.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
      */
-    public static function save_task_retention_fields( $task_id, $new_task = false ) {
-        //phpcs:disable WordPress.Security.NonceVerification.Missing -- caller verified.
+    public static function save_task_retention_fields( $task_id, array $fields, $new_task = false ) {
         $values = array(
-            'retention_count'      => isset( $_POST['retention_count'] ) ? absint( $_POST['retention_count'] ) : ( $new_task ? static::NEW_TASK_RETENTION_COUNT : 0 ),
-            'retention_days'       => isset( $_POST['retention_days'] ) ? absint( $_POST['retention_days'] ) : 0,
-            'retention_storage_mb' => isset( $_POST['retention_storage_mb'] ) ? absint( $_POST['retention_storage_mb'] ) : 0,
-            'delete_cloud_copies'  => empty( $_POST['delete_cloud_copies'] ) ? 0 : 1,
-            'max_chain_length'     => isset( $_POST['max_chain_length'] ) ? absint( $_POST['max_chain_length'] ) : 0,
+            'retention_count'      => isset( $fields['retention_count'] ) ? absint( $fields['retention_count'] ) : ( $new_task ? static::NEW_TASK_RETENTION_COUNT : 0 ),
+            'retention_days'       => isset( $fields['retention_days'] ) ? absint( $fields['retention_days'] ) : 0,
+            'retention_storage_mb' => isset( $fields['retention_storage_mb'] ) ? absint( $fields['retention_storage_mb'] ) : 0,
+            'delete_cloud_copies'  => empty( $fields['delete_cloud_copies'] ) ? 0 : 1,
+            'max_chain_length'     => isset( $fields['max_chain_length'] ) ? absint( $fields['max_chain_length'] ) : 0,
         );
-        //phpcs:enable
 
         MainWP_DB_Backup::instance()->update_backup_task_with_values( $task_id, $values );
 
@@ -2144,7 +2068,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // Only an explicit 0 keeps the snapshots; older clients send nothing and purge as before.
         $delete_snapshots = ! isset( $_POST['delete_snapshots'] ) || '0' !== sanitize_text_field( wp_unslash( $_POST['delete_snapshots'] ) );
         //phpcs:enable WordPress.Security.NonceVerification.Missing
-        die( wp_json_encode( static::remove_backup_result( $id, $delete_snapshots ) ) );
+        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::delete_task( $id, $delete_snapshots ), 'remove', $id ) );
     }
 
     /**
@@ -2168,7 +2092,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public static function remove_backup_result( $id, $delete_snapshots = true ) {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $id );
-        if ( ! static::can_edit_backuptask( $task ) ) {
+        if ( empty( $task ) || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'notask' => true );
         }
 
@@ -2178,7 +2102,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // on the same per-site access the run/reset/list paths enforce; a
         // Team-Control-restricted user must not be able to destroy the
         // backups of a site outside their scope.
-        $scope_error = static::authorize_task_scope( $task->sites, $task->groups );
+        $scope_error = static::authorize_task_scope( implode( ',', static::resolve_task_run_sites( $task ) ), '' );
         if ( '' !== $scope_error ) {
             return array( 'error' => $scope_error );
         }
@@ -2239,7 +2163,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public static function resume_backup() {
         $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Missing
-        die( wp_json_encode( static::resume_backup_result( $id ) ) );
+        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::resume_task( (int) $id ), 'resume', (int) $id ) );
     }
 
     /**
@@ -2261,7 +2185,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
-        if ( ! static::can_edit_backuptask( $task ) ) {
+        if ( empty( $task ) || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'notask' => true );
         }
 
@@ -2269,7 +2193,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // can_edit_backuptask() above is a no-op under the default
         // single-user mode, so gate this on the same per-site access the
         // run/reset/delete paths enforce.
-        $scope_error = static::authorize_task_scope( $task->sites, $task->groups );
+        $scope_error = static::authorize_task_scope( implode( ',', static::resolve_task_run_sites( $task ) ), '' );
         if ( '' !== $scope_error ) {
             return array( 'notask' => true );
         }
@@ -2294,7 +2218,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public static function pause_backup() {
         $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Missing
-        die( wp_json_encode( static::pause_backup_result( $id ) ) );
+        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::pause_task( (int) $id ), 'pause', (int) $id ) );
     }
 
     /**
@@ -2317,7 +2241,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
-        if ( ! static::can_edit_backuptask( $task ) ) {
+        if ( empty( $task ) || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'notask' => true );
         }
 
@@ -2325,7 +2249,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // can_edit_backuptask() above is a no-op under the default
         // single-user mode, so gate this on the same per-site access the
         // run/reset/delete paths enforce.
-        $scope_error = static::authorize_task_scope( $task->sites, $task->groups );
+        $scope_error = static::authorize_task_scope( implode( ',', static::resolve_task_run_sites( $task ) ), '' );
         if ( '' !== $scope_error ) {
             return array( 'notask' => true );
         }

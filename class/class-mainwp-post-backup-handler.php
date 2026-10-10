@@ -210,7 +210,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * @return bool
      */
     public static function site_is_disconnected( $website ): bool {
-        return ! empty( $website ) && '' !== trim( (string) ( $website->sync_errors ?? '' ) );
+        return MainWP_Backup_Restore_Orchestrator::site_is_disconnected( $website );
     }
 
     /**
@@ -250,8 +250,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * @return bool True when consent is required but absent.
      */
     public static function restore_needs_confirmation( $snapshot, $confirm_destructive ) {
-        $destructive = null !== $snapshot && 'files' !== (string) $snapshot->type;
-        return $destructive && ! $confirm_destructive;
+        return MainWP_Backup_Restore_Orchestrator::restore_needs_confirmation( $snapshot, $confirm_destructive );
     }
 
     /**
@@ -398,98 +397,39 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function mainwp_restore_initiate() {
         $this->secure_request( 'mainwp_restore_initiate' );
-
-        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
-            wp_send_json(
-                array(
-                    'error'      => static::plain_text( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ) ),
-                    'error_code' => MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED,
-                )
-            );
-            return;
-        }
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
-        $site_id             = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0;
-        $snapshot_id         = isset( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0;
-        $pre_snapshot        = isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'];
-        $confirm_destructive = isset( $_POST['confirm_destructive'] ) && '1' === $_POST['confirm_destructive'];
-        $preserve_orders     = isset( $_POST['preserve_orders'] ) && '1' === $_POST['preserve_orders'];
+        $site_id     = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0;
+        $snapshot_id = isset( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0;
+        $options     = array(
+            'pre_snapshot'        => isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'],
+            'file_rollback'       => isset( $_POST['pre_snapshot'] ) && '1' === $_POST['pre_snapshot'],
+            'confirm_destructive' => isset( $_POST['confirm_destructive'] ) && '1' === $_POST['confirm_destructive'],
+            'preserve_orders'     => isset( $_POST['preserve_orders'] ) && '1' === $_POST['preserve_orders'],
+        );
         // phpcs:enable WordPress.Security.NonceVerification.Missing
-
-        $website = $this->authorize_restore_site( $site_id );
-        if ( null === $website ) {
-            return;
-        }
-
-        if ( static::site_is_disconnected( $website ) ) {
-            wp_send_json( array( 'error' => static::disconnected_site_error() ) );
-            return;
-        }
-
-        // Re-derive destructive risk server-side. The modal collects consent,
-        // but a direct AJAX call can omit it, so a database-bearing restore is
-        // refused here until confirm_destructive is set. The response carries
-        // the reason (WooCommerce, backup age) for the modal to explain.
-        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
-        if ( null === $snapshot || (int) $snapshot->site_id !== $site_id ) {
-            wp_send_json( array( 'error' => esc_html__( 'Snapshot not found for this site.', 'mainwp' ) ) );
-            return;
-        }
-        if ( self::restore_needs_confirmation( $snapshot, $confirm_destructive ) ) {
-            wp_send_json(
-                array(
-                    'needs_confirmation'   => true,
-                    'site_has_woocommerce' => MainWP_Utility::site_has_woocommerce( (int) $website->id ),
-                    'age_days'             => max( 0, (int) floor( ( time() - (int) $snapshot->created ) / DAY_IN_SECONDS ) ),
-                )
-            );
-            return;
-        }
-
-        // Order preservation applies only to a database-bearing restore; the
-        // backup's created time bounds the customer capture on the child.
-        $preserve_orders = $preserve_orders && null !== $snapshot && 'files' !== (string) $snapshot->type;
-        $woo_order_since = $preserve_orders ? (int) $snapshot->created : 0;
-
-        // A preserve-orders request the child's apply-phase gate is certain
-        // to refuse gets refused here, before any job, pre-snapshot, or
-        // transfer spends hours on it. Best effort: any doubt proceeds and
-        // the apply-phase gate stays the authoritative backstop.
-        if ( $preserve_orders ) {
-            $refusal = MainWP_Backup_Restore_Orchestrator::instance()->woo_preserve_refusal( $website, $snapshot );
-            if ( null !== $refusal ) {
+        try {
+            $result = MainWP_Backup_Operations::restore_snapshot( $site_id, $snapshot_id, $options, 'ui' );
+        } catch ( MainWP_Exception $e ) {
+            $code = $e->get_message_error_code();
+            if ( 'mainwp_confirmation_required' === $code ) {
+                wp_send_json( array_merge( array( 'needs_confirmation' => true ), (array) $e->get_data() ) );
+            } elseif ( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED === $code || MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND === $code ) {
+                wp_send_json( array( 'error' => static::plain_text( $e->getMessage() ) ) );
+            } else {
                 wp_send_json(
                     array(
-                        'error'      => static::plain_text( MainWP_Backup_Error_Codes::message( $refusal ) ),
-                        'error_code' => $refusal,
+                        'error'      => static::plain_text( $e->getMessage() ),
+                        'error_code' => $code,
                     )
                 );
-                return;
             }
-        }
-
-        try {
-            $job_id = MainWP_Backup_Restore_Orchestrator::instance()->initiate_restore(
-                $site_id,
-                $snapshot_id,
-                array(
-                    'pre_snapshot'    => $pre_snapshot,
-                    'file_rollback'   => $pre_snapshot,
-                    'preserve_orders' => $preserve_orders,
-                    'woo_order_since' => $woo_order_since,
-                )
-            );
-        } catch ( MainWP_Exception $e ) {
-            wp_send_json(
-                array(
-                    'error'      => static::plain_text( $e->getMessage() ),
-                    'error_code' => $e->get_message_error_code(),
-                )
-            );
             return;
         }
-
-        wp_send_json( array( 'job_id' => $job_id ) );
+        if ( is_wp_error( $result ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) );
+            return;
+        }
+        wp_send_json( $result );
     }
 
     /**
@@ -575,36 +515,18 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     public function mainwp_restore_rollback() {
         $this->secure_request( 'mainwp_restore_rollback' );
         $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
-
-        $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
-        if ( null === $job ) {
-            wp_send_json(
-                array(
-                    'error'     => esc_html__( 'Restore job not found.', 'mainwp' ),
-                    'retryable' => false,
-                )
-            );
-            return;
-        }
-
-        $website = $this->authorize_restore_site( (int) $job->site_id );
-        if ( null === $website ) {
-            return;
-        }
-
-        if ( static::site_is_disconnected( $website ) ) {
-            wp_send_json(
-                array(
-                    'error'     => static::disconnected_site_error(),
-                    'retryable' => true,
-                )
-            );
-            return;
-        }
-
         try {
-            $rollback_id = MainWP_Backup_Restore_Orchestrator::instance()->initiate_rollback( $job );
+            $result = MainWP_Backup_Operations::rollback_restore( $job_id, 'ui' );
         } catch ( MainWP_Exception $e ) {
+            if ( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED === $e->get_message_error_code() ) {
+                wp_send_json(
+                    array(
+                        'error'     => static::disconnected_site_error(),
+                        'retryable' => true,
+                    )
+                );
+                return;
+            }
             $job       = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
             $retryable = null !== $job
                 && in_array( $job->status, array( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED ), true )
@@ -618,7 +540,20 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             );
             return;
         }
-        wp_send_json( array( 'job_id' => $rollback_id ) );
+        if ( is_wp_error( $result ) ) {
+            if ( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND === $result->get_error_code() ) {
+                wp_send_json(
+                    array(
+                        'error'     => esc_html__( 'Restore job not found.', 'mainwp' ),
+                        'retryable' => false,
+                    )
+                );
+            } else {
+                wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) );
+            }
+            return;
+        }
+        wp_send_json( $result );
     }
 
     /**
@@ -1378,7 +1313,19 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     public function mainwp_backuptask_run_now() {
         $this->secure_request( 'mainwp_backuptask_run_now' );
         $task_id = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        wp_send_json( MainWP_Manage_Backups_Handler::run_backup_task_now( $task_id ) );
+        $result  = MainWP_Backup_Operations::run_task( $task_id );
+        if ( is_wp_error( $result ) ) {
+            $message = $result->get_error_message();
+            if ( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND === $result->get_error_code() ) {
+                $task    = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+                $message = $task && empty( $task->template ) && MainWP_Manage_Backups_Handler::can_edit_backuptask( $task )
+                    ? __( 'You are not allowed to run backups for one or more of this task\'s sites.', 'mainwp' )
+                    : esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' );
+            }
+            wp_send_json( array( 'error' => $message ) );
+            return;
+        }
+        wp_send_json( $result );
     }
 
     /**

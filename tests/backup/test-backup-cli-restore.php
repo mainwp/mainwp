@@ -175,6 +175,25 @@ class MainWP_Backup_CLI_Restore_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Cancel_Transport_Guard;
 
 	/**
+	 * The child process loads the WordPress harness before defining CLI context.
+	 *
+	 * @param \PHPUnit\Framework\TestResult|null $result Current result collector.
+	 * @return \PHPUnit\Framework\TestResult
+	 */
+	public function run( ?\PHPUnit\Framework\TestResult $result = null ): \PHPUnit\Framework\TestResult {
+		if ( 'test_run_resolves_initiates_and_drives_to_completed' !== $this->getName( false ) ) {
+			return parent::run( $result );
+		}
+		$configuration                           = $GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] ?? null;
+		$GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] = '';
+		try {
+			return parent::run( $result );
+		} finally {
+			$GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] = $configuration;
+		}
+	}
+
+	/**
 	 * Test site id.
 	 *
 	 * @var int
@@ -221,6 +240,7 @@ class MainWP_Backup_CLI_Restore_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
+		$this->set_current_user_as_admin();
 		update_option( 'mainwp_enableNativeBackups', 1 );
 		$this->site_id      = $this->create_test_site();
 		$this->orchestrator = new CLI_Restore_Test_Orchestrator();
@@ -386,8 +406,13 @@ class MainWP_Backup_CLI_Restore_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * A valid snapshot for the site resolves, initiates a job, and drives
 	 * it to completed.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
 	 */
 	public function test_run_resolves_initiates_and_drives_to_completed() {
+		define( 'WP_CLI', true );
+		wp_set_current_user( 0 );
 		$snapshot_id = $this->make_snapshot( 'full' );
 		$this->use_cloud_pull_driver();
 		$this->script_completed_child();
@@ -585,11 +610,25 @@ class MainWP_Backup_CLI_Restore_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_drive_to_terminal_advances_only_the_target_job() {
 		$snapshot_id_1 = $this->make_snapshot( 'full' );
-		$job_id_1      = $this->orchestrator->initiate_restore( $this->site_id, $snapshot_id_1, array( 'pre_snapshot' => false ) );
+		$job_id_1      = $this->orchestrator->initiate_restore(
+			$this->site_id,
+			$snapshot_id_1,
+			array(
+				'pre_snapshot'        => false,
+				'confirm_destructive' => true,
+			)
+		);
 
 		$site_id_2     = $this->create_test_site();
 		$snapshot_id_2 = $this->make_snapshot( 'full', array( 'site_id' => $site_id_2 ) );
-		$job_id_2      = $this->orchestrator->initiate_restore( $site_id_2, $snapshot_id_2, array( 'pre_snapshot' => false ) );
+		$job_id_2      = $this->orchestrator->initiate_restore(
+			$site_id_2,
+			$snapshot_id_2,
+			array(
+				'pre_snapshot'        => false,
+				'confirm_destructive' => true,
+			)
+		);
 
 		$this->use_cloud_pull_driver();
 		$this->script_completed_child();

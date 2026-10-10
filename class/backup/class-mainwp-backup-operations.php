@@ -239,6 +239,474 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Validation failures carry fixed Dashboard text without submitted values.
+     *
+     * @param string $field Invalid task field.
+     * @return \WP_Error
+     */
+    private static function invalid_task_input( string $field ): \WP_Error {
+        $message = self::safe_error( 'mainwp_invalid_input' )['message'];
+        if ( 'name' === $field ) {
+            $message = esc_html__( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' );
+        } elseif ( 'type' === $field ) {
+            $message = esc_html__( 'Invalid backup type. Select Full, Database, Incremental, or Files Only and try again.', 'mainwp' );
+        }
+        return new \WP_Error(
+            'mainwp_invalid_input',
+            $message,
+            array(
+                'status' => 400,
+                'field'  => $field,
+            )
+        );
+    }
+
+    /**
+     * Coercion before validation can authorize a different site from the one stored.
+     *
+     * @param mixed  $raw Submitted selection.
+     * @param string $field Selection field.
+     * @return int[]|\WP_Error
+     */
+    private static function task_input_ids( $raw, string $field ) {
+        if ( ! is_array( $raw ) ) {
+            return self::invalid_task_input( $field );
+        }
+        $ids = array();
+        foreach ( $raw as $value ) {
+            if ( is_int( $value ) && $value > 0 ) {
+                $id = $value;
+            } elseif ( is_string( $value ) && preg_match( '/^[1-9][0-9]*$/D', $value ) ) {
+                $id = (int) $value;
+                if ( (string) $id !== $value ) {
+                    return self::invalid_task_input( $field );
+                }
+            } else {
+                return self::invalid_task_input( $field );
+            }
+            $ids[ $id ] = $id;
+        }
+        return array_values( $ids );
+    }
+
+    /**
+     * Partial edits retain omitted settings and nested policy values.
+     *
+     * @param object|null $task Stored task, or null for create defaults.
+     * @return array Transport-neutral fields.
+     */
+    private static function stored_task_fields( ?object $task ): array {
+        return array(
+            'name'            => $task ? html_entity_decode( $task->name, ENT_QUOTES ) : '',
+            'type'            => $task->type ?? '',
+            'schedule'        => $task->schedule ?? '',
+            'interval_hours'  => $task ? (int) $task->interval_hours : 0,
+            'time_of_day'     => $task->time_of_day ?? '',
+            'day_of_week'     => $task ? (int) $task->day_of_week : 0,
+            'day_of_month'    => $task ? (int) $task->day_of_month : 1,
+            'site_ids'        => $task && '' !== $task->sites ? explode( ',', $task->sites ) : array(),
+            'group_ids'       => $task && '' !== $task->groups ? explode( ',', $task->groups ) : array(),
+            'destination_ids' => $task ? ( json_decode( $task->destinations ?? '[]', true ) ?? array() ) : array(),
+            'archive_format'  => $task->archiveFormat ?? 'site',
+            'exclude'         => $task ? html_entity_decode( $task->exclude, ENT_QUOTES ) : '',
+            'retention'       => array(
+                'count'               => $task ? (int) $task->retention_count : MainWP_Manage_Backups_Handler::NEW_TASK_RETENTION_COUNT,
+                'days'                => $task ? (int) $task->retention_days : 0,
+                'storage_mb'          => $task ? (int) $task->retention_storage_mb : 0,
+                'delete_cloud_copies' => ! empty( $task->delete_cloud_copies ),
+                'max_chain_length'    => $task ? (int) $task->max_chain_length : 0,
+            ),
+            'exclude_flags'   => array(
+                'backup_archives' => ! empty( $task->excludebackup ),
+                'cache'           => ! empty( $task->excludecache ),
+                'non_wp_folders'  => ! empty( $task->excludenonwp ),
+                'zip_archives'    => ! empty( $task->excludezip ),
+            ),
+            'archive_tuning'  => array(
+                'max_file_descriptors_override' => ! empty( $task->maximumFileDescriptorsOverride ),
+                'max_file_descriptors_auto'     => ! empty( $task->maximumFileDescriptorsAuto ),
+                'max_file_descriptors'          => $task ? (int) $task->maximumFileDescriptors : 150,
+                'load_files_before_zip'         => ! empty( $task->loadFilesBeforeZip ),
+                'zip_force_override'            => ! empty( $task->zip_force_override ),
+            ),
+        );
+    }
+
+    /**
+     * Partial edits and previews must normalize exactly the values a save uses.
+     *
+     * @param array       $fields Submitted fields, with selections resolved to IDs.
+     * @param object|null $task Stored row for a partial update.
+     * @return array|\WP_Error Normalized task fields.
+     */
+    public static function normalize_task_fields( array $fields, ?object $task = null ) {
+        $base = self::stored_task_fields( $task );
+        if ( empty( $fields ) || array_diff( array_keys( $fields ), array_merge( array_keys( $base ), array( 'subfolder', 'filename' ) ) ) ) {
+            return self::invalid_task_input( 'fields' );
+        }
+        $values = array_merge( $base, $fields );
+        foreach ( array( 'name', 'type', 'schedule', 'archive_format', 'subfolder', 'filename' ) as $field ) {
+            if ( isset( $values[ $field ] ) && ! is_string( $values[ $field ] ) ) {
+                return self::invalid_task_input( $field );
+            }
+        }
+        $values['name'] = sanitize_text_field( $values['name'] );
+        if ( '' === $values['name'] || strlen( $values['name'] ) > 255 ) {
+            return self::invalid_task_input( 'name' );
+        }
+        foreach ( array(
+            'type'           => array( 'full', 'db', 'files', 'incremental' ),
+            'schedule'       => array( 'daily', 'weekly', 'monthly', 'interval' ),
+            'archive_format' => array( 'site', 'global', 'zip', 'tar', 'tar.gz', 'tar.bz2' ),
+        ) as $field => $allowed ) {
+            if ( ! in_array( $values[ $field ], $allowed, true ) ) {
+                return self::invalid_task_input( $field );
+            }
+        }
+        foreach ( array( 'site_ids', 'group_ids', 'destination_ids' ) as $field ) {
+            $ids = self::task_input_ids( $values[ $field ], $field );
+            if ( is_wp_error( $ids ) ) {
+                return $ids;
+            }
+            $values[ $field ] = $ids;
+        }
+        if ( empty( $values['site_ids'] ) && empty( $values['group_ids'] ) ) {
+            return self::invalid_task_input( 'site_ids' );
+        }
+
+        $schedule = $values['schedule'];
+        $changed  = $task && $task->schedule !== $schedule;
+        $active   = array(
+            'interval_hours' => 'interval',
+            'day_of_week'    => 'weekly',
+            'day_of_month'   => 'monthly',
+        );
+        foreach ( $active as $field => $applies_to ) {
+            if ( array_key_exists( $field, $fields ) && $applies_to !== $schedule ) {
+                return self::invalid_task_input( $field );
+            }
+        }
+        if ( 'interval' === $schedule ) {
+            if ( ( ! $task || $changed ) && ! array_key_exists( 'interval_hours', $fields ) ) {
+                return self::invalid_task_input( 'interval_hours' );
+            }
+            if ( array_key_exists( 'time_of_day', $fields ) && ( ! $task || null !== $fields['time_of_day'] ) ) {
+                return self::invalid_task_input( 'time_of_day' );
+            }
+            $values['time_of_day'] = null;
+        } else {
+            $values['interval_hours'] = null;
+            if ( array_key_exists( 'time_of_day', $fields ) && null === $fields['time_of_day'] && ! $task ) {
+                return self::invalid_task_input( 'time_of_day' );
+            }
+            if ( null !== $values['time_of_day'] && '' !== $values['time_of_day'] && ( ! is_string( $values['time_of_day'] ) || ! preg_match( '/^([01][0-9]|2[0-3]):[0-5][0-9]$/D', $values['time_of_day'] ) ) ) {
+                return self::invalid_task_input( 'time_of_day' );
+            }
+            $values['time_of_day'] = '' === $values['time_of_day'] ? null : $values['time_of_day'];
+        }
+        foreach ( array(
+            'interval_hours' => array( 1, 8760 ),
+            'day_of_week'    => array( 0, 6 ),
+            'day_of_month'   => array( 1, 28 ),
+        ) as $field => $bounds ) {
+            if ( $active[ $field ] !== $schedule ) {
+                $values[ $field ] = null;
+                continue;
+            }
+            if ( $changed && 'interval_hours' !== $field && ! array_key_exists( $field, $fields ) ) {
+                $values[ $field ] = $bounds[0];
+            }
+            if ( ! is_int( $values[ $field ] ) || $values[ $field ] < $bounds[0] || $values[ $field ] > $bounds[1] ) {
+                return self::invalid_task_input( $field );
+            }
+        }
+        $values['timing'] = 'interval' === $schedule ? 'interval' : ( null === $values['time_of_day'] ? 'elapsed' : 'time_of_day' );
+
+        $bounds = array(
+            'count'                => 1000,
+            'days'                 => 3650,
+            'storage_mb'           => 104857600,
+            'max_chain_length'     => 1000,
+            'max_file_descriptors' => 100000,
+        );
+        foreach ( array( 'retention', 'exclude_flags', 'archive_tuning' ) as $field ) {
+            if ( ! is_array( $values[ $field ] ) || array_diff( array_keys( $values[ $field ] ), array_keys( $base[ $field ] ) ) ) {
+                return self::invalid_task_input( $field );
+            }
+            $values[ $field ] = array_merge( $base[ $field ], $values[ $field ] );
+            foreach ( $values[ $field ] as $key => $value ) {
+                // Older forms stored larger limits; an omitted value must survive a partial edit.
+                $submitted = array_key_exists( $key, $fields[ $field ] ?? array() );
+                if ( is_bool( $base[ $field ][ $key ] ) ? ! is_bool( $value ) : ( ! is_int( $value ) || $value < 0 || ( $submitted && $value > $bounds[ $key ] ) ) ) {
+                    return self::invalid_task_input( $field );
+                }
+            }
+        }
+        if ( ! is_string( $values['exclude'] ) && ! is_array( $values['exclude'] ) ) {
+            return self::invalid_task_input( 'exclude' );
+        }
+        if ( is_array( $values['exclude'] ) ) {
+            foreach ( $values['exclude'] as $entry ) {
+                if ( ! is_string( $entry ) || strlen( $entry ) > 255 ) {
+                    return self::invalid_task_input( 'exclude' );
+                }
+            }
+        }
+        $exclude           = MainWP_Backup_Settings::sanitize_exclude_list( $values['exclude'] );
+        $values['exclude'] = '' === $exclude ? array() : explode( ',', $exclude );
+        unset( $values['subfolder'], $values['filename'] );
+        return $values;
+    }
+
+    /**
+     * Stop-work actions bypass this gate so disabling backups never prevents a stop.
+     *
+     * @return \WP_Error|null
+     */
+    private static function native_task_write_error(): ?\WP_Error {
+        return MainWP_Backup_Settings::is_native_backups_enabled() ? null : new \WP_Error( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, esc_html__( 'Native backups are not enabled.', 'mainwp' ), array( 'status' => 409 ) );
+    }
+
+    /**
+     * Stored selections must not widen the scope checked at save time.
+     *
+     * @param array  $values Validated selections.
+     * @param string $right Task operation right.
+     * @return true|\WP_Error
+     */
+    private static function authorize_task_input_scope( array $values, string $right ) {
+        $sites  = implode( ',', $values['site_ids'] );
+        $groups = implode( ',', $values['group_ids'] );
+        foreach ( MainWP_Manage_Backups_Handler::expand_task_site_ids( $sites, $groups ) as $id ) {
+            $site = self::authorize_site( $id, $right );
+            if ( is_wp_error( $site ) ) {
+                return $site;
+            }
+        }
+        // The existing write gate and snapshot stamper must see the same canonical lists.
+        if ( '' !== MainWP_Manage_Backups_Handler::authorize_task_scope( $sites, $groups ) ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
+        }
+        foreach ( $values['destination_ids'] as $id ) {
+            if ( ! MainWP_Backup_Storage_Destinations::instance()->get_destination( $id ) ) {
+                return self::not_found( MainWP_Backup_Error_Codes::ERR_DESTINATION_NOT_FOUND );
+            }
+        }
+        return true;
+    }
+
+    /**
+     * A new schedule needs an authorized scope snapshot before cron can run it.
+     *
+     * @param array  $fields Submitted task fields.
+     * @param string $context Calling transport.
+     * @return array|\WP_Error
+     */
+    public static function create_task( array $fields, string $context ) {
+        $base = self::authorize_base( 'add_backup_tasks' );
+        if ( is_wp_error( $base ) ) {
+            return $base;
+        }
+        if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
+            return self::invalid_task_input( 'context' );
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $values = self::normalize_task_fields( $fields );
+        if ( is_wp_error( $values ) ) {
+            return $values;
+        }
+        $scope = self::authorize_task_input_scope( $values, 'add_backup_tasks' );
+        return is_wp_error( $scope ) ? $scope : self::save_task( $values, $fields );
+    }
+
+    /**
+     * A partial edit cannot bypass the existing task authorization.
+     *
+     * @param int    $task_id Task identity.
+     * @param array  $fields Partial task fields.
+     * @param string $context Calling transport.
+     * @return array|\WP_Error
+     */
+    public static function update_task( int $task_id, array $fields, string $context ) {
+        $task = self::authorize_task( $task_id, 'edit_backup_tasks' );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
+            return self::invalid_task_input( 'context' );
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $values = self::normalize_task_fields( $fields, $task );
+        if ( is_wp_error( $values ) ) {
+            return $values;
+        }
+        $scope = self::authorize_task_input_scope( $values, 'edit_backup_tasks' );
+        if ( is_wp_error( $scope ) ) {
+            return $scope;
+        }
+        // Authorize the pre-edit scope as well as the replacement: a caller
+        // who cannot reach the task's current sites must not be able to
+        // re-scope it to sites they can reach and then delete it to launder
+        // the per-site purge gate (the purge enumerates the task's historical
+        // sites, not just the current selection).
+        $scope_error = MainWP_Manage_Backups_Handler::authorize_task_update_scope( implode( ',', MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ) ), '', implode( ',', $values['site_ids'] ), implode( ',', $values['group_ids'] ) );
+        if ( '' !== $scope_error ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
+        }
+        return self::save_task( $values, $fields, $task );
+    }
+
+    /**
+     * The schedule and retention savers use the same values as the normalized result.
+     *
+     * @param array       $values Normalized task fields.
+     * @param array       $fields Submitted legacy filename fields.
+     * @param object|null $task Existing task, or null for create.
+     * @return array|\WP_Error
+     */
+    private static function save_task( array $values, array $fields, ?object $task = null ) {
+        $db        = MainWP_DB_Backup::instance();
+        $sites     = implode( ',', $values['site_ids'] );
+        $groups    = implode( ',', $values['group_ids'] );
+        $exclude   = MainWP_Backup_Settings::sanitize_exclude_list( array_map( 'htmlentities', $values['exclude'] ) );
+        $flags     = $values['exclude_flags'];
+        $tuning    = $values['archive_tuning'];
+        $subfolder = sanitize_text_field( $fields['subfolder'] ?? $task->subfolder ?? '' );
+        $filename  = sanitize_text_field( $fields['filename'] ?? $task->filename ?? '' );
+        if ( $task ) {
+            do_action( 'mainwp_update_backuptask', $task->id );
+            $saved = $db->update_backup_task( $task->id, get_current_user_id(), htmlentities( $values['name'] ), $values['schedule'], $values['type'], $exclude, $sites, $groups, $subfolder, $filename, (int) $flags['backup_archives'], (int) $flags['cache'], (int) $flags['non_wp_folders'], (int) $flags['zip_archives'], $values['archive_format'], $tuning['max_file_descriptors_override'], $tuning['max_file_descriptors_auto'], $tuning['max_file_descriptors'], (int) $tuning['load_files_before_zip'], (int) $tuning['zip_force_override'] );
+        } else {
+            $saved = $db->add_backup_task( get_current_user_id(), htmlentities( $values['name'] ), $values['schedule'], $values['type'], $exclude, $sites, $groups, $subfolder, $filename, 0, (int) $flags['backup_archives'], (int) $flags['cache'], (int) $flags['non_wp_folders'], (int) $flags['zip_archives'], $values['archive_format'], $tuning['max_file_descriptors_override'], $tuning['max_file_descriptors_auto'], $tuning['max_file_descriptors'], (int) $tuning['load_files_before_zip'], (int) $tuning['zip_force_override'] );
+        }
+        if ( false === $saved ) {
+            return new \WP_Error( 'mainwp_internal_error', esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ), array( 'status' => 500 ) );
+        }
+        $id = (int) ( $task ? $task->id : $saved->id );
+        MainWP_Manage_Backups_Handler::stamp_task_scope_snapshot( $id, $sites, $groups );
+        MainWP_Backup_Storage_Handler::save_task_destinations( $id, $values['destination_ids'] );
+        $schedule = MainWP_Manage_Backups_Handler::save_task_schedule_fields(
+            $id,
+            array(
+                'schedule_interval_hours' => $values['interval_hours'] ?? 0,
+                'schedule_time_of_day'    => $values['time_of_day'] ?? '',
+                'schedule_day_of_week'    => $values['day_of_week'] ?? $task->day_of_week ?? 0,
+                'schedule_day_of_month'   => $values['day_of_month'] ?? $task->day_of_month ?? 1,
+            )
+        );
+        MainWP_Manage_Backups_Handler::save_task_retention_fields(
+            $id,
+            array(
+                'retention_count'      => $values['retention']['count'],
+                'retention_days'       => $values['retention']['days'],
+                'retention_storage_mb' => $values['retention']['storage_mb'],
+                'delete_cloud_copies'  => $values['retention']['delete_cloud_copies'],
+                'max_chain_length'     => $values['retention']['max_chain_length'],
+            ),
+            null === $task
+        );
+        if ( null === $task ) {
+            do_action( 'mainwp_add_backuptask', $id );
+        }
+        return array(
+            'task_id'     => $id,
+            'normalized'  => $values,
+            'next_run_at' => empty( $schedule['next_run'] ) ? null : (int) $schedule['next_run'],
+        );
+    }
+
+    /**
+     * Deleting a task can also destroy its historical snapshots.
+     *
+     * @param int  $task_id Task identity.
+     * @param bool $delete_snapshots Whether to purge owned snapshots.
+     * @return array|\WP_Error
+     */
+    public static function delete_task( int $task_id, bool $delete_snapshots = true ) {
+        $task = self::authorize_task( $task_id, 'delete_backup_tasks' );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        // Purging historical sites needs the same direct scope checks as the current run.
+        foreach ( MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( $task_id ) as $id ) {
+            $site = self::authorize_site( (int) $id, 'delete_backup_tasks' );
+            if ( is_wp_error( $site ) ) {
+                return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
+            }
+        }
+        return self::task_action_result( MainWP_Manage_Backups_Handler::remove_backup_result( $task_id, $delete_snapshots ), (int) $task->completed < (int) $task->last_run ? MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING : 'mainwp_operation_failed' );
+    }
+
+    /**
+     * Pausing remains available after native backups are switched off.
+     *
+     * @param int $task_id Task identity.
+     * @return array|\WP_Error
+     */
+    public static function pause_task( int $task_id ) {
+        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+        return is_wp_error( $task ) ? $task : self::task_action_result( MainWP_Manage_Backups_Handler::pause_backup_result( $task_id ) );
+    }
+
+    /**
+     * A resumed schedule must stay inside its authorized run set.
+     *
+     * @param int $task_id Task identity.
+     * @return array|\WP_Error
+     */
+    public static function resume_task( int $task_id ) {
+        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        $error = self::native_task_write_error();
+        return $error ?? self::task_action_result( MainWP_Manage_Backups_Handler::resume_backup_result( $task_id ) );
+    }
+
+    /**
+     * Manual runs need the same operation right and site scope as task execution.
+     *
+     * @param int    $task_id Task identity.
+     * @param string $context Calling transport.
+     * @return array|\WP_Error
+     */
+    public static function run_task( int $task_id, string $context = 'ui' ) {
+        $task = self::authorize_task( $task_id, 'run_backup_tasks' );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
+            return self::invalid_task_input( 'context' );
+        }
+        $error = self::native_task_write_error();
+        return $error ?? self::task_action_result( MainWP_Manage_Backups_Handler::run_backup_task_now( $task_id, $context ), MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+    }
+
+    /**
+     * Legacy task refusals contain fixed Dashboard text, never Child or provider text.
+     *
+     * @param array  $result Existing task result.
+     * @param string $code Refusal code.
+     * @return array|\WP_Error
+     */
+    private static function task_action_result( array $result, string $code = 'mainwp_operation_failed' ) {
+        if ( ! empty( $result['notask'] ) ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
+        }
+        return isset( $result['error'] ) ? new \WP_Error( $code, $result['error'], array( 'status' => 'mainwp_operation_failed' === $code ? 502 : 409 ) ) : $result;
+    }
+
+    /**
      * Initiation absorbs clicks that already own a run.
      *
      * @param int    $site_id Website identity.
@@ -519,6 +987,259 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'uncancelled'       => count( $uncancelled ),
             'sites_uncancelled' => $uncancelled,
         );
+    }
+
+    /**
+     * Admission refusals must follow site authorization for every caller.
+     *
+     * @param int    $site_id Site identity.
+     * @param int    $snapshot_id Snapshot identity.
+     * @param array  $options Restore options and destructive consent.
+     * @param string $context ui, cli or ability.
+     * @throws MainWP_Exception When the browser needs its existing refusal payload.
+     * @return array|\WP_Error
+     */
+    public static function restore_snapshot( int $site_id, int $snapshot_id, array $options, string $context ) {
+        $site = self::authorize_site( $site_id, 'execute_backups' );
+        if ( is_wp_error( $site ) ) {
+            return $site;
+        }
+        if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        }
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() && ! MainWP_Backup_Restore_Orchestrator::site_is_disconnected( $site ) ) {
+            $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+            if ( null === $snapshot || (int) $snapshot->site_id !== $site_id ) {
+                if ( 'ui' === $context ) {
+                    throw new MainWP_Exception( esc_html__( 'Snapshot not found for this site.', 'mainwp' ), null, MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the fixed message is escaped and the code is a trusted constant.
+                }
+                return self::not_found( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND );
+            }
+        }
+        try {
+            return array( 'job_id' => MainWP_Backup_Restore_Orchestrator::instance()->initiate_restore( $site_id, $snapshot_id, $options ) );
+        } catch ( MainWP_Exception $e ) {
+            return self::restore_refusal( $e, $context );
+        }
+    }
+
+    /**
+     * Rollback admission shares the same site right as a new restore.
+     *
+     * @param int    $restore_job_id Source job identity.
+     * @param string $context ui or ability.
+     * @return array|\WP_Error
+     */
+    public static function rollback_restore( int $restore_job_id, string $context = 'ability' ) {
+        $job  = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
+        $site = self::authorize_site( (int) ( $job->site_id ?? 0 ), 'execute_backups' );
+        if ( is_wp_error( $site ) ) {
+            return null === $job && 'mainwp_site_not_found' === $site->get_error_code() ? self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND ) : $site;
+        }
+        try {
+            return array( 'job_id' => MainWP_Backup_Restore_Orchestrator::instance()->initiate_rollback( $job ) );
+        } catch ( MainWP_Exception $e ) {
+            return self::restore_refusal( $e, $context );
+        }
+    }
+
+    /**
+     * Browser adapters retain their exceptions; machine errors never carry raw text.
+     *
+     * @param MainWP_Exception $exception Admission refusal.
+     * @param string           $context Caller context.
+     * @throws MainWP_Exception When the browser needs its existing refusal payload.
+     * @return \WP_Error
+     */
+    private static function restore_refusal( MainWP_Exception $exception, string $context ): \WP_Error {
+        if ( 'ui' === $context ) {
+            throw $exception; // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the orchestrator escapes its exceptions.
+        }
+        $safe = self::safe_error( $exception->get_message_error_code() );
+        $data = array( 'status' => MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR === $safe['code'] ? 500 : 409 );
+        if ( 'mainwp_confirmation_required' === $safe['code'] ) {
+            $facts                        = (array) $exception->get_data();
+            $data['site_has_woocommerce'] = ! empty( $facts['site_has_woocommerce'] );
+            $data['age_days']             = max( 0, (int) ( $facts['age_days'] ?? 0 ) );
+        }
+        return new \WP_Error( $safe['code'], $safe['message'], $data );
+    }
+
+    /**
+     * Stored tests need provider and name before the handler loads their settings.
+     *
+     * @param int $id Destination identity.
+     * @return array|\WP_Error
+     */
+    public static function test_destination( int $id ) {
+        $destination = self::authorize_destination( $id );
+        if ( is_wp_error( $destination ) ) {
+            return $destination;
+        }
+        $disabled = self::native_task_write_error();
+        if ( is_wp_error( $disabled ) ) {
+            return $disabled;
+        }
+        return self::storage_result(
+            MainWP_Backup_Storage_Handler::test_saved_or_submitted(
+                array(
+                    'id'       => $id,
+                    'provider' => $destination->provider,
+                    'name'     => $destination->name,
+                    'settings' => null,
+                )
+            )
+        );
+    }
+
+    /**
+     * Rename and default changes reuse the existing connection-test-before-save flow.
+     *
+     * @param int   $id Destination identity.
+     * @param array $fields Name or default flag.
+     * @return array|\WP_Error
+     */
+    public static function update_destination( int $id, array $fields ) {
+        $destination = self::authorize_destination( $id );
+        if ( is_wp_error( $destination ) ) {
+            return $destination;
+        }
+        $disabled = self::native_task_write_error();
+        if ( is_wp_error( $disabled ) ) {
+            return $disabled;
+        }
+        if ( ! $fields || array_diff( array_keys( $fields ), array( 'name', 'is_default' ) ) || ( array_key_exists( 'name', $fields ) && ( ! is_string( $fields['name'] ) || '' === trim( $fields['name'] ) || strlen( $fields['name'] ) > 255 ) ) || ( array_key_exists( 'is_default', $fields ) && ! is_bool( $fields['is_default'] ) ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        }
+        if ( ! empty( $destination->credentials_invalid ) ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_DESTINATION_CREDENTIALS_REQUIRED, self::safe_error( MainWP_Backup_Error_Codes::ERR_DESTINATION_CREDENTIALS_REQUIRED )['message'], array( 'status' => 400 ) );
+        }
+        return self::storage_result(
+            MainWP_Backup_Storage_Handler::save_destination(
+                array(
+                    'id'         => $id,
+                    'provider'   => $destination->provider,
+                    'name'       => $fields['name'] ?? $destination->name,
+                    'is_default' => $fields['is_default'] ?? ! empty( $destination->is_default ),
+                    'settings'   => $destination->settings,
+                )
+            )
+        );
+    }
+
+    /**
+     * The storage handler owns default uniqueness.
+     *
+     * @param int $id Destination identity.
+     * @return array|\WP_Error
+     */
+    public static function set_default_destination( int $id ) {
+        $destination = self::authorize_destination( $id );
+        if ( is_wp_error( $destination ) ) {
+            return $destination;
+        }
+        $disabled = self::native_task_write_error();
+        return is_wp_error( $disabled ) ? $disabled : self::storage_result( MainWP_Backup_Storage_Handler::set_default_destination( $id ) );
+    }
+
+    /**
+     * The existing flow detaches tasks and retires pending jobs before deleting storage.
+     *
+     * @param int $id Destination identity.
+     * @return array|\WP_Error
+     */
+    public static function delete_destination( int $id ) {
+        $destination = self::authorize_destination( $id );
+        if ( is_wp_error( $destination ) ) {
+            return $destination;
+        }
+        $disabled = self::native_task_write_error();
+        return is_wp_error( $disabled ) ? $disabled : self::storage_result( MainWP_Backup_Storage_Handler::delete_destination_flow( $id, true ) );
+    }
+
+    /**
+     * Provider details can contain credentials or paths, so never copy their errors.
+     *
+     * @param array $result Existing handler response.
+     * @return array|\WP_Error
+     */
+    private static function storage_result( array $result ) {
+        if ( isset( $result['error'] ) || ( array_key_exists( 'ok', $result ) && ! $result['ok'] ) ) {
+            return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
+        }
+        return $result;
+    }
+
+    /**
+     * Global settings share one saver without exposing recovery key material.
+     *
+     * @param array  $values Allowed settings, with omitted fields preserved.
+     * @param string $context ui or ability.
+     * @return array|\WP_Error
+     */
+    public static function save_backup_settings( array $values, string $context = 'ability' ) {
+        $base = self::authorize_base( 'manage_dashboard_settings' );
+        if ( is_wp_error( $base ) ) {
+            return $base;
+        }
+        if ( ! in_array( $context, array( 'ui', 'ability' ), true ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        }
+        if ( 'ui' !== $context ) {
+            $scope = MainWP_Abilities_Util::check_unrestricted_access();
+            if ( is_wp_error( $scope ) ) {
+                return $scope;
+            }
+        }
+        $fields = array( 'native_backups_enabled', 'on_demand_retention_count', 'max_concurrent_backups', 'diagnostics_enabled', 'update_gate' );
+        $gate   = array( 'enabled', 'max_age_days', 'require_offsite' );
+        if ( ! $values || array_diff( array_keys( $values ), $fields ) || ( isset( $values['update_gate'] ) && ( ! is_array( $values['update_gate'] ) || ! $values['update_gate'] || array_diff( array_keys( $values['update_gate'] ), $gate ) ) ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        }
+        $writes = array();
+        foreach ( $values as $key => $value ) {
+            if ( 'update_gate' === $key ) {
+                if ( ! is_array( $value ) ) {
+                    return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+                }
+                foreach ( $value as $field => $setting ) {
+                    $writes[ 'update_gate.' . $field ] = $setting;
+                }
+            } else {
+                $writes[ $key ] = $value;
+            }
+        }
+        $options = array(
+            'on_demand_retention_count'   => 'mainwp_on_demand_retention_count',
+            'max_concurrent_backups'      => 'mainwp_backup_max_concurrent',
+            'diagnostics_enabled'         => MainWP_Backup_Diagnostics::OPTION_ENABLED,
+            'update_gate.enabled'         => 'mainwp_backup_before_upgrade',
+            'update_gate.max_age_days'    => 'mainwp_backup_before_upgrade_days',
+            'update_gate.require_offsite' => 'mainwp_backup_before_upgrade_require_offsite',
+        );
+        // The older form accepts larger counts; machine writes use the bounded policy.
+        $limits = array(
+            'on_demand_retention_count' => 100,
+            'max_concurrent_backups'    => 10,
+            'update_gate.max_age_days'  => 365,
+        );
+        foreach ( $writes as $key => $value ) {
+            $integer = in_array( $key, array( 'on_demand_retention_count', 'max_concurrent_backups', 'update_gate.max_age_days' ), true );
+            if ( ( $integer && ( ! is_int( $value ) || $value < 1 || ( 'ui' !== $context && $value > $limits[ $key ] ) ) ) || ( ! $integer && ! is_bool( $value ) ) ) {
+                return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+            }
+        }
+        foreach ( $writes as $key => $value ) {
+            if ( 'native_backups_enabled' === $key ) {
+                if ( $value && ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+                    MainWP_Utility::update_option( 'mainwp_primaryBackup', '' );
+                }
+                MainWP_Backup_Settings::update_native_backups_option( $value );
+            } else {
+                MainWP_Utility::update_option( $options[ $key ], (int) $value );
+            }
+        }
+        return $values;
     }
 
     /**

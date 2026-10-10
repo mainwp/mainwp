@@ -4277,8 +4277,9 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Back Up Now's hidden task cannot be reopened through Run Now or a queued
-	 * status poll for a site the Dashboard knows is disconnected.
+	 * Back Up Now's hidden task cannot be reopened through Run Now, which treats
+	 * it as no task at all, or through a queued status poll for a site the
+	 * Dashboard knows is disconnected.
 	 *
 	 * @return void
 	 */
@@ -4289,7 +4290,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		\MainWP\Dashboard\MainWP_DB::instance()->update_website_sync_values( $site_id, array( 'sync_errors' => 'Connection failed' ) );
 
 		$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
-		$this->assertSame( 'This site is disconnected from the Dashboard. Reconnect it, then try again.', $start['error'] );
+		$this->assertSame( 'Insufficient permissions. Is this task set by you?', $start['error'] );
 		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, (int) $task->last_run, time() );
 		$this->assertSame( 'This site is disconnected from the Dashboard. Reconnect it, then try again.', $status['error'] );
 		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );

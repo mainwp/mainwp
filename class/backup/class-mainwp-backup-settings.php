@@ -270,8 +270,21 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public static function handle_settings_post(): bool {
         self::$encryption_forced_off        = false;
         self::$recovery_passphrase_rejected = '';
-        if ( MainWP_System_Utility::is_admin() ) {
+        if ( MainWP_System_Utility::is_admin() && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
+                $old_primaryBackup       = get_option( 'mainwp_primaryBackup' );
+                $old_enableNativeBackups = static::is_native_backups_enabled();
+                $enableNativeBackups     = ! empty( $_POST['mainwp_options_enableNativeBackups'] );
+                $values                  = array(
+                    'native_backups_enabled' => $enableNativeBackups && ! ( ! empty( $_POST['mainwp_primaryBackup'] ) && empty( $old_primaryBackup ) ),
+                    'diagnostics_enabled'    => ! empty( $_POST['mainwp_options_backupDiagnosticsEnabled'] ),
+                );
+                if ( isset( $_POST['mainwp_options_onDemandRetentionCount'] ) ) {
+                    $values['on_demand_retention_count'] = max( 1, intval( $_POST['mainwp_options_onDemandRetentionCount'] ) );
+                }
+                if ( is_wp_error( MainWP_Backup_Operations::save_backup_settings( $values, 'ui' ) ) ) {
+                    return false;
+                }
                 if ( isset( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
                     MainWP_Utility::update_option( 'mainwp_backupsOnServer', ( isset( $_POST['mainwp_options_backupOnServer'] ) ? intval( $_POST['mainwp_options_backupOnServer'] ) : 1 ) );
                 }
@@ -282,24 +295,13 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( ! empty( $_POST['mainwp_options_backupOnExternalSources'] ) && 0 <= $_POST['mainwp_options_backupOnExternalSources'] ) {
                     MainWP_Utility::update_option( 'mainwp_backupOnExternalSources', ( isset( $_POST['mainwp_options_backupOnExternalSources'] ) ? intval( $_POST['mainwp_options_backupOnExternalSources'] ) : 1 ) );
                 }
-                if ( isset( $_POST['mainwp_options_onDemandRetentionCount'] ) ) {
-                    MainWP_Utility::update_option( 'mainwp_on_demand_retention_count', max( 1, intval( $_POST['mainwp_options_onDemandRetentionCount'] ) ) );
-                }
                 MainWP_Utility::update_option( 'mainwp_archiveFormat', ( isset( $_POST['mainwp_archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_archiveFormat'] ) ) : '' ) );
-
-                $old_primaryBackup           = get_option( 'mainwp_primaryBackup' );
-                $old_enableNativeBackups     = static::is_native_backups_enabled();
-                $updated_enableNativeBackups = false;
 
                 if ( isset( $_POST['mainwp_primaryBackup'] ) ) {
                     if ( ! empty( $_POST['mainwp_primaryBackup'] ) ) { // not default backup method.
                         MainWP_Utility::update_option( 'mainwp_notificationOnBackupFail', 0 );
                         MainWP_Utility::update_option( 'mainwp_notificationOnBackupStart', 0 );
                         MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', 0 );
-                        if ( empty( $old_primaryBackup ) ) {
-                            static::update_native_backups_option( 0 );
-                            $updated_enableNativeBackups = true;
-                        }
                     }
                     MainWP_Utility::update_option( 'mainwp_primaryBackup', sanitize_text_field( wp_unslash( $_POST['mainwp_primaryBackup'] ) ) );
                 }
@@ -311,13 +313,8 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     MainWP_Utility::update_option( 'mainwp_chunkedBackupTasks', ( ! isset( $_POST['mainwp_options_chunkedBackupTasks'] ) ? 0 : 1 ) );
                 }
 
-                $enableNativeBackups = ( isset( $_POST['mainwp_options_enableNativeBackups'] ) && ! empty( $_POST['mainwp_options_enableNativeBackups'] ) ) ? 1 : 0;
                 if ( $enableNativeBackups && empty( $old_enableNativeBackups ) ) {
                     MainWP_Utility::update_option( 'mainwp_primaryBackup', '' );
-                }
-
-                if ( ! $updated_enableNativeBackups ) {
-                    static::update_native_backups_option( $enableNativeBackups );
                 }
 
                 // Archive encryption. A non-empty passphrase creates or re-wraps
@@ -340,8 +337,6 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     self::$encryption_forced_off = true;
                 }
                 MainWP_Utility::update_option( MainWP_Backup_Encryption::ENABLED_OPTION, $enableEncryption );
-
-                MainWP_Utility::update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, ( isset( $_POST['mainwp_options_backupDiagnosticsEnabled'] ) && ! empty( $_POST['mainwp_options_backupDiagnosticsEnabled'] ) ) ? 1 : 0 );
 
                 return true;
             }

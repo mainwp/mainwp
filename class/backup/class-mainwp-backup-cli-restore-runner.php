@@ -5,12 +5,10 @@
  * The engine-agnostic core behind `wp mainwp backup restore`. It lets an
  * operator who has dashboard CLI but no child wp-admin drive a remote restore
  * of a child from the command line. It owns no restore logic of its own: it
- * mirrors the AJAX initiate path - read the snapshot, apply the same
- * destructive-confirm gate the modal enforces, then hand off to the restore
- * orchestrator - and adds only the one thing CLI needs that the browser gets
- * from WP-Cron: it drives the job to a terminal state synchronously instead of
- * waiting for a scheduled continuation. The thin WP-CLI command wraps this and
- * renders the result.
+ * uses the shared site authorization and restore admission checks. CLI needs
+ * a synchronous drive because WP-Cron is not advancing the job while the
+ * command waits; the runner follows the job to a terminal state and the thin
+ * WP-CLI command renders the result.
  *
  * @package MainWP\Dashboard
  */
@@ -41,7 +39,7 @@ class MainWP_Backup_CLI_Restore_Runner {
     protected $store;
 
     /**
-     * Snapshot reader, used for the confirm gate and its facts.
+     * Retained for callers that inject the original snapshot reader.
      *
      * @var MainWP_Backup_Snapshots
      */
@@ -110,13 +108,9 @@ class MainWP_Backup_CLI_Restore_Runner {
     /**
      * Restore a snapshot to its site, end to end.
      *
-     * Mirrors the AJAX initiate handler: the snapshot is read, the same
-     * destructive-confirm gate is applied (a database-bearing restore is
-     * refused until the operator confirms), the orchestrator resolves the
-     * chain and creates the job, and the job is then driven to a terminal
-     * state. The orchestrator throws rather than returning a code, so an
-     * unknown snapshot, a cross-site snapshot, or a second restore for a busy
-     * site surfaces here as a clean failure result.
+     * The orchestrator owns consent and admission so CLI cannot bypass the
+     * browser's refusals. A refused admission returns without starting the
+     * synchronous drive.
      *
      * @param int           $site_id     Child site id.
      * @param int           $snapshot_id Snapshot to restore.
@@ -136,43 +130,26 @@ class MainWP_Backup_CLI_Restore_Runner {
      * }
      */
     public function run( int $site_id, int $snapshot_id, array $options, bool $confirmed, $progress = null ): array {
-        $snapshot = $this->snapshots->get_snapshot_by_id( $snapshot_id );
-
-        // Re-derive destructive risk exactly as the AJAX path does: anything
-        // but a files-only snapshot rewrites the live database, so it is
-        // refused until the operator confirms. The facts the modal shows
-        // (WooCommerce presence, backup age) ride along so the command can
-        // explain why.
-        if ( MainWP_Post_Backup_Handler::restore_needs_confirmation( $snapshot, $confirmed ) ) {
-            return array(
-                'ok'                   => false,
-                'needs_confirmation'   => true,
-                'job_id'               => 0,
-                'status'               => '',
-                'error'                => '',
-                'error_code'           => '',
-                'site_has_woocommerce' => MainWP_Utility::site_has_woocommerce( $site_id ),
-                'age_days'             => max( 0, (int) floor( ( time() - (int) $snapshot->created ) / DAY_IN_SECONDS ) ),
-            );
+        $website = MainWP_Backup_Operations::authorize_site( $site_id, 'execute_backups' );
+        if ( is_wp_error( $website ) ) {
+            return $this->fail( 0, '', $website->get_error_message(), $website->get_error_code() );
         }
-
-        // Order preservation applies only to a database-bearing restore; the
-        // backup's created time bounds the customer capture on the child.
-        $preserve_orders = ! empty( $options['preserve_orders'] ) && null !== $snapshot && 'files' !== (string) $snapshot->type;
-        $woo_order_since = $preserve_orders ? (int) $snapshot->created : 0;
 
         try {
             $job_id = $this->orchestrator->initiate_restore(
                 $site_id,
                 $snapshot_id,
                 array(
-                    'pre_snapshot'    => ! empty( $options['pre_snapshot'] ),
-                    'file_rollback'   => ! empty( $options['pre_snapshot'] ),
-                    'preserve_orders' => $preserve_orders,
-                    'woo_order_since' => $woo_order_since,
+                    'pre_snapshot'        => ! empty( $options['pre_snapshot'] ),
+                    'file_rollback'       => ! empty( $options['pre_snapshot'] ),
+                    'preserve_orders'     => ! empty( $options['preserve_orders'] ),
+                    'confirm_destructive' => $confirmed,
                 )
             );
         } catch ( MainWP_Exception $e ) {
+            if ( 'mainwp_confirmation_required' === $e->get_message_error_code() ) {
+                return array_merge( $this->fail( 0, '', '', 'mainwp_confirmation_required' ), $e->get_data(), array( 'needs_confirmation' => true ) );
+            }
             return $this->fail( 0, '', html_entity_decode( $e->getMessage(), ENT_QUOTES, 'UTF-8' ), $e->get_message_error_code() );
         }
 

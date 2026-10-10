@@ -407,7 +407,7 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 
 		$_POST['schedule_interval_hours'] = '99999';
 
-		$values = MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+		$values = MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id, $_POST );
 
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
 		$this->assertSame( 8760, (int) $task->interval_hours, 'Interval hours must clamp to a year.' );
@@ -433,7 +433,7 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 
 		$_POST['schedule_interval_hours'] = '4';
 
-		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id, $_POST );
 
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
 		$this->assertSame( $last_run + 4 * HOUR_IN_SECONDS, (int) $task->next_run );
@@ -450,7 +450,7 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 
 		$_POST['schedule_time_of_day'] = '3:5';
 
-		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id, $_POST );
 
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
 		$this->assertSame( '03:05', $task->time_of_day, 'Time of day normalizes to HH:MM.' );
@@ -469,7 +469,7 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 
 			$_POST['schedule_time_of_day'] = $invalid;
 
-			MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+			MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id, $_POST );
 
 			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
 			$this->assertSame( '', $task->time_of_day, "'{$invalid}' must be rejected." );
@@ -489,7 +489,7 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 		$_POST['schedule_day_of_week']  = '9';
 		$_POST['schedule_day_of_month'] = '31';
 
-		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id, $_POST );
 
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
 		$this->assertSame( 6, (int) $task->day_of_week, 'Day of week clamps to 0-6.' );
@@ -512,7 +512,7 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 
 		$_POST['schedule_time_of_day'] = '';
 
-		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id, $_POST );
 
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
 		$this->assertSame( '', $task->time_of_day );
@@ -534,7 +534,7 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 		$_POST['delete_cloud_copies']  = '1';
 		$_POST['max_chain_length']     = '30';
 
-		MainWP_Manage_Backups_Handler::save_task_retention_fields( $id );
+		MainWP_Manage_Backups_Handler::save_task_retention_fields( $id, $_POST );
 
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
 		$this->assertSame( 5, (int) $task->retention_count );
@@ -560,7 +560,7 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 
 		$_POST['retention_count'] = 'abc';
 
-		MainWP_Manage_Backups_Handler::save_task_retention_fields( $id );
+		MainWP_Manage_Backups_Handler::save_task_retention_fields( $id, $_POST );
 
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
 		$this->assertSame( 0, (int) $task->retention_count, 'Junk input saves as no limit.' );
@@ -587,7 +587,7 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 			$_POST['retention_count'] = $posted;
 		}
 
-		MainWP_Manage_Backups_Handler::save_task_retention_fields( $id, true );
+		MainWP_Manage_Backups_Handler::save_task_retention_fields( $id, $_POST, true );
 
 		$this->assertSame( $expected, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->retention_count );
 		$this->assertSame( 7, MainWP_Manage_Backups_Handler::NEW_TASK_RETENTION_COUNT );
@@ -690,7 +690,7 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 		$_POST['schedule_time_of_day'] = '06:00';
-		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id );
+		MainWP_Manage_Backups_Handler::save_task_schedule_fields( $id, $_POST );
 
 		$utc_next = (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->next_run;
 

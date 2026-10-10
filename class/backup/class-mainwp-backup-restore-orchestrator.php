@@ -85,13 +85,47 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         return static::$instance;
     }
 
+    /**
+     * Whether the Dashboard's last contact with a site failed.
+     *
+     * A site with sync errors cannot take a backup or a restore: the request
+     * would fail partway, after a safety backup or a transfer had already
+     * spent its time. The UI turns the actions off and the endpoints refuse.
+     *
+     * @param object|null $website Website row.
+     *
+     * @return bool
+     */
+    public static function site_is_disconnected( $website ): bool {
+        return ! empty( $website ) && '' !== trim( (string) ( $website->sync_errors ?? '' ) );
+    }
+
+    /**
+     * Whether a restore must be explicitly confirmed before it runs.
+     *
+     * A restore that rewrites the database - anything but a files-only
+     * snapshot - overwrites live data, so the server requires the same
+     * consent the modal collects and a direct AJAX call cannot skip it. The
+     * caller surfaces the WooCommerce/backup-age reason; this only decides
+     * whether the gate fires.
+     *
+     * @param object|null $snapshot            Snapshot row being restored.
+     * @param bool        $confirm_destructive Whether the request carried consent.
+     *
+     * @return bool True when consent is required but absent.
+     */
+    public static function restore_needs_confirmation( $snapshot, $confirm_destructive ) {
+        $destructive = null !== $snapshot && 'files' !== (string) $snapshot->type;
+        return $destructive && ! $confirm_destructive;
+    }
+
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     /**
      * Create a restore job for a snapshot.
      *
      * @param int   $site_id     Child site id.
      * @param int   $snapshot_id Snapshot to restore.
-     * @param array $options     { pre_snapshot: bool, file_rollback: bool }.
+     * @param array $options     Restore flags, including confirm_destructive consent.
      *
      * @throws MainWP_Exception When the restore cannot start.
      *
@@ -106,6 +140,42 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
         if ( empty( $website ) ) {
             throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
+        }
+
+        if ( self::site_is_disconnected( $website ) ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
+
+        // Re-derive destructive risk server-side. The modal collects consent,
+        // but a direct AJAX call can omit it, so a database-bearing restore is
+        // refused until confirm_destructive is set. The response carries
+        // the reason (WooCommerce, backup age) for the modal and CLI to explain.
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+        if ( null !== $snapshot && (int) $snapshot->site_id === $site_id && self::restore_needs_confirmation( $snapshot, ! empty( $options['confirm_destructive'] ) ) ) {
+            $refusal = new MainWP_Exception( esc_html__( 'Confirmation is required for this action.', 'mainwp' ), null, 'mainwp_confirmation_required' );
+            $refusal->set_data(
+                array(
+                    'site_has_woocommerce' => MainWP_Utility::site_has_woocommerce( $site_id ),
+                    'age_days'             => max( 0, (int) floor( ( time() - (int) $snapshot->created ) / DAY_IN_SECONDS ) ),
+                )
+            );
+            throw $refusal; // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped at construction.
+        }
+
+        // Order preservation applies only to a database-bearing restore; the
+        // backup's created time bounds the customer capture on the child.
+        $options['preserve_orders'] = ! empty( $options['preserve_orders'] ) && null !== $snapshot && (int) $snapshot->site_id === $site_id && 'files' !== (string) $snapshot->type;
+        $options['woo_order_since'] = $options['preserve_orders'] ? (int) $snapshot->created : 0;
+
+        // A preserve-orders request the child's apply-phase gate is certain
+        // to refuse gets refused here, before any job, pre-snapshot, or
+        // transfer spends hours on it. Best effort: any doubt proceeds and
+        // the apply-phase gate stays the authoritative backstop.
+        if ( $options['preserve_orders'] ) {
+            $refusal = $this->woo_preserve_refusal( $website, $snapshot );
+            if ( null !== $refusal ) {
+                throw MainWP_Backup_Error_Codes::exception( $refusal ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
         }
 
         if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
@@ -332,6 +402,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         );
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all refusals throw MainWP_Exception.
     /**
      * Start a rollback restore from a completed pre-restore safety
      * backup: its artifacts are still on the child and adopt with zero
@@ -346,6 +417,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @return int New job id.
      */
     public function initiate_rollback( object $failed_job ): int {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
+        $website = MainWP_DB::instance()->get_website_by_id( (int) $failed_job->site_id );
+        if ( self::site_is_disconnected( $website ) ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
         $this->assert_rollback_status( $failed_job );
 
         if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( (int) $failed_job->site_id ) ) {

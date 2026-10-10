@@ -523,7 +523,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( $owned ) {
                 $task_id = (string) $handle['task_id'];
                 try {
-                    MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $task_id ), false, false, false );
+                    MainWP_Backup_Executor::send_backup_task_cancel( $website, (string) $task_id );
                 } finally {
                     $this->release_pre_snapshot_handle( $website, $task_id, $owner );
                 }
@@ -1613,6 +1613,19 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return $store->save_checkpoint( (int) $job->id, $checkpoint, $lock_token, true ) ? self::TERMINAL_OUTCOME_DRIVE_ON : self::TERMINAL_OUTCOME_DEFERRED;
         }
 
+        if ( $can_cancel || null === $error ) {
+            $fresh = $store->get_job( (int) $job->id );
+            if ( null === $fresh ) {
+                return self::TERMINAL_OUTCOME_TERMINAL;
+            }
+            $checkpoint                                   = $fresh->checkpoint;
+            $checkpoint['cancel_confirmation']['outcome'] = $can_cancel ? ( in_array( $outcome, array( 'ok', 'failed' ), true ) ? 'confirmed' : 'unconfirmed' ) : 'not_needed';
+            // Terminal status must never become visible before its stop evidence.
+            if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $lock_token ) ) {
+                return self::TERMINAL_OUTCOME_DEFERRED;
+            }
+        }
+
         if ( null === $error ) {
             if ( $store->cancel_job( (int) $job->id, $lock_token ) ) {
                 MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
@@ -2028,7 +2041,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         $answer = null;
         try {
-            $answer = MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $task_id ), false, false, false );
+            $answer = MainWP_Backup_Executor::send_backup_task_cancel( $website, (string) $task_id );
         } catch ( \Throwable $e ) {
             do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its safety backup: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
         } finally {

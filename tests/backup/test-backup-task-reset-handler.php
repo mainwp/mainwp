@@ -23,6 +23,8 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
  */
 class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Child backup_task_cancel calls captured during invoke_reset, each
 	 * as array{site: int, params: array}.
@@ -126,6 +128,9 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 				'params' => $params,
 			);
 			if ( is_array( $child_responses ) && array_key_exists( $site_id, $child_responses ) ) {
+				if ( $child_responses[ $site_id ] instanceof \Exception ) {
+					throw $child_responses[ $site_id ];
+				}
 				return $child_responses[ $site_id ];
 			}
 			return array( 'result' => 'ok' );
@@ -254,16 +259,16 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertIsArray( $response );
 		$this->assertSame( 'reset', $response['status'] ?? null );
-		$this->assertSame( 2, $response['cancelled'] ?? null );
-		$this->assertSame( 0, $response['uncancelled'] ?? null );
+		$this->assertSame( 1, $response['cancelled'] ?? null );
+		$this->assertSame( 1, $response['uncancelled'] ?? null );
 
 		$by_site = array();
 		foreach ( $this->child_calls as $call ) {
 			$by_site[ $call['site'] ] = $call['params'];
 		}
-		$this->assertCount( 2, $by_site, 'Every site in the task must receive one backup_task_cancel.' );
+		$this->assertCount( 1, $by_site );
 		$this->assertSame( 'child-task-a', $by_site[ $site_a ]['task_id'] ?? null, 'A known child task id must be passed through.' );
-		$this->assertSame( '', $by_site[ $site_b ]['task_id'] ?? null, 'Without a progress row the child resolves its own active backup.' );
+		$this->assertArrayNotHasKey( $site_b, $by_site );
 
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertGreaterThanOrEqual( (int) $task->last_run, (int) $task->completed, 'The stuck run must be closed.' );
@@ -284,6 +289,11 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 		$site_c = $this->create_test_site();
 		$task   = $this->create_running_task( array( $site_a, $site_b, $site_c ), 2 * HOUR_IN_SECONDS );
 
+		foreach ( array( $site_a, $site_b, $site_c ) as $site_id ) {
+			MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, $site_id, array() );
+			MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, $site_id, array( 'child_backup_task_id' => 'child-' . $site_id ) );
+		}
+
 		$response = $this->invoke_reset(
 			$task->id,
 			array(
@@ -300,5 +310,87 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertGreaterThanOrEqual( (int) $task->last_run, (int) $task->completed, 'The reset must still close the run.' );
 		$this->assertStringContainsString( 'could not be stopped', (string) $task->backup_notices, 'A partial stop must leave a diagnosable trace.' );
+	}
+
+	/**
+	 * Only explicit terminal replies count as confirmed stops during reset.
+	 *
+	 * @return void
+	 */
+	public function test_reset_reply_table_and_unknown_identity() {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$cases = array(
+			array( 'known', array( 'result' => 'ok' ), true ),
+			array(
+				'known',
+				array(
+					'result' => 'already_terminal',
+					'phase'  => 'completed',
+				),
+				true,
+			),
+			array(
+				'known',
+				array(
+					'result' => 'already_terminal',
+					'phase'  => 'failed',
+				),
+				true,
+			),
+			array(
+				'known',
+				array(
+					'result' => 'already_terminal',
+					'phase'  => 'other',
+				),
+				false,
+			),
+			array( 'known', array( 'result' => 'busy' ), false ),
+			array( 'known', array( 'result' => 'no_active' ), false ),
+			array( 'known', array( 'error' => 'bad' ), false ),
+			array( 'known', array(), false ),
+			array( 'known', 'bad', false ),
+			array( 'known', array( 'result' => 'unknown' ), false ),
+			array( 'known', new \RuntimeException( 'unreachable' ), false ),
+			array( '', array( 'result' => 'ok' ), false ),
+			array( '__creating_123', array( 'result' => 'ok' ), false ),
+		);
+		foreach ( $cases as list( $id, $reply, $confirmed ) ) {
+			$site_id = $this->create_test_site();
+			$task    = $this->create_running_task( $site_id, 2 * HOUR_IN_SECONDS );
+			MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, $site_id, array() );
+			MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, $site_id, array( 'child_backup_task_id' => $id ) );
+			if ( in_array( $id, array( '', '__creating_123' ), true ) ) {
+				$sibling = $this->create_running_task( $site_id, 2 * HOUR_IN_SECONDS );
+				MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $sibling->id, array( 'paused' => 1 ) );
+				MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $sibling->id, $site_id, array() );
+				MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $sibling->id, $site_id, array( 'child_backup_task_id' => 'sibling' ) );
+				$db = \MainWP\Dashboard\MainWP_DB::instance();
+				$db->update_website_option( $site_id, \MainWP\Dashboard\MainWP_Backup_Executor::ADHOC_TASK_OPTION, '{"task_id":"gate-owned","owner":"update-gate"}' );
+				$deny = function () {
+					$this->fail( 'Unknown run identity must never target another lane.' );
+				};
+				add_filter( 'mainwp_fetch_url_authed_pre', $deny );
+				try {
+					$reset = \MainWP\Dashboard\MainWP_Backup_Operations::reset_task_run( (int) $task->id );
+				} finally {
+					remove_filter( 'mainwp_fetch_url_authed_pre', $deny );
+				}
+				$this->assertSame( array( $site_id ), $reset['sites_uncancelled'] );
+				$this->assertGreaterThanOrEqual( (int) $task->last_run, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->completed );
+				$this->assertSame( 'sibling', MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $sibling->id, $site_id )->child_backup_task_id );
+				$this->assertSame( '{"task_id":"gate-owned","owner":"update-gate"}', $db->get_website_option( $site_id, \MainWP\Dashboard\MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+				MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'completed' => (int) $task->completed ) );
+				$db->remove_website_option( $site_id, array( \MainWP\Dashboard\MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+			}
+			$response = $this->invoke_reset( $task->id, array( $site_id => $reply ) );
+			$this->assertSame( $confirmed ? 1 : 0, $response['cancelled'] );
+			$this->assertSame( $confirmed ? 0 : 1, $response['uncancelled'] );
+			$this->assertCount( in_array( $id, array( '', '__creating_123' ), true ) ? 0 : 1, $this->child_calls );
+			$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertGreaterThanOrEqual( (int) $fresh->last_run, (int) $fresh->completed );
+			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+			$this->assertSame( $confirmed ? '' : $id, $progress->child_backup_task_id );
+		}
 	}
 }

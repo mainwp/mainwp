@@ -30,6 +30,8 @@ use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
  */
 class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * The bound a request gets once its holder has lost the slot: short
 	 * enough that the request in flight ends and the holder reaches its

@@ -217,58 +217,134 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             'errors'                    => array(),
         );
 
-        $this->purge_orphaned_snapshot_dirs( $site_id, $orphan_min_age, $result );
-        $this->purge_orphaned_task_snapshots( $site_id, $result );
-        $this->prune_manual_units_to_count( $site_id, $keep, $result );
+        $plan = $this->plan_site_cleanup( $site_id, $keep, $orphan_min_age );
+        $this->remove_orphan_dirs( $plan['orphan_dirs'], $result );
+        $rows = array();
+        foreach ( $plan['orphaned_task_snapshot_ids'] as $id ) {
+            $row = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+            if ( null !== $row ) {
+                $rows[ $id ] = $row;
+            }
+        }
+        $groups = array();
+        foreach ( $rows as $id => $row ) {
+            $root = $id;
+            $seen = array();
+            while ( ! empty( $rows[ $root ]->parent_id ) && isset( $rows[ (int) $rows[ $root ]->parent_id ] ) && ! isset( $seen[ $root ] ) ) {
+                $seen[ $root ] = true;
+                $root          = (int) $rows[ $root ]->parent_id;
+            }
+            $groups[ $row->task_id . ':' . $root ][] = $id;
+        }
+        $before = $result['snapshots_pruned'];
+        foreach ( $groups as $ids ) {
+            sort( $ids, SORT_NUMERIC );
+            // The deleted task's cloud-copies setting went with its row. Cloud
+            // copies are deleted too, because the prune drops the upload rows that
+            // are the only record of the remote keys: keeping the copies would
+            // orphan them for good.
+            $task = (object) array(
+                'id'                  => (int) $rows[ $ids[0] ]->task_id,
+                'delete_cloud_copies' => true,
+            );
+            if ( $this->prune_candidate(
+                array(
+                    'snapshot_ids' => $ids,
+                    'reason'       => 'task_deleted',
+                    'size_bytes'   => $this->selected_snapshot_bytes( $ids ),
+                ),
+                $task,
+                $result
+            ) ) {
+                ++$result['pruned'];
+            }
+        }
+        $result['orphaned_snapshots_pruned'] += $result['snapshots_pruned'] - $before;
+        $task                                 = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        // Complete units beyond the keep-count prune oldest-first through
+        // the same prune_candidate() sequence retention uses, so cloud
+        // copies and upload metadata follow the task's own settings.
+        foreach ( $plan['on_demand_units'] as $unit ) {
+            $unit['size_bytes'] = $this->selected_snapshot_bytes( $unit['snapshot_ids'] );
+            $unit['reason']     = 'beyond_keep' === $unit['reason'] ? 'manual_cleanup' : $unit['reason'];
+            if ( $task && $this->prune_candidate( $unit, $task, $result ) ) {
+                ++$result['pruned'];
+            }
+        }
 
         return $result;
     }
 
     /**
-     * Remove a site's complete snapshots whose task row is gone, unit by
-     * unit, through the same sequence a task delete's purge uses.
+     * Selection stays pure so a preview never starts a deletion or reservation.
      *
-     * The deleted task's cloud-copies setting went with its row. Cloud
-     * copies are deleted too, because the prune drops the upload rows that
-     * are the only record of the remote keys: keeping the copies would
-     * orphan them for good.
-     *
-     * @param int   $site_id Child site id.
-     * @param array $result  Result accumulator, modified in place.
-     *
-     * @return void
+     * @param int      $site_id Child site identity.
+     * @param int|null $keep Complete on-demand units to retain.
+     * @param int      $orphan_min_age Minimum directory age in seconds.
+     * @return array Internal paths, snapshot identities, units and byte estimate.
      */
-    private function purge_orphaned_task_snapshots( int $site_id, array &$result ): void {
-        $query  = MainWP_Backup_Retention_Query::instance();
-        $before = $result['snapshots_pruned'];
-        foreach ( $query->list_orphaned_task_ids_for_site( $site_id ) as $task_id ) {
-            $task = (object) array(
-                'id'                  => $task_id,
-                'delete_cloud_copies' => true,
-            );
-            foreach ( $query->get_units_for_site_task( $site_id, $task_id ) as $unit ) {
-                $snapshot_ids = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
-                sort( $snapshot_ids, SORT_NUMERIC );
-
-                $pruned = $this->prune_candidate(
-                    array(
-                        'snapshot_ids' => $snapshot_ids,
-                        'reason'       => 'task_deleted',
-                        'size_bytes'   => (int) $unit['size_bytes'],
-                    ),
-                    $task,
-                    $result
-                );
-                if ( $pruned ) {
-                    ++$result['pruned'];
+    public function plan_site_cleanup( int $site_id, ?int $keep = null, int $orphan_min_age = 6 * HOUR_IN_SECONDS ): array {
+        $plan = array(
+            'orphan_dirs'                => $this->select_orphan_dirs( $site_id, $orphan_min_age ),
+            'orphaned_task_snapshot_ids' => $this->select_orphaned_task_snapshot_ids( $site_id ),
+            'on_demand_units'            => $this->select_manual_units( $site_id, $keep ),
+            'bytes'                      => 0,
+        );
+        foreach ( $plan['orphan_dirs'] as $dir ) {
+            foreach ( glob( $dir . DIRECTORY_SEPARATOR . '*' ) ?: array() as $file ) { // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- empty-glob guard.
+                if ( is_file( $file ) ) {
+                    $plan['bytes'] += (int) filesize( $file );
                 }
             }
         }
-        $result['orphaned_snapshots_pruned'] += $result['snapshots_pruned'] - $before;
+        $ids = $plan['orphaned_task_snapshot_ids'];
+        foreach ( $plan['on_demand_units'] as $unit ) {
+            $ids = array_merge( $ids, $unit['snapshot_ids'] );
+        }
+        $plan['bytes'] += $this->selected_snapshot_bytes( array_unique( $ids ) );
+        return $plan;
     }
 
     /**
-     * Sweep snapshot-* directories under a site's backup tree that no
+     * Deletion events retain the same size evidence as the preview selection.
+     *
+     * @param array $ids Selected snapshot identities.
+     * @return int Recorded artifact bytes.
+     */
+    private function selected_snapshot_bytes( array $ids ): int {
+        $bytes = 0;
+        foreach ( $ids as $id ) {
+            $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $id );
+            if ( null !== $snapshot ) {
+                $bytes += (int) array_sum( array_column( (array) $snapshot->archives, 'size' ) );
+            }
+        }
+        return $bytes;
+    }
+
+    /**
+     * Select a site's complete snapshots whose task row is gone, unit by
+     * unit, for the same sequence a task delete's purge uses.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return array Snapshot identities from deleted tasks.
+     */
+    private function select_orphaned_task_snapshot_ids( int $site_id ): array {
+        $query = MainWP_Backup_Retention_Query::instance();
+        $ids   = array();
+        foreach ( $query->list_orphaned_task_ids_for_site( $site_id ) as $task_id ) {
+            foreach ( $query->get_units_for_site_task( $site_id, $task_id ) as $unit ) {
+                $unit_ids = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
+                sort( $unit_ids, SORT_NUMERIC );
+                $ids = array_merge( $ids, $unit_ids );
+            }
+        }
+        return $ids;
+    }
+
+    /**
+     * Select snapshot-* directories under a site's backup tree that no
      * non-pruned snapshot row claims.
      *
      * A run that dies between staging files and record_snapshot() leaves
@@ -281,14 +357,14 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * recently; live runs write continuously, so an idle directory past
      * the window has no writer left.
      *
-     * @param int   $site_id Child site id.
-     * @param int   $min_age Seconds since the directory's newest write.
-     * @param array $result  Result accumulator, modified in place.
+     * @param int $site_id Child site id.
+     * @param int $min_age Seconds since the directory's newest write.
      *
-     * @return void
+     * @return array Unclaimed directories within this site's roots.
      */
-    private function purge_orphaned_snapshot_dirs( int $site_id, int $min_age, array &$result ): void {
-        $dirs = array();
+    private function select_orphan_dirs( int $site_id, int $min_age ): array {
+        $selected = array();
+        $dirs     = array();
         foreach ( array( MainWP_Backup_Private_Root::site_path( $site_id ), MainWP_Backup_Private_Root::legacy_site_dir( $site_id ) ) as $root ) {
             if ( ! is_wp_error( $root ) ) {
                 $dirs = array_merge( $dirs, glob( $root . 'snapshot-*', GLOB_ONLYDIR ) ?: array() ); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- empty-glob guard.
@@ -329,6 +405,21 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 continue; // Recently written; a run may still own it.
             }
 
+            $selected[] = $real;
+        }
+        return $selected;
+    }
+
+    /**
+     * Only directories selected by the preview may be removed.
+     *
+     * @param array $dirs Selected directories.
+     * @param array $result Deletion evidence.
+     * @return void
+     */
+    private function remove_orphan_dirs( array $dirs, array &$result ): void {
+        foreach ( $dirs as $real ) {
+            $files = glob( $real . DIRECTORY_SEPARATOR . '*' ) ?: array(); // phpcs:ignore Universal.Operators.DisallowShortTernary.Found -- empty-glob guard.
             $clean = true;
             foreach ( $files as $file ) {
                 if ( is_file( $file ) && ! @unlink( $file ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink, WordPress.PHP.NoSilencedErrors.Discouraged -- sweeping an orphaned dir; failures are reported through errors.
@@ -344,27 +435,23 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     * Prune the site's on-demand task down to a keep-count, newest first,
-     * synchronously.
+     * Select the site's on-demand units beyond a keep-count, newest first,
+     * for synchronous cleanup.
      *
-     * Broken units (a chain whose parent link is missing) are pruned
+     * Broken units (a chain whose parent link is missing) are selected
      * unconditionally - the policy never selects them because it cannot
      * restore them, which is exactly why they otherwise sit forever.
-     * Complete units beyond the keep-count prune oldest-first through
-     * the same prune_candidate() sequence retention uses, so cloud
-     * copies and upload metadata follow the task's own settings.
      *
      * @param int      $site_id Child site id.
      * @param int|null $keep    Units to keep; null uses the task's retention
      *                          count (falling back to the on-demand default).
-     * @param array    $result  Result accumulator, modified in place.
      *
-     * @return void
+     * @return array Selected on-demand units and their reasons.
      */
-    private function prune_manual_units_to_count( int $site_id, ?int $keep, array &$result ): void {
+    private function select_manual_units( int $site_id, ?int $keep ): array {
         $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
         if ( empty( $task ) ) {
-            return; // The site has never run an on-demand backup.
+            return array(); // The site has never run an on-demand backup.
         }
 
         if ( null === $keep ) {
@@ -389,24 +476,16 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             $prunable[] = array( $unit, 'manual_cleanup' );
         }
 
+        $selected = array();
         foreach ( $prunable as list( $unit, $reason ) ) {
             $snapshot_ids = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
             sort( $snapshot_ids, SORT_NUMERIC );
-
-            $pruned = $this->prune_candidate(
-                array(
-                    'snapshot_ids' => $snapshot_ids,
-                    'reason'       => $reason,
-                    'size_bytes'   => (int) $unit['size_bytes'],
-                ),
-                $task,
-                $result
+            $selected[] = array(
+                'snapshot_ids' => $snapshot_ids,
+                'reason'       => 'manual_cleanup' === $reason ? 'beyond_keep' : $reason,
             );
-
-            if ( $pruned ) {
-                ++$result['pruned'];
-            }
         }
+        return $selected;
     }
 
     /**

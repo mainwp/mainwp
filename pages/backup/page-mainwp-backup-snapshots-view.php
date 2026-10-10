@@ -71,6 +71,20 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             \mainwp_do_not_have_permissions( esc_html__( 'restore backups', 'mainwp' ) );
             return;
         }
+        wp_enqueue_script( 'mainwp-backup-cancel-result', MAINWP_PLUGIN_URL . 'assets/js/mainwp-backup-cancel-result.js', array(), MainWP_System::instance()->get_version(), true );
+        wp_localize_script(
+            'mainwp-backup-cancel-result',
+            'mainwpBackupCancelMessages',
+            array(
+                'cancelled'         => __( 'Backup cancelled.', 'mainwp' ),
+                'already_finished'  => __( 'Backup finished. Collecting files...', 'mainwp' ),
+                'already_failed'    => __( 'Backup failed. Checking the result...', 'mainwp' ),
+                'busy'              => __( 'Backup is busy. Try again shortly.', 'mainwp' ),
+                'no_active_on_site' => __( 'No active backup found. Checking the run...', 'mainwp' ),
+                'not_running'       => __( 'No backup is running.', 'mainwp' ),
+                'failed'            => __( 'Could not cancel the backup. Try again.', 'mainwp' ),
+            )
+        );
         $native_enabled = MainWP_Backup_Settings::is_native_backups_enabled();
         $disconnected   = $site_id > 0 && MainWP_Post_Backup_Handler::site_is_disconnected( MainWP_DB::instance()->get_website_by_id( $site_id ) );
         $reconnect_url  = $site_id > 0 ? admin_url( 'admin.php?page=managesites&dashboard=' . $site_id ) : '';
@@ -1337,10 +1351,22 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                         return;
                     }
-                    stopBackupTimers();
-                    setBackupStatus( '<?php echo esc_js( esc_html__( 'Backup cancelled.', 'mainwp' ) ); ?>', false );
-                    showCancelBackup( false );
-                    reenableBackupBtn();
+                    var cancelResult = window.MainWPBackupCancelResult.describeCancelResult( response.result );
+                    setBackupStatus( cancelResult.message, false );
+                    if ( 'cancelled' === response.result ) {
+                        stopBackupTimers();
+                        showCancelBackup( false );
+                        reenableBackupBtn();
+                    } else {
+                        if ( 'already_finished' === response.result || 'already_failed' === response.result ) {
+                            window.clearTimeout( backupPollTimer );
+                            backupPollTimer = window.setTimeout( function () { pollBackup( siteId, backupSinceTs ); }, 100 );
+                        }
+                        if ( ! cancelResult.keepPolling ) {
+                            stopBackupTimers();
+                        }
+                        $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
+                    }
                 }, 'json' ).fail( function () {
                     if ( siteId !== currentSite ) {
                         return;

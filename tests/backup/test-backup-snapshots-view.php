@@ -19,6 +19,8 @@ use MainWP\Dashboard\MainWP_DB;
  */
 class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Render the page as an administrator.
 	 *

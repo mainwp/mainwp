@@ -18,6 +18,8 @@ use MainWP\Dashboard\MainWP_DB;
  */
 class MainWP_Backup_Restore_Progress_Drive_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Remove restore jobs and request state created by the test.
 	 */

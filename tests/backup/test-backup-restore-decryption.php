@@ -79,6 +79,8 @@ class Decrypt_Test_Driver extends MainWP_Backup_Restore_Transfer_Driver {
  */
 class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Scratch dir.
 	 *

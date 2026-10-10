@@ -44,6 +44,8 @@ use MainWP\Dashboard\MainWP_System_Utility;
  */
 class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- the switchable stub belongs with its regression tests.
 
+	use Backup_Cancel_Transport_Guard;
+
 	use Backup_Private_Root_Fixture;
 
 	/**

@@ -112,6 +112,8 @@ class Testable_TestRestore_Driver extends MainWP_Backup_TestRestore_Driver {
  */
 class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	use Backup_Private_Root_Fixture;
 
 	/**

@@ -261,7 +261,6 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_retention_purge_and_remove_both_roots() {
 		$roots  = array( MainWP_Backup_Private_Root::site_dir( 1 ), MainWP_Backup_Private_Root::legacy_site_dir( 1 ) );
-		$purge  = new \ReflectionMethod( MainWP_Backup_Retention_Executor::class, 'purge_orphaned_snapshot_dirs' );
 		$remove = new \ReflectionMethod( MainWP_Backup_Retention_Executor::class, 'remove_local_dir' );
 		foreach ( $roots as $root ) {
 			wp_mkdir_p( $root . 'snapshot-orphan' );
@@ -273,8 +272,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			'orphan_dirs_removed' => 0,
 			'errors'              => array(),
 		);
-		$args   = array( 1, 10, &$result );
-		$purge->invokeArgs( MainWP_Backup_Retention_Executor::instance(), $args );
+		$this->purge_orphan_dirs( 1, 10, $result );
 		$this->assertSame( 2, $result['orphan_dirs_removed'] );
 		foreach ( $roots as $root ) {
 			$this->assertDirectoryDoesNotExist( $root . 'snapshot-orphan' );
@@ -784,13 +782,11 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 					$this->assertSame( array(), $errors, $label );
 					$this->assertDirectoryDoesNotExist( dirname( $file ), $label );
 				}
-				$purge  = new \ReflectionMethod( MainWP_Backup_Retention_Executor::class, 'purge_orphaned_snapshot_dirs' );
 				$result = array(
 					'orphan_dirs_removed' => 0,
 					'errors'              => array(),
 				);
-				$args   = array( $site_id, 10, &$result );
-				$purge->invokeArgs( MainWP_Backup_Retention_Executor::instance(), $args );
+				$this->purge_orphan_dirs( $site_id, 10, $result );
 				$this->assertSame( $exists ? 1 : 0, $result['orphan_dirs_removed'], $label );
 				$this->assertSame( array(), $result['errors'], $label );
 				$this->assertDirectoryDoesNotExist( $site . 'snapshot-orphan', $label );
@@ -834,5 +830,23 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Select the orphaned snapshot directories, then remove exactly those.
+	 *
+	 * @param int   $site_id Site ID.
+	 * @param int   $min_age Minimum directory age in seconds.
+	 * @param array $result  Retention result, updated by reference.
+	 *
+	 * @return void
+	 */
+	private function purge_orphan_dirs( int $site_id, int $min_age, array &$result ): void {
+		$executor = MainWP_Backup_Retention_Executor::instance();
+		$select   = new \ReflectionMethod( MainWP_Backup_Retention_Executor::class, 'select_orphan_dirs' );
+		$remove   = new \ReflectionMethod( MainWP_Backup_Retention_Executor::class, 'remove_orphan_dirs' );
+		$dirs     = $select->invoke( $executor, $site_id, $min_age );
+		$args     = array( $dirs, &$result );
+		$remove->invokeArgs( $executor, $args );
 	}
 }

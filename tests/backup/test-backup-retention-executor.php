@@ -28,6 +28,8 @@ use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
  */
 class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	use Backup_Private_Root_Fixture;
 
 	/**

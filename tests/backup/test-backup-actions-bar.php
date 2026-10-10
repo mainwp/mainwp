@@ -21,6 +21,8 @@ use MainWP\Dashboard\MainWP_System_View;
  */
 class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Tasks created by a test.
 	 *

@@ -39,6 +39,8 @@ use MainWP\Dashboard\MainWP_Backup_Error_Codes;
  */
 class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- the switchable stub belongs with its regression tests.
 
+	use Backup_Cancel_Transport_Guard;
+
 	use Backup_Private_Root_Fixture;
 
 	/**

@@ -227,6 +227,8 @@ class Capability_Probe_Test_Transport extends MainWP_Connect {
  */
 class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	use Backup_Private_Root_Fixture;
 
 	/**

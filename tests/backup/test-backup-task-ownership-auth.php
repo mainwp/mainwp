@@ -351,4 +351,24 @@ class MainWP_Backup_Task_Ownership_Auth_Test extends MainWP_Abilities_Test_Case 
 			}
 		);
 	}
+
+	/**
+	 * Database string IDs and WordPress integer IDs identify the same owner.
+	 *
+	 * @return void
+	 */
+	public function test_real_multi_user_filter_accepts_exact_owner_only() {
+		$owner = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$task  = $this->create_task( $owner, $this->create_test_site() );
+		$task  = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		try {
+			wp_set_current_user( $owner );
+			$this->assertTrue( MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ), 'A string database userid must match its integer WordPress owner.' );
+			wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+			$this->assertFalse( MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) );
+		} finally {
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+		}
+	}
 }

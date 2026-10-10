@@ -217,6 +217,8 @@ class Testable_Restore_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dr
  */
 class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	use Backup_Private_Root_Fixture;
 
 	/**
@@ -2606,6 +2608,9 @@ class Preflight_Candidates_Driver extends MainWP_Backup_Restore_Transfer_Driver 
  * Class MainWP_Backup_Restore_Preflight_Failover_Test
  */
 class MainWP_Backup_Restore_Preflight_Failover_Test extends \WP_UnitTestCase {
+
+	use Backup_Cancel_Transport_Guard;
+
  // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- doubles above.
 
 	/**

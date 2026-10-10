@@ -67,6 +67,8 @@ class Preflight_Test_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
  */
 class MainWP_Backup_Restore_Preflight_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Test site id.
 	 *

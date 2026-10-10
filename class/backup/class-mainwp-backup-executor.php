@@ -25,6 +25,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Unknown identities cannot safely select a Child task owned by this run.
+     *
+     * @param object $website Child site.
+     * @param string $child_task_id Confirmed Child identity.
+     * @return array|null Child response, or null when no safe request exists.
+     */
+    public static function send_backup_task_cancel( object $website, string $child_task_id ): ?array {
+        if ( '' === $child_task_id || self::is_creating_marker( $child_task_id ) ) {
+            return null;
+        }
+        $response = MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $child_task_id ), false, false, false );
+        return is_array( $response ) ? $response : null;
+    }
+
+    /**
      * Keep diagnostic listener failures out of backup retry and cleanup paths.
      *
      * @param \Throwable $e             Original request failure.
@@ -2958,6 +2973,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return bool True when a recent full archive exists.
      */
     public static function has_recent_backup( int $site_id, int $max_age_days = 7 ): bool {
+        return self::latest_backup_archive_mtime( $site_id ) >= ( time() - $max_age_days * DAY_IN_SECONDS );
+    }
+
+    /**
+     * Freshness thresholds reuse the scan without changing archive selection.
+     *
+     * @param int $site_id Website identity.
+     * @return int Newest non-SQL archive mtime, or -1 when none exists.
+     */
+    public static function latest_backup_archive_mtime( int $site_id ): int {
         $latest = -1;
         foreach ( array( MainWP_Backup_Private_Root::site_path( $site_id ), MainWP_Backup_Private_Root::legacy_site_dir( $site_id ) ) as $dir ) {
             if ( is_wp_error( $dir ) || ! is_dir( $dir ) ) {
@@ -2980,7 +3005,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
         }
 
-        return $latest >= ( time() - $max_age_days * DAY_IN_SECONDS );
+        return $latest;
     }
 
     /**

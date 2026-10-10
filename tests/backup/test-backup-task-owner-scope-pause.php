@@ -22,6 +22,8 @@ use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
  */
 class MainWP_Backup_Task_Owner_Scope_Pause_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * A resave restoring scope must win over a stale caller's pause decision.
 	 */

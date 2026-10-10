@@ -15,6 +15,8 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
  */
 class MainWP_Backup_Restore_Ajax_Test extends \WP_UnitTestCase {
 
+	use Backup_Cancel_Transport_Guard;
+
 	use MainWP_Capability_Bypass_Guard;
 
 	/**

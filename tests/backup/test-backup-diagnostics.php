@@ -28,6 +28,8 @@ use MainWP\Dashboard\MainWP_System;
  */
 class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Encoding failures must not leave a corrupt bundle available for download.
 	 */

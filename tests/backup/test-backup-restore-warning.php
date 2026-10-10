@@ -17,6 +17,8 @@ use MainWP\Dashboard\MainWP_Utility;
  */
 class MainWP_Backup_Restore_Warning_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Create a child site row with a given synced plugin list JSON.
 	 *

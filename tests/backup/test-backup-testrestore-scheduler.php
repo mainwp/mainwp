@@ -109,6 +109,8 @@ class Testable_TestRestore_Scheduler extends MainWP_Backup_TestRestore_Scheduler
  */
 class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	use Backup_Private_Root_Fixture;
 
 	/**
@@ -558,5 +560,48 @@ class MainWP_Backup_TestRestore_Scheduler_Test extends MainWP_Abilities_Test_Cas
 
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
 		$this->assertSame( 'pass', (string) $snapshot->test_restore_state, 'The sampler must run on the five-minute lane even when no legacy task is pending.' );
+	}
+
+	/**
+	 * A new attempt cannot make an earlier sandbox result appear fresh.
+	 *
+	 * @return void
+	 */
+	public function test_result_time_survives_reclaim_and_checks_match_restore_type() {
+		global $wpdb;
+		$site_id = $this->create_test_site();
+		$store   = MainWP_Backup_Snapshots::instance();
+		$checks  = array(
+			'files'       => array( 'files_extracted' ),
+			'db'          => array( 'db_imported', 'db_has_rows' ),
+			'full'        => array( 'files_extracted', 'db_imported', 'db_has_rows' ),
+			'incremental' => array( 'files_extracted', 'db_imported', 'db_has_rows' ),
+		);
+		foreach ( $checks as $type => $expected ) {
+			$id = $this->insert_snapshot( $site_id, time() );
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'type' => $type ), array( 'id' => $id ) );
+			$before = \MainWP\Dashboard\MainWP_Backup_Read_Model::get_backup_snapshot( $id );
+			$this->assertNull( $before['test_restore']['result_at'] );
+			$this->assertSame( 'never', $before['test_restore']['state'] );
+			$this->assertNull( $before['test_restore']['attempted_at'] );
+			$wpdb->update(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+				array(
+					'test_restore_state' => 'pass',
+					'test_restore_at'    => 1700000000,
+				),
+				array( 'id' => $id )
+			);
+			$this->assertNull( \MainWP\Dashboard\MainWP_Backup_Read_Model::get_backup_snapshot( $id )['test_restore']['result_at'], 'Older results have an unknown result time.' );
+			$store->set_test_restore_result( $id, 'pass', 1700000000 );
+			$this->assertTrue( $store->claim_for_test_restore( $id, 1800000000, 1750000000 ) );
+			$read = \MainWP\Dashboard\MainWP_Backup_Read_Model::get_backup_snapshot( $id )['test_restore'];
+			$this->assertSame( 'pass', $read['state'] );
+			$this->assertSame( 1800000000, $read['attempted_at'] );
+			$this->assertSame( 1700000000, $read['result_at'] );
+			$this->assertSame( $expected, $read['checks'] );
+			$this->assertSame( 'dashboard_sandbox', $read['scope'] );
+			$this->assertSame( $read, \MainWP\Dashboard\MainWP_Backup_Read_Model::list_backup_snapshots( $site_id )[0]['test_restore'] );
+		}
 	}
 }

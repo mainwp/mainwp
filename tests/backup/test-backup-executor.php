@@ -29,6 +29,8 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
  */
 class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	use Backup_Private_Root_Fixture;
 
 	/**

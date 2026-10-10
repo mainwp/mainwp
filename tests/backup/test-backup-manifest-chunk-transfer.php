@@ -17,6 +17,8 @@ use MainWP\Dashboard\MainWP_DB;
  */
 class MainWP_Backup_Manifest_Chunk_Transfer_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * A gap response cannot confirm the final hash or issue the manifest token.
 	 */

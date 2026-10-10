@@ -21,6 +21,8 @@ use MainWP\Dashboard\MainWP_Keys_Manager;
  */
 class MainWP_Backup_Encryption_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Rejected passphrases must leave the existing recovery key usable.
 	 */

@@ -172,6 +172,8 @@ class CLI_Decrypt_Test_Driver extends MainWP_Backup_Restore_Transfer_Driver {
  */
 class MainWP_Backup_CLI_Restore_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Test site id.
 	 *

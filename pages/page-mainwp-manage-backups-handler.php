@@ -378,94 +378,21 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return array( 'error' => esc_html__( 'The backup task could not be started. Reload the page and try again.', 'mainwp' ) );
         }
 
-        $saved = false;
         if ( $started > 0 && (int) $task->last_run !== $started ) {
             $saved = get_transient( 'mainwp_backup_run_' . $task_id . '_' . $started );
-            if ( ! is_array( $saved ) || ! isset( $saved['task'] ) || ! is_object( $saved['task'] ) || ! isset( $saved['progress'], $saved['snapshots'] ) ) {
-                return array(
-                    'error' => esc_html__( 'The result for this backup run is no longer available. Reload the page to see the latest run.', 'mainwp' ),
-                    'code'  => 'run_not_found',
-                );
-            }
-            $task  = $saved['task'];
-            $error = static::manual_task_start_error( $task );
-            if ( ! static::can_edit_backuptask( $task ) || '' !== $error ) {
-                return array( 'error' => '' !== $error ? $error : esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
-            }
-        }
-        $owns_run    = $started > 0 && (int) $task->last_run === $started;
-        $queued      = 0 === $started && $click > 0 && $click <= time();
-        $open        = $owns_run && (int) $task->completed < $started;
-        $cutoff      = $started;
-        $sites       = array();
-        $stale_sites = array();
-        $complete    = 0;
-        $errors      = $owns_run ? MainWP_Post_Backup_Handler::humanize_backup_errors( $task->backup_errors ) : '';
-        $notices     = $owns_run ? MainWP_Post_Backup_Handler::humanize_backup_errors( $task->backup_notices ?? '' ) : '';
-        foreach ( static::resolve_task_run_sites( $task, $stale_sites ) as $site_id ) {
-            $website  = MainWP_DB::instance()->get_website_by_id( $site_id );
-            $progress = $saved ? ( $saved['progress'][ $site_id ] ?? null ) : MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $site_id );
-            if ( ! $owns_run || $queued || ( $progress && (int) $progress->dtsFetched < max( $cutoff, (int) $task->last_run ) ) ) {
-                $progress = null;
-            }
-            $detail   = MainWP_Post_Backup_Handler::build_task_progress_response( $progress );
-            $snapshot = $saved ? ( $saved['snapshots'][ $site_id ] ?? null ) : MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task_id );
-            if ( ! $owns_run || $queued || ( $snapshot && (int) $snapshot->created < $cutoff ) ) {
-                $snapshot = null;
-            }
-            $status  = $progress ? 'running' : 'pending';
-            $uploads = null;
-            if ( $snapshot ) {
-                ++$complete;
-                $status  = 'completed';
-                $uploads = array(
-                    'total'    => 0,
-                    'complete' => 0,
-                    'failed'   => 0,
-                    'pending'  => 0,
-                );
-                foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $snapshot->id ) as $job ) {
-                    ++$uploads['total'];
-                    if ( 'complete' === $job->status ) {
-                        $bucket = 'complete';
-                    } elseif ( in_array( $job->status, array( 'failed_retryable', 'failed_permanent', 'credentials_invalid' ), true ) ) {
-                        $bucket = 'failed';
-                    } else {
-                        $bucket = 'pending';
-                    }
-                    ++$uploads[ $bucket ];
+            if ( is_array( $saved ) && isset( $saved['task'] ) && is_object( $saved['task'] ) ) {
+                $saved_task = $saved['task'];
+                $error      = static::manual_task_start_error( $saved_task );
+                if ( ! static::can_edit_backuptask( $saved_task ) || '' !== $error ) {
+                    return array( 'error' => '' !== $error ? $error : esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
                 }
-            } elseif ( ( ! $open && ! $queued ) || 'failed' === ( $detail['status'] ?? '' ) ) {
-                $status = 'failed';
             }
-            $sites[] = array(
-                'id'           => (int) $site_id,
-                'name'         => $website ? (string) $website->name : '',
-                'url'          => $website ? (string) $website->url : '',
-                'status'       => $status,
-                'phase'        => $detail['phase'] ?? '',
-                'label'        => $detail['label'] ?? '',
-                'percent'      => $detail['percent'] ?? null,
-                'current_file' => $detail['current_file'] ?? '',
-                'error'        => 'failed' === $status && $progress ? MainWP_Post_Backup_Handler::humanize_backup_errors( $progress->last_error ) : '',
-                'snapshot'     => $snapshot ? array(
-                    'id'        => (int) $snapshot->id,
-                    'type'      => $snapshot->type,
-                    'parent_id' => null === $snapshot->parent_id ? null : (int) $snapshot->parent_id,
-                    'created'   => (int) $snapshot->created,
-                ) : null,
-                'uploads'      => $uploads,
-            );
         }
-        $status = 'failed';
-        if ( $open ) {
-            $status = 'running';
-        } elseif ( $queued ) {
-            $status = 'queued';
-        } elseif ( $complete > 0 ) {
-            $status = count( $sites ) === $complete && '' === $errors ? 'completed' : 'completed_with_errors';
+        $response = MainWP_Backup_Read_Model::get_task_run( $task, $started, $click );
+        if ( ! isset( $response['sites'] ) ) {
+            return $response;
         }
-        if ( $owns_run && ! $saved && ! $retried ) {
+        if ( $started > 0 && (int) $task->last_run === $started && ! $retried ) {
             $current = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
             if ( $current && (int) $current->last_run !== $started ) {
                 // A new claim can replace progress while this response is being
@@ -474,19 +401,17 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 return static::get_backup_task_run_status( $task_id, $started, $click, true, $baseline, $deadline, $driven );
             }
         }
-        return array(
-            'status'      => $status,
-            'run_state'   => $saved ? 'closed' : ( $owns_run ? ( $open ? 'open' : 'closed' ) : 'unowned' ),
-            'stale_sites' => $stale_sites,
-            'started'     => $started,
-            'click'       => $click,
-            'baseline'    => $baseline,
-            'run_open'    => (int) $task->completed < (int) $task->last_run,
-            'errors'      => $errors,
-            'notices'     => $notices,
-            'sites'       => $sites,
-            'lane'        => $driven ? 'driver' : ( (int) $task->completed < (int) $task->last_run && MainWP_Backup_Monitor::has_live_lane_lease() ? 'busy' : 'idle' ),
-        );
+        $response['errors']  = MainWP_Post_Backup_Handler::humanize_backup_errors( $response['errors']['source_text'] );
+        $response['notices'] = MainWP_Post_Backup_Handler::humanize_backup_errors( $response['notices']['source_text'] );
+        foreach ( $response['sites'] as &$site ) {
+            $site['error'] = MainWP_Post_Backup_Handler::humanize_backup_errors( $site['error']['source_text'] );
+        }
+        unset( $site );
+        $response['baseline'] = $baseline;
+        $response['lane']     = $driven ? 'driver' : ( $response['run_open'] && MainWP_Backup_Monitor::has_live_lane_lease() ? 'busy' : 'idle' );
+        // Preserve field order for consumers that retain the original JSON.
+        $response = array_merge( array_slice( $response, 0, 5, true ), array( 'baseline' => $baseline ), array_slice( $response, 5, null, true ) );
+        return $response;
     }
 
     /**
@@ -514,7 +439,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
          */
         global $current_user;
 
-        return $task->userid === $current_user->ID;
+        return (int) $task->userid === (int) $current_user->ID;
     }
 
     /**
@@ -1590,7 +1515,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 // Readiness failures need the Child's reason so the user can correct it.
                 $_error_output = MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED !== $_error_code && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
                 $errorOutput  .= $_error_output . '<br />';
-                MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, (int) $siteid, array( 'last_error' => $_error_output ) );
+                // Progress rows can outlive the task-level error record.
+                $_progress_values = array( 'last_error' => $_error_output );
+                if ( '' !== $_error_code ) {
+                    $_progress                       = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, (int) $siteid );
+                    $_fetch                          = $_progress && is_array( $_progress->fetchResult ) ? $_progress->fetchResult : array();
+                    $_fetch['error_code']            = MainWP_Backup_Operations::safe_error( $_error_code )['code'];
+                    $_progress_values['fetchResult'] = wp_json_encode( $_fetch );
+                }
+                MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, (int) $siteid, $_progress_values );
                 $errorEntries[] = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $_error_output;
 
                 static::close_child_task_after_terminal_mark( (int) $task->id, (int) $siteid );
@@ -1799,7 +1732,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     protected static function send_child_task_cancel( $website, $child_task_id ) {
         try {
-            $information = MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $child_task_id ), false, false, false );
+            $information = MainWP_Backup_Executor::send_backup_task_cancel( $website, (string) $child_task_id );
         } catch ( \Exception $e ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Child cancel did not land: ' . $e->getMessage() );
             return false;

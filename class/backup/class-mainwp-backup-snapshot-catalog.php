@@ -134,43 +134,44 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         $snapshots = MainWP_Backup_Snapshots::instance();
         $leaf      = $snapshots->get_snapshot_by_id( $snapshot_id );
         if ( null === $leaf ) {
-            return $this->refusal( __( 'The selected backup no longer exists.', 'mainwp' ) );
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND, __( 'The selected backup no longer exists.', 'mainwp' ) );
         }
         if ( $expected_site_id > 0 && (int) $leaf->site_id !== $expected_site_id ) {
-            return $this->refusal( __( 'The selected backup does not belong to this site.', 'mainwp' ) );
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE, __( 'The selected backup does not belong to this site.', 'mainwp' ) );
         }
         if ( 'complete' !== $leaf->status ) {
-            return $this->refusal( __( 'The selected backup was removed by retention and can no longer be restored.', 'mainwp' ) );
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_PRUNED, __( 'The selected backup was removed by retention and can no longer be restored.', 'mainwp' ) );
         }
         if ( 'files' === $leaf->type && ! $this->site_supports_restore_files( (int) $leaf->site_id ) ) {
-            return $this->refusal( __( 'This backup contains the site\'s files without a database, and the site\'s MainWP Child plugin predates files-only restore. Update the child plugin to restore it, or download the archive to recover individual files.', 'mainwp' ) );
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_FILES_CHILD_OUTDATED, __( 'This backup contains the site\'s files without a database, and the site\'s MainWP Child plugin predates files-only restore. Update the child plugin to restore it, or download the archive to recover individual files.', 'mainwp' ) );
         }
         if ( $this->site_is_multisite( (int) $leaf->site_id ) && ! $this->site_supports_restore_multisite( (int) $leaf->site_id ) ) {
-            return $this->refusal( __( 'This site runs WordPress Multisite, and its MainWP Child plugin predates network-wide restore. Update the child plugin to restore this backup.', 'mainwp' ) );
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_MULTISITE_CHILD_OUTDATED, __( 'This site runs WordPress Multisite, and its MainWP Child plugin predates network-wide restore. Update the child plugin to restore this backup.', 'mainwp' ) );
         }
 
         $chain = $snapshots->get_chain( $snapshot_id );
         if ( empty( $chain ) ) {
-            return $this->refusal( __( 'The selected backup has no restorable data.', 'mainwp' ) );
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_EMPTY, __( 'The selected backup has no restorable data.', 'mainwp' ) );
         }
 
         // An incremental chain must reach a complete full base.
         if ( 'incremental' === $leaf->type && 'full' !== $chain[0]->type ) {
-            return $this->refusal( __( 'The selected backup belongs to an incremental chain whose base full backup is missing.', 'mainwp' ) );
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_BASE_MISSING, __( 'The selected backup belongs to an incremental chain whose base full backup is missing.', 'mainwp' ) );
         }
         foreach ( $chain as $link ) {
             if ( 'complete' !== $link->status ) {
-                return $this->refusal( __( 'Part of the selected backup chain was removed by retention, so this point in time can no longer be restored.', 'mainwp' ) );
+                return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_CHAIN_PRUNED, __( 'Part of the selected backup chain was removed by retention, so this point in time can no longer be restored.', 'mainwp' ) );
             }
         }
 
         $plan = $this->assemble_plan( $chain );
         if ( empty( $plan ) ) {
-            return $this->refusal( __( 'No artifacts for the selected backup are available locally or in cloud storage.', 'mainwp' ) );
+            return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_NO_ARTIFACTS, __( 'No artifacts for the selected backup are available locally or in cloud storage.', 'mainwp' ) );
         }
         foreach ( $plan as $entry ) {
             if ( 'unavailable' === $entry['source'] ) {
                 return $this->refusal(
+                    MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_ARTIFACT_UNAVAILABLE,
                     sprintf(
                         /* translators: %s: artifact file name. */
                         __( 'A required backup file is no longer available locally or in cloud storage: %s', 'mainwp' ),
@@ -404,13 +405,15 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
     /**
      * Build a refusal result.
      *
+     * @param string $code Admission refusal code.
      * @param string $message Reason.
      *
      * @return array Refusal.
      */
-    private function refusal( string $message ): array {
+    private function refusal( string $code, string $message ): array {
         return array(
             'ok'       => false,
+            'code'     => $code,
             'error'    => $message,
             'chain'    => array(),
             'sub_type' => 'full',

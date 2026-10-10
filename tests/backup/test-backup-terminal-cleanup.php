@@ -31,6 +31,8 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
  */
 class MainWP_Backup_Terminal_Cleanup_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Captured backup_task_cancel calls: one entry per call, holding the
 	 * params array the dashboard sent to the child.

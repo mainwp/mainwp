@@ -1,0 +1,18 @@
+{
+    "status": "failed_permanent",
+    "outcome": "failed",
+    "last_error": "Restore & disk error.",
+    "error_code": "mainwp_restore_disk_full",
+    "attempt_count": 0,
+    "next_retry_at": 0,
+    "next_retry_label": "",
+    "artifact_index": 0,
+    "artifact_total": 1,
+    "has_rollback": false,
+    "cancel_requested": false,
+    "sub_type": "full",
+    "is_rollback": false,
+    "verification": [],
+    "bytes_transferred": 512,
+    "bytes_total": 1024
+}

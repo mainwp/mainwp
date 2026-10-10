@@ -18,6 +18,8 @@ use MainWP\Dashboard\MainWP_DB;
  */
 class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Fixture dir holding artifact files.
 	 *

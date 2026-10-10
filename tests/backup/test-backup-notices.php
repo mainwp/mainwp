@@ -28,6 +28,8 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
  */
 class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * A manual click uses the authorized initiator's identity on every run.
 	 *

@@ -18,6 +18,8 @@ use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
  */
 class MainWP_Backup_Scope_Launder_Guard_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Group ids to clean.
 	 *

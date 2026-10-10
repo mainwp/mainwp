@@ -20,6 +20,8 @@ use MainWP\Dashboard\MainWP_DB;
  */
 class MainWP_Backup_Restore_Nav_Link_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	use Backup_Private_Root_Fixture;
 
 	/**

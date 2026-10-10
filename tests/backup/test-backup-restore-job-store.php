@@ -17,6 +17,8 @@ use MainWP\Dashboard\MainWP_Install;
  */
 class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Store under test.
 	 *

@@ -15,6 +15,8 @@ namespace MainWP\Dashboard\Tests;
  */
 class MainWP_Backup_Logs_Connector_Test extends \WP_UnitTestCase {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Load the connector class files.
 	 *

@@ -504,10 +504,11 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             if ( ! is_array( $decoded ) ) {
                 $decoded = array();
             }
-            if ( ! empty( $decoded['cancel_intent'] ) && ( empty( $failure ) || ! empty( $decoded['terminal_failure'] ) ) ) {
+            if ( ! empty( $decoded['cancel_intent'] ) && isset( $decoded['cancel_confirmation']['outcome'] ) && ( empty( $failure ) || ! empty( $decoded['terminal_failure'] ) ) ) {
                 return true; // Already armed.
             }
-            $decoded['cancel_intent'] = true;
+            $decoded['cancel_intent']                  = true;
+            $decoded['cancel_confirmation']['outcome'] = 'pending';
             if ( ! empty( $failure ) && empty( $decoded['terminal_failure'] ) ) {
                 $decoded['terminal_failure'] = $failure;
             }
@@ -565,6 +566,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             $deferred                       = array(
                 'first_attempt_at' => (int) ( $previous['first_attempt_at'] ?? time() ),
                 'attempt_count'    => (int) ( $previous['attempt_count'] ?? 0 ) + 1,
+                'outcome'          => 'pending',
             );
             $decoded['cancel_confirmation'] = $deferred;
             $decoded['cancel_intent']       = true;

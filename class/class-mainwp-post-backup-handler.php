@@ -189,8 +189,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * @return object|null The website object when authorized, null otherwise.
      */
     private function authorize_restore_site( $site_id ) {
-        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-        if ( ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
+        $website = MainWP_Backup_Operations::authorize_site( (int) $site_id, 'execute_backups' );
+        if ( is_wp_error( $website ) ) {
             wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) );
             return null;
         }
@@ -265,7 +265,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
-        $entries   = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $site_id );
+        $entries   = MainWP_Backup_Read_Model::list_backup_snapshots( $site_id );
         $multisite = MainWP_Backup_Monitor::child_is_multisite( $website );
         $rows      = array();
 
@@ -275,7 +275,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
         foreach ( $entries as $entry ) {
             $uploads = array();
-            foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $entry['snapshot']->id ) as $job ) {
+            foreach ( $entry['uploads'] as $job ) {
                 $uploads[] = array(
                     'destination_id' => (int) $job->destination_id,
                     /* translators: %d: storage destination ID. */
@@ -283,7 +283,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                     'provider'       => (string) $job->provider,
                     'status'         => (string) $job->status,
                     'updated'        => (int) $job->updated,
-                    'last_error'     => mb_substr( (string) $job->last_error, 0, 200 ),
+                    'last_error'     => mb_substr( $job->last_error['source_text'], 0, 200 ),
                 );
             }
             $archives        = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
@@ -302,8 +302,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'offsite_state'      => isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
                 'uploads'            => $uploads,
                 'source'             => (string) $entry['source'],
-                'restorable'         => (bool) $entry['restorable'],
-                'restore_reason'     => (string) $entry['restore_reason'],
+                'restorable'         => (bool) $entry['catalog_restorable'],
+                'restore_reason'     => (string) $entry['catalog_restore_reason'],
                 'size_label'         => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
                 'test_restore_state' => isset( $entry['snapshot']->test_restore_state ) ? (string) $entry['snapshot']->test_restore_state : '',
                 'test_restore_at'    => $test_restore_at,
@@ -314,61 +314,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // site, so a freshly loaded page (or a site switch) resumes the
         // progress views instead of looking hung while a restore or an
         // on-demand backup carries on in the background.
-        global $wpdb;
-        $active_job = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id );
-        // An available safety backup ranks first; a successor rollback owns its source.
-        $failed_jobs = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
-            $wpdb->prepare(
-                'SELECT failed.id, failed.snapshot_id, failed.site_id, failed.status, failed.last_error, failed.checkpoint, failed.created FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' failed WHERE failed.site_id = %d AND failed.status IN ( %s, %s ) ORDER BY ( failed.checkpoint LIKE %s AND NOT EXISTS ( SELECT 1 FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' successor WHERE successor.site_id = failed.site_id AND successor.id > failed.id AND successor.checkpoint REGEXP CONCAT( %s, failed.id, %s ) ) ) DESC, failed.id DESC LIMIT 20', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
-                $site_id,
-                MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
-                MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED,
-                '%' . $wpdb->esc_like( '"pre_snapshot_artifacts":[{' ) . '%',
-                '"rollback_of"[[:space:]]*:[[:space:]]*',
-                '[[:space:]]*[,}]'
-            )
-        );
-        $failed_jobs = is_array( $failed_jobs ) ? $failed_jobs : array();
-        // A completed restore keeps its safety backup until the next one
-        // completes, so its Roll Back has to survive a reload too. Normally
-        // only the newest completed restore still has one.
-        $completed_jobs = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- existing restore job table.
-            $wpdb->prepare(
-                'SELECT id, snapshot_id, site_id, status, last_error, checkpoint, created FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id = %d AND status = %s AND checkpoint LIKE %s AND checkpoint NOT LIKE %s ORDER BY id DESC LIMIT 5', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted DB helper; values use placeholders.
-                $site_id,
-                MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED,
-                '%' . $wpdb->esc_like( '"pre_snapshot_artifacts":[{' ) . '%',
-                '%' . $wpdb->esc_like( '"pre_snapshot_pruned":true' ) . '%'
-            )
-        );
-        foreach ( is_array( $completed_jobs ) ? $completed_jobs : array() as $completed_job ) {
-            $completed_job->checkpoint = json_decode( $completed_job->checkpoint, true );
-            if ( is_array( $completed_job->checkpoint ) && MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $completed_job ) ) {
-                $failed_jobs[] = $completed_job;
-            }
+        $restore_jobs = MainWP_Backup_Read_Model::list_restore_jobs( $site_id );
+        $failed_rows  = $restore_jobs['failed_restore_jobs'];
+        foreach ( $failed_rows as &$failed_row ) {
+            $failed_row['last_error'] = $failed_row['last_error']['source_text'];
         }
-        usort(
-            $failed_jobs,
-            static function ( $a, $b ) {
-                return (int) $b->id - (int) $a->id;
-            }
-        );
-        $failed_rows = array();
-        foreach ( $failed_jobs as $failed_job ) {
-            if ( ! is_array( $failed_job->checkpoint ) ) {
-                $failed_job->checkpoint = json_decode( (string) $failed_job->checkpoint, true );
-            }
-            $failed_rows[] = array(
-                'job_id'       => (int) $failed_job->id,
-                'snapshot_id'  => (int) $failed_job->snapshot_id,
-                'status'       => (string) $failed_job->status,
-                'date_label'   => (int) $failed_job->created > 0 ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $failed_job->created ) ) : '',
-                'last_error'   => (string) $failed_job->last_error,
-                'error_code'   => (string) ( $failed_job->checkpoint['last_error_code'] ?? '' ),
-                'has_rollback' => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $failed_job ),
-                'is_rollback'  => ! empty( $failed_job->checkpoint['is_rollback'] ),
-            );
-        }
+        unset( $failed_row );
         $manual_task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
         $manual_ids  = MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id );
         sort( $manual_ids, SORT_NUMERIC );
@@ -389,7 +340,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'site_url'              => (string) $website->url,
                 'local_only'            => empty( $manual_ids ),
                 'manual_destinations'   => $manual_destinations,
-                'active_restore_job_id' => null !== $active_job ? (int) $active_job->id : 0,
+                'active_restore_job_id' => $restore_jobs['active_restore_job_id'],
                 'failed_restore_jobs'   => $failed_rows,
                 'site_disconnected'     => static::site_is_disconnected( $website ),
                 'reconnect_url'         => admin_url( 'admin.php?page=managesites&dashboard=' . (int) $website->id ),
@@ -421,7 +372,11 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
 
         $keep = isset( $_POST['keep'] ) && '' !== $_POST['keep'] ? max( 1, (int) $_POST['keep'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $result = MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $site_id, $keep );
+        $result = MainWP_Backup_Operations::cleanup_site_backups( $site_id, $keep, false );
+        if ( is_wp_error( $result ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) );
+            return;
+        }
 
         wp_send_json(
             array(
@@ -572,72 +527,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             }
         }
 
-        $transfer = isset( $job->checkpoint['transfer'] ) ? (array) $job->checkpoint['transfer'] : array();
-        $plan     = isset( $job->checkpoint['plan'] ) ? (array) $job->checkpoint['plan'] : array();
-
-        wp_send_json(
-            array_merge(
-                array(
-                    'status'           => (string) $job->status,
-                    'last_error'       => (string) $job->last_error,
-                    'error_code'       => isset( $job->checkpoint['last_error_code'] ) ? (string) $job->checkpoint['last_error_code'] : '',
-                    'attempt_count'    => (int) $job->attempt_count,
-                    'next_retry_at'    => (int) $job->next_retry_at,
-                    'next_retry_label' => (int) $job->next_retry_at > 0 ? MainWP_Utility::format_time( MainWP_Utility::get_timestamp( (int) $job->next_retry_at ) ) : '',
-                    'artifact_index'   => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
-                    'artifact_total'   => count( $plan ),
-                    'has_rollback'     => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $job ),
-                    'cancel_requested' => ! empty( $job->checkpoint['cancel_intent'] ),
-                    'sub_type'         => (string) ( $job->checkpoint['sub_type'] ?? '' ),
-                    'is_rollback'      => ! empty( $job->checkpoint['is_rollback'] ),
-                    'verification'     => isset( $job->checkpoint['verification'] ) ? $job->checkpoint['verification'] : array(),
-                ),
-                $this->transfer_byte_progress( $plan, $transfer )
-            )
-        );
-    }
-
-    /**
-     * Byte-level transfer progress for the poll payload.
-     *
-     * Completed artifacts count in full, the in-flight one counts its
-     * confirmed offset, adopt-only entries never cross the wire and stay
-     * out of both totals. Plans whose archive metadata predates sizes
-     * report nothing rather than a misleading 0/0, so the keys are only
-     * present when a real total is known.
-     *
-     * @param array $plan     Checkpoint plan entries.
-     * @param array $transfer Checkpoint transfer cursor.
-     *
-     * @return array Empty, or { bytes_transferred: int, bytes_total: int }.
-     */
-    private function transfer_byte_progress( array $plan, array $transfer ): array {
-        $index       = isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0;
-        $offset      = isset( $transfer['offset'] ) ? (int) $transfer['offset'] : 0;
-        $total       = 0;
-        $transferred = 0;
-
-        foreach ( array_values( $plan ) as $i => $entry ) {
-            if ( ! empty( $entry['adopt_only'] ) ) {
-                continue;
-            }
-            $size   = isset( $entry['size'] ) ? (int) $entry['size'] : 0;
-            $total += $size;
-            if ( $i < $index ) {
-                $transferred += $size;
-            } elseif ( $i === $index ) {
-                $transferred += min( $offset, $size );
-            }
+        $response = MainWP_Backup_Read_Model::get_restore_job( $job_id );
+        if ( is_wp_error( $response ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
+            return;
         }
-
-        if ( $total <= 0 ) {
-            return array();
-        }
-
-        return array(
-            'bytes_transferred' => $transferred,
-            'bytes_total'       => $total,
-        );
+        unset( $response['cancel_confirmation'], $response['error'], $response['partial_state_reasons'] );
+        $response['last_error'] = $response['last_error']['source_text'];
+        wp_send_json( $response );
     }
 
     /**
@@ -734,110 +631,27 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function mainwp_native_backup_initiate() {
         $this->secure_request( 'mainwp_native_backup_initiate' );
-        $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+        $site_id  = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+        $response = MainWP_Backup_Operations::start_site_backup( $site_id, 'ui' );
+        wp_send_json( $this->serialize_backup_operation( $response ) );
+    }
 
-        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
-            wp_send_json( array( 'error' => esc_html__( 'Native backups are not enabled.', 'mainwp' ) ) );
-            return;
+
+    /**
+     * Existing pages retain their error text and field types.
+     *
+     * @param array|\WP_Error $response Neutral operation result.
+     * @return array Existing AJAX payload.
+     */
+    private function serialize_backup_operation( $response ): array {
+        if ( is_wp_error( $response ) ) {
+            $auth_codes = array( 'mainwp_permission_denied', 'mainwp_insufficient_right', 'mainwp_site_not_found' );
+            return array( 'error' => in_array( $response->get_error_code(), $auth_codes, true ) ? esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) : $response->get_error_message() );
         }
-
-        $website = $this->authorize_restore_site( $site_id );
-        if ( null === $website ) {
-            return;
+        if ( isset( $response['error'] ) && is_array( $response['error'] ) ) {
+            $response['error'] = $response['error']['source_text'];
         }
-
-        if ( static::site_is_disconnected( $website ) ) {
-            wp_send_json( array( 'error' => static::disconnected_site_error() ) );
-            return;
-        }
-
-        // A restore in flight for this site holds the child's single-backup
-        // slot; refuse until it finishes so the two heavy operations cannot
-        // collide on the same child.
-        if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
-            wp_send_json( array( 'error' => esc_html__( 'A restore is in progress for this site. Try again once it finishes.', 'mainwp' ) ) );
-            return;
-        }
-
-        static::raise_backup_resource_limits();
-
-        $task = MainWP_DB_Backup::instance()->ensure_manual_backup_task( $website );
-        if ( empty( $task ) ) {
-            wp_send_json( array( 'error' => esc_html__( 'Could not prepare the on-demand backup.', 'mainwp' ) ) );
-            return;
-        }
-
-        // A run already in flight (last_run newer than completed): follow it
-        // instead of resetting the run mid-flight.
-        if ( (int) $task->completed < (int) $task->last_run ) {
-            wp_send_json(
-                array(
-                    'job_id'  => (int) $task->id,
-                    'started' => (int) $task->last_run,
-                    'status'  => 'running',
-                )
-            );
-            return;
-        }
-
-        // A run that closed successfully seconds ago makes this initiate a
-        // duplicate of the click that just finished (a second tab, a repeat
-        // click landing as the run closed). Absorb it: point the poll at the
-        // run that produced the snapshot instead of reopening it, which would
-        // fire a second preflight, orphan a child task, and poison the
-        // original click's freshness check into a false failure.
-        $settle = MainWP_Backup_Settings::get_manual_run_settle_seconds();
-        if ( $settle > 0 && '' === (string) $task->backup_errors && (int) $task->completed > time() - $settle ) {
-            /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
-            do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'settle_absorbed', (int) $task->last_run, (int) $task->completed );
-            wp_send_json(
-                array(
-                    'job_id'  => (int) $task->id,
-                    'started' => (int) $task->last_run,
-                    'status'  => 'queued',
-                )
-            );
-            return;
-        }
-
-        // Kick the first step. updateRun = true resets completed_sites and
-        // stamps last_run through a claim the settle window can refuse, which
-        // both starts the run and makes it eligible for the
-        // cron_backups_continue backstop. A false return means no concurrency
-        // slot was free (or a racing initiate won the claim); the progress
-        // poll retries the claim for a click whose run never opened - the
-        // cron cannot, it only drives runs that were stamped open.
-        $started  = time();
-        $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle ) );
-
-        // last_run is now stamped, so the task is eligible for a continue.
-        // Kick one immediately so a tab-closed run finishes within seconds
-        // instead of waiting for the 5-minute recurring backup cron.
-        static::kick_backup_continuation();
-
-        // Re-read the row: a successful claim stamped last_run, and a racing
-        // initiate that won the claim stamped its own. Keying the response's
-        // started value to the row (when it advanced) makes the poll judge
-        // freshness against the run that actually owns this backup; a slot
-        // miss leaves the row untouched and keeps the click's own timestamp.
-        $task        = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
-        $started_out = null !== $task && (int) $task->last_run >= $started ? (int) $task->last_run : $started;
-
-        // The hidden manual task is normally created by the claim above, but a
-        // concurrent site delete (or a failed insert) can leave the re-read
-        // empty; report the failure instead of dereferencing null.
-        if ( empty( $task ) ) {
-            wp_send_json( array( 'error' => esc_html__( 'The backup could not be started for this site. Please reload the page and try again.', 'mainwp' ) ) );
-            return;
-        }
-
-        wp_send_json(
-            array(
-                'job_id'  => (int) $task->id,
-                'started' => $started_out,
-                'status'  => $had_slot ? 'running' : 'queued',
-            )
-        );
+        return $response;
     }
 
     /**
@@ -965,166 +779,23 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             }
         }
 
-        if ( ! empty( $task->paused ) ) {
-            $notice = (string) ( $task->backup_notices ?? '' );
-            wp_send_json(
-                array(
-                    'status' => 'failed',
-                    'error'  => '' !== $notice ? static::humanize_backup_errors( $notice ) : esc_html__( 'This task is paused. Resume it before running it.', 'mainwp' ),
-                )
-            );
-            return;
-        }
-
-        if ( $task && (int) $task->completed < (int) $task->last_run ) {
-            // Reuse the shared progress shape (label, percent, counters, bytes)
-            // and pin the status to running: snapshot freshness, checked below,
-            // is the authoritative completion gate, not the child phase.
-            $progress           = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
-            $response           = static::build_task_progress_response( $progress );
-            $response['status'] = 'running';
-            wp_send_json( $response );
-            return;
-        }
-
-        // The run is closed: success when a snapshot fresh for THIS poll's
-        // click landed, otherwise surface the recorded failure. The client
-        // sends the started value the initiate handed it as `since`, so a
-        // later re-init bumping last_run cannot poison the freshness check
-        // of the click that produced the snapshot; without it (a tab on
-        // older JavaScript) the comparison stays keyed to last_run.
-        $errors = $task ? (string) $task->backup_errors : '';
-        $latest = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
-        $cutoff = $since > 0 ? $since : (int) $task->last_run;
-        $fresh  = null !== $latest && (int) $latest->created >= $cutoff;
-
-        // backup_errors clears at every run open, so it only ever describes
-        // the run tied to the CURRENT last_run. The two surfaces below need
-        // different ownership questions answered from that fact.
-        //
-        // The success gate asks whether the errors belong to the run that
-        // produced the fresh snapshot: only while last_run has not moved
-        // past the snapshot. A later run's failure must not poison the
-        // click whose snapshot landed.
-        //
-        // The failure surface asks whether the errors belong to THIS
-        // click's run: they do once last_run caught up to the click's
-        // since (or on older JavaScript that sends none). Keying this to
-        // the snapshot instead silently disowned the current run's real
-        // error whenever the site's only snapshot was an old one - a
-        // child's disk-full message surfaced as the generic no-snapshot
-        // line exactly because of that.
-        $errors_snapshot_run = null !== $latest && (int) $task->last_run <= (int) $latest->created;
-        $errors_click_own    = ( 0 === $since || (int) $task->last_run >= $since );
-
-        if ( $fresh && ( '' === $errors || ! $errors_snapshot_run ) ) {
-            $response = array(
-                'status'      => 'completed',
-                'snapshot_id' => (int) $latest->id,
-            );
-            // Advisory run notes (like the large-site ZIP auto-switch) ride
-            // along so the page shows them with the success status instead of
-            // mistaking them for a failure.
-            $notices = $task ? (string) ( $task->backup_notices ?? '' ) : '';
-            if ( '' !== $notices ) {
-                $response['notice'] = static::humanize_backup_errors( $notices );
+        $response = MainWP_Backup_Read_Model::get_site_backup_progress( $site_id, $since );
+        foreach ( array( 'error', 'notice' ) as $key ) {
+            if ( isset( $response[ $key ] ) ) {
+                $response[ $key ] = static::humanize_backup_errors( $response[ $key ]['source_text'] );
             }
-            wp_send_json( $response );
-            return;
         }
-
-        wp_send_json(
-            array(
-                'status' => 'failed',
-                'error'  => '' !== $errors && $errors_click_own ? static::humanize_backup_errors( $errors ) : esc_html__( 'The on-demand backup did not produce a snapshot.', 'mainwp' ),
-            )
-        );
+        wp_send_json( $response );
     }
 
     /**
-     * Cancel a stuck or unwanted native backup on a child.
-     *
-     * An interrupted backup leaves a non-terminal task on the child that blocks
-     * every new backup, and on an idle child the watchdog cron may never fire to
-     * clear it. This is the Dashboard escape hatch: it tells the child to cancel
-     * its active backup (passing the known child task id, or letting the child
-     * resolve its single active backup when the Dashboard no longer holds the
-     * id), then stops treating the local manual run as in-flight so the UI
-     * reflects the cancel at once.
+     * Cancellation can only stop the Child task identified by this run.
      */
     public function mainwp_native_backup_cancel() {
         $this->secure_request( 'mainwp_native_backup_cancel' );
-        $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
-
-        $website = $this->authorize_restore_site( $site_id );
-        if ( null === $website ) {
-            return;
-        }
-
-        // Pass the child task id when the Dashboard still has it (precise), and
-        // fall back to the child resolving its single active backup otherwise.
-        // A creating marker is not a task id the child knows: a cancel inside
-        // the create window falls back to the child resolving it too.
-        $child_task_id = '';
-        $task          = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
-        if ( ! empty( $task ) ) {
-            $progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
-            if ( ! empty( $progress->child_backup_task_id ) && ! MainWP_Backup_Executor::is_creating_marker( $progress->child_backup_task_id ) ) {
-                $child_task_id = (string) $progress->child_backup_task_id;
-            }
-        }
-
-        try {
-            $information = MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $child_task_id ), false, false, false );
-        } catch ( \Exception $e ) {
-            wp_send_json( array( 'error' => MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ) ) );
-            return;
-        }
-
-        if ( isset( $information['error'] ) ) {
-            wp_send_json( array( 'error' => is_string( $information['error'] ) ? MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) : esc_html__( 'The child site could not cancel the backup.', 'mainwp' ) ) );
-            return;
-        }
-
-        // A live runner still owns the lease mid-slice, so the child refused
-        // rather than fight it: the backup is still running. Closing the local
-        // run here would report a cancel that did not happen and leave the poll
-        // blind to a child task that keeps going.
-        if ( isset( $information['result'] ) && 'busy' === $information['result'] ) {
-            wp_send_json( array( 'error' => esc_html__( 'The backup is mid-step on the child site and could not be cancelled yet. Wait a moment and try again.', 'mainwp' ) ) );
-            return;
-        }
-
-        // Close the local manual run so the next poll does not re-report it as
-        // running; the child task is already terminal. The cancelled note and
-        // log line are the diagnostic trace: without them a cancelled run is
-        // indistinguishable from an ordinary completion later.
-        MainWP_Logger::instance()->debug_for_website(
-            $website,
-            'backup',
-            'Backup cancelled from the dashboard (child task: ' . ( '' !== $child_task_id ? $child_task_id : 'auto-resolved' ) . ')'
-        );
-        if ( ! empty( $task ) ) {
-            MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
-            MainWP_DB_Backup::instance()->update_backup_notices( (int) $task->id, esc_html__( 'Backup cancelled from the dashboard.', 'mainwp' ) . "\n" );
-            // Drop the cancelled child task from the progress row, or the
-            // progress poll keeps projecting it as running / waiting forever.
-            MainWP_DB_Backup::instance()->update_backup_task_progress(
-                (int) $task->id,
-                $site_id,
-                array(
-                    'child_backup_task_id' => '',
-                    'child_phase'          => '',
-                )
-            );
-        }
-
-        wp_send_json(
-            array(
-                'status' => 'cancelled',
-                'result' => isset( $information['result'] ) ? $information['result'] : 'ok',
-            )
-        );
+        $site_id  = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
+        $response = MainWP_Backup_Operations::cancel_site_backup( $site_id );
+        wp_send_json( $this->serialize_backup_operation( $response ) );
     }
 
     /**
@@ -1146,124 +817,13 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_native_backup_task_reset' );
         $task_id = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
-        if ( empty( $task ) || ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) ) {
-            wp_send_json( array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) ) );
+        $response = MainWP_Backup_Operations::reset_task_run( $task_id );
+        if ( is_wp_error( $response ) ) {
+            wp_send_json( array( 'error' => $response->get_error_message() ) );
             return;
         }
-
-        $site_ids = MainWP_Manage_Backups_Handler::resolve_reset_task_site_ids( $task );
-        foreach ( $site_ids as $site_id ) {
-            if ( ! \mainwp_current_user_can( 'site', $site_id ) ) {
-                wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for one or more sites in this task.', 'mainwp' ) ) );
-                return;
-            }
-        }
-
-        if ( (int) $task->completed >= (int) $task->last_run ) {
-            wp_send_json( array( 'error' => esc_html__( 'This task is not currently running.', 'mainwp' ) ) );
-            return;
-        }
-
-        $elapsed = time() - (int) $task->last_run;
-        if ( $elapsed <= MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS ) {
-            wp_send_json( array( 'error' => esc_html__( 'This task is still within its normal run window and cannot be reset yet.', 'mainwp' ) ) );
-            return;
-        }
-
-        $cancelled   = 0;
-        $uncancelled = array();
-        foreach ( $site_ids as $site_id ) {
-            if ( $this->cancel_task_run_on_child( $task, (int) $site_id ) ) {
-                ++$cancelled;
-            } else {
-                $uncancelled[] = (int) $site_id;
-            }
-        }
-
-        $note = esc_html__( 'Backup run reset from the dashboard after being flagged stale.', 'mainwp' );
-        if ( ! empty( $uncancelled ) ) {
-            $note .= ' ' . sprintf(
-                /* translators: %s: Comma-separated site ids. */
-                esc_html__( 'The run could not be stopped on the child for site(s) %s; their run record was cleared on the dashboard only.', 'mainwp' ),
-                implode( ', ', $uncancelled )
-            );
-        }
-
-        MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
-        MainWP_DB_Backup::instance()->update_backup_notices( (int) $task->id, $note . "\n" );
-
-        wp_send_json(
-            array(
-                'status'      => 'reset',
-                'cancelled'   => $cancelled,
-                'uncancelled' => count( $uncancelled ),
-            )
-        );
-    }
-
-    /**
-     * Tell one child in a task to cancel its running backup, as part of a
-     * task reset. Reuses the per-site cancel contract: the child task id
-     * from the task's own progress row when the Dashboard still holds one
-     * (a creating marker is not an id the child knows), an empty id
-     * otherwise so the child resolves its single active backup itself.
-     *
-     * @param object $task    Task row.
-     * @param int    $site_id Site id.
-     *
-     * @return bool True when the child confirmed the run is stopped (or had
-     *              nothing running); false when the cancel did not land and
-     *              the dashboard-only close is the fallback.
-     */
-    private function cancel_task_run_on_child( $task, $site_id ) {
-        $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-        if ( empty( $website ) ) {
-            return false;
-        }
-
-        $child_task_id = '';
-        $progress      = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
-        if ( ! empty( $progress->child_backup_task_id ) && ! MainWP_Backup_Executor::is_creating_marker( $progress->child_backup_task_id ) ) {
-            $child_task_id = (string) $progress->child_backup_task_id;
-        }
-
-        try {
-            $information = MainWP_Connect::fetch_url_authed( $website, 'backup_task_cancel', array( 'task_id' => $child_task_id ), false, false, false );
-        } catch ( \Exception $e ) {
-            return false;
-        }
-
-        if ( isset( $information['error'] ) ) {
-            return false;
-        }
-
-        // A live runner still owns the lease mid-slice; the child refused
-        // rather than fight it, so no stop can be claimed for this site.
-        if ( isset( $information['result'] ) && 'busy' === $information['result'] ) {
-            return false;
-        }
-
-        MainWP_Logger::instance()->debug_for_website(
-            $website,
-            'backup',
-            'Backup cancelled on the child during a stale task reset (child task: ' . ( '' !== $child_task_id ? $child_task_id : 'auto-resolved' ) . ')'
-        );
-
-        // Drop the cancelled child task from the progress row, or the
-        // progress poll keeps projecting it as running / waiting forever.
-        if ( ! empty( $progress ) ) {
-            MainWP_DB_Backup::instance()->update_backup_task_progress(
-                (int) $task->id,
-                (int) $site_id,
-                array(
-                    'child_backup_task_id' => '',
-                    'child_phase'          => '',
-                )
-            );
-        }
-
-        return true;
+        unset( $response['sites_uncancelled'] );
+        wp_send_json( $response );
     }
 
     /**

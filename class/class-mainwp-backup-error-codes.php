@@ -122,6 +122,25 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_GCS_FAILED          = 'mainwp_backup_gcs_failed';
     const ERR_ENCRYPTION_REQUIRED = 'mainwp_backup_encryption_required';
 
+    const ERR_TASK_NOT_FOUND                                 = 'mainwp_backup_task_not_found';
+    const ERR_SNAPSHOT_NOT_FOUND                             = 'mainwp_backup_snapshot_not_found';
+    const ERR_RESTORE_JOB_NOT_FOUND                          = 'mainwp_backup_restore_job_not_found';
+    const ERR_DESTINATION_NOT_FOUND                          = 'mainwp_backup_destination_not_found';
+    const ERR_SITE_DISCONNECTED                              = 'mainwp_backup_site_disconnected';
+    const ERR_NOT_STALLED                                    = 'mainwp_backup_not_stalled';
+    const ERR_DESTINATION_CREDENTIALS_REQUIRED               = 'mainwp_backup_destination_credentials_required';
+    const ERR_GATE_BLOCKED                                   = 'mainwp_backup_gate_blocked';
+    const ERR_UNCLASSIFIED_ERROR                             = 'mainwp_backup_unclassified_error';
+    const ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE               = 'mainwp_backup_snapshot_unrestorable_wrong_site';
+    const ERR_SNAPSHOT_UNRESTORABLE_PRUNED                   = 'mainwp_backup_snapshot_unrestorable_pruned';
+    const ERR_SNAPSHOT_UNRESTORABLE_FILES_CHILD_OUTDATED     = 'mainwp_backup_snapshot_unrestorable_files_child_outdated';
+    const ERR_SNAPSHOT_UNRESTORABLE_MULTISITE_CHILD_OUTDATED = 'mainwp_backup_snapshot_unrestorable_multisite_child_outdated';
+    const ERR_SNAPSHOT_UNRESTORABLE_EMPTY                    = 'mainwp_backup_snapshot_unrestorable_empty';
+    const ERR_SNAPSHOT_UNRESTORABLE_BASE_MISSING             = 'mainwp_backup_snapshot_unrestorable_base_missing';
+    const ERR_SNAPSHOT_UNRESTORABLE_CHAIN_PRUNED             = 'mainwp_backup_snapshot_unrestorable_chain_pruned';
+    const ERR_SNAPSHOT_UNRESTORABLE_NO_ARTIFACTS             = 'mainwp_backup_snapshot_unrestorable_no_artifacts';
+    const ERR_SNAPSHOT_UNRESTORABLE_ARTIFACT_UNAVAILABLE     = 'mainwp_backup_snapshot_unrestorable_artifact_unavailable';
+
     /**
      * Get all registered error codes.
      *
@@ -231,7 +250,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @return array<string,string> Messages keyed by error code.
      */
-    private static function get_messages() {
+    public static function get_messages() {
         return array(
             self::ERR_TIMEOUT                       => esc_html__( 'The connection to the child site timed out during the backup. The child site may be overloaded or behind a server that limits long requests. Try again during low-traffic hours.', 'mainwp' ),
             self::ERR_HTTP_ERROR                    => esc_html__( 'The child site returned an unexpected response during the backup transfer. Check that the child site is reachable and the MainWP Child plugin is active, then try again.', 'mainwp' ),
@@ -299,6 +318,25 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_MANIFEST_CHUNK_WRONG_PHASE    => esc_html__( 'The file-list piece arrived outside of an active staging session on the child site. The transfer restarts from the beginning on the next attempt.', 'mainwp' ),
             self::ERR_MANIFEST_CHUNK_CORRUPT        => esc_html__( 'The transferred file list does not match its expected checksum on the child site and was discarded. The transfer runs again or the run falls back to a full backup.', 'mainwp' ),
             self::ERR_MANIFEST_CHUNK_SEND_FAILED    => esc_html__( 'The file list from the previous backup could not be delivered to the child site in pieces, so a full backup was run instead. The site may enforce a small request size limit.', 'mainwp' ),
+        ) + array(
+            self::ERR_TASK_NOT_FOUND                     => esc_html__( 'The backup task was not found. It may have been deleted, or your account cannot access it. Reload the backup tasks list and try again.', 'mainwp' ),
+            self::ERR_SNAPSHOT_NOT_FOUND                 => esc_html__( 'The backup was not found. It may have been removed by retention or Clean Up, or your account cannot access it. Reload the backups list and try again.', 'mainwp' ),
+            self::ERR_RESTORE_JOB_NOT_FOUND              => esc_html__( 'The restore job was not found. It may have been removed after it finished, or your account cannot access it. Check the site\'s backups page for its result.', 'mainwp' ),
+            self::ERR_DESTINATION_NOT_FOUND              => esc_html__( 'The backup destination was not found. It may have been deleted, or your account cannot access it. Reload the Backup Storage page and try again.', 'mainwp' ),
+            self::ERR_SITE_DISCONNECTED                  => esc_html__( 'This site is disconnected from the Dashboard. Reconnect it, then try again.', 'mainwp' ),
+            self::ERR_NOT_STALLED                        => esc_html__( 'This backup run is not stalled and cannot be reset.', 'mainwp' ),
+            self::ERR_DESTINATION_CREDENTIALS_REQUIRED   => esc_html__( 'Edit the destination credentials on the Backup Storage page.', 'mainwp' ),
+            self::ERR_GATE_BLOCKED                       => esc_html__( 'A recent backup is required before this update.', 'mainwp' ),
+            self::ERR_UNCLASSIFIED_ERROR                 => esc_html__( 'The backup encountered an unexpected problem and did not complete. Check the dashboard and child site error logs for details and try again.', 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE   => esc_html__( 'The selected backup does not belong to this site.', 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_PRUNED       => esc_html__( 'The selected backup was removed by retention and can no longer be restored.', 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_FILES_CHILD_OUTDATED => esc_html__( 'Update the MainWP Child plugin on the site to restore files-only backups.', 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_MULTISITE_CHILD_OUTDATED => esc_html__( 'Update the MainWP Child plugin on the site to restore network-wide backups.', 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_EMPTY        => esc_html__( 'The selected backup has no restorable data.', 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_BASE_MISSING => esc_html__( 'The base full backup for this incremental chain is missing.', 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_CHAIN_PRUNED => esc_html__( 'Part of the selected backup chain was removed by retention.', 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_NO_ARTIFACTS => esc_html__( 'No backup files are available locally or in cloud storage.', 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_ARTIFACT_UNAVAILABLE => esc_html__( 'A required backup file is unavailable locally and in cloud storage.', 'mainwp' ),
         );
     }
 }

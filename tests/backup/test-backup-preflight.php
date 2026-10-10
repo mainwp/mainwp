@@ -25,6 +25,8 @@ use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
  */
 class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Set up: enable the legacy backup feature.
 	 *

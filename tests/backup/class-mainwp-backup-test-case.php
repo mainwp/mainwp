@@ -178,3 +178,55 @@ abstract class MainWP_Backup_Test_Case extends \WP_UnitTestCase {
 		return (int) end( $parts );
 	}
 }
+
+/**
+ * A caught transport exception must not hide an unsafe cancellation request.
+ */
+// phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- shared backup transport guard.
+trait Backup_Cancel_Transport_Guard {
+
+	/**
+	 * Unsafe requests observed during this test.
+	 *
+	 * @var int
+	 */
+	private $empty_cancel_requests = 0;
+
+	/**
+	 * Install before each test, including tests without fixture setup.
+	 *
+	 * @before
+	 * @return void
+	 */
+	public function install_cancel_transport_guard() {
+		$this->empty_cancel_requests = 0;
+		add_filter( 'mainwp_fetch_url_authed_pre', array( $this, 'guard_cancel_transport' ), -9999, 4 );
+	}
+
+	/**
+	 * Track before response stubs can short-circuit the request.
+	 *
+	 * @param mixed  $response Stubbed response.
+	 * @param object $website Child site.
+	 * @param string $what Request action.
+	 * @param array  $params Request arguments.
+	 * @return mixed Unchanged response.
+	 */
+	public function guard_cancel_transport( $response, $website, $what, $params ) {
+		if ( 'backup_task_cancel' === $what && empty( $params['task_id'] ) ) {
+			++$this->empty_cancel_requests;
+		}
+		return $response;
+	}
+
+	/**
+	 * Assert after the handler so caught errors cannot mask the violation.
+	 *
+	 * @after
+	 * @return void
+	 */
+	public function assert_cancel_transport_guard() {
+		remove_filter( 'mainwp_fetch_url_authed_pre', array( $this, 'guard_cancel_transport' ), -9999 );
+		$this->assertSame( 0, $this->empty_cancel_requests, 'A backup cancel must never send an empty task_id.' );
+	}
+}

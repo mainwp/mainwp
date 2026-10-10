@@ -560,11 +560,12 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
         $this->wpdb->update(
             $this->table_name( 'wp_backup_snapshot' ),
             array(
-                'test_restore_state' => $state,
-                'test_restore_at'    => $tested_at,
+                'test_restore_state'     => $state,
+                'test_restore_at'        => $tested_at,
+                'test_restore_result_at' => $tested_at,
             ),
             array( 'id' => $snapshot_id ),
-            array( '%s', '%d' ),
+            array( '%s', '%d', '%d' ),
             array( '%d' )
         );
     }

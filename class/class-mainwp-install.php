@@ -89,7 +89,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.28'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
+    protected $mainwp_db_version = '9.0.2.29'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
 
     /**
      * Protected variable to hold the database option name.
@@ -683,6 +683,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   woo_meta text NOT NULL DEFAULT '',
   test_restore_state varchar(20) NOT NULL DEFAULT '',
   test_restore_at int(11) NOT NULL DEFAULT 0,
+  test_restore_result_at int(11) NOT NULL DEFAULT 0,
   UNIQUE KEY uniq_run_key (run_key),
   KEY idx_site_task (site_id, task_id),
   KEY idx_parent (parent_id),

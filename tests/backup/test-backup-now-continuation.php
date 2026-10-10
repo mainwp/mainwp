@@ -42,6 +42,8 @@ use MainWP\Dashboard\MainWP_System_Cron_Jobs;
  */
 class MainWP_Backup_Now_Continuation_Test extends MainWP_Abilities_Test_Case { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- the switchable clock belongs with its regression tests.
 
+	use Backup_Cancel_Transport_Guard;
+
 	/**
 	 * Null keeps every other test on the real clock.
 	 *

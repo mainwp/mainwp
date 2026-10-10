@@ -557,15 +557,14 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $result = 'ended_failed';
             }
         } elseif ( in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $job->status ) {
-            // The worker applies an armed intent even when a stale save dropped its confirmation.
-            $pending = 'pending' === $confirmation || ! empty( $job->checkpoint['cancel_intent'] );
-            // Lease renewals do not record cancellation evidence.
-            $unchanged = $before->status === $job->status && $before->checkpoint === $job->checkpoint;
-            if ( $unchanged && ( 'failed' === $call || ( 'returned' === $call && ! $pending ) ) ) {
-                return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
-            }
-            if ( $pending ) {
+            if ( MainWP_Backup_Restore_Orchestrator::has_applicable_cancel_intent( $job ) ) {
                 $result = 'cancel_pending';
+            } elseif ( 'failed_retryable' === $job->status && 'verifying' === ( $job->checkpoint['resume_status'] ?? '' ) ) {
+                // Verification retries have already passed the cancellation window.
+                $result = 'not_cancellable';
+            } elseif ( in_array( $call, array( 'returned', 'failed' ), true ) ) {
+                // Worker progress cannot prove that a cancellation was recorded.
+                return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
             }
         }
         return array(

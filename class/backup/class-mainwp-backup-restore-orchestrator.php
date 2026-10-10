@@ -502,6 +502,28 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * A stored confirmation can outlive the intent or the phase that could apply it.
+     *
+     * @param object $job Persisted restore job, including its checkpoint.
+     * @return bool Whether the worker applies its cancel intent before dispatch.
+     */
+    public static function has_applicable_cancel_intent( object $job ): bool {
+        $phase = $job->status;
+        if ( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $phase ) {
+            $phase = isset( $job->checkpoint['resume_status'] ) ? (string) $job->checkpoint['resume_status'] : MainWP_Backup_Restore_Job_Store::STATUS_PENDING;
+        }
+        return ! empty( $job->checkpoint['cancel_intent'] ) && ( in_array(
+            $phase,
+            array(
+                MainWP_Backup_Restore_Job_Store::STATUS_STAGING,
+                MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
+                MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+            ),
+            true
+        ) || ! empty( $job->checkpoint['terminal_failure'] ) );
+    }
+
+    /**
      * Cancel and release the safety-backup handle this job owns, if any.
      *
      * Every caller runs this only after the job's own cancellation is
@@ -792,14 +814,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $status = isset( $job->checkpoint['resume_status'] ) ? (string) $job->checkpoint['resume_status'] : MainWP_Backup_Restore_Job_Store::STATUS_PENDING;
         }
 
-        // A pending cancel is applied before any slice work: the restore
-        // must not be driven forward once the user asked it to stop.
-        $intent_phases = array(
-            MainWP_Backup_Restore_Job_Store::STATUS_STAGING,
-            MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING,
-            MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
-        );
-        if ( ! empty( $job->checkpoint['cancel_intent'] ) && ( in_array( $status, $intent_phases, true ) || ! empty( $job->checkpoint['terminal_failure'] ) ) ) {
+        // An applicable cancel must stop the worker before it advances the restore.
+        if ( self::has_applicable_cancel_intent( $job ) ) {
             if ( self::TERMINAL_OUTCOME_DRIVE_ON !== $this->apply_cancel_intent( $job ) ) {
                 return;
             }

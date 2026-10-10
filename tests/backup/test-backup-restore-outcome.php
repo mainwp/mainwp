@@ -536,13 +536,38 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 		$id       = 0;
 		$statuses = array( 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'failed_retryable' );
 		foreach ( $statuses as $status ) {
-			$rows[ 'C' . ( ++$id ) ] = array( $status, array( 'pending' ), $answers, 'any', 'cancel_pending', 200 );
-			$rows[ 'C' . ( ++$id ) ] = array( $status, $other, $answers, 'changed', 'not_cancellable', 200 );
+			$signal                  = array(
+				'intent'  => true,
+				'resume'  => 'running',
+				'failure' => in_array( $status, array( 'pending', 'preflight', 'pre_snapshot' ), true ),
+			);
+			$rows[ 'C' . ( ++$id ) ] = array( $status, array( 'pending' ), $answers, 'any', 'cancel_pending', 200, array( $signal ) );
+			$rows[ 'C' . ( ++$id ) ] = array(
+				$status,
+				$other,
+				$answers,
+				'changed',
+				array(
+					'not called'     => array( 'not_cancellable', 200 ),
+					'cancel_pending' => array( 'mainwp_operation_failed', 502 ),
+					'cancelled'      => array( 'mainwp_operation_failed', 502 ),
+				),
+				502,
+			);
 			$rows[ 'C' . ( ++$id ) ] = array( $status, $all, array( 'exception' ), 'unchanged', 'mainwp_operation_failed', 502 );
-			$rows[ 'C' . ( ++$id ) ] = array( $status, array( 'pending' ), array( 'exception' ), 'changed', 'cancel_pending', 200 );
-			$rows[ 'C' . ( ++$id ) ] = array( $status, $other, array( 'exception' ), 'changed', 'not_cancellable', 200 );
+			$rows[ 'C' . ( ++$id ) ] = array( $status, array( 'pending' ), array( 'exception' ), 'changed', 'cancel_pending', 200, array( $signal ) );
+			$rows[ 'C' . ( ++$id ) ] = array( $status, $other, array( 'exception' ), 'changed', 'mainwp_operation_failed', 502 );
 		}
 		$answers[] = 'exception';
+		$flags     = array(
+			array(),
+			array( 'intent' => true ),
+			array( 'failure' => true ),
+			array(
+				'intent'  => true,
+				'failure' => true,
+			),
+		);
 		foreach ( array(
 			array( 'verifying', $all, 'not_cancellable' ),
 			array( 'completed', $all, 'not_cancellable' ),
@@ -552,7 +577,7 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 			array( 'failed_permanent', array( 'confirmed' ), 'ended_failed' ),
 			array( 'failed_permanent', array( null, 'pending', 'not_needed' ), 'not_cancellable' ),
 		) as $terminal ) {
-			$rows[ 'C' . ( ++$id ) ] = array( $terminal[0], $terminal[1], $answers, 'any', $terminal[2], 200 );
+			$rows[ 'C' . ( ++$id ) ] = array( $terminal[0], $terminal[1], $answers, 'any', $terminal[2], 200, $flags );
 		}
 		$child_statuses = array( 'staging', 'transferring', 'running', 'failed_retryable' );
 		foreach ( $child_statuses as $offset => $status ) {
@@ -563,7 +588,132 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 		$rows['C51'] = array( $child_statuses, $other, array( 'cancel_pending unwritten' ), 'lease only', 'mainwp_operation_failed', 502 );
 		$rows['C52'] = array( 'running', array( null ), array( 'finished from running' ), 'real', 'not_cancellable', 200 );
 		$rows['C53'] = array( 'running', array( null ), array( 'finished from staging', 'finished from transferring' ), 'real', 'not_cancellable', 200 );
-		$rows['C54'] = array( $statuses, array( null ), array( 'cancel_pending', 'exception' ), 'intent kept', 'cancel_pending', 200 );
+		$by_status   = array();
+		foreach ( $statuses as $status ) {
+			$by_status[ $status ] = in_array( $status, array( 'staging', 'transferring', 'running' ), true ) ? array( 'cancel_pending', 200 ) : array( 'mainwp_operation_failed', 502 );
+		}
+		$rows['C54'] = array( $statuses, array( null ), array( 'cancel_pending', 'exception' ), 'intent kept', $by_status, 200 );
+		$rows['C55'] = array( 'staging', array( null ), array( 'refused terminal write' ), 'progress save', 'mainwp_operation_failed', 502 );
+		$rows['C56'] = array(
+			'failed_retryable',
+			array( null ),
+			array( 'cancel_pending' ),
+			'changed',
+			'not_cancellable',
+			200,
+			array(
+				array(
+					'intent' => true,
+					'resume' => 'verifying',
+				),
+			),
+		);
+		$rows['C57'] = array( 'running', array( 'pending' ), array( 'finished from running' ), 'stale confirmation', 'not_cancellable', 200 );
+		$attempts    = array( 'not called', 'cancel_pending', 'exception' );
+		$by_answer   = array(
+			'not called'     => array( 'not_cancellable', 200 ),
+			'cancel_pending' => array( 'mainwp_operation_failed', 502 ),
+			'exception'      => array( 'mainwp_operation_failed', 502 ),
+		);
+		$early       = array( 'pending', 'preflight', 'pre_snapshot' );
+		$resumes     = array();
+		$failures    = array(
+			array(
+				'intent'  => true,
+				'failure' => true,
+			),
+		);
+		foreach ( $statuses as $phase ) {
+			if ( 'failed_retryable' === $phase ) {
+				continue;
+			}
+			if ( in_array( $phase, $early, true ) ) {
+				$resumes[] = array(
+					'intent' => true,
+					'resume' => $phase,
+				);
+			}
+			$failures[] = array(
+				'intent'  => true,
+				'failure' => true,
+				'resume'  => $phase,
+			);
+		}
+		$failures[]  = array(
+			'intent'  => true,
+			'failure' => true,
+			'resume'  => 'verifying',
+		);
+		$rows['C58'] = array(
+			$child_statuses,
+			$all,
+			$attempts,
+			'changed',
+			'cancel_pending',
+			200,
+			array(
+				array(
+					'intent' => true,
+					'resume' => 'staging',
+				),
+				array(
+					'intent' => true,
+					'resume' => 'transferring',
+				),
+				array(
+					'intent' => true,
+					'resume' => 'running',
+				),
+			),
+		);
+		$rows['C59'] = array( $early, $all, $attempts, 'changed', $by_answer, 502, array( array( 'intent' => true ) ) );
+		$rows['C60'] = array( 'failed_retryable', $all, $attempts, 'changed', $by_answer, 502, $resumes );
+		$rows['C61'] = array(
+			'failed_retryable',
+			$all,
+			$attempts,
+			'changed',
+			'not_cancellable',
+			200,
+			array(
+				array(
+					'intent' => true,
+					'resume' => 'verifying',
+				),
+			),
+		);
+		$rows['C62'] = array(
+			$early,
+			$all,
+			$attempts,
+			'changed',
+			'cancel_pending',
+			200,
+			array(
+				array(
+					'intent'  => true,
+					'failure' => true,
+				),
+			),
+		);
+		$rows['C63'] = array( 'failed_retryable', $all, $attempts, 'changed', 'cancel_pending', 200, $failures );
+		$rows['C64'] = array( $statuses, array( 'pending' ), $attempts, 'changed', $by_answer, 502, array( array( 'failure' => true ) ) );
+		$rows['C65'] = array(
+			'failed_retryable',
+			$all,
+			$attempts,
+			'changed',
+			'not_cancellable',
+			200,
+			array(
+				array( 'resume' => 'verifying' ),
+				array(
+					'failure' => true,
+					'resume'  => 'verifying',
+				),
+			),
+		);
+		$rows['C66'] = array( array( 'verifying', 'completed' ), $all, $attempts, 'any', 'not_cancellable', 200, $flags );
 		return $rows;
 	}
 
@@ -575,25 +725,41 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 	 * @param array        $confirmations Stored confirmation cases.
 	 * @param array        $answers       Call outcome cases.
 	 * @param string       $change        Whether the persisted job changed.
-	 * @param string       $expected      Result enum or error code.
+	 * @param string|array $expected      Result enum, error code or explicit expectations by case.
 	 * @param int          $http          Expected HTTP status.
+	 * @param array        $signals       Intent, failure and resume phase cases.
 	 * @return void
 	 */
-	public function test_cancel_restore_result_matrix( $status, $confirmations, $answers, $change, $expected, $http ) {
+	public function test_cancel_restore_result_matrix( $status, $confirmations, $answers, $change, $expected, $http, $signals = array( array() ) ) {
 		global $wpdb;
 		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
 		$cases = array();
 		foreach ( (array) $status as $case_status ) {
 			foreach ( $confirmations as $confirmation ) {
-				$cases[] = array( $case_status, $confirmation );
+				foreach ( $signals as $signal ) {
+					$cases[] = array( $case_status, $confirmation, $signal );
+				}
 			}
 		}
 		foreach ( $cases as $case ) {
-			list( $status, $confirmation ) = $case;
+			list( $status, $confirmation, $signal ) = $case;
 			foreach ( $answers as $answer ) {
 				$unwritten  = 'cancel_pending unwritten' === $answer;
 				$finished   = 0 === strpos( $answer, 'finished from ' );
+				$refused    = 'refused terminal write' === $answer;
 				$checkpoint = null === $confirmation ? array() : array( 'cancel_confirmation' => array( 'outcome' => $confirmation ) );
+				if ( ! empty( $signal['intent'] ) ) {
+					$checkpoint['cancel_intent'] = true;
+				}
+				if ( ! empty( $signal['failure'] ) ) {
+					$checkpoint['terminal_failure'] = array(
+						'error'      => 'Original failure',
+						'error_code' => 'mainwp_restore_artifact_missing',
+					);
+				}
+				if ( 'failed_retryable' === $status && isset( $signal['resume'] ) ) {
+					$checkpoint['resume_status'] = $signal['resume'];
+				}
 				if ( $unwritten && 'failed_retryable' === $status ) {
 					$checkpoint['resume_status'] = 'running';
 				}
@@ -603,14 +769,14 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				if ( $finished ) {
 					$initial = substr( $answer, strlen( 'finished from ' ) );
 				} else {
-					$initial = $unwritten || ( 'exception' === $answer && 'any' !== $change ) ? $status : ( 'not called' === $answer ? 'verifying' : 'running' );
+					$initial = $refused || $unwritten || ( 'exception' === $answer && 'any' !== $change ) ? $status : ( 'not called' === $answer ? 'verifying' : 'running' );
 				}
 				$this->assertNotFalse(
 					$wpdb->update(
 						$table,
 						array(
 							'status'        => $initial,
-							'checkpoint'    => wp_json_encode( (object) $checkpoint ),
+							'checkpoint'    => wp_json_encode( (object) ( 'stale confirmation' === $change ? array() : $checkpoint ) ),
 							'child_task_id' => $unwritten || $finished || 'cancel_pending' === $answer ? 'owned-restore' : '',
 							'last_error'    => '',
 							'locked_by'     => '',
@@ -622,11 +788,23 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				);
 				$fired   = 0;
 				$blocked = array(
-					'defer_terminal_failure' => 0,
-					'arm_cancel_intent'      => 0,
+					'defer_terminal_failure'          => 0,
+					'arm_cancel_intent'               => 0,
+					'finish_with_cancel_confirmation' => 0,
 				);
-				$hook    = static function ( $sql ) use ( $wpdb, $table, $status, $checkpoint, $answer, $change, $unwritten, $finished, &$fired, &$blocked ) {
-					if ( $finished ) {
+				$hook    = static function ( $sql ) use ( $wpdb, $table, $status, $checkpoint, $answer, $change, $unwritten, $finished, $refused, &$fired, &$blocked ) {
+					if ( $refused ) {
+						if ( 0 === strpos( $sql, 'UPDATE ' . $table . ' SET `status` = ' ) ) {
+							++$blocked['finish_with_cancel_confirmation'];
+							if ( ! $fired ) {
+								++$fired;
+								MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( 987674, array( 'worker_tick' => 1 ) );
+							}
+							return $sql . ' AND 1 = 0';
+						}
+						return $sql;
+					}
+					if ( $finished && 'real' === $change ) {
 						return $sql;
 					}
 					if ( $unwritten && 0 === strpos( $sql, 'UPDATE ' . $table . ' SET ' ) ) {
@@ -650,6 +828,11 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 						return $sql;
 					}
 					++$fired;
+					if ( 'stale confirmation' === $change ) {
+						// A checkpoint built before the drive-on can retain its old confirmation.
+						MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( 987674, $checkpoint );
+						return $sql;
+					}
 					if ( 'changed' === $change || 'intent kept' === $change ) {
 						$checkpoint['worker_tick'] = 1;
 					}
@@ -706,8 +889,20 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 					remove_filter( 'query', $hook );
 					remove_filter( 'mainwp_fetch_url_authed_pre', $stub, 10 );
 				}
-				$case = $status . ' / ' . ( $confirmation ?? 'absent' ) . ' / ' . $answer . ' / ' . $change;
-				$this->assertSame( $finished ? 0 : 1, $fired, $case . ': the concurrent write must land.' );
+				$case  = $status . ' / ' . ( $confirmation ?? 'absent' ) . ' / ' . $answer . ' / ' . $change;
+				$case .= ' / ' . wp_json_encode( $signal );
+				$this->assertSame( $finished && 'real' === $change ? 0 : 1, $fired, $case . ': the concurrent write must land.' );
+				if ( $refused ) {
+					$this->assertGreaterThan( 1, $blocked['finish_with_cancel_confirmation'], $case );
+					$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( 987674 );
+					$this->assertSame( 1, $job->checkpoint['worker_tick'], $case );
+					$this->assertEmpty( $job->checkpoint['cancel_intent'] ?? null, $case );
+				}
+				if ( 'stale confirmation' === $change ) {
+					$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( 987674 );
+					$this->assertSame( 'pending', $job->checkpoint['cancel_confirmation']['outcome'], $case );
+					$this->assertEmpty( $job->checkpoint['cancel_intent'] ?? null, $case );
+				}
 				if ( 'lease only' === $change ) {
 					$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( 987674 );
 					$this->assertSame( $initial, $job->status, $case );
@@ -715,22 +910,23 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 					$this->assertSame( 1700000060, (int) $job->locked_until, $case );
 					$this->assertSame( 1700000001, (int) $job->updated, $case );
 				}
-				if ( 502 === $http ) {
+				list( $case_expected, $case_http ) = is_array( $expected ) ? ( $expected[ $answer ] ?? $expected[ $status ] ) : array( $expected, $http );
+				if ( 502 === $case_http ) {
 					$this->assertWPError( $response, $case );
-					$this->assertSame( $expected, $response->get_error_code(), $case );
-					$this->assertSame( $http, $response->get_error_data()['status'], $case );
+					$this->assertSame( $case_expected, $response->get_error_code(), $case );
+					$this->assertSame( $case_http, $response->get_error_data()['status'], $case );
 				} else {
 					$this->assertIsArray( $response, $case );
 					$this->assertSame(
 						array(
 							'restore_job_id' => 987674,
 							'status'         => $status,
-							'result'         => $expected,
+							'result'         => $case_expected,
 						),
 						$response,
 						$case
 					);
-					$this->assertSame( $http, rest_ensure_response( $response )->get_status(), $case );
+					$this->assertSame( $case_http, rest_ensure_response( $response )->get_status(), $case );
 				}
 			}
 		}

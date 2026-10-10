@@ -561,6 +561,9 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 		}
 		$rows['C50'] = array( $statuses, $all, array( 'exception' ), 'lease only', 'mainwp_operation_failed', 502 );
 		$rows['C51'] = array( $child_statuses, $other, array( 'cancel_pending unwritten' ), 'lease only', 'mainwp_operation_failed', 502 );
+		$rows['C52'] = array( 'running', array( null ), array( 'finished from running' ), 'real', 'not_cancellable', 200 );
+		$rows['C53'] = array( 'running', array( null ), array( 'finished from staging', 'finished from transferring' ), 'real', 'not_cancellable', 200 );
+		$rows['C54'] = array( $statuses, array( null ), array( 'cancel_pending', 'exception' ), 'intent kept', 'cancel_pending', 200 );
 		return $rows;
 	}
 
@@ -589,6 +592,7 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 			list( $status, $confirmation ) = $case;
 			foreach ( $answers as $answer ) {
 				$unwritten  = 'cancel_pending unwritten' === $answer;
+				$finished   = 0 === strpos( $answer, 'finished from ' );
 				$checkpoint = null === $confirmation ? array() : array( 'cancel_confirmation' => array( 'outcome' => $confirmation ) );
 				if ( $unwritten && 'failed_retryable' === $status ) {
 					$checkpoint['resume_status'] = 'running';
@@ -596,14 +600,18 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				if ( $unwritten && 'pending' === $confirmation ) {
 					$checkpoint['cancel_intent'] = true;
 				}
-				$initial = $unwritten || ( 'exception' === $answer && 'any' !== $change ) ? $status : ( 'not called' === $answer ? 'verifying' : 'running' );
+				if ( $finished ) {
+					$initial = substr( $answer, strlen( 'finished from ' ) );
+				} else {
+					$initial = $unwritten || ( 'exception' === $answer && 'any' !== $change ) ? $status : ( 'not called' === $answer ? 'verifying' : 'running' );
+				}
 				$this->assertNotFalse(
 					$wpdb->update(
 						$table,
 						array(
 							'status'        => $initial,
 							'checkpoint'    => wp_json_encode( (object) $checkpoint ),
-							'child_task_id' => $unwritten || 'cancel_pending' === $answer ? 'owned-restore' : '',
+							'child_task_id' => $unwritten || $finished || 'cancel_pending' === $answer ? 'owned-restore' : '',
 							'last_error'    => '',
 							'locked_by'     => '',
 							'locked_until'  => 1700000000,
@@ -617,7 +625,10 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 					'defer_terminal_failure' => 0,
 					'arm_cancel_intent'      => 0,
 				);
-				$hook    = static function ( $sql ) use ( $wpdb, $table, $status, $checkpoint, $answer, $change, $unwritten, &$fired, &$blocked ) {
+				$hook    = static function ( $sql ) use ( $wpdb, $table, $status, $checkpoint, $answer, $change, $unwritten, $finished, &$fired, &$blocked ) {
+					if ( $finished ) {
+						return $sql;
+					}
 					if ( $unwritten && 0 === strpos( $sql, 'UPDATE ' . $table . ' SET ' ) ) {
 						$frames = array_column( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 'function' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- only cancellation-intent writes must be refused.
 						foreach ( array_keys( $blocked ) as $writer ) {
@@ -639,8 +650,12 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 						return $sql;
 					}
 					++$fired;
-					if ( 'changed' === $change ) {
+					if ( 'changed' === $change || 'intent kept' === $change ) {
 						$checkpoint['worker_tick'] = 1;
+					}
+					if ( 'intent kept' === $change ) {
+						// A stale worker save keeps the armed intent but not its confirmation.
+						$checkpoint['cancel_intent'] = true;
 					}
 					if ( 'lease only' === $change ) {
 						$wpdb->update(
@@ -666,8 +681,12 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 					}
 					return $sql;
 				};
-				$stub    = static function ( $value, $site, $what ) {
-					return 'restore_task_cancel' === $what ? array( 'result' => 'busy' ) : $value;
+				$reply   = $finished ? array(
+					'result' => 'already_terminal',
+					'phase'  => 'completed',
+				) : array( 'result' => 'busy' );
+				$stub    = static function ( $value, $site, $what ) use ( $reply ) {
+					return 'restore_task_cancel' === $what ? $reply : $value;
 				};
 				add_filter( 'query', $hook );
 				add_filter( 'mainwp_fetch_url_authed_pre', $stub, 10, 3 );
@@ -688,7 +707,7 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 					remove_filter( 'mainwp_fetch_url_authed_pre', $stub, 10 );
 				}
 				$case = $status . ' / ' . ( $confirmation ?? 'absent' ) . ' / ' . $answer . ' / ' . $change;
-				$this->assertSame( 1, $fired, $case . ': the concurrent write must land.' );
+				$this->assertSame( $finished ? 0 : 1, $fired, $case . ': the concurrent write must land.' );
 				if ( 'lease only' === $change ) {
 					$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( 987674 );
 					$this->assertSame( $initial, $job->status, $case );

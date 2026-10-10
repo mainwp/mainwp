@@ -532,14 +532,14 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $before ) ) {
             return $before;
         }
-        $attempted     = in_array( $before->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $before->status;
-        $cancel_failed = false;
-        if ( $attempted ) {
+        $call = 'not called';
+        if ( in_array( $before->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $before->status ) {
             try {
                 MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $restore_job_id );
+                $call = 'returned';
             } catch ( MainWP_Exception $e ) {
-                // Another lane can finish after admission, so the exception cannot decide the result.
-                $cancel_failed = true;
+                // Another lane can finish after admission, so only the re-read job decides the result.
+                $call = MainWP_Backup_Restore_Orchestrator::CANCEL_FINISHED_ON_SITE === $e->get_message_error_code() ? 'finished' : 'failed';
             }
         }
         $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
@@ -547,21 +547,24 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND );
         }
         $confirmation = $job->checkpoint['cancel_confirmation']['outcome'] ?? '';
-        $cancellable  = in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $job->status;
-        // Lease renewals do not record cancellation evidence.
-        $unchanged = $before->status === $job->status && $before->checkpoint === $job->checkpoint;
-        $result    = 'not_cancellable';
-        if ( in_array( $job->status, array( 'cancelled', 'failed_permanent' ), true ) && 'unconfirmed' === $confirmation ) {
-            $result = 'cancel_unconfirmed';
-        } elseif ( 'cancelled' === $job->status ) {
-            $result = 'cancelled';
-        } elseif ( 'failed_permanent' === $job->status && 'confirmed' === $confirmation ) {
-            $result = 'ended_failed';
-        } elseif ( $cancellable ) {
-            if ( $attempted && $unchanged && ( $cancel_failed || 'pending' !== $confirmation ) ) {
+        $result       = 'not_cancellable';
+        if ( in_array( $job->status, array( 'cancelled', 'failed_permanent' ), true ) ) {
+            if ( 'unconfirmed' === $confirmation ) {
+                $result = 'cancel_unconfirmed';
+            } elseif ( 'cancelled' === $job->status ) {
+                $result = 'cancelled';
+            } elseif ( 'confirmed' === $confirmation ) {
+                $result = 'ended_failed';
+            }
+        } elseif ( in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $job->status ) {
+            // The worker applies an armed intent even when a stale save dropped its confirmation.
+            $pending = 'pending' === $confirmation || ! empty( $job->checkpoint['cancel_intent'] );
+            // Lease renewals do not record cancellation evidence.
+            $unchanged = $before->status === $job->status && $before->checkpoint === $job->checkpoint;
+            if ( $unchanged && ( 'failed' === $call || ( 'returned' === $call && ! $pending ) ) ) {
                 return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
             }
-            if ( 'pending' === $confirmation ) {
+            if ( $pending ) {
                 $result = 'cancel_pending';
             }
         }

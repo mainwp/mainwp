@@ -44,6 +44,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     const TERMINAL_OUTCOME_DRIVE_ON = 'drive_on';
 
     /**
+     * The drive-on path restores the admission checkpoint, so callers need a
+     * code to tell a finished restore from a cancel that failed to record.
+     */
+    const CANCEL_FINISHED_ON_SITE = 'mainwp_restore_finished_on_site';
+
+    /**
      * Singleton.
      *
      * @var MainWP_Backup_Restore_Orchestrator|null
@@ -492,7 +498,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 throw new MainWP_Exception( esc_html__( 'The restore reached its final state while the cancellation was confirmed and no longer needs cancelling.', 'mainwp' ) );
             }
         }
-        throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ) );
+        throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ), null, self::CANCEL_FINISHED_ON_SITE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped; the final argument is an error code.
     }
 
     /**

@@ -557,11 +557,13 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $result = 'ended_failed';
             }
         } elseif ( in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $job->status ) {
-            if ( MainWP_Backup_Restore_Orchestrator::has_applicable_cancel_intent( $job ) ) {
-                $result = 'cancel_pending';
-            } elseif ( 'failed_retryable' === $job->status && 'verifying' === ( $job->checkpoint['resume_status'] ?? '' ) ) {
-                // Verification retries have already passed the cancellation window.
+            $phase = 'failed_retryable' === $job->status ? (string) ( $job->checkpoint['resume_status'] ?? 'pending' ) : $job->status;
+            if ( 'verifying' === $phase ) {
+                // The worker drives a verification retry on, even when it applies an armed intent.
                 $result = 'not_cancellable';
+            } elseif ( MainWP_Backup_Restore_Orchestrator::has_applicable_cancel_intent( $job ) || ( ! empty( $job->checkpoint['cancel_intent'] ) && in_array( $phase, array( 'pending', 'preflight', 'pre_snapshot' ), true ) ) ) {
+                // An intent armed before staging survives until the worker applies it at staging.
+                $result = 'cancel_pending';
             } elseif ( in_array( $call, array( 'returned', 'failed' ), true ) ) {
                 // Worker progress cannot prove that a cancellation was recorded.
                 return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );

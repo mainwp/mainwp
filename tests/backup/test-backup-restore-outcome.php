@@ -588,11 +588,7 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 		$rows['C51'] = array( $child_statuses, $other, array( 'cancel_pending unwritten' ), 'lease only', 'mainwp_operation_failed', 502 );
 		$rows['C52'] = array( 'running', array( null ), array( 'finished from running' ), 'real', 'not_cancellable', 200 );
 		$rows['C53'] = array( 'running', array( null ), array( 'finished from staging', 'finished from transferring' ), 'real', 'not_cancellable', 200 );
-		$by_status   = array();
-		foreach ( $statuses as $status ) {
-			$by_status[ $status ] = in_array( $status, array( 'staging', 'transferring', 'running' ), true ) ? array( 'cancel_pending', 200 ) : array( 'mainwp_operation_failed', 502 );
-		}
-		$rows['C54'] = array( $statuses, array( null ), array( 'cancel_pending', 'exception' ), 'intent kept', $by_status, 200 );
+		$rows['C54'] = array( $statuses, array( null ), array( 'cancel_pending', 'exception' ), 'intent kept', 'cancel_pending', 200 );
 		$rows['C55'] = array( 'staging', array( null ), array( 'refused terminal write' ), 'progress save', 'mainwp_operation_failed', 502 );
 		$rows['C56'] = array(
 			'failed_retryable',
@@ -639,11 +635,6 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				'resume'  => $phase,
 			);
 		}
-		$failures[]  = array(
-			'intent'  => true,
-			'failure' => true,
-			'resume'  => 'verifying',
-		);
 		$rows['C58'] = array(
 			$child_statuses,
 			$all,
@@ -666,8 +657,8 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				),
 			),
 		);
-		$rows['C59'] = array( $early, $all, $attempts, 'changed', $by_answer, 502, array( array( 'intent' => true ) ) );
-		$rows['C60'] = array( 'failed_retryable', $all, $attempts, 'changed', $by_answer, 502, $resumes );
+		$rows['C59'] = array( $early, $all, $attempts, 'changed', 'cancel_pending', 200, array( array( 'intent' => true ) ) );
+		$rows['C60'] = array( 'failed_retryable', $all, $attempts, 'changed', 'cancel_pending', 200, $resumes );
 		$rows['C61'] = array(
 			'failed_retryable',
 			$all,
@@ -679,6 +670,11 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				array(
 					'intent' => true,
 					'resume' => 'verifying',
+				),
+				array(
+					'intent'  => true,
+					'failure' => true,
+					'resume'  => 'verifying',
 				),
 			),
 		);
@@ -714,6 +710,7 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 			),
 		);
 		$rows['C66'] = array( array( 'verifying', 'completed' ), $all, $attempts, 'any', 'not_cancellable', 200, $flags );
+		$rows['C67'] = array( array( 'pending', 'preflight', 'pre_snapshot', 'failed_retryable' ), array( null ), array( 'contended terminal write' ), 'progress saves', 'cancel_pending', 200 );
 		return $rows;
 	}
 
@@ -747,6 +744,7 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				$unwritten  = 'cancel_pending unwritten' === $answer;
 				$finished   = 0 === strpos( $answer, 'finished from ' );
 				$refused    = 'refused terminal write' === $answer;
+				$contended  = 'contended terminal write' === $answer;
 				$checkpoint = null === $confirmation ? array() : array( 'cancel_confirmation' => array( 'outcome' => $confirmation ) );
 				if ( ! empty( $signal['intent'] ) ) {
 					$checkpoint['cancel_intent'] = true;
@@ -769,7 +767,7 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				if ( $finished ) {
 					$initial = substr( $answer, strlen( 'finished from ' ) );
 				} else {
-					$initial = $refused || $unwritten || ( 'exception' === $answer && 'any' !== $change ) ? $status : ( 'not called' === $answer ? 'verifying' : 'running' );
+					$initial = $refused || $contended || $unwritten || ( 'exception' === $answer && 'any' !== $change ) ? $status : ( 'not called' === $answer ? 'verifying' : 'running' );
 				}
 				$this->assertNotFalse(
 					$wpdb->update(
@@ -792,13 +790,14 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 					'arm_cancel_intent'               => 0,
 					'finish_with_cancel_confirmation' => 0,
 				);
-				$hook    = static function ( $sql ) use ( $wpdb, $table, $status, $checkpoint, $answer, $change, $unwritten, $finished, $refused, &$fired, &$blocked ) {
-					if ( $refused ) {
+				$hook    = static function ( $sql ) use ( $wpdb, $table, $status, $checkpoint, $answer, $change, $unwritten, $finished, $refused, $contended, &$fired, &$blocked ) {
+					if ( $refused || $contended ) {
 						if ( 0 === strpos( $sql, 'UPDATE ' . $table . ' SET `status` = ' ) ) {
 							++$blocked['finish_with_cancel_confirmation'];
-							if ( ! $fired ) {
+							// One save makes a refusal; a save before every swap makes contention.
+							if ( $contended || ! $fired ) {
 								++$fired;
-								MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( 987674, array( 'worker_tick' => 1 ) );
+								MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( 987674, array( 'worker_tick' => $fired ) );
 							}
 							return $sql . ' AND 1 = 0';
 						}
@@ -891,7 +890,17 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 				}
 				$case  = $status . ' / ' . ( $confirmation ?? 'absent' ) . ' / ' . $answer . ' / ' . $change;
 				$case .= ' / ' . wp_json_encode( $signal );
-				$this->assertSame( $finished && 'real' === $change ? 0 : 1, $fired, $case . ': the concurrent write must land.' );
+				$this->assertSame( $finished && 'real' === $change ? 0 : ( $contended ? 5 : 1 ), $fired, $case . ': the concurrent write must land.' );
+				if ( $contended ) {
+					$this->assertSame( 5, $blocked['finish_with_cancel_confirmation'], $case );
+					$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( 987674 );
+					$this->assertSame( 5, $job->checkpoint['worker_tick'], $case );
+					$this->assertTrue( $job->checkpoint['cancel_intent'], $case );
+					$this->assertSame( 'pending', $job->checkpoint['cancel_confirmation']['outcome'], $case );
+					$this->assertFalse( MainWP_Backup_Restore_Orchestrator::has_applicable_cancel_intent( $job ), $case . ': the worker skips the intent before staging.' );
+					$job->status = 'staging';
+					$this->assertTrue( MainWP_Backup_Restore_Orchestrator::has_applicable_cancel_intent( $job ), $case . ': the worker applies the intent at staging.' );
+				}
 				if ( $refused ) {
 					$this->assertGreaterThan( 1, $blocked['finish_with_cancel_confirmation'], $case );
 					$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( 987674 );

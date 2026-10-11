@@ -4073,12 +4073,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     /**
      * Validate update backup params.
      *
-     * Turning native backups on here clears the stored primary backup method,
-     * as update-backup-settings-v1 does, so a stored API-backups primary must
-     * not refuse that request. A primary sent in the same body still counts.
-     * Validation runs before sanitization, so "turns native on" is read from
-     * the body update_backup_settings() writes from, coerced the way the
-     * flag's sanitizer coerces it ("false" and null mean off there).
+     * Judges the primary method and native flag that update_backup_settings()
+     * will store, read from the same body and coerced the way the route
+     * sanitizers coerce them. Validation runs before sanitization, and the
+     * general validator reads merged params (query included, null as absent),
+     * so it can disagree with this route's write. Turning native on without a
+     * primary in the body clears the stored primary, as update-backup-settings-v1
+     * does; a primary sent with it still counts. Only requests that send a
+     * flag or a primary are checked, as on general/edit.
      *
      * @param WP_REST_Request $request Request object.
      *
@@ -4086,14 +4088,55 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function validate_update_backup_params( $request ) {
         $body = $this->get_request_body( $request );
-        $body = is_array( $body ) ? $this->fold_native_backups_alias( $body ) : array();
-        $on   = array_key_exists( 'mainwp_enable_legacy_backup_feature', $body ) && 0 !== (int) $this->sanitize_field( $body['mainwp_enable_legacy_backup_feature'] );
-        if ( $on && ! array_key_exists( 'mainwp_primary_backup', $body ) && ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
-            $check = clone $request;
-            $check->set_param( 'mainwp_primary_backup', '' );
-            return $this->validate_update_general_params( $check );
+        $body = is_array( $body ) ? $body : array();
+        $sent = array();
+        foreach ( array( 'mainwp_enable_legacy_backup_feature', 'mainwp_enable_native_backups' ) as $key ) {
+            if ( array_key_exists( $key, $body ) ) {
+                $sent[ $key ] = 0 !== (int) $this->sanitize_field( $body[ $key ] );
+            }
         }
-        return $this->validate_update_general_params( $request );
+        if ( 2 === count( $sent ) && $sent['mainwp_enable_legacy_backup_feature'] !== $sent['mainwp_enable_native_backups'] ) {
+            return new WP_Error(
+                'invalid_backup_config',
+                __( 'mainwp_enable_native_backups and mainwp_enable_legacy_backup_feature name the same setting and were sent with different values.', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+        $primary_sent = array_key_exists( 'mainwp_primary_backup', $body );
+        if ( empty( $sent ) && ! $primary_sent ) {
+            return true;
+        }
+
+        $was_on = (bool) MainWP_Backup_Settings::is_native_backups_enabled();
+        $on     = empty( $sent ) ? $was_on : reset( $sent );
+        if ( $primary_sent ) {
+            // The write casts the sanitized value to a string, so null stores ''.
+            $primary = (string) $this->sanitize_field( $body['mainwp_primary_backup'] );
+        } elseif ( $on && ! $was_on ) {
+            $primary = '';
+        } else {
+            $primary = get_option( 'mainwp_primaryBackup' );
+            if ( is_array( $primary ) && isset( $primary['value'] ) ) {
+                $primary = $primary['value'];
+            }
+            $primary = is_scalar( $primary ) ? (string) $primary : '';
+        }
+
+        if ( 'module-api-backups' === $primary && $on ) {
+            return new WP_Error(
+                'invalid_backup_config',
+                __( 'When mainwp_primary_backup is "module-api-backups", mainwp_enable_legacy_backup_feature must be disabled (0).', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+        if ( '' === $primary && ! $on ) {
+            return new WP_Error(
+                'invalid_backup_config',
+                __( 'When mainwp_primary_backup is not "module-api-backups", mainwp_enable_legacy_backup_feature must be enabled (1).', 'mainwp' ),
+                array( 'status' => 400 )
+            );
+        }
+        return true;
     }
 
     /**

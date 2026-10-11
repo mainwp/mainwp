@@ -491,66 +491,122 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * The validator decides "turns native on" from the body the write reads, with the
-	 * coercion the route sanitizer applies, so a falsy string is not treated as on.
+	 * The backups route judges the native flag and primary method its write stores:
+	 * read from the body (not the query string), coerced as the sanitizers coerce
+	 * them, null included. Stored states: off_api = native off with an API-backups
+	 * primary, on_empty = native on with no primary, on_api = a contradictory stored
+	 * pair the route must leave alone unless the request touches it.
 	 *
-	 * @return array Body, expected status, native flag and primary method.
+	 * @return array Stored state, body, query, expected status, native flag and primary.
 	 */
-	public static function native_flag_inputs_over_api_primary(): array {
+	public static function native_flag_and_primary_matrix(): array {
+		$api = 'module-api-backups';
 		return array(
-			'string false'              => array( array( 'mainwp_enable_native_backups' => 'false' ), 200, 0, 'module-api-backups' ),
-			'legacy key string false'   => array( array( 'mainwp_enable_legacy_backup_feature' => 'false' ), 200, 0, 'module-api-backups' ),
-			'string zero'               => array( array( 'mainwp_enable_native_backups' => '0' ), 200, 0, 'module-api-backups' ),
-			'json false'                => array( array( 'mainwp_enable_native_backups' => false ), 200, 0, 'module-api-backups' ),
-			'string one'                => array( array( 'mainwp_enable_native_backups' => '1' ), 200, 1, '' ),
-			'json true'                 => array( array( 'mainwp_enable_native_backups' => true ), 200, 1, '' ),
-			'null legacy with alias on' => array(
+			'string false'                   => array( 'off_api', array( 'mainwp_enable_native_backups' => 'false' ), array(), 200, 0, $api ),
+			'legacy key string false'        => array( 'off_api', array( 'mainwp_enable_legacy_backup_feature' => 'false' ), array(), 200, 0, $api ),
+			'string zero'                    => array( 'off_api', array( 'mainwp_enable_native_backups' => '0' ), array(), 200, 0, $api ),
+			'json false'                     => array( 'off_api', array( 'mainwp_enable_native_backups' => false ), array(), 200, 0, $api ),
+			'string one'                     => array( 'off_api', array( 'mainwp_enable_native_backups' => '1' ), array(), 200, 1, '' ),
+			'json true'                      => array( 'off_api', array( 'mainwp_enable_native_backups' => true ), array(), 200, 1, '' ),
+			'null legacy with alias on'      => array(
+				'off_api',
 				array(
 					'mainwp_enable_legacy_backup_feature' => null,
 					'mainwp_enable_native_backups'        => 1,
 				),
+				array(),
 				400,
 				0,
-				'module-api-backups',
+				$api,
 			),
-			'on with api primary'       => array(
+			'on with api primary'            => array(
+				'off_api',
 				array(
 					'mainwp_enable_native_backups' => 1,
-					'mainwp_primary_backup'        => 'module-api-backups',
+					'mainwp_primary_backup'        => $api,
 				),
+				array(),
 				400,
 				0,
-				'module-api-backups',
+				$api,
 			),
-			'on with empty primary'     => array(
+			'on with empty primary'          => array(
+				'off_api',
 				array(
 					'mainwp_enable_native_backups' => 1,
 					'mainwp_primary_backup'        => '',
 				),
+				array(),
 				200,
 				1,
 				'',
 			),
+			'on with null primary'           => array(
+				'off_api',
+				array(
+					'mainwp_enable_native_backups' => 1,
+					'mainwp_primary_backup'        => null,
+				),
+				array(),
+				200,
+				1,
+				'',
+			),
+			'null primary alone'             => array( 'off_api', array( 'mainwp_primary_backup' => null ), array(), 400, 0, $api ),
+			'flag only in query'             => array( 'off_api', array( 'mainwp_on_demand_retention_count' => 5 ), array( 'mainwp_enable_native_backups' => 1 ), 200, 0, $api ),
+			'null legacy with alias on, on'  => array(
+				'on_empty',
+				array(
+					'mainwp_enable_legacy_backup_feature' => null,
+					'mainwp_enable_native_backups'        => 1,
+				),
+				array(),
+				400,
+				1,
+				'',
+			),
+			'null flag while on'             => array( 'on_empty', array( 'mainwp_enable_native_backups' => null ), array(), 400, 1, '' ),
+			'api primary, off only in query' => array( 'on_empty', array( 'mainwp_primary_backup' => $api ), array( 'mainwp_enable_native_backups' => 0 ), 400, 1, '' ),
+			'off with api primary'           => array(
+				'on_empty',
+				array(
+					'mainwp_enable_native_backups' => 0,
+					'mainwp_primary_backup'        => $api,
+				),
+				array(),
+				200,
+				0,
+				$api,
+			),
+			'already on'                     => array( 'on_empty', array( 'mainwp_enable_native_backups' => 1 ), array(), 200, 1, '' ),
+			'untouched contradictory state'  => array( 'on_api', array( 'mainwp_on_demand_retention_count' => 5 ), array(), 200, 1, $api ),
+			'on over contradictory state'    => array( 'on_api', array( 'mainwp_enable_native_backups' => 1 ), array(), 400, 1, $api ),
 		);
 	}
 
 	/**
-	 * Native backups off with a stored API-backups primary: each flag spelling ends in
-	 * the state its sanitized value names, or is refused with nothing written.
+	 * Each row ends in the state its sanitized body names, or is refused with nothing written.
 	 *
-	 * @dataProvider native_flag_inputs_over_api_primary
+	 * @dataProvider native_flag_and_primary_matrix
+	 * @param string $state Stored state key.
 	 * @param array  $body Request body.
+	 * @param array  $query Query string parameters.
 	 * @param int    $status Expected HTTP status.
 	 * @param int    $native Expected native flag.
 	 * @param string $primary Expected primary method.
 	 * @return void
 	 */
-	public function test_backups_edit_native_flag_inputs_over_api_primary( array $body, int $status, int $native, string $primary ): void {
-		update_option( 'mainwp_enableNativeBackups', 0 );
-		update_option( 'mainwp_enableLegacyBackupFeature', 0 );
-		update_option( 'mainwp_primaryBackup', 'module-api-backups' );
+	public function test_backups_edit_native_flag_and_primary_matrix( string $state, array $body, array $query, int $status, int $native, string $primary ): void {
+		$on = 'off_api' === $state ? 0 : 1;
+		update_option( 'mainwp_enableNativeBackups', $on );
+		update_option( 'mainwp_enableLegacyBackupFeature', $on );
+		update_option( 'mainwp_primaryBackup', 'on_empty' === $state ? '' : 'module-api-backups' );
 
-		$response = $this->do_authenticated_request( 'PUT', '/mainwp/v2/settings/backups/edit', $body );
+		$request = new WP_REST_Request( 'PUT', '/mainwp/v2/settings/backups/edit' );
+		$request->set_header( 'content-type', 'application/json' );
+		$request->set_body( (string) wp_json_encode( $body ) );
+		$request->set_query_params( $query );
+		$response = rest_do_request( $request );
 
 		$this->assertSame( $status, $response->get_status() );
 		$this->assertSame( $native, (int) get_option( 'mainwp_enableNativeBackups' ) );

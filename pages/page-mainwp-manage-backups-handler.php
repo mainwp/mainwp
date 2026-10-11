@@ -918,7 +918,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             }
         }
         if ( isset( $input['loadFilesBeforeZip'] ) ) {
-            $fields['archive_tuning']['load_files_before_zip'] = 1 === (int) $input['loadFilesBeforeZip'];
+            // The add form posts '' here, which has always meant the global setting.
+            $fields['archive_tuning']['load_files_before_zip'] = '' === $input['loadFilesBeforeZip'] || 1 === (int) $input['loadFilesBeforeZip'];
         }
         if ( isset( $input['retention_count'] ) ) {
             $fields['retention']['count'] = absint( $input['retention_count'] );
@@ -2294,12 +2295,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         $values = array( 'paused' => 0 );
 
-        // A next_run stored before the pause may be stale; recompute
-        // so the task neither fires immediately nor skips a window.
-        if ( (int) $task->next_run > 0 ) {
-            $calculator         = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
-            $values['next_run'] = $calculator->compute_next_run( $task, empty( $task->last_run ) ? null : (int) $task->last_run );
-        }
+        // The kept slot may be stale or an elapsed sentinel from a schedule edited while paused.
+        $calculator         = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+        $values['next_run'] = $calculator->compute_next_run( $task, empty( $task->last_run ) ? null : (int) $task->last_run );
 
         MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, $values );
         return array( 'result' => 'SUCCESS' );

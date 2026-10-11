@@ -1868,7 +1868,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // a stable machine-readable code for support and AI diagnosis.
         $checkpoint['last_error_code']       = $error_code;
         $checkpoint['last_failure_transfer'] = $this->transfer_position( $checkpoint );
-        $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+        if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+            // A retry without its saved resume point would restart at pending.
+            return;
+        }
 
         $next_retry_at = time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts );
         if ( ! $store->fail_retryable( (int) $job->id, $error, $attempts, $next_retry_at, $this->lock_token ) ) {

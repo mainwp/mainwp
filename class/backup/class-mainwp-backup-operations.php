@@ -2211,6 +2211,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return int|null
      */
     private static function preview_task_next_run( array $values, ?object $task = null ): ?int {
+        if ( null !== $task && ! empty( $task->paused ) ) {
+            return (int) $task->next_run > 0 ? (int) $task->next_run : null;
+        }
         $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
         $next       = $calculator->compute_next_run( (object) $values, empty( $task->last_run ) ? null : (int) $task->last_run );
         return $next > 0 ? $next : null;

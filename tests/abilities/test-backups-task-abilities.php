@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Backup_Operations;
+use MainWP\Dashboard\MainWP_Backup_Schedule_Calculator;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
@@ -486,6 +487,60 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $fields['schedule'], $output['task']['schedule'] );
 		$this->assertSame( $fields['interval_hours'] ?? null, $output['schedule_detail']['interval_hours'] );
 		$this->assertSame( $fields['time_of_day'] ?? null, $output['schedule_detail']['time_of_day'] );
+	}
+
+	/**
+	 * A paused edit keeps its stored slot until resume, including the elapsed sentinel.
+	 *
+	 * @dataProvider update_schedule_slots
+	 * @param bool $paused Whether the task is paused.
+	 * @param bool $has_slot Whether the stored next run is positive.
+	 */
+	public function test_update_schedule_preview_matches_confirmed_slot( $paused, $has_slot ) {
+		$db       = MainWP_DB_Backup::instance();
+		$old_next = $has_slot ? time() - HOUR_IN_SECONDS : 0;
+		$last_run = time() - 5 * HOUR_IN_SECONDS;
+		$db->update_backup_task_with_values(
+			$this->task_id,
+			array(
+				'paused'   => (int) $paused,
+				'next_run' => $old_next,
+				'last_run' => $last_run,
+			)
+		);
+		$input   = array(
+			'task_id'        => $this->task_id,
+			'schedule'       => 'interval',
+			'interval_hours' => 3,
+		);
+		$preview = $this->execute( 'update-backup-task', $input + array( 'dry_run' => true ) );
+		$this->assert_output( 'update-backup-task', $preview );
+		$output = $this->execute( 'update-backup-task', $input + array( 'confirm' => true ) );
+		$this->assert_output( 'update-backup-task', $output );
+		$this->assertSame( $output['task']['next_run_at'], $preview['would_affect']['next_run_at'] );
+		$saved      = $db->get_backup_task_by_id( $this->task_id );
+		$calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+		$expected   = $paused ? $old_next : $calculator->compute_next_run( $saved, $last_run );
+		$this->assertSame( $expected, (int) $saved->next_run );
+		if ( $expected > 0 ) {
+			$this->assertSame( $expected, strtotime( $preview['would_affect']['next_run_at'] ) );
+		} else {
+			$this->assertNull( $preview['would_affect']['next_run_at'] );
+		}
+	}
+
+	/**
+	 * Preview must follow the same paused rule for zero and positive slots.
+	 *
+	 * @return array
+	 */
+	public static function update_schedule_slots() {
+		return array(
+			'paused elapsed' => array( true, false ),
+			'paused stale'   => array( true, true ),
+			'active elapsed' => array( false, false ),
+			'active stale'   => array( false, true ),
+		);
 	}
 
 	/**

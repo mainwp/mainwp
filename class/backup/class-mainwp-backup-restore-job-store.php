@@ -397,14 +397,6 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
-     * Raw checkpoint probes need the exact boolean encoding so unrelated
-     * truthy values cannot be mistaken for a stored cancellation intent.
-     *
-     * @var string
-     */
-    const CANCEL_INTENT_FRAGMENT = '"cancel_intent":true';
-
-    /**
      * Persist the checkpoint.
      *
      * The UI can record stop evidence outside the worker's lease. A stale

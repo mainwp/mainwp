@@ -4199,8 +4199,50 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Lease changes and stored stop evidence must survive stale writes.
+	 * A retry needs its durable resume point before leaving the running phase.
+	 */
+	public function test_retryable_failure_keeps_phase_when_checkpoint_swaps_miss() {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job    = $this->make_job( array(), $store::STATUS_RUNNING, array( 'child_task_id' => 'checkpoint-retry-task' ) );
+		$id     = (int) $job->id;
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$misses = 0;
+		$events = array();
 
+		$this->responses['restore_task_run'] = array( 'error' => 'Temporary restore failure' );
+
+		$race  = function ( $sql ) use ( $table, $id, $store, &$misses ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) && str_contains( $sql, 'WHERE id = ' . $id . ' AND checkpoint = ' ) ) {
+				$this->assertNotEmpty( $store->get_job( $id )->locked_by, 'The worker must still hold the lease at every missed swap.' );
+				++$misses;
+				return $sql . ' AND 1 = 0';
+			}
+			return $sql;
+		};
+		$retry = static function ( $job_id ) use ( &$events ) {
+			$events[] = $job_id;
+		};
+		add_filter( 'query', $race );
+		add_action( 'mainwp_backup_diag_restore_retry', $retry );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, $id );
+		} finally {
+			remove_filter( 'query', $race );
+			remove_action( 'mainwp_backup_diag_restore_retry', $retry );
+		}
+		$fresh = $store->get_job( $id );
+		$this->assertSame( 5, $misses );
+		$this->assertSame( $store::STATUS_RUNNING, $fresh->status );
+		$this->assertSame( $job->attempt_count, $fresh->attempt_count );
+		$this->assertSame( $job->last_error, $fresh->last_error );
+		$this->assertArrayNotHasKey( 'resume_status', $fresh->checkpoint );
+		$this->assertSame( $job->checkpoint, $fresh->checkpoint );
+		$this->assertSame( array(), $events );
+	}
+
+	/**
+	 * Lease changes and stored stop evidence must survive stale writes.
+	 *
 	 * @dataProvider lease_checkpoint_interleavings
 	 * @param string $order Interleaving to exercise.
 	 */

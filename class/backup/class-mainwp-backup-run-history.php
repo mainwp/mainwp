@@ -95,28 +95,28 @@ class MainWP_Backup_Run_History {
      * @return int Row identity, zero when history could not be written.
      */
     public static function start( int $task_id, int $site_id, int $started, string $trigger = '', int $owner = 0, ?int $restore_job_id = null, ?string $ref = null ): int {
-        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
-            return 0;
-        }
-        $user_id = get_current_user_id();
-        if ( '' === $trigger ) {
-            $trigger = self::$context['trigger'];
-            $user_id = self::$context['user_id'];
-            if ( '' === $trigger ) {
-                $cron    = defined( 'DOING_CRON' ) && DOING_CRON;
-                $trigger = $cron ? 'schedule' : 'manual';
-                $user_id = $cron ? $owner : get_current_user_id();
-            }
-        } elseif ( in_array( $trigger, array( 'update_gate', 'restore_safety' ), true ) ) {
-            // System lanes have no durable initiating user to attribute.
-            $user_id = 0;
-        }
-        if ( ! in_array( $trigger, array( 'schedule', 'manual', 'ability', 'update_gate', 'restore_safety' ), true ) ) {
-            return 0;
-        }
         return (int) self::write(
-            static function () use ( $task_id, $site_id, $started, $trigger, $user_id, $restore_job_id, $ref ) {
+            static function () use ( $task_id, $site_id, $started, $trigger, $owner, $restore_job_id, $ref ) {
                 global $wpdb;
+                if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+                    return 0;
+                }
+                $user_id = get_current_user_id();
+                if ( '' === $trigger ) {
+                    $trigger = self::$context['trigger'];
+                    $user_id = self::$context['user_id'];
+                    if ( '' === $trigger ) {
+                        $cron    = defined( 'DOING_CRON' ) && DOING_CRON;
+                        $trigger = $cron ? 'schedule' : 'manual';
+                        $user_id = $cron ? $owner : get_current_user_id();
+                    }
+                } elseif ( in_array( $trigger, array( 'update_gate', 'restore_safety' ), true ) ) {
+                    // System lanes have no durable initiating user to attribute.
+                    $user_id = 0;
+                }
+                if ( ! in_array( $trigger, array( 'schedule', 'manual', 'ability', 'update_gate', 'restore_safety' ), true ) ) {
+                    return 0;
+                }
                 $inserted = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- durable history writer.
                     self::table_name(),
                     array(
@@ -199,14 +199,13 @@ class MainWP_Backup_Run_History {
      * @param int|null $snapshot_id This site's snapshot.
      */
     public static function finalize_run( int $task_id, int $started, string $outcome, ?int $site_id = null, string $error_code = '', ?int $snapshot_id = null ): void {
-        global $wpdb;
-        $sql    = 'SELECT id FROM ' . self::table_name() . ' WHERE task_id = %d AND started = %d AND outcome = %s';
-        $values = array( $task_id, $started, 'running' );
+        $where  = 'task_id = %d AND started = %d';
+        $values = array( $task_id, $started );
         if ( null !== $site_id ) {
-            $sql     .= ' AND site_id = %d';
+            $where   .= ' AND site_id = %d';
             $values[] = $site_id;
         }
-        self::finalize_matching( $wpdb->prepare( $sql, $values ), $outcome, $error_code, $snapshot_id ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed clauses; every value prepared.
+        self::finalize_matching( $where, $values, $outcome, $error_code, $snapshot_id );
     }
 
     /**
@@ -216,8 +215,7 @@ class MainWP_Backup_Run_History {
      * @param int $started Newly claimed run timestamp.
      */
     public static function finalize_superseded( int $task_id, int $started ): void {
-        global $wpdb;
-        self::finalize_matching( $wpdb->prepare( 'SELECT id FROM ' . self::table_name() . ' WHERE task_id = %d AND started < %d AND outcome = %s', $task_id, $started, 'running' ), 'incomplete', '' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table; every value prepared.
+        self::finalize_matching( 'task_id = %d AND started < %d', array( $task_id, $started ), 'incomplete', '' );
     }
 
     /**
@@ -229,8 +227,7 @@ class MainWP_Backup_Run_History {
      * @param string $error_code Safe formatter input.
      */
     public static function finalize_restore_safety( int $restore_job_id, string $outcome, string $error_code = '' ): void {
-        global $wpdb;
-        self::finalize_matching( $wpdb->prepare( 'SELECT id FROM ' . self::table_name() . ' WHERE restore_job_id = %d AND trigger_source = %s AND outcome = %s', $restore_job_id, 'restore_safety', 'running' ), $outcome, $error_code ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table; every value prepared.
+        self::finalize_matching( 'restore_job_id = %d AND trigger_source = %s', array( $restore_job_id, 'restore_safety' ), $outcome, $error_code );
     }
 
     /**
@@ -243,23 +240,25 @@ class MainWP_Backup_Run_History {
      * @param string $error_code Safe formatter input.
      */
     public static function finalize_ref( int $site_id, string $ref, string $trigger, string $outcome, string $error_code = '' ): void {
-        global $wpdb;
-        self::finalize_matching( $wpdb->prepare( 'SELECT id FROM ' . self::table_name() . ' WHERE site_id = %d AND ref = %s AND trigger_source = %s AND outcome = %s', $site_id, $ref, $trigger, 'running' ), $outcome, $error_code ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table; every value prepared.
+        self::finalize_matching( 'site_id = %d AND ref = %s AND trigger_source = %s', array( $site_id, $ref, $trigger ), $outcome, $error_code );
     }
 
     /**
-     * Read failures need the same containment as failed writes.
+     * Building and running the lookup sit inside the same containment as the
+     * write, so no part of a history update can interrupt the lane it records.
      *
-     * @param string   $sql Prepared identity query.
+     * @param string   $where Fixed identity clauses with placeholders.
+     * @param array    $values One value per placeholder.
      * @param string   $outcome Terminal outcome.
      * @param string   $error_code Safe formatter input.
      * @param int|null $snapshot_id This site's snapshot.
      */
-    private static function finalize_matching( string $sql, string $outcome, string $error_code, ?int $snapshot_id = null ): void {
+    private static function finalize_matching( string $where, array $values, string $outcome, string $error_code, ?int $snapshot_id = null ): void {
         self::write(
-            static function () use ( $sql, $outcome, $error_code, $snapshot_id ) {
+            static function () use ( $where, $values, $outcome, $error_code, $snapshot_id ) {
                 global $wpdb;
-                $ids = $wpdb->get_col( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- callers prepare the fixed identity query.
+                $values[] = 'running';
+                $ids      = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . self::table_name() . ' WHERE ' . $where . ' AND outcome = %s', $values ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table and clauses; every value prepared.
                 if ( '' !== $wpdb->last_error ) {
                     return false;
                 }

@@ -2740,18 +2740,39 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             )
         );
 
-        // Close the displaced handle's row only once the new handle replaced it: a
-        // failed create or handle write leaves the old handle for its owner to resume.
-        // The numeric id reads the stored option, not a copy carried on $website.
-        $stored = json_decode( (string) MainWP_DB::instance()->get_website_option( (int) $website->id, self::ADHOC_TASK_OPTION ), true );
-        if ( ! empty( $persisted['task_id'] ) && (string) $persisted['task_id'] !== $task_id && is_array( $stored ) && (string) ( $stored['task_id'] ?? '' ) === $task_id ) {
-            $persisted_owner = (string) ( $persisted['owner'] ?? '' );
-            MainWP_Backup_Run_History::finalize_ref( $site_id, (string) $persisted['task_id'], '' === $persisted_owner ? 'update_gate' : 'restore_safety', 'incomplete' );
-        }
+        self::close_displaced_handle_history( (int) $website->id, $persisted, $task_id );
 
         MainWP_Backup_Run_History::start( 0, $site_id, $started, '' === $owner ? 'update_gate' : 'restore_safety', 0, '' === $owner ? null : (int) $owner, $task_id );
 
         return $task_id;
+    }
+
+    /**
+     * Close the history row of a handle this create displaced.
+     *
+     * Only once the stored handle holds the new task: a failed create or handle
+     * write leaves the old handle for its owner to resume. The numeric id reads
+     * the stored option, not a copy carried on the website row, and a failed
+     * read counts as not replaced.
+     *
+     * @param int    $site_id   Child site id.
+     * @param array  $persisted Handle read before the create.
+     * @param string $task_id   Task the create returned.
+     */
+    private static function close_displaced_handle_history( int $site_id, array $persisted, string $task_id ): void {
+        if ( empty( $persisted['task_id'] ) || (string) $persisted['task_id'] === $task_id ) {
+            return;
+        }
+        try {
+            $stored = json_decode( (string) MainWP_DB::instance()->get_website_option( $site_id, self::ADHOC_TASK_OPTION ), true );
+        } catch ( \Throwable $e ) {
+            return;
+        }
+        if ( ! is_array( $stored ) || (string) ( $stored['task_id'] ?? '' ) !== $task_id ) {
+            return;
+        }
+        $owner = (string) ( $persisted['owner'] ?? '' );
+        MainWP_Backup_Run_History::finalize_ref( $site_id, (string) $persisted['task_id'], '' === $owner ? 'update_gate' : 'restore_safety', 'incomplete' );
     }
 
     /**
@@ -2930,7 +2951,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         if ( 'running' !== $status['status'] ) {
-            MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'completed' === $status['status'] && '' !== $downloaded ? 'completed' : 'failed', is_string( $status['meta']['error_code'] ?? null ) ? $status['meta']['error_code'] : '' );
+            MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'completed' === $status['status'] && '' !== $downloaded ? 'completed' : 'failed', 'completed' !== $status['status'] && is_string( $status['meta']['error_code'] ?? null ) ? $status['meta']['error_code'] : '' );
             /**
              * Fires when the dashboard observes a backup task reach a terminal phase.
              *

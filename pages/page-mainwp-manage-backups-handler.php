@@ -804,20 +804,27 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     private static function finalize_site_history( $task, int $site_id, int $history_started, bool $success ): void {
         $snapshot_id = null;
         $error_code  = '';
-        if ( $success ) {
-            $snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
-            $claimed  = (int) ( $task->last ?? 0 );
-            $floor    = $claimed > 0 ? min( $history_started, $claimed ) : $history_started;
-            if ( $snapshot && (int) $snapshot->created >= $floor ) {
-                $snapshot_id = (int) $snapshot->id;
+        // These reads exist only for history; a fault in them must not stop the
+        // driver before it saves this site's mark.
+        try {
+            if ( $success ) {
+                $snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+                $claimed  = (int) ( $task->last ?? 0 );
+                $floor    = $claimed > 0 ? min( $history_started, $claimed ) : $history_started;
+                if ( $snapshot && (int) $snapshot->created >= $floor ) {
+                    $snapshot_id = (int) $snapshot->id;
+                }
+            } else {
+                $progress   = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+                $error_code = $progress->fetchResult['error_code'] ?? '';
+                $error_code = is_string( $error_code ) ? $error_code : '';
+                if ( '' === $error_code && preg_match( '/^\[(mainwp_[a-z0-9_]+)\]/', (string) ( $progress->last_error ?? '' ), $match ) ) {
+                    $error_code = $match[1];
+                }
             }
-        } else {
-            $progress   = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
-            $error_code = $progress->fetchResult['error_code'] ?? '';
-            $error_code = is_string( $error_code ) ? $error_code : '';
-            if ( '' === $error_code && preg_match( '/^\[(mainwp_[a-z0-9_]+)\]/', (string) ( $progress->last_error ?? '' ), $match ) ) {
-                $error_code = $match[1];
-            }
+        } catch ( \Throwable $e ) {
+            $snapshot_id = null;
+            $error_code  = '';
         }
         MainWP_Backup_Run_History::finalize_run( (int) $task->id, $history_started, $success ? 'completed' : 'failed', $site_id, $error_code, $snapshot_id );
     }
@@ -1348,9 +1355,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             // cancel before asking for a new backup.
             static::flush_pending_child_cancel( $website );
 
-            $_mark_detail = '';
-            $backupResult = null;
-            $advanced     = false;
+            $_mark_detail    = '';
+            $_returned_error = false;
+            $backupResult    = null;
+            $advanced        = false;
             try {
                 $subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $task->name ), $task->subfolder );
 
@@ -1388,9 +1396,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 }
 
                 if ( $error ) {
-                    $errorOutput   .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
-                    $errorOutput   .= $tmpErrorOutput . '<br />';
-                    $errorEntries[] = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $tmpErrorOutput;
+                    // A failure returned in the result, not thrown, is still this
+                    // site's failure for the run history.
+                    $_returned_error = true;
+                    $errorOutput    .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
+                    $errorOutput    .= $tmpErrorOutput . '<br />';
+                    $errorEntries[]  = 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />' . $tmpErrorOutput;
                 }
             } catch ( \Exception $e ) {
                 if ( $e instanceof MainWP_Exception
@@ -1537,7 +1548,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
             do_action( 'mainwp_backup_diag_site_mark', (int) $task->id, (int) $siteid, '' === $_mark_detail ? 'success' : 'error', $_mark_detail );
 
-            static::finalize_site_history( $task, (int) $siteid, $history_started, '' === $_mark_detail );
+            static::finalize_site_history( $task, (int) $siteid, $history_started, '' === $_mark_detail && ! $_returned_error );
 
             $completed_sites[ $siteid ] = true;
             MainWP_DB_Backup::instance()->update_completed_sites( $task->id, $completed_sites );

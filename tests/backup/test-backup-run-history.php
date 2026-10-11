@@ -754,31 +754,211 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Displacing an abandoned system handle must retire its evidence.
+	 * Displacing an abandoned handle, across every way the replacement can end.
+	 *
+	 * @dataProvider displacement_matrix
+	 * @param string $mode replaced, create_refused, write_refused or readback_throws.
+	 * @param string $old_outcome Expected outcome of the displaced row.
+	 * @param bool   $new_row Whether the replacement opens a row.
 	 */
-	public function test_abandoned_update_gate_handle_finalizes_when_displaced(): void {
+	public function test_displacement_matrix( string $mode, string $old_outcome, bool $new_row ): void {
+		global $wpdb;
 		$site              = $this->site();
 		$old_ref           = MainWP_Backup_Executor::trigger_backup( $site );
 		$website           = MainWP_DB::instance()->get_website_by_id( $site );
 		$handle            = json_decode( MainWP_DB::instance()->get_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
 		$handle['started'] = time() - MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS - 1;
 		MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, wp_json_encode( $handle ) );
-		$create = static function ( $pre, $child, $what ) {
-			return 'backup_task_create' === $what ? array( 'task_id' => 'replacement-safety-child' ) : $pre;
+		$new_ref  = 'replacement-safety-child';
+		$created  = false;
+		$create   = static function ( $pre, $child, $what ) use ( $mode, $new_ref, &$created ) {
+			if ( 'backup_task_create' !== $what ) {
+				return $pre;
+			}
+			$created = true;
+			return 'create_refused' === $mode ? array( 'error' => 'Child refused the task.' ) : array( 'task_id' => $new_ref );
+		};
+		$options  = MainWP_DB::instance()->get_table_name( 'wp_options' );
+		$readback = false;
+		$fault    = static function ( $query ) use ( $mode, $options, $new_ref, &$readback, &$created ) {
+			if ( 'write_refused' === $mode && 0 === stripos( ltrim( $query ), 'UPDATE' ) && false !== strpos( $query, $options ) && false !== strpos( $query, $new_ref ) ) {
+				return 'SELECT * FROM missing_table_s71_handle';
+			}
+			// After the create, the handle write reads `SELECT name`; only the history readback reads `SELECT value`.
+			if ( 'readback_throws' === $mode && $created && ! $readback && 0 === stripos( ltrim( $query ), 'SELECT value FROM ' . $options ) && false !== strpos( $query, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ) {
+				$readback = true;
+				throw new \RuntimeException( 'adapter fault' );
+			}
+			return $query;
 		};
 		add_filter( 'mainwp_fetch_url_authed_pre', $create, 20, 3 );
+		add_filter( 'query', $fault );
+		$suppress = $wpdb->suppress_errors( true );
+		$returned = null;
 		try {
-			$new_ref = MainWP_Backup_Executor::trigger_backup( $site, 'full', '71' );
+			$returned = MainWP_Backup_Executor::trigger_backup( $site, 'full', '71' );
+		} catch ( \MainWP\Dashboard\MainWP_Exception $e ) {
+			$this->assertSame( 'create_refused', $mode, $e->getMessage() );
 		} finally {
+			$wpdb->suppress_errors( $suppress );
+			remove_filter( 'query', $fault );
 			remove_filter( 'mainwp_fetch_url_authed_pre', $create, 20 );
 		}
+		if ( 'create_refused' !== $mode ) {
+			$this->assertSame( $new_ref, $returned );
+		}
+		if ( 'readback_throws' === $mode ) {
+			$this->assertTrue( $readback );
+		}
+		$stored = json_decode( MainWP_DB::instance()->get_website_option( $site, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
+		$this->assertSame( in_array( $mode, array( 'replaced', 'readback_throws' ), true ) ? $new_ref : $old_ref, $stored['task_id'] );
 		$rows = $this->rows();
-		$this->assertCount( 2, $rows );
-		$this->assertNotSame( $old_ref, $new_ref );
-		$this->assertSame( array( 'incomplete', 'running' ), array_column( $rows, 'outcome' ) );
-		$this->assertSame( array( 'update_gate', 'restore_safety' ), array_column( $rows, 'trigger_source' ) );
-		$this->assertSame( array( $old_ref, $new_ref ), array_column( $rows, 'ref' ) );
-		$this->assertSame( 71, (int) $rows[1]['restore_job_id'] );
+		$this->assertSame( $old_ref, $rows[0]['ref'] );
+		$this->assertSame( 'update_gate', $rows[0]['trigger_source'] );
+		$this->assertSame( $old_outcome, $rows[0]['outcome'] );
+		$this->assertCount( $new_row ? 2 : 1, $rows );
+		if ( $new_row ) {
+			$this->assertSame( array( 'restore_safety', $new_ref, 'running', 71 ), array( $rows[1]['trigger_source'], $rows[1]['ref'], $rows[1]['outcome'], (int) $rows[1]['restore_job_id'] ) );
+		}
+	}
+
+	/**
+	 * D4 replaced; D5 the Child refuses the create; D6 the handle write fails;
+	 * D7 the history-only readback throws. Only a confirmed replacement retires
+	 * the old row, and no history fault stops the create from returning.
+	 *
+	 * @return array
+	 */
+	public static function displacement_matrix(): array {
+		return array(
+			'D4 replaced'        => array( 'replaced', 'incomplete', true ),
+			'D5 create refused'  => array( 'create_refused', 'running', false ),
+			'D6 write refused'   => array( 'write_refused', 'running', true ),
+			'D7 readback throws' => array( 'readback_throws', 'running', true ),
+		);
+	}
+
+	/**
+	 * A thrown database fault in history work cannot interrupt the lane it records.
+	 *
+	 * @dataProvider thrown_history_fault_lanes
+	 * @param string $lane driver, reset or restore_cancel.
+	 */
+	public function test_thrown_history_fault_does_not_interrupt_lane( string $lane ): void {
+		$site    = $this->site();
+		$history = MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' );
+		$fault   = static function ( $query ) use ( $history ) {
+			$frames = array_column( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 'function' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- the fault targets history work only.
+			if ( false !== strpos( $query, $history ) || in_array( 'finalize_site_history', $frames, true ) ) {
+				throw new \RuntimeException( 'adapter fault' );
+			}
+			return $query;
+		};
+		if ( 'driver' === $lane ) {
+			$task = $this->task( array( $site ) );
+			MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+			add_filter( 'query', $fault );
+			try {
+				$this->finish_task( $task );
+			} finally {
+				remove_filter( 'query', $fault );
+			}
+			$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+			$this->assertIsObject( MainWP_Backup_Snapshots::instance()->get_latest_complete( $site, $task->id ) );
+			$this->assertArrayHasKey( $site, json_decode( (string) $fresh->completed_sites, true ) );
+			$this->assertGreaterThanOrEqual( (int) $fresh->last_run, (int) $fresh->completed );
+			$this->assertSame( 'running', $this->rows()[0]['outcome'] );
+		} elseif ( 'reset' === $lane ) {
+			$task = $this->task( array( $site ) );
+			MainWP_DB_Backup::instance()->update_backup_task_with_values(
+				$task->id,
+				array(
+					'last_run'  => time() - 7200,
+					'completed' => 0,
+				)
+			);
+			add_filter( 'query', $fault );
+			try {
+				$result = MainWP_Backup_Operations::reset_task_run( $task->id );
+			} finally {
+				remove_filter( 'query', $fault );
+			}
+			$this->assertSame( 'reset', $result['status'] );
+		} else {
+			$store = MainWP_Backup_Restore_Job_Store::instance();
+			$id    = $store->create_job(
+				$site,
+				5,
+				array(
+					'plan'    => array(),
+					'options' => array( 'pre_snapshot' => true ),
+				)
+			);
+			$ref   = MainWP_Backup_Executor::trigger_backup( $site, 'full', (string) $id );
+			$this->assertTrue( $store->set_status( $id, $store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $ref ) ) );
+			add_filter( 'query', $fault );
+			try {
+				$this->assertSame( 'cancelled', MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $id ) );
+			} finally {
+				remove_filter( 'query', $fault );
+			}
+			$this->assertSame( $store::STATUS_CANCELLED, $store->get_job( $id )->status );
+			$this->assertSame( 'running', $this->rows()[0]['outcome'] );
+		}
+	}
+
+	/**
+	 * Lanes whose history work runs after the recorded operation's own writes.
+	 *
+	 * @return array
+	 */
+	public static function thrown_history_fault_lanes(): array {
+		return array(
+			'driver'         => array( 'driver' ),
+			'stale reset'    => array( 'reset' ),
+			'restore cancel' => array( 'restore_cancel' ),
+		);
+	}
+
+	/**
+	 * A failure returned in the backup result, not thrown, fails the site's row.
+	 */
+	public function test_returned_result_failure_finalizes_failed(): void {
+		$site     = $this->site();
+		$task     = $this->task( array( $site ) );
+		$feedback = static function () {
+			return array( 'ftp' => 'Upload refused' );
+		};
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+		add_filter( 'mainwp_postprocess_backup_sites_feedback', $feedback );
+		try {
+			$this->finish_task( $task );
+		} finally {
+			remove_filter( 'mainwp_postprocess_backup_sites_feedback', $feedback );
+		}
+		$this->assertStringContainsString( 'Upload refused', (string) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->backup_errors );
+		$row = $this->rows()[0];
+		$this->assertSame( 'failed', $row['outcome'] );
+		$this->assertSame( MainWP_Backup_Operations::safe_error( '' )['code'], $row['error_code'] );
+		$this->assertNull( $row['snapshot_id'] );
+	}
+
+	/**
+	 * A completed update-gate task keeps no Child error code.
+	 */
+	public function test_update_gate_completed_row_carries_no_error_code(): void {
+		$site         = $this->site();
+		$this->answer = array(
+			'phase'      => 'completed',
+			'file'       => 'history.zip',
+			'size'       => 4096,
+			'error_code' => MainWP_Backup_Error_Codes::ERR_ZIP_FAILED,
+		);
+		$ref          = MainWP_Backup_Executor::trigger_backup( $site );
+		MainWP_Backup_Executor::get_backup_task_status( $site, $ref, 1 );
+		$row = $this->rows()[0];
+		$this->assertSame( 'completed', $row['outcome'] );
+		$this->assertSame( '', $row['error_code'] );
 	}
 
 	/**
@@ -848,69 +1028,6 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			'failure during create' => array( 'failure', 'failed' ),
 			'lease lost, job live'  => array( 'lease', 'running' ),
 		);
-	}
-
-	/**
-	 * A refused handle write leaves the abandoned handle for its owner.
-	 */
-	public function test_refused_handle_write_keeps_displaced_row_running(): void {
-		global $wpdb;
-		$site              = $this->site();
-		$old_ref           = MainWP_Backup_Executor::trigger_backup( $site );
-		$website           = MainWP_DB::instance()->get_website_by_id( $site );
-		$handle            = json_decode( MainWP_DB::instance()->get_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
-		$handle['started'] = time() - MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS - 1;
-		MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, wp_json_encode( $handle ) );
-		$create  = static function ( $pre, $child, $what ) {
-			return 'backup_task_create' === $what ? array( 'task_id' => 'unpersisted-safety-child' ) : $pre;
-		};
-		$options = MainWP_DB::instance()->get_table_name( 'wp_options' );
-		$deny    = static function ( $query ) use ( $options ) {
-			return 0 === stripos( ltrim( $query ), 'UPDATE' ) && false !== strpos( $query, $options ) && false !== strpos( $query, 'unpersisted-safety-child' ) ? 'SELECT * FROM missing_table_s71_handle' : $query;
-		};
-		add_filter( 'mainwp_fetch_url_authed_pre', $create, 20, 3 );
-		add_filter( 'query', $deny );
-		$suppress = $wpdb->suppress_errors( true );
-		try {
-			MainWP_Backup_Executor::trigger_backup( $site, 'full', '71' );
-		} finally {
-			$wpdb->suppress_errors( $suppress );
-			remove_filter( 'query', $deny );
-			remove_filter( 'mainwp_fetch_url_authed_pre', $create, 20 );
-		}
-		$stored = json_decode( MainWP_DB::instance()->get_website_option( $site, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
-		$this->assertSame( $old_ref, $stored['task_id'] );
-		$rows = $this->rows();
-		$this->assertSame( 'running', $rows[0]['outcome'] );
-		$this->assertSame( $old_ref, $rows[0]['ref'] );
-	}
-
-	/**
-	 * A failed replacement keeps the abandoned handle, so its row stays open.
-	 */
-	public function test_failed_displacement_leaves_abandoned_handle_running(): void {
-		$site              = $this->site();
-		$old_ref           = MainWP_Backup_Executor::trigger_backup( $site );
-		$website           = MainWP_DB::instance()->get_website_by_id( $site );
-		$handle            = json_decode( MainWP_DB::instance()->get_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
-		$handle['started'] = time() - MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS - 1;
-		MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, wp_json_encode( $handle ) );
-		$create = static function ( $pre, $child, $what ) {
-			return 'backup_task_create' === $what ? array( 'error' => 'Child refused the task.' ) : $pre;
-		};
-		add_filter( 'mainwp_fetch_url_authed_pre', $create, 20, 3 );
-		try {
-			MainWP_Backup_Executor::trigger_backup( $site, 'full', '71' );
-			$this->fail( 'A refused create must throw.' );
-		} catch ( \MainWP\Dashboard\MainWP_Exception $e ) {
-			$this->assertNotSame( '', $e->getMessage() );
-		} finally {
-			remove_filter( 'mainwp_fetch_url_authed_pre', $create, 20 );
-		}
-		$rows = $this->rows();
-		$this->assertCount( 1, $rows );
-		$this->assertSame( 'running', $rows[0]['outcome'] );
-		$this->assertSame( $old_ref, $rows[0]['ref'] );
 	}
 
 	/**

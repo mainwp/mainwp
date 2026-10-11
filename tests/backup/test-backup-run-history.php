@@ -608,6 +608,91 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A thrown fault in the history-only confirmation read cannot interrupt the close.
+	 *
+	 * @dataProvider confirmation_read_fault_lanes
+	 * @param string $lane Reset or scope pause.
+	 */
+	public function test_confirmation_read_fault_does_not_interrupt_close( string $lane ): void {
+		global $wpdb;
+		$sites = array( $this->site(), $this->site() );
+		$task  = $this->task( $sites );
+		MainWP_Manage_Backups_Handler::stamp_task_scope_snapshot( $task->id, $task->sites, $task->groups );
+		$this->answer = array( 'phase' => 'archiving_files' );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+		$started = time() - 7200;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'last_run' => $started ) );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ), array( 'started' => $started ), array( 'task_id' => $task->id ) );
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$closed  = false;
+		$thrown  = false;
+		$fault   = static function ( $query ) use ( $table, &$closed, &$thrown ) {
+			if ( preg_match( '/^UPDATE `?' . preg_quote( $table, '/' ) . '`? /', $query ) && false !== strpos( $query, '`completed`' ) ) {
+				$closed = true;
+			} elseif ( $closed && ! $thrown && 0 === stripos( ltrim( $query ), 'SELECT * FROM ' . $table . ' ' ) ) {
+				$thrown = true;
+				throw new \RuntimeException( 'adapter fault' );
+			}
+			return $query;
+		};
+		$allowed = static function () use ( $sites ) {
+			return array( $sites[0] );
+		};
+		$busy    = static function ( $pre, $child, $what ) {
+			return 'backup_task_cancel' === $what ? array( 'result' => 'busy' ) : $pre;
+		};
+		$paused  = 0;
+		$hook    = static function () use ( &$paused ) {
+			++$paused;
+		};
+		add_filter( 'query', $fault );
+		add_filter( 'mainwp_fetch_url_authed_pre', $busy, 20, 3 );
+		add_action( 'mainwp_backup_task_auto_paused', $hook );
+		try {
+			if ( 'reset' === $lane ) {
+				$this->assertSame(
+					array(
+						'status'            => 'reset',
+						'cancelled'         => 0,
+						'uncancelled'       => 2,
+						'sites_uncancelled' => $sites,
+					),
+					MainWP_Backup_Operations::reset_task_run( $task->id )
+				);
+			} else {
+				add_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+				MainWP_Manage_Backups_Handler::pause_task_for_rescope( $task );
+			}
+		} finally {
+			remove_filter( 'query', $fault );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $busy, 20 );
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+			remove_action( 'mainwp_backup_task_auto_paused', $hook );
+		}
+		$this->assertTrue( $thrown, 'The fault must hit the confirmation read.' );
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThanOrEqual( $started, (int) $fresh->completed );
+		if ( 'pause' === $lane ) {
+			$this->assertSame( 1, (int) $fresh->paused );
+			$this->assertStringContainsString( 'Re-save the task to confirm its scope', (string) $fresh->backup_notices );
+			$this->assertSame( 1, $paused );
+		}
+		$this->assertSame( array( 'running', 'running' ), array_column( $this->rows(), 'outcome' ) );
+	}
+
+	/**
+	 * Closes whose history finalize waits on a confirmation read.
+	 *
+	 * @return array
+	 */
+	public static function confirmation_read_fault_lanes(): array {
+		return array(
+			'stale reset' => array( 'reset' ),
+			'scope pause' => array( 'pause' ),
+		);
+	}
+
+	/**
 	 * Ad-hoc pre-update backups have a download, never a snapshot record.
 	 *
 	 * @dataProvider terminal_answers

@@ -771,9 +771,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         );
         // A refused pause leaves the driver responsible for this run's outcome.
         if ( false !== $updated ) {
-            $closed = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
-            if ( ! empty( $closed ) && 1 === (int) $closed->paused && (int) $closed->completed >= (int) $task->last_run ) {
-                MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'incomplete' );
+            try {
+                $closed = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+                if ( ! empty( $closed ) && 1 === (int) $closed->paused && (int) $closed->completed >= (int) $task->last_run ) {
+                    MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'incomplete' );
+                }
+            } catch ( \Throwable $e ) {
+                // The confirmation read serves history only; the pause has already landed.
             }
         }
         MainWP_DB_Backup::instance()->update_backup_notices(

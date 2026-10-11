@@ -726,7 +726,10 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 				'completed' => 0,
 			)
 		);
-		$this->assertSame( 'never_run', $this->read( 'get-backup-task-run', array( 'task_id' => 987671 ) )['status'] );
+		$never = $this->read( 'get-backup-task-run', array( 'task_id' => 987671 ) );
+		$this->assertSame( 'never_run', $never['status'] );
+		$this->assertNotEmpty( $never['sites'] );
+		$this->assertSame( array( 'pending' ), array_values( array_unique( array_column( $never['sites'], 'status' ) ) ) );
 		MainWP_DB_Backup::instance()->update_backup_task_with_values(
 			987672,
 			array(
@@ -962,6 +965,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		);
 		$this->assertGreaterThan( 0, $id );
 		MainWP_DB_Backup::instance()->update_backup_task_with_values( 987671, array( 'destinations' => wp_json_encode( array( $id ) ) ) );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( 987672, array( 'destinations' => wp_json_encode( array( $id ) ) ) );
 		try {
 			foreach ( array( 'list-backup-destinations', 'get-backup-destination' ) as $name ) {
 				$output = $this->read( $name, 'get-backup-destination' === $name ? array( 'destination_id' => $id ) : array( 'provider' => 's3' ) );
@@ -990,6 +994,132 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			$store->delete_destination( $id );
 		}
+	}
+
+	/**
+	 * Stored values the writers accept, each with the read that must keep returning it.
+	 *
+	 * @return array
+	 */
+	public static function stored_values_writers_allow() {
+		return array(
+			'sftp port left blank'      => array( 'sftp_port', '' ),
+			'sftp port out of range'    => array( 'sftp_port', '70000' ),
+			'sftp port kept'            => array( 'sftp_port', '2222' ),
+			'provider with no location' => array( 'empty_location', '' ),
+			'long location strings'     => array( 'long_location', '' ),
+			'long exclude list'         => array( 'long_exclude', '' ),
+			'long site name'            => array( 'long_site_name', '' ),
+			'long primary method'       => array( 'long_primary_method', '' ),
+		);
+	}
+
+	/**
+	 * WordPress validates ability output, so an output bound no writer enforces fails the whole read.
+	 *
+	 * @dataProvider stored_values_writers_allow
+	 *
+	 * @param string $kind Stored value under test.
+	 * @param string $value Stored port for the SFTP cases.
+	 * @return void
+	 */
+	public function test_reads_accept_every_stored_value_the_writers_allow( $kind, $value ) {
+		global $wpdb;
+		$store = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$long  = str_repeat( 'x', 300 );
+		$id    = 0;
+		try {
+			if ( in_array( $kind, array( 'sftp_port', 'empty_location', 'long_location' ), true ) ) {
+				$destinations = array(
+					'sftp_port'      => array(
+						'provider' => 'sftp',
+						'settings' => array(
+							'host'     => 'sftp.example.org',
+							'port'     => $value,
+							'username' => 'backup',
+							'password' => 'secret',
+						),
+					),
+					'empty_location' => array(
+						'provider' => 'dropbox',
+						'settings' => array(
+							'app_key'   => 'key',
+							'base_path' => '/backups',
+						),
+					),
+					'long_location'  => array(
+						'provider' => 's3',
+						'settings' => array(
+							'bucket'   => $long,
+							'region'   => $long,
+							'endpoint' => 'https://' . $long . '.example.org',
+						),
+					),
+				);
+				$id           = $store->add_destination( $destinations[ $kind ] + array( 'name' => 'Stored destination' ) );
+				$this->assertGreaterThan( 0, $id );
+				$one  = $this->read( 'get-backup-destination', array( 'destination_id' => $id ) );
+				$list = $this->read( 'list-backup-destinations', array( 'provider' => $destinations[ $kind ]['provider'] ) );
+				$this->assert_output( 'get-backup-destination', $one );
+				$this->assert_output( 'list-backup-destinations', $list );
+				$this->assertEquals( array( $one ), array_values( wp_list_filter( $list['items'], array( 'id' => $id ) ) ) );
+				if ( 'sftp_port' === $kind ) {
+					$this->assertSame( '2222' === $value ? 2222 : null, $one['location']['port'] ?? null );
+				} elseif ( 'empty_location' === $kind ) {
+					$this->assertSame( '{}', wp_json_encode( $one['location'] ) );
+				} else {
+					$this->assertSame( $long, $one['location']['bucket'] );
+				}
+			} elseif ( 'long_exclude' === $kind ) {
+				// 201 entries of 256 characters: past both old caps and inside the TEXT column.
+				$this->assertNotFalse( MainWP_DB_Backup::instance()->update_backup_task_with_values( 987671, array( 'exclude' => implode( "\n", array_fill( 0, 201, str_repeat( 'x', 256 ) ) ) ) ) );
+				$task = $this->read( 'get-backup-task', array( 'task_id' => 987671 ) );
+				$this->assert_output( 'get-backup-task', $task );
+				$this->assertCount( 201, $task['exclude'] );
+			} elseif ( 'long_site_name' === $kind ) {
+				$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'name' => $long ), array( 'id' => $this->site_id ) );
+				$history = $this->read( 'list-backup-history' );
+				$this->assert_output( 'list-backup-history', $history );
+				$this->assertSame( $long, $history['items'][0]['site_name'] );
+			} else {
+				update_option( 'mainwp_primaryBackup', str_repeat( 'p', 100 ) );
+				$settings = $this->read( 'get-backup-settings' );
+				$this->assert_output( 'get-backup-settings', $settings );
+				$this->assertSame( str_repeat( 'p', 100 ), $settings['primary_backup_method'] );
+			}
+		} finally {
+			if ( $id ) {
+				$store->delete_destination( $id );
+			}
+			delete_option( 'mainwp_primaryBackup' );
+		}
+	}
+
+	/**
+	 * Machine callers may pass booleans and lists the way form encodings do; REST coerces them, PHP callers must get the same reading.
+	 *
+	 * @return void
+	 */
+	public function test_string_booleans_and_site_lists_read_as_rest_coerces_them() {
+		foreach ( array( 'false', '0' ) as $value ) {
+			$status = $this->read( 'get-backup-status', array( 'only_stale' => $value ) );
+			$this->assert_output( 'get-backup-status', $status );
+			$this->assertFalse( $status['filters']['only_stale'], $value );
+		}
+		$listed = $this->read( 'get-backup-status', array( 'site_ids_or_domains' => (string) $this->site_id ) );
+		$this->assert_output( 'get-backup-status', $listed );
+		$this->assertSame( array( $this->site_id ), array_column( $listed['items'], 'site_id' ) );
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'status' => 'pruned' ), array( 'id' => 987673 ) );
+		$snapshots = $this->read(
+			'list-backup-snapshots',
+			array(
+				'site_id_or_domain' => $this->site_id,
+				'include_pruned'    => 'false',
+			)
+		);
+		$this->assert_output( 'list-backup-snapshots', $snapshots );
+		$this->assertSame( 0, $snapshots['total'] );
 	}
 
 	/**
@@ -1144,7 +1274,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 			),
 			array( 'task_id' => 987671 )
 		);
-		$root    = dirname( __DIR__, 2 ) . '/.mwpdev/debugging/s73/status-archives-' . wp_generate_uuid4();
+		$root    = untrailingslashit( get_temp_dir() ) . '/mainwp-status-archives-' . wp_generate_uuid4();
 		$uploads = static function ( $upload ) use ( $root ) {
 			$upload['basedir'] = $root;
 			return $upload;

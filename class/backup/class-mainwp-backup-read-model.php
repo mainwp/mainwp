@@ -608,6 +608,10 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $run   = self::get_task_run( $task, (int) $task->last_run );
         $sites = array();
         foreach ( $run['sites'] as $site ) {
+            if ( 0 === (int) $task->last_run ) {
+                // get_task_run() marks every site of a closed run failed; a task that never ran has no failures.
+                $site['status'] = 'pending';
+            }
             $site['site_id'] = $site['id'];
             $site['phase']   = self::known_phase( (string) $site['phase'] );
             $site['error']   = '' === $site['error']['source_text'] ? null : $site['error'];
@@ -830,6 +834,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return self::paginate( array(), $page, $per_page );
         }
         global $wpdb;
+        // nosemgrep: AIK_tainted-sql-string -- The table name is fixed and every id is cast to int.
         $rows  = $wpdb->get_col( 'SELECT id FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id IN (' . implode( ',', array_map( 'intval', $ids ) ) . ") AND status <> 'reserved' ORDER BY created DESC, id DESC" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- trusted table and authorized integer IDs.
         $items = array();
         foreach ( $rows as $id ) {
@@ -1123,14 +1128,24 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return new \WP_Error( 'mainwp_backup_destination_not_found', '', array( 'status' => 404 ) );
         }
         $settings = is_array( $row->settings ) ? $row->settings : array();
-        $location = array_intersect_key( $settings, array_flip( array( 'bucket', 'region', 'endpoint', 'path_style', 'host', 'port' ) ) );
-        foreach ( $location as $key => &$value ) {
-            $value = 'port' === $key ? (int) $value : ( 'path_style' === $key ? (bool) $value : (string) $value );
+        $location = array();
+        foreach ( array_intersect_key( $settings, array_flip( array( 'bucket', 'region', 'endpoint', 'path_style', 'host', 'port' ) ) ) as $key => $value ) {
+            if ( 'path_style' === $key ) {
+                $location[ $key ] = (bool) $value;
+            } elseif ( 'port' === $key ) {
+                // The SFTP form saves a blank port and the provider falls back to 22, so an unusable value is absent, not 0.
+                $port = (int) $value;
+                if ( $port >= 1 && $port <= 65535 ) {
+                    $location[ $key ] = $port;
+                }
+            } elseif ( '' !== (string) $value ) {
+                $location[ $key ] = (string) $value;
+            }
         }
-        unset( $value );
         $count = 0;
         global $wpdb;
-        $tasks = $wpdb->get_col( 'SELECT destinations FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- only stored destination references are counted, using a fixed table identity.
+        // Hidden on-demand tasks (template = 1) also store destinations, but no task list shows them.
+        $tasks = $wpdb->get_col( 'SELECT destinations FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup' ) . ' WHERE template = 0' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- only stored destination references are counted, using a fixed table identity.
         foreach ( $tasks as $ids ) {
             $count += (int) in_array( $id, self::stored_ids( (string) $ids, true ), true );
         }

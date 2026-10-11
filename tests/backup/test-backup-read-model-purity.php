@@ -49,6 +49,37 @@ class MainWP_Backup_Read_Model_Purity_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * SQL statements the guard must treat as writes, and the function form it must let through.
+	 *
+	 * @return array
+	 */
+	public static function write_statements() {
+		return array(
+			'replace into'            => array( 'REPLACE INTO wp_mainwp_backup (id) VALUES (1)', true ),
+			'replace without into'    => array( 'REPLACE wp_mainwp_backup SET id = 1', true ),
+			'replace low priority'    => array( 'REPLACE LOW_PRIORITY INTO wp_mainwp_backup (id) VALUES (1)', true ),
+			'insert'                  => array( 'INSERT INTO wp_mainwp_backup (id) VALUES (1)', true ),
+			'update'                  => array( 'UPDATE wp_mainwp_backup SET paused = 1', true ),
+			'replace string function' => array( "SELECT id FROM wp_mainwp_wp WHERE REPLACE(url, 'www.', '') = 'example.org'", false ),
+			'replace function spaced' => array( "SELECT REPLACE (url, 'www.', '') FROM wp_mainwp_wp", false ),
+			'plain select'            => array( 'SELECT * FROM wp_mainwp_backup', false ),
+		);
+	}
+
+	/**
+	 * Exempting REPLACE() must not exempt REPLACE statements.
+	 *
+	 * @dataProvider write_statements
+	 *
+	 * @param string $sql Statement.
+	 * @param bool   $writes Whether the guard must flag it.
+	 * @return void
+	 */
+	public function test_write_statement_pattern( $sql, $writes ) {
+		$this->assertSame( $writes, (bool) preg_match( self::write_statement_pattern(), $sql ) );
+	}
+
+	/**
 	 * Every public reader is guarded in active and terminal states.
 	 *
 	 * @return void

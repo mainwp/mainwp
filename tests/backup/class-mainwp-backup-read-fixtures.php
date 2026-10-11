@@ -157,6 +157,16 @@ trait Backup_Read_Fixtures {
 // phpcs:ignore Generic.Files.OneObjectStructurePerFile.MultipleFound -- shared read guard.
 trait Backup_Read_Purity_Guard {
 	/**
+	 * The statements the guard treats as writes.
+	 *
+	 * @return string PCRE pattern.
+	 */
+	protected static function write_statement_pattern() {
+		// Domain resolution uses the SQL string function REPLACE(), which does not mutate a row.
+		return '/\b(INSERT|UPDATE|DELETE|REPLACE(?!\s*\()|ALTER|CREATE|DROP|TRUNCATE)\b/i';
+	}
+
+	/**
 	 * Read calls fail as soon as they attempt externally visible work.
 	 *
 	 * @param callable $call Reader invocation.
@@ -166,9 +176,8 @@ trait Backup_Read_Purity_Guard {
 		$deny = function () {
 			$this->fail( 'A read attempted a write, HTTP request, Child request, or scheduled event.' );
 		};
-		// Domain resolution uses SQL REPLACE(), which does not mutate a row.
 		$query = function ( $sql ) {
-			$this->assertDoesNotMatchRegularExpression( '/\b(INSERT|UPDATE|DELETE|REPLACE(?!\s*\()|ALTER|CREATE|DROP|TRUNCATE)\b/i', $sql, $sql );
+			$this->assertDoesNotMatchRegularExpression( self::write_statement_pattern(), $sql, $sql );
 			return $sql;
 		};
 		$hooks = array( 'pre_http_request', 'mainwp_fetch_url_authed_pre', 'pre_schedule_event', 'pre_update_option', 'setted_transient' );

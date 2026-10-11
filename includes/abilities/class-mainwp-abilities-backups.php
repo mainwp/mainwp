@@ -298,11 +298,9 @@ class MainWP_Abilities_Backups {
                     'enum' => array( 'site', 'global', 'zip', 'tar', 'tar.gz', 'tar.bz2', 'legacy' ),
                 ),
                 'exclude'          => array(
-                    'type'     => 'array',
-                    'maxItems' => 200,
-                    'items'    => array(
-                        'type'      => 'string',
-                        'maxLength' => 255,
+                    'type'  => 'array',
+                    'items' => array(
+                        'type' => 'string',
                     ),
                 ),
                 'exclude_flags'    => array(
@@ -550,7 +548,7 @@ class MainWP_Abilities_Backups {
                         'readonly'     => true,
                         'destructive'  => false,
                         'idempotent'   => true,
-                        'instructions' => 'Pass since exactly as run-site-backup-v1 returned it. Poll every 30 seconds until on_demand.status is completed or failed. not_started means the start was refused for lack of a run slot; call run-site-backup-v1 again.',
+                        'instructions' => 'Pass since exactly as run-site-backup-v1 returned it. Poll every 30 seconds until on_demand.status is completed or failed. not_started means no run has opened for that since handle; call run-site-backup-v1 again.',
                     ),
                 ),
             )
@@ -601,7 +599,7 @@ class MainWP_Abilities_Backups {
                         'status'          => array(
                             'type'        => 'string',
                             'enum'        => array( 'idle', 'not_started', 'running', 'completed', 'failed' ),
-                            'description' => 'not_started: the start was accepted but no run slot was free, so nothing opened. Nothing retries it; call run-site-backup-v1 again.',
+                            'description' => 'not_started: no run has opened for the since handle you passed. Nothing retries it; call run-site-backup-v1 again.',
                         ),
                         'phase'           => array(
                             'type' => array( 'string', 'null' ),
@@ -1454,7 +1452,7 @@ class MainWP_Abilities_Backups {
                 'schedule'          => array(
                     'type'        => 'string',
                     'enum'        => array( 'daily', 'weekly', 'monthly', 'interval', 'legacy' ),
-                    'description' => 'legacy: a stored value outside the supported set, from before input allowlisting. Such a task never runs.',
+                    'description' => 'legacy: a stored schedule value outside the supported set. The scheduler never picks such a task up.',
                 ),
                 'paused'            => array(
                     'type' => 'boolean',
@@ -1599,7 +1597,7 @@ class MainWP_Abilities_Backups {
                 'only_stale'          => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Return only stale sites in items. Totals always describe all sites.',
+                    'description' => 'Return only stale sites in items. Totals describe every site in scope, before this filter.',
                 ),
                 'site_ids_or_domains' => array(
                     'type'        => 'array',
@@ -1874,7 +1872,6 @@ class MainWP_Abilities_Backups {
                             ),
                             'site_name'         => array(
                                 'type'        => array( 'string', 'null' ),
-                                'maxLength'   => 255,
                                 'description' => 'Null when the site was deleted.',
                             ),
                             'trigger'           => array(
@@ -1912,7 +1909,7 @@ class MainWP_Abilities_Backups {
                             'ref'               => array(
                                 'type'        => array( 'string', 'null' ),
                                 'maxLength'   => 191,
-                                'description' => 'The site\'s backup task id for update_gate and restore_safety rows, or the queued update job id for gate_overridden rows from a queued update. Null otherwise.',
+                                'description' => 'The child site\'s backup task handle for update_gate and restore_safety rows, or the queued update job id for gate_overridden rows. Null otherwise.',
                             ),
                         ),
                     ),
@@ -1944,7 +1941,7 @@ class MainWP_Abilities_Backups {
             'mainwp/list-backup-destinations-v1',
             array(
                 'label'               => __( 'List Backup Destinations', 'mainwp' ),
-                'description'         => __( 'Storage destinations: name, provider, default flag, non-secret location (bucket, region, endpoint, host, port), whether stored credentials failed to load, and how many tasks use each. Never returns credentials, usernames, key ids or paths. Possible errors: none beyond authentication and rights.', 'mainwp' ),
+                'description'         => __( 'Storage destinations: name, provider, default flag, non-secret location (bucket, region, endpoint, host, port), whether stored credentials failed to load, and how many scheduled tasks use each. Never returns credentials, usernames, key ids or paths. Possible errors: none beyond authentication and rights.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'input_schema'        => self::list_backup_destinations_input_schema(),
                 'output_schema'       => self::list_backup_destinations_output_schema(),
@@ -2124,7 +2121,6 @@ class MainWP_Abilities_Backups {
                 ),
                 'primary_backup_method'     => array(
                     'type'        => 'string',
-                    'maxLength'   => 64,
                     'description' => 'Empty when native backups (or none) are the primary method; otherwise the backup extension slug.',
                 ),
                 'on_demand_retention_count' => array(
@@ -2221,23 +2217,19 @@ class MainWP_Abilities_Backups {
                     'description'          => 'Non-credential, non-path location fields only. Access keys, app keys, usernames, host fingerprints, every secret, and every filesystem or folder path are never returned.',
                     'properties'           => array(
                         'bucket'     => array(
-                            'type'      => 'string',
-                            'maxLength' => 255,
+                            'type' => 'string',
                         ),
                         'region'     => array(
-                            'type'      => 'string',
-                            'maxLength' => 64,
+                            'type' => 'string',
                         ),
                         'endpoint'   => array(
-                            'type'      => 'string',
-                            'maxLength' => 1024,
+                            'type' => 'string',
                         ),
                         'path_style' => array(
                             'type' => 'boolean',
                         ),
                         'host'       => array(
-                            'type'      => 'string',
-                            'maxLength' => 255,
+                            'type' => 'string',
                         ),
                         'port'       => array(
                             'type'    => 'integer',
@@ -2401,7 +2393,8 @@ class MainWP_Abilities_Backups {
                     $output[ $key ] = self::serialize( $value[ $key ], $property, $key );
                 }
             }
-            return $output;
+            // An empty PHP array encodes as JSON [], which typed clients reject for an object.
+            return array() === $output ? new \stdClass() : $output;
         }
         if ( isset( $schema['items'] ) ) {
             return array_map(
@@ -2451,7 +2444,16 @@ class MainWP_Abilities_Backups {
             return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
         }
         $input = MainWP_Abilities_Util::normalize_input( $input );
-        $site  = isset( $input['site_id_or_domain'] ) ? MainWP_Abilities_Util::resolve_site( $input['site_id_or_domain'] ) : null;
+        // Schema validation accepts "false" and comma lists; REST coerces them, so PHP callers get the same reading.
+        foreach ( array( 'only_stale', 'include_pruned' ) as $flag ) {
+            if ( isset( $input[ $flag ] ) ) {
+                $input[ $flag ] = MainWP_Abilities_Util::get_boolean_input( $input, $flag );
+            }
+        }
+        if ( isset( $input['site_ids_or_domains'] ) && ! is_array( $input['site_ids_or_domains'] ) ) {
+            $input['site_ids_or_domains'] = wp_parse_list( $input['site_ids_or_domains'] );
+        }
+        $site = isset( $input['site_id_or_domain'] ) ? MainWP_Abilities_Util::resolve_site( $input['site_id_or_domain'] ) : null;
         if ( is_wp_error( $site ) ) {
             return self::safe_wp_error( $site );
         }

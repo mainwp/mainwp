@@ -225,7 +225,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>>
             <label class="six wide column middle aligned"><?php esc_html_e( 'Backup recovery passphrase', 'mainwp' ); ?></label>
             <div class="ten wide column">
-                <?php if ( in_array( $passphraseRejected, array( 'short', 'mismatch', 'current', 'current_mismatch', 'account_password' ), true ) ) : ?>
+                <?php if ( in_array( $passphraseRejected, array( 'short', 'mismatch', 'current', 'current_mismatch', 'key_mismatch', 'account_password' ), true ) ) : ?>
                 <div class="ui small red message" style="margin-top: 1em;">
                     <?php
                     if ( 'mismatch' === $passphraseRejected ) {
@@ -234,6 +234,8 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                         esc_html_e( 'Enter the current recovery passphrase to change it. The passphrase was not changed.', 'mainwp' );
                     } elseif ( 'current_mismatch' === $passphraseRejected ) {
                         esc_html_e( 'The current recovery passphrase is not correct. The passphrase was not changed.', 'mainwp' );
+                    } elseif ( 'key_mismatch' === $passphraseRejected ) {
+                        esc_html_e( 'The stored recovery key does not match the backup encryption key file. The passphrase was not changed.', 'mainwp' );
                     } elseif ( 'account_password' === $passphraseRejected ) {
                         esc_html_e( 'Your WordPress password is not correct. The recovery passphrase was not set.', 'mainwp' );
                     } else {

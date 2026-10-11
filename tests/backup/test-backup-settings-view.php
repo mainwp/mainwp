@@ -254,6 +254,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		return array(
 			'current'          => array( 'current', 'Enter the current recovery passphrase to change it. The passphrase was not changed.' ),
 			'current mismatch' => array( 'current_mismatch', 'The current recovery passphrase is not correct. The passphrase was not changed.' ),
+			'key mismatch'     => array( 'key_mismatch', 'The stored recovery key does not match the backup encryption key file. The passphrase was not changed.' ),
 			'account password' => array( 'account_password', 'Your WordPress password is not correct. The recovery passphrase was not set.' ),
 		);
 	}

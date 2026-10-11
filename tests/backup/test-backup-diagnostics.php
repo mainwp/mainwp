@@ -2209,7 +2209,8 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 			$response = $this->request_diagnostics_download( $query );
 			$this->assertNull( $response['bytes'] );
 			$this->assertSame( 403, $response['status'] );
-			$this->assertSame( 'This download link is not valid or has expired. Export the diagnostics again.', $response['message'] );
+			$message = in_array( $state, array( 'subscriber', 'denied right' ), true ) ? 'You do not have permission to download backup diagnostics.' : 'This download link is not valid or has expired. Export the diagnostics again.';
+			$this->assertSame( $message, $response['message'] );
 			$this->assertSame( $consumed ? false : $record, get_site_transient( $key ) );
 		} finally {
 			remove_filter( 'mainwp_currentusercan', $deny, 10 );
@@ -2276,6 +2277,70 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 			'case and slashes' => array( '//BACKUP-DIAGNOSTICS/' ),
 			'encoded slash'    => array( '/backup-diagnostics%2F' ),
 			'dot prefix'       => array( '/./backup-diagnostics/' ),
+		);
+	}
+
+	/** Symlinks must not bypass the authenticated diagnostics download route. */
+	public function test_legacy_diagnostics_symlink_is_refused() {
+		if ( ! function_exists( 'symlink' ) ) {
+			$this->markTestSkipped( 'symlink() is unavailable.' );
+		}
+		$root = MainWP_System_Utility::get_mainwp_dir()[0];
+		$link = $root . 'diagnostics-link-' . wp_generate_uuid4();
+		$file = $this->diag_dir . '/bundle.json';
+		file_put_contents( $file, 'linked diagnostics bytes' );
+		if ( ! @symlink( $this->diag_dir, $link ) ) {
+			$this->markTestSkipped( 'The filesystem cannot create a diagnostics symlink.' );
+		}
+		wp_set_current_user( 0 );
+		try {
+			$query = array(
+				'mwpdl' => basename( $link ) . '/' . basename( $file ),
+				'sig'   => MainWP_System_Utility::get_download_sig( $link . '/' . basename( $file ) ),
+			);
+			$this->assertNull( $this->request_diagnostics_download( $query, true )['bytes'] );
+		} finally {
+			unlink( $link );
+		}
+	}
+
+	/**
+	 * Unauthenticated malformed requests must return before decoding or signature checks.
+	 *
+	 * @dataProvider legacy_download_array_inputs
+	 * @param array $query Request parameters.
+	 */
+	public function test_legacy_download_refuses_array_inputs( array $query ) {
+		wp_set_current_user( 0 );
+		$this->assertSame(
+			array(
+				'bytes'   => null,
+				'message' => null,
+				'status'  => null,
+			),
+			$this->request_diagnostics_download( $query, true )
+		);
+	}
+
+	/**
+	 * PHP query arrays cannot be passed to string-only download helpers.
+	 *
+	 * @return array Malformed download parameters.
+	 */
+	public static function legacy_download_array_inputs(): array {
+		return array(
+			'array mwpdl' => array(
+				array(
+					'mwpdl' => array( 'x' ),
+					'sig'   => 'y',
+				),
+			),
+			'array sig'   => array(
+				array(
+					'mwpdl' => 'x',
+					'sig'   => array( 'y' ),
+				),
+			),
 		);
 	}
 

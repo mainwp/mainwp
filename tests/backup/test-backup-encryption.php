@@ -82,7 +82,7 @@ class MainWP_Backup_Encryption_Test extends MainWP_Abilities_Test_Case {
 		return array(
 			'missing current' => array( '', false, 3 ),
 			'wrong current'   => array( 'wrong recovery passphrase', false, MainWP_Backup_Encryption::PASSPHRASE_MISMATCH ),
-			'foreign KEK'     => array( 'original recovery passphrase', true, MainWP_Backup_Encryption::PASSPHRASE_MISMATCH ),
+			'foreign KEK'     => array( 'original recovery passphrase', true, 4 ),
 		);
 	}
 

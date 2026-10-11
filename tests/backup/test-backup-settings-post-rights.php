@@ -90,13 +90,16 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 	 * @param string $current Current passphrase.
 	 * @param bool   $lost Whether the key file is missing.
 	 * @param string $flag Expected rejection flag.
+	 * @param bool   $foreign Whether the key file differs from the stored recovery key.
 	 */
-	public function test_settings_recovery_replacement_proof( string $current, bool $lost, string $flag ): void {
+	public function test_settings_recovery_replacement_proof( string $current, bool $lost, string $flag, bool $foreign = false ): void {
 		$enc      = MainWP_Backup_Encryption::instance();
 		$original = $enc->set_recovery_passphrase( 'original recovery passphrase' );
 		$kek      = $enc->load_kek();
 		if ( $lost ) {
 			MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		} elseif ( $foreign ) {
+			MainWP_Keys_Manager::instance()->save_key_file( $enc->kek_filename(), random_bytes( 32 ) );
 		}
 		$key_bytes = MainWP_Keys_Manager::instance()->get_key_val( $enc->kek_filename() );
 		$_POST     = array(
@@ -132,6 +135,7 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 			'lost missing'    => array( '', true, 'current' ),
 			'lost wrong'      => array( 'wrong recovery passphrase', true, 'mismatch' ),
 			'lost right'      => array( 'original recovery passphrase', true, '' ),
+			'foreign KEK'     => array( 'original recovery passphrase', false, 'key_mismatch', true ),
 		);
 	}
 
@@ -185,19 +189,41 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 		);
 	}
 
-	/** The generic writer cannot bypass recovery passphrase proof. */
-	public function test_ajax_save_setting_refuses_recovery_blob(): void {
+	/**
+	 * The generic writer cannot bypass recovery passphrase proof through collated names.
+	 *
+	 * @dataProvider recovery_option_names
+	 * @param string $name Option suffix.
+	 * @param string $message Refusal copy.
+	 */
+	public function test_ajax_save_setting_refuses_recovery_blob( string $name, string $message ): void {
 		$enc      = MainWP_Backup_Encryption::instance();
 		$original = $enc->set_recovery_passphrase( 'original recovery passphrase' );
-		foreach ( array( 'backup_recovery_kek', 'BACKUP_RECOVERY_KEK', '<b>backup_recovery_kek</b>' ) as $name ) {
-			$response = json_decode( $this->ajax_save_setting( $name ), true );
-			$this->assertIsArray( $response );
-			$this->assertFalse( $response['success'] );
-			$this->assertNotEmpty( $response['error'] );
-			$this->assertSame( $response['error'], $response['result'] );
-			$this->assertSame( $original, $enc->get_recovery_blob() );
-			$this->assertFalse( get_option( 'mainwp_' . sanitize_text_field( $name ), false ) === '0' );
-		}
+		$response = json_decode( $this->ajax_save_setting( $name ), true );
+		// A collated alias can overwrite the row while the canonical cache stays stale.
+		wp_cache_delete( MainWP_Backup_Encryption::RECOVERY_OPTION, 'options' );
+		wp_cache_delete( 'alloptions', 'options' );
+		$this->assertSame( $original, $enc->get_recovery_blob() );
+		$this->assertIsArray( $response );
+		$this->assertFalse( $response['success'] );
+		$this->assertSame( $message, $response['error'] );
+		$this->assertSame( $response['error'], $response['result'] );
+	}
+
+	/**
+	 * Non-ASCII aliases can compare equal to the recovery option in MySQL.
+	 *
+	 * @return array Option names and refusal copy.
+	 */
+	public static function recovery_option_names(): array {
+		$message = 'The recovery passphrase cannot be saved here. Change it in the backup settings.';
+		return array(
+			'exact'      => array( 'backup_recovery_kek', $message ),
+			'upper case' => array( 'BACKUP_RECOVERY_KEK', $message ),
+			'markup'     => array( '<b>backup_recovery_kek</b>', $message ),
+			'accented'   => array( 'backup_recovery_kék', 'This setting name is not valid.' ),
+			'zero width' => array( "backup_recovery_kek\u{200B}", 'This setting name is not valid.' ),
+		);
 	}
 
 	/**

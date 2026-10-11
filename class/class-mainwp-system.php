@@ -766,6 +766,9 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function parse_init() {
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
+            if ( ! isset( $_REQUEST['mwpdl'] ) || ! is_string( $_REQUEST['mwpdl'] ) || ! is_string( $_GET['sig'] ) ) {
+                return;
+            }
             $private_root = isset( $_GET['root'] ) && 'private' === $_GET['root'];
             if ( $private_root ) {
                 if ( ! is_user_logged_in() ) {
@@ -811,6 +814,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
             $mwpdl = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
             $file  = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
+
+            if ( ! $private_root && is_file( $file ) ) {
+                $diagnostics_dir = MainWP_Backup_Diagnostics::instance()->diagnostics_dir();
+                if ( MainWP_Backup_File_Manager::path_is_confined_to( $file, $diagnostics_dir ) ) {
+                    return;
+                }
+            }
 
             if ( stristr( rawurldecode( $mwpdl ), '..' ) ) {
                 return;

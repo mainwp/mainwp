@@ -74,6 +74,13 @@ class MainWP_Backup_Encryption { // phpcs:ignore Generic.Classes.OpeningBraceSam
     const PASSPHRASE_CURRENT_REQUIRED = 3;
 
     /**
+     * A valid passphrase cannot replace a recovery key that differs from the key file.
+     *
+     * @var int
+     */
+    const PASSPHRASE_KEY_MISMATCH = 4;
+
+    /**
      * PBKDF2 hash algorithm for passphrase derivation.
      *
      * @var string
@@ -278,7 +285,7 @@ class MainWP_Backup_Encryption { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 throw new \InvalidArgumentException( esc_html__( 'The current recovery passphrase does not open the stored recovery key. The passphrase was not changed.', 'mainwp' ), self::PASSPHRASE_MISMATCH ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped; the sniff misreads the int code.
             }
             if ( null !== $kek && ! hash_equals( $kek, $recovered ) ) {
-                throw new \InvalidArgumentException( esc_html__( 'The stored recovery key does not match the backup encryption key file. The passphrase was not changed.', 'mainwp' ), self::PASSPHRASE_MISMATCH ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped; the sniff misreads the int code.
+                throw new \InvalidArgumentException( esc_html__( 'The stored recovery key does not match the backup encryption key file. The passphrase was not changed.', 'mainwp' ), self::PASSPHRASE_KEY_MISMATCH ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped; the sniff misreads the int code.
             }
             if ( null === $kek ) {
                 if ( ! MainWP_Keys_Manager::instance()->save_key_file( $this->kek_filename(), $recovered ) ) {

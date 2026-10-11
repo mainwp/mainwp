@@ -804,8 +804,11 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      */
     public function download_bundle(): void {
         $message = __( 'This download link is not valid or has expired. Export the diagnostics again.', 'mainwp' );
-        if ( ! is_user_logged_in() || ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+        if ( ! is_user_logged_in() ) {
             wp_die( esc_html( $message ), '', array( 'response' => 403 ) );
+        }
+        if ( ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+            wp_die( esc_html__( 'You do not have permission to download backup diagnostics.', 'mainwp' ), '', array( 'response' => 403 ) );
         }
         $nonce = isset( $_GET['_wpnonce'] ) && is_string( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
         if ( ! wp_verify_nonce( $nonce, 'mainwp_backup_diagnostics_download' ) ) {

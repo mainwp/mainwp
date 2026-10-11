@@ -340,6 +340,8 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                 self::$recovery_passphrase_rejected = 'current';
                             } elseif ( MainWP_Backup_Encryption::PASSPHRASE_MISMATCH === $e->getCode() ) {
                                 self::$recovery_passphrase_rejected = $key_missing ? 'mismatch' : 'current_mismatch';
+                            } elseif ( MainWP_Backup_Encryption::PASSPHRASE_KEY_MISMATCH === $e->getCode() ) {
+                                self::$recovery_passphrase_rejected = 'key_mismatch';
                             } else {
                                 self::$recovery_passphrase_rejected = 'short';
                             }

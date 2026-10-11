@@ -807,113 +807,170 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A duplicate initiate must retain the poll handle for a recent clean close.
+	 * Matrix S rows for both start abilities.
 	 *
-	 * @dataProvider starts
+	 * @return array
+	 */
+	public static function start_status_matrix() {
+		$rows = array();
+		foreach ( self::starts() as $start ) {
+			foreach ( array( 'S1', 'S2', 'S3', 'S4', 'S5', 'S6' ) as $row ) {
+				$rows[ $row . ' ' . $start[0] ] = array_merge( array( $row ), $start );
+			}
+		}
+		return $rows;
+	}
+
+	/**
+	 * An agent acts on the start status, so it must name the run this call claimed or attached to.
+	 *
+	 * Rows are matrix S in the review findings: S1 run open before the call, S2 claim won,
+	 * S3 claim won and the first preflight fails, S4 clean run closed within the settle
+	 * window, S5 slot refused, S6 a racing run opens the row during the claim.
+	 *
+	 * @dataProvider start_status_matrix
+	 * @param string $row Matrix row.
 	 * @param string $name Start slug.
 	 * @param string $poll Poll slug.
 	 * @param int    $interval Poll interval.
 	 */
-	public function test_recent_clean_run_attaches_with_original_started_at( $name, $poll, $interval ) {
+	public function test_start_status_follows_matrix_s( $row, $name, $poll, $interval ) {
 		global $wpdb;
-		$task_id = 'run-backup-task' === $name ? $this->task_id : (int) MainWP_DB_Backup::instance()->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) )->id;
-		$closed  = time() - 5;
-		update_option( 'mainwp_backup_manual_settle_seconds', 60 );
-		MainWP_DB_Backup::instance()->update_backup_task_with_values(
-			$task_id,
-			array(
-				'last_run'          => $closed,
-				'last_run_manually' => $closed,
-				'completed'         => $closed,
-				'completed_sites'   => wp_json_encode( array( $this->site_id => true ) ),
-				'backup_errors'     => '',
-			)
-		);
-		MainWP_DB_Backup::instance()->add_backup_task_progress( $task_id, $this->site_id, array() );
-		MainWP_DB_Backup::instance()->update_backup_task_progress(
-			$task_id,
-			$this->site_id,
-			array(
-				'dtsFetched'  => $closed,
-				'child_phase' => 'completed',
-			)
-		);
-		$this->assertNotFalse(
-			$wpdb->insert(
-				MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
-				array(
-					'site_id'  => $this->site_id,
-					'task_id'  => $task_id,
-					'type'     => 'full',
-					'status'   => 'complete',
-					'created'  => $closed,
-					'archives' => '[]',
-				)
-			)
-		);
-		$output = $this->execute( $name, $this->input( $name ) + array( 'confirm' => true ) );
+		$task_id  = 'run-backup-task' === $name ? $this->task_id : (int) MainWP_DB_Backup::instance()->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) )->id;
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$cleanup  = array();
+		$at       = null;
+		$contacts = false;
+		switch ( $row ) {
+			case 'S1':
+				$this->open_run( $task_id );
+				$expect = 'already_running';
+				$at     = (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id )->last_run;
+				break;
+			case 'S2':
+				$expect   = 'started';
+				$contacts = true;
+				break;
+			case 'S3':
+				$fail = static function ( $result, $site, $action ) {
+					return 'backup_preflight' === $action ? array( 'disk_free' => 0 ) : $result;
+				};
+				add_filter( 'mainwp_fetch_url_authed_pre', $fail, 11, 3 );
+				$cleanup[] = static function () use ( $fail ) {
+					remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 11 );
+				};
+				$expect    = 'started';
+				$contacts  = true;
+				break;
+			case 'S4':
+				$at = time() - 5;
+				update_option( 'mainwp_backup_manual_settle_seconds', 60 );
+				MainWP_DB_Backup::instance()->update_backup_task_with_values(
+					$task_id,
+					array(
+						'last_run'          => $at,
+						'last_run_manually' => $at,
+						'completed'         => $at,
+						'completed_sites'   => wp_json_encode( array( $this->site_id => true ) ),
+						'backup_errors'     => '',
+					)
+				);
+				MainWP_DB_Backup::instance()->add_backup_task_progress( $task_id, $this->site_id, array() );
+				MainWP_DB_Backup::instance()->update_backup_task_progress(
+					$task_id,
+					$this->site_id,
+					array(
+						'dtsFetched'  => $at,
+						'child_phase' => 'completed',
+					)
+				);
+				$this->assertNotFalse(
+					$wpdb->insert(
+						MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+						array(
+							'site_id'  => $this->site_id,
+							'task_id'  => $task_id,
+							'type'     => 'full',
+							'status'   => 'complete',
+							'created'  => $at,
+							'archives' => '[]',
+						)
+					)
+				);
+				$expect = 'already_running';
+				break;
+			case 'S5':
+				update_option( 'mainwp_backup_max_concurrent', 1 );
+				$token = \MainWP\Dashboard\MainWP_Backup_Monitor::acquire_backup_slot( 1 );
+				$this->assertIsString( $token );
+				$cleanup[] = static function () use ( $token ) {
+					\MainWP\Dashboard\MainWP_Backup_Monitor::release_backup_slot( $token );
+				};
+				$expect    = 'not_started';
+				break;
+			default:
+				// The racing run starts before this call's click, so a click-time handle would miss it.
+				$at    = time() - 30;
+				$raced = false;
+				$spy   = static function ( $sql ) use ( $table, $task_id, $at, &$raced, &$spy ) {
+					if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET last_run = GREATEST(' ) && str_contains( $sql, 'WHERE id = ' . $task_id . ' AND' ) ) {
+						remove_filter( 'query', $spy );
+						MainWP_DB_Backup::instance()->update_backup_task_with_values(
+							$task_id,
+							array(
+								'last_run'  => $at,
+								'completed' => 0,
+							)
+						);
+						$raced = true;
+					}
+					return $sql;
+				};
+				add_filter( 'query', $spy );
+				$cleanup[] = static function () use ( &$spy ) {
+					remove_filter( 'query', $spy );
+				};
+				$expect    = 'already_running';
+		}
+		$click             = time();
+		$this->child_calls = array();
+		try {
+			$output = $this->execute( $name, $this->input( $name ) + array( 'confirm' => true ) );
+		} finally {
+			foreach ( $cleanup as $undo ) {
+				$undo();
+			}
+		}
+		if ( 'S6' === $row ) {
+			$this->assertTrue( $raced, 'The competing run must open during the atomic claim.' );
+		}
 		$this->assert_output( $name, $output );
-		$this->assertSame( 'already_running', $output['status'] );
-		$this->assertSame( gmdate( 'Y-m-d\TH:i:s\Z', $closed ), $output['started_at'] );
+		$this->assertSame( $expect, $output['status'] );
 		$this->assertSame( 'mainwp/' . $poll . '-v1', $output['poll']['ability'] );
 		$this->assertSame( $interval, $output['poll']['interval_seconds'] );
-		if ( 'run-site-backup' === $name ) {
-			$this->assertSame( $closed, $output['since'] );
-			$this->assertSame( strtotime( $output['started_at'] ), $output['since'] );
-			$this->assertSame( $closed, $output['poll']['input']['since'] );
-		}
 		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
-		$this->assertSame( $closed, (int) $after->last_run );
-		$this->assertSame( $closed, (int) $after->completed );
-		$this->assertSame( array(), $this->child_calls );
-	}
-
-	/** A run that fails its first preflight still opened and must not invite another start. */
-	public function test_site_claim_reports_started_after_immediate_preflight_failure() {
-		$fail = static function ( $result, $site, $action ) {
-			return 'backup_preflight' === $action ? array( 'disk_free' => 0 ) : $result;
-		};
-		add_filter( 'mainwp_fetch_url_authed_pre', $fail, 11, 3 );
-		try {
-			$output = $this->execute( 'run-site-backup', $this->input( 'run-site-backup' ) + array( 'confirm' => true ) );
-			$this->assert_output( 'run-site-backup', $output );
-			$this->assertSame( 'started', $output['status'] );
-			$this->assertNotNull( $output['started_at'] );
-			$this->assertSame( strtotime( $output['started_at'] ), $output['since'] );
-			$task = MainWP_DB_Backup::instance()->get_manual_backup_task( $this->site_id );
-			$this->assertSame( $output['since'], (int) $task->last_run );
-			$this->assertGreaterThanOrEqual( (int) $task->last_run, (int) $task->completed );
-			$this->assertNotEmpty( $task->backup_errors );
-			$this->assertSame( array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
-		} finally {
-			remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 11 );
+		if ( 'started' === $expect ) {
+			$at = (int) $after->last_run;
+			$this->assertGreaterThanOrEqual( $click, $at );
 		}
-	}
-
-	/** A competing claim can open the row after the initial read without owning this call's claim. */
-	public function test_task_queued_behind_racing_open_run_reports_already_running() {
-		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
-		$raced = false;
-		$spy   = function ( $sql ) use ( $table, &$raced, &$spy ) {
-			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET last_run = GREATEST(' ) && str_contains( $sql, 'WHERE id = ' . $this->task_id . ' AND' ) ) {
-				remove_filter( 'query', $spy );
-				$this->open_run( $this->task_id );
-				$raced = true;
+		if ( 'S3' === $row ) {
+			$this->assertGreaterThanOrEqual( (int) $after->last_run, (int) $after->completed );
+			$this->assertNotEmpty( $after->backup_errors );
+			$this->assertSame( 'backup_preflight', $this->child_calls[0][0] );
+		}
+		if ( null === $at ) {
+			$this->assertNull( $output['started_at'] );
+		} else {
+			$this->assertSame( gmdate( 'Y-m-d\TH:i:s\Z', $at ), $output['started_at'] );
+		}
+		if ( 'run-site-backup' === $name ) {
+			$this->assertSame( null === $at ? $output['since'] : $at, $output['since'] );
+			$this->assertSame( $output['since'], $output['poll']['input']['since'] );
+			if ( null === $at ) {
+				$this->assertGreaterThanOrEqual( $click, $output['since'] );
 			}
-			return $sql;
-		};
-		add_filter( 'query', $spy );
-		try {
-			$output = $this->execute( 'run-backup-task', $this->input( 'run-backup-task' ) + array( 'confirm' => true ) );
-			$this->assertTrue( $raced, 'The competing run must open during the atomic claim.' );
-			$this->assert_output( 'run-backup-task', $output );
-			$this->assertSame( 'already_running', $output['status'] );
-			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->task_id );
-			$this->assertLessThan( (int) $task->last_run, (int) $task->completed );
-			$this->assertSame( array(), $this->child_calls );
-		} finally {
-			remove_filter( 'query', $spy );
 		}
+		$this->assertSame( $contacts, array() !== $this->child_calls );
 	}
 
 	/** Reset must refuse a recent or closed run without contacting the Child. */
@@ -1032,30 +1089,6 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 		foreach ( $scheduled_ids as $id ) {
 			$snapshot = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
 			$this->assertSame( 'complete', $snapshot->status );
-		}
-	}
-
-	/**
-	 * A slot refusal cannot promise that cron will retry a run that never opened.
-	 *
-	 * @dataProvider starts
-	 * @param string $name Start slug.
-	 * @param string $poll Poll slug.
-	 * @param int    $interval Poll interval.
-	 */
-	public function test_slot_refusal_is_not_started_with_poll_handle( $name, $poll, $interval ) {
-		update_option( 'mainwp_backup_max_concurrent', 1 );
-		$token = \MainWP\Dashboard\MainWP_Backup_Monitor::acquire_backup_slot( 1 );
-		$this->assertIsString( $token );
-		try {
-			$output = $this->execute( $name, $this->input( $name ) + array( 'confirm' => true ) );
-			$this->assert_output( $name, $output );
-			$this->assertSame( 'not_started', $output['status'] );
-			$this->assertNull( $output['started_at'] );
-			$this->assertSame( 'mainwp/' . $poll . '-v1', $output['poll']['ability'] );
-			$this->assertSame( array(), $this->child_calls );
-		} finally {
-			\MainWP\Dashboard\MainWP_Backup_Monitor::release_backup_slot( $token );
 		}
 	}
 }

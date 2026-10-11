@@ -759,20 +759,58 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 return new \WP_Error( $code, $result['error'], array( 'status' => MainWP_Backup_Error_Codes::ERR_START_FAILED === $code ? 502 : 409 ) );
             }
             if ( 'ability' === $context ) {
-                if ( (int) $task->completed < (int) $task->last_run ) {
-                    $result['status'] = 'already_running';
-                } elseif ( 'running' === $result['status'] ) {
-                    $result['status'] = 'started';
-                } elseif ( 'queued' === $result['status'] ) {
-                    $result['status'] = ! empty( $result['run_open'] ) ? 'already_running' : 'not_started';
-                } else {
-                    $result['status'] = 'already_running';
-                }
+                // running is a won claim unless a run held the row first; any status
+                // other than running or queued is a just-closed run the call adopted.
+                $result = array_merge(
+                    $result,
+                    self::ability_start_status(
+                        (int) $task->completed < (int) $task->last_run || ! in_array( $result['status'], array( 'running', 'queued' ), true ),
+                        'running' === $result['status'] ? true : null,
+                        'queued' === $result['status'] ? MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id ) : null,
+                        (int) $result['started']
+                    )
+                );
             }
             return $result;
         } finally {
             MainWP_Backup_Run_History::set_context( $previous['trigger'], $previous['user_id'] );
         }
+    }
+
+    /**
+     * Agents act on the start status, so it names the run this call claimed or
+     * attached to and never reports a slot refusal while a run holds the row.
+     *
+     * @param bool        $attached A run held the row before the call, or the call was absorbed by a clean run that just closed.
+     * @param bool|null   $claimed Atomic claim result: true won, false lost, null not attempted.
+     * @param object|null $row Task row read after the attempt, or null when not needed.
+     * @param int         $started Start time of the run the call claimed or attached to, or the click time.
+     * @return array{started: int, status: string}
+     */
+    private static function ability_start_status( bool $attached, ?bool $claimed, ?object $row, int $started ): array {
+        if ( $attached ) {
+            return array(
+                'started' => $started,
+                'status'  => 'already_running',
+            );
+        }
+        if ( true === $claimed ) {
+            return array(
+                'started' => $started,
+                'status'  => 'started',
+            );
+        }
+        // A racing initiate can hold the row with a start older than this call's click.
+        if ( null !== $row && (int) $row->completed < (int) $row->last_run ) {
+            return array(
+                'started' => (int) $row->last_run,
+                'status'  => 'already_running',
+            );
+        }
+        return array(
+            'started' => $started,
+            'status'  => 'not_started',
+        );
     }
 
     /**
@@ -834,13 +872,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         // A run already in flight (last_run newer than completed): follow it
         // instead of resetting the run mid-flight.
         if ( (int) $task->completed < (int) $task->last_run ) {
-            return (
-                array(
-                    'job_id'  => (int) $task->id,
-                    'started' => (int) $task->last_run,
-                    'status'  => 'ability' === $context ? 'already_running' : 'running',
-                )
-            );
+            return array( 'job_id' => (int) $task->id ) + ( 'ability' === $context ? self::ability_start_status( true, null, null, (int) $task->last_run ) : array(
+                'started' => (int) $task->last_run,
+                'status'  => 'running',
+            ) );
         }
 
         // A run that closed successfully seconds ago makes this initiate a
@@ -853,13 +888,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $settle > 0 && '' === (string) $task->backup_errors && (int) $task->completed > time() - $settle ) {
             /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
             do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'settle_absorbed', (int) $task->last_run, (int) $task->completed );
-            return (
-                array(
-                    'job_id'  => (int) $task->id,
-                    'started' => (int) $task->last_run,
-                    'status'  => 'ability' === $context ? 'already_running' : 'queued',
-                )
-            );
+            return array( 'job_id' => (int) $task->id ) + ( 'ability' === $context ? self::ability_start_status( true, null, null, (int) $task->last_run ) : array(
+                'started' => (int) $task->last_run,
+                'status'  => 'queued',
+            ) );
         }
 
         // Kick the first step. updateRun = true resets completed_sites and
@@ -896,13 +928,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return new \WP_Error( MainWP_Backup_Error_Codes::ERR_START_FAILED, esc_html__( 'The backup could not be started for this site. Please reload the page and try again.', 'mainwp' ), array( 'status' => 502 ) );
         }
 
-        return (
-            array(
-                'job_id'  => (int) $task->id,
-                'started' => $started_out,
-                'status'  => 'ability' === $context ? ( true === $claimed ? 'started' : ( (int) $task->completed < (int) $task->last_run ? 'already_running' : 'not_started' ) ) : ( $had_slot ? 'running' : 'queued' ),
-            )
-        );
+        return array( 'job_id' => (int) $task->id ) + ( 'ability' === $context ? self::ability_start_status( false, $claimed, $task, $started_out ) : array(
+            'started' => $started_out,
+            'status'  => $had_slot ? 'running' : 'queued',
+        ) );
     }
 
     /**

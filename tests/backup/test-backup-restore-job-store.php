@@ -207,6 +207,137 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Callers read false as a lost lease, so a swap lost to a concurrent write
+	 * is retried and only a gone row, a gone lease, a query error or an
+	 * unmatchable swap reports false.
+	 *
+	 * @dataProvider save_checkpoint_outcomes
+	 * @param string $race     What happens between the read and the swap.
+	 * @param int    $count    How many swaps the race affects.
+	 * @param bool   $fenced   Whether the save carries the lease token.
+	 * @param bool   $expected Expected return value.
+	 */
+	public function test_save_checkpoint_outcome_matrix( $race, $count, $fenced, $expected ) {
+		global $wpdb;
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$job_id = $this->store->create_job( 8803, 42, array( 'cursor' => 1 ) );
+		$this->assertNotNull( $this->store->acquire_next_job( 'holder', 300, null, $job_id ) );
+		$token = $fenced ? 'holder' : null;
+		if ( 'lease gone before read' === $race ) {
+			$wpdb->update( $table, array( 'locked_by' => 'other' ), array( 'id' => $job_id ) );
+		} elseif ( 'row deleted' === $race ) {
+			$wpdb->delete( $table, array( 'id' => $job_id ) );
+		}
+		$before     = $this->store->get_job( $job_id );
+		$swaps      = 0;
+		$hook       = function ( $sql ) use ( $race, $count, $table, $job_id, &$swaps, $wpdb ) {
+			if ( ! str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) || ! str_contains( $sql, 'WHERE id = ' . $job_id . ' AND checkpoint = ' ) ) {
+				return $sql;
+			}
+			++$swaps;
+			if ( $swaps > $count ) {
+				return $sql;
+			}
+			switch ( $race ) {
+				case 'concurrent evidence':
+					$stored                        = json_decode( (string) $wpdb->get_var( $wpdb->prepare( "SELECT checkpoint FROM {$table} WHERE id = %d", $job_id ) ), true ); // phpcs:ignore WordPress.DB -- test race.
+					$stored['cancel_intent']       = true;
+					$stored['cancel_confirmation'] = array( 'attempt_count' => $swaps );
+					$wpdb->update( $table, array( 'checkpoint' => wp_json_encode( $stored ) ), array( 'id' => $job_id ) );
+					return $sql;
+				case 'lease taken mid-save':
+					$wpdb->update( $table, array( 'locked_by' => 'other' ), array( 'id' => $job_id ) );
+					return $sql;
+				case 'terminal cancel mid-save':
+					$this->assertSame( 'written', $this->store->finish_with_cancel_confirmation( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, null, '', 'confirmed' ) );
+					return $sql;
+				case 'unmatchable swap':
+					return $sql . ' AND 1 = 0';
+				case 'identical values':
+					return (string) preg_replace( '/updated = \d+/', 'updated = updated', $sql );
+				case 'query error':
+					return $sql . ' AND no_such_column = 1';
+			}
+			return $sql;
+		};
+		$checkpoint = 'identical values' === $race ? $before->checkpoint : array( 'cursor' => 2 );
+		$suppress   = $wpdb->suppress_errors( true );
+		add_filter( 'query', $hook );
+		try {
+			$result = $this->store->save_checkpoint( $job_id, $checkpoint, $token );
+		} finally {
+			remove_filter( 'query', $hook );
+			$wpdb->suppress_errors( $suppress );
+		}
+		$this->assertSame( $expected, $result );
+		$after = $this->store->get_job( $job_id );
+		switch ( $race ) {
+			case 'none':
+				$this->assertSame( 1, $swaps );
+				$this->assertSame( 2, $after->checkpoint['cursor'] );
+				break;
+			case 'concurrent evidence':
+				$this->assertSame( $count + 1, $swaps );
+				$this->assertSame( 2, $after->checkpoint['cursor'] );
+				$this->assertTrue( $after->checkpoint['cancel_intent'] );
+				$this->assertSame( array( 'attempt_count' => $count ), $after->checkpoint['cancel_confirmation'] );
+				break;
+			case 'lease gone before read':
+				$this->assertSame( 0, $swaps );
+				$this->assertSame( $before->checkpoint, $after->checkpoint );
+				break;
+			case 'row deleted':
+				$this->assertSame( 0, $swaps );
+				$this->assertNull( $after );
+				break;
+			case 'lease taken mid-save':
+				$this->assertSame( 1, $swaps );
+				$this->assertSame( $before->checkpoint, $after->checkpoint );
+				$this->assertSame( 'other', $after->locked_by );
+				break;
+			case 'terminal cancel mid-save':
+				$this->assertSame( 1, $swaps );
+				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $after->status );
+				$this->assertSame( 1, $after->checkpoint['cursor'] );
+				break;
+			case 'unmatchable swap':
+				$this->assertSame( 1, $swaps );
+				$this->assertSame( $before->checkpoint, $after->checkpoint );
+				break;
+			case 'identical values':
+				$this->assertSame( 1, $swaps );
+				$this->assertSame( $before->checkpoint, $after->checkpoint );
+				break;
+			case 'query error':
+				$this->assertSame( 1, $swaps );
+				$this->assertSame( $before->checkpoint, $after->checkpoint );
+				break;
+		}
+	}
+
+	/**
+	 * Every outcome the save must report, fenced and unfenced.
+	 *
+	 * @return array
+	 */
+	public static function save_checkpoint_outcomes() {
+		return array(
+			'no contention'                    => array( 'none', 0, true, true ),
+			'one concurrent write'             => array( 'concurrent evidence', 1, true, true ),
+			'five concurrent writes'           => array( 'concurrent evidence', 5, true, true ),
+			'eight concurrent writes'          => array( 'concurrent evidence', 8, true, true ),
+			'eight concurrent writes unfenced' => array( 'concurrent evidence', 8, false, true ),
+			'lease gone before read'           => array( 'lease gone before read', 0, true, false ),
+			'lease taken mid-save'             => array( 'lease taken mid-save', 1, true, false ),
+			'terminal cancel mid-save'         => array( 'terminal cancel mid-save', 1, true, false ),
+			'row deleted'                      => array( 'row deleted', 0, true, false ),
+			'unmatchable swap'                 => array( 'unmatchable swap', 1, true, false ),
+			'identical values'                 => array( 'identical values', 1, true, true ),
+			'query error'                      => array( 'query error', 1, true, false ),
+		);
+	}
+
+	/**
 	 * Only the explicit clear flag (the applied-cancel path) may drop a
 	 * stored cancel intent.
 	 */

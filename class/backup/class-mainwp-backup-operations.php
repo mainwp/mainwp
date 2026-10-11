@@ -2292,7 +2292,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
-     * Resuming recomputes only a timed schedule, matching the existing action.
+     * Resuming recomputes the stored slot the same way the resume action does.
      *
      * @param int  $task_id Task identity.
      * @param bool $paused Whether the action would pause the task.
@@ -2308,7 +2308,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return $error;
         }
         $next = null;
-        if ( ! $paused && (int) $task->next_run > 0 ) {
+        if ( ! $paused ) {
             $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
             $next       = $calculator->compute_next_run( $task, empty( $task->last_run ) ? null : (int) $task->last_run );
         }

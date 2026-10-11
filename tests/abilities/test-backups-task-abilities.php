@@ -985,6 +985,64 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	/**
+	 * A resume preview recomputes a zero slot the way the resume does.
+	 *
+	 * @dataProvider resume_zero_slot_schedules
+	 * @param array $values Stored schedule fields of the paused task.
+	 */
+	public function test_resume_preview_matches_result_for_zero_slot( $values ) {
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$this->task_id,
+			$values + array(
+				'paused'   => 1,
+				'next_run' => 0,
+				'last_run' => time() - 5 * HOUR_IN_SECONDS,
+			)
+		);
+		$preview = $this->execute( 'resume-backup-task', $this->input( 'resume-backup-task' ) + array( 'dry_run' => true ) );
+		$this->assert_output( 'resume-backup-task', $preview );
+		$output = $this->execute( 'resume-backup-task', $this->input( 'resume-backup-task' ) + array( 'confirm' => true ) );
+		$this->assert_output( 'resume-backup-task', $output );
+		$this->assertSame( $output['next_run_at'], $preview['would_affect']['next_run_at'] );
+		if ( ! empty( $values['interval_hours'] ) || ! empty( $values['time_of_day'] ) ) {
+			$this->assertNotNull( $output['next_run_at'] );
+		} else {
+			$this->assertNull( $output['next_run_at'] );
+		}
+	}
+
+	/**
+	 * Paused schedules whose stored slot is the elapsed sentinel.
+	 *
+	 * @return array
+	 */
+	public static function resume_zero_slot_schedules() {
+		return array(
+			'edited to interval' => array(
+				array(
+					'schedule'       => 'interval',
+					'interval_hours' => 3,
+					'time_of_day'    => '',
+				),
+			),
+			'given a time'       => array(
+				array(
+					'schedule'       => 'daily',
+					'interval_hours' => 0,
+					'time_of_day'    => '14:20',
+				),
+			),
+			'still elapsed'      => array(
+				array(
+					'schedule'       => 'daily',
+					'interval_hours' => 0,
+					'time_of_day'    => '',
+				),
+			),
+		);
+	}
+
 	/** Canonical IDs and domains must resolve without changing the authorized site. */
 	public function test_canonical_id_strings_and_domains_are_resolved() {
 		$site = MainWP_DB::instance()->get_website_by_id( $this->site_id );

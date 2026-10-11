@@ -225,9 +225,9 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function recovery_input_states(): array {
 		return array(
-			'first'           => array( false ),
-			'replacement'     => array( true ),
-			'no wrapped key'  => array( false, true ),
+			'first'          => array( false ),
+			'replacement'    => array( true ),
+			'no wrapped key' => array( false, true ),
 		);
 	}
 

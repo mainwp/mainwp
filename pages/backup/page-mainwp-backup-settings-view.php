@@ -193,8 +193,8 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         </div>
 
         <?php
-        $encryptionEnabled     = MainWP_Backup_Encryption::instance()->is_enabled_setting();
-        $recoveryBlob          = MainWP_Backup_Encryption::instance()->get_recovery_blob();
+        $encryptionEnabled = MainWP_Backup_Encryption::instance()->is_enabled_setting();
+        $recoveryBlob      = MainWP_Backup_Encryption::instance()->get_recovery_blob();
         // Same test as the save handler, so the form asks for the proof the save will check.
         $hasRecoveryPassphrase = ! empty( $recoveryBlob['wrapped_kek'] );
         // Read-only render flag carried through the settings-save redirect, same mechanism as the

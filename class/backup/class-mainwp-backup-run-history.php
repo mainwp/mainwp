@@ -331,8 +331,16 @@ class MainWP_Backup_Run_History {
         }
         $total    = (int) $total;
         $per_page = min( 100, max( 1, $per_page ) );
+        $page     = max( 1, $page );
+        // An overflowing offset can wrap to zero in SQL and return the first page.
+        if ( $page - 1 > intdiv( PHP_INT_MAX, $per_page ) ) {
+            return array(
+                'items' => array(),
+                'total' => $total,
+            );
+        }
         $values[] = $per_page;
-        $values[] = ( max( 1, $page ) - 1 ) * $per_page;
+        $values[] = ( $page - 1 ) * $per_page;
         $items    = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . $table . ' WHERE ' . $where . ' ORDER BY started DESC, id DESC LIMIT %d OFFSET %d', $values ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders -- placeholders and replacements are built together from fixed filters.
         if ( ! is_array( $items ) || '' !== $wpdb->last_error ) {
             throw new \RuntimeException( 'Backup history could not be read.' );

@@ -69,6 +69,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'List Backup Tasks', 'mainwp' ),
                 'description'         => __( 'Scheduled backup tasks you can access, with schedule, pause state, whether a run is open, and next and last run times. Filter by status or by a site. The hidden on-demand task is never listed. Possible errors: mainwp_site_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::list_backup_tasks_input_schema(),
                 'output_schema'       => self::list_backup_tasks_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_backup_tasks' ),
@@ -149,6 +150,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Task', 'mainwp' ),
                 'description'         => __( 'Full configuration of one task: schedule, sites and groups, destinations, retention, archive settings, excludes, owner, and the errors and notices of its current or last run. Possible errors: mainwp_backup_task_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::get_backup_task_input_schema(),
                 'output_schema'       => self::get_backup_task_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_task' ),
@@ -383,6 +385,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Task Run', 'mainwp' ),
                 'description'         => __( 'Per-site state of a task\'s current or last run: status, phase, percent, error, the snapshot each site produced and its upload counts. Poll target for run-backup-task-v1. Reading it never advances the run; cron does. Possible errors: mainwp_backup_task_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::get_backup_task_run_input_schema(),
                 'output_schema'       => self::get_backup_task_run_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_task_run' ),
@@ -538,6 +541,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Site Backup Progress', 'mainwp' ),
                 'description'         => __( 'State of any backup on one site: the on-demand backup (status, phase, percent, files and bytes, snapshot_id on completion, error on failure) and open scheduled runs that cover the site. Poll target for run-site-backup-v1. Reading it never advances the backup. Possible errors: mainwp_site_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::get_site_backup_progress_input_schema(),
                 'output_schema'       => self::get_site_backup_progress_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_site_backup_progress' ),
@@ -677,6 +681,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'List Backup Snapshots', 'mainwp' ),
                 'description'         => __( 'Snapshots recorded for one site, newest first: type, size, chain parent, whether it can be restored and why not, offsite copy state with its evidence, test-restore result, and upload status per destination. Also reports whether the site is disconnected or has a restore or on-demand backup running. Pruned snapshots appear only with include_pruned. Possible errors: mainwp_site_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::list_backup_snapshots_input_schema(),
                 'output_schema'       => self::list_backup_snapshots_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_backup_snapshots' ),
@@ -777,6 +782,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Snapshot', 'mainwp' ),
                 'description'         => __( 'One snapshot in detail: archives by name and size, manifest presence, the chain a restore needs (base first), upload status per destination, and whether WooCommerce metadata was captured. Returns no download link or file path. Possible errors: mainwp_backup_snapshot_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::get_backup_snapshot_input_schema(),
                 'output_schema'       => self::get_backup_snapshot_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_snapshot' ),
@@ -878,6 +884,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'List Restore Jobs', 'mainwp' ),
                 'description'         => __( 'Restore and rollback jobs for one site or for every site you can access, newest first: status, derived outcome, restore type, safety backup state, cancel confirmation and error. Possible errors: mainwp_site_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::list_restore_jobs_input_schema(),
                 'output_schema'       => self::list_restore_jobs_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_restore_jobs' ),
@@ -957,6 +964,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Restore Job', 'mainwp' ),
                 'description'         => __( 'One restore job: status and outcome, progress counters, next retry time, verification as recorded (site report, site-responds check and its rule, WooCommerce preserve result), partial-state risk with reasons, and whether a rollback is available. Poll target for restore-site-snapshot-v1 and rollback-restore-v1. Reading it never advances the restore. Possible errors: mainwp_backup_restore_job_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::get_restore_job_input_schema(),
                 'output_schema'       => self::get_restore_job_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_restore_job' ),
@@ -1141,9 +1149,12 @@ class MainWP_Abilities_Backups {
      */
     private static function task_id_schema(): array {
         return array(
-            'type'        => array( 'integer', 'string' ),
+            // String-first validation preserves the pattern before WordPress can coerce numeric strings.
+            'type'        => array( 'string', 'integer' ),
             'minimum'     => 1,
+            'maximum'     => 9007199254740991,
             'pattern'     => '^[1-9][0-9]*$',
+            'maxLength'   => 16,
             'description' => 'Backup task ID.',
         );
     }
@@ -1155,9 +1166,12 @@ class MainWP_Abilities_Backups {
      */
     private static function snapshot_id_schema(): array {
         return array(
-            'type'        => array( 'integer', 'string' ),
+            // String-first validation preserves the pattern before WordPress can coerce numeric strings.
+            'type'        => array( 'string', 'integer' ),
             'minimum'     => 1,
+            'maximum'     => 9007199254740991,
             'pattern'     => '^[1-9][0-9]*$',
+            'maxLength'   => 16,
             'description' => 'Snapshot ID.',
         );
     }
@@ -1169,9 +1183,12 @@ class MainWP_Abilities_Backups {
      */
     private static function restore_job_id_schema(): array {
         return array(
-            'type'        => array( 'integer', 'string' ),
+            // String-first validation preserves the pattern before WordPress can coerce numeric strings.
+            'type'        => array( 'string', 'integer' ),
             'minimum'     => 1,
+            'maximum'     => 9007199254740991,
             'pattern'     => '^[1-9][0-9]*$',
+            'maxLength'   => 16,
             'description' => 'Restore job ID.',
         );
     }
@@ -1186,6 +1203,8 @@ class MainWP_Abilities_Backups {
             'type'        => 'integer',
             'minimum'     => 1,
             'default'     => 1,
+            // Every supported page size must keep its offset within a 32-bit integer.
+            'maximum'     => 21474836,
             'description' => 'Page number (1-based).',
         );
     }
@@ -1562,6 +1581,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Status', 'mainwp' ),
                 'description'         => __( 'Last known backup per site across the fleet: the latest native snapshot, a backup time the site reported, or a legacy task run that left a backup archive, with a staleness threshold, the backup health bucket and the pre-update backup check verdict. Use it to answer which sites need a backup. Does not list snapshots; use list-backup-snapshots-v1 for one site\'s history. Possible errors: none beyond authentication and rights.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::get_backup_status_input_schema(),
                 'output_schema'       => self::get_backup_status_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_status' ),
@@ -1792,6 +1812,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'List Backup History', 'mainwp' ),
                 'description'         => __( 'Record of backup runs per task and site for the last 90 days: what started each run (a schedule, a user, an agent, the pre-update backup check, or a restore\'s safety backup), its outcome and error code, the snapshot it produced, and updates that overrode the pre-update backup check. Use it for what happened earlier; get-backup-task-v1 carries only the current or last run. Possible errors: mainwp_site_not_found, mainwp_backup_task_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::list_backup_history_input_schema(),
                 'output_schema'       => self::list_backup_history_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_backup_history' ),
@@ -1945,6 +1966,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'List Backup Destinations', 'mainwp' ),
                 'description'         => __( 'Storage destinations: name, provider, default flag, non-secret location (bucket, region, endpoint, host, port), whether stored credentials failed to load, and how many scheduled tasks use each. Never returns credentials, usernames, key ids or paths. Possible errors: none beyond authentication and rights.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::list_backup_destinations_input_schema(),
                 'output_schema'       => self::list_backup_destinations_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_backup_destinations' ),
@@ -2023,6 +2045,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Destination', 'mainwp' ),
                 'description'         => __( 'One storage destination with the same fields as list-backup-destinations-v1. Possible errors: mainwp_backup_destination_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::get_backup_destination_input_schema(),
                 'output_schema'       => self::get_backup_destination_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_destination' ),
@@ -2077,6 +2100,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Settings', 'mainwp' ),
                 'description'         => __( 'Native backups on or off, primary backup method, on-demand retention count, concurrency limit, diagnostics flag, the pre-update backup check policy, and whether encryption is on and a recovery passphrase is set. Never returns key material. Possible errors: none beyond authentication and rights.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Read_Ability::class,
                 'input_schema'        => self::get_backup_settings_input_schema(),
                 'output_schema'       => self::get_backup_settings_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_settings' ),
@@ -2181,9 +2205,12 @@ class MainWP_Abilities_Backups {
      */
     private static function destination_id_schema(): array {
         return array(
-            'type'        => array( 'integer', 'string' ),
+            // String-first validation preserves the pattern before WordPress can coerce numeric strings.
+            'type'        => array( 'string', 'integer' ),
             'minimum'     => 1,
+            'maximum'     => 9007199254740991,
             'pattern'     => '^[1-9][0-9]*$',
+            'maxLength'   => 16,
             'description' => 'Storage destination ID.',
         );
     }
@@ -2345,28 +2372,79 @@ class MainWP_Abilities_Backups {
     }
 
     /**
-     * The one id an input names, used for both authorization and the read.
+     * Authorization and reads must name one exact id, without numeric coercion.
      *
-     * Decimal strings ("+5", " 05 ", "5.0") are read digit by digit, so ids past 2^53 keep every digit, and
-     * anything past PHP_INT_MAX is refused. Floats and exponent strings ("5e0") are exact only below 2^53;
-     * at or past it one float stands for several ids, so they are refused.
+     * JSON integers and canonical decimal digit strings are exact through 2^53 - 1.
+     * A float or another numeric string shape can round to a different identity.
      *
      * @param mixed $value Caller identifier.
      * @return int|null
      */
     private static function positive_int( $value ): ?int {
         if ( is_int( $value ) ) {
-            return $value > 0 ? $value : null;
+            return $value >= 1 && $value <= 9007199254740991 ? $value : null;
         }
-        if ( is_string( $value ) && preg_match( '/^\s*\+?0*([1-9][0-9]*)(?:\.0*)?\s*$/D', $value, $match ) ) {
-            $digits = $match[1];
-            return strlen( $digits ) < 19 || ( 19 === strlen( $digits ) && strcmp( $digits, (string) PHP_INT_MAX ) <= 0 ) ? (int) $digits : null;
-        }
-        if ( ! ( is_float( $value ) || is_string( $value ) ) || ! rest_is_integer( $value ) ) {
+        if ( ! is_string( $value ) || ! preg_match( '/^[1-9][0-9]*$/D', $value ) ) {
             return null;
         }
-        $number = (float) $value;
-        return is_finite( $number ) && $number >= 1 && $number < 9007199254740992.0 ? (int) $number : null;
+        $length = strlen( $value );
+        return $length < 16 || ( 16 === $length && strcmp( $value, '9007199254740991' ) <= 0 ) ? (int) $value : null;
+    }
+
+    /**
+     * WordPress accepts whole floats as integers, so schemas alone cannot protect identity.
+     *
+     * @param mixed $input Raw ability input.
+     * @return true|\WP_Error
+     */
+    public static function validate_id_input( $input ) {
+        if ( is_array( $input ) ) {
+            foreach ( array( 'task_id', 'snapshot_id', 'restore_job_id', 'destination_id' ) as $key ) {
+                if ( array_key_exists( $key, $input ) && null === self::positive_int( $input[ $key ] ) ) {
+                    return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Route validation must reject schema failures before core's input sanitization.
+     *
+     * @param array $routes Registered REST endpoints.
+     * @return array
+     */
+    public static function validate_rest_run_routes( array $routes ): array {
+        foreach ( $routes as $route => &$handlers ) {
+            if ( ! str_starts_with( $route, '/wp-abilities/v1/abilities/' ) || ! str_ends_with( $route, '/run' ) ) {
+                continue;
+            }
+            foreach ( $handlers as &$handler ) {
+                if ( isset( $handler['args']['input'] ) ) {
+                    $handler['args']['input']['validate_callback'] = array( self::class, 'validate_rest_input' );
+                }
+            }
+            unset( $handler );
+        }
+        unset( $handlers );
+        return $routes;
+    }
+
+    /**
+     * Only backup reads need their schema checked before the generic run controller.
+     *
+     * @param mixed            $input Request input.
+     * @param \WP_REST_Request $request Current REST request.
+     * @param string           $param Parameter name.
+     * @return true|\WP_Error
+     */
+    public static function validate_rest_input( $input, \WP_REST_Request $request, string $param ) {
+        $name = $request['name'];
+        if ( ! array_key_exists( $name, self::READ_RIGHTS ) ) {
+            return rest_validate_request_arg( $input, $request, $param );
+        }
+        $ability = wp_get_ability( $name );
+        return rest_validate_value_from_schema( $ability->normalize_input( $input ), $ability->get_input_schema(), $param );
     }
 
     /**

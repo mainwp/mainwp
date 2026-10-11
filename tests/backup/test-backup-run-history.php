@@ -1608,4 +1608,17 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			$priority->setValue( $logger, $previous );
 		}
 	}
+	/**
+	 * An impossible offset must not wrap around to the first history row.
+	 *
+	 * @return void
+	 */
+	public function test_query_overflowing_page_keeps_total_and_returns_no_rows(): void {
+		$site = $this->create_test_site();
+		$id   = MainWP_Backup_Run_History::start( 1, $site, time(), 'manual', get_current_user_id() );
+		$this->assertGreaterThan( 0, $id );
+		$result = MainWP_Backup_Run_History::query( array(), PHP_INT_MAX, 100, array( $site ) );
+		$this->assertSame( 1, $result['total'] );
+		$this->assertSame( array(), $result['items'] );
+	}
 }

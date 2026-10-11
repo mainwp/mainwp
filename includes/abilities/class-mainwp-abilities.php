@@ -63,6 +63,8 @@ class MainWP_Abilities {
             );
         }
 
+        add_filter( 'rest_endpoints', array( MainWP_Abilities_Backups::class, 'validate_rest_run_routes' ) );
+
         // Hook into MainWP REST authentication to include Abilities API routes.
         // This allows consumer_key/consumer_secret authentication to work for abilities.
         add_filter(

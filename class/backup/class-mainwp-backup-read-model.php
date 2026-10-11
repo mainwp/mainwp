@@ -379,25 +379,60 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $entry['restore_reason'] = $admission['ok'] ? null : self::error_value( $admission['error'], $admission['code'] );
             $entry['restore']        = $admission;
         }
-        $snapshot = $entry['snapshot'];
-        $checks   = array( 'files_extracted', 'db_imported', 'db_has_rows' );
+        $entry['test_restore'] = self::snapshot_test_restore( $entry['snapshot'] );
+        $entry['uploads']      = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $entry['snapshot']->id );
+        foreach ( $entry['uploads'] as $job ) {
+            $job->last_error = self::error_value( (string) $job->last_error );
+        }
+        return $entry;
+    }
+
+    /**
+     * Status and detail reads must describe the same recorded sandbox checks.
+     *
+     * @param object $snapshot Recorded snapshot row.
+     * @return array
+     */
+    private static function snapshot_test_restore( object $snapshot ): array {
+        $checks = array( 'files_extracted', 'db_imported', 'db_has_rows' );
         if ( 'files' === $snapshot->type ) {
             $checks = array( 'files_extracted' );
         } elseif ( 'db' === $snapshot->type ) {
             $checks = array( 'db_imported', 'db_has_rows' );
         }
-        $entry['test_restore'] = array(
+        return array(
             'state'        => '' === $snapshot->test_restore_state ? 'never' : (string) $snapshot->test_restore_state,
             'attempted_at' => empty( $snapshot->test_restore_at ) ? null : (int) $snapshot->test_restore_at,
             'result_at'    => empty( $snapshot->test_restore_result_at ) ? null : (int) $snapshot->test_restore_result_at,
             'checks'       => $checks,
             'scope'        => 'dashboard_sandbox',
         );
-        $entry['uploads']      = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $entry['snapshot']->id );
-        foreach ( $entry['uploads'] as $job ) {
-            $job->last_error = self::error_value( (string) $job->last_error );
-        }
-        return $entry;
+    }
+
+    /**
+     * Fleet status needs recorded evidence without the cost of restore admission.
+     *
+     * @param object $snapshot Latest complete snapshot row.
+     * @return array
+     */
+    private static function snapshot_status_summary( object $snapshot ): array {
+        $offsite = '' === $snapshot->offsite_state ? 'none' : (string) $snapshot->offsite_state;
+        return array(
+            'id'           => (int) $snapshot->id,
+            'type'         => (string) $snapshot->type,
+            'created_at'   => (int) $snapshot->created,
+            'evidence'     => array(
+                'recorded_by'       => 'dashboard_after_download',
+                'archive_integrity' => 'transfer_hash_only',
+                'skipped_files'     => 'not_reported',
+            ),
+            'offsite'      => array(
+                'state'       => $offsite,
+                'evidence'    => 'verified' === $offsite ? 'remote_size_match' : 'none',
+                'verified_at' => (int) $snapshot->verified_at,
+            ),
+            'test_restore' => self::snapshot_test_restore( $snapshot ),
+        );
     }
 
     /**
@@ -1037,11 +1072,8 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $last    = max( $child, $legacy[ $id ] ?? 0 );
             $source  = $last > 0 ? ( $child >= ( $legacy[ $id ] ?? 0 ) ? 'child_reported' : 'legacy_task' ) : 'none';
             $latest  = $snapshots[ $id ] ?? null;
-            $summary = null;
             $health  = MainWP_Backup_Snapshots::classify_backup_health( $latest, $now );
             if ( $latest ) {
-                $details = self::snapshot_details( (int) $latest->id );
-                $summary = is_wp_error( $details ) ? null : $details['snapshot'];
                 if ( (int) $latest->created >= $last ) {
                     $last   = (int) $latest->created;
                     $source = 'native_snapshot';
@@ -1060,13 +1092,19 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'last_attempted'  => $attempts[ $id ] ?? 0,
                     'source'          => $source,
                     'is_stale'        => $stale,
-                    'latest_snapshot' => $summary,
+                    'latest_snapshot' => null,
                     'health'          => $health,
                     'update_gate'     => MainWP_Backup_Operations::update_gate_for_site( $site ),
                 );
             }
         }
         $paged = self::paginate( $items, $page, $per_page );
+        foreach ( $paged['items'] as &$item ) {
+            $snapshot = $snapshots[ $item['site_id'] ] ?? null;
+            // A deleted snapshot must still produce null evidence for existing status clients.
+            $item['latest_snapshot'] = $snapshot && MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot->id ) ? self::snapshot_status_summary( $snapshot ) : null;
+        }
+        unset( $item );
         return array(
             'items'                  => $paged['items'],
             'totals'                 => $totals,

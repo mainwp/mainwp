@@ -288,7 +288,7 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
 
         $rows = $this->wpdb->get_results(
             $this->wpdb->prepare(
-                'SELECT s.id, s.site_id, s.created, s.offsite_state, s.status FROM ' . $table . ' s '
+                'SELECT s.id, s.site_id, s.type, s.created, s.offsite_state, s.verified_at, s.status, s.test_restore_state, s.test_restore_at, s.test_restore_result_at FROM ' . $table . ' s '
                 . 'JOIN ( SELECT site_id, MAX(id) AS max_id FROM ' . $table . ' '
                 . "WHERE status = 'complete' AND site_id IN ( {$placeholders} ) GROUP BY site_id ) latest ON s.id = latest.max_id", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare -- $placeholders is a counted %d list over intval-sanitized ids; table identifier from table_name().
                 ...$site_ids

@@ -678,6 +678,22 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( $admission['ok'], $snapshot['restorable'] );
 			$this->assertSame( '' === $reason ? null : $admission['code'], $snapshot['restore_reason']['code'] ?? null );
 		}
+		$queries = array();
+		$count   = static function ( $sql ) use ( &$queries ) {
+			if ( preg_match( '/mainwp_wp_backup_(snapshot|upload_job|storage)\b/', $sql ) && ! str_contains( $sql, 'JOIN ( SELECT site_id' ) ) {
+				$queries[] = $sql;
+			}
+			return $sql;
+		};
+		add_filter( 'query', $count );
+		try {
+			$status = $this->read( 'get-backup-status', array( 'per_page' => 1 ) );
+		} finally {
+			remove_filter( 'query', $count );
+		}
+		$this->assert_output( 'get-backup-status', $status );
+		$this->assertSame( array_intersect_key( $detail['snapshot'], array_flip( array( 'id', 'type', 'created_at', 'evidence', 'offsite', 'test_restore' ) ) ), $status['items'][0]['latest_snapshot'] );
+		$this->assertSame( array( 'SELECT * FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ) . ' WHERE id = 987673' ), $queries, 'Only the returned snapshot needs a presence check; admission and upload queries are unnecessary.' );
 	}
 
 	/**
@@ -926,6 +942,58 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Filtering and pagination must precede any snapshot summary work.
+	 *
+	 * @return void
+	 */
+	public function test_status_does_not_query_snapshots_off_page() {
+		global $wpdb;
+		$other = $this->create_test_site();
+		$this->insert_read_fixture(
+			'wp_backup_snapshot',
+			array(
+				'site_id'  => $other,
+				'task_id'  => 987671,
+				'type'     => 'db',
+				'created'  => 2000000001,
+				'archives' => '[]',
+			)
+		);
+		$queries = array();
+		$count   = static function ( $sql ) use ( &$queries ) {
+			if ( preg_match( '/mainwp_wp_backup_(snapshot|upload_job|storage)\b/', $sql ) && ! str_contains( $sql, 'JOIN ( SELECT site_id' ) ) {
+				$queries[] = $sql;
+			}
+			return $sql;
+		};
+		add_filter( 'query', $count );
+		try {
+			$page  = $this->read(
+				'get-backup-status',
+				array(
+					'page'     => 1,
+					'per_page' => 1,
+				)
+			);
+			$empty = $this->read(
+				'get-backup-status',
+				array(
+					'page'     => 3,
+					'per_page' => 1,
+				)
+			);
+			$stale = $this->read( 'get-backup-status', array( 'only_stale' => true ) );
+		} finally {
+			remove_filter( 'query', $count );
+		}
+		$this->assertCount( 1, $page['items'] );
+		$this->assertSame( array(), $empty['items'] );
+		$this->assertSame( array(), $stale['items'] );
+		$this->assertSame( 2, $stale['totals']['sites'] );
+		$this->assertSame( array( 'SELECT * FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ) . ' WHERE id = 987673' ), $queries, 'Excluded snapshots must not be queried, and the returned row needs no admission.' );
+	}
+
+	/**
 	 * The settings form accepts values above the ability write bounds.
 	 *
 	 * @return void
@@ -1155,7 +1223,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		);
 		$this->assert_output( 'list-backup-snapshots', $snapshots );
 		$this->assertSame( 0, $snapshots['total'] );
-		foreach ( array( '987671.0', '9.87671e5', 987671.0 ) as $id ) {
+		foreach ( array( 987671, '987671' ) as $id ) {
 			$task = $this->read( 'get-backup-task', array( 'task_id' => $id ) );
 			$this->assert_output( 'get-backup-task', $task );
 			$this->assertSame( 987671, $task['task']['id'] );
@@ -1221,67 +1289,213 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Every id shape the input schema accepts, and the id it must read as (null: refused).
+	 * Precision boundaries must be exercised before either transport can coerce them.
 	 *
 	 * @return array
 	 */
 	public static function id_inputs() {
 		return array(
-			'int'                       => array( 987671, 987671 ),
-			'canonical string'          => array( '987671', 987671 ),
-			'whole float string'        => array( '987671.0', 987671 ),
-			'trailing point string'     => array( '987671.', 987671 ),
-			'whole float'               => array( 987671.0, 987671 ),
-			'exponent string'           => array( '9.87671e5', 987671 ),
-			'padded string'             => array( ' 987671 ', 987671 ),
-			'signed string'             => array( '+987671', 987671 ),
-			'leading zero string'       => array( '0987671', 987671 ),
-			'signed string past 2^53'   => array( '+9007199254740993', 9007199254740993 ),
-			'leading zero past 2^53'    => array( '09007199254740993', 9007199254740993 ),
-			'whole string past 2^53'    => array( '9007199254740993.0', 9007199254740993 ),
-			'PHP_INT_MAX string'        => array( '9223372036854775807', PHP_INT_MAX ),
-			'padded PHP_INT_MAX string' => array( ' 9223372036854775807 ', PHP_INT_MAX ),
-			'float at 2^53'             => array( 9007199254740992.0, null ),
-			'float past 2^53'           => array( 9007199254740994.0, null ),
-			'exponent string past 2^53' => array( '9.007199254740993e15', null ),
-			'digits past PHP_INT_MAX'   => array( '9223372036854775808', null ),
-			'long digits'               => array( '99999999999999999999', null ),
-			'float at PHP_INT_MAX'      => array( (float) PHP_INT_MAX, null ),
-			'float past PHP_INT_MAX'    => array( 1e20, null ),
-			'infinite exponent string'  => array( '1e400', null ),
-			'zero'                      => array( 0, null ),
-			'negative'                  => array( -5, null ),
-			'zero string'               => array( '0', null ),
-			'negative zero string'      => array( '-0', null ),
-			'fraction'                  => array( 5.5, null ),
-			'fraction string'           => array( '987671.5', null ),
-			'word'                      => array( 'abc', null ),
-			'hex string'                => array( '0x5', null ),
-			'boolean'                   => array( true, null ),
+			'I01' => array( '1.9999999999999999', null, false ),
+			'I02' => array( '1.00000000000000001', null, false ),
+			'I03' => array( '9007199254740993.0', null, false ),
+			'I04' => array( '9.007199254740993e15', null, false ),
+			'I05' => array( '9223372036854775808', null, false ),
+			'I06' => array( '9007199254740991', 9007199254740991, true ),
+			'I07' => array( '+5', null, false ),
+			'I08' => array( ' 05 ', null, false ),
+			'I09' => array( '5.0', null, false ),
+			'I10' => array( '5e0', null, false ),
+			'I11' => array( 5, 5, true ),
+			'I12' => array( '5', 5, true ),
+			'I13' => array( 0, null, false ),
+			'I14' => array( -1, null, false ),
+			'I15' => array( 9007199254740991, 9007199254740991, true ),
+			'I16' => array( 9007199254740992, null, false ),
+			'I17' => array( 5.0, null, true ),
+			'I18' => array( true, null, false ),
+			'I19' => array( null, null, false ),
+			'I20' => array( array(), null, false ),
+			'I21' => array( '9007199254740992', null, true ),
+			'I22' => array( '05', null, false ),
+			'I23' => array( "5\n", null, true ),
 		);
 	}
 
 	/**
-	 * An accepted id is the exact integer the input names, the same one REST sanitization and the read use; anything else is refused before a lookup.
+	 * Cookie authentication keeps REST tests independent of machine credentials.
+	 *
+	 * @param string $name Ability slug.
+	 * @param array  $input Caller input.
+	 * @return \WP_REST_Response
+	 */
+	private function rest_read( $name, array $input ) {
+		global $wp_rest_server;
+		$previous       = $wp_rest_server;
+		$wp_rest_server = new \WP_REST_Server();
+		do_action( 'rest_api_init' );
+		wp_set_current_user( get_current_user_id() );
+		$request = new \WP_REST_Request( 'GET', '/wp-abilities/v1/abilities/mainwp/' . $name . '-v1/run' );
+		$request->set_query_params( array( 'input' => $input ) );
+		try {
+			return $this->guarded(
+				static function () use ( $request ) {
+					return rest_do_request( $request );
+				}
+			);
+		} finally {
+			$wp_rest_server = $previous;
+		}
+	}
+
+	/**
+	 * Exact lookup aliases exercise large ids without advancing a shared sequence.
+	 *
+	 * @param int[] $lookups Requested task ids.
+	 * @return callable
+	 */
+	private function task_lookup_alias( array &$lookups ) {
+		$table = preg_quote( MainWP_DB::instance()->get_table_name( 'wp_backup' ), '/' );
+		return static function ( $sql ) use ( $table, &$lookups ) {
+			if ( preg_match( '/^SELECT \* FROM ' . $table . ' WHERE id= ([0-9]+)/', $sql, $match ) ) {
+				$lookups[] = (int) $match[1];
+				if ( in_array( $match[1], array( '5', '9007199254740991' ), true ) ) {
+					return preg_replace( '/WHERE id= [0-9]+/', 'WHERE id= 987671', $sql, 1 );
+				}
+			}
+			return $sql;
+		};
+	}
+
+	/**
+	 * Both execution boundaries must refuse ambiguous identities before a lookup.
 	 *
 	 * @dataProvider id_inputs
-	 *
 	 * @param mixed    $id Input value.
-	 * @param int|null $expected Id it reads as.
+	 * @param int|null $expected Exact id, or refusal.
+	 * @param bool     $schema_accepts Whether WordPress accepts the raw shape.
 	 * @return void
 	 */
-	public function test_id_inputs_read_one_task_or_are_refused( $id, $expected ) {
-		$normalize = new \ReflectionMethod( MainWP_Abilities_Backups::class, 'positive_int' );
-		$normalize->setAccessible( true );
-		$this->assertSame( $expected, $normalize->invoke( null, $id ) );
-		$output = $this->callback_read( 'get-backup-task', array( 'task_id' => $id ) );
-		if ( 987671 === $expected ) {
-			$this->assertIsArray( $output, is_wp_error( $output ) ? $output->get_error_code() : '' );
+	public function test_id_inputs_read_one_task_or_are_refused( $id, $expected, $schema_accepts ) {
+		$lookups = array();
+		$alias   = $this->task_lookup_alias( $lookups );
+		add_filter( 'query', $alias );
+		try {
+			$output   = $this->read( 'get-backup-task', array( 'task_id' => $id ) );
+			$response = $this->rest_read( 'get-backup-task', array( 'task_id' => $id ) );
+		} finally {
+			remove_filter( 'query', $alias );
+		}
+		if ( null !== $expected ) {
+			$this->assert_output( 'get-backup-task', $output );
 			$this->assertSame( 987671, $output['task']['id'] );
+			$this->assertSame( 200, $response->get_status() );
+			$this->assertSame( $output, $response->get_data() );
+			$this->assertNotEmpty( $lookups );
+			$this->assertSame( array( $expected ), array_values( array_unique( $lookups ) ) );
 			return;
 		}
 		$this->assertWPError( $output );
-		$this->assertSame( null === $expected ? 'mainwp_invalid_input' : 'mainwp_backup_task_not_found', $output->get_error_code() );
+		$this->assertSame( 'mainwp_invalid_input', $output->get_error_code() );
+		$this->assertSame( 400, $output->get_error_data()['status'] );
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( $schema_accepts ? 'mainwp_invalid_input' : 'rest_invalid_param', $response->get_data()['code'] );
+		$this->assertSame( array(), $lookups );
+	}
+
+	/**
+	 * Restricted users must authorize the row that either accepted shape reads.
+	 *
+	 * @return void
+	 */
+	public function test_restricted_id_shapes_read_same_task_and_hide_denied_job() {
+		global $wpdb;
+		$user = self::factory()->user->create( array( 'role' => 'editor' ) );
+		get_user_by( 'id', $user )->add_cap( 'manage_options' );
+		wp_set_current_user( $user );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'userid' => $user ), array( 'id' => $this->site_id ) );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( 987671, array( 'userid' => $user ) );
+		$denied_site = $this->create_test_site();
+		$this->insert_read_fixture(
+			'wp_backup_restore_job',
+			array(
+				'site_id'     => $denied_site,
+				'snapshot_id' => 987673,
+				'status'      => 'completed',
+				'checkpoint'  => '{"sub_type":"full"}',
+			)
+		);
+		$denied_job = (int) $wpdb->insert_id;
+		$grants     = function ( $allowed, $type, $key ) {
+			return 'site' === $type ? $this->site_id === (int) $key : $allowed;
+		};
+		$lookups    = array();
+		$alias      = $this->task_lookup_alias( $lookups );
+		add_filter( 'query', $alias );
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		add_filter( 'mainwp_currentusercan', $grants, 10, 3 );
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
+		try {
+			$tasks = array();
+			foreach ( array( 5, '5' ) as $id ) {
+				$tasks[] = $this->read( 'get-backup-task', array( 'task_id' => $id ) );
+				$this->assertSame( $tasks[0], $this->rest_read( 'get-backup-task', array( 'task_id' => $id ) )->get_data() );
+			}
+			$this->assert_output( 'get-backup-task', $tasks[0] );
+			$this->assertSame( $tasks[0], $tasks[1] );
+			$this->assertSame( 987671, $tasks[0]['task']['id'] );
+			foreach ( array( $denied_job, (string) $denied_job ) as $id ) {
+				$output   = $this->read( 'get-restore-job', array( 'restore_job_id' => $id ) );
+				$response = $this->rest_read( 'get-restore-job', array( 'restore_job_id' => $id ) );
+				$this->assertWPError( $output );
+				$this->assertSame( 'mainwp_backup_restore_job_not_found', $output->get_error_code() );
+				$this->assertSame( 404, $response->get_status() );
+				$this->assertSame( $output->get_error_code(), $response->get_data()['code'] );
+			}
+			$float = $this->read( 'get-backup-task', array( 'task_id' => 5.0 ) );
+			$this->assertWPError( $float );
+			$this->assertSame( 'mainwp_invalid_input', $float->get_error_code() );
+		} finally {
+			remove_filter( 'query', $alias );
+			remove_filter( 'mainwp_currentusercan', $grants, 10 );
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+		}
+	}
+
+	/**
+	 * Every list shares the same overflow refusal at both execution boundaries.
+	 *
+	 * @return array
+	 */
+	public static function overflowing_pages() {
+		$cases = array();
+		foreach ( array( 'list-backup-tasks', 'list-backup-snapshots', 'list-restore-jobs', 'get-backup-status', 'list-backup-history', 'list-backup-destinations' ) as $name ) {
+			foreach ( array( PHP_INT_MAX, '10000000000000000000', '99999999999999999999' ) as $page ) {
+				$input = array( 'page' => $page );
+				if ( 'list-backup-snapshots' === $name ) {
+					$input['site_id_or_domain'] = 987670;
+				}
+				$cases[ $name . '-' . $page ] = array( $name, $input );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Overflow must remain a client refusal rather than an internal read failure.
+	 *
+	 * @dataProvider overflowing_pages
+	 * @param string $name Ability slug.
+	 * @param array  $input Excessive page.
+	 * @return void
+	 */
+	public function test_list_page_overflow_is_400_on_both_paths( $name, $input ) {
+		$output   = $this->read( $name, $input );
+		$response = $this->rest_read( $name, $input );
+		$this->assertWPError( $output );
+		$this->assertSame( 'ability_invalid_input', $output->get_error_code() );
+		$this->assertSame( 400, $output->get_error_data()['status'] );
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'rest_invalid_param', $response->get_data()['code'] );
 	}
 
 	/**

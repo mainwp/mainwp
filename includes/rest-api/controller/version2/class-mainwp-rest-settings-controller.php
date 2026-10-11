@@ -4076,17 +4076,19 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * Turning native backups on here clears the stored primary backup method,
      * as update-backup-settings-v1 does, so a stored API-backups primary must
      * not refuse that request. A primary sent in the same body still counts.
+     * Validation runs before sanitization, so "turns native on" is read from
+     * the body update_backup_settings() writes from, coerced the way the
+     * flag's sanitizer coerces it ("false" and null mean off there).
      *
      * @param WP_REST_Request $request Request object.
      *
      * @return bool|WP_Error
      */
     public function validate_update_backup_params( $request ) {
-        $flag = $request->get_param( 'mainwp_enable_legacy_backup_feature' );
-        if ( null === $flag ) {
-            $flag = $request->get_param( 'mainwp_enable_native_backups' );
-        }
-        if ( null === $request->get_param( 'mainwp_primary_backup' ) && ! empty( $flag ) && ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+        $body = $this->get_request_body( $request );
+        $body = is_array( $body ) ? $this->fold_native_backups_alias( $body ) : array();
+        $on   = array_key_exists( 'mainwp_enable_legacy_backup_feature', $body ) && 0 !== (int) $this->sanitize_field( $body['mainwp_enable_legacy_backup_feature'] );
+        if ( $on && ! array_key_exists( 'mainwp_primary_backup', $body ) && ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             $check = clone $request;
             $check->set_param( 'mainwp_primary_backup', '' );
             return $this->validate_update_general_params( $check );

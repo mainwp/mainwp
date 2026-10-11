@@ -489,4 +489,72 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 		$this->assertSame( 1, (int) get_option( 'mainwp_enableLegacyBackupFeature' ) );
 		$this->assertSame( '', get_option( 'mainwp_primaryBackup' ) );
 	}
+
+	/**
+	 * The validator decides "turns native on" from the body the write reads, with the
+	 * coercion the route sanitizer applies, so a falsy string is not treated as on.
+	 *
+	 * @return array Body, expected status, native flag and primary method.
+	 */
+	public static function native_flag_inputs_over_api_primary(): array {
+		return array(
+			'string false'              => array( array( 'mainwp_enable_native_backups' => 'false' ), 200, 0, 'module-api-backups' ),
+			'legacy key string false'   => array( array( 'mainwp_enable_legacy_backup_feature' => 'false' ), 200, 0, 'module-api-backups' ),
+			'string zero'               => array( array( 'mainwp_enable_native_backups' => '0' ), 200, 0, 'module-api-backups' ),
+			'json false'                => array( array( 'mainwp_enable_native_backups' => false ), 200, 0, 'module-api-backups' ),
+			'string one'                => array( array( 'mainwp_enable_native_backups' => '1' ), 200, 1, '' ),
+			'json true'                 => array( array( 'mainwp_enable_native_backups' => true ), 200, 1, '' ),
+			'null legacy with alias on' => array(
+				array(
+					'mainwp_enable_legacy_backup_feature' => null,
+					'mainwp_enable_native_backups'        => 1,
+				),
+				400,
+				0,
+				'module-api-backups',
+			),
+			'on with api primary'       => array(
+				array(
+					'mainwp_enable_native_backups' => 1,
+					'mainwp_primary_backup'        => 'module-api-backups',
+				),
+				400,
+				0,
+				'module-api-backups',
+			),
+			'on with empty primary'     => array(
+				array(
+					'mainwp_enable_native_backups' => 1,
+					'mainwp_primary_backup'        => '',
+				),
+				200,
+				1,
+				'',
+			),
+		);
+	}
+
+	/**
+	 * Native backups off with a stored API-backups primary: each flag spelling ends in
+	 * the state its sanitized value names, or is refused with nothing written.
+	 *
+	 * @dataProvider native_flag_inputs_over_api_primary
+	 * @param array  $body Request body.
+	 * @param int    $status Expected HTTP status.
+	 * @param int    $native Expected native flag.
+	 * @param string $primary Expected primary method.
+	 * @return void
+	 */
+	public function test_backups_edit_native_flag_inputs_over_api_primary( array $body, int $status, int $native, string $primary ): void {
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		update_option( 'mainwp_enableLegacyBackupFeature', 0 );
+		update_option( 'mainwp_primaryBackup', 'module-api-backups' );
+
+		$response = $this->do_authenticated_request( 'PUT', '/mainwp/v2/settings/backups/edit', $body );
+
+		$this->assertSame( $status, $response->get_status() );
+		$this->assertSame( $native, (int) get_option( 'mainwp_enableNativeBackups' ) );
+		$this->assertSame( $native, (int) get_option( 'mainwp_enableLegacyBackupFeature' ) );
+		$this->assertSame( $primary, get_option( 'mainwp_primaryBackup' ) );
+	}
 }

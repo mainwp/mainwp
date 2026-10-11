@@ -178,8 +178,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
         }
 
+        $this->assert_no_open_site_backup( $site_id );
         if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
-            throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before starting another.', 'mainwp' ) );
+            throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before starting another.', 'mainwp' ), null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped and the code is a trusted constant.
         }
 
         if ( ! MainWP_Backup_Monitor::child_supports_restore_create_idempotency( $website ) ) {
@@ -224,7 +225,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     private function admit_restore( int $reservation, int $site_id, int $snapshot_id, array $options ): int {
         $resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id, $site_id );
         if ( ! $resolved['ok'] ) {
-            throw new MainWP_Exception( esc_html( $resolved['error'] ) );
+            throw new MainWP_Exception( esc_html( $resolved['error'] ), null, $resolved['code'] ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- catalog codes are trusted identifiers; the message is escaped.
         }
 
         $checkpoint = array(
@@ -265,9 +266,22 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
         if ( null !== $store->get_active_job_for_site( $site_id ) ) {
             // A concurrent submit won the slot for this site.
-            throw new MainWP_Exception( $running ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- callers pass escaped strings.
+            throw new MainWP_Exception( $running, null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- callers pass escaped strings.
         }
-        throw new MainWP_Exception( esc_html__( 'Another backup action is working on this site. Try again in a minute.', 'mainwp' ) );
+        throw new MainWP_Exception( esc_html__( 'Another backup action is working on this site. Try again in a minute.', 'mainwp' ), null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped and the code is a trusted constant.
+    }
+
+    /**
+     * An open on-demand backup already owns the Child's backup lane.
+     *
+     * @param int $site_id Target site identity.
+     * @throws MainWP_Exception When the site's backup run has not closed.
+     */
+    private function assert_no_open_site_backup( int $site_id ): void {
+        $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        if ( $task && (int) $task->completed < (int) $task->last_run ) {
+            throw new MainWP_Exception( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ), null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
     }
 
     /**
@@ -429,9 +443,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
         $this->assert_rollback_status( $failed_job );
+        $this->assert_no_open_site_backup( (int) $failed_job->site_id );
 
         if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( (int) $failed_job->site_id ) ) {
-            throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before rolling back.', 'mainwp' ) );
+            throw new MainWP_Exception( esc_html__( 'A restore is already running for this site. Wait for it to finish before rolling back.', 'mainwp' ), null, MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped and the code is a trusted constant.
         }
 
         // A later restore can retire this source between the caller's read
@@ -486,17 +501,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $artifacts = isset( $failed_job->checkpoint['pre_snapshot_artifacts'] ) ? (array) $failed_job->checkpoint['pre_snapshot_artifacts'] : array();
         if ( ! $this->has_rollback_source( $failed_job ) ) {
             if ( empty( $artifacts ) ) {
-                throw new MainWP_Exception( esc_html__( 'No safety backup was taken before this restore, so there is nothing to roll back to.', 'mainwp' ) );
+                throw new MainWP_Exception( esc_html__( 'No safety backup was taken before this restore, so there is nothing to roll back to.', 'mainwp' ), null, 'mainwp_restore_rollback_status' );
             }
             // A completed rollback also retires its source, so ask about the
             // rollback first or its own success would read as a replacement.
             if ( $this->rollback_started_for( $failed_job ) ) {
-                throw new MainWP_Exception( esc_html__( 'A rollback has already been started for this restore, so it cannot be rolled back again.', 'mainwp' ) );
+                throw new MainWP_Exception( esc_html__( 'A rollback has already been started for this restore, so it cannot be rolled back again.', 'mainwp' ), null, 'mainwp_restore_rollback_status' );
             }
             if ( ! empty( $failed_job->checkpoint['pre_snapshot_pruned'] ) || ! empty( $failed_job->checkpoint['pre_snapshot_pruning'] ) || ( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED === $failed_job->status && empty( $failed_job->checkpoint['is_rollback'] ) && $this->superseded_by_later_completion( $failed_job ) ) ) {
-                throw new MainWP_Exception( esc_html__( 'The safety backup from this restore was replaced by a later restore, so there is nothing to roll back to.', 'mainwp' ) );
+                throw new MainWP_Exception( esc_html__( 'The safety backup from this restore was replaced by a later restore, so there is nothing to roll back to.', 'mainwp' ), null, 'mainwp_restore_rollback_status' );
             }
-            throw new MainWP_Exception( esc_html__( 'A rollback has already been started for this restore, so it cannot be rolled back again.', 'mainwp' ) );
+            throw new MainWP_Exception( esc_html__( 'A rollback has already been started for this restore, so it cannot be rolled back again.', 'mainwp' ), null, 'mainwp_restore_rollback_status' );
         }
 
         $plan = array();
@@ -907,7 +922,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( null === $job ) {
                 return;
             }
-            $status = $job->status;
+            // A verification retry can drive on without changing the stored retry status.
+            $status = MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $job->status
+                ? ( $job->checkpoint['resume_status'] ?? MainWP_Backup_Restore_Job_Store::STATUS_PENDING )
+                : $job->status;
         }
 
         switch ( $status ) {

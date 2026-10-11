@@ -32,20 +32,6 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 	protected $admin_user_id;
 
 	/**
-	 * Consumer key for REST API authentication.
-	 *
-	 * @var string
-	 */
-	protected $consumer_key;
-
-	/**
-	 * Consumer secret for REST API authentication.
-	 *
-	 * @var string
-	 */
-	protected $consumer_secret;
-
-	/**
 	 * Reset the REST server singleton and boot a fresh server, the same
 	 * way the REST integration tests do.
 	 *
@@ -73,12 +59,12 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * Tear down: drop the test API key and reset singletons.
+	 * Singleton state must not change authentication in later tests.
 	 *
 	 * @return void
 	 */
 	public function tearDown(): void {
-		global $wpdb, $wp_rest_server;
+		global $wp_rest_server;
 		$wp_rest_server = null;
 
 		\MainWP_REST_Authentication::$instance = null;
@@ -87,8 +73,6 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 		$property   = $reflection->getProperty( 'instance' );
 		$property->setAccessible( true );
 		$property->setValue( null, null );
-
-		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_api_keys WHERE description = 'Test API Key'" ); // phpcs:ignore WordPress.DB -- test cleanup.
 
 		delete_option( 'mainwp_enableNativeBackups' );
 		delete_option( 'mainwp_primaryBackup' );
@@ -101,73 +85,37 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * Create an admin and a read_write API key.
+	 * Controller behavior needs session authority without activating machine authentication.
 	 *
 	 * @return void
 	 */
 	protected function authenticate_as_admin(): void {
-		global $wpdb;
-
 		$this->admin_user_id = $this->factory->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $this->admin_user_id );
-
-		$this->consumer_key    = 'ck_' . bin2hex( random_bytes( 16 ) );
-		$this->consumer_secret = 'cs_' . bin2hex( random_bytes( 16 ) );
-
-		$wpdb->insert( // phpcs:ignore WordPress.DB -- test fixture.
-			$wpdb->prefix . 'mainwp_api_keys',
-			array(
-				'user_id'         => $this->admin_user_id,
-				'description'     => 'Test API Key',
-				'permissions'     => 'read_write',
-				'consumer_key'    => mainwp_api_hash( $this->consumer_key ),
-				'consumer_secret' => $this->consumer_secret,
-				'truncated_key'   => substr( $this->consumer_key, -7 ),
-				'enabled'         => 1,
-				'last_access'     => current_time( 'mysql' ),
-			),
-			array( '%d', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+		$auth = $this->getMockBuilder( \MainWP_REST_Authentication::class )->disableOriginalConstructor()->onlyMethods( array( 'is_valid_permissions' ) )->getMock();
+		$auth->method( 'is_valid_permissions' )->willReturnCallback(
+			static function () {
+				return current_user_can( 'manage_options' ) ? true : new \WP_Error( 'mainwp_rest_authentication_error', 'Administrator session required.', array( 'status' => 401 ) );
+			}
 		);
+		\MainWP_REST_Authentication::$instance = $auth;
 	}
 
 	/**
-	 * Make an authenticated REST request; PUT/PATCH bodies go as JSON.
+	 * JSON requests must exercise the controller's real validation and persistence.
 	 *
 	 * @param string $method HTTP method.
-	 * @param string $route  REST route.
-	 * @param array  $body   JSON body for write requests.
-	 *
+	 * @param string $route REST route.
+	 * @param array  $body JSON body for write requests.
 	 * @return \WP_REST_Response Response object.
 	 */
 	protected function do_authenticated_request( string $method, string $route, array $body = array() ): \WP_REST_Response {
-		$original_get        = $_GET;
-		$original_server     = $_SERVER;
-		$original_query_vars = $GLOBALS['wp']->query_vars;
-
-		$_GET['consumer_key']    = $this->consumer_key;
-		$_GET['consumer_secret'] = $this->consumer_secret;
-		$_SERVER['HTTPS']        = 'on';
-		$_SERVER['REQUEST_URI']  = '/wp-json' . $route;
-		// API key auth only runs for the route WordPress is dispatching.
-		$GLOBALS['wp']->query_vars['rest_route'] = $route;
-
-		\MainWP_REST_Authentication::$instance = null;
-		$auth                                  = \MainWP_REST_Authentication::get_instance();
-		$auth->authenticate( 0 );
-
 		$request = new WP_REST_Request( $method, $route );
 		if ( ! empty( $body ) ) {
 			$request->set_header( 'content-type', 'application/json' );
 			$request->set_body( (string) wp_json_encode( $body ) );
 		}
-
-		$response = rest_do_request( $request );
-
-		$_GET                      = $original_get;
-		$_SERVER                   = $original_server;
-		$GLOBALS['wp']->query_vars = $original_query_vars;
-
-		return $response;
+		return rest_do_request( $request );
 	}
 
 	/**

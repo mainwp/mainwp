@@ -447,13 +447,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_restore_progress' );
         $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
-        if ( null === $job ) {
+        $job = MainWP_Backup_Operations::authorize_restore_job( $job_id );
+        if ( is_wp_error( $job ) ) {
             wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
-            return;
-        }
-
-        if ( null === $this->authorize_restore_site( (int) $job->site_id ) ) {
             return;
         }
 
@@ -485,13 +481,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_restore_cancel' );
         $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id );
-        if ( null === $job ) {
+        $job = MainWP_Backup_Operations::authorize_restore_job( $job_id );
+        if ( is_wp_error( $job ) ) {
             wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
-            return;
-        }
-
-        if ( null === $this->authorize_restore_site( (int) $job->site_id ) ) {
             return;
         }
 
@@ -541,16 +533,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
         if ( is_wp_error( $result ) ) {
-            if ( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND === $result->get_error_code() ) {
-                wp_send_json(
-                    array(
-                        'error'     => esc_html__( 'Restore job not found.', 'mainwp' ),
-                        'retryable' => false,
-                    )
-                );
-            } else {
-                wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) );
-            }
+            wp_send_json(
+                array(
+                    'error'     => esc_html__( 'Restore job not found.', 'mainwp' ),
+                    'retryable' => false,
+                )
+            );
             return;
         }
         wp_send_json( $result );

@@ -1164,7 +1164,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function rollback_restore( int $restore_job_id, string $context = 'ability' ) {
-        $job = 'ui' === $context ? MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id ) : self::authorize_restore_job( $restore_job_id );
+        $job = self::authorize_restore_job( $restore_job_id );
         if ( is_wp_error( $job ) ) {
             return $job;
         }
@@ -1220,7 +1220,8 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $disabled ) ) {
             return $disabled;
         }
-        return self::storage_result(
+        $before = get_option( MainWP_Backup_Storage_SFTP::HOSTKEYS_OPTION, array() );
+        $result = self::storage_result(
             MainWP_Backup_Storage_Handler::test_saved_or_submitted(
                 array(
                     'id'       => $id,
@@ -1228,8 +1229,22 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'name'     => $destination->name,
                     'settings' => null,
                 )
-            )
+            ),
+            (string) $destination->provider
         );
+        $after  = get_option( MainWP_Backup_Storage_SFTP::HOSTKEYS_OPTION, array() );
+        $pinned = 'sftp' === $destination->provider && ! isset( $before[ $id ] ) && isset( $after[ $id ] );
+        if ( is_wp_error( $result ) ) {
+            $result->add_data(
+                array(
+                    'status'          => 502,
+                    'host_key_pinned' => $pinned,
+                )
+            );
+        } else {
+            $result['host_key_pinned'] = $pinned;
+        }
+        return $result;
     }
 
     /**
@@ -1294,18 +1309,35 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return $destination;
         }
         $disabled = self::native_task_write_error();
-        return is_wp_error( $disabled ) ? $disabled : self::storage_result( MainWP_Backup_Storage_Handler::delete_destination_flow( $id, true ) );
+        if ( is_wp_error( $disabled ) ) {
+            return $disabled;
+        }
+        $count  = count( MainWP_Backup_Storage_Handler::tasks_using_destination( $id ) );
+        $result = self::storage_result( MainWP_Backup_Storage_Handler::delete_destination_flow( $id, true ) );
+        if ( ! is_wp_error( $result ) ) {
+            $result['tasks_detached'] = $count;
+        }
+        return $result;
     }
 
     /**
      * Provider details can contain credentials or paths, so never copy their errors.
      *
-     * @param array $result Existing handler response.
+     * @param array  $result Existing handler response.
+     * @param string $provider Provider whose probe failed.
      * @return array|\WP_Error
      */
-    private static function storage_result( array $result ) {
+    private static function storage_result( array $result, string $provider = '' ) {
         if ( isset( $result['error'] ) || ( array_key_exists( 'ok', $result ) && ! $result['ok'] ) ) {
-            return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
+            $codes = array(
+                's3'      => MainWP_Backup_Error_Codes::ERR_S3_FAILED,
+                'gcs'     => MainWP_Backup_Error_Codes::ERR_GCS_FAILED,
+                'dropbox' => MainWP_Backup_Error_Codes::ERR_DROPBOX_FAILED,
+                'sftp'    => MainWP_Backup_Error_Codes::ERR_FTP_FAILED,
+                'local'   => MainWP_Backup_Error_Codes::ERR_S3_FAILED,
+            );
+            $code  = $codes[ $provider ] ?? 'mainwp_operation_failed';
+            return new \WP_Error( $code, self::safe_error( $code )['message'], array( 'status' => 502 ) );
         }
         return $result;
     }
@@ -1331,6 +1363,39 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 return $scope;
             }
         }
+        $writes = self::backup_settings_writes( $values, $context );
+        if ( is_wp_error( $writes ) ) {
+            return $writes;
+        }
+        $options = array(
+            'on_demand_retention_count'   => 'mainwp_on_demand_retention_count',
+            'max_concurrent_backups'      => 'mainwp_backup_max_concurrent',
+            'diagnostics_enabled'         => MainWP_Backup_Diagnostics::OPTION_ENABLED,
+            'update_gate.enabled'         => 'mainwp_backup_before_upgrade',
+            'update_gate.max_age_days'    => 'mainwp_backup_before_upgrade_days',
+            'update_gate.require_offsite' => 'mainwp_backup_before_upgrade_require_offsite',
+        );
+        foreach ( $writes as $key => $value ) {
+            if ( 'native_backups_enabled' === $key ) {
+                if ( $value && ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+                    MainWP_Utility::update_option( 'mainwp_primaryBackup', '' );
+                }
+                MainWP_Backup_Settings::update_native_backups_option( $value );
+            } else {
+                MainWP_Utility::update_option( $options[ $key ], (int) $value );
+            }
+        }
+        return $values;
+    }
+
+    /**
+     * Validation must finish before either a preview or any persisted setting.
+     *
+     * @param array  $values Submitted policy fields.
+     * @param string $context Caller policy bounds.
+     * @return array|\WP_Error Flattened validated changes.
+     */
+    private static function backup_settings_writes( array $values, string $context = 'ability' ) {
         $fields = array( 'native_backups_enabled', 'on_demand_retention_count', 'max_concurrent_backups', 'diagnostics_enabled', 'update_gate' );
         $gate   = array( 'enabled', 'max_age_days', 'require_offsite' );
         if ( ! $values || array_diff( array_keys( $values ), $fields ) || ( isset( $values['update_gate'] ) && ( ! is_array( $values['update_gate'] ) || ! $values['update_gate'] || array_diff( array_keys( $values['update_gate'] ), $gate ) ) ) ) {
@@ -1349,14 +1414,6 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $writes[ $key ] = $value;
             }
         }
-        $options = array(
-            'on_demand_retention_count'   => 'mainwp_on_demand_retention_count',
-            'max_concurrent_backups'      => 'mainwp_backup_max_concurrent',
-            'diagnostics_enabled'         => MainWP_Backup_Diagnostics::OPTION_ENABLED,
-            'update_gate.enabled'         => 'mainwp_backup_before_upgrade',
-            'update_gate.max_age_days'    => 'mainwp_backup_before_upgrade_days',
-            'update_gate.require_offsite' => 'mainwp_backup_before_upgrade_require_offsite',
-        );
         // The older form accepts larger counts; machine writes use the bounded policy.
         $limits = array(
             'on_demand_retention_count' => 100,
@@ -1369,26 +1426,145 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
             }
         }
-        foreach ( $writes as $key => $value ) {
-            if ( 'native_backups_enabled' === $key ) {
-                if ( $value && ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
-                    MainWP_Utility::update_option( 'mainwp_primaryBackup', '' );
+        return $writes;
+    }
+
+    /**
+     * Provider probes and the deleting flow can write, so previews only inspect stored rows.
+     *
+     * @param int    $id Destination identity.
+     * @param string $action Destination action slug.
+     * @param array  $fields Name or default change.
+     * @return array|\WP_Error
+     */
+    public static function preview_destination( int $id, string $action, array $fields = array() ) {
+        $destination = self::authorize_destination( $id );
+        if ( is_wp_error( $destination ) ) {
+            return $destination;
+        }
+        $disabled = self::native_task_write_error();
+        if ( is_wp_error( $disabled ) ) {
+            return $disabled;
+        }
+        $effect = array( 'destination_id' => $id );
+        switch ( $action ) {
+            case 'test-backup-destination':
+                $pins                          = get_option( MainWP_Backup_Storage_SFTP::HOSTKEYS_OPTION, array() );
+                $effect['provider']            = (string) $destination->provider;
+                $effect['writes_probe_object'] = true;
+                $effect['may_pin_host_key']    = 'sftp' === $destination->provider && empty( $destination->settings['host_fingerprint'] ) && ! isset( $pins[ $id ] );
+                break;
+            case 'set-default-backup-destination':
+                $previous                      = MainWP_Backup_Storage_Destinations::instance()->get_default();
+                $effect['previous_default_id'] = $previous ? (int) $previous->id : null;
+                break;
+            case 'update-backup-destination':
+                if ( ! $fields || array_diff( array_keys( $fields ), array( 'name', 'is_default' ) ) || ( array_key_exists( 'name', $fields ) && ( ! is_string( $fields['name'] ) || '' === trim( $fields['name'] ) || mb_strlen( $fields['name'], 'UTF-8' ) > 255 ) ) || ( array_key_exists( 'is_default', $fields ) && ! is_bool( $fields['is_default'] ) ) ) {
+                    return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
                 }
-                MainWP_Backup_Settings::update_native_backups_option( $value );
-            } else {
-                MainWP_Utility::update_option( $options[ $key ], (int) $value );
+                if ( ! empty( $destination->credentials_invalid ) ) {
+                    return new \WP_Error( MainWP_Backup_Error_Codes::ERR_DESTINATION_CREDENTIALS_REQUIRED, self::safe_error( MainWP_Backup_Error_Codes::ERR_DESTINATION_CREDENTIALS_REQUIRED )['message'], array( 'status' => 400 ) );
+                }
+                $effect['changes'] = array();
+                foreach ( $fields as $field => $value ) {
+                    $before = 'is_default' === $field ? ! empty( $destination->is_default ) : (string) $destination->name;
+                    $after  = 'name' === $field ? sanitize_text_field( $value ) : $value;
+                    if ( $before !== $after ) {
+                        $effect['changes'][] = array(
+                            'field' => $field,
+                            'from'  => $before,
+                            'to'    => $after,
+                        );
+                    }
+                }
+                $effect['connection_test_runs'] = true;
+                break;
+            case 'delete-backup-destination':
+                $effect['tasks_detached'] = array();
+                foreach ( MainWP_Backup_Storage_Handler::tasks_using_destination( $id ) as $task ) {
+                    $effect['tasks_detached'][] = array(
+                        'task_id' => (int) $task->id,
+                        'name'    => (string) $task->name,
+                    );
+                }
+                $effect['pending_jobs_failed'] = array(
+                    'upload' => 0,
+                    'delete' => 0,
+                );
+                global $wpdb;
+                $table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+                $jobs  = $wpdb->get_results( $wpdb->prepare( "SELECT kind, COUNT(*) AS total FROM {$table} WHERE destination_id = %d AND status NOT IN (%s, %s, %s) GROUP BY kind", $id, MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, MainWP_Backup_Upload_Job_Store::STATUS_CREDENTIALS_INVALID ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the predicate must match the handler's cross-snapshot retirement rule.
+                if ( null === $jobs || '' !== $wpdb->last_error ) {
+                    return new \WP_Error( 'mainwp_internal_error', self::safe_error( 'mainwp_internal_error' )['message'], array( 'status' => 500 ) );
+                }
+                foreach ( $jobs as $job ) {
+                    if ( isset( $effect['pending_jobs_failed'][ $job['kind'] ] ) ) {
+                        $effect['pending_jobs_failed'][ $job['kind'] ] = (int) $job['total'];
+                    }
+                }
+                $effect['remote_objects_left_in_place'] = true;
+                $effect['was_default']                  = ! empty( $destination->is_default );
+                break;
+            default:
+                return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        }
+        return self::backup_preview( $effect );
+    }
+
+    /**
+     * Global policy previews must share validation without touching options or crons.
+     *
+     * @param array $values Submitted policy fields.
+     * @return array|\WP_Error
+     */
+    public static function preview_backup_settings( array $values ) {
+        $base = self::authorize_base( 'manage_dashboard_settings' );
+        if ( is_wp_error( $base ) ) {
+            return $base;
+        }
+        $scope = MainWP_Abilities_Util::check_unrestricted_access();
+        if ( is_wp_error( $scope ) ) {
+            return $scope;
+        }
+        $writes = self::backup_settings_writes( $values );
+        if ( is_wp_error( $writes ) ) {
+            return $writes;
+        }
+        $settings = MainWP_Backup_Read_Model::get_settings();
+        $changes  = array();
+        foreach ( $writes as $key => $value ) {
+            $before = 0 === strpos( $key, 'update_gate.' ) ? $settings['update_gate'][ substr( $key, 12 ) ] : $settings[ $key ];
+            if ( $before !== $value ) {
+                $changes[] = array(
+                    'setting' => $key,
+                    'from'    => $before,
+                    'to'      => $value,
+                );
             }
         }
-        return $values;
+        $stops  = isset( $values['native_backups_enabled'] ) && ! $values['native_backups_enabled'] && $settings['native_backups_enabled'];
+        $clears = ! empty( $values['native_backups_enabled'] ) && ! $settings['native_backups_enabled'] && '' !== $settings['primary_backup_method'];
+        return self::backup_preview(
+            array(
+                'changes'                      => $changes,
+                'stops_scheduled_backups'      => $stops,
+                'clears_primary_backup_method' => $clears,
+                'primary_backup_method'        => $clears ? substr( sanitize_key( $settings['primary_backup_method'] ), 0, 64 ) : null,
+            )
+        );
     }
 
     /**
      * The stored confirmation decides whether a stop can be claimed.
      *
-     * @param int $restore_job_id Restore identity.
+     * @param int    $restore_job_id Restore identity.
+     * @param string $context Caller context.
      * @return array|\WP_Error Cancellation evidence.
      */
-    public static function cancel_restore( int $restore_job_id ) {
+    public static function cancel_restore( int $restore_job_id, string $context = 'ability' ) {
+        if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        }
         $before = self::authorize_restore_job( $restore_job_id );
         if ( is_wp_error( $before ) ) {
             return $before;
@@ -1434,6 +1610,156 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'restore_job_id' => $restore_job_id,
             'status'         => $job->status,
             'result'         => $result,
+        );
+    }
+
+    /**
+     * The consent preview must use the same catalog admission as a restore.
+     *
+     * @param int   $site_id Target site identity.
+     * @param int   $snapshot_id Snapshot identity.
+     * @param array $options Safety backup and order preservation choices.
+     * @return array|\WP_Error
+     */
+    public static function preview_restore_snapshot( int $site_id, int $snapshot_id, array $options ) {
+        $site = self::authorize_site( $site_id, 'execute_backups' );
+        if ( is_wp_error( $site ) ) {
+            return $site;
+        }
+        $snapshot = self::authorize_snapshot( $snapshot_id );
+        if ( is_wp_error( $snapshot ) ) {
+            return $snapshot;
+        }
+        if ( (int) $snapshot->site_id !== $site_id ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND );
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $snapshot_id, $site_id );
+        $details  = MainWP_Backup_Read_Model::snapshot_details( $snapshot_id );
+        if ( is_wp_error( $details ) ) {
+            return $details;
+        }
+        $type     = $resolved['sub_type'] ?? ( 'incremental' === $snapshot->type ? 'full' : $snapshot->type );
+        $refusals = self::restore_preview_refusals( $site );
+        $reason   = $resolved['ok'] ? null : self::safe_error( $resolved['code'] );
+        if ( null !== $reason ) {
+            $refusals[] = $reason;
+        }
+        $age_days = max( 0, (int) floor( ( time() - (int) $snapshot->created ) / DAY_IN_SECONDS ) );
+        $woo      = MainWP_Utility::site_has_woocommerce( $site_id );
+        $warnings = array(
+            /* translators: %d: age of the snapshot in days. */
+            sprintf( __( 'The snapshot is %d days old.', 'mainwp' ), $age_days ),
+            __( 'Site capabilities and WooCommerce order preservation are checked when you confirm.', 'mainwp' ),
+        );
+        if ( 'files' !== $type ) {
+            $warnings[] = __( 'This restore replaces the database. Content changed since the snapshot will be lost.', 'mainwp' );
+            if ( $woo ) {
+                $warnings[] = __( 'WooCommerce orders changed since the snapshot can be lost. Order preservation requires support from the site.', 'mainwp' );
+            }
+        }
+        return self::backup_preview(
+            array(
+                'site_id'              => $site_id,
+                'snapshot'             => $details['snapshot'],
+                'restorable'           => $resolved['ok'],
+                'restore_reason'       => $reason,
+                'restore_type'         => $type,
+                'replaces_database'    => 'files' !== $type,
+                'chain_ids'            => $details['chain_ids'],
+                'site_has_woocommerce' => $woo,
+                'safety_backup'        => array(
+                    'will_take' => $options['pre_snapshot'] ?? true,
+                    'type'      => 'full',
+                ),
+                'preserve_orders'      => array(
+                    'requested'  => ! empty( $options['preserve_orders'] ),
+                    'checked_at' => 'confirm',
+                ),
+            ),
+            $refusals,
+            $warnings
+        );
+    }
+
+    /**
+     * Local evidence can refuse admission without contacting the Child.
+     *
+     * @param object $site Authorized site.
+     * @return array
+     */
+    private static function restore_preview_refusals( object $site ): array {
+        $refusals = array();
+        if ( MainWP_Backup_Restore_Orchestrator::site_is_disconnected( $site ) ) {
+            $refusals[] = self::safe_error( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED );
+        }
+        $task = MainWP_DB_Backup::instance()->get_manual_backup_task( (int) $site->id );
+        if ( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( (int) $site->id ) || ( $task && (int) $task->completed < (int) $task->last_run ) ) {
+            $refusals[] = self::safe_error( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+        }
+        return $refusals;
+    }
+
+    /**
+     * A pending stop does not prove that the Child has stopped applying the restore.
+     *
+     * @param int $restore_job_id Restore identity.
+     * @return array|\WP_Error
+     */
+    public static function preview_restore_cancel( int $restore_job_id ) {
+        $job = self::authorize_restore_job( $restore_job_id );
+        if ( is_wp_error( $job ) ) {
+            return $job;
+        }
+        $phase = 'failed_retryable' === $job->status ? ( $job->checkpoint['resume_status'] ?? 'pending' ) : $job->status;
+        return self::backup_preview(
+            array(
+                'restore_job_id'     => $restore_job_id,
+                'status'             => $job->status,
+                'cancellable'        => in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $phase,
+                'site_will_be_asked' => ! empty( $job->child_task_id ) && in_array( $phase, array( 'staging', 'transferring', 'running' ), true ),
+            ),
+            array(),
+            array( __( 'An early-phase cancel takes effect once the job reaches staging. Poll the restore job until cancellation is confirmed.', 'mainwp' ) )
+        );
+    }
+
+    /**
+     * Safety backup retention and source status determine whether rollback can start.
+     *
+     * @param int $restore_job_id Source restore identity.
+     * @return array|\WP_Error
+     */
+    public static function preview_restore_rollback( int $restore_job_id ) {
+        $job = self::authorize_restore_job( $restore_job_id );
+        if ( is_wp_error( $job ) ) {
+            return $job;
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $site = self::authorize_site( (int) $job->site_id, 'execute_backups' );
+        if ( is_wp_error( $site ) ) {
+            return $site;
+        }
+        $available = in_array( $job->status, array( 'completed', 'failed_permanent', 'cancelled' ), true ) && MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $job );
+        $refusals  = self::restore_preview_refusals( $site );
+        if ( ! $available ) {
+            $refusals[] = self::safe_error( 'mainwp_restore_rollback_status' );
+        }
+        return self::backup_preview(
+            array(
+                'source_restore_job_id' => $restore_job_id,
+                'site_id'               => (int) $job->site_id,
+                'rollback_available'    => $available,
+                'source_status'         => $job->status,
+                'restore_type'          => 'full',
+            ),
+            $refusals
         );
     }
 

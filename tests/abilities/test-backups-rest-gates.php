@@ -9,6 +9,8 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
+use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_DB_Backup;
 
 require_once __DIR__ . '/../backup/class-mainwp-backup-read-fixtures.php';
@@ -27,6 +29,19 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 	protected $server;
 
 	/**
+	 * Allocated destination for write previews.
+	 *
+	 * @var int
+	 */
+	private $write_destination_id;
+	/**
+	 * Allocated terminal restore job.
+	 *
+	 * @var int
+	 */
+	private $write_restore_job_id;
+
+	/**
 	 * Routes must be created after the ability registry is initialized.
 	 *
 	 * @return void
@@ -40,6 +55,28 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 		do_action( 'rest_api_init' );
 		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		$this->seed_read_fixtures();
+		$this->write_destination_id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'REST stored destination',
+				'settings' => array( 'base_path' => '/private/rest-preview-path' ),
+			)
+		);
+		$this->write_restore_job_id = MainWP_Backup_Restore_Job_Store::instance()->create_job(
+			$this->site_id,
+			987673,
+			array(
+				'sub_type'               => 'full',
+				'pre_snapshot_artifacts' => array(
+					array(
+						'file' => 'safety.tar.gz',
+						'role' => 'full',
+						'size' => 1,
+					),
+				),
+			)
+		);
+		MainWP_Backup_Restore_Job_Store::instance()->set_status( $this->write_restore_job_id, 'failed_permanent' );
 		$this->insert_read_fixture(
 			'wp_backup_storage',
 			array(
@@ -59,6 +96,9 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 	public function tearDown(): void {
 		global $wp_rest_server;
 		$wp_rest_server = null;
+		MainWP_Backup_Storage_Destinations::instance()->delete_destination( $this->write_destination_id );
+		global $wpdb;
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'id' => $this->write_restore_job_id ) );
 		$this->clear_read_fixtures();
 		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		parent::tearDown();
@@ -235,6 +275,15 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 			array( 'delete-backup-task', 'POST', 'mainwp_backup_task_not_found' ),
 			array( 'pause-backup-task', 'POST', 'mainwp_backup_task_not_found' ),
 			array( 'resume-backup-task', 'POST', 'mainwp_backup_task_not_found' ),
+			array( 'restore-site-snapshot', 'POST', 'mainwp_backup_snapshot_not_found' ),
+			array( 'cancel-restore', 'DELETE', 'mainwp_backup_restore_job_not_found' ),
+			array( 'rollback-restore', 'POST', 'mainwp_backup_restore_job_not_found' ),
+			array( 'test-backup-destination', 'POST', 'mainwp_backup_destination_not_found' ),
+			array( 'set-default-backup-destination', 'POST', 'mainwp_backup_destination_not_found' ),
+			array( 'update-backup-destination', 'POST', 'mainwp_backup_destination_not_found' ),
+			array( 'delete-backup-destination', 'POST', 'mainwp_backup_destination_not_found' ),
+			array( 'update-backup-settings', 'POST', 'rest_ability_not_found' ),
+
 		);
 	}
 
@@ -247,6 +296,31 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 	 */
 	private function write_input( $name, $missing = false ) {
 		$id = $missing ? 9007199254740991 : 987671;
+		if ( 'update-backup-settings' === $name ) {
+			return array(
+				'on_demand_retention_count' => 7,
+				'dry_run'                   => true,
+			);
+		}
+		if ( false !== strpos( $name, 'destination' ) ) {
+			return array(
+				'destination_id' => $missing ? $id : $this->write_destination_id,
+				'dry_run'        => true,
+			) + ( 'update-backup-destination' === $name ? array( 'name' => 'REST rename' ) : array() );
+		}
+		if ( 'restore-site-snapshot' === $name ) {
+			return array(
+				'site_id_or_domain' => $this->site_id,
+				'snapshot_id'       => $missing ? $id : 987673,
+				'dry_run'           => true,
+			);
+		}
+		if ( 'cancel-restore' === $name || 'rollback-restore' === $name ) {
+			return array(
+				'restore_job_id' => $missing ? $id : $this->write_restore_job_id,
+				'dry_run'        => true,
+			);
+		}
 		if ( 'create-backup-task' === $name ) {
 			return array(
 				'name'                => 'REST preview task',
@@ -339,9 +413,35 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 	 */
 	public function test_write_missing_target_returns_exact_404( $name, $method, $code ) {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		$response = $this->write_request( $method, $name, $this->write_input( $name, true ) );
+		// Global settings have no target, so their 404 is an unavailable ability.
+		if ( 'update-backup-settings' === $name ) {
+			$this->assertTrue( wp_has_ability( 'mainwp/update-backup-settings-v1' ) );
+			$registry = \WP_Abilities_Registry::get_instance();
+			$property = new \ReflectionProperty( \WP_Abilities_Registry::class, 'registered_abilities' );
+			$property->setAccessible( true );
+			$abilities = $property->getValue( $registry );
+			$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+			wp_unregister_ability( 'mainwp/update-backup-settings-v1' );
+		}
+		try {
+			$response = $this->write_request( $method, $name, $this->write_input( $name, true ) );
+		} finally {
+			if ( 'update-backup-settings' === $name ) {
+				$property->setValue( $registry, $abilities );
+			}
+		}
 		$this->assertSame( 404, $response->get_status(), wp_json_encode( $response->get_data() ) );
 		$this->assertSame( $code, $response->get_data()['code'] );
+	}
+
+	/** Unsupported destination fields must keep the ability refusal code over REST. */
+	public function test_destination_update_unknown_fields_are_ability_invalid_input() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		foreach ( array( 'settings', 'base_path', 'destination_ids', 'restore_job_id', 'unknown' ) as $key ) {
+			$response = $this->write_request( 'POST', 'update-backup-destination', $this->write_input( 'update-backup-destination' ) + array( $key => 'private' ) );
+			$this->assertSame( 400, $response->get_status() );
+			$this->assertSame( 'ability_invalid_input', $response->get_data()['code'], $key );
+		}
 	}
 
 	/**
@@ -356,5 +456,6 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 		$wrong    = 'POST' === $method ? 'GET' : 'POST';
 		$response = $this->write_request( $wrong, $name, $this->write_input( $name ) );
 		$this->assertSame( 405, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( 'rest_ability_invalid_method', $response->get_data()['code'] );
 	}
 }

@@ -131,6 +131,14 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			'mainwp/delete-backup-task-v1',
 			'mainwp/pause-backup-task-v1',
 			'mainwp/resume-backup-task-v1',
+			'mainwp/restore-site-snapshot-v1',
+			'mainwp/cancel-restore-v1',
+			'mainwp/rollback-restore-v1',
+			'mainwp/test-backup-destination-v1',
+			'mainwp/set-default-backup-destination-v1',
+			'mainwp/update-backup-destination-v1',
+			'mainwp/delete-backup-destination-v1',
+			'mainwp/update-backup-settings-v1',
 
 			'mainwp/list-sites-v1',
 			'mainwp/get-site-v1',
@@ -150,6 +158,8 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			},
 			$mainwp_abilities
 		);
+
+		$this->assertNotContains( 'mainwp/create-backup-destination-v1', $ability_names );
 
 		foreach ( $expected as $name ) {
 			$this->assertContains(

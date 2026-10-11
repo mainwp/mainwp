@@ -16,7 +16,9 @@ class MainWP_Backup_Ability extends \WP_Ability {
      * @return true|\WP_Error
      */
     public function validate_input( $input = null ) {
-        $valid = MainWP_Abilities_Backups::validate_id_input( $input, empty( $this->get_meta_item( 'annotations' )['readonly'] ) );
+        // Unknown fields belong to schema validation, rather than identifier parsing.
+        $ids   = is_array( $input ) ? array_intersect_key( $input, $this->get_input_schema()['properties'] ?? array() ) : $input;
+        $valid = MainWP_Abilities_Backups::validate_id_input( $ids, empty( $this->get_meta_item( 'annotations' )['readonly'] ) );
         if ( is_wp_error( $valid ) ) {
             return $valid;
         }

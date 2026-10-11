@@ -45,6 +45,14 @@ class MainWP_Abilities_Backups {
         'mainwp/delete-backup-task-v1',
         'mainwp/pause-backup-task-v1',
         'mainwp/resume-backup-task-v1',
+        'mainwp/restore-site-snapshot-v1',
+        'mainwp/cancel-restore-v1',
+        'mainwp/rollback-restore-v1',
+        'mainwp/test-backup-destination-v1',
+        'mainwp/set-default-backup-destination-v1',
+        'mainwp/update-backup-destination-v1',
+        'mainwp/delete-backup-destination-v1',
+        'mainwp/update-backup-settings-v1',
     );
 
     /**
@@ -79,6 +87,14 @@ class MainWP_Abilities_Backups {
         self::register_delete_backup_task();
         self::register_pause_backup_task();
         self::register_resume_backup_task();
+        self::register_restore_site_snapshot();
+        self::register_cancel_restore();
+        self::register_rollback_restore();
+        self::register_test_backup_destination();
+        self::register_set_default_backup_destination();
+        self::register_update_backup_destination();
+        self::register_delete_backup_destination();
+        self::register_update_backup_settings();
     }
 
     /**
@@ -2348,6 +2364,12 @@ class MainWP_Abilities_Backups {
                 )
             );
         }
+        if ( 'mainwp/update-backup-settings-v1' === $ability ) {
+            $scope = MainWP_Abilities_Util::check_unrestricted_access();
+            if ( is_wp_error( $scope ) ) {
+                return self::safe_wp_error( $scope );
+            }
+        }
         $valid = self::validate_id_input( $input, in_array( $ability, self::WRITE_ABILITIES, true ) );
         if ( is_wp_error( $valid ) ) {
             return $valid;
@@ -2511,6 +2533,10 @@ class MainWP_Abilities_Backups {
             $params = $request->get_json_params();
         }
         $input = $params['input'] ?? null;
+        if ( 'mainwp/update-backup-destination-v1' === $name && is_array( $input ) && array_diff_key( $input, $ability->get_input_schema()['properties'] ) ) {
+            // Core's ability validator preserves the documented refusal for connection fields.
+            return true;
+        }
         $valid = rest_validate_value_from_schema( $ability->normalize_input( $input ), $ability->get_input_schema(), $param );
         return is_wp_error( $valid ) ? $valid : ( in_array( $name, self::WRITE_ABILITIES, true ) ? self::validate_id_input( $input, true ) : true );
     }
@@ -4929,6 +4955,359 @@ class MainWP_Abilities_Backups {
         );
     }
 
+    /** Restore writes share the existing consent envelope and site authority. */
+    private static function register_restore_site_snapshot(): void {
+        wp_register_ability(
+            'mainwp/restore-site-snapshot-v1',
+            array(
+                'label'               => __( 'Restore Site Snapshot', 'mainwp' ),
+                'description'         => __( 'Restore a site from one of its snapshots. Full and database restores replace the site\'s database; content changed since the snapshot is lost. By default a full safety backup is taken first so rollback-restore-v1 can undo the restore. Returns a restore job id; cron runs the restore. Poll get-restore-job-v1 and read outcome, partial_state_risk and verification. dry_run is the consent step: snapshot age, what is replaced, WooCommerce warnings and the refusals known without contacting the site. Possible errors: mainwp_backup_legacy_disabled, mainwp_backup_site_disconnected, mainwp_backup_already_running, mainwp_backup_snapshot_not_found, mainwp_site_not_found, mainwp_restore_woo_legacy_orders, mainwp_restore_woo_sync_mode, mainwp_restore_woo_version_skew, mainwp_restore_child_update_required.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::restore_site_snapshot_input_schema(),
+                'output_schema'       => self::restore_site_snapshot_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_restore_site_snapshot' ),
+                'permission_callback' => self::permission_callback( 'mainwp/restore-site-snapshot-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Destructive. Requires confirm:true or dry_run:true. Call dry_run first and show the user replaces_database, the snapshot age and the safety backup plan. Site capability and WooCommerce checks run only at confirm. The site does not roll back files on failure; rollback relies on the safety backup.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Direct callbacks repeat authorization before preview or dispatch.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_restore_site_snapshot( $input ) {
+        return self::execute_write( 'restore-site-snapshot', $input );
+    }
+
+    /** Restore writes share the existing consent envelope and site authority. */
+    private static function register_cancel_restore(): void {
+        wp_register_ability(
+            'mainwp/cancel-restore-v1',
+            array(
+                'label'               => __( 'Cancel Restore', 'mainwp' ),
+                'description'         => __( 'Request cancellation of a restore job that has not reached verification. An early-phase cancel takes effect once the job reaches staging. cancel_pending means the request is recorded; it does not mean the job has stopped. Poll get-restore-job-v1 until the stop is confirmed. Results: cancelled, cancel_pending, cancel_unconfirmed (the site never confirmed within 15 minutes and may be partly restored), ended_failed, or not_cancellable. Possible errors: mainwp_backup_restore_job_not_found.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::cancel_restore_input_schema(),
+                'output_schema'       => self::cancel_restore_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_cancel_restore' ),
+                'permission_callback' => self::permission_callback( 'mainwp/cancel-restore-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => true,
+                        'instructions' => __( 'Requires confirm:true or dry_run:true. After cancel_pending or cancel_unconfirmed read get-restore-job-v1 before reporting the site state. An early-phase cancel takes effect once the job reaches staging.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Direct callbacks repeat authorization before preview or dispatch.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_cancel_restore( $input ) {
+        return self::execute_write( 'cancel-restore', $input );
+    }
+
+    /** Restore writes share the existing consent envelope and site authority. */
+    private static function register_rollback_restore(): void {
+        wp_register_ability(
+            'mainwp/rollback-restore-v1',
+            array(
+                'label'               => __( 'Roll Back Restore', 'mainwp' ),
+                'description'         => __( 'Restore the full safety backup taken before a restore job, undoing that restore. Starts a new restore job; poll get-restore-job-v1 with the returned restore_job_id. Available only when the source job took a safety backup and is in a rollback-able status. Possible errors: mainwp_restore_rollback_status, mainwp_backup_site_disconnected, mainwp_backup_already_running, mainwp_backup_restore_job_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::rollback_restore_input_schema(),
+                'output_schema'       => self::rollback_restore_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_rollback_restore' ),
+                'permission_callback' => self::permission_callback( 'mainwp/rollback-restore-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Destructive. Requires confirm:true or dry_run:true. Call dry_run first and show the user the source job and that the whole safety backup is applied.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Direct callbacks repeat authorization before preview or dispatch.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_rollback_restore( $input ) {
+        return self::execute_write( 'rollback-restore', $input );
+    }
+
+    /**
+     * Restore consent and safety choices exclude internal options.
+     *
+     * @return array
+     */
+    private static function restore_site_snapshot_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array( 'site_id_or_domain', 'snapshot_id' ),
+            'properties'           => array(
+                'site_id_or_domain'  => self::site_id_or_domain_schema(),
+                'snapshot_id'        => self::snapshot_id_schema(),
+                'take_safety_backup' => array(
+                    'type'        => 'boolean',
+                    'default'     => true,
+                    'description' => 'Take a full safety backup of the site first so the restore can be rolled back. The Snapshots page has this on by default.',
+                ),
+                'preserve_orders'    => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'WooCommerce: keep orders placed after the snapshot. Refused at confirm when the store cannot support it.',
+                ),
+                'dry_run'            => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
+                ),
+                'confirm'            => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Exact IDs prevent coercion from changing the cancellation target.
+     *
+     * @return array
+     */
+    private static function cancel_restore_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array( 'restore_job_id' ),
+            'properties'           => array(
+                'restore_job_id' => self::restore_job_id_schema(),
+                'dry_run'        => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
+                ),
+                'confirm'        => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Rollback names the recorded source job, never an artifact path.
+     *
+     * @return array
+     */
+    private static function rollback_restore_input_schema(): array {
+        return self::cancel_restore_input_schema();
+    }
+
+    /**
+     * The preview exposes consent facts without artifact paths.
+     *
+     * @return array
+     */
+    private static function restore_site_snapshot_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'site_id', 'snapshot', 'restorable', 'restore_reason', 'restore_type', 'replaces_database', 'chain_ids', 'site_has_woocommerce', 'safety_backup', 'preserve_orders' ),
+                'properties'           => array(
+                    'site_id'              => array( 'type' => 'integer' ),
+                    'snapshot'             => self::snapshot_summary_schema(),
+                    'restorable'           => array( 'type' => 'boolean' ),
+                    'restore_reason'       => self::safe_error_or_null_schema(),
+                    'restore_type'         => array(
+                        'type' => 'string',
+                        'enum' => array( 'full', 'db', 'files' ),
+                    ),
+                    'replaces_database'    => array(
+                        'type'        => 'boolean',
+                        'description' => 'True for full and db restores: content changed since the snapshot is lost.',
+                    ),
+                    'chain_ids'            => array(
+                        'type'  => 'array',
+                        'items' => array( 'type' => 'integer' ),
+                    ),
+                    'site_has_woocommerce' => array( 'type' => 'boolean' ),
+                    'safety_backup'        => array(
+                        'type'                 => 'object',
+                        'additionalProperties' => false,
+                        'required'             => array( 'will_take', 'type' ),
+                        'properties'           => array(
+                            'will_take' => array( 'type' => 'boolean' ),
+                            'type'      => array(
+                                'type' => 'string',
+                                'enum' => array( 'full' ),
+                            ),
+                        ),
+                    ),
+                    'preserve_orders'      => array(
+                        'type'                 => 'object',
+                        'additionalProperties' => false,
+                        'required'             => array( 'requested', 'checked_at' ),
+                        'properties'           => array(
+                            'requested'  => array( 'type' => 'boolean' ),
+                            'checked_at' => array(
+                                'type' => 'string',
+                                'enum' => array( 'confirm' ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            self::restore_start_schema( 'snapshot_id' )
+        );
+    }
+
+    /**
+     * A pending cancellation must never imply an immediate stop.
+     *
+     * @return array
+     */
+    private static function cancel_restore_output_schema(): array {
+        $status = self::restore_job_summary_schema()['properties']['status'];
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'restore_job_id', 'status', 'cancellable', 'site_will_be_asked' ),
+                'properties'           => array(
+                    'restore_job_id'     => array( 'type' => 'integer' ),
+                    'status'             => $status,
+                    'cancellable'        => array( 'type' => 'boolean' ),
+                    'site_will_be_asked' => array(
+                        'type'        => 'boolean',
+                        'description' => 'True while the site is receiving or applying the restore: the site must confirm it stopped, which can take up to 15 minutes.',
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'restore_job_id', 'result', 'status' ),
+                'properties'           => array(
+                    'restore_job_id' => array( 'type' => 'integer' ),
+                    'result'         => array(
+                        'type'        => 'string',
+                        'enum'        => array( 'cancelled', 'cancel_pending', 'cancel_unconfirmed', 'ended_failed', 'not_cancellable' ),
+                        'description' => 'cancelled: the job stopped and the site confirmed, or never had a restore task. cancel_pending: cancellation is recorded; an early-phase cancel takes effect once the job reaches staging. Poll get-restore-job-v1 until the stop is confirmed. cancel_unconfirmed: the site never confirmed it stopped within 15 minutes. ended_failed: the restore had already failed; the cancel stopped any further attempt and the site confirmed. not_cancellable: the job had already finished or is verifying.',
+                    ),
+                    'status'         => $status,
+                ),
+            )
+        );
+    }
+
+    /**
+     * Rollback previews disclose only the source and its retained safety backup.
+     *
+     * @return array
+     */
+    private static function rollback_restore_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'source_restore_job_id', 'site_id', 'rollback_available', 'source_status', 'restore_type' ),
+                'properties'           => array(
+                    'source_restore_job_id' => array( 'type' => 'integer' ),
+                    'site_id'               => array( 'type' => 'integer' ),
+                    'rollback_available'    => array( 'type' => 'boolean' ),
+                    'source_status'         => self::restore_job_summary_schema()['properties']['status'],
+                    'restore_type'          => array(
+                        'type'        => 'string',
+                        'enum'        => array( 'full' ),
+                        'description' => 'A rollback restores the full safety backup.',
+                    ),
+                ),
+            ),
+            self::restore_start_schema( 'source_restore_job_id' )
+        );
+    }
+
+    /**
+     * The poll input pins the admitted job even if a later restore starts on its site.
+     *
+     * @param string $source Snapshot or source job field.
+     * @return array
+     */
+    private static function restore_start_schema( string $source ): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array( 'restore_job_id', 'site_id', $source, 'status', 'started_at', 'poll' ),
+            'properties'           => array(
+                'restore_job_id' => array(
+                    'type'    => 'integer',
+                    'minimum' => 1,
+                ),
+                'site_id'        => array( 'type' => 'integer' ),
+                $source          => array( 'type' => 'integer' ),
+                'status'         => array(
+                    'type' => 'string',
+                    'enum' => array( 'started', 'already_running', 'not_started' ),
+                ),
+                'started_at'     => self::ts_schema(),
+                'poll'           => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'required'             => array( 'ability', 'input', 'interval_seconds' ),
+                    'properties'           => array(
+                        'ability'          => array(
+                            'type' => 'string',
+                            'enum' => array( 'mainwp/get-restore-job-v1' ),
+                        ),
+                        'input'            => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array( 'restore_job_id' ),
+                            'properties'           => array( 'restore_job_id' => array( 'type' => 'integer' ) ),
+                        ),
+                        'interval_seconds' => array(
+                            'type' => 'integer',
+                            'enum' => array( 30 ),
+                        ),
+                    ),
+                ),
+            ),
+        );
+    }
+
     /**
      * Required keys separate the branches even on WordPress versions that ignore const.
      *
@@ -4978,6 +5357,534 @@ class MainWP_Abilities_Backups {
         );
     }
 
+    /** Stored configuration writes must share consent and authorization with previews. */
+    private static function register_test_backup_destination(): void {
+        wp_register_ability(
+            'mainwp/test-backup-destination-v1',
+            array(
+                'label'               => __( 'Test Backup Destination', 'mainwp' ),
+                'description'         => __( 'Run the stored destination\'s connection test. Writes and deletes a probe object; for SFTP without a pinned host key it pins the key on first contact. Takes no settings: credentials stay in the Dashboard. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::test_backup_destination_input_schema(),
+                'output_schema'       => self::test_backup_destination_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_test_backup_destination' ),
+                'permission_callback' => self::permission_callback( 'mainwp/test-backup-destination-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => false,
+                        'idempotent'   => true,
+                        'instructions' => __( 'Requires confirm:true or dry_run:true. The provider\'s own error text is never returned; the error code says which provider failed.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Direct callbacks repeat authorization before preview or dispatch.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_test_backup_destination( $input ) {
+        return self::execute_write( 'test-backup-destination', $input );
+    }
+
+    /** Stored configuration writes must share consent and authorization with previews. */
+    private static function register_set_default_backup_destination(): void {
+        wp_register_ability(
+            'mainwp/set-default-backup-destination-v1',
+            array(
+                'label'               => __( 'Set Default Backup Destination', 'mainwp' ),
+                'description'         => __( 'Make one destination the default: the one preselected when a backup task is created on the Backups page. Existing tasks keep their destinations. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::set_default_backup_destination_input_schema(),
+                'output_schema'       => self::set_default_backup_destination_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_set_default_backup_destination' ),
+                'permission_callback' => self::permission_callback( 'mainwp/set-default-backup-destination-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => false,
+                        'idempotent'   => true,
+                        'instructions' => __( 'Requires confirm:true or dry_run:true.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Direct callbacks repeat authorization before preview or dispatch.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_set_default_backup_destination( $input ) {
+        return self::execute_write( 'set-default-backup-destination', $input );
+    }
+
+    /** Stored configuration writes must share consent and authorization with previews. */
+    private static function register_update_backup_destination(): void {
+        wp_register_ability(
+            'mainwp/update-backup-destination-v1',
+            array(
+                'label'               => __( 'Update Backup Destination', 'mainwp' ),
+                'description'         => __( 'Rename a destination or change its default flag. Nothing else can be changed here: credentials, hosts, buckets and paths are edited on the Backup Storage page. The stored connection is tested before saving. Possible errors: mainwp_invalid_input, mainwp_backup_destination_not_found, mainwp_backup_destination_credentials_required, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::update_backup_destination_input_schema(),
+                'output_schema'       => self::update_backup_destination_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_update_backup_destination' ),
+                'permission_callback' => self::permission_callback( 'mainwp/update-backup-destination-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => false,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Requires confirm:true or dry_run:true.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Direct callbacks repeat authorization before preview or dispatch.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_update_backup_destination( $input ) {
+        return self::execute_write( 'update-backup-destination', $input );
+    }
+
+    /** Stored configuration writes must share consent and authorization with previews. */
+    private static function register_delete_backup_destination(): void {
+        wp_register_ability(
+            'mainwp/delete-backup-destination-v1',
+            array(
+                'label'               => __( 'Delete Backup Destination', 'mainwp' ),
+                'description'         => __( 'Remove a destination from the Dashboard: tasks that used it are detached, and its pending uploads and pending cloud deletions are failed. Objects already stored at the destination are left in place. dry_run lists the tasks and jobs affected. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::delete_backup_destination_input_schema(),
+                'output_schema'       => self::delete_backup_destination_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_delete_backup_destination' ),
+                'permission_callback' => self::permission_callback( 'mainwp/delete-backup-destination-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Destructive on the Dashboard side only. Requires confirm:true or dry_run:true. Call dry_run first and show the detached tasks to the user.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Direct callbacks repeat authorization before preview or dispatch.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_delete_backup_destination( $input ) {
+        return self::execute_write( 'delete-backup-destination', $input );
+    }
+
+    /** Stored configuration writes must share consent and authorization with previews. */
+    private static function register_update_backup_settings(): void {
+        wp_register_ability(
+            'mainwp/update-backup-settings-v1',
+            array(
+                'label'               => __( 'Update Backup Settings', 'mainwp' ),
+                'description'         => __( 'Change native backups on or off, the on-demand retention count, the concurrency limit, diagnostics, and the pre-update backup check policy. Encryption and the recovery passphrase cannot be changed here. Turning native backups off stops scheduled backups; turning them on clears a third-party primary method; dry_run reports both. Possible errors: mainwp_invalid_input, mainwp_restricted_account.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::update_backup_settings_input_schema(),
+                'output_schema'       => self::update_backup_settings_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_update_backup_settings' ),
+                'permission_callback' => self::permission_callback( 'mainwp/update-backup-settings-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Changes Dashboard-wide behavior. Requires confirm:true or dry_run:true. Call dry_run first and show the changes to the user.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Direct callbacks repeat authorization before preview or dispatch.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_update_backup_settings( $input ) {
+        return self::execute_write( 'update-backup-settings', $input );
+    }
+
+    /**
+     * Stored tests, defaults and deletes need only an identity and consent.
+     *
+     * @return array
+     */
+    private static function test_backup_destination_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array( 'destination_id' ),
+            'properties'           => array(
+                'destination_id' => self::destination_id_schema(),
+                'dry_run'        => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
+                ),
+                'confirm'        => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Required to perform the action. Cannot be combined with dry_run.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Identical consent schemas keep stored destination actions consistent.
+     *
+     * @return array
+     */
+    private static function set_default_backup_destination_input_schema(): array {
+        return self::test_backup_destination_input_schema();
+    }
+
+    /**
+     * Identical consent schemas keep stored destination actions consistent.
+     *
+     * @return array
+     */
+    private static function delete_backup_destination_input_schema(): array {
+        return self::test_backup_destination_input_schema();
+    }
+
+    /**
+     * Connection fields stay on the Dashboard's storage form.
+     *
+     * @return array
+     */
+    private static function update_backup_destination_input_schema(): array {
+        $schema                             = self::test_backup_destination_input_schema();
+        $schema['properties']['name']       = array(
+            'type'      => 'string',
+            'minLength' => 1,
+            'maxLength' => 255,
+        );
+        $schema['properties']['is_default'] = array( 'type' => 'boolean' );
+        return $schema;
+    }
+
+    /**
+     * Machine settings exclude encryption and recovery material.
+     *
+     * @return array
+     */
+    private static function update_backup_settings_input_schema(): array {
+        $schema = self::get_backup_settings_output_schema();
+        unset( $schema['required'], $schema['properties']['encryption'], $schema['properties']['primary_backup_method'] );
+        $schema['properties']['on_demand_retention_count']['maximum'] = 100;
+        $schema['properties']['max_concurrent_backups']['maximum']    = 10;
+        unset( $schema['properties']['on_demand_retention_count']['description'], $schema['properties']['max_concurrent_backups']['description'], $schema['properties']['update_gate']['required'] );
+        $schema['properties']['update_gate']['properties']['max_age_days']['maximum'] = 365;
+        $envelope = self::test_backup_destination_input_schema();
+        foreach ( array( 'dry_run', 'confirm' ) as $key ) {
+            $schema['properties'][ $key ] = $envelope['properties'][ $key ];
+        }
+        return $schema;
+    }
+
+    /**
+     * Closed result branches exclude internal configuration and provider text.
+     *
+     * @return array
+     */
+    private static function test_backup_destination_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'destination_id', 'provider', 'writes_probe_object', 'may_pin_host_key' ),
+                'properties'           => array(
+                    'destination_id'      => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                    'provider'            => array(
+                        'type' => 'string',
+                        'enum' => array( 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
+                    ),
+                    'writes_probe_object' => array(
+                        'type' => 'boolean',
+                    ),
+                    'may_pin_host_key'    => array(
+                        'type' => 'boolean',
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'destination_id', 'ok', 'error', 'host_key_pinned' ),
+                'properties'           => array(
+                    'destination_id'  => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                    'ok'              => array(
+                        'type' => 'boolean',
+                    ),
+                    'error'           => self::safe_error_or_null_schema(),
+                    'host_key_pinned' => array(
+                        'type' => 'boolean',
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed result branches exclude internal configuration and provider text.
+     *
+     * @return array
+     */
+    private static function set_default_backup_destination_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'destination_id', 'previous_default_id' ),
+                'properties'           => array(
+                    'destination_id'      => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                    'previous_default_id' => array(
+                        'type'    => array( 'integer', 'null' ),
+                        'minimum' => 1,
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'destination_id', 'is_default' ),
+                'properties'           => array(
+                    'destination_id' => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                    'is_default'     => array(
+                        'type' => 'boolean',
+                        'enum' => array( true ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed result branches exclude internal configuration and provider text.
+     *
+     * @return array
+     */
+    private static function update_backup_destination_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'destination_id', 'changes', 'connection_test_runs' ),
+                'properties'           => array(
+                    'destination_id'       => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                    'changes'              => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array( 'field', 'from', 'to' ),
+                            'properties'           => array(
+                                'field' => array(
+                                    'type' => 'string',
+                                    'enum' => array( 'name', 'is_default' ),
+                                ),
+                                'from'  => array(
+                                    'type' => array( 'string', 'boolean' ),
+                                ),
+                                'to'    => array(
+                                    'type' => array( 'string', 'boolean' ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    'connection_test_runs' => array(
+                        'type' => 'boolean',
+                        'enum' => array( true ),
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'destination' ),
+                'properties'           => array(
+                    'destination' => self::destination_schema(),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed result branches exclude internal configuration and provider text.
+     *
+     * @return array
+     */
+    private static function delete_backup_destination_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'destination_id', 'tasks_detached', 'pending_jobs_failed', 'remote_objects_left_in_place', 'was_default' ),
+                'properties'           => array(
+                    'destination_id'               => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                    'tasks_detached'               => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array( 'task_id', 'name' ),
+                            'properties'           => array(
+                                'task_id' => array(
+                                    'type'    => 'integer',
+                                    'minimum' => 1,
+                                ),
+                                'name'    => array(
+                                    'type' => 'string',
+                                ),
+                            ),
+                        ),
+                    ),
+                    'pending_jobs_failed'          => array(
+                        'type'                 => 'object',
+                        'additionalProperties' => false,
+                        'required'             => array( 'upload', 'delete' ),
+                        'properties'           => array(
+                            'upload' => array(
+                                'type'    => 'integer',
+                                'minimum' => 0,
+                            ),
+                            'delete' => array(
+                                'type'    => 'integer',
+                                'minimum' => 0,
+                            ),
+                        ),
+                    ),
+                    'remote_objects_left_in_place' => array(
+                        'type' => 'boolean',
+                        'enum' => array( true ),
+                    ),
+                    'was_default'                  => array(
+                        'type' => 'boolean',
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'destination_id', 'deleted', 'tasks_detached' ),
+                'properties'           => array(
+                    'destination_id' => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                    'deleted'        => array(
+                        'type' => 'boolean',
+                        'enum' => array( true ),
+                    ),
+                    'tasks_detached' => array(
+                        'type'    => 'integer',
+                        'minimum' => 0,
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed result branches exclude internal configuration and provider text.
+     *
+     * @return array
+     */
+    private static function update_backup_settings_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'changes', 'stops_scheduled_backups', 'clears_primary_backup_method', 'primary_backup_method' ),
+                'properties'           => array(
+                    'changes'                      => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array( 'setting', 'from', 'to' ),
+                            'properties'           => array(
+                                'setting' => array(
+                                    'type' => 'string',
+                                    'enum' => array( 'native_backups_enabled', 'on_demand_retention_count', 'max_concurrent_backups', 'diagnostics_enabled', 'update_gate.enabled', 'update_gate.max_age_days', 'update_gate.require_offsite' ),
+                                ),
+                                'from'    => array(
+                                    'type' => array( 'boolean', 'integer' ),
+                                ),
+                                'to'      => array(
+                                    'type' => array( 'boolean', 'integer' ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    'stops_scheduled_backups'      => array(
+                        'type' => 'boolean',
+                    ),
+                    'clears_primary_backup_method' => array(
+                        'type' => 'boolean',
+                    ),
+                    'primary_backup_method'        => array(
+                        'type'      => array( 'string', 'null' ),
+                        'maxLength' => 64,
+                    ),
+                ),
+            ),
+            self::get_backup_settings_output_schema()
+        );
+    }
+
     /**
      * The service owns actions and previews; projection excludes internal handles and paths.
      *
@@ -5006,22 +5913,53 @@ class MainWP_Abilities_Backups {
             if ( ! $confirm && ! $dry_run ) {
                 return self::safe_wp_error( new \WP_Error( 'mainwp_confirmation_required', '', array( 'status' => 400 ) ) );
             }
-            $stop = in_array( $name, array( 'cancel-site-backup', 'reset-backup-task-run', 'pause-backup-task' ), true );
-            if ( ! $stop && ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            $stop = in_array( $name, array( 'cancel-site-backup', 'reset-backup-task-run', 'pause-backup-task', 'cancel-restore' ), true );
+            if ( ! $stop && 'update-backup-settings' !== $name && ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
                 return self::safe_wp_error( new \WP_Error( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, '', array( 'status' => 409 ) ) );
             }
-            $site_id = isset( $input['site_id_or_domain'] ) ? (int) MainWP_Abilities_Util::resolve_site( $input['site_id_or_domain'] )->id : 0;
-            $task_id = isset( $input['task_id'] ) ? self::positive_int( $input['task_id'] ) : 0;
-            $keep    = $input['keep'] ?? null;
-            $fields  = array();
+            $site_id         = isset( $input['site_id_or_domain'] ) ? (int) MainWP_Abilities_Util::resolve_site( $input['site_id_or_domain'] )->id : 0;
+            $task_id         = isset( $input['task_id'] ) ? self::positive_int( $input['task_id'] ) : 0;
+            $snapshot_id     = isset( $input['snapshot_id'] ) ? self::positive_int( $input['snapshot_id'] ) : 0;
+            $restore_job_id  = isset( $input['restore_job_id'] ) ? self::positive_int( $input['restore_job_id'] ) : 0;
+            $destination_id  = isset( $input['destination_id'] ) ? self::positive_int( $input['destination_id'] ) : 0;
+            $restore_options = array(
+                'pre_snapshot'        => $input['take_safety_backup'] ?? true,
+                'file_rollback'       => $input['take_safety_backup'] ?? true,
+                'preserve_orders'     => $input['preserve_orders'] ?? false,
+                'confirm_destructive' => $confirm,
+            );
+            $keep            = $input['keep'] ?? null;
+            $fields          = array();
             if ( in_array( $name, array( 'create-backup-task', 'update-backup-task' ), true ) ) {
                 $fields = self::task_write_fields( $input );
                 if ( is_wp_error( $fields ) ) {
                     return self::safe_wp_error( $fields );
                 }
             }
+            if ( in_array( $name, array( 'update-backup-destination', 'update-backup-settings' ), true ) ) {
+                $fields = $input;
+                unset( $fields['destination_id'], $fields['dry_run'], $fields['confirm'] );
+            }
             if ( $dry_run ) {
                 switch ( $name ) {
+                    case 'test-backup-destination':
+                    case 'set-default-backup-destination':
+                    case 'update-backup-destination':
+                    case 'delete-backup-destination':
+                        $result = MainWP_Backup_Operations::preview_destination( $destination_id, $name, $fields );
+                        break;
+                    case 'update-backup-settings':
+                        $result = MainWP_Backup_Operations::preview_backup_settings( $fields );
+                        break;
+                    case 'restore-site-snapshot':
+                        $result = MainWP_Backup_Operations::preview_restore_snapshot( $site_id, $snapshot_id, $restore_options );
+                        break;
+                    case 'cancel-restore':
+                        $result = MainWP_Backup_Operations::preview_restore_cancel( $restore_job_id );
+                        break;
+                    case 'rollback-restore':
+                        $result = MainWP_Backup_Operations::preview_restore_rollback( $restore_job_id );
+                        break;
                     case 'create-backup-task':
                         $result = MainWP_Backup_Operations::preview_task_create( $fields );
                         break;
@@ -5053,6 +5991,75 @@ class MainWP_Abilities_Backups {
                 }
             } else {
                 switch ( $name ) {
+                    case 'test-backup-destination':
+                        $result = MainWP_Backup_Operations::test_destination( $destination_id );
+                        if ( is_wp_error( $result ) && 502 === ( $result->get_error_data()['status'] ?? 0 ) ) {
+                            $result = array(
+                                'ok'              => false,
+                                'error'           => MainWP_Backup_Operations::safe_error( $result->get_error_code() ),
+                                'host_key_pinned' => ! empty( $result->get_error_data()['host_key_pinned'] ),
+                            );
+                        }
+                        if ( ! is_wp_error( $result ) ) {
+                            $result['destination_id'] = $destination_id;
+                            $result['error']          = $result['error'] ?? null;
+                        }
+                        break;
+                    case 'set-default-backup-destination':
+                        $result = MainWP_Backup_Operations::set_default_destination( $destination_id );
+                        if ( ! is_wp_error( $result ) ) {
+                            $result = array(
+                                'destination_id' => $destination_id,
+                                'is_default'     => true,
+                            );
+                        }
+                        break;
+                    case 'update-backup-destination':
+                        $result = MainWP_Backup_Operations::update_destination( $destination_id, $fields );
+                        if ( ! is_wp_error( $result ) ) {
+                            $result = array( 'destination' => MainWP_Backup_Read_Model::get_destination( $destination_id ) );
+                        }
+                        break;
+                    case 'delete-backup-destination':
+                        $result = MainWP_Backup_Operations::delete_destination( $destination_id );
+                        if ( ! is_wp_error( $result ) ) {
+                            $result['destination_id'] = $destination_id;
+                        }
+                        break;
+                    case 'update-backup-settings':
+                        $result = MainWP_Backup_Operations::save_backup_settings( $fields, 'ability' );
+                        if ( ! is_wp_error( $result ) ) {
+                            $result = MainWP_Backup_Read_Model::get_settings();
+                        }
+                        break;
+                    case 'restore-site-snapshot':
+                    case 'rollback-restore':
+                        $source_job = 'rollback-restore' === $name ? MainWP_Backup_Operations::authorize_restore_job( $restore_job_id ) : null;
+                        if ( is_wp_error( $source_job ) ) {
+                            return self::safe_wp_error( $source_job );
+                        }
+                        $result = 'restore-site-snapshot' === $name
+                            ? MainWP_Backup_Operations::restore_snapshot( $site_id, $snapshot_id, $restore_options, 'ability' )
+                            : MainWP_Backup_Operations::rollback_restore( $restore_job_id, 'ability' );
+                        if ( ! is_wp_error( $result ) ) {
+                            // The atomic promotion admits this job; a fresh transport read supplies its time.
+                            $admitted_job             = MainWP_Backup_Restore_Job_Store::instance()->get_job( $result['job_id'] );
+                            $admitted                 = null !== $admitted_job && 'reserved' !== $admitted_job->status;
+                            $result['status']         = $admitted ? 'started' : 'not_started';
+                            $result['started_at']     = $admitted ? (int) $admitted_job->created : null;
+                            $result['restore_job_id'] = $result['job_id'];
+                            $result['site_id']        = $source_job ? (int) $source_job->site_id : $site_id;
+                            $result[ $source_job ? 'source_restore_job_id' : 'snapshot_id' ] = $source_job ? $restore_job_id : $snapshot_id;
+                            $result['poll'] = array(
+                                'ability'          => 'mainwp/get-restore-job-v1',
+                                'input'            => array( 'restore_job_id' => $result['restore_job_id'] ),
+                                'interval_seconds' => 30,
+                            );
+                        }
+                        break;
+                    case 'cancel-restore':
+                        $result = MainWP_Backup_Operations::cancel_restore( $restore_job_id, 'ability' );
+                        break;
                     case 'create-backup-task':
                     case 'update-backup-task':
                         $result = 'create-backup-task' === $name ? MainWP_Backup_Operations::create_task( $fields, 'ability' ) : MainWP_Backup_Operations::update_task( $task_id, $fields, 'ability' );

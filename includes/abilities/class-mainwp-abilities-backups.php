@@ -2444,6 +2444,10 @@ class MainWP_Abilities_Backups {
             return rest_validate_request_arg( $input, $request, $param );
         }
         $ability = wp_get_ability( $name );
+        if ( ! $ability instanceof \WP_Ability ) {
+            // An unregistered read keeps the default check, so the controller answers its own 404.
+            return rest_validate_request_arg( $input, $request, $param );
+        }
         return rest_validate_value_from_schema( $ability->normalize_input( $input ), $ability->get_input_schema(), $param );
     }
 

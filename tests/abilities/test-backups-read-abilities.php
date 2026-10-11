@@ -1499,6 +1499,29 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A backup read missing from the registry must answer core's 404, not fatal in route validation.
+	 *
+	 * @return void
+	 */
+	public function test_rest_run_of_unregistered_backup_read_is_not_found() {
+		$registry = \WP_Abilities_Registry::get_instance();
+		$property = new \ReflectionProperty( $registry, 'registered_abilities' );
+		$property->setAccessible( true );
+		$abilities = $property->getValue( $registry );
+		$remaining = $abilities;
+		unset( $remaining['mainwp/get-backup-task-v1'] );
+		$property->setValue( $registry, $remaining );
+		$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+		try {
+			$response = $this->rest_read( 'get-backup-task', array( 'task_id' => 987671 ) );
+		} finally {
+			$property->setValue( $registry, $abilities );
+		}
+		$this->assertSame( 404, $response->get_status() );
+		$this->assertSame( 'rest_ability_not_found', $response->get_data()['code'] );
+	}
+
+	/**
 	 * Counts a Child reports, and what the restore read must show for each.
 	 *
 	 * @return array

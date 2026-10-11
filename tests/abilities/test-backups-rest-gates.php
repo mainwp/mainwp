@@ -420,7 +420,10 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 			$property = new \ReflectionProperty( \WP_Abilities_Registry::class, 'registered_abilities' );
 			$property->setAccessible( true );
 			$abilities = $property->getValue( $registry );
-			$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+			// Controllers without input coercion look up missing abilities without a registration check.
+			if ( ! method_exists( \WP_REST_Abilities_V1_Run_Controller::class, 'sanitize_input_for_ability' ) ) {
+				$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+			}
 			wp_unregister_ability( 'mainwp/update-backup-settings-v1' );
 		}
 		try {

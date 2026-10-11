@@ -523,12 +523,12 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A same-host downgrade to plain HTTP is allowed when the host is on the
-	 * private network, the same rule an http:// endpoint gets.
+	 * A redirect never moves an HTTPS request to plain HTTP, even on a
+	 * private host where an http:// endpoint would be allowed.
 	 *
 	 * @return void
 	 */
-	public function test_request_follows_same_host_downgrade_on_private_host() {
+	public function test_request_refuses_same_host_downgrade_on_private_host() {
 		$provider = $this->make_provider(
 			array(
 				$this->response( 307, '', array( 'location' => 'http://192.168.1.50:9000/example-bucket/k.bin' ) ),
@@ -540,9 +540,14 @@ class MainWP_Backup_Storage_S3_Test extends \WP_UnitTestCase {
 			)
 		);
 
-		$this->assertTrue( $provider->put_object( 'k.bin', 'x' ) );
-		$this->assertCount( 2, $this->requests );
-		$this->assertSame( 'http://192.168.1.50:9000/example-bucket/k.bin', $this->requests[1]['url'] );
+		try {
+			$provider->put_object( 'k.bin', 'x' );
+			$this->fail( 'An HTTPS to HTTP redirect on a private host must throw.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertStringContainsString( 'redirected an HTTPS request to a non-HTTPS URL', $e->getMessage() );
+		}
+
+		$this->assertCount( 1, $this->requests, 'The follow-up request must not run after a downgrade redirect.' );
 	}
 
 	/**

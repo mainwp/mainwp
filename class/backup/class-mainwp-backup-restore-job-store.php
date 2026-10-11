@@ -569,7 +569,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
                 return 'fenced';
             }
             // A miss against a row nobody changed is a failed write, not a race.
-            if ( null !== $missed && $missed === array( (string) $row->checkpoint, $row->status, $row->locked_by ) ) {
+            if ( null !== $missed && array( (string) $row->checkpoint, $row->status, $row->locked_by ) === $missed ) {
                 return 'refused';
             }
 

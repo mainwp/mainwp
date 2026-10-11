@@ -173,7 +173,7 @@ trait Backup_Read_Purity_Guard {
 	 * @return mixed Reader result.
 	 */
 	protected function guarded( callable $call ) {
-		$deny = function () {
+		$deny  = function () {
 			$this->fail( 'A read attempted a write, HTTP request, Child request, or scheduled event.' );
 		};
 		$query = function ( $sql ) {

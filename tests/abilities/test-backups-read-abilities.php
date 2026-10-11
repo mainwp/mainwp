@@ -1566,7 +1566,10 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 			$remaining = $abilities;
 			unset( $remaining[ 'mainwp/' . $name . '-v1' ] );
 			$property->setValue( $registry, $remaining );
-			$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+			// Controllers without input coercion look up missing abilities without a registration check.
+			if ( ! method_exists( \WP_REST_Abilities_V1_Run_Controller::class, 'sanitize_input_for_ability' ) ) {
+				$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+			}
 		}
 		try {
 			if ( 'query' === $transport ) {
@@ -1602,6 +1605,10 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 			$property->setValue( $registry, $abilities );
 		}
 		$this->assertSame( $status, $response->get_status() );
+		if ( isset( $query['name'] ) && ! is_string( $query['name'] ) ) {
+			$this->assertArrayHasKey( 'name', $response->get_data()['data']['params'] );
+			$this->assertSame( 'rest_invalid_type', $response->get_data()['data']['details']['name']['code'] );
+		}
 		if ( null === $code ) {
 			$this->assertFalse( $response->is_error() );
 			return;

@@ -319,9 +319,18 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
             if ( '' !== $location ) {
                 $redirect_url = \WP_Http::make_absolute_url( $location, $url );
                 // Guard first so a metadata or public-HTTP target reports its
-                // own reason, which also stops a downgrade to http:// unless
-                // the host is private; dispatch() re-runs it from the cache.
+                // own reason; dispatch() re-runs it from the cache.
                 $this->guard_outbound_host( $redirect_url );
+                // An admin who chose https:// chose an encrypted transport. A
+                // redirect must not move the signed request and its body to
+                // plain HTTP, even on a private host; an http:// endpoint is
+                // configured explicitly instead.
+                if ( 'https' === strtolower( (string) wp_parse_url( $url, PHP_URL_SCHEME ) ) && 'https' !== strtolower( (string) wp_parse_url( $redirect_url, PHP_URL_SCHEME ) ) ) {
+                    throw new \RuntimeException(
+                        esc_html__( 'The storage endpoint redirected an HTTPS request to a non-HTTPS URL, so nothing was sent there. Use an https:// endpoint that does not redirect to http://, or enter the http:// endpoint directly.', 'mainwp' ),
+                        0
+                    );
+                }
                 if ( self::server( $redirect_url ) !== self::server( $url ) && ! $this->is_trusted_redirect_host( $redirect_url ) ) {
                     throw new \RuntimeException(
                         esc_html(
@@ -447,8 +456,8 @@ class MainWP_Backup_Storage_S3 implements MainWP_Backup_Storage_Provider, MainWP
     /**
      * The host and port a URL connects to, normalized so case, a trailing
      * dot or an explicit default port do not count as a different server.
-     * The scheme is left out on purpose: a same-server downgrade to http://
-     * is decided by guard_outbound_host(), not here.
+     * The scheme is left out on purpose: request() refuses any redirect from
+     * https:// to another scheme before this comparison matters.
      *
      * @param string $url URL.
      *

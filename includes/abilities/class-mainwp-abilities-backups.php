@@ -2510,6 +2510,10 @@ class MainWP_Abilities_Backups {
             }
             foreach ( $handlers as &$handler ) {
                 if ( isset( $handler['args']['input'] ) ) {
+                    // Core keeps sanitizing after a bad name, so the input sanitizer can receive an array name; validating name first stops the request before that.
+                    if ( isset( $handler['args']['name'] ) && empty( $handler['args']['name']['validate_callback'] ) ) {
+                        $handler['args']['name']['validate_callback'] = 'rest_validate_request_arg';
+                    }
                     $handler['args']['input']['validate_callback'] = array( self::class, 'validate_rest_input' );
                 }
             }

@@ -12,6 +12,8 @@ use MainWP\Dashboard\MainWP_Backup_Encryption;
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_Backup_Settings;
 use MainWP\Dashboard\MainWP_Keys_Manager;
+use MainWP\Dashboard\MainWP_Post_Handler;
+use MainWP\Dashboard\MainWP_Settings;
 
 /** Shared settings authorization and allowed fields. */
 class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case {
@@ -24,7 +26,8 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 
 	/** Recovery key files are outside WordPress's transaction cleanup. */
 	public function tearDown(): void {
-		$_POST = array();
+		$_POST    = array();
+		$_REQUEST = array();
 		MainWP_Keys_Manager::instance()->delete_key_file( MainWP_Backup_Encryption::instance()->kek_filename() );
 		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
 		parent::tearDown();
@@ -77,6 +80,119 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 			'refused' => array( false ),
 			'held'    => array( true ),
 		);
+	}
+
+	/**
+	 * An administrator's nonce cannot bypass the settings right on generic writes.
+	 *
+	 * @dataProvider rights
+	 * @param bool $allowed Whether the settings right is held.
+	 */
+	public function test_ajax_save_settings_checks_right_before_backup_option_writes( bool $allowed ): void {
+		update_option( 'mainwp_backup_encryption_enabled', 1 );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$right = static function ( $can, $type, $key ) use ( $allowed ) {
+			return 'dashboard' === $type && 'manage_dashboard_settings' === $key ? $allowed : $can;
+		};
+		add_filter( 'mainwp_currentusercan', $right, 10, 3 );
+		try {
+			foreach ( array( 'backup_encryption_enabled', 'enableNativeBackups' ) as $name ) {
+				$response = $this->ajax_save_setting( $name );
+				$this->assertSame( $allowed ? 0 : 1, (int) get_option( 'mainwp_' . $name ) );
+				if ( ! $allowed ) {
+					$message = 'Error - insufficient permissions!';
+					$this->assertSame(
+						array(
+							'success' => false,
+							'result'  => $message,
+							'error'   => $message,
+						),
+						json_decode( $response, true )
+					);
+				}
+			}
+			$this->assertSame( $allowed ? 0 : 1, (int) get_option( 'mainwp_backup_encryption_enabled' ) );
+			$this->assertSame( $allowed ? 0 : 1, (int) get_option( 'mainwp_enableNativeBackups' ) );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $right, 10 );
+		}
+	}
+
+	/**
+	 * The general settings form must not clear the backup gate without its right.
+	 *
+	 * @dataProvider rights
+	 * @param bool $allowed Whether the settings right is held.
+	 */
+	public function test_general_settings_post_checks_right_before_update_gate_writes( bool $allowed ): void {
+		update_option( 'mainwp_backup_before_upgrade', 1 );
+		update_option( 'mainwp_backup_before_upgrade_days', 7 );
+		update_option( 'mainwp_backup_before_upgrade_require_offsite', 1 );
+		$_POST = array(
+			'submit'                               => '1',
+			'wp_nonce'                             => wp_create_nonce( 'Settings' ),
+			'mainwp_backup_before_upgrade_section' => '1',
+			'mainwp_backup_before_upgrade_days'    => '12',
+		);
+		$right = static function ( $can, $type, $key ) use ( $allowed ) {
+			return 'dashboard' === $type && 'manage_dashboard_settings' === $key ? $allowed : $can;
+		};
+		add_filter( 'mainwp_currentusercan', $right, 10, 3 );
+		try {
+			MainWP_Settings::handle_settings_post();
+			$this->assertSame( $allowed ? 0 : 1, (int) get_option( 'mainwp_backup_before_upgrade' ) );
+			$this->assertSame( $allowed ? 12 : 7, (int) get_option( 'mainwp_backup_before_upgrade_days' ) );
+			$this->assertSame( $allowed ? 0 : 1, (int) get_option( 'mainwp_backup_before_upgrade_require_offsite' ) );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $right, 10 );
+		}
+	}
+
+	/**
+	 * The legacy success die() must not terminate the test process after a write.
+	 *
+	 * @param string $name Option suffix.
+	 * @return string Refusal response, or an empty body after a persisted write.
+	 */
+	private function ajax_save_setting( string $name ): string {
+		$nonce    = wp_create_nonce( 'mainwp_save_settings' );
+		$_POST    = array(
+			'action'   => 'mainwp_save_settings',
+			'security' => $nonce,
+			'name'     => $name,
+			'value'    => '0',
+		);
+		$_REQUEST = $_POST;
+
+		$throw = static function () {
+			return static function ( $message ) {
+				throw new \WPAjaxDieStopException( (string) $message );
+			};
+		};
+
+		$written = static function ( $option ) use ( $name ) {
+			if ( 'mainwp_' . $name === $option ) {
+				throw new \WPAjaxDieContinueException();
+			}
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $throw );
+		add_action( 'updated_option', $written );
+		$response = '';
+		ob_start();
+		try {
+			MainWP_Post_Handler::instance()->ajax_mainwp_save_settings();
+		} catch ( \WPAjaxDieContinueException $exception ) {
+			$response = $exception->getMessage();
+		} catch ( \WPAjaxDieStopException $exception ) {
+			$response = $exception->getMessage();
+		} finally {
+			$response .= ob_get_clean();
+			remove_action( 'updated_option', $written );
+			remove_filter( 'wp_die_ajax_handler', $throw );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+		}
+		return $response;
 	}
 
 	/** Partial saves must preserve omitted policy and encryption values. */

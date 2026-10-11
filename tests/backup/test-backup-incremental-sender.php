@@ -4278,8 +4278,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 
 	/**
 	 * Back Up Now's hidden task cannot be reopened through Run Now, which treats
-	 * it as no task at all, or through a queued status poll for a site the
-	 * Dashboard knows is disconnected.
+	 * it as no task at all, or through a status poll, even when disconnected.
 	 *
 	 * @return void
 	 */
@@ -4292,7 +4291,19 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
 		$this->assertSame( 'Insufficient permissions. Is this task set by you?', $start['error'] );
 		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, (int) $task->last_run, time() );
-		$this->assertSame( 'This site is disconnected from the Dashboard. Reconnect it, then try again.', $status['error'] );
+		$this->assertSame( 'Insufficient permissions. Is this task set by you?', $status['error'] );
+		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $task->last_run, $after->last_run );
+		$this->assertSame( array(), $this->child_calls );
+	}
+
+	/** A hidden task's poll must refuse before it can claim a connected site. */
+	public function test_hidden_connected_task_poll_cannot_open_run(): void {
+		global $wpdb;
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$wpdb->update( $wpdb->prefix . 'mainwp_wp_backup', array( 'template' => 1 ), array( 'id' => $task->id ) );
+		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, 0, time() );
+		$this->assertSame( array( 'error' => 'Insufficient permissions. Is this task set by you?' ), $status );
 		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertSame( $task->last_run, $after->last_run );
 		$this->assertSame( array(), $this->child_calls );

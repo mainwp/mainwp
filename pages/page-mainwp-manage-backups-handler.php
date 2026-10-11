@@ -354,7 +354,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $deadline        = $request_started + max( 0.0, (float) apply_filters( 'mainwp_backup_status_poll_budget', 25 ) );
         }
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
-        if ( empty( $task ) || ! static::can_edit_backuptask( $task ) ) {
+        if ( empty( $task ) || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
         }
         $error = static::manual_task_start_error( $task );

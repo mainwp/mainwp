@@ -389,6 +389,72 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( array( 'result' => 'SUCCESS' ), MainWP_Backup_Operations::pause_task( $created['task_id'] ) );
 	}
 
+	/** A paused task refusal must not claim that another run is active. */
+	public function test_run_task_paused_refusal_is_unclassified(): void {
+		$created = MainWP_Backup_Operations::create_task( $this->fields( $this->create_test_site() ), 'ability' );
+		$this->assertIsArray( $created );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $created['task_id'], array( 'paused' => 1 ) );
+		$error = MainWP_Backup_Operations::run_task( $created['task_id'], 'ability' );
+		$this->assertWPError( $error );
+		$this->assertSame( 'mainwp_backup_unclassified_error', $error->get_error_code() );
+		$this->assertNotSame( 'mainwp_backup_already_running', $error->get_error_code() );
+		$this->assertSame( 409, $error->get_error_data()['status'] );
+		$this->assertSame( 'This task is paused. Resume it before running it.', $error->get_error_message() );
+	}
+
+	/** The form's existing limits must survive the shared validator. */
+	public function test_ajax_create_accepts_older_form_limits(): void {
+		$db     = MainWP_DB_Backup::instance();
+		$before = $db->get_backup_tasks();
+		$posted = $this->posted( $this->fields( $this->create_test_site() ) );
+
+		$posted['retention_count']                = '2000';
+		$posted['maximumFileDescriptors']         = '250000';
+		$posted['maximumFileDescriptorsOverride'] = '1';
+
+		$response = $this->ajax( 'mainwp_addbackup', $posted );
+		$this->assertSame( array( 'result' => 'Task created successfully.' ), $response );
+		$tasks = $db->get_backup_tasks();
+		$this->assertCount( count( $before ) + 1, $tasks );
+		$task = end( $tasks );
+		$this->assertSame( 2000, (int) $task->retention_count );
+		$this->assertSame( 250000, (int) $task->maximumFileDescriptors );
+	}
+
+	/** Reposting an older task's policy must not prevent a name edit. */
+	public function test_ajax_edit_preserves_older_form_retention(): void {
+		$fields  = $this->fields( $this->create_test_site() );
+		$created = MainWP_Backup_Operations::create_task( $fields, 'ability' );
+		$this->assertIsArray( $created );
+		$id = $created['task_id'];
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $id, array( 'retention_count' => 2000 ) );
+		$posted                    = $this->posted( $fields );
+		$posted['id']              = $id;
+		$posted['name']            = 'Renamed older task';
+		$posted['retention_count'] = '2000';
+		$response                  = $this->ajax( 'mainwp_updatebackup', $posted );
+		$this->assertSame( array( 'result' => 'Task updated successfully.' ), $response );
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( 'Renamed older task', $task->name );
+		$this->assertSame( 2000, (int) $task->retention_count );
+	}
+
+	/** Form compatibility must not relax machine write ceilings. */
+	public function test_ability_create_refuses_older_form_limits(): void {
+		$fields = $this->fields( $this->create_test_site() );
+		$db     = MainWP_DB_Backup::instance();
+		$before = $db->get_backup_tasks();
+		foreach ( array(
+			array( 'retention' => array( 'count' => 2000 ) ),
+			array( 'archive_tuning' => array( 'max_file_descriptors' => 250000 ) ),
+		) as $limits ) {
+			$error = MainWP_Backup_Operations::create_task( array_merge( $fields, $limits ), 'ability' );
+			$this->assertWPError( $error );
+			$this->assertSame( 'mainwp_invalid_input', $error->get_error_code() );
+			$this->assertEquals( $before, $db->get_backup_tasks(), 'A refused ability create must leave the task table unchanged.' );
+		}
+	}
+
 	/**
 	 * Machine task runs cannot create a browser click's baseline transient.
 	 */

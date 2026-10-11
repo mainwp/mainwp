@@ -204,6 +204,39 @@ class MainWP_Backup_Restore_Refusals_Shared_Test extends MainWP_Abilities_Test_C
 		$this->assertSame( $before, $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A ), 'A refused request cannot reserve or create a restore job.' );
 	}
 
+	/** Internal reservations must disclose no job or site through rollback. */
+	public function test_ability_rollback_hides_reserved_job(): void {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job_id = $store->create_job( $this->site_id, $this->snapshot_id, array() );
+		$this->assertGreaterThan( 0, $job_id );
+		$this->assertTrue( $store->set_status( $job_id, 'reserved' ) );
+		$error = MainWP_Backup_Operations::rollback_restore( $job_id, 'ability' );
+		$this->assertWPError( $error );
+		$this->assertSame( 'mainwp_backup_restore_job_not_found', $error->get_error_code() );
+		$this->assertSame( 404, $error->get_error_data()['status'] );
+		$this->assertStringNotContainsString( (string) $this->site_id, $error->get_error_message() );
+		$this->assertSame( 'reserved', $store->get_job( $job_id )->status );
+	}
+
+	/** An inaccessible job must answer like a missing job without its site identity. */
+	public function test_ability_rollback_hides_inaccessible_job(): void {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job_id = $store->create_job( $this->site_id, $this->snapshot_id, array( 'pre_snapshot_artifacts' => array( array( 'file' => 'safety.tar.gz' ) ) ) );
+		$this->assertGreaterThan( 0, $job_id );
+		$this->assertTrue( $store->set_status( $job_id, 'failed_permanent' ) );
+		add_filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );
+		try {
+			$error = MainWP_Backup_Operations::rollback_restore( $job_id, 'ability' );
+			$this->assertWPError( $error );
+			$this->assertSame( 'mainwp_backup_restore_job_not_found', $error->get_error_code() );
+			$this->assertSame( 404, $error->get_error_data()['status'] );
+			$this->assertStringNotContainsString( (string) $this->site_id, $error->get_error_message() );
+			$this->assertSame( 'failed_permanent', $store->get_job( $job_id )->status );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );
+		}
+	}
+
 	/** Authenticated CLI callers need WordPress capability, operation right and scope. */
 	public function test_cli_subscriber_and_denied_admin_are_refused_before_admission(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );

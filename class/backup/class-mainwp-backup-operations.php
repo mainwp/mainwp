@@ -337,9 +337,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param array       $fields Submitted fields, with selections resolved to IDs.
      * @param object|null $task Stored row for a partial update.
+     * @param string      $context Calling transport.
      * @return array|\WP_Error Normalized task fields.
      */
-    public static function normalize_task_fields( array $fields, ?object $task = null ) {
+    public static function normalize_task_fields( array $fields, ?object $task = null, string $context = 'ability' ) {
         $base = self::stored_task_fields( $task );
         if ( empty( $fields ) || array_diff( array_keys( $fields ), array_merge( array_keys( $base ), array( 'subfolder', 'filename' ) ) ) ) {
             return self::invalid_task_input( 'fields' );
@@ -435,9 +436,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             }
             $values[ $field ] = array_merge( $base[ $field ], $values[ $field ] );
             foreach ( $values[ $field ] as $key => $value ) {
-                // Older forms stored larger limits; an omitted value must survive a partial edit.
+                // The task form never had upper limits, so only machine callers get the schema
+                // ceilings, and a larger stored value they omit survives a partial edit.
                 $submitted = array_key_exists( $key, $fields[ $field ] ?? array() );
-                if ( is_bool( $base[ $field ][ $key ] ) ? ! is_bool( $value ) : ( ! is_int( $value ) || $value < 0 || ( $submitted && $value > $bounds[ $key ] ) ) ) {
+                if ( is_bool( $base[ $field ][ $key ] ) ? ! is_bool( $value ) : ( ! is_int( $value ) || $value < 0 || ( 'ui' !== $context && $submitted && $value > $bounds[ $key ] ) ) ) {
                     return self::invalid_task_input( $field );
                 }
             }
@@ -514,7 +516,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
-        $values = self::normalize_task_fields( $fields );
+        $values = self::normalize_task_fields( $fields, null, $context );
         if ( is_wp_error( $values ) ) {
             return $values;
         }
@@ -542,7 +544,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
-        $values = self::normalize_task_fields( $fields, $task );
+        $values = self::normalize_task_fields( $fields, $task, $context );
         if ( is_wp_error( $values ) ) {
             return $values;
         }
@@ -689,7 +691,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return self::invalid_task_input( 'context' );
         }
         $error = self::native_task_write_error();
-        return $error ?? self::task_action_result( MainWP_Manage_Backups_Handler::run_backup_task_now( $task_id, $context ), MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+        return $error ?? self::task_action_result( MainWP_Manage_Backups_Handler::run_backup_task_now( $task_id, $context ), MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR );
     }
 
     /**
@@ -1031,7 +1033,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function rollback_restore( int $restore_job_id, string $context = 'ability' ) {
-        $job  = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
+        $job = 'ui' === $context ? MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id ) : self::authorize_restore_job( $restore_job_id );
+        if ( is_wp_error( $job ) ) {
+            return $job;
+        }
         $site = self::authorize_site( (int) ( $job->site_id ?? 0 ), 'execute_backups' );
         if ( is_wp_error( $site ) ) {
             return null === $job && 'mainwp_site_not_found' === $site->get_error_code() ? self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND ) : $site;

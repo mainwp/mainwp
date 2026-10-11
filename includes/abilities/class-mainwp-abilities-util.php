@@ -85,6 +85,17 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         'mainwp/delete-client-v1'            => 'manage_clients',
         'mainwp/suspend-client-v1'           => 'manage_clients',
         'mainwp/unsuspend-client-v1'         => 'manage_clients',
+        // Native backups.
+        'mainwp/run-site-backup-v1'          => 'execute_backups',
+        'mainwp/run-backup-task-v1'          => 'run_backup_tasks',
+        'mainwp/cancel-site-backup-v1'       => 'execute_backups',
+        'mainwp/reset-backup-task-run-v1'    => 'pause_resume_backup_tasks',
+        'mainwp/cleanup-site-backups-v1'     => 'execute_backups',
+        'mainwp/create-backup-task-v1'       => 'add_backup_tasks',
+        'mainwp/update-backup-task-v1'       => 'edit_backup_tasks',
+        'mainwp/delete-backup-task-v1'       => 'delete_backup_tasks',
+        'mainwp/pause-backup-task-v1'        => 'pause_resume_backup_tasks',
+        'mainwp/resume-backup-task-v1'       => 'pause_resume_backup_tasks',
         // Tags (groups).
         'mainwp/add-tag-v1'                  => 'manage_groups',
         'mainwp/update-tag-v1'               => 'manage_groups',

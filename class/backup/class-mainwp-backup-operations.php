@@ -300,7 +300,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'name'            => $task ? html_entity_decode( $task->name, ENT_QUOTES ) : '',
             'type'            => $task->type ?? '',
             'schedule'        => $task->schedule ?? '',
-            'interval_hours'  => $task ? (int) $task->interval_hours : 0,
+            'interval_hours'  => $task && 'interval' === $task->schedule ? (int) $task->interval_hours : null,
             'time_of_day'     => $task->time_of_day ?? '',
             'day_of_week'     => $task ? (int) $task->day_of_week : 0,
             'day_of_month'    => $task ? (int) $task->day_of_month : 1,
@@ -518,12 +518,8 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
-        $values = self::normalize_task_fields( $fields, null, $context );
-        if ( is_wp_error( $values ) ) {
-            return $values;
-        }
-        $scope = self::authorize_task_input_scope( $values, 'add_backup_tasks' );
-        return is_wp_error( $scope ) ? $scope : self::save_task( $values, $fields );
+        $values = self::prepare_task_fields( $fields, null, $context, 'add_backup_tasks' );
+        return is_wp_error( $values ) ? $values : self::save_task( $values, $fields );
     }
 
     /**
@@ -546,24 +542,37 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
+        $values = self::prepare_task_fields( $fields, $task, $context, 'edit_backup_tasks' );
+        if ( is_wp_error( $values ) ) {
+            return $values;
+        }
+        return self::save_task( $values, $fields, $task );
+    }
+
+    /**
+     * Preview and save must reject the same partial fields and scope changes.
+     *
+     * @param array       $fields Submitted fields.
+     * @param object|null $task Existing task or create defaults.
+     * @param string      $context Calling transport.
+     * @param string      $right Operation right.
+     * @return array|\WP_Error
+     */
+    private static function prepare_task_fields( array $fields, ?object $task, string $context, string $right ) {
         $values = self::normalize_task_fields( $fields, $task, $context );
         if ( is_wp_error( $values ) ) {
             return $values;
         }
-        $scope = self::authorize_task_input_scope( $values, 'edit_backup_tasks' );
+        $scope = self::authorize_task_input_scope( $values, $right );
         if ( is_wp_error( $scope ) ) {
             return $scope;
         }
-        // Authorize the pre-edit scope as well as the replacement: a caller
-        // who cannot reach the task's current sites must not be able to
-        // re-scope it to sites they can reach and then delete it to launder
-        // the per-site purge gate (the purge enumerates the task's historical
-        // sites, not just the current selection).
-        $scope_error = MainWP_Manage_Backups_Handler::authorize_task_update_scope( implode( ',', MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ) ), '', implode( ',', $values['site_ids'] ), implode( ',', $values['group_ids'] ) );
+        // Both scopes must be reachable so a partial edit cannot hide inaccessible history.
+        $scope_error = $task ? MainWP_Manage_Backups_Handler::authorize_task_update_scope( implode( ',', MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ) ), '', implode( ',', $values['site_ids'] ), implode( ',', $values['group_ids'] ) ) : '';
         if ( '' !== $scope_error ) {
             return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
         }
-        return self::save_task( $values, $fields, $task );
+        return $values;
     }
 
     /**
@@ -628,14 +637,18 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Deleting a task can also destroy its historical snapshots.
      *
-     * @param int  $task_id Task identity.
-     * @param bool $delete_snapshots Whether to purge owned snapshots.
+     * @param int    $task_id Task identity.
+     * @param bool   $delete_snapshots Whether to purge owned snapshots.
+     * @param string $context Calling transport.
      * @return array|\WP_Error
      */
-    public static function delete_task( int $task_id, bool $delete_snapshots = true ) {
+    public static function delete_task( int $task_id, bool $delete_snapshots = true, string $context = 'ui' ) {
         $task = self::authorize_task( $task_id, 'delete_backup_tasks' );
         if ( is_wp_error( $task ) ) {
             return $task;
+        }
+        if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
+            return self::invalid_task_input( 'context' );
         }
         $error = self::native_task_write_error();
         if ( $error ) {
@@ -654,24 +667,35 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Pausing remains available after native backups are switched off.
      *
-     * @param int $task_id Task identity.
+     * @param int    $task_id Task identity.
+     * @param string $context Calling transport.
      * @return array|\WP_Error
      */
-    public static function pause_task( int $task_id ) {
+    public static function pause_task( int $task_id, string $context = 'ui' ) {
         $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
-        return is_wp_error( $task ) ? $task : self::task_action_result( MainWP_Manage_Backups_Handler::pause_backup_result( $task_id ) );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
+            return self::invalid_task_input( 'context' );
+        }
+        return self::task_action_result( MainWP_Manage_Backups_Handler::pause_backup_result( $task_id ) );
     }
 
     /**
      * A resumed schedule must stay inside its authorized run set.
      *
-     * @param int $task_id Task identity.
+     * @param int    $task_id Task identity.
+     * @param string $context Calling transport.
      * @return array|\WP_Error
      */
-    public static function resume_task( int $task_id ) {
+    public static function resume_task( int $task_id, string $context = 'ui' ) {
         $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
         if ( is_wp_error( $task ) ) {
             return $task;
+        }
+        if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
+            return self::invalid_task_input( 'context' );
         }
         $error = self::native_task_write_error();
         return $error ?? self::task_action_result( MainWP_Manage_Backups_Handler::resume_backup_result( $task_id ) );
@@ -696,9 +720,23 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
+        $stale   = array();
+        $code    = '';
+        $message = MainWP_Manage_Backups_Handler::manual_task_start_error( $task, $stale, $code );
+        if ( '' !== $message ) {
+            return new \WP_Error( $code, $message, array( 'status' => 409 ) );
+        }
         $previous = MainWP_Backup_Run_History::set_context( 'ability' === $context ? 'ability' : 'manual', get_current_user_id() );
         try {
-            return self::task_action_result( MainWP_Manage_Backups_Handler::run_backup_task_now( $task_id, $context ), MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR );
+            $result = MainWP_Manage_Backups_Handler::run_backup_task_now( $task_id, $context );
+            if ( isset( $result['error'] ) ) {
+                $code = $result['error_code'] ?? MainWP_Backup_Error_Codes::ERR_START_FAILED;
+                return new \WP_Error( $code, $result['error'], array( 'status' => MainWP_Backup_Error_Codes::ERR_START_FAILED === $code ? 502 : 409 ) );
+            }
+            if ( 'ability' === $context ) {
+                $result['status'] = (int) $task->completed < (int) $task->last_run ? 'already_running' : ( 'running' === $result['status'] ? 'started' : 'not_started' );
+            }
+            return $result;
         } finally {
             MainWP_Backup_Run_History::set_context( $previous['trigger'], $previous['user_id'] );
         }
@@ -757,7 +795,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         $task = MainWP_DB_Backup::instance()->ensure_manual_backup_task( $website );
         if ( empty( $task ) ) {
-            return new \WP_Error( 'mainwp_internal_error', esc_html__( 'Could not prepare the on-demand backup.', 'mainwp' ), array( 'status' => 500 ) );
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_START_FAILED, esc_html__( 'Could not prepare the on-demand backup.', 'mainwp' ), array( 'status' => 500 ) );
         }
 
         // A run already in flight (last_run newer than completed): follow it
@@ -767,7 +805,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 array(
                     'job_id'  => (int) $task->id,
                     'started' => (int) $task->last_run,
-                    'status'  => 'running',
+                    'status'  => 'ability' === $context ? 'already_running' : 'running',
                 )
             );
         }
@@ -786,7 +824,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 array(
                     'job_id'  => (int) $task->id,
                     'started' => (int) $task->last_run,
-                    'status'  => 'queued',
+                    'status'  => 'ability' === $context ? 'not_started' : 'queued',
                 )
             );
         }
@@ -823,14 +861,14 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         // concurrent site delete (or a failed insert) can leave the re-read
         // empty; report the failure instead of dereferencing null.
         if ( empty( $task ) ) {
-            return new \WP_Error( 'mainwp_operation_failed', esc_html__( 'The backup could not be started for this site. Please reload the page and try again.', 'mainwp' ), array( 'status' => 502 ) );
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_START_FAILED, esc_html__( 'The backup could not be started for this site. Please reload the page and try again.', 'mainwp' ), array( 'status' => 502 ) );
         }
 
         return (
             array(
                 'job_id'  => (int) $task->id,
                 'started' => $started_out,
-                'status'  => $had_slot ? 'running' : 'queued',
+                'status'  => 'ability' === $context ? ( $had_slot ? 'started' : ( (int) $task->completed < (int) $task->last_run ? 'already_running' : 'not_started' ) ) : ( $had_slot ? 'running' : 'queued' ),
             )
         );
     }
@@ -1365,6 +1403,476 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         return array(
             'applies' => $applies,
             'verdict' => $applies ? MainWP_Backup_Executor::evaluate_update_backup_gate( (int) $site->id, MainWP_Updates_Overview::get_backup_before_upgrade_days() ) : 'not_applicable',
+        );
+    }
+
+    /**
+     * A preview must not create the hidden task or contact the site.
+     *
+     * @param int $site_id Site identity.
+     * @return array|\WP_Error
+     */
+    public static function preview_site_backup( int $site_id ) {
+        $site = self::authorize_site( $site_id, 'execute_backups' );
+        if ( is_wp_error( $site ) ) {
+            return $site;
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $db         = MainWP_DB_Backup::instance();
+        $task       = $db->get_manual_backup_task( $site_id );
+        $keep       = MainWP_Backup_Settings::get_on_demand_retention_count();
+        $candidates = $task ? self::retention_after_backup( $site_id, (int) $task->id, new MainWP_Backup_Retention_Policy( $keep, 0, 0 ) ) : array();
+        $ids        = array();
+        foreach ( $candidates as $candidate ) {
+            $ids = array_merge( $ids, $candidate['snapshot_ids'] );
+        }
+        $refusals = array();
+        if ( MainWP_Post_Backup_Handler::site_is_disconnected( $site ) ) {
+            $refusals[] = self::safe_error( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED );
+        } elseif ( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
+            $refusals[] = self::safe_error( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+        }
+        return self::backup_preview(
+            array(
+                'site_id'                  => $site_id,
+                'run_open'                 => $task && (int) $task->completed < (int) $task->last_run,
+                'destinations'             => self::preview_destinations( $db->manual_backup_task_destinations( $site_id ) ),
+                'retention_keep'           => $keep,
+                'would_prune_snapshot_ids' => $ids,
+            ),
+            $refusals,
+            array( __( 'Site capabilities and available run slots are checked when you confirm.', 'mainwp' ) )
+        );
+    }
+
+    /**
+     * Stored scope and retention can be inspected without claiming a run.
+     *
+     * @param int $task_id Task identity.
+     * @return array|\WP_Error
+     */
+    public static function preview_task_run( int $task_id ) {
+        $task = self::authorize_task( $task_id, 'run_backup_tasks' );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $stale   = array();
+        $sites   = MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task, $stale );
+        $code    = '';
+        $message = MainWP_Manage_Backups_Handler::manual_task_start_error( $task, $stale, $code );
+        $impact  = array();
+        $policy  = new MainWP_Backup_Retention_Policy( (int) $task->retention_count, (int) $task->retention_days, (int) $task->retention_storage_mb );
+        foreach ( $sites as $id ) {
+            $ids     = array();
+            $reasons = array();
+            foreach ( self::retention_after_backup( $id, $task_id, $policy ) as $candidate ) {
+                $ids       = array_merge( $ids, $candidate['snapshot_ids'] );
+                $reasons[] = $candidate['reason'];
+            }
+            $impact[] = array(
+                'site_id'                  => $id,
+                'would_prune_snapshot_ids' => $ids,
+                'reasons'                  => array_values( array_unique( $reasons ) ),
+            );
+        }
+        $warnings = array(
+            __( 'Site capabilities and available run slots are checked when you confirm.', 'mainwp' ),
+            __( 'Retention estimates use the stored snapshots; the size of the new backup is not known yet.', 'mainwp' ),
+        );
+        if ( 'incremental' === $task->type ) {
+            $warnings[] = __( 'Retention estimates assume a new complete backup unit. An incremental run may extend an existing chain instead.', 'mainwp' );
+        }
+        return self::backup_preview(
+            array(
+                'task_id'          => $task_id,
+                'run_open'         => (int) $task->completed < (int) $task->last_run,
+                'site_ids'         => $sites,
+                'stale_site_ids'   => $stale,
+                'destinations'     => self::preview_destinations( (array) json_decode( (string) $task->destinations, true ) ),
+                'retention_impact' => $impact,
+            ),
+            '' === $message ? array() : array( self::safe_error( $code ) ),
+            $warnings
+        );
+    }
+
+    /**
+     * The future backup counts toward retention without inventing an archive size or id.
+     *
+     * @param int                            $site_id Site identity.
+     * @param int                            $task_id Task identity.
+     * @param MainWP_Backup_Retention_Policy $policy Stored policy.
+     * @return array
+     */
+    private static function retention_after_backup( int $site_id, int $task_id, MainWP_Backup_Retention_Policy $policy ): array {
+        $units  = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $site_id, $task_id );
+        $now    = time();
+        $newest = $now;
+        foreach ( $units as $unit ) {
+            $newest = max( $newest, (int) $unit['newest_created'] + 1 );
+        }
+        $units[] = array(
+            'snapshots'      => array(),
+            'is_complete'    => true,
+            'size_bytes'     => 0,
+            'newest_created' => $newest,
+            'oldest_created' => $newest,
+        );
+        return $policy->evaluate( $units, $now );
+    }
+
+    /**
+     * Destination previews exclude credentials and storage paths.
+     *
+     * @param array $ids Stored destination identities.
+     * @return array
+     */
+    private static function preview_destinations( array $ids ): array {
+        $destinations = array();
+        foreach ( $ids as $id ) {
+            $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $id );
+            if ( $destination ) {
+                $destinations[] = array(
+                    'id'       => (int) $destination->id,
+                    'name'     => (string) $destination->name,
+                    'provider' => (string) $destination->provider,
+                );
+            }
+        }
+        return $destinations;
+    }
+
+    /**
+     * Cancellation eligibility can be read without sending a stop request.
+     *
+     * @param int $site_id Site identity.
+     * @return array|\WP_Error
+     */
+    public static function preview_site_cancel( int $site_id ) {
+        $site = self::authorize_site( $site_id, 'execute_backups' );
+        if ( is_wp_error( $site ) ) {
+            return $site;
+        }
+        $db       = MainWP_DB_Backup::instance();
+        $task     = $db->get_manual_backup_task( $site_id );
+        $progress = $task ? $db->get_backup_task_progress( (int) $task->id, $site_id ) : null;
+        $id       = (string) ( $progress->child_backup_task_id ?? '' );
+        return self::backup_preview(
+            array(
+                'site_id'          => $site_id,
+                'run_open'         => $task && (int) $task->completed < (int) $task->last_run,
+                'child_task_known' => '' !== $id && ! MainWP_Backup_Executor::is_creating_marker( $id ),
+            )
+        );
+    }
+
+    /**
+     * Reset eligibility must use the same stall threshold as confirmation.
+     *
+     * @param int $task_id Task identity.
+     * @return array|\WP_Error
+     */
+    public static function preview_task_reset( int $task_id ) {
+        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        $open    = (int) $task->completed < (int) $task->last_run;
+        $elapsed = $open ? max( 0, time() - (int) $task->last_run ) : 0;
+        return self::backup_preview(
+            array(
+                'task_id'                 => $task_id,
+                'run_open'                => $open,
+                'started_at'              => (int) $task->last_run,
+                'stalled_for_seconds'     => $elapsed,
+                'stall_threshold_seconds' => MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS,
+                'site_ids'                => MainWP_Manage_Backups_Handler::resolve_reset_task_site_ids( $task ),
+            ),
+            $open && $elapsed > MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS ? array() : array( self::safe_error( MainWP_Backup_Error_Codes::ERR_NOT_STALLED ) )
+        );
+    }
+
+    /**
+     * Internal cleanup paths are replaced by counts before a preview reaches callers.
+     *
+     * @param int      $site_id Site identity.
+     * @param int|null $keep Retention override.
+     * @return array|\WP_Error
+     */
+    public static function preview_site_cleanup( int $site_id, ?int $keep ) {
+        $site = self::authorize_site( $site_id, 'execute_backups' );
+        if ( is_wp_error( $site ) ) {
+            return $site;
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        $keep = $keep ?? ( ! empty( $task->retention_count ) ? (int) $task->retention_count : MainWP_Backup_Settings::get_on_demand_retention_count() );
+        $plan = MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep );
+        return self::backup_preview(
+            array(
+                'site_id'                    => $site_id,
+                'keep'                       => $keep,
+                'orphan_dirs'                => count( $plan['orphan_dirs'] ),
+                'orphaned_task_snapshot_ids' => $plan['orphaned_task_snapshot_ids'],
+                'on_demand_units'            => $plan['on_demand_units'],
+                'bytes_to_prune'             => $plan['bytes'],
+            )
+        );
+    }
+
+    /**
+     * A create preview needs the same defaults and scope checks as a saved task.
+     *
+     * @param array $fields Submitted task fields.
+     * @return array|\WP_Error
+     */
+    public static function preview_task_create( array $fields ) {
+        $base = self::authorize_base( 'add_backup_tasks' );
+        if ( is_wp_error( $base ) ) {
+            return $base;
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $values = self::prepare_task_fields( $fields, null, 'ability', 'add_backup_tasks' );
+        if ( is_wp_error( $values ) ) {
+            return $values;
+        }
+        return self::backup_preview(
+            array(
+                'normalized'        => $values,
+                'resolved_site_ids' => MainWP_Manage_Backups_Handler::expand_task_site_ids( implode( ',', $values['site_ids'] ), implode( ',', $values['group_ids'] ) ),
+                'next_run_at'       => self::preview_task_next_run( $values ),
+            )
+        );
+    }
+
+    /**
+     * Retention is evaluated without pruning so a caller can review a partial edit.
+     *
+     * @param int   $task_id Task identity.
+     * @param array $fields Partial task fields.
+     * @return array|\WP_Error
+     */
+    public static function preview_task_update( int $task_id, array $fields ) {
+        $task = self::authorize_task( $task_id, 'edit_backup_tasks' );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $values = self::prepare_task_fields( $fields, $task, 'ability', 'edit_backup_tasks' );
+        if ( is_wp_error( $values ) ) {
+            return $values;
+        }
+        $before = self::normalize_task_fields( array( 'name' => html_entity_decode( $task->name, ENT_QUOTES ) ), $task );
+        // A repair of an invalid legacy value must still be reviewable.
+        $before = is_wp_error( $before ) ? self::stored_task_fields( $task ) : $before;
+        $query  = MainWP_Backup_Retention_Query::instance();
+        $policy = new MainWP_Backup_Retention_Policy( $values['retention']['count'], $values['retention']['days'], $values['retention']['storage_mb'] );
+        $impact = array();
+        foreach ( $query->list_site_ids_for_task( $task_id ) as $site_id ) {
+            $site = self::authorize_site( $site_id, 'edit_backup_tasks' );
+            if ( is_wp_error( $site ) ) {
+                return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
+            }
+            $ids     = array();
+            $reasons = array();
+            foreach ( $policy->evaluate( $query->get_units_for_site_task( $site_id, $task_id ), time() ) as $candidate ) {
+                $ids       = array_merge( $ids, $candidate['snapshot_ids'] );
+                $reasons[] = $candidate['reason'];
+            }
+            $impact[] = array(
+                'site_id'                  => $site_id,
+                'would_prune_snapshot_ids' => $ids,
+                'reasons'                  => array_values( array_unique( $reasons ) ),
+            );
+        }
+        return self::backup_preview(
+            array(
+                'task_id'                  => $task_id,
+                'changes'                  => self::preview_task_changes( $before, $values ),
+                'retention_impact'         => $impact,
+                'next_run_at'              => self::preview_task_next_run( $values, $task ),
+                'owner_changes_to_user_id' => get_current_user_id() === (int) $task->userid ? null : get_current_user_id(),
+            )
+        );
+    }
+
+    /**
+     * Scalar policy changes keep the diff usable without exposing stored row members.
+     *
+     * @param array $before Original normalized fields.
+     * @param array $after Proposed normalized fields.
+     * @return array
+     */
+    private static function preview_task_changes( array $before, array $after ): array {
+        $changes = array();
+        foreach ( $after as $key => $value ) {
+            $old = $before[ $key ] ?? null;
+            if ( in_array( $key, array( 'retention', 'exclude_flags', 'archive_tuning' ), true ) ) {
+                foreach ( $value as $member => $to ) {
+                    $from = $old[ $member ] ?? null;
+                    if ( $from !== $to ) {
+                        $changes[] = array(
+                            'field' => $key . '.' . $member,
+                            'from'  => $from,
+                            'to'    => $to,
+                        );
+                    }
+                }
+            } elseif ( $old !== $value ) {
+                $changes[] = array(
+                    'field' => $key,
+                    'from'  => $old,
+                    'to'    => $value,
+                );
+            }
+        }
+        return $changes;
+    }
+
+    /**
+     * The calculator can project a schedule without invoking the database saver.
+     *
+     * @param array       $values Normalized fields.
+     * @param object|null $task Existing task, if any.
+     * @return int|null
+     */
+    private static function preview_task_next_run( array $values, ?object $task = null ): ?int {
+        $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+        $next       = $calculator->compute_next_run( (object) $values, empty( $task->last_run ) ? null : (int) $task->last_run );
+        return $next > 0 ? $next : null;
+    }
+
+    /**
+     * Historical sites need authorization before a deletion preview exposes their snapshots.
+     *
+     * @param int  $task_id Task identity.
+     * @param bool $delete_snapshots Whether snapshots would be purged.
+     * @return array|\WP_Error
+     */
+    public static function preview_task_delete( int $task_id, bool $delete_snapshots = true ) {
+        $task = self::authorize_task( $task_id, 'delete_backup_tasks' );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $query     = MainWP_Backup_Retention_Query::instance();
+        $snapshots = array();
+        $cloud     = array();
+        foreach ( $query->list_site_ids_for_task( $task_id ) as $site_id ) {
+            if ( is_wp_error( self::authorize_site( $site_id, 'delete_backup_tasks' ) ) ) {
+                return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
+            }
+            if ( ! $delete_snapshots ) {
+                continue;
+            }
+            foreach ( $query->get_units_for_site_task( $site_id, $task_id ) as $unit ) {
+                foreach ( $unit['snapshots'] as $snapshot ) {
+                    $snapshots[] = array(
+                        'id'         => (int) $snapshot->id,
+                        'site_id'    => $site_id,
+                        'type'       => $snapshot->type,
+                        'created_at' => (int) $snapshot->created,
+                    );
+                    if ( empty( $task->delete_cloud_copies ) ) {
+                        continue;
+                    }
+                    foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $snapshot->id ) as $job ) {
+                        if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE !== $job->status || 'local' === $job->provider ) {
+                            continue;
+                        }
+                        $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+                        $cloud[]     = array(
+                            'snapshot_id'      => (int) $snapshot->id,
+                            'destination_id'   => (int) $job->destination_id,
+                            'destination_name' => $destination ? $destination->name : null,
+                        );
+                    }
+                }
+            }
+        }
+        $warnings = array();
+        if ( count( $snapshots ) > 500 || count( $cloud ) > 500 ) {
+            $warnings[] = __( 'The preview lists up to 500 snapshots and 500 cloud copies. Confirmation deletes the full selection.', 'mainwp' );
+        }
+        $refusals = (int) $task->completed < (int) $task->last_run ? array( self::safe_error( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ) ) : array();
+        return self::backup_preview(
+            array(
+                'task_id'             => $task_id,
+                'task_name'           => html_entity_decode( $task->name, ENT_QUOTES ),
+                'delete_snapshots'    => $delete_snapshots,
+                'delete_cloud_copies' => $delete_snapshots && ! empty( $task->delete_cloud_copies ),
+                'snapshots'           => array_slice( $snapshots, 0, 500 ),
+                'snapshots_truncated' => count( $snapshots ) > 500,
+                'cloud_copies'        => array_slice( $cloud, 0, 500 ),
+            ),
+            $refusals,
+            $warnings
+        );
+    }
+
+    /**
+     * Resuming recomputes only a timed schedule, matching the existing action.
+     *
+     * @param int  $task_id Task identity.
+     * @param bool $paused Whether the action would pause the task.
+     * @return array|\WP_Error
+     */
+    public static function preview_task_pause( int $task_id, bool $paused ) {
+        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        $error = $paused ? null : self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $next = null;
+        if ( ! $paused && (int) $task->next_run > 0 ) {
+            $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+            $next       = $calculator->compute_next_run( $task, empty( $task->last_run ) ? null : (int) $task->last_run );
+        }
+        return self::backup_preview(
+            array(
+                'task_id'     => $task_id,
+                'paused_now'  => ! empty( $task->paused ),
+                'next_run_at' => $next,
+            )
+        );
+    }
+
+    /**
+     * A refused preview still shows the authorized target and the reason it cannot proceed.
+     *
+     * @param array $effect Authorized changes.
+     * @param array $refusals Safe refusal messages.
+     * @param array $warnings Fixed preview caveats.
+     * @return array
+     */
+    private static function backup_preview( array $effect, array $refusals = array(), array $warnings = array() ): array {
+        return array(
+            'would_affect' => $effect,
+            'can_proceed'  => empty( $refusals ),
+            'refusals'     => $refusals,
+            'warnings'     => $warnings,
         );
     }
 }

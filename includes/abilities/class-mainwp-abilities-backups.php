@@ -1,6 +1,6 @@
 <?php
 /**
- * Native backup abilities expose authorized evidence without advancing work.
+ * Backup abilities share authorization and keep previews separate from writes.
  *
  * @package MainWP\Dashboard
  */
@@ -9,7 +9,7 @@ namespace MainWP\Dashboard;
 
 defined( 'ABSPATH' ) || exit;
 
-/** Native backup reads share the service's authorization and refusal rules. */
+/** Backup reads and actions share the service's authorization and refusal rules. */
 class MainWP_Abilities_Backups {
 
     /**
@@ -31,6 +31,20 @@ class MainWP_Abilities_Backups {
         'mainwp/get-backup-snapshot-v1'      => 'execute_backups',
         'mainwp/list-restore-jobs-v1'        => 'execute_backups',
         'mainwp/get-restore-job-v1'          => 'execute_backups',
+    );
+
+    /** Writes use the operation-right map rather than the read-right map. */
+    private const WRITE_ABILITIES = array(
+        'mainwp/run-site-backup-v1',
+        'mainwp/run-backup-task-v1',
+        'mainwp/cancel-site-backup-v1',
+        'mainwp/reset-backup-task-run-v1',
+        'mainwp/cleanup-site-backups-v1',
+        'mainwp/create-backup-task-v1',
+        'mainwp/update-backup-task-v1',
+        'mainwp/delete-backup-task-v1',
+        'mainwp/pause-backup-task-v1',
+        'mainwp/resume-backup-task-v1',
     );
 
     /**
@@ -55,6 +69,16 @@ class MainWP_Abilities_Backups {
         self::register_get_backup_snapshot();
         self::register_list_restore_jobs();
         self::register_get_restore_job();
+        self::register_run_site_backup();
+        self::register_run_backup_task();
+        self::register_cancel_site_backup();
+        self::register_reset_backup_task_run();
+        self::register_cleanup_site_backups();
+        self::register_create_backup_task();
+        self::register_update_backup_task();
+        self::register_delete_backup_task();
+        self::register_pause_backup_task();
+        self::register_resume_backup_task();
     }
 
     /**
@@ -69,7 +93,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'List Backup Tasks', 'mainwp' ),
                 'description'         => __( 'Scheduled backup tasks you can access, with schedule, pause state, whether a run is open, and next and last run times. Filter by status or by a site. The hidden on-demand task is never listed. Possible errors: mainwp_site_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::list_backup_tasks_input_schema(),
                 'output_schema'       => self::list_backup_tasks_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_backup_tasks' ),
@@ -150,7 +174,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Task', 'mainwp' ),
                 'description'         => __( 'Full configuration of one task: schedule, sites and groups, destinations, retention, archive settings, excludes, owner, and the errors and notices of its current or last run. Possible errors: mainwp_backup_task_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::get_backup_task_input_schema(),
                 'output_schema'       => self::get_backup_task_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_task' ),
@@ -385,7 +409,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Task Run', 'mainwp' ),
                 'description'         => __( 'Per-site state of a task\'s current or last run: status, phase, percent, error, the snapshot each site produced and its upload counts. Poll target for run-backup-task-v1. Reading it never advances the run; cron does. Possible errors: mainwp_backup_task_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::get_backup_task_run_input_schema(),
                 'output_schema'       => self::get_backup_task_run_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_task_run' ),
@@ -541,7 +565,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Site Backup Progress', 'mainwp' ),
                 'description'         => __( 'State of any backup on one site: the on-demand backup (status, phase, percent, files and bytes, snapshot_id on completion, error on failure) and open scheduled runs that cover the site. Poll target for run-site-backup-v1. Reading it never advances the backup. Possible errors: mainwp_site_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::get_site_backup_progress_input_schema(),
                 'output_schema'       => self::get_site_backup_progress_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_site_backup_progress' ),
@@ -681,7 +705,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'List Backup Snapshots', 'mainwp' ),
                 'description'         => __( 'Snapshots recorded for one site, newest first: type, size, chain parent, whether it can be restored and why not, offsite copy state with its evidence, test-restore result, and upload status per destination. Also reports whether the site is disconnected or has a restore or on-demand backup running. Pruned snapshots appear only with include_pruned. Possible errors: mainwp_site_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::list_backup_snapshots_input_schema(),
                 'output_schema'       => self::list_backup_snapshots_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_backup_snapshots' ),
@@ -782,7 +806,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Snapshot', 'mainwp' ),
                 'description'         => __( 'One snapshot in detail: archives by name and size, manifest presence, the chain a restore needs (base first), upload status per destination, and whether WooCommerce metadata was captured. Returns no download link or file path. Possible errors: mainwp_backup_snapshot_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::get_backup_snapshot_input_schema(),
                 'output_schema'       => self::get_backup_snapshot_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_snapshot' ),
@@ -884,7 +908,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'List Restore Jobs', 'mainwp' ),
                 'description'         => __( 'Restore and rollback jobs for one site or for every site you can access, newest first: status, derived outcome, restore type, safety backup state, cancel confirmation and error. Possible errors: mainwp_site_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::list_restore_jobs_input_schema(),
                 'output_schema'       => self::list_restore_jobs_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_restore_jobs' ),
@@ -964,7 +988,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Restore Job', 'mainwp' ),
                 'description'         => __( 'One restore job: status and outcome, progress counters, next retry time, verification as recorded (site report, site-responds check and its rule, WooCommerce preserve result), partial-state risk with reasons, and whether a rollback is available. Poll target for restore-site-snapshot-v1 and rollback-restore-v1. Reading it never advances the restore. Possible errors: mainwp_backup_restore_job_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::get_restore_job_input_schema(),
                 'output_schema'       => self::get_restore_job_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_restore_job' ),
@@ -1581,7 +1605,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Status', 'mainwp' ),
                 'description'         => __( 'Last known backup per site across the fleet: the latest native snapshot, a backup time the site reported, or a legacy task run that left a backup archive, with a staleness threshold, the backup health bucket and the pre-update backup check verdict. Use it to answer which sites need a backup. Does not list snapshots; use list-backup-snapshots-v1 for one site\'s history. Possible errors: none beyond authentication and rights.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::get_backup_status_input_schema(),
                 'output_schema'       => self::get_backup_status_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_status' ),
@@ -1812,7 +1836,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'List Backup History', 'mainwp' ),
                 'description'         => __( 'Record of backup runs per task and site for the last 90 days: what started each run (a schedule, a user, an agent, the pre-update backup check, or a restore\'s safety backup), its outcome and error code, the snapshot it produced, and updates that overrode the pre-update backup check. Use it for what happened earlier; get-backup-task-v1 carries only the current or last run. Possible errors: mainwp_site_not_found, mainwp_backup_task_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::list_backup_history_input_schema(),
                 'output_schema'       => self::list_backup_history_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_backup_history' ),
@@ -1966,7 +1990,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'List Backup Destinations', 'mainwp' ),
                 'description'         => __( 'Storage destinations: name, provider, default flag, non-secret location (bucket, region, endpoint, host, port), whether stored credentials failed to load, and how many scheduled tasks use each. Never returns credentials, usernames, key ids or paths. Possible errors: none beyond authentication and rights.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::list_backup_destinations_input_schema(),
                 'output_schema'       => self::list_backup_destinations_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_list_backup_destinations' ),
@@ -2045,7 +2069,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Destination', 'mainwp' ),
                 'description'         => __( 'One storage destination with the same fields as list-backup-destinations-v1. Possible errors: mainwp_backup_destination_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::get_backup_destination_input_schema(),
                 'output_schema'       => self::get_backup_destination_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_destination' ),
@@ -2100,7 +2124,7 @@ class MainWP_Abilities_Backups {
                 'label'               => __( 'Get Backup Settings', 'mainwp' ),
                 'description'         => __( 'Native backups on or off, primary backup method, on-demand retention count, concurrency limit, diagnostics flag, the pre-update backup check policy, and whether encryption is on and a recovery passphrase is set. Never returns key material. Possible errors: none beyond authentication and rights.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
-                'ability_class'       => MainWP_Backup_Read_Ability::class,
+                'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::get_backup_settings_input_schema(),
                 'output_schema'       => self::get_backup_settings_output_schema(),
                 'execute_callback'    => array( self::class, 'execute_get_backup_settings' ),
@@ -2308,10 +2332,10 @@ class MainWP_Abilities_Backups {
         if ( is_wp_error( $base ) ) {
             return self::safe_wp_error( $base );
         }
-        if ( ! array_key_exists( $ability, self::READ_RIGHTS ) ) {
+        if ( ! array_key_exists( $ability, self::READ_RIGHTS ) && ! in_array( $ability, self::WRITE_ABILITIES, true ) ) {
             return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
         }
-        $right = self::READ_RIGHTS[ $ability ];
+        $right = self::READ_RIGHTS[ $ability ] ?? MainWP_Abilities_Util::required_rights_for_ability( $ability )[0];
         if ( '' !== $right && ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
             return self::safe_wp_error(
                 new \WP_Error(
@@ -2323,6 +2347,10 @@ class MainWP_Abilities_Backups {
                     )
                 )
             );
+        }
+        $valid = self::validate_id_input( $input, in_array( $ability, self::WRITE_ABILITIES, true ) );
+        if ( is_wp_error( $valid ) ) {
+            return $valid;
         }
         $input = MainWP_Abilities_Util::normalize_input( $input );
         foreach ( array(
@@ -2395,13 +2423,36 @@ class MainWP_Abilities_Backups {
      * WordPress accepts whole floats as integers, so schemas alone cannot protect identity.
      *
      * @param mixed $input Raw ability input.
+     * @param bool  $selections Whether selections are write targets.
      * @return true|\WP_Error
      */
-    public static function validate_id_input( $input ) {
+    public static function validate_id_input( $input, bool $selections = false ) {
         if ( is_array( $input ) ) {
             foreach ( array( 'task_id', 'snapshot_id', 'restore_job_id', 'destination_id' ) as $key ) {
                 if ( array_key_exists( $key, $input ) && null === self::positive_int( $input[ $key ] ) ) {
                     return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
+                }
+            }
+            if ( array_key_exists( 'site_id_or_domain', $input ) ) {
+                $site = $input['site_id_or_domain'];
+                // Numeric-looking strings name ids; domains and URLs retain the house resolver.
+                if ( '' === $site || ( ( ! is_string( $site ) || is_numeric( $site ) ) && null === self::positive_int( $site ) ) ) {
+                    return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
+                }
+            }
+            // Read filters retain REST's list coercion; write selections must preserve raw identities.
+            foreach ( $selections ? array( 'site_ids_or_domains', 'group_ids', 'destination_ids' ) : array() as $key ) {
+                if ( ! array_key_exists( $key, $input ) ) {
+                    continue;
+                }
+                if ( ! is_array( $input[ $key ] ) ) {
+                    return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
+                }
+                foreach ( $input[ $key ] as $id ) {
+                    $valid = 'site_ids_or_domains' === $key ? self::validate_id_input( array( 'site_id_or_domain' => $id ) ) : ( null !== self::positive_int( $id ) );
+                    if ( is_wp_error( $valid ) || false === $valid ) {
+                        return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
+                    }
                 }
             }
         }
@@ -2431,10 +2482,10 @@ class MainWP_Abilities_Backups {
     }
 
     /**
-     * Only registered backup reads need their schema checked before the generic run controller.
+     * Registered backup abilities need their schema checked before REST coercion.
      *
      * Query and body parameters outrank the route, so `name` can be any shape a request carries.
-     * Everything other than a registered backup read keeps core's check and core's answer.
+     * Other abilities retain the controller's default input check.
      *
      * @param mixed            $input Request input.
      * @param \WP_REST_Request $request Current REST request.
@@ -2443,11 +2494,25 @@ class MainWP_Abilities_Backups {
      */
     public static function validate_rest_input( $input, \WP_REST_Request $request, string $param ) {
         $name = $request->get_param( 'name' );
-        if ( ! is_string( $name ) || ! array_key_exists( $name, self::READ_RIGHTS ) || ! wp_has_ability( $name ) ) {
+        if ( ! is_string( $name ) || ( ! array_key_exists( $name, self::READ_RIGHTS ) && ! in_array( $name, self::WRITE_ABILITIES, true ) ) || ! wp_has_ability( $name ) ) {
             return rest_validate_request_arg( $input, $request, $param );
         }
-        $ability = wp_get_ability( $name );
-        return rest_validate_value_from_schema( $ability->normalize_input( $input ), $ability->get_input_schema(), $param );
+        $ability     = wp_get_ability( $name );
+        $annotations = $ability->get_meta_item( 'annotations' );
+        $method      = ! empty( $annotations['readonly'] ) ? 'GET' : ( ! empty( $annotations['destructive'] ) && ! empty( $annotations['idempotent'] ) ? 'DELETE' : 'POST' );
+        if ( $request->get_method() !== $method ) {
+            // Core's method refusal precedes the ability-specific input check.
+            return rest_validate_request_arg( $input, $request, $param );
+        }
+        // DELETE bodies are normalized into the query before the controller executes.
+        $params = in_array( $request->get_method(), array( 'GET', 'DELETE' ), true ) ? $request->get_query_params() : $request->get_json_params();
+        if ( 'DELETE' === $request->get_method() && ! isset( $params['input'] ) ) {
+            // Body normalization runs after route validation, so inspect the same carrier here.
+            $params = $request->get_json_params();
+        }
+        $input = $params['input'] ?? null;
+        $valid = rest_validate_value_from_schema( $ability->normalize_input( $input ), $ability->get_input_schema(), $param );
+        return is_wp_error( $valid ) ? $valid : ( in_array( $name, self::WRITE_ABILITIES, true ) ? self::validate_id_input( $input, true ) : true );
     }
 
     /**
@@ -2460,7 +2525,7 @@ class MainWP_Abilities_Backups {
         $safe   = MainWP_Backup_Operations::safe_error( $error->get_error_code() );
         $source = $error->get_error_data();
         $data   = array( 'status' => is_array( $source ) && isset( $source['status'] ) ? (int) $source['status'] : 500 );
-        if ( 'mainwp_insufficient_right' === $safe['code'] && is_array( $source ) && isset( $source['right'] ) && in_array( $source['right'], self::READ_RIGHTS, true ) ) {
+        if ( 'mainwp_insufficient_right' === $safe['code'] && is_array( $source ) && isset( $source['right'] ) && in_array( $source['right'], array_merge( self::READ_RIGHTS, MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS ), true ) ) {
             $data['right'] = $source['right'];
         }
         return new \WP_Error( $safe['code'], $safe['message'], $data );
@@ -2744,5 +2809,2403 @@ class MainWP_Abilities_Backups {
      */
     public static function execute_get_backup_settings( $input = null ) {
         return self::execute_read( 'get_backup_settings', $input );
+    }
+
+    /** Discovery keeps consent and transport requirements alongside each action. */
+    private static function register_run_site_backup(): void {
+        wp_register_ability(
+            'mainwp/run-site-backup-v1',
+            array(
+                'label'               => __( 'Run Site Backup', 'mainwp' ),
+                'description'         => __( 'Start an on-demand full backup of one site now (Back Up Now). Returns a handle; the backup continues under cron. Poll get-site-backup-progress-v1 with the returned poll.input until on_demand.status is completed or failed. Once the snapshot lands, on-demand snapshots beyond the retention count are pruned; dry_run lists them. Possible errors: mainwp_backup_legacy_disabled, mainwp_backup_site_disconnected, mainwp_backup_already_running, mainwp_backup_start_failed, mainwp_site_not_found.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::run_site_backup_input_schema(),
+                'output_schema'       => self::run_site_backup_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_run_site_backup' ),
+                'permission_callback' => self::permission_callback( 'mainwp/run-site-backup-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Changes a child site and can prune older on-demand snapshots. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. not_started means no run slot was free: nothing starts on its own, call again later. already_running means the call attached to the open run.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed input schemas prevent undocumented parameters from reaching an action.
+     *
+     * @return array
+     */
+    private static function run_site_backup_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'site_id_or_domain',
+            ),
+            'properties'           => array(
+                'site_id_or_domain' => self::site_id_or_domain_schema(),
+                'dry_run'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                ),
+                'confirm'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys distinguish previews from confirmed results.
+     *
+     * @return array
+     */
+    private static function run_site_backup_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'site_id',
+                    'run_open',
+                    'destinations',
+                    'retention_keep',
+                    'would_prune_snapshot_ids',
+                ),
+                'properties'           => array(
+                    'site_id'                  => array(
+                        'type' => 'integer',
+                    ),
+                    'run_open'                 => array(
+                        'type'        => 'boolean',
+                        'description' => 'An on-demand run is already open; confirm would attach to it instead of starting another.',
+                    ),
+                    'destinations'             => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array(
+                                'id',
+                                'name',
+                                'provider',
+                            ),
+                            'properties'           => array(
+                                'id'       => array(
+                                    'type' => 'integer',
+                                ),
+                                'name'     => array(
+                                    'type'      => 'string',
+                                    'maxLength' => 255,
+                                ),
+                                'provider' => array(
+                                    'type' => 'string',
+                                    'enum' => array(
+                                        's3',
+                                        'gcs',
+                                        'dropbox',
+                                        'sftp',
+                                        'local',
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    'retention_keep'           => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                    'would_prune_snapshot_ids' => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type' => 'integer',
+                        ),
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'site_id',
+                    'status',
+                    'started_at',
+                    'since',
+                    'poll',
+                ),
+                'properties'           => array(
+                    'site_id'    => array(
+                        'type' => 'integer',
+                    ),
+                    'status'     => array(
+                        'type'        => 'string',
+                        'enum'        => array(
+                            'started',
+                            'already_running',
+                            'not_started',
+                        ),
+                        'description' => 'already_running: an on-demand backup of this site was already open and this call attached to it. not_started: no run slot was free; nothing starts on its own, call this ability again later.',
+                    ),
+                    'started_at' => self::ts_schema(),
+                    'since'      => array(
+                        'type'        => 'integer',
+                        'minimum'     => 0,
+                        'description' => 'Opaque handle for get-site-backup-progress-v1. Pass it back exactly as returned.',
+                    ),
+                    'poll'       => array(
+                        'type'                 => 'object',
+                        'additionalProperties' => false,
+                        'required'             => array(
+                            'ability',
+                            'input',
+                            'interval_seconds',
+                        ),
+                        'properties'           => array(
+                            'ability'          => array(
+                                'type' => 'string',
+                                'enum' => array(
+                                    'mainwp/get-site-backup-progress-v1',
+                                ),
+                            ),
+                            'input'            => array(
+                                'type'                 => 'object',
+                                'additionalProperties' => false,
+                                'required'             => array(
+                                    'site_id_or_domain',
+                                    'since',
+                                ),
+                                'properties'           => array(
+                                    'site_id_or_domain' => array(
+                                        'type' => 'integer',
+                                    ),
+                                    'since'             => array(
+                                        'type' => 'integer',
+                                    ),
+                                ),
+                            ),
+                            'interval_seconds' => array(
+                                'type' => 'integer',
+                                'enum' => array(
+                                    30,
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_run_site_backup( $input ) {
+        return self::execute_write( 'run-site-backup', $input );
+    }
+
+    /** Discovery keeps consent and transport requirements alongside each action. */
+    private static function register_run_backup_task(): void {
+        wp_register_ability(
+            'mainwp/run-backup-task-v1',
+            array(
+                'label'               => __( 'Run Backup Task', 'mainwp' ),
+                'description'         => __( 'Start a scheduled task now for all its sites (Run Now). Returns a handle; cron continues the run. Poll get-backup-task-run-v1 with the task_id. The task\'s retention applies after each site\'s snapshot lands; dry_run lists what would be pruned per site. Possible errors: mainwp_backup_legacy_disabled, mainwp_backup_already_running, mainwp_backup_task_paused, mainwp_backup_no_sites, mainwp_backup_start_failed, mainwp_backup_task_not_found.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::run_backup_task_input_schema(),
+                'output_schema'       => self::run_backup_task_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_run_backup_task' ),
+                'permission_callback' => self::permission_callback( 'mainwp/run-backup-task-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Changes child sites and can prune snapshots. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. not_started means no run slot was free; call again later. already_running means the call attached to the open run.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed input schemas prevent undocumented parameters from reaching an action.
+     *
+     * @return array
+     */
+    private static function run_backup_task_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'task_id',
+            ),
+            'properties'           => array(
+                'task_id' => self::task_id_schema(),
+                'dry_run' => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                ),
+                'confirm' => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys distinguish previews from confirmed results.
+     *
+     * @return array
+     */
+    private static function run_backup_task_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'run_open',
+                    'site_ids',
+                    'stale_site_ids',
+                    'destinations',
+                    'retention_impact',
+                ),
+                'properties'           => array(
+                    'task_id'          => array(
+                        'type' => 'integer',
+                    ),
+                    'run_open'         => array(
+                        'type' => 'boolean',
+                    ),
+                    'site_ids'         => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type' => 'integer',
+                        ),
+                    ),
+                    'stale_site_ids'   => array(
+                        'type'        => 'array',
+                        'items'       => array(
+                            'type' => 'integer',
+                        ),
+                        'description' => 'Sites in the task that no longer resolve and will be skipped.',
+                    ),
+                    'destinations'     => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array(
+                                'id',
+                                'name',
+                                'provider',
+                            ),
+                            'properties'           => array(
+                                'id'       => array(
+                                    'type' => 'integer',
+                                ),
+                                'name'     => array(
+                                    'type'      => 'string',
+                                    'maxLength' => 255,
+                                ),
+                                'provider' => array(
+                                    'type' => 'string',
+                                    'enum' => array(
+                                        's3',
+                                        'gcs',
+                                        'dropbox',
+                                        'sftp',
+                                        'local',
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    'retention_impact' => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array(
+                                'site_id',
+                                'would_prune_snapshot_ids',
+                                'reasons',
+                            ),
+                            'properties'           => array(
+                                'site_id'                  => array(
+                                    'type' => 'integer',
+                                ),
+                                'would_prune_snapshot_ids' => array(
+                                    'type'  => 'array',
+                                    'items' => array(
+                                        'type' => 'integer',
+                                    ),
+                                ),
+                                'reasons'                  => array(
+                                    'type'  => 'array',
+                                    'items' => array(
+                                        'type' => 'string',
+                                        'enum' => array(
+                                            'age',
+                                            'count',
+                                            'storage_cap',
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'status',
+                    'started_at',
+                    'poll',
+                ),
+                'properties'           => array(
+                    'task_id'    => array(
+                        'type' => 'integer',
+                    ),
+                    'status'     => array(
+                        'type'        => 'string',
+                        'enum'        => array(
+                            'started',
+                            'already_running',
+                            'not_started',
+                        ),
+                        'description' => 'already_running: a run of this task was already open and this call attached to it. not_started: no run slot was free; nothing starts on its own, call this ability again later.',
+                    ),
+                    'started_at' => self::ts_schema(),
+                    'poll'       => array(
+                        'type'                 => 'object',
+                        'additionalProperties' => false,
+                        'required'             => array(
+                            'ability',
+                            'input',
+                            'interval_seconds',
+                        ),
+                        'properties'           => array(
+                            'ability'          => array(
+                                'type' => 'string',
+                                'enum' => array(
+                                    'mainwp/get-backup-task-run-v1',
+                                ),
+                            ),
+                            'input'            => array(
+                                'type'                 => 'object',
+                                'additionalProperties' => false,
+                                'required'             => array(
+                                    'task_id',
+                                ),
+                                'properties'           => array(
+                                    'task_id' => array(
+                                        'type' => 'integer',
+                                    ),
+                                ),
+                            ),
+                            'interval_seconds' => array(
+                                'type' => 'integer',
+                                'enum' => array(
+                                    60,
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_run_backup_task( $input ) {
+        return self::execute_write( 'run-backup-task', $input );
+    }
+
+    /** Discovery keeps consent and transport requirements alongside each action. */
+    private static function register_cancel_site_backup(): void {
+        wp_register_ability(
+            'mainwp/cancel-site-backup-v1',
+            array(
+                'label'               => __( 'Cancel Site Backup', 'mainwp' ),
+                'description'         => __( 'Ask the site to stop its open on-demand backup. The result says what happened: cancelled, already_finished (the Dashboard still records the snapshot), already_failed, not_running, no_active_on_site, or busy (try again). Does not cancel scheduled task runs; use reset-backup-task-run-v1 for a stalled one. Possible errors: mainwp_operation_failed, mainwp_site_not_found.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::cancel_site_backup_input_schema(),
+                'output_schema'       => self::cancel_site_backup_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_cancel_site_backup' ),
+                'permission_callback' => self::permission_callback( 'mainwp/cancel-site-backup-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => true,
+                        'instructions' => __( 'Requires confirm:true or dry_run:true. busy while the backup is still starting is normal; retry after the next progress read.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed input schemas prevent undocumented parameters from reaching an action.
+     *
+     * @return array
+     */
+    private static function cancel_site_backup_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'site_id_or_domain',
+            ),
+            'properties'           => array(
+                'site_id_or_domain' => self::site_id_or_domain_schema(),
+                'dry_run'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                ),
+                'confirm'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys distinguish previews from confirmed results.
+     *
+     * @return array
+     */
+    private static function cancel_site_backup_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'site_id',
+                    'run_open',
+                    'child_task_known',
+                ),
+                'properties'           => array(
+                    'site_id'          => array(
+                        'type' => 'integer',
+                    ),
+                    'run_open'         => array(
+                        'type' => 'boolean',
+                    ),
+                    'child_task_known' => array(
+                        'type'        => 'boolean',
+                        'description' => 'False while the backup is starting and the site has not reported its task id yet; confirm then answers busy without contacting the site.',
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'site_id',
+                    'result',
+                    'message',
+                ),
+                'properties'           => array(
+                    'site_id' => array(
+                        'type' => 'integer',
+                    ),
+                    'result'  => array(
+                        'type'        => 'string',
+                        'enum'        => array(
+                            'cancelled',
+                            'already_finished',
+                            'already_failed',
+                            'not_running',
+                            'no_active_on_site',
+                            'busy',
+                        ),
+                        'description' => 'cancelled: the site stopped the backup. already_finished: the site had completed it before the cancel arrived; the Dashboard still collects and records it. already_failed: the site had already failed it; the Dashboard records the failure. not_running: no on-demand backup is open on the Dashboard. no_active_on_site: the Dashboard has an open run but the site reports no such backup; the run closes through the stall reset. busy: the site could not stop right now, or its task id is not known yet; try again.',
+                    ),
+                    'message' => array(
+                        'type'        => 'string',
+                        'maxLength'   => 500,
+                        'description' => 'Fixed text per result value.',
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_cancel_site_backup( $input ) {
+        return self::execute_write( 'cancel-site-backup', $input );
+    }
+
+    /** Discovery keeps consent and transport requirements alongside each action. */
+    private static function register_reset_backup_task_run(): void {
+        wp_register_ability(
+            'mainwp/reset-backup-task-run-v1',
+            array(
+                'label'               => __( 'Reset Backup Task Run', 'mainwp' ),
+                'description'         => __( 'Close a task run that has been open for more than an hour without finishing: asks each site with a known backup task to stop, then marks the run complete on the Dashboard. Refused before the stall threshold. Possible errors: mainwp_backup_not_stalled, mainwp_backup_task_not_found.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::reset_backup_task_run_input_schema(),
+                'output_schema'       => self::reset_backup_task_run_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_reset_backup_task_run' ),
+                'permission_callback' => self::permission_callback( 'mainwp/reset-backup-task-run-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => true,
+                        'instructions' => __( 'Requires confirm:true or dry_run:true. Sites that did not confirm the stop are counted in sites_uncancelled; their backup may still be running on the site.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed input schemas prevent undocumented parameters from reaching an action.
+     *
+     * @return array
+     */
+    private static function reset_backup_task_run_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'task_id',
+            ),
+            'properties'           => array(
+                'task_id' => self::task_id_schema(),
+                'dry_run' => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                ),
+                'confirm' => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys distinguish previews from confirmed results.
+     *
+     * @return array
+     */
+    private static function reset_backup_task_run_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'run_open',
+                    'started_at',
+                    'stalled_for_seconds',
+                    'stall_threshold_seconds',
+                    'site_ids',
+                ),
+                'properties'           => array(
+                    'task_id'                 => array(
+                        'type' => 'integer',
+                    ),
+                    'run_open'                => array(
+                        'type' => 'boolean',
+                    ),
+                    'started_at'              => self::ts_schema(),
+                    'stalled_for_seconds'     => array(
+                        'type'    => 'integer',
+                        'minimum' => 0,
+                    ),
+                    'stall_threshold_seconds' => array(
+                        'type' => 'integer',
+                        'enum' => array(
+                            3600,
+                        ),
+                    ),
+                    'site_ids'                => array(
+                        'type'        => 'array',
+                        'items'       => array(
+                            'type' => 'integer',
+                        ),
+                        'description' => 'Sites whose backup task would be asked to stop.',
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'status',
+                    'sites_cancelled',
+                    'sites_uncancelled',
+                ),
+                'properties'           => array(
+                    'task_id'           => array(
+                        'type' => 'integer',
+                    ),
+                    'status'            => array(
+                        'type'        => 'string',
+                        'enum'        => array(
+                            'reset',
+                        ),
+                        'description' => 'The run\'s status after this action: closed on the Dashboard.',
+                    ),
+                    'sites_cancelled'   => array(
+                        'type'        => 'integer',
+                        'minimum'     => 0,
+                        'description' => 'Sites that confirmed they stopped.',
+                    ),
+                    'sites_uncancelled' => array(
+                        'type'        => 'integer',
+                        'minimum'     => 0,
+                        'description' => 'Sites that did not confirm the stop, including sites whose backup task id was unknown (no request is sent then). The Dashboard closed the run anyway; their backup may still be running on the site.',
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_reset_backup_task_run( $input ) {
+        return self::execute_write( 'reset-backup-task-run', $input );
+    }
+
+    /** Discovery keeps consent and transport requirements alongside each action. */
+    private static function register_cleanup_site_backups(): void {
+        wp_register_ability(
+            'mainwp/cleanup-site-backups-v1',
+            array(
+                'label'               => __( 'Clean Up Site Backups', 'mainwp' ),
+                'description'         => __( 'Free Dashboard storage for one site (the Snapshots page\'s Clean Up): removes orphaned snapshot folders, snapshots of deleted tasks with their cloud copies, broken incremental chains, and on-demand backups beyond keep. Does not touch snapshots of existing scheduled tasks. dry_run lists exactly what would go. Possible errors: mainwp_site_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::cleanup_site_backups_input_schema(),
+                'output_schema'       => self::cleanup_site_backups_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_cleanup_site_backups' ),
+                'permission_callback' => self::permission_callback( 'mainwp/cleanup-site-backups-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Destructive. Requires confirm:true or dry_run:true. Call dry_run first and show the snapshot ids to the user.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed input schemas prevent undocumented parameters from reaching an action.
+     *
+     * @return array
+     */
+    private static function cleanup_site_backups_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'site_id_or_domain',
+            ),
+            'properties'           => array(
+                'site_id_or_domain' => self::site_id_or_domain_schema(),
+                'keep'              => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'maximum'     => 100,
+                    'description' => 'On-demand backups to keep. Omit to use the on-demand retention count, as the Snapshots page does when the field is empty.',
+                ),
+                'dry_run'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                ),
+                'confirm'           => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys distinguish previews from confirmed results.
+     *
+     * @return array
+     */
+    private static function cleanup_site_backups_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'site_id',
+                    'keep',
+                    'orphan_dirs',
+                    'orphaned_task_snapshot_ids',
+                    'on_demand_units',
+                    'bytes_to_prune',
+                ),
+                'properties'           => array(
+                    'site_id'                    => array(
+                        'type' => 'integer',
+                    ),
+                    'keep'                       => array(
+                        'type' => 'integer',
+                    ),
+                    'orphan_dirs'                => array(
+                        'type'        => 'integer',
+                        'minimum'     => 0,
+                        'description' => 'Snapshot folders with no record and no open run, idle at least 6 hours.',
+                    ),
+                    'orphaned_task_snapshot_ids' => array(
+                        'type'        => 'array',
+                        'items'       => array(
+                            'type' => 'integer',
+                        ),
+                        'description' => 'Snapshots whose task was deleted. Their cloud copies are deleted too.',
+                    ),
+                    'on_demand_units'            => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array(
+                                'snapshot_ids',
+                                'reason',
+                            ),
+                            'properties'           => array(
+                                'snapshot_ids' => array(
+                                    'type'  => 'array',
+                                    'items' => array(
+                                        'type' => 'integer',
+                                    ),
+                                ),
+                                'reason'       => array(
+                                    'type' => 'string',
+                                    'enum' => array(
+                                        'broken_chain',
+                                        'beyond_keep',
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    'bytes_to_prune'             => array(
+                        'type'    => 'integer',
+                        'minimum' => 0,
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'site_id',
+                    'orphan_dirs_removed',
+                    'units_pruned',
+                    'snapshots_pruned',
+                    'orphaned_snapshots_pruned',
+                    'bytes_pruned',
+                    'errors',
+                ),
+                'properties'           => array(
+                    'site_id'                   => array(
+                        'type' => 'integer',
+                    ),
+                    'orphan_dirs_removed'       => array(
+                        'type' => 'integer',
+                    ),
+                    'units_pruned'              => array(
+                        'type' => 'integer',
+                    ),
+                    'snapshots_pruned'          => array(
+                        'type' => 'integer',
+                    ),
+                    'orphaned_snapshots_pruned' => array(
+                        'type' => 'integer',
+                    ),
+                    'bytes_pruned'              => array(
+                        'type' => 'integer',
+                    ),
+                    'errors'                    => array(
+                        'type'  => 'array',
+                        'items' => self::safe_error_schema(),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_cleanup_site_backups( $input ) {
+        return self::execute_write( 'cleanup-site-backups', $input );
+    }
+
+    /** Discovery keeps consent and transport requirements alongside each action. */
+    private static function register_create_backup_task(): void {
+        wp_register_ability(
+            'mainwp/create-backup-task-v1',
+            array(
+                'label'               => __( 'Create Backup Task', 'mainwp' ),
+                'description'         => __( 'Create a scheduled backup task: name, type, schedule, sites or groups, destinations, retention, archive format and excludes. dry_run returns the normalized task and its first run time. Possible errors: mainwp_invalid_input, mainwp_site_not_found, mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::create_backup_task_input_schema(),
+                'output_schema'       => self::create_backup_task_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_create_backup_task' ),
+                'permission_callback' => self::permission_callback( 'mainwp/create-backup-task-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => false,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Requires confirm:true or dry_run:true. Call dry_run first and show the normalized task to the user. interval schedules need interval_hours; daily, weekly and monthly without time_of_day run whenever the interval has elapsed.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed input schemas prevent undocumented parameters from reaching an action.
+     *
+     * @return array
+     */
+    private static function create_backup_task_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'name',
+                'type',
+                'schedule',
+            ),
+            'properties'           => array(
+                'name'                => array(
+                    'type'      => 'string',
+                    'minLength' => 1,
+                    'maxLength' => 255,
+                ),
+                'type'                => array(
+                    'type' => 'string',
+                    'enum' => array(
+                        'full',
+                        'db',
+                        'files',
+                        'incremental',
+                    ),
+                ),
+                'schedule'            => array(
+                    'type' => 'string',
+                    'enum' => array(
+                        'daily',
+                        'weekly',
+                        'monthly',
+                        'interval',
+                    ),
+                ),
+                'interval_hours'      => array(
+                    'type'        => 'integer',
+                    'minimum'     => 1,
+                    'maximum'     => 8760,
+                    'description' => 'Interval schedules only.',
+                ),
+                'time_of_day'         => array(
+                    'type'        => 'string',
+                    'pattern'     => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                    'description' => 'Daily, weekly and monthly schedules, Dashboard timezone.',
+                ),
+                'day_of_week'         => array(
+                    'type'    => 'integer',
+                    'minimum' => 0,
+                    'maximum' => 6,
+                ),
+                'day_of_month'        => array(
+                    'type'    => 'integer',
+                    'minimum' => 1,
+                    'maximum' => 28,
+                ),
+                'site_ids_or_domains' => array(
+                    'type'        => 'array',
+                    'maxItems'    => 1000,
+                    'uniqueItems' => true,
+                    'default'     => array(),
+                    'items'       => self::site_id_or_domain_schema(),
+                    'description' => 'Sites to back up. Stored as site IDs.',
+                ),
+                'group_ids'           => array(
+                    'type'        => 'array',
+                    'maxItems'    => 200,
+                    'uniqueItems' => true,
+                    'default'     => array(),
+                    'items'       => array_merge(
+                        self::task_id_schema(),
+                        array(
+                            'description' => 'Group ID.',
+                        )
+                    ),
+                ),
+                'destination_ids'     => array(
+                    'type'        => 'array',
+                    'maxItems'    => 20,
+                    'uniqueItems' => true,
+                    'default'     => array(),
+                    'items'       => self::destination_id_schema(),
+                ),
+                'retention'           => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'properties'           => array(
+                        'count'               => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                            'maximum' => 1000,
+                        ),
+                        'days'                => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                            'maximum' => 3650,
+                        ),
+                        'storage_mb'          => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                            'maximum' => 104857600,
+                        ),
+                        'delete_cloud_copies' => array(
+                            'type' => 'boolean',
+                        ),
+                        'max_chain_length'    => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                            'maximum' => 1000,
+                        ),
+                    ),
+                ),
+                'archive_format'      => array(
+                    'type'    => 'string',
+                    'enum'    => array(
+                        'site',
+                        'global',
+                        'zip',
+                        'tar',
+                        'tar.gz',
+                        'tar.bz2',
+                    ),
+                    'default' => 'site',
+                ),
+                'exclude'             => array(
+                    'type'     => 'array',
+                    'maxItems' => 200,
+                    'default'  => array(),
+                    'items'    => array(
+                        'type'      => 'string',
+                        'minLength' => 1,
+                        'maxLength' => 255,
+                    ),
+                ),
+                'exclude_flags'       => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'properties'           => array(
+                        'backup_archives' => array(
+                            'type' => 'boolean',
+                        ),
+                        'cache'           => array(
+                            'type' => 'boolean',
+                        ),
+                        'non_wp_folders'  => array(
+                            'type' => 'boolean',
+                        ),
+                        'zip_archives'    => array(
+                            'type' => 'boolean',
+                        ),
+                    ),
+                ),
+                'archive_tuning'      => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'properties'           => array(
+                        'max_file_descriptors_override' => array(
+                            'type' => 'boolean',
+                        ),
+                        'max_file_descriptors_auto'     => array(
+                            'type' => 'boolean',
+                        ),
+                        'max_file_descriptors'          => array(
+                            'type'    => 'integer',
+                            'minimum' => 1,
+                            'maximum' => 100000,
+                        ),
+                        'load_files_before_zip'         => array(
+                            'type' => 'boolean',
+                        ),
+                        'zip_force_override'            => array(
+                            'type' => 'boolean',
+                        ),
+                    ),
+                ),
+                'dry_run'             => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                ),
+                'confirm'             => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys distinguish previews from confirmed results.
+     *
+     * @return array
+     */
+    private static function create_backup_task_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'normalized',
+                    'resolved_site_ids',
+                    'next_run_at',
+                ),
+                'properties'           => array(
+                    'normalized'        => self::task_fields_schema(),
+                    'resolved_site_ids' => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type' => 'integer',
+                        ),
+                    ),
+                    'next_run_at'       => self::ts_schema(),
+                ),
+            ),
+            self::get_backup_task_output_schema()
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_create_backup_task( $input ) {
+        return self::execute_write( 'create-backup-task', $input );
+    }
+
+    /** Discovery keeps consent and transport requirements alongside each action. */
+    private static function register_update_backup_task(): void {
+        wp_register_ability(
+            'mainwp/update-backup-task-v1',
+            array(
+                'label'               => __( 'Update Backup Task', 'mainwp' ),
+                'description'         => __( 'Change any subset of a task\'s fields; omitted fields keep their values. Saving makes you the task owner, as the Backups page does. Lowering retention prunes on the next sweep; dry_run lists the affected snapshots and the owner change. Possible errors: mainwp_invalid_input, mainwp_backup_task_not_found, mainwp_site_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::update_backup_task_input_schema(),
+                'output_schema'       => self::update_backup_task_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_update_backup_task' ),
+                'permission_callback' => self::permission_callback( 'mainwp/update-backup-task-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Changes the schedule and retention of backups. Requires confirm:true or dry_run:true. Call dry_run first and show the diff and retention impact to the user. time_of_day null clears the time.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed input schemas prevent undocumented parameters from reaching an action.
+     *
+     * @return array
+     */
+    private static function update_backup_task_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'task_id',
+            ),
+            'properties'           => array(
+                'task_id'             => self::task_id_schema(),
+                'name'                => array(
+                    'type'      => 'string',
+                    'minLength' => 1,
+                    'maxLength' => 255,
+                ),
+                'type'                => array(
+                    'type' => 'string',
+                    'enum' => array(
+                        'full',
+                        'db',
+                        'files',
+                        'incremental',
+                    ),
+                ),
+                'schedule'            => array(
+                    'type' => 'string',
+                    'enum' => array(
+                        'daily',
+                        'weekly',
+                        'monthly',
+                        'interval',
+                    ),
+                ),
+                'interval_hours'      => array(
+                    'type'    => 'integer',
+                    'minimum' => 1,
+                    'maximum' => 8760,
+                ),
+                'time_of_day'         => array(
+                    'type'        => array(
+                        'string',
+                        'null',
+                    ),
+                    'pattern'     => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                    'description' => 'null clears the time: a daily, weekly or monthly task then runs in elapsed mode (stored \'\'), as leaving the field empty on the task form does. Omit to keep the stored time.',
+                ),
+                'day_of_week'         => array(
+                    'type'    => 'integer',
+                    'minimum' => 0,
+                    'maximum' => 6,
+                ),
+                'day_of_month'        => array(
+                    'type'    => 'integer',
+                    'minimum' => 1,
+                    'maximum' => 28,
+                ),
+                'site_ids_or_domains' => array(
+                    'type'        => 'array',
+                    'maxItems'    => 1000,
+                    'uniqueItems' => true,
+                    'items'       => self::site_id_or_domain_schema(),
+                    'description' => 'Replaces the task\'s sites. Stored as site IDs.',
+                ),
+                'group_ids'           => array(
+                    'type'        => 'array',
+                    'maxItems'    => 200,
+                    'uniqueItems' => true,
+                    'items'       => array_merge(
+                        self::task_id_schema(),
+                        array(
+                            'description' => 'Group ID.',
+                        )
+                    ),
+                ),
+                'destination_ids'     => array(
+                    'type'        => 'array',
+                    'maxItems'    => 20,
+                    'uniqueItems' => true,
+                    'items'       => self::destination_id_schema(),
+                ),
+                'retention'           => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'properties'           => array(
+                        'count'               => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                            'maximum' => 1000,
+                        ),
+                        'days'                => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                            'maximum' => 3650,
+                        ),
+                        'storage_mb'          => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                            'maximum' => 104857600,
+                        ),
+                        'delete_cloud_copies' => array(
+                            'type' => 'boolean',
+                        ),
+                        'max_chain_length'    => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                            'maximum' => 1000,
+                        ),
+                    ),
+                ),
+                'archive_format'      => array(
+                    'type' => 'string',
+                    'enum' => array(
+                        'site',
+                        'global',
+                        'zip',
+                        'tar',
+                        'tar.gz',
+                        'tar.bz2',
+                    ),
+                ),
+                'exclude'             => array(
+                    'type'     => 'array',
+                    'maxItems' => 200,
+                    'items'    => array(
+                        'type'      => 'string',
+                        'minLength' => 1,
+                        'maxLength' => 255,
+                    ),
+                ),
+                'exclude_flags'       => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'properties'           => array(
+                        'backup_archives' => array(
+                            'type' => 'boolean',
+                        ),
+                        'cache'           => array(
+                            'type' => 'boolean',
+                        ),
+                        'non_wp_folders'  => array(
+                            'type' => 'boolean',
+                        ),
+                        'zip_archives'    => array(
+                            'type' => 'boolean',
+                        ),
+                    ),
+                ),
+                'archive_tuning'      => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'properties'           => array(
+                        'max_file_descriptors_override' => array(
+                            'type' => 'boolean',
+                        ),
+                        'max_file_descriptors_auto'     => array(
+                            'type' => 'boolean',
+                        ),
+                        'max_file_descriptors'          => array(
+                            'type'    => 'integer',
+                            'minimum' => 1,
+                            'maximum' => 100000,
+                        ),
+                        'load_files_before_zip'         => array(
+                            'type' => 'boolean',
+                        ),
+                        'zip_force_override'            => array(
+                            'type' => 'boolean',
+                        ),
+                    ),
+                ),
+                'dry_run'             => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                ),
+                'confirm'             => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys distinguish previews from confirmed results.
+     *
+     * @return array
+     */
+    private static function update_backup_task_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'changes',
+                    'retention_impact',
+                    'next_run_at',
+                    'owner_changes_to_user_id',
+                ),
+                'properties'           => array(
+                    'task_id'                  => array(
+                        'type' => 'integer',
+                    ),
+                    'changes'                  => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array(
+                                'field',
+                                'from',
+                                'to',
+                            ),
+                            'properties'           => array(
+                                'field' => array(
+                                    'type'      => 'string',
+                                    'maxLength' => 64,
+                                ),
+                                'from'  => array(
+                                    'type' => array(
+                                        'string',
+                                        'integer',
+                                        'boolean',
+                                        'array',
+                                        'null',
+                                    ),
+                                ),
+                                'to'    => array(
+                                    'type' => array(
+                                        'string',
+                                        'integer',
+                                        'boolean',
+                                        'array',
+                                        'null',
+                                    ),
+                                ),
+                            ),
+                        ),
+                    ),
+                    'retention_impact'         => array(
+                        'type'        => 'array',
+                        'items'       => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array(
+                                'site_id',
+                                'would_prune_snapshot_ids',
+                                'reasons',
+                            ),
+                            'properties'           => array(
+                                'site_id'                  => array(
+                                    'type' => 'integer',
+                                ),
+                                'would_prune_snapshot_ids' => array(
+                                    'type'  => 'array',
+                                    'items' => array(
+                                        'type' => 'integer',
+                                    ),
+                                ),
+                                'reasons'                  => array(
+                                    'type'  => 'array',
+                                    'items' => array(
+                                        'type' => 'string',
+                                        'enum' => array(
+                                            'age',
+                                            'count',
+                                            'storage_cap',
+                                        ),
+                                    ),
+                                ),
+                            ),
+                        ),
+                        'description' => 'Pruned on the next retention sweep after the change.',
+                    ),
+                    'next_run_at'              => self::ts_schema(),
+                    'owner_changes_to_user_id' => array(
+                        'type'        => array(
+                            'integer',
+                            'null',
+                        ),
+                        'description' => 'Saving makes you the task owner, as the Backups page does. Null when you already own it.',
+                    ),
+                ),
+            ),
+            self::get_backup_task_output_schema()
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_update_backup_task( $input ) {
+        return self::execute_write( 'update-backup-task', $input );
+    }
+
+    /** Discovery keeps consent and transport requirements alongside each action. */
+    private static function register_delete_backup_task(): void {
+        wp_register_ability(
+            'mainwp/delete-backup-task-v1',
+            array(
+                'label'               => __( 'Delete Backup Task', 'mainwp' ),
+                'description'         => __( 'Delete a task and, by default, its snapshots and their cloud copies (cloud copies only when the task deletes them). delete_snapshots:false keeps every snapshot. Refused while a run is open. dry_run lists the snapshots and cloud copies affected. Possible errors: mainwp_backup_already_running, mainwp_backup_task_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::delete_backup_task_input_schema(),
+                'output_schema'       => self::delete_backup_task_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_delete_backup_task' ),
+                'permission_callback' => self::permission_callback( 'mainwp/delete-backup-task-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Destructive and not reversible. Requires confirm:true or dry_run:true. Call dry_run first and show the snapshot list to the user. Only call when the user explicitly requests deletion.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed input schemas prevent undocumented parameters from reaching an action.
+     *
+     * @return array
+     */
+    private static function delete_backup_task_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'task_id',
+            ),
+            'properties'           => array(
+                'task_id'          => self::task_id_schema(),
+                'delete_snapshots' => array(
+                    'type'        => 'boolean',
+                    'default'     => true,
+                    'description' => 'Also delete the task\'s snapshots, and their cloud copies when the task\'s delete_cloud_copies is on. false keeps every snapshot.',
+                ),
+                'dry_run'          => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                ),
+                'confirm'          => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys distinguish previews from confirmed results.
+     *
+     * @return array
+     */
+    private static function delete_backup_task_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'task_name',
+                    'delete_snapshots',
+                    'delete_cloud_copies',
+                    'snapshots',
+                    'snapshots_truncated',
+                    'cloud_copies',
+                ),
+                'properties'           => array(
+                    'task_id'             => array(
+                        'type' => 'integer',
+                    ),
+                    'task_name'           => array(
+                        'type' => 'string',
+                    ),
+                    'delete_snapshots'    => array(
+                        'type' => 'boolean',
+                    ),
+                    'delete_cloud_copies' => array(
+                        'type' => 'boolean',
+                    ),
+                    'snapshots'           => array(
+                        'type'     => 'array',
+                        'maxItems' => 500,
+                        'items'    => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array(
+                                'id',
+                                'site_id',
+                                'type',
+                                'created_at',
+                            ),
+                            'properties'           => array(
+                                'id'         => array(
+                                    'type' => 'integer',
+                                ),
+                                'site_id'    => array(
+                                    'type' => 'integer',
+                                ),
+                                'type'       => array(
+                                    'type' => 'string',
+                                    'enum' => array(
+                                        'full',
+                                        'db',
+                                        'files',
+                                        'incremental',
+                                    ),
+                                ),
+                                'created_at' => self::ts_schema(),
+                            ),
+                        ),
+                    ),
+                    'snapshots_truncated' => array(
+                        'type' => 'boolean',
+                    ),
+                    'cloud_copies'        => array(
+                        'type'     => 'array',
+                        'maxItems' => 500,
+                        'items'    => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array(
+                                'snapshot_id',
+                                'destination_id',
+                                'destination_name',
+                            ),
+                            'properties'           => array(
+                                'snapshot_id'      => array(
+                                    'type' => 'integer',
+                                ),
+                                'destination_id'   => array(
+                                    'type' => 'integer',
+                                ),
+                                'destination_name' => array(
+                                    'type'      => array(
+                                        'string',
+                                        'null',
+                                    ),
+                                    'maxLength' => 255,
+                                ),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'deleted',
+                    'snapshots_deleted',
+                ),
+                'properties'           => array(
+                    'task_id'           => array(
+                        'type' => 'integer',
+                    ),
+                    'deleted'           => array(
+                        'type' => 'boolean',
+                        'enum' => array(
+                            true,
+                        ),
+                    ),
+                    'snapshots_deleted' => array(
+                        'type' => 'boolean',
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_delete_backup_task( $input ) {
+        return self::execute_write( 'delete-backup-task', $input );
+    }
+
+    /** Discovery keeps consent and transport requirements alongside each action. */
+    private static function register_pause_backup_task(): void {
+        wp_register_ability(
+            'mainwp/pause-backup-task-v1',
+            array(
+                'label'               => __( 'Pause Backup Task', 'mainwp' ),
+                'description'         => __( 'Take a task off its schedule. A run that is already open stops being advanced until the task is resumed; nothing is cancelled on the sites. Possible errors: mainwp_backup_task_not_found.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::pause_backup_task_input_schema(),
+                'output_schema'       => self::pause_backup_task_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_pause_backup_task' ),
+                'permission_callback' => self::permission_callback( 'mainwp/pause-backup-task-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => false,
+                        'idempotent'   => true,
+                        'instructions' => __( 'Requires confirm:true or dry_run:true.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed input schemas prevent undocumented parameters from reaching an action.
+     *
+     * @return array
+     */
+    private static function pause_backup_task_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'task_id',
+            ),
+            'properties'           => array(
+                'task_id' => self::task_id_schema(),
+                'dry_run' => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                ),
+                'confirm' => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys distinguish previews from confirmed results.
+     *
+     * @return array
+     */
+    private static function pause_backup_task_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'paused_now',
+                    'next_run_at',
+                ),
+                'properties'           => array(
+                    'task_id'     => array(
+                        'type' => 'integer',
+                    ),
+                    'paused_now'  => array(
+                        'type' => 'boolean',
+                    ),
+                    'next_run_at' => array_merge(
+                        self::ts_schema(),
+                        array(
+                            'description' => 'Next run time after the action; null when the task would be paused.',
+                        )
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'paused',
+                    'next_run_at',
+                ),
+                'properties'           => array(
+                    'task_id'     => array(
+                        'type' => 'integer',
+                    ),
+                    'paused'      => array(
+                        'type' => 'boolean',
+                    ),
+                    'next_run_at' => self::ts_schema(),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_pause_backup_task( $input ) {
+        return self::execute_write( 'pause-backup-task', $input );
+    }
+
+    /** Discovery keeps consent and transport requirements alongside each action. */
+    private static function register_resume_backup_task(): void {
+        wp_register_ability(
+            'mainwp/resume-backup-task-v1',
+            array(
+                'label'               => __( 'Resume Backup Task', 'mainwp' ),
+                'description'         => __( 'Put a paused task back on its schedule, let an open run continue, and return the next run time. Possible errors: mainwp_backup_task_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::resume_backup_task_input_schema(),
+                'output_schema'       => self::resume_backup_task_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_resume_backup_task' ),
+                'permission_callback' => self::permission_callback( 'mainwp/resume-backup-task-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => false,
+                        'idempotent'   => true,
+                        'instructions' => __( 'Requires confirm:true or dry_run:true.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Closed input schemas prevent undocumented parameters from reaching an action.
+     *
+     * @return array
+     */
+    private static function resume_backup_task_input_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'task_id',
+            ),
+            'properties'           => array(
+                'task_id' => self::task_id_schema(),
+                'dry_run' => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                ),
+                'confirm' => array(
+                    'type'        => 'boolean',
+                    'default'     => false,
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys distinguish previews from confirmed results.
+     *
+     * @return array
+     */
+    private static function resume_backup_task_output_schema(): array {
+        return self::write_output_schema(
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'paused_now',
+                    'next_run_at',
+                ),
+                'properties'           => array(
+                    'task_id'     => array(
+                        'type' => 'integer',
+                    ),
+                    'paused_now'  => array(
+                        'type' => 'boolean',
+                    ),
+                    'next_run_at' => array_merge(
+                        self::ts_schema(),
+                        array(
+                            'description' => 'Next run time after the action; null when the task would be paused.',
+                        )
+                    ),
+                ),
+            ),
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array(
+                    'task_id',
+                    'paused',
+                    'next_run_at',
+                ),
+                'properties'           => array(
+                    'task_id'     => array(
+                        'type' => 'integer',
+                    ),
+                    'paused'      => array(
+                        'type' => 'boolean',
+                    ),
+                    'next_run_at' => self::ts_schema(),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_resume_backup_task( $input ) {
+        return self::execute_write( 'resume-backup-task', $input );
+    }
+
+    /**
+     * Normalized outputs include null markers that submitted fields cannot use.
+     *
+     * @return array
+     */
+    private static function task_fields_schema(): array {
+        return array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array(
+                'name',
+                'type',
+                'schedule',
+                'timing',
+                'interval_hours',
+                'time_of_day',
+                'day_of_week',
+                'day_of_month',
+                'site_ids',
+                'group_ids',
+                'destination_ids',
+                'retention',
+                'archive_format',
+                'exclude',
+                'exclude_flags',
+                'archive_tuning',
+            ),
+            'properties'           => array(
+                'name'            => array(
+                    'type'      => 'string',
+                    'maxLength' => 255,
+                ),
+                'type'            => array(
+                    'type' => 'string',
+                    'enum' => array(
+                        'full',
+                        'db',
+                        'files',
+                        'incremental',
+                    ),
+                ),
+                'schedule'        => array(
+                    'type' => 'string',
+                    'enum' => array(
+                        'daily',
+                        'weekly',
+                        'monthly',
+                        'interval',
+                    ),
+                ),
+                'timing'          => array(
+                    'type'        => 'string',
+                    'enum'        => array(
+                        'time_of_day',
+                        'interval',
+                        'elapsed',
+                    ),
+                    'description' => 'elapsed: a daily, weekly or monthly task with no time_of_day runs whenever its interval has elapsed and has no fixed next run time.',
+                ),
+                'interval_hours'  => array(
+                    'type'        => array(
+                        'integer',
+                        'null',
+                    ),
+                    'minimum'     => 1,
+                    'maximum'     => 8760,
+                    'description' => 'Null unless schedule is interval.',
+                ),
+                'time_of_day'     => array(
+                    'type'        => array(
+                        'string',
+                        'null',
+                    ),
+                    'pattern'     => '^([01][0-9]|2[0-3]):[0-5][0-9]$',
+                    'description' => 'Null for interval schedules and for elapsed timing.',
+                ),
+                'day_of_week'     => array(
+                    'type'        => array(
+                        'integer',
+                        'null',
+                    ),
+                    'minimum'     => 0,
+                    'maximum'     => 6,
+                    'description' => 'Null unless schedule is weekly.',
+                ),
+                'day_of_month'    => array(
+                    'type'        => array(
+                        'integer',
+                        'null',
+                    ),
+                    'minimum'     => 1,
+                    'maximum'     => 28,
+                    'description' => 'Null unless schedule is monthly.',
+                ),
+                'site_ids'        => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                ),
+                'group_ids'       => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                ),
+                'destination_ids' => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'    => 'integer',
+                        'minimum' => 1,
+                    ),
+                ),
+                'retention'       => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'required'             => array(
+                        'count',
+                        'days',
+                        'storage_mb',
+                        'delete_cloud_copies',
+                        'max_chain_length',
+                    ),
+                    'properties'           => array(
+                        'count'               => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                        ),
+                        'days'                => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                        ),
+                        'storage_mb'          => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                        ),
+                        'delete_cloud_copies' => array(
+                            'type' => 'boolean',
+                        ),
+                        'max_chain_length'    => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                        ),
+                    ),
+                ),
+                'archive_format'  => array(
+                    'type' => 'string',
+                    'enum' => array(
+                        'site',
+                        'global',
+                        'zip',
+                        'tar',
+                        'tar.gz',
+                        'tar.bz2',
+                    ),
+                ),
+                'exclude'         => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'      => 'string',
+                        'maxLength' => 255,
+                    ),
+                ),
+                'exclude_flags'   => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'required'             => array(
+                        'backup_archives',
+                        'cache',
+                        'non_wp_folders',
+                        'zip_archives',
+                    ),
+                    'properties'           => array(
+                        'backup_archives' => array(
+                            'type' => 'boolean',
+                        ),
+                        'cache'           => array(
+                            'type' => 'boolean',
+                        ),
+                        'non_wp_folders'  => array(
+                            'type' => 'boolean',
+                        ),
+                        'zip_archives'    => array(
+                            'type' => 'boolean',
+                        ),
+                    ),
+                ),
+                'archive_tuning'  => array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'required'             => array(
+                        'max_file_descriptors_override',
+                        'max_file_descriptors_auto',
+                        'max_file_descriptors',
+                        'load_files_before_zip',
+                        'zip_force_override',
+                    ),
+                    'properties'           => array(
+                        'max_file_descriptors_override' => array(
+                            'type' => 'boolean',
+                        ),
+                        'max_file_descriptors_auto'     => array(
+                            'type' => 'boolean',
+                        ),
+                        'max_file_descriptors'          => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                        ),
+                        'load_files_before_zip'         => array(
+                            'type' => 'boolean',
+                        ),
+                        'zip_force_override'            => array(
+                            'type' => 'boolean',
+                        ),
+                    ),
+                ),
+            ),
+        );
+    }
+
+    /**
+     * Required keys separate the branches even on WordPress versions that ignore const.
+     *
+     * @param array $preview Action-specific preview.
+     * @param array $confirmed Confirmed result contract.
+     * @return array
+     */
+    private static function write_output_schema( array $preview, array $confirmed ): array {
+        $confirmed['required'][]            = 'dry_run';
+        $confirmed['properties']['dry_run'] = array(
+            'type'  => 'boolean',
+            'const' => false,
+        );
+        return array(
+            'oneOf' => array(
+                array(
+                    'type'                 => 'object',
+                    'additionalProperties' => false,
+                    'required'             => array( 'dry_run', 'would_affect', 'can_proceed', 'warnings', 'refusals' ),
+                    'properties'           => array(
+                        'dry_run'      => array(
+                            'type'  => 'boolean',
+                            'const' => true,
+                        ),
+                        'would_affect' => $preview,
+                        'can_proceed'  => array(
+                            'type'        => 'boolean',
+                            'description' => 'False when confirm would be refused for a reason listed in refusals.',
+                        ),
+                        'warnings'     => array(
+                            'type'     => 'array',
+                            'maxItems' => 50,
+                            'items'    => array(
+                                'type'      => 'string',
+                                'maxLength' => 500,
+                            ),
+                        ),
+                        'refusals'     => array(
+                            'type'     => 'array',
+                            'maxItems' => 20,
+                            'items'    => self::safe_error_schema(),
+                        ),
+                    ),
+                ),
+                $confirmed,
+            ),
+        );
+    }
+
+    /**
+     * The service owns actions and previews; projection excludes internal handles and paths.
+     *
+     * @param string $name Action slug.
+     * @param mixed  $input Caller input.
+     * @return array|\WP_Error
+     */
+    private static function execute_write( string $name, $input ) {
+        try {
+            $allowed = self::authorize( 'mainwp/' . $name . '-v1', $input );
+            if ( is_wp_error( $allowed ) ) {
+                return $allowed;
+            }
+            $schema_method = str_replace( '-', '_', $name ) . '_input_schema';
+            $schema        = self::$schema_method();
+            if ( is_wp_error( rest_validate_value_from_schema( $input, $schema ) ) ) {
+                return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
+            }
+            $input   = rest_sanitize_value_from_schema( $input, $schema );
+            $input   = MainWP_Abilities_Util::normalize_input( $input );
+            $confirm = MainWP_Abilities_Util::get_boolean_input( $input, 'confirm' );
+            $dry_run = MainWP_Abilities_Util::get_boolean_input( $input, 'dry_run' );
+            if ( $confirm && $dry_run ) {
+                return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
+            }
+            if ( ! $confirm && ! $dry_run ) {
+                return self::safe_wp_error( new \WP_Error( 'mainwp_confirmation_required', '', array( 'status' => 400 ) ) );
+            }
+            $stop = in_array( $name, array( 'cancel-site-backup', 'reset-backup-task-run', 'pause-backup-task' ), true );
+            if ( ! $stop && ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+                return self::safe_wp_error( new \WP_Error( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, '', array( 'status' => 409 ) ) );
+            }
+            $site_id = isset( $input['site_id_or_domain'] ) ? (int) MainWP_Abilities_Util::resolve_site( $input['site_id_or_domain'] )->id : 0;
+            $task_id = isset( $input['task_id'] ) ? self::positive_int( $input['task_id'] ) : 0;
+            $keep    = $input['keep'] ?? null;
+            $fields  = array();
+            if ( in_array( $name, array( 'create-backup-task', 'update-backup-task' ), true ) ) {
+                $fields = self::task_write_fields( $input );
+                if ( is_wp_error( $fields ) ) {
+                    return self::safe_wp_error( $fields );
+                }
+            }
+            if ( $dry_run ) {
+                switch ( $name ) {
+                    case 'create-backup-task':
+                        $result = MainWP_Backup_Operations::preview_task_create( $fields );
+                        break;
+                    case 'update-backup-task':
+                        $result = MainWP_Backup_Operations::preview_task_update( $task_id, $fields );
+                        break;
+                    case 'delete-backup-task':
+                        $result = MainWP_Backup_Operations::preview_task_delete( $task_id, $input['delete_snapshots'] ?? true );
+                        break;
+                    case 'pause-backup-task':
+                    case 'resume-backup-task':
+                        $result = MainWP_Backup_Operations::preview_task_pause( $task_id, 'pause-backup-task' === $name );
+                        break;
+                    case 'run-site-backup':
+                        $result = MainWP_Backup_Operations::preview_site_backup( $site_id );
+                        break;
+                    case 'run-backup-task':
+                        $result = MainWP_Backup_Operations::preview_task_run( $task_id );
+                        break;
+                    case 'cancel-site-backup':
+                        $result = MainWP_Backup_Operations::preview_site_cancel( $site_id );
+                        break;
+                    case 'reset-backup-task-run':
+                        $result = MainWP_Backup_Operations::preview_task_reset( $task_id );
+                        break;
+                    case 'cleanup-site-backups':
+                        $result = MainWP_Backup_Operations::preview_site_cleanup( $site_id, $keep );
+                        break;
+                }
+            } else {
+                switch ( $name ) {
+                    case 'create-backup-task':
+                    case 'update-backup-task':
+                        $result = 'create-backup-task' === $name ? MainWP_Backup_Operations::create_task( $fields, 'ability' ) : MainWP_Backup_Operations::update_task( $task_id, $fields, 'ability' );
+                        if ( ! is_wp_error( $result ) ) {
+                            $result = MainWP_Backup_Read_Model::get_task( MainWP_DB_Backup::instance()->get_backup_task_by_id( $result['task_id'] ) );
+                        }
+                        break;
+                    case 'delete-backup-task':
+                        $delete_snapshots = $input['delete_snapshots'] ?? true;
+                        $result           = MainWP_Backup_Operations::delete_task( $task_id, $delete_snapshots, 'ability' );
+                        if ( ! is_wp_error( $result ) ) {
+                            $result = array(
+                                'task_id'           => $task_id,
+                                'deleted'           => true,
+                                'snapshots_deleted' => $delete_snapshots,
+                            );
+                        }
+                        break;
+                    case 'pause-backup-task':
+                    case 'resume-backup-task':
+                        $paused = 'pause-backup-task' === $name;
+                        $result = $paused ? MainWP_Backup_Operations::pause_task( $task_id, 'ability' ) : MainWP_Backup_Operations::resume_task( $task_id, 'ability' );
+                        if ( ! is_wp_error( $result ) ) {
+                            $task   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+                            $result = array(
+                                'task_id'     => $task_id,
+                                'paused'      => ! empty( $task->paused ),
+                                'next_run_at' => $paused ? null : (int) $task->next_run,
+                            );
+                        }
+                        break;
+                    case 'run-site-backup':
+                        $result = MainWP_Backup_Operations::start_site_backup( $site_id, 'ability' );
+                        if ( ! is_wp_error( $result ) ) {
+                            $since  = (int) $result['started'];
+                            $result = array(
+                                'site_id'    => $site_id,
+                                'status'     => $result['status'],
+                                'started_at' => 'not_started' === $result['status'] ? null : $since,
+                                'since'      => $since,
+                                'poll'       => array(
+                                    'ability'          => 'mainwp/get-site-backup-progress-v1',
+                                    'input'            => array(
+                                        'site_id_or_domain' => $site_id,
+                                        'since' => $since,
+                                    ),
+                                    'interval_seconds' => 30,
+                                ),
+                            );
+                        }
+                        break;
+                    case 'run-backup-task':
+                        $result = MainWP_Backup_Operations::run_task( $task_id, 'ability' );
+                        if ( ! is_wp_error( $result ) ) {
+                            $result = array(
+                                'task_id'    => $task_id,
+                                'status'     => $result['status'],
+                                'started_at' => (int) $result['started'],
+                                'poll'       => array(
+                                    'ability'          => 'mainwp/get-backup-task-run-v1',
+                                    'input'            => array( 'task_id' => $task_id ),
+                                    'interval_seconds' => 60,
+                                ),
+                            );
+                        }
+                        break;
+                    case 'cancel-site-backup':
+                        $result = MainWP_Backup_Operations::cancel_site_backup( $site_id );
+                        if ( ! is_wp_error( $result ) ) {
+                            $messages          = self::cancel_messages();
+                            $result['site_id'] = $site_id;
+                            $result['message'] = $messages[ $result['result'] ];
+                        }
+                        break;
+                    case 'reset-backup-task-run':
+                        $result = MainWP_Backup_Operations::reset_task_run( $task_id );
+                        if ( ! is_wp_error( $result ) ) {
+                            $result = array(
+                                'task_id'           => $task_id,
+                                'status'            => 'reset',
+                                'sites_cancelled'   => $result['cancelled'],
+                                'sites_uncancelled' => $result['uncancelled'],
+                            );
+                        }
+                        break;
+                    case 'cleanup-site-backups':
+                        $result = MainWP_Backup_Operations::cleanup_site_backups( $site_id, $keep );
+                        if ( ! is_wp_error( $result ) ) {
+                            $result['site_id']      = $site_id;
+                            $result['units_pruned'] = $result['pruned'];
+                            $result['errors']       = array_map(
+                                static function ( $error ) {
+                                    return MainWP_Backup_Operations::safe_error( is_array( $error ) ? (string) ( $error['code'] ?? '' ) : '' );
+                                },
+                                $result['errors']
+                            );
+                        }
+                        break;
+                }
+            }
+            if ( is_wp_error( $result ) ) {
+                return self::safe_wp_error( $result );
+            }
+            $result['dry_run'] = $dry_run;
+            $schema_method     = str_replace( '-', '_', $name ) . '_output_schema';
+            $schema            = self::$schema_method();
+            return self::serialize( $result, $schema['oneOf'][ $dry_run ? 0 : 1 ] );
+        } catch ( \Throwable $exception ) {
+            return self::safe_wp_error( new \WP_Error( 'mainwp_internal_error', '', array( 'status' => 500 ) ) );
+        }
+    }
+
+    /**
+     * Only submitted fields reach the partial-update service; omissions keep stored values.
+     *
+     * @param array $input Validated ability input.
+     * @return array|\WP_Error
+     */
+    private static function task_write_fields( array $input ) {
+        unset( $input['task_id'], $input['dry_run'], $input['confirm'] );
+        if ( array_key_exists( 'site_ids_or_domains', $input ) ) {
+            $sites = array();
+            foreach ( $input['site_ids_or_domains'] as $id ) {
+                $site = MainWP_Abilities_Util::resolve_site( $id );
+                if ( is_wp_error( $site ) ) {
+                    return $site;
+                }
+                $sites[] = (int) $site->id;
+            }
+            unset( $input['site_ids_or_domains'] );
+            $input['site_ids'] = $sites;
+        }
+        foreach ( array( 'group_ids', 'destination_ids' ) as $key ) {
+            if ( isset( $input[ $key ] ) ) {
+                $input[ $key ] = array_map( array( self::class, 'positive_int' ), $input[ $key ] );
+            }
+        }
+        return $input;
+    }
+
+    /**
+     * Fixed messages exclude untrusted Child response text.
+     *
+     * @return array
+     */
+    private static function cancel_messages(): array {
+        return array(
+            'cancelled'         => __( 'The site confirmed that it stopped the backup.', 'mainwp' ),
+            'already_finished'  => __( 'The site had already finished the backup. The Dashboard will still collect and record it.', 'mainwp' ),
+            'already_failed'    => __( 'The site had already failed the backup. The Dashboard will record the failure.', 'mainwp' ),
+            'not_running'       => __( 'No on-demand backup is open on the Dashboard for this site.', 'mainwp' ),
+            'no_active_on_site' => __( 'The site reports no matching backup. The Dashboard run remains open until it is reset after the stall threshold.', 'mainwp' ),
+            'busy'              => __( 'The backup could not be stopped yet. Read its progress and try cancelling again.', 'mainwp' ),
+        );
     }
 }

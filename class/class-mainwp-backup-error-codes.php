@@ -72,6 +72,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_RUN_CANCELLED      = 'mainwp_backup_run_cancelled';
     const ERR_RUN_RESET          = 'mainwp_backup_run_reset';
     const ERR_RUN_INCOMPLETE     = 'mainwp_backup_run_incomplete';
+    const ERR_TASK_PAUSED        = 'mainwp_backup_task_paused';
+    const ERR_NO_SITES           = 'mainwp_backup_no_sites';
+    const ERR_START_FAILED       = 'mainwp_backup_start_failed';
     const ERR_STALLED            = 'mainwp_backup_stalled';
     const ERR_RETRY_EXHAUSTED    = 'mainwp_backup_retry_exhausted';
     const ERR_ALREADY_RUNNING    = 'mainwp_backup_already_running';
@@ -325,6 +328,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_MANIFEST_CHUNK_CORRUPT        => esc_html__( 'The transferred file list does not match its expected checksum on the child site and was discarded. The transfer runs again or the run falls back to a full backup.', 'mainwp' ),
             self::ERR_MANIFEST_CHUNK_SEND_FAILED    => esc_html__( 'The file list from the previous backup could not be delivered to the child site in pieces, so a full backup was run instead. The site may enforce a small request size limit.', 'mainwp' ),
         ) + array(
+            self::ERR_TASK_PAUSED                        => esc_html__( 'This backup task is paused. Resume it from the backup tasks list, then run it again.', 'mainwp' ),
+            self::ERR_NO_SITES                           => esc_html__( 'This backup task has no available sites to run. Edit the task, select sites you can access, and save it before trying again.', 'mainwp' ),
+            self::ERR_START_FAILED                       => esc_html__( 'The backup could not be started. Reload the backup tasks list and try again. If it still fails, check the Dashboard error log.', 'mainwp' ),
             self::ERR_TASK_NOT_FOUND                     => esc_html__( 'The backup task was not found. It may have been deleted, or your account cannot access it. Reload the backup tasks list and try again.', 'mainwp' ),
             self::ERR_SNAPSHOT_NOT_FOUND                 => esc_html__( 'The backup was not found, or your account cannot access it. Reload the backups list and try again.', 'mainwp' ),
             self::ERR_RESTORE_JOB_NOT_FOUND              => esc_html__( 'The restore job was not found. It may not have started yet, or your account cannot access it. Check the site\'s backups page for recent restores.', 'mainwp' ),

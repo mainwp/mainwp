@@ -1512,11 +1512,38 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 			'V4 unregistered backup read'           => array( 'get-backup-task', array( 'task_id' => 987671 ), array(), false, 404, 'rest_ability_not_found' ),
 			'V5 name parameter as an array'         => array( 'get-backup-task', array( 'task_id' => 987671 ), array( 'name' => array( 'x' ) ), true, 400, 'rest_invalid_param' ),
 			'V6 registered ability outside backups' => array( 'count-sites', array(), array(), true, 200, null ),
+			'V7 JSON-body POST'                     => array(
+				'cleanup-site-backups',
+				array(
+					'site_id_or_domain' => 987670,
+					'dry_run'           => true,
+				),
+				array(),
+				true,
+				200,
+				null,
+				'POST',
+				'json',
+			),
+			'V8 form-encoded POST'                  => array(
+				'cleanup-site-backups',
+				array(
+					'site_id_or_domain' => 987670,
+					'dry_run'           => true,
+				),
+				array(),
+				true,
+				400,
+				'rest_invalid_param',
+				'POST',
+				'form',
+			),
+			'V9 GET with JSON body'                 => array( 'get-backup-task', array( 'task_id' => 987671 ), array(), true, 200, null, 'GET', 'json' ),
 		);
 	}
 
 	/**
-	 * Only a registered backup read gets the backup schema check; every other request keeps core's answer.
+	 * Registered backup actions and reads validate the input their controller executes.
 	 *
 	 * @dataProvider run_route_names
 	 * @param string      $name Ability slug in the route.
@@ -1525,9 +1552,11 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 * @param bool        $registered Whether the ability stays registered.
 	 * @param int         $status Expected HTTP status.
 	 * @param string|null $code Expected error code.
+	 * @param string      $method Request method.
+	 * @param string      $transport Input carrier.
 	 * @return void
 	 */
-	public function test_run_route_input_check_follows_the_resolved_name( $name, $input, $query, $registered, $status, $code ) {
+	public function test_run_route_input_check_follows_the_resolved_name( $name, $input, $query, $registered, $status, $code, $method = 'GET', $transport = 'query' ) {
 		$registry = \WP_Abilities_Registry::get_instance();
 		$property = new \ReflectionProperty( $registry, 'registered_abilities' );
 		$property->setAccessible( true );
@@ -1539,7 +1568,35 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 			$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
 		}
 		try {
-			$response = $this->rest_read( $name, $input, $query );
+			if ( 'query' === $transport ) {
+				$response = $this->rest_read( $name, $input, $query );
+			} else {
+				global $wp_rest_server;
+				$previous       = $wp_rest_server;
+				$wp_rest_server = new \WP_REST_Server();
+				do_action( 'rest_api_init' );
+				$request = new \WP_REST_Request( $method, '/wp-abilities/v1/abilities/mainwp/' . $name . '-v1/run' );
+				if ( 'GET' === $method ) {
+					$request->set_query_params( array( 'input' => $input ) );
+					$request->set_header( 'Content-Type', 'application/json' );
+					$request->set_body( wp_json_encode( array( 'input' => array( 'task_id' => '05' ) ) ) );
+				} elseif ( 'form' === $transport ) {
+					$request->set_header( 'Content-Type', 'application/x-www-form-urlencoded' );
+					$request->set_body_params( array( 'input' => $input ) );
+				} else {
+					$request->set_header( 'Content-Type', 'application/json' );
+					$request->set_body( wp_json_encode( array( 'input' => $input ) ) );
+				}
+				try {
+					$response = $this->guarded(
+						static function () use ( $request ) {
+							return rest_do_request( $request );
+						}
+					);
+				} finally {
+					$wp_rest_server = $previous;
+				}
+			}
 		} finally {
 			$property->setValue( $registry, $abilities );
 		}

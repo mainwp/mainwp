@@ -121,6 +121,16 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			'mainwp/list-backup-destinations-v1',
 			'mainwp/get-backup-destination-v1',
 			'mainwp/get-backup-settings-v1',
+			'mainwp/run-site-backup-v1',
+			'mainwp/run-backup-task-v1',
+			'mainwp/cancel-site-backup-v1',
+			'mainwp/reset-backup-task-run-v1',
+			'mainwp/cleanup-site-backups-v1',
+			'mainwp/create-backup-task-v1',
+			'mainwp/update-backup-task-v1',
+			'mainwp/delete-backup-task-v1',
+			'mainwp/pause-backup-task-v1',
+			'mainwp/resume-backup-task-v1',
 
 			'mainwp/list-sites-v1',
 			'mainwp/get-site-v1',
@@ -316,6 +326,16 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			'mainwp/ignore-site-plugins-v1'      => true,
 			'mainwp/ignore-site-themes-v1'       => true,
 			'mainwp/unignore-site-updates-v1'    => true,
+			'mainwp/run-site-backup-v1'          => false,
+			'mainwp/run-backup-task-v1'          => false,
+			'mainwp/cancel-site-backup-v1'       => true,
+			'mainwp/reset-backup-task-run-v1'    => true,
+			'mainwp/cleanup-site-backups-v1'     => false,
+			'mainwp/create-backup-task-v1'       => false,
+			'mainwp/update-backup-task-v1'       => false,
+			'mainwp/delete-backup-task-v1'       => false,
+			'mainwp/pause-backup-task-v1'        => true,
+			'mainwp/resume-backup-task-v1'       => true,
 		);
 
 		// Check readonly abilities - all should be idempotent.
@@ -361,6 +381,13 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 					'mainwp/update-site-themes-v1',
 					'mainwp/update-site-translations-v1',
 					'mainwp/unignore-site-updates-v1',
+					'mainwp/run-site-backup-v1',
+					'mainwp/run-backup-task-v1',
+					'mainwp/cancel-site-backup-v1',
+					'mainwp/reset-backup-task-run-v1',
+					'mainwp/cleanup-site-backups-v1',
+					'mainwp/update-backup-task-v1',
+					'mainwp/delete-backup-task-v1',
 				),
 				true
 			);

@@ -181,9 +181,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
         }
         $stale_sites = array();
-        $error       = static::manual_task_start_error( $task, $stale_sites );
+        $error_code  = '';
+        $error       = static::manual_task_start_error( $task, $stale_sites, $error_code );
         if ( '' !== $error ) {
-            return array( 'error' => $error );
+            return 'ability' === $context ? array(
+                'error'      => $error,
+                'error_code' => $error_code,
+            ) : array( 'error' => $error );
         }
         MainWP_Post_Backup_Handler::raise_backup_resource_limits();
         if ( (int) $task->completed < (int) $task->last_run ) {
@@ -303,17 +307,22 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *
      * @param object $task Task row.
      * @param array  $stale_sites Deleted site ids omitted from the run.
+     * @param string $error_code Stable refusal identity for machine callers.
      * @return string Refusal message, or an empty string.
      */
-    private static function manual_task_start_error( object $task, array &$stale_sites = array() ): string {
+    public static function manual_task_start_error( object $task, array &$stale_sites = array(), string &$error_code = '' ): string {
+        $error_code = '';
         if ( ! empty( $task->paused ) ) {
+            $error_code = MainWP_Backup_Error_Codes::ERR_TASK_PAUSED;
             return __( 'This task is paused. Resume it before running it.', 'mainwp' );
         }
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            $error_code = MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED;
             return __( 'Native backups are not enabled.', 'mainwp' );
         }
         $sites = static::resolve_task_run_sites( $task, $stale_sites );
         if ( empty( $sites ) ) {
+            $error_code = MainWP_Backup_Error_Codes::ERR_NO_SITES;
             return ! empty( $stale_sites )
                 ? __( 'No existing sites remain in this backup task. Re-save the task to select sites.', 'mainwp' )
                 : __( 'No sites are selected for this backup task. Edit the task and select sites.', 'mainwp' );
@@ -321,15 +330,18 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         foreach ( $sites as $site_id ) {
             $website = MainWP_DB::instance()->get_website_by_id( $site_id );
             if ( empty( $website ) || ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                $error_code = MainWP_Backup_Error_Codes::ERR_NO_PERMISSION;
                 return __( 'You are not allowed to run backups for one or more of this task\'s sites.', 'mainwp' );
             }
             if ( null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id ) ) {
+                $error_code = MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING;
                 return __( 'A restore is in progress for this site. Try again once it finishes.', 'mainwp' );
             }
             // Back Up Now's hidden task targets one site, so a disconnected site
             // refuses here like the Back Up Now button does. A scheduled task
             // still runs its connected sites; a disconnected one fails on its own.
             if ( 1 === (int) $task->template && MainWP_Post_Backup_Handler::site_is_disconnected( $website ) ) {
+                $error_code = MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED;
                 return MainWP_Post_Backup_Handler::disconnected_site_error();
             }
         }

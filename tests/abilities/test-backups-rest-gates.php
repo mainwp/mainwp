@@ -9,6 +9,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Backup;
 
 require_once __DIR__ . '/../backup/class-mainwp-backup-read-fixtures.php';
 require_once __DIR__ . '/test-backups-read-abilities.php';
@@ -215,5 +216,145 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( array(), $response->get_data()['items'] );
 		$this->assertSame( 0, $response->get_data()['totals']['sites'] );
+	}
+
+	/**
+	 * Consent and method gates must stay consistent across all backup writes.
+	 *
+	 * @return array
+	 */
+	public static function writes() {
+		return array(
+			array( 'run-site-backup', 'POST', 'mainwp_site_not_found' ),
+			array( 'run-backup-task', 'POST', 'mainwp_backup_task_not_found' ),
+			array( 'cancel-site-backup', 'DELETE', 'mainwp_site_not_found' ),
+			array( 'reset-backup-task-run', 'DELETE', 'mainwp_backup_task_not_found' ),
+			array( 'cleanup-site-backups', 'POST', 'mainwp_site_not_found' ),
+			array( 'create-backup-task', 'POST', 'mainwp_site_not_found' ),
+			array( 'update-backup-task', 'POST', 'mainwp_backup_task_not_found' ),
+			array( 'delete-backup-task', 'POST', 'mainwp_backup_task_not_found' ),
+			array( 'pause-backup-task', 'POST', 'mainwp_backup_task_not_found' ),
+			array( 'resume-backup-task', 'POST', 'mainwp_backup_task_not_found' ),
+		);
+	}
+
+	/**
+	 * Valid fields isolate transport and target errors from schema errors.
+	 *
+	 * @param string $name Action slug.
+	 * @param bool   $missing Whether to use a missing target.
+	 * @return array
+	 */
+	private function write_input( $name, $missing = false ) {
+		$id = $missing ? 9007199254740991 : 987671;
+		if ( 'create-backup-task' === $name ) {
+			return array(
+				'name'                => 'REST preview task',
+				'type'                => 'full',
+				'schedule'            => 'daily',
+				'site_ids_or_domains' => array( $missing ? $id : $this->site_id ),
+				'dry_run'             => true,
+			);
+		}
+		if ( false !== strpos( $name, 'task' ) ) {
+			return array(
+				'task_id' => $id,
+				'dry_run' => true,
+			) + ( 'update-backup-task' === $name ? array( 'name' => 'REST edited task' ) : array() );
+		}
+		return array(
+			'site_id_or_domain' => $missing ? $id : $this->site_id,
+			'dry_run'           => true,
+		);
+	}
+
+	/**
+	 * The REST controller reads write input from the body before its callbacks run.
+	 *
+	 * @param string $method HTTP method.
+	 * @param string $name Action slug.
+	 * @param array  $input Caller input.
+	 * @return \WP_REST_Response
+	 */
+	private function write_request( $method, $name, array $input ) {
+		$request = new \WP_REST_Request( $method, '/wp-abilities/v1/abilities/mainwp/' . $name . '-v1/run' );
+		if ( 'GET' === $method ) {
+			$request->set_query_params( array( 'input' => $input ) );
+		} else {
+			$request->set_header( 'Content-Type', 'application/json' );
+			$request->set_body( wp_json_encode( array( 'input' => $input ) ) );
+		}
+		return $this->guarded(
+			function () use ( $request ) {
+				return $this->server->dispatch( $request );
+			}
+		);
+	}
+
+	/**
+	 * Authorized write previews must expose the envelope over the documented method.
+	 *
+	 * @dataProvider writes
+	 * @param string $name Slug.
+	 * @param string $method Method.
+	 */
+	public function test_authorized_write_dry_run_returns_200( $name, $method ) {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		if ( 'reset-backup-task-run' === $name ) {
+			MainWP_DB_Backup::instance()->update_backup_task_with_values(
+				987671,
+				array(
+					'last_run'  => time() - 7200,
+					'completed' => 0,
+				)
+			);
+		}
+		$response = $this->write_request( $method, $name, $this->write_input( $name ) );
+		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertTrue( $response->get_data()['dry_run'] );
+		$valid = rest_validate_value_from_schema( $response->get_data(), wp_get_ability( 'mainwp/' . $name . '-v1' )->get_output_schema() );
+		$this->assertTrue( $valid, is_wp_error( $valid ) ? $valid->get_error_message() : '' );
+	}
+
+	/**
+	 * Authentication must be required for previews as well as confirmed actions.
+	 *
+	 * @dataProvider writes
+	 * @param string $name Slug.
+	 * @param string $method Method.
+	 */
+	public function test_unauthenticated_write_returns_401( $name, $method ) {
+		wp_set_current_user( 0 );
+		$response = $this->write_request( $method, $name, $this->write_input( $name ) );
+		$this->assertSame( 401, $response->get_status() );
+	}
+
+	/**
+	 * Missing targets must keep their exact refusal code through REST.
+	 *
+	 * @dataProvider writes
+	 * @param string $name Slug.
+	 * @param string $method Method.
+	 * @param string $code Target code.
+	 */
+	public function test_write_missing_target_returns_exact_404( $name, $method, $code ) {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$response = $this->write_request( $method, $name, $this->write_input( $name, true ) );
+		$this->assertSame( 404, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( $code, $response->get_data()['code'] );
+	}
+
+	/**
+	 * Method annotations must prevent a preview from using the wrong verb.
+	 *
+	 * @dataProvider writes
+	 * @param string $name Slug.
+	 * @param string $method Method.
+	 */
+	public function test_write_wrong_method_returns_405( $name, $method ) {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$wrong    = 'POST' === $method ? 'GET' : 'POST';
+		$response = $this->write_request( $wrong, $name, $this->write_input( $name ) );
+		$this->assertSame( 405, $response->get_status(), wp_json_encode( $response->get_data() ) );
 	}
 }

@@ -8,7 +8,7 @@
 namespace MainWP\Dashboard;
 
 /** WordPress schemas permit numeric coercion that can change an id's meaning. */
-class MainWP_Backup_Read_Ability extends \WP_Ability {
+class MainWP_Backup_Ability extends \WP_Ability {
     /**
      * The REST controller consults this check before coercing schema-valid input.
      *
@@ -16,7 +16,7 @@ class MainWP_Backup_Read_Ability extends \WP_Ability {
      * @return true|\WP_Error
      */
     public function validate_input( $input = null ) {
-        $valid = MainWP_Abilities_Backups::validate_id_input( $input );
+        $valid = MainWP_Abilities_Backups::validate_id_input( $input, empty( $this->get_meta_item( 'annotations' )['readonly'] ) );
         if ( is_wp_error( $valid ) ) {
             return $valid;
         }

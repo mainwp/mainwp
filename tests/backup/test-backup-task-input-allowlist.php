@@ -390,13 +390,13 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/** A paused task refusal must not claim that another run is active. */
-	public function test_run_task_paused_refusal_is_unclassified(): void {
+	public function test_run_task_paused_refusal_has_stable_code(): void {
 		$created = MainWP_Backup_Operations::create_task( $this->fields( $this->create_test_site() ), 'ability' );
 		$this->assertIsArray( $created );
 		MainWP_DB_Backup::instance()->update_backup_task_with_values( $created['task_id'], array( 'paused' => 1 ) );
 		$error = MainWP_Backup_Operations::run_task( $created['task_id'], 'ability' );
 		$this->assertWPError( $error );
-		$this->assertSame( 'mainwp_backup_unclassified_error', $error->get_error_code() );
+		$this->assertSame( 'mainwp_backup_task_paused', $error->get_error_code() );
 		$this->assertNotSame( 'mainwp_backup_already_running', $error->get_error_code() );
 		$this->assertSame( 409, $error->get_error_data()['status'] );
 		$this->assertSame( 'This task is paused. Resume it before running it.', $error->get_error_message() );

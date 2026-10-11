@@ -2830,7 +2830,7 @@ class MainWP_Abilities_Backups {
                         'readonly'     => false,
                         'destructive'  => true,
                         'idempotent'   => false,
-                        'instructions' => __( 'Changes a child site and can prune older on-demand snapshots. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. not_started means no run slot was free: nothing starts on its own, call again later. already_running means the call attached to the open run.', 'mainwp' ),
+                        'instructions' => __( 'Changes a child site and can prune older on-demand snapshots. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. not_started means no run slot was free: nothing starts on its own, call again later. already_running means the call attached to an open run, or to one that finished seconds ago; poll for its result.', 'mainwp' ),
                     ),
                 ),
             )
@@ -2854,7 +2854,7 @@ class MainWP_Abilities_Backups {
                 'dry_run'           => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
                 ),
                 'confirm'           => array(
                     'type'        => 'boolean',
@@ -2954,7 +2954,7 @@ class MainWP_Abilities_Backups {
                             'already_running',
                             'not_started',
                         ),
-                        'description' => 'already_running: an on-demand backup of this site was already open and this call attached to it. not_started: no run slot was free; nothing starts on its own, call this ability again later.',
+                        'description' => 'already_running: an on-demand backup of this site was open, or finished seconds ago, and this call attached to it. not_started: no run slot was free; nothing starts on its own, call this ability again later.',
                     ),
                     'started_at' => self::ts_schema(),
                     'since'      => array(
@@ -3035,7 +3035,7 @@ class MainWP_Abilities_Backups {
                         'readonly'     => false,
                         'destructive'  => true,
                         'idempotent'   => false,
-                        'instructions' => __( 'Changes child sites and can prune snapshots. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. not_started means no run slot was free; call again later. already_running means the call attached to the open run.', 'mainwp' ),
+                        'instructions' => __( 'Changes child sites and can prune snapshots. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. not_started means no run slot was free: nothing starts on its own, call again later. already_running means the call attached to an open run, or to one that finished seconds ago; poll for its result.', 'mainwp' ),
                     ),
                 ),
             )
@@ -3059,7 +3059,7 @@ class MainWP_Abilities_Backups {
                 'dry_run' => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
                 ),
                 'confirm' => array(
                     'type'        => 'boolean',
@@ -3195,7 +3195,7 @@ class MainWP_Abilities_Backups {
                             'already_running',
                             'not_started',
                         ),
-                        'description' => 'already_running: a run of this task was already open and this call attached to it. not_started: no run slot was free; nothing starts on its own, call this ability again later.',
+                        'description' => 'already_running: a run of this task was open, or finished seconds ago, and this call attached to it. not_started: no run slot was free; nothing starts on its own, call this ability again later.',
                     ),
                     'started_at' => self::ts_schema(),
                     'poll'       => array(
@@ -3291,7 +3291,7 @@ class MainWP_Abilities_Backups {
                 'dry_run'           => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
                 ),
                 'confirm'           => array(
                     'type'        => 'boolean',
@@ -3417,7 +3417,7 @@ class MainWP_Abilities_Backups {
                 'dry_run' => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
                 ),
                 'confirm' => array(
                     'type'        => 'boolean',
@@ -3469,7 +3469,7 @@ class MainWP_Abilities_Backups {
                         'items'       => array(
                             'type' => 'integer',
                         ),
-                        'description' => 'Sites whose backup task would be asked to stop.',
+                        'description' => 'Sites in the run. A site whose backup task id is not known gets no request and is counted in sites_uncancelled.',
                     ),
                 ),
             ),
@@ -3567,7 +3567,7 @@ class MainWP_Abilities_Backups {
                 'dry_run'           => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
                 ),
                 'confirm'           => array(
                     'type'        => 'boolean',
@@ -3904,7 +3904,7 @@ class MainWP_Abilities_Backups {
                 'dry_run'             => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
                 ),
                 'confirm'             => array(
                     'type'        => 'boolean',
@@ -4158,7 +4158,7 @@ class MainWP_Abilities_Backups {
                 'dry_run'             => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
                 ),
                 'confirm'             => array(
                     'type'        => 'boolean',
@@ -4333,7 +4333,7 @@ class MainWP_Abilities_Backups {
                 'dry_run'          => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
                 ),
                 'confirm'          => array(
                     'type'        => 'boolean',
@@ -4520,7 +4520,7 @@ class MainWP_Abilities_Backups {
                 'dry_run' => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
                 ),
                 'confirm' => array(
                     'type'        => 'boolean',
@@ -4635,7 +4635,7 @@ class MainWP_Abilities_Backups {
                 'dry_run' => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Preview only. Changes nothing, contacts no site, fires no hooks.',
+                    'description' => 'Preview only. Changes nothing and contacts no site.',
                 ),
                 'confirm' => array(
                     'type'        => 'boolean',
@@ -5110,7 +5110,7 @@ class MainWP_Abilities_Backups {
                             $result = array(
                                 'task_id'    => $task_id,
                                 'status'     => $result['status'],
-                                'started_at' => (int) $result['started'],
+                                'started_at' => 'not_started' === $result['status'] ? null : (int) $result['started'],
                                 'poll'       => array(
                                     'ability'          => 'mainwp/get-backup-task-run-v1',
                                     'input'            => array( 'task_id' => $task_id ),

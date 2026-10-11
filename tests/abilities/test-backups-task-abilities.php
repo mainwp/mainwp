@@ -590,6 +590,9 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$request->set_header( 'Content-Type', 'application/json' );
 		$request->set_body( wp_json_encode( array( 'input' => $input ), JSON_PRESERVE_ZERO_FRACTION ) );
 		try {
+			if ( empty( $input['dry_run'] ) ) {
+				return rest_do_request( $request );
+			}
 			return $this->guarded(
 				static function () use ( $request ) {
 					return rest_do_request( $request );
@@ -642,6 +645,148 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 			}
 		} finally {
 			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+		}
+	}
+
+	/**
+	 * Preview and confirmation must agree through both supported transports.
+	 *
+	 * @return array
+	 */
+	public static function update_transports() {
+		return array(
+			'PHP'  => array( false ),
+			'REST' => array( true ),
+		);
+	}
+
+	/**
+	 * Historical fixtures must use database-allocated snapshot identities.
+	 *
+	 * @param int      $site_id Historical site.
+	 * @param int|null $created Snapshot timestamp, or null for an expired snapshot.
+	 * @return int
+	 */
+	private function create_task_history_snapshot( $site_id, $created = null ) {
+		global $wpdb;
+		$this->assertNotFalse(
+			$wpdb->insert(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+				array(
+					'site_id'  => $site_id,
+					'task_id'  => $this->task_id,
+					'type'     => 'full',
+					'status'   => 'complete',
+					'created'  => $created ?? time() - 2 * DAY_IN_SECONDS,
+					'archives' => '[]',
+				)
+			)
+		);
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * Deleted sites still participate in retention without blocking a task edit.
+	 *
+	 * @dataProvider update_transports
+	 * @param bool $rest Whether to use the REST run route.
+	 */
+	public function test_update_allows_deleted_historical_site_and_lists_retention_impact( $rest ) {
+		global $wpdb;
+		$history_site = $this->create_test_site();
+		$snapshot_id  = $this->create_task_history_snapshot( $history_site );
+		// Retention preserves the newest restorable unit even when older units have expired.
+		$this->create_task_history_snapshot( $history_site, time() );
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'id' => $history_site ) );
+		$this->assertEmpty( MainWP_DB::instance()->get_website_by_id_unscoped( $history_site ) );
+		$input = array(
+			'task_id'   => $this->task_id,
+			'retention' => array( 'days' => 1 ),
+		);
+		try {
+			foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+				if ( $rest ) {
+					$response = $this->body_preview( 'update-backup-task', $input + array( $mode => true ) );
+					$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+					$output = $response->get_data();
+				} else {
+					$output = $this->execute( 'update-backup-task', $input + array( $mode => true ) );
+				}
+				$this->assert_output( 'update-backup-task', $output );
+				if ( 'dry_run' === $mode ) {
+					$this->assertSame(
+						array(
+							array(
+								'site_id'                  => $history_site,
+								'would_prune_snapshot_ids' => array( $snapshot_id ),
+								'reasons'                  => array( 'age' ),
+							),
+						),
+						$output['would_affect']['retention_impact']
+					);
+				} else {
+					$this->assertSame( 1, $output['retention']['days'] );
+					$this->assertSame( 1, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->task_id )->retention_days );
+				}
+			}
+		} finally {
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'site_id' => $history_site ) );
+		}
+	}
+
+	/**
+	 * An owner cannot lower retention for an existing historical site outside their scope.
+	 *
+	 * @dataProvider update_transports
+	 * @param bool $rest Whether to use the REST run route.
+	 */
+	public function test_update_refuses_out_of_scope_historical_site_on_preview_confirm_and_ui( $rest ) {
+		$this->skip_when_capabilities_bypassed();
+		global $wpdb;
+		$history_site = $this->create_test_site();
+		$snapshot_id  = $this->create_task_history_snapshot( $history_site );
+		$before       = MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->task_id );
+		$deny         = static function ( $allowed, $type, $id ) use ( $history_site ) {
+			return 'site' === $type && (int) $id === $history_site ? false : $allowed;
+		};
+		$scope        = function () {
+			return array( $this->site_id );
+		};
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		$input = array(
+			'task_id'   => $this->task_id,
+			'retention' => array( 'days' => 1 ),
+		);
+		try {
+			$this->assertSame( get_current_user_id(), (int) $before->userid );
+			$this->assertNotWPError( MainWP_Backup_Operations::authorize_site( $this->site_id, 'edit_backup_tasks' ) );
+			$this->assertEmpty( MainWP_DB::instance()->get_website_by_id( $history_site ) );
+			$this->assertNotEmpty( MainWP_DB::instance()->get_website_by_id_unscoped( $history_site ) );
+			foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+				if ( $rest ) {
+					$response = $this->body_preview( 'update-backup-task', $input + array( $mode => true ) );
+					$this->assertSame( 404, $response->get_status(), wp_json_encode( $response->get_data() ) );
+					$this->assertSame( 'mainwp_backup_task_not_found', $response->get_data()['code'] );
+				} else {
+					$error = $this->execute( 'update-backup-task', $input + array( $mode => true ) );
+					$this->assertWPError( $error );
+					$this->assertSame( 'mainwp_backup_task_not_found', $error->get_error_code() );
+					$this->assertSame( 404, $error->get_error_data()['status'] );
+				}
+				$this->assertSame( (array) $before, (array) MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->task_id ) );
+			}
+			$error = MainWP_Backup_Operations::update_task( $this->task_id, array( 'retention' => $input['retention'] ), 'ui' );
+			$this->assertWPError( $error );
+			$this->assertSame( 'mainwp_backup_task_not_found', $error->get_error_code() );
+			$this->assertSame( 404, $error->get_error_data()['status'] );
+			$this->assertSame( (array) $before, (array) MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->task_id ) );
+		} finally {
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'id' => $snapshot_id ) );
 		}
 	}
 

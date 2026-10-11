@@ -567,12 +567,37 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $scope ) ) {
             return $scope;
         }
-        // Both scopes must be reachable so a partial edit cannot hide inaccessible history.
+        // Both current scopes must be reachable before saving a partial edit.
         $scope_error = $task ? MainWP_Manage_Backups_Handler::authorize_task_update_scope( implode( ',', MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ) ), '', implode( ',', $values['site_ids'] ), implode( ',', $values['group_ids'] ) ) : '';
         if ( '' !== $scope_error ) {
             return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
         }
+        if ( null !== $task ) {
+            $history = self::authorize_task_history_sites( (int) $task->id );
+            if ( is_wp_error( $history ) ) {
+                return $history;
+            }
+        }
         return $values;
+    }
+
+    /**
+     * Retention changes can prune sites that are no longer in the task's current scope.
+     *
+     * @param int $task_id Task identity.
+     * @return true|\WP_Error
+     */
+    private static function authorize_task_history_sites( int $task_id ) {
+        foreach ( MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( $task_id ) as $site_id ) {
+            // A scoped lookup would mistake a hidden site for a deleted one.
+            if ( empty( MainWP_DB::instance()->get_website_by_id_unscoped( $site_id ) ) ) {
+                continue;
+            }
+            if ( is_wp_error( self::authorize_site( $site_id, 'edit_backup_tasks' ) ) ) {
+                return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
+            }
+        }
+        return true;
     }
 
     /**
@@ -734,7 +759,15 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 return new \WP_Error( $code, $result['error'], array( 'status' => MainWP_Backup_Error_Codes::ERR_START_FAILED === $code ? 502 : 409 ) );
             }
             if ( 'ability' === $context ) {
-                $result['status'] = (int) $task->completed < (int) $task->last_run ? 'already_running' : ( 'running' === $result['status'] ? 'started' : 'not_started' );
+                if ( (int) $task->completed < (int) $task->last_run ) {
+                    $result['status'] = 'already_running';
+                } elseif ( 'running' === $result['status'] ) {
+                    $result['status'] = 'started';
+                } elseif ( 'queued' === $result['status'] ) {
+                    $result['status'] = ! empty( $result['run_open'] ) ? 'already_running' : 'not_started';
+                } else {
+                    $result['status'] = 'already_running';
+                }
             }
             return $result;
         } finally {
@@ -824,7 +857,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 array(
                     'job_id'  => (int) $task->id,
                     'started' => (int) $task->last_run,
-                    'status'  => 'ability' === $context ? 'not_started' : 'queued',
+                    'status'  => 'ability' === $context ? 'already_running' : 'queued',
                 )
             );
         }
@@ -832,14 +865,13 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         // Kick the first step. updateRun = true resets completed_sites and
         // stamps last_run through a claim the settle window can refuse, which
         // both starts the run and makes it eligible for the
-        // cron_backups_continue backstop. A false return means no concurrency
-        // slot was free (or a racing initiate won the claim); the progress
-        // poll retries the claim for a click whose run never opened - the
-        // cron cannot, it only drives runs that were stamped open.
+        // cron_backups_continue backstop. The claim result distinguishes a
+        // slot refusal from a run that opened and failed before returning.
         $started  = time();
         $previous = MainWP_Backup_Run_History::set_context( 'ability' === $context ? 'ability' : 'manual', get_current_user_id() );
+        $claimed  = null;
         try {
-            $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle ) );
+            $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle, $claimed ) );
         } finally {
             MainWP_Backup_Run_History::set_context( $previous['trigger'], $previous['user_id'] );
         }
@@ -868,7 +900,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             array(
                 'job_id'  => (int) $task->id,
                 'started' => $started_out,
-                'status'  => 'ability' === $context ? ( $had_slot ? 'started' : ( (int) $task->completed < (int) $task->last_run ? 'already_running' : 'not_started' ) ) : ( $had_slot ? 'running' : 'queued' ),
+                'status'  => 'ability' === $context ? ( true === $claimed ? 'started' : ( (int) $task->completed < (int) $task->last_run ? 'already_running' : 'not_started' ) ) : ( $had_slot ? 'running' : 'queued' ),
             )
         );
     }
@@ -1685,10 +1717,6 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $policy = new MainWP_Backup_Retention_Policy( $values['retention']['count'], $values['retention']['days'], $values['retention']['storage_mb'] );
         $impact = array();
         foreach ( $query->list_site_ids_for_task( $task_id ) as $site_id ) {
-            $site = self::authorize_site( $site_id, 'edit_backup_tasks' );
-            if ( is_wp_error( $site ) ) {
-                return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
-            }
             $ids     = array();
             $reasons = array();
             foreach ( $policy->evaluate( $query->get_units_for_site_task( $site_id, $task_id ), time() ) as $candidate ) {

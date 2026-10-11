@@ -4231,7 +4231,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			remove_action( 'mainwp_backup_diag_restore_retry', $retry );
 		}
 		$fresh = $store->get_job( $id );
-		$this->assertSame( 1, $misses, 'A swap that cannot match an unchanged row must not be retried.' );
+		$this->assertSame( 2, $misses, 'A swap that cannot match an unchanged row is retried once, then reported.' );
 		$this->assertSame( $store::STATUS_RUNNING, $fresh->status );
 		$this->assertSame( $job->attempt_count, $fresh->attempt_count );
 		$this->assertSame( $job->last_error, $fresh->last_error );

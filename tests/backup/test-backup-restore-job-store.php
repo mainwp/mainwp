@@ -208,8 +208,9 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 
 	/**
 	 * Callers read false as a lost lease, so a swap lost to a concurrent write
-	 * is retried and only a gone row, a gone lease, a query error or an
-	 * unmatchable swap reports false.
+	 * is retried, including one whose writer restored the exact row, and only
+	 * a gone row, a gone lease, a query error or an unmatchable swap reports
+	 * false.
 	 *
 	 * @dataProvider save_checkpoint_outcomes
 	 * @param string $race     What happens between the read and the swap.
@@ -230,7 +231,15 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		}
 		$before     = $this->store->get_job( $job_id );
 		$swaps      = 0;
-		$hook       = function ( $sql ) use ( $race, $count, $table, $job_id, &$swaps, $wpdb ) {
+		$original   = (string) $wpdb->get_var( $wpdb->prepare( "SELECT checkpoint FROM {$table} WHERE id = %d", $job_id ) ); // phpcs:ignore WordPress.DB -- test race.
+		$restore    = false;
+		$hook       = function ( $sql ) use ( $race, $count, $table, $job_id, &$swaps, &$restore, $original, $wpdb ) {
+			if ( $restore && str_starts_with( $sql, 'SELECT checkpoint, status, locked_by FROM ' . $table ) ) {
+				// The outside writer clears its evidence again before the reread.
+				$restore = false;
+				$wpdb->update( $table, array( 'checkpoint' => $original ), array( 'id' => $job_id ) );
+				return $sql;
+			}
 			if ( ! str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) || ! str_contains( $sql, 'WHERE id = ' . $job_id . ' AND checkpoint = ' ) ) {
 				return $sql;
 			}
@@ -244,6 +253,13 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 					$stored['cancel_intent']       = true;
 					$stored['cancel_confirmation'] = array( 'attempt_count' => $swaps );
 					$wpdb->update( $table, array( 'checkpoint' => wp_json_encode( $stored ) ), array( 'id' => $job_id ) );
+					return $sql;
+				case 'evidence added then cleared':
+					$stored                        = json_decode( $original, true );
+					$stored['cancel_intent']       = true;
+					$stored['cancel_confirmation'] = array( 'attempt_count' => 1 );
+					$wpdb->update( $table, array( 'checkpoint' => wp_json_encode( $stored ) ), array( 'id' => $job_id ) );
+					$restore = true;
 					return $sql;
 				case 'lease taken mid-save':
 					$wpdb->update( $table, array( 'locked_by' => 'other' ), array( 'id' => $job_id ) );
@@ -300,8 +316,12 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $after->status );
 				$this->assertSame( 1, $after->checkpoint['cursor'] );
 				break;
+			case 'evidence added then cleared':
+				$this->assertSame( 2, $swaps );
+				$this->assertSame( array( 'cursor' => 2 ), $after->checkpoint );
+				break;
 			case 'unmatchable swap':
-				$this->assertSame( 1, $swaps );
+				$this->assertSame( 2, $swaps );
 				$this->assertSame( $before->checkpoint, $after->checkpoint );
 				break;
 			case 'identical values':
@@ -331,7 +351,8 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			'lease taken mid-save'             => array( 'lease taken mid-save', 1, true, false ),
 			'terminal cancel mid-save'         => array( 'terminal cancel mid-save', 1, true, false ),
 			'row deleted'                      => array( 'row deleted', 0, true, false ),
-			'unmatchable swap'                 => array( 'unmatchable swap', 1, true, false ),
+			'evidence added then cleared'      => array( 'evidence added then cleared', 1, true, true ),
+			'unmatchable swap'                 => array( 'unmatchable swap', 2, true, false ),
 			'identical values'                 => array( 'identical values', 1, true, true ),
 			'query error'                      => array( 'query error', 1, true, false ),
 		);

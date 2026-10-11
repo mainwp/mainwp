@@ -410,6 +410,12 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * than reported. Each retry needs a new write outside the lease, and
      * the terminal writer drops the lease, so the loop ends.
      *
+     * A row that reads back unchanged after a miss is retried once: an
+     * outside writer can add stop evidence and then clear it again (the
+     * UI lane drives on after the Child reports completion), restoring
+     * the exact text. Two misses in a row against an unchanged row mean
+     * the compare cannot match.
+     *
      * @param int         $job_id              Job id.
      * @param array       $checkpoint          Checkpoint.
      * @param string|null $lock_token          Fence the write on this lease token; null writes unfenced.
@@ -417,7 +423,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      *
      * @return bool True when the write landed; false when the row is gone,
      *              the lease is no longer the caller's, the query failed, or
-     *              the swap missed although the row did not change.
+     *              the swap missed twice against an unchanged row.
      */
     public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null, bool $clear_cancel_intent = false ): bool {
         unset( $checkpoint['cancel_intent'] );
@@ -430,8 +436,9 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             );
         }
 
-        $previous = null;
-        $encoded  = '';
+        $previous  = null;
+        $encoded   = '';
+        $unchanged = 0;
         while ( true ) {
             $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
                 $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
@@ -440,10 +447,16 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
                 return false;
             }
             if ( null !== $previous && $row->checkpoint === $previous->checkpoint && $row->status === $previous->status ) {
-                // Nothing changed since the missed swap. MySQL reports zero
-                // rows for identical values, which is a landed write; any
-                // other miss would repeat forever.
-                return $encoded === (string) $previous->checkpoint;
+                // MySQL reports zero rows for identical values, which is a
+                // landed write.
+                if ( $encoded === (string) $previous->checkpoint ) {
+                    return true;
+                }
+                if ( ++$unchanged > 1 ) {
+                    return false;
+                }
+            } else {
+                $unchanged = 0;
             }
             $stored  = (string) $row->checkpoint;
             $decoded = json_decode( $stored, true );

@@ -194,7 +194,9 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
 
         <?php
         $encryptionEnabled     = MainWP_Backup_Encryption::instance()->is_enabled_setting();
-        $hasRecoveryPassphrase = ! empty( MainWP_Backup_Encryption::instance()->get_recovery_blob() );
+        $recoveryBlob          = MainWP_Backup_Encryption::instance()->get_recovery_blob();
+        // Same test as the save handler, so the form asks for the proof the save will check.
+        $hasRecoveryPassphrase = ! empty( $recoveryBlob['wrapped_kek'] );
         // Read-only render flag carried through the settings-save redirect, same mechanism as the
         // existing message=saved flag: it never gates anything, it only decides whether a warning shows.
         $encryptionForcedOff = isset( $_GET['backup_encryption_forced_off'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['backup_encryption_forced_off'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended

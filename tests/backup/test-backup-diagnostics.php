@@ -2201,7 +2201,10 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		} elseif ( 'symlink' === $state ) {
 			$outside = wp_tempnam( 'outside-diagnostics' );
 			file_put_contents( $outside, 'outside bytes' );
-			symlink( $outside, $this->diag_dir . '/escape.json' );
+			if ( ! function_exists( 'symlink' ) || ! @symlink( $outside, $this->diag_dir . '/escape.json' ) ) {
+				unlink( $outside );
+				$this->markTestSkipped( 'The filesystem cannot create a diagnostics symlink.' );
+			}
 			$record['file'] = 'escape.json';
 		}
 		set_site_transient( $key, $record, 600 );

@@ -192,12 +192,16 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 	 * The form asks for the proof appropriate to the stored recovery state.
 	 *
 	 * @dataProvider recovery_input_states
-	 * @param bool $armed Whether a recovery blob exists.
+	 * @param bool $armed   Whether a recovery blob exists.
+	 * @param bool $partial Whether a stored array lacks the wrapped key.
 	 */
-	public function test_settings_renders_recovery_proof_inputs( bool $armed ) {
+	public function test_settings_renders_recovery_proof_inputs( bool $armed, bool $partial = false ) {
 		$enc = MainWP_Backup_Encryption::instance();
 		if ( $armed ) {
 			$enc->set_recovery_passphrase( 'original recovery passphrase' );
+		} elseif ( $partial ) {
+			// The save handler treats a blob without a wrapped key as unset.
+			update_option( MainWP_Backup_Encryption::RECOVERY_OPTION, array( 'algo' => 'pbkdf2-sha256' ), false );
 		} else {
 			delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
 		}
@@ -221,8 +225,9 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function recovery_input_states(): array {
 		return array(
-			'first'       => array( false ),
-			'replacement' => array( true ),
+			'first'           => array( false ),
+			'replacement'     => array( true ),
+			'no wrapped key'  => array( false, true ),
 		);
 	}
 

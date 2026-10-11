@@ -346,13 +346,24 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return self::invalid_task_input( 'fields' );
         }
         $values = array_merge( $base, $fields );
+        // The task form never had size or length ceilings, so only machine callers get the
+        // schema's. Each applies to a submitted value: a larger stored one survives a partial edit.
+        $ceilings = 'ui' === $context ? array() : array(
+            'name'                 => 255,
+            'exclude'              => 255,
+            'count'                => 1000,
+            'days'                 => 3650,
+            'storage_mb'           => 104857600,
+            'max_chain_length'     => 1000,
+            'max_file_descriptors' => 100000,
+        );
         foreach ( array( 'name', 'type', 'schedule', 'archive_format', 'subfolder', 'filename' ) as $field ) {
             if ( isset( $values[ $field ] ) && ! is_string( $values[ $field ] ) ) {
                 return self::invalid_task_input( $field );
             }
         }
         $values['name'] = sanitize_text_field( $values['name'] );
-        if ( '' === $values['name'] || strlen( $values['name'] ) > 255 ) {
+        if ( '' === $values['name'] || ( isset( $ceilings['name'], $fields['name'] ) && mb_strlen( $values['name'], 'UTF-8' ) > $ceilings['name'] ) ) {
             return self::invalid_task_input( 'name' );
         }
         foreach ( array(
@@ -423,23 +434,14 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         $values['timing'] = 'interval' === $schedule ? 'interval' : ( null === $values['time_of_day'] ? 'elapsed' : 'time_of_day' );
 
-        $bounds = array(
-            'count'                => 1000,
-            'days'                 => 3650,
-            'storage_mb'           => 104857600,
-            'max_chain_length'     => 1000,
-            'max_file_descriptors' => 100000,
-        );
         foreach ( array( 'retention', 'exclude_flags', 'archive_tuning' ) as $field ) {
             if ( ! is_array( $values[ $field ] ) || array_diff( array_keys( $values[ $field ] ), array_keys( $base[ $field ] ) ) ) {
                 return self::invalid_task_input( $field );
             }
             $values[ $field ] = array_merge( $base[ $field ], $values[ $field ] );
             foreach ( $values[ $field ] as $key => $value ) {
-                // The task form never had upper limits, so only machine callers get the schema
-                // ceilings, and a larger stored value they omit survives a partial edit.
                 $submitted = array_key_exists( $key, $fields[ $field ] ?? array() );
-                if ( is_bool( $base[ $field ][ $key ] ) ? ! is_bool( $value ) : ( ! is_int( $value ) || $value < 0 || ( 'ui' !== $context && $submitted && $value > $bounds[ $key ] ) ) ) {
+                if ( is_bool( $base[ $field ][ $key ] ) ? ! is_bool( $value ) : ( ! is_int( $value ) || $value < 0 || ( $submitted && isset( $ceilings[ $key ] ) && $value > $ceilings[ $key ] ) ) ) {
                     return self::invalid_task_input( $field );
                 }
             }
@@ -449,7 +451,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         if ( is_array( $values['exclude'] ) ) {
             foreach ( $values['exclude'] as $entry ) {
-                if ( ! is_string( $entry ) || strlen( $entry ) > 255 ) {
+                if ( ! is_string( $entry ) || ( isset( $ceilings['exclude'] ) && array_key_exists( 'exclude', $fields ) && mb_strlen( $entry, 'UTF-8' ) > $ceilings['exclude'] ) ) {
                     return self::invalid_task_input( 'exclude' );
                 }
             }
@@ -1113,7 +1115,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $disabled ) ) {
             return $disabled;
         }
-        if ( ! $fields || array_diff( array_keys( $fields ), array( 'name', 'is_default' ) ) || ( array_key_exists( 'name', $fields ) && ( ! is_string( $fields['name'] ) || '' === trim( $fields['name'] ) || strlen( $fields['name'] ) > 255 ) ) || ( array_key_exists( 'is_default', $fields ) && ! is_bool( $fields['is_default'] ) ) ) {
+        if ( ! $fields || array_diff( array_keys( $fields ), array( 'name', 'is_default' ) ) || ( array_key_exists( 'name', $fields ) && ( ! is_string( $fields['name'] ) || '' === trim( $fields['name'] ) || mb_strlen( $fields['name'], 'UTF-8' ) > 255 ) ) || ( array_key_exists( 'is_default', $fields ) && ! is_bool( $fields['is_default'] ) ) ) {
             return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
         }
         if ( ! empty( $destination->credentials_invalid ) ) {

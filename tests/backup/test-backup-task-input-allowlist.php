@@ -492,4 +492,79 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( 2000, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->retention_count );
 		$this->assertSame( 20, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->retention_days );
 	}
+
+	/**
+	 * The ceiling matrix: form context keeps its unbounded values, machine callers get the schema.
+	 *
+	 * @return array
+	 */
+	public static function ceiling_matrix(): array {
+		$wide  = str_repeat( "\u{5907}", 256 );
+		$rows  = array(
+			'M1 name 255 ascii'        => array( array( 'name' => str_repeat( 'a', 255 ) ), array(), null, null ),
+			'M2 name 256 ascii'        => array( array( 'name' => str_repeat( 'a', 256 ) ), array(), null, 'name' ),
+			'M3 name 86 wide'          => array( array( 'name' => str_repeat( "\u{5907}", 86 ) ), array(), null, null ),
+			'M4 name 256 wide'         => array( array( 'name' => $wide ), array(), null, 'name' ),
+			'M5 name whitespace'       => array( array( 'name' => '   ' ), array(), 'name', 'name' ),
+			'M6 name not a string'     => array( array( 'name' => 5 ), array(), 'name', 'name' ),
+			'M7 count 1000'            => array( array( 'retention' => array( 'count' => 1000 ) ), array(), null, null ),
+			'M8 count 1001'            => array( array( 'retention' => array( 'count' => 1001 ) ), array(), null, 'retention' ),
+			'M9 count negative'        => array( array( 'retention' => array( 'count' => -1 ) ), array(), 'retention', 'retention' ),
+			'M10 stored count omitted' => array( array( 'name' => 'Renamed' ), array( 'retention_count' => 2000 ), null, null ),
+			'M11 descriptors 100001'   => array( array( 'archive_tuning' => array( 'max_file_descriptors' => 100001 ) ), array(), null, 'archive_tuning' ),
+			'M12 days 3651'            => array( array( 'retention' => array( 'days' => 3651 ) ), array(), null, 'retention' ),
+			'M12 storage 104857601'    => array( array( 'retention' => array( 'storage_mb' => 104857601 ) ), array(), null, 'retention' ),
+			'M12 chain 1001'           => array( array( 'retention' => array( 'max_chain_length' => 1001 ) ), array(), null, 'retention' ),
+			'M13 exclude 255 wide'     => array( array( 'exclude' => array( str_repeat( "\u{5907}", 255 ) ) ), array(), null, null ),
+			'M14 exclude 256'          => array( array( 'exclude' => array( str_repeat( 'a', 256 ) ) ), array(), null, 'exclude' ),
+			'M15 exclude not a string' => array( array( 'exclude' => array( 5 ) ), array(), 'exclude', 'exclude' ),
+			'M16 exclude long string'  => array( array( 'exclude' => str_repeat( 'a', 300 ) ), array(), null, null ),
+			'M17 stored name omitted'  => array( array( 'retention' => array( 'days' => 2 ) ), array( 'name' => str_repeat( 'a', 300 ) ), null, null ),
+		);
+		$cases = array();
+		foreach ( $rows as $label => $row ) {
+			$cases[ $label . ' ui' ]      = array( 'ui', $row[0], $row[1], $row[2] );
+			$cases[ $label . ' ability' ] = array( 'ability', $row[0], $row[1], $row[3] );
+		}
+		return $cases;
+	}
+
+	/**
+	 * Every ceiling is one rule: unbounded for the form, schema-bounded for machine callers.
+	 *
+	 * @dataProvider ceiling_matrix
+	 * @param string      $context Caller context.
+	 * @param array       $input Submitted fields.
+	 * @param array       $stored Stored column overrides; empty means a create.
+	 * @param string|null $refused Expected refused field, or null when accepted.
+	 */
+	public function test_ceiling_matrix( string $context, array $input, array $stored, ?string $refused ): void {
+		$fields = $this->fields( $this->create_test_site() );
+		$task   = null;
+		if ( $stored ) {
+			$created = MainWP_Backup_Operations::create_task( $fields, 'ability' );
+			$this->assertIsArray( $created );
+			MainWP_DB_Backup::instance()->update_backup_task_with_values( $created['task_id'], $stored );
+			$task   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $created['task_id'] );
+			$fields = array();
+		}
+		$result = MainWP_Backup_Operations::normalize_task_fields( array_merge( $fields, $input ), $task, $context );
+		if ( null === $refused ) {
+			$this->assertIsArray( $result );
+			return;
+		}
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_invalid_input', $result->get_error_code() );
+		$this->assertSame( $refused, $result->get_error_data()['field'] );
+	}
+
+	/** The form saves a long multibyte name as it always did. */
+	public function test_ajax_create_accepts_multibyte_name(): void {
+		$name     = str_repeat( "\u{5907}", 86 );
+		$posted   = $this->posted( array_merge( $this->fields( $this->create_test_site() ), array( 'name' => $name ) ) );
+		$response = $this->ajax( 'mainwp_addbackup', $posted );
+		$this->assertSame( array( 'result' => 'Task created successfully.' ), $response );
+		$tasks = MainWP_DB_Backup::instance()->get_backup_tasks();
+		$this->assertSame( $name, html_entity_decode( end( $tasks )->name, ENT_QUOTES, 'UTF-8' ) );
+	}
 }

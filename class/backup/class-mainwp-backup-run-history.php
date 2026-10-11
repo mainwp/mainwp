@@ -258,7 +258,7 @@ class MainWP_Backup_Run_History {
             static function () use ( $where, $values, $outcome, $error_code, $snapshot_id ) {
                 global $wpdb;
                 $values[] = 'running';
-                // nosec -- Identity clauses are fixed within this class; every value is prepared.
+                // nosemgrep: AIK_tainted-sql-string -- Identity clauses are fixed within this class; every value is prepared.
                 $ids = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM ' . self::table_name() . ' WHERE ' . $where . ' AND outcome = %s', $values ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table and clauses; every value prepared.
                 if ( '' !== $wpdb->last_error ) {
                     return false;

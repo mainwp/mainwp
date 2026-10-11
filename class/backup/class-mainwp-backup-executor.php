@@ -2770,9 +2770,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return;
             }
             if ( '' !== $owner ) {
+                global $wpdb;
                 $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $owner );
-                // An active restore still polls its own task after the site handle changes.
-                if ( null !== $job && in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) {
+                // An active restore still polls its own task after the site handle changes,
+                // and a failed job read cannot prove that restore has ended.
+                if ( '' !== $wpdb->last_error || ( null !== $job && in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) ) {
                     return;
                 }
             }

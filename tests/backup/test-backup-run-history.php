@@ -890,8 +890,14 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			return 'create_refused' === $mode ? array( 'error' => 'Child refused the task.' ) : array( 'task_id' => $new_ref );
 		};
 		$options  = MainWP_DB::instance()->get_table_name( 'wp_options' );
+		$jobs     = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
 		$readback = false;
-		$fault    = static function ( $query ) use ( $mode, $options, $new_ref, &$readback, &$created ) {
+		$job_read = false;
+		$fault    = static function ( $query ) use ( $mode, $options, $jobs, $new_ref, &$readback, &$created, &$job_read ) {
+			if ( 'owner_read_fails' === $mode && $created && 0 === stripos( ltrim( $query ), 'SELECT * FROM ' . $jobs ) ) {
+				$job_read = true;
+				return 'SELECT * FROM missing_table_s72_owner';
+			}
 			if ( 'write_refused' === $mode && 0 === stripos( ltrim( $query ), 'UPDATE' ) && false !== strpos( $query, $options ) && false !== strpos( $query, $new_ref ) ) {
 				return 'SELECT * FROM missing_table_s71_handle';
 			}
@@ -921,8 +927,11 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		if ( 'readback_throws' === $mode ) {
 			$this->assertTrue( $readback );
 		}
+		if ( 'owner_read_fails' === $mode ) {
+			$this->assertTrue( $job_read );
+		}
 		$stored = json_decode( MainWP_DB::instance()->get_website_option( $site, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
-		$this->assertSame( in_array( $mode, array( 'replaced', 'readback_throws' ), true ) ? $new_ref : $old_ref, $stored['task_id'] );
+		$this->assertSame( in_array( $mode, array( 'replaced', 'readback_throws', 'owner_read_fails' ), true ) ? $new_ref : $old_ref, $stored['task_id'] );
 		$rows = $this->rows();
 		$this->assertSame( $old_ref, $rows[0]['ref'] );
 		$this->assertSame( '' === $owner ? 'update_gate' : 'restore_safety', $rows[0]['trigger_source'] );
@@ -949,7 +958,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Replacement needs confirmation; active restores retain their own safety evidence.
+	 * Replacement needs confirmation; an active or unreadable restore owner keeps its safety row open.
 	 *
 	 * @return array
 	 */
@@ -961,6 +970,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			'D7 readback throws' => array( 'readback_throws', 'running', true ),
 			'D8 active restore'  => array( 'replaced', 'running', true, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT ),
 			'D9 terminal owner'  => array( 'replaced', 'incomplete', true, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT ),
+			'D10 owner unread'   => array( 'owner_read_fails', 'running', true, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT ),
 		);
 	}
 

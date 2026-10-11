@@ -896,11 +896,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 'zip_archives'    => ! empty( $input['excludezip'] ),
             ),
             'archive_tuning'  => array(
-                'max_file_descriptors_override' => isset( $input['maximumFileDescriptorsOverride'] ) && 1 === (int) $input['maximumFileDescriptorsOverride'],
-                'max_file_descriptors_auto'     => isset( $input['maximumFileDescriptorsAuto'] ) && 1 === (int) $input['maximumFileDescriptorsAuto'],
-                'max_file_descriptors'          => isset( $input['maximumFileDescriptors'] ) ? intval( $input['maximumFileDescriptors'] ) : 150,
-                'load_files_before_zip'         => isset( $input['loadFilesBeforeZip'] ),
-                'zip_force_override'            => isset( $input['zipForceOverride'] ) && 1 === (int) $input['zipForceOverride'],
+                'zip_force_override' => isset( $input['zipForceOverride'] ) && 1 === (int) $input['zipForceOverride'],
             ),
             'retention'       => array(
                 'days'                => isset( $input['retention_days'] ) ? absint( $input['retention_days'] ) : 0,
@@ -909,6 +905,21 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 'max_chain_length'    => isset( $input['max_chain_length'] ) ? absint( $input['max_chain_length'] ) : 0,
             ),
         );
+        // Absent descriptor controls still produce zero checkbox values in
+        // the native form's JavaScript. A submitted limit distinguishes those
+        // placeholders from an edit to the legacy controls.
+        if ( isset( $input['maximumFileDescriptors'] ) && '' !== $input['maximumFileDescriptors'] ) {
+            $fields['archive_tuning']['max_file_descriptors'] = intval( $input['maximumFileDescriptors'] );
+            if ( isset( $input['maximumFileDescriptorsOverride'] ) ) {
+                $fields['archive_tuning']['max_file_descriptors_override'] = 1 === (int) $input['maximumFileDescriptorsOverride'];
+            }
+            if ( isset( $input['maximumFileDescriptorsAuto'] ) ) {
+                $fields['archive_tuning']['max_file_descriptors_auto'] = 1 === (int) $input['maximumFileDescriptorsAuto'];
+            }
+        }
+        if ( isset( $input['loadFilesBeforeZip'] ) ) {
+            $fields['archive_tuning']['load_files_before_zip'] = 1 === (int) $input['loadFilesBeforeZip'];
+        }
         if ( isset( $input['retention_count'] ) ) {
             $fields['retention']['count'] = absint( $input['retention_count'] );
         } elseif ( isset( $input['id'] ) ) {
@@ -1015,7 +1026,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $sched_task = (object) array_merge( array( 'schedule' => $task->schedule ), $values );
 
         $calculator         = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
-        $values['next_run'] = $calculator->compute_next_run( $sched_task, empty( $task->last_run ) ? null : (int) $task->last_run );
+        $values['next_run'] = empty( $task->paused ) ? $calculator->compute_next_run( $sched_task, empty( $task->last_run ) ? null : (int) $task->last_run ) : (int) $task->next_run;
 
         MainWP_DB_Backup::instance()->update_backup_task_with_values( $task_id, $values );
 
@@ -2194,8 +2205,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // history (an authorized deleter leaves nothing orphaned). A task with
         // no runs has no history and authorizes trivially.
         $historical = MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( (int) $task->id );
-        if ( ! empty( $historical ) ) {
-            $history_error = static::authorize_task_scope( implode( ',', array_map( 'intval', $historical ) ), '' );
+        foreach ( $historical as $site_id ) {
+            // A scoped lookup cannot distinguish a hidden site from deleted history.
+            if ( empty( MainWP_DB::instance()->get_website_by_id_unscoped( $site_id ) ) ) {
+                continue;
+            }
+            $history_error = static::authorize_task_scope( (string) $site_id, '' );
             if ( '' !== $history_error ) {
                 return array( 'error' => $history_error );
             }

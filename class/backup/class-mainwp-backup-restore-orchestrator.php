@@ -810,7 +810,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                         $store::RECLAIM_CEILING
                     ),
                     '',
-                    null
+                    (string) $expired_job->locked_by
                 );
             }
 
@@ -1683,7 +1683,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param object      $job        Job row.
      * @param string|null $error      Error text, or null for a user cancellation.
      * @param string      $error_code Stable error code, or empty when none.
-     * @param string|null $lock_token Worker lease token, or null for an expired-lease sweep.
+     * @param string|null $lock_token Captured lease token, or null for an unleased UI cancellation.
      *
      * @return string One of the TERMINAL_OUTCOME_* constants.
      */

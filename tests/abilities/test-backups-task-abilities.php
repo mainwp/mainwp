@@ -12,6 +12,7 @@ use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
+use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 
 
 require_once __DIR__ . '/../backup/class-mainwp-backup-read-fixtures.php';
@@ -683,6 +684,107 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 		return (int) $wpdb->insert_id;
+	}
+
+	/**
+	 * Missing historical sites remain purgeable without exposing hidden existing sites.
+	 *
+	 * @dataProvider delete_history_scopes
+	 * @param string $state Historical site state.
+	 * @param string $transport Deletion entry point.
+	 */
+	public function test_delete_history_site_scope_on_preview_and_delete( $state, $transport ) {
+		$this->skip_when_capabilities_bypassed();
+		global $wpdb;
+		$history_site = $this->create_test_site();
+		$snapshot_id  = $this->create_task_history_snapshot( $history_site );
+		$before       = MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->task_id );
+		if ( 'deleted' === $state ) {
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'id' => $history_site ) );
+		}
+		$deny  = static function ( $allowed, $type, $id ) use ( $history_site, $state ) {
+			return 'hidden' === $state && 'site' === $type && (int) $id === $history_site ? false : $allowed;
+		};
+		$scope = function () use ( $history_site, $state ) {
+			return 'hidden' === $state ? array( $this->site_id ) : array( $this->site_id, $history_site );
+		};
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		try {
+			$this->assertNotWPError( MainWP_Backup_Operations::authorize_site( $this->site_id, 'delete_backup_tasks' ) );
+			if ( 'deleted' === $state ) {
+				$this->assertEmpty( MainWP_DB::instance()->get_website_by_id_unscoped( $history_site ) );
+			} else {
+				$this->assertNotEmpty( MainWP_DB::instance()->get_website_by_id_unscoped( $history_site ) );
+			}
+			if ( 'hidden' === $state ) {
+				$this->assertEmpty( MainWP_DB::instance()->get_website_by_id( $history_site ) );
+			}
+			$input = array(
+				'task_id'          => $this->task_id,
+				'delete_snapshots' => true,
+			);
+			foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+				if ( 'rest' === $transport ) {
+					$response = $this->body_preview( 'delete-backup-task', $input + array( $mode => true ) );
+					$this->assertSame( 'hidden' === $state ? 404 : 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+					$output = $response->get_data();
+				} elseif ( 'handler' === $transport ) {
+					$output = 'dry_run' === $mode ? MainWP_Backup_Operations::preview_task_delete( $this->task_id ) : MainWP_Manage_Backups_Handler::remove_backup_result( $this->task_id );
+				} else {
+					$output = $this->execute( 'delete-backup-task', $input + array( $mode => true ) );
+				}
+				if ( 'hidden' === $state ) {
+					if ( 'rest' === $transport ) {
+						$this->assertSame( 'mainwp_backup_task_not_found', $output['code'] );
+					} elseif ( 'handler' === $transport && 'confirm' === $mode ) {
+						$this->assertArrayHasKey( 'error', $output );
+					} else {
+						$this->assertWPError( $output );
+						$this->assertSame( 'mainwp_backup_task_not_found', $output->get_error_code() );
+					}
+				} elseif ( 'dry_run' === $mode ) {
+					$this->assertIsArray( $output, is_wp_error( $output ) ? $output->get_error_message() : '' );
+					$this->assertSame( array( $snapshot_id ), array_column( $output['would_affect']['snapshots'], 'id' ) );
+					$this->assertSame( $history_site, $output['would_affect']['snapshots'][0]['site_id'] );
+				} elseif ( 'handler' === $transport ) {
+					$this->assertSame( 'SUCCESS', $output['result'] ?? null );
+				} else {
+					$this->assert_output( 'delete-backup-task', $output );
+					$this->assertTrue( $output['snapshots_deleted'] );
+				}
+				$task     = MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->task_id );
+				$snapshot = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ) . ' WHERE id = %d', $snapshot_id ) );
+				if ( 'hidden' === $state || 'dry_run' === $mode ) {
+					$this->assertEquals( $before, $task );
+					$this->assertNotNull( $snapshot );
+				} else {
+					$this->assertNull( $task );
+					$this->assertSame( 'pruned', $snapshot->status, 'Deletion must purge history even without a site row.' );
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'id' => $snapshot_id ) );
+		}
+	}
+
+	/**
+	 * Every transport must enforce the same historical site scope.
+	 *
+	 * @return array
+	 */
+	public static function delete_history_scopes() {
+		$rows = array();
+		foreach ( array( 'deleted', 'hidden', 'accessible' ) as $state ) {
+			foreach ( array( 'ability', 'rest', 'handler' ) as $transport ) {
+				$rows[ $state . '-' . $transport ] = array( $state, $transport );
+			}
+		}
+		return $rows;
 	}
 
 	/**

@@ -11,6 +11,8 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Task_Form;
+use MainWP\Dashboard\MainWP_Backup_Schedule_Calculator;
+use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 
@@ -497,6 +499,162 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 			0 // zip_force_override cleared.
 		);
 		$this->assertSame( 0, (int) $db->get_backup_task_by_id( $added->id )->zip_force_override );
+	}
+
+	/**
+	 * Hidden legacy controls must survive a native form save, including false values.
+	 *
+	 * @dataProvider native_form_task_states
+	 * @param bool $paused Whether the schedule is paused.
+	 * @param int  $flag Stored legacy boolean value.
+	 * @param bool $phantom Whether absent controls produced empty JavaScript values.
+	 */
+	public function test_native_form_save_preserves_legacy_tuning_and_paused_schedule( $paused, $flag, $phantom ) {
+		global $wpdb;
+		$previous_post = $_POST;
+		$user          = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		update_user_meta( $user, 'mainwp_api_enabled', 1 );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$this->assertNotFalse(
+			$wpdb->insert(
+				MainWP_DB::instance()->get_table_name( 'wp' ),
+				array(
+					'userid'     => $user,
+					'name'       => 'Native form site',
+					'url'        => 'https://native-form.example.org/',
+					'is_staging' => 0,
+				)
+			)
+		);
+		$site = (int) $wpdb->insert_id;
+		$this->assertNotFalse( $wpdb->insert( MainWP_DB::instance()->get_table_name( 'wp_sync' ), array( 'wpid' => $site ) ) );
+		$db   = MainWP_DB_Backup::instance();
+		$task = $db->add_backup_task( $user, 'Native form save', 'interval', 'full', '', (string) $site, '', '', '', 0, 0, 0, 0, 0, 'site', $flag, $flag, 333, $flag, $flag );
+		$this->assertIsObject( $task );
+		$old_next = time() - HOUR_IN_SECONDS;
+		$last_run = time() - 5 * HOUR_IN_SECONDS;
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'paused'         => (int) $paused,
+				'next_run'       => $old_next,
+				'last_run'       => $last_run,
+				'completed'      => time(),
+				'interval_hours' => 2,
+			)
+		);
+		$_POST = array(
+			'id'                      => $task->id,
+			'name'                    => 'Edited native task',
+			'type'                    => 'full',
+			'schedule'                => 'interval',
+			'schedule_interval_hours' => 3,
+			'sites'                   => array( $site ),
+			'zipForceOverride'        => $flag,
+		);
+		if ( $phantom ) {
+			$_POST['maximumFileDescriptorsOverride'] = 0;
+			$_POST['maximumFileDescriptorsAuto']     = 0;
+			$_POST['maximumFileDescriptors']         = '';
+		}
+		$die = static function () {
+			return static function () {
+				throw new \RuntimeException( 'task-form-json-end' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $die );
+		ob_start();
+		try {
+			try {
+				MainWP_Manage_Backups_Handler::update_backup();
+			} catch ( \RuntimeException $e ) {
+				$this->assertSame( 'task-form-json-end', $e->getMessage() );
+			}
+			$raw = ob_get_contents();
+		} finally {
+			ob_end_clean();
+			remove_filter( 'wp_die_ajax_handler', $die );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			$_POST = $previous_post;
+		}
+		try {
+			$this->assertArrayHasKey( 'result', json_decode( $raw, true ), $raw );
+			$saved = $db->get_backup_task_by_id( $task->id );
+			foreach ( array( 'maximumFileDescriptorsOverride', 'maximumFileDescriptorsAuto', 'loadFilesBeforeZip', 'zip_force_override' ) as $field ) {
+				$this->assertSame( $flag, (int) $saved->$field, $field );
+			}
+			$this->assertSame( 333, (int) $saved->maximumFileDescriptors );
+			$this->assertSame( 3, (int) $saved->interval_hours );
+			$this->assertSame( (int) $paused, (int) $saved->paused );
+			$calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+			$expected   = $calculator->compute_next_run( $saved, $last_run );
+			$this->assertSame( $paused ? $old_next : $expected, (int) $saved->next_run );
+			if ( $paused ) {
+				$this->assertSame( 'SUCCESS', MainWP_Manage_Backups_Handler::resume_backup_result( $task->id )['result'] ?? null );
+				$resumed = $db->get_backup_task_by_id( $task->id );
+				$this->assertSame( 0, (int) $resumed->paused );
+				$this->assertSame( $expected, (int) $resumed->next_run );
+			}
+		} finally {
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'id' => $task->id ) );
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'id' => $site ) );
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_sync' ), array( 'wpid' => $site ) );
+			delete_option( 'mainwp_enableNativeBackups' );
+		}
+	}
+
+	/**
+	 * Both boolean values must survive both schedule states.
+	 *
+	 * @return array
+	 */
+	public static function native_form_task_states() {
+		return array(
+			'paused true fields'  => array( true, 1, false ),
+			'paused false fields' => array( true, 0, false ),
+			'active true fields'  => array( false, 1, false ),
+			'active false fields' => array( false, 0, false ),
+			'paused empty inputs' => array( true, 1, true ),
+			'active empty inputs' => array( false, 1, true ),
+		);
+	}
+
+	/**
+	 * A paused schedule keeps its old slot until resume applies the edited interval.
+	 */
+	public function test_paused_schedule_save_waits_for_resume() {
+		global $wpdb;
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$db   = MainWP_DB_Backup::instance();
+		$task = $db->add_backup_task( $user, 'Paused schedule save', 'interval', 'full', '', '', '', '', '', 0, 0, 0, 0, 0, 'site', 0, 1, 150, 0, 0 );
+		$this->assertIsObject( $task );
+		$old_next = time() - HOUR_IN_SECONDS;
+		$last_run = time() - 5 * HOUR_IN_SECONDS;
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'interval_hours' => 2,
+				'next_run'       => $old_next,
+				'last_run'       => $last_run,
+			)
+		);
+		try {
+			$this->assertSame( 'SUCCESS', MainWP_Manage_Backups_Handler::pause_backup_result( $task->id )['result'] ?? null );
+			$this->assertSame( $old_next, (int) $db->get_backup_task_by_id( $task->id )->next_run );
+			$values = MainWP_Manage_Backups_Handler::save_task_schedule_fields( $task->id, array( 'schedule_interval_hours' => 3 ) );
+			$this->assertSame( $old_next, (int) $values['next_run'] );
+			$this->assertSame( $old_next, (int) $db->get_backup_task_by_id( $task->id )->next_run );
+			$this->assertSame( 'SUCCESS', MainWP_Manage_Backups_Handler::resume_backup_result( $task->id )['result'] ?? null );
+			$resumed    = $db->get_backup_task_by_id( $task->id );
+			$calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+			$this->assertSame( 0, (int) $resumed->paused );
+			$this->assertSame( $calculator->compute_next_run( $resumed, $last_run ), (int) $resumed->next_run );
+		} finally {
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'id' => $task->id ) );
+		}
 	}
 
 	/**

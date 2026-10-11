@@ -582,18 +582,19 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
-     * Retention changes can prune sites that are no longer in the task's current scope.
+     * Edits and deletion can prune sites that are no longer in the task's current scope.
      *
-     * @param int $task_id Task identity.
+     * @param int    $task_id Task identity.
+     * @param string $right Required operation right.
      * @return true|\WP_Error
      */
-    private static function authorize_task_history_sites( int $task_id ) {
+    private static function authorize_task_history_sites( int $task_id, string $right = 'edit_backup_tasks' ) {
         foreach ( MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( $task_id ) as $site_id ) {
             // A scoped lookup would mistake a hidden site for a deleted one.
             if ( empty( MainWP_DB::instance()->get_website_by_id_unscoped( $site_id ) ) ) {
                 continue;
             }
-            if ( is_wp_error( self::authorize_site( $site_id, 'edit_backup_tasks' ) ) ) {
+            if ( is_wp_error( self::authorize_site( $site_id, $right ) ) ) {
                 return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
             }
         }
@@ -679,12 +680,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
-        // Purging historical sites needs the same direct scope checks as the current run.
-        foreach ( MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( $task_id ) as $id ) {
-            $site = self::authorize_site( (int) $id, 'delete_backup_tasks' );
-            if ( is_wp_error( $site ) ) {
-                return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
-            }
+        $history = self::authorize_task_history_sites( $task_id, 'delete_backup_tasks' );
+        if ( is_wp_error( $history ) ) {
+            return $history;
         }
         return self::task_action_result( MainWP_Manage_Backups_Handler::remove_backup_result( $task_id, $delete_snapshots ), (int) $task->completed < (int) $task->last_run ? MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING : 'mainwp_operation_failed' );
     }
@@ -2234,13 +2232,14 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
+        $history = self::authorize_task_history_sites( $task_id, 'delete_backup_tasks' );
+        if ( is_wp_error( $history ) ) {
+            return $history;
+        }
         $query     = MainWP_Backup_Retention_Query::instance();
         $snapshots = array();
         $cloud     = array();
         foreach ( $query->list_site_ids_for_task( $task_id ) as $site_id ) {
-            if ( is_wp_error( self::authorize_site( $site_id, 'delete_backup_tasks' ) ) ) {
-                return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
-            }
             if ( ! $delete_snapshots ) {
                 continue;
             }

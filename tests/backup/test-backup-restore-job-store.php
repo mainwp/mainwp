@@ -168,6 +168,45 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A stale phase cursor cannot undo an acknowledged stop or its first failure.
+	 */
+	public function test_save_checkpoint_preserves_stored_stop_evidence() {
+		$job_id = $this->store->create_job( 8801, 42, array( 'cursor' => 1 ) );
+		$this->assertNotNull( $this->store->acquire_next_job( 'holder', 300, null, $job_id ) );
+		$stale = $this->store->get_job( $job_id )->checkpoint;
+		$this->assertNotNull( $this->store->defer_terminal_failure( $job_id, 'Original failure', 'original_code' ) );
+		$this->assertSame( 'written', $this->store->finish_with_cancel_confirmation( $job_id, $this->store::STATUS_FAILED_PERMANENT, 'Original failure', 'original_code', 'confirmed' ) );
+		$stored          = $this->store->get_job( $job_id );
+		$stale['cursor'] = 2;
+		$this->assertTrue( $this->store->save_checkpoint( $job_id, $stale ) );
+		$fresh = $this->store->get_job( $job_id );
+		$this->assertSame( $stored->status, $fresh->status );
+		$this->assertSame( $stored->last_error, $fresh->last_error );
+		foreach ( array( 'cancel_intent', 'cancel_confirmation', 'terminal_failure', 'last_error_code' ) as $key ) {
+			$this->assertSame( $stored->checkpoint[ $key ], $fresh->checkpoint[ $key ] ?? null, $key );
+		}
+		$this->assertSame( 2, $fresh->checkpoint['cursor'] );
+	}
+
+	/**
+	 * Without stored stop evidence the worker's checkpoint is authoritative,
+	 * so a later retryable failure reports its own error code.
+	 */
+	public function test_save_checkpoint_worker_error_code_wins_without_stop_evidence() {
+		$job_id = $this->store->create_job( 8802, 42, array( 'cursor' => 1 ) );
+		$this->assertNotNull( $this->store->acquire_next_job( 'holder', 300, null, $job_id ) );
+		$checkpoint                    = $this->store->get_job( $job_id )->checkpoint;
+		$checkpoint['last_error_code'] = 'first_code';
+		$this->assertTrue( $this->store->save_checkpoint( $job_id, $checkpoint, 'holder' ) );
+		$checkpoint['last_error_code'] = 'second_code';
+		$this->assertTrue( $this->store->save_checkpoint( $job_id, $checkpoint, 'holder' ) );
+		$this->assertSame( 'second_code', $this->store->get_job( $job_id )->checkpoint['last_error_code'] );
+		unset( $checkpoint['last_error_code'] );
+		$this->assertTrue( $this->store->save_checkpoint( $job_id, $checkpoint, 'holder' ) );
+		$this->assertArrayNotHasKey( 'last_error_code', $this->store->get_job( $job_id )->checkpoint );
+	}
+
+	/**
 	 * Only the explicit clear flag (the applied-cancel path) may drop a
 	 * stored cancel intent.
 	 */

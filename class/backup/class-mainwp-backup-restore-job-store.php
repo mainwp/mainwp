@@ -397,11 +397,8 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
-     * The JSON fragment a stored cancel intent serializes to. The key is
-     * written only by this store's own arm/save paths and the value is
-     * only ever boolean true, so a substring match on the stored row is
-     * an exact intent probe - no JSON functions needed, which keeps the
-     * merge below portable across MySQL and MariaDB.
+     * Raw checkpoint probes need the exact boolean encoding so unrelated
+     * truthy values cannot be mistaken for a stored cancellation intent.
      *
      * @var string
      */
@@ -410,14 +407,11 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     /**
      * Persist the checkpoint.
      *
-     * A cancel intent recorded on the row is sticky: the UI writes it
-     * unfenced from outside the lease, so a worker saving phase data
-     * built from an older in-memory copy would silently erase it. The
-     * carry-forward happens INSIDE the UPDATE - the statement itself
-     * picks the flag-carrying encoding when the stored row holds the
-     * intent - so there is no read-then-write window in which a cancel
-     * landing mid-save could still be lost. Only the explicit
-     * $clear_cancel_intent (the applied-cancel path) may drop it.
+     * The UI can record stop evidence outside the worker's lease. A stale
+     * phase copy must not erase that evidence or replace a terminal outcome.
+     * Comparing the stored checkpoint prevents a mid-save cancellation from
+     * being lost; a missed swap retries with the newer evidence. Only the
+     * explicit applied-cancel path may clear it after Child completion.
      *
      * @param int         $job_id              Job id.
      * @param array       $checkpoint          Checkpoint.
@@ -438,40 +432,63 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             );
         }
 
-        $plain                       = (string) wp_json_encode( $checkpoint );
-        $checkpoint['cancel_intent'] = true;
-        $flagged                     = (string) wp_json_encode( $checkpoint );
-
-        $fence = '';
-        $binds = array( '%' . $this->wpdb->esc_like( self::CANCEL_INTENT_FRAGMENT ) . '%', $flagged, $plain, time(), $job_id );
-        if ( null !== $lock_token ) {
-            $fence   = ' AND locked_by = %s';
-            $binds[] = $lock_token;
+        for ( $attempt = 0; $attempt < 5; $attempt++ ) {
+            $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+            );
+            if ( null === $row || ( null !== $lock_token && $row->locked_by !== $lock_token ) ) {
+                return false;
+            }
+            $stored  = (string) $row->checkpoint;
+            $decoded = json_decode( $stored, true );
+            $decoded = is_array( $decoded ) ? $decoded : array();
+            $merged  = $checkpoint;
+            if ( ! empty( $decoded['cancel_intent'] ) ) {
+                $merged['cancel_intent'] = true;
+            }
+            // Stop evidence (a cancel confirmation, a deferred failure, or a
+            // stopped status) is written outside the lease, and its error code
+            // belongs to it. Without it, the worker owns the error code, so a
+            // later retryable failure reports its own code.
+            $stopped = in_array( $row->status, array( self::STATUS_FAILED_PERMANENT, self::STATUS_CANCELLED ), true );
+            if ( $stopped || isset( $decoded['cancel_confirmation'] ) || isset( $decoded['terminal_failure'] ) ) {
+                foreach ( array( 'cancel_confirmation', 'terminal_failure', 'last_error_code' ) as $key ) {
+                    if ( array_key_exists( $key, $decoded ) ) {
+                        $merged[ $key ] = $decoded[ $key ];
+                    }
+                }
+            }
+            $encoded = (string) wp_json_encode( $merged );
+            $fence   = '';
+            $binds   = array( $encoded, time(), $job_id, $stored, $row->status );
+            if ( null !== $lock_token ) {
+                $fence   = ' AND locked_by = %s';
+                $binds[] = $lock_token;
+            }
+            $updated = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional lease fence adds its bind.
+                    'UPDATE ' . $this->table() . " SET checkpoint = %s, updated = %d WHERE id = %d AND checkpoint = %s AND status = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
+                    $binds
+                )
+            );
+            if ( 1 === $updated ) {
+                return true;
+            }
+            if ( false === $updated ) {
+                return false;
+            }
+            if ( $encoded === $stored ) {
+                // MySQL also reports zero for identical values; only a matching
+                // reread can distinguish that from a lost fence or checkpoint.
+                $fresh = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+                    $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+                );
+                if ( null !== $fresh && $fresh->checkpoint === $encoded && $fresh->status === $row->status && ( null === $lock_token || $fresh->locked_by === $lock_token ) ) {
+                    return true;
+                }
+            }
         }
-
-        $updated = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- placeholder list and bind array grow together.
-                'UPDATE ' . $this->table() . " SET checkpoint = IF( checkpoint LIKE %s, %s, %s ), updated = %d WHERE id = %d{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- the fence is a fixed SQL fragment; its value binds via placeholder.
-                $binds
-            )
-        );
-
-        if ( null === $lock_token ) {
-            return false !== $updated;
-        }
-        if ( 1 === $updated ) {
-            return true;
-        }
-        if ( false === $updated ) {
-            return false;
-        }
-        // Zero affected rows is ambiguous under MySQL: the fence refused
-        // the write, or the values were already identical. Only a
-        // confirmed token mismatch is a lost lease (mirrors update_job).
-        $holder = $this->wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-            $this->wpdb->prepare( 'SELECT locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
-        );
-        return $holder === $lock_token;
+        return false;
     }
 
     /**

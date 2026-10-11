@@ -23,6 +23,13 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Read_Purity_Guard;
 
 	/**
+	 * Allocated history identity prevents collisions across fixture seeds.
+	 *
+	 * @var int
+	 */
+	private $history_id;
+
+	/**
 	 * Each read starts with recorded evidence and a fresh authorization cache.
 	 *
 	 * @return void
@@ -40,6 +47,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	private function seed_configuration_and_history() {
+		global $wpdb;
 		$this->insert_read_fixture(
 			'wp_backup_storage',
 			array(
@@ -54,7 +62,6 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->insert_read_fixture(
 			'wp_backup_run_history',
 			array(
-				'id'                => 987677,
 				'task_id'           => 987671,
 				'site_id'           => $this->site_id,
 				'started'           => time() - 60,
@@ -67,6 +74,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 				'snapshot_id'       => 987673,
 			)
 		);
+		$this->history_id = (int) $wpdb->insert_id;
 	}
 
 	/**
@@ -75,9 +83,32 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tear_down() {
+		global $wpdb;
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ), array( 'id' => $this->history_id ) );
 		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
 		$this->clear_read_fixtures();
 		parent::tear_down();
+	}
+
+	/**
+	 * Independent history fixtures must not collide or rewrite an earlier row.
+	 */
+	public function test_history_fixture_allocates_independent_rows() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' );
+		$first = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . $table . ' WHERE site_id = %d ORDER BY id DESC LIMIT 1', $this->site_id ) );
+		$this->assertNotNull( $first );
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), array( 'id' => 987676 ) );
+		$previous = $wpdb->suppress_errors( true );
+		try {
+			$this->seed_configuration_and_history();
+			$second = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . $table . ' WHERE site_id = %d ORDER BY id DESC LIMIT 1', $this->site_id ) );
+			$this->assertNotSame( $first->id, $second->id );
+			$this->assertEquals( $first, $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . $table . ' WHERE id = %d', $first->id ) ) );
+		} finally {
+			$wpdb->suppress_errors( $previous );
+			$wpdb->delete( $table, array( 'site_id' => $this->site_id ) );
+		}
 	}
 
 	/**
@@ -586,7 +617,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 				'message'    => $text,
 				'error_code' => 'mainwp_backup_disk_full',
 			),
-			array( 'id' => 987677 )
+			array( 'id' => $this->history_id )
 		);
 		foreach ( self::reads() as list( $name, $input ) ) {
 			if ( 'list-backup-snapshots' === $name ) {
@@ -1682,7 +1713,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 					'error_code' => '',
 					'message'    => '/private/raw-error',
 				),
-				array( 'id' => 987677 )
+				array( 'id' => $this->history_id )
 			);
 			$output = $this->read(
 				'list-backup-history',
@@ -1711,7 +1742,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 					'restore_job_id'    => 'restore_safety' === $trigger ? 987674 : null,
 					'ref'               => 'child-history-id',
 				),
-				array( 'id' => 987677 )
+				array( 'id' => $this->history_id )
 			);
 			$row = $this->read( 'list-backup-history' )['items'][0];
 			$this->assertNull( $row['task_id'] );
@@ -1728,7 +1759,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 				'finished' => 0,
 				'started'  => time() - 40 * DAY_IN_SECONDS,
 			),
-			array( 'id' => 987677 )
+			array( 'id' => $this->history_id )
 		);
 		$this->assertSame( 0, $this->read( 'list-backup-history' )['total'] );
 		$this->assertSame( 1, $this->read( 'list-backup-history', array( 'days' => 90 ) )['total'] );
@@ -1800,7 +1831,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 				$this->assertStringNotContainsString( '/private/raw-error', wp_json_encode( $output ) );
 			}
 			foreach ( array( 'backup_missing', 'backup_pending_offsite' ) as $message ) {
-				$wpdb->update( $table, array( 'message' => $message ), array( 'id' => 987677 ) );
+				$wpdb->update( $table, array( 'message' => $message ), array( 'id' => $this->history_id ) );
 				$output = $this->read(
 					'list-backup-history',
 					array(

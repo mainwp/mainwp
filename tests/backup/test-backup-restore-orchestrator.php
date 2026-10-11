@@ -3076,6 +3076,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * @param bool $terminal_failure Whether the cancellation was driven by a terminal failure.
 	 */
 	public function test_bounded_cancellation_cleans_staging( $terminal_failure ) {
+		global $wpdb;
 		$store      = MainWP_Backup_Restore_Job_Store::instance();
 		$checkpoint = array( 'cancel_intent' => true );
 		if ( $terminal_failure ) {
@@ -3117,7 +3118,13 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$this->assertSame( $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
 			$checkpoint = $job->checkpoint;
 			$checkpoint['cancel_confirmation']['first_attempt_at'] = time() - $store::CANCEL_CONFIRMATION_TIMEOUT_SECONDS;
-			$store->save_checkpoint( (int) $job->id, $checkpoint );
+			$this->assertNotFalse(
+				$wpdb->update(
+					MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+					array( 'checkpoint' => wp_json_encode( $checkpoint ) ),
+					array( 'id' => (int) $job->id )
+				)
+			);
 			$job = $this->tick( $store->get_job( (int) $job->id ) );
 			$this->assertSame( $store::STATUS_FAILED_PERMANENT, $job->status );
 			$this->assertFileDoesNotExist( $staging . 'backup.zip' );
@@ -3358,6 +3365,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * @param bool   $terminal_failure Whether a caught failure is already pending in the checkpoint.
 	 */
 	public function test_unconfirmed_cancellation_attempts_are_bounded( $answer, $sweep, $terminal_failure ) {
+		global $wpdb;
 		$store      = MainWP_Backup_Restore_Job_Store::instance();
 		$checkpoint = array( 'cancel_intent' => true );
 		if ( $terminal_failure ) {
@@ -3392,7 +3400,13 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$original   = $terminal_failure ? 'Original replay failure' : ( $sweep ? $fresh->last_error : null );
 		$checkpoint = $fresh->checkpoint;
 		$checkpoint['cancel_confirmation']['first_attempt_at'] = time() - $store::CANCEL_CONFIRMATION_TIMEOUT_SECONDS;
-		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$this->assertNotFalse(
+			$wpdb->update(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+				array( 'checkpoint' => wp_json_encode( $checkpoint ) ),
+				array( 'id' => (int) $job->id )
+			)
+		);
 		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
 		$fresh = $store->get_job( (int) $job->id );
 		++$ticks;
@@ -4182,6 +4196,173 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$this->assertNotNull( $reclaimed );
 			$this->assertSame( $i, (int) $reclaimed->reclaim_count );
 		}
+	}
+
+	/**
+	 * Lease changes and stored stop evidence must survive stale writes.
+
+	 * @dataProvider lease_checkpoint_interleavings
+	 * @param string $order Interleaving to exercise.
+	 */
+	public function test_lease_checkpoint_interleaving_matrix( $order ) {
+		global $wpdb;
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array( 'cursor' => 1 ) );
+		$id    = (int) $job->id;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$stale = $job->checkpoint;
+		if ( str_starts_with( $order, 'sweep' ) ) {
+			$this->expire_job_at_reclaim_ceiling( $id );
+			$other = $store->create_job( $this->create_test_site(), 5, array() );
+			$this->expire_job_at_reclaim_ceiling( $other );
+			$captured    = $store->get_job( $id );
+			$after_race  = null;
+			$interleaved = false;
+			$events      = array();
+			$event       = static function ( $failure ) use ( &$events ) {
+				$events[] = $failure['job_id'];
+			};
+			$race        = function ( $sql ) use ( &$race, &$interleaved, &$after_race, $order, $table, $id, $store, $captured ) {
+				$at_read  = str_contains( $order, 'before-read' ) && str_starts_with( $sql, 'SELECT * FROM ' . $table . ' WHERE id = ' . $id );
+				$at_write = str_contains( $order, 'at-write' ) && str_starts_with( $sql, 'UPDATE ' . $table . ' SET `status`' ) && str_contains( $sql, 'WHERE id = ' . $id . ' ' );
+				if ( $at_read || $at_write ) {
+					remove_filter( 'query', $race );
+					$interleaved = true;
+					if ( str_contains( $order, 'reacquire' ) ) {
+						$store->release_lock( $id, $captured->locked_by );
+						$this->assertNotNull( $store->acquire_next_job( 'fresh-worker', 300, null, $id ) );
+					} else {
+						$this->assertSame( 'written', $store->finish_with_cancel_confirmation( $id, $store::STATUS_CANCELLED, null, '', 'not_needed' ) );
+					}
+					$after_race = $store->get_job( $id );
+				}
+				return $sql;
+			};
+			add_filter( 'query', $race );
+			add_action( 'mainwp_backup_restore_failed', $event );
+			try {
+				$this->orchestrator->process_pending_restore_jobs( 30 );
+			} finally {
+				remove_filter( 'query', $race );
+				remove_action( 'mainwp_backup_restore_failed', $event );
+			}
+			$fresh = $store->get_job( $id );
+			if ( 'sweep-success' === $order ) {
+				$this->assertSame( $store::STATUS_FAILED_PERMANENT, $fresh->status );
+				$this->assertSame( '', $fresh->locked_by );
+				$this->assertSame( 1, $fresh->checkpoint['cursor'] );
+				$this->assertSame( '', $fresh->checkpoint['last_error_code'] );
+				$this->assertSame( array( $id, $other ), $events );
+			} else {
+				$this->assertTrue( $interleaved, 'The race must land at the requested boundary.' );
+				$this->assertEquals( $after_race, $fresh, 'A lost fence must change no stored column.' );
+				$this->assertSame( array( $other ), $events, 'A refused fence must not abort the sweep.' );
+			}
+			$this->assertSame( $store::STATUS_FAILED_PERMANENT, $store->get_job( $other )->status );
+			return;
+		}
+
+		$this->assertNotNull( $store->acquire_next_job( 'worker-a', 300, time() - 301, $id ) );
+		if ( 'reclaim-stale-fence' === $order ) {
+			$this->assertNotNull( $store->acquire_next_job( 'worker-b', 300, null, $id ) );
+			$before = $store->get_job( $id );
+			$this->assertFalse( $store->save_checkpoint( $id, array( 'cursor' => 9 ), 'worker-a' ) );
+			$this->assertEquals( $before, $store->get_job( $id ) );
+			return;
+		}
+		$stale['cursor'] = 9;
+		$incoming        = array(
+			'cancel_confirmation' => array(
+				'outcome'       => 'pending',
+				'attempt_count' => 99,
+			),
+			'terminal_failure'    => array(
+				'error'      => 'Stale error',
+				'error_code' => 'stale_code',
+			),
+			'last_error_code'     => 'stale_code',
+		);
+		$token           = 'worker-a';
+		if ( 'ui-defer-save' === $order || 'reclaim-defer-save' === $order || 'ui-during-save' === $order ) {
+			$store->set_status( $id, $store::STATUS_RUNNING, array( 'child_task_id' => 'child-restore' ), $token );
+			if ( 'ui-during-save' !== $order ) {
+				$this->assertNotNull( $store->defer_terminal_failure( $id, 'reclaim-defer-save' === $order ? 'Original failure' : null, 'original_code' ) );
+			}
+		} elseif ( 'ui-terminal-save' === $order || 'reclaim-terminal-save' === $order ) {
+			$cancel = 'ui-terminal-save' === $order;
+			$this->assertSame( 'written', $store->finish_with_cancel_confirmation( $id, $cancel ? $store::STATUS_CANCELLED : $store::STATUS_FAILED_PERMANENT, $cancel ? null : 'Original failure', 'original_code', $cancel ? 'not_needed' : null ) );
+			$token = null;
+			$stale = array_merge( $stale, $incoming );
+		} elseif ( 'incoming-only' === $order ) {
+			$stale = array_merge( $stale, $incoming );
+		} else {
+			$key    = $order;
+			$stored = array(
+				$key => 'last_error_code' === $key ? 'original_code' : array(
+					'outcome' => 'confirmed',
+					'error'   => 'Original failure',
+				),
+			);
+			$this->assertTrue( $store->save_checkpoint( $id, array_merge( $job->checkpoint, $stored ), $token ) );
+			$stale = array_merge( $stale, $incoming );
+		}
+		$before      = $store->get_job( $id );
+		$interleaved = false;
+		$race        = function ( $sql ) use ( &$race, &$interleaved, &$before, $order, $table, $id, $store ) {
+			if ( 'ui-during-save' === $order && str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint' ) ) {
+				remove_filter( 'query', $race );
+				$interleaved = true;
+				$this->assertNotNull( $store->defer_terminal_failure( $id, 'Original failure', 'original_code' ) );
+				$before = $store->get_job( $id );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $race );
+		try {
+			$this->assertTrue( $store->save_checkpoint( $id, $stale, $token ) );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		if ( 'ui-during-save' === $order ) {
+			$this->assertTrue( $interleaved );
+		}
+		$fresh = $store->get_job( $id );
+		$this->assertSame( $before->status, $fresh->status );
+		$this->assertSame( $before->locked_by, $fresh->locked_by );
+		$this->assertSame( $before->last_error, $fresh->last_error );
+		$this->assertSame( 9, $fresh->checkpoint['cursor'] );
+		// A lone stored error code is the lease holder's own earlier write, so its newer save wins.
+		$worker_owns_code = 'last_error_code' === $order;
+		foreach ( array_merge( array( 'cancel_intent' ), array_keys( $incoming ) ) as $key ) {
+			$expected = ( $worker_owns_code && 'last_error_code' === $key ) ? $stale[ $key ] : ( $before->checkpoint[ $key ] ?? $stale[ $key ] ?? null );
+			$this->assertSame( $expected, $fresh->checkpoint[ $key ] ?? null, $key . ' must prefer stored evidence only when present.' );
+		}
+	}
+
+	/**
+	 * Both sides of each race need the same row-level assertions.
+	 *
+	 * @return array
+	 */
+	public static function lease_checkpoint_interleavings() {
+		$orders = array(
+			'sweep-success',
+			'sweep-reacquire-before-read',
+			'sweep-reacquire-at-write',
+			'sweep-cancel-before-read',
+			'sweep-cancel-at-write',
+			'ui-defer-save',
+			'reclaim-defer-save',
+			'ui-terminal-save',
+			'reclaim-terminal-save',
+			'reclaim-stale-fence',
+			'incoming-only',
+			'cancel_confirmation',
+			'terminal_failure',
+			'last_error_code',
+			'ui-during-save',
+		);
+		return array_combine( $orders, array_map( static fn( $order ) => array( $order ), $orders ) );
 	}
 
 	/**

@@ -468,7 +468,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         );
     }
     /**
-     * A count the Child reports is stored as sent, so anything that is not a whole, non-negative, castable number reads as unknown.
+     * A count the Child reports is stored as sent, so anything that is not an exact whole, non-negative number that fits an int reads as unknown.
      *
      * @param mixed $value Stored Child value.
      * @return int|null
@@ -477,12 +477,16 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_int( $value ) ) {
             return $value >= 0 ? $value : null;
         }
-        if ( ! is_numeric( $value ) ) {
-            return null;
+        if ( is_string( $value ) ) {
+            // Read decimal strings digit by digit so counts past 2^53 stay exact; refuse anything past PHP_INT_MAX.
+            if ( ! preg_match( '/^\s*\+?0*([0-9]+)(?:\.0*)?\s*$/D', $value, $match ) ) {
+                return null;
+            }
+            $digits = $match[1];
+            return strlen( $digits ) < 19 || ( 19 === strlen( $digits ) && strcmp( $digits, (string) PHP_INT_MAX ) <= 0 ) ? (int) $digits : null;
         }
-        $number = (float) $value;
-        // 2^63 is the first float above PHP_INT_MAX; casting it or anything larger wraps negative.
-        return is_finite( $number ) && $number >= 0 && $number < 9.2233720368547758E18 && floor( $number ) === $number ? (int) $number : null;
+        // A float is exact only below 2^53; at or past it one float stands for several counts.
+        return is_float( $value ) && is_finite( $value ) && $value >= 0 && $value < 9007199254740992.0 && floor( $value ) === $value ? (int) $value : null;
     }
 
     /**

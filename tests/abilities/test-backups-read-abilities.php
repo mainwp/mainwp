@@ -1221,53 +1221,67 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Every id shape the input schema accepts, and what it must read as.
+	 * Every id shape the input schema accepts, and the id it must read as (null: refused).
 	 *
 	 * @return array
 	 */
 	public static function id_inputs() {
 		return array(
-			'int'                      => array( 987671, true ),
-			'canonical string'         => array( '987671', true ),
-			'whole float string'       => array( '987671.0', true ),
-			'whole float'              => array( 987671.0, true ),
-			'exponent string'          => array( '9.87671e5', true ),
-			'padded string'            => array( ' 987671 ', true ),
-			'signed string'            => array( '+987671', true ),
-			'zero'                     => array( 0, false ),
-			'negative'                 => array( -5, false ),
-			'zero string'              => array( '0', false ),
-			'negative zero string'     => array( '-0', false ),
-			'fraction'                 => array( 5.5, false ),
-			'fraction string'          => array( '987671.5', false ),
-			'float at PHP_INT_MAX'     => array( (float) PHP_INT_MAX, false ),
-			'float past PHP_INT_MAX'   => array( 1e20, false ),
-			'digits past PHP_INT_MAX'  => array( '99999999999999999999', false ),
-			'infinite exponent string' => array( '1e400', false ),
-			'word'                     => array( 'abc', false ),
-			'hex string'               => array( '0x5', false ),
-			'boolean'                  => array( true, false ),
+			'int'                       => array( 987671, 987671 ),
+			'canonical string'          => array( '987671', 987671 ),
+			'whole float string'        => array( '987671.0', 987671 ),
+			'trailing point string'     => array( '987671.', 987671 ),
+			'whole float'               => array( 987671.0, 987671 ),
+			'exponent string'           => array( '9.87671e5', 987671 ),
+			'padded string'             => array( ' 987671 ', 987671 ),
+			'signed string'             => array( '+987671', 987671 ),
+			'leading zero string'       => array( '0987671', 987671 ),
+			'signed string past 2^53'   => array( '+9007199254740993', 9007199254740993 ),
+			'leading zero past 2^53'    => array( '09007199254740993', 9007199254740993 ),
+			'whole string past 2^53'    => array( '9007199254740993.0', 9007199254740993 ),
+			'PHP_INT_MAX string'        => array( '9223372036854775807', PHP_INT_MAX ),
+			'padded PHP_INT_MAX string' => array( ' 9223372036854775807 ', PHP_INT_MAX ),
+			'float at 2^53'             => array( 9007199254740992.0, null ),
+			'float past 2^53'           => array( 9007199254740994.0, null ),
+			'exponent string past 2^53' => array( '9.007199254740993e15', null ),
+			'digits past PHP_INT_MAX'   => array( '9223372036854775808', null ),
+			'long digits'               => array( '99999999999999999999', null ),
+			'float at PHP_INT_MAX'      => array( (float) PHP_INT_MAX, null ),
+			'float past PHP_INT_MAX'    => array( 1e20, null ),
+			'infinite exponent string'  => array( '1e400', null ),
+			'zero'                      => array( 0, null ),
+			'negative'                  => array( -5, null ),
+			'zero string'               => array( '0', null ),
+			'negative zero string'      => array( '-0', null ),
+			'fraction'                  => array( 5.5, null ),
+			'fraction string'           => array( '987671.5', null ),
+			'word'                      => array( 'abc', null ),
+			'hex string'                => array( '0x5', null ),
+			'boolean'                   => array( true, null ),
 		);
 	}
 
 	/**
-	 * An accepted id reads the task REST sanitization would read; anything else is refused before a lookup.
+	 * An accepted id is the exact integer the input names, the same one REST sanitization and the read use; anything else is refused before a lookup.
 	 *
 	 * @dataProvider id_inputs
 	 *
-	 * @param mixed $id Input value.
-	 * @param bool  $reads Whether it identifies task 987671.
+	 * @param mixed    $id Input value.
+	 * @param int|null $expected Id it reads as.
 	 * @return void
 	 */
-	public function test_id_inputs_read_one_task_or_are_refused( $id, $reads ) {
+	public function test_id_inputs_read_one_task_or_are_refused( $id, $expected ) {
+		$normalize = new \ReflectionMethod( MainWP_Abilities_Backups::class, 'positive_int' );
+		$normalize->setAccessible( true );
+		$this->assertSame( $expected, $normalize->invoke( null, $id ) );
 		$output = $this->callback_read( 'get-backup-task', array( 'task_id' => $id ) );
-		if ( $reads ) {
+		if ( 987671 === $expected ) {
 			$this->assertIsArray( $output, is_wp_error( $output ) ? $output->get_error_code() : '' );
 			$this->assertSame( 987671, $output['task']['id'] );
 			return;
 		}
 		$this->assertWPError( $output );
-		$this->assertSame( 'mainwp_invalid_input', $output->get_error_code() );
+		$this->assertSame( null === $expected ? 'mainwp_invalid_input' : 'mainwp_backup_task_not_found', $output->get_error_code() );
 	}
 
 	/**
@@ -1277,18 +1291,27 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function child_counts() {
 		return array(
-			'int'             => array( 3, 3 ),
-			'zero'            => array( 0, 0 ),
-			'numeric string'  => array( '3', 3 ),
-			'whole float'     => array( 3.0, 3 ),
-			'negative'        => array( -3, null ),
-			'fraction'        => array( 3.7, null ),
-			'overflow'        => array( 1e19, null ),
-			'overflow string' => array( '1e19', null ),
-			'word'            => array( 'abc', null ),
-			'boolean'         => array( true, null ),
-			'list'            => array( array( 3 ), null ),
-			'absent'          => array( null, null ),
+			'int'                     => array( 3, 3 ),
+			'zero'                    => array( 0, 0 ),
+			'PHP_INT_MAX'             => array( PHP_INT_MAX, PHP_INT_MAX ),
+			'numeric string'          => array( '3', 3 ),
+			'padded string'           => array( ' 3 ', 3 ),
+			'leading zero string'     => array( '03', 3 ),
+			'whole string'            => array( '3.0', 3 ),
+			'string past 2^53'        => array( '9007199254740993', 9007199254740993 ),
+			'PHP_INT_MAX string'      => array( '9223372036854775807', PHP_INT_MAX ),
+			'string past PHP_INT_MAX' => array( '9223372036854775808', null ),
+			'near-whole string'       => array( '3.00000000000000001', null ),
+			'exponent string'         => array( '1e3', null ),
+			'whole float'             => array( 3.0, 3 ),
+			'negative'                => array( -3, null ),
+			'fraction'                => array( 3.7, null ),
+			'overflow'                => array( 1e19, null ),
+			'overflow string'         => array( '1e19', null ),
+			'word'                    => array( 'abc', null ),
+			'boolean'                 => array( true, null ),
+			'list'                    => array( array( 3 ), null ),
+			'absent'                  => array( null, null ),
 		);
 	}
 

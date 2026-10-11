@@ -2345,11 +2345,11 @@ class MainWP_Abilities_Backups {
     }
 
     /**
-     * Ids the input schema accepts, read the way REST sanitization reads them, without wrapping past PHP_INT_MAX.
+     * The one id an input names, used for both authorization and the read.
      *
-     * Schema validation also accepts whole-valued numbers ("5.0", 5.0, "5e0", " 5 ") and REST casts them to
-     * int, so PHP callers get the same id. A value at or past 2^63, the first float above PHP_INT_MAX, would
-     * wrap negative when cast and is refused instead.
+     * Decimal strings ("+5", " 05 ", "5.0") are read digit by digit, so ids past 2^53 keep every digit, and
+     * anything past PHP_INT_MAX is refused. Floats and exponent strings ("5e0") are exact only below 2^53;
+     * at or past it one float stands for several ids, so they are refused.
      *
      * @param mixed $value Caller identifier.
      * @return int|null
@@ -2358,14 +2358,15 @@ class MainWP_Abilities_Backups {
         if ( is_int( $value ) ) {
             return $value > 0 ? $value : null;
         }
-        if ( is_string( $value ) && preg_match( '/^[1-9][0-9]*$/D', $value ) && (string) (int) $value === $value ) {
-            return (int) $value;
+        if ( is_string( $value ) && preg_match( '/^\s*\+?0*([1-9][0-9]*)(?:\.0*)?\s*$/D', $value, $match ) ) {
+            $digits = $match[1];
+            return strlen( $digits ) < 19 || ( 19 === strlen( $digits ) && strcmp( $digits, (string) PHP_INT_MAX ) <= 0 ) ? (int) $digits : null;
         }
         if ( ! ( is_float( $value ) || is_string( $value ) ) || ! rest_is_integer( $value ) ) {
             return null;
         }
         $number = (float) $value;
-        return is_finite( $number ) && $number >= 1 && $number < 9.2233720368547758E18 ? (int) $number : null;
+        return is_finite( $number ) && $number >= 1 && $number < 9007199254740992.0 ? (int) $number : null;
     }
 
     /**
@@ -2457,6 +2458,12 @@ class MainWP_Abilities_Backups {
             return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
         }
         $input = MainWP_Abilities_Util::normalize_input( $input );
+        // authorize() checked the id positive_int() names; the read must use that same id, not a second cast.
+        foreach ( array( 'task_id', 'snapshot_id', 'restore_job_id', 'destination_id' ) as $key ) {
+            if ( isset( $input[ $key ] ) ) {
+                $input[ $key ] = self::positive_int( $input[ $key ] );
+            }
+        }
         // Schema validation accepts "false" and comma lists; REST coerces them, so PHP callers get the same reading.
         foreach ( array( 'only_stale', 'include_pruned' ) as $flag ) {
             if ( isset( $input[ $flag ] ) ) {

@@ -2741,8 +2741,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         );
 
         // Close the displaced handle's row only once the new handle replaced it: a
-        // failed create leaves the old handle in place for its owner to resume.
-        if ( ! empty( $persisted['task_id'] ) && (string) $persisted['task_id'] !== $task_id ) {
+        // failed create or handle write leaves the old handle for its owner to resume.
+        // The numeric id reads the stored option, not a copy carried on $website.
+        $stored = json_decode( (string) MainWP_DB::instance()->get_website_option( (int) $website->id, self::ADHOC_TASK_OPTION ), true );
+        if ( ! empty( $persisted['task_id'] ) && (string) $persisted['task_id'] !== $task_id && is_array( $stored ) && (string) ( $stored['task_id'] ?? '' ) === $task_id ) {
             $persisted_owner = (string) ( $persisted['owner'] ?? '' );
             MainWP_Backup_Run_History::finalize_ref( $site_id, (string) $persisted['task_id'], '' === $persisted_owner ? 'update_gate' : 'restore_safety', 'incomplete' );
         }

@@ -782,6 +782,110 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A restore that ends while its safety create is in flight closes the row
+	 * the create then opens; a lost lease on a live job leaves it to the next holder.
+	 *
+	 * @dataProvider publication_race_cases
+	 * @param string $event cancel, failure or lease.
+	 * @param string $expected Expected safety row outcome.
+	 */
+	public function test_safety_row_published_after_restore_ended( string $event, string $expected ): void {
+		$site         = $this->site();
+		$store        = MainWP_Backup_Restore_Job_Store::instance();
+		$orchestrator = MainWP_Backup_Restore_Orchestrator::instance();
+		$id           = $store->create_job(
+			$site,
+			5,
+			array(
+				'plan'    => array(),
+				'options' => array( 'pre_snapshot' => true ),
+			)
+		);
+		$this->assertTrue( $store->set_status( $id, $store::STATUS_PREFLIGHT ) );
+		$terminal = new \ReflectionMethod( $orchestrator, 'record_terminal_failure' );
+		$terminal->setAccessible( true );
+		$create = static function ( $pre, $child, $what ) use ( $event, $id, $store, $orchestrator, $terminal ) {
+			if ( 'backup_task_create' !== $what ) {
+				return $pre;
+			}
+			if ( 'cancel' === $event ) {
+				$orchestrator->cancel_job( $id );
+			} elseif ( 'failure' === $event ) {
+				$terminal->invoke( $orchestrator, $store->get_job( $id ), 'Child unreachable', MainWP_Backup_Error_Codes::ERR_TIMEOUT, null );
+			}
+			return array( 'task_id' => 'raced-safety-child' );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $create, 20, 3 );
+		$token = new \ReflectionProperty( $orchestrator, 'lock_token' );
+		$token->setAccessible( true );
+		$saved = $token->getValue( $orchestrator );
+		// A token the job does not hold makes the phase write lose its fence.
+		$token->setValue( $orchestrator, 'lease' === $event ? 'stale-worker-token' : null );
+		try {
+			$preflight = new \ReflectionMethod( $orchestrator, 'phase_preflight' );
+			$preflight->setAccessible( true );
+			$preflight->invoke( $orchestrator, $store->get_job( $id ) );
+		} finally {
+			$token->setValue( $orchestrator, $saved );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $create, 20 );
+		}
+		$rows = $this->rows();
+		$this->assertCount( 1, $rows );
+		$this->assertSame( 'restore_safety', $rows[0]['trigger_source'] );
+		$this->assertSame( $id, (int) $rows[0]['restore_job_id'] );
+		$this->assertSame( $expected, $rows[0]['outcome'] );
+		$this->assertSame( 'failure' === $event ? MainWP_Backup_Error_Codes::ERR_TIMEOUT : '', $rows[0]['error_code'] );
+	}
+
+	/**
+	 * Cancel and failure end the job before the row exists; a stale lease does not end it.
+	 *
+	 * @return array
+	 */
+	public static function publication_race_cases(): array {
+		return array(
+			'cancel during create'  => array( 'cancel', 'cancelled' ),
+			'failure during create' => array( 'failure', 'failed' ),
+			'lease lost, job live'  => array( 'lease', 'running' ),
+		);
+	}
+
+	/**
+	 * A refused handle write leaves the abandoned handle for its owner.
+	 */
+	public function test_refused_handle_write_keeps_displaced_row_running(): void {
+		global $wpdb;
+		$site              = $this->site();
+		$old_ref           = MainWP_Backup_Executor::trigger_backup( $site );
+		$website           = MainWP_DB::instance()->get_website_by_id( $site );
+		$handle            = json_decode( MainWP_DB::instance()->get_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
+		$handle['started'] = time() - MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS - 1;
+		MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, wp_json_encode( $handle ) );
+		$create  = static function ( $pre, $child, $what ) {
+			return 'backup_task_create' === $what ? array( 'task_id' => 'unpersisted-safety-child' ) : $pre;
+		};
+		$options = MainWP_DB::instance()->get_table_name( 'wp_options' );
+		$deny    = static function ( $query ) use ( $options ) {
+			return 0 === stripos( ltrim( $query ), 'UPDATE' ) && false !== strpos( $query, $options ) && false !== strpos( $query, 'unpersisted-safety-child' ) ? 'SELECT * FROM missing_table_s71_handle' : $query;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $create, 20, 3 );
+		add_filter( 'query', $deny );
+		$suppress = $wpdb->suppress_errors( true );
+		try {
+			MainWP_Backup_Executor::trigger_backup( $site, 'full', '71' );
+		} finally {
+			$wpdb->suppress_errors( $suppress );
+			remove_filter( 'query', $deny );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $create, 20 );
+		}
+		$stored = json_decode( MainWP_DB::instance()->get_website_option( $site, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
+		$this->assertSame( $old_ref, $stored['task_id'] );
+		$rows = $this->rows();
+		$this->assertSame( 'running', $rows[0]['outcome'] );
+		$this->assertSame( $old_ref, $rows[0]['ref'] );
+	}
+
+	/**
 	 * A failed replacement keeps the abandoned handle, so its row stays open.
 	 */
 	public function test_failed_displacement_leaves_abandoned_handle_running(): void {

@@ -993,7 +993,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $this->record_failure( $job, $message, false, MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT );
                 return;
             }
-            $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $task_id ), $this->lock_token );
+            if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $task_id ), $this->lock_token ) ) {
+                // A cancel or failure can commit while the Child create is in flight,
+                // before the safety row exists for its terminal path to close.
+                $fresh = $store->get_job( (int) $job->id );
+                if ( null !== $fresh && ! in_array( $fresh->status, $store::active_statuses(), true ) ) {
+                    $cancelled = $store::STATUS_CANCELLED === $fresh->status;
+                    MainWP_Backup_Run_History::finalize_restore_safety( (int) $job->id, $cancelled ? 'cancelled' : 'failed', $cancelled ? '' : (string) ( $fresh->checkpoint['last_error_code'] ?? '' ) );
+                }
+            }
             return;
         }
 

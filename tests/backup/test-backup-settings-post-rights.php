@@ -50,6 +50,7 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 			'mainwp_options_enableNativeBackups'        => '1',
 			'mainwp_options_onDemandRetentionCount'     => '9',
 			'mainwp_options_backupEncryptionPassphrase' => 'replacement settings recovery passphrase',
+			'mainwp_options_backupEncryptionCurrentPassphrase' => 'original settings recovery passphrase',
 		);
 		$right = static function ( $can, $type, $key ) use ( $allowed ) {
 			return 'dashboard' === $type && 'manage_dashboard_settings' === $key ? $allowed : $can;
@@ -80,6 +81,123 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 			'refused' => array( false ),
 			'held'    => array( true ),
 		);
+	}
+
+	/**
+	 * A refused passphrase still allows unrelated backup settings to save.
+	 *
+	 * @dataProvider recovery_proof
+	 * @param string $current Current passphrase.
+	 * @param bool   $lost Whether the key file is missing.
+	 * @param string $flag Expected rejection flag.
+	 */
+	public function test_settings_recovery_replacement_proof( string $current, bool $lost, string $flag ): void {
+		$enc      = MainWP_Backup_Encryption::instance();
+		$original = $enc->set_recovery_passphrase( 'original recovery passphrase' );
+		$kek      = $enc->load_kek();
+		if ( $lost ) {
+			MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		}
+		$key_bytes = MainWP_Keys_Manager::instance()->get_key_val( $enc->kek_filename() );
+		$_POST     = array(
+			'submit'                                    => '1',
+			'wp_nonce'                                  => wp_create_nonce( 'Settings' ),
+			'mainwp_options_backupEncryptionPassphrase' => 'replacement recovery passphrase',
+			'mainwp_options_backupEncryptionCurrentPassphrase' => wp_slash( $current ),
+			'mainwp_options_onDemandRetentionCount'     => '9',
+		);
+		$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+		$this->assertSame( $flag, MainWP_Backup_Settings::recovery_passphrase_rejection() );
+		$this->assertSame( 9, MainWP_Backup_Settings::get_on_demand_retention_count() );
+		if ( '' !== $flag ) {
+			$this->assertSame( serialize( $original ), serialize( $enc->get_recovery_blob() ) );
+			$this->assertSame( $key_bytes, MainWP_Keys_Manager::instance()->get_key_val( $enc->kek_filename() ) );
+		} else {
+			$this->assertNotSame( $original, $enc->get_recovery_blob() );
+			$this->assertSame( $kek, $enc->load_kek() );
+			$this->assertSame( $kek, $enc->recover_kek( 'replacement recovery passphrase', $enc->get_recovery_blob() ) );
+		}
+	}
+
+	/**
+	 * The same proof applies when recovering a lost key file.
+	 *
+	 * @return array Proof and key-file states.
+	 */
+	public static function recovery_proof(): array {
+		return array(
+			'missing current' => array( '', false, 'current' ),
+			'wrong current'   => array( 'wrong recovery passphrase', false, 'current_mismatch' ),
+			'right current'   => array( 'original recovery passphrase', false, '' ),
+			'lost missing'    => array( '', true, 'current' ),
+			'lost wrong'      => array( 'wrong recovery passphrase', true, 'mismatch' ),
+			'lost right'      => array( 'original recovery passphrase', true, '' ),
+		);
+	}
+
+	/**
+	 * A Settings nonce alone cannot establish the first recovery passphrase.
+	 *
+	 * @dataProvider account_passwords
+	 * @param string $password Submitted account password.
+	 * @param bool   $accepted Whether the password matches.
+	 */
+	public function test_settings_first_passphrase_requires_account_password( string $password, bool $accepted ): void {
+		$enc = MainWP_Backup_Encryption::instance();
+		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
+		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
+		wp_set_current_user(
+			$this->factory->user->create(
+				array(
+					'role'      => 'administrator',
+					'user_pass' => 'WordPress password \\ " proof',
+				)
+			)
+		);
+		$_POST = array(
+			'submit'                                    => '1',
+			'wp_nonce'                                  => wp_create_nonce( 'Settings' ),
+			'mainwp_options_backupEncryptionPassphrase' => 'first recovery passphrase',
+			'mainwp_options_backupEncryptionAccountPassword' => wp_slash( $password ),
+			'mainwp_options_onDemandRetentionCount'     => '9',
+		);
+		$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+		$this->assertSame( $accepted ? '' : 'account_password', MainWP_Backup_Settings::recovery_passphrase_rejection() );
+		$this->assertSame( 9, MainWP_Backup_Settings::get_on_demand_retention_count() );
+		if ( $accepted ) {
+			$this->assertSame( $enc->load_kek(), $enc->recover_kek( 'first recovery passphrase', $enc->get_recovery_blob() ) );
+		} else {
+			$this->assertSame( array(), $enc->get_recovery_blob() );
+			$this->assertSame( '', MainWP_Keys_Manager::instance()->get_key_val( $enc->kek_filename() ) );
+		}
+	}
+
+	/**
+	 * Password punctuation must survive the Settings form's unslashing.
+	 *
+	 * @return array Account password attempts.
+	 */
+	public static function account_passwords(): array {
+		return array(
+			'missing' => array( '', false ),
+			'wrong'   => array( 'wrong WordPress password', false ),
+			'right'   => array( 'WordPress password \\ " proof', true ),
+		);
+	}
+
+	/** The generic writer cannot bypass recovery passphrase proof. */
+	public function test_ajax_save_setting_refuses_recovery_blob(): void {
+		$enc      = MainWP_Backup_Encryption::instance();
+		$original = $enc->set_recovery_passphrase( 'original recovery passphrase' );
+		foreach ( array( 'backup_recovery_kek', 'BACKUP_RECOVERY_KEK', '<b>backup_recovery_kek</b>' ) as $name ) {
+			$response = json_decode( $this->ajax_save_setting( $name ), true );
+			$this->assertIsArray( $response );
+			$this->assertFalse( $response['success'] );
+			$this->assertNotEmpty( $response['error'] );
+			$this->assertSame( $response['error'], $response['result'] );
+			$this->assertSame( $original, $enc->get_recovery_blob() );
+			$this->assertFalse( get_option( 'mainwp_' . sanitize_text_field( $name ), false ) === '0' );
+		}
 	}
 
 	/**
@@ -171,13 +289,14 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 		};
 
 		$written = static function ( $option ) use ( $name ) {
-			if ( 'mainwp_' . $name === $option ) {
+			if ( 'mainwp_' . sanitize_text_field( $name ) === $option ) {
 				throw new \WPAjaxDieContinueException();
 			}
 		};
 		add_filter( 'wp_doing_ajax', '__return_true' );
 		add_filter( 'wp_die_ajax_handler', $throw );
 		add_action( 'updated_option', $written );
+		add_action( 'added_option', $written );
 		$response = '';
 		ob_start();
 		try {
@@ -189,6 +308,7 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 		} finally {
 			$response .= ob_get_clean();
 			remove_action( 'updated_option', $written );
+			remove_action( 'added_option', $written );
 			remove_filter( 'wp_die_ajax_handler', $throw );
 			remove_filter( 'wp_doing_ajax', '__return_true' );
 		}

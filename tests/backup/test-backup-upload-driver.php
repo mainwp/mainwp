@@ -1611,6 +1611,16 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		// The sibling HMAC authenticates the exact manifest bytes under the KEK.
 		$this->assertFileExists( $prefix . '/manifest.json.hmac' );
 		$this->assertSame( $enc->manifest_hmac( $json, $kek ), file_get_contents( $prefix . '/manifest.json.hmac' ) );
+
+		$new_blob = $enc->set_recovery_passphrase( 'replacement upload passphrase', 'upload driver encryption passphrase' );
+		$this->assertNotSame( $manifest['recovery'], $new_blob );
+		$this->assertSame( $manifest['recovery']['kek_version_id'], $new_blob['kek_version_id'] );
+		$recovered = $enc->recover_kek( 'upload driver encryption passphrase', $manifest['recovery'] );
+		$this->assertSame( $enc->load_kek(), $recovered );
+		$this->assertSame( $dek, $enc->dek_from_meta( $manifest['encryption'], $snapshot_id, $recovered ) );
+		$this->assertSame( $small, MainWP_Backup_Archive_Cipher::open( $small_blob, $dek, 'snapshot:' . $snapshot_id . ':whole:small.txt' ) );
+		$this->assertSame( $enc->manifest_hmac( $json, $enc->load_kek() ), file_get_contents( $prefix . '/manifest.json.hmac' ) );
+		$this->assertSame( $json, file_get_contents( $prefix . '/manifest.json' ) );
 	}
 
 	/**

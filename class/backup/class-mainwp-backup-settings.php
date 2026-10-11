@@ -322,13 +322,28 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // passphrase exists, so a backup is never sealed without a way to
                 // recover it. Turning encryption off never removes the key
                 // material - already-encrypted snapshots still need it.
-                $encryption     = MainWP_Backup_Encryption::instance();
-                $enc_passphrase = isset( $_POST['mainwp_options_backupEncryptionPassphrase'] ) ? (string) wp_unslash( $_POST['mainwp_options_backupEncryptionPassphrase'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used verbatim as key material, never stored or rendered.
+                $encryption         = MainWP_Backup_Encryption::instance();
+                $enc_passphrase     = isset( $_POST['mainwp_options_backupEncryptionPassphrase'] ) ? (string) wp_unslash( $_POST['mainwp_options_backupEncryptionPassphrase'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used verbatim as key material, never stored or rendered.
+                $current_passphrase = isset( $_POST['mainwp_options_backupEncryptionCurrentPassphrase'] ) ? (string) wp_unslash( $_POST['mainwp_options_backupEncryptionCurrentPassphrase'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- used verbatim as key material, never stored or rendered.
                 if ( '' !== trim( $enc_passphrase ) ) {
-                    try {
-                        $encryption->set_recovery_passphrase( $enc_passphrase );
-                    } catch ( \InvalidArgumentException $e ) {
-                        self::$recovery_passphrase_rejected = MainWP_Backup_Encryption::PASSPHRASE_MISMATCH === $e->getCode() ? 'mismatch' : 'short';
+                    $existing = $encryption->get_recovery_blob();
+                    $user     = wp_get_current_user();
+                    $password = isset( $_POST['mainwp_options_backupEncryptionAccountPassword'] ) ? (string) wp_unslash( $_POST['mainwp_options_backupEncryptionAccountPassword'] ) : ''; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- password verification requires the verbatim input, never stored or rendered.
+                    if ( empty( $existing['wrapped_kek'] ) && ( '' === $password || ! wp_check_password( $password, $user->user_pass, $user->ID ) ) ) {
+                        self::$recovery_passphrase_rejected = 'account_password';
+                    } else {
+                        $key_missing = null === $encryption->load_kek();
+                        try {
+                            $encryption->set_recovery_passphrase( $enc_passphrase, $current_passphrase );
+                        } catch ( \InvalidArgumentException $e ) {
+                            if ( MainWP_Backup_Encryption::PASSPHRASE_CURRENT_REQUIRED === $e->getCode() ) {
+                                self::$recovery_passphrase_rejected = 'current';
+                            } elseif ( MainWP_Backup_Encryption::PASSPHRASE_MISMATCH === $e->getCode() ) {
+                                self::$recovery_passphrase_rejected = $key_missing ? 'mismatch' : 'current_mismatch';
+                            } else {
+                                self::$recovery_passphrase_rejected = 'short';
+                            }
+                        }
                     }
                 }
                 $enableEncryption = ( isset( $_POST['mainwp_options_enableBackupEncryption'] ) && ! empty( $_POST['mainwp_options_enableBackupEncryption'] ) ) ? 1 : 0;

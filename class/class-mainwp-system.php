@@ -797,6 +797,15 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     return;
                 }
             } else {
+                $mwpdl    = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
+                $segments = explode( '/', ltrim( strtolower( wp_normalize_path( rawurldecode( $mwpdl ) ) ), '/' ) );
+                // Diagnostics must pass the user-bound admin-post checks.
+                while ( isset( $segments[0] ) && ( '' === $segments[0] || '.' === $segments[0] ) ) {
+                    array_shift( $segments );
+                }
+                if ( strtolower( MainWP_Backup_Diagnostics::SUBDIR ) === ( $segments[0] ?? '' ) ) {
+                    return;
+                }
                 $mwpDir = MainWP_System_Utility::get_mainwp_dir();
                 $mwpDir = $mwpDir[0];
             }

@@ -732,6 +732,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         }
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
+        if ( 0 === strcasecmp( 'mainwp_' . $name, MainWP_Backup_Encryption::RECOVERY_OPTION ) ) {
+            $ret           = array( 'success' => false );
+            $ret['result'] = esc_html__( 'Change the recovery passphrase in the backup settings.', 'mainwp' );
+            $ret['error']  = $ret['result'];
+            MainWP_Client::exit_json( $ret );
+        }
         if ( ! empty( $name ) ) {
             $option_name = 'mainwp_' . $name;
             $val         = isset( $_POST['value'] ) ? sanitize_text_field( wp_unslash( $_POST['value'] ) ) : '';

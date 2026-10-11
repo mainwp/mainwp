@@ -37,6 +37,11 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const SUBDIR = 'backup-diagnostics';
 
     /**
+     * Hash tokens so stored records cannot themselves act as download links.
+     */
+    const DOWNLOAD_TRANSIENT_PREFIX = 'mainwp_backup_diag_download_';
+
+    /**
      * Days an event file survives before the daily prune removes it.
      */
     const RETENTION_DAYS = 14;
@@ -763,6 +768,74 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
             return;
         }
+    }
+
+    /**
+     * Bind an exported bundle to its requesting user for ten minutes.
+     *
+     * @param string $bundle Exported bundle path.
+     * @return string Download URL with raw query separators for the Settings script.
+     */
+    public function create_download_url( string $bundle ): string {
+        $token = wp_generate_password( 32, false );
+        set_site_transient(
+            self::DOWNLOAD_TRANSIENT_PREFIX . hash( 'sha256', $token ),
+            array(
+                'user_id' => get_current_user_id(),
+                'file'    => basename( $bundle ),
+                'expires' => time() + 600,
+            ),
+            600
+        );
+        return add_query_arg(
+            array(
+                'action'   => 'mainwp_backup_diagnostics_download',
+                'token'    => $token,
+                '_wpnonce' => wp_create_nonce( 'mainwp_backup_diagnostics_download' ),
+            ),
+            admin_url( 'admin-post.php' )
+        );
+    }
+
+    /**
+     * Require the exporting user's current authorization before serving a bundle.
+     *
+     * @return void
+     */
+    public function download_bundle(): void {
+        $message = __( 'This download link is not valid or has expired. Export the diagnostics again.', 'mainwp' );
+        if ( ! is_user_logged_in() || ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+            wp_die( esc_html( $message ), '', array( 'response' => 403 ) );
+        }
+        $nonce = isset( $_GET['_wpnonce'] ) && is_string( $_GET['_wpnonce'] ) ? sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ) ) : '';
+        if ( ! wp_verify_nonce( $nonce, 'mainwp_backup_diagnostics_download' ) ) {
+            wp_die( esc_html( $message ), '', array( 'response' => 403 ) );
+        }
+        $token = isset( $_GET['token'] ) && is_string( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+        $key   = self::DOWNLOAD_TRANSIENT_PREFIX . hash( 'sha256', $token );
+        if ( ! preg_match( '/^[a-zA-Z0-9]{32}$/', $token ) ) {
+            wp_die( esc_html( $message ), '', array( 'response' => 403 ) );
+        }
+        $record = get_site_transient( $key );
+        $dir    = $this->diagnostics_dir();
+        $file   = is_array( $record ) && isset( $record['file'] ) && is_string( $record['file'] ) ? $record['file'] : '';
+        $path   = $dir . $file;
+        if (
+            ! is_array( $record ) || ! isset( $record['user_id'], $record['expires'] ) ||
+            ! is_int( $record['user_id'] ) || get_current_user_id() !== $record['user_id'] ||
+            ! is_int( $record['expires'] ) || time() >= $record['expires'] ||
+            '' === $file || basename( $file ) !== $file ||
+            false !== strpos( $file, '/' ) || false !== strpos( $file, '\\' ) ||
+            '' === $dir || ! MainWP_Backup_File_Manager::path_is_confined_to( $path, $dir ) || ! is_file( $path )
+        ) {
+            delete_site_transient( $key );
+            wp_die( esc_html( $message ), '', array( 'response' => 403 ) );
+        }
+        // Consume before streaming so a completed download cannot be replayed.
+        if ( ! delete_site_transient( $key ) ) {
+            wp_die( esc_html( $message ), '', array( 'response' => 403 ) );
+        }
+        MainWP_System_Handler::instance()->upload_file( $path );
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- export failures are caught and returned as an empty path.

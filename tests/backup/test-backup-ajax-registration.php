@@ -21,6 +21,14 @@ class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 
 	use MainWP_Capability_Bypass_Guard;
 
+	/** Diagnostics downloads have no unauthenticated admin-post entry point. */
+	public function test_diagnostics_admin_post_download_hook_registered() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		MainWP_Post_Backup_Handler::instance()->init();
+		$this->assertNotFalse( has_action( 'admin_post_mainwp_backup_diagnostics_download', array( \MainWP\Dashboard\MainWP_Backup_Diagnostics::instance(), 'download_bundle' ) ) );
+		$this->assertFalse( has_action( 'admin_post_nopriv_mainwp_backup_diagnostics_download' ) );
+	}
+
 	/**
 	 * Collect the wp_ajax_* hook names with callbacks owned by
 	 * MainWP_Post_Backup_Handler, mapped to their callback method names.

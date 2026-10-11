@@ -38,13 +38,14 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( $original, $enc->get_recovery_blob() );
 			$this->assertSame( 3, (int) get_option( 'mainwp_backupsOnServer' ) );
 			$this->assertTrue( $enc->is_enabled_setting() );
-			$_POST['mainwp_options_backupEncryptionPassphrase'] = '123456789012';
+			$_POST['mainwp_options_backupEncryptionPassphrase']        = '123456789012';
+			$_POST['mainwp_options_backupEncryptionCurrentPassphrase'] = 'original recovery passphrase';
 			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
 			$this->assertSame( '', MainWP_Backup_Settings::recovery_passphrase_rejection() );
 			$this->assertNotSame( $original, $enc->get_recovery_blob() );
 			$this->assertSame( $enc->load_kek(), $enc->recover_kek( '123456789012', $enc->get_recovery_blob() ) );
 		} finally {
-			unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_backupEncryptionPassphrase'], $_POST['mainwp_options_backupOnServer'], $_POST['mainwp_options_enableBackupEncryption'] );
+			unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_backupEncryptionPassphrase'], $_POST['mainwp_options_backupEncryptionCurrentPassphrase'], $_POST['mainwp_options_backupOnServer'], $_POST['mainwp_options_enableBackupEncryption'] );
 			delete_option( 'mainwp_backupsOnServer' );
 		}
 	}
@@ -99,11 +100,12 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 			$_POST['mainwp_options_backupEncryptionPassphrase'] = 'short';
 			MainWP_Backup_Settings::handle_settings_post();
 			$this->assertSame( 'short', MainWP_Backup_Settings::recovery_passphrase_rejection() );
-			$_POST['mainwp_options_backupEncryptionPassphrase'] = 'a wrong but long passphrase';
+			$_POST['mainwp_options_backupEncryptionPassphrase']        = 'a wrong but long passphrase';
+			$_POST['mainwp_options_backupEncryptionCurrentPassphrase'] = 'a wrong but long passphrase';
 			MainWP_Backup_Settings::handle_settings_post();
 			$this->assertSame( 'mismatch', MainWP_Backup_Settings::recovery_passphrase_rejection() );
 		} finally {
-			unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_backupEncryptionPassphrase'] );
+			unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_backupEncryptionPassphrase'], $_POST['mainwp_options_backupEncryptionCurrentPassphrase'] );
 		}
 
 		$_GET['backup_recovery_passphrase_rejected'] = 'short';
@@ -160,13 +162,19 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function test_handle_settings_post_arms_encryption_with_passphrase() {
-		$admin = $this->factory->user->create( array( 'role' => 'administrator' ) );
+		$admin = $this->factory->user->create(
+			array(
+				'role'      => 'administrator',
+				'user_pass' => 'settings account password',
+			)
+		);
 		wp_set_current_user( $admin );
 
 		$_POST['submit']                                    = '1';
 		$_POST['wp_nonce']                                  = wp_create_nonce( 'Settings' );
 		$_POST['mainwp_options_enableBackupEncryption']     = '1';
 		$_POST['mainwp_options_backupEncryptionPassphrase'] = 'a strong settings passphrase';
+		$_POST['mainwp_options_backupEncryptionAccountPassword'] = 'settings account password';
 
 		$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
 
@@ -177,7 +185,77 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $enc->is_armed() );
 		$this->assertFalse( MainWP_Backup_Settings::encryption_was_forced_off(), 'Encryption armed legitimately; the forced-off signal must not be set.' );
 
-		unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_enableBackupEncryption'], $_POST['mainwp_options_backupEncryptionPassphrase'] );
+		unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_enableBackupEncryption'], $_POST['mainwp_options_backupEncryptionPassphrase'], $_POST['mainwp_options_backupEncryptionAccountPassword'] );
+	}
+
+	/**
+	 * The form asks for the proof appropriate to the stored recovery state.
+	 *
+	 * @dataProvider recovery_input_states
+	 * @param bool $armed Whether a recovery blob exists.
+	 */
+	public function test_settings_renders_recovery_proof_inputs( bool $armed ) {
+		$enc = MainWP_Backup_Encryption::instance();
+		if ( $armed ) {
+			$enc->set_recovery_passphrase( 'original recovery passphrase' );
+		} else {
+			delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
+		}
+		ob_start();
+		MainWP_Backup_Settings_View::render_settings();
+		$output = ob_get_clean();
+		$shown  = $armed ? 'mainwp_options_backupEncryptionCurrentPassphrase' : 'mainwp_options_backupEncryptionAccountPassword';
+		$hidden = $armed ? 'mainwp_options_backupEncryptionAccountPassword' : 'mainwp_options_backupEncryptionCurrentPassphrase';
+		$this->assertStringContainsString( 'autocomplete="current-password" name="' . $shown . '"', $output );
+		$this->assertStringNotContainsString( 'name="' . $hidden . '"', $output );
+		$this->assertStringContainsString( 'placeholder="' . ( $armed ? 'Current recovery passphrase' : 'Your WordPress password' ) . '"', $output );
+		$this->assertStringContainsString( 'placeholder="' . ( $armed ? 'New recovery passphrase' : 'Set a recovery passphrase' ) . '"', $output );
+		$this->assertLessThan( strpos( $output, 'name="mainwp_options_backupEncryptionPassphrase"' ), strpos( $output, 'name="' . $shown . '"' ) );
+		$this->assertStringContainsString( 'To change it, enter the current passphrase and a new one. Leave both blank to keep the current one. Setting the first passphrase asks for your WordPress password.', $output );
+	}
+
+	/**
+	 * Each recovery state asks for a different secret.
+	 *
+	 * @return array Stored recovery states.
+	 */
+	public static function recovery_input_states(): array {
+		return array(
+			'first'       => array( false ),
+			'replacement' => array( true ),
+		);
+	}
+
+	/**
+	 * A redirect must preserve the specific reason proof was refused.
+	 *
+	 * @dataProvider recovery_proof_banners
+	 * @param string $flag Rejection flag.
+	 * @param string $message Required banner copy.
+	 */
+	public function test_settings_renders_recovery_proof_banner( string $flag, string $message ) {
+		$_GET['backup_recovery_passphrase_rejected'] = $flag;
+		ob_start();
+		try {
+			MainWP_Backup_Settings_View::render_settings();
+		} finally {
+			$output = ob_get_clean();
+			unset( $_GET['backup_recovery_passphrase_rejected'] );
+		}
+		$this->assertStringContainsString( $message, $output );
+	}
+
+	/**
+	 * Keep refusal copy tied to the failure the operator can correct.
+	 *
+	 * @return array Flags and exact copy.
+	 */
+	public static function recovery_proof_banners(): array {
+		return array(
+			'current'          => array( 'current', 'Enter the current recovery passphrase to change it. The passphrase was not changed.' ),
+			'current mismatch' => array( 'current_mismatch', 'The current recovery passphrase is not correct. The passphrase was not changed.' ),
+			'account password' => array( 'account_password', 'Your WordPress password is not correct. The recovery passphrase was not set.' ),
+		);
 	}
 
 	/**

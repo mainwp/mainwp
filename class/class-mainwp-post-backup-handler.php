@@ -105,6 +105,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_snapshots_cleanup', array( &$this, 'mainwp_snapshots_cleanup' ) );
             $this->add_action( 'mainwp_backup_diagnostics_export', array( &$this, 'mainwp_backup_diagnostics_export' ) );
         }
+        add_action( 'admin_post_mainwp_backup_diagnostics_download', array( MainWP_Backup_Diagnostics::instance(), 'download_bundle' ) );
         // Intentionally not capability-gated: the backup-before-update check is
         // read-only and used by the updates flow, where a user without backup
         // rights still needs it.
@@ -751,9 +752,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
-     * Build the diagnostics export bundle and hand back a signed download
-     * URL served by the existing chunked mwpdl path, so no new
-     * file-serving code is involved.
+     * Keep diagnostics downloads bound to the user who requested the export.
      */
     public function mainwp_backup_diagnostics_export() {
         $this->secure_request( 'mainwp_backup_diagnostics_export' );
@@ -769,12 +768,9 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return;
         }
 
-        $mwp_dir = MainWP_System_Utility::get_mainwp_dir();
-        $mwp_dir = $mwp_dir[0];
-
         wp_send_json(
             array(
-                'url' => admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $bundle ) . '&mwpdl=' . rawurlencode( str_replace( $mwp_dir, '', $bundle ) ) ),
+                'url' => MainWP_Backup_Diagnostics::instance()->create_download_url( $bundle ),
             )
         );
     }

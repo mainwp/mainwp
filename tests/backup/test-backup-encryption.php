@@ -40,10 +40,60 @@ class MainWP_Backup_Encryption_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( $original, $enc->get_recovery_blob() );
 			$this->assertSame( $kek, $enc->load_kek() );
 		}
-		$accepted = $enc->set_recovery_passphrase( '123456789012' );
+		$accepted = $enc->set_recovery_passphrase( '123456789012', 'original recovery passphrase' );
 		$this->assertSame( $accepted, $enc->get_recovery_blob() );
 		$this->assertNotSame( $original, $accepted );
 		$this->assertSame( $kek, $enc->recover_kek( '123456789012', $accepted ) );
+	}
+
+	/**
+	 * Possession of the key file cannot substitute for knowing the passphrase.
+	 *
+	 * @dataProvider refused_replacements
+	 * @param string $current Current passphrase supplied as proof.
+	 * @param bool   $foreign Whether the key file belongs to another KEK.
+	 * @param int    $code Expected refusal code.
+	 */
+	public function test_recovery_replacement_requires_matching_proof( $current, $foreign, $code ) {
+		$enc      = MainWP_Backup_Encryption::instance();
+		$original = $enc->set_recovery_passphrase( 'original recovery passphrase' );
+		if ( $foreign ) {
+			MainWP_Keys_Manager::instance()->save_key_file( $enc->kek_filename(), random_bytes( 32 ) );
+		}
+		$key_bytes = MainWP_Keys_Manager::instance()->get_key_val( $enc->kek_filename() );
+		update_option( 'mainwp_backupsOnServer', 7 );
+		try {
+			$enc->set_recovery_passphrase( 'replacement recovery passphrase', $current );
+			$this->fail( 'Replacement must prove possession of the existing recovery passphrase and KEK.' );
+		} catch ( \InvalidArgumentException $error ) {
+			$this->assertSame( $code, $error->getCode() );
+		}
+		$this->assertSame( serialize( $original ), serialize( $enc->get_recovery_blob() ) );
+		$this->assertSame( $key_bytes, MainWP_Keys_Manager::instance()->get_key_val( $enc->kek_filename() ) );
+		$this->assertSame( 7, get_option( 'mainwp_backupsOnServer' ) );
+	}
+
+	/**
+	 * Missing proof and invalid proof need distinct operator guidance.
+	 *
+	 * @return array Refused replacement inputs.
+	 */
+	public static function refused_replacements() {
+		return array(
+			'missing current' => array( '', false, 3 ),
+			'wrong current'   => array( 'wrong recovery passphrase', false, MainWP_Backup_Encryption::PASSPHRASE_MISMATCH ),
+			'foreign KEK'     => array( 'original recovery passphrase', true, MainWP_Backup_Encryption::PASSPHRASE_MISMATCH ),
+		);
+	}
+
+	/** Re-entering the same passphrase remains proof when the key file exists. */
+	public function test_existing_passphrase_can_prove_itself() {
+		$enc      = MainWP_Backup_Encryption::instance();
+		$original = $enc->set_recovery_passphrase( 'original recovery passphrase' );
+		$kek      = $enc->load_kek();
+		$blob     = $enc->set_recovery_passphrase( 'original recovery passphrase' );
+		$this->assertSame( $original['kek_version_id'], $blob['kek_version_id'] );
+		$this->assertSame( $kek, $enc->recover_kek( 'original recovery passphrase', $blob ) );
 	}
 
 	/**
@@ -195,17 +245,20 @@ class MainWP_Backup_Encryption_Test extends MainWP_Abilities_Test_Case {
 	public function test_passphrase_change_keeps_existing_deks_readable() {
 		$enc = MainWP_Backup_Encryption::instance();
 
-		$enc->set_recovery_passphrase( 'first passphrase value here' );
+		$blob1      = $enc->set_recovery_passphrase( 'first passphrase value here' );
 		$kek_before = $enc->load_kek();
 		$wrapped    = $enc->wrap_dek( $enc->generate_dek(), 99, $kek_before );
 		$dek_before = $enc->unwrap_dek( $wrapped, 99, $kek_before );
 
-		$blob2     = $enc->set_recovery_passphrase( 'second passphrase value here' );
+		$blob2     = $enc->set_recovery_passphrase( 'second passphrase value here', 'first passphrase value here' );
 		$kek_after = $enc->load_kek();
 
 		$this->assertSame( $kek_before, $kek_after, 'Passphrase change must not regenerate the KEK.' );
 		$this->assertSame( $dek_before, $enc->unwrap_dek( $wrapped, 99, $kek_after ), 'Old DEK must still unwrap.' );
 		$this->assertSame( $kek_after, $enc->recover_kek( 'second passphrase value here', $blob2 ) );
+		$this->assertSame( $blob1['kek_version_id'], $blob2['kek_version_id'] );
+		$this->expectException( \RuntimeException::class );
+		$enc->recover_kek( 'first passphrase value here', $blob2 );
 	}
 
 	/**

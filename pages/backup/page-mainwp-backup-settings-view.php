@@ -225,20 +225,31 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>>
             <label class="six wide column middle aligned"><?php esc_html_e( 'Backup recovery passphrase', 'mainwp' ); ?></label>
             <div class="ten wide column">
-                <?php if ( 'short' === $passphraseRejected || 'mismatch' === $passphraseRejected ) : ?>
+                <?php if ( in_array( $passphraseRejected, array( 'short', 'mismatch', 'current', 'current_mismatch', 'account_password' ), true ) ) : ?>
                 <div class="ui small red message" style="margin-top: 1em;">
                     <?php
                     if ( 'mismatch' === $passphraseRejected ) {
                         esc_html_e( 'The backup encryption key file is missing and the passphrase does not match the stored recovery key. To restore the key, enter the original recovery passphrase.', 'mainwp' );
+                    } elseif ( 'current' === $passphraseRejected ) {
+                        esc_html_e( 'Enter the current recovery passphrase to change it. The passphrase was not changed.', 'mainwp' );
+                    } elseif ( 'current_mismatch' === $passphraseRejected ) {
+                        esc_html_e( 'The current recovery passphrase is not correct. The passphrase was not changed.', 'mainwp' );
+                    } elseif ( 'account_password' === $passphraseRejected ) {
+                        esc_html_e( 'Your WordPress password is not correct. The recovery passphrase was not set.', 'mainwp' );
                     } else {
                         esc_html_e( 'The recovery passphrase must be at least 12 characters.', 'mainwp' );
                     }
                     ?>
                 </div>
                 <?php endif; ?>
-                <input type="password" autocomplete="new-password" name="mainwp_options_backupEncryptionPassphrase" id="mainwp_options_backupEncryptionPassphrase" value="" placeholder="<?php echo $hasRecoveryPassphrase ? esc_attr__( 'A recovery passphrase is set; enter a new one to change it', 'mainwp' ) : esc_attr__( 'Set a recovery passphrase', 'mainwp' ); ?>"/>
+                <?php if ( $hasRecoveryPassphrase ) : ?>
+                <input type="password" autocomplete="current-password" name="mainwp_options_backupEncryptionCurrentPassphrase" id="mainwp_options_backupEncryptionCurrentPassphrase" value="" placeholder="<?php esc_attr_e( 'Current recovery passphrase', 'mainwp' ); ?>"/>
+                <?php else : ?>
+                <input type="password" autocomplete="current-password" name="mainwp_options_backupEncryptionAccountPassword" id="mainwp_options_backupEncryptionAccountPassword" value="" placeholder="<?php esc_attr_e( 'Your WordPress password', 'mainwp' ); ?>"/>
+                <?php endif; ?>
+                <input type="password" autocomplete="new-password" name="mainwp_options_backupEncryptionPassphrase" id="mainwp_options_backupEncryptionPassphrase" value="" placeholder="<?php echo $hasRecoveryPassphrase ? esc_attr__( 'New recovery passphrase', 'mainwp' ) : esc_attr__( 'Set a recovery passphrase', 'mainwp' ); ?>"/>
                 <div class="ui small message" style="margin-top: 1em;">
-                    <?php esc_html_e( 'This passphrase recovers your encrypted backups if the dashboard and its key file are lost. Store it somewhere safe and separate from the dashboard. A long, unique passphrase (20 characters or more) is strongly recommended. Leave blank to keep the current one.', 'mainwp' ); ?>
+                    <?php esc_html_e( 'This passphrase recovers your encrypted backups if the dashboard and its key file are lost. Store it somewhere safe and separate from the dashboard. A long, unique passphrase (20 characters or more) is strongly recommended. To change it, enter the current passphrase and a new one. Leave both blank to keep the current one. Setting the first passphrase asks for your WordPress password.', 'mainwp' ); ?>
                 </div>
             </div>
         </div>

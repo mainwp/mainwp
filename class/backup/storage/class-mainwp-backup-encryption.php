@@ -67,6 +67,13 @@ class MainWP_Backup_Encryption { // phpcs:ignore Generic.Classes.OpeningBraceSam
     const PASSPHRASE_MISMATCH = 2;
 
     /**
+     * Replacement needs proof even when the dashboard still has its key file.
+     *
+     * @var int
+     */
+    const PASSPHRASE_CURRENT_REQUIRED = 3;
+
+    /**
      * PBKDF2 hash algorithm for passphrase derivation.
      *
      * @var string
@@ -242,32 +249,42 @@ class MainWP_Backup_Encryption { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
-     * Set or change the recovery passphrase. Creates the KEK on first use,
-     * restores it from the stored blob when the key file is lost, and always
-     * re-wraps the same KEK; never regenerates it.
+     * Replace the recovery wrap only after proving the existing passphrase.
+     * Re-entering it as the new passphrase also proves possession. Creates a
+     * KEK on first use and restores a lost key file from the existing wrap.
      *
-     * @param string $passphrase The operator passphrase.
+     * @param string $passphrase         New recovery passphrase.
+     * @param string $current_passphrase Current passphrase, or '' to prove with the new one.
      *
      * @return array The self-describing recovery blob that was stored.
-     * @throws \InvalidArgumentException When the trimmed passphrase is too short, or the key file is lost and the passphrase does not open the stored blob.
+     * @throws \InvalidArgumentException When the new passphrase is too short, proof fails, or the recovered KEK differs from the key file.
      * @throws \RuntimeException When a recovered or new KEK cannot be persisted to its key file.
      */
-    public function set_recovery_passphrase( $passphrase ) {
+    public function set_recovery_passphrase( $passphrase, $current_passphrase = '' ) {
         if ( mb_strlen( trim( (string) $passphrase ), 'UTF-8' ) < self::MIN_PASSPHRASE_LENGTH ) {
             throw new \InvalidArgumentException( esc_html__( 'The recovery passphrase must be at least 12 characters.', 'mainwp' ), self::PASSPHRASE_TOO_SHORT ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped; the sniff misreads the int code.
         }
         $kek      = $this->load_kek();
         $existing = $this->get_recovery_blob();
-        if ( null === $kek && ! empty( $existing['wrapped_kek'] ) ) {
-            // With the key file lost, the stored blob holds the only copy of the
-            // KEK every wrapped DEK depends on. A new KEK would overwrite it.
+        if ( ! empty( $existing['wrapped_kek'] ) ) {
+            // Offsite manifests keep older recovery wraps, so replacement must
+            // prove possession and preserve the KEK their DEKs depend on.
             try {
-                $kek = $this->recover_kek( (string) $passphrase, $existing );
+                $recovered = $this->recover_kek( '' !== $current_passphrase ? $current_passphrase : $passphrase, $existing );
             } catch ( \Throwable $e ) {
-                throw new \InvalidArgumentException( esc_html__( 'The passphrase does not open the stored recovery key, so the backup encryption key was not replaced.', 'mainwp' ), self::PASSPHRASE_MISMATCH ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped; the sniff misreads the int code.
+                if ( '' === $current_passphrase ) {
+                    throw new \InvalidArgumentException( esc_html__( 'Enter the current recovery passphrase to change it. The passphrase was not changed.', 'mainwp' ), self::PASSPHRASE_CURRENT_REQUIRED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped; the sniff misreads the int code.
+                }
+                throw new \InvalidArgumentException( esc_html__( 'The current recovery passphrase does not open the stored recovery key. The passphrase was not changed.', 'mainwp' ), self::PASSPHRASE_MISMATCH ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped; the sniff misreads the int code.
             }
-            if ( ! MainWP_Keys_Manager::instance()->save_key_file( $this->kek_filename(), $kek ) ) {
-                throw new \RuntimeException( esc_html( 'Could not persist the recovered backup encryption key.' ) );
+            if ( null !== $kek && ! hash_equals( $kek, $recovered ) ) {
+                throw new \InvalidArgumentException( esc_html__( 'The stored recovery key does not match the backup encryption key file. The passphrase was not changed.', 'mainwp' ), self::PASSPHRASE_MISMATCH ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- the message is escaped; the sniff misreads the int code.
+            }
+            if ( null === $kek ) {
+                if ( ! MainWP_Keys_Manager::instance()->save_key_file( $this->kek_filename(), $recovered ) ) {
+                    throw new \RuntimeException( esc_html__( 'Could not persist the recovered backup encryption key.', 'mainwp' ) );
+                }
+                $kek = $recovered;
             }
         }
         $kek          = null !== $kek ? $kek : $this->get_or_create_kek();

@@ -22,6 +22,9 @@ use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Backups_Handler;
 use MainWP\Dashboard\MainWP_System;
+use MainWP\Dashboard\MainWP_System_Handler;
+use MainWP\Dashboard\MainWP_System_Utility;
+use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
 /**
  * Class MainWP_Backup_Diagnostics_Test
@@ -118,6 +121,13 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	private $diag_dir;
 
 	/**
+	 * Site transients can outlive the test transaction in an object cache.
+	 *
+	 * @var string[]
+	 */
+	private $download_keys = array();
+
+	/**
 	 * Set up: enable native backups and point the recorder at scratch.
 	 *
 	 * @return void
@@ -138,6 +148,10 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function tearDown(): void {
 		global $wpdb;
+		foreach ( $this->download_keys as $key ) {
+			delete_site_transient( $key );
+		}
+		$this->download_keys = array();
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup_progress" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
 		$wpdb->query( "DELETE FROM {$wpdb->prefix}mainwp_wp_backup" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup.
 		$wpdb->query( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) ); // phpcs:ignore WordPress.DB -- test cleanup.
@@ -2004,12 +2018,11 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * The export endpoint hands back a signed mwpdl download URL for the
-	 * built bundle, and refuses while diagnostics is disabled.
+	 * The exported bundle needs a user-bound download rather than a bearer URL.
 	 *
 	 * @return void
 	 */
-	public function test_export_handler_returns_signed_download_url() {
+	public function test_export_handler_returns_authenticated_download_url() {
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
 
 		$response = $this->invoke_export_handler();
@@ -2019,24 +2032,269 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->enable_recorder();
 		MainWP_Backup_Diagnostics::instance()->record( 'exporturl', 'poll', 1, 1, array( 'phase' => 'queued' ) );
 
-		// The bundle must land inside the mainwp uploads tree for the mwpdl
-		// download path to serve it, so the scratch-dir filter is lifted here.
-		remove_filter( 'mainwp_backup_diagnostics_dir', array( $this, 'filter_diag_dir' ) );
-		$real_dir = MainWP_Backup_Diagnostics::instance()->diagnostics_dir();
-		copy( $this->diag_dir . '/' . $this->event_filename( 'exporturl' ), $real_dir . $this->event_filename( 'exporturl' ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
-
 		$response = $this->invoke_export_handler();
-
-		foreach ( (array) glob( $real_dir . '*' ) as $file ) {
-			if ( is_file( $file ) && false === strpos( basename( $file ), '.htaccess' ) && 'index.php' !== basename( $file ) ) {
-				unlink( $file );
-			}
-		}
-
 		$this->assertIsArray( $response );
 		$this->assertArrayHasKey( 'url', $response );
-		$this->assertStringContainsString( 'mwpdl=', $response['url'] );
-		$this->assertStringContainsString( 'sig=', $response['url'] );
+		$this->assertSame( wp_parse_url( admin_url( 'admin-post.php' ), PHP_URL_PATH ), wp_parse_url( $response['url'], PHP_URL_PATH ) );
+		parse_str( wp_parse_url( $response['url'], PHP_URL_QUERY ), $query );
+		$this->assertSame( 'mainwp_backup_diagnostics_download', $query['action'] );
+		$this->assertMatchesRegularExpression( '/^[a-zA-Z0-9]{32}$/', $query['token'] );
+		$this->assertNotFalse( wp_verify_nonce( $query['_wpnonce'], 'mainwp_backup_diagnostics_download' ) );
+		$this->assertArrayNotHasKey( 'mwpdl', $query );
+		$this->assertArrayNotHasKey( 'sig', $query );
+		$this->assertStringNotContainsString( '&amp;', $response['url'] );
+		$this->assertStringNotContainsString( '&#038;', $response['url'] );
+		$key                   = 'mainwp_backup_diag_download_' . hash( 'sha256', $query['token'] );
+		$this->download_keys[] = $key;
+		$record                = get_site_transient( $key );
+		$this->assertSame( get_current_user_id(), $record['user_id'] );
+		$this->assertSame( basename( $record['file'] ), $record['file'] );
+		$this->assertFileExists( $this->diag_dir . '/' . $record['file'] );
+		$this->assertGreaterThan( time() + 590, $record['expires'] );
+		$this->assertLessThanOrEqual( time() + 600, $record['expires'] );
+		$this->assertSame( file_get_contents( $this->diag_dir . '/' . $record['file'] ), $this->request_diagnostics_download( $query )['bytes'] );
+	}
+
+	/**
+	 * Replace only the exit-producing streamer and wp_die to retain endpoint checks.
+	 *
+	 * @param array $query Request parameters.
+	 * @param bool  $legacy Whether to use the old download route.
+	 * @return array Captured bytes and refusal details.
+	 */
+	private function request_diagnostics_download( array $query, bool $legacy = false ): array {
+		$streamer = new class() extends MainWP_System_Handler {
+			/**
+			 * The production streamer's exit would terminate the test process.
+			 *
+			 * @param string $file Authorized path.
+			 * @throws \RuntimeException To replace the streamer's exit.
+			 * @throws \LogicException When a record has not been consumed before streaming.
+			 */
+			public function upload_file( $file ) {
+				$token = isset( $_GET['token'] ) ? sanitize_text_field( wp_unslash( $_GET['token'] ) ) : '';
+				if ( '' !== $token && false !== get_site_transient( 'mainwp_backup_diag_download_' . hash( 'sha256', $token ) ) ) {
+					throw new \LogicException( 'The download record must be consumed before streaming.' );
+				}
+				throw new \RuntimeException( file_get_contents( $file ) );
+			}
+		};
+		$response = array(
+			'bytes'   => null,
+			'message' => null,
+			'status'  => null,
+		);
+		$die      = static function () use ( &$response ) {
+			return static function ( $message, $title, $args ) use ( &$response ) {
+				$response['message'] = $message;
+				$response['status']  = $args['response'];
+				throw new \RuntimeException( 'download refused' );
+			};
+		};
+		$property = new \ReflectionProperty( MainWP_System_Handler::class, 'instance' );
+		$original = $property->getValue();
+		$get      = $_GET;
+		$request  = $_REQUEST;
+		add_filter( 'wp_die_handler', $die );
+		try {
+			$property->setValue( null, $streamer );
+			$_GET     = $query;
+			$_REQUEST = $query;
+			try {
+				if ( $legacy ) {
+					MainWP_System::instance()->parse_init();
+				} else {
+					MainWP_Post_Backup_Handler::instance()->init();
+					do_action( 'admin_post_mainwp_backup_diagnostics_download' );
+				}
+			} catch ( \RuntimeException $error ) {
+				if ( null === $response['message'] ) {
+					$response['bytes'] = $error->getMessage();
+				} else {
+					$this->assertSame( 'download refused', $error->getMessage() );
+				}
+			}
+			return $response;
+		} finally {
+			$property->setValue( null, $original );
+			$_GET     = $get;
+			$_REQUEST = $request;
+			remove_filter( 'wp_die_handler', $die );
+		}
+	}
+
+	/**
+	 * Download validation must also be exercised independently of URL creation.
+	 *
+	 * @return array Query parameters and transient key.
+	 */
+	private function diagnostics_download_fixture(): array {
+		$this->set_current_user_as_admin();
+		$token = wp_generate_password( 32, false );
+		$key   = 'mainwp_backup_diag_download_' . hash( 'sha256', $token );
+		set_site_transient(
+			$key,
+			array(
+				'user_id' => get_current_user_id(),
+				'file'    => 'bundle.json',
+				'expires' => time() + 600,
+			),
+			600
+		);
+		$this->download_keys[] = $key;
+		file_put_contents( $this->diag_dir . '/bundle.json', 'diagnostics bundle bytes' );
+		return array(
+			array(
+				'action'   => 'mainwp_backup_diagnostics_download',
+				'token'    => $token,
+				'_wpnonce' => wp_create_nonce( 'mainwp_backup_diagnostics_download' ),
+			),
+			$key,
+		);
+	}
+
+	/** The token must be consumed before the selected bytes reach the streamer. */
+	public function test_diagnostics_download_serves_bundle_once() {
+		list( $query, $key ) = $this->diagnostics_download_fixture();
+		$this->assertSame( 'diagnostics bundle bytes', $this->request_diagnostics_download( $query )['bytes'] );
+		$this->assertFalse( get_site_transient( $key ) );
+		$second = $this->request_diagnostics_download( $query );
+		$this->assertNull( $second['bytes'] );
+		$this->assertSame( 403, $second['status'] );
+		$this->assertSame( 'This download link is not valid or has expired. Export the diagnostics again.', $second['message'] );
+	}
+
+	/**
+	 * Authorization and nonce refusals cannot consume another user's valid record.
+	 *
+	 * @dataProvider diagnostics_refusals
+	 * @param string $state Request mutation.
+	 * @param bool   $consumed Whether the record itself is invalid.
+	 */
+	public function test_diagnostics_download_refusals( string $state, bool $consumed ) {
+		list( $query, $key ) = $this->diagnostics_download_fixture();
+		$record              = get_site_transient( $key );
+		$outside             = '';
+		$deny                = static function ( $can, $type, $right ) use ( $state ) {
+			return 'denied right' === $state && 'dashboard' === $type && 'execute_backups' === $right ? false : $can;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		if ( 'logged out' === $state ) {
+			wp_set_current_user( 0 );
+		} elseif ( 'other admin' === $state || 'subscriber' === $state ) {
+			wp_set_current_user( $this->factory->user->create( array( 'role' => 'subscriber' === $state ? 'subscriber' : 'administrator' ) ) );
+			$query['_wpnonce'] = wp_create_nonce( 'mainwp_backup_diagnostics_download' );
+		} elseif ( 'wrong nonce' === $state ) {
+			$query['_wpnonce'] = 'invalid';
+		} elseif ( 'missing nonce' === $state ) {
+			unset( $query['_wpnonce'] );
+		} elseif ( 'expired' === $state ) {
+			$record['expires'] = time() - 1;
+		} elseif ( 'malformed record' === $state ) {
+			$record = 'invalid';
+		} elseif ( 'traversal' === $state ) {
+			$record['file'] = '../outside.json';
+		} elseif ( 'backslash' === $state ) {
+			$record['file'] = 'subdir\\bundle.json';
+		} elseif ( 'missing file' === $state ) {
+			$record['file'] = 'missing.json';
+		} elseif ( 'symlink' === $state ) {
+			$outside = wp_tempnam( 'outside-diagnostics' );
+			file_put_contents( $outside, 'outside bytes' );
+			symlink( $outside, $this->diag_dir . '/escape.json' );
+			$record['file'] = 'escape.json';
+		}
+		set_site_transient( $key, $record, 600 );
+		try {
+			$response = $this->request_diagnostics_download( $query );
+			$this->assertNull( $response['bytes'] );
+			$this->assertSame( 403, $response['status'] );
+			$this->assertSame( 'This download link is not valid or has expired. Export the diagnostics again.', $response['message'] );
+			$this->assertSame( $consumed ? false : $record, get_site_transient( $key ) );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			if ( '' !== $outside ) {
+				unlink( $outside );
+			}
+		}
+	}
+
+	/**
+	 * Failed privilege checks preserve records; invalid records cannot be reused.
+	 *
+	 * @return array Refusal cases and consumption expectations.
+	 */
+	public static function diagnostics_refusals(): array {
+		return array(
+			'logged out'       => array( 'logged out', false ),
+			'other admin'      => array( 'other admin', true ),
+			'subscriber'       => array( 'subscriber', false ),
+			'denied right'     => array( 'denied right', false ),
+			'wrong nonce'      => array( 'wrong nonce', false ),
+			'missing nonce'    => array( 'missing nonce', false ),
+			'expired'          => array( 'expired', true ),
+			'malformed record' => array( 'malformed record', true ),
+			'traversal'        => array( 'traversal', true ),
+			'backslash'        => array( 'backslash', true ),
+			'missing file'     => array( 'missing file', true ),
+			'symlink'          => array( 'symlink', true ),
+		);
+	}
+
+	/**
+	 * Older signed links must not bypass the authenticated diagnostics route.
+	 *
+	 * @dataProvider legacy_diagnostics_paths
+	 * @param string $prefix Diagnostics directory spelling in the request.
+	 */
+	public function test_legacy_diagnostics_link_is_refused( string $prefix ) {
+		$root = MainWP_System_Utility::get_mainwp_dir()[0];
+		$dir  = $root . ltrim( rawurldecode( $prefix ), '/' );
+		wp_mkdir_p( $dir );
+		$file = $dir . 'diagnostics-' . wp_generate_uuid4() . '.json';
+		file_put_contents( $file, 'legacy diagnostics bytes' );
+		wp_set_current_user( 0 );
+		try {
+			$query = array(
+				'mwpdl' => $prefix . basename( $file ),
+				'sig'   => MainWP_System_Utility::get_download_sig( $file ),
+			);
+			$this->assertNull( $this->request_diagnostics_download( $query, true )['bytes'] );
+		} finally {
+			unlink( $file );
+		}
+	}
+
+	/**
+	 * Directory matching must survive the legacy route's decoding and slashes.
+	 *
+	 * @return array Legacy directory spellings.
+	 */
+	public static function legacy_diagnostics_paths(): array {
+		return array(
+			'plain'            => array( 'backup-diagnostics/' ),
+			'case and slashes' => array( '//BACKUP-DIAGNOSTICS/' ),
+			'encoded slash'    => array( '/backup-diagnostics%2F' ),
+			'dot prefix'       => array( '/./backup-diagnostics/' ),
+		);
+	}
+
+	/** Bulk-install and other legacy callers still depend on signed public downloads. */
+	public function test_legacy_other_subdirectory_download_still_served() {
+		$dir = MainWP_System_Utility::get_mainwp_dir()[0] . 'bulk-install/';
+		wp_mkdir_p( $dir );
+		$file = $dir . 'archive-' . wp_generate_uuid4() . '.zip';
+		file_put_contents( $file, 'legacy archive bytes' );
+		wp_set_current_user( 0 );
+		try {
+			$query = array(
+				'mwpdl' => 'bulk-install/' . basename( $file ),
+				'sig'   => MainWP_System_Utility::get_download_sig( $file ),
+			);
+			$this->assertSame( 'legacy archive bytes', $this->request_diagnostics_download( $query, true )['bytes'] );
+		} finally {
+			unlink( $file );
+		}
 	}
 
 	/**

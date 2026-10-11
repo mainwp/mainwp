@@ -209,8 +209,8 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	/**
 	 * Callers read false as a lost lease, so a swap lost to a concurrent write
 	 * is retried, including one whose writer restored the exact row, and only
-	 * a gone row, a gone lease, a query error or an unmatchable swap reports
-	 * false.
+	 * a gone row, a gone lease, a query error or a swap that misses every
+	 * attempt reports false.
 	 *
 	 * @dataProvider save_checkpoint_outcomes
 	 * @param string $race     What happens between the read and the swap.
@@ -317,11 +317,11 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 				$this->assertSame( 1, $after->checkpoint['cursor'] );
 				break;
 			case 'evidence added then cleared':
-				$this->assertSame( 2, $swaps );
+				$this->assertSame( $count + 1, $swaps );
 				$this->assertSame( array( 'cursor' => 2 ), $after->checkpoint );
 				break;
 			case 'unmatchable swap':
-				$this->assertSame( 2, $swaps );
+				$this->assertSame( 20, $swaps );
 				$this->assertSame( $before->checkpoint, $after->checkpoint );
 				break;
 			case 'identical values':
@@ -352,7 +352,9 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			'terminal cancel mid-save'         => array( 'terminal cancel mid-save', 1, true, false ),
 			'row deleted'                      => array( 'row deleted', 0, true, false ),
 			'evidence added then cleared'      => array( 'evidence added then cleared', 1, true, true ),
-			'unmatchable swap'                 => array( 'unmatchable swap', 2, true, false ),
+			'two evidence cycles'              => array( 'evidence added then cleared', 2, true, true ),
+			'two evidence cycles unfenced'     => array( 'evidence added then cleared', 2, false, true ),
+			'unmatchable swap'                 => array( 'unmatchable swap', 20, true, false ),
 			'identical values'                 => array( 'identical values', 1, true, true ),
 			'query error'                      => array( 'query error', 1, true, false ),
 		);

@@ -407,14 +407,12 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      *
      * Callers treat false as a lost lease and go on with fenced writes
      * otherwise, so a swap lost to a concurrent write is retried rather
-     * than reported. Each retry needs a new write outside the lease, and
-     * the terminal writer drops the lease, so the loop ends.
-     *
-     * A row that reads back unchanged after a miss is retried once: an
-     * outside writer can add stop evidence and then clear it again (the
-     * UI lane drives on after the Child reports completion), restoring
-     * the exact text. Two misses in a row against an unchanged row mean
-     * the compare cannot match.
+     * than reported, even when the row reads back unchanged: the UI lane
+     * can add stop evidence and clear it again after the Child reports
+     * completion, restoring the exact text. Every miss needs a write
+     * outside the lease, and the terminal writer drops the lease; the
+     * attempt cap only stops a worker from spinning behind a writer that
+     * never settles.
      *
      * @param int         $job_id              Job id.
      * @param array       $checkpoint          Checkpoint.
@@ -423,7 +421,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      *
      * @return bool True when the write landed; false when the row is gone,
      *              the lease is no longer the caller's, the query failed, or
-     *              the swap missed twice against an unchanged row.
+     *              every attempt missed.
      */
     public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null, bool $clear_cancel_intent = false ): bool {
         unset( $checkpoint['cancel_intent'] );
@@ -436,27 +434,19 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             );
         }
 
-        $previous  = null;
-        $encoded   = '';
-        $unchanged = 0;
-        while ( true ) {
+        $previous = null;
+        $encoded  = '';
+        for ( $attempt = 0; $attempt < 20; $attempt++ ) {
             $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
                 $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
             );
             if ( null === $row || ( null !== $lock_token && $row->locked_by !== $lock_token ) ) {
                 return false;
             }
-            if ( null !== $previous && $row->checkpoint === $previous->checkpoint && $row->status === $previous->status ) {
+            if ( null !== $previous && $row->checkpoint === $previous->checkpoint && $row->status === $previous->status && $encoded === (string) $row->checkpoint ) {
                 // MySQL reports zero rows for identical values, which is a
                 // landed write.
-                if ( $encoded === (string) $previous->checkpoint ) {
-                    return true;
-                }
-                if ( ++$unchanged > 1 ) {
-                    return false;
-                }
-            } else {
-                $unchanged = 0;
+                return true;
             }
             $stored  = (string) $row->checkpoint;
             $decoded = json_decode( $stored, true );
@@ -498,6 +488,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             }
             $previous = $row;
         }
+        return false;
     }
 
     /**

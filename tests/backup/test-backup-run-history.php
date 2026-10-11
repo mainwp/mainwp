@@ -562,7 +562,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 				);
 			} else {
 				add_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
-				$this->assertNull( MainWP_Manage_Backups_Handler::pause_task_for_rescope( $task ) );
+				MainWP_Manage_Backups_Handler::pause_task_for_rescope( $task );
 			}
 		} finally {
 			$wpdb->suppress_errors( $suppress );

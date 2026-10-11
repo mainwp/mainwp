@@ -492,7 +492,7 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$cancelled   = 'This job is already cancelled. Confirming changes nothing and reports cancelled.';
 		$unconfirmed = 'This job already ended without the site confirming that it stopped. Confirming changes nothing and reports cancel_unconfirmed.';
 		$ended       = 'This job already failed and the site confirmed that it stopped. Confirming changes nothing and reports ended_failed.';
-		$verifying   = 'The restored site is being verified, so the job can no longer be cancelled. Confirming reports not_cancellable.';
+		$verifying   = 'The restore has reached verification, so the job can no longer be cancelled. Confirming reports not_cancellable.';
 		$local       = 'The site is not applying the restore yet, so a cancel normally stops the job at once. If the stop cannot be recorded right away, it is applied when the job reaches staging.';
 		$site        = 'The site is asked to stop. Confirmation can take up to 15 minutes; poll get-restore-job-v1 until the result is final.';
 		$outcome     = static function ( $value ) {
@@ -515,6 +515,8 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 			'C10 transferring'                      => array( 'transferring', array(), 'owned-restore', true, true, $site, null ),
 			'C10 running'                           => array( 'running', array(), 'owned-restore', true, true, $site, null ),
 			'C11 staging without a Child task'      => array( 'staging', array(), '', true, false, $local, null ),
+			'C9 armed intent'                       => array( 'pending', array( 'cancel_intent' => true ), '', true, false, $local, null ),
+			'C10 retrying a transfer'               => array( 'failed_retryable', array( 'resume_status' => 'transferring' ), 'owned-restore', true, true, $site, null ),
 			'C12 retrying a failure, no Child task' => array(
 				'failed_retryable',
 				array(

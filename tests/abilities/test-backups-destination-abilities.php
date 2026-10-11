@@ -474,11 +474,18 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 	/** Unreadable stored settings cannot silently become a credential-free update. */
 	public function test_update_refuses_corrupt_stored_secrets() {
 		global $wpdb;
-		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), array( 'settings' => 'unreadable' ), array( 'id' => $this->id ) );
-		foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
-			$error = $this->execute( 'update-backup-destination', $this->input( 'update-backup-destination' ) + array( $mode => true ) );
-			$this->assertSame( 'mainwp_backup_destination_credentials_required', $error->get_error_code() );
-			$this->assertSame( 400, $error->get_error_data()['status'] );
+		// Teardown finds the destination's key file through the stored envelope, so the envelope must come back.
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$envelope = $wpdb->get_var( $wpdb->prepare( "SELECT settings FROM {$table} WHERE id = %d", $this->id ) ); // phpcs:ignore WordPress.DB -- test fixture.
+		$wpdb->update( $table, array( 'settings' => 'unreadable' ), array( 'id' => $this->id ) );
+		try {
+			foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+				$error = $this->execute( 'update-backup-destination', $this->input( 'update-backup-destination' ) + array( $mode => true ) );
+				$this->assertSame( 'mainwp_backup_destination_credentials_required', $error->get_error_code() );
+				$this->assertSame( 400, $error->get_error_data()['status'] );
+			}
+		} finally {
+			$wpdb->update( $table, array( 'settings' => $envelope ), array( 'id' => $this->id ) );
 		}
 	}
 
@@ -639,8 +646,15 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 		);
 		$output = $this->execute( 'test-backup-destination', $this->input( 'test-backup-destination' ) + array( 'dry_run' => true ) );
 		$this->assertTrue( $output['would_affect']['may_pin_host_key'] );
-		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), array( 'settings' => 'unreadable' ), array( 'id' => $this->id ) );
-		$output = $this->execute( 'test-backup-destination', $this->input( 'test-backup-destination' ) + array( 'dry_run' => true ) );
+		// Teardown finds the destination's key file through the stored envelope, so the envelope must come back.
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$envelope = $wpdb->get_var( $wpdb->prepare( "SELECT settings FROM {$table} WHERE id = %d", $this->id ) ); // phpcs:ignore WordPress.DB -- test fixture.
+		$wpdb->update( $table, array( 'settings' => 'unreadable' ), array( 'id' => $this->id ) );
+		try {
+			$output = $this->execute( 'test-backup-destination', $this->input( 'test-backup-destination' ) + array( 'dry_run' => true ) );
+		} finally {
+			$wpdb->update( $table, array( 'settings' => $envelope ), array( 'id' => $this->id ) );
+		}
 		$this->assert_output( 'test-backup-destination', $output );
 		$this->assertFalse( $output['would_affect']['may_pin_host_key'] );
 	}

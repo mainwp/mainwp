@@ -1780,7 +1780,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         } elseif ( null !== $finished ) {
             $warning = __( 'This job has already finished. Confirming changes nothing and reports not_cancellable.', 'mainwp' );
         } elseif ( ! $cancellable ) {
-            $warning = __( 'The restored site is being verified, so the job can no longer be cancelled. Confirming reports not_cancellable.', 'mainwp' );
+            $warning = __( 'The restore has reached verification, so the job can no longer be cancelled. Confirming reports not_cancellable.', 'mainwp' );
         } elseif ( $asks_site ) {
             $warning = __( 'The site is asked to stop. Confirmation can take up to 15 minutes; poll get-restore-job-v1 until the result is final.', 'mainwp' );
         } else {

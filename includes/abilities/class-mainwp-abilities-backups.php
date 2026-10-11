@@ -2431,7 +2431,10 @@ class MainWP_Abilities_Backups {
     }
 
     /**
-     * Only backup reads need their schema checked before the generic run controller.
+     * Only registered backup reads need their schema checked before the generic run controller.
+     *
+     * Query and body parameters outrank the route, so `name` can be any shape a request carries.
+     * Everything other than a registered backup read keeps core's check and core's answer.
      *
      * @param mixed            $input Request input.
      * @param \WP_REST_Request $request Current REST request.
@@ -2439,15 +2442,11 @@ class MainWP_Abilities_Backups {
      * @return true|\WP_Error
      */
     public static function validate_rest_input( $input, \WP_REST_Request $request, string $param ) {
-        $name = $request['name'];
-        if ( ! array_key_exists( $name, self::READ_RIGHTS ) ) {
+        $name = $request->get_param( 'name' );
+        if ( ! is_string( $name ) || ! array_key_exists( $name, self::READ_RIGHTS ) || ! wp_has_ability( $name ) ) {
             return rest_validate_request_arg( $input, $request, $param );
         }
         $ability = wp_get_ability( $name );
-        if ( ! $ability instanceof \WP_Ability ) {
-            // An unregistered read keeps the default check, so the controller answers its own 404.
-            return rest_validate_request_arg( $input, $request, $param );
-        }
         return rest_validate_value_from_schema( $ability->normalize_input( $input ), $ability->get_input_schema(), $param );
     }
 

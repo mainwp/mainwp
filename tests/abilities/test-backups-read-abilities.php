@@ -1326,16 +1326,17 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @param string $name Ability slug.
 	 * @param array  $input Caller input.
+	 * @param array  $query Extra query parameters.
 	 * @return \WP_REST_Response
 	 */
-	private function rest_read( $name, array $input ) {
+	private function rest_read( $name, array $input, array $query = array() ) {
 		global $wp_rest_server;
 		$previous       = $wp_rest_server;
 		$wp_rest_server = new \WP_REST_Server();
 		do_action( 'rest_api_init' );
 		wp_set_current_user( get_current_user_id() );
 		$request = new \WP_REST_Request( 'GET', '/wp-abilities/v1/abilities/mainwp/' . $name . '-v1/run' );
-		$request->set_query_params( array( 'input' => $input ) );
+		$request->set_query_params( array_merge( $query, array( 'input' => $input ) ) );
 		try {
 			return $this->guarded(
 				static function () use ( $request ) {
@@ -1499,26 +1500,55 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A backup read missing from the registry must answer core's 404, not fatal in route validation.
+	 * Every request shape the run-route input check can see, by the name WordPress resolves.
 	 *
+	 * @return array
+	 */
+	public static function run_route_names() {
+		return array(
+			'V1 registered read, valid id'          => array( 'get-backup-task', array( 'task_id' => 987671 ), array(), true, 200, null ),
+			'V2 registered read, schema refusal'    => array( 'get-backup-task', array( 'task_id' => '05' ), array(), true, 400, 'rest_invalid_param' ),
+			'V3 registered read, exact id refusal'  => array( 'get-backup-task', array( 'task_id' => '9007199254740992' ), array(), true, 400, 'mainwp_invalid_input' ),
+			'V4 unregistered backup read'           => array( 'get-backup-task', array( 'task_id' => 987671 ), array(), false, 404, 'rest_ability_not_found' ),
+			'V5 name parameter as an array'         => array( 'get-backup-task', array( 'task_id' => 987671 ), array( 'name' => array( 'x' ) ), true, 400, 'rest_invalid_param' ),
+			'V6 registered ability outside backups' => array( 'count-sites', array(), array(), true, 200, null ),
+		);
+	}
+
+	/**
+	 * Only a registered backup read gets the backup schema check; every other request keeps core's answer.
+	 *
+	 * @dataProvider run_route_names
+	 * @param string      $name Ability slug in the route.
+	 * @param array       $input Caller input.
+	 * @param array       $query Extra query parameters.
+	 * @param bool        $registered Whether the ability stays registered.
+	 * @param int         $status Expected HTTP status.
+	 * @param string|null $code Expected error code.
 	 * @return void
 	 */
-	public function test_rest_run_of_unregistered_backup_read_is_not_found() {
+	public function test_run_route_input_check_follows_the_resolved_name( $name, $input, $query, $registered, $status, $code ) {
 		$registry = \WP_Abilities_Registry::get_instance();
 		$property = new \ReflectionProperty( $registry, 'registered_abilities' );
 		$property->setAccessible( true );
 		$abilities = $property->getValue( $registry );
-		$remaining = $abilities;
-		unset( $remaining['mainwp/get-backup-task-v1'] );
-		$property->setValue( $registry, $remaining );
-		$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+		if ( ! $registered ) {
+			$remaining = $abilities;
+			unset( $remaining[ 'mainwp/' . $name . '-v1' ] );
+			$property->setValue( $registry, $remaining );
+			$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+		}
 		try {
-			$response = $this->rest_read( 'get-backup-task', array( 'task_id' => 987671 ) );
+			$response = $this->rest_read( $name, $input, $query );
 		} finally {
 			$property->setValue( $registry, $abilities );
 		}
-		$this->assertSame( 404, $response->get_status() );
-		$this->assertSame( 'rest_ability_not_found', $response->get_data()['code'] );
+		$this->assertSame( $status, $response->get_status() );
+		if ( null === $code ) {
+			$this->assertFalse( $response->is_error() );
+			return;
+		}
+		$this->assertSame( $code, $response->get_data()['code'] );
 	}
 
 	/**

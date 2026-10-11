@@ -1263,8 +1263,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $disabled ) ) {
             return $disabled;
         }
-        if ( ! $fields || array_diff( array_keys( $fields ), array( 'name', 'is_default' ) ) || ( array_key_exists( 'name', $fields ) && ( ! is_string( $fields['name'] ) || '' === trim( $fields['name'] ) || mb_strlen( $fields['name'], 'UTF-8' ) > 255 ) ) || ( array_key_exists( 'is_default', $fields ) && ! is_bool( $fields['is_default'] ) ) ) {
-            return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        $fields = self::prepare_destination_fields( $fields );
+        if ( is_wp_error( $fields ) ) {
+            return $fields;
         }
         if ( ! empty( $destination->credentials_invalid ) ) {
             return new \WP_Error( MainWP_Backup_Error_Codes::ERR_DESTINATION_CREDENTIALS_REQUIRED, self::safe_error( MainWP_Backup_Error_Codes::ERR_DESTINATION_CREDENTIALS_REQUIRED )['message'], array( 'status' => 400 ) );
@@ -1278,8 +1279,39 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'is_default' => $fields['is_default'] ?? ! empty( $destination->is_default ),
                     'settings'   => $destination->settings,
                 )
-            )
+            ),
+            (string) $destination->provider
         );
+    }
+
+    /**
+     * Preview and save must use the same sanitized destination changes.
+     *
+     * @param array $fields Name or default flag.
+     * @return array|\WP_Error
+     */
+    private static function prepare_destination_fields( array $fields ) {
+        if ( ! $fields || array_diff( array_keys( $fields ), array( 'name', 'is_default' ) ) || ( array_key_exists( 'name', $fields ) && ! is_string( $fields['name'] ) ) || ( array_key_exists( 'is_default', $fields ) && ! is_bool( $fields['is_default'] ) ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        }
+        if ( array_key_exists( 'name', $fields ) ) {
+            $fields['name'] = sanitize_text_field( $fields['name'] );
+            if ( '' === $fields['name'] || mb_strlen( $fields['name'], 'UTF-8' ) > 255 ) {
+                return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+            }
+        }
+        return $fields;
+    }
+
+    /**
+     * Connection tests can establish SFTP trust when no fingerprint or pin exists.
+     *
+     * @param object $destination Stored destination.
+     * @return bool
+     */
+    private static function destination_may_pin_host_key( object $destination ): bool {
+        $pins = get_option( MainWP_Backup_Storage_SFTP::HOSTKEYS_OPTION, array() );
+        return 'sftp' === $destination->provider && empty( $destination->settings['host_fingerprint'] ) && ! isset( $pins[ (int) $destination->id ] );
     }
 
     /**
@@ -1334,10 +1366,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'gcs'     => MainWP_Backup_Error_Codes::ERR_GCS_FAILED,
                 'dropbox' => MainWP_Backup_Error_Codes::ERR_DROPBOX_FAILED,
                 'sftp'    => MainWP_Backup_Error_Codes::ERR_FTP_FAILED,
-                'local'   => MainWP_Backup_Error_Codes::ERR_S3_FAILED,
+                'local'   => MainWP_Backup_Error_Codes::ERR_LOCAL_FAILED,
             );
-            $code  = $codes[ $provider ] ?? 'mainwp_operation_failed';
-            return new \WP_Error( $code, self::safe_error( $code )['message'], array( 'status' => 502 ) );
+            $code  = $codes[ $provider ] ?? 'mainwp_internal_error';
+            return new \WP_Error( $code, self::safe_error( $code )['message'], array( 'status' => 'mainwp_internal_error' === $code ? 500 : 502 ) );
         }
         return $result;
     }
@@ -1449,18 +1481,18 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $effect = array( 'destination_id' => $id );
         switch ( $action ) {
             case 'test-backup-destination':
-                $pins                          = get_option( MainWP_Backup_Storage_SFTP::HOSTKEYS_OPTION, array() );
                 $effect['provider']            = (string) $destination->provider;
                 $effect['writes_probe_object'] = true;
-                $effect['may_pin_host_key']    = 'sftp' === $destination->provider && empty( $destination->settings['host_fingerprint'] ) && ! isset( $pins[ $id ] );
+                $effect['may_pin_host_key']    = self::destination_may_pin_host_key( $destination );
                 break;
             case 'set-default-backup-destination':
                 $previous                      = MainWP_Backup_Storage_Destinations::instance()->get_default();
                 $effect['previous_default_id'] = $previous ? (int) $previous->id : null;
                 break;
             case 'update-backup-destination':
-                if ( ! $fields || array_diff( array_keys( $fields ), array( 'name', 'is_default' ) ) || ( array_key_exists( 'name', $fields ) && ( ! is_string( $fields['name'] ) || '' === trim( $fields['name'] ) || mb_strlen( $fields['name'], 'UTF-8' ) > 255 ) ) || ( array_key_exists( 'is_default', $fields ) && ! is_bool( $fields['is_default'] ) ) ) {
-                    return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+                $fields = self::prepare_destination_fields( $fields );
+                if ( is_wp_error( $fields ) ) {
+                    return $fields;
                 }
                 if ( ! empty( $destination->credentials_invalid ) ) {
                     return new \WP_Error( MainWP_Backup_Error_Codes::ERR_DESTINATION_CREDENTIALS_REQUIRED, self::safe_error( MainWP_Backup_Error_Codes::ERR_DESTINATION_CREDENTIALS_REQUIRED )['message'], array( 'status' => 400 ) );
@@ -1468,16 +1500,16 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $effect['changes'] = array();
                 foreach ( $fields as $field => $value ) {
                     $before = 'is_default' === $field ? ! empty( $destination->is_default ) : (string) $destination->name;
-                    $after  = 'name' === $field ? sanitize_text_field( $value ) : $value;
-                    if ( $before !== $after ) {
+                    if ( $before !== $value ) {
                         $effect['changes'][] = array(
                             'field' => $field,
                             'from'  => $before,
-                            'to'    => $after,
+                            'to'    => $value,
                         );
                     }
                 }
                 $effect['connection_test_runs'] = true;
+                $effect['may_pin_host_key']     = self::destination_may_pin_host_key( $destination );
                 break;
             case 'delete-backup-destination':
                 $effect['tasks_detached'] = array();
@@ -1642,7 +1674,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $details ) ) {
             return $details;
         }
-        $type     = $resolved['sub_type'] ?? ( 'incremental' === $snapshot->type ? 'full' : $snapshot->type );
+        $type     = $resolved['ok'] ? $resolved['sub_type'] : ( 'incremental' === $snapshot->type ? 'full' : $snapshot->type );
         $refusals = self::restore_preview_refusals( $site );
         $reason   = $resolved['ok'] ? null : self::safe_error( $resolved['code'] );
         if ( null !== $reason ) {
@@ -1714,16 +1746,25 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $job ) ) {
             return $job;
         }
-        $phase = 'failed_retryable' === $job->status ? ( $job->checkpoint['resume_status'] ?? 'pending' ) : $job->status;
+        $phase       = 'failed_retryable' === $job->status ? ( $job->checkpoint['resume_status'] ?? 'pending' ) : $job->status;
+        $cancellable = in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $phase;
+        $asks_site   = ! empty( $job->child_task_id ) && in_array( $phase, array( 'staging', 'transferring', 'running' ), true );
+        if ( ! $cancellable ) {
+            $warning = __( 'This job can no longer be cancelled. Confirming returns not_cancellable.', 'mainwp' );
+        } elseif ( $asks_site ) {
+            $warning = __( 'The site is asked to stop. Confirmation can take up to 15 minutes; poll get-restore-job-v1 until the result is final.', 'mainwp' );
+        } else {
+            $warning = __( 'The site is not applying the restore yet, so a cancel normally stops the job at once. If the stop cannot be recorded right away, it is applied when the job reaches staging.', 'mainwp' );
+        }
         return self::backup_preview(
             array(
                 'restore_job_id'     => $restore_job_id,
                 'status'             => $job->status,
-                'cancellable'        => in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $phase,
-                'site_will_be_asked' => ! empty( $job->child_task_id ) && in_array( $phase, array( 'staging', 'transferring', 'running' ), true ),
+                'cancellable'        => $cancellable,
+                'site_will_be_asked' => $asks_site,
             ),
             array(),
-            array( __( 'An early-phase cancel takes effect once the job reaches staging. Poll the restore job until cancellation is confirmed.', 'mainwp' ) )
+            array( $warning )
         );
     }
 

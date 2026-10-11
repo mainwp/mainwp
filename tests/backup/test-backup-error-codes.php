@@ -11,6 +11,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
+use MainWP\Dashboard\MainWP_Backup_Operations;
 
 /**
  * Class MainWP_Backup_Error_Codes_Test
@@ -134,6 +135,7 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		'mainwp_backup_ftp_failed',
 		'mainwp_backup_dropbox_failed',
 		'mainwp_backup_s3_failed',
+		'mainwp_backup_local_failed',
 		'mainwp_backup_hash_mismatch',
 	);
 
@@ -309,6 +311,23 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 		$this->assertContains( 'mainwp_backup_gcs_failed', $registered );
 		$this->assertSame( 'mainwp_backup_gcs_failed', MainWP_Backup_Error_Codes::ERR_GCS_FAILED );
 		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( MainWP_Backup_Error_Codes::ERR_GCS_FAILED ) );
+	}
+
+	/** Local storage failures need Dashboard folder guidance through the safe formatter. */
+	public function test_registers_local_error_code_with_safe_message() {
+		$code    = MainWP_Backup_Error_Codes::ERR_LOCAL_FAILED;
+		$message = 'Could not write to the backup folder on the Dashboard server. Check that the folder exists and is writable, then try again.';
+		$this->assertSame( 'mainwp_backup_local_failed', $code );
+		$this->assertContains( $code, MainWP_Backup_Error_Codes::get_registered_codes() );
+		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( $code ) );
+		$this->assertSame( $message, MainWP_Backup_Error_Codes::message( $code ) );
+		$this->assertSame(
+			array(
+				'code'    => $code,
+				'message' => $message,
+			),
+			MainWP_Backup_Operations::safe_error( $code )
+		);
 	}
 
 	/**

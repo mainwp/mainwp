@@ -4961,7 +4961,7 @@ class MainWP_Abilities_Backups {
             'mainwp/restore-site-snapshot-v1',
             array(
                 'label'               => __( 'Restore Site Snapshot', 'mainwp' ),
-                'description'         => __( 'Restore a site from one of its snapshots. Full and database restores replace the site\'s database; content changed since the snapshot is lost. By default a full safety backup is taken first so rollback-restore-v1 can undo the restore. Returns a restore job id; cron runs the restore. Poll get-restore-job-v1 and read outcome, partial_state_risk and verification. dry_run is the consent step: snapshot age, what is replaced, WooCommerce warnings and the refusals known without contacting the site. Possible errors: mainwp_backup_legacy_disabled, mainwp_backup_site_disconnected, mainwp_backup_already_running, mainwp_backup_snapshot_not_found, mainwp_site_not_found, mainwp_restore_woo_legacy_orders, mainwp_restore_woo_sync_mode, mainwp_restore_woo_version_skew, mainwp_restore_child_update_required.', 'mainwp' ),
+                'description'         => __( 'Restore a site from one of its snapshots. Full and database restores replace the site\'s database; content changed since the snapshot is lost. By default a full safety backup is taken first so rollback-restore-v1 can undo the restore. Returns a restore job id; cron runs the restore. Poll get-restore-job-v1 and read outcome, partial_state_risk and verification. dry_run is the consent step: snapshot age, what is replaced, WooCommerce warnings and the refusals known without contacting the site. Possible errors: mainwp_backup_legacy_disabled, mainwp_backup_site_disconnected, mainwp_backup_already_running, mainwp_backup_snapshot_not_found, mainwp_site_not_found, mainwp_restore_woo_legacy_orders, mainwp_restore_woo_sync_mode, mainwp_restore_woo_version_skew, mainwp_restore_child_update_required, and the mainwp_backup_snapshot_unrestorable_* codes when the snapshot cannot be restored (dry_run shows the reason).', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::restore_site_snapshot_input_schema(),
@@ -4997,7 +4997,7 @@ class MainWP_Abilities_Backups {
             'mainwp/cancel-restore-v1',
             array(
                 'label'               => __( 'Cancel Restore', 'mainwp' ),
-                'description'         => __( 'Request cancellation of a restore job that has not reached verification. An early-phase cancel takes effect once the job reaches staging. cancel_pending means the request is recorded; it does not mean the job has stopped. Poll get-restore-job-v1 until the stop is confirmed. Results: cancelled, cancel_pending, cancel_unconfirmed (the site never confirmed within 15 minutes and may be partly restored), ended_failed, or not_cancellable. Possible errors: mainwp_backup_restore_job_not_found.', 'mainwp' ),
+                'description'         => __( 'Request cancellation of a restore job that has not reached verification. cancel_pending means the request is recorded but the job has not stopped; a request recorded before staging is applied when the job reaches staging. Poll get-restore-job-v1 until the stop is confirmed. Results: cancelled, cancel_pending, cancel_unconfirmed (the site never confirmed within 15 minutes and may be partly restored), ended_failed, or not_cancellable. Possible errors: mainwp_backup_restore_job_not_found, mainwp_operation_failed.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::cancel_restore_input_schema(),
@@ -5010,7 +5010,7 @@ class MainWP_Abilities_Backups {
                         'readonly'     => false,
                         'destructive'  => true,
                         'idempotent'   => true,
-                        'instructions' => __( 'Requires confirm:true or dry_run:true. After cancel_pending or cancel_unconfirmed read get-restore-job-v1 before reporting the site state. An early-phase cancel takes effect once the job reaches staging.', 'mainwp' ),
+                        'instructions' => __( 'Requires confirm:true or dry_run:true. After cancel_pending or cancel_unconfirmed read get-restore-job-v1 before reporting the site state.', 'mainwp' ),
                     ),
                 ),
             )
@@ -5033,7 +5033,7 @@ class MainWP_Abilities_Backups {
             'mainwp/rollback-restore-v1',
             array(
                 'label'               => __( 'Roll Back Restore', 'mainwp' ),
-                'description'         => __( 'Restore the full safety backup taken before a restore job, undoing that restore. Starts a new restore job; poll get-restore-job-v1 with the returned restore_job_id. Available only when the source job took a safety backup and is in a rollback-able status. Possible errors: mainwp_restore_rollback_status, mainwp_backup_site_disconnected, mainwp_backup_already_running, mainwp_backup_restore_job_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'description'         => __( 'Restore the full safety backup taken before a restore job, undoing that restore. Starts a new restore job; poll get-restore-job-v1 with the returned restore_job_id. Available only when the source job took a safety backup and has finished (completed, failed or cancelled). Possible errors: mainwp_restore_rollback_status, mainwp_backup_site_disconnected, mainwp_backup_already_running, mainwp_backup_restore_job_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::rollback_restore_input_schema(),
@@ -5225,7 +5225,7 @@ class MainWP_Abilities_Backups {
                     'result'         => array(
                         'type'        => 'string',
                         'enum'        => array( 'cancelled', 'cancel_pending', 'cancel_unconfirmed', 'ended_failed', 'not_cancellable' ),
-                        'description' => 'cancelled: the job stopped and the site confirmed, or never had a restore task. cancel_pending: cancellation is recorded; an early-phase cancel takes effect once the job reaches staging. Poll get-restore-job-v1 until the stop is confirmed. cancel_unconfirmed: the site never confirmed it stopped within 15 minutes. ended_failed: the restore had already failed; the cancel stopped any further attempt and the site confirmed. not_cancellable: the job had already finished or is verifying.',
+                        'description' => 'cancelled: the job stopped and the site confirmed, or never had a restore task. cancel_pending: the request is recorded but the job has not stopped; a request recorded before staging is applied when the job reaches staging. Poll get-restore-job-v1 until the stop is confirmed. cancel_unconfirmed: the site never confirmed it stopped within 15 minutes. ended_failed: the restore had already failed; the cancel stopped any further attempt and the site confirmed. not_cancellable: the job had already finished or is verifying.',
                     ),
                     'status'         => $status,
                 ),
@@ -5280,7 +5280,7 @@ class MainWP_Abilities_Backups {
                 $source          => array( 'type' => 'integer' ),
                 'status'         => array(
                     'type' => 'string',
-                    'enum' => array( 'started', 'already_running', 'not_started' ),
+                    'enum' => array( 'started', 'not_started' ),
                 ),
                 'started_at'     => self::ts_schema(),
                 'poll'           => array(
@@ -5435,7 +5435,7 @@ class MainWP_Abilities_Backups {
             'mainwp/update-backup-destination-v1',
             array(
                 'label'               => __( 'Update Backup Destination', 'mainwp' ),
-                'description'         => __( 'Rename a destination or change its default flag. Nothing else can be changed here: credentials, hosts, buckets and paths are edited on the Backup Storage page. The stored connection is tested before saving. Possible errors: mainwp_invalid_input, mainwp_backup_destination_not_found, mainwp_backup_destination_credentials_required, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'description'         => __( 'Rename a destination or change its default flag. Nothing else can be changed here: credentials, hosts, buckets and paths are edited on the Backup Storage page. The stored connection is tested before saving, and an SFTP destination without a pinned host key pins the key on first contact. Possible errors: mainwp_invalid_input, mainwp_backup_destination_not_found, mainwp_backup_destination_credentials_required, mainwp_backup_legacy_disabled, and the provider\'s failure code when the connection test fails.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::update_backup_destination_input_schema(),
@@ -5557,7 +5557,7 @@ class MainWP_Abilities_Backups {
                 'confirm'        => array(
                     'type'        => 'boolean',
                     'default'     => false,
-                    'description' => 'Required to perform the action. Cannot be combined with dry_run.',
+                    'description' => 'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
                 ),
             ),
         );
@@ -5587,12 +5587,9 @@ class MainWP_Abilities_Backups {
      * @return array
      */
     private static function update_backup_destination_input_schema(): array {
+        // Tags and whitespace can shrink the name; the service bounds its sanitized value.
         $schema                             = self::test_backup_destination_input_schema();
-        $schema['properties']['name']       = array(
-            'type'      => 'string',
-            'minLength' => 1,
-            'maxLength' => 255,
-        );
+        $schema['properties']['name']       = array( 'type' => 'string' );
         $schema['properties']['is_default'] = array( 'type' => 'boolean' );
         return $schema;
     }
@@ -5715,7 +5712,7 @@ class MainWP_Abilities_Backups {
             array(
                 'type'                 => 'object',
                 'additionalProperties' => false,
-                'required'             => array( 'destination_id', 'changes', 'connection_test_runs' ),
+                'required'             => array( 'destination_id', 'changes', 'connection_test_runs', 'may_pin_host_key' ),
                 'properties'           => array(
                     'destination_id'       => array(
                         'type'    => 'integer',
@@ -5744,6 +5741,9 @@ class MainWP_Abilities_Backups {
                     'connection_test_runs' => array(
                         'type' => 'boolean',
                         'enum' => array( true ),
+                    ),
+                    'may_pin_host_key'     => array(
+                        'type' => 'boolean',
                     ),
                 ),
             ),

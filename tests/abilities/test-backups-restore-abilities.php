@@ -470,14 +470,56 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertArrayNotHasKey( 'cancel_intent', $job->checkpoint );
 	}
 
-	/** The cancellation description must explain when early-phase intent takes effect. */
-	public function test_cancel_copy_defers_early_phase_stop_until_staging() {
+	/** The cancellation description must distinguish a recorded request from a confirmed stop. */
+	public function test_cancel_copy_distinguishes_pending_request_from_stop() {
 		$ability = $this->ability( 'cancel-restore' );
-		$this->assertStringContainsString( 'staging', $ability->get_description() );
+		$this->assertStringContainsString( 'cancel_pending means the request is recorded but the job has not stopped; a request recorded before staging is applied when the job reaches staging.', $ability->get_description() );
+		$this->assertStringContainsString( 'mainwp_operation_failed', $ability->get_description() );
+		$this->assertSame( 'Requires confirm:true or dry_run:true. After cancel_pending or cancel_unconfirmed read get-restore-job-v1 before reporting the site state.', $ability->get_meta()['annotations']['instructions'] );
 		$schema = $ability->get_output_schema()['oneOf'][1]['properties']['result'];
 		$this->assertSame( array( 'cancelled', 'cancel_pending', 'cancel_unconfirmed', 'ended_failed', 'not_cancellable' ), $schema['enum'] );
-		$this->assertStringContainsString( 'staging', $schema['description'] );
+		$this->assertStringContainsString( 'cancel_pending: the request is recorded but the job has not stopped; a request recorded before staging is applied when the job reaches staging.', $schema['description'] );
 		$this->assertStringNotContainsString( 'next restore step', $schema['description'] );
+	}
+
+	/**
+	 * Cancellation advice must follow the job's phase and Child task evidence.
+	 *
+	 * @return array
+	 */
+	public static function cancel_previews() {
+		$finished = 'This job can no longer be cancelled. Confirming returns not_cancellable.';
+		$local    = 'The site is not applying the restore yet, so a cancel normally stops the job at once. If the stop cannot be recorded right away, it is applied when the job reaches staging.';
+		$site     = 'The site is asked to stop. Confirmation can take up to 15 minutes; poll get-restore-job-v1 until the result is final.';
+		return array(
+			array( 'completed', '', false, false, $finished ),
+			array( 'verifying', 'owned-restore', false, false, $finished ),
+			array( 'pending', '', true, false, $local ),
+			array( 'staging', 'owned-restore', true, true, $site ),
+			array( 'transferring', 'owned-restore', true, true, $site ),
+			array( 'running', 'owned-restore', true, true, $site ),
+		);
+	}
+
+	/**
+	 * Previews must explain confirmation without changing existing eligibility.
+	 *
+	 * @dataProvider cancel_previews
+	 * @param string $status Fixture phase.
+	 * @param string $child Child task identity.
+	 * @param bool   $cancellable Expected cancellation eligibility.
+	 * @param bool   $asks_site Expected Child request.
+	 * @param string $warning Expected single warning.
+	 */
+	public function test_cancel_preview_warning_follows_job_state( $status, $child, $cancellable, $asks_site, $warning ) {
+		$this->fixture_job( $status, array(), $child );
+		$output = $this->execute( 'cancel-restore', $this->input( 'cancel-restore' ) + array( 'dry_run' => true ) );
+		$this->assert_output( 'cancel-restore', $output );
+		$this->assertSame( $cancellable, $output['would_affect']['cancellable'] );
+		$this->assertSame( $asks_site, $output['would_affect']['site_will_be_asked'] );
+		$this->assertTrue( $output['can_proceed'] );
+		$this->assertSame( array( $warning ), $output['warnings'] );
+		$this->assertSame( array(), $this->calls );
 	}
 
 	/** Contention arms an early-phase cancel, which must be reported without claiming a stop. */
@@ -811,6 +853,32 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFalse( $output['would_affect']['safety_backup']['will_take'] );
 		$this->assertSame( array( 'mainwp_backup_site_disconnected', 'mainwp_backup_snapshot_unrestorable_pruned' ), array_column( $output['refusals'], 'code' ) );
 		$this->assertStringNotContainsString( $this->artifact, wp_json_encode( $output, JSON_UNESCAPED_SLASHES ) );
+	}
+
+	/** A refused files restore still describes the snapshot's own type. */
+	public function test_unrestorable_files_preview_does_not_warn_about_database_replacement() {
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'type'   => 'files',
+				'status' => 'pruned',
+			),
+			array( 'id' => $this->snapshot_id )
+		);
+		$output = $this->execute( 'restore-site-snapshot', $this->input( 'restore-site-snapshot' ) + array( 'dry_run' => true ) );
+		$this->assert_output( 'restore-site-snapshot', $output );
+		$this->assertFalse( $output['would_affect']['restorable'] );
+		$this->assertSame( 'files', $output['would_affect']['restore_type'] );
+		$this->assertFalse( $output['would_affect']['replaces_database'] );
+		$this->assertNotContains( 'This restore replaces the database. Content changed since the snapshot will be lost.', $output['warnings'] );
+	}
+
+	/** Restore starts cannot attach to a busy site, so the schema must describe only emitted statuses. */
+	public function test_restore_start_schemas_exclude_already_running() {
+		foreach ( array( 'restore-site-snapshot', 'rollback-restore' ) as $name ) {
+			$this->assertSame( array( 'started', 'not_started' ), $this->ability( $name )->get_output_schema()['oneOf'][1]['properties']['status']['enum'] );
+		}
 	}
 
 	/**

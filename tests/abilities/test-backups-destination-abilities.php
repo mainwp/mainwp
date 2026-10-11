@@ -115,6 +115,43 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 	}
 
 	/**
+	 * REST previews must retain the same purity guard as PHP previews.
+	 *
+	 * @param string $name Action slug.
+	 * @param array  $input Caller input.
+	 * @return \WP_REST_Response
+	 */
+	private function rest( $name, array $input ) {
+		global $wp_rest_server;
+		$previous       = $wp_rest_server;
+		$wp_rest_server = new \WP_REST_Server();
+		do_action( 'rest_api_init' );
+		$request = new \WP_REST_Request( 'POST', '/wp-abilities/v1/abilities/mainwp/' . $name . '-v1/run' );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body( wp_json_encode( array( 'input' => $input ) ) );
+		$call = static function () use ( $request ) {
+			return rest_do_request( $request );
+		};
+		try {
+			return ! empty( $input['dry_run'] ) ? $this->guarded( $call ) : $call();
+		} finally {
+			$wp_rest_server = $previous;
+		}
+	}
+
+	/**
+	 * Both entry points must follow the destination field rules.
+	 *
+	 * @return array
+	 */
+	public static function transports() {
+		return array(
+			'PHP'  => array( false ),
+			'REST' => array( true ),
+		);
+	}
+
+	/**
 	 * Projection must exclude both location keys and their values.
 	 *
 	 * @param string $name Action slug.
@@ -445,13 +482,231 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 		}
 	}
 
+	/**
+	 * Length limits apply to the stored name after tags and whitespace are removed.
+	 *
+	 * @return array
+	 */
+	public static function sanitized_names() {
+		$cases = array();
+		foreach ( array( false, true ) as $rest ) {
+			$cases[] = array( $rest, "Prod <b>S3</b>\nbox", 'Prod S3 box' );
+			$cases[] = array( $rest, '<b>' . str_repeat( 'é', 255 ) . '</b>', str_repeat( 'é', 255 ) );
+		}
+		return $cases;
+	}
+
+	/**
+	 * Preview consent must describe the exact name that confirmation stores.
+	 *
+	 * @dataProvider sanitized_names
+	 * @param bool   $rest Use the REST run route.
+	 * @param string $name Submitted name.
+	 * @param string $expected Sanitized name.
+	 */
+	public function test_update_sanitizes_name_for_preview_and_confirm( $rest, $name, $expected ) {
+		$input = array(
+			'destination_id' => $this->id,
+			'name'           => $name,
+		);
+		if ( $rest ) {
+			$response = $this->rest( 'update-backup-destination', $input + array( 'dry_run' => true ) );
+			$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+			$preview = $response->get_data();
+		} else {
+			$preview = $this->execute( 'update-backup-destination', $input + array( 'dry_run' => true ) );
+		}
+		$this->assert_output( 'update-backup-destination', $preview );
+		$this->assertSame(
+			array(
+				array(
+					'field' => 'name',
+					'from'  => 'Stored destination',
+					'to'    => $expected,
+				),
+			),
+			$preview['would_affect']['changes']
+		);
+		$this->assertSame( 'Stored destination', MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id )->name );
+		if ( $rest ) {
+			$response = $this->rest( 'update-backup-destination', $input + array( 'confirm' => true ) );
+			$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+			$output = $response->get_data();
+		} else {
+			$output = $this->execute( 'update-backup-destination', $input + array( 'confirm' => true ) );
+		}
+		$this->assert_output( 'update-backup-destination', $output );
+		$this->assertSame( $expected, $output['destination']['name'] );
+		$this->assertSame( $expected, MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id )->name );
+	}
+
+	/**
+	 * Sanitized names must be nonempty and fit the stored field.
+	 *
+	 * @return array
+	 */
+	public static function invalid_sanitized_names() {
+		return array(
+			array( false, '<b></b>' ),
+			array( true, '<b></b>' ),
+			array( false, str_repeat( 'é', 256 ) ),
+			array( true, str_repeat( 'é', 256 ) ),
+		);
+	}
+
+	/**
+	 * Invalid sanitized names must fail before a probe or any row change.
+	 *
+	 * @dataProvider invalid_sanitized_names
+	 * @param bool   $rest Use the REST run route.
+	 * @param string $name Submitted name.
+	 */
+	public function test_update_rejects_invalid_sanitized_name( $rest, $name ) {
+		$before = MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id );
+		foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+			$input = array(
+				'destination_id' => $this->id,
+				'name'           => $name,
+				$mode            => true,
+			);
+			if ( $rest ) {
+				$response = $this->rest( 'update-backup-destination', $input );
+				$this->assertSame( 400, $response->get_status() );
+				$this->assertSame( 'mainwp_invalid_input', $response->get_data()['code'] );
+			} else {
+				$error = $this->execute( 'update-backup-destination', $input );
+				$this->assertWPError( $error );
+				$this->assertSame( 'mainwp_invalid_input', $error->get_error_code() );
+				$this->assertSame( 400, $error->get_error_data()['status'] );
+			}
+			$this->assertEquals( $before, MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id ) );
+		}
+	}
+
+	/**
+	 * Update consent must disclose the same first-contact pin as a connection test.
+	 *
+	 * @dataProvider transports
+	 * @param bool $rest Use the REST run route.
+	 */
+	public function test_update_preview_discloses_host_key_pinning( $rest ) {
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$this->assertArrayNotHasKey( $this->id, get_option( MainWP_Backup_Storage_SFTP::HOSTKEYS_OPTION, array() ) );
+		foreach ( array( 'local', 'sftp' ) as $provider ) {
+			if ( 'sftp' === $provider ) {
+				$this->assertTrue(
+					$store->update_destination(
+						$this->id,
+						array(
+							'provider' => 'sftp',
+							'settings' => array(
+								'password'  => 'stored-password',
+								'base_path' => $this->dir,
+							),
+						)
+					)
+				);
+			}
+			$input = $this->input( 'update-backup-destination' ) + array( 'dry_run' => true );
+			if ( $rest ) {
+				$response = $this->rest( 'update-backup-destination', $input );
+				$this->assertSame( 200, $response->get_status() );
+				$output = $response->get_data();
+			} else {
+				$output = $this->execute( 'update-backup-destination', $input );
+			}
+			$this->assert_output( 'update-backup-destination', $output );
+			$this->assertSame( 'sftp' === $provider, $output['would_affect']['may_pin_host_key'] );
+			$this->assertTrue( $output['would_affect']['connection_test_runs'] );
+			$this->assertArrayNotHasKey( $this->id, get_option( MainWP_Backup_Storage_SFTP::HOSTKEYS_OPTION, array() ) );
+		}
+	}
+
 	/** Connection testing must happen before a rename is persisted. */
 	public function test_update_does_not_save_when_connection_test_fails() {
 		MainWP_Backup_Storage_Destinations::instance()->update_destination( $this->id, array( 'settings' => array( 'base_path' => $this->dir . '/missing' ) ) );
 		$error = $this->execute( 'update-backup-destination', $this->input( 'update-backup-destination' ) + array( 'confirm' => true ) );
 		$this->assertWPError( $error );
+		$this->assertSame( 'mainwp_backup_local_failed', $error->get_error_code() );
+		$this->assertSame( 502, $error->get_error_data()['status'] );
 		$this->assertStringNotContainsString( $this->dir, wp_json_encode( $error, JSON_UNESCAPED_SLASHES ) );
 		$this->assertSame( 'Stored destination', MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id )->name );
+	}
+
+	/**
+	 * Failed local probes must describe the Dashboard folder without disclosing its path.
+	 *
+	 * @dataProvider transports
+	 * @param bool $rest Use the REST run route.
+	 */
+	public function test_local_connection_failure_uses_local_code_without_path( $rest ) {
+		MainWP_Backup_Storage_Destinations::instance()->update_destination( $this->id, array( 'settings' => array( 'base_path' => $this->dir . '/missing' ) ) );
+		$input = array(
+			'destination_id' => $this->id,
+			'confirm'        => true,
+		);
+		if ( $rest ) {
+			$response = $this->rest( 'test-backup-destination', $input );
+			$this->assertSame( 200, $response->get_status() );
+			$output = $response->get_data();
+		} else {
+			$output = $this->execute( 'test-backup-destination', $input );
+		}
+		$this->assert_output( 'test-backup-destination', $output );
+		$this->assertFalse( $output['ok'] );
+		$this->assertSame( MainWP_Backup_Operations::safe_error( 'mainwp_backup_local_failed' ), $output['error'] );
+		$this->assertFalse( $output['host_key_pinned'] );
+	}
+
+	/**
+	 * A refused Dashboard delete must not report a Child response failure.
+	 *
+	 * @dataProvider transports
+	 * @param bool $rest Use the REST run route.
+	 */
+	public function test_delete_storage_failure_is_internal_error( $rest ) {
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$hits  = 0;
+		$fail  = function ( $sql ) use ( $table, &$hits ) {
+			if ( ( 'DELETE FROM `' . $table . '` WHERE `id` = ' . $this->id ) === $sql ) {
+				++$hits;
+				return $sql . ' AND 1 = 0';
+			}
+			return $sql;
+		};
+		add_filter( 'query', $fail );
+		try {
+			$input = array(
+				'destination_id' => $this->id,
+				'confirm'        => true,
+			);
+			if ( $rest ) {
+				$response = $this->rest( 'delete-backup-destination', $input );
+				$this->assertSame( 500, $response->get_status() );
+				$this->assertSame( 'mainwp_internal_error', $response->get_data()['code'] );
+				$this->assertSame( MainWP_Backup_Operations::safe_error( 'mainwp_internal_error' )['message'], $response->get_data()['message'] );
+			} else {
+				$error = $this->execute( 'delete-backup-destination', $input );
+				$this->assertWPError( $error );
+				$this->assertSame( 'mainwp_internal_error', $error->get_error_code() );
+				$this->assertSame( 500, $error->get_error_data()['status'] );
+				$this->assertSame( MainWP_Backup_Operations::safe_error( 'mainwp_internal_error' )['message'], $error->get_error_message() );
+			}
+		} finally {
+			remove_filter( 'query', $fail );
+		}
+		$this->assertSame( 1, $hits );
+		$this->assertNotNull( MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id ) );
+	}
+
+	/** Destination and settings writes must all use the shared consent wording. */
+	public function test_destination_and_settings_confirm_copy_is_shared() {
+		foreach ( array_merge( array_column( self::actions(), 0 ), array( 'update-backup-settings' ) ) as $name ) {
+			$this->assertSame(
+				'Must be true to perform the action. Call with dry_run first and show the preview to the user.',
+				$this->ability( $name )->get_input_schema()['properties']['confirm']['description']
+			);
+		}
 	}
 
 	/** Delete previews must count the same nonterminal jobs the handler retires. */

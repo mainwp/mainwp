@@ -126,6 +126,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_DROPBOX_FAILED      = 'mainwp_backup_dropbox_failed';
     const ERR_S3_FAILED           = 'mainwp_backup_s3_failed';
     const ERR_GCS_FAILED          = 'mainwp_backup_gcs_failed';
+    const ERR_LOCAL_FAILED        = 'mainwp_backup_local_failed';
     const ERR_ENCRYPTION_REQUIRED = 'mainwp_backup_encryption_required';
 
     const ERR_TASK_NOT_FOUND                                 = 'mainwp_backup_task_not_found';
@@ -312,6 +313,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_DROPBOX_FAILED                => esc_html__( 'Could not upload the backup to Dropbox. Check the Dropbox connection settings and available storage space, then try again.', 'mainwp' ),
             self::ERR_S3_FAILED                     => esc_html__( 'Could not upload the backup to Amazon S3. Check the S3 credentials, bucket name, and permissions, then try again.', 'mainwp' ),
             self::ERR_GCS_FAILED                    => esc_html__( 'Could not upload the backup to Google Cloud Storage. Check the HMAC key, bucket name, and permissions, then try again.', 'mainwp' ),
+            self::ERR_LOCAL_FAILED                  => esc_html__( 'Could not write to the backup folder on the Dashboard server. Check that the folder exists and is writable, then try again.', 'mainwp' ),
             self::ERR_ENCRYPTION_REQUIRED           => esc_html__( 'Backup encryption is on, but this backup could not be encrypted, so it was not uploaded. Check the encryption key in the Backups settings, then run the backup again.', 'mainwp' ),
             self::ERR_HASH_MISMATCH                 => esc_html__( 'The downloaded backup file does not match the integrity hash reported by the child site. The file may have been modified or corrupted during the transfer. The local file was removed; try the download again.', 'mainwp' ),
             self::ERR_DL_FILE_NOT_FOUND             => esc_html__( 'The backup file was not found on the child site. It may have been removed by a cleanup. Run a new backup and try again.', 'mainwp' ),

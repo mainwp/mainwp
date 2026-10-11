@@ -57,6 +57,13 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const BACKUP_SNAPSHOT_TEST_RESTORE_RESULT_AT_REPAIR_PENDING = 'mainwp_backup_snapshot_test_restore_result_at_repair_pending';
 
     /**
+     * Restore checkpoint writes compare this column even after a failed migration stamps the version.
+     *
+     * @var string
+     */
+    const BACKUP_RESTORE_JOB_CHECKPOINT_REV_REPAIR_PENDING = 'mainwp_backup_restore_job_checkpoint_rev_repair_pending';
+
+    /**
      * Retry failed per-site identity migrations after the version is stamped.
      *
      * @var string
@@ -96,7 +103,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.30'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
+    protected $mainwp_db_version = '9.0.2.31'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
 
     /**
      * Protected variable to hold the database option name.
@@ -211,6 +218,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_backup_task_last_continued();
             $this->maybe_retry_native_backup_tables();
             $this->maybe_retry_backup_snapshot_test_restore_result_at();
+            $this->maybe_retry_backup_restore_job_checkpoint_rev();
             $pending = (int) get_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
             if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
                 $this->repair_backup_site_unique_keys();
@@ -598,6 +606,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $this->maybe_repair_knowledge_table();
         $this->post_update();
         $this->ensure_backup_snapshot_test_restore_result_at();
+        $this->ensure_backup_restore_job_checkpoint_rev();
 
         do_action( 'mainwp_db_after_update', $currentVersion, $this->mainwp_db_version ); // new version: $this->mainwp_db_version.
 
@@ -747,6 +756,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   child_task_id varchar(64) NOT NULL DEFAULT '',
   pre_snapshot_task_id varchar(64) NOT NULL DEFAULT '',
   checkpoint longtext NOT NULL,
+  checkpoint_rev int(11) unsigned NOT NULL DEFAULT 0,
   last_error text NOT NULL DEFAULT '',
   attempt_count int(11) NOT NULL DEFAULT 0,
   reclaim_count int(11) NOT NULL DEFAULT 0,
@@ -1844,6 +1854,44 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $pending = (int) get_site_option( static::BACKUP_SNAPSHOT_TEST_RESTORE_RESULT_AT_REPAIR_PENDING );
         if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
             $this->ensure_backup_snapshot_test_restore_result_at();
+        }
+    }
+
+    /**
+     * A failed dbDelta must not leave every restore checkpoint write refused.
+     *
+     * @return bool Whether the column exists.
+     */
+    public function ensure_backup_restore_job_checkpoint_rev(): bool {
+        $suppress = $this->wpdb->suppress_errors();
+        $table    = esc_sql( $this->table_name( 'wp_backup_restore_job' ) );
+        $column   = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'checkpoint_rev'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table escaped via esc_sql.
+        $error    = '';
+        if ( empty( $column ) ) {
+            $this->wpdb->query( "ALTER TABLE {$table} ADD COLUMN checkpoint_rev int(11) unsigned NOT NULL DEFAULT 0" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table escaped via esc_sql.
+            $error  = $this->wpdb->last_error;
+            $column = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'checkpoint_rev'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table escaped via esc_sql.
+        }
+        $this->wpdb->suppress_errors( $suppress );
+        if ( empty( $column ) ) {
+            // Install precedes the warning listeners, so the logger must receive this directly.
+            MainWP_Logger::instance()->warning( sprintf( 'Restore job checkpoint_rev repair deferred for %s: %s', $table, $error ) );
+            update_site_option( static::BACKUP_RESTORE_JOB_CHECKPOINT_REV_REPAIR_PENDING, time() );
+            return false;
+        }
+        delete_site_option( static::BACKUP_RESTORE_JOB_CHECKPOINT_REV_REPAIR_PENDING );
+        return true;
+    }
+
+    /**
+     * Denied ALTER statements must not run on every request.
+     *
+     * @return void
+     */
+    public function maybe_retry_backup_restore_job_checkpoint_rev(): void {
+        $pending = (int) get_site_option( static::BACKUP_RESTORE_JOB_CHECKPOINT_REV_REPAIR_PENDING );
+        if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
+            $this->ensure_backup_restore_job_checkpoint_rev();
         }
     }
 

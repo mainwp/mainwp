@@ -1140,7 +1140,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $pull_manifest = $driver->generate_pull_manifest( $plan );
             if ( null !== $pull_manifest ) {
                 $checkpoint['plan'] = $plan; // Expected hashes filled from the upload records.
-                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                    return; // Nothing exists on the site yet; the next slice builds the manifest again.
+                }
 
                 $created = $this->create_child_restore_task( $job, $checkpoint, $plan, $pull_manifest );
                 if ( '' === $created['task_id'] || ! empty( $created['reused'] ) ) {
@@ -1151,6 +1153,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     // The child created the task but refused the
                     // manifest: stage and stream into that same task.
                     $checkpoint['cloud_pull_tried'] = true;
+                    // A refused save is harmless: once child_task_id lands, the
+                    // cloud pull gate above is skipped without this flag.
                     $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
                     if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token ) ) {
                         // Lease lost after the child task was created: its id
@@ -1193,14 +1197,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( $needs_staging ) {
             $outcome            = MainWP_Backup_Restore_Transfer_Driver::instance()->stage_artifacts( (int) $job->id, $plan, $deadline );
             $checkpoint['plan'] = $plan;
-            $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+            $saved              = $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
             if ( null !== $outcome['error'] ) {
                 $this->record_failure( $job, (string) $outcome['error'], ! empty( $outcome['retryable'] ), isset( $outcome['error_code'] ) ? (string) $outcome['error_code'] : '' );
                 return;
             }
-            if ( ! $outcome['done'] ) {
-                return; // More staging next tick.
+            if ( ! $saved || ! $outcome['done'] ) {
+                return; // More staging next tick, or the staged plan has to be saved first.
             }
         }
 
@@ -1288,7 +1292,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( ! empty( $outcome['restage'] ) ) {
             $checkpoint['plan'] = $outcome['plan'];
         }
-        $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+        $saved = $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
         if ( ! empty( $fresh->checkpoint['cancel_intent'] ) ) {
             // Cancellation owns the outcome, including an already-completed child.
@@ -1298,6 +1302,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         if ( null !== $outcome['error'] ) {
             $this->record_failure( $job, $outcome['error'], $outcome['retryable'], (string) ( $outcome['error_code'] ?? '' ) );
+            return;
+        }
+        if ( ! $saved ) {
+            // Resending from the stored cursor is safe: the site answers a gap
+            // with the offset it expects.
             return;
         }
         if ( ! empty( $outcome['restage'] ) ) {
@@ -1398,7 +1407,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 if ( isset( $payload['sub_state']['progress']['woo_preserve'] ) ) {
                     $checkpoint['verification']['woo_preserve'] = $payload['sub_state']['progress']['woo_preserve'];
                 }
-                $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+                if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                    return; // The site reports the finished task again on the next poll.
+                }
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, array(), $this->lock_token );
                 return;
             }
@@ -1426,10 +1437,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $checkpoint                                  = $job->checkpoint;
         $checkpoint['verification']                  = isset( $checkpoint['verification'] ) && is_array( $checkpoint['verification'] ) ? $checkpoint['verification'] : array();
         $checkpoint['verification']['site_responds'] = $reachable;
-        $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
+        $saved                                       = $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
 
         if ( ! $reachable ) {
             $this->record_failure( $job, esc_html__( 'The site did not respond after the restore. The restore completed on the child; check the site directly.', 'mainwp' ), true );
+            return;
+        }
+        if ( ! $saved ) {
             return;
         }
 
@@ -1868,12 +1882,37 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // a stable machine-readable code for support and AI diagnosis.
         $checkpoint['last_error_code']       = $error_code;
         $checkpoint['last_failure_transfer'] = $this->transfer_position( $checkpoint );
+        $next_retry_at                       = time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts );
         if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
-            // A retry without its saved resume point would restart at pending.
+            if ( ! $this->lease_still_held( $job ) ) {
+                return; // The live holder owns the retry bookkeeping.
+            }
+            // A retry without its saved resume point would restart at pending,
+            // taking a second safety backup over the restored site. Keep the
+            // phase and back off in place: acquisition waits for next_retry_at
+            // in every active status, and attempts still run out into a
+            // terminal failure.
+            $current = $store->get_job( (int) $job->id );
+            if ( null === $current || ! in_array( $current->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) {
+                return;
+            }
+            $kept = $store->set_status(
+                (int) $job->id,
+                $current->status,
+                array(
+                    'last_error'    => $error,
+                    'attempt_count' => $attempts,
+                    'next_retry_at' => $next_retry_at,
+                ),
+                $this->lock_token
+            );
+            if ( $kept ) {
+                /** This action is documented in class/backup/class-mainwp-backup-restore-orchestrator.php */
+                do_action( 'mainwp_backup_diag_restore_retry', (int) $job->id, (int) $job->site_id, $attempts, $error_code, $next_retry_at, $advanced );
+            }
             return;
         }
 
-        $next_retry_at = time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts );
         if ( ! $store->fail_retryable( (int) $job->id, $error, $attempts, $next_retry_at, $this->lock_token ) ) {
             // The lease was reclaimed; the live holder owns the retry
             // bookkeeping, so the diag event below is not emitted here.

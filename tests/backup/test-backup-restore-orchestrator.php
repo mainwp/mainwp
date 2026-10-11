@@ -1671,7 +1671,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			if ( str_starts_with( $sql, 'UPDATE ' . $table ) || str_starts_with( $sql, 'UPDATE `' . $table . '`' ) ) {
 				$combined     = str_contains( $sql, 'last_error = ' );
 				$status_write = str_contains( $sql, '`status` = ' );
-				if ( 'checkpoint' === $refused && str_contains( $sql, '`checkpoint` = ' ) ) {
+				// The drive-on clear is the checkpoint write without a revision compare.
+				$clear = str_contains( $sql, ' SET checkpoint = ' ) && ! str_contains( $sql, ' AND checkpoint_rev = ' );
+				if ( 'checkpoint' === $refused && $clear ) {
 					return 'SELECT mainwp_test_refused_checkpoint_write';
 				}
 				if ( ( true === $refused && ( $combined || $status_write ) )
@@ -4199,9 +4201,15 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * A retry needs its durable resume point before leaving the running phase.
+	 * A retryable failure whose resume point cannot be saved keeps its phase
+	 * and backs off in place while the lease is still held, and records
+	 * nothing once another worker holds it.
+	 *
+	 * @dataProvider refused_failure_saves
+	 * @param bool $lease_lost Whether another worker takes the lease inside the save.
 	 */
-	public function test_retryable_failure_keeps_phase_when_checkpoint_swaps_miss() {
+	public function test_retryable_failure_keeps_phase_when_checkpoint_swaps_miss( $lease_lost ) {
+		global $wpdb;
 		$store  = MainWP_Backup_Restore_Job_Store::instance();
 		$job    = $this->make_job( array(), $store::STATUS_RUNNING, array( 'child_task_id' => 'checkpoint-retry-task' ) );
 		$id     = (int) $job->id;
@@ -4211,10 +4219,14 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$this->responses['restore_task_run'] = array( 'error' => 'Temporary restore failure' );
 
-		$race  = function ( $sql ) use ( $table, $id, $store, &$misses ) {
-			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) && str_contains( $sql, 'WHERE id = ' . $id . ' AND checkpoint = ' ) ) {
-				$this->assertNotEmpty( $store->get_job( $id )->locked_by, 'The worker must still hold the lease at every missed swap.' );
+		$race  = function ( $sql ) use ( $table, $id, $store, $lease_lost, &$misses, $wpdb ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) && str_contains( $sql, 'WHERE id = ' . $id . ' AND checkpoint_rev = ' ) ) {
 				++$misses;
+				if ( $lease_lost ) {
+					$wpdb->update( $table, array( 'locked_by' => 'other-worker' ), array( 'id' => $id ) );
+					return $sql;
+				}
+				$this->assertNotEmpty( $store->get_job( $id )->locked_by, 'The worker must still hold the lease at the missed swap.' );
 				return $sql . ' AND 1 = 0';
 			}
 			return $sql;
@@ -4222,6 +4234,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$retry = static function ( $job_id ) use ( &$events ) {
 			$events[] = $job_id;
 		};
+		$start = time();
 		add_filter( 'query', $race );
 		add_action( 'mainwp_backup_diag_restore_retry', $retry );
 		try {
@@ -4231,13 +4244,76 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			remove_action( 'mainwp_backup_diag_restore_retry', $retry );
 		}
 		$fresh = $store->get_job( $id );
-		$this->assertSame( 20, $misses, 'A swap that never matches is reported after the attempt cap.' );
+		$this->assertSame( 1, $misses, 'A statement that cannot land is reported after one miss.' );
 		$this->assertSame( $store::STATUS_RUNNING, $fresh->status );
-		$this->assertSame( $job->attempt_count, $fresh->attempt_count );
-		$this->assertSame( $job->last_error, $fresh->last_error );
 		$this->assertArrayNotHasKey( 'resume_status', $fresh->checkpoint );
 		$this->assertSame( $job->checkpoint, $fresh->checkpoint );
-		$this->assertSame( array(), $events );
+		if ( $lease_lost ) {
+			$this->assertSame( $job->attempt_count, $fresh->attempt_count );
+			$this->assertSame( $job->last_error, $fresh->last_error );
+			$this->assertSame( $job->next_retry_at, $fresh->next_retry_at );
+			$this->assertSame( array(), $events );
+			return;
+		}
+		$this->assertSame( (int) $job->attempt_count + 1, (int) $fresh->attempt_count );
+		$this->assertGreaterThan( $start, (int) $fresh->next_retry_at );
+		$this->assertNotSame( '', $fresh->last_error );
+		$this->assertSame( array( $id ), $events );
+	}
+
+	/**
+	 * Matrix rows 29 and 30: lease still held, lease taken inside the save.
+	 *
+	 * @return array
+	 */
+	public static function refused_failure_saves() {
+		return array(
+			'lease held' => array( false ),
+			'lease lost' => array( true ),
+		);
+	}
+
+	/**
+	 * Matrix row 31: a finished site task whose verification cannot be saved
+	 * keeps the job running, so the next poll records the verification.
+	 */
+	public function test_running_phase_keeps_phase_when_verification_save_cannot_land() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array(), $store::STATUS_RUNNING, array( 'child_task_id' => 'task-9-restore' ) );
+		$id    = (int) $job->id;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+
+		$this->responses['restore_task_run'] = array(
+			'task_id'   => 'task-9-restore',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'row_counts_ok' => true ) ),
+		);
+
+		$misses = 0;
+		$race   = function ( $sql ) use ( $table, $id, &$misses ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) && str_contains( $sql, 'WHERE id = ' . $id . ' AND checkpoint_rev = ' ) && str_contains( $sql, 'row_counts_ok' ) ) {
+				++$misses;
+				return $sql . ' AND 1 = 0';
+			}
+			return $sql;
+		};
+		$kicks  = $this->orchestrator->continuation_count;
+		add_filter( 'query', $race );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, $id );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$fresh = $store->get_job( $id );
+		$this->assertSame( 1, $misses );
+		$this->assertSame( $store::STATUS_RUNNING, $fresh->status );
+		$this->assertArrayNotHasKey( 'verification', $fresh->checkpoint );
+		$this->assertSame( '', $fresh->locked_by );
+		$this->assertGreaterThan( $kicks, $this->orchestrator->continuation_count );
+
+		$job = $this->tick( $fresh );
+		$this->assertSame( $store::STATUS_VERIFYING, $job->status );
+		$this->assertTrue( $job->checkpoint['verification']['row_counts_ok'] );
 	}
 
 	/**

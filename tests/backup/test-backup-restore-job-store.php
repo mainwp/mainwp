@@ -207,18 +207,20 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Callers read false as a lost lease, so a swap lost to a concurrent write
-	 * is retried, including one whose writer restored the exact row, and only
-	 * a gone row, a gone lease, a query error or a swap that misses every
-	 * attempt reports false.
+	 * Every outcome of a checkpoint save, mapped to the rows of the save
+	 * matrix: a swap lost to an outside write retries on the newer revision,
+	 * a write that restores the exact earlier text still moves the revision,
+	 * and false means the row or lease is gone, the query failed, the
+	 * statement cannot land, or twenty outside writes beat it.
 	 *
 	 * @dataProvider save_checkpoint_outcomes
-	 * @param string $race     What happens between the read and the swap.
+	 * @param string $race     What happens around the save.
 	 * @param int    $count    How many swaps the race affects.
 	 * @param bool   $fenced   Whether the save carries the lease token.
 	 * @param bool   $expected Expected return value.
+	 * @param int    $attempts Expected swap attempts.
 	 */
-	public function test_save_checkpoint_outcome_matrix( $race, $count, $fenced, $expected ) {
+	public function test_save_checkpoint_outcome_matrix( $race, $count, $fenced, $expected, $attempts ) {
 		global $wpdb;
 		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
 		$job_id = $this->store->create_job( 8803, 42, array( 'cursor' => 1 ) );
@@ -228,19 +230,25 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			$wpdb->update( $table, array( 'locked_by' => 'other' ), array( 'id' => $job_id ) );
 		} elseif ( 'row deleted' === $race ) {
 			$wpdb->delete( $table, array( 'id' => $job_id ) );
+		} elseif ( 'terminal cancel before read' === $race ) {
+			$this->assertSame( 'written', $this->store->finish_with_cancel_confirmation( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, null, '', 'confirmed' ) );
 		}
-		$before     = $this->store->get_job( $job_id );
-		$swaps      = 0;
-		$original   = (string) $wpdb->get_var( $wpdb->prepare( "SELECT checkpoint FROM {$table} WHERE id = %d", $job_id ) ); // phpcs:ignore WordPress.DB -- test race.
-		$restore    = false;
-		$hook       = function ( $sql ) use ( $race, $count, $table, $job_id, &$swaps, &$restore, $original, $wpdb ) {
-			if ( $restore && str_starts_with( $sql, 'SELECT checkpoint, status, locked_by FROM ' . $table ) ) {
+		$before   = $this->store->get_job( $job_id );
+		$original = (string) $wpdb->get_var( $wpdb->prepare( "SELECT checkpoint FROM {$table} WHERE id = %d", $job_id ) ); // phpcs:ignore WordPress.DB -- test race.
+		$swaps    = 0;
+		$restore  = false;
+		// Outside writers move the revision like every production writer does.
+		$outside    = function ( $text ) use ( $wpdb, $table, $job_id ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$table} SET checkpoint = %s, checkpoint_rev = checkpoint_rev + 1 WHERE id = %d", $text, $job_id ) ); // phpcs:ignore WordPress.DB -- test race.
+		};
+		$hook       = function ( $sql ) use ( $race, $count, $table, $job_id, &$swaps, &$restore, $original, $outside, $wpdb ) {
+			if ( $restore && str_starts_with( $sql, 'SELECT checkpoint, status, locked_by, checkpoint_rev FROM ' . $table ) ) {
 				// The outside writer clears its evidence again before the reread.
 				$restore = false;
-				$wpdb->update( $table, array( 'checkpoint' => $original ), array( 'id' => $job_id ) );
+				$outside( $original );
 				return $sql;
 			}
-			if ( ! str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) || ! str_contains( $sql, 'WHERE id = ' . $job_id . ' AND checkpoint = ' ) ) {
+			if ( ! str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) || ! str_contains( $sql, 'WHERE id = ' . $job_id . ' AND checkpoint_rev = ' ) ) {
 				return $sql;
 			}
 			++$swaps;
@@ -252,13 +260,13 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 					$stored                        = json_decode( (string) $wpdb->get_var( $wpdb->prepare( "SELECT checkpoint FROM {$table} WHERE id = %d", $job_id ) ), true ); // phpcs:ignore WordPress.DB -- test race.
 					$stored['cancel_intent']       = true;
 					$stored['cancel_confirmation'] = array( 'attempt_count' => $swaps );
-					$wpdb->update( $table, array( 'checkpoint' => wp_json_encode( $stored ) ), array( 'id' => $job_id ) );
+					$outside( wp_json_encode( $stored ) );
 					return $sql;
 				case 'evidence added then cleared':
 					$stored                        = json_decode( $original, true );
 					$stored['cancel_intent']       = true;
 					$stored['cancel_confirmation'] = array( 'attempt_count' => 1 );
-					$wpdb->update( $table, array( 'checkpoint' => wp_json_encode( $stored ) ), array( 'id' => $job_id ) );
+					$outside( wp_json_encode( $stored ) );
 					$restore = true;
 					return $sql;
 				case 'lease taken mid-save':
@@ -266,6 +274,9 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 					return $sql;
 				case 'terminal cancel mid-save':
 					$this->assertSame( 'written', $this->store->finish_with_cancel_confirmation( $job_id, MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, null, '', 'confirmed' ) );
+					return $sql;
+				case 'row deleted mid-save':
+					$wpdb->delete( $table, array( 'id' => $job_id ) );
 					return $sql;
 				case 'unmatchable swap':
 					return $sql . ' AND 1 = 0';
@@ -286,77 +297,68 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			$wpdb->suppress_errors( $suppress );
 		}
 		$this->assertSame( $expected, $result );
+		$this->assertSame( $attempts, $swaps );
 		$after = $this->store->get_job( $job_id );
 		switch ( $race ) {
 			case 'none':
-				$this->assertSame( 1, $swaps );
-				$this->assertSame( 2, $after->checkpoint['cursor'] );
-				break;
-			case 'concurrent evidence':
-				$this->assertSame( $count + 1, $swaps );
-				$this->assertSame( 2, $after->checkpoint['cursor'] );
-				$this->assertTrue( $after->checkpoint['cancel_intent'] );
-				$this->assertSame( array( 'attempt_count' => $count ), $after->checkpoint['cancel_confirmation'] );
-				break;
-			case 'lease gone before read':
-				$this->assertSame( 0, $swaps );
-				$this->assertSame( $before->checkpoint, $after->checkpoint );
-				break;
-			case 'row deleted':
-				$this->assertSame( 0, $swaps );
-				$this->assertNull( $after );
-				break;
-			case 'lease taken mid-save':
-				$this->assertSame( 1, $swaps );
-				$this->assertSame( $before->checkpoint, $after->checkpoint );
-				$this->assertSame( 'other', $after->locked_by );
-				break;
-			case 'terminal cancel mid-save':
-				$this->assertSame( 1, $swaps );
-				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $after->status );
-				$this->assertSame( 1, $after->checkpoint['cursor'] );
-				break;
 			case 'evidence added then cleared':
-				$this->assertSame( $count + 1, $swaps );
 				$this->assertSame( array( 'cursor' => 2 ), $after->checkpoint );
 				break;
-			case 'unmatchable swap':
-				$this->assertSame( 20, $swaps );
-				$this->assertSame( $before->checkpoint, $after->checkpoint );
+			case 'concurrent evidence':
+				$this->assertTrue( $after->checkpoint['cancel_intent'] );
+				$this->assertSame( array( 'attempt_count' => min( $count, 20 ) ), $after->checkpoint['cancel_confirmation'] );
+				$this->assertSame( $expected ? 2 : 1, $after->checkpoint['cursor'] );
+				$this->assertSame( $fenced ? 'holder' : $before->locked_by, $after->locked_by );
+				break;
+			case 'terminal cancel mid-save':
+				$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED, $after->status );
+				$this->assertSame( $fenced ? 1 : 2, $after->checkpoint['cursor'] );
+				$this->assertSame( 'confirmed', $after->checkpoint['cancel_confirmation']['outcome'] );
+				break;
+			case 'row deleted':
+			case 'row deleted mid-save':
+				$this->assertNull( $after );
 				break;
 			case 'identical values':
-				$this->assertSame( 1, $swaps );
+				$this->assertSame( $before->checkpoint, $after->checkpoint );
+				$this->assertSame( (int) $before->checkpoint_rev + 1, (int) $after->checkpoint_rev );
+				break;
+			case 'lease taken mid-save':
+				$this->assertSame( 'other', $after->locked_by );
 				$this->assertSame( $before->checkpoint, $after->checkpoint );
 				break;
-			case 'query error':
-				$this->assertSame( 1, $swaps );
+			default:
 				$this->assertSame( $before->checkpoint, $after->checkpoint );
-				break;
+				$this->assertSame( $before->checkpoint_rev, $after->checkpoint_rev );
 		}
 	}
 
 	/**
-	 * Every outcome the save must report, fenced and unfenced.
+	 * Rows of the save matrix: race, count, fenced, expected, attempts.
 	 *
 	 * @return array
 	 */
 	public static function save_checkpoint_outcomes() {
 		return array(
-			'no contention'                    => array( 'none', 0, true, true ),
-			'one concurrent write'             => array( 'concurrent evidence', 1, true, true ),
-			'five concurrent writes'           => array( 'concurrent evidence', 5, true, true ),
-			'eight concurrent writes'          => array( 'concurrent evidence', 8, true, true ),
-			'eight concurrent writes unfenced' => array( 'concurrent evidence', 8, false, true ),
-			'lease gone before read'           => array( 'lease gone before read', 0, true, false ),
-			'lease taken mid-save'             => array( 'lease taken mid-save', 1, true, false ),
-			'terminal cancel mid-save'         => array( 'terminal cancel mid-save', 1, true, false ),
-			'row deleted'                      => array( 'row deleted', 0, true, false ),
-			'evidence added then cleared'      => array( 'evidence added then cleared', 1, true, true ),
-			'two evidence cycles'              => array( 'evidence added then cleared', 2, true, true ),
-			'two evidence cycles unfenced'     => array( 'evidence added then cleared', 2, false, true ),
-			'unmatchable swap'                 => array( 'unmatchable swap', 20, true, false ),
-			'identical values'                 => array( 'identical values', 1, true, true ),
-			'query error'                      => array( 'query error', 1, true, false ),
+			'1 no contention'                      => array( 'none', 0, true, true, 1 ),
+			'2 identical values'                   => array( 'identical values', 1, true, true, 1 ),
+			'4 one concurrent write'               => array( 'concurrent evidence', 1, true, true, 2 ),
+			'5 five concurrent writes'             => array( 'concurrent evidence', 5, true, true, 6 ),
+			'5 eight concurrent writes'            => array( 'concurrent evidence', 8, true, true, 9 ),
+			'6 eight concurrent writes unfenced'   => array( 'concurrent evidence', 8, false, true, 9 ),
+			'7 twenty concurrent writes'           => array( 'concurrent evidence', 20, true, false, 20 ),
+			'8 evidence added then cleared'        => array( 'evidence added then cleared', 1, true, true, 2 ),
+			'9 two evidence cycles'                => array( 'evidence added then cleared', 2, true, true, 3 ),
+			'9 two evidence cycles unfenced'       => array( 'evidence added then cleared', 2, false, true, 3 ),
+			'11 terminal cancel mid-save'          => array( 'terminal cancel mid-save', 1, true, false, 1 ),
+			'12 terminal cancel before read'       => array( 'terminal cancel before read', 0, true, false, 0 ),
+			'13 terminal cancel mid-save unfenced' => array( 'terminal cancel mid-save', 1, false, true, 2 ),
+			'14 lease gone before read'            => array( 'lease gone before read', 0, true, false, 0 ),
+			'15 lease taken mid-save'              => array( 'lease taken mid-save', 1, true, false, 1 ),
+			'21 row deleted'                       => array( 'row deleted', 0, true, false, 0 ),
+			'22 row deleted mid-save'              => array( 'row deleted mid-save', 1, true, false, 1 ),
+			'23 query error'                       => array( 'query error', 1, true, false, 1 ),
+			'24 unmatchable swap'                  => array( 'unmatchable swap', 20, true, false, 1 ),
 		);
 	}
 
@@ -1062,26 +1064,23 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Freeze the UPDATE timestamp to exercise an actual zero-row no-op.
+	 * A same-second write with the same status still changes the row.
 	 */
 	public function test_set_status_same_second_noop_returns_true() {
-		$id        = $this->store->create_job( 77904, 42, array() );
-		$table     = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
-		$updated   = (int) $this->store->get_job( $id )->updated;
-		$read_back = false;
-		$freeze    = static function ( $query ) use ( $table, $updated, &$read_back ) {
-			if ( str_starts_with( $query, 'SELECT * FROM ' . $table . ' WHERE id = ' ) ) {
-				$read_back = true;
-			}
+		$id      = $this->store->create_job( 77904, 42, array() );
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$before  = $this->store->get_job( $id );
+		$updated = (int) $before->updated;
+		$freeze  = static function ( $query ) use ( $table, $updated ) {
 			return str_starts_with( $query, 'UPDATE ' . $table . ' SET ' ) ? preg_replace( '/`updated` = [0-9]+/', '`updated` = ' . $updated, $query ) : $query;
 		};
 		add_filter( 'query', $freeze );
 		try {
 			$this->assertTrue( $this->store->set_status( $id, 'pending' ) );
-			$this->assertTrue( $read_back, 'A zero-row write must re-read the current row.' );
 		} finally {
 			remove_filter( 'query', $freeze );
 		}
+		$this->assertSame( (int) $before->checkpoint_rev + 1, (int) $this->store->get_job( $id )->checkpoint_rev, 'A same-second write still lands because it moves the revision.' );
 	}
 
 	/**

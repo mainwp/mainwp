@@ -1518,7 +1518,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			update_site_option( MainWP_Install::NATIVE_BACKUP_TABLES_CHECKED, time() - HOUR_IN_SECONDS - 1 );
 			MainWP_Install::instance()->install();
 			$this->assertSame( $table, $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) );
-			$this->assertSame( '9.0.2.30', get_site_option( 'mainwp_db_version' ) );
+			$this->assertSame( '9.0.2.31', get_site_option( 'mainwp_db_version' ) );
 			$this->assertCount( 13, $wpdb->get_results( 'SHOW COLUMNS FROM ' . $table ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed test table.
 		} finally {
 			$version = $this->saved_site_options['mainwp_db_version'];
@@ -1547,7 +1547,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	public static function install_paths(): array {
 		return array(
 			'fresh'        => array( false ),
-			'hourly retry' => array( '9.0.2.30' ),
+			'hourly retry' => array( '9.0.2.31' ),
 		);
 	}
 
@@ -1557,7 +1557,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	public function test_history_message_definition_has_no_default_and_start_supplies_empty_message(): void {
 		$definition = new \ReflectionMethod( MainWP_Install::class, 'native_backup_table_sql' );
 		$definition->setAccessible( true );
-		$sql = $definition->invoke( MainWP_Install::instance(), 'wp_backup_run_history', '9.0.2.30', '' );
+		$sql = $definition->invoke( MainWP_Install::instance(), 'wp_backup_run_history', '9.0.2.31', '' );
 		$this->assertMatchesRegularExpression( '/^\s*message text NOT NULL,\s*$/m', $sql );
 		$this->assertDoesNotMatchRegularExpression( '/^\s*message\b[^\n]*\bDEFAULT\b/im', $sql );
 		$this->assertGreaterThan( 0, MainWP_Backup_Run_History::start( 1, $this->site(), time() ) );

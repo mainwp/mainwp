@@ -194,7 +194,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         $now     = time();
         $updated = $this->wpdb->query(
             $this->wpdb->prepare(
-                'UPDATE ' . $this->table() . ' SET status = %s, snapshot_id = %d, checkpoint = %s, locked_until = 0, created = %d, updated = %d WHERE id = %d AND status = %s',
+                'UPDATE ' . $this->table() . ' SET status = %s, snapshot_id = %d, checkpoint = %s, checkpoint_rev = checkpoint_rev + 1, locked_until = 0, created = %d, updated = %d WHERE id = %d AND status = %s',
                 self::STATUS_PENDING,
                 $snapshot_id,
                 wp_json_encode( $checkpoint ),
@@ -400,19 +400,18 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * Persist the checkpoint.
      *
      * The UI can record stop evidence outside the worker's lease. A stale
-     * phase copy must not erase that evidence or replace a terminal outcome.
-     * Comparing the stored checkpoint prevents a mid-save cancellation from
-     * being lost; a missed swap retries with the newer evidence. Only the
-     * explicit applied-cancel path may clear it after Child completion.
+     * phase copy must not erase that evidence or replace a terminal outcome,
+     * so the save merges the stored evidence and swaps on checkpoint_rev.
+     * Every checkpoint or status write advances the revision, even one that
+     * restores the exact earlier text, so a miss always means another write
+     * landed, and a reread at the same revision means the statement cannot
+     * land at all. Only the explicit applied-cancel path may clear the
+     * evidence after Child completion.
      *
-     * Callers treat false as a lost lease and go on with fenced writes
-     * otherwise, so a swap lost to a concurrent write is retried rather
-     * than reported, even when the row reads back unchanged: the UI lane
-     * can add stop evidence and clear it again after the Child reports
-     * completion, restoring the exact text. Every miss needs a write
-     * outside the lease, and the terminal writer drops the lease; the
+     * Callers must not advance past the data a refused save carried. The
      * attempt cap only stops a worker from spinning behind a writer that
-     * never settles.
+     * never settles; reaching it takes twenty outside writes inside this
+     * one save.
      *
      * @param int         $job_id              Job id.
      * @param array       $checkpoint          Checkpoint.
@@ -420,36 +419,41 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * @param bool        $clear_cancel_intent Drop a stored cancel_intent instead of preserving it.
      *
      * @return bool True when the write landed; false when the row is gone,
-     *              the lease is no longer the caller's, the query failed, or
-     *              every attempt missed.
+     *              the lease is no longer the caller's, the query failed, the
+     *              statement cannot land, or every attempt lost to an outside
+     *              write.
      */
     public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null, bool $clear_cancel_intent = false ): bool {
         unset( $checkpoint['cancel_intent'] );
+        $fence = '';
+        $token = array();
+        if ( null !== $lock_token ) {
+            $fence = ' AND locked_by = %s';
+            $token = array( $lock_token );
+        }
         if ( $clear_cancel_intent ) {
-            return $this->update_job(
-                $job_id,
-                array( 'checkpoint' => wp_json_encode( $checkpoint ) ),
-                array( '%s' ),
-                $lock_token
+            $updated = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+                $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional lease fence adds its bind.
+                    'UPDATE ' . $this->table() . " SET checkpoint = %s, checkpoint_rev = checkpoint_rev + 1, updated = %d WHERE id = %d{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
+                    array_merge( array( (string) wp_json_encode( $checkpoint ), time(), $job_id ), $token )
+                )
             );
+            return 1 === $updated;
         }
 
-        $previous = null;
-        $encoded  = '';
+        $missed = null;
         for ( $attempt = 0; $attempt < 20; $attempt++ ) {
             $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by, checkpoint_rev FROM ' . $this->table() . ' WHERE id = %d', $job_id )
             );
             if ( null === $row || ( null !== $lock_token && $row->locked_by !== $lock_token ) ) {
                 return false;
             }
-            if ( null !== $previous && $row->checkpoint === $previous->checkpoint && $row->status === $previous->status && $encoded === (string) $row->checkpoint ) {
-                // MySQL reports zero rows for identical values, which is a
-                // landed write.
-                return true;
+            $rev = (int) $row->checkpoint_rev;
+            if ( $rev === $missed ) {
+                return false;
             }
-            $stored  = (string) $row->checkpoint;
-            $decoded = json_decode( $stored, true );
+            $decoded = json_decode( (string) $row->checkpoint, true );
             $decoded = is_array( $decoded ) ? $decoded : array();
             $merged  = $checkpoint;
             if ( ! empty( $decoded['cancel_intent'] ) ) {
@@ -467,17 +471,10 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
                     }
                 }
             }
-            $encoded = (string) wp_json_encode( $merged );
-            $fence   = '';
-            $binds   = array( $encoded, time(), $job_id, $stored, $row->status );
-            if ( null !== $lock_token ) {
-                $fence   = ' AND locked_by = %s';
-                $binds[] = $lock_token;
-            }
             $updated = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
                 $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional lease fence adds its bind.
-                    'UPDATE ' . $this->table() . " SET checkpoint = %s, updated = %d WHERE id = %d AND checkpoint = %s AND status = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
-                    $binds
+                    'UPDATE ' . $this->table() . " SET checkpoint = %s, checkpoint_rev = checkpoint_rev + 1, updated = %d WHERE id = %d AND checkpoint_rev = %d{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
+                    array_merge( array( (string) wp_json_encode( $merged ), time(), $job_id, $rev ), $token )
                 )
             );
             if ( 1 === $updated ) {
@@ -486,7 +483,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             if ( false === $updated ) {
                 return false;
             }
-            $previous = $row;
+            $missed = $rev;
         }
         return false;
     }
@@ -498,8 +495,8 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * from its own read could revert a worker's newer checkpoint (racing
      * fenced writes land between the read and the write). The intent is
      * therefore injected with a bounded compare-and-swap: the UPDATE only
-     * lands while the checkpoint still matches the exact value read, and
-     * a miss re-reads and retries against the fresher row.
+     * lands while checkpoint_rev still matches the revision read, and a
+     * miss re-reads and retries against the fresher row.
      *
      * @param int         $job_id     Job id.
      * @param array       $failure    Original failure to preserve when combined deferral failed.
@@ -510,7 +507,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     public function arm_cancel_intent( int $job_id, array $failure = array(), ?string $lock_token = null ): bool {
         for ( $attempt = 0; $attempt < 5; $attempt++ ) {
             $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by, checkpoint_rev FROM ' . $this->table() . ' WHERE id = %d', $job_id )
             );
             if ( null === $row || ! in_array( $row->status, self::active_statuses(), true ) || ( null !== $lock_token && $row->locked_by !== $lock_token ) ) {
                 return false;
@@ -530,15 +527,15 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
                 $decoded['terminal_failure'] = $failure;
             }
             $fence = '';
-            $binds = array( wp_json_encode( $decoded ), time(), $job_id, $stored, $row->status );
+            $binds = array( wp_json_encode( $decoded ), time(), $job_id, (int) $row->checkpoint_rev );
             if ( null !== $lock_token ) {
                 $fence   = ' AND locked_by = %s';
                 $binds[] = $lock_token;
             }
 
-            $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the exact stored value.
+            $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the stored revision.
                 $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional lease fence adds its bind.
-                    'UPDATE ' . $this->table() . " SET checkpoint = %s, updated = %d WHERE id = %d AND checkpoint = %s AND status = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
+                    'UPDATE ' . $this->table() . " SET checkpoint = %s, checkpoint_rev = checkpoint_rev + 1, updated = %d WHERE id = %d AND checkpoint_rev = %d{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
                     $binds
                 )
             );
@@ -577,7 +574,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         $missed = null;
         for ( $attempt = 0; $attempt < 5; $attempt++ ) {
             $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by, checkpoint_rev FROM ' . $this->table() . ' WHERE id = %d', $job_id )
             );
             if ( null === $row || ! in_array( $row->status, self::active_statuses(), true ) ) {
                 return 'terminal';
@@ -586,7 +583,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
                 return 'fenced';
             }
             // A miss against a row nobody changed is a failed write, not a race.
-            if ( null !== $missed && array( (string) $row->checkpoint, $row->status, $row->locked_by ) === $missed ) {
+            if ( null !== $missed && (int) $row->checkpoint_rev === $missed ) {
                 return 'refused';
             }
 
@@ -600,7 +597,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             if ( null !== $outcome ) {
                 $decoded['cancel_confirmation']['outcome'] = $outcome;
             }
-            $set   = "`status` = %s, locked_until = 0, locked_by = '', active_site_id = NULL, updated = %d";
+            $set   = "`status` = %s, locked_until = 0, locked_by = '', active_site_id = NULL, checkpoint_rev = checkpoint_rev + 1, updated = %d";
             $binds = array( $status, time() );
             if ( null !== $error ) {
                 $decoded['last_error_code'] = $error_code;
@@ -608,23 +605,23 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
                 $binds[]                    = $error;
             }
             $set .= ', checkpoint = %s';
-            array_push( $binds, wp_json_encode( $decoded ), $job_id, $stored, $row->status );
+            array_push( $binds, wp_json_encode( $decoded ), $job_id, (int) $row->checkpoint_rev );
 
             $fence = '';
             if ( null !== $lock_token ) {
                 $fence   = ' AND locked_by = %s';
                 $binds[] = $lock_token;
             }
-            $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the exact stored value.
+            $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the stored revision.
                 $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional columns and fence add their binds.
-                    'UPDATE ' . $this->table() . " SET {$set} WHERE id = %d AND checkpoint = %s AND status = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed SQL fragments; every value binds via placeholder.
+                    'UPDATE ' . $this->table() . " SET {$set} WHERE id = %d AND checkpoint_rev = %d{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed SQL fragments; every value binds via placeholder.
                     $binds
                 )
             );
             if ( 1 === $swapped ) {
                 return 'written';
             }
-            $missed = array( $stored, $row->status, $row->locked_by );
+            $missed = (int) $row->checkpoint_rev;
         }
         return 'contended';
     }
@@ -642,7 +639,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     public function defer_terminal_failure( int $job_id, ?string $error, string $error_code, ?string $lock_token = null ): ?array {
         for ( $attempt = 0; $attempt < 5; $attempt++ ) {
             $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by, last_error FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by, last_error, checkpoint_rev FROM ' . $this->table() . ' WHERE id = %d', $job_id )
             );
             if ( null === $row || ! in_array( $row->status, self::active_statuses(), true ) || ( null !== $lock_token && $row->locked_by !== $lock_token ) ) {
                 return null;
@@ -671,14 +668,14 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             }
 
             $fence = '';
-            $binds = array( wp_json_encode( $decoded ), $last_error, time(), $job_id, $stored, $row->status );
+            $binds = array( wp_json_encode( $decoded ), $last_error, time(), $job_id, (int) $row->checkpoint_rev );
             if ( null !== $lock_token ) {
                 $fence   = ' AND locked_by = %s';
                 $binds[] = $lock_token;
             }
-            $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the exact stored value.
+            $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the stored revision.
                 $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional lease fence adds its bind.
-                    'UPDATE ' . $this->table() . " SET checkpoint = %s, last_error = %s, updated = %d WHERE id = %d AND checkpoint = %s AND status = %s{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
+                    'UPDATE ' . $this->table() . " SET checkpoint = %s, checkpoint_rev = checkpoint_rev + 1, last_error = %s, updated = %d WHERE id = %d AND checkpoint_rev = %d{$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fence with a bound token.
                     $binds
                 )
             );
@@ -695,10 +692,8 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * Transition matrix (failed_retryable is active):
      * - Active -> active or terminal: write; a supplied token must match.
      * - Terminal -> active or terminal: no write, with or without a token.
-     * - Changed row: true. Query failure or missing row: false.
-     * - Unchanged row, terminal destination: false; only the winning writer succeeds.
-     * - Unchanged row, active destination: a supplied token must still own it;
-     *   without a token, true only if its status already matches.
+     * - Every landed write advances checkpoint_rev, so it always changes the
+     *   row: true. Query failure, missing, terminal or fenced-out row: false.
      *
      * @param int         $job_id     Job id.
      * @param string      $status     New status.
@@ -728,6 +723,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             }
         }
         $set[]    = 'active_site_id = ' . ( $active ? 'site_id' : 'NULL' );
+        $set[]    = 'checkpoint_rev = checkpoint_rev + 1';
         $values[] = $job_id;
         // Every transition preserves the first terminal writer's result.
         $statuses = self::active_statuses();
@@ -748,18 +744,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         } finally {
             $this->wpdb->suppress_errors( $suppress );
         }
-        if ( false === $changed || 1 === $changed ) {
-            return 1 === $changed;
-        }
-        if ( ! $active ) {
-            return false;
-        }
-        // Resolve an unchanged active write, including same-second no-ops.
-        $current = $this->get_job( $job_id );
-        if ( null === $current ) {
-            return false;
-        }
-        return null !== $lock_token ? $current->locked_by === $lock_token : $current->status === $status;
+        return 1 === $changed;
     }
 
     /**

@@ -81,7 +81,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string[]
      */
-    const NATIVE_BACKUP_TABLES = array( 'wp_backup_snapshot', 'wp_backup_storage', 'wp_backup_upload_job', 'wp_backup_restore_job' );
+    const NATIVE_BACKUP_TABLES = array( 'wp_backup_snapshot', 'wp_backup_storage', 'wp_backup_upload_job', 'wp_backup_restore_job', 'wp_backup_run_history' );
 
     /**
      * MySQL advisory lock name serializing the wp_backup_progress duplicate
@@ -96,7 +96,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.29'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
+    protected $mainwp_db_version = '9.0.2.30'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
 
     /**
      * Protected variable to hold the database option name.
@@ -676,6 +676,22 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      */
     private function native_backup_table_sql( $table_key, $current_version, $charset_collate ) {
         $columns = array(
+            'wp_backup_run_history' => "  id bigint(20) unsigned NOT NULL auto_increment,
+  task_id int(11) NOT NULL DEFAULT 0,
+  site_id int(11) NOT NULL,
+  started int(11) NOT NULL DEFAULT 0,
+  finished int(11) NOT NULL DEFAULT 0,
+  trigger_source varchar(20) NOT NULL DEFAULT '',
+  initiator_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
+  outcome varchar(20) NOT NULL DEFAULT 'running',
+  error_code varchar(64) NOT NULL DEFAULT '',
+  message text NOT NULL DEFAULT '',
+  snapshot_id bigint(20) unsigned NULL DEFAULT NULL,
+  restore_job_id bigint(20) unsigned NULL DEFAULT NULL,
+  ref varchar(191) NULL DEFAULT NULL,
+  KEY idx_task_site_started (task_id, site_id, started),
+  KEY idx_site_finished (site_id, finished),
+  KEY idx_finished (finished)",
             'wp_backup_snapshot'    => "  id bigint(20) unsigned NOT NULL auto_increment,
   task_id int(11) NOT NULL,
   site_id int(11) NOT NULL,

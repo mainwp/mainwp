@@ -285,6 +285,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             MainWP_Backup_Upload_Driver::instance()->init();
             MainWP_Backup_Retention_Scheduler::instance()->init();
             MainWP_Backup_Diagnostics::instance()->init();
+            MainWP_Backup_Run_History::init();
         }
         MainWP_Manage_Groups::init();
         MainWP_User::init();
@@ -549,6 +550,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_System_Cron_Jobs::instance()->cron_backups_prune();
         // Under WP-Cron the diagnostics prune rides the same hook; this script calls the lane directly, so prune here too.
         MainWP_Backup_Diagnostics::instance()->prune();
+        MainWP_Backup_Run_History::prune();
     }
 
     /**

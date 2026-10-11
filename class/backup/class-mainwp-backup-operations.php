@@ -693,7 +693,15 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return self::invalid_task_input( 'context' );
         }
         $error = self::native_task_write_error();
-        return $error ?? self::task_action_result( MainWP_Manage_Backups_Handler::run_backup_task_now( $task_id, $context ), MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR );
+        if ( $error ) {
+            return $error;
+        }
+        $previous = MainWP_Backup_Run_History::set_context( 'ability' === $context ? 'ability' : 'manual', get_current_user_id() );
+        try {
+            return self::task_action_result( MainWP_Manage_Backups_Handler::run_backup_task_now( $task_id, $context ), MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR );
+        } finally {
+            MainWP_Backup_Run_History::set_context( $previous['trigger'], $previous['user_id'] );
+        }
     }
 
     /**
@@ -791,7 +799,12 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         // poll retries the claim for a click whose run never opened - the
         // cron cannot, it only drives runs that were stamped open.
         $started  = time();
-        $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle ) );
+        $previous = MainWP_Backup_Run_History::set_context( 'ability' === $context ? 'ability' : 'manual', get_current_user_id() );
+        try {
+            $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle ) );
+        } finally {
+            MainWP_Backup_Run_History::set_context( $previous['trigger'], $previous['user_id'] );
+        }
 
         // last_run is now stamped, so the task is eligible for a continue.
         // Kick one immediately so a tab-closed run finishes within seconds
@@ -895,6 +908,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'], array( 'status' => 502 ) );
         }
         if ( 'cancelled' === $result ) {
+            MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'cancelled', $site_id );
             // Close the local manual run so the next poll does not re-report it as
             // running; the child confirmed this cancellation. The cancelled note and
             // log line are the diagnostic trace: without them a cancelled run is
@@ -985,6 +999,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         $db->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
         $db->update_backup_notices( (int) $task->id, $note . "\n" );
+        MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'reset' );
         return array(
             'status'            => 'reset',
             'cancelled'         => $cancelled,

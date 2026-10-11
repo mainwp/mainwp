@@ -1038,6 +1038,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( 'completed' === $phase ) {
                 $artifacts = $this->safety_backup_artifacts( $payload, (string) $job->pre_snapshot_task_id );
                 if ( empty( $artifacts ) ) {
+                    MainWP_Backup_Run_History::finalize_ref( (int) $job->site_id, (string) $job->pre_snapshot_task_id, 'restore_safety', 'failed' );
                     // Same verdict as a failed safety backup. The handle stays
                     // with this job so the terminal path stops or prunes the
                     // unusable Child task instead of leaving it behind.
@@ -1061,6 +1062,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 // on for rollback.
                 $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
 
+                MainWP_Backup_Run_History::finalize_ref( (int) $job->site_id, (string) $job->pre_snapshot_task_id, 'restore_safety', 'completed' );
+
                 // The site keeps one safety backup. Older ones go only once
                 // this one is durably recorded, and while this job still holds
                 // the site, so no rollback of an older restore can start.
@@ -1073,6 +1076,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $error      = is_array( $payload ) && isset( $payload['error'] ) ? MainWP_Backup_Error_Codes::sanitize_message( (string) $payload['error'] ) : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
                 $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
                 if ( 'failed' === $phase || ( is_array( $payload ) && isset( $payload['error'] ) ) ) {
+                    MainWP_Backup_Run_History::finalize_ref( (int) $job->site_id, (string) $job->pre_snapshot_task_id, 'restore_safety', 'failed', $error_code );
                     $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
                     $this->record_failure( $job, $error, false, $error_code );
                 } else {

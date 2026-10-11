@@ -1200,6 +1200,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $stale_sites        = array();
         $unauthorized_sites = array();
         $sites              = static::resolve_task_run_sites( $task, $stale_sites, $unauthorized_sites );
+        $history_started    = (int) $task->last_run;
+        if ( $updateRun ) {
+            foreach ( $sites as $site_id ) {
+                MainWP_Backup_Run_History::start( (int) $task->id, (int) $site_id, $history_started, '', (int) $task->userid );
+            }
+        }
         if ( null === static::authorized_snapshot_ids( $task ) ) {
             MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'authorized_sites' => implode( ',', $sites ) ) );
         }
@@ -1496,6 +1502,21 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
             do_action( 'mainwp_backup_diag_site_mark', (int) $task->id, (int) $siteid, '' === $_mark_detail ? 'success' : 'error', $_mark_detail );
 
+            $_snapshot = '' === $_mark_detail ? MainWP_Backup_Snapshots::instance()->get_latest_complete( (int) $siteid, (int) $task->id ) : null;
+            $_progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, (int) $siteid );
+            $_code     = (string) ( $_progress->fetchResult['error_code'] ?? '' );
+            if ( '' === $_code && preg_match( '/^\[(mainwp_[a-z0-9_]+)\]/', (string) ( $_progress->last_error ?? '' ), $_match ) ) {
+                $_code = $_match[1];
+            }
+            MainWP_Backup_Run_History::finalize_run(
+                (int) $task->id,
+                $history_started,
+                '' === $_mark_detail ? 'completed' : 'failed',
+                (int) $siteid,
+                '' === $_mark_detail ? '' : $_code,
+                $_snapshot && (int) $_snapshot->created >= $history_started ? (int) $_snapshot->id : null
+            );
+
             $completed_sites[ $siteid ] = true;
             MainWP_DB_Backup::instance()->update_completed_sites( $task->id, $completed_sites );
 
@@ -1552,6 +1573,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                 do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'close_refused_pending_record', (int) $task->last_run, (int) $task->completed );
             } elseif ( MainWP_DB_Backup::instance()->update_backup_completed( $task->id ) ) {
+                MainWP_Backup_Run_History::finalize_run( (int) $task->id, $history_started, 'incomplete' );
                 // Only the driver whose guarded close stamped the run owns
                 // the close side effects: with backup_errors persisting on
                 // the row for the on-demand poll to surface, this gate is

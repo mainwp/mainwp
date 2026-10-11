@@ -2726,6 +2726,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         $task_id = sanitize_text_field( $information['task_id'] );
+        $started = time();
         MainWP_DB::instance()->update_website_option(
             $website,
             self::ADHOC_TASK_OPTION,
@@ -2733,11 +2734,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 array(
                     'task_id' => $task_id,
                     'type'    => $type,
-                    'started' => time(),
+                    'started' => $started,
                     'owner'   => $owner,
                 )
             )
         );
+
+        MainWP_Backup_Run_History::start( 0, $site_id, $started, '' === $owner ? 'update_gate' : 'restore_safety', 0, '' === $owner ? null : (int) $owner, $task_id );
 
         return $task_id;
     }
@@ -2864,7 +2867,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'task_id' => 0,
                 )
             );
-            return self::map_task_status( $payload );
+            $status = self::map_task_status( $payload );
+            if ( 'failed' === $status['status'] ) {
+                MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'failed', (string) ( $status['meta']['error_code'] ?? '' ) );
+            }
+            return $status;
         }
 
         $deadline = time() + $budget_seconds;
@@ -2912,6 +2919,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         if ( 'running' !== $status['status'] ) {
+            MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'completed' === $status['status'] && '' !== $downloaded ? 'completed' : 'failed', (string) ( $status['meta']['error_code'] ?? '' ) );
             /**
              * Fires when the dashboard observes a backup task reach a terminal phase.
              *

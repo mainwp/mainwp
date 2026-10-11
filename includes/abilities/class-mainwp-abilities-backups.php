@@ -2345,7 +2345,11 @@ class MainWP_Abilities_Backups {
     }
 
     /**
-     * Canonical strings cannot overflow onto another stored identity.
+     * Ids the input schema accepts, read the way REST sanitization reads them, without wrapping past PHP_INT_MAX.
+     *
+     * Schema validation also accepts whole-valued numbers ("5.0", 5.0, "5e0", " 5 ") and REST casts them to
+     * int, so PHP callers get the same id. A value at or past 2^63, the first float above PHP_INT_MAX, would
+     * wrap negative when cast and is refused instead.
      *
      * @param mixed $value Caller identifier.
      * @return int|null
@@ -2357,11 +2361,11 @@ class MainWP_Abilities_Backups {
         if ( is_string( $value ) && preg_match( '/^[1-9][0-9]*$/D', $value ) && (string) (int) $value === $value ) {
             return (int) $value;
         }
-        // Schema validation accepts whole-valued numbers ("5.0", 5.0, "5e0") and REST sanitizes them to int; PHP callers get the same reading.
-        if ( ( is_float( $value ) || is_string( $value ) ) && rest_is_integer( $value ) && (float) $value >= 1 && (float) $value <= PHP_INT_MAX ) {
-            return (int) $value;
+        if ( ! ( is_float( $value ) || is_string( $value ) ) || ! rest_is_integer( $value ) ) {
+            return null;
         }
-        return null;
+        $number = (float) $value;
+        return is_finite( $number ) && $number >= 1 && $number < 9.2233720368547758E18 ? (int) $number : null;
     }
 
     /**

@@ -1212,9 +1212,103 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assert_output( $name, $output );
 		if ( 'no_items' === $expected ) {
 			$this->assertSame( array(), $output['items'] );
+			if ( 'get-backup-status' === $name ) {
+				$this->assertSame( 0, $output['totals']['sites'] );
+			}
 		} else {
 			$this->assertNull( $output['items'][0]['latest_snapshot'] );
 		}
+	}
+
+	/**
+	 * Every id shape the input schema accepts, and what it must read as.
+	 *
+	 * @return array
+	 */
+	public static function id_inputs() {
+		return array(
+			'int'                      => array( 987671, true ),
+			'canonical string'         => array( '987671', true ),
+			'whole float string'       => array( '987671.0', true ),
+			'whole float'              => array( 987671.0, true ),
+			'exponent string'          => array( '9.87671e5', true ),
+			'padded string'            => array( ' 987671 ', true ),
+			'signed string'            => array( '+987671', true ),
+			'zero'                     => array( 0, false ),
+			'negative'                 => array( -5, false ),
+			'zero string'              => array( '0', false ),
+			'negative zero string'     => array( '-0', false ),
+			'fraction'                 => array( 5.5, false ),
+			'fraction string'          => array( '987671.5', false ),
+			'float at PHP_INT_MAX'     => array( (float) PHP_INT_MAX, false ),
+			'float past PHP_INT_MAX'   => array( 1e20, false ),
+			'digits past PHP_INT_MAX'  => array( '99999999999999999999', false ),
+			'infinite exponent string' => array( '1e400', false ),
+			'word'                     => array( 'abc', false ),
+			'hex string'               => array( '0x5', false ),
+			'boolean'                  => array( true, false ),
+		);
+	}
+
+	/**
+	 * An accepted id reads the task REST sanitization would read; anything else is refused before a lookup.
+	 *
+	 * @dataProvider id_inputs
+	 *
+	 * @param mixed $id Input value.
+	 * @param bool  $reads Whether it identifies task 987671.
+	 * @return void
+	 */
+	public function test_id_inputs_read_one_task_or_are_refused( $id, $reads ) {
+		$output = $this->callback_read( 'get-backup-task', array( 'task_id' => $id ) );
+		if ( $reads ) {
+			$this->assertIsArray( $output, is_wp_error( $output ) ? $output->get_error_code() : '' );
+			$this->assertSame( 987671, $output['task']['id'] );
+			return;
+		}
+		$this->assertWPError( $output );
+		$this->assertSame( 'mainwp_invalid_input', $output->get_error_code() );
+	}
+
+	/**
+	 * Counts a Child reports, and what the restore read must show for each.
+	 *
+	 * @return array
+	 */
+	public static function child_counts() {
+		return array(
+			'int'             => array( 3, 3 ),
+			'zero'            => array( 0, 0 ),
+			'numeric string'  => array( '3', 3 ),
+			'whole float'     => array( 3.0, 3 ),
+			'negative'        => array( -3, null ),
+			'fraction'        => array( 3.7, null ),
+			'overflow'        => array( 1e19, null ),
+			'overflow string' => array( '1e19', null ),
+			'word'            => array( 'abc', null ),
+			'boolean'         => array( true, null ),
+			'list'            => array( array( 3 ), null ),
+			'absent'          => array( null, null ),
+		);
+	}
+
+	/**
+	 * A Child-reported count outside what a count can be reads null instead of failing the whole read.
+	 *
+	 * @dataProvider child_counts
+	 *
+	 * @param mixed    $reported Stored Child value.
+	 * @param int|null $expected Output value.
+	 * @return void
+	 */
+	public function test_child_reported_counts_read_as_counts_or_null( $reported, $expected ) {
+		global $wpdb;
+		$orphans    = null === $reported ? array() : array( 'orphan_customer_orders' => $reported );
+		$checkpoint = array( 'verification' => array( 'woo_orphans' => $orphans ) );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'checkpoint' => wp_json_encode( $checkpoint ) ), array( 'id' => 987674 ) );
+		$job = $this->read( 'get-restore-job', array( 'restore_job_id' => 987674 ) );
+		$this->assert_output( 'get-restore-job', $job );
+		$this->assertSame( $expected, $job['verification']['woo_orphan_customer_orders'] );
 	}
 
 	/**

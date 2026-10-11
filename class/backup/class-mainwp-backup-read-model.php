@@ -468,6 +468,24 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         );
     }
     /**
+     * A count the Child reports is stored as sent, so anything that is not a whole, non-negative, castable number reads as unknown.
+     *
+     * @param mixed $value Stored Child value.
+     * @return int|null
+     */
+    private static function child_count( $value ): ?int {
+        if ( is_int( $value ) ) {
+            return $value >= 0 ? $value : null;
+        }
+        if ( ! is_numeric( $value ) ) {
+            return null;
+        }
+        $number = (float) $value;
+        // 2^63 is the first float above PHP_INT_MAX; casting it or anything larger wraps negative.
+        return is_finite( $number ) && $number >= 0 && $number < 9.2233720368547758E18 && floor( $number ) === $number ? (int) $number : null;
+    }
+
+    /**
      * Fleet pagination must follow the same complete scope checks as targeting.
      *
      * @param string   $status Task filter.
@@ -567,7 +585,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'max_chain_length'    => (int) $task->max_chain_length,
             ),
             'archive_format'   => in_array( $task->archiveFormat, array( 'site', 'global', 'zip', 'tar', 'tar.gz', 'tar.bz2' ), true ) ? $task->archiveFormat : 'legacy',
-            // The task writer stores a comma-joined list; older rows may still hold newlines.
+            // The task writer stores a comma-joined list; splitting on line breaks too drops the stray CR an older CRLF form post left.
             'exclude'          => preg_split( '/\r\n|\r|\n|,/', $exclude, -1, PREG_SPLIT_NO_EMPTY ),
             'exclude_flags'    => array(
                 'backup_archives' => ! empty( $task->excludebackup ),
@@ -922,7 +940,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'site_responds'              => is_bool( $verification['site_responds'] ?? null ) ? $verification['site_responds'] : null,
                 'site_responds_rule'         => 'http_200_to_499',
                 'woo_preserve_applied'       => isset( $verification['woo_preserve'] ) ? ! empty( $verification['woo_preserve'] ) : null,
-                'woo_orphan_customer_orders' => isset( $verification['woo_orphans']['orphan_customer_orders'] ) && is_numeric( $verification['woo_orphans']['orphan_customer_orders'] ) && $verification['woo_orphans']['orphan_customer_orders'] >= 0 ? (int) $verification['woo_orphans']['orphan_customer_orders'] : null,
+                'woo_orphan_customer_orders' => self::child_count( $verification['woo_orphans']['orphan_customer_orders'] ?? null ),
             ),
             'partial_state_risk'       => $risk,
             'partial_state_reasons'    => $reasons,

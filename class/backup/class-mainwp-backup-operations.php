@@ -1352,4 +1352,19 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         return MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $site_id, $keep );
     }
+    /**
+     * Fleet status must use the same applicability rule as the enforcing update lane.
+     *
+     * @param object $site Stored site row.
+     * @return array Applicability and evidence verdict.
+     */
+    public static function update_gate_for_site( object $site ): array {
+        $applies = MainWP_Backup_Settings::is_native_backups_enabled()
+            && 1 === (int) get_option( 'mainwp_backup_before_upgrade', 0 )
+            && 0 !== (int) $site->backup_before_upgrade;
+        return array(
+            'applies' => $applies,
+            'verdict' => $applies ? MainWP_Backup_Executor::evaluate_update_backup_gate( (int) $site->id, MainWP_Updates_Overview::get_backup_before_upgrade_days() ) : 'not_applicable',
+        );
+    }
 }

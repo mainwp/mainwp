@@ -299,6 +299,7 @@ class MainWP_Backup_Run_History {
      * @param int   $page One-based page.
      * @param int   $per_page Page size.
      * @param int[] $authorized_site_ids Fully authorized site roster.
+     * @throws \RuntimeException When either history query fails.
      * @return array Items and total.
      */
     public static function query( array $filters, int $page, int $per_page, array $authorized_site_ids ): array {
@@ -323,12 +324,19 @@ class MainWP_Backup_Run_History {
                 $values[] = $filters[ $key ];
             }
         }
-        $table    = self::table_name();
-        $total    = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . $table . ' WHERE ' . $where, $values ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders -- placeholders and replacements are built together from fixed filters.
+        $table = self::table_name();
+        $total = $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . $table . ' WHERE ' . $where, $values ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders -- placeholders and replacements are built together from fixed filters.
+        if ( null === $total || '' !== $wpdb->last_error ) {
+            throw new \RuntimeException( 'Backup history could not be read.' );
+        }
+        $total    = (int) $total;
         $per_page = min( 100, max( 1, $per_page ) );
         $values[] = $per_page;
         $values[] = ( max( 1, $page ) - 1 ) * $per_page;
         $items    = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . $table . ' WHERE ' . $where . ' ORDER BY started DESC, id DESC LIMIT %d OFFSET %d', $values ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders -- placeholders and replacements are built together from fixed filters.
+        if ( ! is_array( $items ) || '' !== $wpdb->last_error ) {
+            throw new \RuntimeException( 'Backup history could not be read.' );
+        }
         foreach ( $items as &$item ) {
             $item['error'] = '' !== $item['error_code'] ? MainWP_Backup_Operations::safe_error( $item['error_code'] ) : null;
             // Old rows may predate the safe-message contract; reads rebuild it too.

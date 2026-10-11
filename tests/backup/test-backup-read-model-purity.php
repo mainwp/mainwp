@@ -27,6 +27,15 @@ class MainWP_Backup_Read_Model_Purity_Test extends MainWP_Abilities_Test_Case {
 	public function set_up() {
 		parent::set_up();
 		$this->seed_read_fixtures();
+		$this->insert_read_fixture(
+			'wp_backup_storage',
+			array(
+				'id'       => 987676,
+				'name'     => 'Read destination',
+				'provider' => 's3',
+				'settings' => 'unreadable',
+			)
+		);
 	}
 
 	/**
@@ -47,6 +56,16 @@ class MainWP_Backup_Read_Model_Purity_Test extends MainWP_Abilities_Test_Case {
 	public function test_every_public_reader_is_pure() {
 		$this->assertTrue( class_exists( MainWP_Backup_Read_Model::class ), 'The pure read model must exist.' );
 		$calls  = array(
+			'get_backup_status'        => static function () {
+				return MainWP_Backup_Read_Model::get_backup_status(); },
+			'list_history'             => static function () {
+				return MainWP_Backup_Read_Model::list_history(); },
+			'list_destinations'        => static function () {
+				return MainWP_Backup_Read_Model::list_destinations(); },
+			'get_destination'          => static function () {
+				return MainWP_Backup_Read_Model::get_destination( 987676 ); },
+			'get_settings'             => static function () {
+				return MainWP_Backup_Read_Model::get_settings(); },
 			'get_task_run'             => function () {
 				return MainWP_Backup_Read_Model::get_task_run( MainWP_DB_Backup::instance()->get_backup_task_by_id( 987671 ), 1700000000, 0 );
 			},
@@ -68,6 +87,22 @@ class MainWP_Backup_Read_Model_Purity_Test extends MainWP_Abilities_Test_Case {
 			'list_restore_jobs'        => function () {
 				return MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id );
 			},
+			'list_tasks'               => function () {
+				return MainWP_Backup_Read_Model::list_tasks(); },
+			'get_task'                 => function () {
+				return MainWP_Backup_Read_Model::get_task( MainWP_DB_Backup::instance()->get_backup_task_by_id( 987671 ) ); },
+			'task_run_details'         => function () {
+				return MainWP_Backup_Read_Model::task_run_details( MainWP_DB_Backup::instance()->get_backup_task_by_id( 987671 ) ); },
+			'site_backup_state'        => function () {
+				return MainWP_Backup_Read_Model::site_backup_state( $this->site_id ); },
+			'query_backup_snapshots'   => function () {
+				return MainWP_Backup_Read_Model::query_backup_snapshots( $this->site_id ); },
+			'snapshot_details'         => function () {
+				return MainWP_Backup_Read_Model::snapshot_details( 987673 ); },
+			'query_restore_jobs'       => function () {
+				return MainWP_Backup_Read_Model::query_restore_jobs(); },
+			'restore_job_details'      => function () {
+				return MainWP_Backup_Read_Model::restore_job_details( 987674 ); },
 		);
 		$public = array_map(
 			static function ( $method ) {

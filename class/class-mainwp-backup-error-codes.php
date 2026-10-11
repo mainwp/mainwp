@@ -69,6 +69,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_SNAPSHOT_RECORD_FAILED = 'mainwp_backup_snapshot_record_failed';
 
     // Process.
+    const ERR_RUN_CANCELLED      = 'mainwp_backup_run_cancelled';
+    const ERR_RUN_RESET          = 'mainwp_backup_run_reset';
+    const ERR_RUN_INCOMPLETE     = 'mainwp_backup_run_incomplete';
     const ERR_STALLED            = 'mainwp_backup_stalled';
     const ERR_RETRY_EXHAUSTED    = 'mainwp_backup_retry_exhausted';
     const ERR_ALREADY_RUNNING    = 'mainwp_backup_already_running';
@@ -276,6 +279,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_TAR_WRITE_FAILED              => esc_html__( 'Could not write to the backup archive. The server may be out of disk space or the backup directory permissions may have changed. Free up disk space or check directory permissions.', 'mainwp' ),
             self::ERR_FILE_SKIPPED                  => esc_html__( 'A file could not be added to the backup archive. Check the file permissions; the file was skipped and the backup continued.', 'mainwp' ),
             self::ERR_TOO_MANY_SKIPPED              => esc_html__( 'Too many files could not be added to the backup. Check disk space and file permissions on the child site, then try again.', 'mainwp' ),
+            self::ERR_RUN_CANCELLED                 => esc_html__( 'The backup run was cancelled before it completed.', 'mainwp' ),
+            self::ERR_RUN_RESET                     => esc_html__( 'The backup run was reset before it completed.', 'mainwp' ),
+            self::ERR_RUN_INCOMPLETE                => esc_html__( 'The backup run closed without a confirmed result for this site.', 'mainwp' ),
             self::ERR_STALLED                       => esc_html__( 'Backup stopped responding after receiving an invalid status from the child site. Check the child site error log for details.', 'mainwp' ),
             self::ERR_RETRY_EXHAUSTED               => esc_html__( 'Backup did not complete after every retry was used. The child site may be overloaded, have insufficient resources, or be behind a firewall that blocks long-running requests. Check the child site status and try again during low-traffic hours.', 'mainwp' ),
             self::ERR_ALREADY_RUNNING               => esc_html__( 'Another backup is in progress for this site. Wait for it to finish or for the stale process to be detected, then try again.', 'mainwp' ),

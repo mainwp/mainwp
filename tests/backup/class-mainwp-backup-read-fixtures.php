@@ -163,11 +163,12 @@ trait Backup_Read_Purity_Guard {
 	 * @return mixed Reader result.
 	 */
 	protected function guarded( callable $call ) {
-		$deny  = function () {
+		$deny = function () {
 			$this->fail( 'A read attempted a write, HTTP request, Child request, or scheduled event.' );
 		};
+		// Domain resolution uses SQL REPLACE(), which does not mutate a row.
 		$query = function ( $sql ) {
-			$this->assertDoesNotMatchRegularExpression( '/\b(INSERT|UPDATE|DELETE|REPLACE|ALTER|CREATE|DROP|TRUNCATE)\b/i', $sql, $sql );
+			$this->assertDoesNotMatchRegularExpression( '/\b(INSERT|UPDATE|DELETE|REPLACE(?!\s*\()|ALTER|CREATE|DROP|TRUNCATE)\b/i', $sql, $sql );
 			return $sql;
 		};
 		$hooks = array( 'pre_http_request', 'mainwp_fetch_url_authed_pre', 'pre_schedule_event', 'pre_update_option', 'setted_transient' );

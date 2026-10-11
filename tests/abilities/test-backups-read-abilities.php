@@ -1,0 +1,1177 @@
+<?php
+/**
+ * Backup reads must expose authorized evidence without advancing work.
+ *
+ * @package MainWP\Dashboard\Tests
+ */
+
+namespace MainWP\Dashboard\Tests;
+
+use MainWP\Dashboard\MainWP_Abilities_Backups;
+use MainWP\Dashboard\MainWP_Backup_Operations;
+use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_DB_Backup;
+
+require_once __DIR__ . '/../backup/class-mainwp-backup-read-fixtures.php';
+require_once __DIR__ . '/../backup/test-backup-safe-error.php';
+
+/** Reads must enforce the same gates in both callbacks. */
+class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
+	use Backup_Read_Fixtures;
+	use Backup_Read_Purity_Guard;
+
+	/**
+	 * Each read starts with recorded evidence and a fresh authorization cache.
+	 *
+	 * @return void
+	 */
+	public function set_up() {
+		parent::set_up();
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
+		$this->seed_read_fixtures();
+		$this->seed_configuration_and_history();
+	}
+
+	/**
+	 * Global configuration and recent history exercise the remaining read contracts.
+	 *
+	 * @return void
+	 */
+	private function seed_configuration_and_history() {
+		$this->insert_read_fixture(
+			'wp_backup_storage',
+			array(
+				'id'       => 987676,
+				'name'     => 'Read destination',
+				'provider' => 's3',
+				'settings' => 'unreadable',
+				'created'  => time(),
+				'updated'  => time(),
+			)
+		);
+		$this->insert_read_fixture(
+			'wp_backup_run_history',
+			array(
+				'id'                => 987677,
+				'task_id'           => 987671,
+				'site_id'           => $this->site_id,
+				'started'           => time() - 60,
+				'finished'          => time(),
+				'trigger_source'    => 'manual',
+				'initiator_user_id' => get_current_user_id(),
+				'outcome'           => 'failed',
+				'error_code'        => 'mainwp_backup_disk_full',
+				'message'           => 'Private old message',
+				'snapshot_id'       => 987673,
+			)
+		);
+	}
+
+	/**
+	 * Fixture evidence and memoized permissions must not escape the test.
+	 *
+	 * @return void
+	 */
+	public function tear_down() {
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
+		$this->clear_read_fixtures();
+		parent::tear_down();
+	}
+
+	/**
+	 * One provider keeps the required checks identical across all reads.
+	 *
+	 * @return array
+	 */
+	public static function reads() {
+		return array(
+			'tasks'        => array( 'list-backup-tasks', array(), '' ),
+			'task'         => array( 'get-backup-task', array( 'task_id' => 987671 ), 'edit_backup_tasks' ),
+			'run'          => array( 'get-backup-task-run', array( 'task_id' => 987671 ), 'run_backup_tasks' ),
+			'progress'     => array( 'get-site-backup-progress', array( 'site_id_or_domain' => 987670 ), 'execute_backups' ),
+			'snapshots'    => array( 'list-backup-snapshots', array( 'site_id_or_domain' => 987670 ), 'execute_backups' ),
+			'snapshot'     => array( 'get-backup-snapshot', array( 'snapshot_id' => 987673 ), 'execute_backups' ),
+			'status'       => array( 'get-backup-status', array(), 'execute_backups' ),
+			'history'      => array( 'list-backup-history', array(), 'execute_backups' ),
+			'destinations' => array( 'list-backup-destinations', array(), 'edit_backup_tasks' ),
+			'destination'  => array( 'get-backup-destination', array( 'destination_id' => 987676 ), 'edit_backup_tasks' ),
+			'settings'     => array( 'get-backup-settings', array(), 'manage_dashboard_settings' ),
+			'jobs'         => array( 'list-restore-jobs', array(), 'execute_backups' ),
+			'job'          => array( 'get-restore-job', array( 'restore_job_id' => 987674 ), 'execute_backups' ),
+		);
+	}
+
+	/**
+	 * Missing registration must fail before a callback is reached.
+	 *
+	 * @param string $name Ability slug.
+	 * @return \WP_Ability
+	 */
+	private function ability( $name ) {
+		$ability = wp_get_ability( 'mainwp/' . $name . '-v1' );
+		$this->assertNotNull( $ability, $name . ' must be registered.' );
+		return $ability;
+	}
+
+	/**
+	 * Every execution is guarded against externally visible work.
+	 *
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @return mixed
+	 */
+	private function read( $name, $input = null ) {
+		$ability = $this->ability( $name );
+		return $this->guarded(
+			static function () use ( $ability, $input ) {
+				return $ability->execute( $input );
+			}
+		);
+	}
+
+	/**
+	 * Direct calls must retain authorization even when core wraps permission errors.
+	 *
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @return mixed
+	 */
+	private function callback_read( $name, $input ) {
+		$callback = 'execute_' . str_replace( '-', '_', $name );
+		return $this->guarded(
+			static function () use ( $callback, $input ) {
+				return MainWP_Abilities_Backups::$callback( $input );
+			}
+		);
+	}
+
+	/**
+	 * Core documents output contracts independently of PHP array types.
+	 *
+	 * @param string $name Ability slug.
+	 * @param mixed  $output Returned evidence.
+	 * @return void
+	 */
+	private function assert_output( $name, $output ) {
+		$this->assertIsArray( $output, is_wp_error( $output ) ? $output->get_error_message() : '' );
+		$valid = rest_validate_value_from_schema( $output, $this->ability( $name )->get_output_schema() );
+		$this->assertTrue( $valid, is_wp_error( $valid ) ? $valid->get_error_message() : '' );
+	}
+
+	/**
+	 * Discovery must expose the category, rights and read annotations.
+	 *
+	 * @dataProvider reads
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @param string $right Required operation right.
+	 * @return void
+	 */
+	public function test_ability_is_registered( $name, $input, $right ) {
+		$ability = $this->ability( $name );
+		$this->assertSame( 'mainwp-backups', $ability->get_category() );
+		$this->assertNotEmpty( $ability->get_label() );
+		$this->assertStringContainsString( 'Possible errors:', $ability->get_description() );
+		$this->assertArrayHasKey( 'mainwp-backups', wp_get_ability_categories() );
+		$this->assertSame( $right, MainWP_Abilities_Backups::READ_RIGHTS[ $ability->get_name() ] );
+		$meta = $ability->get_meta();
+		$this->assertTrue( $meta['show_in_rest'] );
+		$this->assertTrue( $meta['annotations']['readonly'] );
+		$this->assertFalse( $meta['annotations']['destructive'] );
+		$this->assertTrue( $meta['annotations']['idempotent'] );
+	}
+
+	/**
+	 * Recorded evidence must satisfy the advertised output contract.
+	 *
+	 * @dataProvider reads
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @return void
+	 */
+	public function test_read_returns_expected_structure( $name, $input ) {
+		$output = $this->read( $name, $input );
+		$this->assert_output( $name, $output );
+		if ( in_array( $name, array( 'list-backup-tasks', 'list-restore-jobs', 'list-backup-snapshots', 'list-backup-history', 'list-backup-destinations' ), true ) ) {
+			$this->assertSame( 1, 'get-backup-status' === $name ? $output['totals']['sites'] : $output['total'] );
+			$this->assertCount( 1, $output['items'] );
+			$this->assertSame( 1, $output['page'] );
+			$this->assertSame( 50, $output['per_page'] );
+		} elseif ( 'get-backup-status' === $name ) {
+			$this->assertSame( 1, $output['totals']['sites'] );
+			$this->assertSame( 'native_snapshot', $output['items'][0]['source'] );
+		} elseif ( 'get-backup-destination' === $name ) {
+			$this->assertSame( 987676, $output['id'] );
+			$this->assertTrue( $output['credentials_invalid'] );
+		} elseif ( 'get-backup-settings' === $name ) {
+			$this->assertTrue( $output['native_backups_enabled'] );
+		} elseif ( 'get-backup-task' === $name ) {
+			$this->assertSame( 987671, $output['task']['id'] );
+			$this->assertSame( array( $this->site_id ), $output['scope']['site_ids'] );
+			$this->assertNull( $output['schedule_detail']['interval_hours'] );
+			$this->assertNull( $output['schedule_detail']['time_of_day'] );
+			$this->assertSame( 'mainwp_backup_disk_full', $output['last_run_summary']['errors'][0]['code'] );
+		} elseif ( 'get-backup-task-run' === $name ) {
+			$this->assertSame( 'completed_with_errors', $output['status'] );
+			$this->assertSame( $this->site_id, $output['sites'][0]['site_id'] );
+			$this->assertSame( 987673, $output['sites'][0]['snapshot']['id'] );
+		} elseif ( 'get-site-backup-progress' === $name ) {
+			$this->assertSame( 'failed', $output['on_demand']['status'] );
+			$this->assertSame( $this->site_id, $output['site_id'] );
+		} elseif ( 'get-backup-snapshot' === $name ) {
+			$this->assertSame( array( 987673 ), $output['chain_ids'] );
+			$this->assertSame( 'full.zip', $output['archives'][0]['file'] );
+		} else {
+			$this->assertSame( 'failed', $output['job']['outcome'] );
+			$this->assertFalse( $output['files_rollback_available'] );
+			$this->assertSame( 512, $output['progress']['bytes_transferred'] );
+		}
+	}
+
+	/**
+	 * Userless callers must fail before target evidence is read.
+	 *
+	 * @dataProvider reads
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @return void
+	 */
+	public function test_read_requires_authentication( $name, $input ) {
+		wp_set_current_user( 0 );
+		$this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
+		$this->assertSame( 'ability_invalid_permissions', $this->read( $name, $input )->get_error_code() );
+		$result = $this->callback_read( $name, $input );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_permission_denied', $result->get_error_code() );
+		$this->assertSame( 401, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * Site ownership does not replace the base capability.
+	 *
+	 * @dataProvider reads
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @return void
+	 */
+	public function test_read_requires_manage_options( $name, $input ) {
+		$this->set_current_user_as_subscriber();
+		$this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
+		$this->assertSame( 'ability_invalid_permissions', $this->read( $name, $input )->get_error_code() );
+		$result = $this->callback_read( $name, $input );
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_permission_denied', $result->get_error_code() );
+		$this->assertSame( 403, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * Closed inputs must refuse undocumented fields.
+	 *
+	 * @dataProvider reads
+	 * @param string $name Ability slug.
+	 * @return void
+	 */
+	public function test_read_validates_input( $name ) {
+		$result = $this->read( $name, array( 'unexpected' => true ) );
+		$this->assertWPError( $result );
+		$this->assertSame( 'ability_invalid_input', $result->get_error_code() );
+	}
+
+	/**
+	 * Turning native backups off must not hide existing recovery evidence.
+	 *
+	 * @dataProvider reads
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @return void
+	 */
+	public function test_read_works_with_native_disabled( $name, $input ) {
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		$this->assert_output( $name, $this->read( $name, $input ) );
+	}
+
+	/**
+	 * A granular denial must not alter ownership or site access.
+	 *
+	 * @param string $right Required operation right.
+	 * @return callable
+	 */
+	private function withhold_right( $right ) {
+		return static function ( $allowed, $type, $key ) use ( $right ) {
+			return 'dashboard' === $type && $key === $right ? false : $allowed;
+		};
+	}
+
+	/**
+	 * Owning an accessible task must not bypass its operation right.
+	 *
+	 * @dataProvider reads
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @param string $right Required operation right.
+	 * @return void
+	 */
+	public function test_missing_right_denies_even_owned_accessible_tasks( $name, $input, $right ) {
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		$this->assertIsObject( MainWP_Backup_Operations::authorize_site( $this->site_id, '' ) );
+		$this->assertFalse( is_wp_error( MainWP_Backup_Operations::authorize_task( 987671, '' ) ) );
+		$deny = $this->withhold_right( $right );
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			$permission = $this->ability( $name )->check_permissions( array( 'site_id_or_domain' => $this->site_id ) );
+			$result     = $this->callback_read( $name, $input );
+			if ( '' === $right ) {
+				$this->assertTrue( $permission );
+				$this->assertSame( 1, $result['total'] );
+			} else {
+				foreach ( array( $permission, $result ) as $denied ) {
+					$this->assertWPError( $denied );
+					$this->assertSame( 'mainwp_insufficient_right', $denied->get_error_code() );
+					$this->assertSame( 403, $denied->get_error_data()['status'] );
+					$this->assertSame( $right, $denied->get_error_data()['right'] );
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+		}
+	}
+
+	/**
+	 * An empty right must not deny a permitted scoped task owner.
+	 *
+	 * @return void
+	 */
+	public function test_permitted_non_superadministrator_can_list_owned_task() {
+		$user = self::factory()->user->create( array( 'role' => 'editor' ) );
+		get_user_by( 'id', $user )->add_cap( 'manage_options' );
+		wp_set_current_user( $user );
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'userid' => $user ), array( 'id' => $this->site_id ) );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( 987671, array( 'userid' => $user ) );
+		$grants = static function ( $allowed, $type, $key ) {
+			if ( '' === $key ) {
+				return false;
+			}
+			if ( 'dashboard' === $type ) {
+				return in_array( $key, array( 'edit_backup_tasks', 'run_backup_tasks', 'execute_backups' ), true );
+			}
+			return 'site' === $type ? 987670 === (int) $key : $allowed;
+		};
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		add_filter( 'mainwp_currentusercan', $grants, 10, 3 );
+		try {
+			$this->assertFalse( is_super_admin() );
+			$output = $this->read( 'list-backup-tasks' );
+			$this->assert_output( 'list-backup-tasks', $output );
+			$this->assertSame( 1, $output['total'] );
+			$this->assertSame( 987671, $output['items'][0]['id'] );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $grants, 10 );
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+		}
+	}
+
+	/**
+	 * Each denial isolates one independent permission predicate.
+	 *
+	 * @return array
+	 */
+	public static function fleet_denials() {
+		$cases = array();
+		foreach ( array( 'list-backup-tasks', 'list-restore-jobs', 'get-backup-status', 'list-backup-history' ) as $name ) {
+			foreach ( array( 'access', 'owner', 'site-right' ) as $kind ) {
+				$cases[ $name . '-' . $kind ] = array( $name, $kind );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Hidden sites must not consume a page or inflate totals.
+	 *
+	 * @dataProvider fleet_denials
+	 * @param string $name Ability slug.
+	 * @param string $kind Denial source.
+	 * @return void
+	 */
+	public function test_fleet_denials_trim_rows_totals_and_pagination( $name, $kind ) {
+		$other = $this->create_test_site();
+		$task  = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'Other task', 'daily', 'full', '', (string) $other, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->insert_read_fixture(
+			'wp_backup_restore_job',
+			array(
+				'site_id'     => $other,
+				'snapshot_id' => 987673,
+				'status'      => 'completed',
+				'checkpoint'  => '{"sub_type":"full"}',
+			)
+		);
+		$this->insert_read_fixture(
+			'wp_backup_run_history',
+			array(
+				'task_id'        => $task->id,
+				'site_id'        => $other,
+				'started'        => time(),
+				'trigger_source' => 'schedule',
+				'outcome'        => 'running',
+				'message'        => '',
+			)
+		);
+		$before = $this->read( $name );
+		$this->assertSame( 2, 'get-backup-status' === $name ? $before['totals']['sites'] : $before['total'] );
+		$access = static function ( $allowed, $id ) {
+			return 987670 === (int) $id ? false : $allowed;
+		};
+		$right  = static function ( $allowed, $type, $key ) {
+			return 'site' === $type && 987670 === (int) $key ? false : $allowed;
+		};
+		if ( 'access' === $kind ) {
+			add_filter( 'mainwp_check_site_access', $access, 10, 2 );
+		} elseif ( 'site-right' === $kind ) {
+			add_filter( 'mainwp_currentusercan', $right, 10, 3 );
+		} else {
+			add_filter( 'mainwp_is_single_user', '__return_false' );
+			global $wpdb;
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'userid' => get_current_user_id() + 1000 ), array( 'id' => $this->site_id ) );
+		}
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
+		try {
+			$output = $this->read( $name, array( 'per_page' => 1 ) );
+			$this->assert_output( $name, $output );
+			$this->assertSame( 1, 'get-backup-status' === $name ? $output['totals']['sites'] : $output['total'] );
+			$this->assertCount( 1, $output['items'] );
+			$this->assertSame( 'list-backup-tasks' === $name ? (int) $task->id : $other, $output['items'][0][ 'list-backup-tasks' === $name ? 'id' : 'site_id' ] );
+			$this->assertSame(
+				array(),
+				$this->read(
+					$name,
+					array(
+						'per_page' => 1,
+						'page'     => 2,
+					)
+				)['items']
+			);
+		} finally {
+			remove_filter( 'mainwp_check_site_access', $access, 10 );
+			remove_filter( 'mainwp_currentusercan', $right, 10 );
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+		}
+	}
+
+	/**
+	 * Out-of-scope targets must look missing to the caller.
+	 *
+	 * @dataProvider reads
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @return void
+	 */
+	public function test_restricted_scope_conceals_targets( $name, $input ) {
+		$other = $this->create_test_site();
+		$scope = static function () use ( $other ) {
+			return array( $other );
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		try {
+			$result = $this->read( $name, $input );
+			if ( in_array( $name, array( 'list-backup-destinations', 'get-backup-destination', 'get-backup-settings' ), true ) ) {
+				$this->assert_output( $name, $result );
+			} elseif ( 'get-backup-status' === $name ) {
+				$this->assertSame( 1, $result['totals']['sites'] );
+				$this->assertSame( $other, $result['items'][0]['site_id'] );
+			} elseif ( empty( $input ) ) {
+				$this->assertSame( 0, $result['total'] );
+				$this->assertSame( array(), $result['items'] );
+			} else {
+				$this->assertWPError( $result );
+				$this->assertSame( 404, $result->get_error_data()['status'] );
+				$this->assertContains( $result->get_error_code(), array( 'mainwp_site_not_found', 'mainwp_backup_task_not_found', 'mainwp_backup_snapshot_not_found', 'mainwp_backup_restore_job_not_found' ) );
+			}
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		}
+	}
+
+	/**
+	 * Target errors must survive the permission-stage status rewrite.
+	 *
+	 * @dataProvider reads
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @return void
+	 */
+	public function test_target_errors_are_deferred_to_execute( $name, $input ) {
+		if ( in_array( $name, array( 'get-backup-status', 'list-backup-destinations', 'get-backup-settings' ), true ) ) {
+			$this->assertTrue( $this->ability( $name )->check_permissions( $input ) );
+			$this->assert_output( $name, $this->read( $name, $input ) );
+			return;
+		}
+		if ( empty( $input ) ) {
+			$input = array( 'site_id_or_domain' => 999999999 );
+		} else {
+			$input = array_fill_keys( array_keys( $input ), 999999999 );
+		}
+		$this->assertTrue( $this->ability( $name )->check_permissions( $input ) );
+		$result = $this->read( $name, $input );
+		$this->assertWPError( $result );
+		$this->assertSame( 404, $result->get_error_data()['status'] );
+	}
+
+	/**
+	 * Embedded sensitive values must not become messages or output data.
+	 *
+	 * @dataProvider \MainWP\Dashboard\Tests\MainWP_Backup_Safe_Error_Test::sensitive_sources
+	 * @param string $secret Embedded sensitive value.
+	 * @return void
+	 */
+	public function test_safe_errors_and_paths_never_escape( $secret ) {
+		global $wpdb;
+		$text   = 'Could not finish because ' . $secret . ' was unavailable.';
+		$source = '[mainwp_backup_disk_full] ' . $text;
+		foreach ( array( 987671, 987672 ) as $id ) {
+			MainWP_DB_Backup::instance()->update_backup_task_with_values(
+				$id,
+				array(
+					'backup_errors'  => $source,
+					'backup_notices' => $text,
+				)
+			);
+		}
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_progress' ),
+			array(
+				'last_error'  => $source,
+				'fetchResult' => wp_json_encode( array( 'current_file' => $secret ) ),
+			),
+			array( 'wp_id' => $this->site_id )
+		);
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'last_error' => $source ), array( 'id' => 987675 ) );
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'status'        => 'pruned',
+				'created'       => 1699999990,
+				'manifest_path' => $secret,
+				'encryption'    => '{"wrapped_dek":"secret-dek"}',
+			),
+			array( 'id' => 987673 )
+		);
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+			array(
+				'last_error' => $text,
+				'checkpoint' => wp_json_encode(
+					array(
+						'sub_type'         => 'full',
+						'last_error_code'  => 'mainwp_restore_disk_full',
+						'last_error'       => $text,
+						'terminal_failure' => array( 'error' => $text ),
+						'plan'             => array(
+							array(
+								'local_path'  => $secret,
+								'staged_path' => $secret,
+							),
+						),
+					)
+				),
+			),
+			array( 'id' => 987674 )
+		);
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ),
+			array(
+				'message'    => $text,
+				'error_code' => 'mainwp_backup_disk_full',
+			),
+			array( 'id' => 987677 )
+		);
+		foreach ( self::reads() as list( $name, $input ) ) {
+			if ( 'list-backup-snapshots' === $name ) {
+				$input['include_pruned'] = true;
+			}
+			$result = $this->read( $name, $input );
+			$this->assert_output( $name, $result );
+			$json = wp_json_encode( $result, JSON_UNESCAPED_SLASHES );
+			$this->assertStringNotContainsString( substr( wp_json_encode( $secret, JSON_UNESCAPED_SLASHES ), 1, -1 ), $json, $name );
+			$this->assertStringNotContainsString( __FILE__, $json, $name );
+			$this->assertStringNotContainsString( ABSPATH, $json, $name );
+			if ( false !== strpos( $name, 'snapshot' ) ) {
+				foreach ( array( 'encryption', 'wrapped_dek', 'path', 'manifest_path' ) as $field ) {
+					$this->assertStringNotContainsString( '"' . $field . '"', $json, $name );
+				}
+			}
+		}
+		$this->assertSame( 'mainwp_backup_disk_full', $this->read( 'get-backup-task-run', array( 'task_id' => 987671 ) )['sites'][0]['error']['code'] );
+		$this->assertSame( 'mainwp_backup_unclassified_error', $this->read( 'get-backup-task', array( 'task_id' => 987671 ) )['last_run_summary']['notices'][0]['code'] );
+	}
+
+	/**
+	 * Full admission must override the catalog list flag.
+	 *
+	 * @return array
+	 */
+	public static function restorability() {
+		return array( array( 'base_missing' ), array( 'chain_pruned' ), array( 'artifact_unavailable' ), array( '' ) );
+	}
+
+	/**
+	 * Every reported restore verdict must match actual admission.
+	 *
+	 * @dataProvider restorability
+	 * @param string $reason Admission refusal suffix.
+	 * @return void
+	 */
+	public function test_restorable_matches_full_admission( $reason ) {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		if ( 'base_missing' === $reason ) {
+			$wpdb->update(
+				$table,
+				array(
+					'type'      => 'incremental',
+					'parent_id' => 987679,
+				),
+				array( 'id' => 987673 )
+			);
+		} elseif ( 'chain_pruned' === $reason ) {
+			$this->insert_read_fixture(
+				'wp_backup_snapshot',
+				array(
+					'id'       => 987679,
+					'site_id'  => $this->site_id,
+					'task_id'  => 987671,
+					'type'     => 'full',
+					'status'   => 'pruned',
+					'archives' => '[]',
+				)
+			);
+			$wpdb->update( $table, array( 'parent_id' => 987679 ), array( 'id' => 987673 ) );
+		} elseif ( 'artifact_unavailable' === $reason ) {
+			$wpdb->update( $table, array( 'archives' => '[{"file":"full.zip","role":"full","path":"/missing/full.zip"},{"file":"db.sql.gz","role":"db","path":"/missing/db.sql.gz"}]' ), array( 'id' => 987673 ) );
+			$wpdb->update(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+				array(
+					'status'     => 'complete',
+					'checkpoint' => '{"artifacts":[{"file":"full.zip","mode":"chunked"}]}',
+				),
+				array( 'id' => 987675 )
+			);
+		}
+		$catalog = MainWP_Backup_Snapshot_Catalog::instance();
+		$entries = array_values(
+			array_filter(
+				$catalog->list_snapshots_for_site( $this->site_id ),
+				static function ( $entry ) {
+					return 987673 === (int) $entry['snapshot']->id;
+				}
+			)
+		);
+		$this->assertTrue( $entries[0]['restorable'] );
+		$admission = $catalog->resolve_restorable_chain( 987673, $this->site_id );
+		$list      = $this->read( 'list-backup-snapshots', array( 'site_id_or_domain' => $this->site_id ) );
+		$this->assert_output( 'list-backup-snapshots', $list );
+		$detail = $this->read( 'get-backup-snapshot', array( 'snapshot_id' => 987673 ) );
+		$this->assert_output( 'get-backup-snapshot', $detail );
+		foreach ( array( $list['items'][0]['snapshot'], $detail['snapshot'] ) as $snapshot ) {
+			$this->assertSame( $admission['ok'], $snapshot['restorable'] );
+			$this->assertSame( '' === $reason ? null : $admission['code'], $snapshot['restore_reason']['code'] ?? null );
+		}
+	}
+
+	/**
+	 * Existing stored names must remain readable at their original length.
+	 *
+	 * @return void
+	 */
+	public function test_stored_names_are_not_capped_at_255() {
+		$name             = str_repeat( 'n', 300 );
+		$destination_name = str_repeat( 'é', 200 );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			987671,
+			array(
+				'name'         => $name,
+				'destinations' => '[987676]',
+				'completed'    => 1699999999,
+			)
+		);
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), array( 'name' => $destination_name ), array( 'id' => 987676 ) );
+		$this->assertSame( $name, $this->read( 'list-backup-tasks' )['items'][0]['name'] );
+		$task = $this->read( 'get-backup-task', array( 'task_id' => 987671 ) );
+		$this->assert_output( 'get-backup-task', $task );
+		$this->assertSame( $name, $task['task']['name'] );
+		$this->assertSame( $destination_name, $task['destinations'][0]['name'] );
+		$this->assertSame( $name, $this->read( 'get-site-backup-progress', array( 'site_id_or_domain' => $this->site_id ) )['scheduled_runs'][0]['task_name'] );
+		$this->assertSame( $name, $this->read( 'list-backup-history' )['items'][0]['task_name'] );
+		foreach ( array( 'list-backup-destinations', 'get-backup-destination' ) as $slug ) {
+			$dest = $this->read( $slug, 'get-backup-destination' === $slug ? array( 'destination_id' => 987676 ) : array() );
+			$this->assert_output( $slug, $dest );
+			$this->assertSame( $destination_name, 'get-backup-destination' === $slug ? $dest['name'] : $dest['items'][0]['name'] );
+		}
+		$this->assertSame( $destination_name, $this->read( 'get-backup-snapshot', array( 'snapshot_id' => 987673 ) )['uploads'][0]['destination_name'] );
+	}
+
+	/**
+	 * Absent or unfamiliar progress must retain its actual meaning.
+	 *
+	 * @return void
+	 */
+	public function test_progress_idle_not_started_unknown_phase_and_never_run() {
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			987671,
+			array(
+				'last_run'  => 0,
+				'completed' => 0,
+			)
+		);
+		$this->assertSame( 'never_run', $this->read( 'get-backup-task-run', array( 'task_id' => 987671 ) )['status'] );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			987672,
+			array(
+				'last_run'  => 0,
+				'completed' => 0,
+			)
+		);
+		$this->assertSame( 'idle', $this->read( 'get-site-backup-progress', array( 'site_id_or_domain' => $this->site_id ) )['on_demand']['status'] );
+		$this->assertSame(
+			'not_started',
+			$this->read(
+				'get-site-backup-progress',
+				array(
+					'site_id_or_domain' => $this->site_id,
+					'since'             => 1700000000,
+				)
+			)['on_demand']['status']
+		);
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( 987672, array( 'last_run' => 1700000000 ) );
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_progress' ),
+			array(
+				'child_phase'  => 'future_phase',
+				'current_file' => ABSPATH . 'secret.zip',
+			),
+			array( 'task_id' => 987672 )
+		);
+		$output = $this->read( 'get-site-backup-progress', array( 'site_id_or_domain' => $this->site_id ) );
+		$this->assert_output( 'get-site-backup-progress', $output );
+		$this->assertSame( 'unknown', $output['on_demand']['phase'] );
+		$this->assertStringNotContainsString( ABSPATH, wp_json_encode( $output, JSON_UNESCAPED_SLASHES ) );
+	}
+
+	/**
+	 * An unconfirmed cancellation must not imply the site recovered.
+	 *
+	 * @return void
+	 */
+	public function test_restore_outcomes_safety_and_partial_state_follow_checkpoint() {
+		global $wpdb;
+		$checkpoint = array(
+			'sub_type'               => 'full',
+			'options'                => array( 'pre_snapshot' => true ),
+			'pre_snapshot_artifacts' => array( array( 'path' => __FILE__ ) ),
+			'cancel_intent'          => true,
+			'cancel_confirmation'    => array( 'outcome' => 'unconfirmed' ),
+			'last_error_code'        => 'mainwp_restore_disk_full',
+			'verification'           => array(
+				'site_responds' => true,
+				'woo_preserve'  => array(
+					'customers_restored' => 2,
+					'stock_applied'      => 3,
+				),
+				'woo_orphans'   => array( 'orphan_customer_orders' => 1 ),
+			),
+		);
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+			array(
+				'child_task_id' => 'child-apply',
+				'checkpoint'    => wp_json_encode( $checkpoint ),
+			),
+			array( 'id' => 987674 )
+		);
+		$output = $this->read( 'get-restore-job', array( 'restore_job_id' => 987674 ) );
+		$this->assert_output( 'get-restore-job', $output );
+		$this->assertSame( 'cancel_unconfirmed', $output['job']['outcome'] );
+		$this->assertSame( 'taken', $output['job']['safety_backup'] );
+		$this->assertSame( 'possible', $output['partial_state_risk'] );
+		$this->assertTrue( $output['verification']['woo_preserve_applied'] );
+		$this->assertEqualsCanonicalizing( array( 'child_apply_started', 'no_files_rollback', 'db_applied_after_files', 'cancel_unconfirmed' ), $output['partial_state_reasons'] );
+		$list = $this->read( 'list-restore-jobs', array( 'outcome' => 'cancel_unconfirmed' ) );
+		$this->assertSame( $output['job'], $list['items'][0] );
+		$this->assertSame( 0, $this->read( 'list-restore-jobs', array( 'outcome' => 'completed' ) )['total'] );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'status' => 'reserved' ), array( 'id' => 987674 ) );
+		$this->assertSame( 0, $this->read( 'list-restore-jobs' )['total'] );
+		$this->assertSame( 'mainwp_backup_restore_job_not_found', $this->read( 'get-restore-job', array( 'restore_job_id' => 987674 ) )->get_error_code() );
+	}
+
+	/**
+	 * Unexpected failures must not expose source text or arbitrary data.
+	 *
+	 * @dataProvider reads
+	 * @param string $name Ability slug.
+	 * @param array  $input Valid input fixture.
+	 * @return void
+	 */
+	public function test_exception_messages_are_not_reflected( $name, $input ) {
+		if ( 'get-backup-settings' === $name ) {
+			update_option( 'mainwp_primaryBackup', 'test-provider', false );
+			wp_cache_delete( 'mainwp_primaryBackup', 'options' );
+		}
+		$secret = 'C:\\private\\backups\\secret.zip';
+		$throw  = static function ( $sql ) use ( $secret, $name ) {
+			if ( 'get-backup-settings' === $name && false === strpos( $sql, 'mainwp_primaryBackup' ) ) {
+				return $sql;
+			}
+			throw new \RuntimeException( 'Failed at ' . $secret );
+		};
+		add_filter( 'query', $throw );
+		try {
+			$output = $this->callback_read( $name, $input );
+			$this->assertWPError( $output );
+			$this->assertSame( 'mainwp_internal_error', $output->get_error_code() );
+			$this->assertSame( 500, $output->get_error_data()['status'] );
+			$this->assertStringNotContainsString( $secret, $output->get_error_message() );
+			$this->assertSame( array( 'status' => 500 ), $output->get_error_data() );
+		} finally {
+			remove_filter( 'query', $throw );
+		}
+	}
+
+	/**
+	 * Scalar inputs must not silently become an unrestricted fleet read.
+	 *
+	 * @return void
+	 */
+	public function test_direct_callbacks_reject_scalar_inputs() {
+		foreach ( array( 'list-backup-tasks', 'list-restore-jobs' ) as $name ) {
+			$result = $this->callback_read( $name, true );
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_invalid_input', $result->get_error_code() );
+			$this->assertSame( 400, $result->get_error_data()['status'] );
+		}
+	}
+	/**
+	 * Failed legacy marks are attempts, even when the runner marked the site done.
+	 *
+	 * @return void
+	 */
+	public function test_failed_legacy_run_moves_only_last_attempted() {
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'status' => 'pruned' ), array( 'id' => 987673 ) );
+		$this->set_site_option( $this->site_id, 'primary_lasttime_backup', 1600000000 );
+		$before = $this->read( 'get-backup-status' )['items'][0];
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			987671,
+			array(
+				'last_run'        => time(),
+				'completed'       => time() + 1,
+				'completed_sites' => wp_json_encode( array( $this->site_id => true ) ),
+				'backup_errors'   => '[mainwp_backup_disk_full] failed',
+			)
+		);
+		$after = $this->read( 'get-backup-status' )['items'][0];
+		$this->assertSame( $before['last_backup'], $after['last_backup'] );
+		$this->assertSame( 'child_reported', $after['source'] );
+		$this->assertNotSame( $before['last_attempted'], $after['last_attempted'] );
+		$this->assertSame( gmdate( 'Y-m-d\TH:i:s\Z' ), $after['last_attempted'] );
+	}
+
+	/**
+	 * Existing status clients rely on the original pagination and evidence keys.
+	 *
+	 * @return void
+	 */
+	public function test_status_compatibility_filters_totals_and_native_ties() {
+		$input  = array(
+			'threshold_days' => 365,
+			'only_stale'     => false,
+			'page'           => 1,
+			'per_page'       => 1,
+		);
+		$output = $this->read( 'get-backup-status', $input );
+		$this->assert_output( 'get-backup-status', $output );
+		foreach ( array( 'items', 'totals', 'page', 'per_page', 'filters', 'note' ) as $key ) {
+			$this->assertArrayHasKey( $key, $output );
+		}
+		foreach ( array( 'site_id', 'url', 'name', 'last_backup', 'last_attempted', 'source', 'is_stale' ) as $key ) {
+			$this->assertArrayHasKey( $key, $output['items'][0] );
+		}
+		$this->assertSame( gmdate( 'Y-m-d\TH:i:s\Z', 1700000000 ), $output['items'][0]['last_attempted'] );
+		$this->assertSame( '', $output['note'] );
+		$this->assertSame( 'No sites matched the applied filters.', $this->read( 'get-backup-status', array( 'page' => 2 ) )['note'] );
+		$this->assertSame( 365, $output['filters']['threshold_days'] );
+		$this->assertSame( 1, $output['per_page'] );
+		$this->set_site_option( $this->site_id, 'primary_lasttime_backup', 2000000000 );
+		$this->assertSame( 'native_snapshot', $this->read( 'get-backup-status' )['items'][0]['source'] );
+		$this->assertSame( array(), $this->read( 'get-backup-status', array( 'only_stale' => true ) )['items'] );
+		$this->assertSame( 1, $this->read( 'get-backup-status', array( 'only_stale' => true ) )['totals']['sites'] );
+		$this->assertSame(
+			array(),
+			$this->read(
+				'get-backup-status',
+				array(
+					'page'     => 2,
+					'per_page' => 1,
+				)
+			)['items']
+		);
+		$filtered = $this->read( 'get-backup-status', array( 'site_ids_or_domains' => array( 'parity.example.org', 999999 ) ) );
+		$this->assertSame( array( $this->site_id ), $filtered['filters']['site_ids'] );
+	}
+
+	/**
+	 * The settings form accepts values above the ability write bounds.
+	 *
+	 * @return void
+	 */
+	public function test_settings_preserve_stored_values_above_write_bounds() {
+		update_option( 'mainwp_on_demand_retention_count', 101 );
+		update_option( 'mainwp_backup_max_concurrent', 12 );
+		update_option( \MainWP\Dashboard\MainWP_Backup_Encryption::RECOVERY_OPTION, array( 'wrapped_dek' => '/private/key-material' ) );
+		$output = $this->read( 'get-backup-settings' );
+		$this->assert_output( 'get-backup-settings', $output );
+		$this->assertSame( 101, $output['on_demand_retention_count'] );
+		$this->assertSame( 12, $output['max_concurrent_backups'] );
+		$this->assertStringNotContainsString( 'wrapped_dek', wp_json_encode( $output ) );
+	}
+
+	/**
+	 * Decryption may succeed, but only explicitly public location fields can escape.
+	 *
+	 * @return void
+	 */
+	public function test_destinations_strip_all_secret_and_path_fields() {
+		$store     = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$fields    = array_merge( \MainWP\Dashboard\MainWP_Backup_Storage_Handler::SECRET_FIELDS, array( 'access_key', 'app_key', 'username', 'host_fingerprint', 'base_path', 'path', 'folder' ) );
+		$settings  = array_fill_keys( $fields, '/private/backup-credential' );
+		$settings += array(
+			'bucket'     => 'public-bucket',
+			'region'     => 'us-east-1',
+			'endpoint'   => 'https://storage.example.org',
+			'path_style' => true,
+		);
+		$id        = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Readable destination',
+				'settings' => $settings,
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( 987671, array( 'destinations' => wp_json_encode( array( $id ) ) ) );
+		try {
+			foreach ( array( 'list-backup-destinations', 'get-backup-destination' ) as $name ) {
+				$output = $this->read( $name, 'get-backup-destination' === $name ? array( 'destination_id' => $id ) : array( 'provider' => 's3' ) );
+				$this->assert_output( $name, $output );
+				$json = wp_json_encode( $output, JSON_UNESCAPED_SLASHES );
+				foreach ( $fields as $field ) {
+					$this->assertStringNotContainsString( '"' . $field . '"', $json );
+				}
+				$this->assertStringNotContainsString( '/private/backup-credential', $json );
+			}
+			$one = $this->read( 'get-backup-destination', array( 'destination_id' => $id ) );
+			$this->assertSame( 'public-bucket', $one['location']['bucket'] );
+			$this->assertFalse( $one['credentials_invalid'] );
+			$this->assertSame( 1, $one['task_count'] );
+			$this->assertSame( 2, $this->read( 'list-backup-destinations', array( 'per_page' => 1 ) )['total'] );
+			$this->assertCount(
+				1,
+				$this->read(
+					'list-backup-destinations',
+					array(
+						'page'     => 2,
+						'per_page' => 1,
+					)
+				)['items']
+			);
+		} finally {
+			$store->delete_destination( $id );
+		}
+	}
+
+	/**
+	 * Uncoded terminal outcomes need fixed explanations, and open rows need a caveat.
+	 *
+	 * @return void
+	 */
+	public function test_history_outcomes_filters_and_deferred_running_rows() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' );
+		foreach ( array( 'cancelled', 'reset', 'incomplete' ) as $outcome ) {
+			$wpdb->update(
+				$table,
+				array(
+					'outcome'    => $outcome,
+					'error_code' => '',
+					'message'    => '/private/raw-error',
+				),
+				array( 'id' => 987677 )
+			);
+			$output = $this->read(
+				'list-backup-history',
+				array(
+					'outcome'           => $outcome,
+					'trigger'           => 'manual',
+					'task_id'           => 987671,
+					'site_id_or_domain' => 'parity.example.org',
+					'days'              => 90,
+				)
+			);
+			$this->assert_output( 'list-backup-history', $output );
+			$this->assertSame( 1, $output['total'] );
+			$this->assertSame( 'mainwp_backup_run_' . $outcome, $output['items'][0]['error']['code'] );
+			$this->assertStringNotContainsString( '/private/raw-error', wp_json_encode( $output ) );
+		}
+		foreach ( array( 'update_gate', 'restore_safety' ) as $trigger ) {
+			$wpdb->update(
+				$table,
+				array(
+					'task_id'           => 0,
+					'outcome'           => 'completed',
+					'trigger_source'    => $trigger,
+					'initiator_user_id' => 0,
+					'snapshot_id'       => null,
+					'restore_job_id'    => 'restore_safety' === $trigger ? 987674 : null,
+					'ref'               => 'child-history-id',
+				),
+				array( 'id' => 987677 )
+			);
+			$row = $this->read( 'list-backup-history' )['items'][0];
+			$this->assertNull( $row['task_id'] );
+			$this->assertNull( $row['task_name'] );
+			$this->assertSame( 0, $row['initiator_user_id'] );
+			$this->assertNull( $row['error'] );
+			$this->assertFalse( $row['snapshot_recorded'] );
+			$this->assertSame( 'child-history-id', $row['ref'] );
+		}
+		$wpdb->update(
+			$table,
+			array(
+				'outcome'  => 'running',
+				'finished' => 0,
+				'started'  => time() - 40 * DAY_IN_SECONDS,
+			),
+			array( 'id' => 987677 )
+		);
+		$this->assertSame( 0, $this->read( 'list-backup-history' )['total'] );
+		$this->assertSame( 1, $this->read( 'list-backup-history', array( 'days' => 90 ) )['total'] );
+		$this->assertNull( $this->read( 'list-backup-history', array( 'days' => 90 ) )['items'][0]['finished_at'] );
+		$this->assertStringContainsString( 'reconciliation', $this->ability( 'list-backup-history' )->get_meta()['annotations']['instructions'] );
+		foreach ( array( array( 'days' => 'bad' ), array( 'outcome' => array( 'failed' ) ), array( 'trigger' => true ), array( 'page' => 0 ) ) as $input ) {
+			$this->assertSame( 'mainwp_invalid_input', $this->callback_read( 'list-backup-history', $input )->get_error_code() );
+		}
+	}
+
+	/**
+	 * A failed SQL read must not masquerade as an empty history page.
+	 *
+	 * @return void
+	 */
+	public function test_history_failed_query_is_safe_error() {
+		global $wpdb;
+		$broken = static function ( $sql ) {
+			return false !== strpos( $sql, 'mainwp_wp_backup_run_history' ) ? 'SELECT * FROM mainwp_missing_history_table' : $sql;
+		};
+		$old    = $wpdb->suppress_errors( true );
+		add_filter( 'query', $broken );
+		try {
+			$output = $this->callback_read( 'list-backup-history', array() );
+			$this->assertWPError( $output );
+			$this->assertSame( 'mainwp_internal_error', $output->get_error_code() );
+			$this->assertSame( 500, $output->get_error_data()['status'] );
+		} finally {
+			remove_filter( 'query', $broken );
+			$wpdb->suppress_errors( $old );
+		}
+	}
+
+	/**
+	 * The status verdict must follow the enforcing gate's native, global and site switches.
+	 *
+	 * @return void
+	 */
+	public function test_status_update_gate_matches_enforcing_policy() {
+		global $wpdb;
+		foreach ( array( array( 0, 1, 1, false ), array( 1, 0, 1, false ), array( 1, 1, 0, false ), array( 1, 1, -1, true ), array( 1, 1, 1, true ) ) as list( $native, $global, $site_flag, $applies ) ) {
+			update_option( 'mainwp_enableNativeBackups', $native );
+			update_option( 'mainwp_backup_before_upgrade', $global );
+			update_option( 'mainwp_backup_before_upgrade_days', 7 );
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'backup_before_upgrade' => $site_flag ), array( 'id' => $this->site_id ) );
+			$site = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+			$gate = $this->guarded(
+				static function () use ( $site ) {
+					return MainWP_Backup_Operations::update_gate_for_site( $site );
+				}
+			);
+			$this->assertSame( $applies, $gate['applies'] );
+			$this->assertSame( $gate, $this->read( 'get-backup-status' )['items'][0]['update_gate'] );
+			$this->assertSame( $applies ? 'pass' : 'not_applicable', $gate['verdict'] );
+		}
+		update_option( 'mainwp_backup_before_upgrade_require_offsite', 1 );
+		$this->assertSame( 'pending_offsite', $this->read( 'get-backup-status' )['items'][0]['update_gate']['verdict'] );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'offsite_state' => 'verified' ), array( 'id' => 987673 ) );
+		$this->assertSame( 'pass', $this->read( 'get-backup-status' )['items'][0]['update_gate']['verdict'] );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'created' => 1 ), array( 'id' => 987673 ) );
+		$this->set_site_option( $this->site_id, 'primary_lasttime_backup', time() );
+		$this->assertSame( 'missing', $this->read( 'get-backup-status' )['items'][0]['update_gate']['verdict'] );
+	}
+	/**
+	 * A legacy success needs both the processed mark and an archive from that run.
+	 *
+	 * @return void
+	 */
+	public function test_legacy_success_needs_fresh_archive_and_no_error_mark() {
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'status' => 'pruned' ), array( 'id' => 987673 ) );
+		$started = time() - 10;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			987671,
+			array(
+				'last_run'        => $started,
+				'completed'       => $started + 1,
+				'completed_sites' => wp_json_encode( array( $this->site_id => true ) ),
+				'backup_errors'   => '',
+			)
+		);
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_progress' ),
+			array(
+				'dtsFetched' => $started,
+				'last_error' => '',
+			),
+			array( 'task_id' => 987671 )
+		);
+		$root    = dirname( __DIR__, 2 ) . '/.mwpdev/debugging/s73/status-archives-' . wp_generate_uuid4();
+		$uploads = static function ( $upload ) use ( $root ) {
+			$upload['basedir'] = $root;
+			return $upload;
+		};
+		add_filter( 'mainwp_get_wp_upload_dir', $uploads );
+		$file = $root . '/mainwp/0/' . $this->site_id . '/full.zip';
+		try {
+			$this->assertSame( 'none', $this->read( 'get-backup-status' )['items'][0]['source'] );
+			wp_mkdir_p( dirname( $file ) );
+			file_put_contents( $file, 'fixture archive' );
+			touch( $file, $started );
+			$output = $this->read( 'get-backup-status' );
+			$this->assert_output( 'get-backup-status', $output );
+			$this->assertSame( 'legacy_task', $output['items'][0]['source'] );
+			$this->assertSame( gmdate( 'Y-m-d\TH:i:s\Z', $started ), $output['items'][0]['last_backup'] );
+			$this->assertStringNotContainsString( $root, wp_json_encode( $output, JSON_UNESCAPED_SLASHES ) );
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_progress' ), array( 'last_error' => '[mainwp_backup_disk_full] failed' ), array( 'task_id' => 987671 ) );
+			$this->assertSame( 'none', $this->read( 'get-backup-status' )['items'][0]['source'] );
+			$this->assertSame( gmdate( 'Y-m-d\TH:i:s\Z', $started ), $this->read( 'get-backup-status' )['items'][0]['last_attempted'] );
+		} finally {
+			remove_filter( 'mainwp_get_wp_upload_dir', $uploads );
+			if ( file_exists( $file ) ) {
+				unlink( $file ); }
+			foreach ( array( dirname( $file ), $root . '/mainwp/0', $root . '/mainwp', $root ) as $dir ) {
+				if ( is_dir( $dir ) ) {
+					rmdir( $dir ); }
+			}
+		}
+	}
+}

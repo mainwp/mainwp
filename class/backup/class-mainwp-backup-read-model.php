@@ -466,4 +466,718 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'failed_restore_jobs'   => $failed_rows,
         );
     }
+    /**
+     * Fleet pagination must follow the same complete scope checks as targeting.
+     *
+     * @param string   $status Task filter.
+     * @param int|null $site_id Optional site filter.
+     * @param int      $page Page number.
+     * @param int      $per_page Page size.
+     * @return array Neutral task summaries.
+     */
+    public static function list_tasks( string $status = 'any', ?int $site_id = null, int $page = 1, int $per_page = 50 ): array {
+        $authorized = MainWP_Backup_Operations::authorized_site_ids( '' );
+        $items      = array();
+        foreach ( MainWP_DB_Backup::instance()->get_backup_tasks_for_user() as $task ) {
+            $sites = MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task );
+            if ( ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) || array_diff( $sites, $authorized ) || ( null !== $site_id && ! in_array( $site_id, $sites, true ) ) ) {
+                continue;
+            }
+            $summary = self::task_summary( $task );
+            if ( ( 'active' === $status && $summary['paused'] ) || ( 'paused' === $status && ! $summary['paused'] ) || ( 'running' === $status && ( $summary['paused'] || ! $summary['run_open'] ) ) ) {
+                continue;
+            }
+            $items[] = $summary;
+        }
+        return self::paginate( $items, $page, $per_page );
+    }
+
+    /**
+     * Stored schedules can predate the currently supported values.
+     *
+     * @param object $task Stored row.
+     * @return array Neutral summary.
+     */
+    private static function task_summary( object $task ): array {
+        return array(
+            'id'                => (int) $task->id,
+            'name'              => html_entity_decode( (string) $task->name, ENT_QUOTES ),
+            'type'              => (string) $task->type,
+            'schedule'          => in_array( $task->schedule, array( 'daily', 'weekly', 'monthly', 'interval' ), true ) ? $task->schedule : 'legacy',
+            'paused'            => ! empty( $task->paused ),
+            'run_open'          => (int) $task->completed < (int) $task->last_run,
+            'next_run_at'       => (int) $task->next_run,
+            'last_run_at'       => (int) $task->last_run,
+            'last_completed_at' => (int) $task->completed,
+            'site_count'        => count( MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ) ),
+            'destination_count' => count( self::stored_ids( $task->destinations ?? '[]', true ) ),
+        );
+    }
+
+    /**
+     * Legacy selections are stored as CSV or JSON rather than typed arrays.
+     *
+     * @param string $raw Stored selection.
+     * @param bool   $json Whether the selection uses JSON.
+     * @return int[]
+     */
+    private static function stored_ids( string $raw, bool $json = false ): array {
+        return array_values( array_filter( array_map( 'intval', $json ? ( json_decode( $raw, true ) ?? array() ) : explode( ',', $raw ) ) ) );
+    }
+
+    /**
+     * Detail reads retain stored settings without invoking save-time rules.
+     *
+     * @param object $task Authorized task row.
+     * @return array Neutral configuration.
+     */
+    public static function get_task( object $task ): array {
+        $destinations = array();
+        $selected     = self::stored_ids( $task->destinations ?? '[]', true );
+        foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
+            if ( in_array( (int) $destination->id, $selected, true ) ) {
+                $destinations[] = array(
+                    'id'       => (int) $destination->id,
+                    'name'     => (string) $destination->name,
+                    'provider' => (string) $destination->provider,
+                );
+            }
+        }
+        $exclude = html_entity_decode( (string) $task->exclude, ENT_QUOTES );
+        return array(
+            'task'             => self::task_summary( $task ),
+            'schedule_detail'  => array(
+                'interval_hours' => 'interval' === $task->schedule && (int) $task->interval_hours > 0 ? (int) $task->interval_hours : null,
+                'time_of_day'    => in_array( $task->schedule, array( 'daily', 'weekly', 'monthly' ), true ) && '' !== $task->time_of_day ? (string) $task->time_of_day : null,
+                'day_of_week'    => 'weekly' === $task->schedule ? (int) $task->day_of_week : null,
+                'day_of_month'   => 'monthly' === $task->schedule ? (int) $task->day_of_month : null,
+            ),
+            'scope'            => array(
+                'site_ids'            => self::stored_ids( (string) $task->sites ),
+                'group_ids'           => self::stored_ids( (string) $task->groups ),
+                'authorized_site_ids' => null === $task->authorized_sites ? null : self::stored_ids( (string) $task->authorized_sites ),
+            ),
+            'destinations'     => $destinations,
+            'retention'        => array(
+                'count'               => (int) $task->retention_count,
+                'days'                => (int) $task->retention_days,
+                'storage_mb'          => (int) $task->retention_storage_mb,
+                'delete_cloud_copies' => ! empty( $task->delete_cloud_copies ),
+                'max_chain_length'    => (int) $task->max_chain_length,
+            ),
+            'archive_format'   => in_array( $task->archiveFormat, array( 'site', 'global', 'zip', 'tar', 'tar.gz', 'tar.bz2' ), true ) ? $task->archiveFormat : 'legacy',
+            'exclude'          => '' === $exclude ? array() : preg_split( '/\r\n|\r|\n/', $exclude ),
+            'exclude_flags'    => array(
+                'backup_archives' => ! empty( $task->excludebackup ),
+                'cache'           => ! empty( $task->excludecache ),
+                'non_wp_folders'  => ! empty( $task->excludenonwp ),
+                'zip_archives'    => ! empty( $task->excludezip ),
+            ),
+            'archive_tuning'   => array(
+                'max_file_descriptors_override' => ! empty( $task->maximumFileDescriptorsOverride ),
+                'max_file_descriptors_auto'     => ! empty( $task->maximumFileDescriptorsAuto ),
+                'max_file_descriptors'          => (int) $task->maximumFileDescriptors,
+                'load_files_before_zip'         => ! empty( $task->loadFilesBeforeZip ),
+                'zip_force_override'            => ! empty( $task->zip_force_override ),
+            ),
+            'owner_user_id'    => (int) $task->userid,
+            'last_run_summary' => array(
+                'errors'  => self::error_list( (string) $task->backup_errors ),
+                'notices' => self::error_list( (string) ( $task->backup_notices ?? '' ) ),
+            ),
+        );
+    }
+
+    /**
+     * Empty stored text is absence of an error, not an unclassified failure.
+     *
+     * @param string $text Stored errors or notices.
+     * @return array[] Neutral errors.
+     */
+    private static function error_list( string $text ): array {
+        return '' === $text ? array() : array( self::error_value( $text ) );
+    }
+
+    /**
+     * Run polling uses the shared progress evidence without driving a claim.
+     *
+     * @param object $task Authorized task row.
+     * @return array Neutral run details.
+     */
+    public static function task_run_details( object $task ): array {
+        $run   = self::get_task_run( $task, (int) $task->last_run );
+        $sites = array();
+        foreach ( $run['sites'] as $site ) {
+            $site['site_id'] = $site['id'];
+            $site['phase']   = self::known_phase( (string) $site['phase'] );
+            $site['error']   = '' === $site['error']['source_text'] ? null : $site['error'];
+            if ( null !== $site['snapshot'] ) {
+                $site['snapshot']['created_at'] = $site['snapshot']['created'];
+            }
+            $sites[] = $site;
+        }
+        return array(
+            'task_id'      => (int) $task->id,
+            'status'       => (int) $task->last_run > 0 ? $run['status'] : 'never_run',
+            'run_open'     => $run['run_open'],
+            'stalled'      => $run['run_open'] && time() - (int) $task->last_run >= MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS,
+            'started_at'   => (int) $task->last_run,
+            'completed_at' => $run['run_open'] ? 0 : (int) $task->completed,
+            'sites'        => $sites,
+            'errors'       => self::error_list( $run['errors']['source_text'] ),
+            'notices'      => self::error_list( $run['notices']['source_text'] ),
+        );
+    }
+
+    /**
+     * Newer Child phases remain visible without breaking the known enum.
+     *
+     * @param string $phase Stored phase.
+     * @return string|null
+     */
+    private static function known_phase( string $phase ): ?string {
+        return '' === $phase ? null : ( null === MainWP_Backup_Task_Phase::tryFrom( $phase ) ? 'unknown' : $phase );
+    }
+
+    /**
+     * One site's state includes on-demand evidence and authorized scheduled runs.
+     *
+     * @param int $site_id Authorized site.
+     * @param int $since Start handle.
+     * @return array Neutral progress.
+     */
+    public static function site_backup_state( int $site_id, int $since = 0 ): array {
+        $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        if ( ! $task || ( $since > 0 && (int) $task->last_run < $since ) ) {
+            $progress = array( 'status' => $since > 0 ? 'not_started' : 'idle' );
+        } elseif ( 0 === (int) $task->last_run && empty( $task->paused ) ) {
+            $progress = array( 'status' => 'idle' );
+        } else {
+            $progress = self::get_site_backup_progress( $site_id, $since );
+        }
+        $progress          = array_merge(
+            array(
+                'status'          => 'idle',
+                'phase'           => null,
+                'label'           => '',
+                'percent'         => null,
+                'files_processed' => null,
+                'files_total'     => null,
+                'bytes_done'      => null,
+                'bytes_expected'  => null,
+                'snapshot_id'     => null,
+                'error'           => null,
+                'notice'          => null,
+            ),
+            $progress
+        );
+        $progress['phase'] = self::known_phase( (string) $progress['phase'] );
+        $scheduled         = array();
+        foreach ( MainWP_DB_Backup::instance()->get_backup_tasks_to_complete() as $scheduled_task ) {
+            if ( ! empty( $scheduled_task->template ) || is_wp_error( MainWP_Backup_Operations::authorize_task( (int) $scheduled_task->id, 'execute_backups' ) ) || ! in_array( $site_id, MainWP_Manage_Backups_Handler::resolve_task_run_sites( $scheduled_task ), true ) ) {
+                continue;
+            }
+            $row = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $scheduled_task->id, $site_id );
+            if ( ! $row ) {
+                continue;
+            }
+            $detail      = MainWP_Post_Backup_Handler::build_task_progress_response( $row );
+            $scheduled[] = array(
+                'task_id'   => (int) $scheduled_task->id,
+                'task_name' => html_entity_decode( (string) $scheduled_task->name, ENT_QUOTES ),
+                'phase'     => self::known_phase( (string) ( $detail['phase'] ?? '' ) ),
+                'percent'   => $detail['percent'] ?? null,
+            );
+        }
+        return array(
+            'site_id'        => $site_id,
+            'on_demand'      => $progress,
+            'scheduled_runs' => $scheduled,
+        );
+    }
+
+    /**
+     * Snapshot pagination excludes pruned evidence unless requested.
+     *
+     * @param int  $site_id Authorized site.
+     * @param bool $include_pruned Include retained metadata for pruned copies.
+     * @param int  $page Page number.
+     * @param int  $per_page Page size.
+     * @return array Neutral snapshot list.
+     */
+    public static function query_backup_snapshots( int $site_id, bool $include_pruned = false, int $page = 1, int $per_page = 50 ): array {
+        $items = array();
+        foreach ( self::list_backup_snapshots( $site_id ) as $entry ) {
+            if ( $include_pruned || 'pruned' !== $entry['snapshot']->status ) {
+                $items[] = self::snapshot_details_from_entry( $entry );
+            }
+        }
+        $active = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id );
+        $task   = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        return array_merge(
+            self::paginate( $items, $page, $per_page ),
+            array(
+                'site_id'                  => $site_id,
+                'site_disconnected'        => MainWP_Backup_Restore_Orchestrator::site_is_disconnected( MainWP_DB::instance()->get_website_by_id( $site_id ) ),
+                'active_restore_job_id'    => $active ? (int) $active->id : null,
+                'on_demand_backup_running' => $task && (int) $task->completed < (int) $task->last_run,
+            )
+        );
+    }
+
+    /**
+     * Detail and list reads use the same full admission evidence.
+     *
+     * @param int $snapshot_id Authorized snapshot.
+     * @return array|\WP_Error
+     */
+    public static function snapshot_details( int $snapshot_id ) {
+        $entry = self::get_backup_snapshot( $snapshot_id );
+        return is_wp_error( $entry ) ? $entry : self::snapshot_details_from_entry( $entry );
+    }
+
+    /**
+     * Only recorded evidence can support a snapshot's recovery claims.
+     *
+     * @param array $entry Neutral catalog entry.
+     * @return array Neutral snapshot details.
+     */
+    private static function snapshot_details_from_entry( array $entry ): array {
+        $snapshot     = $entry['snapshot'];
+        $task         = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $snapshot->task_id );
+        $offsite      = '' === $snapshot->offsite_state ? 'none' : (string) $snapshot->offsite_state;
+        $summary      = array(
+            'id'             => (int) $snapshot->id,
+            'site_id'        => (int) $snapshot->site_id,
+            'task_id'        => (int) $snapshot->task_id,
+            'origin'         => ! $task ? 'deleted_task' : ( (int) $task->manual_site_id === (int) $snapshot->site_id ? 'on_demand' : 'scheduled_task' ),
+            'type'           => (string) $snapshot->type,
+            'parent_id'      => $snapshot->parent_id,
+            'created_at'     => (int) $snapshot->created,
+            'status'         => (string) $snapshot->status,
+            'evidence'       => array(
+                'recorded_by'       => 'dashboard_after_download',
+                'archive_integrity' => 'transfer_hash_only',
+                'skipped_files'     => 'not_reported',
+            ),
+            'size_bytes'     => array_sum(
+                array_map(
+                    static function ( $archive ) {
+                        return (int) ( $archive['size'] ?? 0 ); },
+                    $snapshot->archives
+                )
+            ),
+            'encrypted'      => ! empty( $snapshot->encryption ),
+            'source'         => $entry['source'],
+            'restorable'     => $entry['restorable'],
+            'restore_reason' => $entry['restore_reason'],
+            'offsite'        => array(
+                'state'       => $offsite,
+                'evidence'    => 'verified' === $offsite ? 'remote_size_match' : 'none',
+                'verified_at' => (int) $snapshot->verified_at,
+            ),
+            'test_restore'   => $entry['test_restore'],
+        );
+        $destinations = array();
+        foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
+            $destinations[ (int) $destination->id ] = (string) $destination->name;
+        }
+        $uploads = array();
+        foreach ( $entry['uploads'] as $upload ) {
+            $uploads[] = array(
+                'destination_id'   => (int) $upload->destination_id,
+                'destination_name' => $destinations[ (int) $upload->destination_id ] ?? null,
+                'provider'         => (string) $upload->provider,
+                'status'           => (string) $upload->status,
+                'updated_at'       => (int) $upload->updated,
+                'last_error'       => '' === $upload->last_error['source_text'] ? null : $upload->last_error,
+            );
+        }
+        $archives = array();
+        foreach ( $snapshot->archives as $archive ) {
+            $archives[] = array(
+                'file'       => basename( str_replace( '\\', '/', (string) ( $archive['file'] ?? '' ) ) ),
+                'size_bytes' => (int) ( $archive['size'] ?? 0 ),
+                'role'       => (string) ( $archive['role'] ?? '' ),
+            );
+        }
+        return array(
+            'snapshot'             => $summary,
+            'uploads'              => $uploads,
+            'archives'             => $archives,
+            'manifest_present'     => ! empty( $snapshot->manifest_path ) && file_exists( $snapshot->manifest_path ),
+            'chain_ids'            => array_map(
+                static function ( $link ) {
+                    return (int) $link->id; },
+                MainWP_Backup_Snapshots::instance()->get_chain( (int) $snapshot->id )
+            ),
+            'has_woocommerce_meta' => ! empty( $snapshot->woo_meta ),
+        );
+    }
+
+    /**
+     * Restore list totals and pagination must use the fully authorized fleet.
+     *
+     * @param int|null $site_id Optional authorized site.
+     * @param string   $outcome Outcome filter.
+     * @param int      $page Page number.
+     * @param int      $per_page Page size.
+     * @return array Neutral restore summaries.
+     */
+    public static function query_restore_jobs( ?int $site_id = null, string $outcome = 'any', int $page = 1, int $per_page = 50 ): array {
+        $ids = null === $site_id ? MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) : array( $site_id );
+        if ( empty( $ids ) ) {
+            return self::paginate( array(), $page, $per_page );
+        }
+        global $wpdb;
+        $rows  = $wpdb->get_col( 'SELECT id FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' WHERE site_id IN (' . implode( ',', array_map( 'intval', $ids ) ) . ") AND status <> 'reserved' ORDER BY created DESC, id DESC" ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- trusted table and authorized integer IDs.
+        $items = array();
+        foreach ( $rows as $id ) {
+            $detail = self::restore_job_details( (int) $id );
+            if ( ! is_wp_error( $detail ) && ( 'any' === $outcome || $outcome === $detail['job']['outcome'] ) ) {
+                $items[] = $detail['job'];
+            }
+        }
+        return self::paginate( $items, $page, $per_page );
+    }
+
+    /**
+     * Checkpoint evidence distinguishes cancellation from confirmed recovery.
+     *
+     * @param int $restore_job_id Authorized restore identity.
+     * @return array|\WP_Error
+     */
+    public static function restore_job_details( int $restore_job_id ) {
+        $detail = self::get_restore_job( $restore_job_id );
+        if ( is_wp_error( $detail ) ) {
+            return $detail;
+        }
+        $job      = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
+        $cp       = $job->checkpoint;
+        $terminal = in_array( $job->status, array( 'completed', 'cancelled', 'failed_permanent' ), true );
+        $safety   = 'pending';
+        if ( ! empty( $cp['is_rollback'] ) || empty( $cp['options']['pre_snapshot'] ) ) {
+            $safety = 'not_requested';
+        } elseif ( ! empty( $cp['pre_snapshot_pruned'] ) ) {
+            $safety = 'pruned';
+        } elseif ( ! empty( $cp['pre_snapshot_artifacts'] ) ) {
+            $safety = 'taken';
+        } elseif ( $terminal || in_array( $job->status, array( 'staging', 'transferring', 'running', 'verifying' ), true ) ) {
+            $safety = 'failed';
+        }
+        $reasons = $detail['partial_state_reasons'];
+        $risk    = 'none';
+        if ( 'completed' !== $job->status && ! empty( $job->child_task_id ) ) {
+            if ( $terminal || in_array( $job->status, array( 'running', 'verifying', 'failed_retryable' ), true ) ) {
+                $risk      = $terminal ? 'possible' : 'unknown';
+                $reasons[] = 'child_apply_started';
+                if ( 'db' !== $detail['sub_type'] ) {
+                    $reasons[] = 'no_files_rollback';
+                    if ( 'full' === $detail['sub_type'] ) {
+                        $reasons[] = 'db_applied_after_files';
+                    }
+                }
+            }
+        }
+        $verification = $detail['verification'];
+        $child_report = $verification;
+        unset( $child_report['site_responds'] );
+        return array(
+            'job'                      => array(
+                'id'                  => (int) $job->id,
+                'site_id'             => (int) $job->site_id,
+                'snapshot_id'         => (int) $job->snapshot_id,
+                'status'              => $detail['status'],
+                'outcome'             => $detail['outcome'],
+                'restore_type'        => '' !== $detail['sub_type'] ? $detail['sub_type'] : 'full',
+                'is_rollback'         => $detail['is_rollback'],
+                'rollback_of'         => ! empty( $cp['rollback_of'] ) ? (int) $cp['rollback_of'] : null,
+                'safety_backup'       => $safety,
+                'rollback_available'  => $detail['has_rollback'],
+                'cancel_requested'    => $detail['cancel_requested'],
+                'cancel_confirmation' => $detail['cancel_confirmation'],
+                'error'               => '' === $detail['error']['source_text'] && '' === $detail['error_code'] ? null : $detail['error'],
+                'attempt_count'       => $detail['attempt_count'],
+                'created_at'          => (int) $job->created,
+                'updated_at'          => (int) $job->updated,
+            ),
+            'progress'                 => array(
+                'artifact_index'    => $detail['artifact_index'],
+                'artifact_total'    => $detail['artifact_total'],
+                'bytes_transferred' => $detail['bytes_transferred'] ?? null,
+                'bytes_total'       => $detail['bytes_total'] ?? null,
+            ),
+            'next_retry_at'            => $detail['next_retry_at'],
+            'verification'             => array(
+                'child_report_present'       => ! empty( $child_report ),
+                'site_responds'              => $verification['site_responds'] ?? null,
+                'site_responds_rule'         => 'http_200_to_499',
+                'woo_preserve_applied'       => isset( $verification['woo_preserve'] ) ? ! empty( $verification['woo_preserve'] ) : null,
+                'woo_orphan_customer_orders' => isset( $verification['woo_orphans']['orphan_customer_orders'] ) ? (int) $verification['woo_orphans']['orphan_customer_orders'] : null,
+            ),
+            'partial_state_risk'       => $risk,
+            'partial_state_reasons'    => $reasons,
+            'files_rollback_available' => false,
+        );
+    }
+
+    /**
+     * Totals describe the filtered set before any page is sliced.
+     *
+     * @param array $items Filtered rows.
+     * @param int   $page Page number.
+     * @param int   $per_page Page size.
+     * @return array
+     */
+    private static function paginate( array $items, int $page, int $per_page ): array {
+        return array(
+            'items'    => array_slice( $items, ( $page - 1 ) * $per_page, $per_page ),
+            'total'    => count( $items ),
+            'page'     => $page,
+            'per_page' => $per_page,
+        );
+    }
+    /**
+     * Fleet totals and pagination must use the complete authorized site set.
+     *
+     * @param int   $threshold_days Freshness window.
+     * @param bool  $only_stale Whether to return stale rows only.
+     * @param array $site_ids_or_domains Optional fleet filter.
+     * @param int   $page Page number.
+     * @param int   $per_page Page size.
+     * @return array Neutral status evidence.
+     */
+    public static function get_backup_status( int $threshold_days = 7, bool $only_stale = false, array $site_ids_or_domains = array(), int $page = 1, int $per_page = 50 ): array {
+        $authorized = MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' );
+        $requested  = array();
+        if ( ! empty( $site_ids_or_domains ) ) {
+            foreach ( MainWP_Abilities_Util::resolve_sites( $site_ids_or_domains )['sites'] as $site ) {
+                if ( in_array( (int) $site->id, $authorized, true ) ) {
+                    $requested[] = (int) $site->id;
+                }
+            }
+            $requested  = array_values( array_unique( $requested ) );
+            $authorized = array_values( array_intersect( $authorized, $requested ) );
+        }
+        $snapshots = MainWP_Backup_Snapshots::instance()->get_latest_per_site( $authorized );
+        $attempts  = array();
+        $legacy    = array();
+        foreach ( MainWP_DB_Backup::instance()->get_backup_tasks_for_user() as $task ) {
+            $started = (int) $task->last_run;
+            if ( $started <= 0 ) {
+                continue;
+            }
+            $completed = json_decode( (string) $task->completed_sites, true );
+            foreach ( array_intersect( MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ), $authorized ) as $id ) {
+                $attempts[ $id ] = max( $attempts[ $id ] ?? 0, $started );
+                $progress        = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $id );
+                $error           = $progress && (int) $progress->dtsFetched >= $started ? (string) $progress->last_error : (string) $task->backup_errors;
+                // The runner marks completion after errors too; an archive alone cannot override an error mark.
+                if ( empty( $completed[ $id ] ) || '' !== $error ) {
+                    continue;
+                }
+                if ( MainWP_Backup_Executor::latest_backup_archive_mtime( $id ) >= $started ) {
+                    $legacy[ $id ] = max( $legacy[ $id ] ?? 0, $started );
+                }
+            }
+        }
+        $totals = array(
+            'sites'     => count( $authorized ),
+            'stale'     => 0,
+            'never'     => 0,
+            'by_health' => array(
+                'protected' => 0,
+                'at_risk'   => 0,
+                'critical'  => 0,
+                'unknown'   => 0,
+            ),
+        );
+        $items  = array();
+        $now    = time();
+        foreach ( $authorized as $id ) {
+            $site    = MainWP_DB::instance()->get_website_by_id( $id );
+            $options = MainWP_DB::instance()->get_website_options_array( $site, array( 'primary_lasttime_backup' ) );
+            $child   = max( 0, (int) ( $options['primary_lasttime_backup'] ?? 0 ) );
+            $last    = max( $child, $legacy[ $id ] ?? 0 );
+            $source  = $last > 0 ? ( $child >= ( $legacy[ $id ] ?? 0 ) ? 'child_reported' : 'legacy_task' ) : 'none';
+            $latest  = $snapshots[ $id ] ?? null;
+            $summary = null;
+            $health  = MainWP_Backup_Snapshots::classify_backup_health( $latest, $now );
+            if ( $latest ) {
+                $details = self::snapshot_details( (int) $latest->id );
+                $summary = $details['snapshot'];
+                if ( (int) $latest->created >= $last ) {
+                    $last   = (int) $latest->created;
+                    $source = 'native_snapshot';
+                }
+            }
+            $stale = 0 === $last || $last < $now - $threshold_days * DAY_IN_SECONDS;
+            ++$totals['by_health'][ $health ];
+            $totals['stale'] += (int) $stale;
+            $totals['never'] += (int) ( 0 === $last );
+            if ( ! $only_stale || $stale ) {
+                $items[] = array(
+                    'site_id'         => $id,
+                    'url'             => (string) $site->url,
+                    'name'            => html_entity_decode( (string) $site->name, ENT_QUOTES ),
+                    'last_backup'     => $last,
+                    'last_attempted'  => $attempts[ $id ] ?? 0,
+                    'source'          => $source,
+                    'is_stale'        => $stale,
+                    'latest_snapshot' => $summary,
+                    'health'          => $health,
+                    'update_gate'     => MainWP_Backup_Operations::update_gate_for_site( $site ),
+                );
+            }
+        }
+        $paged = self::paginate( $items, $page, $per_page );
+        return array(
+            'items'                  => $paged['items'],
+            'totals'                 => $totals,
+            'page'                   => $page,
+            'per_page'               => $per_page,
+            'filters'                => array(
+                'threshold_days' => $threshold_days,
+                'only_stale'     => $only_stale,
+                'site_ids'       => $requested,
+            ),
+            'native_backups_enabled' => MainWP_Backup_Settings::is_native_backups_enabled(),
+            'update_gate_policy'     => self::update_gate_policy(),
+            'note'                   => empty( $paged['items'] ) ? __( 'No sites matched the applied filters.', 'mainwp' ) : '',
+        );
+    }
+
+    /**
+     * History pagination must exclude denied sites before counting rows.
+     *
+     * @param array $filters Validated history filters.
+     * @param int   $page Page number.
+     * @param int   $per_page Page size.
+     * @return array Neutral history evidence.
+     */
+    public static function list_history( array $filters = array(), int $page = 1, int $per_page = 50 ): array {
+        $result = MainWP_Backup_Run_History::query( $filters, $page, $per_page, MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) );
+        $items  = array();
+        foreach ( $result['items'] as $row ) {
+            $task = (int) $row['task_id'] > 0 ? MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $row['task_id'] ) : null;
+            $site = MainWP_DB::instance()->get_website_by_id( (int) $row['site_id'] );
+            $code = (string) $row['error_code'];
+            if ( '' === $code && in_array( $row['outcome'], array( 'cancelled', 'reset', 'incomplete' ), true ) ) {
+                $code = 'mainwp_backup_run_' . $row['outcome'];
+            }
+            $failed  = in_array( $row['outcome'], array( 'failed', 'cancelled', 'reset', 'incomplete' ), true );
+            $items[] = array(
+                'id'                => (int) $row['id'],
+                'task_id'           => (int) $row['task_id'] > 0 ? (int) $row['task_id'] : null,
+                'task_name'         => $task ? html_entity_decode( (string) $task->name, ENT_QUOTES ) : null,
+                'site_id'           => (int) $row['site_id'],
+                'site_name'         => $site ? html_entity_decode( (string) $site->name, ENT_QUOTES ) : null,
+                'trigger'           => $row['trigger_source'],
+                'initiator_user_id' => (int) $row['initiator_user_id'],
+                'outcome'           => $row['outcome'],
+                'started_at'        => (int) $row['started'],
+                'finished_at'       => (int) $row['finished'],
+                'error'             => $failed ? array( 'code' => $code ) : null,
+                'snapshot_recorded' => ! empty( $row['snapshot_id'] ),
+                'snapshot_id'       => ! empty( $row['snapshot_id'] ) ? (int) $row['snapshot_id'] : null,
+                'restore_job_id'    => ! empty( $row['restore_job_id'] ) ? (int) $row['restore_job_id'] : null,
+                'ref'               => $row['ref'],
+            );
+        }
+        return array(
+            'items'          => $items,
+            'total'          => $result['total'],
+            'page'           => $page,
+            'per_page'       => $per_page,
+            'retention_days' => 90,
+        );
+    }
+
+    /**
+     * Lists need decrypted public locations and the same unreadable-credentials flag as details.
+     *
+     * @param string $provider Provider filter.
+     * @param int    $page Page number.
+     * @param int    $per_page Page size.
+     * @return array Public destination page.
+     */
+    public static function list_destinations( string $provider = 'any', int $page = 1, int $per_page = 50 ): array {
+        $items = array();
+        foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $row ) {
+            if ( 'any' === $provider || $row->provider === $provider ) {
+                $items[] = self::get_destination( (int) $row->id );
+            }
+        }
+        return self::paginate( $items, $page, $per_page );
+    }
+
+    /**
+     * An allowlist also excludes identifiers and paths the edit form retains.
+     *
+     * @param int $id Destination identity.
+     * @return array|\WP_Error Public metadata.
+     */
+    public static function get_destination( int $id ) {
+        $row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
+        if ( ! $row ) {
+            return new \WP_Error( 'mainwp_backup_destination_not_found', '', array( 'status' => 404 ) );
+        }
+        $settings = is_array( $row->settings ) ? $row->settings : array();
+        $location = array_intersect_key( $settings, array_flip( array( 'bucket', 'region', 'endpoint', 'path_style', 'host', 'port' ) ) );
+        foreach ( $location as $key => &$value ) {
+            $value = 'port' === $key ? (int) $value : ( 'path_style' === $key ? (bool) $value : (string) $value );
+        }
+        unset( $value );
+        $count = 0;
+        global $wpdb;
+        $tasks = $wpdb->get_col( 'SELECT destinations FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- only stored destination references are counted, using a fixed table identity.
+        foreach ( $tasks as $ids ) {
+            $count += (int) in_array( $id, self::stored_ids( (string) $ids, true ), true );
+        }
+        return array(
+            'id'                  => (int) $row->id,
+            'name'                => (string) $row->name,
+            'provider'            => (string) $row->provider,
+            'is_default'          => ! empty( $row->is_default ),
+            'location'            => $location,
+            'credentials_invalid' => ! empty( $row->credentials_invalid ),
+            'task_count'          => $count,
+            'created_at'          => (int) $row->created,
+            'updated_at'          => (int) $row->updated,
+        );
+    }
+
+    /**
+     * Read contracts preserve settings stored above the machine write bounds.
+     *
+     * @return array Public settings and boolean encryption flags.
+     */
+    public static function get_settings(): array {
+        $encryption = MainWP_Backup_Encryption::instance();
+        return array(
+            'native_backups_enabled'    => MainWP_Backup_Settings::is_native_backups_enabled(),
+            'primary_backup_method'     => (string) get_option( 'mainwp_primaryBackup', '' ),
+            'on_demand_retention_count' => MainWP_Backup_Settings::get_on_demand_retention_count(),
+            'max_concurrent_backups'    => MainWP_Backup_Settings::get_max_concurrent_backups(),
+            'diagnostics_enabled'       => MainWP_Backup_Diagnostics::is_enabled(),
+            'update_gate'               => self::update_gate_policy(),
+            'encryption'                => array(
+                'enabled'                 => $encryption->is_enabled_setting(),
+                'recovery_passphrase_set' => ! empty( $encryption->get_recovery_blob() ),
+            ),
+        );
+    }
+
+    /**
+     * Status and settings must describe the same enforcing policy.
+     *
+     * @return array Gate policy.
+     */
+    private static function update_gate_policy(): array {
+        return array(
+            'enabled'         => 1 === (int) get_option( 'mainwp_backup_before_upgrade', 0 ),
+            'max_age_days'    => MainWP_Updates_Overview::get_backup_before_upgrade_days(),
+            'require_offsite' => (bool) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 ),
+        );
+    }
 }

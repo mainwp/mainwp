@@ -790,6 +790,39 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     }
 
     /**
+     * Records one site's terminal outcome for the run that marked it.
+     *
+     * The run identity can sit a second past the claim (GREATEST with the last
+     * close), while snapshots carry wall-clock time, so the claim's wall-clock
+     * stamp is the lower bound for this run's snapshot.
+     *
+     * @param object $task            Task row as read by the driver.
+     * @param int    $site_id         Site the driver marked.
+     * @param int    $history_started Run identity.
+     * @param bool   $success         Whether the site mark was a success.
+     */
+    private static function finalize_site_history( $task, int $site_id, int $history_started, bool $success ): void {
+        $snapshot_id = null;
+        $error_code  = '';
+        if ( $success ) {
+            $snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+            $claimed  = (int) ( $task->last ?? 0 );
+            $floor    = $claimed > 0 ? min( $history_started, $claimed ) : $history_started;
+            if ( $snapshot && (int) $snapshot->created >= $floor ) {
+                $snapshot_id = (int) $snapshot->id;
+            }
+        } else {
+            $progress   = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+            $error_code = $progress->fetchResult['error_code'] ?? '';
+            $error_code = is_string( $error_code ) ? $error_code : '';
+            if ( '' === $error_code && preg_match( '/^\[(mainwp_[a-z0-9_]+)\]/', (string) ( $progress->last_error ?? '' ), $match ) ) {
+                $error_code = $match[1];
+            }
+        }
+        MainWP_Backup_Run_History::finalize_run( (int) $task->id, $history_started, $success ? 'completed' : 'failed', $site_id, $error_code, $snapshot_id );
+    }
+
+    /**
      * Update backup task.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::add_backup_task()
@@ -1504,21 +1537,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
             do_action( 'mainwp_backup_diag_site_mark', (int) $task->id, (int) $siteid, '' === $_mark_detail ? 'success' : 'error', $_mark_detail );
 
-            $_snapshot = '' === $_mark_detail ? MainWP_Backup_Snapshots::instance()->get_latest_complete( (int) $siteid, (int) $task->id ) : null;
-            $_progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, (int) $siteid );
-            $_code     = $_progress->fetchResult['error_code'] ?? '';
-            $_code     = is_string( $_code ) ? $_code : '';
-            if ( '' === $_code && preg_match( '/^\[(mainwp_[a-z0-9_]+)\]/', (string) ( $_progress->last_error ?? '' ), $_match ) ) {
-                $_code = $_match[1];
-            }
-            MainWP_Backup_Run_History::finalize_run(
-                (int) $task->id,
-                $history_started,
-                '' === $_mark_detail ? 'completed' : 'failed',
-                (int) $siteid,
-                '' === $_mark_detail ? '' : $_code,
-                $_snapshot && (int) $_snapshot->created >= $history_started ? (int) $_snapshot->id : null
-            );
+            static::finalize_site_history( $task, (int) $siteid, $history_started, '' === $_mark_detail );
 
             $completed_sites[ $siteid ] = true;
             MainWP_DB_Backup::instance()->update_completed_sites( $task->id, $completed_sites );

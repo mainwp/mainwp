@@ -2875,8 +2875,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 )
             );
             $status = self::map_task_status( $payload );
-            if ( 'failed' === $status['status'] ) {
-                MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'failed', (string) ( $status['meta']['error_code'] ?? '' ) );
+            // Only a failure the Child reported ends the task: an unreadable answer
+            // keeps the handle, so a later pass can still see the task complete.
+            if ( 'failed' === $status['status'] && isset( $status['meta']['phase'] ) ) {
+                MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'failed', is_string( $status['meta']['error_code'] ?? null ) ? $status['meta']['error_code'] : '' );
             }
             return $status;
         }
@@ -2926,7 +2928,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         if ( 'running' !== $status['status'] ) {
-            MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'completed' === $status['status'] && '' !== $downloaded ? 'completed' : 'failed', (string) ( $status['meta']['error_code'] ?? '' ) );
+            MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'completed' === $status['status'] && '' !== $downloaded ? 'completed' : 'failed', is_string( $status['meta']['error_code'] ?? null ) ? $status['meta']['error_code'] : '' );
             /**
              * Fires when the dashboard observes a backup task reach a terminal phase.
              *

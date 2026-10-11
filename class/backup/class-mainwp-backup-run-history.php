@@ -221,6 +221,19 @@ class MainWP_Backup_Run_History {
     }
 
     /**
+     * A restore can end before it stores its safety backup's Child handle, so
+     * the restore job, which each safety row carries, is the stable key.
+     *
+     * @param int    $restore_job_id Restore job that owns the safety backup.
+     * @param string $outcome Terminal outcome.
+     * @param string $error_code Safe formatter input.
+     */
+    public static function finalize_restore_safety( int $restore_job_id, string $outcome, string $error_code = '' ): void {
+        global $wpdb;
+        self::finalize_matching( $wpdb->prepare( 'SELECT id FROM ' . self::table_name() . ' WHERE restore_job_id = %d AND trigger_source = %s AND outcome = %s', $restore_job_id, 'restore_safety', 'running' ), $outcome, $error_code ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table; every value prepared.
+    }
+
+    /**
      * Ad-hoc lanes have a Child handle instead of a Dashboard task run.
      *
      * @param int    $site_id Site identity.

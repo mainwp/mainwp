@@ -601,7 +601,13 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 		$ref   = MainWP_Backup_Executor::trigger_backup( $site, 'full', (string) $id );
-		$this->assertTrue( $store->set_status( $id, $store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $ref ) ) );
+		if ( 'preflight' === $handle_state ) {
+			// The handle and its row exist before the job stores the Child task id.
+			$this->assertTrue( $store->set_status( $id, $store::STATUS_PREFLIGHT ) );
+			$this->assertEmpty( $store->get_job( $id )->pre_snapshot_task_id );
+		} else {
+			$this->assertTrue( $store->set_status( $id, $store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $ref ) ) );
+		}
 		$this->assertSame( 'running', $this->rows()[0]['outcome'] );
 		$orchestrator = MainWP_Backup_Restore_Orchestrator::instance();
 		$before       = null;
@@ -648,13 +654,102 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function restore_terminal_history_cases(): array {
 		return array(
-			'cancel owned'    => array( true, 'owned' ),
-			'cancel foreign'  => array( true, 'foreign' ),
-			'cancel deleted'  => array( true, 'deleted' ),
-			'failure owned'   => array( false, 'owned' ),
-			'failure foreign' => array( false, 'foreign' ),
-			'failure deleted' => array( false, 'deleted' ),
-			'failure later'   => array( false, 'completed' ),
+			'cancel owned'      => array( true, 'owned' ),
+			'cancel foreign'    => array( true, 'foreign' ),
+			'cancel deleted'    => array( true, 'deleted' ),
+			'failure owned'     => array( false, 'owned' ),
+			'failure foreign'   => array( false, 'foreign' ),
+			'failure deleted'   => array( false, 'deleted' ),
+			'failure later'     => array( false, 'completed' ),
+			'cancel preflight'  => array( true, 'preflight' ),
+			'failure preflight' => array( false, 'preflight' ),
+		);
+	}
+
+	/**
+	 * One site's terminal record, across every shape the driver can hand over.
+	 *
+	 * @dataProvider site_history_matrix
+	 * @param bool        $success Site mark.
+	 * @param int         $claim_offset Claim wall-clock time relative to the run identity.
+	 * @param int|null    $snapshot_offset Snapshot created time relative to the run identity, null for none.
+	 * @param mixed       $fetch_code Child error_code stored on the progress row.
+	 * @param string      $last_error Progress last_error text.
+	 * @param bool        $linked Whether the snapshot belongs to this run.
+	 * @param string|null $code Expected stored error code, null for the unclassified code.
+	 */
+	public function test_site_history_matrix( bool $success, int $claim_offset, ?int $snapshot_offset, $fetch_code, string $last_error, bool $linked, ?string $code ): void {
+		global $wpdb;
+		$site    = $this->site();
+		$task    = $this->task( array( $site ) );
+		$started = time() - 100;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run' => $started,
+				'last'     => $started + $claim_offset,
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertGreaterThan( 0, MainWP_Backup_Run_History::start( (int) $task->id, $site, $started ) );
+		$snapshot_id = null;
+		if ( null !== $snapshot_offset ) {
+			$snapshot_id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+				array(
+					'task_id' => $task->id,
+					'site_id' => $site,
+				)
+			);
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'created' => $started + $snapshot_offset ), array( 'id' => $snapshot_id ) );
+		}
+		MainWP_DB_Backup::instance()->add_backup_task_progress( $task->id, $site, array() );
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site,
+			array(
+				'fetchResult' => wp_json_encode( array( 'error_code' => $fetch_code ) ),
+				'last_error'  => $last_error,
+			)
+		);
+		$warnings = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Warnings must remain observable.
+			static function ( $severity, $message ) use ( &$warnings ) {
+				$warnings[] = $message;
+				return true;
+			},
+			E_WARNING | E_NOTICE
+		);
+		try {
+			$finalize = new \ReflectionMethod( MainWP_Manage_Backups_Handler::class, 'finalize_site_history' );
+			$finalize->setAccessible( true );
+			$finalize->invoke( null, $task, $site, $started, $success );
+		} finally {
+			restore_error_handler();
+		}
+		$this->assertSame( array(), $warnings );
+		$row = $this->rows()[0];
+		$this->assertSame( $success ? 'completed' : 'failed', $row['outcome'] );
+		$this->assertSame( $linked ? (int) $snapshot_id : 0, (int) $row['snapshot_id'] );
+		$expected = $success ? '' : MainWP_Backup_Operations::safe_error( (string) $code )['code'];
+		$this->assertSame( $expected, $row['error_code'] );
+	}
+
+	/**
+	 * Rows: success with this run's snapshot; the claim second before a run
+	 * identity bumped by GREATEST; a snapshot older than the claim; no snapshot;
+	 * failures with a string code, a non-string code, and a code only in last_error.
+	 *
+	 * @return array
+	 */
+	public static function site_history_matrix(): array {
+		return array(
+			'snapshot after start'      => array( true, 0, 3, '', '', true, null ),
+			'snapshot in claim second'  => array( true, -1, -1, '', '', true, null ),
+			'snapshot before claim'     => array( true, 0, -5, '', '', false, null ),
+			'no snapshot'               => array( true, 0, null, '', '', false, null ),
+			'failure string code'       => array( false, 0, null, MainWP_Backup_Error_Codes::ERR_TIMEOUT, '', false, MainWP_Backup_Error_Codes::ERR_TIMEOUT ),
+			'failure array code'        => array( false, 0, null, array( 'unexpected' ), '', false, '' ),
+			'failure code in lasterror' => array( false, 0, null, '', '[' . MainWP_Backup_Error_Codes::ERR_TIMEOUT . '] Child timed out', false, MainWP_Backup_Error_Codes::ERR_TIMEOUT ),
 		);
 	}
 
@@ -804,6 +899,38 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		MainWP_Backup_Executor::get_backup_task_status( $site, $ref );
 		$this->assertSame( 'failed', $this->rows()[0]['outcome'] );
 		$this->assertSame( MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_ZIP_FAILED )['message'], $this->rows()[0]['message'] );
+	}
+
+	/**
+	 * An unreadable passive answer keeps the handle, so the row stays open; a
+	 * reported failure with a malformed code still closes it without warnings.
+	 */
+	public function test_update_gate_passive_unreadable_answer_stays_running(): void {
+		$site         = $this->site();
+		$ref          = MainWP_Backup_Executor::trigger_backup( $site );
+		$this->answer = array( 'error' => '/secret-provider' );
+		MainWP_Backup_Executor::get_backup_task_status( $site, $ref );
+		$this->assertSame( 'running', $this->rows()[0]['outcome'] );
+		$this->answer = array(
+			'phase'      => 'failed',
+			'error_code' => array( 'unexpected' ),
+		);
+		$warnings     = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Warnings must remain observable.
+			static function ( $severity, $message ) use ( &$warnings ) {
+				$warnings[] = $message;
+				return true;
+			},
+			E_WARNING | E_NOTICE
+		);
+		try {
+			MainWP_Backup_Executor::get_backup_task_status( $site, $ref );
+		} finally {
+			restore_error_handler();
+		}
+		$this->assertSame( array(), $warnings );
+		$this->assertSame( 'failed', $this->rows()[0]['outcome'] );
+		$this->assertSame( MainWP_Backup_Operations::safe_error( '' )['code'], $this->rows()[0]['error_code'] );
 	}
 
 	/**

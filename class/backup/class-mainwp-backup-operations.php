@@ -1237,7 +1237,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $result ) ) {
             $result->add_data(
                 array(
-                    'status'          => 502,
+                    'status'          => $result->get_error_data()['status'] ?? 502,
                     'host_key_pinned' => $pinned,
                 )
             );
@@ -1310,6 +1310,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return bool
      */
     private static function destination_may_pin_host_key( object $destination ): bool {
+        // Unreadable settings fail the credential check before any handshake, so nothing can be pinned.
+        if ( ! empty( $destination->credentials_invalid ) || ! is_array( $destination->settings ) ) {
+            return false;
+        }
         $pins = get_option( MainWP_Backup_Storage_SFTP::HOSTKEYS_OPTION, array() );
         return 'sftp' === $destination->provider && empty( $destination->settings['host_fingerprint'] ) && ! isset( $pins[ (int) $destination->id ] );
     }
@@ -1615,17 +1619,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( null === $job || 'reserved' === $job->status ) {
             return self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND );
         }
-        $confirmation = $job->checkpoint['cancel_confirmation']['outcome'] ?? '';
-        $result       = 'not_cancellable';
-        if ( in_array( $job->status, array( 'cancelled', 'failed_permanent' ), true ) ) {
-            if ( 'unconfirmed' === $confirmation ) {
-                $result = 'cancel_unconfirmed';
-            } elseif ( 'cancelled' === $job->status ) {
-                $result = 'cancelled';
-            } elseif ( 'confirmed' === $confirmation ) {
-                $result = 'ended_failed';
-            }
-        } elseif ( in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $job->status ) {
+        $finished = self::finished_cancel_result( $job );
+        $result   = $finished ?? 'not_cancellable';
+        if ( null === $finished && 'verifying' !== $job->status ) {
             $phase = 'failed_retryable' === $job->status ? (string) ( $job->checkpoint['resume_status'] ?? 'pending' ) : $job->status;
             if ( 'verifying' === $phase ) {
                 // The worker drives a verification retry on, even when it applies an armed intent.
@@ -1643,6 +1639,31 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'status'         => $job->status,
             'result'         => $result,
         );
+    }
+
+    /**
+     * Confirm makes no call for a finished job, so its stored outcome is the result a preview can promise.
+     *
+     * @param object $job Restore job row.
+     * @return string|null Result for a finished job, null while the job is active.
+     */
+    private static function finished_cancel_result( object $job ): ?string {
+        if ( in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) {
+            return null;
+        }
+        $confirmation = $job->checkpoint['cancel_confirmation']['outcome'] ?? '';
+        if ( in_array( $job->status, array( 'cancelled', 'failed_permanent' ), true ) ) {
+            if ( 'unconfirmed' === $confirmation ) {
+                return 'cancel_unconfirmed';
+            }
+            if ( 'cancelled' === $job->status ) {
+                return 'cancelled';
+            }
+            if ( 'confirmed' === $confirmation ) {
+                return 'ended_failed';
+            }
+        }
+        return 'not_cancellable';
     }
 
     /**
@@ -1749,8 +1770,17 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $phase       = 'failed_retryable' === $job->status ? ( $job->checkpoint['resume_status'] ?? 'pending' ) : $job->status;
         $cancellable = in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $phase;
         $asks_site   = ! empty( $job->child_task_id ) && in_array( $phase, array( 'staging', 'transferring', 'running' ), true );
-        if ( ! $cancellable ) {
-            $warning = __( 'This job can no longer be cancelled. Confirming returns not_cancellable.', 'mainwp' );
+        $finished    = self::finished_cancel_result( $job );
+        if ( 'cancelled' === $finished ) {
+            $warning = __( 'This job is already cancelled. Confirming changes nothing and reports cancelled.', 'mainwp' );
+        } elseif ( 'cancel_unconfirmed' === $finished ) {
+            $warning = __( 'This job already ended without the site confirming that it stopped. Confirming changes nothing and reports cancel_unconfirmed.', 'mainwp' );
+        } elseif ( 'ended_failed' === $finished ) {
+            $warning = __( 'This job already failed and the site confirmed that it stopped. Confirming changes nothing and reports ended_failed.', 'mainwp' );
+        } elseif ( null !== $finished ) {
+            $warning = __( 'This job has already finished. Confirming changes nothing and reports not_cancellable.', 'mainwp' );
+        } elseif ( ! $cancellable ) {
+            $warning = __( 'The restored site is being verified, so the job can no longer be cancelled. Confirming reports not_cancellable.', 'mainwp' );
         } elseif ( $asks_site ) {
             $warning = __( 'The site is asked to stop. Confirmation can take up to 15 minutes; poll get-restore-job-v1 until the result is final.', 'mainwp' );
         } else {

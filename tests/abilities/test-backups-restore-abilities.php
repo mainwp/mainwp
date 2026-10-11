@@ -483,36 +483,70 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Cancellation advice must follow the job's phase and Child task evidence.
+	 * Matrix C: every job state the cancel preview can see, with the result confirm reports.
 	 *
 	 * @return array
 	 */
 	public static function cancel_previews() {
-		$finished = 'This job can no longer be cancelled. Confirming returns not_cancellable.';
-		$local    = 'The site is not applying the restore yet, so a cancel normally stops the job at once. If the stop cannot be recorded right away, it is applied when the job reaches staging.';
-		$site     = 'The site is asked to stop. Confirmation can take up to 15 minutes; poll get-restore-job-v1 until the result is final.';
+		$finished    = 'This job has already finished. Confirming changes nothing and reports not_cancellable.';
+		$cancelled   = 'This job is already cancelled. Confirming changes nothing and reports cancelled.';
+		$unconfirmed = 'This job already ended without the site confirming that it stopped. Confirming changes nothing and reports cancel_unconfirmed.';
+		$ended       = 'This job already failed and the site confirmed that it stopped. Confirming changes nothing and reports ended_failed.';
+		$verifying   = 'The restored site is being verified, so the job can no longer be cancelled. Confirming reports not_cancellable.';
+		$local       = 'The site is not applying the restore yet, so a cancel normally stops the job at once. If the stop cannot be recorded right away, it is applied when the job reaches staging.';
+		$site        = 'The site is asked to stop. Confirmation can take up to 15 minutes; poll get-restore-job-v1 until the result is final.';
+		$outcome     = static function ( $value ) {
+			return array( 'cancel_confirmation' => array( 'outcome' => $value ) );
+		};
 		return array(
-			array( 'completed', '', false, false, $finished ),
-			array( 'verifying', 'owned-restore', false, false, $finished ),
-			array( 'pending', '', true, false, $local ),
-			array( 'staging', 'owned-restore', true, true, $site ),
-			array( 'transferring', 'owned-restore', true, true, $site ),
-			array( 'running', 'owned-restore', true, true, $site ),
+			'C1 completed'                          => array( 'completed', array(), '', false, false, $finished, 'not_cancellable' ),
+			'C2 cancelled, not needed'              => array( 'cancelled', $outcome( 'not_needed' ), '', false, false, $cancelled, 'cancelled' ),
+			'C2 cancelled, confirmed'               => array( 'cancelled', $outcome( 'confirmed' ), 'owned-restore', false, false, $cancelled, 'cancelled' ),
+			'C3 cancelled, unconfirmed'             => array( 'cancelled', $outcome( 'unconfirmed' ), 'owned-restore', false, false, $unconfirmed, 'cancel_unconfirmed' ),
+			'C4 failed, confirmed'                  => array( 'failed_permanent', $outcome( 'confirmed' ), 'owned-restore', false, false, $ended, 'ended_failed' ),
+			'C5 failed, unconfirmed'                => array( 'failed_permanent', $outcome( 'unconfirmed' ), 'owned-restore', false, false, $unconfirmed, 'cancel_unconfirmed' ),
+			'C6 failed, no confirmation'            => array( 'failed_permanent', array(), '', false, false, $finished, 'not_cancellable' ),
+			'C7 verifying'                          => array( 'verifying', array(), 'owned-restore', false, false, $verifying, 'not_cancellable' ),
+			'C8 retrying verification'              => array( 'failed_retryable', array( 'resume_status' => 'verifying' ), 'owned-restore', false, false, $verifying, 'not_cancellable' ),
+			'C9 pending'                            => array( 'pending', array(), '', true, false, $local, null ),
+			'C9 preflight'                          => array( 'preflight', array(), '', true, false, $local, null ),
+			'C9 pre_snapshot'                       => array( 'pre_snapshot', array(), '', true, false, $local, null ),
+			'C10 staging'                           => array( 'staging', array(), 'owned-restore', true, true, $site, null ),
+			'C10 transferring'                      => array( 'transferring', array(), 'owned-restore', true, true, $site, null ),
+			'C10 running'                           => array( 'running', array(), 'owned-restore', true, true, $site, null ),
+			'C11 staging without a Child task'      => array( 'staging', array(), '', true, false, $local, null ),
+			'C12 retrying a failure, no Child task' => array(
+				'failed_retryable',
+				array(
+					'resume_status'    => 'pending',
+					'terminal_failure' => array(
+						'error'      => 'Stored failure.',
+						'error_code' => 'mainwp_restore_failed',
+					),
+				),
+				'',
+				true,
+				false,
+				$local,
+				null,
+			),
 		);
 	}
 
 	/**
-	 * Previews must explain confirmation without changing existing eligibility.
+	 * A finished job's preview must name the result confirm reports; an active job's must say whether the site is asked.
 	 *
 	 * @dataProvider cancel_previews
-	 * @param string $status Fixture phase.
-	 * @param string $child Child task identity.
-	 * @param bool   $cancellable Expected cancellation eligibility.
-	 * @param bool   $asks_site Expected Child request.
-	 * @param string $warning Expected single warning.
+	 * @param string      $status Fixture status.
+	 * @param array       $checkpoint Fixture checkpoint.
+	 * @param string      $child Child task identity.
+	 * @param bool        $cancellable Expected cancellation eligibility.
+	 * @param bool        $asks_site Expected Child request.
+	 * @param string      $warning Expected single warning.
+	 * @param string|null $result Confirm result when confirm makes no Child request.
 	 */
-	public function test_cancel_preview_warning_follows_job_state( $status, $child, $cancellable, $asks_site, $warning ) {
-		$this->fixture_job( $status, array(), $child );
+	public function test_cancel_preview_warning_follows_job_state( $status, $checkpoint, $child, $cancellable, $asks_site, $warning, $result ) {
+		$this->fixture_job( $status, $checkpoint, $child );
 		$output = $this->execute( 'cancel-restore', $this->input( 'cancel-restore' ) + array( 'dry_run' => true ) );
 		$this->assert_output( 'cancel-restore', $output );
 		$this->assertSame( $cancellable, $output['would_affect']['cancellable'] );
@@ -520,6 +554,12 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $output['can_proceed'] );
 		$this->assertSame( array( $warning ), $output['warnings'] );
 		$this->assertSame( array(), $this->calls );
+		if ( null !== $result ) {
+			$output = $this->execute( 'cancel-restore', $this->input( 'cancel-restore' ) + array( 'confirm' => true ) );
+			$this->assert_output( 'cancel-restore', $output );
+			$this->assertSame( $result, $output['result'] );
+			$this->assertSame( array(), $this->calls );
+		}
 	}
 
 	/** Contention arms an early-phase cancel, which must be reported without claiming a stop. */

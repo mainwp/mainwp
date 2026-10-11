@@ -622,6 +622,29 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 		}
 	}
 
+	/** A row whose settings cannot be read fails before any handshake, so no preview may promise a pin. */
+	public function test_unreadable_sftp_settings_never_promise_a_pin() {
+		global $wpdb;
+		$this->assertTrue(
+			MainWP_Backup_Storage_Destinations::instance()->update_destination(
+				$this->id,
+				array(
+					'provider' => 'sftp',
+					'settings' => array(
+						'password'  => 'stored-password',
+						'base_path' => $this->dir,
+					),
+				)
+			)
+		);
+		$output = $this->execute( 'test-backup-destination', $this->input( 'test-backup-destination' ) + array( 'dry_run' => true ) );
+		$this->assertTrue( $output['would_affect']['may_pin_host_key'] );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), array( 'settings' => 'unreadable' ), array( 'id' => $this->id ) );
+		$output = $this->execute( 'test-backup-destination', $this->input( 'test-backup-destination' ) + array( 'dry_run' => true ) );
+		$this->assert_output( 'test-backup-destination', $output );
+		$this->assertFalse( $output['would_affect']['may_pin_host_key'] );
+	}
+
 	/** Connection testing must happen before a rename is persisted. */
 	public function test_update_does_not_save_when_connection_test_fails() {
 		MainWP_Backup_Storage_Destinations::instance()->update_destination( $this->id, array( 'settings' => array( 'base_path' => $this->dir . '/missing' ) ) );

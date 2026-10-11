@@ -107,6 +107,9 @@ class MainWP_Backup_Run_History {
                 $trigger = $cron ? 'schedule' : 'manual';
                 $user_id = $cron ? $owner : get_current_user_id();
             }
+        } elseif ( in_array( $trigger, array( 'update_gate', 'restore_safety' ), true ) ) {
+            // System lanes have no durable initiating user to attribute.
+            $user_id = 0;
         }
         if ( ! in_array( $trigger, array( 'schedule', 'manual', 'ability', 'update_gate', 'restore_safety' ), true ) ) {
             return 0;
@@ -204,6 +207,17 @@ class MainWP_Backup_Run_History {
             $values[] = $site_id;
         }
         self::finalize_matching( $wpdb->prepare( $sql, $values ), $outcome, $error_code, $snapshot_id ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed clauses; every value prepared.
+    }
+
+    /**
+     * Superseded runs can no longer receive per-site terminal observations.
+     *
+     * @param int $task_id Task identity.
+     * @param int $started Newly claimed run timestamp.
+     */
+    public static function finalize_superseded( int $task_id, int $started ): void {
+        global $wpdb;
+        self::finalize_matching( $wpdb->prepare( 'SELECT id FROM ' . self::table_name() . ' WHERE task_id = %d AND started < %d AND outcome = %s', $task_id, $started, 'running' ), 'incomplete', '' ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed table; every value prepared.
     }
 
     /**

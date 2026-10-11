@@ -1758,6 +1758,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return self::TERMINAL_OUTCOME_DEFERRED;
         }
 
+        if ( ! empty( $job->pre_snapshot_task_id ) ) {
+            MainWP_Backup_Run_History::finalize_ref( (int) $job->site_id, (string) $job->pre_snapshot_task_id, 'restore_safety', $cancelled ? 'cancelled' : 'failed', $cancelled ? '' : (string) $error_code );
+        }
+
         if ( $cancelled ) {
             MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
             $this->cancel_owned_pre_snapshot_handle( $job );

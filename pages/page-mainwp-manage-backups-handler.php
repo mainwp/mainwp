@@ -769,6 +769,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 'completed' => max( (int) $task->completed, (int) $task->last_run ),
             )
         );
+        MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'incomplete' );
         MainWP_DB_Backup::instance()->update_backup_notices(
             $task->id,
             esc_html__( 'This task was paused because its owner\'s site access changed or could not be confirmed. Re-save the task to confirm its scope, then resume it.', 'mainwp' ) . '<br />'
@@ -1202,6 +1203,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         $sites              = static::resolve_task_run_sites( $task, $stale_sites, $unauthorized_sites );
         $history_started    = (int) $task->last_run;
         if ( $updateRun ) {
+            MainWP_Backup_Run_History::finalize_superseded( (int) $task->id, $history_started );
             foreach ( $sites as $site_id ) {
                 MainWP_Backup_Run_History::start( (int) $task->id, (int) $site_id, $history_started, '', (int) $task->userid );
             }
@@ -1504,7 +1506,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
             $_snapshot = '' === $_mark_detail ? MainWP_Backup_Snapshots::instance()->get_latest_complete( (int) $siteid, (int) $task->id ) : null;
             $_progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, (int) $siteid );
-            $_code     = (string) ( $_progress->fetchResult['error_code'] ?? '' );
+            $_code     = $_progress->fetchResult['error_code'] ?? '';
+            $_code     = is_string( $_code ) ? $_code : '';
             if ( '' === $_code && preg_match( '/^\[(mainwp_[a-z0-9_]+)\]/', (string) ( $_progress->last_error ?? '' ), $_match ) ) {
                 $_code = $_match[1];
             }

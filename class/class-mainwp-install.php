@@ -685,7 +685,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   initiator_user_id bigint(20) unsigned NOT NULL DEFAULT 0,
   outcome varchar(20) NOT NULL DEFAULT 'running',
   error_code varchar(64) NOT NULL DEFAULT '',
-  message text NOT NULL DEFAULT '',
+  message text NOT NULL,
   snapshot_id bigint(20) unsigned NULL DEFAULT NULL,
   restore_job_id bigint(20) unsigned NULL DEFAULT NULL,
   ref varchar(191) NULL DEFAULT NULL,

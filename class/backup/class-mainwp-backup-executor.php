@@ -2740,6 +2740,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             )
         );
 
+        // Close the displaced handle's row only once the new handle replaced it: a
+        // failed create leaves the old handle in place for its owner to resume.
+        if ( ! empty( $persisted['task_id'] ) && (string) $persisted['task_id'] !== $task_id ) {
+            $persisted_owner = (string) ( $persisted['owner'] ?? '' );
+            MainWP_Backup_Run_History::finalize_ref( $site_id, (string) $persisted['task_id'], '' === $persisted_owner ? 'update_gate' : 'restore_safety', 'incomplete' );
+        }
+
         MainWP_Backup_Run_History::start( 0, $site_id, $started, '' === $owner ? 'update_gate' : 'restore_safety', 0, '' === $owner ? null : (int) $owner, $task_id );
 
         return $task_id;

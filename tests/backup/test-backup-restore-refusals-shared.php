@@ -13,6 +13,7 @@ use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
 /** A missed refusal must terminate promptly without contacting a real Child. */
@@ -204,18 +205,55 @@ class MainWP_Backup_Restore_Refusals_Shared_Test extends MainWP_Abilities_Test_C
 		$this->assertSame( $before, $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A ), 'A refused request cannot reserve or create a restore job.' );
 	}
 
-	/** Internal reservations must disclose no job or site through rollback. */
-	public function test_ability_rollback_hides_reserved_job(): void {
+	/**
+	 * Both contexts treat a reservation as missing.
+	 *
+	 * @return array
+	 */
+	public static function rollback_contexts(): array {
+		return array(
+			'ui'      => array( 'ui' ),
+			'ability' => array( 'ability' ),
+		);
+	}
+
+	/**
+	 * Internal reservations must disclose no job or site through rollback.
+	 *
+	 * @dataProvider rollback_contexts
+	 * @param string $context Caller context.
+	 */
+	public function test_ability_rollback_hides_reserved_job( string $context ): void {
 		$store  = MainWP_Backup_Restore_Job_Store::instance();
 		$job_id = $store->create_job( $this->site_id, $this->snapshot_id, array() );
 		$this->assertGreaterThan( 0, $job_id );
 		$this->assertTrue( $store->set_status( $job_id, 'reserved' ) );
-		$error = MainWP_Backup_Operations::rollback_restore( $job_id, 'ability' );
+		$error = MainWP_Backup_Operations::rollback_restore( $job_id, $context );
 		$this->assertWPError( $error );
 		$this->assertSame( 'mainwp_backup_restore_job_not_found', $error->get_error_code() );
 		$this->assertSame( 404, $error->get_error_data()['status'] );
 		$this->assertStringNotContainsString( (string) $this->site_id, $error->get_error_message() );
 		$this->assertSame( 'reserved', $store->get_job( $job_id )->status );
+	}
+
+	/** Rollback refuses a deleted site before it reserves the slot, as a new restore does. */
+	public function test_rollback_refuses_deleted_site_before_reservation(): void {
+		global $wpdb;
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job_id = $store->create_job( $this->site_id, $this->snapshot_id, array( 'pre_snapshot_artifacts' => array( array( 'file' => 'safety.tar.gz' ) ) ) );
+		$this->assertGreaterThan( 0, $job_id );
+		$this->assertTrue( $store->set_status( $job_id, 'failed_permanent' ) );
+		$job = $store->get_job( $job_id );
+		MainWP_DB::instance()->remove_website( $this->site_id );
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$before = $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A );
+		try {
+			MainWP_Backup_Restore_Orchestrator::instance()->initiate_rollback( $job );
+			$this->fail( 'A deleted site must refuse rollback.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( 'Site not found.', $e->getMessage() );
+		}
+		$this->assertSame( $before, $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A ) );
 	}
 
 	/** An inaccessible job must answer like a missing job without its site identity. */

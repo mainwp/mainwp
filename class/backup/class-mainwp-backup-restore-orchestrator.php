@@ -422,6 +422,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
         $website = MainWP_DB::instance()->get_website_by_id( (int) $failed_job->site_id );
+        if ( empty( $website ) ) {
+            throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
+        }
         if ( self::site_is_disconnected( $website ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SITE_DISCONNECTED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }

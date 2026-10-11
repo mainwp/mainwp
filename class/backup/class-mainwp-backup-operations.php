@@ -1039,9 +1039,13 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $job ) ) {
             return $job;
         }
-        $site = self::authorize_site( (int) ( $job->site_id ?? 0 ), 'execute_backups' );
+        // A reserved row is an internal slot hold, not a restore anyone can roll back.
+        if ( null === $job || 'reserved' === $job->status ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND );
+        }
+        $site = self::authorize_site( (int) $job->site_id, 'execute_backups' );
         if ( is_wp_error( $site ) ) {
-            return null === $job && 'mainwp_site_not_found' === $site->get_error_code() ? self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND ) : $site;
+            return $site;
         }
         try {
             return array( 'job_id' => MainWP_Backup_Restore_Orchestrator::instance()->initiate_rollback( $job ) );

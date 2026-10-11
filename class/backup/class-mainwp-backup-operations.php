@@ -759,12 +759,14 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 return new \WP_Error( $code, $result['error'], array( 'status' => MainWP_Backup_Error_Codes::ERR_START_FAILED === $code ? 502 : 409 ) );
             }
             if ( 'ability' === $context ) {
-                // running is a won claim unless a run held the row first; any status
-                // other than running or queued is a just-closed run the call adopted.
+                // The handler marks a run it found open; running without that mark is a
+                // won claim, and any status other than running or queued is a
+                // just-closed run the call adopted. The handler's own read is the one
+                // that counts: the row can open or close after this method read it.
                 $result = array_merge(
                     $result,
                     self::ability_start_status(
-                        (int) $task->completed < (int) $task->last_run || ! in_array( $result['status'], array( 'running', 'queued' ), true ),
+                        ! empty( $result['attached'] ) || ! in_array( $result['status'], array( 'running', 'queued' ), true ),
                         'running' === $result['status'] ? true : null,
                         'queued' === $result['status'] ? MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id ) : null,
                         (int) $result['started']
@@ -899,11 +901,12 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         // both starts the run and makes it eligible for the
         // cron_backups_continue backstop. The claim result distinguishes a
         // slot refusal from a run that opened and failed before returning.
-        $started  = time();
-        $previous = MainWP_Backup_Run_History::set_context( 'ability' === $context ? 'ability' : 'manual', get_current_user_id() );
-        $claimed  = null;
+        $started         = time();
+        $previous        = MainWP_Backup_Run_History::set_context( 'ability' === $context ? 'ability' : 'manual', get_current_user_id() );
+        $claimed         = null;
+        $claimed_started = 0;
         try {
-            $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle, $claimed ) );
+            $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle, $claimed, $claimed_started ) );
         } finally {
             MainWP_Backup_Run_History::set_context( $previous['trigger'], $previous['user_id'] );
         }
@@ -918,6 +921,8 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         // started value to the row (when it advanced) makes the poll judge
         // freshness against the run that actually owns this backup; a slot
         // miss leaves the row untouched and keeps the click's own timestamp.
+        // An ability caller that won the claim gets its own run's start, since
+        // another caller can claim a newer run between the close and this read.
         $task        = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
         $started_out = null !== $task && (int) $task->last_run >= $started ? (int) $task->last_run : $started;
 
@@ -928,7 +933,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return new \WP_Error( MainWP_Backup_Error_Codes::ERR_START_FAILED, esc_html__( 'The backup could not be started for this site. Please reload the page and try again.', 'mainwp' ), array( 'status' => 502 ) );
         }
 
-        return array( 'job_id' => (int) $task->id ) + ( 'ability' === $context ? self::ability_start_status( false, $claimed, $task, $started_out ) : array(
+        return array( 'job_id' => (int) $task->id ) + ( 'ability' === $context ? self::ability_start_status( false, $claimed, $task, true === $claimed ? $claimed_started : $started_out ) : array(
             'started' => $started_out,
             'status'  => $had_slot ? 'running' : 'queued',
         ) );
@@ -1739,7 +1744,8 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $values ) ) {
             return $values;
         }
-        $before = self::normalize_task_fields( array( 'name' => html_entity_decode( $task->name, ENT_QUOTES ) ), $task );
+        // The stored row came from the form, which never had the machine-input ceilings.
+        $before = self::normalize_task_fields( array( 'name' => html_entity_decode( $task->name, ENT_QUOTES ) ), $task, 'ui' );
         // A repair of an invalid legacy value must still be reviewable.
         $before = is_wp_error( $before ) ? self::stored_task_fields( $task ) : $before;
         $query  = MainWP_Backup_Retention_Query::instance();

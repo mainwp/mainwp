@@ -814,7 +814,9 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 	public static function start_status_matrix() {
 		$rows = array();
 		foreach ( self::starts() as $start ) {
-			foreach ( array( 'S1', 'S2', 'S3', 'S4', 'S5', 'S6' ) as $row ) {
+			// S7 and S8 need the task path's two reads; S9 needs the site path's re-read.
+			$only = 'run-site-backup' === $start[0] ? array( 'S9' ) : array( 'S7', 'S8' );
+			foreach ( array_merge( array( 'S1', 'S2', 'S3', 'S4', 'S5', 'S6' ), $only ) as $row ) {
 				$rows[ $row . ' ' . $start[0] ] = array_merge( array( $row ), $start );
 			}
 		}
@@ -826,7 +828,9 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * Rows are matrix S in the review findings: S1 run open before the call, S2 claim won,
 	 * S3 claim won and the first preflight fails, S4 clean run closed within the settle
-	 * window, S5 slot refused, S6 a racing run opens the row during the claim.
+	 * window, S5 slot refused, S6 a racing run opens the row during the claim, S7 a run opens
+	 * between the task path's two reads, S8 a run closes with errors between those reads and
+	 * this call's claim wins, S9 another caller claims a newer run before the site path's re-read.
 	 *
 	 * @dataProvider start_status_matrix
 	 * @param string $row Matrix row.
@@ -838,9 +842,20 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 		global $wpdb;
 		$task_id  = 'run-backup-task' === $name ? $this->task_id : (int) MainWP_DB_Backup::instance()->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) )->id;
 		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$jobs     = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
 		$cleanup  = array();
 		$at       = null;
 		$contacts = false;
+		$fired    = false;
+		$watch    = static function ( $filter, $callback ) use ( &$cleanup ) {
+			add_filter( $filter, $callback, 10, 4 );
+			$cleanup[] = static function () use ( $filter, $callback ) {
+				remove_filter( $filter, $callback, 10 );
+			};
+		};
+		$fail     = static function ( $result, $site, $action ) {
+			return 'backup_preflight' === $action ? array( 'disk_free' => 0 ) : $result;
+		};
 		switch ( $row ) {
 			case 'S1':
 				$this->open_run( $task_id );
@@ -852,9 +867,6 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 				$contacts = true;
 				break;
 			case 'S3':
-				$fail = static function ( $result, $site, $action ) {
-					return 'backup_preflight' === $action ? array( 'disk_free' => 0 ) : $result;
-				};
 				add_filter( 'mainwp_fetch_url_authed_pre', $fail, 11, 3 );
 				$cleanup[] = static function () use ( $fail ) {
 					remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 11 );
@@ -908,13 +920,12 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 				};
 				$expect    = 'not_started';
 				break;
-			default:
+			case 'S6':
 				// The racing run starts before this call's click, so a click-time handle would miss it.
-				$at    = time() - 30;
-				$raced = false;
-				$spy   = static function ( $sql ) use ( $table, $task_id, $at, &$raced, &$spy ) {
-					if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET last_run = GREATEST(' ) && str_contains( $sql, 'WHERE id = ' . $task_id . ' AND' ) ) {
-						remove_filter( 'query', $spy );
+				$at  = time() - 30;
+				$spy = static function ( $sql ) use ( $table, $task_id, $at, &$fired ) {
+					if ( ! $fired && str_starts_with( $sql, 'UPDATE ' . $table . ' SET last_run = GREATEST(' ) && str_contains( $sql, 'WHERE id = ' . $task_id . ' AND' ) ) {
+						$fired = true;
 						MainWP_DB_Backup::instance()->update_backup_task_with_values(
 							$task_id,
 							array(
@@ -922,15 +933,82 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 								'completed' => 0,
 							)
 						);
-						$raced = true;
 					}
 					return $sql;
 				};
-				add_filter( 'query', $spy );
-				$cleanup[] = static function () use ( &$spy ) {
-					remove_filter( 'query', $spy );
+				$watch( 'query', $spy );
+				$expect = 'already_running';
+				break;
+			case 'S7':
+			case 'S8':
+				// Operations reads the row first; its restore check is the first restore-job read
+				// before the handler reads the row again.
+				$at = 'S7' === $row ? time() - 30 : null;
+				if ( 'S8' === $row ) {
+					MainWP_DB_Backup::instance()->update_backup_task_with_values(
+						$task_id,
+						array(
+							'last_run'  => time() - 100,
+							'completed' => 0,
+						)
+					);
+				}
+				$spy = static function ( $sql ) use ( $jobs, $task_id, $row, $at, &$fired ) {
+					if ( ! $fired && str_contains( $sql, $jobs ) ) {
+						$fired = true;
+						MainWP_DB_Backup::instance()->update_backup_task_with_values(
+							$task_id,
+							'S7' === $row ? array(
+								'last_run'  => $at,
+								'completed' => 0,
+							) : array(
+								'completed'     => time() - 50,
+								'backup_errors' => 'Earlier run failed.',
+							)
+						);
+					}
+					return $sql;
 				};
-				$expect    = 'already_running';
+				$watch( 'query', $spy );
+				$expect   = 'S7' === $row ? 'already_running' : 'started';
+				$contacts = 'S8' === $row;
+				break;
+			default:
+				// This call's run fails its preflight and closes; another caller then claims a
+				// newer run before the re-read, so the row no longer carries this call's start.
+				add_filter( 'mainwp_fetch_url_authed_pre', $fail, 11, 3 );
+				$cleanup[]  = static function () use ( $fail ) {
+					remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 11 );
+				};
+				$claim_seen = false;
+				$spy        = static function ( $sql ) use ( $table, $task_id, &$claim_seen, &$fired, &$at ) {
+					global $wpdb;
+					if ( $fired ) {
+						return $sql;
+					}
+					if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET last_run = GREATEST(' ) && str_contains( $sql, 'WHERE id = ' . $task_id . ' AND' ) ) {
+						$claim_seen = true;
+						return $sql;
+					}
+					if ( $claim_seen && str_contains( $sql, 'manual_site_id' ) ) {
+						$fired = true;
+						$mine  = $wpdb->get_row( $wpdb->prepare( 'SELECT last_run, completed FROM ' . $table . ' WHERE id = %d', $task_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- trusted table name.
+						if ( (int) $mine->completed >= (int) $mine->last_run ) {
+							$at = (int) $mine->last_run;
+							MainWP_DB_Backup::instance()->update_backup_task_with_values(
+								$task_id,
+								array(
+									'last_run'  => $at + 10,
+									'completed' => 0,
+								)
+							);
+						}
+					}
+					return $sql;
+				};
+				$watch( 'query', $spy );
+				$expect   = 'started';
+				$contacts = true;
 		}
 		$click             = time();
 		$this->child_calls = array();
@@ -941,22 +1019,33 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 				$undo();
 			}
 		}
-		if ( 'S6' === $row ) {
-			$this->assertTrue( $raced, 'The competing run must open during the atomic claim.' );
+		if ( in_array( $row, array( 'S6', 'S7', 'S8', 'S9' ), true ) ) {
+			$this->assertTrue( $fired, 'The competing change must land inside the call.' );
 		}
 		$this->assert_output( $name, $output );
 		$this->assertSame( $expect, $output['status'] );
 		$this->assertSame( 'mainwp/' . $poll . '-v1', $output['poll']['ability'] );
 		$this->assertSame( $interval, $output['poll']['interval_seconds'] );
 		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
-		if ( 'started' === $expect ) {
+		if ( 'S9' === $row ) {
+			$this->assertNotNull( $at, 'The run must have closed before the newer claim.' );
+			$this->assertSame( $at + 10, (int) $after->last_run );
+		} elseif ( 'started' === $expect ) {
 			$at = (int) $after->last_run;
+		}
+		if ( 'started' === $expect ) {
 			$this->assertGreaterThanOrEqual( $click, $at );
+		}
+		if ( 'S3' === $row || 'S9' === $row ) {
+			$this->assertSame( array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
 		}
 		if ( 'S3' === $row ) {
 			$this->assertGreaterThanOrEqual( (int) $after->last_run, (int) $after->completed );
 			$this->assertNotEmpty( $after->backup_errors );
-			$this->assertSame( 'backup_preflight', $this->child_calls[0][0] );
+		}
+		if ( 'S4' === $row ) {
+			$this->assertSame( $at, (int) $after->last_run );
+			$this->assertSame( $at, (int) $after->completed );
 		}
 		if ( null === $at ) {
 			$this->assertNull( $output['started_at'] );

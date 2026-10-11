@@ -191,13 +191,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
         MainWP_Post_Backup_Handler::raise_backup_resource_limits();
         if ( (int) $task->completed < (int) $task->last_run ) {
-            return array(
+            $open = array(
                 'job_id'      => $task_id,
                 'started'     => (int) $task->last_run,
                 'click'       => 0,
                 'status'      => 'running',
                 'stale_sites' => $stale_sites,
             );
+            // A won claim also answers running; only this reply means the call attached.
+            return 'ability' === $context ? $open + array( 'attached' => true ) : $open;
         }
 
         $click    = time();

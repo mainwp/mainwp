@@ -997,4 +997,19 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assert_output( 'delete-backup-task', $preview );
 		$this->assertSame( $name, $preview['would_affect']['task_name'] );
 	}
+
+	/** A long stored name must not turn every untouched field into a reported change. */
+	public function test_update_preview_of_long_stored_name_lists_only_submitted_changes() {
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $this->task_id, array( 'name' => str_repeat( 'Task', 100 ) ) );
+		$preview = $this->execute(
+			'update-backup-task',
+			array(
+				'task_id'   => $this->task_id,
+				'retention' => array( 'count' => 3 ),
+				'dry_run'   => true,
+			)
+		);
+		$this->assert_output( 'update-backup-task', $preview );
+		$this->assertSame( array( 'retention.count' ), array_column( $preview['would_affect']['changes'], 'field' ) );
+	}
 }

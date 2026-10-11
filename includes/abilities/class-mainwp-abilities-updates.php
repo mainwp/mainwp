@@ -280,7 +280,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates WordPress core on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'core\']. When the pre-update backup setting is on, sites without a qualifying backup are skipped; dry_run lists them. ignore_backup_gate: true updates them anyway.',
+                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates WordPress core on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'core\']. When the pre-update backup setting is on and the site has no qualifying backup, confirm is refused with mainwp_backup_gate_blocked; dry_run shows the items it would hold. ignore_backup_gate: true updates the site anyway.',
                         'readonly'     => false,
                         'destructive'  => true,
                         'idempotent'   => false,
@@ -309,7 +309,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates plugins on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'plugins\']. When the pre-update backup setting is on, sites without a qualifying backup are skipped; dry_run lists them. ignore_backup_gate: true updates them anyway.',
+                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates plugins on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'plugins\']. When the pre-update backup setting is on and the site has no qualifying backup, confirm is refused with mainwp_backup_gate_blocked; dry_run shows the items it would hold. ignore_backup_gate: true updates the site anyway.',
                         'readonly'     => false,
                         'destructive'  => true,
                         'idempotent'   => false,
@@ -338,7 +338,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates themes on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'themes\']. When the pre-update backup setting is on, sites without a qualifying backup are skipped; dry_run lists them. ignore_backup_gate: true updates them anyway.',
+                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates themes on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'themes\']. When the pre-update backup setting is on and the site has no qualifying backup, confirm is refused with mainwp_backup_gate_blocked; dry_run shows the items it would hold. ignore_backup_gate: true updates the site anyway.',
                         'readonly'     => false,
                         'destructive'  => true,
                         'idempotent'   => false,
@@ -367,7 +367,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'meta'                => array(
                     'show_in_rest' => true,
                     'annotations'  => array(
-                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates translations on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'translations\']. When the pre-update backup setting is on, sites without a qualifying backup are skipped; dry_run lists them. ignore_backup_gate: true updates them anyway.',
+                        'instructions' => 'Changes child sites. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user. Updates translations on a single site. For batch operations across multiple sites, use run_updates_v1 with types=[\'translations\']. When the pre-update backup setting is on and the site has no qualifying backup, confirm is refused with mainwp_backup_gate_blocked; dry_run shows the items it would hold. ignore_backup_gate: true updates the site anyway.',
                         'readonly'     => false,
                         'destructive'  => true,
                         'idempotent'   => false,
@@ -3297,17 +3297,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $backup_gates = array();
         $skipped      = self::get_execution_skipped( array( $site ), array( 'core' ), array(), $ignore_backup_gate, $backup_gates );
         $gate         = $backup_gates[ (int) $site->id ];
-        if ( $gate['applies'] && 'pass' !== $gate['verdict'] && ! $ignore_backup_gate ) {
-            return new \WP_Error(
-                MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED,
-                MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED )['message'],
-                array(
-                    'status'  => 409,
-                    'site_id' => (int) $site->id,
-                    'verdict' => $gate['verdict'],
-                )
-            );
-        }
 
         $user_extension         = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
         $global_ignored_plugins = array();
@@ -3336,6 +3325,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'mainwp_no_updates',
                 __( 'No core updates available for this site.', 'mainwp' ),
                 array( 'status' => 404 )
+            );
+        }
+
+        if ( $gate['applies'] && 'pass' !== $gate['verdict'] && ! $ignore_backup_gate ) {
+            return new \WP_Error(
+                MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED,
+                MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED )['message'],
+                array(
+                    'status'  => 409,
+                    'site_id' => (int) $site->id,
+                    'verdict' => $gate['verdict'],
+                )
             );
         }
 
@@ -3421,17 +3422,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $backup_gates = array();
         $skipped      = self::get_execution_skipped( array( $site ), array( 'plugins' ), $slugs, $ignore_backup_gate, $backup_gates );
         $gate         = $backup_gates[ (int) $site->id ];
-        if ( $gate['applies'] && 'pass' !== $gate['verdict'] && ! $ignore_backup_gate ) {
-            return new \WP_Error(
-                MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED,
-                MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED )['message'],
-                array(
-                    'status'  => 409,
-                    'site_id' => (int) $site->id,
-                    'verdict' => $gate['verdict'],
-                )
-            );
-        }
 
         $user_extension         = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
         $global_ignored_plugins = array();
@@ -3465,6 +3455,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'total_updated' => 0,
                     'total_errors'  => 0,
                 ),
+            );
+        }
+
+        if ( $gate['applies'] && 'pass' !== $gate['verdict'] && ! $ignore_backup_gate ) {
+            return new \WP_Error(
+                MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED,
+                MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED )['message'],
+                array(
+                    'status'  => 409,
+                    'site_id' => (int) $site->id,
+                    'verdict' => $gate['verdict'],
+                )
             );
         }
 
@@ -3551,17 +3553,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $backup_gates = array();
         $skipped      = self::get_execution_skipped( array( $site ), array( 'themes' ), $slugs, $ignore_backup_gate, $backup_gates );
         $gate         = $backup_gates[ (int) $site->id ];
-        if ( $gate['applies'] && 'pass' !== $gate['verdict'] && ! $ignore_backup_gate ) {
-            return new \WP_Error(
-                MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED,
-                MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED )['message'],
-                array(
-                    'status'  => 409,
-                    'site_id' => (int) $site->id,
-                    'verdict' => $gate['verdict'],
-                )
-            );
-        }
 
         $user_extension        = MainWP_DB_Common::instance()->get_user_extension_by_user_id();
         $global_ignored_themes = array();
@@ -3595,6 +3586,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'total_updated' => 0,
                     'total_errors'  => 0,
                 ),
+            );
+        }
+
+        if ( $gate['applies'] && 'pass' !== $gate['verdict'] && ! $ignore_backup_gate ) {
+            return new \WP_Error(
+                MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED,
+                MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED )['message'],
+                array(
+                    'status'  => 409,
+                    'site_id' => (int) $site->id,
+                    'verdict' => $gate['verdict'],
+                )
             );
         }
 
@@ -3681,17 +3684,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $backup_gates = array();
         $skipped      = self::get_execution_skipped( array( $site ), array( 'translations' ), $slugs, $ignore_backup_gate, $backup_gates );
         $gate         = $backup_gates[ (int) $site->id ];
-        if ( $gate['applies'] && 'pass' !== $gate['verdict'] && ! $ignore_backup_gate ) {
-            return new \WP_Error(
-                MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED,
-                MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED )['message'],
-                array(
-                    'status'  => 409,
-                    'site_id' => (int) $site->id,
-                    'verdict' => $gate['verdict'],
-                )
-            );
-        }
 
         $translation_upgrades = ! empty( $site->translation_upgrades ) ? json_decode( $site->translation_upgrades, true ) : array();
         if ( ! is_array( $translation_upgrades ) || empty( $translation_upgrades ) ) {
@@ -3749,6 +3741,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 'name'            => $name,
                 'current_version' => isset( $translation['version'] ) ? $translation['version'] : '',
                 'new_version'     => isset( $translation['new_version'] ) ? $translation['new_version'] : '',
+            );
+        }
+
+        if ( $gate['applies'] && 'pass' !== $gate['verdict'] && ! $ignore_backup_gate ) {
+            return new \WP_Error(
+                MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED,
+                MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_GATE_BLOCKED )['message'],
+                array(
+                    'status'  => 409,
+                    'site_id' => (int) $site->id,
+                    'verdict' => $gate['verdict'],
+                )
             );
         }
 
@@ -4592,11 +4596,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $warnings                     = array();
         if ( $summary['backup_gate_blocked_sites'] > 0 ) {
             /* translators: %d: sites blocked by the backup gate. */
-            $warnings[] = sprintf( __( '%d sites have no backup that meets the pre-update backup setting and will be skipped. Pass ignore_backup_gate: true to update them anyway.', 'mainwp' ), $summary['backup_gate_blocked_sites'] );
+            $warnings[] = sprintf( _n( '%d site has no backup that meets the pre-update backup setting and will be skipped. Pass ignore_backup_gate: true to update it anyway.', '%d sites have no backup that meets the pre-update backup setting and will be skipped. Pass ignore_backup_gate: true to update them anyway.', $summary['backup_gate_blocked_sites'], 'mainwp' ), $summary['backup_gate_blocked_sites'] );
         }
         if ( $summary['backup_gate_overridden_sites'] > 0 ) {
             /* translators: %d: sites updated through an explicit backup gate override. */
-            $warnings[] = sprintf( __( '%d sites will be updated even though their pre-update backup check is not met.', 'mainwp' ), $summary['backup_gate_overridden_sites'] );
+            $warnings[] = sprintf( _n( '%d site will be updated even though its pre-update backup check is not met.', '%d sites will be updated even though their pre-update backup check is not met.', $summary['backup_gate_overridden_sites'], 'mainwp' ), $summary['backup_gate_overridden_sites'] );
         }
         if ( $summary['has_core'] ) {
             $warnings[] = __( 'The plan includes WordPress core updates.', 'mainwp' );

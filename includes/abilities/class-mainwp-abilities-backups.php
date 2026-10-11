@@ -1919,7 +1919,7 @@ class MainWP_Abilities_Backups {
                     'items' => array(
                         'type'                 => 'object',
                         'additionalProperties' => false,
-                        'required'             => array( 'id', 'task_id', 'task_name', 'site_id', 'site_name', 'trigger', 'initiator_user_id', 'outcome', 'started_at', 'finished_at', 'error', 'snapshot_recorded', 'snapshot_id', 'restore_job_id', 'ref' ),
+                        'required'             => array( 'id', 'task_id', 'task_name', 'site_id', 'site_name', 'trigger', 'initiator_user_id', 'outcome', 'gate_verdict', 'started_at', 'finished_at', 'error', 'snapshot_recorded', 'snapshot_id', 'restore_job_id', 'ref' ),
                         'properties'           => array(
                             'id'                => array(
                                 'type'    => 'integer',
@@ -1949,6 +1949,11 @@ class MainWP_Abilities_Backups {
                             'outcome'           => array(
                                 'type' => 'string',
                                 'enum' => array( 'running', 'completed', 'failed', 'cancelled', 'reset', 'incomplete', 'gate_overridden' ),
+                            ),
+                            'gate_verdict'      => array(
+                                'type'        => array( 'string', 'null' ),
+                                'enum'        => array( 'missing', 'pending_offsite', null ),
+                                'description' => 'The pre-update backup verdict that was overridden, on gate_overridden rows: missing or pending_offsite. Null for other outcomes.',
                             ),
                             'started_at'        => self::ts_schema(),
                             'finished_at'       => self::ts_schema(),

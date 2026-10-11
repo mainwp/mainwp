@@ -9,6 +9,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Backup_Operations;
+use MainWP\Dashboard\MainWP_Backup_Run_History;
 use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
@@ -1728,6 +1729,84 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'reconciliation', $this->ability( 'list-backup-history' )->get_meta()['annotations']['instructions'] );
 		foreach ( array( array( 'days' => 'bad' ), array( 'outcome' => array( 'failed' ) ), array( 'trigger' => true ), array( 'page' => 0 ) ) as $input ) {
 			$this->assertSame( 'mainwp_invalid_input', $this->callback_read( 'list-backup-history', $input )->get_error_code() );
+		}
+	}
+
+	/**
+	 * Override history must explain which backup check the caller bypassed.
+	 *
+	 * @return void
+	 */
+	public function test_history_lists_overridden_gate_verdicts() {
+		global $wpdb;
+		$input  = array( 'site_id_or_domain' => $this->site_id );
+		$before = $this->read( 'list-backup-history', $input );
+		$this->assert_output( 'list-backup-history', $before );
+		$this->assertCount( 1, $before['items'] );
+		$this->assertNull( $before['items'][0]['gate_verdict'] );
+		$expected = array( $before['items'][0]['id'] => null );
+		$ids      = array();
+		try {
+			foreach ( array( 'pending_offsite', 'missing' ) as $verdict ) {
+				$id = MainWP_Backup_Run_History::record_gate_override( $this->site_id, $verdict );
+				$this->assertGreaterThan( 0, $id );
+				$ids[]           = $id;
+				$expected[ $id ] = $verdict;
+			}
+			$output = $this->read( 'list-backup-history', $input );
+			$this->assert_output( 'list-backup-history', $output );
+			$this->assertSame( 3, $output['total'] );
+			$actual = array_column( $output['items'], 'gate_verdict', 'id' );
+			ksort( $expected );
+			ksort( $actual );
+			$this->assertSame( $expected, $actual );
+		} finally {
+			foreach ( $ids as $id ) {
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ), array( 'id' => $id ) );
+			}
+		}
+	}
+
+	/**
+	 * Other stored text must not acquire the meaning of an overridden verdict.
+	 *
+	 * @return void
+	 */
+	public function test_history_gate_verdict_is_null_for_unrecognized_or_non_override_messages() {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' );
+		$id    = MainWP_Backup_Run_History::record_gate_override( $this->site_id, 'missing' );
+		$this->assertGreaterThan( 0, $id );
+		try {
+			foreach ( array( '', 'missing', 'backup_pending_offsite /private/raw-error' ) as $message ) {
+				$wpdb->update( $table, array( 'message' => $message ), array( 'id' => $id ) );
+				$output = $this->read(
+					'list-backup-history',
+					array(
+						'site_id_or_domain' => $this->site_id,
+						'outcome'           => 'gate_overridden',
+					)
+				);
+				$this->assert_output( 'list-backup-history', $output );
+				$this->assertCount( 1, $output['items'] );
+				$this->assertNull( $output['items'][0]['gate_verdict'] );
+				$this->assertStringNotContainsString( '/private/raw-error', wp_json_encode( $output ) );
+			}
+			foreach ( array( 'backup_missing', 'backup_pending_offsite' ) as $message ) {
+				$wpdb->update( $table, array( 'message' => $message ), array( 'id' => 987677 ) );
+				$output = $this->read(
+					'list-backup-history',
+					array(
+						'site_id_or_domain' => $this->site_id,
+						'outcome'           => 'failed',
+					)
+				);
+				$this->assert_output( 'list-backup-history', $output );
+				$this->assertCount( 1, $output['items'] );
+				$this->assertNull( $output['items'][0]['gate_verdict'] );
+			}
+		} finally {
+			$wpdb->delete( $table, array( 'id' => $id ) );
 		}
 	}
 

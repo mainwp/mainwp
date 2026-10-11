@@ -9,7 +9,7 @@ The MainWP Abilities API provides a standardized, schema-validated interface for
 
 **Key Features:**
 - 101 abilities across 7 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge, mainwp-backups
-- JSON Schema validation for inputs (outputs documented but not enforced)
+- JSON Schema validation for inputs and outputs; WP_Ability::execute() rejects output that fails its schema with ability_invalid_output
 - Permission callbacks with per-site ACLs
 - Batch operation support with automatic queuing
 - Feature-gated module integration (Cost Tracker, Logs)
@@ -36,7 +36,7 @@ The MainWP Abilities API provides a standardized, schema-validated interface for
    - Abilities API validates input against `input_schema`
    - Calls permission callback (checks `manage_options` + site access)
    - Calls execute callback (delegates to MainWP core logic)
-   - Returns output (documented by `output_schema` for tooling, not enforced at runtime)
+   - Validates output against `output_schema`; rejects invalid output with `ability_invalid_output`
 
 ### File Structure
 
@@ -74,12 +74,12 @@ Each write's `caller_note` describes that write. Omitting it on update clears th
 
 The `mainwp-backups` category has 31 abilities: 13 reads and 18 actions. Reads return stored evidence without contacting a site or advancing a run. Actions require `dry_run: true` for a preview or `confirm: true` to proceed. Passing both is an error. Previews apply the same authorization and refusal rules as confirmation.
 
-Backup abilities require authentication, `manage_options`, the applicable Dashboard right, and access to every target site. Missing and inaccessible targets return the same not-found code. Destination credentials, encryption keys, recovery passphrases, filesystem paths, and download links are excluded from inputs and outputs. Create destinations on the Dashboard; `mainwp/create-backup-destination-v1` is not registered.
+Backup abilities require authentication, `manage_options`, the applicable Dashboard right, and access to every target site. Backup abilities answer a missing or inaccessible target with the same not-found code. Destination credentials, encryption keys, recovery passphrases, filesystem paths, and download links are excluded from inputs and outputs. Create destinations on the Dashboard; `mainwp/create-backup-destination-v1` is not registered.
 
 | Ability | Method | Behavior |
 |---------|--------|----------|
 | `mainwp/get-backup-status-v1` | GET | Reports each site's last known backup, staleness, native health, and update gate verdict. |
-| `mainwp/list-backup-history-v1` | GET | Lists durable per-site run outcomes and gate overrides with provenance and timestamps. |
+| `mainwp/list-backup-history-v1` | GET | Lists durable per-site run outcomes and gate overrides, with the overridden verdict, provenance and timestamps. |
 | `mainwp/list-backup-tasks-v1` | GET | Lists visible tasks with pagination and filters. |
 | `mainwp/get-backup-task-v1` | GET | Returns one task's configuration and current or last run summary. |
 | `mainwp/get-backup-task-run-v1` | GET | Returns stored progress for a task run without driving it. |
@@ -114,7 +114,7 @@ Backup and restore starts continue through cron. Follow the returned `poll.abili
 
 The six update abilities (`run-updates-v1`, `update-all-v1`, and `update-site-{core,plugins,themes,translations}-v1`) check backups when native backups and the global pre-update backup setting are enabled and the site's `backup_before_upgrade` flag is nonzero. A preview includes `would_affect.sites[].backup_gate` with `applies`, `verdict`, and `overridden`. Its summary counts `backup_gate_blocked_sites` and `backup_gate_overridden_sites`.
 
-A non-pass verdict skips eligible items with `backup_missing` or `backup_pending_offsite`. Existing hold reasons take precedence. Multi-site confirmation reports skips; single-site confirmation returns 409 `mainwp_backup_gate_blocked` with `site_id` and `verdict`. Pass `ignore_backup_gate: true` to proceed under the same authorization and hold checks. Immediate results include `backup_gate` as a per-site array for multi-site abilities or an object for single-site abilities. Queued jobs retain the flag, recheck evidence at dispatch time, and expose per-site gate decisions and skip reasons through `get-batch-job-status-v1`.
+A non-pass verdict skips eligible items with `backup_missing` or `backup_pending_offsite`. Existing hold reasons take precedence. Multi-site confirmation reports skips; single-site confirmation returns 409 `mainwp_backup_gate_blocked` with `site_id` and `verdict` when the gate would hold at least one requested item. Pass `ignore_backup_gate: true` to proceed under the same authorization and hold checks. Immediate results include `backup_gate` as a per-site array for multi-site abilities or an object for single-site abilities. Queued jobs retain the flag, recheck evidence at dispatch time, and expose per-site gate decisions and skip reasons through `get-batch-job-status-v1`.
 
 Each site dispatched through an override records one `gate_overridden` history row. Its fixed message is `backup_missing` or `backup_pending_offsite`; `ref` is the queued update job ID, or null for an immediate update. History write failures are logged without interrupting updates. The REST v2 update endpoints retain their existing advisory behavior.
 

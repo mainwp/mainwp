@@ -235,6 +235,7 @@ class MainWP_Updates_Backup_Gate_Test extends MainWP_Abilities_Test_Case {
 		if ( $blocked ) {
 			$this->assertSame( array( 'pending_offsite' === $state ? 'backup_pending_offsite' : 'backup_missing' ), array_values( array_unique( array_column( $entry['skipped'], 'reason' ) ) ) );
 			$this->assertStringContainsString( 'ignore_backup_gate: true', implode( ' ', $result['warnings'] ) );
+			$this->assertStringStartsWith( '1 site has no backup', $result['warnings'][0] );
 		}
 		$this->assertSame( $blocked ? 1 : 0, $result['would_affect']['summary']['backup_gate_blocked_sites'] );
 		$this->assertSame( $override ? 1 : 0, $result['would_affect']['summary']['backup_gate_overridden_sites'] );
@@ -339,7 +340,106 @@ class MainWP_Updates_Backup_Gate_Test extends MainWP_Abilities_Test_Case {
 			foreach ( $result['would_affect']['sites'][0]['skipped'] as $item ) {
 				$this->assertSame( 'translation' === $item['type'] ? 'backup_missing' : 'ignored_site', $item['reason'] );
 			}
+			if ( $type && 'translations' !== $type ) {
+				$this->assertSame( 0, $result['would_affect']['summary']['backup_gate_blocked_sites'] );
+				$this->assertSame( array(), $result['warnings'] );
+			}
 		}
+		if ( ! $type ) {
+			return;
+		}
+		$result = $this->execute_ability( 'mainwp/' . $name . '-v1', $this->input( $type, $id ) + array( 'confirm' => true ) );
+		if ( 'core' === $type ) {
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_no_updates', $result->get_error_code() );
+			$this->assertSame( 404, $result->get_error_data()['status'] );
+		} elseif ( 'translations' === $type ) {
+			// Translations have no hold layer, so this fixture still needs the backup refusal.
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_backup_gate_blocked', $result->get_error_code() );
+			$this->assertSame( 409, $result->get_error_data()['status'] );
+		} else {
+			$this->assertNotWPError( $result );
+			$this->assert_output( $name, $result );
+			$this->assertSame( array(), $result['updated'] );
+			$this->assertSame( array(), $result['errors'] );
+			$this->assertSame( array( 'ignored_site' ), array_column( $result['skipped'], 'reason' ) );
+			$this->assertSame( 1, $result['summary']['total_skipped'] );
+			$this->assertSame( 0, $result['summary']['total_updated'] );
+		}
+		$this->assertSame( array(), $this->calls );
+		$this->assertSame( 0, MainWP_Backup_Run_History::query( array(), 1, 100, array( $id ) )['total'] );
+	}
+
+	/**
+	 * Empty selections must preserve the answer regardless of the blocking verdict.
+	 *
+	 * @return array
+	 */
+	public static function nothing_pending_cases(): array {
+		$fixtures = array();
+		foreach ( self::abilities() as $label => $ability ) {
+			if ( ! $ability[1] ) {
+				continue;
+			}
+			foreach ( array( 'missing', 'pending_offsite' ) as $state ) {
+				$fixtures[ $label . '-' . $state . '-empty' ] = array_merge( $ability, array( $state, false ) );
+				if ( 'core' !== $ability[1] ) {
+					$fixtures[ $label . '-' . $state . '-unmatched-slug' ] = array_merge( $ability, array( $state, true ) );
+				}
+			}
+		}
+		return $fixtures;
+	}
+
+	/**
+	 * A backup refusal must not replace an existing empty-selection result.
+	 *
+	 * @dataProvider nothing_pending_cases
+	 * @param string $name Ability slug.
+	 * @param string $type Single-site type.
+	 * @param string $state Blocking evidence fixture.
+	 * @param bool   $unmatched_slug Whether other slugs remain pending.
+	 */
+	public function test_gate_blocked_site_with_nothing_pending_keeps_existing_answer( $name, $type, $state, $unmatched_slug ) {
+		$id    = $this->site( $type );
+		$input = $this->input( $type, $id );
+		if ( 'pending_offsite' === $state ) {
+			$this->snapshot( $id, $state );
+		}
+		if ( $unmatched_slug ) {
+			$input['slugs'] = array( 'not-pending' );
+		} elseif ( 'core' === $type ) {
+			$this->set_site_option( $id, 'wp_upgrades', wp_json_encode( array() ) );
+		} elseif ( 'plugins' === $type ) {
+			$this->set_site_plugin_upgrades( $id, array() );
+		} elseif ( 'themes' === $type ) {
+			$this->set_site_theme_upgrades( $id, array() );
+		} else {
+			$this->set_site_translation_upgrades( $id, array() );
+		}
+		$preview = $this->execute_ability( 'mainwp/' . $name . '-v1', $input + array( 'dry_run' => true ) );
+		$this->assertNotWPError( $preview );
+		$this->assert_output( $name, $preview );
+		$this->assertSame( 0, $preview['would_affect']['summary']['item_count'] );
+		$this->assertSame( 0, $preview['would_affect']['summary']['backup_gate_blocked_sites'] );
+		$result = $this->execute_ability( 'mainwp/' . $name . '-v1', $input + array( 'confirm' => true ) );
+		if ( 'core' === $type ) {
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_no_updates', $result->get_error_code() );
+			$this->assertSame( 404, $result->get_error_data()['status'] );
+		} else {
+			$this->assertNotWPError( $result );
+			$this->assert_output( $name, $result );
+			$this->assertSame( array(), $result['updated'] );
+			$this->assertSame( array(), $result['errors'] );
+			$this->assertSame( array(), $result['skipped'] );
+			$this->assertSame( $state, $result['backup_gate']['verdict'] );
+			$this->assertTrue( $result['backup_gate']['applies'] );
+			$this->assertFalse( $result['backup_gate']['overridden'] );
+		}
+		$this->assertSame( array(), $this->calls );
+		$this->assertSame( 0, MainWP_Backup_Run_History::query( array(), 1, 100, array( $id ) )['total'] );
 	}
 
 	/**

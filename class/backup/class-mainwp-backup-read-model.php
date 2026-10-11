@@ -1139,6 +1139,13 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( '' === $code && in_array( $row['outcome'], array( 'cancelled', 'reset', 'incomplete' ), true ) ) {
                 $code = 'mainwp_backup_run_' . $row['outcome'];
             }
+            $gate_verdict = null;
+            if ( 'gate_overridden' === $row['outcome'] ) {
+                $gate_verdict = array(
+                    'backup_missing'         => 'missing',
+                    'backup_pending_offsite' => 'pending_offsite',
+                )[ $row['message'] ] ?? null;
+            }
             $failed  = in_array( $row['outcome'], array( 'failed', 'cancelled', 'reset', 'incomplete' ), true );
             $items[] = array(
                 'id'                => (int) $row['id'],
@@ -1149,6 +1156,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'trigger'           => $row['trigger_source'],
                 'initiator_user_id' => (int) $row['initiator_user_id'],
                 'outcome'           => $row['outcome'],
+                'gate_verdict'      => $gate_verdict,
                 'started_at'        => (int) $row['started'],
                 'finished_at'       => (int) $row['finished'],
                 'error'             => $failed ? array( 'code' => $code ) : null,

@@ -1184,10 +1184,11 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array Public destination page.
      */
     public static function list_destinations( string $provider = 'any', int $page = 1, int $per_page = 50 ): array {
-        $items = array();
+        $items                     = array();
+        $visible_task_destinations = self::visible_task_destinations();
         foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $row ) {
             if ( 'any' === $provider || $row->provider === $provider ) {
-                $detail = self::get_destination( (int) $row->id );
+                $detail = self::get_destination( (int) $row->id, $visible_task_destinations );
                 if ( ! is_wp_error( $detail ) ) {
                     $items[] = $detail;
                 }
@@ -1197,12 +1198,33 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Destination totals must not reveal tasks omitted by the caller's task list.
+     *
+     * @return array<int,string>|null Visible task ids and references, or null for unrestricted access.
+     */
+    private static function visible_task_destinations(): ?array {
+        if ( ! is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
+            return null;
+        }
+        $authorized = MainWP_Backup_Operations::authorized_site_ids( '' );
+        $visible    = array();
+        foreach ( MainWP_DB_Backup::instance()->get_backup_tasks_for_user() as $task ) {
+            $sites = MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task );
+            if ( MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) && ! array_diff( $sites, $authorized ) ) {
+                $visible[ (int) $task->id ] = (string) $task->destinations;
+            }
+        }
+        return $visible;
+    }
+
+    /**
      * An allowlist also excludes identifiers and paths the edit form retains.
      *
-     * @param int $id Destination identity.
+     * @param int                    $id Destination identity.
+     * @param array<int,string>|null $visible_task_destinations Precomputed visible task references for a list call.
      * @return array|\WP_Error Public metadata.
      */
-    public static function get_destination( int $id ) {
+    public static function get_destination( int $id, ?array $visible_task_destinations = null ) {
         $row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
         if ( ! $row ) {
             return new \WP_Error( 'mainwp_backup_destination_not_found', '', array( 'status' => 404 ) );
@@ -1224,8 +1246,9 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         $count = 0;
         global $wpdb;
+        $visible_task_destinations = $visible_task_destinations ?? self::visible_task_destinations();
         // Hidden on-demand tasks (template = 1) also store destinations, but no task list shows them.
-        $tasks = $wpdb->get_col( 'SELECT destinations FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup' ) . ' WHERE template = 0' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- only stored destination references are counted, using a fixed table identity.
+        $tasks = $visible_task_destinations ?? $wpdb->get_col( 'SELECT destinations FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup' ) . ' WHERE template = 0' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared -- only stored destination references are counted, using a fixed table identity.
         foreach ( $tasks as $ids ) {
             $count += (int) in_array( $id, self::stored_ids( (string) $ids, true ), true );
         }

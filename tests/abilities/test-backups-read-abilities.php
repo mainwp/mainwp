@@ -1927,3 +1927,151 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 }
+
+/** Dynamic identities keep destination scope tests independent of recorded fixtures. */
+class MainWP_Backups_Destination_Count_Test extends MainWP_Abilities_Test_Case {
+	use Backup_Read_Purity_Guard;
+
+	/**
+	 * Task visibility includes ownership, full run scope and hidden templates.
+	 *
+	 * @return array Destination ids and the visible site id.
+	 */
+	private function seed_counts(): array {
+		$this->set_current_user_as_admin();
+		$site  = $this->create_test_site();
+		$other = $this->create_test_site();
+		$this->create_test_site_sync( $site );
+		$this->create_test_site_sync( $other );
+		$store = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$ids   = array();
+		foreach ( array( 'First count destination', 'Second count destination' ) as $name ) {
+			$ids[] = $store->add_destination(
+				array(
+					'name'     => $name,
+					'provider' => 'local',
+					'settings' => array(),
+				)
+			);
+			$this->assertGreaterThan( 0, end( $ids ) );
+		}
+		$user  = get_current_user_id();
+		$owner = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		global $wpdb;
+		foreach ( array( array( $user, (string) $site, 0 ), array( $user, $site . ',' . $other, 0 ), array( $user, (string) $other, 0 ), array( $owner, (string) $site, 0 ), array( $user, (string) $site, 1 ) ) as $row ) {
+			$this->assertNotFalse(
+				$wpdb->insert(
+					MainWP_DB::instance()->get_table_name( 'wp_backup' ),
+					array(
+						'userid'       => $row[0],
+						'name'         => 'Destination count task',
+						'schedule'     => 'daily',
+						'type'         => 'full',
+						'sites'        => $row[1],
+						'groups'       => '',
+						'template'     => $row[2],
+						'destinations' => wp_json_encode( $ids ),
+					)
+				),
+				$wpdb->last_error
+			);
+		}
+		return array( $ids, $site );
+	}
+
+	/**
+	 * Separate cases keep a list failure from hiding a detail-scope failure.
+	 *
+	 * @return array Read names, scopes and expected counts.
+	 */
+	public static function destination_count_cases(): array {
+		$cases = array();
+		foreach ( array( 'list-backup-destinations', 'get-backup-destination' ) as $name ) {
+			foreach ( array(
+				'all'     => 4,
+				'partial' => 1,
+				'empty'   => 0,
+			) as $scope => $count ) {
+				$cases[ $name . '-' . $scope ] = array( $name, $scope, $count );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Both registered reads must retain their required count field under scope.
+	 *
+	 * @dataProvider destination_count_cases
+	 * @param string $name Read name.
+	 * @param string $kind Scope case.
+	 * @param int    $expected Visible task count.
+	 * @return void
+	 */
+	public function test_destination_counts_follow_visible_tasks( string $name, string $kind, int $expected ): void {
+		list( $ids, $site ) = $this->seed_counts();
+		$scope              = static function () use ( $kind, $site ) {
+			return 'all' === $kind ? 'all' : ( 'partial' === $kind ? array( $site ) : array() );
+		};
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
+		try {
+			$ability = wp_get_ability( 'mainwp/' . $name . '-v1' );
+			$this->assertNotNull( $ability );
+			$output = $this->guarded(
+				static function () use ( $ability, $name, $ids ) {
+					return $ability->execute( 'get-backup-destination' === $name ? array( 'destination_id' => $ids[0] ) : null );
+				}
+			);
+			$this->assertIsArray( $output, is_wp_error( $output ) ? $output->get_error_message() : '' );
+			$this->assertTrue( rest_validate_value_from_schema( $output, $ability->get_output_schema() ) );
+			$items = 'get-backup-destination' === $name ? array( $output ) : $output['items'];
+			$this->assertCount( 'get-backup-destination' === $name ? 1 : 2, $items );
+			foreach ( $items as $item ) {
+				$this->assertSame( $expected, $item['task_count'], $name . ': ' . $kind );
+			}
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+			MainWP_Backup_Operations::reset_authorized_site_ids_memo();
+		}
+	}
+
+	/**
+	 * Each list call must resolve visibility once without retaining another caller's scope.
+	 *
+	 * @return void
+	 */
+	public function test_destination_list_resolves_visible_tasks_once_per_call(): void {
+		list( $ids, $site ) = $this->seed_counts();
+		$scope              = static function () use ( $site ) {
+			return array( $site );
+		};
+		$table              = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$scans              = 0;
+		$query              = static function ( $sql ) use ( $table, &$scans ) {
+			if ( preg_match( '/SELECT\s+\*\s+FROM\s+' . preg_quote( $table, '/' ) . '\b/i', $sql ) ) {
+				++$scans;
+			}
+			return $sql;
+		};
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		add_filter( 'query', $query );
+		MainWP_Backup_Operations::reset_authorized_site_ids_memo();
+		try {
+			$list = \MainWP\Dashboard\MainWP_Backup_Read_Model::list_destinations();
+			$this->assertSame( 1, $scans );
+			$this->assertSame( array( 1, 1 ), array_column( $list['items'], 'task_count' ) );
+			wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+			$list = \MainWP\Dashboard\MainWP_Backup_Read_Model::list_destinations();
+			$this->assertSame( 2, $scans );
+			$this->assertSame( array( 0, 0 ), array_column( $list['items'], 'task_count' ) );
+		} finally {
+			remove_filter( 'query', $query );
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+			MainWP_Backup_Operations::reset_authorized_site_ids_memo();
+		}
+	}
+}

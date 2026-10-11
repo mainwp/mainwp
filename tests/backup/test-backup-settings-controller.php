@@ -343,4 +343,150 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 
 		$this->assertSame( 400, $response->get_status() );
 	}
+
+	/**
+	 * Machine authentication must not bypass a withheld Dashboard settings right.
+	 *
+	 * @return void
+	 */
+	public function test_backups_edit_requires_dashboard_settings_right(): void {
+		$options = array(
+			'mainwp_enableNativeBackups'       => 0,
+			'mainwp_enableLegacyBackupFeature' => 0,
+			'mainwp_primaryBackup'             => 'old-provider',
+			'mainwp_on_demand_retention_count' => 5,
+		);
+		foreach ( $options as $option => $value ) {
+			update_option( $option, $value );
+		}
+		$deny = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'manage_dashboard_settings' === $right ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		$writes = array();
+		$track  = static function ( $value, $option ) use ( &$writes ) {
+			$writes[] = $option;
+			return $value;
+		};
+		add_filter( 'pre_update_option', $track, 10, 2 );
+		try {
+			$response = $this->do_authenticated_request(
+				'PUT',
+				'/mainwp/v2/settings/backups/edit',
+				array(
+					'mainwp_enable_native_backups'     => 1,
+					'mainwp_primary_backup'            => '',
+					'mainwp_on_demand_retention_count' => 7,
+				)
+			);
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny );
+			remove_filter( 'pre_update_option', $track );
+		}
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'mainwp_insufficient_right', $response->get_data()['code'] );
+		$this->assertSame( 'Your role does not permit this operation.', $response->get_data()['message'] );
+		$this->assertSame(
+			array(
+				'status' => 403,
+				'right'  => 'manage_dashboard_settings',
+			),
+			$response->get_data()['data']
+		);
+		$this->assertSame( array(), $writes );
+		foreach ( $options as $option => $value ) {
+			$this->assertSame( (string) $value, (string) get_option( $option ), $option );
+		}
+	}
+
+	/**
+	 * The effective old flag may still live under its rollback name.
+	 *
+	 * @return array Flag transition cases.
+	 */
+	public static function native_transitions(): array {
+		return array(
+			'enable'              => array( 0, 0, 1, false, '' ),
+			'enable with primary' => array( 0, 0, 1, true, '' ),
+			'legacy off'          => array( null, 0, 1, true, '' ),
+			'already enabled'     => array( 1, 1, 1, true, '' ),
+			'legacy on'           => array( null, 1, 1, true, '' ),
+			'disable'             => array( 1, 1, 0, false, 'old-provider' ),
+		);
+	}
+
+	/**
+	 * Enabling native backups must override a primary value in the same body.
+	 *
+	 * @dataProvider native_transitions
+	 * @param int|null $old_native Stored native flag, or absent.
+	 * @param int      $old_legacy Rollback flag.
+	 * @param int      $new_flag Requested native flag.
+	 * @param bool     $set_primary Whether the body also sets a primary method.
+	 * @param string   $expected_primary Expected resulting primary method.
+	 * @return void
+	 */
+	public function test_backups_edit_native_transition( $old_native, int $old_legacy, int $new_flag, bool $set_primary, string $expected_primary ): void {
+		if ( null === $old_native ) {
+			delete_option( 'mainwp_enableNativeBackups' );
+		} else {
+			update_option( 'mainwp_enableNativeBackups', $old_native );
+		}
+		update_option( 'mainwp_enableLegacyBackupFeature', $old_legacy );
+		update_option( 'mainwp_primaryBackup', 'old-provider' );
+		$body = array( 'mainwp_enable_native_backups' => $new_flag );
+		if ( $set_primary ) {
+			$body['mainwp_primary_backup'] = '';
+		}
+		$primary_updates = array();
+		$track           = static function ( $value ) use ( &$primary_updates ) {
+			$primary_updates[] = $value;
+			return $value;
+		};
+		add_filter( 'pre_update_option_mainwp_primaryBackup', $track );
+		try {
+			$response = $this->do_authenticated_request( 'PUT', '/mainwp/v2/settings/backups/edit', $body );
+		} finally {
+			remove_filter( 'pre_update_option_mainwp_primaryBackup', $track );
+		}
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( $new_flag, (int) get_option( 'mainwp_enableNativeBackups' ) );
+		$this->assertSame( $new_flag, (int) get_option( 'mainwp_enableLegacyBackupFeature' ) );
+		$this->assertSame( $expected_primary, get_option( 'mainwp_primaryBackup' ) );
+		$expected_updates = (int) $set_primary + (int) ( $new_flag && ! ( null === $old_native ? $old_legacy : $old_native ) );
+		$this->assertSame( array_fill( 0, $expected_updates, '' ), $primary_updates );
+		$this->assertSame( 1, $response->get_data()['success'] );
+	}
+	/**
+	 * Turning native backups on clears a stored API-backups primary, as the ability does,
+	 * while a body that asks for both stays refused and general/edit keeps its rule.
+	 *
+	 * @return void
+	 */
+	public function test_backups_edit_enables_native_over_stored_api_backups_primary(): void {
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		update_option( 'mainwp_enableLegacyBackupFeature', 0 );
+		update_option( 'mainwp_primaryBackup', 'module-api-backups' );
+
+		$both = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/settings/backups/edit',
+			array(
+				'mainwp_enable_native_backups' => 1,
+				'mainwp_primary_backup'        => 'module-api-backups',
+			)
+		);
+		$this->assertSame( 400, $both->get_status() );
+		$this->assertSame( 'module-api-backups', get_option( 'mainwp_primaryBackup' ) );
+
+		$general = $this->do_authenticated_request( 'PUT', '/mainwp/v2/settings/general/edit', array( 'mainwp_enable_native_backups' => 1 ) );
+		$this->assertSame( 400, $general->get_status() );
+		$this->assertSame( 0, (int) get_option( 'mainwp_enableNativeBackups' ) );
+
+		$response = $this->do_authenticated_request( 'PUT', '/mainwp/v2/settings/backups/edit', array( 'mainwp_enable_native_backups' => 1 ) );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 1, (int) get_option( 'mainwp_enableNativeBackups' ) );
+		$this->assertSame( 1, (int) get_option( 'mainwp_enableLegacyBackupFeature' ) );
+		$this->assertSame( '', get_option( 'mainwp_primaryBackup' ) );
+	}
 }

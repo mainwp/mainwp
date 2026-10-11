@@ -35,8 +35,10 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
             return;
         }
 
+        $restricted = is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() );
         MainWP_Backup_Page::render_header( 'Storage' );
         ?>
+        <?php if ( ! $restricted ) : ?>
         <div class="mainwp-actions-bar">
             <div class="ui mini form">
                 <div class="ui stackable grid">
@@ -49,19 +51,28 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 </div>
             </div>
         </div>
+        <?php endif; ?>
         <div class="ui padded segment" id="mainwp-backup-storage">
             <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-storage-info-message', __( 'Storage destinations are where backup tasks copy their backups after each run. Choose them on each backup task.', 'mainwp' ) ); ?>
             <?php static::render_oauth_notice(); ?>
             <?php if ( ! empty( $_GET['sftp_trust_reset'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only save notice. ?>
                 <div class="ui yellow message"><?php echo esc_html( MainWP_Backup_Storage_Handler::sftp_trust_reset_notice() ); ?></div>
             <?php endif; ?>
-            <div class="ui message" id="mainwp-storage-message-zone" style="display:none"></div>
-            <?php static::render_list_table(); ?>
-            <div class="ui hidden divider"></div>
-            <?php static::render_form(); ?>
+            <?php if ( $restricted ) : ?>
+                <div id="mainwp-storage-message-zone"><div class="ui message"><?php esc_html_e( 'Storage destinations are shared by the whole Dashboard, so accounts limited to some sites can view them but not change them.', 'mainwp' ); ?></div></div>
+            <?php else : ?>
+                <div class="ui message" id="mainwp-storage-message-zone" style="display:none"></div>
+            <?php endif; ?>
+            <?php static::render_list_table( $restricted ); ?>
+            <?php if ( ! $restricted ) : ?>
+                <div class="ui hidden divider"></div>
+                <?php static::render_form(); ?>
+            <?php endif; ?>
         </div>
         <?php
-        self::render_scripts();
+        if ( ! $restricted ) {
+            self::render_scripts();
+        }
         MainWP_Backup_Page::render_footer( 'Storage' );
     }
 
@@ -105,9 +116,10 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
      * Render the destinations table. Settings never load here, so no
      * secret can reach the page.
      *
+     * @param bool $restricted Whether the caller has limited site access.
      * @return void
      */
-    public static function render_list_table(): void {
+    public static function render_list_table( bool $restricted = false ): void {
         $destinations    = MainWP_Backup_Storage_Destinations::instance()->list_destinations();
         $provider_labels = static::provider_labels();
         ?>
@@ -134,14 +146,16 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     <td>
                         <?php if ( ! empty( $destination->is_default ) ) : ?>
                             <span class="ui small green label"><?php esc_html_e( 'Default', 'mainwp' ); ?></span>
-                        <?php else : ?>
+                        <?php elseif ( ! $restricted ) : ?>
                             <a href="#" class="mainwp-storage-make-default"><?php esc_html_e( 'Make default', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </td>
                     <td class="collapsing">
+                        <?php if ( ! $restricted ) : ?>
                         <button type="button" class="ui mini button mainwp-storage-edit"><?php esc_html_e( 'Edit', 'mainwp' ); ?></button>
                         <button type="button" class="ui mini button mainwp-storage-test"><?php esc_html_e( 'Test', 'mainwp' ); ?></button>
                         <button type="button" class="ui mini icon basic button mainwp-storage-delete" aria-label="<?php esc_attr_e( 'Delete', 'mainwp' ); ?>" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete this destination.', 'mainwp' ); ?>"><i class="trash icon"></i></button>
+                        <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>

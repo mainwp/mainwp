@@ -29,6 +29,7 @@ use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit;
 use MainWP\Dashboard\MainWP_Credential_Render;
 use MainWP\Dashboard\MainWP_Backup_Settings;
+use MainWP\Dashboard\MainWP_Backup_Operations;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -363,7 +364,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'callback'            => array( $this, 'update_backup_settings' ),
                 'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                 'args'                => $this->get_update_backup_allowed_fields(),
-                'validate_callback'   => array( $this, 'validate_update_general_params' ),
+                'validate_callback'   => array( $this, 'validate_update_backup_params' ),
             ),
         );
 
@@ -1629,6 +1630,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_backup_settings( $request ) {
+        $permission = MainWP_Backup_Operations::authorize_base( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1642,13 +1647,19 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
         $body = $this->fold_native_backups_alias( $body );
 
+        $native_was_enabled = MainWP_Backup_Settings::is_native_backups_enabled();
         try {
             $update_if_present = function ( $key, $option_name, $cast = null ) use ( $body ) {
                 return $this->update_option_if_present( $body, $key, $option_name, $cast );
             };
 
             $update_if_present( 'mainwp_primary_backup', 'mainwp_primaryBackup', 'string' );
-            $update_if_present( 'mainwp_enable_legacy_backup_feature', 'mainwp_enableNativeBackups', 'int' );
+            if ( array_key_exists( 'mainwp_enable_legacy_backup_feature', $body ) ) {
+                if ( ! empty( $body['mainwp_enable_legacy_backup_feature'] ) && ! $native_was_enabled ) {
+                    MainWP_Utility::update_option( 'mainwp_primaryBackup', '' );
+                }
+                MainWP_Backup_Settings::update_native_backups_option( $body['mainwp_enable_legacy_backup_feature'] );
+            }
             $update_if_present( 'mainwp_backups_on_server', 'mainwp_backupsOnServer', 'string' );
             $update_if_present( 'mainwp_backup_on_external_sources', 'mainwp_backupOnExternalSources', 'string' );
             $update_if_present( 'mainwp_archive_format', 'mainwp_archiveFormat', 'string' );
@@ -4057,6 +4068,30 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             __( 'Invalid time. Use whole hours in 24h format like 0:00, 9:00, 23:00, etc...', 'mainwp' ),
             array( 'status' => 400 )
         );
+    }
+
+    /**
+     * Validate update backup params.
+     *
+     * Turning native backups on here clears the stored primary backup method,
+     * as update-backup-settings-v1 does, so a stored API-backups primary must
+     * not refuse that request. A primary sent in the same body still counts.
+     *
+     * @param WP_REST_Request $request Request object.
+     *
+     * @return bool|WP_Error
+     */
+    public function validate_update_backup_params( $request ) {
+        $flag = $request->get_param( 'mainwp_enable_legacy_backup_feature' );
+        if ( null === $flag ) {
+            $flag = $request->get_param( 'mainwp_enable_native_backups' );
+        }
+        if ( null === $request->get_param( 'mainwp_primary_backup' ) && ! empty( $flag ) && ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            $check = clone $request;
+            $check->set_param( 'mainwp_primary_backup', '' );
+            return $this->validate_update_general_params( $check );
+        }
+        return $this->validate_update_general_params( $request );
     }
 
     /**

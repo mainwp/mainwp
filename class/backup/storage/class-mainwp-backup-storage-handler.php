@@ -100,6 +100,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     public function ajax_dropbox_oauth_start() {
         $this->secure_request( 'mainwp_dropbox_oauth_start' );
         $this->check_permission();
+        $this->check_unrestricted_permission();
         die( wp_json_encode( static::start_dropbox_oauth( $this->read_destination_input() ) ) );
     }
 
@@ -252,7 +253,10 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $state = strtolower( sanitize_key( wp_unslash( $_GET['state'] ) ) );
         $code  = isset( $_GET['code'] ) ? sanitize_text_field( wp_unslash( $_GET['code'] ) ) : '';
 
-        if ( isset( $_GET['error'] ) ) {
+        $refusal = $this->check_unrestricted_permission( false );
+        if ( null !== $refusal ) {
+            $result = $refusal;
+        } elseif ( isset( $_GET['error'] ) ) {
             // The user declined on the Dropbox side; consume the stash anyway.
             static::complete_dropbox_oauth( $state, '' );
             $result = array( 'error' => esc_html__( 'The Dropbox authorization was declined. Nothing was saved.', 'mainwp' ) );
@@ -290,6 +294,23 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         if ( ! \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
             die( wp_json_encode( array( 'error' => esc_html__( 'Insufficient permissions to manage backup storage.', 'mainwp' ) ) ) );
         }
+    }
+
+    /**
+     * Shared destinations can affect tasks outside a restricted user's scope.
+     *
+     * @param bool $ajax Whether refusal must end the AJAX response.
+     * @return array|null Refusal for the OAuth notice, or null when allowed.
+     */
+    private function check_unrestricted_permission( bool $ajax = true ): ?array {
+        if ( ! is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
+            return null;
+        }
+        $refusal = array( 'error' => esc_html__( 'Storage destinations are shared by the whole Dashboard. Accounts limited to some sites cannot change them.', 'mainwp' ) );
+        if ( $ajax ) {
+            die( wp_json_encode( $refusal ) );
+        }
+        return $refusal;
     }
 
     /**
@@ -335,6 +356,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     public function ajax_storage_save() {
         $this->secure_request( 'mainwp_storage_save' );
         $this->check_permission();
+        $this->check_unrestricted_permission();
         die( wp_json_encode( static::save_destination( $this->read_destination_input() ) ) );
     }
 
@@ -346,6 +368,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     public function ajax_storage_test() {
         $this->secure_request( 'mainwp_storage_test' );
         $this->check_permission();
+        $this->check_unrestricted_permission();
         die( wp_json_encode( static::test_saved_or_submitted( $this->read_destination_input() ) ) );
     }
 
@@ -373,6 +396,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     public function ajax_storage_delete() {
         $this->secure_request( 'mainwp_storage_delete' );
         $this->check_permission();
+        $this->check_unrestricted_permission();
         // phpcs:disable WordPress.Security.NonceVerification.Missing -- verified by secure_request.
         $id        = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
         $confirmed = isset( $_POST['confirmed'] ) && '1' === $_POST['confirmed'];
@@ -430,6 +454,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     public function ajax_storage_default() {
         $this->secure_request( 'mainwp_storage_default' );
         $this->check_permission();
+        $this->check_unrestricted_permission();
         $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request.
         die( wp_json_encode( static::set_default_destination( $id ) ) );
     }

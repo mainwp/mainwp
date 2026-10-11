@@ -62,7 +62,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param string $right Granular operation right, or empty for summary reads.
      * @return true|\WP_Error
      */
-    private static function authorize_base( string $right ) {
+    public static function authorize_base( string $right ) {
         if ( ! self::userless_cli() ) {
             $base = MainWP_Abilities_Util::check_rest_api_permission();
             if ( is_wp_error( $base ) ) {

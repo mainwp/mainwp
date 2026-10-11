@@ -1478,7 +1478,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * Stores job data in a transient and schedules a cron event for processing.
      *
      * @param array $sites         Array of site objects to update.
-     * @param array $update_params Update parameters with keys: types (array), specific_items (array).
+     * @param array $update_params Update selection and optional ignore_backup_gate flag.
      * @return string|\WP_Error Job ID for status polling, or WP_Error on failure.
      */
     public static function queue_batch_updates( array $sites, array $update_params ) {
@@ -1513,22 +1513,23 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         // Structure aligns with REST v2 job status endpoint expectations.
         // Status values: 'queued' -> 'processing' -> 'completed' | 'failed'.
         $job_data = array(
-            'job_type'        => 'update',            // Distinguishes from 'sync' jobs.
-            'user_id'         => get_current_user_id(), // Polling must enforce ownership.
-            'sites'           => $site_ids,
-            'types'           => $types,
-            'specific_items'  => $specific_items,
+            'job_type'           => 'update',            // Distinguishes from 'sync' jobs.
+            'user_id'            => get_current_user_id(), // Polling must enforce ownership.
+            'sites'              => $site_ids,
+            'types'              => $types,
+            'specific_items'     => $specific_items,
+            'ignore_backup_gate' => self::get_boolean_input( $update_params, 'ignore_backup_gate' ),
             // Rights can change between chunks; empty types require every update right.
-            'required_rights' => self::required_rights_for_ability( 'mainwp/run-updates-v1', array( 'types' => $types ) ),
-            'status'          => 'queued',            // queued | processing | completed | failed.
-            'created'         => time(),
-            'started'         => null,
-            'completed'       => null,
-            'updated'         => array(),             // Successful updates array.
-            'errors'          => array(),             // Failed updates array.
-            'progress'        => 0,                   // 0-100 percentage.
-            'total'           => count( $site_ids ),  // Total sites to process.
-            'processed'       => 0,                   // Sites processed so far.
+            'required_rights'    => self::required_rights_for_ability( 'mainwp/run-updates-v1', array( 'types' => $types ) ),
+            'status'             => 'queued',            // queued | processing | completed | failed.
+            'created'            => time(),
+            'started'            => null,
+            'completed'          => null,
+            'updated'            => array(),             // Successful updates array.
+            'errors'             => array(),             // Failed updates array.
+            'progress'           => 0,                   // 0-100 percentage.
+            'total'              => count( $site_ids ),  // Total sites to process.
+            'processed'          => 0,                   // Sites processed so far.
         );
 
         set_transient( 'mainwp_update_job_' . $job_id, $job_data, DAY_IN_SECONDS );

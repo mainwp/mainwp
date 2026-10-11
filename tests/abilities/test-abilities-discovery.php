@@ -160,6 +160,16 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 		);
 
 		$this->assertNotContains( 'mainwp/create-backup-destination-v1', $ability_names );
+		$backup_abilities = array_filter(
+			$mainwp_abilities,
+			static function ( $ability ) {
+				return 'mainwp-backups' === $ability->get_category();
+			}
+		);
+		$this->assertCount( 31, $backup_abilities );
+		foreach ( array_slice( $expected, 0, 31 ) as $name ) {
+			$this->assertSame( 'mainwp-backups', wp_get_ability( $name )->get_category(), $name );
+		}
 
 		foreach ( $expected as $name ) {
 			$this->assertContains(

@@ -130,7 +130,7 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
                 'skipped'           => array(
                     'type'        => 'object',
-                    'description' => __( 'Updates held back at dispatch time because a hold applied.', 'mainwp' ),
+                    'description' => __( 'Updates held back at dispatch time because a hold or the backup gate applied.', 'mainwp' ),
                     'properties'  => array(
                         'count' => array(
                             'type'    => 'integer',
@@ -149,8 +149,8 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
                                     'slug'    => array( 'type' => 'string' ),
                                     'reason'  => array(
                                         'type'        => 'string',
-                                        'enum'        => array( 'ignored_site', 'ignored_global', 'ignored_site_flag' ),
-                                        'description' => __( 'Which hold applies. ignored_site: the site\'s own ignore list. ignored_global: the global ignore list. ignored_site_flag: the site ignores every update of this type. The first matching layer wins, in that order.', 'mainwp' ),
+                                        'enum'        => array( 'ignored_site', 'ignored_global', 'ignored_site_flag', 'backup_missing', 'backup_pending_offsite' ),
+                                        'description' => __( 'Which hold applies. ignored_site: the site\'s own ignore list. ignored_global: the global ignore list. ignored_site_flag: the site ignores every update of this type. The first matching layer wins, in that order. backup_missing and backup_pending_offsite: the site\'s pre-update backup check is not met; checked after the hold layers.', 'mainwp' ),
                                     ),
                                 ),
                                 'required'   => array( 'site_id', 'type', 'slug', 'reason' ),
@@ -158,6 +158,23 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
                         ),
                     ),
                     'required'    => array( 'count', 'items' ),
+                ),
+                'backup_gate'       => array(
+                    'type'  => 'array',
+                    'items' => array(
+                        'type'                 => 'object',
+                        'additionalProperties' => false,
+                        'properties'           => array(
+                            'site_id'    => array( 'type' => 'integer' ),
+                            'applies'    => array( 'type' => 'boolean' ),
+                            'verdict'    => array(
+                                'type' => 'string',
+                                'enum' => array( 'pass', 'pending_offsite', 'missing', 'not_applicable' ),
+                            ),
+                            'overridden' => array( 'type' => 'boolean' ),
+                        ),
+                        'required'             => array( 'site_id', 'applies', 'verdict', 'overridden' ),
+                    ),
                 ),
                 'unchanged'         => array(
                     'type'        => 'integer',
@@ -392,6 +409,7 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
                 'items' => $skipped_items,
             ),
             'unchanged'    => $unchanged,
+            'backup_gate'  => isset( $job_data['backup_gate'] ) && is_array( $job_data['backup_gate'] ) ? array_values( $job_data['backup_gate'] ) : array(),
             'started_at'   => $started_at,
             'completed_at' => $completed_at,
             'errors'       => $normalized_errors,

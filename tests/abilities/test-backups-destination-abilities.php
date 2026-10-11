@@ -244,6 +244,96 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 	}
 
 	/**
+	 * Global destinations can affect tasks outside the caller's site scope.
+	 *
+	 * @return array
+	 */
+	public static function restricted_action_requests() {
+		$requests = array();
+		foreach ( self::actions() as $action ) {
+			foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+				foreach ( array( 'permission', 'callback', 'REST' ) as $transport ) {
+					$requests[ $action[0] . '/' . $mode . '/' . $transport ] = array( $action[0], $mode, $transport );
+				}
+			}
+		}
+		return $requests;
+	}
+
+	/**
+	 * Site restrictions must protect global storage before any destination lookup.
+	 *
+	 * @dataProvider restricted_action_requests
+	 * @param string $name Action slug.
+	 * @param string $mode Consent path.
+	 * @param string $transport Entry point.
+	 */
+	public function test_restricted_account_is_refused_before_storage( $name, $mode, $transport ) {
+		$store         = MainWP_Backup_Storage_Destinations::instance();
+		$before        = $store->list_destinations();
+		$table         = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$storage_calls = 0;
+		$observe       = static function ( $sql ) use ( $table, &$storage_calls ) {
+			if ( false !== strpos( $sql, $table ) ) {
+				++$storage_calls;
+			}
+			return $sql;
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );
+		add_filter( 'query', $observe );
+		try {
+			$input = $this->input( $name ) + array( $mode => true );
+			if ( 'REST' === $transport ) {
+				$response = $this->rest( $name, $input );
+				$code     = $response->get_data()['code'] ?? null;
+				$status   = $response->get_status();
+			} else {
+				$output = 'permission' === $transport ? $this->ability( $name )->check_permissions( $input ) : $this->execute( $name, $input, true );
+				$code   = is_wp_error( $output ) ? $output->get_error_code() : null;
+				$status = is_wp_error( $output ) ? $output->get_error_data()['status'] : null;
+			}
+		} finally {
+			remove_filter( 'query', $observe );
+			remove_filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );
+		}
+		$this->assertSame( 'mainwp_restricted_account', $code );
+		$this->assertSame( 403, $status );
+		$this->assertSame( 0, $storage_calls, 'A restricted action reached destination storage.' );
+		$this->assertEquals( $before, $store->list_destinations(), 'A restricted action changed destination rows.' );
+	}
+
+	/**
+	 * Delete previews can disclose tasks belonging to sites the caller cannot access.
+	 *
+	 * @dataProvider transports
+	 * @param bool $rest Use the REST run route.
+	 */
+	public function test_restricted_delete_preview_does_not_disclose_out_of_scope_task( $rest ) {
+		$task = MainWP_Backup_Operations::create_task(
+			array(
+				'name'     => 'Out-of-scope destination task',
+				'type'     => 'full',
+				'schedule' => 'daily',
+				'site_ids' => array( $this->create_test_site() ),
+			),
+			'ability'
+		);
+		$this->assertIsArray( $task );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $task['task_id'], array( 'destinations' => wp_json_encode( array( $this->id ) ) ) );
+		add_filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );
+		try {
+			$input  = $this->input( 'delete-backup-destination' ) + array( 'dry_run' => true );
+			$output = $rest ? $this->rest( 'delete-backup-destination', $input )->get_data() : $this->execute( 'delete-backup-destination', $input, true );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );
+		}
+		$text = wp_json_encode( $output );
+		$this->assertStringNotContainsString( 'Out-of-scope destination task', $text );
+		$this->assertDoesNotMatchRegularExpression( '/"task_id":' . $task['task_id'] . '(?:[,}])/', $text );
+		$this->assertSame( wp_json_encode( array( $this->id ) ), MainWP_DB_Backup::instance()->get_backup_task_by_id( $task['task_id'] )->destinations );
+	}
+
+	/**
 	 * Undocumented fields must stop before the adapter.
 	 *
 	 * @dataProvider actions

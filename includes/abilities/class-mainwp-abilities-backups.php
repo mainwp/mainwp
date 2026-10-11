@@ -2364,7 +2364,18 @@ class MainWP_Abilities_Backups {
                 )
             );
         }
-        if ( 'mainwp/update-backup-settings-v1' === $ability ) {
+        // Global settings and destinations can affect tasks outside the caller's site scope.
+        if ( in_array(
+            $ability,
+            array(
+                'mainwp/test-backup-destination-v1',
+                'mainwp/set-default-backup-destination-v1',
+                'mainwp/update-backup-destination-v1',
+                'mainwp/delete-backup-destination-v1',
+                'mainwp/update-backup-settings-v1',
+            ),
+            true
+        ) ) {
             $scope = MainWP_Abilities_Util::check_unrestricted_access();
             if ( is_wp_error( $scope ) ) {
                 return self::safe_wp_error( $scope );
@@ -5363,7 +5374,7 @@ class MainWP_Abilities_Backups {
             'mainwp/test-backup-destination-v1',
             array(
                 'label'               => __( 'Test Backup Destination', 'mainwp' ),
-                'description'         => __( 'Run the stored destination\'s connection test. Writes and deletes a probe object; for SFTP without a pinned host key it pins the key on first contact. Takes no settings: credentials stay in the Dashboard. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'description'         => __( 'Run the stored destination\'s connection test. Writes and deletes a probe object; for SFTP without a pinned host key it pins the key on first contact. Takes no settings: credentials stay in the Dashboard. Requires an account with access to all sites. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled, mainwp_restricted_account.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::test_backup_destination_input_schema(),
@@ -5399,7 +5410,7 @@ class MainWP_Abilities_Backups {
             'mainwp/set-default-backup-destination-v1',
             array(
                 'label'               => __( 'Set Default Backup Destination', 'mainwp' ),
-                'description'         => __( 'Make one destination the default: the one preselected when a backup task is created on the Backups page. Existing tasks keep their destinations. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'description'         => __( 'Make one destination the default: the one preselected when a backup task is created on the Backups page. Existing tasks keep their destinations. Requires an account with access to all sites. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled, mainwp_restricted_account.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::set_default_backup_destination_input_schema(),
@@ -5435,7 +5446,7 @@ class MainWP_Abilities_Backups {
             'mainwp/update-backup-destination-v1',
             array(
                 'label'               => __( 'Update Backup Destination', 'mainwp' ),
-                'description'         => __( 'Rename a destination or change its default flag. Nothing else can be changed here: credentials, hosts, buckets and paths are edited on the Backup Storage page. The stored connection is tested before saving, and an SFTP destination without a pinned host key pins the key on first contact. Possible errors: mainwp_invalid_input, mainwp_backup_destination_not_found, mainwp_backup_destination_credentials_required, mainwp_backup_legacy_disabled, and the provider\'s failure code when the connection test fails.', 'mainwp' ),
+                'description'         => __( 'Rename a destination or change its default flag. Nothing else can be changed here: credentials, hosts, buckets and paths are edited on the Backup Storage page. The stored connection is tested before saving, and an SFTP destination without a pinned host key pins the key on first contact. Requires an account with access to all sites. Possible errors: mainwp_invalid_input, mainwp_backup_destination_not_found, mainwp_backup_destination_credentials_required, mainwp_backup_legacy_disabled, mainwp_restricted_account, and the provider\'s failure code when the connection test fails.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::update_backup_destination_input_schema(),
@@ -5471,7 +5482,7 @@ class MainWP_Abilities_Backups {
             'mainwp/delete-backup-destination-v1',
             array(
                 'label'               => __( 'Delete Backup Destination', 'mainwp' ),
-                'description'         => __( 'Remove a destination from the Dashboard: tasks that used it are detached, and its pending uploads and pending cloud deletions are failed. Objects already stored at the destination are left in place. dry_run lists the tasks and jobs affected. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled.', 'mainwp' ),
+                'description'         => __( 'Remove a destination from the Dashboard: tasks that used it are detached, and its pending uploads and pending cloud deletions are failed. Objects already stored at the destination are left in place. dry_run lists the tasks and jobs affected. Requires an account with access to all sites. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled, mainwp_restricted_account.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::delete_backup_destination_input_schema(),

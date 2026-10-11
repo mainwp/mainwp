@@ -139,6 +139,48 @@ class MainWP_Backup_Run_History {
     }
 
     /**
+     * An override has no backup run to finalize, but must keep the initiating user.
+     *
+     * @param int         $site_id Site admitted by the override.
+     * @param string      $verdict Gate evidence at dispatch time.
+     * @param string|null $ref Queued update identity, null for immediate updates.
+     * @return int Row identity, zero when history could not be written.
+     */
+    public static function record_gate_override( int $site_id, string $verdict, ?string $ref = null ): int {
+        $messages = array(
+            'missing'         => 'backup_missing',
+            'pending_offsite' => 'backup_pending_offsite',
+        );
+        if ( ! isset( $messages[ $verdict ] ) || ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            return 0;
+        }
+        return (int) self::write(
+            static function () use ( $site_id, $verdict, $ref, $messages ) {
+                global $wpdb;
+                $now      = time();
+                $inserted = $wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- durable override evidence uses the same contained writer as backup runs.
+                    self::table_name(),
+                    array(
+                        'task_id'           => 0,
+                        'site_id'           => $site_id,
+                        'started'           => $now,
+                        'finished'          => $now,
+                        'trigger_source'    => 'ability',
+                        'initiator_user_id' => get_current_user_id(),
+                        'outcome'           => 'gate_overridden',
+                        'error_code'        => '',
+                        'message'           => $messages[ $verdict ],
+                        'ref'               => $ref,
+                    ),
+                    array( '%d', '%d', '%d', '%d', '%s', '%d', '%s', '%s', '%s', '%s' )
+                );
+                return false === $inserted ? false : (int) $wpdb->insert_id;
+            },
+            'gate override'
+        );
+    }
+
+    /**
      * The first terminal observation wins, even if a later poll disagrees.
      *
      * @param int      $id History identity.
@@ -346,9 +388,10 @@ class MainWP_Backup_Run_History {
             throw new \RuntimeException( 'Backup history could not be read.' );
         }
         foreach ( $items as &$item ) {
-            $item['error'] = '' !== $item['error_code'] ? MainWP_Backup_Operations::safe_error( $item['error_code'] ) : null;
+            $item['error']    = '' !== $item['error_code'] ? MainWP_Backup_Operations::safe_error( $item['error_code'] ) : null;
+            $override_message = 'gate_overridden' === $item['outcome'] && in_array( $item['message'], array( 'backup_missing', 'backup_pending_offsite' ), true ) ? $item['message'] : '';
             // Old rows may predate the safe-message contract; reads rebuild it too.
-            $item['message'] = $item['error']['message'] ?? ( 'completed' === $item['outcome'] && 'update_gate' === $item['trigger_source'] ? 'Pre-update backup downloaded; no snapshot recorded.' : '' );
+            $item['message'] = $item['error']['message'] ?? ( 'completed' === $item['outcome'] && 'update_gate' === $item['trigger_source'] ? 'Pre-update backup downloaded; no snapshot recorded.' : $override_message );
         }
         return array(
             'items' => $items,

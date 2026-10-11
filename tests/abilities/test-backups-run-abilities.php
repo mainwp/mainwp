@@ -477,10 +477,15 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$task_id = 'run-backup-task' === $name ? $this->task_id : (int) MainWP_DB_Backup::instance()->get_manual_backup_task( $this->site_id )->id;
 		$before  = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $this->site_id );
 		$this->assertNotEmpty( $before->child_backup_task_id );
+		$polls_before = $this->polls;
 		do_action( 'mainwp_native_backup_continue_action' );
 		$after = MainWP_DB_Backup::instance()->get_backup_task_progress( $task_id, $this->site_id );
+		// How many Child status calls fit in one slice depends on the runner's
+		// clock, so the proof is that cron itself drove the Child and the row
+		// moved, not which mocked phase it reached.
+		$this->assertGreaterThan( $polls_before, $this->polls, 'The continue action must drive the Child without a poll.' );
 		$this->assertNotSame( $before->child_phase, $after->child_phase );
-		$this->assertSame( 'archiving_files', $after->child_phase );
+		$this->assertContains( $after->child_phase, array( 'db_dump', 'archiving_files' ) );
 	}
 
 	/**

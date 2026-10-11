@@ -762,14 +762,20 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         if ( null === $reason ) {
             return;
         }
-        MainWP_DB_Backup::instance()->update_backup_task_with_values(
+        $updated = MainWP_DB_Backup::instance()->update_backup_task_with_values(
             $task->id,
             array(
                 'paused'    => 1,
                 'completed' => max( (int) $task->completed, (int) $task->last_run ),
             )
         );
-        MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'incomplete' );
+        // A refused pause leaves the driver responsible for this run's outcome.
+        if ( false !== $updated ) {
+            $closed = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+            if ( ! empty( $closed ) && 1 === (int) $closed->paused && (int) $closed->completed >= (int) $task->last_run ) {
+                MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'incomplete' );
+            }
+        }
         MainWP_DB_Backup::instance()->update_backup_notices(
             $task->id,
             esc_html__( 'This task was paused because its owner\'s site access changed or could not be confirmed. Re-save the task to confirm its scope, then resume it.', 'mainwp' ) . '<br />'

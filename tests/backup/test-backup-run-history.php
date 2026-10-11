@@ -514,6 +514,100 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A refused task close leaves the driver able to record the real outcome.
+	 *
+	 * @dataProvider refused_task_close_lanes
+	 * @param string $lane Reset or scope pause.
+	 * @param bool   $success Later Child verdict.
+	 */
+	public function test_refused_task_close_preserves_history_for_driver( string $lane, bool $success ): void {
+		global $wpdb;
+		$sites = array( $this->site(), $this->site() );
+		$task  = $this->task( $sites );
+		MainWP_Manage_Backups_Handler::stamp_task_scope_snapshot( $task->id, $task->sites, $task->groups );
+		$this->answer = array( 'phase' => 'archiving_files' );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+		$started = time() - 7200;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'last_run' => $started ) );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ), array( 'started' => $started ), array( 'task_id' => $task->id ) );
+		$this->assertSame( array( 'running', 'running' ), array_column( $this->rows(), 'outcome' ) );
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$refused = false;
+		$deny    = static function ( $query ) use ( $table, &$refused ) {
+			if ( preg_match( '/^UPDATE `?' . preg_quote( $table, '/' ) . '`? /', $query ) && false !== strpos( $query, '`completed`' ) ) {
+				$refused = true;
+				return 'SELECT * FROM missing_table_history_task_close';
+			}
+			return $query;
+		};
+		$allowed = static function () use ( $sites ) {
+			return array( $sites[0] );
+		};
+		$busy    = static function ( $pre, $child, $what ) {
+			return 'backup_task_cancel' === $what ? array( 'result' => 'busy' ) : $pre;
+		};
+		add_filter( 'query', $deny );
+		add_filter( 'mainwp_fetch_url_authed_pre', $busy, 20, 3 );
+		$suppress = $wpdb->suppress_errors( true );
+		try {
+			if ( 'reset' === $lane ) {
+				$this->assertSame(
+					array(
+						'status'            => 'reset',
+						'cancelled'         => 0,
+						'uncancelled'       => 2,
+						'sites_uncancelled' => $sites,
+					),
+					MainWP_Backup_Operations::reset_task_run( $task->id )
+				);
+			} else {
+				add_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+				$this->assertNull( MainWP_Manage_Backups_Handler::pause_task_for_rescope( $task ) );
+			}
+		} finally {
+			$wpdb->suppress_errors( $suppress );
+			remove_filter( 'query', $deny );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $busy, 20 );
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $allowed );
+		}
+		$this->assertTrue( $refused, 'The task close must reach the refused UPDATE.' );
+		$open = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $started, (int) $open->last_run );
+		$this->assertLessThan( $started, (int) $open->completed );
+		$this->assertSame( 0, (int) $open->paused );
+		$this->assertSame( array( 'running', 'running' ), array_column( $this->rows(), 'outcome' ) );
+		$this->answer = $success ? array(
+			'phase' => 'completed',
+			'file'  => 'history.zip',
+			'size'  => 4096,
+		) : array(
+			'phase'      => 'failed',
+			'error_code' => MainWP_Backup_Error_Codes::ERR_ZIP_FAILED,
+		);
+		$this->finish_task( $task );
+		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertSame( $started, (int) $fresh->last_run );
+		$this->assertGreaterThanOrEqual( $started, (int) $fresh->completed );
+		$this->assertSame( array( $success ? 'completed' : 'failed', $success ? 'completed' : 'failed' ), array_column( $this->rows(), 'outcome' ) );
+		foreach ( $this->rows() as $row ) {
+			$this->assertSame( $started, (int) $row['started'] );
+			$this->assertSame( $success ? '' : MainWP_Backup_Error_Codes::ERR_ZIP_FAILED, $row['error_code'] );
+		}
+	}
+
+	/**
+	 * Each refused close must preserve evidence for a later terminal verdict.
+	 *
+	 * @return array
+	 */
+	public static function refused_task_close_lanes(): array {
+		return array(
+			'reset then completed' => array( 'reset', true ),
+			'pause then failed'    => array( 'pause', false ),
+		);
+	}
+
+	/**
 	 * Ad-hoc pre-update backups have a download, never a snapshot record.
 	 *
 	 * @dataProvider terminal_answers
@@ -757,14 +851,31 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	 * Displacing an abandoned handle, across every way the replacement can end.
 	 *
 	 * @dataProvider displacement_matrix
-	 * @param string $mode replaced, create_refused, write_refused or readback_throws.
+	 * @param string $mode Replacement or refusal case.
 	 * @param string $old_outcome Expected outcome of the displaced row.
 	 * @param bool   $new_row Whether the replacement opens a row.
+	 * @param string $owner_status Status of the displaced restore owner, if any.
 	 */
-	public function test_displacement_matrix( string $mode, string $old_outcome, bool $new_row ): void {
+	public function test_displacement_matrix( string $mode, string $old_outcome, bool $new_row, string $owner_status = '' ): void {
 		global $wpdb;
-		$site              = $this->site();
-		$old_ref           = MainWP_Backup_Executor::trigger_backup( $site );
+		$site  = $this->site();
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$owner = '';
+		if ( '' !== $owner_status ) {
+			$owner = (string) $store->create_job(
+				$site,
+				5,
+				array(
+					'plan'    => array(),
+					'options' => array( 'pre_snapshot' => true ),
+				)
+			);
+			$this->assertGreaterThan( 0, (int) $owner );
+		}
+		$old_ref = MainWP_Backup_Executor::trigger_backup( $site, 'full', $owner );
+		if ( '' !== $owner_status ) {
+			$this->assertTrue( $store->set_status( (int) $owner, $owner_status, array( 'pre_snapshot_task_id' => $old_ref ) ) );
+		}
 		$website           = MainWP_DB::instance()->get_website_by_id( $site );
 		$handle            = json_decode( MainWP_DB::instance()->get_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
 		$handle['started'] = time() - MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS - 1;
@@ -796,7 +907,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		$suppress = $wpdb->suppress_errors( true );
 		$returned = null;
 		try {
-			$returned = MainWP_Backup_Executor::trigger_backup( $site, 'full', '71' );
+			$returned = MainWP_Backup_Executor::trigger_backup( $site, 'full', '' === $owner ? '71' : '' );
 		} catch ( \MainWP\Dashboard\MainWP_Exception $e ) {
 			$this->assertSame( 'create_refused', $mode, $e->getMessage() );
 		} finally {
@@ -814,18 +925,31 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( in_array( $mode, array( 'replaced', 'readback_throws' ), true ) ? $new_ref : $old_ref, $stored['task_id'] );
 		$rows = $this->rows();
 		$this->assertSame( $old_ref, $rows[0]['ref'] );
-		$this->assertSame( 'update_gate', $rows[0]['trigger_source'] );
+		$this->assertSame( '' === $owner ? 'update_gate' : 'restore_safety', $rows[0]['trigger_source'] );
 		$this->assertSame( $old_outcome, $rows[0]['outcome'] );
 		$this->assertCount( $new_row ? 2 : 1, $rows );
 		if ( $new_row ) {
-			$this->assertSame( array( 'restore_safety', $new_ref, 'running', 71 ), array( $rows[1]['trigger_source'], $rows[1]['ref'], $rows[1]['outcome'], (int) $rows[1]['restore_job_id'] ) );
+			$this->assertSame( array( '' === $owner ? 'restore_safety' : 'update_gate', $new_ref, 'running', '' === $owner ? 71 : 0 ), array( $rows[1]['trigger_source'], $rows[1]['ref'], $rows[1]['outcome'], (int) $rows[1]['restore_job_id'] ) );
+		}
+		if ( $store::STATUS_PRE_SNAPSHOT === $owner_status ) {
+			MainWP_Backup_Restore_Orchestrator::instance()->run_job( $store->get_job( (int) $owner ), microtime( true ) + 2 );
+			$this->assertSame( $store::STATUS_STAGING, $store->get_job( (int) $owner )->status );
+			$this->assertSame( array( 'completed', 'running' ), array_column( $this->rows(), 'outcome' ) );
+			$this->assertSame( $new_ref, json_decode( MainWP_DB::instance()->get_website_option( $site, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true )['task_id'] );
+			$polls = array_values(
+				array_filter(
+					$this->calls,
+					static function ( $call ) {
+						return 'backup_task_run' === $call[0];
+					}
+				)
+			);
+			$this->assertSame( $old_ref, $polls[0][2]['task_id'] );
 		}
 	}
 
 	/**
-	 * D4 replaced; D5 the Child refuses the create; D6 the handle write fails;
-	 * D7 the history-only readback throws. Only a confirmed replacement retires
-	 * the old row, and no history fault stops the create from returning.
+	 * Replacement needs confirmation; active restores retain their own safety evidence.
 	 *
 	 * @return array
 	 */
@@ -835,6 +959,8 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			'D5 create refused'  => array( 'create_refused', 'running', false ),
 			'D6 write refused'   => array( 'write_refused', 'running', true ),
 			'D7 readback throws' => array( 'readback_throws', 'running', true ),
+			'D8 active restore'  => array( 'replaced', 'running', true, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT ),
+			'D9 terminal owner'  => array( 'replaced', 'incomplete', true, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT ),
 		);
 	}
 
@@ -1300,8 +1426,12 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( '9.0.2.30', get_site_option( 'mainwp_db_version' ) );
 			$this->assertCount( 13, $wpdb->get_results( 'SHOW COLUMNS FROM ' . $table ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed test table.
 		} finally {
-			update_site_option( 'mainwp_db_version', '9.0.2.29' );
-			MainWP_Install::instance()->install();
+			$version = $this->saved_site_options['mainwp_db_version'];
+			false === $version ? delete_site_option( 'mainwp_db_version' ) : update_site_option( 'mainwp_db_version', $version );
+			if ( $table !== $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->esc_like( $table ) ) ) ) {
+				update_site_option( MainWP_Install::NATIVE_BACKUP_TABLES_CHECKED, 0 );
+				MainWP_Install::instance()->install();
+			}
 			foreach ( $this->saved_options as $name => $value ) {
 				false === $value ? delete_option( $name ) : update_option( $name, $value );
 			}

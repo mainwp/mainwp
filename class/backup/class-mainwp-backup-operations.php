@@ -997,9 +997,15 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 implode( ', ', $uncancelled )
             );
         }
-        $db->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
+        $updated = $db->update_backup_task_with_values( (int) $task->id, array( 'completed' => time() ) );
         $db->update_backup_notices( (int) $task->id, $note . "\n" );
-        MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'reset' );
+        // A refused close leaves the driver responsible for this run's outcome.
+        if ( false !== $updated ) {
+            $closed = $db->get_backup_task_by_id( (int) $task->id );
+            if ( ! empty( $closed ) && (int) $closed->completed >= (int) $task->last_run ) {
+                MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'reset' );
+            }
+        }
         return array(
             'status'            => 'reset',
             'cancelled'         => $cancelled,

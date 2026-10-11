@@ -2763,15 +2763,22 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( empty( $persisted['task_id'] ) || (string) $persisted['task_id'] === $task_id ) {
             return;
         }
+        $owner = (string) ( $persisted['owner'] ?? '' );
         try {
             $stored = json_decode( (string) MainWP_DB::instance()->get_website_option( $site_id, self::ADHOC_TASK_OPTION ), true );
+            if ( ! is_array( $stored ) || (string) ( $stored['task_id'] ?? '' ) !== $task_id ) {
+                return;
+            }
+            if ( '' !== $owner ) {
+                $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $owner );
+                // An active restore still polls its own task after the site handle changes.
+                if ( null !== $job && in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) {
+                    return;
+                }
+            }
         } catch ( \Throwable $e ) {
             return;
         }
-        if ( ! is_array( $stored ) || (string) ( $stored['task_id'] ?? '' ) !== $task_id ) {
-            return;
-        }
-        $owner = (string) ( $persisted['owner'] ?? '' );
         MainWP_Backup_Run_History::finalize_ref( $site_id, (string) $persisted['task_id'], '' === $owner ? 'update_gate' : 'restore_safety', 'incomplete' );
     }
 

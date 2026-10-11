@@ -358,7 +358,8 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 return self::snapshot_evidence( $entry, (int) $snapshot->site_id );
             }
         }
-        return array();
+        // The row was deleted between the two reads.
+        return new \WP_Error( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND, MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND )['message'], array( 'status' => 404 ) );
     }
 
     /**
@@ -502,7 +503,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         return array(
             'id'                => (int) $task->id,
             'name'              => html_entity_decode( (string) $task->name, ENT_QUOTES ),
-            'type'              => (string) $task->type,
+            'type'              => in_array( $task->type, array( 'full', 'db', 'files', 'incremental' ), true ) ? $task->type : 'legacy',
             'schedule'          => in_array( $task->schedule, array( 'daily', 'weekly', 'monthly', 'interval' ), true ) ? $task->schedule : 'legacy',
             'paused'            => ! empty( $task->paused ),
             'run_open'          => (int) $task->completed < (int) $task->last_run,
@@ -566,7 +567,8 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'max_chain_length'    => (int) $task->max_chain_length,
             ),
             'archive_format'   => in_array( $task->archiveFormat, array( 'site', 'global', 'zip', 'tar', 'tar.gz', 'tar.bz2' ), true ) ? $task->archiveFormat : 'legacy',
-            'exclude'          => '' === $exclude ? array() : preg_split( '/\r\n|\r|\n/', $exclude ),
+            // The task writer stores a comma-joined list; older rows may still hold newlines.
+            'exclude'          => preg_split( '/\r\n|\r|\n|,/', $exclude, -1, PREG_SPLIT_NO_EMPTY ),
             'exclude_flags'    => array(
                 'backup_archives' => ! empty( $task->excludebackup ),
                 'cache'           => ! empty( $task->excludecache ),
@@ -791,7 +793,8 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $uploads[] = array(
                 'destination_id'   => (int) $upload->destination_id,
                 'destination_name' => $destinations[ (int) $upload->destination_id ] ?? null,
-                'provider'         => (string) $upload->provider,
+                // Enqueue stores an empty provider when the destination was deleted first.
+                'provider'         => '' === (string) $upload->provider ? null : (string) $upload->provider,
                 'status'           => (string) $upload->status,
                 'updated_at'       => (int) $upload->updated,
                 'last_error'       => '' === $upload->last_error['source_text'] ? null : $upload->last_error,
@@ -915,10 +918,11 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'next_retry_at'            => $detail['next_retry_at'],
             'verification'             => array(
                 'child_report_present'       => ! empty( $child_report ),
-                'site_responds'              => $verification['site_responds'] ?? null,
+                // The Child's own verification array is stored as sent; only the Dashboard's check writes a boolean here.
+                'site_responds'              => is_bool( $verification['site_responds'] ?? null ) ? $verification['site_responds'] : null,
                 'site_responds_rule'         => 'http_200_to_499',
                 'woo_preserve_applied'       => isset( $verification['woo_preserve'] ) ? ! empty( $verification['woo_preserve'] ) : null,
-                'woo_orphan_customer_orders' => isset( $verification['woo_orphans']['orphan_customer_orders'] ) ? (int) $verification['woo_orphans']['orphan_customer_orders'] : null,
+                'woo_orphan_customer_orders' => isset( $verification['woo_orphans']['orphan_customer_orders'] ) && is_numeric( $verification['woo_orphans']['orphan_customer_orders'] ) && $verification['woo_orphans']['orphan_customer_orders'] >= 0 ? (int) $verification['woo_orphans']['orphan_customer_orders'] : null,
             ),
             'partial_state_risk'       => $risk,
             'partial_state_reasons'    => $reasons,
@@ -1000,7 +1004,12 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $items  = array();
         $now    = time();
         foreach ( $authorized as $id ) {
-            $site    = MainWP_DB::instance()->get_website_by_id( $id );
+            $site = MainWP_DB::instance()->get_website_by_id( $id );
+            if ( ! $site ) {
+                // Deleted after the roster read.
+                --$totals['sites'];
+                continue;
+            }
             $options = MainWP_DB::instance()->get_website_options_array( $site, array( 'primary_lasttime_backup' ) );
             $child   = max( 0, (int) ( $options['primary_lasttime_backup'] ?? 0 ) );
             $last    = max( $child, $legacy[ $id ] ?? 0 );
@@ -1010,7 +1019,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $health  = MainWP_Backup_Snapshots::classify_backup_health( $latest, $now );
             if ( $latest ) {
                 $details = self::snapshot_details( (int) $latest->id );
-                $summary = $details['snapshot'];
+                $summary = is_wp_error( $details ) ? null : $details['snapshot'];
                 if ( (int) $latest->created >= $last ) {
                     $last   = (int) $latest->created;
                     $source = 'native_snapshot';
@@ -1110,7 +1119,10 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $items = array();
         foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $row ) {
             if ( 'any' === $provider || $row->provider === $provider ) {
-                $items[] = self::get_destination( (int) $row->id );
+                $detail = self::get_destination( (int) $row->id );
+                if ( ! is_wp_error( $detail ) ) {
+                    $items[] = $detail;
+                }
             }
         }
         return self::paginate( $items, $page, $per_page );

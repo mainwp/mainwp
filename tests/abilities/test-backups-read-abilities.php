@@ -1009,6 +1009,10 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 			'provider with no location' => array( 'empty_location', '' ),
 			'long location strings'     => array( 'long_location', '' ),
 			'long exclude list'         => array( 'long_exclude', '' ),
+			'exclude list as saved'     => array( 'saved_exclude', '' ),
+			'legacy task type'          => array( 'legacy_type', '' ),
+			'upload with no provider'   => array( 'upload_provider', '' ),
+			'child verification values' => array( 'child_verification', '' ),
 			'long site name'            => array( 'long_site_name', '' ),
 			'long primary method'       => array( 'long_primary_method', '' ),
 		);
@@ -1071,11 +1075,42 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 					$this->assertSame( $long, $one['location']['bucket'] );
 				}
 			} elseif ( 'long_exclude' === $kind ) {
-				// 201 entries of 256 characters: past both old caps and inside the TEXT column.
-				$this->assertNotFalse( MainWP_DB_Backup::instance()->update_backup_task_with_values( 987671, array( 'exclude' => implode( "\n", array_fill( 0, 201, str_repeat( 'x', 256 ) ) ) ) ) );
+				// 201 entries of 256 characters, joined the way the task writer stores them: past both old caps and inside the TEXT column.
+				$this->assertNotFalse( MainWP_DB_Backup::instance()->update_backup_task_with_values( 987671, array( 'exclude' => \MainWP\Dashboard\MainWP_Backup_Settings::sanitize_exclude_list( array_fill( 0, 201, str_repeat( 'x', 256 ) ) ) ) ) );
 				$task = $this->read( 'get-backup-task', array( 'task_id' => 987671 ) );
 				$this->assert_output( 'get-backup-task', $task );
 				$this->assertCount( 201, $task['exclude'] );
+			} elseif ( 'saved_exclude' === $kind ) {
+				MainWP_DB_Backup::instance()->update_backup_task_with_values( 987671, array( 'exclude' => \MainWP\Dashboard\MainWP_Backup_Settings::sanitize_exclude_list( "wp-content/cache\nwp-content/uploads" ) ) );
+				$task = $this->read( 'get-backup-task', array( 'task_id' => 987671 ) );
+				$this->assert_output( 'get-backup-task', $task );
+				$this->assertSame( array( 'wp-content/cache', 'wp-content/uploads' ), $task['exclude'] );
+			} elseif ( 'legacy_type' === $kind ) {
+				MainWP_DB_Backup::instance()->update_backup_task_with_values( 987671, array( 'type' => '' ) );
+				$list = $this->read( 'list-backup-tasks' );
+				$task = $this->read( 'get-backup-task', array( 'task_id' => 987671 ) );
+				$this->assert_output( 'list-backup-tasks', $list );
+				$this->assert_output( 'get-backup-task', $task );
+				$this->assertSame( 'legacy', $task['task']['type'] );
+			} elseif ( 'upload_provider' === $kind ) {
+				$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'provider' => '' ), array( 'id' => 987675 ) );
+				$one  = $this->read( 'get-backup-snapshot', array( 'snapshot_id' => 987673 ) );
+				$list = $this->read( 'list-backup-snapshots', array( 'site_id_or_domain' => $this->site_id ) );
+				$this->assert_output( 'get-backup-snapshot', $one );
+				$this->assert_output( 'list-backup-snapshots', $list );
+				$this->assertNull( $one['uploads'][0]['provider'] );
+			} elseif ( 'child_verification' === $kind ) {
+				$checkpoint = array(
+					'verification' => array(
+						'site_responds' => 'yes',
+						'woo_orphans'   => array( 'orphan_customer_orders' => -3 ),
+					),
+				);
+				$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'checkpoint' => wp_json_encode( $checkpoint ) ), array( 'id' => 987674 ) );
+				$job = $this->read( 'get-restore-job', array( 'restore_job_id' => 987674 ) );
+				$this->assert_output( 'get-restore-job', $job );
+				$this->assertNull( $job['verification']['site_responds'] );
+				$this->assertNull( $job['verification']['woo_orphan_customer_orders'] );
 			} elseif ( 'long_site_name' === $kind ) {
 				$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'name' => $long ), array( 'id' => $this->site_id ) );
 				$history = $this->read( 'list-backup-history' );
@@ -1120,6 +1155,66 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		);
 		$this->assert_output( 'list-backup-snapshots', $snapshots );
 		$this->assertSame( 0, $snapshots['total'] );
+		foreach ( array( '987671.0', '9.87671e5', 987671.0 ) as $id ) {
+			$task = $this->read( 'get-backup-task', array( 'task_id' => $id ) );
+			$this->assert_output( 'get-backup-task', $task );
+			$this->assertSame( 987671, $task['task']['id'] );
+		}
+	}
+
+	/**
+	 * Rows another request deletes between two reads of the same call: the query that finds nothing, and the read it hits.
+	 *
+	 * @return array
+	 */
+	public static function rows_deleted_mid_read() {
+		return array(
+			'snapshot gone before the catalog read'  => array( '/(?<=backup_snapshot )WHERE site_id = /', 'get-backup-snapshot', array( 'snapshot_id' => 987673 ), 'not_found' ),
+			'snapshot gone before the status detail' => array( '/(?<=backup_snapshot )WHERE id = /', 'get-backup-status', array(), 'no_snapshot' ),
+			'site gone before the status row'        => array( '/WHERE id = 987670\b/', 'get-backup-status', array(), 'no_items' ),
+			'destination gone before its detail'     => array( '/(?<=backup_storage )WHERE id = /', 'list-backup-destinations', array(), 'no_items' ),
+		);
+	}
+
+	/**
+	 * A row deleted mid-read is a missing row: never an internal error, never invalid output.
+	 *
+	 * @dataProvider rows_deleted_mid_read
+	 *
+	 * @param string $pattern WHERE clause of the second read, which then finds nothing.
+	 * @param string $name Ability slug.
+	 * @param array  $input Ability input.
+	 * @param string $expected not_found, no_snapshot or no_items.
+	 * @return void
+	 */
+	public function test_reads_survive_rows_deleted_mid_read( $pattern, $name, $input, $expected ) {
+		$gone = static function ( $sql ) use ( $pattern ) {
+			return preg_replace_callback(
+				$pattern,
+				static function ( $m ) {
+					return 'WHERE 0 AND ' . substr( $m[0], 6 );
+				},
+				$sql,
+				1
+			);
+		};
+		add_filter( 'query', $gone );
+		try {
+			$output = $this->read( $name, $input );
+		} finally {
+			remove_filter( 'query', $gone );
+		}
+		if ( 'not_found' === $expected ) {
+			$this->assertWPError( $output );
+			$this->assertSame( 'mainwp_backup_snapshot_not_found', $output->get_error_code() );
+			return;
+		}
+		$this->assert_output( $name, $output );
+		if ( 'no_items' === $expected ) {
+			$this->assertSame( array(), $output['items'] );
+		} else {
+			$this->assertNull( $output['items'][0]['latest_snapshot'] );
+		}
 	}
 
 	/**

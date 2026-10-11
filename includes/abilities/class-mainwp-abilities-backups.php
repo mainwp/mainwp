@@ -1350,8 +1350,9 @@ class MainWP_Abilities_Backups {
                     'description' => 'Null when the destination was deleted.',
                 ),
                 'provider'         => array(
-                    'type' => 'string',
-                    'enum' => array( 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
+                    'type'        => array( 'string', 'null' ),
+                    'enum'        => array( 's3', 'gcs', 'dropbox', 'sftp', 'local', null ),
+                    'description' => 'Null when the destination was deleted before the upload was queued.',
                 ),
                 'status'           => array(
                     'type' => 'string',
@@ -1446,8 +1447,9 @@ class MainWP_Abilities_Backups {
                     'type' => 'string',
                 ),
                 'type'              => array(
-                    'type' => 'string',
-                    'enum' => array( 'full', 'db', 'files', 'incremental' ),
+                    'type'        => 'string',
+                    'enum'        => array( 'full', 'db', 'files', 'incremental', 'legacy' ),
+                    'description' => 'legacy: a stored backup type outside the supported set.',
                 ),
                 'schedule'          => array(
                     'type'        => 'string',
@@ -2352,7 +2354,14 @@ class MainWP_Abilities_Backups {
         if ( is_int( $value ) ) {
             return $value > 0 ? $value : null;
         }
-        return is_string( $value ) && preg_match( '/^[1-9][0-9]*$/D', $value ) && (string) (int) $value === $value ? (int) $value : null;
+        if ( is_string( $value ) && preg_match( '/^[1-9][0-9]*$/D', $value ) && (string) (int) $value === $value ) {
+            return (int) $value;
+        }
+        // Schema validation accepts whole-valued numbers ("5.0", 5.0, "5e0") and REST sanitizes them to int; PHP callers get the same reading.
+        if ( ( is_float( $value ) || is_string( $value ) ) && rest_is_integer( $value ) && (float) $value >= 1 && (float) $value <= PHP_INT_MAX ) {
+            return (int) $value;
+        }
+        return null;
     }
 
     /**

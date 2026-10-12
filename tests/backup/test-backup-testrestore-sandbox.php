@@ -22,7 +22,6 @@ namespace MainWP\Dashboard;
  * @return float|false
  */
 function disk_free_space( $directory ) {
-	Tests\MainWP_Backup_TestRestore_Sandbox_Test::$last_directory = $directory;
 	$free = Tests\MainWP_Backup_TestRestore_Sandbox_Test::$free_space;
 	return null === $free ? \disk_free_space( $directory ) : $free;
 }
@@ -51,12 +50,6 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 */
 	public static $free_space = null;
 
-	/**
-	 * Capacity checks must measure the directory that receives the archive.
-	 *
-	 * @var string|null
-	 */
-	public static $last_directory = null;
 
 	/**
 	 * Scratch dir for archive fixtures.
@@ -73,9 +66,8 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	public function set_up() {
 		parent::set_up();
 		$this->set_up_private_root();
-		self::$free_space     = null;
-		self::$last_directory = null;
-		$this->dir            = sys_get_temp_dir() . '/mainwp-tr-sandbox-' . uniqid();
+		self::$free_space = null;
+		$this->dir        = sys_get_temp_dir() . '/mainwp-tr-sandbox-' . uniqid();
 		mkdir( $this->dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
 	}
 
@@ -85,8 +77,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 * @return void
 	 */
 	public function tear_down() {
-		self::$free_space     = null;
-		self::$last_directory = null;
+		self::$free_space = null;
 		$this->rrmdir( $this->dir );
 		$this->tear_down_private_root();
 		parent::tear_down();
@@ -273,8 +264,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				$this->assertFileDoesNotExist( $escaped );
 			}
 		} finally {
-			self::$free_space     = null;
-			self::$last_directory = null;
+			self::$free_space = null;
 			$sandbox->tear_down();
 		}
 	}
@@ -377,8 +367,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				$this->assertSame( hash( 'sha256', 'more-bytes' ), $sandbox->sentinel_sha256( 'second.txt' ) );
 			}
 		} finally {
-			self::$free_space     = null;
-			self::$last_directory = null;
+			self::$free_space = null;
 			$sandbox->tear_down();
 		}
 	}

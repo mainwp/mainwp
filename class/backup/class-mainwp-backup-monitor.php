@@ -220,8 +220,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * Stores the child backup directory hash in site metadata for later
      * operations (sensitive value: stored only, never rendered), blocks
-     * the backup when the child disk space is critically low or either server
-     * lacks room for a known full/files backup, switches ZIP to
+     * the backup when the child disk space is critically low, switches ZIP to
      * tar.gz on a large site (unless the task forces ZIP), and logs advisory
      * warnings for the rest of the report.
      *
@@ -235,12 +234,11 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *                                   that ignores the by-reference mutation (the deprecated shim)
      *                                   passes false and gets the warn-only behavior, so the log
      *                                   never claims a switch that did not reach the wire.
-     * @param string      $backup_type  Full/files applies estimate checks; empty or other types skip them.
      *
-     * @return array Negotiated readings, or an empty array when unavailable or unsupported.
-     * @throws MainWP_Exception When disk space is insufficient or readiness fails without previously confirmed task-spine support.
+     * @return void
+     * @throws MainWP_Exception When the child reports critically low disk space or readiness fails without previously confirmed task-spine support.
      */
-    public static function negotiate_backup_preflight( object &$website, string &$archive_ext = '', ?object $task = null, bool $allow_switch = true, string $backup_type = '' ): array { // phpcs:ignore -- NOSONAR - complex.
+    public static function negotiate_backup_preflight( object &$website, string &$archive_ext = '', ?object $task = null, bool $allow_switch = true ): void { // phpcs:ignore -- NOSONAR - complex.
         $diag_task_id = is_object( $task ) && ! empty( $task->id ) ? (int) $task->id : 0;
 
         try {
@@ -258,7 +256,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
              * @param string $status    ok|unavailable|unsupported|failed.
              */
             do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, array(), 'unavailable' );
-            return array(); // Capability unknown - proceed for backwards compatibility.
+            return; // Capability unknown - proceed for backwards compatibility.
         }
 
         if ( ! is_array( $preflight ) || isset( $preflight['error'] ) ) {
@@ -302,7 +300,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             MainWP_Logger::instance()->info_for_website( $website, 'backup', 'Backup preflight not supported by the child site; proceeding without it.' );
             /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
             do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, is_array( $preflight ) ? $preflight : array(), 'unsupported' );
-            return array();
+            return;
         }
 
         /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
@@ -323,10 +321,6 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 MainWP_Backup_Error_Codes::ERR_DISK_FULL
             );
             // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        }
-
-        if ( in_array( $backup_type, array( 'full', 'files' ), true ) ) {
-            static::validate_backup_disk_space( $website, $preflight, $diag_task_id );
         }
 
         if ( isset( $preflight['time_limit_ok'] ) && ! $preflight['time_limit_ok'] ) {
@@ -422,57 +416,6 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         static::record_negotiated_capabilities( $website, $preflight );
-        return $preflight;
-    }
-
-    /**
-     * Check the negotiated file estimate before a full/files archive starts.
-     *
-     * @param object $website         Website object.
-     * @param array  $preflight       This run's negotiated readings.
-     * @param int    $diag_task_id    Driving backup task id, or zero for ad-hoc runs.
-     * @param bool   $check_dashboard Whether the archive will be stored on the Dashboard.
-     * @param bool   $check_child     Whether the Child's free space still reflects no archive of this run.
-     * @return void
-     * @throws MainWP_Exception When the file estimate exceeds either server's free space.
-     */
-    public static function validate_backup_disk_space( object $website, array $preflight, int $diag_task_id, bool $check_dashboard = true, bool $check_child = true ): void {
-        if ( ! isset( $preflight['estimated_bytes'] ) || ! is_numeric( $preflight['estimated_bytes'] ) ) {
-            return;
-        }
-
-        // Float comparisons preserve byte counts above 2 GB on 32-bit hosts.
-        $estimated_bytes = (float) $preflight['estimated_bytes'];
-        $message         = null;
-        if ( $check_child && isset( $preflight['disk_free'] ) && false !== $preflight['disk_free'] && is_numeric( $preflight['disk_free'] ) && $estimated_bytes > (float) $preflight['disk_free'] ) {
-            $message = sprintf(
-                /* translators: 1: estimated backup size, 2: available disk space */
-                esc_html__( 'The child site does not have enough disk space for this backup: estimated site size %1$s, free space %2$s. No backup was started. The estimate counts the database and the wp-content folder of the child site, including excluded folders. Free up space on the child site and try again.', 'mainwp' ),
-                esc_html( size_format( $estimated_bytes ) ),
-                esc_html( size_format( (float) $preflight['disk_free'] ) )
-            );
-        } elseif ( $check_dashboard ) {
-            $backup_dir = MainWP_Backup_Private_Root::resolve();
-            if ( ! is_wp_error( $backup_dir ) ) {
-                $free_bytes = function_exists( 'disk_free_space' ) ? @disk_free_space( $backup_dir ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- may be disabled by the host.
-                if ( false !== $free_bytes && is_numeric( $free_bytes ) && $estimated_bytes > (float) $free_bytes ) {
-                    $message = sprintf(
-                        /* translators: 1: estimated backup size, 2: available disk space */
-                        esc_html__( 'The Dashboard server does not have enough disk space to store this backup: estimated site size %1$s, free space %2$s. No backup was started. The estimate counts the database and the wp-content folder of the child site, including excluded folders. Free up space on the Dashboard server and try again.', 'mainwp' ),
-                        esc_html( size_format( $estimated_bytes ) ),
-                        esc_html( size_format( 0.0 === (float) $free_bytes ? 0 : (float) $free_bytes ) )
-                    );
-                }
-            }
-        }
-
-        if ( null !== $message ) {
-            /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
-            do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, array_merge( $preflight, array( 'error_code' => MainWP_Backup_Error_Codes::ERR_DISK_FULL ) ), 'failed' );
-            $exception = new MainWP_Exception( $message, null, MainWP_Backup_Error_Codes::ERR_DISK_FULL );
-            $exception->set_data( array( 'disk_estimate' => true ) );
-            throw $exception; // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- message parts are escaped above.
-        }
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the inner rethrow is caught within this method.

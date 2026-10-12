@@ -374,7 +374,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // Negotiate the archive format before building the request so a
                 // large-site ZIP auto-switch reaches the child in $params['ext'].
                 $archive_ext = MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask );
-                MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, $pTask );
+                $preflight   = MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, $pTask, true, $type );
                 if ( ! MainWP_Backup_Monitor::child_supports_task_spine( $website ) ) {
                     throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                 }
@@ -407,6 +407,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( 'incremental' === $type ) {
                     $send           = self::resolve_incremental_send( $website, $pTask, $backupTaskProgress );
                     $params['type'] = $send['type'];
+                    if ( 'full' === $send['type'] ) {
+                        MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId );
+                    }
                     foreach ( $send['params'] as $send_key => $send_value ) {
                         $params[ $send_key ] = $send_value;
                     }
@@ -429,6 +432,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             $params['parent_manifest_ref']    = $push['mtoken'];
                             $params['parent_manifest_sha256'] = $manifest_sha256;
                         } else {
+                            MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId );
                             self::record_incremental_notice( $website, $taskId, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED ) );
                             $params['type']          = 'full';
                             $params['emit_manifest'] = '1';
@@ -2564,7 +2568,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         // Negotiate before building the request so a large-site ZIP auto-switch
         // reaches the child in $params['ext']. The driving task, when one
         // exists, carries the keep-ZIP override and receives the outcome note.
-        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat, $pTask );
+        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat, $pTask, true, $pType );
 
         // This engine is the one remaining caller of the child's legacy backup
         // action, and Run Now is what reaches it. A child too old for the task
@@ -2754,7 +2758,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         MainWP_Backup_Monitor::validate_backup_environment();
 
         $archive_ext = MainWP_Backup_Settings::get_current_archive_extension( $website );
-        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext );
+        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, null, true, $type );
 
         if ( ! MainWP_Backup_Monitor::child_supports_task_spine( $website ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.

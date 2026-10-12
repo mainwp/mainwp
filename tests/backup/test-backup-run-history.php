@@ -333,6 +333,347 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Run Now advances elapsed and calendar schedules after a successful claim.
+	 *
+	 * @dataProvider s84_manual_schedules
+	 * @param string $schedule Calendar cadence or interval mode.
+	 * @param bool   $ahead Whether the stored slot is still ahead.
+	 */
+	public function test_s84_manual_claim_advances_next_run( string $schedule, bool $ahead ): void {
+		$site = $this->site();
+		$task = $this->task( array( $site ) );
+		$now  = time();
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'schedule'       => $schedule,
+				'interval_hours' => 'interval' === $schedule ? 4 : 0,
+				'time_of_day'    => wp_date( 'H:i', $now + ( $ahead ? HOUR_IN_SECONDS : -HOUR_IN_SECONDS ) ),
+				'day_of_week'    => (int) wp_date( 'w', $now ),
+				'day_of_month'   => (int) wp_date( 'j', $now ),
+				'next_run'       => $now + ( $ahead ? HOUR_IN_SECONDS : -HOUR_IN_SECONDS ) - $now % 60,
+				'last_run'       => $now - DAY_IN_SECONDS,
+				'completed'      => $now - DAY_IN_SECONDS,
+			)
+		);
+		$result = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		$this->assertSame( 'running', $result['status'] );
+		$fresh      = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$calculator = new \MainWP\Dashboard\MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+		$this->assertSame( $calculator->compute_next_run( $fresh, (int) $fresh->last_run ), (int) $fresh->next_run );
+		$this->assertGreaterThan( time(), (int) $fresh->next_run );
+		if ( 'interval' === $schedule ) {
+			$this->assertSame( (int) $fresh->last_run + 4 * HOUR_IN_SECONDS, (int) $fresh->next_run );
+			$this->finish_task( $fresh );
+			$this->calls = array();
+			\MainWP\Dashboard\MainWP_System_Cron_Jobs::instance()->cron_backups();
+			$this->assertSame( array(), $this->calls, 'Hourly cron must not dispatch the manually completed interval again.' );
+		}
+	}
+
+	/**
+	 * Calendar slots on either side of now and the overdue interval.
+	 *
+	 * @return array
+	 */
+	public static function s84_manual_schedules(): array {
+		return array(
+			'interval past' => array( 'interval', false ),
+			'daily ahead'   => array( 'daily', true ),
+			'daily past'    => array( 'daily', false ),
+			'weekly ahead'  => array( 'weekly', true ),
+			'weekly past'   => array( 'weekly', false ),
+			'monthly ahead' => array( 'monthly', true ),
+			'monthly past'  => array( 'monthly', false ),
+		);
+	}
+
+	/**
+	 * A refused claim and the hidden task sentinel retain their schedule.
+	 *
+	 * @dataProvider s84_unchanged_claims
+	 * @param string $reason Lane, slot, debounce or sentinel.
+	 */
+	public function test_s84_manual_unclaimed_or_zero_keeps_next_run( string $reason ): void {
+		$site = $this->site();
+		$task = $this->task( array( $site ) );
+		$next = 'sentinel' === $reason ? 0 : time() - 60;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'interval_hours' => 4,
+				'next_run'       => $next,
+			)
+		);
+		$slot = null;
+		if ( 'lane' === $reason ) {
+			$this->assertTrue(
+				add_option(
+					\MainWP\Dashboard\MainWP_Backup_Monitor::LANE_LEASE_OPTION,
+					wp_json_encode(
+						array(
+							'token'     => 'other-worker',
+							'started'   => time(),
+							'heartbeat' => time(),
+							'pid'       => 2,
+							'lease'     => 600,
+						)
+					),
+					'',
+					false
+				)
+			);
+		} elseif ( 'slot' === $reason ) {
+			update_option( 'mainwp_backup_max_concurrent', 1 );
+			$slot = \MainWP\Dashboard\MainWP_Backup_Monitor::acquire_backup_slot( 1 );
+			$this->assertIsString( $slot );
+		} elseif ( 'debounce' === $reason ) {
+			MainWP_DB_Backup::instance()->update_backup_task_with_values(
+				$task->id,
+				array(
+					'last_run'  => time(),
+					'completed' => time(),
+				)
+			);
+		}
+		try {
+			$result = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+			$this->assertSame( $next, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->next_run );
+			$this->assertSame( 'sentinel' === $reason ? 'running' : 'queued', $result['status'] );
+		} finally {
+			if ( 'lane' === $reason ) {
+				delete_option( \MainWP\Dashboard\MainWP_Backup_Monitor::LANE_LEASE_OPTION );
+			}
+			if ( null !== $slot ) {
+				\MainWP\Dashboard\MainWP_Backup_Monitor::release_backup_slot( $slot );
+			}
+			delete_option( 'mainwp_backup_max_concurrent' );
+		}
+	}
+
+	/**
+	 * Claim refusals and the legacy sentinel.
+	 *
+	 * @return array
+	 */
+	public static function s84_unchanged_claims(): array {
+		return array(
+			'lane'     => array( 'lane' ),
+			'slot'     => array( 'slot' ),
+			'debounce' => array( 'debounce' ),
+			'sentinel' => array( 'sentinel' ),
+		);
+	}
+
+	/**
+	 * Transport failures retain their registered history classifications.
+	 *
+	 * @dataProvider s84_transport_errors
+	 * @param string $message Transport exception message.
+	 * @param string $code Transport subtype.
+	 * @param string $expected Registered history code.
+	 */
+	public function test_s84_driver_transport_error_history( string $message, string $code, string $expected ): void {
+		$site = $this->site();
+		$task = $this->task( array( $site ) );
+		$fail = static function ( $pre, $website, $what ) use ( $message, $code ) {
+			if ( 'backup_task_create' === $what ) {
+				throw new \MainWP\Dashboard\MainWP_Exception( $message, 'private-provider-token', $code );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $fail, 20, 3 );
+		try {
+			MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 20 );
+		}
+		$row = $this->rows()[0];
+		$this->assertSame( 'failed', $row['outcome'] );
+		$this->assertSame( $expected, $row['error_code'] );
+		$this->assertSame( MainWP_Backup_Operations::safe_error( $expected )['message'], $row['message'] );
+	}
+
+	/**
+	 * Transport messages and existing stable codes.
+	 *
+	 * @return array
+	 */
+	public static function s84_transport_errors(): array {
+		return array(
+			'NOMAINWP'          => array( 'NOMAINWP', '', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR ),
+			'operation timeout' => array( 'TIMEOUT', 'operation', MainWP_Backup_Error_Codes::ERR_TIMEOUT ),
+			'gateway timeout'   => array( 'TIMEOUT', 'gateway', MainWP_Backup_Error_Codes::ERR_TIMEOUT ),
+			'connect timeout'   => array( 'TIMEOUT', 'connect', MainWP_Backup_Error_Codes::ERR_CONNECT_FAILED ),
+			'HTTPERROR'         => array( 'HTTPERROR', '', MainWP_Backup_Error_Codes::ERR_CONNECT_FAILED ),
+		);
+	}
+
+	/**
+	 * Exhausted replay reconciliation preserves the last transport cause in history.
+	 */
+	public function test_s84_spine_replay_transport_cause_in_history(): void {
+		$site = $this->site();
+		$task = $this->task( array( $site ) );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+		$this->answer = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$this->finish_task( $task );
+		$fail = static function ( $pre, $website, $what ) {
+			if ( 'backup_task_status' === $what ) {
+				throw new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP', 'private-provider-token' );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $fail, 20, 3 );
+		try {
+			for ( $i = 0; $i < 5; ++$i ) {
+				$progress                                     = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site );
+				$state                                        = json_decode( $progress->last_error, true );
+				$state['reconcile_pending']['last_status_at'] = 0;
+				MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site, array( 'last_error' => wp_json_encode( $state ) ) );
+				$this->finish_task( $task );
+			}
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 20 );
+		}
+		$row = $this->rows()[0];
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $row['error_code'] );
+		$this->assertStringContainsString( 'AUTH_ERROR2; ' . MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, $row['message'] );
+		$read = MainWP_Backup_Run_History::query( array(), 1, 10, array( $site ) )['items'][0];
+		$this->assertSame( $row['message'], $read['message'], 'History reads must preserve the safe cause codes.' );
+		$this->assertStringNotContainsString( 'private-provider-token', $read['message'] );
+	}
+
+	/**
+	 * The gate cap retains a mapped cause and restore history consumes its replay tag.
+	 *
+	 * @dataProvider s84_safety_lanes
+	 * @param string $lane Gate or restore safety writer.
+	 */
+	public function test_s84_safety_history_replay_cause( string $lane ): void {
+		$site = $this->site();
+		if ( 'gate' === $lane ) {
+			$ref = MainWP_Backup_Executor::trigger_backup( $site );
+			MainWP_DB::instance()->update_website_option(
+				$site,
+				MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+				wp_json_encode(
+					array(
+						'task_id'           => $ref,
+						'owner'             => '',
+						'reconcile_pending' => array(
+							'attempts'       => 4,
+							'last_status_at' => 0,
+						),
+					)
+				)
+			);
+			$fail = static function ( $pre, $website, $what ) {
+				if ( 'backup_task_status' === $what ) {
+					throw new \MainWP\Dashboard\MainWP_Exception( 'NOMAINWP', 'secret-provider' );
+				}
+				return $pre;
+			};
+			add_filter( 'mainwp_fetch_url_authed_pre', $fail, 20, 3 );
+			try {
+				$status = MainWP_Backup_Executor::get_backup_task_status( $site, $ref, 1 );
+				$this->assertSame( 'failed', $status['status'] );
+				$this->assertSame( 'AUTH_ERROR2; ' . MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, $status['meta']['extra'] );
+			} finally {
+				remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 20 );
+			}
+		} else {
+			$store = MainWP_Backup_Restore_Job_Store::instance();
+			$id    = $store->create_job( $site, 5, array( 'last_error_extra' => 'AUTH_ERROR2' ) );
+			$ref   = MainWP_Backup_Executor::trigger_backup( $site, 'full', (string) $id );
+			$this->assertTrue( $store->set_status( $id, $store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $ref ) ) );
+			$terminal = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
+			$terminal->setAccessible( true );
+			$terminal->invoke( MainWP_Backup_Restore_Orchestrator::instance(), $store->get_job( $id ), 'Timed out.', '', null );
+		}
+		$row = $this->rows()[0];
+		$this->assertSame( 'failed', $row['outcome'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $row['error_code'] );
+		$this->assertStringContainsString( 'AUTH_ERROR2', $row['message'] );
+	}
+
+	/**
+	 * The two safety history writers.
+	 *
+	 * @return array
+	 */
+	public static function s84_safety_lanes(): array {
+		return array(
+			'gate'    => array( 'gate' ),
+			'restore' => array( 'restore' ),
+		);
+	}
+
+	/**
+	 * Initiate reports queuing from the claim, including a failed first step.
+	 *
+	 * @dataProvider s84_initiate_claims
+	 * @param bool $held Whether another worker holds the lane.
+	 */
+	public function test_s84_initiate_queued_uses_claim( bool $held ): void {
+		$site = $this->site();
+		$fail = static function ( $pre, $website, $what ) {
+			if ( 'backup_task_create' === $what ) {
+				throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ZIP_FAILED );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $fail, 20, 3 );
+		add_filter( 'pre_http_request', '__return_empty_array' );
+		if ( $held ) {
+			$this->assertTrue(
+				add_option(
+					\MainWP\Dashboard\MainWP_Backup_Monitor::LANE_LEASE_OPTION,
+					wp_json_encode(
+						array(
+							'token'     => 'other-worker',
+							'started'   => time(),
+							'heartbeat' => time(),
+							'pid'       => 2,
+							'lease'     => 600,
+						)
+					),
+					'',
+					false
+				)
+			);
+		}
+		try {
+			$result = MainWP_Backup_Operations::start_site_backup( $site, 'ui' );
+			$this->assertIsArray( $result );
+			$this->assertSame( $held ? 'queued' : 'running', $result['status'] );
+			if ( ! $held ) {
+				$this->assertSame( 'failed', $this->rows()[0]['outcome'] );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', '__return_empty_array' );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 20 );
+			delete_option( \MainWP\Dashboard\MainWP_Backup_Monitor::LANE_LEASE_OPTION );
+			wp_clear_scheduled_hook( 'mainwp_native_backup_continue_action' );
+		}
+	}
+
+	/**
+	 * Lane refusal and a claimed failure.
+	 *
+	 * @return array
+	 */
+	public static function s84_initiate_claims(): array {
+		return array(
+			'lane held'         => array( true ),
+			'first step failed' => array( false ),
+		);
+	}
+
+	/**
 	 * Malformed Child codes must not warn on the progress request.
 	 */
 	public function test_driver_array_error_code_finalizes_without_warning(): void {

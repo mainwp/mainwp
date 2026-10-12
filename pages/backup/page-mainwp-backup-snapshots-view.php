@@ -1242,7 +1242,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     // phase string is used only to reset the per-phase ETA.
                     var label = data.label || '<?php echo esc_js( esc_html__( 'Backing up...', 'mainwp' ) ); ?>';
                     if ( 'queued' === data.status ) {
-                        label = '<?php echo esc_js( esc_html__( 'Queued; waiting for a free slot...', 'mainwp' ) ); ?>';
+                        label = '<?php echo esc_js( esc_html__( 'Queued; another backup is running. This one starts when it finishes. Keep this tab open until then.', 'mainwp' ) ); ?>';
                     }
                     var pct = ( data.percent !== null && data.percent !== undefined ) ? data.percent : null;
 

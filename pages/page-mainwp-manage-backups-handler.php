@@ -246,11 +246,15 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     private static function claim_manual_task_run( object &$task, int $click, ?int $baseline = null, float $deadline = 0.0, bool &$driven = false ): array {
         $task_id = (int) $task->id;
+        $before  = (int) $task->last_run;
         $claimed = null;
         $started = 0;
         $settle  = MainWP_Backup_Settings::get_manual_run_settle_seconds();
         $outcome = null;
         static::execute_backup_task( $task, 5, true, max( 1, $settle ), $claimed, $started, true, $outcome, $deadline );
+        if ( true === $claimed ) {
+            MainWP_System_Cron_Jobs::instance()->maybe_advance_backup_next_run( $task_id, $before );
+        }
         $driven = $driven || $outcome['sites_visited'] > 0;
         $task   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
         if ( empty( $task ) ) {
@@ -828,6 +832,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
     private static function finalize_site_history( $task, int $site_id, int $history_started, bool $success ): void {
         $snapshot_id = null;
         $error_code  = '';
+        $error_extra = '';
         // These reads exist only for history; a fault in them must not stop the
         // driver before it saves this site's mark.
         try {
@@ -839,9 +844,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     $snapshot_id = (int) $snapshot->id;
                 }
             } else {
-                $progress   = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
-                $error_code = $progress->fetchResult['error_code'] ?? '';
-                $error_code = is_string( $error_code ) ? $error_code : '';
+                $progress    = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site_id );
+                $error_code  = $progress->fetchResult['error_code'] ?? '';
+                $error_code  = is_string( $error_code ) ? $error_code : '';
+                $error_extra = is_string( $progress->fetchResult['error_extra'] ?? null ) ? $progress->fetchResult['error_extra'] : '';
                 if ( '' === $error_code && preg_match( '/^\[(mainwp_[a-z0-9_]+)\]/', (string) ( $progress->last_error ?? '' ), $match ) ) {
                     $error_code = $match[1];
                 }
@@ -850,7 +856,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             $snapshot_id = null;
             $error_code  = '';
         }
-        MainWP_Backup_Run_History::finalize_run( (int) $task->id, $history_started, $success ? 'completed' : 'failed', $site_id, $error_code, $snapshot_id );
+        MainWP_Backup_Run_History::finalize_run( (int) $task->id, $history_started, $success ? 'completed' : 'failed', $site_id, $error_code, $snapshot_id, $error_extra );
     }
 
     /**
@@ -1522,17 +1528,20 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 if ( null === $errorOutput ) {
                     $errorOutput = '';
                 }
-                $errorOutput .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
-                $_error_code  = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
+                $errorOutput  .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
+                $_error_code   = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
+                $_history_code = MainWP_Backup_Error_Codes::code_for_exception( $e );
                 // Readiness failures need the Child's reason so the user can correct it.
                 $_error_output = MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED !== $_error_code && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
                 $errorOutput  .= $_error_output . '<br />';
                 // Progress rows can outlive the task-level error record.
                 $_progress_values = array( 'last_error' => $_error_output );
-                if ( '' !== $_error_code ) {
+                if ( '' !== $_history_code ) {
                     $_progress                       = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, (int) $siteid );
                     $_fetch                          = $_progress && is_array( $_progress->fetchResult ) ? $_progress->fetchResult : array();
-                    $_fetch['error_code']            = MainWP_Backup_Operations::safe_error( $_error_code )['code'];
+                    $_fetch['error_code']            = $_history_code;
+                    $_extra                          = $e instanceof MainWP_Exception ? (string) $e->get_message_extra() : '';
+                    $_fetch['error_extra']           = preg_match( '/^AUTH_ERROR2(?:; mainwp_[a-z0-9_]+)?$/', $_extra ) ? $_extra : '';
                     $_progress_values['fetchResult'] = wp_json_encode( $_fetch );
                 }
                 MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, (int) $siteid, $_progress_values );

@@ -187,14 +187,15 @@ class MainWP_Backup_Run_History {
      * @param string   $outcome Terminal outcome.
      * @param string   $error_code Code only, never a stored message.
      * @param int|null $snapshot_id Snapshot belonging to this run.
+     * @param string   $error_extra Replay tag and registered transport cause only.
      * @return bool Whether a running row changed.
      */
-    public static function finalize( int $id, string $outcome, string $error_code = '', ?int $snapshot_id = null ): bool {
+    public static function finalize( int $id, string $outcome, string $error_code = '', ?int $snapshot_id = null, string $error_extra = '' ): bool {
         if ( ! in_array( $outcome, array( 'completed', 'failed', 'cancelled', 'reset', 'incomplete' ), true ) ) {
             return false;
         }
         return (bool) self::write(
-            static function () use ( $id, $outcome, $error_code, $snapshot_id ) {
+            static function () use ( $id, $outcome, $error_code, $snapshot_id, $error_extra ) {
                 global $wpdb;
                 $row = $wpdb->get_row( $wpdb->prepare( 'SELECT trigger_source FROM ' . self::table_name() . ' WHERE id = %d AND outcome = %s', $id, 'running' ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- fixed table; values prepared.
                 if ( '' !== $wpdb->last_error ) {
@@ -203,7 +204,7 @@ class MainWP_Backup_Run_History {
                 if ( ! $row ) {
                     return 0;
                 }
-                $safe    = MainWP_Backup_Operations::safe_error( $error_code );
+                $safe    = self::history_error( $error_code, $error_extra );
                 $failure = 'failed' === $outcome || '' !== $error_code;
                 $message = $failure ? $safe['message'] : '';
                 if ( 'completed' === $outcome && 'update_gate' === $row->trigger_source ) {
@@ -231,6 +232,22 @@ class MainWP_Backup_Run_History {
     }
 
     /**
+     * Preserve replay and registered transport causes without retaining request text.
+     *
+     * @param string $code Primary error code.
+     * @param string $extra Exception context or an older stored message.
+     * @return array Safe code and message.
+     */
+    private static function history_error( string $code, string $extra ): array {
+        $safe = MainWP_Backup_Operations::safe_error( $code );
+        if ( MainWP_Backup_Error_Codes::ERR_TIMEOUT === $safe['code'] && preg_match( '/\bAUTH_ERROR2(?:; (mainwp_[a-z0-9_]+))?\)?$/', $extra, $match ) ) {
+            $cause            = isset( $match[1] ) && in_array( $match[1], MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? '; ' . $match[1] : '';
+            $safe['message'] .= ' (AUTH_ERROR2' . $cause . ')';
+        }
+        return $safe;
+    }
+
+    /**
      * Restrict a late finalizer to the run it observed.
      *
      * @param int      $task_id Task identity.
@@ -239,15 +256,16 @@ class MainWP_Backup_Run_History {
      * @param int|null $site_id Null closes remaining sites in the run.
      * @param string   $error_code Safe formatter input.
      * @param int|null $snapshot_id This site's snapshot.
+     * @param string   $error_extra Replay tag and registered transport cause only.
      */
-    public static function finalize_run( int $task_id, int $started, string $outcome, ?int $site_id = null, string $error_code = '', ?int $snapshot_id = null ): void {
+    public static function finalize_run( int $task_id, int $started, string $outcome, ?int $site_id = null, string $error_code = '', ?int $snapshot_id = null, string $error_extra = '' ): void {
         $where  = 'task_id = %d AND started = %d';
         $values = array( $task_id, $started );
         if ( null !== $site_id ) {
             $where   .= ' AND site_id = %d';
             $values[] = $site_id;
         }
-        self::finalize_matching( $where, $values, $outcome, $error_code, $snapshot_id );
+        self::finalize_matching( $where, $values, $outcome, $error_code, $snapshot_id, $error_extra );
     }
 
     /**
@@ -269,7 +287,19 @@ class MainWP_Backup_Run_History {
      * @param string $error_code Safe formatter input.
      */
     public static function finalize_restore_safety( int $restore_job_id, string $outcome, string $error_code = '' ): void {
-        self::finalize_matching( 'restore_job_id = %d AND trigger_source = %s', array( $restore_job_id, 'restore_safety' ), $outcome, $error_code );
+        self::write(
+            static function () use ( $restore_job_id, $outcome, $error_code ) {
+                $extra = '';
+                if ( 'failed' === $outcome ) {
+                    $job        = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
+                    $extra      = (string) ( $job->checkpoint['last_error_extra'] ?? '' );
+                    $error_code = MainWP_Backup_Error_Codes::code_for_exception( new MainWP_Exception( (string) ( $job->last_error ?? '' ), $extra, $error_code ) );
+                }
+                self::finalize_matching( 'restore_job_id = %d AND trigger_source = %s', array( $restore_job_id, 'restore_safety' ), $outcome, $error_code, null, $extra );
+                return true;
+            },
+            'finalize_restore_safety'
+        );
     }
 
     /**
@@ -280,9 +310,10 @@ class MainWP_Backup_Run_History {
      * @param string $trigger Lane identity.
      * @param string $outcome Terminal outcome.
      * @param string $error_code Safe formatter input.
+     * @param string $error_extra Replay tag and registered transport cause only.
      */
-    public static function finalize_ref( int $site_id, string $ref, string $trigger, string $outcome, string $error_code = '' ): void {
-        self::finalize_matching( 'site_id = %d AND ref = %s AND trigger_source = %s', array( $site_id, $ref, $trigger ), $outcome, $error_code );
+    public static function finalize_ref( int $site_id, string $ref, string $trigger, string $outcome, string $error_code = '', string $error_extra = '' ): void {
+        self::finalize_matching( 'site_id = %d AND ref = %s AND trigger_source = %s', array( $site_id, $ref, $trigger ), $outcome, $error_code, null, $error_extra );
     }
 
     /**
@@ -294,10 +325,11 @@ class MainWP_Backup_Run_History {
      * @param string   $outcome Terminal outcome.
      * @param string   $error_code Safe formatter input.
      * @param int|null $snapshot_id This site's snapshot.
+     * @param string   $error_extra Replay tag and registered transport cause only.
      */
-    private static function finalize_matching( string $where, array $values, string $outcome, string $error_code, ?int $snapshot_id = null ): void {
+    private static function finalize_matching( string $where, array $values, string $outcome, string $error_code, ?int $snapshot_id = null, string $error_extra = '' ): void {
         self::write(
-            static function () use ( $where, $values, $outcome, $error_code, $snapshot_id ) {
+            static function () use ( $where, $values, $outcome, $error_code, $snapshot_id, $error_extra ) {
                 global $wpdb;
                 $values[] = 'running';
                 // nosemgrep: AIK_tainted-sql-string -- Identity clauses are fixed within this class; every value is prepared.
@@ -306,7 +338,7 @@ class MainWP_Backup_Run_History {
                     return false;
                 }
                 foreach ( $ids as $id ) {
-                    self::finalize( (int) $id, $outcome, $error_code, $snapshot_id );
+                    self::finalize( (int) $id, $outcome, $error_code, $snapshot_id, $error_extra );
                 }
                 return true;
             },
@@ -388,7 +420,7 @@ class MainWP_Backup_Run_History {
             throw new \RuntimeException( 'Backup history could not be read.' );
         }
         foreach ( $items as &$item ) {
-            $item['error']    = '' !== $item['error_code'] ? MainWP_Backup_Operations::safe_error( $item['error_code'] ) : null;
+            $item['error']    = '' !== $item['error_code'] ? self::history_error( $item['error_code'], $item['message'] ) : null;
             $override_message = 'gate_overridden' === $item['outcome'] && in_array( $item['message'], array( 'backup_missing', 'backup_pending_offsite' ), true ) ? $item['message'] : '';
             // Old rows may predate the safe-message contract; reads rebuild it too.
             $item['message'] = $item['error']['message'] ?? ( 'completed' === $item['outcome'] && 'update_gate' === $item['trigger_source'] ? 'Pre-update backup downloaded; no snapshot recorded.' : $override_message );

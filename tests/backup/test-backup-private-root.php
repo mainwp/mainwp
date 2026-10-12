@@ -849,4 +849,63 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		$args     = array( $dirs, &$result );
 		$remove->invokeArgs( $executor, $args );
 	}
+	/**
+	 * Recorded subfolder snapshots count once per page; orphan folders do not.
+	 */
+	public function test_s84_backup_column_batches_recorded_snapshot_times(): void {
+		global $wpdb;
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$sites   = array( $this->create_test_site( array( 'userid' => $user ) ), $this->create_test_site( array( 'userid' => $user ) ) );
+		$created = 1700001000;
+		foreach ( $sites as $index => $site ) {
+			$dir = MainWP_Backup_Private_Root::site_dir( $site );
+			file_put_contents( $dir . 'full.zip', 'legacy' );
+			touch( $dir . 'full.zip', 1700000000 );
+			wp_mkdir_p( $dir . 'snapshot-task-' . $site );
+			file_put_contents( $dir . 'snapshot-task-' . $site . '/archive.zip', 'recorded' );
+			wp_mkdir_p( $dir . 'snapshot-orphan' );
+			file_put_contents( $dir . 'snapshot-orphan/archive.zip', 'orphan' );
+			touch( $dir . 'snapshot-orphan/archive.zip', $created + 5000 );
+			$wpdb->insert(
+				\MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+				array(
+					'site_id'       => $site,
+					'task_id'       => 0,
+					'type'          => 'incremental',
+					'created'       => $created + $index,
+					'status'        => 'complete',
+					'archives'      => '[]',
+					'manifest_path' => '',
+				)
+			);
+		}
+		$table        = new \MainWP\Dashboard\MainWP_Manage_Sites_List_Table();
+		$table->items = array_map(
+			static function ( $id ) {
+				return (array) \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $id );
+			},
+			$sites
+		);
+		$queries      = 0;
+		$count        = static function ( $sql ) use ( &$queries ) {
+			if ( str_starts_with( $sql, 'SELECT' ) && str_contains( $sql, 'wp_backup_snapshot' ) ) {
+				++$queries;
+			}
+			return $sql;
+		};
+		add_filter( 'query', $count );
+		try {
+			foreach ( $table->items as $index => $item ) {
+				$expected = \MainWP\Dashboard\MainWP_Utility::format_timestamp( \MainWP\Dashboard\MainWP_Utility::get_timestamp( $created + $index ) ) . '<br />';
+				$this->assertSame( $expected, $table->column_backup( $item ) );
+				$this->assertSame( $expected, $table->column_backup( $item ) );
+			}
+			$this->assertSame( 1, $queries, 'All page rows and repeated renders must share one snapshot query.' );
+		} finally {
+			remove_filter( 'query', $count );
+			delete_option( 'mainwp_enableNativeBackups' );
+		}
+	}
 }

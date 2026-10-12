@@ -34,6 +34,13 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
     public $items;
 
     /**
+     * Snapshot times shared by all rows rendered by this request.
+     *
+     * @var array|null
+     */
+    private $backup_snapshot_times = null;
+
+    /**
      * Public variable to hold total items number.
      *
      * @var integer
@@ -146,6 +153,20 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             closedir( $dh );
         }
 
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            if ( null === $this->backup_snapshot_times ) {
+                $site_ids = is_array( $this->items ) ? array_column( $this->items, 'id' ) : array();
+                if ( empty( $site_ids ) ) {
+                    $sites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( array( 'select_wp_fields' => array( 'id' ) ) ) );
+                    while ( $sites && ( $site = MainWP_DB::fetch_object( $sites ) ) ) {
+                        $site_ids[] = (int) $site->id;
+                    }
+                }
+                $this->cache_backup_snapshot_times( $site_ids );
+            }
+            $lastbackup = max( $lastbackup, (int) ( $this->backup_snapshot_times[ (int) $item['id'] ] ?? 0 ) );
+        }
+
         $output = '';
         if ( 0 < $lastbackup ) {
             $output = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lastbackup ) ) . '<br />';
@@ -154,6 +175,21 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         }
 
         return $output;
+    }
+
+    /**
+     * Load complete snapshot times in one query before any page row renders.
+     *
+     * @param array $site_ids Sites included in this table.
+     */
+    private function cache_backup_snapshot_times( array $site_ids ): void {
+        if ( null !== $this->backup_snapshot_times || ! MainWP_Backup_Settings::is_native_backups_enabled() || ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+            return;
+        }
+        $this->backup_snapshot_times = array();
+        foreach ( MainWP_Backup_Snapshots::instance()->get_latest_per_site( $site_ids ) as $site_id => $snapshot ) {
+            $this->backup_snapshot_times[ $site_id ] = (int) $snapshot->created;
+        }
     }
 
     /**
@@ -1284,6 +1320,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
          */
         do_action( 'mainwp_sitestable_prepared_items', $websites, $site_ids );
 
+        $this->cache_backup_snapshot_times( $site_ids );
         $this->items       = $websites;
         $this->total_items = $totalRecords;
     }

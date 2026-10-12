@@ -191,6 +191,39 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Classify transport exceptions without changing the shared safe formatter.
+     *
+     * @param \Throwable $error Request or Child failure.
+     * @return string Existing registered backup code.
+     */
+    public static function code_for_exception( \Throwable $error ): string {
+        $code = $error instanceof MainWP_Exception ? (string) $error->get_message_error_code() : '';
+        if ( in_array( $code, static::get_registered_codes(), true ) ) {
+            return $code;
+        }
+        $extra = $error instanceof MainWP_Exception ? (string) $error->get_message_extra() : '';
+        if ( 'AUTH_ERROR2' === $code || preg_match( '/^AUTH_ERROR2(?:;|$)/', $extra ) ) {
+            return self::ERR_TIMEOUT;
+        }
+        if ( 'TIMEOUT' === $error->getMessage() ) {
+            if ( 'connect' === $code ) {
+                return self::ERR_CONNECT_FAILED;
+            }
+            if ( in_array( $code, array( 'operation', 'gateway' ), true ) ) {
+                return self::ERR_TIMEOUT;
+            }
+        }
+        if ( 'NOMAINWP' === $error->getMessage() ) {
+            return self::ERR_HTTP_ERROR;
+        }
+        if ( 'HTTPERROR' === $error->getMessage() ) {
+            $data = $error instanceof MainWP_Exception ? $error->get_data() : null;
+            return is_array( $data ) && (int) ( $data['http_status'] ?? 0 ) > 0 ? self::ERR_HTTP_ERROR : self::ERR_CONNECT_FAILED;
+        }
+        return self::ERR_UNCLASSIFIED_ERROR;
+    }
+
+    /**
      * Get the severity for an error code.
      *
      * @param string $code Error code.
@@ -271,7 +304,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_DIR_NOT_WRITABLE              => esc_html__( 'The backup directory is not writable. Set the directory permissions to allow the web server to write, or contact your hosting provider.', 'mainwp' ),
             self::ERR_PRIVATE_ROOT_UNAVAILABLE      => esc_html__( 'Private backup storage could not be set up. The Dashboard needs a writable directory outside the web root for backup archives. Set MAINWP_BACKUP_PRIVATE_DIR in wp-config.php to such a directory and try again.', 'mainwp' ),
             self::ERR_MISSING_EXTENSION             => esc_html__( 'A required PHP extension is not available. Ask your host to enable the missing extension, such as cURL, OpenSSL, or ZipArchive.', 'mainwp' ),
-            self::ERR_UNSUPPORTED_LAYOUT            => esc_html__( 'MainWP backups cannot run on this site yet. Its wp-content folder is stored outside the WordPress core folder. Some managed hosts, such as Pressable and WordPress.com, and Bedrock installs use this layout. No backup or restore was started and nothing on the site was changed. Use the backups your host provides for this site for now.', 'mainwp' ),
+            self::ERR_UNSUPPORTED_LAYOUT            => esc_html__( 'This file backup or restore cannot run on this site yet. Its wp-content or uploads folder is outside the WordPress core folder, either directly or through a symlink. Some managed hosts, such as Pressable and WordPress.com, and Bedrock installs use this layout. No backup or restore was started and nothing on the site was changed. Database-only backups and restores still work on this site. Use the backups your host provides for files for now.', 'mainwp' ),
             self::ERR_DB_CONNECTION_LOST            => esc_html__( 'The database connection was lost during the backup. The database server may be overloaded. Try running the backup again during low-traffic hours.', 'mainwp' ),
             self::ERR_DB_QUERY_FAILED               => esc_html__( 'Database backup did not complete. The child site may have run out of memory or the database connection was interrupted. Check the child site PHP memory limit and error log.', 'mainwp' ),
             self::ERR_DB_DUMP_EMPTY                 => esc_html__( 'Backup response from the child site did not include the expected files. The child site may need a PHP or MainWP Child plugin update. Verify the child site is running the latest MainWP Child version.', 'mainwp' ),

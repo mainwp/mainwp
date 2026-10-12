@@ -904,7 +904,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $claimed         = null;
         $claimed_started = 0;
         try {
-            $had_slot = ( false !== MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle, $claimed, $claimed_started ) );
+            MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true, $settle, $claimed, $claimed_started );
         } finally {
             MainWP_Backup_Run_History::set_context( $previous['trigger'], $previous['user_id'] );
         }
@@ -933,7 +933,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         return array( 'job_id' => (int) $task->id ) + ( 'ability' === $context ? self::ability_start_status( false, $claimed, $task, true === $claimed ? $claimed_started : $started_out ) : array(
             'started' => $started_out,
-            'status'  => $had_slot ? 'running' : 'queued',
+            'status'  => true === $claimed ? 'running' : 'queued',
         ) );
     }
 

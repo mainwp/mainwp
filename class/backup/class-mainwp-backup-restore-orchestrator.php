@@ -1206,7 +1206,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     || $observed['bytes'] > (int) ( $previous['bytes'] ?? 0 );
                 $touched  = '' !== $observed['last_progress_at'] && (string) ( $previous['last_progress_at'] ?? '' ) !== $observed['last_progress_at'];
                 // A heartbeat moves last_progress_at before anything is saved, so only a
-                // confirmed replay (the run is known to have executed) lets it renew attempts.
+                // confirmed replay lets it renew attempts: the Child received the run and
+                // recorded its request id, normally because it executed the run.
                 $moved = $saved || ( $touched && $confirmed_replay );
                 if ( $reconcile && ! $saved && ! $touched && ! in_array( $phase, array( 'completed', 'failed' ), true ) ) {
                     if ( $confirmed_replay ) {
@@ -1284,7 +1285,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
             if ( 'failed' === $phase || '' === $phase || ( $reconcile && isset( $payload['error'] ) ) ) {
                 $error      = is_array( $payload ) && isset( $payload['error'] ) ? MainWP_Backup_Error_Codes::sanitize_message( (string) $payload['error'] ) : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
-                $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
+                $error_code = MainWP_Backup_Error_Codes::code_for_exception( new MainWP_Exception( $error, null, is_array( $payload ) && is_string( $payload['error_code'] ?? null ) ? $payload['error_code'] : '' ) );
                 if ( 'failed' === $phase || ( is_array( $payload ) && isset( $payload['error'] ) ) ) {
                     MainWP_Backup_Run_History::finalize_restore_safety( (int) $job->id, 'failed', $error_code );
                     $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );

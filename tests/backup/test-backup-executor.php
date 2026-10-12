@@ -2712,6 +2712,34 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 	}
 
 	/**
+	 * A thrown poll retains HTTP status without retaining the response body.
+	 */
+	public function test_s84_thrown_poll_has_http_status_without_body() {
+		$failure = new MainWP_Exception( 'NOMAINWP' );
+		$failure->set_data(
+			array(
+				'http_status' => 503,
+				'body'        => '<td>password</td><td>private-secret</td>',
+			)
+		);
+		$payload = null;
+		$listen  = static function ( $value ) use ( &$payload ) {
+			$payload = $value;
+		};
+		add_action( 'mainwp_backup_diag_poll', $listen );
+		try {
+			$record = new \ReflectionMethod( MainWP_Backup_Executor::class, 'record_thrown_request' );
+			$record->setAccessible( true );
+			$record->invoke( null, $failure, 0.1, array( 'sent' => true ), array( 'op' => 'status' ) );
+			$this->assertSame( 503, $payload['http_status'] ?? null );
+			$this->assertArrayNotHasKey( 'body', $payload );
+			$this->assertStringNotContainsString( 'private-secret', wp_json_encode( $payload ) );
+		} finally {
+			remove_action( 'mainwp_backup_diag_poll', $listen );
+		}
+	}
+
+	/**
 	 * A budgeted run failure must survive a throwing diagnostic listener.
 	 */
 	public function test_thrown_budgeted_run_survives_diag_listener_failure() {
@@ -3732,7 +3760,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 			$this->fail( 'An unchanged timestamp must exhaust.' );
 		} catch ( MainWP_Exception $error ) {
 			$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $error->get_message_error_code() );
-			$this->assertSame( 'AUTH_ERROR2', $error->get_message_extra() );
+			$this->assertSame( 'AUTH_ERROR2; ' . MainWP_Backup_Error_Codes::ERR_CONNECT_FAILED, $error->get_message_extra() );
 		}
 		$this->assertSame( array_merge( array_fill( 0, 5, 'backup_task_run' ), array_fill( 0, 5, 'backup_task_status' ) ), $calls );
 	}
@@ -4031,7 +4059,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		}
 		$this->assertSame( 'failed', $status['status'] );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $status['meta']['error_code'] );
-		$this->assertSame( 'AUTH_ERROR2', $status['meta']['extra'] );
+		$this->assertSame( 'AUTH_ERROR2; ' . MainWP_Backup_Error_Codes::ERR_CONNECT_FAILED, $status['meta']['extra'] );
 		$this->assertSame( array_merge( array( 'backup_task_run', 'backup_task_run' ), array_fill( 0, 5, 'backup_task_status' ) ), $calls );
 	}
 

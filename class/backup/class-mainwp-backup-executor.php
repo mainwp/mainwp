@@ -67,6 +67,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 ),
                 $payload_extra
             );
+            $data    = $e instanceof MainWP_Exception ? $e->get_data() : null;
+            if ( is_array( $data ) && isset( $data['http_status'] ) && is_numeric( $data['http_status'] ) ) {
+                $payload['http_status'] = (int) $data['http_status'];
+            }
+            // Response bodies can contain credentials that the diagnostic sanitizer cannot remove.
             /** This action is documented in class/backup/class-mainwp-backup-executor.php */
             do_action( 'mainwp_backup_diag_poll', $payload, $elapsed, $context );
         } catch ( \Throwable $listener_error ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must not change backup control flow.
@@ -710,6 +715,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             try {
                 $temp = MainWP_Connect::fetch_url_authed( $website, 'backup_task_' . $operation, array( 'task_id' => $backupTaskProgress->child_backup_task_id ), false, false, false );
             } catch ( \Exception $e ) {
+                if ( $reconcile ) {
+                    $run_state['reconcile_pending']['transport_error_code'] = MainWP_Backup_Error_Codes::code_for_exception( $e );
+                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'last_error' => wp_json_encode( $run_state ) ) );
+                }
                 // The failed run call consumes a retry attempt below instead of being ignored.
                 MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup task ' . $operation . ' failed: ' . $e->getMessage() );
                 self::record_thrown_request(
@@ -951,7 +960,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
                 return false;
             } else {
-                throw MainWP_Backup_Error_Codes::exception( $reconcile ? MainWP_Backup_Error_Codes::ERR_TIMEOUT : MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED, $reconcile ? 'AUTH_ERROR2' : null ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                throw MainWP_Backup_Error_Codes::exception( $reconcile ? MainWP_Backup_Error_Codes::ERR_TIMEOUT : MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED, $reconcile ? 'AUTH_ERROR2' . ( ! empty( $run_state['reconcile_pending']['transport_error_code'] ) ? '; ' . $run_state['reconcile_pending']['transport_error_code'] : '' ) : null ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
         }
 
@@ -2881,8 +2890,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * The Child also bumps last_progress_at from an in-slice heartbeat before
      * any work is saved, so a slice the host kills every time still moves it.
-     * Only a confirmed replay may count that as progress: the replayed run is
-     * known to have executed. Elsewhere it would keep resetting the attempt cap.
+     * A confirmed replay proves the Child received the run and recorded its
+     * request id, normally because it executed the run. Only then may a heartbeat
+     * renew attempts; elsewhere it would keep resetting the attempt cap.
      *
      * @param array $observed Current position.
      * @param array $previous Last observed position.
@@ -2925,10 +2935,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * End a replayed run that stayed unchanged through the reconciliation budget.
      *
+     * @param array $pending Reconciliation state and last transport classification.
      * @return array Failed gate status with the replay cause.
      */
-    private static function reconciliation_timeout_status(): array {
-        $error = MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_TIMEOUT, 'AUTH_ERROR2' );
+    private static function reconciliation_timeout_status( array $pending = array() ): array {
+        $extra = 'AUTH_ERROR2' . ( ! empty( $pending['transport_error_code'] ) ? '; ' . $pending['transport_error_code'] : '' );
+        $error = MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $extra );
         return array(
             'status' => 'failed',
             'meta'   => array(
@@ -3065,7 +3077,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             // Only a failure the Child reported ends the task: an unreadable answer
             // keeps the handle, so a later pass can still see the task complete.
             if ( 'failed' === $status['status'] && isset( $status['meta']['phase'] ) ) {
-                MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'failed', is_string( $status['meta']['error_code'] ?? null ) ? $status['meta']['error_code'] : '' );
+                MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'failed', MainWP_Backup_Error_Codes::code_for_exception( new MainWP_Exception( (string) ( $status['meta']['error'] ?? '' ), (string) ( $status['meta']['extra'] ?? '' ), is_string( $status['meta']['error_code'] ?? null ) ? $status['meta']['error_code'] : '' ) ), (string) ( $status['meta']['extra'] ?? '' ) );
             }
             return $status;
         }
@@ -3082,7 +3094,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         do {
             if ( $reconcile ) {
                 if ( (int) ( $pending['attempts'] ?? 0 ) >= self::RUN_ATTEMPT_CAP ) {
-                    $status = self::reconciliation_timeout_status();
+                    $status = self::reconciliation_timeout_status( $pending );
                     break;
                 }
                 $now       = microtime( true );
@@ -3120,10 +3132,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     )
                 );
                 if ( $reconcile ) {
-                    $pending['attempts'] = (int) ( $pending['attempts'] ?? 0 ) + 1;
+                    $pending['transport_error_code'] = MainWP_Backup_Error_Codes::code_for_exception( $e );
+                    $pending['attempts']             = (int) ( $pending['attempts'] ?? 0 ) + 1;
                     self::save_gate_reconciliation( $website, $task_id, $pending );
                     if ( $pending['attempts'] >= self::RUN_ATTEMPT_CAP ) {
-                        $status = self::reconciliation_timeout_status();
+                        $status = self::reconciliation_timeout_status( $pending );
                         break;
                     }
                 }
@@ -3169,7 +3182,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         $pending['attempts'] = (int) ( $pending['attempts'] ?? 0 ) + 1;
                         self::save_gate_reconciliation( $website, $task_id, $pending );
                         if ( $pending['attempts'] >= self::RUN_ATTEMPT_CAP ) {
-                            $status = self::reconciliation_timeout_status();
+                            $status = self::reconciliation_timeout_status( $pending );
                         }
                     }
                 }
@@ -3186,7 +3199,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         }
 
         if ( 'running' !== $status['status'] ) {
-            MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'completed' === $status['status'] && '' !== $downloaded ? 'completed' : 'failed', 'completed' !== $status['status'] && is_string( $status['meta']['error_code'] ?? null ) ? $status['meta']['error_code'] : '' );
+            MainWP_Backup_Run_History::finalize_ref( $site_id, $task_id, 'update_gate', 'completed' === $status['status'] && '' !== $downloaded ? 'completed' : 'failed', 'completed' !== $status['status'] ? MainWP_Backup_Error_Codes::code_for_exception( new MainWP_Exception( (string) ( $status['meta']['error'] ?? '' ), (string) ( $status['meta']['extra'] ?? '' ), is_string( $status['meta']['error_code'] ?? null ) ? $status['meta']['error_code'] : '' ) ) : '', (string) ( $status['meta']['extra'] ?? '' ) );
             /**
              * Fires when the dashboard observes a backup task reach a terminal phase.
              *

@@ -1814,9 +1814,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * - Without an incoming or stored failure, cancel_intent means user
      *   cancellation. A retry record supplies elapsed time, not a verdict.
      *   Missing retry records start now.
-     * - A terminal write for a row that carried no task id when it was read
-     *   re-reads the row; a task id on it that this decision did not cancel is
-     *   cancelled by id.
+     * - A landed terminal write re-reads the row; a task id on it other than the
+     *   one this decision requested a cancel for is cancelled by id. The
+     *   cloud-pull fallback can replace the id under a live row.
      * - Intent, original failure and retry time must be durable before the child
      *   round trip, so a new lease holder inherits the gate while it is in flight.
      * - A refused combined write defers without a request or cleanup; arm intent
@@ -1862,7 +1862,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $can_cancel         = ( ! empty( $job->child_task_id ) || ( ! empty( $job->checkpoint['child_create_attempted'] ) && ! empty( $job->checkpoint['restore_id'] ) ) ) && in_array( $phase, array( $store::STATUS_STAGING, $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
         $outcome            = $store::STATUS_VERIFYING === $phase ? 'completed' : 'ok';
         $by_restore_id      = $can_cancel && empty( $job->child_task_id );
-        $decided_task_id    = '';
+        $decided_task_id    = (string) $job->child_task_id;
         if ( $can_cancel ) {
             $deferred = $store->defer_terminal_failure( (int) $job->id, $error, $error_code, $lock_token );
             if ( null === $deferred ) {
@@ -1959,15 +1959,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return self::TERMINAL_OUTCOME_DEFERRED;
         }
 
-        if ( empty( $job->child_task_id ) ) {
-            // The terminal write ends every fenced worker write. The row read for
-            // this decision carried no task id, so an id it carries now was recorded
-            // by a worker whose write landed before the swap; that worker will not
-            // cancel it, and this decision did not unless it already cancelled it by id.
-            $final = $store->get_job( (int) $job->id );
-            if ( null !== $final && ! empty( $final->child_task_id ) && (string) $final->child_task_id !== $decided_task_id ) {
-                $this->cancel_task_created_after_terminal( $final, (string) $final->child_task_id );
-            }
+        // The terminal write ends every fenced worker write, so an id the row
+        // carries now was recorded before the swap. The decision requested a
+        // cancel for $decided_task_id only; any other id belongs to a task nothing
+        // will cancel: the cloud-pull fallback replaces the id under a live row,
+        // and a worker whose write landed does not run its refused-write cancel.
+        $final = $store->get_job( (int) $job->id );
+        if ( null !== $final && ! empty( $final->child_task_id ) && (string) $final->child_task_id !== $decided_task_id ) {
+            $this->cancel_task_created_after_terminal( $final, (string) $final->child_task_id );
         }
 
         MainWP_Backup_Run_History::finalize_restore_safety( (int) $job->id, $cancelled ? 'cancelled' : 'failed', $cancelled ? '' : (string) $error_code );

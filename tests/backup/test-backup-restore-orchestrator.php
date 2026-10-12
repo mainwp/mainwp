@@ -3892,8 +3892,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * @param bool   $timeout_elapsed Whether the cancel confirmation window has already run out.
 	 * @param array  $expect          Expected outcome.
 	 * @param bool   $marker          Whether the create marker was saved before the cancel read the row.
+	 * @param string $initial_task_id Task id the row carries when the cancel reads it, '' for none.
 	 */
-	public function test_restore_id_cancel_decides_from_the_task_the_row_carries( $lane, $landing, $answers, $timeout_elapsed, $expect, $marker = true ) {
+	public function test_restore_id_cancel_decides_from_the_task_the_row_carries( $lane, $landing, $answers, $timeout_elapsed, $expect, $marker = true, $initial_task_id = '' ) {
 		global $wpdb;
 		$store    = MainWP_Backup_Restore_Job_Store::instance();
 		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
@@ -3905,7 +3906,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				'outcome'          => 'pending',
 			);
 		}
-		$job  = $this->make_job( $override, $store::STATUS_STAGING );
+		$job  = $this->make_job( $override, '' === $initial_task_id ? $store::STATUS_STAGING : $store::STATUS_RUNNING, '' === $initial_task_id ? array() : array( 'child_task_id' => $initial_task_id ) );
 		$id   = (int) $job->id;
 		$dead = null;
 		if ( 'sweep' === $lane ) {
@@ -3926,8 +3927,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$landed = false;
 		if ( 'during_request' === $landing ) {
-			$inject = static function ( $pre, $website, $what, $params ) use ( $store, $id, $dead, &$landed ) {
-				if ( 'restore_task_cancel' === $what && isset( $params['restore_id'] ) && ! $landed ) {
+			$inject = static function ( $pre, $website, $what, $params ) use ( $store, $id, $dead, $initial_task_id, &$landed ) {
+				if ( 'restore_task_cancel' === $what && ! $landed && ( '' === $initial_task_id ? isset( $params['restore_id'] ) : ( $params['task_id'] ?? '' ) === $initial_task_id ) ) {
 					$landed = $store->set_status( $id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'late-task' ), $dead );
 				}
 				return $pre;
@@ -3977,7 +3978,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( $expect['confirmation'], $job->checkpoint['cancel_confirmation']['outcome'] ?? null );
 		$this->assertSame( $expect['intent'], ! empty( $job->checkpoint['cancel_intent'] ) );
 		$this->assertArrayNotHasKey( 'child_completed_unrecorded', $job->checkpoint );
-		if ( 'during_request' === $landing ) {
+		if ( 'during_request' === $landing && '' === $initial_task_id ) {
 			$this->assertNotEmpty( preg_grep( '/recorded meanwhile/', $logs ) );
 		}
 		if ( isset( $expect['log'] ) ) {
@@ -4031,6 +4032,28 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'intent'       => true,
 			'calls'        => array( 'restore_id', 'late-task' ),
 		);
+		$already_failed    = array(
+			'result' => 'already_terminal',
+			'phase'  => 'failed',
+		);
+		$replaced_ui       = array(
+			'answer'       => 'cancelled',
+			'code'         => null,
+			'status'       => MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED,
+			'confirmation' => 'confirmed',
+			'intent'       => true,
+			'calls'        => array( 'first-task', 'late-task' ),
+			'log'          => '/created after the job ended/',
+		);
+		$replaced_sweep    = array(
+			'answer'       => null,
+			'code'         => null,
+			'status'       => MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
+			'confirmation' => 'confirmed',
+			'intent'       => true,
+			'calls'        => array( 'first-task', 'late-task' ),
+			'log'          => '/created after the job ended/',
+		);
 		$unrequested_ui    = array(
 			'answer'       => 'cancelled',
 			'code'         => null,
@@ -4083,6 +4106,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'B12b ui, no marker, id before the swap SELECT' => array( 'ui', 'before_swap_select', array( $ok ), false, $unrequested_ui, false ),
 			'B12c ui, no marker, id between the swap SELECT and UPDATE' => array( 'ui', 'before_terminal_write', array( $ok ), false, $unrequested_ui, false ),
 			'D9 sweep, no marker, zombie id before the swap SELECT' => array( 'sweep', 'before_swap_select', array( $ok ), false, $unrequested_sweep, false ),
+			'F1b ui, replacement id before re-read'      => array( 'ui', 'during_request', array( $already_failed, $ok ), false, $replaced_ui, true, 'first-task' ),
+			'F1c ui, replacement id before the swap SELECT' => array( 'ui', 'before_swap_select', array( $already_failed, $ok ), false, $replaced_ui, true, 'first-task' ),
+			'F1d ui, replacement id between the swap SELECT and UPDATE' => array( 'ui', 'before_terminal_write', array( $already_failed, $ok ), false, $replaced_ui, true, 'first-task' ),
+			'F5 sweep, zombie replacement id before re-read' => array( 'sweep', 'during_request', array( $already_failed, $ok ), false, $replaced_sweep, true, 'first-task' ),
 		);
 	}
 

@@ -107,6 +107,9 @@ class Log_Admin {
      * Handle archive data action.
      */
     public function handle_post_archive_data() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
         if ( isset( $_GET['clearArchivedSitesChangesData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_archived_sites_changes' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             Log_DB_Archive::instance()->truncate_archive_tables();
             wp_safe_redirect( esc_url( admin_url( 'admin.php?page=MainWPTools' ) ) );
@@ -315,7 +318,7 @@ class Log_Admin {
     /**
      * Render logs db large size notice.
      *
-     * @param int $limit DB size limit in MByte, default 300 MB.
+     * @param int    $limit DB size limit in MByte, default 300 MB.
      * @param string $which The page slug where the notice is displayed.
      */
     public function render_logs_db_notice( $limit = 300, $which = '' ) {

@@ -394,7 +394,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     /** Run the export_sites method that exports the Child Sites .csv file */
     public static function admin_init() { // phpcs:ignore -- NOSONAR - complex.
         static::export_sites();
-        if ( isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             delete_option( 'mainwp_extensions_api_username' );
             delete_option( 'mainwp_extensions_api_password' );
             delete_option( 'mainwp_extensions_api_save_login' );

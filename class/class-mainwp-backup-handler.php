@@ -659,8 +659,8 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Child archives include custom and resumed names, not just generated prefixes.
      *
-     * The Child runs the name through sanitize_text_field() before deleting, so a name that
-     * sanitizing would change (tags, octets, extra whitespace) could reach it as a different file.
+     * Released Children sanitize the name before deleting; the equality check prevents
+     * sanitizing (tags, octets, extra whitespace) from targeting a different file.
      *
      * @param mixed $file Child archive basename.
      * @return bool Whether the name can be sent to the Child for deletion.

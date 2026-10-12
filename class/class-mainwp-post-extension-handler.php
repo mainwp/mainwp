@@ -144,9 +144,15 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      */
     public function ajax_extension_plugin_action() {
         $this->check_security( 'mainwp_extension_plugin_action' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage Add-ons.', 'mainwp' ) ) );
+        }
         $plugin_slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $action      = isset( $_POST['what'] ) ? sanitize_text_field( wp_unslash( $_POST['what'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! empty( $plugin_slug ) && in_array( $action, array( 'active', 'disable', 'remove' ) ) ) {
+            if ( ! current_user_can( 'remove' === $action ? 'delete_plugins' : 'activate_plugins' ) ) {
+                wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage Add-ons.', 'mainwp' ) ) );
+            }
             $this->invalidate_warm_cache();
             if ( 'disable' === $action ) {
                 if ( is_plugin_active( $plugin_slug ) ) {

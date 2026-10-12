@@ -79,7 +79,7 @@ class Test_Manage_Sites_Site_Scope extends \WP_UnitTestCase {
         $this->current_wpid = MainWP_System_Utility::get_current_wpid();
         MainWP_System_Utility::set_current_wpid( 0 );
 
-        $this->upload_root = dirname( __DIR__ ) . '/.mwpdev/debugging/scope-gaps/s1/fixtures-' . wp_generate_uuid4();
+        $this->upload_root = get_temp_dir() . 'mainwp-site-scope-' . wp_generate_uuid4();
         wp_mkdir_p( $this->upload_root );
         $this->filter(
             'mainwp_get_wp_upload_dir',
@@ -383,7 +383,8 @@ class Test_Manage_Sites_Site_Scope extends \WP_UnitTestCase {
         wp_get_current_user()->add_cap( 'edit_themes', false );
         $this->assertFalse( current_user_can( 'edit_themes' ) );
         $before = 'delete' === $action ? $wp_filesystem->get_contents( $file ) : false;
-        MainWP_Notification_Template::instance()->handle_template_file_action();
+        $result = MainWP_Notification_Template::instance()->handle_template_file_action();
+        $this->assertSame( 35, $result );
         if ( 'delete' === $action ) {
             $this->assertSame( $before, $wp_filesystem->get_contents( $file ) );
         } else {

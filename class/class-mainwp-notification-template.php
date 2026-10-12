@@ -345,21 +345,30 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
         $type            = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : '';
         $templ_base_name = ! empty( $type ) ? static::get_template_name_by_notification_type( $type ) : '';
 
-        if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'delete-email-template' ) && current_user_can( 'edit_themes' ) && $hasWPFileSystem ) {
-            $dir     = $this->template_custom_path;
-            $deleted = $wp_filesystem->delete( $dir . $templ_base_name );
-            if ( $deleted ) {
-                $updated_templ = 1;
+        if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'delete-email-template' ) && $hasWPFileSystem ) {
+            if ( ! current_user_can( 'edit_themes' ) ) {
+                // Same refusal code as save_template(), so the page explains why nothing changed.
+                $updated_templ = 35;
+            } else {
+                $dir     = $this->template_custom_path;
+                $deleted = $wp_filesystem->delete( $dir . $templ_base_name );
+                if ( $deleted ) {
+                    $updated_templ = 1;
+                }
             }
         }
 
-        if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'copy-email-template' ) && current_user_can( 'edit_themes' ) && $hasWPFileSystem ) {
-            $template_path = $this->template_path;
-            $source_dir    = apply_filters( 'mainwp_default_template_source_dir', $template_path, $templ_base_name );
-            $dest_dir      = $this->template_custom_path;
-            $copied        = $wp_filesystem->copy( $source_dir . $templ_base_name, $dest_dir . $templ_base_name );
-            if ( $copied ) {
-                $updated_templ = 2;
+        if ( ! empty( $templ_base_name ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'copy-email-template' ) && $hasWPFileSystem ) {
+            if ( ! current_user_can( 'edit_themes' ) ) {
+                $updated_templ = 35;
+            } else {
+                $template_path = $this->template_path;
+                $source_dir    = apply_filters( 'mainwp_default_template_source_dir', $template_path, $templ_base_name );
+                $dest_dir      = $this->template_custom_path;
+                $copied        = $wp_filesystem->copy( $source_dir . $templ_base_name, $dest_dir . $templ_base_name );
+                if ( $copied ) {
+                    $updated_templ = 2;
+                }
             }
         }
 

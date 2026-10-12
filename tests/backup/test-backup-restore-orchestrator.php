@@ -3501,10 +3501,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * @dataProvider terminal_failure_cancellation_cases
 	 * @param string $answer Child cancellation outcome.
 	 * @param string $child_task_id Child task id, or empty before task creation.
+	 * @param bool   $attempted Whether creation might have reached the Child.
 	 */
-	public function test_terminal_failure_cancels_child_before_finishing( $answer, $child_task_id ) {
+	public function test_terminal_failure_cancels_child_before_finishing( $answer, $child_task_id, $attempted = false ) {
 		$job    = $this->make_job(
-			array(),
+			$attempted ? array( 'child_create_attempted' => true ) : array(),
 			MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
 			array(
 				'child_task_id'        => $child_task_id,
@@ -3550,9 +3551,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$store = MainWP_Backup_Restore_Job_Store::instance();
 		$job   = $store->get_job( (int) $job->id );
 
-		$this->assertSame( '' === $child_task_id ? array() : array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( '' === $child_task_id && ! $attempted ? array() : array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
 		if ( '' !== $child_task_id ) {
 			$this->assertSame( $child_task_id, $this->calls[0]['params']['task_id'] );
+		} elseif ( $attempted ) {
+			$this->assertSame( array( 'restore_id' => 'orch01test' ), $this->calls[0]['params'] );
 		}
 		// A child that answered busy or rolling_back may still be writing, and
 		// a request that threw proves nothing either way, so all four defer.
@@ -3604,15 +3607,166 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 */
 	public static function terminal_failure_cancellation_cases() {
 		return array(
-			'confirmed'         => array( 'ok', 'task-9-restore' ),
-			'already failed'    => array( 'already_terminal', 'task-9-restore' ),
-			'busy'              => array( 'busy', 'task-9-restore' ),
-			'rolling back'      => array( 'rolling_back', 'task-9-restore' ),
-			'child error'       => array( 'error', 'task-9-restore' ),
-			'already completed' => array( 'completed', 'task-9-restore' ),
-			'unreachable'       => array( 'unreachable', 'task-9-restore' ),
-			'no child task'     => array( 'ok', '' ),
+			'confirmed'                   => array( 'ok', 'task-9-restore' ),
+			'already failed'              => array( 'already_terminal', 'task-9-restore' ),
+			'busy'                        => array( 'busy', 'task-9-restore' ),
+			'rolling back'                => array( 'rolling_back', 'task-9-restore' ),
+			'child error'                 => array( 'error', 'task-9-restore' ),
+			'already completed'           => array( 'completed', 'task-9-restore' ),
+			'unreachable'                 => array( 'unreachable', 'task-9-restore' ),
+			'no child task'               => array( 'ok', '' ),
+			'unrecorded child task'       => array( 'ok', '', true ),
+			'unrecorded task absent'      => array( 'not_found', '', true ),
+			'unrecorded task unreachable' => array( 'unreachable', '', true ),
 		);
+	}
+
+	/**
+	 * The Child may own a restore even when the fenced handle write was refused.
+	 *
+	 * @dataProvider unrecorded_child_cancel_paths
+	 * @param string $path Creation path.
+	 * @param string $trigger Terminal decision source.
+	 */
+	public function test_unrecorded_child_create_is_cancelled_by_restore_id( $path, $trigger ) {
+		global $wpdb;
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array(), $store::STATUS_STAGING );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		if ( 'standard' !== $path ) {
+			$this->use_cloud_pull_driver( $this->pull_manifest_fixture() );
+		}
+		$this->responses['restore_task_create'] = array(
+			'task_id'                => 'unrecorded-child',
+			'phase'                  => 'queued',
+			'pull_manifest_rejected' => 'rejected pull' === $path,
+		);
+		$at_create                              = null;
+		$observe                                = static function ( $pre, $website, $what ) use ( $store, $job, &$at_create ) {
+			if ( 'restore_task_create' === $what ) {
+				$at_create = $store->get_job( (int) $job->id );
+			}
+			return $pre;
+		};
+		$refuse                                 = static function ( $sql ) use ( $table ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET ' ) && str_contains( $sql, "`child_task_id` = 'unrecorded-child'" ) ) {
+				return $sql . ' AND 1 = 0';
+			}
+			return $sql;
+		};
+		add_filter( 'query', $refuse );
+		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 3 );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_filter( 'query', $refuse );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
+		}
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( '', $job->child_task_id );
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertNotNull( $at_create );
+		$this->assertNotEmpty( $at_create->locked_by );
+		if ( 'user' === $trigger ) {
+			$this->orchestrator->cancel_job( (int) $job->id );
+		} elseif ( 'ceiling' === $trigger ) {
+			$this->expire_job_at_reclaim_ceiling( (int) $job->id );
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} else {
+			$record = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
+			$record->invoke( $this->orchestrator, $job, 'Restore stopped.', 'test_restore_failure', null );
+		}
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( array( 'restore_task_create', 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'restore_id' => $this->calls[0]['params']['restore_id'] ), $this->calls[1]['params'] );
+		$this->assertTrue( $at_create->checkpoint['child_create_attempted'] ?? false );
+		$this->assertTrue( $job->checkpoint['child_create_attempted'] ?? false );
+		$this->assertSame( 'confirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
+		$this->assertSame( 'user' === $trigger ? $store::STATUS_CANCELLED : $store::STATUS_FAILED_PERMANENT, $job->status );
+	}
+
+	/**
+	 * All creation paths can lose their acknowledgement before any terminal decision.
+	 *
+	 * @return array Creation and terminal decision combinations.
+	 */
+	public static function unrecorded_child_cancel_paths() {
+		$cases = array();
+		foreach ( array( 'standard', 'cloud', 'rejected pull' ) as $path ) {
+			foreach ( array( 'user', 'ceiling', 'failure' ) as $trigger ) {
+				$cases[ $path . ' ' . $trigger ] = array( $path, $trigger );
+			}
+		}
+		return $cases;
+	}
+
+	/** A refused checkpoint cannot authorize a Child side effect. */
+	public function test_child_create_requires_durable_attempt_marker() {
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                    = $this->make_job( array(), $store::STATUS_STAGING );
+		$table                                  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$this->responses['restore_task_create'] = array( 'task_id' => 'must-not-exist' );
+		$this->responses['restore_task_run']    = array( 'phase' => 'completed' );
+		$refuse                                 = static function ( $sql ) use ( $table ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint' ) && str_contains( $sql, 'child_create_attempted' ) ) {
+				return $sql . ' AND 1 = 0';
+			}
+			return $sql;
+		};
+		add_filter( 'query', $refuse );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_filter( 'query', $refuse );
+		}
+		$this->assertSame( array(), array_column( $this->calls, 'what' ) );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertEmpty( $job->child_task_id );
+		$this->assertArrayNotHasKey( 'child_create_attempted', $job->checkpoint );
+	}
+
+	/** No matching identity proves absence, while transport failure proves nothing. */
+	public function test_cancel_unrecorded_child_not_found_is_confirmed() {
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                    = $this->make_job( array( 'child_create_attempted' => true ), $store::STATUS_STAGING );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'not_found' );
+		$this->orchestrator->cancel_job( (int) $job->id );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'restore_id' => 'orch01test' ), $this->calls[0]['params'] );
+		$this->assertSame( $store::STATUS_CANCELLED, $job->status );
+		$this->assertSame( 'confirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
+	}
+
+	/** The existing retry window protects a Child whose response was lost. */
+	public function test_cancel_unrecorded_child_unreachable_remains_pending_then_times_out() {
+		global $wpdb;
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                    = $this->make_job( array( 'child_create_attempted' => true ), $store::STATUS_STAGING );
+		$this->responses['restore_task_cancel'] = new MainWP_Exception( 'Site unreachable.' );
+		$this->assertSame( 'cancel_pending', $this->orchestrator->cancel_job( (int) $job->id ) );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertSame( 'pending', $job->checkpoint['cancel_confirmation']['outcome'] );
+		$this->assertSame( array( 'restore_id' => 'orch01test' ), $this->calls[0]['params'] );
+		$checkpoint = $job->checkpoint;
+		$checkpoint['cancel_confirmation']['first_attempt_at'] = time() - $store::CANCEL_CONFIRMATION_TIMEOUT_SECONDS;
+		$this->assertSame(
+			1,
+			$wpdb->query(
+				$wpdb->prepare(
+					'UPDATE ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) . ' SET checkpoint = %s, checkpoint_rev = checkpoint_rev + 1 WHERE id = %d',
+					wp_json_encode( $checkpoint ),
+					(int) $job->id
+				)
+			)
+		);
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 'unconfirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
+		$this->assertSame( 'mainwp_restore_cancel_unconfirmed', $job->checkpoint['last_error_code'] );
+		$this->assertSame( array( 'restore_task_cancel', 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
 	}
 
 	/**

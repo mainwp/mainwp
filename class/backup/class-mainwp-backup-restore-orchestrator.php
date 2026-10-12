@@ -719,12 +719,18 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     private function request_child_cancel( object $job ): string {
         $website = $this->website( $job );
 
-        $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_cancel', array( 'task_id' => $job->child_task_id ), false, false, false );
+        $params  = ! empty( $job->child_task_id )
+            ? array( 'task_id' => $job->child_task_id )
+            : array( 'restore_id' => $job->checkpoint['restore_id'] );
+        $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_cancel', $params, false, false, false );
         $result  = is_array( $payload ) && isset( $payload['result'] ) ? (string) $payload['result'] : '';
         $phase   = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
 
         if ( 'ok' === $result ) {
             return 'ok';
+        }
+        if ( 'not_found' === $result ) {
+            return 'failed';
         }
         if ( 'already_terminal' === $result ) {
             return 'completed' === $phase ? 'completed' : 'failed';
@@ -1510,7 +1516,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @return array { task_id: string ('' after recording a failure),
      *                 pull_rejected: bool, reused?: bool }.
      */
-    private function create_child_restore_task( object $job, array $checkpoint, array $plan, ?array $pull_manifest = null ): array {
+    private function create_child_restore_task( object $job, array &$checkpoint, array $plan, ?array $pull_manifest = null ): array {
         // Re-check the lease immediately before this irreversible side effect.
         // Staging can run long enough for the lease to expire and another lane
         // to reclaim the job; without this a lease-lost worker would create a
@@ -1560,6 +1566,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         $website = $this->website( $job );
+        // A lost create response must remain cancellable even when its task id never lands.
+        $checkpoint['child_create_attempted'] = true;
+        if ( ! MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+            return array(
+                'task_id'       => '',
+                'pull_rejected' => false,
+            );
+        }
         $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_create', $params, false, false, false );
 
         if ( ! is_array( $payload ) || empty( $payload['task_id'] ) ) {
@@ -1670,7 +1684,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * A child task can still restore in staging after a rejected pull manifest,
      * and in transferring/running. Pending, preflight and pre_snapshot precede
      * restore-task creation; verifying follows confirmed child completion.
-     * Terminal rows cannot drive work. A missing child task needs no request.
+     * Terminal rows cannot drive work. A task id can be lost after creation,
+     * so an attempted create retains its restore identity for cancellation.
      *
      * Child can restore?            Child answer       Decision
      * terminal row                  not requested      retain terminal verdict
@@ -1731,7 +1746,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $error              = $failure['error'] ?? $error;
         $error_code         = $failure['error_code'] ?? $error_code;
         $phase              = $store::STATUS_FAILED_RETRYABLE === $job->status ? ( $job->checkpoint['resume_status'] ?? $store::STATUS_PENDING ) : $job->status;
-        $can_cancel         = ! empty( $job->child_task_id ) && in_array( $phase, array( $store::STATUS_STAGING, $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
+        $can_cancel         = ( ! empty( $job->child_task_id ) || ( ! empty( $job->checkpoint['child_create_attempted'] ) && ! empty( $job->checkpoint['restore_id'] ) ) ) && in_array( $phase, array( $store::STATUS_STAGING, $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
         $outcome            = $store::STATUS_VERIFYING === $phase ? 'completed' : 'ok';
         if ( $can_cancel ) {
             $deferred = $store->defer_terminal_failure( (int) $job->id, $error, $error_code, $lock_token );

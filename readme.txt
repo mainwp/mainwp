@@ -151,6 +151,10 @@ Please report security bugs found in the source code of the MainWP plugin throug
 
 == Changelog ==
 
+= 6.2.3 - 10-12-2026 =
+
+* Security: Hardened REST API key authentication, permissions, lifecycle, and caching.
+
 = 6.2.2 - 10-1-2026 =
 
 * Fixed: PHP fatal error when saving Monitoring settings while uptime monitoring is enabled.

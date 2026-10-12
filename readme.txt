@@ -153,10 +153,7 @@ Please report security bugs found in the source code of the MainWP plugin throug
 
 = 6.2.3 - 10-12-2026 =
 
-* Security: REST API keys now authenticate only MainWP REST API routes. A request to any other route made with a REST API key is refused.
-* Security: REST API keys whose owner was deleted or removed from the Dashboard site are now refused and removed.
-* Security: A REST API key can no longer create or edit a key with permissions it does not have.
-* Security: Unknown, disabled, and mismatched REST API keys, secrets, and signatures now return the same error. Cached key data expires after five minutes and is cleared when a key is edited or deleted.
+* Security: Hardened REST API key authentication, permissions, lifecycle, and caching.
 
 = 6.2.2 - 10-1-2026 =
 

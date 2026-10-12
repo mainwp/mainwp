@@ -150,8 +150,7 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 	/**
 	 * A user row whose consumer_secret is hashed at rest must not be allowed to
 	 * authenticate via OAuth 1.0a, since HMAC verification needs the plaintext
-	 * secret on the server side. The auth code returns a specific error code so
-	 * callers can distinguish this case from a generic signature failure.
+	 * secret on the server side. The refusal must not reveal whether the key exists.
 	 */
 	public function test_oauth_signature_rejects_hashed_secret(): void {
 		$hashed_user = (object) array(
@@ -167,7 +166,9 @@ class Test_REST_Authentication_Hashing extends \WP_UnitTestCase {
 		$result = $this->invoke_auth_method( 'check_oauth_signature', array( $hashed_user, $params ) );
 
 		$this->assertInstanceOf( \WP_Error::class, $result );
-		$this->assertSame( 'mainwp_rest_authentication_oauth1_unsupported', $result->get_error_code() );
+		$this->assertSame( 'mainwp_rest_authentication_disabled_key', $result->get_error_code() );
+		$this->assertSame( __( 'The REST API Key are disabled.', 'mainwp' ), $result->get_error_message() );
+		$this->assertSame( array( 'status' => 401 ), $result->get_error_data() );
 
 		unset( $_SERVER['REQUEST_METHOD'], $_SERVER['REQUEST_URI'] );
 	}

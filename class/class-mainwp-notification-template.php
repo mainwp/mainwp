@@ -326,7 +326,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
      *
      * Handle template file action.
      *
-     * @return bool $done handle result.
+     * @return int|false Result code, or false when no action ran.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
      */

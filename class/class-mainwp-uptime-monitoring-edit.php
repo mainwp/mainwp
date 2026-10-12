@@ -112,8 +112,15 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 if ( empty( $site_id ) && isset( $_REQUEST['id'] ) ) {
                     $site_id = (int) $_REQUEST['id'];
                 }
-                if ( ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                if ( $site_id <= 0 || ! \mainwp_current_user_can( 'site', $site_id ) ) {
                     return;
+                }
+                // update_wp_monitor() writes by monitor id alone, so a posted id must belong to the authorized site.
+                foreach ( array( 'mainwp_edit_monitor_id', 'edit_sub_monitor_id' ) as $monitor_field ) {
+                    $posted_monitor_id = isset( $_POST[ $monitor_field ] ) ? intval( $_POST[ $monitor_field ] ) : 0;
+                    if ( 0 !== $posted_monitor_id && ! MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'monitor_id', $posted_monitor_id ) ) {
+                        return;
+                    }
                 }
             } elseif ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
                 return;

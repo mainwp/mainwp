@@ -391,6 +391,121 @@ class Test_Dashboard_Settings_Writers_Rights extends \WP_UnitTestCase {
     }
 
     /**
+     * Posted site and monitor ids against the authorized site.
+     *
+     * @return array Posted site and monitor ids against the authorized site.
+     */
+    public static function monitor_ownership(): array {
+        return array(
+            'other primary refused'    => array( 'site', 'other_primary', false, false ),
+            'other sub refused'        => array( 'site', 'other_sub', true, false ),
+            'missing monitor refused'  => array( 'site', 'missing', false, false ),
+            'zero site refused'        => array( 'zero', 'own_primary', false, false ),
+            'own primary allowed'      => array( 'site', 'own_primary', false, true ),
+            'own sub allowed'          => array( 'site', 'own_sub', true, true ),
+            'new sub for site allowed' => array( 'site', 'none', true, true ),
+        );
+    }
+
+    /**
+     * A monitor id from another site must not ride on the authorized site's right.
+     *
+     * @dataProvider monitor_ownership
+     * @param string $site_source Resolved site: the authorized site or zero.
+     * @param string $monitor Posted monitor id.
+     * @param bool   $sub Sub-monitor form.
+     * @param bool   $saved Whether the save goes through.
+     */
+    public function test_uptime_monitor_must_belong_to_site( string $site_source, string $monitor, bool $sub, bool $saved ): void {
+        $site   = $this->create_test_site();
+        $other  = $this->create_test_site();
+        $db     = MainWP_DB_Uptime_Monitoring::instance();
+        $output = array();
+        foreach ( array( $site, $other ) as $wpid ) {
+            $db->update_wp_monitor(
+                array(
+                    'wpid'    => $wpid,
+                    'keyword' => 'original',
+                    'active'  => 0,
+                ),
+                $output
+            );
+            $db->update_wp_monitor(
+                array(
+                    'wpid'    => $wpid,
+                    'suburl'  => 'original-sub',
+                    'issub'   => 1,
+                    'keyword' => 'original',
+                ),
+                $output
+            );
+        }
+        $ids      = array(
+            'own_primary'   => (int) $db->get_monitor_by( $site, 'issub', 0, array(), ARRAY_A )['monitor_id'],
+            'own_sub'       => (int) $db->get_monitor_by( $site, 'suburl', 'original-sub', array(), ARRAY_A )['monitor_id'],
+            'other_primary' => (int) $db->get_monitor_by( $other, 'issub', 0, array(), ARRAY_A )['monitor_id'],
+            'other_sub'     => (int) $db->get_monitor_by( $other, 'suburl', 'original-sub', array(), ARRAY_A )['monitor_id'],
+            'missing'       => 999999,
+            'none'          => 0,
+        );
+        $monitors = static function () use ( $db, $site, $other ) {
+            return array(
+                $db->get_monitors( array( 'wpid' => $site ), ARRAY_A ),
+                $db->get_monitors( array( 'wpid' => $other ), ARRAY_A ),
+            );
+        };
+        $before   = $monitors();
+        $_POST    = array_merge(
+            $this->monitor_post(),
+            array(
+                'mainwp_edit_monitor_individual_settings' => '1',
+                'mainwp_edit_monitor_id'                  => $sub ? $ids['own_primary'] : $ids[ $monitor ],
+            )
+        );
+        $_REQUEST = array( 'monitor_wpid' => 'zero' === $site_source ? 0 : $site );
+        if ( $sub ) {
+            $_POST['update_submonitor']           = '1';
+            $_POST['edit_sub_monitor_id']         = $ids[ $monitor ];
+            $_POST['mainwp_edit_monitor_sub_url'] = 'replacement-sub';
+            $_POST['monitor_edit_is_sub_url']     = '1';
+        }
+        $this->settings_right( false );
+        $prior = $this->filters['mainwp_currentusercan'];
+        $this->filter(
+            'mainwp_currentusercan',
+            static function ( $can, $type, $cap ) use ( $prior, $site, $site_source ) {
+                // A filter that grants id 0 must still not reach the monitor writer.
+                return 'site' === $type ? ( $site === (int) $cap || ( 'zero' === $site_source && 0 === (int) $cap ) ) : $prior( $can, $type, $cap );
+            }
+        );
+        $redirects = 0;
+        $this->filter(
+            'wp_redirect',
+            static function () use ( &$redirects ) {
+                ++$redirects;
+                return false;
+            }
+        );
+        $this->capture(
+            static function () {
+                Settings_Rights_Uptime_Edit::instance()->handle_save_settings();
+            }
+        );
+        if ( ! $saved ) {
+            $this->assertSame( $before, $monitors() );
+            $this->assertSame( 0, $redirects );
+            return;
+        }
+        $this->assertSame( $before[1], $monitors()[1] );
+        if ( $sub ) {
+            $this->assertNotEmpty( $db->get_monitor_by( $site, 'suburl', 'replacement-sub' ) );
+            $this->assertSame( 1, $redirects );
+        } else {
+            $this->assertSame( 'replacement', $db->get_monitor_by( $site, 'issub', 0, array(), ARRAY_A )['keyword'] );
+        }
+    }
+
+    /**
      * Template actions and settings rights.
      *
      * @return array Template actions and settings rights.

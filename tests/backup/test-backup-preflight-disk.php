@@ -301,23 +301,31 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 			$db     = MainWP_DB_Backup::instance();
 			$holder = $db->add_backup_task( $website->userid, 'Sibling fixture', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
 			$this->assertIsObject( $holder );
+			$sibling = is_array( $options['sibling'] ) ? $options['sibling'] : array();
 			$db->update_backup_task_with_values(
 				$holder->id,
 				array(
 					'last_run'  => time() - 50,
 					'completed' => 0,
+					'paused'    => (int) ( $sibling['paused'] ?? 0 ),
 				)
 			);
+			unset( $sibling['paused'] );
 			$db->add_backup_task_progress( $holder->id, $site_id, array() );
 			$db->update_backup_task_progress(
 				$holder->id,
 				$site_id,
-				array(
-					'dtsFetched'           => time(),
-					'child_backup_task_id' => 'task-sibling-live',
+				array_merge(
+					array(
+						'dtsFetched'           => time(),
+						'child_backup_task_id' => 'task-sibling-live',
+					),
+					$sibling
 				)
 			);
-			$this->assertSame( (int) $holder->id, $db->get_sibling_site_holder( $site_id, $task->id ) );
+			if ( true === $options['sibling'] ) {
+				$this->assertSame( (int) $holder->id, $db->get_sibling_site_holder( $site_id, $task->id ) );
+			}
 		}
 		if ( isset( $options['handle'] ) ) {
 			MainWP_DB::instance()->update_website_option( $website, 'adhoc_backup_task', wp_json_encode( $options['handle'] ) );
@@ -670,6 +678,76 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 			'incremental-no-base-dashboard'   => array( 'incremental', false, 10 * GB_IN_BYTES, 100 * MB_IN_BYTES, 'dashboard' ),
 			'incremental-chunk-dashboard'     => array( 'incremental', 'chunk-failure', 10 * GB_IN_BYTES, 100 * MB_IN_BYTES, 'dashboard' ),
 			'50mb-still-refuses'              => array( 'full', false, 49 * MB_IN_BYTES, 10 * GB_IN_BYTES, 'floor' ),
+		);
+	}
+
+	/**
+	 * A completed sibling's archive stays on the Child until it is downloaded
+	 * and deleted, after the Child slot is already free.
+	 *
+	 * @dataProvider sibling_archive_cases
+	 * @param array $sibling Sibling run state.
+	 * @param bool  $skips_child Whether the Child half is skipped.
+	 * @return void
+	 */
+	public function test_sibling_archive_on_child_skips_child_estimate( array $sibling, $skips_child ) {
+		$result = $this->run_executor(
+			'scheduled',
+			'full',
+			array( 'disk_free' => 100 * MB_IN_BYTES ),
+			false,
+			array(
+				'sibling' => $sibling,
+				'stop'    => array(
+					'task_id' => 'task-new',
+					'phase'   => 'queued',
+				),
+			)
+		);
+		if ( $skips_child ) {
+			$this->assertFalse( $result );
+			$this->assertSame( array( 'backup_preflight', 'backup_task_create' ), array_column( $this->child_calls, 0 ) );
+		} else {
+			$this->assertInstanceOf( MainWP_Exception::class, $result );
+			$this->assertSame( $this->estimate_message( 'child', '100 MB' ), $result->getMessage() );
+			$this->assertSame( array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
+		}
+	}
+
+	/**
+	 * Sibling states around the Child's completion and the Dashboard download.
+	 *
+	 * @return array
+	 */
+	public static function sibling_archive_cases() {
+		$fetched = wp_json_encode( array( 'full' => 'sibling.tar.gz' ) );
+		return array(
+			'completed-awaiting-download' => array(
+				array(
+					'child_phase' => 'completed',
+					'fetchResult' => $fetched,
+				),
+				true,
+			),
+			'paused-live'                 => array(
+				array(
+					'child_phase' => 'running',
+					'paused'      => 1,
+				),
+				true,
+			),
+			'downloaded'                  => array(
+				array(
+					'child_phase'            => 'completed',
+					'fetchResult'            => $fetched,
+					'downloadedFULLComplete' => 1,
+				),
+				false,
+			),
+			'failed'                      => array(
+				array( 'child_phase' => 'failed' ),
+				false,
+			),
 		);
 	}
 

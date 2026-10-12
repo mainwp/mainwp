@@ -223,6 +223,24 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Find another open run of this Dashboard whose archive may still be on the Child.
+     *
+     * Wider than get_sibling_site_holder(): a sibling's archive stays on the
+     * Child after its Child task completes, until the Dashboard has downloaded
+     * it and asked the Child to delete it, so the Child's free space reads low
+     * for that whole window. Paused runs count because their archive stays.
+     * Incremental runs record no per-site download flag, so they count until
+     * the run closes.
+     *
+     * @param int $wp_id   Child Site ID.
+     * @param int $task_id Task about to create its own archive.
+     * @return int Task id of such a run, or 0.
+     */
+    public function get_sibling_child_archive_holder( $wp_id, $task_id ) {
+        return (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT b.id FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' b INNER JOIN ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . " p ON p.task_id = b.id WHERE p.wp_id = %d AND b.id <> %d AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND p.child_backup_task_id <> '' AND p.child_phase <> 'failed' AND ( ( b.type = 'db' AND p.downloadedDBComplete = 0 ) OR ( b.type <> 'db' AND p.downloadedFULLComplete = 0 ) ) LIMIT 1", $wp_id, $task_id ) );
+    }
+
+    /**
      * Method backup_full_task_running()
      *
      * Check if full backup task is running.

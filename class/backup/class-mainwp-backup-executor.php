@@ -374,12 +374,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // Negotiate the archive format before building the request so a
                 // large-site ZIP auto-switch reaches the child in $params['ext'].
                 $archive_ext = MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask );
-                // While a sibling task holds this site, its partial archive already uses
-                // Child space the estimate counts, so the Child half is skipped. The
-                // Dashboard half still runs: the sibling's archive is downloaded only
-                // after its Child task completes, and a holder row that outlived its
-                // Child task must not let a new archive skip both checks.
-                $sibling_holder = MainWP_DB_Backup::instance()->get_sibling_site_holder( (int) $website->id, (int) $taskId );
+                // A sibling run's archive uses Child space until it is downloaded and
+                // deleted, so the Child half is skipped while one may be there. The
+                // Dashboard half still runs: downloaded archives stay on the Dashboard,
+                // and a row that outlived its Child task must not skip both checks.
+                $sibling_holder = MainWP_DB_Backup::instance()->get_sibling_child_archive_holder( (int) $website->id, (int) $taskId );
                 $preflight      = MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, $pTask, true, $sibling_holder > 0 ? '' : $type );
                 if ( $sibling_holder > 0 && in_array( $type, array( 'full', 'files' ), true ) ) {
                     MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId, true, false );

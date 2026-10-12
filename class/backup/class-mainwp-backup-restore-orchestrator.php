@@ -1814,8 +1814,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * - Without an incoming or stored failure, cancel_intent means user
      *   cancellation. A retry record supplies elapsed time, not a verdict.
      *   Missing retry records start now.
-     * - A terminal write that followed a restore_id request re-reads the row;
-     *   a task id on it is cancelled by id.
+     * - A terminal write for a row that carried no task id when it was read
+     *   re-reads the row; a task id on it that this decision did not cancel is
+     *   cancelled by id.
      * - Intent, original failure and retry time must be durable before the child
      *   round trip, so a new lease holder inherits the gate while it is in flight.
      * - A refused combined write defers without a request or cleanup; arm intent
@@ -1958,11 +1959,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return self::TERMINAL_OUTCOME_DEFERRED;
         }
 
-        if ( $by_restore_id ) {
-            // The terminal write ends every fenced worker write. A task id the row
-            // carries now that this decision did not cancel was recorded by a
-            // worker whose write landed after the re-read, and that worker will
-            // not cancel it.
+        if ( empty( $job->child_task_id ) ) {
+            // The terminal write ends every fenced worker write. The row read for
+            // this decision carried no task id, so an id it carries now was recorded
+            // by a worker whose write landed before the swap; that worker will not
+            // cancel it, and this decision did not unless it already cancelled it by id.
             $final = $store->get_job( (int) $job->id );
             if ( null !== $final && ! empty( $final->child_task_id ) && (string) $final->child_task_id !== $decided_task_id ) {
                 $this->cancel_task_created_after_terminal( $final, (string) $final->child_task_id );

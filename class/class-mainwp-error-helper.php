@@ -104,7 +104,7 @@ class MainWP_Error_Helper { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $base = '';
         if ( $exception instanceof MainWP_Exception ) {
-            $base = static::get_error_message( $exception );
+            $base = MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( static::get_error_message( $exception ) );
         }
 
         if ( '' === $base ) {

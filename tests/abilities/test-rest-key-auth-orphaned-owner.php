@@ -1,6 +1,6 @@
 <?php
 /**
- * REST API keys require an existing owner and are removed with that owner.
+ * REST API keys require an existing owner and are removed when that owner's authority changes.
  *
  * @package MainWP\Dashboard\Tests
  */
@@ -21,6 +21,7 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
     private $original_rest_server;
     private $cookie_priority;
     private $deleted_user_priority;
+    private $original_v1_keys;
     private $created_keys = array();
 
     public function setUp(): void {
@@ -32,6 +33,7 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
         $this->original_query_vars  = $GLOBALS['wp']->query_vars;
         $this->original_rest_server = $GLOBALS['wp_rest_server'];
         $this->original_instance    = \MainWP_REST_Authentication::$instance;
+        $this->original_v1_keys     = get_option( 'mainwp_rest_api_keys', false );
 
         // Core restores the hooked instance even when another harness resets the singleton.
         foreach ( $GLOBALS['wp_filter']['determine_current_user']->callbacks[15] as $callback ) {
@@ -68,6 +70,11 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
         }
         if ( false !== $this->deleted_user_priority ) {
             add_action( 'deleted_user', array( $this->auth, 'delete_user_api_keys' ), $this->deleted_user_priority, 3 );
+        }
+        if ( false === $this->original_v1_keys ) {
+            delete_option( 'mainwp_rest_api_keys' );
+        } else {
+            update_option( 'mainwp_rest_api_keys', $this->original_v1_keys );
         }
         if ( false !== $this->cookie_priority ) {
             add_filter( 'rest_authentication_errors', 'rest_cookie_check_errors', $this->cookie_priority );
@@ -308,6 +315,74 @@ class Test_REST_Key_Auth_Orphaned_Owner extends MainWP_Abilities_Test_Case {
         $this->assertFalse( wp_cache_get( $cache_a ) );
         $this->assertEquals( $row_b, $this->key_row( $key_b ) );
         $this->assertIsObject( wp_cache_get( $cache_b ) );
+    }
+
+    public static function role_change_modes(): array {
+        return array( 'set role' => array( 'set' ), 'remove role' => array( 'remove' ) );
+    }
+
+    /**
+     * @dataProvider role_change_modes
+     */
+    public function test_role_change_removes_only_the_owners_v2_keys_and_cache( string $mode ): void {
+        $owner_a = $this->set_current_user_as_admin();
+        $owner_b = $this->set_current_user_as_admin();
+        $key_a   = $this->create_key( $owner_a );
+        $key_b   = $this->create_key( $owner_b );
+        $row_b   = $this->key_row( $key_b );
+        foreach ( array( $key_a, $key_b ) as $credentials ) {
+            $this->prepare_anonymous_request( $credentials, 'bearer' );
+            $this->assertNotWPError( $this->run_authentication_hooks() );
+        }
+        $cache_a = 'mainwp_api_key_' . md5( mainwp_api_hash( $key_a['consumer_key'] ) );
+        $cache_b = 'mainwp_api_key_' . md5( mainwp_api_hash( $key_b['consumer_key'] ) );
+        $this->assertIsObject( wp_cache_get( $cache_a ) );
+        $this->assertIsObject( wp_cache_get( $cache_b ) );
+
+        $v1_keys = array(
+            'ck_role_change_v1' => array(
+                'ck_hashed' => 'legacy-key-hash',
+                'cs'        => 'legacy-secret-hash',
+                'desc'      => 'Role change v1 control',
+                'enabled'   => 1,
+                'perms'     => 'r',
+            ),
+        );
+        update_option( 'mainwp_rest_api_keys', $v1_keys );
+
+        $owner = get_userdata( $owner_a );
+        $this->assertInstanceOf( \WP_User::class, $owner );
+        if ( 'set' === $mode ) {
+            $owner->set_role( 'subscriber' );
+        } else {
+            $owner->remove_role( 'administrator' );
+        }
+
+        $this->assertNull( $this->key_row( $key_a ) );
+        $this->assertFalse( wp_cache_get( $cache_a ) );
+        $this->assertEquals( $row_b, $this->key_row( $key_b ) );
+        $this->assertIsObject( wp_cache_get( $cache_b ) );
+        $this->assertSame( $v1_keys, get_option( 'mainwp_rest_api_keys' ) );
+
+        $this->prepare_anonymous_request( $key_a, 'bearer' );
+        $this->assert_disabled_key_error( $this->run_authentication_hooks() );
+    }
+
+    public function test_role_change_handler_leaves_a_different_captured_table_alone(): void {
+        global $wpdb;
+        $credentials = $this->create_key( $this->set_current_user_as_admin() );
+        $row         = $this->key_row( $credentials );
+        $base_prefix = $wpdb->base_prefix;
+
+        // Single-site wpdb ignores blog IDs; model a role change on a different site's prefix.
+        $wpdb->base_prefix = $base_prefix . 'unrelated_';
+        try {
+            $this->assertNotSame( MainWP_DB::instance()->get_table_name( 'api_keys' ), $wpdb->get_blog_prefix() . 'mainwp_api_keys' );
+            $this->auth->delete_user_api_keys_on_role_change( (int) $row->user_id );
+        } finally {
+            $wpdb->base_prefix = $base_prefix;
+        }
+        $this->assertEquals( $row, $this->key_row( $credentials ) );
     }
 
     public function test_blog_removal_handler_leaves_a_different_captured_table_alone(): void {

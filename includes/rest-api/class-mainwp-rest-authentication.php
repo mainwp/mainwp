@@ -117,6 +117,8 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         add_action( 'deleted_user', array( $this, 'delete_user_api_keys' ), 10, 3 );
         add_action( 'remove_user_from_blog', array( $this, 'remove_user_from_blog_api_keys' ), 10, 3 );
         add_action( 'revoked_super_admin', array( $this, 'revoked_super_admin_api_keys' ) );
+        add_action( 'set_user_role', array( $this, 'delete_user_api_keys_on_role_change' ) );
+        add_action( 'remove_user_role', array( $this, 'delete_user_api_keys_on_role_change' ) );
     }
 
     /**
@@ -133,6 +135,25 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         foreach ( $rows as $row ) {
             self::delete_api_key_cache( $row->consumer_key );
         }
+    }
+
+    /**
+     * Delete an owner's API keys when their WordPress role changes.
+     *
+     * Roles and custom roles do not have a reliable privilege ordering, so any
+     * changed or removed role revokes credentials issued under the old role.
+     * On multisite, a role change on another site must not affect keys stored
+     * for the Dashboard site.
+     *
+     * @param int $user_id User whose role changed.
+     */
+    public function delete_user_api_keys_on_role_change( $user_id ) {
+        global $wpdb;
+
+        if ( $wpdb->get_blog_prefix() . 'mainwp_api_keys' !== MainWP_DB::instance()->get_table_name( 'api_keys' ) ) {
+            return;
+        }
+        $this->delete_user_api_keys( $user_id );
     }
 
     /**

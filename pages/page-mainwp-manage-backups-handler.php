@@ -1529,11 +1529,13 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 if ( null === $errorOutput ) {
                     $errorOutput = '';
                 }
-                $errorOutput  .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
-                $_error_code   = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
-                $_history_code = MainWP_Backup_Error_Codes::code_for_exception( $e );
-                // Readiness failures need the Child's reason so the user can correct it.
-                $_error_output = MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED !== $_error_code && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
+                $errorOutput   .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
+                $_error_code    = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
+                $_history_code  = MainWP_Backup_Error_Codes::code_for_exception( $e );
+                $_error_data    = $e instanceof MainWP_Exception ? $e->get_data() : null;
+                $_disk_estimate = MainWP_Backup_Error_Codes::ERR_DISK_FULL === $_error_code && is_array( $_error_data ) && true === ( $_error_data['disk_estimate'] ?? false );
+                // Readiness and estimate refusals need their specific remedy.
+                $_error_output = ! $_disk_estimate && MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED !== $_error_code && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
                 $errorOutput  .= $_error_output . '<br />';
                 // Progress rows can outlive the task-level error record.
                 $_progress_values = array( 'last_error' => $_error_output );

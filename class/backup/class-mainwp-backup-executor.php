@@ -374,7 +374,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // Negotiate the archive format before building the request so a
                 // large-site ZIP auto-switch reaches the child in $params['ext'].
                 $archive_ext = MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask );
-                $preflight   = MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, $pTask, true, $type );
+                // While a sibling task runs on this site, its partial archive already uses
+                // space the estimate counts, and the Child refuses this create anyway, so
+                // the estimate check waits until the site is free.
+                $sibling_holder = MainWP_DB_Backup::instance()->get_sibling_site_holder( (int) $website->id, (int) $taskId );
+                $preflight      = MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, $pTask, true, $sibling_holder > 0 ? '' : $type );
                 if ( ! MainWP_Backup_Monitor::child_supports_task_spine( $website ) ) {
                     throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                 }
@@ -407,7 +411,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( 'incremental' === $type ) {
                     $send           = self::resolve_incremental_send( $website, $pTask, $backupTaskProgress );
                     $params['type'] = $send['type'];
-                    if ( 'full' === $send['type'] ) {
+                    if ( 'full' === $send['type'] && 0 === $sibling_holder ) {
                         MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId );
                     }
                     foreach ( $send['params'] as $send_key => $send_value ) {
@@ -432,7 +436,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             $params['parent_manifest_ref']    = $push['mtoken'];
                             $params['parent_manifest_sha256'] = $manifest_sha256;
                         } else {
-                            MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId );
+                            if ( 0 === $sibling_holder ) {
+                                MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId );
+                            }
                             self::record_incremental_notice( $website, $taskId, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED ) );
                             $params['type']          = 'full';
                             $params['emit_manifest'] = '1';
@@ -569,7 +575,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // the Child's one-task slot can be held by a sibling run that
                 // will finish; that refusal is a delay, never a foreign
                 // blocker, so the persistence clock must not run for it.
-                if ( 0 < MainWP_DB_Backup::instance()->get_sibling_site_holder( (int) $website->id, (int) $taskId ) ) {
+                if ( 0 < $sibling_holder ) {
                     if ( $current && ! empty( $current->foreign_refused_since ) ) {
                         MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) );
                     }
@@ -2568,7 +2574,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         // Negotiate before building the request so a large-site ZIP auto-switch
         // reaches the child in $params['ext']. The driving task, when one
         // exists, carries the keep-ZIP override and receives the outcome note.
-        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat, $pTask, true, $pType );
+        // Append continues an existing archive whose bytes already consume space.
+        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat, $pTask, true, $append ? '' : $pType );
 
         // This engine is the one remaining caller of the child's legacy backup
         // action, and Run Now is what reaches it. A child too old for the task
@@ -2758,7 +2765,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         MainWP_Backup_Monitor::validate_backup_environment();
 
         $archive_ext = MainWP_Backup_Settings::get_current_archive_extension( $website );
-        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, null, true, $type );
+        $preflight   = MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext );
 
         if ( ! MainWP_Backup_Monitor::child_supports_task_spine( $website ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -2767,11 +2774,17 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $persisted = self::read_adhoc_task( $website );
         if ( ! empty( $persisted['task_id'] ) && ( empty( $persisted['type'] ) || $persisted['type'] === $type ) ) {
             if ( (string) ( $persisted['owner'] ?? '' ) === $owner ) {
+                // Resuming our handle does not allocate another archive.
                 return $persisted['task_id'];
             }
             if ( time() - (int) ( $persisted['started'] ?? 0 ) <= self::ADHOC_TASK_ABANDON_SECONDS ) {
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
+        }
+
+        if ( in_array( $type, array( 'full', 'files' ), true ) ) {
+            // Restore safety archives stay on the Child instead of being downloaded.
+            MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, 0, '' === $owner );
         }
 
         if ( 1 === (int) $website->maximumFileDescriptorsOverride ) {

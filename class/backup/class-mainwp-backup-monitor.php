@@ -428,13 +428,14 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Check the negotiated file estimate before a full/files archive starts.
      *
-     * @param object $website      Website object.
-     * @param array  $preflight    This run's negotiated readings.
-     * @param int    $diag_task_id Driving backup task id, or zero for ad-hoc runs.
+     * @param object $website         Website object.
+     * @param array  $preflight       This run's negotiated readings.
+     * @param int    $diag_task_id    Driving backup task id, or zero for ad-hoc runs.
+     * @param bool   $check_dashboard Whether the archive will be stored on the Dashboard.
      * @return void
      * @throws MainWP_Exception When the file estimate exceeds either server's free space.
      */
-    public static function validate_backup_disk_space( object $website, array $preflight, int $diag_task_id ): void {
+    public static function validate_backup_disk_space( object $website, array $preflight, int $diag_task_id, bool $check_dashboard = true ): void {
         if ( ! isset( $preflight['estimated_bytes'] ) || ! is_numeric( $preflight['estimated_bytes'] ) ) {
             return;
         }
@@ -445,18 +446,18 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( isset( $preflight['disk_free'] ) && false !== $preflight['disk_free'] && is_numeric( $preflight['disk_free'] ) && $estimated_bytes > (float) $preflight['disk_free'] ) {
             $message = sprintf(
                 /* translators: 1: estimated backup size, 2: available disk space */
-                esc_html__( 'The child site does not have enough disk space for this backup: estimated size %1$s, free space %2$s. No backup was started. Free up space on the child site or exclude large folders under Backup Excludes in the backup task.', 'mainwp' ),
+                esc_html__( 'The child site does not have enough disk space for this backup: estimated size %1$s, free space %2$s. No backup was started. The estimate counts the database and every file in wp-content, including excluded folders. Free up space on the child site and try again.', 'mainwp' ),
                 esc_html( size_format( $estimated_bytes ) ),
                 esc_html( size_format( (float) $preflight['disk_free'] ) )
             );
-        } else {
+        } elseif ( $check_dashboard ) {
             $backup_dir = MainWP_Backup_Private_Root::resolve();
             if ( ! is_wp_error( $backup_dir ) ) {
                 $free_bytes = function_exists( 'disk_free_space' ) ? @disk_free_space( $backup_dir ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- may be disabled by the host.
                 if ( false !== $free_bytes && is_numeric( $free_bytes ) && $estimated_bytes > (float) $free_bytes ) {
                     $message = sprintf(
                         /* translators: 1: estimated backup size, 2: available disk space */
-                        esc_html__( 'The Dashboard server does not have enough disk space to store this backup: estimated size %1$s, free space %2$s. No backup was started. Free up space on the Dashboard server or exclude large folders under Backup Excludes in the backup task.', 'mainwp' ),
+                        esc_html__( 'The Dashboard server does not have enough disk space to store this backup: estimated size %1$s, free space %2$s. No backup was started. The estimate counts the database and every file in wp-content, including excluded folders. Free up space on the Dashboard server and try again.', 'mainwp' ),
                         esc_html( size_format( $estimated_bytes ) ),
                         esc_html( size_format( 0.0 === (float) $free_bytes ? 0 : (float) $free_bytes ) )
                     );
@@ -467,7 +468,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( null !== $message ) {
             /** This action is documented in class/backup/class-mainwp-backup-monitor.php */
             do_action( 'mainwp_backup_diag_preflight', (int) $website->id, $diag_task_id, array_merge( $preflight, array( 'error_code' => MainWP_Backup_Error_Codes::ERR_DISK_FULL ) ), 'failed' );
-            throw new MainWP_Exception( $message, null, MainWP_Backup_Error_Codes::ERR_DISK_FULL ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- message parts are escaped above.
+            $exception = new MainWP_Exception( $message, null, MainWP_Backup_Error_Codes::ERR_DISK_FULL );
+            $exception->set_data( array( 'disk_estimate' => true ) );
+            throw $exception; // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- message parts are escaped above.
         }
     }
 

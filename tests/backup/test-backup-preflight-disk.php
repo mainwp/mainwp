@@ -12,6 +12,7 @@ require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
+use MainWP\Dashboard\MainWP_Backup_Private_Root;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
@@ -58,7 +59,8 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tearDown(): void {
-		MainWP_Backup_TestRestore_Sandbox_Test::$free_space = null;
+		MainWP_Backup_TestRestore_Sandbox_Test::$free_space     = null;
+		MainWP_Backup_TestRestore_Sandbox_Test::$last_directory = null;
 		$this->tear_down_private_root();
 		parent::tearDown();
 	}
@@ -67,9 +69,10 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 	 * Supply readiness and stop at the first backup request.
 	 *
 	 * @param array $overrides Readiness fields.
+	 * @param array $stop Mocked response after preflight.
 	 * @return void
 	 */
-	private function mock_preflight( array $overrides ) {
+	private function mock_preflight( array $overrides, array $stop = array() ) {
 		$preflight = array_merge(
 			array(
 				'disk_free'       => 10 * GB_IN_BYTES,
@@ -85,12 +88,12 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 		}
 		add_filter(
 			'mainwp_fetch_url_authed_pre',
-			function ( $result, $website, $what, $params ) use ( $preflight ) {
+			function ( $result, $website, $what, $params ) use ( $preflight, $stop ) {
 				$this->child_calls[] = array( $what, $params );
 				if ( 'backup_preflight' === $what ) {
 					return $preflight;
 				}
-				return array(
+				return $stop ? $stop : array(
 					'error'      => 'Fixture stops after preflight.',
 					'error_code' => MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT,
 				);
@@ -132,6 +135,9 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'child site', $exception->getMessage() );
 		$this->assertStringContainsString( '5 GB', $exception->getMessage() );
 		$this->assertStringContainsString( '3 GB', $exception->getMessage() );
+		$this->assertSame( $this->estimate_message( 'child', '3 GB' ), $exception->getMessage() );
+		$this->assertSame( array( 'disk_estimate' => true ), $exception->get_data() );
+		$this->assertEmpty( $exception->get_message_extra() );
 	}
 
 	/** Dashboard refusal measures the same private root used for downloads. */
@@ -143,6 +149,10 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'Dashboard server', $exception->getMessage() );
 		$this->assertStringContainsString( '5 GB', $exception->getMessage() );
 		$this->assertStringContainsString( '3 GB', $exception->getMessage() );
+		$this->assertSame( $this->estimate_message( 'dashboard', '3 GB' ), $exception->getMessage() );
+		$this->assertSame( array( 'disk_estimate' => true ), $exception->get_data() );
+		$this->assertEmpty( $exception->get_message_extra() );
+		$this->assertSame( MainWP_Backup_Private_Root::resolve(), MainWP_Backup_TestRestore_Sandbox_Test::$last_directory );
 	}
 
 	/** Float zero must still render as 0 B. */
@@ -225,9 +235,10 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 	 * @param string      $type Backup type.
 	 * @param array       $overrides Readiness fields.
 	 * @param bool|string $with_base Seed a usable base or a named fallback fixture.
-	 * @return MainWP_Exception|null Refusal or mocked stop response.
+	 * @param array       $options Continuation, owner, handle and sibling fixtures.
+	 * @return mixed Executor result or refusal.
 	 */
-	private function run_executor( $path, $type, array $overrides, $with_base = false ) {
+	private function run_executor( $path, $type, array $overrides, $with_base = false, array $options = array() ) {
 		MainWP_Backup_TestRestore_Sandbox_Test::$free_space = $this->dashboard_free;
 		$site_id = $this->create_test_site();
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -286,19 +297,43 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 				$this->assertSame( 'push', json_decode( $progress->last_error, true )['incremental_sent'] );
 			}
 		}
-		$this->mock_preflight( $overrides );
+		if ( ! empty( $options['sibling'] ) ) {
+			$db     = MainWP_DB_Backup::instance();
+			$holder = $db->add_backup_task( $website->userid, 'Sibling fixture', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+			$this->assertIsObject( $holder );
+			$db->update_backup_task_with_values(
+				$holder->id,
+				array(
+					'last_run'  => time() - 50,
+					'completed' => 0,
+				)
+			);
+			$db->add_backup_task_progress( $holder->id, $site_id, array() );
+			$db->update_backup_task_progress(
+				$holder->id,
+				$site_id,
+				array(
+					'dtsFetched'           => time(),
+					'child_backup_task_id' => 'task-sibling-live',
+				)
+			);
+			$this->assertSame( (int) $holder->id, $db->get_sibling_site_holder( $site_id, $task->id ) );
+		}
+		if ( isset( $options['handle'] ) ) {
+			MainWP_DB::instance()->update_website_option( $website, 'adhoc_backup_task', wp_json_encode( $options['handle'] ) );
+		}
+		$this->mock_preflight( $overrides, $options['stop'] ?? array() );
 		try {
 			if ( 'scheduled' === $path ) {
-				MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+				return MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			} elseif ( 'run-now' === $path ) {
-				MainWP_Backup_Executor::backup( $site_id, $type, '', '', 0, 0, 0, 0 );
+				return MainWP_Backup_Executor::backup( $site_id, $type, '', '', 0, 0, 0, 0, null, '', false, false, false, false, false, false, $options['append'] ?? false );
 			} else {
-				MainWP_Backup_Executor::trigger_backup( $site_id, $type );
+				return MainWP_Backup_Executor::trigger_backup( $site_id, $type, $options['owner'] ?? '' );
 			}
 		} catch ( MainWP_Exception $e ) {
 			return $e;
 		}
-		return null;
 	}
 
 	/**
@@ -560,5 +595,299 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 			'incremental-child'     => array( 'incremental', 'child' ),
 			'incremental-dashboard' => array( 'incremental', 'dashboard' ),
 		);
+	}
+
+	/**
+	 * The sibling's partial archive has already consumed space on the Child.
+	 *
+	 * @dataProvider sibling_disk_cases
+	 * @param string      $type Requested type.
+	 * @param bool|string $base Incremental fixture.
+	 * @param int         $child_free Child free bytes.
+	 * @return void
+	 */
+	public function test_sibling_holder_yields_without_estimate_refusal( $type, $base, $child_free ) {
+		$this->dashboard_free = 100 * MB_IN_BYTES;
+		$reasons              = array();
+		$capture              = static function ( $task_id, $reason ) use ( &$reasons ) {
+			$reasons[] = $reason;
+		};
+		add_action( 'mainwp_backup_diag_run_reinit', $capture, 10, 2 );
+		try {
+			$result = $this->run_executor(
+				'scheduled',
+				$type,
+				array(
+					'disk_free'      => $child_free,
+					'manifest_chunk' => 1,
+				),
+				$base,
+				array(
+					'sibling' => true,
+					'stop'    => array(
+						'error'      => 'Sibling holds the site.',
+						'error_code' => MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING,
+					),
+				)
+			);
+		} finally {
+			remove_action( 'mainwp_backup_diag_run_reinit', $capture );
+		}
+		if ( $child_free < 50 * MB_IN_BYTES ) {
+			$this->assertInstanceOf( MainWP_Exception::class, $result );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $result->get_message_error_code() );
+			$this->assertEmpty( $result->get_data() );
+			$this->assertSame( array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
+		} else {
+			$this->assertFalse( $result );
+			$this->assertContains( 'sibling_holds_site_yield', $reasons );
+			$expected = 'chunk-failure' === $base ? array( 'backup_preflight', 'backup_manifest_chunk', 'backup_task_create' ) : array( 'backup_preflight', 'backup_task_create' );
+			$this->assertSame( $expected, array_column( $this->child_calls, 0 ) );
+			$this->assertSame( 'files' === $type ? 'files' : 'full', end( $this->child_calls )[1]['type'] );
+		}
+	}
+
+	/**
+	 * Both disks may be short while an existing archive holds the site.
+	 *
+	 * @return array
+	 */
+	public static function sibling_disk_cases() {
+		return array(
+			'full-child-short'     => array( 'full', false, 100 * MB_IN_BYTES ),
+			'full-dashboard-short' => array( 'full', false, 10 * GB_IN_BYTES ),
+			'files'                => array( 'files', false, 100 * MB_IN_BYTES ),
+			'incremental-no-base'  => array( 'incremental', false, 100 * MB_IN_BYTES ),
+			'incremental-chunk'    => array( 'incremental', 'chunk-failure', 100 * MB_IN_BYTES ),
+			'50mb-still-refuses'   => array( 'full', false, 49 * MB_IN_BYTES ),
+		);
+	}
+
+	/**
+	 * Resuming an owned archive needs no capacity for another whole archive.
+	 *
+	 * @dataProvider owned_handle_cases
+	 * @param string $owner Handle owner.
+	 * @param string $type Requested type.
+	 * @param string $saved_type Persisted type.
+	 * @return void
+	 */
+	public function test_owned_handle_resumes_after_preflight_without_estimate_check( $owner, $type, $saved_type ) {
+		$this->dashboard_free = 100 * MB_IN_BYTES;
+		$result               = $this->run_executor(
+			'adhoc',
+			$type,
+			array( 'disk_free' => 100 * MB_IN_BYTES ),
+			false,
+			array(
+				'owner'  => $owner,
+				'handle' => array(
+					'task_id' => 'task-owned',
+					'type'    => $saved_type,
+					'owner'   => $owner,
+					'started' => time(),
+				),
+			)
+		);
+		$this->assertSame( 'task-owned', $result );
+		$this->assertSame( array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
+	}
+
+	/**
+	 * Older persisted handles may omit the type.
+	 *
+	 * @return array
+	 */
+	public static function owned_handle_cases() {
+		$cases = array();
+		foreach ( array(
+			''    => 'update',
+			'123' => 'restore',
+		) as $owner => $label ) {
+			foreach ( array( 'full', 'files' ) as $type ) {
+				foreach ( array( $type, '' ) as $saved_type ) {
+					$cases[ $label . '-' . $type . '-' . ( $saved_type ? 'same' : 'empty' ) ] = array( (string) $owner, $type, $saved_type );
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Restore safety archives remain on the Child.
+	 *
+	 * @dataProvider restore_create_cases
+	 * @param string $type Requested type.
+	 * @param string $disk Short disk.
+	 * @return void
+	 */
+	public function test_restore_safety_create_checks_only_child_disk( $type, $disk ) {
+		$this->dashboard_free = 100 * MB_IN_BYTES;
+		$result               = $this->run_executor(
+			'adhoc',
+			$type,
+			array( 'disk_free' => 'child' === $disk ? 100 * MB_IN_BYTES : 10 * GB_IN_BYTES ),
+			false,
+			array(
+				'owner' => '123',
+				'stop'  => array(
+					'task_id' => 'task-safety',
+					'phase'   => 'queued',
+				),
+			)
+		);
+		if ( 'child' === $disk ) {
+			$this->assertInstanceOf( MainWP_Exception::class, $result );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $result->get_message_error_code() );
+			$this->assertSame( array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
+		} else {
+			$this->assertSame( 'task-safety', $result );
+			$this->assertSame( array( 'backup_preflight', 'backup_task_create' ), array_column( $this->child_calls, 0 ) );
+		}
+	}
+
+	/**
+	 * File-including restore types use only the Child's capacity.
+	 *
+	 * @return array
+	 */
+	public static function restore_create_cases() {
+		return array(
+			'full-child'      => array( 'full', 'child' ),
+			'full-dashboard'  => array( 'full', 'dashboard' ),
+			'files-child'     => array( 'files', 'child' ),
+			'files-dashboard' => array( 'files', 'dashboard' ),
+		);
+	}
+
+	/**
+	 * A live handle owned elsewhere must retain the ownership refusal.
+	 *
+	 * @dataProvider foreign_handle_cases
+	 * @param string $owner Requested owner.
+	 * @param string $saved_owner Persisted owner.
+	 * @return void
+	 */
+	public function test_other_owner_keeps_already_running_refusal( $owner, $saved_owner ) {
+		$this->dashboard_free = 100 * MB_IN_BYTES;
+		$result               = $this->run_executor(
+			'adhoc',
+			'full',
+			array( 'disk_free' => 100 * MB_IN_BYTES ),
+			false,
+			array(
+				'owner'  => $owner,
+				'handle' => array(
+					'task_id' => 'task-foreign',
+					'type'    => 'full',
+					'owner'   => $saved_owner,
+					'started' => time(),
+				),
+			)
+		);
+		$this->assertInstanceOf( MainWP_Exception::class, $result );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, $result->get_message_error_code() );
+		$this->assertSame( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ), $result->getMessage() );
+		$this->assertSame( array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
+	}
+
+	/**
+	 * Update gates and restore jobs can each hold the ad-hoc slot.
+	 *
+	 * @return array
+	 */
+	public static function foreign_handle_cases() {
+		return array(
+			'update-vs-restore' => array( '', '123' ),
+			'restore-vs-update' => array( '123', '' ),
+		);
+	}
+
+	/**
+	 * Append continues the existing archive instead of allocating another one.
+	 *
+	 * @dataProvider append_cases
+	 * @param string $type Requested type.
+	 * @param mixed  $append Legacy continuation flag.
+	 * @return void
+	 */
+	public function test_legacy_append_skips_estimate_check( $type, $append ) {
+		$this->dashboard_free = 100 * MB_IN_BYTES;
+		$result               = $this->run_executor( 'run-now', $type, array( 'disk_free' => 100 * MB_IN_BYTES ), false, array( 'append' => $append ) );
+		$this->assertInstanceOf( MainWP_Exception::class, $result );
+		$this->assertSame( $append ? MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT : MainWP_Backup_Error_Codes::ERR_DISK_FULL, $result->get_message_error_code() );
+		$this->assertSame( $append ? array( 'backup_preflight', 'backup' ) : array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
+		if ( $append ) {
+			$this->assertEquals( 1, $this->child_calls[1][1]['append'] );
+		}
+	}
+
+	/**
+	 * The browser uses integer one; truthy legacy values share that behavior.
+	 *
+	 * @return array
+	 */
+	public static function append_cases() {
+		return array(
+			'full-append'   => array( 'full', 1 ),
+			'files-append'  => array( 'files', '1' ),
+			'fresh-control' => array( 'full', false ),
+		);
+	}
+
+	/**
+	 * The estimate remedies differ from generic disk-full failures.
+	 *
+	 * @dataProvider handler_message_cases
+	 * @param string $disk Refusal source.
+	 * @return void
+	 */
+	public function test_handler_preserves_estimate_message_and_registry_controls( $disk ) {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$site_id = $this->create_test_site();
+		$task    = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'Disk message fixture', 'daily', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
+		$this->assertIsObject( $task );
+		MainWP_Backup_TestRestore_Sandbox_Test::$free_space = 'dashboard' === $disk ? 100 * MB_IN_BYTES : 10 * GB_IN_BYTES;
+		$child_free = '50mb' === $disk ? 49 * MB_IN_BYTES : ( 'child' === $disk ? 100 * MB_IN_BYTES : 10 * GB_IN_BYTES );
+		$this->mock_preflight(
+			array( 'disk_free' => $child_free ),
+			array(
+				'error'      => 'Child reported disk full.',
+				'error_code' => MainWP_Backup_Error_Codes::ERR_DISK_FULL,
+			)
+		);
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$expected = in_array( $disk, array( 'child', 'dashboard' ), true ) ? $this->estimate_message( $disk, '100 MB' ) : MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_DISK_FULL );
+		$this->assertSame( $expected, $progress->last_error );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $progress->fetchResult['error_code'] );
+	}
+
+	/**
+	 * Unmarked low-space and Child errors must keep the registry message.
+	 *
+	 * @return array
+	 */
+	public static function handler_message_cases() {
+		return array(
+			'child'          => array( 'child' ),
+			'dashboard'      => array( 'dashboard' ),
+			'50mb'           => array( '50mb' ),
+			'child-reported' => array( 'child-reported' ),
+		);
+	}
+
+	/**
+	 * Excludes do not reduce the Child's estimate.
+	 *
+	 * @param string $disk Short disk.
+	 * @param string $free Formatted free bytes.
+	 * @return string
+	 */
+	private function estimate_message( $disk, $free ) {
+		$message = 'child' === $disk
+			? 'The child site does not have enough disk space for this backup: estimated size %1$s, free space %2$s. No backup was started. The estimate counts the database and every file in wp-content, including excluded folders. Free up space on the child site and try again.'
+			: 'The Dashboard server does not have enough disk space to store this backup: estimated size %1$s, free space %2$s. No backup was started. The estimate counts the database and every file in wp-content, including excluded folders. Free up space on the Dashboard server and try again.';
+		return sprintf( $message, '5 GB', $free );
 	}
 }

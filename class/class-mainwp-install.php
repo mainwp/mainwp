@@ -1808,6 +1808,15 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Whether restore job writes can use the checkpoint revision column.
+     *
+     * @return bool Whether no schema repair is pending.
+     */
+    public static function backup_restore_job_checkpoint_rev_ready(): bool {
+        return ! get_site_option( static::BACKUP_RESTORE_JOB_CHECKPOINT_REV_REPAIR_PENDING );
+    }
+
+    /**
      * Avoid retrying denied ALTER statements on every request.
      *
      * @return void

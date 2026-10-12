@@ -15,6 +15,7 @@ use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Install;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
@@ -383,6 +384,38 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 			} else {
 				$this->assertSame( 'mainwp_backup_legacy_disabled', $output->get_error_code() );
 				$this->assertSame( 409, $output->get_error_data()['status'] );
+			}
+		}
+	}
+
+	/**
+	 * Restore, rollback and cancel explain a pending schema repair instead of
+	 * starting work nothing can record.
+	 */
+	public function test_restore_abilities_refuse_while_schema_repair_pending() {
+		$marker  = MainWP_Install::BACKUP_RESTORE_JOB_CHECKPOINT_REV_REPAIR_PENDING;
+		$pending = get_site_option( $marker );
+		update_site_option( $marker, time() );
+		try {
+			$this->fixture_job( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, array( 'pre_snapshot_artifacts' => array( array( 'file' => 'safety.tar.gz' ) ) ) );
+			$results = array(
+				'restore'  => MainWP_Backup_Operations::restore_snapshot( $this->site_id, $this->snapshot_id, array( 'confirm_destructive' => true ), 'ability' ),
+				'rollback' => MainWP_Backup_Operations::rollback_restore( $this->job_id, 'ability' ),
+			);
+			$this->fixture_job( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array(), 'paused-task' );
+			$before            = MainWP_Backup_Restore_Job_Store::instance()->get_job( $this->job_id );
+			$results['cancel'] = MainWP_Backup_Operations::cancel_restore( $this->job_id );
+			foreach ( $results as $lane => $result ) {
+				$this->assertWPError( $result, $lane );
+				$this->assertSame( 'mainwp_restore_schema_repair_pending', $result->get_error_code(), $lane );
+				$this->assertSame( 409, $result->get_error_data()['status'], $lane );
+			}
+			$this->assertEquals( $before, MainWP_Backup_Restore_Job_Store::instance()->get_job( $this->job_id ) );
+		} finally {
+			if ( false === $pending ) {
+				delete_site_option( $marker );
+			} else {
+				update_site_option( $marker, $pending );
 			}
 		}
 	}

@@ -24,6 +24,7 @@ use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
 use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Install;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
@@ -4259,6 +4260,80 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertGreaterThan( $start, (int) $fresh->next_retry_at );
 		$this->assertNotSame( '', $fresh->last_error );
 		$this->assertSame( array( $id ), $events );
+	}
+
+	/**
+	 * Matrix rows M1-M4: while the revision column repair is pending, no
+	 * restore is admitted, no slice drives the site, a cancel writes nothing,
+	 * and the job resumes once the repair lands.
+	 */
+	public function test_schema_repair_pending_pauses_restore_lanes() {
+		global $wpdb;
+		$store   = MainWP_Backup_Restore_Job_Store::instance();
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$marker  = MainWP_Install::BACKUP_RESTORE_JOB_CHECKPOINT_REV_REPAIR_PENDING;
+		$pending = get_site_option( $marker );
+		$source  = $this->make_job(
+			array(
+				'pre_snapshot_artifacts' => array(
+					array(
+						'file' => 'backup-pre.tar.gz',
+						'size' => 1234,
+						'role' => 'full',
+					),
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT
+		);
+		$job     = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'paused-task' ) );
+		$id      = (int) $job->id;
+		$rows    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ); // phpcs:ignore WordPress.DB -- test fixture.
+
+		$this->responses['restore_task_run'] = array(
+			'task_id'   => 'paused-task',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'row_counts_ok' => true ) ),
+		);
+
+		update_site_option( $marker, time() );
+		try {
+			$kicks = $this->orchestrator->continuation_count;
+			$this->orchestrator->process_pending_restore_jobs( 30, $id );
+			$held = $store->get_job( $id );
+			$this->assertSame( array(), $this->calls, 'A paused slice must not call the site.' );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $held->status );
+			$this->assertSame( '', $held->locked_by );
+			$this->assertSame( $kicks, $this->orchestrator->continuation_count );
+
+			foreach ( array( 'restore', 'rollback', 'cancel' ) as $lane ) {
+				try {
+					if ( 'restore' === $lane ) {
+						$this->orchestrator->initiate_restore( $this->site_id, 5 );
+					} elseif ( 'rollback' === $lane ) {
+						$this->orchestrator->initiate_rollback( $source );
+					} else {
+						$this->orchestrator->cancel_job( $id );
+					}
+					$this->fail( $lane . ' must refuse while the repair is pending.' );
+				} catch ( MainWP_Exception $e ) {
+					$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_SCHEMA_REPAIR_PENDING, $e->get_message_error_code(), $lane );
+				}
+			}
+			$this->assertSame( $rows, (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ), 'A refused admission must not reserve a slot.' ); // phpcs:ignore WordPress.DB -- test fixture.
+			$this->assertEquals( $held, $store->get_job( $id ), 'A refused cancel must write nothing.' );
+		} finally {
+			if ( false === $pending ) {
+				delete_site_option( $marker );
+			} else {
+				update_site_option( $marker, $pending );
+			}
+		}
+
+		$this->orchestrator->process_pending_restore_jobs( 30, $id );
+		$this->assertCount( 1, array_filter( $this->calls, static fn( $call ) => 'restore_task_run' === $call['what'] ) );
+		$resumed = $store->get_job( $id );
+		$this->assertContains( $resumed->status, array( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED ), 'The repaired slice drives the job on.' );
+		$this->assertTrue( $resumed->checkpoint['verification']['row_counts_ok'] );
 	}
 
 	/**

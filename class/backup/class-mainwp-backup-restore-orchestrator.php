@@ -136,6 +136,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
+        if ( ! MainWP_Install::backup_restore_job_checkpoint_rev_ready() ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RESTORE_SCHEMA_REPAIR_PENDING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
 
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
         if ( empty( $website ) ) {
@@ -435,6 +438,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
+        if ( ! MainWP_Install::backup_restore_job_checkpoint_rev_ready() ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RESTORE_SCHEMA_REPAIR_PENDING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+        }
         $website = MainWP_DB::instance()->get_website_by_id( (int) $failed_job->site_id );
         if ( empty( $website ) ) {
             throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
@@ -550,6 +556,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         return $job_id;
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.
     /**
      * Cancel a restore job, deferring a busy child to the cron lane.
      *
@@ -565,6 +572,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *                or 'cancel_pending' when the decision must be retried.
      */
     public function cancel_job( int $job_id ): string {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         $store = MainWP_Backup_Restore_Job_Store::instance();
         $job   = $store->get_job( $job_id );
         if ( null === $job ) {
@@ -580,6 +588,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 throw new MainWP_Exception( esc_html__( 'This restore has already finished on the site and can no longer be cancelled. If it failed, you can roll it back instead.', 'mainwp' ) );
             default:
                 break;
+        }
+        // Every cancel write names the revision column, so nothing could be recorded.
+        if ( ! MainWP_Install::backup_restore_job_checkpoint_rev_ready() ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RESTORE_SCHEMA_REPAIR_PENDING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
         $outcome = $this->record_terminal_failure( $job, null, '', null );
@@ -776,6 +788,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *                                 the cron behavior.
      */
     public function process_pending_restore_jobs( int $budget_seconds = self::DEFAULT_BUDGET_SECONDS, ?int $only_job_id = null ): void {
+        // Every checkpoint, status and cancel write names the revision column,
+        // so driving the site without it would advance a restore nothing can
+        // record. The job keeps its row and resumes after the repair.
+        if ( ! MainWP_Install::backup_restore_job_checkpoint_rev_ready() ) {
+            return;
+        }
         $deadline = microtime( true ) + $budget_seconds;
         $token    = 'restore-' . wp_generate_password( 12, false );
         $store    = MainWP_Backup_Restore_Job_Store::instance();

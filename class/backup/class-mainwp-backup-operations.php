@@ -1609,6 +1609,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $restore_job_id );
                 $call = 'returned';
             } catch ( MainWP_Exception $e ) {
+                if ( MainWP_Backup_Error_Codes::ERR_RESTORE_SCHEMA_REPAIR_PENDING === $e->get_message_error_code() ) {
+                    return new \WP_Error( $e->get_message_error_code(), self::safe_error( $e->get_message_error_code() )['message'], array( 'status' => 409 ) );
+                }
                 // Another lane can finish after admission, so only the re-read job decides the result.
                 $call = MainWP_Backup_Restore_Orchestrator::CANCEL_FINISHED_ON_SITE === $e->get_message_error_code() ? 'finished' : 'failed';
             }

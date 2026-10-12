@@ -3016,6 +3016,65 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		}
 	}
 	/**
+	 * A denied revision migration keeps restores paused and stays repairable
+	 * after the version stamp.
+	 *
+	 * @return void
+	 */
+	public function test_failed_checkpoint_rev_upgrade_retries_on_current_version() {
+		global $wpdb;
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$marker  = MainWP_Install::BACKUP_RESTORE_JOB_CHECKPOINT_REV_REPAIR_PENDING;
+		$pending = get_site_option( $marker );
+		$blocked = 0;
+		$deny    = static function ( $sql ) use ( $table, &$blocked ) {
+			if ( 0 === stripos( $sql, 'ALTER TABLE ' . $table ) && preg_match( '/ADD(?: COLUMN)? `?checkpoint_rev`?/i', $sql ) ) {
+				++$blocked;
+				return 'SELECT mainwp_checkpoint_rev_forced_failure';
+			}
+			return $sql;
+		};
+		MainWP_Install::instance()->install();
+		add_filter( 'mainwp_log_do_to_db', '__return_false' );
+		try {
+			$this->assertNotFalse( $wpdb->query( "ALTER TABLE {$table} DROP COLUMN checkpoint_rev" ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- old-schema fixture.
+			update_site_option( 'mainwp_db_version', '9.0.2.30' );
+			add_filter( 'query', $deny );
+			MainWP_Install::instance()->install();
+			$this->assertGreaterThan( 0, $blocked, 'The upgrade must attempt the denied column addition.' );
+			$this->assertFalse( $this->column_exists( $table, 'checkpoint_rev' ) );
+			$this->assertSame( '9.0.2.31', get_site_option( 'mainwp_db_version' ) );
+			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( $marker ), 'The failed column addition must arm a repair marker.' );
+			$this->assertFalse( MainWP_Install::backup_restore_job_checkpoint_rev_ready(), 'Restores must stay paused while the repair is pending.' );
+			remove_filter( 'query', $deny );
+			MainWP_Install::instance()->install();
+			$this->assertFalse( $this->column_exists( $table, 'checkpoint_rev' ), 'The fresh marker must throttle the retry.' );
+			update_site_option( $marker, time() - HOUR_IN_SECONDS - 1 );
+			MainWP_Install::instance()->install();
+			$this->assertTrue( $this->column_exists( $table, 'checkpoint_rev' ), 'An overdue retry must add the column on the current version.' );
+			$this->assertFalse( get_site_option( $marker ), 'A successful repair must clear its marker.' );
+			$this->assertTrue( MainWP_Install::backup_restore_job_checkpoint_rev_ready() );
+		} finally {
+			remove_filter( 'query', $deny );
+			remove_filter( 'mainwp_log_do_to_db', '__return_false' );
+			if ( ! $this->column_exists( $table, 'checkpoint_rev' ) ) {
+				$wpdb->query( "ALTER TABLE {$table} ADD COLUMN checkpoint_rev int(11) unsigned NOT NULL DEFAULT 0" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL survives transaction rollback.
+			}
+			if ( false === $pending ) {
+				delete_site_option( $marker );
+			} else {
+				update_site_option( $marker, $pending );
+			}
+			if ( false === $this->saved_db_version ) {
+				delete_site_option( 'mainwp_db_version' );
+			} else {
+				update_site_option( 'mainwp_db_version', $this->saved_db_version );
+			}
+			self::commit_transaction();
+		}
+	}
+
+	/**
 	 * An existing install needs history as soon as its schema version advances.
 	 *
 	 * @return void

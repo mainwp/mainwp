@@ -120,6 +120,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_CHILD_UPDATE_REQUIRED         = 'mainwp_backup_child_update_required';
     const ERR_CHILD_PREFLIGHT_FAILED        = 'mainwp_backup_child_preflight_failed';
     const ERR_RESTORE_CHILD_UPDATE_REQUIRED = 'mainwp_restore_child_update_required';
+    const ERR_RESTORE_SCHEMA_REPAIR_PENDING = 'mainwp_restore_schema_repair_pending';
 
     // Upload.
     const ERR_FTP_FAILED          = 'mainwp_backup_ftp_failed';
@@ -309,6 +310,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_CHILD_UPDATE_REQUIRED         => esc_html__( 'The MainWP Child plugin on this site is too old to run backups. Update MainWP Child on the site, then sync it to run backups again.', 'mainwp' ),
             self::ERR_CHILD_PREFLIGHT_FAILED        => esc_html__( 'The child site could not get ready for a backup. Fix the problem it reported on the site, then try again.', 'mainwp' ),
             self::ERR_RESTORE_CHILD_UPDATE_REQUIRED => esc_html__( 'The MainWP Child plugin on this site is too old to restore a backup safely. Update MainWP Child on the site, then run the restore again.', 'mainwp' ),
+            self::ERR_RESTORE_SCHEMA_REPAIR_PENDING => esc_html__( 'The Dashboard database is missing an update that restores need, and MainWP could not add it. Check the MainWP log for the database error and that the database user may change tables. MainWP retries every hour, and restores stay paused until the update succeeds.', 'mainwp' ),
             self::ERR_FTP_FAILED                    => esc_html__( 'Could not upload the backup to the FTP server. Check the FTP credentials and that the server is reachable, then try again.', 'mainwp' ),
             self::ERR_DROPBOX_FAILED                => esc_html__( 'Could not upload the backup to Dropbox. Check the Dropbox connection settings and available storage space, then try again.', 'mainwp' ),
             self::ERR_S3_FAILED                     => esc_html__( 'Could not upload the backup to Amazon S3. Check the S3 credentials, bucket name, and permissions, then try again.', 'mainwp' ),

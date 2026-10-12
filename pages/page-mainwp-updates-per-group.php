@@ -904,7 +904,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
         /* translators: %s: number of days */
-        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        /* translators: %s: number of days */
+        $str_format_file = esc_html__( 'Main file modified %s days ago', 'mainwp' );
         $count_abandoned = count( $allPluginsOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>
@@ -1002,7 +1004,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                     $last_updated             = $plugin_outdate['last_updated'];
                                                     $plugin_last_updated_date = new \DateTime( '@' . $last_updated );
                                                     $diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
-                                                    $outdate_notice           = sprintf( $str_format, $diff_in_days );
+                                                    $outdate_notice           = sprintf( 'file_mtime' === ( $plugin_outdate['detection'] ?? '' ) ? $str_format_file : $str_format, $diff_in_days );
                                                     ?>
                                                     <tr dismissed="0">
                                                         <td class="collapsing"><?php echo MainWP_System_Utility::get_plugin_icon( dirname( $slug ) ); // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
@@ -1063,7 +1065,9 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function render_abandoned_themes( $websites, $allThemesOutdate, $all_groups_sites, $all_groups, $site_offset_for_groups, $decodedDismissedThemes ) { // phpcs:ignore -- NOSONAR - complex.
         /* translators: %s: number of days */
-        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        /* translators: %s: number of days */
+        $str_format_file = esc_html__( 'Main file modified %s days ago', 'mainwp' );
         $count_abandoned = count( $allThemesOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>
@@ -1160,7 +1164,7 @@ class MainWP_Updates_Per_Group { // phpcs:ignore Generic.Classes.OpeningBraceSam
                                                     $last_updated            = $theme_outdate['last_updated'];
                                                     $theme_last_updated_date = new \DateTime( '@' . $last_updated );
                                                     $diff_in_days            = $now->diff( $theme_last_updated_date )->format( '%a' );
-                                                    $outdate_notice          = sprintf( $str_format, $diff_in_days );
+                                                    $outdate_notice          = sprintf( 'file_mtime' === ( $theme_outdate['detection'] ?? '' ) ? $str_format_file : $str_format, $diff_in_days );
                                                     ?>
                                                     <tr dismissed="0">
                                                         <td>

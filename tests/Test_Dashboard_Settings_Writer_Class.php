@@ -244,7 +244,8 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
             'H5 monitoring'    => 'wizard_monitoring',
             'M6 archive'       => 'archive',
             'M6 cancel'        => 'cancel',
-            'M8 monitoring'    => 'monitoring',
+            'M8 health on'     => 'monitoring_checked',
+            'M8 health off'    => 'monitoring_cleared',
             'M9 manage sites'  => 'manage_sites',
             'D1 email'         => 'email',
             'D2 tools'         => 'tools',
@@ -598,26 +599,49 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
     }
 
     /**
-     * Page Settings omits the Site Health fields and must preserve their values.
+     * Page Settings posts the Site Health box only when it is checked.
      *
      * @param bool $allowed Settings grant.
      */
-    private function monitoring( bool $allowed ): void {
+    private function monitoring_checked( bool $allowed ): void {
+        $this->monitoring( $allowed, true );
+    }
+
+    /**
+     * An unchecked Site Health box must not disable monitoring for a refused user.
+     *
+     * @param bool $allowed Settings grant.
+     */
+    private function monitoring_cleared( bool $allowed ): void {
+        $this->monitoring( $allowed, false );
+    }
+
+    /**
+     * Page Settings includes the Site Health fields; only the column choice is per user.
+     *
+     * @param bool $allowed Settings grant.
+     * @param bool $checked Whether the Site Health box is posted.
+     */
+    private function monitoring( bool $allowed, bool $checked ): void {
         $_POST = array(
             'wp_nonce'                                 => wp_create_nonce( 'MonitoringSitesScrOptions' ),
             'mainwp_default_monitoring_sites_per_page' => '50',
+            'mainwp_site_healthThreshold'              => $checked ? '100' : '80',
             'mainwp_show_column_name'                  => '1',
         );
+        if ( $checked ) {
+            $_POST['mainwp_disable_sitesHealthMonitoring'] = '1';
+        }
         $this->options(
             $allowed,
             array(
-                'mainwp_disableSitesHealthMonitoring'      => 0,
-                'mainwp_sitehealthThreshold'               => 100,
+                'mainwp_disableSitesHealthMonitoring'      => $checked ? 1 : 0,
+                'mainwp_sitehealthThreshold'               => $checked ? 80 : 100,
                 'mainwp_default_monitoring_sites_per_page' => 25,
             ),
             array(
-                'mainwp_disableSitesHealthMonitoring'      => 0,
-                'mainwp_sitehealthThreshold'               => 100,
+                'mainwp_disableSitesHealthMonitoring'      => $checked ? 0 : 1,
+                'mainwp_sitehealthThreshold'               => $checked ? 100 : 80,
                 'mainwp_default_monitoring_sites_per_page' => 50,
             ),
             static function () {
@@ -625,6 +649,22 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
             }
         );
         $this->assertSame( array( 'name' => 1 ), get_user_option( 'mainwp_settings_show_monitoring_sites_columns' ) );
+    }
+
+    /** A Page Settings post without its nonce writes nothing, not even the column choice. */
+    public function test_monitoring_page_settings_needs_nonce(): void {
+        $this->right( 'manage_dashboard_settings', true );
+        $_POST = array(
+            'wp_nonce'                                 => 'invalid',
+            'mainwp_default_monitoring_sites_per_page' => '50',
+            'mainwp_site_healthThreshold'              => '100',
+            'mainwp_show_column_name'                  => '1',
+        );
+        update_option( 'mainwp_disableSitesHealthMonitoring', 1 );
+        $snapshot = $this->snapshot();
+        MainWP_System_Handler::instance()->handle_monitoring_sites_screen_settings();
+        $this->assertSame( $snapshot, $this->snapshot() );
+        $this->assertFalse( get_user_option( 'mainwp_settings_show_monitoring_sites_columns' ) );
     }
 
     /**

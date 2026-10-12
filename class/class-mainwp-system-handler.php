@@ -345,6 +345,14 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     update_option( 'mainwp_default_monitoring_sites_per_page', ( isset( $_POST['mainwp_default_monitoring_sites_per_page'] ) ? intval( $_POST['mainwp_default_monitoring_sites_per_page'] ) : 25 ) );
                 }
             }
+
+            // The Page Settings form includes MainWP_Monitoring_View::render_settings(), so it posts the Site Health fields.
+            if ( $can_manage_settings ) {
+                update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
+
+                $val = isset( $_POST['mainwp_site_healthThreshold'] ) ? intval( $_POST['mainwp_site_healthThreshold'] ) : 80;
+                update_option( 'mainwp_sitehealthThreshold', $val );
+            }
         }
     }
 

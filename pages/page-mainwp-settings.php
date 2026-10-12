@@ -640,9 +640,10 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
                     // The reader treats a non-positive or non-integer value as 7, so store
                     // 7 for those and keep any positive window, including ones over a year.
-                    $days = isset( $_POST['mainwp_backup_before_upgrade_days'] ) && is_scalar( $_POST['mainwp_backup_before_upgrade_days'] ) ? wp_unslash( $_POST['mainwp_backup_before_upgrade_days'] ) : 7;
+                    // The reader accepts leading zeros (030 is 30), so they are stripped first.
+                    $days = isset( $_POST['mainwp_backup_before_upgrade_days'] ) && is_scalar( $_POST['mainwp_backup_before_upgrade_days'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_backup_before_upgrade_days'] ) ) : 7;
                     $val  = filter_var(
-                        $days,
+                        ltrim( (string) $days, '0' ),
                         FILTER_VALIDATE_INT,
                         array(
                             'options' => array(

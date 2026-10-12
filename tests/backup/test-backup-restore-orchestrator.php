@@ -606,6 +606,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
 		$this->assertSame( '', (string) $job->child_task_id );
 		$this->assertTrue( $job->checkpoint['cloud_pull_tried'] );
+		$this->assertArrayNotHasKey( 'child_create_attempted', $job->checkpoint );
 		$this->assertSame( str_repeat( 'a', 64 ), $job->checkpoint['plan'][0]['sha256'] );
 		$this->assertSame( array(), $job->checkpoint['transfer'] );
 		$this->assertEmpty( $job->last_error );
@@ -613,10 +614,40 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$job = $this->tick( $job );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->status );
 		$this->assertSame( 'b14-standard-transfer', $job->child_task_id );
+		$this->assertTrue( $job->checkpoint['child_create_attempted'] );
 		$this->assertNotSame( 'b14-pull-failed', $job->child_task_id );
 		$creates = array_values( array_filter( $this->calls, static fn( $call ) => 'restore_task_create' === $call['what'] ) );
 		$this->assertCount( 2, $creates );
 		$this->assertNotSame( $creates[0]['params']['restore_id'], $creates[1]['params']['restore_id'] );
+	}
+
+	/**
+	 * The fallback identity has not reached the Child until its own create.
+	 */
+	public function test_cloud_pull_fallback_clears_attempt_marker_before_terminal_failure() {
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                    = $this->make_job( array( 'child_create_attempted' => true ), $store::STATUS_RUNNING, array( 'child_task_id' => 'b14-pull-failed' ) );
+		$this->responses['restore_task_run']    = array(
+			'task_id'    => 'b14-pull-failed',
+			'phase'      => 'failed',
+			'error_code' => 'mainwp_cloud_pull_failed',
+		);
+		$this->responses['restore_task_cancel'] = new MainWP_Exception( 'Site unreachable.' );
+
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', $job->child_task_id );
+		$this->assertTrue( $job->checkpoint['cloud_pull_tried'] );
+		$this->assertNotEmpty( $job->checkpoint['restore_id'] );
+		$this->assertNotSame( 'orch01test', $job->checkpoint['restore_id'] );
+		$this->assertArrayNotHasKey( 'child_create_attempted', $job->checkpoint );
+
+		$record = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
+		$this->assertSame( MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, $record->invoke( $this->orchestrator, $job, 'Fallback staging failed.', 'test_restore_failure', null ) );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 'Fallback staging failed.', $job->last_error );
+		$this->assertSame( array( 'restore_task_run' ), array_column( $this->calls, 'what' ) );
 	}
 
 	/**
@@ -824,6 +855,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
 		$this->assertSame( '', $job->checkpoint['last_error_code'] );
+		$this->assertSame( array( 'restore_task_create', 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'restore_id' => $this->calls[0]['params']['restore_id'] ), $this->calls[1]['params'] );
 	}
 
 	/**
@@ -3698,6 +3731,56 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			}
 		}
 		return $cases;
+	}
+
+	/**
+	 * An unrecorded completed task needs its handle recovered before polling.
+	 *
+	 * @dataProvider completed_child_intent_cases
+	 * @param bool $has_failure Whether a terminal failure triggers cancellation.
+	 */
+	public function test_cancel_unrecorded_completed_child_recovers_handle_through_staging( $has_failure ) {
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                    = $this->make_job( array( 'child_create_attempted' => true ), $store::STATUS_STAGING );
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'already_terminal',
+			'phase'  => 'completed',
+		);
+		$this->responses['restore_task_create'] = array(
+			'task_id'   => 'unrecorded-completed',
+			'reused'    => true,
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'db_ok' => true ) ),
+		);
+		$this->assertSame( '', $job->child_task_id );
+
+		if ( $has_failure ) {
+			$record = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
+			$this->assertSame( MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_DRIVE_ON, $record->invoke( $this->orchestrator, $job, 'Restore stopped.', 'test_restore_failure', null ) );
+		} else {
+			try {
+				$this->orchestrator->cancel_job( (int) $job->id );
+				$this->fail( 'Expected the completed Child task to refuse cancellation.' );
+			} catch ( MainWP_Exception $e ) {
+				$this->assertSame( 'The restore already finished on the site and can no longer be cancelled.', $e->getMessage() );
+			}
+		}
+
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', $job->child_task_id );
+		$this->assertTrue( empty( $job->checkpoint['cancel_intent'] ) );
+		$this->assertArrayNotHasKey( 'terminal_failure', $job->checkpoint );
+		$this->assertArrayNotHasKey( 'cancel_confirmation', $job->checkpoint );
+		$this->assertSame( array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'restore_id' => 'orch01test' ), $this->calls[0]['params'] );
+
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_VERIFYING, $job->status );
+		$this->assertSame( 'unrecorded-completed', $job->child_task_id );
+		$this->assertTrue( $job->checkpoint['verification']['db_ok'] );
+		$this->assertSame( array( 'restore_task_cancel', 'restore_task_create' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( $this->calls[0]['params']['restore_id'], $this->calls[1]['params']['restore_id'] );
 	}
 
 	/** A refused checkpoint cannot authorize a Child side effect. */

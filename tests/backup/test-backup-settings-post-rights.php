@@ -319,15 +319,18 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 	 */
 	public static function update_gate_days(): array {
 		return array(
-			'zero'        => array( '0', 7 ),
-			'negative'    => array( '-5', 7 ),
-			'valid'       => array( '12', 12 ),
-			'minimum'     => array( '1', 1 ),
-			'one year'    => array( '365', 365 ),
-			'above year'  => array( '400', 400 ),
-			'fraction'    => array( '1.5', 7 ),
-			'non-numeric' => array( 'invalid', 7 ),
-			'mixed'       => array( '12days', 7 ),
+			'zero'              => array( '0', 7 ),
+			'negative'          => array( '-5', 7 ),
+			'valid'             => array( '12', 12 ),
+			'minimum'           => array( '1', 1 ),
+			'one year'          => array( '365', 365 ),
+			'above year'        => array( '400', 400 ),
+			'fraction'          => array( '1.5', 7 ),
+			'non-numeric'       => array( 'invalid', 7 ),
+			'mixed'             => array( '12days', 7 ),
+			'leading zero'      => array( '030', 30 ),
+			'leading zeros one' => array( '001', 1 ),
+			'all zeros'         => array( '000', 7 ),
 		);
 	}
 

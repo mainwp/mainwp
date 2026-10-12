@@ -1513,7 +1513,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param array|null $pull_manifest Presigned pull manifest, when the
      *                                  child downloads from cloud storage.
      *
-     * @return array { task_id: string ('' after recording a failure),
+     * @return array { task_id: string ('' on failure, lease loss or refused writes),
      *                 pull_rejected: bool, reused?: bool }.
      */
     private function create_child_restore_task( object $job, array &$checkpoint, array $plan, ?array $pull_manifest = null ): array {
@@ -1655,6 +1655,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $checkpoint['transfer']         = array();
             // The child pins each restore_id to its first task for replay safety; the fallback needs its own identity.
             $checkpoint['restore_id'] = strtolower( wp_generate_password( 12, false ) );
+            unset( $checkpoint['child_create_attempted'] );
             if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ), $this->lock_token ) ) {
                 return false;
             }
@@ -1694,7 +1695,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * verifying, no stored failure  not requested      terminalize fresh failure; otherwise drive on
      * no                            not requested      terminalize failure or cancellation
      * yes                           ok/failed          terminalize failure or cancellation
-     * yes                           completed          clear pending decision; poll completion
+     * yes                           completed          clear decision; stage if id-less, otherwise run
      * yes                           busy/rolling_back  defer until 15 minutes have elapsed
      * yes                           unconfirmed        defer until the same elapsed-time limit
      * yes                           any deferred       at timeout, terminalize with warning
@@ -1715,6 +1716,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *   phase_verifying() and the UI cancel lane obey the same ordering.
      *
      * A thrown or unreadable reply is unconfirmed, not proof the child stopped.
+     * An answered create error still cancels by restore_id because a Child task may exist.
      * Verification never consults it because child completion settled that already.
      * Poll frequency must not shorten the rollback window or replace the cause.
      *
@@ -1783,8 +1785,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( 'completed' === $outcome && ( $can_cancel || null === $error || $had_stored_failure ) ) {
-            // Preserve verification and never resume artifact transfer after child completion.
-            if ( $can_cancel && ! $store->set_status( (int) $job->id, $store::STATUS_RUNNING, array(), $lock_token ) ) {
+            // An id-less job must recover its handle through idempotent create before polling.
+            $status = empty( $job->child_task_id ) ? $store::STATUS_STAGING : $store::STATUS_RUNNING;
+            if ( $can_cancel && ! $store->set_status( (int) $job->id, $status, array(), $lock_token ) ) {
                 return self::TERMINAL_OUTCOME_DEFERRED;
             }
             $fresh = $store->get_job( (int) $job->id );

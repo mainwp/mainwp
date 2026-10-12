@@ -1888,8 +1888,16 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $attempts = $advanced ? 1 : (int) $job->attempt_count + 1;
 
         if ( ! $retryable || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
-            $this->record_terminal_failure( $job, $error, $error_code, $this->lock_token );
-
+            if ( self::TERMINAL_OUTCOME_DEFERRED === $this->record_terminal_failure( $job, $error, $error_code, $this->lock_token ) ) {
+                // A deferral with no armed intent means the evidence writes were
+                // refused, not that the Child asked for time; back off so the row
+                // is not re-driven every tick, and try the terminal write again
+                // after the delay.
+                $after = $store->get_job( (int) $job->id );
+                if ( null !== $after && in_array( $after->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && empty( $after->checkpoint['cancel_intent'] ) ) {
+                    $this->back_off_in_place( $job, $error, $error_code, false );
+                }
+            }
             return;
         }
 
@@ -1902,42 +1910,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $checkpoint['last_failure_transfer'] = $this->transfer_position( $checkpoint );
         $next_retry_at                       = time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts );
         if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
-            if ( ! $this->lease_still_held( $job ) ) {
-                return; // The live holder owns the retry bookkeeping.
-            }
-            // A retry without its saved resume point would restart at pending,
-            // taking a second safety backup over the restored site. Keep the
-            // phase and back off in place: acquisition waits for next_retry_at
-            // in every active status, and attempts still run out into a
-            // terminal failure.
-            $current = $store->get_job( (int) $job->id );
-            if ( null === $current || ! in_array( $current->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) {
-                return;
-            }
-            // The watermark that reset the budget did not persist, so the next
-            // failure would reset it again; count from the stored attempt instead.
-            $attempts      = (int) $current->attempt_count + 1;
-            $next_retry_at = time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts );
-            $kept          = $store->set_status(
-                (int) $job->id,
-                $current->status,
-                array(
-                    'last_error'    => $error,
-                    'attempt_count' => $attempts,
-                    'next_retry_at' => $next_retry_at,
-                ),
-                $this->lock_token
-            );
-            if ( ! $kept ) {
-                return;
-            }
-            /** This action is documented in class/backup/class-mainwp-backup-restore-orchestrator.php */
-            do_action( 'mainwp_backup_diag_restore_retry', (int) $job->id, (int) $job->site_id, $attempts, $error_code, $next_retry_at, false );
-            if ( MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
-                // Backoff first: a terminal write refused by the same failure
-                // leaves a backed-off row, not one re-driven every tick.
-                $this->record_terminal_failure( $job, $error, $error_code, $this->lock_token );
-            }
+            $this->back_off_in_place( $job, $error, $error_code, true );
             return;
         }
 
@@ -1960,6 +1933,54 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
          * @param bool   $progress_reset Whether transfer progress reset the budget.
          */
         do_action( 'mainwp_backup_diag_restore_retry', (int) $job->id, (int) $job->site_id, $attempts, $error_code, $next_retry_at, $advanced );
+    }
+
+    /**
+     * Record a failure's backoff on the row without moving its phase.
+     *
+     * @param object $job         Job row.
+     * @param string $error       Error text.
+     * @param string $error_code  Stable error code, or '' when none.
+     * @param bool   $terminalize Whether exhausted attempts end the job here.
+     */
+    private function back_off_in_place( object $job, string $error, string $error_code, bool $terminalize ): void {
+        if ( ! $this->lease_still_held( $job ) ) {
+            return; // The live holder owns the retry bookkeeping.
+        }
+        $store = MainWP_Backup_Restore_Job_Store::instance();
+        // A retry without its saved resume point would restart at pending,
+        // taking a second safety backup over the restored site. Keep the
+        // phase and back off in place: acquisition waits for next_retry_at
+        // in every active status, and attempts still run out into a
+        // terminal failure.
+        $current = $store->get_job( (int) $job->id );
+        if ( null === $current || ! in_array( $current->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) {
+            return;
+        }
+        // The watermark that reset the budget did not persist, so the next
+        // failure would reset it again; count from the stored attempt instead.
+        $attempts      = (int) $current->attempt_count + 1;
+        $next_retry_at = time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts );
+        $kept          = $store->set_status(
+            (int) $job->id,
+            $current->status,
+            array(
+                'last_error'    => $error,
+                'attempt_count' => $attempts,
+                'next_retry_at' => $next_retry_at,
+            ),
+            $this->lock_token
+        );
+        if ( ! $kept ) {
+            return;
+        }
+        /** This action is documented in class/backup/class-mainwp-backup-restore-orchestrator.php */
+        do_action( 'mainwp_backup_diag_restore_retry', (int) $job->id, (int) $job->site_id, $attempts, $error_code, $next_retry_at, false );
+        if ( $terminalize && MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
+            // Backoff first: a terminal write refused by the same failure
+            // leaves a backed-off row, not one re-driven every tick.
+            $this->record_terminal_failure( $job, $error, $error_code, $this->lock_token );
+        }
     }
 
     /**

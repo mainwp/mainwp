@@ -4404,6 +4404,88 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Matrix row 33: an exhausted failure whose terminal write is refused by
+	 * the same fault backs off in place instead of being re-driven every tick.
+	 */
+	public function test_exhausted_failure_backs_off_when_the_terminal_write_is_refused() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$job   = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, array( 'attempt_count' => MainWP_Backup_Backoff::MAX_ATTEMPTS - 1 ) );
+		$id    = (int) $job->id;
+
+		$this->orchestrator->responds = false;
+		$retries                      = array();
+		$failures                     = array();
+		$refuse                       = static function ( $sql ) use ( $table ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET ' ) && str_contains( $sql, ' checkpoint = ' ) ) {
+				return $sql . ' AND 1 = 0';
+			}
+			return $sql;
+		};
+		$retry                        = static function ( $job_id, $site_id, $attempts ) use ( &$retries ) {
+			$retries[] = $attempts;
+		};
+		$failed                       = static function ( $event ) use ( &$failures ) {
+			$failures[] = $event;
+		};
+		add_filter( 'query', $refuse );
+		add_action( 'mainwp_backup_diag_restore_retry', $retry, 10, 3 );
+		add_action( 'mainwp_backup_restore_failed', $failed );
+		try {
+			$start = time();
+			$this->orchestrator->process_pending_restore_jobs( 30, $id );
+		} finally {
+			remove_filter( 'query', $refuse );
+			remove_action( 'mainwp_backup_diag_restore_retry', $retry, 10 );
+			remove_action( 'mainwp_backup_restore_failed', $failed );
+		}
+		$fresh = $store->get_job( $id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $fresh->status );
+		$this->assertSame( MainWP_Backup_Backoff::MAX_ATTEMPTS, (int) $fresh->attempt_count );
+		$this->assertGreaterThan( $start, (int) $fresh->next_retry_at, 'The refused terminal write must leave a backed-off row.' );
+		$this->assertNotSame( '', $fresh->last_error );
+		$this->assertSame( array( MainWP_Backup_Backoff::MAX_ATTEMPTS ), $retries );
+		$this->assertSame( array(), $failures );
+	}
+
+	/**
+	 * Matrix row 34: a deferral that armed a cancel intent is the Child
+	 * confirmation window, so the job keeps polling without a backoff.
+	 */
+	public function test_exhausted_failure_waiting_for_child_confirmation_keeps_polling() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job(
+			array(),
+			MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+			array(
+				'child_task_id' => 'busy-task',
+				'attempt_count' => MainWP_Backup_Backoff::MAX_ATTEMPTS - 1,
+			)
+		);
+		$id    = (int) $job->id;
+
+		$this->responses['restore_task_run']    = array( 'error' => 'Temporary restore failure' );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'busy' );
+		$retries                                = array();
+		$retry                                  = static function ( $job_id ) use ( &$retries ) {
+			$retries[] = $job_id;
+		};
+		add_action( 'mainwp_backup_diag_restore_retry', $retry );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, $id );
+		} finally {
+			remove_action( 'mainwp_backup_diag_restore_retry', $retry );
+		}
+		$fresh = $store->get_job( $id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $fresh->status );
+		$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
+		$this->assertSame( 'pending', $fresh->checkpoint['cancel_confirmation']['outcome'] );
+		$this->assertSame( $job->next_retry_at, $fresh->next_retry_at );
+		$this->assertSame( $job->attempt_count, $fresh->attempt_count );
+		$this->assertSame( array(), $retries );
+	}
+
+	/**
 	 * Matrix rows 29 and 30: lease still held, lease taken inside the save.
 	 *
 	 * @return array

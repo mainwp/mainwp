@@ -9,7 +9,7 @@
  * Plugin URI: https://mainwp.com/
  * Text Domain: mainwp
  * Requires at least: 6.2
- * Version:  6.3-beta1
+ * Version:  6.3-beta3
  * Requires PHP: 8.3
  * License: GPLv3 or later
  * License URI: https://www.gnu.org/licenses/gpl-3.0.html

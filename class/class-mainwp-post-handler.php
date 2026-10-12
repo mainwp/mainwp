@@ -722,6 +722,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function ajax_mainwp_save_settings() {
+        // Authorize before secure_request records the duplicate-request marker.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            $ret           = array( 'success' => false );
+            $ret['result'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
+            $ret['error']  = $ret['result'];
+            MainWP_Client::exit_json( $ret );
+        }
         $this->secure_request( 'mainwp_save_settings' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $name = isset( $_POST['name'] ) ? sanitize_text_field( wp_unslash( $_POST['name'] ) ) : '';
@@ -1549,6 +1556,9 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * @uses \MainWP\Dashboard\MainWP_Plugins_Handler::trust_plugin()
      */
     public function mainwp_autoupdate_and_trust_child() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            MainWP_Client::exit_json( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+        }
         $this->secure_request( 'mainwp_autoupdate_and_trust_child' );
         if ( 1 !== (int) get_option( 'mainwp_pluginAutomaticDailyUpdate' ) ) {
             update_option( 'mainwp_pluginAutomaticDailyUpdate', 1 );

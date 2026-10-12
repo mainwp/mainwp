@@ -642,14 +642,33 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $pFile File to delete.
      *
      * @return bool true
+     * @throws MainWP_Exception When the archive name is invalid.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      */
     public static function backup_delete_file( $pSiteId, $pFile ) {
+        if ( ! static::is_valid_backup_archive_name( $pFile ) ) {
+            throw new MainWP_Exception( esc_html__( 'Invalid backup archive name.', 'mainwp' ) );
+        }
         $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
         MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $pFile ) );
         return true;
+    }
+
+    /**
+     * Child archives include custom and resumed names, not just generated prefixes.
+     *
+     * @param mixed $file Child archive basename.
+     * @return bool Whether the name can be sent to the Child for deletion.
+     */
+    public static function is_valid_backup_archive_name( $file ) {
+        return is_string( $file ) && '' !== $file
+            && false === strpos( $file, '/' )
+            && false === strpos( $file, '\\' )
+            && false === strpos( $file, "\0" )
+            && false === strpos( $file, '..' )
+            && 1 === preg_match( '/\.(?:zip|tar(?:\.gz|\.bz2)?)\z/', $file );
     }
 
     /**
@@ -1169,7 +1188,7 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      */
     public static function handle_settings_post() {
         if ( MainWP_System_Utility::is_admin() ) {
-            if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
+            if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
                 if ( isset( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
                     MainWP_Utility::update_option( 'mainwp_backupsOnServer', ( isset( $_POST['mainwp_options_backupOnServer'] ) ? intval( $_POST['mainwp_options_backupOnServer'] ) : 1 ) );
                 }

@@ -3734,14 +3734,31 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * An unrecorded completed task needs its handle recovered before polling.
+	 * An unrecorded completed task recovers its handle before staging, which may no longer be possible.
 	 *
-	 * @dataProvider completed_child_intent_cases
-	 * @param bool $has_failure Whether a terminal failure triggers cancellation.
+	 * @dataProvider completed_unrecorded_recovery_cases
+	 * @param bool $has_failure    Whether a terminal failure triggers cancellation.
+	 * @param bool $source_present Whether the backup file can still be staged.
 	 */
-	public function test_cancel_unrecorded_completed_child_recovers_handle_through_staging( $has_failure ) {
-		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
-		$job                                    = $this->make_job( array( 'child_create_attempted' => true ), $store::STATUS_STAGING );
+	public function test_cancel_unrecorded_completed_child_recovers_handle_before_staging( $has_failure, $source_present ) {
+		$store    = MainWP_Backup_Restore_Job_Store::instance();
+		$override = array( 'child_create_attempted' => true );
+		if ( ! $source_present ) {
+			$override['plan'] = array(
+				array(
+					'role'        => 'db',
+					'file'        => 'db.zip',
+					'size'        => 10,
+					'sha256'      => '',
+					'snapshot_id' => 5,
+					'source'      => 'local',
+					'local_path'  => $this->dir . '/deleted-db.zip',
+					'remote_key'  => '',
+					'adopt_only'  => false,
+				),
+			);
+		}
+		$job                                    = $this->make_job( $override, $store::STATUS_STAGING );
 		$this->responses['restore_task_cancel'] = array(
 			'result' => 'already_terminal',
 			'phase'  => 'completed',
@@ -3769,6 +3786,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$job = $store->get_job( (int) $job->id );
 		$this->assertSame( $store::STATUS_STAGING, $job->status );
 		$this->assertSame( '', $job->child_task_id );
+		$this->assertTrue( $job->checkpoint['child_completed_unrecorded'] );
 		$this->assertTrue( empty( $job->checkpoint['cancel_intent'] ) );
 		$this->assertArrayNotHasKey( 'terminal_failure', $job->checkpoint );
 		$this->assertArrayNotHasKey( 'cancel_confirmation', $job->checkpoint );
@@ -3778,9 +3796,81 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$job = $this->tick( $job );
 		$this->assertSame( $store::STATUS_VERIFYING, $job->status );
 		$this->assertSame( 'unrecorded-completed', $job->child_task_id );
+		$this->assertSame( '', (string) $job->last_error );
 		$this->assertTrue( $job->checkpoint['verification']['db_ok'] );
+		$this->assertArrayNotHasKey( 'child_completed_unrecorded', $job->checkpoint );
 		$this->assertSame( array( 'restore_task_cancel', 'restore_task_create' ), array_column( $this->calls, 'what' ) );
 		$this->assertSame( $this->calls[0]['params']['restore_id'], $this->calls[1]['params']['restore_id'] );
+	}
+
+	/**
+	 * Triggers crossed with whether staging is still possible.
+	 *
+	 * @return array
+	 */
+	public static function completed_unrecorded_recovery_cases() {
+		return array(
+			'user cancellation, source present' => array( false, true ),
+			'terminal failure, source present'  => array( true, true ),
+			'user cancellation, source deleted' => array( false, false ),
+			'terminal failure, source deleted'  => array( true, false ),
+		);
+	}
+
+	/**
+	 * A recovery create that makes a new task falls back to staging into that task.
+	 */
+	public function test_unrecorded_completed_recovery_without_finished_task_stages_normally() {
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                    = $this->make_job(
+			array(
+				'child_create_attempted'     => true,
+				'child_completed_unrecorded' => true,
+			),
+			$store::STATUS_STAGING
+		);
+		$this->responses['restore_task_create'] = array( 'task_id' => 'recreated-task' );
+
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_TRANSFERRING, $job->status );
+		$this->assertSame( 'recreated-task', $job->child_task_id );
+		$this->assertArrayNotHasKey( 'child_completed_unrecorded', $job->checkpoint );
+		$this->assertNotEmpty( $job->checkpoint['plan'][0]['staged_path'] );
+		$this->assertSame( array( 'restore_task_create', 'restore_task_create' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( $this->calls[0]['params']['restore_id'], $this->calls[1]['params']['restore_id'] );
+	}
+
+	/**
+	 * A UI cancel that finds no task while the create is in flight must not leave the created task running.
+	 */
+	public function test_task_created_after_ui_cancel_confirmed_is_cancelled_by_task_id() {
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                    = $this->make_job( array(), $store::STATUS_STAGING );
+		$this->responses['restore_task_cancel'] = array(
+			array( 'result' => 'not_found' ),
+			array( 'result' => 'ok' ),
+		);
+		$this->responses['restore_task_create'] = array( 'task_id' => 'late-task' );
+		$cancelled                              = null;
+		$race                                   = function ( $pre, $website, $what ) use ( $job, &$cancelled ) {
+			if ( 'restore_task_create' === $what && null === $cancelled ) {
+				$cancelled = $this->orchestrator->cancel_job( (int) $job->id );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $race, 5, 3 );
+		try {
+			$job = $this->tick( $job );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $race, 5 );
+		}
+
+		$this->assertSame( 'cancelled', $cancelled );
+		$this->assertSame( $store::STATUS_CANCELLED, $job->status );
+		$this->assertSame( 'confirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
+		$this->assertSame( array( 'restore_task_cancel', 'restore_task_create', 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'restore_id' => 'orch01test' ), $this->calls[0]['params'] );
+		$this->assertSame( array( 'task_id' => 'late-task' ), $this->calls[2]['params'] );
 	}
 
 	/** A refused checkpoint cannot authorize a Child side effect. */

@@ -744,6 +744,41 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Cancel a Child task whose create landed after this job went terminal.
+     *
+     * A UI cancel can reach the Child while the create request is still in
+     * flight, find no task by restore_id and finish as confirmed. The create
+     * then leaves a task no job owns, and a queued cloud pull runs on its own.
+     * A job that is still active belongs to another worker, whose create
+     * reuses the task, so only a terminal job sends the cancel.
+     *
+     * @param object $job     Job row.
+     * @param string $task_id Child task id the create returned.
+     *
+     * @return void
+     */
+    private function cancel_task_created_after_terminal( object $job, string $task_id ): void {
+        $store = MainWP_Backup_Restore_Job_Store::instance();
+        $fresh = $store->get_job( (int) $job->id );
+        if ( null !== $fresh && in_array( $fresh->status, $store::active_statuses(), true ) ) {
+            return;
+        }
+        $result = '';
+        try {
+            $website = $this->website( $job );
+            $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_cancel', array( 'task_id' => $task_id ), false, false, false );
+            $result  = is_array( $payload ) && isset( $payload['result'] ) ? (string) $payload['result'] : '';
+        } catch ( \Throwable $e ) {
+            $result = '';
+        }
+        if ( in_array( $result, array( 'ok', 'already_terminal' ), true ) ) {
+            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: cancelled child restore task %s, created after the job ended.', (int) $job->id, $task_id ), (int) $job->site_id, 0 );
+            return;
+        }
+        do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: child restore task %s was created after the job ended and could not be cancelled; it may need manual cleanup on the site.', (int) $job->id, $task_id ), (int) $job->site_id, 0 );
+    }
+
+    /**
      * Apply a recorded cancel intent before driving the child.
      *
      * @param object $job Job row.
@@ -1154,6 +1189,19 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $plan       = (array) $checkpoint['plan'];
         $driver     = $this->transfer_driver();
 
+        // The Child reported this restore completed while its task id was never
+        // recorded. The create returns that task for the same restore_id, so ask
+        // before staging, which is not needed and may no longer be possible.
+        if ( empty( $job->child_task_id ) && ! empty( $checkpoint['child_completed_unrecorded'] ) ) {
+            unset( $checkpoint['child_completed_unrecorded'] );
+            $created = $this->create_child_restore_task( $job, $checkpoint, $plan );
+            if ( '' === $created['task_id'] || ! empty( $created['reused'] ) ) {
+                return;
+            }
+            // A new task means the finished one is gone; staging continues and
+            // its create reuses the new task.
+        }
+
         // Cloud pull: when the destination can presign and the child can
         // download, the dashboard never touches the bytes - the child
         // task is created with a presigned manifest and the job goes
@@ -1184,6 +1232,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                         // Lease lost after the child task was created: its id
                         // never landed, so surface the orphan and stop.
                         do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ), (int) $job->site_id, 0 );
+                        $this->cancel_task_created_after_terminal( $job, $created['task_id'] );
                         return;
                     }
                     do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the site declined the direct cloud download; using the standard transfer.', (int) $job->id ), (int) $job->site_id, 0 );
@@ -1195,6 +1244,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     // child task and recording its id. Surface the orphaned
                     // child task and stop; the reclaiming worker owns the job.
                     do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ), (int) $job->site_id, 0 );
+                    $this->cancel_task_created_after_terminal( $job, $created['task_id'] );
                     return;
                 }
                 $artifact_count = count( $pull_manifest['artifacts'] );
@@ -1247,6 +1297,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token ) ) {
             // Lease lost between creating the child task and recording its id.
             do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: the lease was lost after creating child restore task %s; it may need manual cleanup on the site.', (int) $job->id, $created['task_id'] ), (int) $job->site_id, 0 );
+            $this->cancel_task_created_after_terminal( $job, $created['task_id'] );
             return;
         }
     }
@@ -1785,9 +1836,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( 'completed' === $outcome && ( $can_cancel || null === $error || $had_stored_failure ) ) {
-            // An id-less job must recover its handle through idempotent create before polling.
-            $status = empty( $job->child_task_id ) ? $store::STATUS_STAGING : $store::STATUS_RUNNING;
-            if ( $can_cancel && ! $store->set_status( (int) $job->id, $status, array(), $lock_token ) ) {
+            // A job without a recorded task id cannot poll; staging recovers the
+            // id through the idempotent create. Decide from the row re-read after
+            // the Child round trip, since the worker may have recorded it meanwhile.
+            $unrecorded = $can_cancel && empty( $fresh->child_task_id );
+            if ( $can_cancel && ! $store->set_status( (int) $job->id, $unrecorded ? $store::STATUS_STAGING : $store::STATUS_RUNNING, array(), $lock_token ) ) {
                 return self::TERMINAL_OUTCOME_DEFERRED;
             }
             $fresh = $store->get_job( (int) $job->id );
@@ -1796,6 +1849,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
             $checkpoint = $fresh->checkpoint;
             unset( $checkpoint['cancel_confirmation'], $checkpoint['terminal_failure'], $checkpoint['last_error_code'] );
+            if ( $unrecorded ) {
+                $checkpoint['child_completed_unrecorded'] = true;
+            }
             return $store->save_checkpoint( (int) $job->id, $checkpoint, $lock_token, true ) ? self::TERMINAL_OUTCOME_DRIVE_ON : self::TERMINAL_OUTCOME_DEFERRED;
         }
 

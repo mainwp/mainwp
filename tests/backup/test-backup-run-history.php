@@ -645,6 +645,53 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A throw the classifier cannot place must not hide a replay tag the checkpoint already holds.
+	 */
+	public function test_s84_restore_safety_unclassified_throw_keeps_replay_tag(): void {
+		$site  = $this->site();
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$id    = $store->create_job(
+			$site,
+			5,
+			array(
+				'plan'                           => array(),
+				'options'                        => array( 'pre_snapshot' => true ),
+				'pre_snapshot_reconcile_pending' => true,
+				'pre_snapshot_replay_confirmed'  => true,
+				'last_error_extra'               => 'AUTH_ERROR2',
+			)
+		);
+		$ref   = MainWP_Backup_Executor::trigger_backup( $site, 'full', (string) $id );
+		$this->assertTrue(
+			$store->set_status(
+				$id,
+				$store::STATUS_PRE_SNAPSHOT,
+				array(
+					'pre_snapshot_task_id' => $ref,
+					'attempt_count'        => 6,
+					'next_retry_at'        => 0,
+				)
+			)
+		);
+		$fail = static function ( $pre, $website, $what ) {
+			if ( 'backup_task_status' === $what ) {
+				throw new \MainWP\Dashboard\MainWP_Exception( 'ERROR: blocked by the site firewall', '', '' );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $fail, 20, 3 );
+		try {
+			MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs( 2, $id );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 20 );
+		}
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $store->get_job( $id )->status );
+		$row = $this->rows()[0];
+		$this->assertSame( array( 'failed', MainWP_Backup_Error_Codes::ERR_TIMEOUT ), array( $row['outcome'], $row['error_code'] ) );
+		$this->assertSame( MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_TIMEOUT )['message'] . ' (AUTH_ERROR2)', $row['message'] );
+	}
+
+	/**
 	 * Each transport's legacy restore text and subtype remain a separate contract.
 	 *
 	 * @return array

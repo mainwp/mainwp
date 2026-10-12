@@ -960,8 +960,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
         } catch ( \Throwable $e ) {
             $code = ( $e instanceof MainWP_Exception ) ? $e->get_message_error_code() : '';
+            // An unclassified result is no evidence, so history keeps the replay tag a checkpoint may hold.
+            $history_code = MainWP_Backup_Error_Codes::code_for_exception( $e );
+            $history_code = MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR === $history_code ? null : $history_code;
             // The site layout does not change between retries.
-            $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT !== $code, $code, MainWP_Backup_Error_Codes::code_for_exception( $e ) );
+            $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT !== $code, $code, $history_code );
         } finally {
             remove_filter( 'mainwp_fetch_url_site_timeout', $cap_timeout );
             $store->release_lock( $job_id, $token );

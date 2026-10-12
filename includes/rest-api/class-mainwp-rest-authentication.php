@@ -659,7 +659,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return false;
         }
 
-        if ( ! is_string( $params['oauth_signature_method'] ) || ( 'HMAC-SHA1' !== $params['oauth_signature_method'] && 'HMAC-SHA256' !== $params['oauth_signature_method'] ) ) {
+        if ( ! in_array( $params['oauth_signature_method'], array( 'HMAC-SHA1', 'HMAC-SHA256' ), true ) ) {
             $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid signature - signature method is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
             return false;
         }

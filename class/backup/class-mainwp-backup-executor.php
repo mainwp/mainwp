@@ -24,6 +24,12 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
+    /** The spine and gate share the five-attempt limit. */
+    private const RUN_ATTEMPT_CAP = 5;
+
+    /** Cap times interval (225 s) must exceed the Child's 180 s lease before declaring a first slice stuck. */
+    private const RECONCILE_INTERVAL_SECONDS = 45;
+
     /**
      * Unknown identities cannot safely select a Child task owned by this run.
      *
@@ -681,13 +687,30 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( ! MainWP_Backup_Monitor::confirm_native_lease() || ! MainWP_Backup_Monitor::confirm_lane_lease() ) {
                 return false;
             }
+            $run_state = json_decode( (string) $backupTaskProgress->last_error, true );
+            $run_state = is_array( $run_state ) ? $run_state : array();
+            $watermark = array(
+                'phase' => (string) $backupTaskProgress->child_phase,
+                'files' => (int) $backupTaskProgress->files_processed,
+                'bytes' => (int) $backupTaskProgress->bytes_downloaded,
+            );
+            $reconcile = isset( $run_state['reconcile_pending'] );
+            if ( $reconcile ) {
+                $now = microtime( true );
+                if ( $now < (float) ( $run_state['reconcile_pending']['last_status_at'] ?? 0 ) + self::RECONCILE_INTERVAL_SECONDS ) {
+                    return false;
+                }
+                $run_state['reconcile_pending']['last_status_at'] = $now;
+                $backupTaskProgress                               = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'last_error' => wp_json_encode( $run_state ) ) );
+            }
+            $operation  = $reconcile ? 'status' : 'run';
             $temp       = false;
             $diag_start = microtime( true );
             try {
-                $temp = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $backupTaskProgress->child_backup_task_id ), false, false, false );
+                $temp = MainWP_Connect::fetch_url_authed( $website, 'backup_task_' . $operation, array( 'task_id' => $backupTaskProgress->child_backup_task_id ), false, false, false );
             } catch ( \Exception $e ) {
                 // The failed run call consumes a retry attempt below instead of being ignored.
-                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup task run failed: ' . $e->getMessage() );
+                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Backup task ' . $operation . ' failed: ' . $e->getMessage() );
                 self::record_thrown_request(
                     $e,
                     microtime( true ) - $diag_start,
@@ -696,11 +719,17 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         'task_id' => ! empty( $backupTaskProgress->child_backup_task_id ) ? (string) $backupTaskProgress->child_backup_task_id : '',
                     ),
                     array(
-                        'op'      => 'run',
+                        'op'      => $operation,
                         'site_id' => (int) $website->id,
                         'task_id' => (int) $taskId,
                     )
                 );
+            }
+
+            if ( 'run' === $operation && is_array( $temp ) && 'AUTH_ERROR2' === ( $temp['error_code'] ?? '' ) ) {
+                $run_state['reconcile_pending'] = array_merge( $watermark, array( 'last_status_at' => microtime( true ) ) );
+                $backupTaskProgress             = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'last_error' => wp_json_encode( $run_state ) ) );
+                $reconcile                      = true;
             }
 
             if ( is_array( $temp ) ) {
@@ -710,7 +739,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $temp,
                     microtime( true ) - $diag_start,
                     array(
-                        'op'      => 'run',
+                        'op'      => $operation,
                         'site_id' => (int) $website->id,
                         'task_id' => (int) $taskId,
                     )
@@ -718,16 +747,37 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
 
             if ( ! MainWP_Backup_Monitor::confirm_native_lease() || ! MainWP_Backup_Monitor::refresh_lane_lease() ) {
-                return false; // Same stop as a slice that is still working: the row is untouched and the next cycle runs it again.
+                return false; // A successor keeps any pending reconciliation and reads status before running again.
             }
 
-            if ( ! empty( $temp ) && 'incremental' === $type
+            if ( 'run' === $operation && $reconcile ) {
+                $temp = false;
+            } elseif ( $reconcile && is_array( $temp ) && isset( $temp['phase'] ) ) {
+                $observed = self::task_progress_watermark( $temp, (array) $run_state['reconcile_pending'] );
+                $terminal = in_array( (string) $temp['phase'], array( 'completed', 'failed' ), true );
+                if ( $terminal || self::task_progress_advanced( $observed, (array) $run_state['reconcile_pending'] ) ) {
+                    unset( $run_state['reconcile_pending'] );
+                    $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress(
+                        $taskId,
+                        $website->id,
+                        array(
+                            'last_error' => wp_json_encode( $run_state ),
+                            'attempts'   => 0,
+                        )
+                    );
+                    self::record_child_progress( $taskId, (int) $website->id, $temp );
+                } elseif ( ! isset( $temp['error'] ) ) {
+                    $temp = false;
+                }
+            }
+
+            if ( 'run' === $operation && ! empty( $temp ) && 'incremental' === $type
                 && isset( $temp['error_code'] ) && MainWP_Backup_Error_Codes::ERR_INCREMENTAL_BASE_MISSING === $temp['error_code']
                 && self::requeue_incremental_after_base_missing( $website, $pTask, $backupTaskProgress ) ) {
                 return false; // Requeued: the next cycle re-creates the task with the escalated send.
             }
 
-            if ( ! empty( $temp ) && isset( $temp['error'] )
+            if ( 'run' === $operation && ! empty( $temp ) && isset( $temp['error'] )
                 && isset( $temp['error_code'] ) && MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING === $temp['error_code'] ) {
                 // The slice runner hit the child's other backup lock (a
                 // legacy one-shot mid-run, usually short-lived). Failing the
@@ -787,6 +837,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
 
                 self::record_child_progress( $taskId, (int) $website->id, $temp );
+                if ( self::task_progress_advanced( self::task_progress_watermark( $temp, $watermark ), $watermark ) || in_array( (string) $temp['phase'], array( 'completed', 'failed' ), true ) ) {
+                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => 0 ) );
+                }
 
                 if ( (int) $backupTaskProgress->foreign_refused_since > 0 ) {
                     // The lock holder is gone and the slice ran: stop the
@@ -872,11 +925,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         )
                     );
                 }
-            } elseif ( 5 > $backupTaskProgress->attempts ) {
+            } elseif ( self::RUN_ATTEMPT_CAP > $backupTaskProgress->attempts ) {
                 $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => $backupTaskProgress->attempts + 1 ) );
                 return false;
             } else {
-                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                throw MainWP_Backup_Error_Codes::exception( $reconcile ? MainWP_Backup_Error_Codes::ERR_TIMEOUT : MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED, $reconcile ? 'AUTH_ERROR2' : null ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
             }
         }
 
@@ -2785,6 +2838,78 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Preserve missing counters when a Child reports only its phase.
+     *
+     * @param array $payload Child reply.
+     * @param array $previous Last observed position.
+     * @return array Phase, files and bytes.
+     */
+    private static function task_progress_watermark( array $payload, array $previous = array() ): array {
+        $progress = isset( $payload['progress'] ) && is_array( $payload['progress'] ) ? $payload['progress'] : array();
+        return array(
+            'phase' => isset( $payload['phase'] ) ? sanitize_key( (string) $payload['phase'] ) : (string) ( $previous['phase'] ?? '' ),
+            'files' => max( 0, (int) ( $progress['files_scanned'] ?? $progress['files_processed'] ?? $previous['files'] ?? 0 ) ),
+            'bytes' => max( 0, (int) ( $progress['bytes_done'] ?? $previous['bytes'] ?? 0 ) ),
+        );
+    }
+
+    /**
+     * A phase transition or increasing counters proves the Child moved.
+     *
+     * @param array $observed Current position.
+     * @param array $previous Last observed position.
+     * @return bool Whether progress moved.
+     */
+    private static function task_progress_advanced( array $observed, array $previous ): bool {
+        return ( $previous['phase'] ?? '' ) !== $observed['phase']
+            || $observed['files'] > (int) ( $previous['files'] ?? 0 )
+            || $observed['bytes'] > (int) ( $previous['bytes'] ?? 0 );
+    }
+
+    /**
+     * Keep gate reconciliation across budgets without replacing another owner's handle.
+     *
+     * @param object     $website Child site.
+     * @param string     $task_id Child handle.
+     * @param array|null $watermark Pending position, or null to clear it.
+     * @param array      $observed Last readable position.
+     */
+    private static function save_gate_reconciliation( object $website, string $task_id, ?array $watermark, array $observed = array() ): void {
+        $db     = MainWP_DB::instance();
+        $raw    = (string) $db->get_website_option( (int) $website->id, self::ADHOC_TASK_OPTION );
+        $handle = json_decode( $raw, true );
+        if ( ! is_array( $handle ) || ( $handle['task_id'] ?? '' ) !== $task_id || ! empty( $handle['owner'] ) ) {
+            return;
+        }
+        if ( ! empty( $observed ) ) {
+            $handle['progress_watermark'] = $observed;
+        }
+        if ( null === $watermark ) {
+            unset( $handle['reconcile_pending'] );
+        } else {
+            $handle['reconcile_pending'] = $watermark;
+        }
+        $db->compare_and_swap_website_option( (int) $website->id, self::ADHOC_TASK_OPTION, $raw, wp_json_encode( $handle ) );
+    }
+
+    /**
+     * End a replayed run that stayed unchanged through the reconciliation budget.
+     *
+     * @return array Failed gate status with the replay cause.
+     */
+    private static function reconciliation_timeout_status(): array {
+        $error = MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_TIMEOUT, 'AUTH_ERROR2' );
+        return array(
+            'status' => 'failed',
+            'meta'   => array(
+                'error'      => $error->getMessage(),
+                'error_code' => $error->get_message_error_code(),
+                'extra'      => $error->get_message_extra(),
+            ),
+        );
+    }
+
+    /**
      * Method record_child_progress()
      *
      * Map a child task status payload onto the granular progress fields
@@ -2867,7 +2992,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @return array Status array: status (running|completed|failed) and meta (phase, file, size, local, error, error_code).
      * @throws MainWP_Exception When the site is unknown or the child is unreachable.
-     * @throws \Exception When a status or run request fails; the original exception propagates.
+     * @throws \Exception When a request fails before the reconciliation cap.
      */
     public static function get_backup_task_status( int $site_id, string $task_id, int $budget_seconds = 0 ): array {
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -2915,11 +3040,41 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return $status;
         }
 
-        $deadline = time() + $budget_seconds;
+        $handle    = self::read_adhoc_task( $website );
+        $pending   = ( $handle['task_id'] ?? '' ) === $task_id ? ( $handle['reconcile_pending'] ?? null ) : null;
+        $watermark = is_array( $pending ) ? $pending : ( ( $handle['task_id'] ?? '' ) === $task_id ? (array) ( $handle['progress_watermark'] ?? array() ) : array() );
+        $reconcile = is_array( $pending );
+        $deadline  = microtime( true ) + $budget_seconds;
+        $status    = array(
+            'status' => 'running',
+            'meta'   => array(),
+        );
         do {
+            if ( $reconcile ) {
+                if ( (int) ( $pending['attempts'] ?? 0 ) >= self::RUN_ATTEMPT_CAP ) {
+                    $status = self::reconciliation_timeout_status();
+                    break;
+                }
+                $now       = microtime( true );
+                $next_read = (float) ( $pending['last_status_at'] ?? 0 ) + self::RECONCILE_INTERVAL_SECONDS;
+                $wait      = min( max( 0, $next_read - $now ), max( 0, $deadline - $now ) );
+                if ( $wait > 0 ) {
+                    usleep( (int) floor( $wait * 1000000 ) );
+                }
+                $now = microtime( true );
+                if ( $now >= $deadline ) {
+                    break;
+                }
+                if ( $now < $next_read ) {
+                    continue;
+                }
+                $pending['last_status_at'] = $now;
+                self::save_gate_reconciliation( $website, $task_id, $pending );
+            }
+            $operation  = $reconcile ? 'status' : 'run';
             $diag_start = microtime( true );
             try {
-                $payload = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $task_id ), false, false, false );
+                $payload = MainWP_Connect::fetch_url_authed( $website, 'backup_task_' . $operation, array( 'task_id' => $task_id ), false, false, false );
             } catch ( \Exception $e ) {
                 self::record_thrown_request(
                     $e,
@@ -2929,12 +3084,32 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         'task_id' => $task_id,
                     ),
                     array(
-                        'op'      => 'run',
+                        'op'      => $operation,
                         'site_id' => (int) $site_id,
                         'task_id' => 0,
                     )
                 );
+                if ( $reconcile ) {
+                    $pending['attempts'] = (int) ( $pending['attempts'] ?? 0 ) + 1;
+                    self::save_gate_reconciliation( $website, $task_id, $pending );
+                    if ( $pending['attempts'] >= self::RUN_ATTEMPT_CAP ) {
+                        $status = self::reconciliation_timeout_status();
+                        break;
+                    }
+                }
                 throw $e;
+            }
+            $replayed_run = 'run' === $operation && is_array( $payload ) && 'AUTH_ERROR2' === ( $payload['error_code'] ?? '' );
+            if ( $replayed_run ) {
+                $reconcile = true;
+                $pending   = array_merge(
+                    $watermark,
+                    array(
+                        'attempts'       => 0,
+                        'last_status_at' => microtime( true ),
+                    )
+                );
+                self::save_gate_reconciliation( $website, $task_id, $pending );
             }
             /** This action is documented in class/backup/class-mainwp-backup-executor.php */
             do_action(
@@ -2942,13 +3117,34 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 is_array( $payload ) ? $payload : array(),
                 microtime( true ) - $diag_start,
                 array(
-                    'op'      => 'run',
+                    'op'      => $operation,
                     'site_id' => (int) $site_id,
                     'task_id' => 0,
                 )
             );
-            $status = self::map_task_status( $payload );
-        } while ( 'running' === $status['status'] && time() < $deadline );
+            if ( $replayed_run ) {
+                $status = array(
+                    'status' => 'running',
+                    'meta'   => array(),
+                );
+            } else {
+                $status = self::map_task_status( $payload );
+                if ( is_array( $payload ) && isset( $payload['phase'] ) ) {
+                    $observed = self::task_progress_watermark( $payload, $watermark );
+                    if ( ! $reconcile || 'running' !== $status['status'] || self::task_progress_advanced( $observed, $watermark ) ) {
+                        $watermark = $observed;
+                        $reconcile = false;
+                        self::save_gate_reconciliation( $website, $task_id, null, $observed );
+                    } else {
+                        $pending['attempts'] = (int) ( $pending['attempts'] ?? 0 ) + 1;
+                        self::save_gate_reconciliation( $website, $task_id, $pending );
+                        if ( $pending['attempts'] >= self::RUN_ATTEMPT_CAP ) {
+                            $status = self::reconciliation_timeout_status();
+                        }
+                    }
+                }
+            }
+        } while ( 'running' === $status['status'] && microtime( true ) < $deadline );
 
         $downloaded = '';
         if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {

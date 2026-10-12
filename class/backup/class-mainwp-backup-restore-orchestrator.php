@@ -28,6 +28,9 @@ defined( 'ABSPATH' ) || exit;
  */
 class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
+    /** Cap times interval (315 s) must exceed the Child's 180 s lease before declaring a first slice stuck. */
+    private const RECONCILE_INTERVAL_SECONDS = 45;
+
     /**
      * Cron slice budget, seconds. Below the upload driver's 240 so both
      * fit one continuation tick with headroom.
@@ -1138,9 +1141,24 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $store   = MainWP_Backup_Restore_Job_Store::instance();
         $website = $this->website( $job );
 
+        if ( ! empty( $job->checkpoint['pre_snapshot_reconcile_pending'] ) && (int) $job->next_retry_at > time() ) {
+            return;
+        }
+
         while ( microtime( true ) < $deadline ) {
+            $reconcile = ! empty( $job->checkpoint['pre_snapshot_reconcile_pending'] );
+            $operation = $reconcile ? 'backup_task_status' : 'backup_task_run';
+            if ( ! $reconcile ) {
+                // Arm the read before leaving: a reclaimed worker cannot checkpoint a replay afterward.
+                $checkpoint                                   = $job->checkpoint;
+                $checkpoint['pre_snapshot_reconcile_pending'] = true;
+                if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                    return;
+                }
+                $job->checkpoint = $checkpoint;
+            }
             $diag_start = microtime( true );
-            $payload    = MainWP_Connect::fetch_url_authed( $website, 'backup_task_run', array( 'task_id' => $job->pre_snapshot_task_id ), false, false, false );
+            $payload    = MainWP_Connect::fetch_url_authed( $website, $operation, array( 'task_id' => $job->pre_snapshot_task_id ), false, false, false );
 
             /** This action is documented in class/backup/class-mainwp-backup-executor.php */
             do_action(
@@ -1160,7 +1178,52 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 return;
             }
 
+            if ( 'backup_task_run' === $operation && is_array( $payload ) && 'AUTH_ERROR2' === ( $payload['error_code'] ?? '' ) ) {
+                $checkpoint                                   = $job->checkpoint;
+                $checkpoint['pre_snapshot_reconcile_pending'] = true;
+                $this->defer_pre_snapshot_reconciliation( $job, $checkpoint );
+                return;
+            }
+
             $phase = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
+
+            if ( '' !== $phase && ! isset( $payload['error'] ) ) {
+                $previous = (array) ( $job->checkpoint['pre_snapshot_progress'] ?? array() );
+                $progress = isset( $payload['progress'] ) && is_array( $payload['progress'] ) ? $payload['progress'] : array();
+                $observed = array(
+                    'phase' => sanitize_key( $phase ),
+                    'files' => max( 0, (int) ( $progress['files_scanned'] ?? $progress['files_processed'] ?? $previous['files'] ?? 0 ) ),
+                    'bytes' => max( 0, (int) ( $progress['bytes_done'] ?? $previous['bytes'] ?? 0 ) ),
+                );
+                $moved    = ( $previous['phase'] ?? '' ) !== $observed['phase']
+                    || $observed['files'] > (int) ( $previous['files'] ?? 0 )
+                    || $observed['bytes'] > (int) ( $previous['bytes'] ?? 0 );
+                if ( $reconcile && ! $moved && ! in_array( $phase, array( 'completed', 'failed' ), true ) ) {
+                    $this->defer_pre_snapshot_reconciliation( $job, $job->checkpoint );
+                    return;
+                }
+                $checkpoint                          = $job->checkpoint;
+                $checkpoint['pre_snapshot_progress'] = $observed;
+                unset( $checkpoint['pre_snapshot_reconcile_pending'] );
+                if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                    return;
+                }
+                $job->checkpoint = $checkpoint;
+                if ( $moved || in_array( $phase, array( 'completed', 'failed' ), true ) ) {
+                    if ( ! $store->set_status(
+                        (int) $job->id,
+                        MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+                        array(
+                            'attempt_count' => 0,
+                            'next_retry_at' => 0,
+                        ),
+                        $this->lock_token
+                    ) ) {
+                        return;
+                    }
+                    $job->attempt_count = 0;
+                }
+            }
 
             if ( 'completed' === $phase ) {
                 $artifacts = $this->safety_backup_artifacts( $payload, (string) $job->pre_snapshot_task_id );
@@ -1199,7 +1262,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), $this->lock_token );
                 return;
             }
-            if ( 'failed' === $phase || '' === $phase ) {
+            if ( 'failed' === $phase || '' === $phase || ( $reconcile && isset( $payload['error'] ) ) ) {
                 $error      = is_array( $payload ) && isset( $payload['error'] ) ? MainWP_Backup_Error_Codes::sanitize_message( (string) $payload['error'] ) : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
                 $error_code = is_array( $payload ) && isset( $payload['error_code'] ) ? (string) $payload['error_code'] : '';
                 if ( 'failed' === $phase || ( is_array( $payload ) && isset( $payload['error'] ) ) ) {
@@ -1215,7 +1278,40 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 }
                 return;
             }
+            if ( $reconcile ) {
+                return;
+            }
         }
+    }
+
+    /**
+     * Spend a safety-backup attempt and defer the next status read for one reconcile interval.
+     *
+     * @param object $job Restore job.
+     * @param array  $checkpoint Safety-backup reconciliation state.
+     */
+    private function defer_pre_snapshot_reconciliation( object $job, array $checkpoint ): void {
+        $store    = MainWP_Backup_Restore_Job_Store::instance();
+        $attempts = (int) $job->attempt_count + 1;
+        if ( MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
+            $checkpoint['last_error_extra'] = 'AUTH_ERROR2';
+        }
+        if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+            return;
+        }
+        if ( MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
+            $this->record_failure( $job, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_TIMEOUT ), false, MainWP_Backup_Error_Codes::ERR_TIMEOUT );
+            return;
+        }
+        $store->set_status(
+            (int) $job->id,
+            MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+            array(
+                'attempt_count' => $attempts,
+                'next_retry_at' => time() + self::RECONCILE_INTERVAL_SECONDS,
+            ),
+            $this->lock_token
+        );
     }
 
     /**

@@ -8,7 +8,24 @@
  * @package MainWP\Dashboard\Tests
  */
 
-namespace MainWP\Dashboard\Tests;
+namespace MainWP\Dashboard;
+
+/**
+ * Advance the existing virtual clock instead of waiting during reconciliation tests.
+ *
+ * @param int $microseconds Wait duration.
+ */
+function usleep( $microseconds ) {
+	if ( null !== Tests\MainWP_Backup_Executor_Test::$reconcile_waits && null !== Tests\MainWP_Backup_Now_Continuation_Test::$fixed_microtime ) {
+		Tests\MainWP_Backup_Executor_Test::$reconcile_waits[]        = $microseconds;
+		Tests\MainWP_Backup_Now_Continuation_Test::$fixed_microtime += $microseconds / 1000000;
+		Tests\MainWP_Backup_Incremental_Sender_Test::$fixed_time     = (int) Tests\MainWP_Backup_Now_Continuation_Test::$fixed_microtime;
+		return;
+	}
+	\usleep( $microseconds );
+}
+
+namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- transport clock fixtures share the production namespace.
 
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 
@@ -27,7 +44,14 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 /**
  * Class MainWP_Backup_Executor_Test
  */
-class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
+class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- the clock and sleep fixtures exercise production deadlines.
+
+	/**
+	 * Null leaves other tests on real time and real sleep.
+	 *
+	 * @var array|null
+	 */
+	public static $reconcile_waits = null;
 
 	use Backup_Cancel_Transport_Guard;
 
@@ -155,6 +179,9 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tearDown(): void {
+		self::$reconcile_waits                                = null;
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time    = null;
 		$property = new \ReflectionProperty( MainWP_Backup_Snapshots::class, 'instance' );
 		$property->setValue( null, $this->snapshot_instance );
 		foreach ( $this->snapshot_files as $file ) {
@@ -3135,6 +3162,675 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( 'mainwp_backup_db_query_failed', $e->get_message_error_code() );
 			$this->assertStringContainsString( 'Could not read table data', $e->getMessage() );
 		}
+	}
+
+	/**
+	 * A lost run reply yields without abandoning the Child task.
+	 *
+	 * @param int    $site_id Site id.
+	 * @param object $task Task row.
+	 */
+	private function a1_yield( $site_id, $task ) {
+		try {
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			// Each original A1 call models a later slice, after the reconciliation interval.
+			$row   = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$state = json_decode( (string) $row->last_error, true );
+			if ( isset( $state['reconcile_pending']['last_status_at'] ) ) {
+				$state['reconcile_pending']['last_status_at'] -= 45;
+				MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'last_error' => wp_json_encode( $state ) ) );
+			}
+		} catch ( MainWP_Exception $error ) {
+			$this->fail( 'Reconciliation must yield; received ' . $error->get_message_error_code() . ': ' . $error->getMessage() );
+		}
+	}
+
+	/**
+	 * Script Child replies and capture the actual request order.
+	 *
+	 * @param array $replies Ordered wire replies.
+	 * @param array $calls Requests made by the executor.
+	 */
+	private function a1_wire( $replies, &$calls ) {
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $pre, $website, $what ) use ( &$replies, &$calls ) {
+				if ( in_array( $what, array( 'backup_task_run', 'backup_task_status' ), true ) ) {
+					$calls[] = $what;
+					$this->assertNotEmpty( $replies, 'Unexpected extra Child request.' );
+					$reply = array_shift( $replies );
+					if ( $reply instanceof MainWP_Exception ) {
+						throw $reply; // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- fixture.
+					}
+					return $reply;
+				}
+				return $pre;
+			},
+			20,
+			3
+		);
+	}
+
+	/**
+	 * Completion through a status read records one snapshot and fires its event once.
+	 */
+	public function test_a1_spine_replay_lease_held_records_snapshot_once() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 'a1-held',
+				'child_phase'          => 'archiving_files',
+				'files_processed'      => 10,
+				'bytes_downloaded'     => 100,
+				'last_error'           => '{"manifest_pending":"pending:1:fixture"}',
+			)
+		);
+		$auth  = array(
+			'error'      => 'This request has already been used.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$calls = array();
+		$this->a1_wire(
+			array(
+				$auth,
+				array(
+					'phase'    => 'archiving_files',
+					'progress' => array(
+						'files_processed' => 10,
+						'bytes_done'      => 100,
+					),
+				),
+				array(
+					'phase'    => 'archiving_files',
+					'progress' => array(
+						'files_processed' => 11,
+						'bytes_done'      => 200,
+					),
+				),
+				$auth,
+				array(
+					'phase' => 'completed',
+					'file'  => 'a1.zip',
+					'size'  => 4096,
+				),
+			),
+			$calls
+		);
+		$recorded = array();
+		$record   = static function ( $id ) use ( &$recorded ) {
+			$recorded[] = $id;
+		};
+		$download = static function ( $pre, $url, $file ) {
+			file_put_contents( $file, "PK\x03\x04" . str_repeat( 'x', 4092 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixture.
+			return true;
+		};
+		add_action( 'mainwp_backup_snapshot_recorded', $record );
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		try {
+			$this->a1_yield( $site_id, $task );
+			$this->a1_yield( $site_id, $task );
+			$row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertSame( 2, (int) $row->attempts, 'Unchanged status must consume an attempt.' );
+			$this->a1_yield( $site_id, $task );
+			$row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+			$this->assertSame( 0, (int) $row->attempts );
+			$this->assertSame( 11, (int) $row->files_processed );
+			$this->assertSame( 'pending:1:fixture', json_decode( $row->last_error, true )['manifest_pending'] );
+			$this->a1_yield( $site_id, $task );
+			$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			$this->assertCount( 1, $recorded );
+			$this->assertSame( $recorded[0], (int) MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id )->id );
+			$this->assertSame( array( 'backup_task_run', 'backup_task_status', 'backup_task_status', 'backup_task_run', 'backup_task_status' ), $calls );
+		} finally {
+			remove_action( 'mainwp_backup_snapshot_recorded', $record );
+			remove_filter( 'mainwp_download_to_file_pre', $download );
+		}
+	}
+
+	/**
+	 * Seven lost replies remain eligible when each status observes new files.
+	 */
+	public function test_a1_spine_replay_lease_released_progress_avoids_exhaustion() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 'a1-released',
+				'child_phase'          => 'archiving_files',
+			)
+		);
+		$replies = array();
+		for ( $round = 1; $round <= 7; ++$round ) {
+			$replies[] = array(
+				'error'      => 'This request has already been used.',
+				'error_code' => 'AUTH_ERROR2',
+			);
+			$replies[] = array(
+				'phase'    => 'archiving_files',
+				'progress' => array(
+					'files_processed' => $round,
+					'bytes_done'      => $round * 100,
+				),
+			);
+		}
+		$replies[] = array(
+			'error'      => 'This request has already been used.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$replies[] = array(
+			'phase' => 'completed',
+			'file'  => 'a1.zip',
+			'size'  => 4096,
+		);
+		$calls     = array();
+		$this->a1_wire( $replies, $calls );
+		$download = static function ( $pre, $url, $file ) {
+			file_put_contents( $file, "PK\x03\x04" . str_repeat( 'x', 4092 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixture.
+			return true;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		try {
+			for ( $round = 1; $round <= 7; ++$round ) {
+				$this->a1_yield( $site_id, $task );
+				$this->a1_yield( $site_id, $task );
+				$this->assertSame( 0, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts );
+			}
+			$this->a1_yield( $site_id, $task );
+			$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			$this->assertNotNull( MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ) );
+			$this->assertSame( array_merge( ...array_fill( 0, 8, array( 'backup_task_run', 'backup_task_status' ) ) ), $calls );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $download );
+		}
+	}
+
+	/**
+	 * Unchanged status and transport failures never renew the attempt budget.
+	 */
+	public function test_a1_spine_unchanged_status_exhausts_as_timeout() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 'a1-stuck',
+				'child_phase'          => 'archiving_files',
+				'files_processed'      => 10,
+				'bytes_downloaded'     => 100,
+			)
+		);
+		$calls = array();
+		$same  = array(
+			'phase'    => 'archiving_files',
+			'progress' => array(
+				'files_processed' => 10,
+				'bytes_done'      => 100,
+			),
+		);
+		$this->a1_wire(
+			array(
+				array(
+					'error'      => 'Replay.',
+					'error_code' => 'AUTH_ERROR2',
+				),
+				$same,
+				new MainWP_Exception( 'HTTPERROR' ),
+				$same,
+				$same,
+				$same,
+			),
+			$calls
+		);
+		for ( $attempt = 1; $attempt <= 5; ++$attempt ) {
+			$this->a1_yield( $site_id, $task );
+			$this->assertSame( $attempt, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts );
+		}
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Unchanged status must exhaust the reconciliation budget.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $error->get_message_error_code() );
+			$this->assertStringContainsString( 'AUTH_ERROR2', $error->get_message_extra() );
+		}
+		$this->assertSame( array_merge( array( 'backup_task_run' ), array_fill( 0, 5, 'backup_task_status' ) ), $calls );
+	}
+
+	/**
+	 * A real error on the next run still propagates unchanged.
+	 */
+	public function test_a1_spine_non_auth_run_error_still_throws() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 'a1-error' ) );
+		$calls = array();
+		$this->a1_wire(
+			array(
+				array(
+					'error'      => 'Replay.',
+					'error_code' => 'AUTH_ERROR2',
+				),
+				array( 'phase' => 'archiving_files' ),
+				array(
+					'error'      => 'Could not read table.',
+					'error_code' => 'mainwp_backup_db_query_failed',
+				),
+			),
+			$calls
+		);
+		$this->a1_yield( $site_id, $task );
+		$this->a1_yield( $site_id, $task );
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'The non-AUTH Child error must propagate.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( 'mainwp_backup_db_query_failed', $error->get_message_error_code() );
+			$this->assertSame( 'Could not read table.', $error->getMessage() );
+		}
+	}
+
+	/**
+	 * Status errors, including AUTH_ERROR2, cannot be treated as lost run replies.
+	 */
+	public function test_a1_spine_status_error_still_throws() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 'a1-status-error' ) );
+		$calls = array();
+		$this->a1_wire(
+			array(
+				array(
+					'error'      => 'Replay.',
+					'error_code' => 'AUTH_ERROR2',
+				),
+				array(
+					'error'      => 'Status refused.',
+					'error_code' => 'AUTH_ERROR2',
+				),
+			),
+			$calls
+		);
+		$this->a1_yield( $site_id, $task );
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Status errors must propagate.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( 'Status refused.', $error->getMessage() );
+		}
+	}
+
+	/**
+	 * The site loop yields a hidden task on replay; an explicit busy cancel stays pending.
+	 */
+	public function test_a1_site_loop_replay_yields_and_busy_cancel_is_pending() {
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = MainWP_DB_Backup::instance()->ensure_manual_backup_task( $website );
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup' ),
+			array(
+				'last_run'  => time() - 10,
+				'completed' => 0,
+			),
+			array( 'id' => $task->id )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- fixture.
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 'a1-cancel',
+				'child_phase'          => 'archiving_files',
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'error'      => 'Replay.',
+				'error_code' => 'AUTH_ERROR2',
+			)
+		);
+		$this->mock_child_action( 'backup_task_cancel', array( 'result' => 'busy' ) );
+		$claimed = null;
+		$started = 0;
+		$outcome = null;
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, false, 0, $claimed, $started, false, $outcome );
+		$this->assertSame( 0, $outcome['sites_finished'], 'A replay must not mark the site failed.' );
+		$this->assertSame( 'a1-cancel', MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->child_backup_task_id );
+		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $site_id, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION ) );
+		MainWP_Manage_Backups_Handler::close_child_task_after_terminal_mark( $task->id, $site_id );
+		$pending = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION, null, true );
+		$this->assertArrayHasKey( 'a1-cancel', $pending );
+	}
+
+	/**
+	 * The update gate reads status until movement or completion after a lost run reply.
+	 */
+	public function test_a1_budgeted_gate_reconciles_replay_before_running_again() {
+		$this->delta1_clock();
+		$site_id = $this->create_test_site();
+		$calls   = array();
+		$this->a1_wire(
+			array(
+				array(
+					'error'      => 'Replay.',
+					'error_code' => 'AUTH_ERROR2',
+				),
+				array( 'phase' => 'archiving_files' ),
+				array(
+					'error'      => 'Replay.',
+					'error_code' => 'AUTH_ERROR2',
+				),
+				array( 'phase' => 'archiving_files' ),
+				array( 'phase' => 'completed' ),
+			),
+			$calls
+		);
+		$status = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'a1-gate', 600 );
+		$this->assertSame( 'completed', $status['status'] );
+		$this->assertSame( array( 'backup_task_run', 'backup_task_status', 'backup_task_run', 'backup_task_status', 'backup_task_status' ), $calls );
+	}
+
+	/**
+	 * A gate continuation reads status when the previous budget ended with a replay.
+	 */
+	public function test_a1_budgeted_gate_resumes_persisted_reconciliation() {
+		$site_id = $this->create_test_site();
+		MainWP_DB::instance()->update_website_option(
+			$site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id'           => 'a1-gate',
+					'owner'             => '',
+					'reconcile_pending' => array(
+						'phase' => 'archiving_files',
+						'files' => 1,
+						'bytes' => 100,
+					),
+				)
+			)
+		);
+		$calls = array();
+		$this->a1_wire( array( array( 'phase' => 'completed' ) ), $calls );
+		$this->assertSame( 'completed', MainWP_Backup_Executor::get_backup_task_status( $site_id, 'a1-gate', 1 )['status'] );
+		$this->assertSame( array( 'backup_task_status' ), $calls );
+	}
+
+	/**
+	 * A gate watermark from a previous budget prevents a run after unchanged status.
+	 */
+	public function test_a1_budgeted_gate_preserves_progress_between_budgets() {
+		$this->delta1_clock();
+		$site_id = $this->create_test_site();
+		MainWP_DB::instance()->update_website_option(
+			$site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id'            => 'a1-gate',
+					'owner'              => '',
+					'progress_watermark' => array(
+						'phase' => 'archiving_files',
+						'files' => 10,
+						'bytes' => 100,
+					),
+				)
+			)
+		);
+		$calls = array();
+		$this->a1_wire(
+			array(
+				array(
+					'error'      => 'Replay.',
+					'error_code' => 'AUTH_ERROR2',
+				),
+				array(
+					'phase'    => 'archiving_files',
+					'progress' => array(
+						'files_processed' => 10,
+						'bytes_done'      => 100,
+					),
+				),
+				array( 'phase' => 'completed' ),
+			),
+			$calls
+		);
+		$this->assertSame( 'completed', MainWP_Backup_Executor::get_backup_task_status( $site_id, 'a1-gate', 600 )['status'] );
+		$this->assertSame( array( 'backup_task_run', 'backup_task_status', 'backup_task_status' ), $calls );
+	}
+
+	/**
+	 * Virtual sleeps keep the gate's real pacing and deadline checks in the test.
+	 */
+	private function delta1_clock() {
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = \microtime( true );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time    = (int) MainWP_Backup_Now_Continuation_Test::$fixed_microtime;
+		self::$reconcile_waits                                = array();
+	}
+
+	/**
+	 * Unchanged gate reads are separated by 45 seconds within one budget.
+	 */
+	public function test_delta1_gate_reconcile_reads_are_paced() {
+		$this->delta1_clock();
+		$start   = MainWP_Backup_Now_Continuation_Test::$fixed_microtime;
+		$site_id = $this->create_test_site();
+		MainWP_DB::instance()->update_website_option(
+			$site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id'            => 'delta1-paced',
+					'owner'              => '',
+					'progress_watermark' => array(
+						'phase' => 'archiving_files',
+						'files' => 1,
+						'bytes' => 100,
+					),
+				)
+			)
+		);
+		$calls = array();
+		$same  = array(
+			'phase'    => 'archiving_files',
+			'progress' => array(
+				'files_processed' => 1,
+				'bytes_done'      => 100,
+			),
+		);
+		$this->a1_wire(
+			array(
+				array(
+					'error'      => 'Replay.',
+					'error_code' => 'AUTH_ERROR2',
+				),
+				$same,
+				$same,
+				array( 'phase' => 'completed' ),
+			),
+			$calls
+		);
+		$reads   = array();
+		$capture = static function ( $pre, $website, $what ) use ( &$reads ) {
+			if ( 'backup_task_status' === $what ) {
+				$reads[] = MainWP_Backup_Now_Continuation_Test::$fixed_microtime;
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $capture, 30, 3 );
+		try {
+			$this->assertSame( 'completed', MainWP_Backup_Executor::get_backup_task_status( $site_id, 'delta1-paced', 140 )['status'] );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $capture, 30 );
+		}
+		$this->assertSame( array( 'backup_task_run', 'backup_task_status', 'backup_task_status', 'backup_task_status' ), $calls );
+		$this->assertCount( 3, $reads );
+		$previous = $start;
+		foreach ( $reads as $read ) {
+			$this->assertGreaterThanOrEqual( 45, $read - $previous, 'Reconcile reads must not burst before the interval.' );
+			$previous = $read;
+		}
+		$this->assertSame( array( 45000000, 45000000, 45000000 ), self::$reconcile_waits );
+		$this->assertLessThanOrEqual( $start + 140, MainWP_Backup_Now_Continuation_Test::$fixed_microtime );
+	}
+
+	/**
+	 * A budget shorter than the next read interval expires without a request.
+	 */
+	public function test_delta1_gate_wait_stops_at_budget_deadline() {
+		$this->delta1_clock();
+		$start   = MainWP_Backup_Now_Continuation_Test::$fixed_microtime;
+		$site_id = $this->create_test_site();
+		$pending = array(
+			'phase'          => 'archiving_files',
+			'files'          => 1,
+			'bytes'          => 100,
+			'attempts'       => 2,
+			'last_status_at' => $start,
+		);
+		MainWP_DB::instance()->update_website_option(
+			$site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id'           => 'delta1-budget',
+					'owner'             => '',
+					'reconcile_pending' => $pending,
+				)
+			)
+		);
+		$calls = array();
+		$this->a1_wire( array( array( 'phase' => 'completed' ) ), $calls );
+		$this->assertSame( 'running', MainWP_Backup_Executor::get_backup_task_status( $site_id, 'delta1-budget', 10 )['status'] );
+		$this->assertSame( array(), $calls );
+		$this->assertSame( array( 10000000 ), self::$reconcile_waits );
+		$this->assertSame( $start + 10, MainWP_Backup_Now_Continuation_Test::$fixed_microtime );
+		$handle = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, null, true );
+		$this->assertSame( $pending, $handle['reconcile_pending'] );
+	}
+
+	/**
+	 * Five unchanged gate reads across passes end the handle and its history.
+	 */
+	public function test_delta1_gate_reconcile_cap_persists_across_passes() {
+		$this->delta1_clock();
+		$site_id = $this->create_test_site();
+		$start   = MainWP_Backup_Now_Continuation_Test::$fixed_microtime;
+		MainWP_DB::instance()->update_website_option(
+			$site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id'           => 'delta1-cap',
+					'owner'             => '',
+					'reconcile_pending' => array(
+						'phase'          => 'archiving_files',
+						'files'          => 1,
+						'bytes'          => 100,
+						'attempts'       => 0,
+						'last_status_at' => $start,
+					),
+				)
+			)
+		);
+		$history_id = \MainWP\Dashboard\MainWP_Backup_Run_History::start( 0, $site_id, time(), 'update_gate', 0, null, 'delta1-cap' );
+		$this->assertGreaterThan( 0, $history_id );
+		$calls = array();
+		$child = static function ( $pre, $website, $what ) use ( &$calls ) {
+			$calls[] = $what;
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 2;
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time     = (int) MainWP_Backup_Now_Continuation_Test::$fixed_microtime;
+			return array(
+				'phase'    => 'archiving_files',
+				'progress' => array(
+					'files_processed' => 1,
+					'bytes_done'      => 100,
+				),
+			);
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 20, 3 );
+		try {
+			for ( $attempt = 1; $attempt <= 5; ++$attempt ) {
+				MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 45;
+				$status = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'delta1-cap', 1 );
+				$this->assertCount( $attempt, $calls );
+				if ( $attempt < 5 ) {
+					$this->assertSame( 'running', $status['status'] );
+					$handle = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, null, true );
+					$this->assertSame( $attempt, $handle['reconcile_pending']['attempts'] ?? null, 'Unchanged reconcile attempts must persist across cron passes.' );
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 20 );
+		}
+		$this->assertSame( 'failed', $status['status'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $status['meta']['error_code'] );
+		$this->assertSame( 'AUTH_ERROR2', $status['meta']['extra'] );
+		$this->assertEmpty( MainWP_DB::instance()->get_website_option( $site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		$this->assertSame( array_fill( 0, 5, 'backup_task_status' ), $calls );
+		global $wpdb;
+		$row = $wpdb->get_row( $wpdb->prepare( 'SELECT outcome, error_code FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ) . ' WHERE id = %d', $history_id ) ); // phpcs:ignore WordPress.DB -- fixture assertion.
+		$this->assertSame( 'failed', $row->outcome );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $row->error_code );
+	}
+
+	/**
+	 * Rapid spine cycles yield until 45 seconds have elapsed without spending attempts.
+	 */
+	public function test_delta1_spine_early_cycle_yields_without_request_or_attempt() {
+		$this->delta1_clock();
+		$start                  = MainWP_Backup_Now_Continuation_Test::$fixed_microtime;
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 'delta1-spine',
+				'child_phase'          => 'archiving_files',
+				'files_processed'      => 1,
+				'bytes_downloaded'     => 100,
+				'attempts'             => 2,
+				'last_error'           => wp_json_encode(
+					array(
+						'reconcile_pending' => array(
+							'phase'          => 'archiving_files',
+							'files'          => 1,
+							'bytes'          => 100,
+							'last_status_at' => $start,
+						),
+					)
+				),
+			)
+		);
+		$calls = array();
+		$this->a1_wire(
+			array(
+				array(
+					'phase'    => 'archiving_files',
+					'progress' => array(
+						'files_processed' => 1,
+						'bytes_done'      => 100,
+					),
+				),
+			),
+			$calls
+		);
+		$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+		$this->assertSame( array(), $calls, 'An early cycle must not issue a status read or run.' );
+		$this->assertSame( 2, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts );
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 44;
+		$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+		$this->assertSame( array(), $calls );
+		++MainWP_Backup_Now_Continuation_Test::$fixed_microtime;
+		$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+		$this->assertSame( array( 'backup_task_status' ), $calls );
+		$this->assertSame( 3, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts );
 	}
 
 	/**

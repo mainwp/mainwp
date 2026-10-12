@@ -4633,6 +4633,239 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Make the next safety-backup slice eligible without waiting in real time.
+	 *
+	 * @param object $job Restore job.
+	 * @return object Updated job.
+	 */
+	private function a1_safety_tick( $job ) {
+		if ( (int) $job->next_retry_at > 0 ) {
+			MainWP_Backup_Restore_Job_Store::instance()->set_status( (int) $job->id, $job->status, array( 'next_retry_at' => 0 ) );
+		}
+		return $this->tick( $job );
+	}
+
+	/**
+	 * More than seven lost run replies complete when status keeps advancing.
+	 */
+	public function test_a1_pre_snapshot_replay_progress_survives_eight_rounds() {
+		$job    = $this->make_job(
+			array(
+				'pre_snapshot_progress' => array(
+					'phase' => 'archiving_files',
+					'files' => 0,
+					'bytes' => 0,
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array( 'pre_snapshot_task_id' => 'a1-safety' )
+		);
+		$handle = wp_json_encode(
+			array(
+				'task_id' => 'a1-safety',
+				'owner'   => (string) $job->id,
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		$this->responses['backup_task_run'] = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		for ( $round = 1; $round <= 8; ++$round ) {
+			$job = $this->a1_safety_tick( $job );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, $job->status, 'Replay must retain the safety backup phase without backoff.' );
+			$this->assertGreaterThanOrEqual( time() + 44, (int) $job->next_retry_at );
+			$this->assertLessThanOrEqual( time() + 45, (int) $job->next_retry_at );
+			$this->assertSame( $handle, MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+			$this->responses['backup_task_status'] = array(
+				'phase'    => 'archiving_files',
+				'progress' => array(
+					'files_processed' => $round,
+					'bytes_done'      => 100 * $round,
+				),
+			);
+			$job                                   = $this->a1_safety_tick( $job );
+			$this->assertSame( 0, (int) $job->attempt_count );
+			$this->assertSame( $round, $job->checkpoint['pre_snapshot_progress']['files'] );
+		}
+		$job                                   = $this->a1_safety_tick( $job );
+		$this->responses['backup_task_status'] = array(
+			'task_id'   => 'a1-safety',
+			'phase'     => 'completed',
+			'artifacts' => array(
+				array(
+					'file' => 'safety.zip',
+					'size' => 10,
+					'role' => 'full',
+				),
+			),
+		);
+		$job                                   = $this->a1_safety_tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( 'safety.zip', $job->checkpoint['pre_snapshot_artifacts'][0]['file'] );
+		$this->assertSame( array_merge( ...array_fill( 0, 9, array( 'backup_task_run', 'backup_task_status' ) ) ), array_column( $this->calls, 'what' ) );
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+	}
+
+	/**
+	 * An unchanged safety status spends the existing seven-attempt budget.
+	 */
+	public function test_a1_pre_snapshot_unchanged_status_exhausts() {
+		$job = $this->make_job(
+			array(
+				'pre_snapshot_progress' => array(
+					'phase' => 'archiving_files',
+					'files' => 1,
+					'bytes' => 100,
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array( 'pre_snapshot_task_id' => 'a1-stuck' )
+		);
+		MainWP_DB::instance()->update_website_option(
+			$this->site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id' => 'a1-stuck',
+					'owner'   => (string) $job->id,
+				)
+			)
+		);
+		$this->responses['backup_task_run']    = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$this->responses['backup_task_status'] = array(
+			'phase'    => 'archiving_files',
+			'progress' => array(
+				'files_processed' => 1,
+				'bytes_done'      => 100,
+			),
+		);
+		for ( $attempt = 1; $attempt < 7; ++$attempt ) {
+			$job = $this->a1_safety_tick( $job );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, $job->status );
+			$this->assertSame( $attempt, (int) $job->attempt_count );
+			$this->assertGreaterThanOrEqual( time() + 44, (int) $job->next_retry_at );
+			$this->assertLessThanOrEqual( time() + 45, (int) $job->next_retry_at );
+		}
+		$job = $this->a1_safety_tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( array_merge( array( 'backup_task_run' ), array_fill( 0, 6, 'backup_task_status' ), array( 'backup_task_cancel' ) ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A terminal Child failure during reconciliation still fails the restore.
+	 */
+	public function test_a1_pre_snapshot_terminal_status_error_fails_restore() {
+		$job                                   = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'a1-failed' ) );
+		$this->responses['backup_task_run']    = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$this->responses['backup_task_status'] = array(
+			'phase'      => 'failed',
+			'error'      => 'Could not read table.',
+			'error_code' => 'mainwp_backup_db_query_failed',
+		);
+		$job                                   = $this->a1_safety_tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, $job->status );
+		$job = $this->a1_safety_tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 'Could not read table.', $job->last_error );
+		$this->assertSame( 'mainwp_backup_db_query_failed', $job->checkpoint['last_error_code'] );
+		$this->assertSame( array( 'backup_task_run', 'backup_task_status' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A reclaimed restore worker leaves its successor a status read after replay.
+	 */
+	public function test_a1_pre_snapshot_replay_after_lease_loss_keeps_reconciliation() {
+		$job                                = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'a1-lease' ) );
+		$this->responses['backup_task_run'] = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$reclaim                            = static function () use ( $job ) {
+			MainWP_Backup_Restore_Job_Store::instance()->set_status(
+				(int) $job->id,
+				MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+				array(
+					'locked_by'    => 'new-holder',
+					'locked_until' => time() + 3600,
+				)
+			);
+		};
+		add_action( 'mainwp_backup_diag_poll', $reclaim );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_action( 'mainwp_backup_diag_poll', $reclaim );
+		}
+		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		$this->assertTrue( $job->checkpoint['pre_snapshot_reconcile_pending'] ?? false, 'A successor must read status before sending another run.' );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, $job->status );
+		$this->assertSame( 0, (int) $job->attempt_count );
+		$this->assertSame( array( 'backup_task_run' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A deferred safety backup is ineligible for direct and leased drives for 45 seconds.
+	 */
+	public function test_delta1_pre_snapshot_deferral_waits_for_reconcile_interval() {
+		$job                                = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 'delta1-safety' ) );
+		$this->responses['backup_task_run'] = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$before                             = time();
+		$job                                = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, $job->status );
+		$this->assertGreaterThanOrEqual( $before + 45, (int) $job->next_retry_at, 'Reconciliation must wait 45 seconds before spending another attempt.' );
+		$this->assertLessThanOrEqual( time() + 45, (int) $job->next_retry_at );
+		$this->assertSame( 1, (int) $job->attempt_count );
+		$this->responses['backup_task_status'] = array( 'phase' => 'archiving_files' );
+		$job                                   = $this->tick( $job );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->acquire_next_job( 'delta1-early', 60, time(), (int) $job->id ) );
+		$this->assertSame( array( 'backup_task_run' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( 1, (int) MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->attempt_count );
+	}
+
+	/**
+	 * A safety-backup timeout retains AUTH_ERROR2 as structured extra data.
+	 */
+	public function test_delta1_pre_snapshot_cap_retains_replay_timeout_extra() {
+		$job                                   = $this->make_job(
+			array(
+				'pre_snapshot_reconcile_pending' => true,
+				'pre_snapshot_progress'          => array(
+					'phase' => 'archiving_files',
+					'files' => 1,
+					'bytes' => 100,
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array(
+				'pre_snapshot_task_id' => 'delta1-cap-safety',
+				'attempt_count'        => 6,
+			)
+		);
+		$this->responses['backup_task_status'] = array(
+			'phase'    => 'archiving_files',
+			'progress' => array(
+				'files_processed' => 1,
+				'bytes_done'      => 100,
+			),
+		);
+		$job                                   = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $job->checkpoint['last_error_code'] );
+		$this->assertSame( 'AUTH_ERROR2', $job->checkpoint['last_error_extra'] ?? null, 'The timeout must retain its replay cause as extra data.' );
+	}
+
+	/**
 	 * An unreadable response cannot establish that the child task stopped.
 	 *
 	 * @dataProvider pre_snapshot_answer_shapes

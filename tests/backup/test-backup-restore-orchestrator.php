@@ -4910,14 +4910,14 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			MainWP_Backup_Restore_Job_Store::instance()->set_status( (int) $job->id, $job->status, array( 'next_retry_at' => 0 ) );
 			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
 			$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
-			$this->assertGreaterThanOrEqual( $previous, (int) $job->attempt_count, 'A heartbeat alone must not renew attempts.' );
+			$this->assertGreaterThanOrEqual( $previous, (int) $job->attempt_count, 'Attempts never drop between slices.' );
 			$previous = (int) $job->attempt_count;
 		}
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
 		$this->assertArrayNotHasKey( 'last_error_extra', $job->checkpoint, 'No replay was seen, so none is reported.' );
 		$whats = array_column( $this->calls, 'what' );
 		$this->assertContains( 'backup_task_status', $whats );
-		$this->assertSame( 7, count( array_keys( $whats, 'backup_task_run', true ) ) );
+		$this->assertSame( 7, count( array_keys( $whats, 'backup_task_run', true ) ), 'A heartbeat alone must not renew attempts: an in-slice reset shows as extra runs.' );
 	}
 
 	/**
@@ -4951,6 +4951,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			array(
 				'pre_snapshot_progress'          => $previous,
 				'pre_snapshot_reconcile_pending' => true,
+				'pre_snapshot_replay_confirmed'  => true,
 			),
 			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
 			array(
@@ -4961,6 +4962,33 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->responses['backup_task_status'] = $this->s83_safety_progress_reply( '2026-10-12 12:00:00' );
 		$job                                   = $this->a1_safety_tick( $job );
 		$this->assertSame( 0, (int) $job->attempt_count );
+		$this->assertArrayNotHasKey( 'pre_snapshot_reconcile_pending', $job->checkpoint );
+		$this->assertSame( array( 'backup_task_status' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A marker without the confirmation flag reads as armed, so a heartbeat alone keeps attempts.
+	 */
+	public function test_s83_pre_snapshot_marker_without_flag_is_armed_only() {
+		$job                                   = $this->make_job(
+			array(
+				'pre_snapshot_progress'          => array(
+					'phase'            => 'dumping_db',
+					'files'            => 1,
+					'bytes'            => 100,
+					'last_progress_at' => '2026-10-12 12:00:00',
+				),
+				'pre_snapshot_reconcile_pending' => true,
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array(
+				'pre_snapshot_task_id' => 's83-safety-legacy',
+				'attempt_count'        => 2,
+			)
+		);
+		$this->responses['backup_task_status'] = $this->s83_safety_progress_reply( '2026-10-12 12:00:40' );
+		$job                                   = $this->a1_safety_tick( $job );
+		$this->assertSame( 2, (int) $job->attempt_count );
 		$this->assertArrayNotHasKey( 'pre_snapshot_reconcile_pending', $job->checkpoint );
 		$this->assertSame( array( 'backup_task_status' ), array_column( $this->calls, 'what' ) );
 	}
@@ -5216,6 +5244,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$job                                   = $this->make_job(
 			array(
 				'pre_snapshot_reconcile_pending' => true,
+				'pre_snapshot_replay_confirmed'  => true,
 				'pre_snapshot_progress'          => array(
 					'phase' => 'archiving_files',
 					'files' => 1,

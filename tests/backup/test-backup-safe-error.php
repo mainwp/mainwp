@@ -239,4 +239,39 @@ class MainWP_Backup_Safe_Error_Test extends MainWP_Abilities_Test_Case {
 			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 10 );
 		}
 	}
+
+	/**
+	 * Run state stored in the progress row's error column is not shown as error text.
+	 *
+	 * @return array Stored text, expected source text, expected code.
+	 */
+	public function run_state_error_cases() {
+		return array(
+			'reconcile run state' => array( '{"last_progress_at":"2026-10-12 12:00:00","reconcile_pending":{"phase":"dumping_db"}}', '', MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR ),
+			'incremental marker'  => array( '{"incremental_sent":"run"}', '', MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR ),
+			'plain message'       => array( 'The private volume is full.', 'The private volume is full.', MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR ),
+			'prefixed code'       => array( '[mainwp_backup_disk_full] Full.', '[mainwp_backup_disk_full] Full.', 'mainwp_backup_disk_full' ),
+			'empty'               => array( '', '', MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR ),
+		);
+	}
+
+	/**
+	 * A failed site's error value drops run-state JSON and keeps real messages.
+	 *
+	 * @dataProvider run_state_error_cases
+	 * @param string $stored Progress row error column.
+	 * @param string $source_text Expected source text.
+	 * @param string $code Expected code.
+	 */
+	public function test_run_state_json_is_not_error_text( $stored, $source_text, $code ) {
+		$method = new \ReflectionMethod( MainWP_Backup_Read_Model::class, 'error_value' );
+		$method->setAccessible( true );
+		$this->assertSame(
+			array(
+				'code'        => $code,
+				'source_text' => $source_text,
+			),
+			$method->invoke( null, $stored )
+		);
+	}
 }

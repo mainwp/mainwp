@@ -28,7 +28,7 @@ defined( 'ABSPATH' ) || exit;
  */
 class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
-    /** Cap times interval (315 s) must exceed the Child's 180 s lease before declaring a first slice stuck. */
+    /** The replay spends the first of seven attempts, so six reads span 270 s, past the Child's 180 s lease, before a first slice counts as stuck. */
     private const RECONCILE_INTERVAL_SECONDS = 45;
 
     /**
@@ -1146,8 +1146,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         while ( microtime( true ) < $deadline ) {
-            $reconcile        = ! empty( $job->checkpoint['pre_snapshot_reconcile_pending'] );
-            $confirmed_replay = $reconcile && ( $job->checkpoint['pre_snapshot_replay_confirmed'] ?? true );
+            $reconcile = ! empty( $job->checkpoint['pre_snapshot_reconcile_pending'] );
+            // A marker without the flag cannot tell an arm before the run from a replay; read it as armed.
+            $confirmed_replay = $reconcile && ! empty( $job->checkpoint['pre_snapshot_replay_confirmed'] );
             $operation        = $reconcile ? 'backup_task_status' : 'backup_task_run';
             if ( ! $reconcile ) {
                 // Arm the read before leaving: a reclaimed worker cannot checkpoint a replay afterward.
@@ -1312,7 +1313,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     private function defer_pre_snapshot_reconciliation( object $job, array $checkpoint ): void {
         $store    = MainWP_Backup_Restore_Job_Store::instance();
         $attempts = (int) $job->attempt_count + 1;
-        if ( MainWP_Backup_Backoff::attempts_exhausted( $attempts ) && ( $checkpoint['pre_snapshot_replay_confirmed'] ?? true ) ) {
+        if ( MainWP_Backup_Backoff::attempts_exhausted( $attempts ) && ! empty( $checkpoint['pre_snapshot_replay_confirmed'] ) ) {
             $checkpoint['last_error_extra'] = 'AUTH_ERROR2';
         }
         if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {

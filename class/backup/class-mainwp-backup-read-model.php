@@ -20,6 +20,10 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array Neutral error evidence.
      */
     private static function error_value( string $source_text, string $code = '' ): array {
+        // The progress row's error column also holds run state as a JSON object, which is not error text.
+        if ( is_array( json_decode( $source_text, true ) ) ) {
+            $source_text = '';
+        }
         if ( '' === $code && preg_match( '/^\[(mainwp_[a-z0-9_]+)\]/', $source_text, $match ) ) {
             $code = $match[1];
         }

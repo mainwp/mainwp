@@ -3829,7 +3829,14 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			),
 			$store::STATUS_STAGING
 		);
-		$this->responses['restore_task_create'] = array( 'task_id' => 'recreated-task' );
+		$this->responses['restore_task_create'] = array(
+			array( 'task_id' => 'recreated-task' ),
+			array(
+				'task_id' => 'recreated-task',
+				'reused'  => true,
+				'phase'   => 'receiving',
+			),
+		);
 
 		$job = $this->tick( $job );
 		$this->assertSame( $store::STATUS_TRANSFERRING, $job->status );
@@ -3841,16 +3848,20 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * A UI cancel that finds no task while the create is in flight must not leave the created task running.
+	 * A UI cancel that finds no task while a create is in flight must not leave the created task running.
+	 *
+	 * @dataProvider task_created_after_ui_cancel_cases
+	 * @param array $checkpoint Checkpoint overrides for the staging job.
+	 * @param array $create     The create answer that lands after the cancel.
 	 */
-	public function test_task_created_after_ui_cancel_confirmed_is_cancelled_by_task_id() {
+	public function test_task_created_after_ui_cancel_confirmed_is_cancelled_by_task_id( $checkpoint, $create ) {
 		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
-		$job                                    = $this->make_job( array(), $store::STATUS_STAGING );
+		$job                                    = $this->make_job( $checkpoint, $store::STATUS_STAGING );
 		$this->responses['restore_task_cancel'] = array(
 			array( 'result' => 'not_found' ),
 			array( 'result' => 'ok' ),
 		);
-		$this->responses['restore_task_create'] = array( 'task_id' => 'late-task' );
+		$this->responses['restore_task_create'] = $create;
 		$cancelled                              = null;
 		$race                                   = function ( $pre, $website, $what ) use ( $job, &$cancelled ) {
 			if ( 'restore_task_create' === $what && null === $cancelled ) {
@@ -3867,10 +3878,85 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$this->assertSame( 'cancelled', $cancelled );
 		$this->assertSame( $store::STATUS_CANCELLED, $job->status );
+		$this->assertSame( '', (string) $job->child_task_id );
 		$this->assertSame( 'confirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
 		$this->assertSame( array( 'restore_task_cancel', 'restore_task_create', 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
 		$this->assertSame( array( 'restore_id' => 'orch01test' ), $this->calls[0]['params'] );
 		$this->assertSame( array( 'task_id' => 'late-task' ), $this->calls[2]['params'] );
+	}
+
+	/**
+	 * Every create that can return a task id after the job ended.
+	 *
+	 * @return array
+	 */
+	public static function task_created_after_ui_cancel_cases() {
+		return array(
+			'standard create, new task'    => array( array(), array( 'task_id' => 'late-task' ) ),
+			'standard create, reused task' => array(
+				array(),
+				array(
+					'task_id' => 'late-task',
+					'reused'  => true,
+					'phase'   => 'queued',
+				),
+			),
+			'recovery probe, new task'     => array(
+				array(
+					'child_create_attempted'     => true,
+					'child_completed_unrecorded' => true,
+				),
+				array( 'task_id' => 'late-task' ),
+			),
+		);
+	}
+
+	/**
+	 * A completed answer to the reclaim sweep's cancel must leave a job a worker can take.
+	 *
+	 * @dataProvider swept_completed_cases
+	 * @param string $child_task_id Recorded Child task id, or '' when it never landed.
+	 * @param string $next_call     The Child call that recovers the completed task.
+	 */
+	public function test_reclaim_sweep_completed_answer_releases_the_expired_lease( $child_task_id, $next_call ) {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$extra = '' === $child_task_id ? array() : array( 'child_task_id' => $child_task_id );
+		$job   = $this->make_job( array( 'child_create_attempted' => true ), $store::STATUS_STAGING, $extra );
+		$this->expire_job_at_reclaim_ceiling( (int) $job->id );
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'already_terminal',
+			'phase'  => 'completed',
+		);
+		$this->responses['restore_task_create'] = array(
+			'task_id'   => 'swept-completed',
+			'reused'    => true,
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'db_ok' => true ) ),
+		);
+		$this->responses['restore_task_run']    = array(
+			'task_id'   => 'swept-completed',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'db_ok' => true ) ),
+		);
+
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_COMPLETED, $job->status );
+		$this->assertSame( '' === $child_task_id ? 'swept-completed' : $child_task_id, $job->child_task_id );
+		$this->assertSame( array( 'restore_task_cancel', $next_call ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * Swept jobs with and without a recorded Child task id.
+	 *
+	 * @return array
+	 */
+	public static function swept_completed_cases() {
+		return array(
+			'task id never recorded' => array( '', 'restore_task_create' ),
+			'task id recorded'       => array( 'swept-recorded', 'restore_task_run' ),
+		);
 	}
 
 	/** A refused checkpoint cannot authorize a Child side effect. */

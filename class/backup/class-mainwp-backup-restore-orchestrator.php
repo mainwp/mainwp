@@ -744,24 +744,25 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Cancel a Child task whose create landed after this job went terminal.
+     * Cancel a Child task whose create answer arrived after this job ended.
      *
      * A UI cancel can reach the Child while the create request is still in
      * flight, find no task by restore_id and finish as confirmed. The create
      * then leaves a task no job owns, and a queued cloud pull runs on its own.
-     * A job that is still active belongs to another worker, whose create
-     * reuses the task, so only a terminal job sends the cancel.
+     * A job that is still active belongs to a worker whose create reuses the
+     * task by restore_id, and an unreadable row proves nothing, so only a
+     * terminal row sends the cancel.
      *
      * @param object $job     Job row.
      * @param string $task_id Child task id the create returned.
      *
-     * @return void
+     * @return bool Whether the job had ended, so the task id must not be used.
      */
-    private function cancel_task_created_after_terminal( object $job, string $task_id ): void {
+    private function cancel_task_created_after_terminal( object $job, string $task_id ): bool {
         $store = MainWP_Backup_Restore_Job_Store::instance();
         $fresh = $store->get_job( (int) $job->id );
-        if ( null !== $fresh && in_array( $fresh->status, $store::active_statuses(), true ) ) {
-            return;
+        if ( null === $fresh || in_array( $fresh->status, $store::active_statuses(), true ) ) {
+            return false;
         }
         $result = '';
         try {
@@ -771,11 +772,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         } catch ( \Throwable $e ) {
             $result = '';
         }
-        if ( in_array( $result, array( 'ok', 'already_terminal' ), true ) ) {
+        if ( 'ok' === $result ) {
             do_action( 'mainwp_log_info', sprintf( 'Restore job %d: cancelled child restore task %s, created after the job ended.', (int) $job->id, $task_id ), (int) $job->site_id, 0 );
-            return;
+        } elseif ( 'already_terminal' === $result ) {
+            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: child restore task %s, created after the job ended, had already stopped.', (int) $job->id, $task_id ), (int) $job->site_id, 0 );
+        } else {
+            do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: child restore task %s was created after the job ended and could not be cancelled; it may need manual cleanup on the site.', (int) $job->id, $task_id ), (int) $job->site_id, 0 );
         }
-        do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: child restore task %s was created after the job ended and could not be cancelled; it may need manual cleanup on the site.', (int) $job->id, $task_id ), (int) $job->site_id, 0 );
+        return true;
     }
 
     /**
@@ -861,7 +865,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         try {
             $now = time();
             foreach ( $store->find_jobs_over_reclaim_ceiling( $store::active_statuses(), $now, $only_job_id ) as $expired_job ) {
-                $this->record_terminal_failure(
+                $outcome = $this->record_terminal_failure(
                     $expired_job,
                     sprintf(
                         /* translators: %d: number of times the restore was interrupted. */
@@ -871,6 +875,24 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     '',
                     (string) $expired_job->locked_by
                 );
+                if ( self::TERMINAL_OUTCOME_DRIVE_ON === $outcome ) {
+                    // The Child finished the restore, so the job drives on. Acquire
+                    // skips a row that keeps a holder at the reclaim ceiling, so the
+                    // dead holder's lease is released; the ceiling still ends the job
+                    // if its next worker dies too.
+                    $driven = $store->get_job( (int) $expired_job->id );
+                    if ( null !== $driven && in_array( $driven->status, $store::active_statuses(), true ) ) {
+                        $store->set_status(
+                            (int) $expired_job->id,
+                            $driven->status,
+                            array(
+                                'locked_by'    => '',
+                                'locked_until' => 0,
+                            ),
+                            (string) $expired_job->locked_by
+                        );
+                    }
+                }
             }
 
             $job = $store->acquire_next_job( $token, $lease_seconds, $now, $only_job_id );
@@ -1639,7 +1661,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         $task_id = sanitize_text_field( (string) $payload['task_id'] );
-        $reused  = ! empty( $payload['reused'] );
+        if ( $this->cancel_task_created_after_terminal( $job, $task_id ) ) {
+            return array(
+                'task_id'       => '',
+                'pull_rejected' => false,
+            );
+        }
+        $reused = ! empty( $payload['reused'] );
         if ( $reused ) {
             $store  = MainWP_Backup_Restore_Job_Store::instance();
             $phase  = isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
@@ -1653,6 +1681,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     $checkpoint['verification']['woo_preserve'] = $payload['sub_state']['progress']['woo_preserve'];
                 }
                 if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                    $this->cancel_task_created_after_terminal( $job, $task_id );
                     return array(
                         'task_id'       => '',
                         'pull_rejected' => false,
@@ -1667,6 +1696,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     );
                 }
             } elseif ( ! $store->set_status( (int) $job->id, $status, array( 'child_task_id' => $task_id ), $this->lock_token ) ) {
+                $this->cancel_task_created_after_terminal( $job, $task_id );
                 return array(
                     'task_id'       => '',
                     'pull_rejected' => false,

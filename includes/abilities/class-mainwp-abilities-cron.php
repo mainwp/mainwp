@@ -615,6 +615,8 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                     $site_dispatched = true;
                                     $information     = MainWP_Connect::fetch_url_authed( $website, 'upgrade' );
 
+                                    MainWP_Updates_Handler::activity_log_upgrade( $website, $information ); // see do_action_mainwp_install_actions for more details about the upgrade: plugins, themes, translation.
+
                                     // Validate response - check for transport failure or API error.
                                     if ( false === $information ) {
                                         $site_success  = false;
@@ -699,6 +701,10 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                                 'list' => urldecode( $slugs_list ),
                                             )
                                         );
+
+                                        if ( is_array( $information ) && isset( $information['other_data'] ) ) { // ok.
+                                            mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $information['other_data'], 'plugin' );
+                                        }
 
                                         // Validate response - check for transport failure or API error.
                                         if ( false === $information ) {
@@ -811,6 +817,10 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                             )
                                         );
 
+                                        if ( is_array( $information ) && isset( $information['other_data'] ) ) { // ok.
+                                            mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $information['other_data'], 'theme' );
+                                        }
+
                                         // Validate response - check for transport failure or API error.
                                         if ( false === $information ) {
                                             $site_success  = false;
@@ -915,6 +925,10 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                                         ),
                                         true
                                     );
+
+                                    if ( is_array( $information ) && isset( $information['other_data'] ) ) {
+                                        mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $website, 'updated', $information['other_data'], 'trans' );
+                                    }
 
                                     // Validate response - check for transport failure or API error.
                                     if ( false === $information ) {

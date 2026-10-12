@@ -4460,7 +4460,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $this->table_name( 'cost_tracker' ),
         );
 
-        if ( ! defined( 'MAINWP_MODULE_LOG_ENABLED' ) || MAINWP_MODULE_LOG_ENABLED ) {
+        $enable_mainwp_modules = array(
+            'logs' => defined( 'MAINWP_MODULE_LOG_ENABLED' ) && MAINWP_MODULE_LOG_ENABLED,
+        );
+        $enable_mainwp_modules = apply_filters( 'mainwp_enabled_modules', $enable_mainwp_modules, 'logs' );
+
+        if ( ! empty( $enable_mainwp_modules['logs'] ) ) {
             $core_tables[] = $this->table_name( 'wp_logs' );
             $core_tables[] = $this->table_name( 'wp_logs_meta' );
             $core_tables[] = $this->table_name( 'wp_logs_meta_archive' );

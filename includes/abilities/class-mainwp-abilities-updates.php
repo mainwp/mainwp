@@ -4606,6 +4606,8 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
 
             $information = MainWP_Connect::fetch_url_authed( $site, 'upgrade' );
 
+            MainWP_Updates_Handler::activity_log_upgrade( $site, $information ); // see do_action_mainwp_install_actions for more details about the upgrade: plugins, themes, translation.
+
             /**
              * Action: mainwp_after_wp_update
              *
@@ -4741,6 +4743,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                 }
             }
 
+            if ( is_array( $information ) && isset( $information['other_data'] ) ) { // ok.
+                $output_array = $information['other_data']; // updated_data: plugins,themes,trans.
+                mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $site, 'updated', $output_array, 'plugin' );
+            }
+
             // Update stored plugin_upgrades to remove updated items.
             if ( ! empty( $updated ) ) {
                 $current_upgrades = ! empty( $site->plugin_upgrades ) ? json_decode( $site->plugin_upgrades, true ) : array();
@@ -4839,6 +4846,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                         'message'   => $error_msg,
                     );
                 }
+            }
+
+            if ( is_array( $information ) && isset( $information['other_data'] ) ) { // ok.
+                $output_array = $information['other_data']; // updated_data: plugins,themes,trans.
+                mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $site, 'updated', $output_array, 'theme' );
             }
 
             // Update stored theme_upgrades to remove updated items.
@@ -4946,6 +4958,11 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                         'message'   => $error_msg,
                     );
                 }
+            }
+
+            if ( is_array( $information ) && isset( $information['other_data'] ) ) { // ok.
+                $output_array = $information['other_data']; // updated_data: plugins,themes,trans.
+                mainwp_get_actions_handler_instance()->do_action_mainwp_install_actions( $site, 'updated', $output_array, 'trans' );
             }
 
             // Update stored translation_upgrades to remove updated items.

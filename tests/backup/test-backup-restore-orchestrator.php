@@ -4337,6 +4337,73 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Matrix row 32: a refused failure save after transfer progress still
+	 * counts from the stored attempt, so a save that keeps failing exhausts
+	 * the budget instead of restarting it on every failure.
+	 */
+	public function test_in_place_backoff_counts_from_the_stored_attempt_and_exhausts() {
+		global $wpdb;
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$job   = $this->make_job(
+			array(
+				'transfer'              => array(
+					'artifact_index' => 1,
+					'offset'         => 500,
+				),
+				'last_failure_transfer' => array(
+					'artifact_index' => 0,
+					'offset'         => 0,
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING,
+			array( 'attempt_count' => MainWP_Backup_Backoff::MAX_ATTEMPTS - 2 )
+		);
+		$id    = (int) $job->id;
+
+		$this->orchestrator->responds = false;
+		$retries                      = array();
+		$failures                     = array();
+		$refuse                       = static function ( $sql ) use ( $table, $id ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) && str_contains( $sql, 'WHERE id = ' . $id . ' AND checkpoint_rev = ' ) ) {
+				return $sql . ' AND 1 = 0';
+			}
+			return $sql;
+		};
+		$retry                        = static function ( $job_id, $site_id, $attempts, $code, $next, $progress_reset ) use ( &$retries ) {
+			$retries[] = array( $attempts, $progress_reset );
+		};
+		$failed                       = static function ( $event ) use ( &$failures ) {
+			$failures[] = $event;
+		};
+		add_filter( 'query', $refuse );
+		add_action( 'mainwp_backup_diag_restore_retry', $retry, 10, 6 );
+		add_action( 'mainwp_backup_restore_failed', $failed );
+		try {
+			$start = time();
+			$this->orchestrator->process_pending_restore_jobs( 30, $id );
+			$first = $store->get_job( $id );
+			$this->assertSame( MainWP_Backup_Backoff::MAX_ATTEMPTS - 1, (int) $first->attempt_count, 'The refused save must not reset the attempt budget.' );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $first->status );
+			$this->assertGreaterThan( $start, (int) $first->next_retry_at );
+			$this->assertSame( array( array( MainWP_Backup_Backoff::MAX_ATTEMPTS - 1, false ) ), $retries );
+			$this->assertSame( array(), $failures );
+
+			$wpdb->update( $table, array( 'next_retry_at' => 0 ), array( 'id' => $id ) );
+			$this->orchestrator->process_pending_restore_jobs( 30, $id );
+			$final = $store->get_job( $id );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $final->status );
+			$this->assertSame( '', $final->locked_by );
+			$this->assertNull( $final->active_site_id );
+			$this->assertCount( 1, $failures );
+		} finally {
+			remove_filter( 'query', $refuse );
+			remove_action( 'mainwp_backup_diag_restore_retry', $retry, 10 );
+			remove_action( 'mainwp_backup_restore_failed', $failed );
+		}
+	}
+
+	/**
 	 * Matrix rows 29 and 30: lease still held, lease taken inside the save.
 	 *
 	 * @return array

@@ -411,6 +411,9 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 				$this->assertSame( 409, $result->get_error_data()['status'], $lane );
 			}
 			$this->assertEquals( $before, MainWP_Backup_Restore_Job_Store::instance()->get_job( $this->job_id ) );
+			foreach ( array( 'restore-site-snapshot', 'rollback-restore', 'cancel-restore' ) as $name ) {
+				$this->assertStringContainsString( 'mainwp_restore_schema_repair_pending', $this->ability( $name )->get_description(), $name );
+			}
 		} finally {
 			if ( false === $pending ) {
 				delete_site_option( $marker );

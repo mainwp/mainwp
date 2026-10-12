@@ -1914,7 +1914,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( null === $current || ! in_array( $current->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) ) {
                 return;
             }
-            $kept = $store->set_status(
+            // The watermark that reset the budget did not persist, so the next
+            // failure would reset it again; count from the stored attempt instead.
+            $attempts      = (int) $current->attempt_count + 1;
+            $next_retry_at = time() + MainWP_Backup_Backoff::delay_for_attempt( $attempts );
+            $kept          = $store->set_status(
                 (int) $job->id,
                 $current->status,
                 array(
@@ -1924,9 +1928,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 ),
                 $this->lock_token
             );
-            if ( $kept ) {
-                /** This action is documented in class/backup/class-mainwp-backup-restore-orchestrator.php */
-                do_action( 'mainwp_backup_diag_restore_retry', (int) $job->id, (int) $job->site_id, $attempts, $error_code, $next_retry_at, $advanced );
+            if ( ! $kept ) {
+                return;
+            }
+            /** This action is documented in class/backup/class-mainwp-backup-restore-orchestrator.php */
+            do_action( 'mainwp_backup_diag_restore_retry', (int) $job->id, (int) $job->site_id, $attempts, $error_code, $next_retry_at, false );
+            if ( MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
+                // Backoff first: a terminal write refused by the same failure
+                // leaves a backed-off row, not one re-driven every tick.
+                $this->record_terminal_failure( $job, $error, $error_code, $this->lock_token );
             }
             return;
         }

@@ -293,6 +293,45 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * The stored window must agree with the update gate's fallback and supported range.
+	 *
+	 * @dataProvider update_gate_days
+	 * @param string $posted Submitted window.
+	 * @param int    $expected Stored window.
+	 */
+	public function test_general_settings_post_normalizes_update_gate_days( string $posted, int $expected ): void {
+		update_option( 'mainwp_backup_before_upgrade_days', 99 );
+		$_POST = array(
+			'submit'                               => '1',
+			'wp_nonce'                             => wp_create_nonce( 'Settings' ),
+			'mainwp_backup_before_upgrade_section' => '1',
+			'mainwp_backup_before_upgrade_days'    => $posted,
+		);
+		MainWP_Settings::handle_settings_post();
+		$this->assertSame( $expected, (int) get_option( 'mainwp_backup_before_upgrade_days' ) );
+		$this->assertSame( $expected, \MainWP\Dashboard\MainWP_Updates_Overview::get_backup_before_upgrade_days() );
+	}
+
+	/**
+	 * Invalid windows use the same fallback as the reader.
+	 *
+	 * @return array Submitted and stored windows.
+	 */
+	public static function update_gate_days(): array {
+		return array(
+			'zero'        => array( '0', 7 ),
+			'negative'    => array( '-5', 7 ),
+			'valid'       => array( '12', 12 ),
+			'minimum'     => array( '1', 1 ),
+			'one year'    => array( '365', 365 ),
+			'above year'  => array( '400', 400 ),
+			'fraction'    => array( '1.5', 7 ),
+			'non-numeric' => array( 'invalid', 7 ),
+			'mixed'       => array( '12days', 7 ),
+		);
+	}
+
+	/**
 	 * The legacy success die() must not terminate the test process after a write.
 	 *
 	 * @param string $name Option suffix.

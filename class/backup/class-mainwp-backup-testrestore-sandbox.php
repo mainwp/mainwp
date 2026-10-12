@@ -1453,6 +1453,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * @return void
      */
     private function remove_dir( string $dir ): void {
+        // A restored archive can carry symlinks; following one would delete
+        // files outside the sandbox, so links are removed, never walked.
+        if ( is_link( untrailingslashit( $dir ) ) ) {
+            wp_delete_file( untrailingslashit( $dir ) );
+            return;
+        }
         $entries = scandir( $dir );
         if ( false === $entries ) {
             return;
@@ -1462,7 +1468,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 continue;
             }
             $path = $dir . $entry;
-            if ( is_dir( $path ) ) {
+            if ( is_link( $path ) ) {
+                wp_delete_file( $path );
+            } elseif ( is_dir( $path ) ) {
                 $this->remove_dir( trailingslashit( $path ) );
             } else {
                 wp_delete_file( $path );

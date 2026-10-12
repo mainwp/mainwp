@@ -595,8 +595,11 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 		// On CLI the limit is already 0, so a bound has to be in force for
 		// the loop re-asserting the policy to be worth observing.
 		set_time_limit( 900 );
-		MainWP_Manage_Backups_Handler::execute_backup_task( $task );
-		set_time_limit( 0 );
+		try {
+			MainWP_Manage_Backups_Handler::execute_backup_task( $task );
+		} finally {
+			set_time_limit( 0 );
+		}
 
 		$this->assertNotNull( $aged, 'Precondition: the run must claim a slot.' );
 		$this->assertIsArray( $seen, 'Precondition: the run must reach the site loop.' );

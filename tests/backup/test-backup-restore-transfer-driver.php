@@ -278,6 +278,10 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 	 * @param string $dir Directory.
 	 */
 	private function rrmdir( $dir ) {
+		if ( is_link( $dir ) ) {
+			unlink( $dir );
+			return;
+		}
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
@@ -286,7 +290,9 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 				continue;
 			}
 			$path = $dir . '/' . $entry;
-			if ( is_dir( $path ) ) {
+			if ( is_link( $path ) ) {
+				unlink( $path );
+			} elseif ( is_dir( $path ) ) {
 				$this->rrmdir( $path );
 			} else {
 				unlink( $path );

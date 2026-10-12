@@ -595,10 +595,14 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 			if ( is_link( $link ) ) {
 				unlink( $link ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
 			}
-			if ( is_dir( $real ) ) {
+			if ( is_link( $real ) ) {
+				unlink( $real );
+			} elseif ( is_dir( $real ) ) {
 				$iterator = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $real, \FilesystemIterator::SKIP_DOTS ), \RecursiveIteratorIterator::CHILD_FIRST );
 				foreach ( $iterator as $left_over ) {
-					if ( $left_over->isDir() ) {
+					if ( $left_over->isLink() ) {
+						unlink( $left_over->getPathname() );
+					} elseif ( $left_over->isDir() ) {
 						rmdir( $left_over->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
 					} else {
 						unlink( $left_over->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.

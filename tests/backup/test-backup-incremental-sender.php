@@ -158,9 +158,15 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	private static function rrmdir( $dir ) {
+		if ( is_link( $dir ) ) {
+			unlink( $dir );
+			return;
+		}
 		$iterator = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ), \RecursiveIteratorIterator::CHILD_FIRST );
 		foreach ( $iterator as $leftover ) {
-			if ( $leftover->isDir() ) {
+			if ( $leftover->isLink() ) {
+				unlink( $leftover->getPathname() );
+			} elseif ( $leftover->isDir() ) {
 				rmdir( $leftover->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.
 			} else {
 				unlink( $leftover->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.

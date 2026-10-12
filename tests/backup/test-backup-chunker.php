@@ -49,6 +49,10 @@ class MainWP_Backup_Chunker_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	private function remove_dir( $dir ) {
+		if ( is_link( $dir ) ) {
+			unlink( $dir );
+			return;
+		}
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
@@ -57,7 +61,9 @@ class MainWP_Backup_Chunker_Test extends \WP_UnitTestCase {
 				continue;
 			}
 			$path = $dir . DIRECTORY_SEPARATOR . $entry;
-			if ( is_dir( $path ) ) {
+			if ( is_link( $path ) ) {
+				unlink( $path );
+			} elseif ( is_dir( $path ) ) {
 				$this->remove_dir( $path );
 			} else {
 				unlink( $path );

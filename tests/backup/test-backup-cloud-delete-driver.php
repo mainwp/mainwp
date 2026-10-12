@@ -62,6 +62,10 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	private function remove_dir( $dir ) {
+		if ( is_link( $dir ) ) {
+			unlink( $dir );
+			return;
+		}
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
@@ -70,7 +74,9 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 			\RecursiveIteratorIterator::CHILD_FIRST
 		);
 		foreach ( $items as $item ) {
-			if ( $item->isDir() ) {
+			if ( $item->isLink() ) {
+				unlink( $item->getPathname() );
+			} elseif ( $item->isDir() ) {
 				rmdir( $item->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- test cleanup.
 			} else {
 				unlink( $item->getPathname() ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- test cleanup.

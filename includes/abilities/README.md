@@ -301,7 +301,7 @@ All MainWP-specific error codes use the `mainwp_*` prefix:
 | `mainwp_no_updates` | 400 | No updates available for requested operation |
 | `mainwp_module_not_available` | 501 | Required module not active |
 | `mainwp_site_offline` | 503 | Site unreachable |
-| `mainwp_operation_failed` | 500 | Generic operation failure |
+| `mainwp_operation_failed` | 500/502 | Generic operation failure; 502 when a backup or restore action fails on the Child |
 | `mainwp_internal_error` | 500 | Unexpected internal error |
 | `mainwp_client_creation_failed` | 500 | Failed to create client |
 | `mainwp_client_update_failed` | 500 | Failed to update client |

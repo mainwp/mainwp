@@ -52,8 +52,7 @@ class MainWP_Credential_Storage {
      * Returns:
      *   - the prefixed envelope string on success
      *   - the input unchanged when input is null (not provided) or not a string
-     *   - the input unchanged when input is '' (credential cleared); the
-     *     old envelope's key file is retired since nothing references it
+     *   - the input unchanged when input is '' (credential cleared)
      *   - the input unchanged when input is already an envelope (idempotent)
      *   - the old envelope when the plaintext matches its decrypted value
      *     (unchanged save; no re-encryption, no key file rotation)
@@ -62,12 +61,11 @@ class MainWP_Credential_Storage {
      * Callers MUST treat a `false` return as a hard failure and refuse
      * to persist; otherwise the column silently downgrades to plaintext.
      *
-     * When the caller passes the previously stored value, the key file
-     * referenced by that superseded envelope is deleted after the new
-     * envelope is built, so re-encryptions stop accumulating orphaned
-     * key files. The idempotent early-return above keeps an unchanged
-     * envelope's key file untouched, and a legacy plaintext old value
-     * has no key file to retire.
+     * The one-shot path never deletes the old envelope's key file because
+     * the caller's storage write can still fail. Replacing a stored
+     * credential should use stage_credential_encryption(), persist its
+     * value, then commit_credential_intent() after a successful write or
+     * rollback_credential_intent() after a failed write.
      *
      * @param mixed  $plaintext    Credential to encrypt.
      * @param string $field        Field name (used in keyfile prefix).
@@ -79,6 +77,7 @@ class MainWP_Credential_Storage {
         if ( false === $intent ) {
             return false;
         }
+        $intent['retire_key'] = null;
         static::commit_credential_intent( $intent );
         return $intent['value'];
     }

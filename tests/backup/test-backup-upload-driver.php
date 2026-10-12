@@ -134,6 +134,10 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	private function remove_dir( $dir ) {
+		if ( is_link( $dir ) ) {
+			unlink( $dir );
+			return;
+		}
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
@@ -142,7 +146,9 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 				continue;
 			}
 			$path = $dir . DIRECTORY_SEPARATOR . $entry;
-			if ( is_dir( $path ) ) {
+			if ( is_link( $path ) ) {
+				unlink( $path );
+			} elseif ( is_dir( $path ) ) {
 				$this->remove_dir( $path );
 			} else {
 				unlink( $path );

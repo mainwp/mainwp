@@ -47,6 +47,10 @@ class MainWP_Backup_Storage_Local_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	private function remove_dir( $dir ) {
+		if ( is_link( $dir ) ) {
+			unlink( $dir );
+			return;
+		}
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
@@ -55,13 +59,48 @@ class MainWP_Backup_Storage_Local_Test extends \WP_UnitTestCase {
 				continue;
 			}
 			$path = $dir . DIRECTORY_SEPARATOR . $entry;
-			if ( is_dir( $path ) ) {
+			if ( is_link( $path ) ) {
+				unlink( $path );
+			} elseif ( is_dir( $path ) ) {
 				$this->remove_dir( $path );
 			} else {
 				unlink( $path );
 			}
 		}
 		rmdir( $dir );
+	}
+
+	/**
+	 * A fixture symlink must not give cleanup access to another directory's files.
+	 *
+	 * @return void
+	 */
+	public function test_remove_dir_preserves_symlink_target() {
+		$dir    = get_temp_dir() . 'mainwp-cleanup-link-' . uniqid();
+		$target = get_temp_dir() . 'mainwp-cleanup-target-' . uniqid();
+		mkdir( $dir, 0755, true );
+		mkdir( $target, 0755, true );
+		$sentinel = $target . '/sentinel.txt';
+		$link     = $dir . '/linked-dir';
+		file_put_contents( $sentinel, 'keep' );
+		try {
+			$this->assertTrue( symlink( $target, $link ) );
+			$this->remove_dir( $dir );
+			$this->assertFileExists( $sentinel );
+			$this->assertSame( 'keep', file_get_contents( $sentinel ) );
+			$this->assertDirectoryDoesNotExist( $dir );
+		} finally {
+			if ( is_link( $link ) ) {
+				unlink( $link );
+			}
+			if ( is_dir( $dir ) ) {
+				rmdir( $dir );
+			}
+			if ( file_exists( $sentinel ) ) {
+				unlink( $sentinel );
+			}
+			rmdir( $target );
+		}
 	}
 
 	/**

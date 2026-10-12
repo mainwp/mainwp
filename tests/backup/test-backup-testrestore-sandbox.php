@@ -84,6 +84,45 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
+	 * Sandbox cleanup removes a symlink found in the extracted tree without following it,
+	 * so a link in a restored archive cannot reach files outside the sandbox.
+	 */
+	public function test_remove_dir_unlinks_symlinks_without_following_them() {
+		$root    = trailingslashit( get_temp_dir() ) . 'mainwp-sbx-link-' . wp_generate_password( 8, false );
+		$outside = trailingslashit( get_temp_dir() ) . 'mainwp-sbx-outside-' . wp_generate_password( 8, false );
+		$this->assertTrue( wp_mkdir_p( $root . '/nested' ) );
+		$this->assertTrue( wp_mkdir_p( $outside ) );
+		$this->assertSame( 4, file_put_contents( $outside . '/keep.txt', 'keep' ) );
+		$this->assertTrue( symlink( $outside, $root . '/nested/link' ) );
+		$this->assertTrue( symlink( $outside, $root . '-rootlink' ) );
+
+		$sandbox = ( new \ReflectionClass( MainWP_Backup_TestRestore_Sandbox::class ) )->newInstanceWithoutConstructor();
+		$method  = new \ReflectionMethod( $sandbox, 'remove_dir' );
+		$method->setAccessible( true );
+		try {
+			$method->invoke( $sandbox, trailingslashit( $root ) );
+			$method->invoke( $sandbox, trailingslashit( $root . '-rootlink' ) );
+
+			$this->assertFileExists( $outside . '/keep.txt', 'A link inside the tree must not be followed.' );
+			$this->assertFalse( is_link( $root . '/nested/link' ) );
+			$this->assertDirectoryDoesNotExist( $root );
+			$this->assertFalse( is_link( $root . '-rootlink' ), 'A linked root is unlinked, not walked.' );
+		} finally {
+			foreach ( array( $root . '/nested/link', $root . '-rootlink' ) as $link ) {
+				if ( is_link( $link ) ) {
+					unlink( $link );
+				}
+			}
+			if ( file_exists( $outside . '/keep.txt' ) ) {
+				unlink( $outside . '/keep.txt' );
+			}
+			if ( is_dir( $outside ) ) {
+				rmdir( $outside );
+			}
+		}
+	}
+
+	/**
 	 * Recursive cleanup.
 	 *
 	 * @param string $dir Directory.
@@ -91,6 +130,10 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 * @return void
 	 */
 	private function rrmdir( $dir ) {
+		if ( is_link( $dir ) ) {
+			unlink( $dir );
+			return;
+		}
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
@@ -99,7 +142,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				continue;
 			}
 			$path = $dir . '/' . $entry;
-			if ( is_dir( $path ) ) {
+			if ( is_link( $path ) ) {
+				unlink( $path );
+			} elseif ( is_dir( $path ) ) {
 				$this->rrmdir( $path );
 			} else {
 				unlink( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test cleanup.

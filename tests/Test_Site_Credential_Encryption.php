@@ -118,26 +118,33 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$this->assertFalse( $result );
 	}
 
-	public function test_encrypt_retires_old_key_file_when_old_envelope_provided(): void {
-		$deleted = array();
-		add_action(
-			'mainwp_delete_key_file',
-			function ( $file_key ) use ( &$deleted ) {
-				$deleted[] = $file_key;
+	public function test_encrypt_keeps_old_key_file_before_replacement_is_persisted(): void {
+		remove_filter( 'mainwp_encrypt_key_value', array( $this, 'stub_encrypt' ), 10 );
+		remove_filter( 'mainwp_decrypt_key_value', array( $this, 'stub_decrypt' ), 10 );
+		$manager = \MainWP\Dashboard\MainWP_Keys_Manager::instance();
+		$field   = 'http_pass_' . wp_generate_uuid4();
+		$keys    = array();
+		try {
+			$old_envelope = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'old-pw', $field );
+			$this->assertIsString( $old_envelope );
+			$old    = json_decode( substr( $old_envelope, strlen( self::ENVELOPE_PREFIX ) ), true );
+			$keys[] = $old['file_key'];
+			$this->assertFileExists( $manager::get_keys_dir() . $old['file_key'] );
+			$this->assertSame( 'old-pw', \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $old_envelope ) );
+
+			$result = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'new-pw', $field, $old_envelope );
+			$this->assertIsString( $result );
+			$new    = json_decode( substr( $result, strlen( self::ENVELOPE_PREFIX ) ), true );
+			$keys[] = $new['file_key'];
+			$this->assertNotSame( $old['file_key'], $new['file_key'] );
+			$this->assertSame( 'new-pw', \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $result ) );
+			$this->assertFileExists( $manager::get_keys_dir() . $old['file_key'] );
+			$this->assertSame( 'old-pw', \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $old_envelope ) );
+		} finally {
+			foreach ( $keys as $key ) {
+				$manager->delete_key_file( $key );
 			}
-		);
-
-		$old_envelope = self::ENVELOPE_PREFIX . wp_json_encode(
-			array(
-				'encrypted_val' => 'STUB:' . base64_encode( 'old-pw' ),
-				'file_key'      => 'site_credential_http_pass_oldkey',
-			)
-		);
-
-		$result = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'new-pw', 'http_pass', $old_envelope );
-
-		$this->assertStringStartsWith( self::ENVELOPE_PREFIX, $result );
-		$this->assertSame( array( 'site_credential_http_pass_oldkey' ), $deleted );
+		}
 	}
 
 	public function test_encrypt_keeps_old_key_file_when_new_envelope_reuses_it(): void {
@@ -226,10 +233,7 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 			}
 		);
 
-		// An old envelope whose key file is gone decrypts to ''. The
-		// unchanged-value comparison must fail and the plaintext must be
-		// re-encrypted, repairing the broken envelope and retiring the
-		// stale key reference.
+		// An unreadable envelope cannot prove that the plaintext is unchanged.
 		$broken = self::ENVELOPE_PREFIX . wp_json_encode(
 			array(
 				'encrypted_val' => 'UNREADABLE',
@@ -242,10 +246,10 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$this->assertStringStartsWith( self::ENVELOPE_PREFIX, $result );
 		$this->assertNotSame( $broken, $result );
 		$this->assertSame( 'repair-me', \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $result ) );
-		$this->assertSame( array( 'site_credential_http_user_stale_key' ), $deleted );
+		$this->assertSame( array(), $deleted );
 	}
 
-	public function test_encrypt_credential_empty_string_retires_old_key_and_returns_empty(): void {
+	public function test_encrypt_credential_empty_string_keeps_old_key_and_returns_empty(): void {
 		$deleted = array();
 		add_action(
 			'mainwp_delete_key_file',
@@ -264,7 +268,7 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$result = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( '', 'http_pass', $old_envelope );
 
 		$this->assertSame( '', $result );
-		$this->assertSame( array( 'site_credential_http_pass_clear_key' ), $deleted );
+		$this->assertSame( array(), $deleted );
 	}
 
 	public function test_encrypt_credential_null_does_not_retire_old_key(): void {

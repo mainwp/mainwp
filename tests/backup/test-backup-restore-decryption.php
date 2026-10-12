@@ -144,6 +144,10 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	private function rrmdir( $dir ) {
+		if ( is_link( $dir ) ) {
+			unlink( $dir );
+			return;
+		}
 		if ( ! is_dir( $dir ) ) {
 			return;
 		}
@@ -152,7 +156,9 @@ class MainWP_Backup_Restore_Decryption_Test extends \WP_UnitTestCase {
 				continue;
 			}
 			$path = $dir . '/' . $entry;
-			if ( is_dir( $path ) ) {
+			if ( is_link( $path ) ) {
+				unlink( $path );
+			} elseif ( is_dir( $path ) ) {
 				$this->rrmdir( $path );
 			} else {
 				unlink( $path );

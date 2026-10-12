@@ -249,6 +249,11 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
         $desc            = ! empty( $description_param ) ? sanitize_text_field( $description_param ) : '';
         $scope           = $this->determine_scope( $permission );
 
+        $permission_check = $this->check_key_permission_limit( $scope );
+        if ( is_wp_error( $permission_check ) ) {
+            return $permission_check;
+        }
+
         try {
             // Save api key v2. insert_rest_api_key() returns false when the
             // underlying wpdb->insert() fails, so we guard against the bool
@@ -338,9 +343,14 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
         // Determine description.
         $desc = ! empty( $description_param ) ? sanitize_text_field( $description_param ) : $current_description;
 
+        $scope            = ! empty( $permissions_param ) ? $this->determine_scope( $permissions_param, is_numeric( $cons_key_id ) ? 'v2' : 'v1' ) : $current_permissions;
+        $permission_check = $this->check_key_permission_limit( $scope, $current_permissions );
+        if ( is_wp_error( $permission_check ) ) {
+            return $permission_check;
+        }
+
         // Edit api key v1.
         if ( ! is_numeric( $cons_key_id ) ) {
-            $scope    = ! empty( $permissions_param ) ? $this->determine_scope( $permissions_param, 'v1' ) : $current_permissions;
             $save     = false;
             $all_keys = get_option( 'mainwp_rest_api_keys', false );
             if ( is_array( $all_keys ) && isset( $all_keys[ $cons_key_id ] ) ) {
@@ -363,7 +373,6 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
 
             MainWP_Utility::update_option( 'mainwp_rest_api_keys', $all_keys );
         } else {
-            $scope = ! empty( $permissions_param ) ? $this->determine_scope( $permissions_param ) : $current_permissions;
             // Update api key.
             $updated = MainWP_DB::instance()->update_rest_api_key( $api_key->key_id, $scope, $desc, $active );
             if ( false === $updated ) {
@@ -566,6 +575,46 @@ class MainWP_Rest_API_Keys_Controller extends MainWP_REST_Controller { //phpcs:i
                 }
             }
         }
+        return true;
+    }
+
+    /**
+     * Keep key management within the authenticated key's capabilities.
+     *
+     * @param string      $scope Resulting permissions.
+     * @param string|null $current_permissions Target's current permissions, when editing.
+     * @return true|WP_Error
+     */
+    private function check_key_permission_limit( $scope, $current_permissions = null ) {
+        $caller = \MainWP_REST_Authentication::get_instance()->get_rest_valid_user();
+        if ( empty( $caller ) ) {
+            return true;
+        }
+
+        $permission_map = array(
+            'read'       => array( 'read' ),
+            'write'      => array( 'write', 'delete' ),
+            'delete'     => array( 'delete' ),
+            'read_write' => array( 'read', 'write', 'delete' ),
+            'r'          => array( 'read' ),
+            'w'          => array( 'write' ),
+            'd'          => array( 'delete' ),
+        );
+        $allowed        = $permission_map[ $caller->permissions ] ?? array();
+
+        foreach ( array( $current_permissions, $scope ) as $permissions ) {
+            if ( null === $permissions ) {
+                continue;
+            }
+            $required = array();
+            foreach ( explode( ',', $permissions ) as $permission ) {
+                $required = array_merge( $required, $permission_map[ $permission ] ?? array() );
+            }
+            if ( ! empty( array_diff( $required, $allowed ) ) ) {
+                return new WP_Error( 'mainwp_rest_api_key_permission_exceeded', __( 'An API key cannot grant permissions it does not have.', 'mainwp' ), array( 'status' => 403 ) );
+            }
+        }
+
         return true;
     }
 

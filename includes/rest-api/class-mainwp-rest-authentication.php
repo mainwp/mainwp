@@ -659,6 +659,11 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return false;
         }
 
+        if ( ! is_string( $params['oauth_signature_method'] ) || ( 'HMAC-SHA1' !== $params['oauth_signature_method'] && 'HMAC-SHA256' !== $params['oauth_signature_method'] ) ) {
+            $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid signature - signature method is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
+            return false;
+        }
+
         // Fetch WP user by consumer key.
         $user = $this->get_user_data_by_consumer_key( $params['oauth_consumer_key'] );
 
@@ -826,21 +831,10 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         $query_string   = implode( '%26', $this->join_with_equals_sign( $params ) ); // Join with ampersand.
         $string_to_sign = $http_method . '&' . $base_request_uri . '&' . $query_string;
 
-        if ( 'HMAC-SHA1' !== $params['oauth_signature_method'] && 'HMAC-SHA256' !== $params['oauth_signature_method'] ) {
-            return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid signature - signature method is invalid.', 'mainwp' ), array( 'status' => 401 ) );
-        }
-
-        // OAuth 1.0a HMAC verification requires the plaintext secret as the HMAC
-        // key. Keys created after MWP-1540 store the secret hashed at rest and
-        // therefore cannot be used with this auth method. Direct the caller to
-        // Basic Auth over HTTPS or to reissue (and use the new key only via
-        // Basic Auth).
-        //
-        // TODO MWP-1540 sunset (~v6.3): drop this branch. By the sunset target
-        // any plaintext keys still in the wild will already be failing through
-        // Basic Auth as well, so reissue is the only path forward anyway.
+        // HMAC needs the plaintext secret. A distinct error for a hashed secret
+        // would reveal that the submitted consumer key exists.
         if ( ! $this->is_legacy_plaintext_secret( $user->consumer_secret ) ) {
-            return new WP_Error( 'mainwp_rest_authentication_oauth1_unsupported', __( 'OAuth 1.0a is not supported for this API key. Use Basic Auth over HTTPS or reissue the key.', 'mainwp' ), array( 'status' => 401 ) );
+            return $this->refused_key_error();
         }
 
         $hash_algorithm = strtolower( str_replace( 'HMAC-', '', $params['oauth_signature_method'] ) );

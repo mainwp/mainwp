@@ -21,6 +21,7 @@ use MainWP\Dashboard\MainWP_Notification_Template;
 use MainWP\Dashboard\MainWP_System_Handler;
 use MainWP\Dashboard\Module\Log\Log_DB_Archive;
 use MainWP\Dashboard\Module\Log\Log_DB_Helper;
+use MainWP\Dashboard\Module\Log\Log_Install;
 use MainWP\Dashboard\Module\Log\Log_Manager;
 use MainWP\Dashboard\Writer_Class_Extension_Handler;
 use MainWP\Dashboard\Writer_Class_Settings;
@@ -118,6 +119,13 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
      */
     private $log_options = array();
 
+    /**
+     * Notice fixtures must not leave database-update state behind.
+     *
+     * @var array
+     */
+    private $notice_options = array();
+
     /** Raw exits must not prevent assertions on the unchanged writers. */
     public static function setUpBeforeClass(): void {
         parent::setUpBeforeClass();
@@ -192,6 +200,13 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
             $property->setValue( MainWP_Notification_Template::instance(), $original );
         }
         Log_Manager::instance()->settings->options = $this->log_options;
+        foreach ( $this->notice_options as $name => $original ) {
+            if ( null === $original ) {
+                delete_option( $name );
+            } else {
+                update_option( $name, $original );
+            }
+        }
         if ( $this->root && is_dir( $this->root ) ) {
             foreach ( glob( $this->root . '/*' ) as $file ) {
                 unlink( $file );
@@ -278,6 +293,60 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
             $this->wizard( substr( $writer, 7 ), $allowed );
         } else {
             $this->$writer( $allowed );
+        }
+    }
+
+    /**
+     * Notice controls invoke AJAX actions that require the settings right.
+     *
+     * @return array Status and settings grant.
+     */
+    public static function update_notice_rights(): array {
+        return array(
+            'running refused'        => array( 'running', false ),
+            'running allowed'        => array( 'running', true ),
+            'require_update refused' => array( 'require_update', false ),
+            'require_update allowed' => array( 'require_update', true ),
+        );
+    }
+
+    /**
+     * Page loads must not start refused AJAX requests or delete shared state.
+     *
+     * @dataProvider update_notice_rights
+     * @param string $status Database-update status.
+     * @param bool   $allowed Settings grant.
+     */
+    public function test_update_db_notice_right( string $status, bool $allowed ): void {
+        $this->right( 'manage_dashboard_settings', $allowed );
+        $options = array(
+            'mainwp_module_log_db_version' => '1.0.1.26',
+            'mainwp_module_logs_updates_dismissed_db_process_status' => $status,
+            'mainwp_module_logs_updates_dismissed_db_cancelled' => 0,
+        );
+        foreach ( $options as $name => $value ) {
+            $this->notice_options[ $name ] = get_option( $name, null );
+            update_option( $name, $value );
+        }
+        $this->assertSame( '1.0.1.26', Log_Install::instance()->get_current_logs_db_ver() );
+        $admin = ( new \ReflectionClass( Writer_Class_Log_Admin::class ) )->newInstanceWithoutConstructor();
+        $body  = $this->capture(
+            static function () use ( $admin ) {
+                $admin->render_update_db_notice();
+            }
+        );
+        $this->assertStringContainsString( 'id="module-log-update-dissmised-logs-running" style="display:none;"', $body );
+        if ( $allowed && 'running' === $status ) {
+            $this->assertStringContainsString( 'mainwp_module_logs_start_update_dismissed_db();', $body );
+        } else {
+            $this->assertStringNotContainsString( 'mainwp_module_logs_start_update_dismissed_db', $body );
+        }
+        if ( $allowed && 'require_update' === $status ) {
+            $this->assertStringContainsString( 'id="module-update-logs-db-requirement"', $body );
+            $this->assertFalse( get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' ) );
+        } else {
+            $this->assertStringNotContainsString( 'module-update-logs-db-requirement', $body );
+            $this->assertSame( 0, get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' ) );
         }
     }
 
@@ -529,14 +598,13 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
     }
 
     /**
-     * An absent checkbox must not disable monitoring for a refused user.
+     * Page Settings omits the Site Health fields and must preserve their values.
      *
      * @param bool $allowed Settings grant.
      */
     private function monitoring( bool $allowed ): void {
         $_POST = array(
             'wp_nonce'                                 => wp_create_nonce( 'MonitoringSitesScrOptions' ),
-            'mainwp_site_healthThreshold'              => '100',
             'mainwp_default_monitoring_sites_per_page' => '50',
             'mainwp_show_column_name'                  => '1',
         );
@@ -544,11 +612,11 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
             $allowed,
             array(
                 'mainwp_disableSitesHealthMonitoring'      => 0,
-                'mainwp_sitehealthThreshold'               => 80,
+                'mainwp_sitehealthThreshold'               => 100,
                 'mainwp_default_monitoring_sites_per_page' => 25,
             ),
             array(
-                'mainwp_disableSitesHealthMonitoring'      => 1,
+                'mainwp_disableSitesHealthMonitoring'      => 0,
                 'mainwp_sitehealthThreshold'               => 100,
                 'mainwp_default_monitoring_sites_per_page' => 50,
             ),

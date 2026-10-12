@@ -74,6 +74,7 @@ class Test_Dashboard_Settings_Writers_Rights extends \WP_UnitTestCase {
     /** WordPress capabilities remain granted while MainWP rights vary. */
     public function setUp(): void {
         parent::setUp();
+        wp_create_nonce( 'mainwp-settings-rights-fixture' );
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
         $_GET     = array();
         $_POST    = array();

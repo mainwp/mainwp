@@ -613,6 +613,125 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The outer restore catch must retain transport evidence before humanizing it.
+	 *
+	 * @dataProvider s84_restore_transport_errors
+	 * @param string $message Transport exception message.
+	 * @param string $code Transport subtype.
+	 * @param array  $data Request diagnostics.
+	 * @param string $expected Registered history code.
+	 * @param string $last_error Unchanged restore-facing error text.
+	 */
+	public function test_s84_restore_safety_transport_error_history( string $message, string $code, array $data, string $expected, string $last_error ): void {
+		$row = $this->s84_restore_transport_failure( $message, $code, $data, $last_error, false );
+		$this->assertSame( $expected, $row['error_code'] );
+		$this->assertSame( MainWP_Backup_Operations::safe_error( $expected )['message'], $row['message'] );
+	}
+
+	/**
+	 * A confirmed replay's exhausted status reads carry only safe transport codes.
+	 *
+	 * @dataProvider s84_restore_transport_errors
+	 * @param string $message Transport exception message.
+	 * @param string $code Transport subtype.
+	 * @param array  $data Request diagnostics.
+	 * @param string $expected Registered transport cause.
+	 * @param string $last_error Unchanged restore-facing error text.
+	 */
+	public function test_s84_restore_safety_replay_transport_error_history( string $message, string $code, array $data, string $expected, string $last_error ): void {
+		$row = $this->s84_restore_transport_failure( $message, $code, $data, $last_error, true );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $row['error_code'] );
+		$this->assertSame( MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_TIMEOUT )['message'] . ' (AUTH_ERROR2; ' . $expected . ')', $row['message'] );
+	}
+
+	/**
+	 * Each transport's legacy restore text and subtype remain a separate contract.
+	 *
+	 * @return array
+	 */
+	public static function s84_restore_transport_errors(): array {
+		$http_error = 'The site could not be reached during the restore. It may be down, overloaded, or briefly blocking dashboard requests; the restore retries automatically.';
+		return array(
+			'HTTPERROR with status'    => array( 'HTTPERROR', '', array( 'http_status' => 503 ), MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, $http_error ),
+			'HTTPERROR without status' => array( 'HTTPERROR', '', array(), MainWP_Backup_Error_Codes::ERR_CONNECT_FAILED, $http_error ),
+			'NOMAINWP'                 => array( 'NOMAINWP', '', array(), MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, 'The MainWP Child plugin did not answer on the site. Check that the site loads and the MainWP Child plugin is active; the restore retries automatically.' ),
+			'TIMEOUT connect'          => array( 'TIMEOUT', 'connect', array(), MainWP_Backup_Error_Codes::ERR_CONNECT_FAILED, 'TIMEOUT' ),
+		);
+	}
+
+	/**
+	 * Drive real leases and failure writes; only the Child transport is scripted.
+	 *
+	 * @param string $message Transport exception message.
+	 * @param string $code Transport subtype.
+	 * @param array  $data Request diagnostics.
+	 * @param string $last_error Unchanged restore-facing error text.
+	 * @param bool   $replay Whether the checkpoint already confirms a replay.
+	 * @return array Terminal safety history row.
+	 */
+	private function s84_restore_transport_failure( string $message, string $code, array $data, string $last_error, bool $replay ): array {
+		$site       = $this->site();
+		$store      = MainWP_Backup_Restore_Job_Store::instance();
+		$checkpoint = array(
+			'plan'    => array(),
+			'options' => array( 'pre_snapshot' => true ),
+		);
+		if ( $replay ) {
+			$checkpoint['pre_snapshot_reconcile_pending'] = true;
+			$checkpoint['pre_snapshot_replay_confirmed']  = true;
+		}
+		$id  = $store->create_job( $site, 5, $checkpoint );
+		$ref = MainWP_Backup_Executor::trigger_backup( $site, 'full', (string) $id );
+		$this->assertTrue( $store->set_status( $id, $store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => $ref ) ) );
+		$fail = static function ( $pre, $website, $what ) use ( $message, $code, $data ) {
+			if ( in_array( $what, array( 'backup_task_run', 'backup_task_status' ), true ) ) {
+				$error = new \MainWP\Dashboard\MainWP_Exception( $message, 'private-provider-token', $code );
+				$error->set_data(
+					array_merge(
+						$data,
+						array(
+							'request'       => 'private-request-text',
+							'response_body' => 'private-response-text',
+						)
+					)
+				);
+				throw $error;
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $fail, 20, 3 );
+		try {
+			for ( $attempt = 1; $attempt <= 7; ++$attempt ) {
+				$job = $store->get_job( $id );
+				$this->assertTrue( $store->set_status( $id, $job->status, array( 'next_retry_at' => 0 ) ) );
+				MainWP_Backup_Restore_Orchestrator::instance()->process_pending_restore_jobs( 2, $id );
+				$job = $store->get_job( $id );
+				$this->assertSame( $last_error, $job->last_error );
+				$this->assertSame( $code, $job->checkpoint['last_error_code'] );
+				$this->assertArrayNotHasKey( 'last_error_extra', $job->checkpoint );
+				$row = $this->rows()[0];
+				if ( $attempt < 7 ) {
+					$this->assertSame( $store::STATUS_FAILED_RETRYABLE, $job->status );
+					$this->assertSame( $attempt, (int) $job->attempt_count );
+					$this->assertSame( array( 'running', '', '' ), array( $row['outcome'], $row['error_code'], $row['message'] ) );
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 20 );
+		}
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( array( 'restore_safety', $ref, 'failed', $id ), array( $row['trigger_source'], $row['ref'], $row['outcome'], (int) $row['restore_job_id'] ) );
+		$this->assertSame( array_merge( array( $replay ? 'backup_task_status' : 'backup_task_run' ), array_fill( 0, 6, 'backup_task_status' ), array( 'backup_task_cancel' ) ), array_slice( array_column( $this->calls, 0 ), 2 ) );
+		$read = MainWP_Backup_Run_History::query( array(), 1, 10, array( $site ) )['items'][0];
+		$this->assertSame( $row['message'], $read['message'] );
+		foreach ( array( 'private-provider-token', 'private-request-text', 'private-response-text' ) as $private_text ) {
+			$this->assertStringNotContainsString( $private_text, $row['message'] );
+			$this->assertStringNotContainsString( $private_text, $read['message'] );
+		}
+		return $row;
+	}
+
+	/**
 	 * Initiate reports queuing from the claim, including a failed first step.
 	 *
 	 * @dataProvider s84_initiate_claims

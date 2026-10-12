@@ -961,7 +961,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         } catch ( \Throwable $e ) {
             $code = ( $e instanceof MainWP_Exception ) ? $e->get_message_error_code() : '';
             // The site layout does not change between retries.
-            $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT !== $code, $code );
+            $this->record_failure( $job, MainWP_Backup_Error_Codes::sanitize_message( $e->getMessage() ), MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT !== $code, $code, MainWP_Backup_Error_Codes::code_for_exception( $e ) );
         } finally {
             remove_filter( 'mainwp_fetch_url_site_timeout', $cap_timeout );
             $store->release_lock( $job_id, $token );
@@ -1961,10 +1961,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param string|null $error      Error text, or null for a user cancellation.
      * @param string      $error_code Stable error code, or empty when none.
      * @param string|null $lock_token Captured lease token, or null for an unleased UI cancellation.
+     * @param string|null $history_error_code Classification kept separate from restore-facing errors.
+     * @param string      $history_error_extra Replay tag and registered transport cause only.
      *
      * @return string One of the TERMINAL_OUTCOME_* constants.
      */
-    private function record_terminal_failure( object $job, ?string $error, string $error_code, ?string $lock_token ): string {
+    private function record_terminal_failure( object $job, ?string $error, string $error_code, ?string $lock_token, ?string $history_error_code = null, string $history_error_extra = '' ): string {
         $store = MainWP_Backup_Restore_Job_Store::instance();
         $job   = $store->get_job( (int) $job->id );
         if ( null === $job || ! in_array( $job->status, $store::active_statuses(), true ) || ( null !== $lock_token && $job->locked_by !== $lock_token ) ) {
@@ -2086,7 +2088,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $this->cancel_task_created_after_terminal( $final, (string) $final->child_task_id );
         }
 
-        MainWP_Backup_Run_History::finalize_restore_safety( (int) $job->id, $cancelled ? 'cancelled' : 'failed', $cancelled ? '' : (string) $error_code );
+        MainWP_Backup_Run_History::finalize_restore_safety( (int) $job->id, $cancelled ? 'cancelled' : 'failed', $cancelled ? '' : ( $history_error_code ?? (string) $error_code ), $cancelled ? '' : $history_error_extra );
 
         if ( $cancelled ) {
             MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
@@ -2136,12 +2138,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * The current status is saved as the resume point so a retry
      * continues the phase that failed instead of starting over.
      *
-     * @param object $job        Job row.
-     * @param string $error      Error text.
-     * @param bool   $retryable  Whether a retry can succeed.
-     * @param string $error_code Stable error code matching $error, or '' when none.
+     * @param object      $job        Job row.
+     * @param string      $error      Error text.
+     * @param bool        $retryable  Whether a retry can succeed.
+     * @param string      $error_code Stable error code matching $error, or '' when none.
+     * @param string|null $history_error_code Classification kept separate from restore-facing errors.
      */
-    private function record_failure( object $job, string $error, bool $retryable, string $error_code = '' ): void {
+    private function record_failure( object $job, string $error, bool $retryable, string $error_code = '', ?string $history_error_code = null ): void {
         $store = MainWP_Backup_Restore_Job_Store::instance();
         $error = $this->humanize_stored_error( $error );
 
@@ -2149,6 +2152,19 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // row was read; a stale write here would erase that cursor.
         $fresh      = $store->get_job( (int) $job->id );
         $checkpoint = null !== $fresh ? $fresh->checkpoint : $job->checkpoint;
+
+        $history_error_extra = '';
+        $phase               = MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE === $job->status ? ( $checkpoint['resume_status'] ?? MainWP_Backup_Restore_Job_Store::STATUS_PENDING ) : $job->status;
+        if ( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT === $phase
+            && ! empty( $checkpoint['pre_snapshot_reconcile_pending'] )
+            && ! empty( $checkpoint['pre_snapshot_replay_confirmed'] )
+            && ! in_array( $error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true )
+            && in_array( $history_error_code, array( MainWP_Backup_Error_Codes::ERR_CONNECT_FAILED, MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, MainWP_Backup_Error_Codes::ERR_TIMEOUT ), true )
+        ) {
+            // History needs the replay cause; restore clients still consume the original failure.
+            $history_error_extra = 'AUTH_ERROR2; ' . $history_error_code;
+            $history_error_code  = MainWP_Backup_Error_Codes::ERR_TIMEOUT;
+        }
 
         // A failure that follows real transfer progress starts a fresh
         // attempt budget: MAX_ATTEMPTS bounds consecutive no-progress
@@ -2158,7 +2174,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $attempts = $advanced ? 1 : (int) $job->attempt_count + 1;
 
         if ( ! $retryable || MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
-            if ( self::TERMINAL_OUTCOME_DEFERRED === $this->record_terminal_failure( $job, $error, $error_code, $this->lock_token ) ) {
+            if ( self::TERMINAL_OUTCOME_DEFERRED === $this->record_terminal_failure( $job, $error, $error_code, $this->lock_token, $history_error_code, $history_error_extra ) ) {
                 // A deferral with no armed intent means the evidence writes were
                 // refused, not that the Child asked for time; back off so the row
                 // is not re-driven every tick, and try the terminal write again

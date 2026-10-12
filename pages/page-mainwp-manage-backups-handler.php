@@ -855,6 +855,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         } catch ( \Throwable $e ) {
             $snapshot_id = null;
             $error_code  = '';
+            $error_extra = '';
         }
         MainWP_Backup_Run_History::finalize_run( (int) $task->id, $history_started, $success ? 'completed' : 'failed', $site_id, $error_code, $snapshot_id, $error_extra );
     }

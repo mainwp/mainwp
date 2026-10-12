@@ -285,14 +285,15 @@ class MainWP_Backup_Run_History {
      * @param int    $restore_job_id Restore job that owns the safety backup.
      * @param string $outcome Terminal outcome.
      * @param string $error_code Safe formatter input.
+     * @param string $error_extra Replay tag and registered transport cause only; empty uses the checkpoint.
      */
-    public static function finalize_restore_safety( int $restore_job_id, string $outcome, string $error_code = '' ): void {
+    public static function finalize_restore_safety( int $restore_job_id, string $outcome, string $error_code = '', string $error_extra = '' ): void {
         self::write(
-            static function () use ( $restore_job_id, $outcome, $error_code ) {
+            static function () use ( $restore_job_id, $outcome, $error_code, $error_extra ) {
                 $extra = '';
                 if ( 'failed' === $outcome ) {
                     $job        = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
-                    $extra      = (string) ( $job->checkpoint['last_error_extra'] ?? '' );
+                    $extra      = '' !== $error_extra ? $error_extra : (string) ( $job->checkpoint['last_error_extra'] ?? '' );
                     $error_code = MainWP_Backup_Error_Codes::code_for_exception( new MainWP_Exception( (string) ( $job->last_error ?? '' ), $extra, $error_code ) );
                 }
                 self::finalize_matching( 'restore_job_id = %d AND trigger_source = %s', array( $restore_job_id, 'restore_safety' ), $outcome, $error_code, null, $extra );

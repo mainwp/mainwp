@@ -2362,6 +2362,207 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Real sizes include every remaining role and preserve the fixed reserve.
+	 *
+	 * @dataProvider download_disk_cases
+	 * @param string $type Backup type.
+	 * @param mixed  $free Measured free bytes.
+	 * @param mixed  $size Reported archive size, or null to omit it.
+	 * @param int    $partial Existing archive bytes.
+	 * @param bool   $refused Whether the transfer must be refused.
+	 * @param bool   $manifest Whether the full run also downloads a manifest.
+	 */
+	public function test_download_disk_guard( $type, $free, $size, $partial, $refused, $manifest = false ) {
+		list( $site_id, $task ) = $this->arrange_manual_task( 'incremental' === $type );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'type' => $type ) );
+		$task                           = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$body                           = "PK\x03\x04" . str_repeat( 'z', 396 );
+		$this->remote_files['real.zip'] = $body;
+		$payload                        = array(
+			'phase' => 'completed',
+			'file'  => 'real.zip',
+		);
+		if ( null !== $size ) {
+			$payload['size'] = $size;
+		}
+		if ( 'incremental' === $type ) {
+			$payload['artifacts'] = $this->arrange_remote_artifacts();
+			if ( null === $size ) {
+				unset( $payload['artifacts'][0]['size'] );
+			}
+		} elseif ( $manifest ) {
+			$payload['artifacts'] = array(
+				array(
+					'file'   => 'files.list',
+					'role'   => 'manifest',
+					'size'   => 40,
+					'sha256' => hash( 'sha256', $this->remote_files['files.list'] ),
+				),
+			);
+		}
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function ( $result, $website, $what ) use ( $payload ) {
+				return 'backup_task_run' === $what ? $payload : $result;
+			},
+			20,
+			3
+		);
+		$this->assertNull( $this->run_cycle( $site_id, $task )['exception'] );
+		$dir   = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
+		$local = 'incremental' === $type ? $dir . 'snapshot-manual-' . $task->id . '/uploads.part001.zip' : $dir . 'resume.zip';
+		if ( $partial > 0 ) {
+			wp_mkdir_p( dirname( $local ) );
+			file_put_contents( $local, substr( $body, 0, $partial ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- partial fixture.
+			if ( 'incremental' !== $type ) {
+				MainWP_DB_Backup::instance()->update_backup_task_progress( $task->id, $site_id, array( 'downloadedFULL' => $local ) );
+			}
+		}
+		$downloads = array();
+		$capture   = static function ( $pre, $url, $file ) use ( &$downloads ) {
+			$downloads[] = $file;
+			return $pre;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $capture, 1, 3 );
+		MainWP_Backup_TestRestore_Sandbox_Test::$free_space = $free;
+		try {
+			$finish = $this->run_cycle( $site_id, $task );
+		} finally {
+			MainWP_Backup_TestRestore_Sandbox_Test::$free_space = null;
+			remove_filter( 'mainwp_download_to_file_pre', $capture, 1 );
+		}
+		if ( $refused ) {
+			$this->assertInstanceOf( MainWP_Exception::class, $finish['exception'] );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $finish['exception']->get_message_error_code() );
+			$this->assertStringContainsString( 'Dashboard server', $finish['exception']->getMessage() );
+			$this->assertSame( array(), $downloads, 'Refuse the entire set before its first transfer.' );
+			$this->assertFileDoesNotExist( $local );
+		} else {
+			$this->assertNull( $finish['exception'] );
+			$this->assertIsArray( $finish['result'] );
+			$this->assertNotEmpty( $downloads );
+		}
+	}
+
+	/**
+	 * Capacity boundaries and unavailable readings.
+	 *
+	 * @return array
+	 */
+	public static function download_disk_cases() {
+		$margin = 100 * MB_IN_BYTES;
+		return array(
+			'full refused'          => array( 'full', $margin + 399, 400, 0, true ),
+			'files refused'         => array( 'files', $margin + 399, 400, 0, true ),
+			'db refused'            => array( 'db', $margin + 399, 400, 0, true ),
+			'full fits exactly'     => array( 'full', $margin + 400, 400, 0, false ),
+			'roles sum refused'     => array( 'incremental', $margin + 300, 372, 0, true ),
+			'roles size missing'    => array( 'incremental', 1, null, 0, false ),
+			'roles resume fits'     => array( 'incremental', $margin + 272, 372, 100, false ),
+			'roles resume cleans'   => array( 'incremental', $margin + 271, 372, 100, true ),
+			'roles sum fits'        => array( 'incremental', $margin + 372, 372, 0, false ),
+			'full plus manifest'    => array( 'full', $margin + 420, 400, 0, true, true ),
+			'free unavailable'      => array( 'full', false, 400, 0, false ),
+			'size missing'          => array( 'full', 1, null, 0, false ),
+			'resume remaining fits' => array( 'full', $margin + 200, 400, 200, false ),
+			'resume refused cleans' => array( 'full', $margin + 199, 400, 200, true ),
+		);
+	}
+
+	/** Terminal refusals use the failed-download history, diagnostics and Child prune. */
+	public function test_download_disk_refusal_records_failure_and_prunes_child() {
+		list( $site_id, $task ) = $this->arrange_manual_task( false );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'type' => 'full' ) );
+		$responses = array(
+			'backup_task_run'   => array(
+				'phase' => 'completed',
+				'file'  => 'backup-base.zip',
+				'size'  => 400,
+			),
+			'backup_task_prune' => array(
+				'result'  => 'ok',
+				'pruned'  => 1,
+				'active'  => 0,
+				'missing' => 0,
+			),
+		);
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function ( $result, $website, $what ) use ( $responses ) {
+				return $responses[ $what ] ?? $result;
+			},
+			20,
+			3
+		);
+		$polls = array();
+		$marks = array();
+		add_action(
+			'mainwp_backup_diag_poll',
+			static function ( $payload, $elapsed, $context ) use ( &$polls ) {
+				$polls[] = array( $payload, $context );
+			},
+			10,
+			3
+		);
+		add_action(
+			'mainwp_backup_diag_site_mark',
+			static function ( $task_id, $site, $outcome, $detail ) use ( &$marks ) {
+				$marks[] = array( $outcome, $detail );
+			},
+			10,
+			4
+		);
+		$downloads = array();
+		add_filter(
+			'mainwp_download_to_file_pre',
+			static function ( $pre, $url, $file ) use ( &$downloads ) {
+				$downloads[] = $file;
+				return $pre;
+			},
+			1,
+			3
+		);
+		$start = MainWP_Manage_Backups_Handler::run_backup_task_now( (int) $task->id );
+		MainWP_Backup_TestRestore_Sandbox_Test::$free_space = 100 * MB_IN_BYTES + 399;
+		try {
+			$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, $start['started'], $start['click'] );
+		} finally {
+			MainWP_Backup_TestRestore_Sandbox_Test::$free_space = null;
+		}
+		$this->assertSame( 'failed', $status['status'] );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $progress->fetchResult['error_code'] ?? '' );
+		$this->assertStringContainsString( 'Free up space on the Dashboard server and run the backup again.', $progress->last_error );
+		$this->assertSame( array(), $downloads );
+		$this->assertSame(
+			array(
+				array(
+					'task_ids' => wp_json_encode( array( 'manual-' . $task->id ) ),
+					'sweep'    => 0,
+				),
+			),
+			$this->all_call_params( 'backup_task_prune' )
+		);
+		$this->assertSame( 'error', end( $marks )[0] );
+		$this->assertStringContainsString( MainWP_Backup_Error_Codes::ERR_DISK_FULL, end( $marks )[1] );
+		$failed_polls = array_values(
+			array_filter(
+				$polls,
+				static function ( $poll ) {
+					return 'download' === ( $poll[1]['op'] ?? '' ) && MainWP_Backup_Error_Codes::ERR_DISK_FULL === ( $poll[0]['error_code'] ?? '' );
+				}
+			)
+		);
+		$this->assertCount( 1, $failed_polls );
+		$this->assertFalse( $failed_polls[0][0]['sent'] );
+		global $wpdb;
+		$history = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ) . ' WHERE task_id = %d AND site_id = %d ORDER BY id DESC LIMIT 1', $task->id, $site_id ) ); // phpcs:ignore WordPress.DB -- history evidence.
+		$this->assertSame( 'failed', $history->outcome );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $history->error_code );
+		$this->assertSame( array(), glob( \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . '*.zip' ) );
+	}
+
+	/**
 	 * Run Now extends the chain and announces success after recording it.
 	 *
 	 * @return void

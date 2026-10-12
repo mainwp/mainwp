@@ -81,6 +81,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @param string $pType   'full' or 'db' to download a backup.
      * @param string $pUrl    Remote backup identifier passed to the child.
      * @param string $pFile   Local destination inside this site's backup directory.
+     * @param mixed  $pSize   Completed artifact size, or false when unknown.
      *
      * @return bool True on success, including when the type is not 'full' or 'db'.
      * @throws MainWP_Exception If the destination is outside the site's backup directory,
@@ -91,7 +92,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      */
-    public static function backup_download_file( int $pSiteId, string $pType, string $pUrl, string $pFile ): bool {
+    public static function backup_download_file( int $pSiteId, string $pType, string $pUrl, string $pFile, $pSize = false ): bool {
         if ( ! MainWP_Backup_Private_Root::is_within_private_site_dir( $pFile, $pSiteId ) ) {
             // The local path round-trips through the browser between the
             // create and download requests, so it is attacker-influenced:
@@ -137,6 +138,10 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         // Files recorded by complete backup snapshots belong to snapshot
         // retention; the sweep neither counts nor deletes them.
         $protected = MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( $pSiteId );
+        if ( is_numeric( $pSize ) && (float) $pSize > 0 ) {
+            // A native update-gate download can resume this incoming file.
+            $protected[ MainWP_Backup_Snapshots::normalise_path( $pFile ) ] = true;
+        }
         foreach ( MainWP_DB_Backup::instance()->get_open_run_download_paths( $pSiteId ) as $path ) {
             $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] = true;
         }
@@ -213,8 +218,8 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
 
         if ( 'db' === $pType || 'full' === $pType ) {
-            static::download_backup_artifact( $website, $pUrl, $pFile, false, $http_user_plain, $http_pass_plain );
-            static::validate_backup_file( $pFile, false );
+            static::download_backup_artifact( $website, $pUrl, $pFile, $pSize, $http_user_plain, $http_pass_plain );
+            static::validate_backup_file( $pFile, $pSize );
         }
 
         return true;

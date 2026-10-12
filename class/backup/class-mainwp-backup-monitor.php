@@ -323,6 +323,20 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
+        if ( isset( $preflight['estimated_bytes'], $preflight['disk_free'] ) && is_numeric( $preflight['estimated_bytes'] ) && is_numeric( $preflight['disk_free'] ) && (float) $preflight['estimated_bytes'] > (float) $preflight['disk_free'] ) {
+            do_action(
+                'mainwp_log_warning',
+                sprintf(
+                    /* translators: 1: estimated site size, 2: available Child disk space */
+                    esc_html__( 'The child site estimates its site size at %1$s, more than its %2$s of free disk space. The backup runs anyway because the real archive is usually much smaller than the estimate. If the backup fails for lack of disk space, free up space on the child site and run it again.', 'mainwp' ),
+                    esc_html( size_format( (float) $preflight['estimated_bytes'] ) ),
+                    esc_html( size_format( (float) $preflight['disk_free'] ) )
+                ),
+                (int) $website->id,
+                $diag_task_id
+            );
+        }
+
         if ( isset( $preflight['time_limit_ok'] ) && ! $preflight['time_limit_ok'] ) {
             do_action( 'mainwp_log_warning', 'Child site cannot call set_time_limit(). Large backups may time out.', (int) $website->id, $diag_task_id );
         }

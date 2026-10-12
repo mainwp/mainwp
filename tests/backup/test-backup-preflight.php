@@ -104,6 +104,47 @@ class MainWP_Backup_Preflight_Test extends MainWP_Abilities_Test_Case {
 		);
 	}
 
+	/** The raw estimate warns without preventing the Child task from starting. */
+	public function test_disk_estimate_is_advisory_and_backup_starts() {
+		$site_id = $this->create_test_site();
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(
+					array(
+						'estimated_bytes' => 3 * GB_IN_BYTES,
+						'disk_free'       => GB_IN_BYTES,
+					)
+				),
+				'backup_task_create' => array(
+					'task_id' => 'advisory-task',
+					'phase'   => 'queued',
+				),
+			)
+		);
+		$warnings = array();
+		$capture  = static function ( $message, $site = 0 ) use ( &$warnings ) {
+			$warnings[] = array( $message, $site );
+		};
+		add_action( 'mainwp_log_warning', $capture, 10, 2 );
+		try {
+			$this->assertSame( 'advisory-task', MainWP_Backup_Executor::trigger_backup( $site_id ) );
+		} finally {
+			remove_action( 'mainwp_log_warning', $capture );
+		}
+		$matching = array_values(
+			array_filter(
+				$warnings,
+				static function ( $warning ) {
+					return str_contains( $warning[0], 'real archive is usually much smaller' );
+				}
+			)
+		);
+		$this->assertCount( 1, $matching );
+		$this->assertStringContainsString( '3 GB', $matching[0][0] );
+		$this->assertStringContainsString( '1 GB', $matching[0][0] );
+		$this->assertSame( $site_id, $matching[0][1] );
+	}
+
 	/**
 	 * A healthy preflight response.
 	 *

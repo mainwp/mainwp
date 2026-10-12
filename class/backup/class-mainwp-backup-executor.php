@@ -24,6 +24,9 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
+    /** Keep the Dashboard's own database and uploads writable. */
+    private const DOWNLOAD_DISK_MARGIN = 100 * MB_IN_BYTES;
+
     /** The spine and gate share the five-attempt limit. */
     private const RUN_ATTEMPT_CAP = 5;
 
@@ -1133,6 +1136,40 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 $backupTaskProgress = $own_row;
             }
 
+            $downloads = array();
+            foreach ( array(
+                'db'   => 'DB',
+                'full' => 'FULL',
+            ) as $role => $column ) {
+                if ( empty( $information[ $role ] ) ) {
+                    continue;
+                }
+                $size = empty( $information['db'] ) || empty( $information['full'] ) ? ( $information['size'] ?? false ) : false;
+                foreach ( (array) ( $information['artifacts'] ?? array() ) as $artifact ) {
+                    if ( ( $artifact['file'] ?? '' ) === $information[ $role ] ) {
+                        $size = $artifact['size'] ?? false;
+                        break;
+                    }
+                }
+                $downloads[] = array(
+                    'size'     => is_numeric( $size ) && (float) $size > 0 ? $size : false,
+                    'path'     => self::resumable_download_path( (string) $backupTaskProgress->{ 'downloaded' . $column }, (int) $backupTaskProgress->{ 'downloaded' . $column . 'Complete' }, (int) $website->id ),
+                    'complete' => (bool) $backupTaskProgress->{ 'downloaded' . $column . 'Complete' },
+                    'role'     => $role,
+                );
+            }
+            if ( ! empty( $information['full'] ) ) {
+                foreach ( (array) ( $information['artifacts'] ?? array() ) as $artifact ) {
+                    if ( 'manifest' === ( $artifact['role'] ?? '' ) ) {
+                        $downloads[] = array(
+                            'size' => $artifact['size'] ?? false,
+                            'path' => $dir . self::run_dir_name( (string) $backupTaskProgress->child_backup_task_id ) . '/' . MainWP_Utility::sanitize_file_name( basename( (string) ( $artifact['file'] ?? '' ) ) ),
+                        );
+                    }
+                }
+            }
+            self::validate_download_disk_space( $website, $dir, $downloads, (int) $taskId );
+
             $localBackupFile = null;
 
             $fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
@@ -2114,6 +2151,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $wp_filesystem->mkdir( $run_dir, 0750 );
         // Native backup starts revisit the site directory to recover crashed downloads and sweep orphan mutexes.
         MainWP_Backup_File_Manager::cleanup_stale_download_locks( $dir );
+
+        $downloads = array();
+        foreach ( $artifacts as $artifact ) {
+            $downloads[] = array(
+                'size' => $artifact['size'] ?? false,
+                'path' => MainWP_Backup_File_Manager::normalize_filename( $run_dir . MainWP_Utility::sanitize_file_name( basename( (string) ( $artifact['file'] ?? '' ) ) ) ),
+                'role' => $artifact['role'] ?? '',
+            );
+        }
+        self::validate_download_disk_space( $website, $run_dir, $downloads, (int) $pTask->id );
 
         $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
         $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
@@ -3190,12 +3237,36 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         } while ( 'running' === $status['status'] && microtime( true ) < $deadline );
 
         $downloaded = '';
+        $rejected   = '';
         if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {
             $type  = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
             $local = self::build_local_backup_file( $website, $type, $status['meta']['file'] );
-            MainWP_Backup_File_Manager::backup_download_file( $site_id, $type, $status['meta']['file'], $local );
-            $downloaded              = (string) $status['meta']['file'];
-            $status['meta']['local'] = $local;
+            try {
+                self::validate_download_disk_space(
+                    $website,
+                    dirname( $local ),
+                    array(
+                        array(
+                            'size' => $status['meta']['size'] ?? false,
+                            'path' => $local,
+                            'role' => $type,
+                        ),
+                    )
+                );
+            } catch ( MainWP_Exception $e ) {
+                if ( MainWP_Backup_Error_Codes::ERR_DISK_FULL !== $e->get_message_error_code() ) {
+                    throw $e; // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- preserve the original exception.
+                }
+                $rejected                     = (string) $status['meta']['file'];
+                $status['status']             = 'failed';
+                $status['meta']['error']      = $e->getMessage();
+                $status['meta']['error_code'] = $e->get_message_error_code();
+            }
+            if ( 'completed' === $status['status'] ) {
+                MainWP_Backup_File_Manager::backup_download_file( $site_id, $type, $status['meta']['file'], $local, $status['meta']['size'] ?? false );
+                $downloaded              = (string) $status['meta']['file'];
+                $status['meta']['local'] = $local;
+            }
         }
 
         if ( 'running' !== $status['status'] ) {
@@ -3238,11 +3309,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         // reports no result, so the handle is read back: while it still names
         // this task, the next call resumes it and downloads the archive again,
         // and the child copy has to be there for that.
-        if ( '' !== $downloaded && self::adhoc_handle_released( (int) $website->id, $task_id ) ) {
+        $cleanup_file = '' !== $downloaded ? $downloaded : $rejected;
+        if ( '' !== $cleanup_file && self::adhoc_handle_released( (int) $website->id, $task_id ) ) {
             try {
-                MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $downloaded ) );
+                MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $cleanup_file ) );
             } catch ( \Exception $e ) {
-                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed after a validated download: ' . $e->getMessage() );
+                MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Remote backup cleanup failed: ' . $e->getMessage() );
             }
         }
 
@@ -3562,6 +3634,86 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return '';
         }
         return $path;
+    }
+
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the error-code factory returns MainWP_Exception.
+    /**
+     * Reserve space for all remaining artifacts before the first transfer.
+     *
+     * @param object $website   Child site.
+     * @param string $directory Download directory.
+     * @param array  $downloads Sizes, paths, roles and completion flags.
+     * @param int    $task_id   Driving Dashboard task, or zero for the update gate.
+     * @return void
+     * @throws MainWP_Exception When capacity is insufficient or a partial file is locked.
+     */
+    private static function validate_download_disk_space( object $website, string $directory, array $downloads, int $task_id = 0 ): void {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        $total     = 0.0;
+        $remaining = 0.0;
+        foreach ( $downloads as $download ) {
+            if ( ! is_numeric( $download['size'] ) || ! is_finite( (float) $download['size'] ) || (float) $download['size'] < 0 ) {
+                return;
+            }
+            $size   = (float) $download['size'];
+            $total += $size;
+            if ( ! empty( $download['complete'] ) ) {
+                continue;
+            }
+            $stored = is_file( $download['path'] ) ? @filesize( $download['path'] ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- a disappeared partial has no reusable bytes.
+            if ( false !== $stored && (float) $stored === $size && in_array( $download['role'] ?? '', array( 'part', 'db', 'full' ), true ) ) {
+                try {
+                    MainWP_Backup_File_Manager::validate_backup_file( $download['path'], $download['size'] );
+                } catch ( MainWP_Exception $e ) {
+                    $stored = false;
+                }
+            }
+            $remaining += false !== $stored && (float) $stored <= $size ? $size - (float) $stored : $size;
+        }
+        if ( $remaining <= 0 ) {
+            return;
+        }
+        $free = function_exists( 'disk_free_space' ) ? @disk_free_space( $directory ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- may be disabled by the host.
+        if ( ! is_numeric( $free ) || ! is_finite( (float) $free ) || (float) $free < 0 || $remaining + self::DOWNLOAD_DISK_MARGIN <= (float) $free ) {
+            return;
+        }
+
+        foreach ( $downloads as $download ) {
+            $path = $download['path'];
+            if ( ! empty( $download['complete'] ) || ! is_file( $path ) || ! MainWP_Backup_Private_Root::is_within_private_site_dir( $path, (int) $website->id ) ) {
+                continue;
+            }
+            if ( ! MainWP_Backup_File_Manager::acquire_download_lock( $path, (int) $website->id, $task_id ) ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $path ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            }
+            try {
+                wp_delete_file( $path );
+            } finally {
+                MainWP_Backup_File_Manager::release_download_lock( $path );
+            }
+        }
+        $exception = new MainWP_Exception(
+            sprintf(
+                /* translators: 1: real backup size, 2: available Dashboard disk space */
+                esc_html__( 'The Dashboard server does not have enough free disk space for this backup: backup size %1$s, free space %2$s. Free up space on the Dashboard server and run the backup again.', 'mainwp' ),
+                esc_html( size_format( $total ) ),
+                esc_html( size_format( 0.0 === (float) $free ? 0 : (float) $free ) )
+            ),
+            null,
+            MainWP_Backup_Error_Codes::ERR_DISK_FULL
+        );
+        $exception->set_data( array( 'dashboard_disk_space' => true ) );
+        self::record_thrown_request(
+            $exception,
+            0.0,
+            array( 'sent' => false ),
+            array(
+                'op'      => 'download',
+                'site_id' => (int) $website->id,
+                'task_id' => $task_id,
+            )
+        );
+        throw $exception; // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- message parts are escaped above.
     }
 
     /**

@@ -486,6 +486,100 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Update-gate downloads use completed size and account for a partial file.
+	 *
+	 * @dataProvider update_gate_disk_cases
+	 * @param mixed $free Measured capacity.
+	 * @param mixed $size Completed size, or null when missing.
+	 * @param int   $partial Bytes already stored.
+	 * @param bool  $refused Expected refusal.
+	 */
+	public function test_update_gate_download_disk_guard( $free, $size, $partial, $refused ) {
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'gate-disk',
+					'type'    => 'full',
+					'started' => time() - 60,
+				)
+			)
+		);
+		\MainWP\Dashboard\MainWP_Backup_Run_History::start( 0, $site_id, time() - 60, 'update_gate', (int) $website->userid, null, 'gate-disk' );
+		$payload = array(
+			'phase' => 'completed',
+			'type'  => 'full',
+			'file'  => 'gate.zip',
+		);
+		if ( null !== $size ) {
+			$payload['size'] = $size;
+		}
+		$this->mock_child_action( 'backup_task_run', $payload );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		$called = array();
+		$this->record_child_actions( $called );
+		$builder = new \ReflectionMethod( MainWP_Backup_Executor::class, 'build_local_backup_file' );
+		$local   = $builder->invoke( null, $website, 'full', 'gate.zip' );
+		if ( $partial > 0 ) {
+			file_put_contents( $local, 'PK' . str_repeat( 'x', $partial - 2 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- resume fixture.
+		}
+		$downloads              = array();
+		$stored_before_transfer = array();
+		add_filter(
+			'mainwp_download_to_file_pre',
+			static function ( $pre, $url, $file, $expected ) use ( &$downloads, &$stored_before_transfer ) {
+				$downloads[]              = $expected;
+				$stored_before_transfer[] = is_file( $file ) ? filesize( $file ) : 0;
+				file_put_contents( $file, "PK\x03\x04" . str_repeat( 'z', 62 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- transfer fixture.
+				return true;
+			},
+			10,
+			4
+		);
+		MainWP_Backup_TestRestore_Sandbox_Test::$free_space = $free;
+		ob_start();
+		try {
+			$status = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'gate-disk', 60 );
+		} finally {
+			ob_end_clean();
+			MainWP_Backup_TestRestore_Sandbox_Test::$free_space = null;
+		}
+		$this->assertSame( $refused ? 'failed' : 'completed', $status['status'] );
+		if ( $refused ) {
+			$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_DISK_FULL, $status['meta']['error_code'] );
+			$this->assertSame( array(), $downloads );
+			$this->assertFileDoesNotExist( $local );
+		} else {
+			$this->assertFileExists( $local );
+			$this->assertSame( array( $size ?? false ), $downloads );
+			$this->assertSame( array( $partial ), $stored_before_transfer, 'The retention sweep must preserve the partial used by the guard.' );
+		}
+		$this->assertContains( 'delete_backup', $called );
+		$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $website, 'adhoc_backup_task' ) );
+	}
+
+	/**
+	 * Update-gate capacity and resume cases.
+	 *
+	 * @return array
+	 */
+	public static function update_gate_disk_cases() {
+		$margin = 100 * MB_IN_BYTES;
+		return array(
+			'refused'         => array( $margin + 65, 66, 0, true ),
+			'fits exactly'    => array( $margin + 66, 66, 0, false ),
+			'free unknown'    => array( false, 66, 0, false ),
+			'size missing'    => array( 1, null, 0, false ),
+			'resume fits'     => array( $margin + 33, 66, 33, false ),
+			'resume rejected' => array( $margin + 32, 66, 33, true ),
+		);
+	}
+
+	/**
 	 * A database-only ad-hoc backup also leaves the child after its download,
 	 * and a child that fails the delete still gets the completion hook and
 	 * the cleared handle.

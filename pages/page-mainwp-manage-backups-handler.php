@@ -1501,8 +1501,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 }
 
                 // A failed snapshot insert must surface now, even when downloads classify as record_pending.
+                $_error_data    = $e instanceof MainWP_Exception ? $e->get_data() : null;
+                $_disk_refused  = $e instanceof MainWP_Exception && MainWP_Backup_Error_Codes::ERR_DISK_FULL === $e->get_message_error_code() && is_array( $_error_data ) && true === ( $_error_data['dashboard_disk_space'] ?? false );
                 $_record_failed = $e instanceof MainWP_Exception && MainWP_Backup_Error_Codes::ERR_SNAPSHOT_RECORD_FAILED === $e->get_message_error_code();
-                $_resumable     = ( ! $_record_failed && (int) $task->completed < (int) $task->last_run )
+                $_resumable     = ( ! $_record_failed && ! $_disk_refused && (int) $task->completed < (int) $task->last_run )
                     ? MainWP_DB_Backup::instance()->is_backup_site_resumable_for_run( $task, $siteid )
                     : false;
                 if ( false !== $_resumable ) {
@@ -1532,8 +1534,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $errorOutput  .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
                 $_error_code   = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
                 $_history_code = MainWP_Backup_Error_Codes::code_for_exception( $e );
-                // Readiness failures need the Child's reason so the user can correct it.
-                $_error_output = MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED !== $_error_code && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
+                // Readiness and download-capacity failures need their specific remedy.
+                $_error_output = ! $_disk_refused && MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED !== $_error_code && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
                 $errorOutput  .= $_error_output . '<br />';
                 // Progress rows can outlive the task-level error record.
                 $_progress_values = array( 'last_error' => $_error_output );

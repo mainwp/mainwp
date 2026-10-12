@@ -659,6 +659,9 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Child archives include custom and resumed names, not just generated prefixes.
      *
+     * The Child runs the name through sanitize_text_field() before deleting, so a name that
+     * sanitizing would change (tags, octets, extra whitespace) could reach it as a different file.
+     *
      * @param mixed $file Child archive basename.
      * @return bool Whether the name can be sent to the Child for deletion.
      */
@@ -668,7 +671,8 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             && false === strpos( $file, '\\' )
             && false === strpos( $file, "\0" )
             && false === strpos( $file, '..' )
-            && 1 === preg_match( '/\.(?:zip|tar(?:\.gz|\.bz2)?)\z/', $file );
+            && 1 === preg_match( '/\.(?:zip|tar(?:\.gz|\.bz2)?)\z/', $file )
+            && sanitize_text_field( $file ) === $file;
     }
 
     /**

@@ -157,6 +157,14 @@ class Test_Backup_Delete_File_Gate extends \WP_UnitTestCase {
             'disguised PHP'     => array( 'x.zip.php' ),
             'PHP file'          => array( 'wp-config.php' ),
             'unanchored suffix' => array( "x.zip\n" ),
+            // The Child sanitizes the name before deleting, so each of these would reach it as a different file.
+            'tag hides suffix'  => array( 'backup-123.pid<!--x>.zip' ),
+            'unclosed tag'      => array( 'backup-123.pid<x.zip' ),
+            'percent octet'     => array( 'backup%2d1.zip' ),
+            'leading space'     => array( ' x.zip' ),
+            'double space'      => array( 'x  y.zip' ),
+            'tab'               => array( "x\t.zip" ),
+            'invalid UTF-8'     => array( "x\xff.zip" ),
         );
     }
 
@@ -182,6 +190,7 @@ class Test_Backup_Delete_File_Gate extends \WP_UnitTestCase {
         $site = $this->create_test_site();
         try {
             MainWP_Backup_Handler::backup_delete_file( $site, $name );
+            $this->fail( 'Expected an invalid archive name to throw.' );
         } catch ( \MainWP\Dashboard\MainWP_Exception $exception ) {
             $this->assertNotEmpty( $exception->getMessage() );
         }

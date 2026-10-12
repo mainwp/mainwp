@@ -20,10 +20,6 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array Neutral error evidence.
      */
     private static function error_value( string $source_text, string $code = '' ): array {
-        // The progress row's error column also holds run state as a JSON object, which is not error text.
-        if ( is_array( json_decode( $source_text, true ) ) ) {
-            $source_text = '';
-        }
         if ( '' === $code && preg_match( '/^\[(mainwp_[a-z0-9_]+)\]/', $source_text, $match ) ) {
             $code = $match[1];
         }
@@ -31,6 +27,16 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'code'        => '' !== $code ? $code : MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR,
             'source_text' => $source_text,
         );
+    }
+
+    /**
+     * The progress row's error column also holds run state as a JSON object, which is not error text.
+     *
+     * @param string $last_error Progress row error column.
+     * @return string Error text, or '' for run state.
+     */
+    private static function progress_error_text( string $last_error ): string {
+        return is_array( json_decode( $last_error, true ) ) ? '' : $last_error;
     }
 
     /**
@@ -122,7 +128,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'label'        => $detail['label'] ?? '',
                 'percent'      => $detail['percent'] ?? null,
                 'current_file' => $detail['current_file'] ?? '',
-                'error'        => self::error_value( 'failed' === $status && $progress ? (string) $progress->last_error : '', 'failed' === $status && $progress ? (string) ( $progress->fetchResult['error_code'] ?? '' ) : '' ),
+                'error'        => self::error_value( 'failed' === $status && $progress ? self::progress_error_text( (string) $progress->last_error ) : '', 'failed' === $status && $progress ? (string) ( $progress->fetchResult['error_code'] ?? '' ) : '' ),
                 'snapshot'     => $snapshot ? array(
                     'id'        => (int) $snapshot->id,
                     'type'      => $snapshot->type,
@@ -1041,7 +1047,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             foreach ( array_intersect( MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ), $authorized ) as $id ) {
                 $attempts[ $id ] = max( $attempts[ $id ] ?? 0, $started );
                 $progress        = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $id );
-                $error           = $progress && (int) $progress->dtsFetched >= $started ? (string) $progress->last_error : (string) $task->backup_errors;
+                $error           = $progress && (int) $progress->dtsFetched >= $started ? self::progress_error_text( (string) $progress->last_error ) : (string) $task->backup_errors;
                 // The runner marks completion after errors too; an archive alone cannot override an error mark.
                 if ( empty( $completed[ $id ] ) || '' !== $error ) {
                     continue;

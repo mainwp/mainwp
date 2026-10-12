@@ -241,37 +241,34 @@ class MainWP_Backup_Safe_Error_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Run state stored in the progress row's error column is not shown as error text.
+	 * Run state stored in the progress row's error column is not error text; other columns keep theirs.
 	 *
-	 * @return array Stored text, expected source text, expected code.
+	 * @return array Stored text, expected progress-column text.
 	 */
 	public function run_state_error_cases() {
 		return array(
-			'reconcile run state' => array( '{"last_progress_at":"2026-10-12 12:00:00","reconcile_pending":{"phase":"dumping_db"}}', '', MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR ),
-			'incremental marker'  => array( '{"incremental_sent":"run"}', '', MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR ),
-			'plain message'       => array( 'The private volume is full.', 'The private volume is full.', MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR ),
-			'prefixed code'       => array( '[mainwp_backup_disk_full] Full.', '[mainwp_backup_disk_full] Full.', 'mainwp_backup_disk_full' ),
-			'empty'               => array( '', '', MainWP_Backup_Error_Codes::ERR_UNCLASSIFIED_ERROR ),
+			'reconcile run state' => array( '{"last_progress_at":"2026-10-12 12:00:00","reconcile_pending":{"phase":"dumping_db"}}', '' ),
+			'incremental marker'  => array( '{"incremental_sent":"run"}', '' ),
+			'plain message'       => array( 'The private volume is full.', 'The private volume is full.' ),
+			'prefixed code'       => array( '[mainwp_backup_disk_full] Full.', '[mainwp_backup_disk_full] Full.' ),
+			'empty'               => array( '', '' ),
 		);
 	}
 
 	/**
-	 * A failed site's error value drops run-state JSON and keeps real messages.
+	 * Only the progress row's column drops run-state JSON; the shared error value keeps any text.
 	 *
 	 * @dataProvider run_state_error_cases
-	 * @param string $stored Progress row error column.
-	 * @param string $source_text Expected source text.
-	 * @param string $code Expected code.
+	 * @param string $stored Stored text.
+	 * @param string $progress_text Expected text from the progress-row column.
 	 */
-	public function test_run_state_json_is_not_error_text( $stored, $source_text, $code ) {
-		$method = new \ReflectionMethod( MainWP_Backup_Read_Model::class, 'error_value' );
-		$method->setAccessible( true );
-		$this->assertSame(
-			array(
-				'code'        => $code,
-				'source_text' => $source_text,
-			),
-			$method->invoke( null, $stored )
-		);
+	public function test_run_state_json_is_not_error_text( $stored, $progress_text ) {
+		$model    = new \ReflectionClass( MainWP_Backup_Read_Model::class );
+		$progress = $model->getMethod( 'progress_error_text' );
+		$value    = $model->getMethod( 'error_value' );
+		$progress->setAccessible( true );
+		$value->setAccessible( true );
+		$this->assertSame( $progress_text, $progress->invoke( null, $stored ) );
+		$this->assertSame( $stored, $value->invoke( null, $stored )['source_text'], 'Restore and task errors keep their stored text.' );
 	}
 }

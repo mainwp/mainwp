@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.2
 Requires PHP: 7.4
-Stable tag: 6.2.2
+Stable tag: 6.2.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -150,6 +150,12 @@ Please report security bugs found in the source code of the MainWP plugin throug
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.2.3 - 10-12-2026 =
+
+* Security: REST API keys now authenticate only MainWP REST API routes. A request to any other route made with a REST API key is refused.
+* Security: REST API keys whose owner was deleted or removed from the Dashboard site are now refused and removed.
+* Security: Failed REST API key, secret, and signature checks now return the same error. Cached key data expires after five minutes and is cleared when a key is edited or deleted.
 
 = 6.2.2 - 10-1-2026 =
 

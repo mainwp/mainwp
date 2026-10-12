@@ -4646,6 +4646,345 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A database cursor can move while the visible table and byte counters stay fixed.
+	 *
+	 * @param string|null $stamp Child progress timestamp.
+	 * @return array Child reply.
+	 */
+	private function s83_safety_progress_reply( $stamp ) {
+		$reply = array(
+			'phase'    => 'dumping_db',
+			'progress' => array(
+				'files_processed' => 1,
+				'bytes_done'      => 100,
+			),
+		);
+		if ( null !== $stamp ) {
+			$reply['last_progress_at'] = $stamp;
+		}
+		return $reply;
+	}
+
+	/**
+	 * Equal status spends an attempt; eight timestamp-only advances complete the safety backup.
+	 */
+	public function test_s83_pre_snapshot_timestamp_progress_uses_last_observed_reply() {
+		$job                                   = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array( 'pre_snapshot_task_id' => 's83-safety' ) );
+		$same                                  = $this->s83_safety_progress_reply( '2026-10-12 12:00:00' );
+		$auth                                  = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$this->responses['backup_task_run']    = array( $same, $auth );
+		$job                                   = $this->a1_safety_tick( $job );
+		$this->responses['backup_task_run']    = $auth;
+		$this->responses['backup_task_status'] = $same;
+		$job                                   = $this->a1_safety_tick( $job );
+		$this->assertSame( 2, (int) $job->attempt_count, 'The first status equals the last observed run reply.' );
+		for ( $round = 1; $round <= 8; ++$round ) {
+			$this->responses['backup_task_status'] = $this->s83_safety_progress_reply( '2026-10-12 12:00:0' . $round );
+			$job                                   = $this->a1_safety_tick( $job );
+			$this->assertSame( 0, (int) $job->attempt_count, 'Timestamp-only progress must reset attempts.' );
+			$this->assertSame( '2026-10-12 12:00:0' . $round, $job->checkpoint['pre_snapshot_progress']['last_progress_at'] ?? null );
+			$job = $this->a1_safety_tick( $job );
+		}
+		$this->responses['backup_task_status'] = array(
+			'task_id'   => 's83-safety',
+			'phase'     => 'completed',
+			'artifacts' => array(
+				array(
+					'file' => 'safety.zip',
+					'size' => 10,
+					'role' => 'full',
+				),
+			),
+		);
+		$job                                   = $this->a1_safety_tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( 'safety.zip', $job->checkpoint['pre_snapshot_artifacts'][0]['file'] );
+		$this->assertSame( array_merge( array( 'backup_task_run', 'backup_task_run', 'backup_task_status' ), array_merge( ...array_fill( 0, 8, array( 'backup_task_status', 'backup_task_run' ) ) ), array( 'backup_task_status' ) ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A confirmed replay gets seven attempts even after three failed transports.
+	 */
+	public function test_s83_pre_snapshot_replay_renews_full_unchanged_window() {
+		$same                                  = $this->s83_safety_progress_reply( '2026-10-12 12:00:00' );
+		$job                                   = $this->make_job(
+			array(
+				'pre_snapshot_progress' => array(
+					'phase'            => 'dumping_db',
+					'files'            => 1,
+					'bytes'            => 100,
+					'last_progress_at' => $same['last_progress_at'],
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array( 'pre_snapshot_task_id' => 's83-safety-stuck' )
+		);
+		$this->responses['backup_task_run']    = new MainWP_Exception( 'HTTPERROR' );
+		$this->responses['backup_task_status'] = $same;
+		for ( $attempt = 1; $attempt <= 3; ++$attempt ) {
+			MainWP_Backup_Restore_Job_Store::instance()->set_status( (int) $job->id, $job->status, array( 'next_retry_at' => 0 ) );
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+			$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status, 'Each transport failure must remain retryable.' );
+			$this->assertSame( $attempt, (int) $job->attempt_count );
+		}
+		$this->responses['backup_task_run'] = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		MainWP_Backup_Restore_Job_Store::instance()->set_status( (int) $job->id, $job->status, array( 'next_retry_at' => 0 ) );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		$this->assertSame( 1, (int) $job->attempt_count, 'A confirmed replay starts a fresh window.' );
+		for ( $attempt = 2; $attempt < 7; ++$attempt ) {
+			$job = $this->a1_safety_tick( $job );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, $job->status );
+			$this->assertSame( $attempt, (int) $job->attempt_count );
+			$this->assertArrayNotHasKey( 'last_error_extra', $job->checkpoint );
+		}
+		$job = $this->a1_safety_tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $job->checkpoint['last_error_code'] );
+		$this->assertSame( 'AUTH_ERROR2', $job->checkpoint['last_error_extra'] ?? null );
+		$operations = array_column( $this->calls, 'what' );
+		$this->assertSame(
+			4,
+			count(
+				array_filter(
+					$operations,
+					static function ( $op ) {
+						return 'backup_task_run' === $op;
+					}
+				)
+			)
+		);
+		$this->assertSame(
+			9,
+			count(
+				array_filter(
+					$operations,
+					static function ( $op ) {
+						return 'backup_task_status' === $op;
+					}
+				)
+			)
+		);
+	}
+
+	/**
+	 * Both failures may happen before the Child receives the run request.
+	 *
+	 * @return array Run failure cases.
+	 */
+	public function s83_unconfirmed_run_cases() {
+		return array(
+			'thrown'    => array( new MainWP_Exception( 'HTTPERROR' ) ),
+			'shapeless' => array( array() ),
+		);
+	}
+
+	/**
+	 * A replay discards prior no-progress attempts before charging its first attempt.
+	 */
+	public function test_s83_pre_snapshot_confirmed_replay_resets_prior_attempts() {
+		$same = $this->s83_safety_progress_reply( '2026-10-12 12:00:00' );
+		$job  = $this->make_job(
+			array(
+				'pre_snapshot_progress' => array(
+					'phase'            => 'dumping_db',
+					'files'            => 1,
+					'bytes'            => 100,
+					'last_progress_at' => $same['last_progress_at'],
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array(
+				'pre_snapshot_task_id' => 's83-prior-attempts',
+				'attempt_count'        => 3,
+			)
+		);
+		MainWP_DB::instance()->update_website_option(
+			$this->site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id' => 's83-prior-attempts',
+					'owner'   => (string) $job->id,
+				)
+			)
+		);
+		$this->responses['backup_task_run']    = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$this->responses['backup_task_status'] = $same;
+		$job                                   = $this->a1_safety_tick( $job );
+		$this->assertSame( 1, (int) $job->attempt_count, 'A confirmed replay starts a fresh window.' );
+		for ( $attempt = 2; $attempt < 7; ++$attempt ) {
+			$job = $this->a1_safety_tick( $job );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, $job->status );
+			$this->assertSame( $attempt, (int) $job->attempt_count );
+		}
+		$job = $this->a1_safety_tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $job->checkpoint['last_error_code'] );
+		$this->assertSame( 'AUTH_ERROR2', $job->checkpoint['last_error_extra'] ?? null );
+		$this->assertSame( array_merge( array( 'backup_task_run' ), array_fill( 0, 6, 'backup_task_status' ), array( 'backup_task_cancel' ) ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * An armed retry reads once and resends in that slice without charging the read.
+	 *
+	 * @dataProvider s83_unconfirmed_run_cases
+	 * @param mixed $failure Run transport failure.
+	 */
+	public function test_s83_pre_snapshot_unconfirmed_retry_resends_run( $failure ) {
+		$same                                  = $this->s83_safety_progress_reply( '2026-10-12 12:00:00' );
+		$job                                   = $this->make_job(
+			array(
+				'pre_snapshot_progress' => array(
+					'phase'            => 'dumping_db',
+					'files'            => 1,
+					'bytes'            => 100,
+					'last_progress_at' => $same['last_progress_at'],
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array( 'pre_snapshot_task_id' => 's83-retry' )
+		);
+		$this->responses['backup_task_run']    = $failure;
+		$this->responses['backup_task_status'] = $same;
+		for ( $attempt = 1; $attempt <= 2; ++$attempt ) {
+			MainWP_Backup_Restore_Job_Store::instance()->set_status( (int) $job->id, $job->status, array( 'next_retry_at' => 0 ) );
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+			$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+			$this->assertSame( $attempt, (int) $job->attempt_count, 'Only the failed run spends an attempt.' );
+			$this->assertArrayNotHasKey( 'last_error_extra', $job->checkpoint );
+		}
+		$this->assertSame( array( 'backup_task_run', 'backup_task_status', 'backup_task_run' ), array_column( $this->calls, 'what' ) );
+		$this->responses['backup_task_run'] = array(
+			'task_id'   => 's83-retry',
+			'phase'     => 'completed',
+			'artifacts' => array(
+				array(
+					'file' => 'safety.zip',
+					'size' => 10,
+					'role' => 'full',
+				),
+			),
+		);
+		$job                                = $this->a1_safety_tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertArrayNotHasKey( 'last_error_extra', $job->checkpoint );
+		$this->assertSame( array( 'backup_task_run', 'backup_task_status', 'backup_task_run', 'backup_task_status', 'backup_task_run' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * Missing and empty timestamps both leave the initial comparison unknown.
+	 *
+	 * @return array Baseline cases.
+	 */
+	public function s83_safety_unknown_timestamp_cases() {
+		return array(
+			'missing' => array( null ),
+			'empty'   => array( '' ),
+		);
+	}
+
+	/**
+	 * A first nonempty safety timestamp proves movement without a prior token.
+	 *
+	 * @dataProvider s83_safety_unknown_timestamp_cases
+	 * @param string|null $baseline Last observed timestamp.
+	 */
+	public function test_s83_pre_snapshot_unknown_timestamp_baseline( $baseline ) {
+		$previous = array(
+			'phase' => 'dumping_db',
+			'files' => 1,
+			'bytes' => 100,
+		);
+		if ( null !== $baseline ) {
+			$previous['last_progress_at'] = $baseline;
+		}
+		$job                                   = $this->make_job(
+			array(
+				'pre_snapshot_progress'          => $previous,
+				'pre_snapshot_reconcile_pending' => true,
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array(
+				'pre_snapshot_task_id' => 's83-safety-unknown',
+				'attempt_count'        => 2,
+			)
+		);
+		$this->responses['backup_task_status'] = $this->s83_safety_progress_reply( '2026-10-12 12:00:00' );
+		$job                                   = $this->a1_safety_tick( $job );
+		$this->assertSame( 0, (int) $job->attempt_count );
+		$this->assertArrayNotHasKey( 'pre_snapshot_reconcile_pending', $job->checkpoint );
+		$this->assertSame( array( 'backup_task_status' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A successor reads the armed status before retrying a run whose reply was lost with the lease.
+	 */
+	public function test_s83_pre_snapshot_lease_successor_reads_before_retry() {
+		$same                               = $this->s83_safety_progress_reply( '2026-10-12 12:00:00' );
+		$job                                = $this->make_job(
+			array(
+				'pre_snapshot_progress' => array(
+					'phase'            => 'dumping_db',
+					'files'            => 1,
+					'bytes'            => 100,
+					'last_progress_at' => $same['last_progress_at'],
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array( 'pre_snapshot_task_id' => 's83-successor' )
+		);
+		$this->responses['backup_task_run'] = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$reclaim                            = static function () use ( $job ) {
+			MainWP_Backup_Restore_Job_Store::instance()->set_status(
+				(int) $job->id,
+				MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+				array(
+					'locked_by'    => 'successor',
+					'locked_until' => time() + 3600,
+				)
+			);
+		};
+		add_action( 'mainwp_backup_diag_poll', $reclaim );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_action( 'mainwp_backup_diag_poll', $reclaim );
+		}
+		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		$this->assertTrue( $job->checkpoint['pre_snapshot_reconcile_pending'] );
+		$this->responses['backup_task_status'] = $same;
+		$this->responses['backup_task_run']    = array(
+			'task_id'   => 's83-successor',
+			'phase'     => 'completed',
+			'artifacts' => array(
+				array(
+					'file' => 'safety.zip',
+					'size' => 10,
+					'role' => 'full',
+				),
+			),
+		);
+		$job                                   = $this->a1_safety_tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->status );
+		$this->assertSame( array( 'backup_task_run', 'backup_task_status', 'backup_task_run' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
 	 * More than seven lost run replies complete when status keeps advancing.
 	 */
 	public function test_a1_pre_snapshot_replay_progress_survives_eight_rounds() {

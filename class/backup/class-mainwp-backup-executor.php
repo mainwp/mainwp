@@ -690,9 +690,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $run_state = json_decode( (string) $backupTaskProgress->last_error, true );
             $run_state = is_array( $run_state ) ? $run_state : array();
             $watermark = array(
-                'phase' => (string) $backupTaskProgress->child_phase,
-                'files' => (int) $backupTaskProgress->files_processed,
-                'bytes' => (int) $backupTaskProgress->bytes_downloaded,
+                'phase'            => (string) $backupTaskProgress->child_phase,
+                'files'            => (int) $backupTaskProgress->files_processed,
+                'bytes'            => (int) $backupTaskProgress->bytes_downloaded,
+                'last_progress_at' => (string) ( $run_state['last_progress_at'] ?? '' ),
             );
             $reconcile = isset( $run_state['reconcile_pending'] );
             if ( $reconcile ) {
@@ -727,8 +728,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
 
             if ( 'run' === $operation && is_array( $temp ) && 'AUTH_ERROR2' === ( $temp['error_code'] ?? '' ) ) {
+                $current_progress               = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
+                $run_state                      = json_decode( (string) $current_progress->last_error, true );
+                $run_state                      = is_array( $run_state ) ? $run_state : array();
                 $run_state['reconcile_pending'] = array_merge( $watermark, array( 'last_status_at' => microtime( true ) ) );
-                $backupTaskProgress             = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'last_error' => wp_json_encode( $run_state ) ) );
+                $backupTaskProgress             = MainWP_DB_Backup::instance()->update_backup_task_progress(
+                    $taskId,
+                    $website->id,
+                    array(
+                        'last_error' => wp_json_encode( $run_state ),
+                        'attempts'   => 0,
+                    )
+                );
                 $reconcile                      = true;
             }
 
@@ -750,6 +761,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return false; // A successor keeps any pending reconciliation and reads status before running again.
             }
 
+            if ( is_array( $temp ) && isset( $temp['phase'] ) ) {
+                // Other progress writers may have saved their keys during the round trip.
+                $current_progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
+                $run_state        = json_decode( (string) $current_progress->last_error, true );
+                $run_state        = is_array( $run_state ) ? $run_state : array();
+            }
+
             if ( 'run' === $operation && $reconcile ) {
                 $temp = false;
             } elseif ( $reconcile && is_array( $temp ) && isset( $temp['phase'] ) ) {
@@ -761,7 +779,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         $taskId,
                         $website->id,
                         array(
-                            'last_error' => wp_json_encode( $run_state ),
+                            'last_error' => empty( $run_state ) ? '' : wp_json_encode( $run_state ),
                             'attempts'   => 0,
                         )
                     );
@@ -771,7 +789,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
             }
 
-            if ( 'run' === $operation && ! empty( $temp ) && 'incremental' === $type
+            if ( ! empty( $temp ) && 'incremental' === $type
                 && isset( $temp['error_code'] ) && MainWP_Backup_Error_Codes::ERR_INCREMENTAL_BASE_MISSING === $temp['error_code']
                 && self::requeue_incremental_after_base_missing( $website, $pTask, $backupTaskProgress ) ) {
                 return false; // Requeued: the next cycle re-creates the task with the escalated send.
@@ -816,10 +834,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // Unknown phase strings from newer children stay null and keep polling.
                 $phase = MainWP_Backup_Task_Phase::tryFrom( (string) $temp['phase'] );
 
-                // Dashboard sees only the Child's projected progress columns. Internal cursor movement within
-                // one table or file still reads as not advanced if phase, counters and current_file stay the same.
-                // A stored Child progress token would close this gap.
-                $advanced = is_string( $temp['phase'] ) && sanitize_key( $temp['phase'] ) !== (string) $backupTaskProgress->child_phase;
+                // Child checkpoints expose cursor movement that the projected counters omit.
+                $observed = self::task_progress_watermark( $temp, $watermark );
+                $advanced = self::task_progress_advanced( $observed, $watermark );
                 $progress = isset( $temp['progress'] ) && is_array( $temp['progress'] ) ? $temp['progress'] : array();
                 if ( isset( $progress['current_file'] ) && substr( sanitize_text_field( (string) $progress['current_file'] ), 0, 255 ) !== (string) $backupTaskProgress->current_file ) {
                     $advanced = true;
@@ -837,9 +854,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
 
                 self::record_child_progress( $taskId, (int) $website->id, $temp );
-                if ( self::task_progress_advanced( self::task_progress_watermark( $temp, $watermark ), $watermark ) || in_array( (string) $temp['phase'], array( 'completed', 'failed' ), true ) ) {
-                    MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'attempts' => 0 ) );
+                if ( '' !== $observed['last_progress_at'] ) {
+                    $run_state['last_progress_at'] = $observed['last_progress_at'];
                 }
+                $values = array( 'last_error' => empty( $run_state ) ? '' : wp_json_encode( $run_state ) );
+                if ( self::task_progress_advanced( $observed, $watermark ) || in_array( (string) $temp['phase'], array( 'completed', 'failed' ), true ) ) {
+                    $values['attempts'] = 0;
+                }
+                MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, $values );
 
                 if ( (int) $backupTaskProgress->foreign_refused_since > 0 ) {
                     // The lock holder is gone and the slice ran: stop the
@@ -2842,19 +2864,20 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @param array $payload Child reply.
      * @param array $previous Last observed position.
-     * @return array Phase, files and bytes.
+     * @return array Phase, files, bytes and Child progress timestamp.
      */
     private static function task_progress_watermark( array $payload, array $previous = array() ): array {
         $progress = isset( $payload['progress'] ) && is_array( $payload['progress'] ) ? $payload['progress'] : array();
         return array(
-            'phase' => isset( $payload['phase'] ) ? sanitize_key( (string) $payload['phase'] ) : (string) ( $previous['phase'] ?? '' ),
-            'files' => max( 0, (int) ( $progress['files_scanned'] ?? $progress['files_processed'] ?? $previous['files'] ?? 0 ) ),
-            'bytes' => max( 0, (int) ( $progress['bytes_done'] ?? $previous['bytes'] ?? 0 ) ),
+            'phase'            => isset( $payload['phase'] ) ? sanitize_key( (string) $payload['phase'] ) : (string) ( $previous['phase'] ?? '' ),
+            'files'            => max( 0, (int) ( $progress['files_scanned'] ?? $progress['files_processed'] ?? $previous['files'] ?? 0 ) ),
+            'bytes'            => max( 0, (int) ( $progress['bytes_done'] ?? $previous['bytes'] ?? 0 ) ),
+            'last_progress_at' => isset( $payload['last_progress_at'] ) && is_string( $payload['last_progress_at'] ) && '' !== $payload['last_progress_at'] ? $payload['last_progress_at'] : (string) ( $previous['last_progress_at'] ?? '' ),
         );
     }
 
     /**
-     * A phase transition or increasing counters proves the Child moved.
+     * Checkpoints and heartbeats reveal movement within a table or file.
      *
      * @param array $observed Current position.
      * @param array $previous Last observed position.
@@ -2863,7 +2886,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     private static function task_progress_advanced( array $observed, array $previous ): bool {
         return ( $previous['phase'] ?? '' ) !== $observed['phase']
             || $observed['files'] > (int) ( $previous['files'] ?? 0 )
-            || $observed['bytes'] > (int) ( $previous['bytes'] ?? 0 );
+            || $observed['bytes'] > (int) ( $previous['bytes'] ?? 0 )
+            || ( '' !== $observed['last_progress_at'] && (string) ( $previous['last_progress_at'] ?? '' ) !== $observed['last_progress_at'] );
     }
 
     /**

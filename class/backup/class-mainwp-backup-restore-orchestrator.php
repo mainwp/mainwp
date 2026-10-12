@@ -1146,12 +1146,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         while ( microtime( true ) < $deadline ) {
-            $reconcile = ! empty( $job->checkpoint['pre_snapshot_reconcile_pending'] );
-            $operation = $reconcile ? 'backup_task_status' : 'backup_task_run';
+            $reconcile        = ! empty( $job->checkpoint['pre_snapshot_reconcile_pending'] );
+            $confirmed_replay = $reconcile && ( $job->checkpoint['pre_snapshot_replay_confirmed'] ?? true );
+            $operation        = $reconcile ? 'backup_task_status' : 'backup_task_run';
             if ( ! $reconcile ) {
                 // Arm the read before leaving: a reclaimed worker cannot checkpoint a replay afterward.
                 $checkpoint                                   = $job->checkpoint;
                 $checkpoint['pre_snapshot_reconcile_pending'] = true;
+                $checkpoint['pre_snapshot_replay_confirmed']  = false;
                 if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
                     return;
                 }
@@ -1181,6 +1183,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( 'backup_task_run' === $operation && is_array( $payload ) && 'AUTH_ERROR2' === ( $payload['error_code'] ?? '' ) ) {
                 $checkpoint                                   = $job->checkpoint;
                 $checkpoint['pre_snapshot_reconcile_pending'] = true;
+                $checkpoint['pre_snapshot_replay_confirmed']  = true;
+                $job->attempt_count                           = 0;
                 $this->defer_pre_snapshot_reconciliation( $job, $checkpoint );
                 return;
             }
@@ -1191,20 +1195,32 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $previous = (array) ( $job->checkpoint['pre_snapshot_progress'] ?? array() );
                 $progress = isset( $payload['progress'] ) && is_array( $payload['progress'] ) ? $payload['progress'] : array();
                 $observed = array(
-                    'phase' => sanitize_key( $phase ),
-                    'files' => max( 0, (int) ( $progress['files_scanned'] ?? $progress['files_processed'] ?? $previous['files'] ?? 0 ) ),
-                    'bytes' => max( 0, (int) ( $progress['bytes_done'] ?? $previous['bytes'] ?? 0 ) ),
+                    'phase'            => sanitize_key( $phase ),
+                    'files'            => max( 0, (int) ( $progress['files_scanned'] ?? $progress['files_processed'] ?? $previous['files'] ?? 0 ) ),
+                    'bytes'            => max( 0, (int) ( $progress['bytes_done'] ?? $previous['bytes'] ?? 0 ) ),
+                    'last_progress_at' => isset( $payload['last_progress_at'] ) && is_string( $payload['last_progress_at'] ) && '' !== $payload['last_progress_at'] ? $payload['last_progress_at'] : (string) ( $previous['last_progress_at'] ?? '' ),
                 );
                 $moved    = ( $previous['phase'] ?? '' ) !== $observed['phase']
                     || $observed['files'] > (int) ( $previous['files'] ?? 0 )
-                    || $observed['bytes'] > (int) ( $previous['bytes'] ?? 0 );
+                    || $observed['bytes'] > (int) ( $previous['bytes'] ?? 0 )
+                    || ( '' !== $observed['last_progress_at'] && (string) ( $previous['last_progress_at'] ?? '' ) !== $observed['last_progress_at'] );
                 if ( $reconcile && ! $moved && ! in_array( $phase, array( 'completed', 'failed' ), true ) ) {
-                    $this->defer_pre_snapshot_reconciliation( $job, $job->checkpoint );
-                    return;
+                    if ( $confirmed_replay ) {
+                        $this->defer_pre_snapshot_reconciliation( $job, $job->checkpoint );
+                        return;
+                    }
+                    // A transport failure may have happened before the Child received the run.
+                    $checkpoint = $job->checkpoint;
+                    unset( $checkpoint['pre_snapshot_reconcile_pending'], $checkpoint['pre_snapshot_replay_confirmed'] );
+                    if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                        return;
+                    }
+                    $job->checkpoint = $checkpoint;
+                    continue;
                 }
                 $checkpoint                          = $job->checkpoint;
                 $checkpoint['pre_snapshot_progress'] = $observed;
-                unset( $checkpoint['pre_snapshot_reconcile_pending'] );
+                unset( $checkpoint['pre_snapshot_reconcile_pending'], $checkpoint['pre_snapshot_replay_confirmed'] );
                 if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
                     return;
                 }
@@ -1293,7 +1309,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     private function defer_pre_snapshot_reconciliation( object $job, array $checkpoint ): void {
         $store    = MainWP_Backup_Restore_Job_Store::instance();
         $attempts = (int) $job->attempt_count + 1;
-        if ( MainWP_Backup_Backoff::attempts_exhausted( $attempts ) ) {
+        if ( MainWP_Backup_Backoff::attempts_exhausted( $attempts ) && ( $checkpoint['pre_snapshot_replay_confirmed'] ?? true ) ) {
             $checkpoint['last_error_extra'] = 'AUTH_ERROR2';
         }
         if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {

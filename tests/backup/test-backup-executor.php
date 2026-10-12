@@ -3615,6 +3615,464 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 	}
 
 	/**
+	 * Keep the visible database counters fixed while its cursor moves.
+	 *
+	 * @param string|null $stamp Child progress timestamp, or an older reply without it.
+	 * @return array Child reply.
+	 */
+	private function s83_progress_reply( $stamp ) {
+		$reply = array(
+			'phase'    => 'dumping_db',
+			'progress' => array(
+				'files_processed' => 1,
+				'bytes_done'      => 100,
+			),
+		);
+		if ( null !== $stamp ) {
+			$reply['last_progress_at'] = $stamp;
+		}
+		return $reply;
+	}
+
+	/**
+	 * An equal first read spends an attempt; timestamp-only movement survives eight rounds.
+	 */
+	public function test_s83_spine_timestamp_progress_uses_last_observed_reply() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 's83-spine',
+				'last_error'           => '{"manifest_pending":"pending:fixture","other_writer":"keep"}',
+			)
+		);
+		$same    = $this->s83_progress_reply( '2026-10-12 12:00:00' );
+		$auth    = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$replies = array( $same, $auth, $same );
+		for ( $round = 1; $round <= 8; ++$round ) {
+			$replies[] = $this->s83_progress_reply( '2026-10-12 12:00:0' . $round );
+			$replies[] = $auth;
+		}
+		$replies[] = array(
+			'phase' => 'completed',
+			'file'  => 's83.zip',
+			'size'  => 4096,
+		);
+		$calls     = array();
+		$this->a1_wire( $replies, $calls );
+		$download = static function ( $pre, $url, $file ) {
+			file_put_contents( $file, "PK\x03\x04" . str_repeat( 'x', 4092 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixture.
+			return true;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		try {
+			$this->a1_yield( $site_id, $task );
+			$this->a1_yield( $site_id, $task );
+			$this->a1_yield( $site_id, $task );
+			$this->assertSame( 2, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts, 'The first status equals the last observed run reply.' );
+			for ( $round = 1; $round <= 8; ++$round ) {
+				$this->a1_yield( $site_id, $task );
+				$row   = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+				$state = json_decode( $row->last_error, true );
+				$this->assertSame( 0, (int) $row->attempts, 'Timestamp-only progress must reset attempts.' );
+				$this->assertSame( '2026-10-12 12:00:0' . $round, $state['last_progress_at'] ?? null );
+				$this->assertSame( 'pending:fixture', $state['manifest_pending'] );
+				$this->assertSame( 'keep', $state['other_writer'] );
+				$this->a1_yield( $site_id, $task );
+			}
+			$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			$this->assertNotNull( MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ) );
+			$this->assertSame( array_merge( array( 'backup_task_run', 'backup_task_run', 'backup_task_status' ), array_merge( ...array_fill( 0, 8, array( 'backup_task_status', 'backup_task_run' ) ) ), array( 'backup_task_status' ) ), $calls );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $download );
+		}
+	}
+
+	/**
+	 * Prior transport failures cannot shorten the confirmed replay's five-read window.
+	 */
+	public function test_s83_spine_replay_renews_full_unchanged_window() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 's83-stuck' ) );
+		$same  = $this->s83_progress_reply( '2026-10-12 12:00:00' );
+		$calls = array();
+		$this->a1_wire(
+			array_merge(
+				array( $same ),
+				array_fill( 0, 3, new MainWP_Exception( 'HTTPERROR' ) ),
+				array(
+					array(
+						'error'      => 'Replay.',
+						'error_code' => 'AUTH_ERROR2',
+					),
+					$same,
+					new MainWP_Exception( 'HTTPERROR' ),
+				),
+				array_fill( 0, 3, $same )
+			),
+			$calls
+		);
+		for ( $cycle = 0; $cycle < 4; ++$cycle ) {
+			$this->a1_yield( $site_id, $task );
+		}
+		$this->assertSame( 3, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts );
+		$this->a1_yield( $site_id, $task );
+		$this->assertSame( 1, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts, 'A confirmed replay starts a fresh window.' );
+		for ( $attempt = 2; $attempt <= 5; ++$attempt ) {
+			$this->a1_yield( $site_id, $task );
+			$this->assertSame( $attempt, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts );
+		}
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'An unchanged timestamp must exhaust.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $error->get_message_error_code() );
+			$this->assertSame( 'AUTH_ERROR2', $error->get_message_extra() );
+		}
+		$this->assertSame( array_merge( array_fill( 0, 5, 'backup_task_run' ), array_fill( 0, 5, 'backup_task_status' ) ), $calls );
+	}
+
+	/**
+	 * Missing and empty timestamps both leave the initial comparison unknown.
+	 *
+	 * @return array Baseline cases.
+	 */
+	public function s83_unknown_timestamp_cases() {
+		return array(
+			'missing' => array( null ),
+			'empty'   => array( '' ),
+		);
+	}
+
+	/**
+	 * A first nonempty timestamp proves movement even without a prior token.
+	 *
+	 * @dataProvider s83_unknown_timestamp_cases
+	 * @param string|null $baseline Last observed timestamp.
+	 */
+	public function test_s83_spine_unknown_timestamp_baseline( $baseline ) {
+		list( $site_id, $task ) = $this->site_and_task();
+		$pending                = array(
+			'phase' => 'dumping_db',
+			'files' => 1,
+			'bytes' => 100,
+		);
+		if ( null !== $baseline ) {
+			$pending['last_progress_at'] = $baseline;
+		}
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 's83-unknown',
+				'child_phase'          => 'dumping_db',
+				'files_processed'      => 1,
+				'bytes_downloaded'     => 100,
+				'attempts'             => 2,
+				'last_error'           => wp_json_encode( array( 'reconcile_pending' => $pending ) ),
+			)
+		);
+		$calls = array();
+		$this->a1_wire( array( $this->s83_progress_reply( '2026-10-12 12:00:00' ) ), $calls );
+		$this->a1_yield( $site_id, $task );
+		$this->assertSame( 0, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts );
+		$this->assertSame( array( 'backup_task_status' ), $calls );
+	}
+
+	/**
+	 * A failed status must use the same incremental escalation as a failed run.
+	 */
+	public function test_s83_spine_reconciled_base_missing_requeues() {
+		list( $site_id, $task ) = $this->site_and_task( array( 'type' => 'incremental' ) );
+		$manifest               = tempnam( sys_get_temp_dir(), 's83-manifest-' );
+		$this->snapshot_files[] = $manifest;
+		$manifest_bytes         = "a.php\t10\t100\nb.php\t20\t200\n";
+		file_put_contents( $manifest, $manifest_bytes ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixture.
+		$base_id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id'       => $task->id,
+				'site_id'       => $site_id,
+				'type'          => 'full',
+				'archives'      => array(),
+				'manifest_path' => $manifest,
+				'run_key'       => $site_id . ':' . $task->id . ':c:s83-parent',
+			)
+		);
+		$creates = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function ( $pre, $website, $what, $params ) use ( &$creates ) {
+				if ( 'backup_preflight' === $what ) {
+					return array(
+						'disk_free'                => 10 * GB_IN_BYTES,
+						'dir_writable'             => true,
+						'db_connected'             => true,
+						'zip_support'              => true,
+						'time_limit_ok'            => true,
+						'backup_dir_hash'          => 'abc123def456gh78',
+						'task_spine'               => 1,
+						'incremental'              => 1,
+						'manifest_writer_identity' => 1,
+					);
+				}
+				if ( 'backup_task_create' === $what ) {
+					$creates[] = $params;
+					return array(
+						'task_id' => 's83-base-' . count( $creates ),
+						'phase'   => 'queued',
+					);
+				}
+				return $pre;
+			},
+			10,
+			4
+		);
+		$state = array(
+			'incremental_sent' => 'plain',
+			'run'              => (int) $task->last_run,
+			'manifest_pending' => 'pending:fixture',
+		);
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 's83-base',
+				'last_error'           => wp_json_encode( $state ),
+			)
+		);
+		$calls  = array();
+		$auth   = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$failed = array(
+			'phase'      => 'failed',
+			'error'      => 'The file list from the previous backup is missing.',
+			'error_code' => MainWP_Backup_Error_Codes::ERR_INCREMENTAL_BASE_MISSING,
+		);
+		$this->a1_wire( array( $auth, $failed, $auth, $failed, $auth, $failed ), $calls );
+		$this->a1_yield( $site_id, $task );
+		$this->a1_yield( $site_id, $task );
+		$row = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$this->assertSame( '', $row->child_backup_task_id );
+		$this->assertSame( 0, (int) $row->dtsFetched );
+		$this->assertSame( 0, (int) $row->attempts );
+		$this->assertSame( $state, json_decode( $row->last_error, true ) );
+		$this->a1_yield( $site_id, $task );
+		$this->assertCount( 1, $creates );
+		$this->assertSame( 'incremental', $creates[0]['type'] );
+		$this->assertSame( (string) $base_id, (string) $creates[0]['parent_snapshot_id'] );
+		$this->assertSame( base64_encode( $manifest_bytes ), $creates[0]['parent_manifest'] );
+		$this->a1_yield( $site_id, $task );
+		$this->a1_yield( $site_id, $task );
+		$this->a1_yield( $site_id, $task );
+		$this->assertCount( 2, $creates );
+		$this->assertSame( 'full', $creates[1]['type'] );
+		$this->assertSame( '1', (string) $creates[1]['emit_manifest'] );
+		$this->a1_yield( $site_id, $task );
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'A missing base after the full fallback must remain a real failure.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_INCREMENTAL_BASE_MISSING, $error->get_message_error_code() );
+		}
+		$this->assertSame( array_merge( ...array_fill( 0, 3, array( 'backup_task_run', 'backup_task_status' ) ) ), $calls );
+	}
+
+	/**
+	 * An empty completed run state keeps the existing empty-string representation.
+	 */
+	public function test_s83_spine_reconciled_completion_clears_empty_run_state() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->give_site_real_privkey( $site_id );
+		$this->seed_progress( $task->id, $site_id, array( 'child_backup_task_id' => 's83-empty' ) );
+		$calls = array();
+		$this->a1_wire(
+			array(
+				array(
+					'error'      => 'Replay.',
+					'error_code' => 'AUTH_ERROR2',
+				),
+				array(
+					'phase' => 'completed',
+					'file'  => 's83.zip',
+					'size'  => 4096,
+				),
+			),
+			$calls
+		);
+		$download = static function ( $pre, $url, $file ) {
+			file_put_contents( $file, "PK\x03\x04" . str_repeat( 'x', 4092 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixture.
+			return true;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		try {
+			$this->a1_yield( $site_id, $task );
+			$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			$this->assertSame( '', MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->last_error );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $download );
+		}
+	}
+
+	/**
+	 * Each gate pass contains one request, so its next pass must use persisted state.
+	 */
+	private function s83_gate_clock() {
+		$this->delta1_clock();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function ( $pre ) {
+				MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 2;
+				MainWP_Backup_Incremental_Sender_Test::$fixed_time     = (int) MainWP_Backup_Now_Continuation_Test::$fixed_microtime;
+				return $pre;
+			},
+			30
+		);
+	}
+
+	/**
+	 * Timestamp-only gate progress survives eight lost replies across separate budgets.
+	 */
+	public function test_s83_gate_timestamp_progress_uses_last_observed_reply() {
+		$this->s83_gate_clock();
+		$site_id = $this->create_test_site();
+		MainWP_DB::instance()->update_website_option(
+			$site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id' => 's83-gate',
+					'owner'   => '',
+				)
+			)
+		);
+		$same    = $this->s83_progress_reply( '2026-10-12 12:00:00' );
+		$auth    = array(
+			'error'      => 'Replay.',
+			'error_code' => 'AUTH_ERROR2',
+		);
+		$replies = array( $same, $auth, $same );
+		for ( $round = 1; $round <= 8; ++$round ) {
+			$replies[] = $this->s83_progress_reply( '2026-10-12 12:00:0' . $round );
+			$replies[] = $auth;
+		}
+		$replies[] = array( 'phase' => 'completed' );
+		$calls     = array();
+		$this->a1_wire( $replies, $calls );
+		for ( $cycle = 0; $cycle < 3; ++$cycle ) {
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 45;
+			$this->assertSame( 'running', MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate', 1 )['status'] );
+		}
+		$handle = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, null, true );
+		$this->assertSame( 1, $handle['reconcile_pending']['attempts'] );
+		for ( $round = 1; $round <= 8; ++$round ) {
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 45;
+			$this->assertSame( 'running', MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate', 1 )['status'] );
+			$handle = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, null, true );
+			$this->assertArrayNotHasKey( 'reconcile_pending', $handle, 'Timestamp-only progress must clear reconciliation.' );
+			$this->assertSame( '2026-10-12 12:00:0' . $round, $handle['progress_watermark']['last_progress_at'] ?? null );
+			$this->assertSame( 'running', MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate', 1 )['status'] );
+		}
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 45;
+		$this->assertSame( 'completed', MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate', 1 )['status'] );
+		$this->assertSame( array_merge( array( 'backup_task_run', 'backup_task_run', 'backup_task_status' ), array_merge( ...array_fill( 0, 8, array( 'backup_task_status', 'backup_task_run' ) ) ), array( 'backup_task_status' ) ), $calls );
+	}
+
+	/**
+	 * A frozen timestamp spends every gate read and retains the replay timeout cause.
+	 */
+	public function test_s83_gate_unchanged_timestamp_exhausts() {
+		$this->s83_gate_clock();
+		$site_id = $this->create_test_site();
+		MainWP_DB::instance()->update_website_option(
+			$site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id' => 's83-gate-stuck',
+					'owner'   => '',
+				)
+			)
+		);
+		$same  = $this->s83_progress_reply( '2026-10-12 12:00:00' );
+		$calls = array();
+		$this->a1_wire(
+			array_merge(
+				array(
+					$same,
+					array(
+						'error'      => 'Replay.',
+						'error_code' => 'AUTH_ERROR2',
+					),
+				),
+				array_fill( 0, 4, $same ),
+				array( new MainWP_Exception( 'HTTPERROR' ) )
+			),
+			$calls
+		);
+		$this->assertSame( 'running', MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate-stuck', 1 )['status'] );
+		$handle = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, null, true );
+		$this->assertSame( $same['last_progress_at'], $handle['progress_watermark']['last_progress_at'] ?? null, 'The baseline must survive a budget boundary.' );
+		$this->assertSame( 'running', MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate-stuck', 1 )['status'] );
+		for ( $attempt = 1; $attempt <= 5; ++$attempt ) {
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 45;
+			$status = MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate-stuck', 1 );
+			if ( $attempt < 5 ) {
+				$this->assertSame( 'running', $status['status'] );
+				$handle = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, null, true );
+				$this->assertSame( $attempt, $handle['reconcile_pending']['attempts'] );
+			}
+		}
+		$this->assertSame( 'failed', $status['status'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_TIMEOUT, $status['meta']['error_code'] );
+		$this->assertSame( 'AUTH_ERROR2', $status['meta']['extra'] );
+		$this->assertSame( array_merge( array( 'backup_task_run', 'backup_task_run' ), array_fill( 0, 5, 'backup_task_status' ) ), $calls );
+	}
+
+	/**
+	 * An unknown gate timestamp accepts its first nonempty observation.
+	 *
+	 * @dataProvider s83_unknown_timestamp_cases
+	 * @param string|null $baseline Last observed timestamp.
+	 */
+	public function test_s83_gate_unknown_timestamp_baseline( $baseline ) {
+		$this->s83_gate_clock();
+		$site_id = $this->create_test_site();
+		$pending = array(
+			'phase'    => 'dumping_db',
+			'files'    => 1,
+			'bytes'    => 100,
+			'attempts' => 2,
+		);
+		if ( null !== $baseline ) {
+			$pending['last_progress_at'] = $baseline;
+		}
+		MainWP_DB::instance()->update_website_option(
+			$site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id'           => 's83-gate-unknown',
+					'owner'             => '',
+					'reconcile_pending' => $pending,
+				)
+			)
+		);
+		$calls = array();
+		$this->a1_wire( array( $this->s83_progress_reply( '2026-10-12 12:00:00' ) ), $calls );
+		$this->assertSame( 'running', MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate-unknown', 1 )['status'] );
+		$handle = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, null, true );
+		$this->assertArrayNotHasKey( 'reconcile_pending', $handle );
+		$this->assertSame( array( 'backup_task_status' ), $calls );
+	}
+
+	/**
 	 * Unchanged gate reads are separated by 45 seconds within one budget.
 	 */
 	public function test_delta1_gate_reconcile_reads_are_paced() {

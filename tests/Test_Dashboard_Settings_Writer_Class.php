@@ -347,7 +347,7 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
             $this->assertFalse( get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' ) );
         } else {
             $this->assertStringNotContainsString( 'module-update-logs-db-requirement', $body );
-            $this->assertSame( 0, get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' ) );
+            $this->assertSame( '0', (string) get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' ) );
         }
     }
 

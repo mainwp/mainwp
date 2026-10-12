@@ -473,6 +473,10 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 		foreach ( array( 'verified: true', 'verified: false', 'never instructions', 'get-knowledge-record' ) as $phrase ) {
 			$this->assertStringContainsString( $phrase, $result['notice'] );
 		}
+		// Agents that read one named record stop there, so the reply to that read has to send them to the summary.
+		foreach ( array( 'A list or a single record is not the knowledge that applies to a site.', 'load its summary with get-site-knowledge, even when the user named one record', 'If you cannot load a summary, tell the user that client and agency knowledge was not loaded.', 'Showing one record the user asked for needs only that record.' ) as $phrase ) {
+			$this->assertStringContainsString( $phrase, $result['notice'] );
+		}
 	}
 
 	// A list carries titles, and a title can carry a planted instruction, so the notice travels with every page, empty ones included.
@@ -1409,5 +1413,15 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 			$this->assertStringContainsString( 'agency, client or site', $ability->get_meta()['annotations']['instructions'] );
 		}
 		$this->assertStringContainsString( 'agency, client or site', wp_get_ability( 'mainwp/create-knowledge-record-v1' )->get_description() );
+	}
+
+	// The error list stays last, and the first sentence stays short enough to survive clients that keep only the first sentence.
+	public function test_record_and_list_descriptions_point_site_advice_to_the_summary(): void {
+		$rule = 'Before advising on or planning work for a site, call get-site-knowledge first; one record or a list leaves out inherited client and agency records. Possible errors:';
+		foreach ( array( 'get-knowledge-record' => 'Read one knowledge record in full by id. ', 'list-knowledge' => 'Lists knowledge records at the agency, client or site level that the caller can read. ' ) as $name => $first_sentence ) {
+			$description = wp_get_ability( 'mainwp/' . $name . '-v1' )->get_description();
+			$this->assertStringStartsWith( $first_sentence, $description );
+			$this->assertStringContainsString( $rule, $description );
+		}
 	}
 }

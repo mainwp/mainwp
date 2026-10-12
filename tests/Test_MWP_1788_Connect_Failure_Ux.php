@@ -15,6 +15,16 @@ namespace MainWP\Dashboard\Tests;
 class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 
 	/**
+	 * Assert that a body naming a secret is suppressed as a unit.
+	 *
+	 * @param string $text    Summarized body.
+	 * @param string $message Optional assertion message.
+	 */
+	private function assert_sensitive_body_hidden( $text, $message = '' ): void {
+		$this->assertSame( '[response content hidden: it named a sensitive field]', $text, $message );
+	}
+
+	/**
 	 * 403 is always treated as WAF-likely.
 	 */
 	public function test_403_is_waf_likely(): void {
@@ -96,15 +106,13 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Body excerpt is stripped, truncated, and redacts secrets.
+	 * A body excerpt that names secrets is suppressed as a unit.
 	 */
 	public function test_body_excerpt_is_safe(): void {
 		$body = '<html><title>Attention Required</title><p>password=supersecret uniqueId=abc123</p></html>';
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
 
-		$this->assertStringContainsString( 'Attention Required', $text );
-		$this->assertStringContainsString( 'password=[redacted]', $text );
-		$this->assertStringContainsString( 'uniqueId=[redacted]', $text );
+		$this->assert_sensitive_body_hidden( $text );
 		$this->assertStringNotContainsString( 'supersecret', $text );
 		$this->assertStringNotContainsString( '<title>', $text );
 	}
@@ -117,9 +125,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			'<html><title>Attention Required</title><p>password=supersecret uniqueId=abc123</p></html>'
 		);
 
-		$this->assertStringContainsString( 'Attention Required', $text );
-		$this->assertStringContainsString( 'password=[redacted]', $text );
-		$this->assertStringContainsString( 'uniqueId=[redacted]', $text );
+		$this->assert_sensitive_body_hidden( $text );
 		$this->assertStringNotContainsString( 'supersecret', $text );
 		$this->assertStringNotContainsString( 'Requiredpassword', $text );
 	}
@@ -130,7 +136,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	public function test_table_cells_do_not_glue_password(): void {
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<td>Login</td><td>password=hunter2</td>' );
 
-		$this->assertStringContainsString( 'password=[redacted]', $text );
+		$this->assert_sensitive_body_hidden( $text );
 		$this->assertStringNotContainsString( 'hunter2', $text );
 		$this->assertStringNotContainsString( 'Loginpassword', $text );
 	}
@@ -141,7 +147,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	public function test_div_cells_redact_pwd_label(): void {
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<div>Error</div><div>pwd: hunter2</div>' );
 
-		$this->assertStringContainsString( 'pwd=[redacted]', $text );
+		$this->assert_sensitive_body_hidden( $text );
 		$this->assertStringNotContainsString( 'hunter2', $text );
 		$this->assertStringNotContainsString( 'Errorpwd', $text );
 	}
@@ -154,10 +160,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			'Login<br>signature=sig111 <b>Note</b>nonce=non222 <span>x</span>token=tok333 Error<!-- c -->uniqueId=uid444'
 		);
 
-		$this->assertStringContainsString( 'signature=[redacted]', $text );
-		$this->assertStringContainsString( 'nonce=[redacted]', $text );
-		$this->assertStringContainsString( 'token=[redacted]', $text );
-		$this->assertStringContainsString( 'uniqueId=[redacted]', $text );
+		$this->assert_sensitive_body_hidden( $text );
 		foreach ( array( 'sig111', 'non222', 'tok333', 'uid444' ) as $secret ) {
 			$this->assertStringNotContainsString( $secret, $text );
 		}
@@ -174,8 +177,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'adminpassword=hunter2 dbpassword=x' );
 
-		$this->assertStringContainsString( 'adminpassword=[redacted]', $text );
-		$this->assertStringContainsString( 'dbpassword=[redacted]', $text );
+		$this->assert_sensitive_body_hidden( $text );
 		$this->assertStringNotContainsString( 'hunter2', $text );
 		$this->assertStringNotContainsString( 'dbpassword=x', $text );
 	}
@@ -189,10 +191,11 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		foreach ( array( 'hash111', 'p222', 'q444', 'r555', 'h333' ) as $secret ) {
 			$this->assertStringNotContainsString( $secret, $text );
 		}
-		$this->assertStringContainsString( 'bypass=visible', $text );
+		$this->assert_sensitive_body_hidden( $text );
 
 		// A bare underscore suffix used as the whole name is still a secret.
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '_pass=u666 _token=t777' );
+		$this->assert_sensitive_body_hidden( $text );
 		$this->assertStringNotContainsString( 'u666', $text );
 		$this->assertStringNotContainsString( 't777', $text );
 	}
@@ -220,14 +223,15 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	public function test_tag_inside_name_is_still_redacted(): void {
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>pass<strong>word=s111</strong></p><span>pass</span><span>word</span>=s222 <i>to</i>ken=s333 sig<b>nature</b>: s444 pa<b>ss</b>wo<i>rd</i>=s777' );
 
+		$this->assert_sensitive_body_hidden( $text );
 		foreach ( array( 's111', 's222', 's333', 's444', 's777' ) as $secret ) {
 			$this->assertStringNotContainsString( $secret, $text );
 		}
 
-		// Words that are not a sensitive name keep their spacing and values.
+		// Ordinary bodies that do not name a secret keep their spacing and values.
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<td>Login</td><td>password=s555</td>' );
 		$this->assertStringNotContainsString( 's555', $text );
-		$this->assertStringContainsString( 'Login password=', $text );
+		$this->assert_sensitive_body_hidden( $text );
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>Site name: Example Blog</p>' );
 		$this->assertSame( 'Site name: Example Blog', $text );
 	}
@@ -244,7 +248,9 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			's456' => '{"pa<b>ss</b>word" : "s456"}',
 		);
 		foreach ( $bodies as $secret => $body ) {
-			$this->assertStringNotContainsString( $secret, \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body ) );
+			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+			$this->assert_sensitive_body_hidden( $text, $secret );
+			$this->assertStringNotContainsString( $secret, $text );
 		}
 
 		$names = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::SENSITIVE_PARAM_NAMES;
@@ -257,8 +263,38 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		foreach ( $names as $name ) {
 			$split = implode( '<span></span>', str_split( $name ) );
 			$text  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>Login ' . $split . '=q7q7</p>' );
+			$this->assert_sensitive_body_hidden( $text, $name );
 			$this->assertStringNotContainsString( 'q7q7', $text, $name );
 		}
+	}
+
+	/**
+	 * Ambiguous and encoded field forms suppress the whole body excerpt.
+	 */
+	public function test_ambiguous_sensitive_body_forms_are_hidden_whole(): void {
+		$cases = array(
+			'bracketed name'       => 'request[userpwd]=qa-body-one page=sites',
+			'embedded assignment'  => 'message="userpwd=qa-body-two" page=sites',
+			'unterminated quote'   => 'userpwd="qa-body-three page=sites',
+			'percent encoded name' => '%75serpwd=qa-body-four page=sites',
+			'double encoded name'  => '%2575serpwd=qa-body-five page=sites',
+			'format character'     => "userp\u{200B}wd=qa-body-six page=sites",
+			'tag inside value'     => 'password=abc<i></i>tail=qa-body-seven',
+			'punctuation split'    => 'p-a-s-s-w-o-r-d=qa-body-eight page=sites',
+			'split suffix'         => 'custom_k-ey=qa-body-nine page=sites',
+		);
+
+		foreach ( $cases as $label => $body ) {
+			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
+			$this->assert_sensitive_body_hidden( $text, $label );
+			$this->assertStringNotContainsString( 'qa-body-', $text, $label );
+			$this->assertStringNotContainsString( 'page=sites', $text, $label );
+		}
+
+		$shifted = 'https://example.test/failure?opaque=' . str_repeat( 'a', 1400 ) . ' request[userpwd]=qa-body-shifted';
+		$text    = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $shifted );
+		$this->assert_sensitive_body_hidden( $text, 'URL query stripping shifts later text into the excerpt' );
+		$this->assertStringNotContainsString( 'qa-body-shifted', $text );
 	}
 
 	/**
@@ -270,6 +306,11 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$start = microtime( true );
 		\MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( $words );
 		$this->assertLessThan( 2.0, microtime( true ) - $start );
+
+		$start = microtime( true );
+		$body  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $words );
+		$this->assertLessThan( 5.0, microtime( true ) - $start );
+		$this->assertStringStartsWith( 'Lorem ipsum', $body );
 
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( $words . 'pass word=s666' );
 		$this->assertStringNotContainsString( 's666', $text );
@@ -291,6 +332,10 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'monkey=banana', $text );
 		$this->assertStringContainsString( 'keycode=visible', $text );
 		$this->assertStringContainsString( 'page=sites', $text );
+
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'mon-key=banana key-code=visible page=sites' );
+		$this->assertStringContainsString( 'mon-key=banana', $text );
+		$this->assertStringContainsString( 'key-code=visible', $text );
 	}
 
 	/**
@@ -355,13 +400,9 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 				$this->assertStringNotContainsString( 'qa-userpwd-value', $surface, $label );
 				$this->assertStringNotContainsString( 'qa-uniqueid-value', $surface, $label );
 				$this->assertStringNotContainsString( 'qa-pubkey-value', $surface, $label );
-				$this->assertStringContainsString( 'json' === $form ? '"page":"sites"' : 'page=sites', html_entity_decode( $surface, ENT_QUOTES ), $label );
-				$this->assertStringContainsString( 'json' === $form ? '"monkey":"1"' : 'monkey=1', html_entity_decode( $surface, ENT_QUOTES ), $label );
-			}
-			foreach ( array( 'response_body', 'failure_ux_text' ) as $surface_name ) {
-				$name_prefix = 'json' === $form ? '"' : '';
-				$this->assertStringContainsString( $name_prefix . 'userpwd' . $name_prefix . '=[redacted]', $surfaces[ $surface_name ], $form . ' / ' . $surface_name );
-				$this->assertStringContainsString( $name_prefix . 'uniqueId' . $name_prefix . '=[redacted]', $surfaces[ $surface_name ], $form . ' / ' . $surface_name );
+				$this->assertStringContainsString( 'response content hidden: it named a sensitive field', $surface, $label );
+				$this->assertStringNotContainsString( 'page=sites', html_entity_decode( $surface, ENT_QUOTES ), $label );
+				$this->assertStringNotContainsString( 'monkey=1', html_entity_decode( $surface, ENT_QUOTES ), $label );
 			}
 		}
 	}
@@ -386,16 +427,15 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 				foreach ( array( 'qa-legacy-sig', 'qa-nonce-value', 'qa-data-sig', 'qa-adv-sig' ) as $secret ) {
 					$this->assertStringNotContainsString( $secret, $surface, $label );
 				}
-				$this->assertStringContainsString( 'json' === $form ? '"page":"sites"' : 'page=sites', html_entity_decode( $surface, ENT_QUOTES ), $label );
-				$this->assertStringContainsString( 'json' === $form ? '"monkey":"1"' : 'monkey=1', html_entity_decode( $surface, ENT_QUOTES ), $label );
+				$this->assertStringContainsString( 'response content hidden: it named a sensitive field', $surface, $label );
+				$this->assertStringNotContainsString( 'page=sites', html_entity_decode( $surface, ENT_QUOTES ), $label );
+				$this->assertStringNotContainsString( 'monkey=1', html_entity_decode( $surface, ENT_QUOTES ), $label );
 			}
-			$name_prefix = 'json' === $form ? '"' : '';
-			$this->assertStringContainsString( $name_prefix . 'mainwpsignature_adv' . $name_prefix . '=[redacted]', $surfaces['failure_ux_text'], $form );
 		}
 	}
 
 	/**
-	 * print_r() and var_dump() dumps hide everything after a sensitive key; earlier keys stay.
+	 * print_r() and var_dump() bodies naming a sensitive key are hidden whole.
 	 */
 	public function test_print_r_style_dumps_redact_sensitive_keys(): void {
 		$dump = "<pre>Array\n(\n    [user] => admin\n    [function] => register\n    [page] => sites\n    [monkey] => 1\n    [userpwd] => qa-userpwd value\n    [password] => qa-password-value\n)\n</pre><p>Error establishing a connection</p>";
@@ -406,28 +446,27 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			foreach ( array( 'qa-userpwd', 'qa-password-value' ) as $secret ) {
 				$this->assertStringNotContainsString( $secret, $plain, $surface_name );
 			}
-			$this->assertStringContainsString( '[user] => admin', $plain, $surface_name );
-			$this->assertStringContainsString( '[page] => sites', $plain, $surface_name );
-			$this->assertStringContainsString( '[monkey] => 1', $plain, $surface_name );
-			// Text after the first sensitive key is dropped on purpose.
+			$this->assertStringContainsString( 'response content hidden: it named a sensitive field', $plain, $surface_name );
+			$this->assertStringNotContainsString( '[user] => admin', $plain, $surface_name );
+			$this->assertStringNotContainsString( '[page] => sites', $plain, $surface_name );
+			$this->assertStringNotContainsString( '[monkey] => 1', $plain, $surface_name );
 			$this->assertStringNotContainsString( 'Error establishing a connection', $plain, $surface_name );
 		}
-		$this->assertStringContainsString( '[userpwd] => [redacted]', $surfaces['response_body'] );
-		$this->assertStringContainsString( '[userpwd] => [redacted]', $surfaces['failure_ux_text'] );
+		$this->assert_sensitive_body_hidden( $surfaces['response_body'] );
 
 		foreach ( array( 'userpwd', 'password', 'mainwpsignature_adv' ) as $name ) {
 			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'Array ( [page] => sites [' . $name . '] => qa-dump-secret )' );
 			$this->assertStringNotContainsString( 'qa-dump-secret', $text, $name );
-			$this->assertStringContainsString( '[page] => sites [' . $name . '] => [redacted]', $text, $name );
+			$this->assert_sensitive_body_hidden( $text, $name );
 		}
 
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'array(2) { ["page"]=> string(5) "sites" ["userpwd"]=> string(9) "qa-dumped" }' );
 		$this->assertStringNotContainsString( 'qa-dumped', $text );
-		$this->assertStringContainsString( '["page"]=> string(5) "sites"', $text );
+		$this->assert_sensitive_body_hidden( $text );
 
-		// Bracketed text that is not followed by => stays as written.
+		// A sensitive name is enough to suppress arbitrary body text, even without =>.
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '[password] reset link sent. [monkey] => banana' );
-		$this->assertSame( '[password] reset link sent. [monkey] => banana', $text );
+		$this->assert_sensitive_body_hidden( $text );
 	}
 
 	/**
@@ -443,7 +482,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		foreach ( $bodies as $label => $body ) {
 			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
 			$this->assertStringNotContainsString( 'qa-tail-', $text, $label );
-			$this->assertStringContainsString( '[redacted]', $text, $label );
+			$this->assert_sensitive_body_hidden( $text, $label );
 		}
 	}
 
@@ -461,7 +500,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		foreach ( $bodies as $label => $body ) {
 			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
 			$this->assertStringNotContainsString( 'qa-key-', $text, $label );
-			$this->assertStringContainsString( '[redacted]', $text, $label );
+			$this->assert_sensitive_body_hidden( $text, $label );
 		}
 	}
 
@@ -478,8 +517,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		foreach ( $bodies as $label => $body ) {
 			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
 			$this->assertStringNotContainsString( 'qa-obj-', $text, $label );
-			$this->assertStringContainsString( '[redacted]', $text, $label );
-			$this->assertStringContainsString( 'sites', $text, $label );
+			$this->assert_sensitive_body_hidden( $text, $label );
 		}
 
 		// A visibility suffix on an ordinary property keeps its value.
@@ -504,7 +542,11 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			foreach ( $surfaces as $surface_name => $surface ) {
 				$this->assertStringNotContainsString( 'qa-split-', $surface, $label . ' / ' . $surface_name );
 			}
-			$this->assertStringContainsString( '[redacted]', $surfaces['failure_ux_text'], $label );
+			if ( '' !== $case[0] ) {
+				$this->assert_sensitive_body_hidden( $surfaces['response_body'], $label );
+			} else {
+				$this->assertStringContainsString( '[redacted]', $surfaces['failure_ux_text'], $label );
+			}
 		}
 	}
 
@@ -527,11 +569,47 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			'split pass1'             => "x-cache: pa\u{00A0}ss1=qa-hdr-twelve",
 			'split signature'         => 'x-cache: signa%C2%A0ture=qa-hdr-thirteen',
 			'split authorization'     => "x-cache: author\u{00A0}ization=qa-hdr-fourteen",
+			'split suffix'            => 'x-cache: custom_k&nbsp;ey=qa-hdr-fifteen',
 		);
 		foreach ( $cases as $label => $header ) {
 			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( "HTTP/1.1 403 Forbidden\r\n" . $header . "\r\n" );
 			$this->assertStringNotContainsString( 'qa-hdr-', $text, $label );
 			$this->assertStringContainsString( 'x-cache: [redacted]', $text, $label );
+		}
+	}
+
+	/**
+	 * URLs in any kept header drop userinfo, query strings, and fragments.
+	 */
+	public function test_non_location_header_urls_drop_unknown_secrets(): void {
+		$headers = "HTTP/1.1 502 Bad Gateway\r\nx-cache: https://alice:harbor47@example.test/cache/path?ticket=opaque42#trace\r\nserver: https://bob%3Ariver88%40origin.example.test/failure%3Ftrace%3Dopaque99%23tail\r\ncf-cache-status: https%3A%2F%2Fcarol%3Aforest77%40encoded.example.test%2Fedge%3Fopaque%3Dvalue%23tail\r\ncontent-type: https&colon;&sol;&sol;dave&colon;ridge66&commat;entity.example.test&sol;mime&quest;opaque&equals;value\r\nx-cache-status: //erin:stone55@relative.example.test/cache#tail\r\nserver: %2F%2Ffrank%3Acreek44%40encoded-relative.example.test%2Forigin%23tail\r\nx-sucuri-id: ftp://grace:field33@files.example.test/archive?opaque=value#tail\r\n";
+		$text    = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
+
+		$this->assertStringContainsString( 'x-cache: https://example.test/cache/path', $text );
+		$this->assertStringContainsString( 'server: https://origin.example.test/failure', $text );
+		$this->assertStringContainsString( 'cf-cache-status: https://encoded.example.test/edge', $text );
+		$this->assertStringContainsString( 'content-type: https://entity.example.test/mime', $text );
+		$this->assertStringContainsString( 'x-cache-status: //relative.example.test/cache', $text );
+		$this->assertStringContainsString( 'server: //encoded-relative.example.test/origin', $text );
+		$this->assertStringContainsString( 'x-sucuri-id: ftp://files.example.test/archive', $text );
+		foreach ( array( 'alice', 'harbor47', 'ticket=', 'opaque42', '#trace', 'bob', 'river88', 'trace=', 'opaque99', 'carol', 'forest77', 'dave', 'ridge66', 'erin', 'stone55', 'frank', 'creek44', 'grace', 'field33', 'opaque=', '%3F', '%40', '&colon;' ) as $secret ) {
+			$this->assertStringNotContainsString( $secret, $text );
+		}
+	}
+
+	/**
+	 * Free-form diagnostics preserve benign text, strip URLs, and hide secret names.
+	 */
+	public function test_free_form_diagnostic_text_is_sanitized(): void {
+		$ux = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+
+		$this->assertSame( 'Connection failed at https://example.test/path', $ux::sanitize_diagnostic_text( 'Connection failed at https://alice:harbor47@example.test/path?ticket=opaque42#trace' ) );
+		$this->assertSame( 'Plain connection failure', $ux::sanitize_diagnostic_text( 'Plain connection failure' ) );
+
+		foreach ( array( 'userpwd=qa-free-one', 'pass<b></b>word=qa-free-two', '%2575serpwd=qa-free-three' ) as $text ) {
+			$sanitized = $ux::sanitize_diagnostic_text( $text );
+			$this->assertStringContainsString( 'response content hidden: it named a sensitive field', $sanitized );
+			$this->assertStringNotContainsString( 'qa-free-', $sanitized );
 		}
 	}
 
@@ -573,7 +651,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '[userpwd] => qa-big-secret [page] => ' . str_repeat( 'a', 1048576 ) );
 
 		$this->assertStringNotContainsString( 'qa-big-secret', $text );
-		$this->assertStringContainsString( '[userpwd] => [redacted]', $text );
+		$this->assert_sensitive_body_hidden( $text );
 	}
 
 	/**
@@ -609,6 +687,84 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'qa-hdr-one', $snippet );
 		$this->assertStringNotContainsString( 'qa-hdr-two', $snippet );
 		$this->assertStringContainsString( 'www-authenticate:', $snippet );
+	}
+
+	/**
+	 * Legacy response_readable and exception text fields cannot bypass body suppression.
+	 */
+	public function test_legacy_readable_response_fields_are_sanitized(): void {
+		$ux = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+
+		$exception = new \MainWP\Dashboard\MainWP_Exception( 'Remote failure' );
+		$exception->set_data( array( 'text' => 'Status: 500 userpwd=qa-legacy-one page=sites' ) );
+		$from_array = $ux::readable_response_from_output( array(), $exception );
+
+		$string_exception = new \MainWP\Dashboard\MainWP_Exception( 'Remote failure' );
+		$string_exception->set_data( 'userpwd=qa-legacy-two page=sites' );
+		$from_string = $ux::readable_response_from_output( array(), $string_exception );
+
+		$from_output = $ux::readable_response_from_output(
+			array(
+				'http_status'       => 500,
+				'response_readable' => 'Status: 500 userpwd=qa-legacy-three page=sites',
+			)
+		);
+
+		foreach ( array( $from_array, $from_string, $from_output ) as $surface ) {
+			$this->assertStringContainsString( 'response content hidden: it named a sensitive field', $surface );
+			$this->assertStringNotContainsString( 'qa-legacy-', $surface );
+			$this->assertStringNotContainsString( 'page=sites', $surface );
+		}
+	}
+
+	/**
+	 * Structured empty response fields win over legacy readable text without nesting it.
+	 */
+	public function test_pre_sanitized_empty_response_is_not_nested(): void {
+		$ux       = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+		$enriched = $ux::enrich_output(
+			array( 'http_status' => 500 ),
+			array(
+				'http_status' => 500,
+				'headers'     => '',
+				'body'        => '',
+			)
+		);
+		$readable = $ux::readable_response_from_output( $enriched );
+
+		$this->assertSame( $enriched['response_readable'], $readable );
+		$this->assertSame( 1, substr_count( $readable, 'Status: 500' ) );
+		$this->assertSame( 1, substr_count( $readable, 'Body: no readable child response was returned.' ) );
+
+		$exception = new \MainWP\Dashboard\MainWP_Exception( 'Remote failure' );
+		$exception->set_data(
+			array(
+				'text'        => 'Status: 500 userpwd=qa-ignored-legacy',
+				'http_status' => 500,
+				'headers'     => '',
+				'body'        => '',
+			)
+		);
+		$readable = $ux::readable_response_from_output( array(), $exception );
+		$this->assertSame( 1, substr_count( $readable, 'Status: 500' ) );
+		$this->assertStringContainsString( 'Body: no readable child response was returned.', $readable );
+		$this->assertStringNotContainsString( 'qa-ignored-legacy', $readable );
+	}
+
+	/**
+	 * An arbitrary exception message cannot inject a secret ahead of the failure UX.
+	 */
+	public function test_error_helper_sanitizes_arbitrary_exception_message(): void {
+		$exception = new \MainWP\Dashboard\MainWP_Exception( 'Remote failure userpwd=qa-message-secret page=sites' );
+		$html      = \MainWP\Dashboard\MainWP_Error_Helper::get_connect_failure_message(
+			$exception,
+			array( 'http_status' => 500 )
+		);
+
+		$this->assertStringContainsString( 'response content hidden: it named a sensitive field', $html );
+		$this->assertStringContainsString( 'Status: 500', $html );
+		$this->assertStringNotContainsString( 'qa-message-secret', $html );
+		$this->assertStringNotContainsString( 'page=sites', $html );
 	}
 
 	/**
@@ -850,19 +1006,14 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 
 		$body = 'Welcome csrf_token=qa-csrf-secret site_api_key=qa-api-key plugin_password=qa-plugin-secret page=sites';
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-		$this->assertStringContainsString( 'csrf_token=[redacted]', $text );
-		$this->assertStringContainsString( 'site_api_key=[redacted]', $text );
-		$this->assertStringContainsString( 'plugin_password=[redacted]', $text );
-		$this->assertStringContainsString( 'page=sites', $text );
+		$this->assert_sensitive_body_hidden( $text );
 		$this->assertStringNotContainsString( 'qa-csrf-secret', $text );
 		$this->assertStringNotContainsString( 'qa-api-key', $text );
 		$this->assertStringNotContainsString( 'qa-plugin-secret', $text );
 
 		$json = '{"csrf_token":"qa-csrf-secret","plugin_password":"qa-plugin-secret","page":"sites"}';
 		$json_text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $json );
-		$this->assertStringContainsString( '"csrf_token"=[redacted]', $json_text );
-		$this->assertStringContainsString( '"plugin_password"=[redacted]', $json_text );
-		$this->assertStringContainsString( '"page":"sites"', $json_text );
+		$this->assert_sensitive_body_hidden( $json_text );
 		$this->assertStringNotContainsString( 'qa-csrf-secret', $json_text );
 		$this->assertStringNotContainsString( 'qa-plugin-secret', $json_text );
 
@@ -886,7 +1037,8 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		);
 
 		foreach ( array( $details['response']['text'], $html, $text_ux, $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'] ) as $surface ) {
-			$this->assertStringContainsString( 'page=sites', $surface );
+			$this->assertStringContainsString( 'response content hidden: it named a sensitive field', $surface );
+			$this->assertStringNotContainsString( 'page=sites', $surface );
 			$this->assertStringNotContainsString( 'qa-csrf-secret', $surface );
 			$this->assertStringNotContainsString( 'qa-api-key', $surface );
 			$this->assertStringNotContainsString( 'qa-plugin-secret', $surface );
@@ -903,18 +1055,14 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	public function test_delimiter_containing_secrets_are_fully_redacted(): void {
 		$body = 'Welcome plugin_password=qa,secret csrf_token=qa space-token page=sites';
 		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-		$this->assertStringContainsString( 'plugin_password=[redacted]', $text );
-		$this->assertStringContainsString( 'csrf_token=[redacted]', $text );
-		$this->assertStringContainsString( 'page=sites', $text );
+		$this->assert_sensitive_body_hidden( $text );
 		$this->assertStringNotContainsString( 'qa,secret', $text );
 		$this->assertStringNotContainsString( ',secret', $text );
 		$this->assertStringNotContainsString( 'qa space-token', $text );
 
 		$json = '{"plugin_password":"qa, secret","csrf_token":"qa space-token","page":"sites"}';
 		$json_text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $json );
-		$this->assertStringContainsString( '"plugin_password"=[redacted]', $json_text );
-		$this->assertStringContainsString( '"csrf_token"=[redacted]', $json_text );
-		$this->assertStringContainsString( '"page":"sites"', $json_text );
+		$this->assert_sensitive_body_hidden( $json_text );
 		$this->assertStringNotContainsString( 'qa, secret', $json_text );
 		$this->assertStringNotContainsString( 'qa space-token', $json_text );
 
@@ -938,7 +1086,8 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		);
 
 		foreach ( array( $details['response']['text'], $html, $text_ux, $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'] ) as $surface ) {
-			$this->assertStringContainsString( 'page=sites', $surface );
+			$this->assertStringContainsString( 'response content hidden: it named a sensitive field', $surface );
+			$this->assertStringNotContainsString( 'page=sites', $surface );
 			$this->assertStringNotContainsString( 'qa,secret', $surface );
 			$this->assertStringNotContainsString( ',secret', $surface );
 			$this->assertStringNotContainsString( 'qa space-token', $surface );

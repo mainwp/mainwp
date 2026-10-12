@@ -3881,40 +3881,177 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * A not_found answer cannot confirm a cancel once the worker has recorded a task id.
+	 * A cancel sent by restore_id is decided against the task id the row carries.
+	 *
+	 * Keys name the rows of .mwpdev/reviews/s82-create-cancel-matrix.md.
+	 *
+	 * @dataProvider restore_id_cancel_landing_cases
+	 * @param string $lane            'ui' (cancel_job) or 'sweep' (reclaim ceiling).
+	 * @param string $landing         When the worker's task id write lands.
+	 * @param array  $answers         Scripted restore_task_cancel answers, in order.
+	 * @param bool   $timeout_elapsed Whether the cancel confirmation window has already run out.
+	 * @param array  $expect          Expected outcome.
 	 */
-	public function test_not_found_cancel_defers_when_task_id_lands_during_the_request() {
-		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
-		$job                                    = $this->make_job( array( 'child_create_attempted' => true ), $store::STATUS_STAGING );
-		$id                                     = (int) $job->id;
-		$this->responses['restore_task_cancel'] = array(
-			array( 'result' => 'not_found' ),
-			array( 'result' => 'ok' ),
-		);
-		$landed                                 = false;
-		$record                                 = static function ( $pre, $website, $what, $params ) use ( $store, $id, &$landed ) {
-			if ( 'restore_task_cancel' === $what && isset( $params['restore_id'] ) && ! $landed ) {
-				$landed = $store->set_status( $id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'late-task' ) );
-			}
-			return $pre;
-		};
-		add_filter( 'mainwp_fetch_url_authed_pre', $record, 5, 4 );
-		try {
-			$this->assertSame( 'cancel_pending', $this->orchestrator->cancel_job( $id ) );
-		} finally {
-			remove_filter( 'mainwp_fetch_url_authed_pre', $record, 5 );
+	public function test_restore_id_cancel_decides_from_the_task_the_row_carries( $lane, $landing, $answers, $timeout_elapsed, $expect ) {
+		global $wpdb;
+		$store    = MainWP_Backup_Restore_Job_Store::instance();
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$override = array( 'child_create_attempted' => true );
+		if ( $timeout_elapsed ) {
+			$override['cancel_confirmation'] = array(
+				'first_attempt_at' => time() - MainWP_Backup_Restore_Job_Store::CANCEL_CONFIRMATION_TIMEOUT_SECONDS,
+				'attempt_count'    => 1,
+				'outcome'          => 'pending',
+			);
 		}
-		$this->assertTrue( $landed );
-		$job = $store->get_job( $id );
-		$this->assertSame( $store::STATUS_RUNNING, $job->status );
-		$this->assertTrue( ! empty( $job->checkpoint['cancel_intent'] ) );
+		$job  = $this->make_job( $override, $store::STATUS_STAGING );
+		$id   = (int) $job->id;
+		$dead = null;
+		if ( 'sweep' === $lane ) {
+			$this->expire_job_at_reclaim_ceiling( $id );
+			$dead = 'reclaim-' . $id . '-' . MainWP_Backup_Restore_Job_Store::RECLAIM_CEILING;
+		}
+		$this->responses['restore_task_cancel'] = $answers;
+		$this->responses['restore_task_run']    = array(
+			'task_id'   => 'late-task',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'db_ok' => true ) ),
+		);
+		$logs                                   = array();
+		$log                                    = static function ( $message ) use ( &$logs ) {
+			$logs[] = $message;
+		};
+		add_action( 'mainwp_log_info', $log );
 
-		$job = $this->tick( $job );
-		$this->assertSame( $store::STATUS_CANCELLED, $job->status );
-		$this->assertSame( 'confirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
-		$this->assertSame( array( 'restore_task_cancel', 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
-		$this->assertSame( array( 'restore_id' => 'orch01test' ), $this->calls[0]['params'] );
-		$this->assertSame( array( 'task_id' => 'late-task' ), $this->calls[1]['params'] );
+		$landed = false;
+		if ( 'during_request' === $landing ) {
+			$inject = static function ( $pre, $website, $what, $params ) use ( $store, $id, $dead, &$landed ) {
+				if ( 'restore_task_cancel' === $what && isset( $params['restore_id'] ) && ! $landed ) {
+					$landed = $store->set_status( $id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'late-task' ), $dead );
+				}
+				return $pre;
+			};
+			add_filter( 'mainwp_fetch_url_authed_pre', $inject, 5, 4 );
+		} else {
+			$terminal = 'ui' === $lane ? MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED : MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT;
+			$inject   = static function ( $sql ) use ( $table, $id, $terminal, $wpdb, &$landed ) {
+				if ( ! $landed && str_starts_with( $sql, 'UPDATE ' . $table . ' SET `status` = \'' . $terminal . '\'' ) ) {
+					$landed = true;
+					$wpdb->query( "UPDATE {$table} SET child_task_id = 'late-task', status = 'running', checkpoint_rev = checkpoint_rev + 1 WHERE id = {$id}" ); // phpcs:ignore WordPress.DB -- test interleaving.
+				}
+				return $sql;
+			};
+			add_filter( 'query', $inject );
+		}
+
+		$answer = null;
+		$code   = null;
+		try {
+			if ( 'ui' === $lane ) {
+				try {
+					$answer = $this->orchestrator->cancel_job( $id );
+				} catch ( MainWP_Exception $e ) {
+					$code = $e->get_message_error_code();
+				}
+			} else {
+				$this->orchestrator->process_pending_restore_jobs( 30, $id );
+			}
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $inject, 5 );
+			remove_filter( 'query', $inject );
+			remove_action( 'mainwp_log_info', $log );
+		}
+
+		$this->assertTrue( $landed );
+		$this->assertSame( $expect['answer'], $answer );
+		$this->assertSame( $expect['code'], $code );
+		$job = $store->get_job( $id );
+		$this->assertSame( $expect['status'], $job->status );
+		$this->assertSame( 'late-task', $job->child_task_id );
+		$this->assertSame( $expect['confirmation'], $job->checkpoint['cancel_confirmation']['outcome'] ?? null );
+		$this->assertSame( $expect['intent'], ! empty( $job->checkpoint['cancel_intent'] ) );
+		$this->assertArrayNotHasKey( 'child_completed_unrecorded', $job->checkpoint );
+		if ( 'during_request' === $landing ) {
+			$this->assertNotEmpty( preg_grep( '/recorded meanwhile/', $logs ) );
+		}
+		if ( isset( $expect['after_tick'] ) ) {
+			$job = $this->tick( $job );
+			$this->assertSame( $expect['after_tick'], $job->status );
+		}
+		$expected_calls = array();
+		foreach ( $expect['calls'] as $call ) {
+			$expected_calls[] = 'run' === $call ? array( 'restore_task_run', 'late-task' ) : array( 'restore_task_cancel', $call );
+		}
+		$actual_calls = array();
+		foreach ( $this->calls as $call ) {
+			$actual_calls[] = array( $call['what'], $call['params']['task_id'] ?? 'restore_id' );
+		}
+		$this->assertSame( $expected_calls, $actual_calls );
+	}
+
+	/**
+	 * Orderings of a task id write against a cancel sent by restore_id.
+	 *
+	 * @return array
+	 */
+	public static function restore_id_cancel_landing_cases() {
+		$not_found = array( 'result' => 'not_found' );
+		$ok        = array( 'result' => 'ok' );
+		$finished  = array(
+			'answer'       => 'cancelled',
+			'code'         => null,
+			'status'       => MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED,
+			'confirmation' => 'confirmed',
+			'intent'       => true,
+			'calls'        => array( 'restore_id', 'late-task' ),
+		);
+		$pending   = array(
+			'answer'       => 'cancel_pending',
+			'code'         => null,
+			'status'       => MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+			'confirmation' => 'pending',
+			'intent'       => true,
+			'after_tick'   => MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED,
+			'calls'        => array( 'restore_id', 'late-task', 'late-task' ),
+		);
+		$swept     = array(
+			'answer'       => null,
+			'code'         => null,
+			'status'       => MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
+			'confirmation' => 'confirmed',
+			'intent'       => true,
+			'calls'        => array( 'restore_id', 'late-task' ),
+		);
+		return array(
+			'B3 ui, id before re-read, ok'         => array( 'ui', 'during_request', array( $not_found, $ok ), false, $finished ),
+			'B4 ui, id inside the swap window, ok' => array( 'ui', 'before_terminal_write', array( $not_found, $ok ), false, $finished ),
+			'B8 ui, id before re-read, timeout'    => array( 'ui', 'during_request', array( $not_found, $ok ), true, $finished ),
+			'B3 ui, busy'                          => array( 'ui', 'during_request', array( $not_found, array( 'result' => 'busy' ), $ok ), false, $pending ),
+			'B3 ui, transport'                     => array( 'ui', 'during_request', array( $not_found, new MainWP_Exception( 'Site unreachable.' ), $ok ), false, $pending ),
+			'B3 ui, completed'                     => array(
+				'ui',
+				'during_request',
+				array(
+					$not_found,
+					array(
+						'result' => 'already_terminal',
+						'phase'  => 'completed',
+					),
+				),
+				false,
+				array(
+					'answer'       => null,
+					'code'         => MainWP_Backup_Restore_Orchestrator::CANCEL_FINISHED_ON_SITE,
+					'status'       => MainWP_Backup_Restore_Job_Store::STATUS_RUNNING,
+					'confirmation' => null,
+					'intent'       => false,
+					'after_tick'   => MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING,
+					'calls'        => array( 'restore_id', 'late-task', 'run' ),
+				),
+			),
+			'D2 sweep, zombie id before re-read'   => array( 'sweep', 'during_request', array( $not_found, $ok ), false, $swept ),
+			'D3 sweep, zombie id inside the swap'  => array( 'sweep', 'before_terminal_write', array( $not_found, $ok ), false, $swept ),
+		);
 	}
 
 	/**

@@ -744,6 +744,22 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Ask the Child to cancel, reading a thrown or unreadable reply as unconfirmed.
+     *
+     * @param object $job Job row; a recorded child_task_id sends the cancel by id.
+     *
+     * @return string request_child_cancel()'s answer, or 'unconfirmed'.
+     */
+    private function request_child_cancel_or_unconfirmed( object $job ): string {
+        try {
+            return $this->request_child_cancel( $job );
+        } catch ( \Throwable $e ) {
+            do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
+            return 'unconfirmed';
+        }
+    }
+
+    /**
      * Cancel a Child task whose create answer arrived after this job ended.
      *
      * A UI cancel can reach the Child while the create request is still in
@@ -1785,6 +1801,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * verifying, no stored failure  not requested      terminalize fresh failure; otherwise drive on
      * no                            not requested      terminalize failure or cancellation
      * yes                           ok/failed          terminalize failure or cancellation
+     * yes (by restore_id)           not_found, id      cancel that id; decide from its answer
+     *                               recorded meanwhile
      * yes                           completed          clear decision; stage if id-less, otherwise run
      * yes                           busy/rolling_back  defer until 15 minutes have elapsed
      * yes                           unconfirmed        defer until the same elapsed-time limit
@@ -1796,6 +1814,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * - Without an incoming or stored failure, cancel_intent means user
      *   cancellation. A retry record supplies elapsed time, not a verdict.
      *   Missing retry records start now.
+     * - A terminal write that followed a restore_id request re-reads the row;
+     *   a task id on it is cancelled by id.
      * - Intent, original failure and retry time must be durable before the child
      *   round trip, so a new lease holder inherits the gate while it is in flight.
      * - A refused combined write defers without a request or cleanup; arm intent
@@ -1840,6 +1860,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $phase              = $store::STATUS_FAILED_RETRYABLE === $job->status ? ( $job->checkpoint['resume_status'] ?? $store::STATUS_PENDING ) : $job->status;
         $can_cancel         = ( ! empty( $job->child_task_id ) || ( ! empty( $job->checkpoint['child_create_attempted'] ) && ! empty( $job->checkpoint['restore_id'] ) ) ) && in_array( $phase, array( $store::STATUS_STAGING, $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
         $outcome            = $store::STATUS_VERIFYING === $phase ? 'completed' : 'ok';
+        $by_restore_id      = $can_cancel && empty( $job->child_task_id );
+        $decided_task_id    = '';
         if ( $can_cancel ) {
             $deferred = $store->defer_terminal_failure( (int) $job->id, $error, $error_code, $lock_token );
             if ( null === $deferred ) {
@@ -1853,21 +1875,22 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 }
                 return self::TERMINAL_OUTCOME_DEFERRED;
             }
-            $outcome = 'unconfirmed';
-            try {
-                $outcome = $this->request_child_cancel( $job );
-            } catch ( \Throwable $e ) {
-                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
-            }
-            $fresh = $store->get_job( (int) $job->id );
+            $outcome = $this->request_child_cancel_or_unconfirmed( $job );
+            $fresh   = $store->get_job( (int) $job->id );
             if ( null === $fresh || ! in_array( $fresh->status, $store::active_statuses(), true ) || $store::STATUS_VERIFYING === $fresh->status ) {
                 return self::TERMINAL_OUTCOME_TERMINAL;
             }
             // A lookup by restore_id that found nothing predates any create still
             // in flight. If the worker recorded a task id meanwhile, that task may
-            // be running, so the next decision cancels it by id instead.
-            if ( 'failed' === $outcome && empty( $job->child_task_id ) && ! empty( $fresh->child_task_id ) ) {
-                $outcome = 'unconfirmed';
+            // run, so the decision comes from a cancel of it by id.
+            if ( 'failed' === $outcome && $by_restore_id && ! empty( $fresh->child_task_id ) ) {
+                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site had no task for this restore when the cancel arrived, but task %s was recorded meanwhile; cancelling it by id.', (int) $job->id, $fresh->child_task_id ), (int) $job->site_id, 0 );
+                $decided_task_id = (string) $fresh->child_task_id;
+                $outcome         = $this->request_child_cancel_or_unconfirmed( $fresh );
+                $fresh           = $store->get_job( (int) $job->id );
+                if ( null === $fresh || ! in_array( $fresh->status, $store::active_statuses(), true ) || $store::STATUS_VERIFYING === $fresh->status ) {
+                    return self::TERMINAL_OUTCOME_TERMINAL;
+                }
             }
         }
 
@@ -1933,6 +1956,17 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 return self::TERMINAL_OUTCOME_TERMINAL;
             }
             return self::TERMINAL_OUTCOME_DEFERRED;
+        }
+
+        if ( $by_restore_id ) {
+            // The terminal write ends every fenced worker write. A task id the row
+            // carries now that this decision did not cancel was recorded by a
+            // worker whose write landed after the re-read, and that worker will
+            // not cancel it.
+            $final = $store->get_job( (int) $job->id );
+            if ( null !== $final && ! empty( $final->child_task_id ) && (string) $final->child_task_id !== $decided_task_id ) {
+                $this->cancel_task_created_after_terminal( $final, (string) $final->child_task_id );
+            }
         }
 
         MainWP_Backup_Run_History::finalize_restore_safety( (int) $job->id, $cancelled ? 'cancelled' : 'failed', $cancelled ? '' : (string) $error_code );

@@ -1417,7 +1417,7 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 
 	// The error list stays last, and the first sentence stays short enough to survive clients that keep only the first sentence.
 	public function test_record_and_list_descriptions_point_site_advice_to_the_summary(): void {
-		$rule = 'Before advising on or planning work for a site, call get-site-knowledge first; one record or a list leaves out inherited client and agency records. Possible errors:';
+		$rule = 'Before advising on or planning work for a site, call get-site-knowledge first; one record or a list does not show which client and agency records apply to that site. Possible errors:';
 		foreach ( array( 'get-knowledge-record' => 'Read one knowledge record in full by id. ', 'list-knowledge' => 'Lists knowledge records at the agency, client or site level that the caller can read. ' ) as $name => $first_sentence ) {
 			$description = wp_get_ability( 'mainwp/' . $name . '-v1' )->get_description();
 			$this->assertStringStartsWith( $first_sentence, $description );

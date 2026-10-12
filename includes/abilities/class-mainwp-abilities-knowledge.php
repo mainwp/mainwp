@@ -52,7 +52,7 @@ class MainWP_Abilities_Knowledge {
             'mainwp/get-knowledge-record-v1',
             array(
                 'label'               => __( 'Get Knowledge Record', 'mainwp' ),
-                'description'         => __( 'Read one knowledge record in full by id. Before advising on or planning work for a site, call get-site-knowledge first; one record or a list leaves out inherited client and agency records. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_knowledge_not_found, mainwp_access_denied, mainwp_knowledge_db_error.', 'mainwp' ),
+                'description'         => __( 'Read one knowledge record in full by id. Before advising on or planning work for a site, call get-site-knowledge first; one record or a list does not show which client and agency records apply to that site. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_knowledge_not_found, mainwp_access_denied, mainwp_knowledge_db_error.', 'mainwp' ),
                 'category'            => 'mainwp-knowledge',
                 'input_schema'        => self::input_schema( array( 'record_id' ), array( 'record_id' ) ),
                 'output_schema'       => self::record_schema( true ),
@@ -139,7 +139,7 @@ class MainWP_Abilities_Knowledge {
             'mainwp/list-knowledge-v1',
             array(
                 'label'               => __( 'List Knowledge', 'mainwp' ),
-                'description'         => __( 'Lists knowledge records at the agency, client or site level that the caller can read. Records have no bodies. Filter by scope, type, verified or a text query on title, description and body. total is computed under the same filters. Before advising on or planning work for a site, call get-site-knowledge first; one record or a list leaves out inherited client and agency records. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_knowledge_db_error.', 'mainwp' ),
+                'description'         => __( 'Lists knowledge records at the agency, client or site level that the caller can read. Records have no bodies. Filter by scope, type, verified or a text query on title, description and body. total is computed under the same filters. Before advising on or planning work for a site, call get-site-knowledge first; one record or a list does not show which client and agency records apply to that site. Possible errors: ability_invalid_input, ability_invalid_permissions, mainwp_permission_denied, mainwp_invalid_input, mainwp_knowledge_db_error.', 'mainwp' ),
                 'category'            => 'mainwp-knowledge',
                 'input_schema'        => array(
                     // Every filter is optional, so a call without input (REST GET with no input parameter) must pass as an empty object.

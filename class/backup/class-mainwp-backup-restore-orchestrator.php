@@ -765,15 +765,19 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return false;
         }
         $result = '';
+        $phase  = '';
         try {
             $website = $this->website( $job );
             $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_cancel', array( 'task_id' => $task_id ), false, false, false );
             $result  = is_array( $payload ) && isset( $payload['result'] ) ? (string) $payload['result'] : '';
+            $phase   = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
         } catch ( \Throwable $e ) {
             $result = '';
         }
         if ( 'ok' === $result ) {
             do_action( 'mainwp_log_info', sprintf( 'Restore job %d: cancelled child restore task %s, created after the job ended.', (int) $job->id, $task_id ), (int) $job->site_id, 0 );
+        } elseif ( 'already_terminal' === $result && 'completed' === $phase ) {
+            do_action( 'mainwp_log_warning', sprintf( 'Restore job %d: child restore task %s, created after the job ended, finished restoring the site. Check the site.', (int) $job->id, $task_id ), (int) $job->site_id, 0 );
         } elseif ( 'already_terminal' === $result ) {
             do_action( 'mainwp_log_info', sprintf( 'Restore job %d: child restore task %s, created after the job ended, had already stopped.', (int) $job->id, $task_id ), (int) $job->site_id, 0 );
         } else {
@@ -1220,8 +1224,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( '' === $created['task_id'] || ! empty( $created['reused'] ) ) {
                 return;
             }
-            // A new task means the finished one is gone; staging continues and
-            // its create reuses the new task.
+            // A new task means the finished one is gone. Record it before staging,
+            // the way a rejected pull manifest does, so the next slice stages and
+            // streams into it and a cancel can always reach it by id.
+            if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => $created['task_id'] ), $this->lock_token ) ) {
+                $this->cancel_task_created_after_terminal( $job, $created['task_id'] );
+            }
+            return;
         }
 
         // Cloud pull: when the destination can presign and the child can
@@ -1853,6 +1862,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $fresh = $store->get_job( (int) $job->id );
             if ( null === $fresh || ! in_array( $fresh->status, $store::active_statuses(), true ) || $store::STATUS_VERIFYING === $fresh->status ) {
                 return self::TERMINAL_OUTCOME_TERMINAL;
+            }
+            // A lookup by restore_id that found nothing predates any create still
+            // in flight. If the worker recorded a task id meanwhile, that task may
+            // be running, so the next decision cancels it by id instead.
+            if ( 'failed' === $outcome && empty( $job->child_task_id ) && ! empty( $fresh->child_task_id ) ) {
+                $outcome = 'unconfirmed';
             }
         }
 

@@ -3829,22 +3829,92 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			),
 			$store::STATUS_STAGING
 		);
-		$this->responses['restore_task_create'] = array(
-			array( 'task_id' => 'recreated-task' ),
-			array(
-				'task_id' => 'recreated-task',
-				'reused'  => true,
-				'phase'   => 'receiving',
-			),
-		);
+		$this->responses['restore_task_create'] = array( 'task_id' => 'recreated-task' );
+
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertSame( 'recreated-task', $job->child_task_id );
+		$this->assertArrayNotHasKey( 'child_completed_unrecorded', $job->checkpoint );
+		$this->assertArrayNotHasKey( 'staged_path', $job->checkpoint['plan'][0] );
+		$this->assertSame( array( 'restore_task_create' ), array_column( $this->calls, 'what' ) );
 
 		$job = $this->tick( $job );
 		$this->assertSame( $store::STATUS_TRANSFERRING, $job->status );
 		$this->assertSame( 'recreated-task', $job->child_task_id );
-		$this->assertArrayNotHasKey( 'child_completed_unrecorded', $job->checkpoint );
 		$this->assertNotEmpty( $job->checkpoint['plan'][0]['staged_path'] );
-		$this->assertSame( array( 'restore_task_create', 'restore_task_create' ), array_column( $this->calls, 'what' ) );
-		$this->assertSame( $this->calls[0]['params']['restore_id'], $this->calls[1]['params']['restore_id'] );
+		$this->assertSame( array( 'restore_task_create' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A recovery task the job cannot record because a cancel ended it is cancelled by id.
+	 */
+	public function test_unrecorded_completed_recovery_task_refused_by_ended_job_is_cancelled() {
+		global $wpdb;
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$table                                  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$job                                    = $this->make_job(
+			array(
+				'child_create_attempted'     => true,
+				'child_completed_unrecorded' => true,
+			),
+			$store::STATUS_STAGING
+		);
+		$id                                     = (int) $job->id;
+		$this->responses['restore_task_create'] = array( 'task_id' => 'probe-task' );
+		$end                                    = static function ( $sql ) use ( $table, $id, $wpdb ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET ' ) && str_contains( $sql, "`child_task_id` = 'probe-task'" ) ) {
+				$wpdb->update( $table, array( 'status' => MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED ), array( 'id' => $id ) );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $end );
+		try {
+			$job = $this->tick( $job );
+		} finally {
+			remove_filter( 'query', $end );
+		}
+
+		$this->assertSame( $store::STATUS_CANCELLED, $job->status );
+		$this->assertSame( '', (string) $job->child_task_id );
+		$this->assertSame( array( 'restore_task_create', 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'task_id' => 'probe-task' ), $this->calls[1]['params'] );
+	}
+
+	/**
+	 * A not_found answer cannot confirm a cancel once the worker has recorded a task id.
+	 */
+	public function test_not_found_cancel_defers_when_task_id_lands_during_the_request() {
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                    = $this->make_job( array( 'child_create_attempted' => true ), $store::STATUS_STAGING );
+		$id                                     = (int) $job->id;
+		$this->responses['restore_task_cancel'] = array(
+			array( 'result' => 'not_found' ),
+			array( 'result' => 'ok' ),
+		);
+		$landed                                 = false;
+		$record                                 = static function ( $pre, $website, $what, $params ) use ( $store, $id, &$landed ) {
+			if ( 'restore_task_cancel' === $what && isset( $params['restore_id'] ) && ! $landed ) {
+				$landed = $store->set_status( $id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => 'late-task' ) );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $record, 5, 4 );
+		try {
+			$this->assertSame( 'cancel_pending', $this->orchestrator->cancel_job( $id ) );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $record, 5 );
+		}
+		$this->assertTrue( $landed );
+		$job = $store->get_job( $id );
+		$this->assertSame( $store::STATUS_RUNNING, $job->status );
+		$this->assertTrue( ! empty( $job->checkpoint['cancel_intent'] ) );
+
+		$job = $this->tick( $job );
+		$this->assertSame( $store::STATUS_CANCELLED, $job->status );
+		$this->assertSame( 'confirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
+		$this->assertSame( array( 'restore_task_cancel', 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'restore_id' => 'orch01test' ), $this->calls[0]['params'] );
+		$this->assertSame( array( 'task_id' => 'late-task' ), $this->calls[1]['params'] );
 	}
 
 	/**

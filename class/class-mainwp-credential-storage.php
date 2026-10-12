@@ -74,12 +74,7 @@ class MainWP_Credential_Storage {
      */
     public static function encrypt_credential( $plaintext, $field = 'http_pass', $old_envelope = null ) {
         $intent = static::stage_credential_encryption( $plaintext, $field, $old_envelope );
-        if ( false === $intent ) {
-            return false;
-        }
-        $intent['retire_key'] = null;
-        static::commit_credential_intent( $intent );
-        return $intent['value'];
+        return false === $intent ? false : $intent['value'];
     }
 
     /**

@@ -259,8 +259,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 continue;
             }
             if ( 0 === stripos( $line, 'HTTP/' ) ) {
-                $status = $line;
-                if ( self::mentions_sensitive_name( $line ) ) {
+                $status = self::redact_urls_in_text( $line );
+                if ( ! is_string( $status ) ) {
+                    $status = self::unredactable_text();
+                } elseif ( self::mentions_sensitive_name( $line ) || self::mentions_sensitive_name( $status ) ) {
                     $status = ( preg_match( '/^HTTP\/\S+\s+\d{3}/', $line, $code ) ? $code[0] . ' ' : '' ) . '[redacted]';
                 }
                 continue;
@@ -305,7 +307,26 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $text = wp_strip_all_tags( $text );
         $text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
         $text = preg_replace( '/\s+/u', ' ', $text );
-        $text = self::redact_secrets( trim( (string) $text ) );
+        if ( ! is_string( $text ) ) {
+            return self::unredactable_text();
+        }
+        $text = trim( $text );
+
+        // Arbitrary remote text has too many encodings and boundary forms for
+        // field-by-field redaction to be reliable. Scan the complete excerpt
+        // plus enough lookahead for a name crossing its display boundary.
+        $scan_text = mb_substr( $text, 0, self::BODY_LIMIT + 64, 'UTF-8' );
+        if ( self::mentions_sensitive_name( $scan_text ) ) {
+            return self::sensitive_text();
+        }
+
+        $text = self::redact_secrets( $text );
+        // Removing a long URL query can pull later text into the excerpt.
+        // Recheck the exact prefix that can now become visible.
+        $scan_text = mb_substr( $text, 0, self::BODY_LIMIT + 64, 'UTF-8' );
+        if ( self::mentions_sensitive_name( $scan_text ) ) {
+            return self::sensitive_text();
+        }
 
         if ( mb_strlen( $text, 'UTF-8' ) > self::BODY_LIMIT ) {
             // Cut on a character boundary: a split UTF-8 sequence makes esc_html() return ''.
@@ -417,14 +438,17 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $output = array();
         }
 
-        $body        = '';
-        $http_status = 0;
-        $headers     = '';
-        $resolved_ip = '';
+        $body                = '';
+        $http_status         = 0;
+        $headers             = '';
+        $resolved_ip         = '';
+        $legacy_text         = '';
+        $has_response_fields = false;
 
         if ( $exception instanceof MainWP_Exception ) {
             $data = $exception->get_data();
             if ( is_array( $data ) ) {
+                $has_response_fields = array_key_exists( 'headers', $data ) || array_key_exists( 'body', $data );
                 if ( isset( $data['http_status'] ) ) {
                     $http_status = (int) $data['http_status'];
                 }
@@ -437,8 +461,11 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 if ( isset( $data['resolved_ip'] ) ) {
                     $resolved_ip = $data['resolved_ip'];
                 }
+                if ( ! empty( $data['text'] ) ) {
+                    $legacy_text = (string) $data['text'];
+                }
             } elseif ( is_string( $data ) ) {
-                $body = $data;
+                $legacy_text = $data;
             }
         }
 
@@ -448,14 +475,31 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $http_status = (int) $output['httpCode'];
         }
 
-        if ( isset( $output['response_headers'] ) && '' !== $output['response_headers'] ) {
-            $headers = (string) $output['response_headers'];
+        if ( array_key_exists( 'response_headers', $output ) ) {
+            $has_response_fields = true;
+            if ( '' !== (string) $output['response_headers'] ) {
+                $headers = (string) $output['response_headers'];
+            }
         }
 
-        if ( isset( $output['response_body'] ) && '' !== (string) $output['response_body'] ) {
-            $body = (string) $output['response_body'];
-        } elseif ( isset( $output['fetch_data'] ) && is_string( $output['fetch_data'] ) && '[hidden response data]' !== $output['fetch_data'] && '' === $body ) {
-            $body = $output['fetch_data'];
+        if ( array_key_exists( 'response_body', $output ) ) {
+            $has_response_fields = true;
+            if ( '' !== (string) $output['response_body'] ) {
+                $body = (string) $output['response_body'];
+            }
+        } elseif ( array_key_exists( 'fetch_data', $output ) ) {
+            $has_response_fields = true;
+            if ( is_string( $output['fetch_data'] ) && '[hidden response data]' !== $output['fetch_data'] && '' === $body ) {
+                $body = $output['fetch_data'];
+            }
+        }
+
+        if ( ! $has_response_fields && isset( $output['response_readable'] ) && is_string( $output['response_readable'] ) ) {
+            $legacy_text = $output['response_readable'];
+        }
+
+        if ( ! $has_response_fields && '' === $body && '' !== $legacy_text ) {
+            $body = $legacy_text;
         }
 
         if ( isset( $output['resolved_ip'] ) ) {
@@ -488,19 +532,6 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string
      */
     public static function readable_response_from_output( $output = array(), $exception = null ) {
-        if ( $exception instanceof MainWP_Exception ) {
-            $data = $exception->get_data();
-            if ( is_array( $data ) && ! empty( $data['text'] ) ) {
-                return (string) $data['text'];
-            }
-            if ( is_string( $data ) && '' !== $data && '[hidden response data]' !== $data ) {
-                return $data;
-            }
-        }
-        if ( is_array( $output ) && ! empty( $output['response_readable'] ) ) {
-            return (string) $output['response_readable'];
-        }
-
         $details = self::from_exception( $exception, $output );
         return $details['response']['text'];
     }
@@ -769,13 +800,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
         $text = self::redact_dump_tail( $text );
 
-        $with_urls = preg_replace_callback(
-            '#(?:https?://[^\s\'"<>]+|/[^\s\'"<>]*\?[^\s\'"<>]+)#i',
-            static function ( $match ) {
-                return MainWP_Connect_Failure_Ux::redact_url( $match[0] );
-            },
-            $text
-        );
+        $with_urls = self::redact_urls_in_text( $text );
         if ( ! is_string( $with_urls ) ) {
             return self::unredactable_text();
         }
@@ -839,6 +864,97 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         );
 
         return is_string( $unquoted ) ? $unquoted : self::unredactable_text();
+    }
+
+    /**
+     * Make arbitrary diagnostic text safe without changing benign text.
+     *
+     * URLs lose userinfo, query strings, and fragments. Text that names a
+     * sensitive field is hidden as a unit because its value boundary cannot
+     * be trusted in an exception or other free-form diagnostic string.
+     *
+     * @param string $text Diagnostic text.
+     *
+     * @return string
+     */
+    public static function sanitize_diagnostic_text( $text ) {
+        if ( ! is_string( $text ) || '' === $text ) {
+            return '';
+        }
+
+        $with_urls = self::redact_urls_in_text( $text );
+        if ( ! is_string( $with_urls ) ) {
+            return self::unredactable_text();
+        }
+        if ( self::mentions_sensitive_name( $text ) || self::mentions_sensitive_name( $with_urls ) ) {
+            return self::sensitive_text();
+        }
+
+        return $with_urls;
+    }
+
+    /**
+     * Strip unknown secrets from URLs embedded in text.
+     *
+     * @param string $text Text that may contain absolute or relative URLs.
+     *
+     * @return string|null
+     */
+    private static function redact_urls_in_text( $text ) {
+        $with_urls = preg_replace_callback(
+            '#(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}+://[^\s\'"<>]++|//[^\s\'"<>]++|/[^\s\'"<>]*+\?[^\s\'"<>]++)#',
+            static function ( $found ) {
+                return MainWP_Connect_Failure_Ux::redact_url( MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] ) );
+            },
+            $text
+        );
+        if ( ! is_string( $with_urls ) ) {
+            return null;
+        }
+
+        // A fully encoded scheme does not match the URL pattern above. Decode
+        // only the whitespace-delimited token, then replace its URL portion.
+        return preg_replace_callback(
+            '#[^\s\'"<>]+#u',
+            static function ( $found ) {
+                $decoded = MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] );
+                if ( $decoded === $found[0] ) {
+                    return $found[0];
+                }
+                if ( preg_match( '/(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}:\/\//', $decoded, $scheme, PREG_OFFSET_CAPTURE ) ) {
+                    $offset = $scheme[0][1];
+                    return substr( $decoded, 0, $offset ) . MainWP_Connect_Failure_Ux::redact_url( substr( $decoded, $offset ) );
+                }
+                if ( 0 === strpos( $decoded, '//' ) ) {
+                    return MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                }
+                if ( 0 === strpos( $decoded, '/' ) && false !== strpos( $decoded, '?' ) ) {
+                    return MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                }
+                return $found[0];
+            },
+            $with_urls
+        );
+    }
+
+    /**
+     * Repeatedly decode entities and percent encoding in diagnostic text.
+     *
+     * @param string $text Text to decode.
+     *
+     * @return string
+     */
+    private static function decode_diagnostic_text( $text ) {
+        $decoded = (string) $text;
+        for ( $round = 0; $round < 3; ++$round ) {
+            $next = rawurldecode( html_entity_decode( $decoded, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+            if ( $next === $decoded ) {
+                break;
+            }
+            $decoded = $next;
+        }
+
+        return $decoded;
     }
 
     /**
@@ -920,6 +1036,15 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Placeholder shown when a response names a sensitive field.
+     *
+     * @return string
+     */
+    private static function sensitive_text() {
+        return __( '[response content hidden: it named a sensitive field]', 'mainwp' );
+    }
+
+    /**
      * Prepare one kept header value for display.
      *
      * A header value that names a secret anywhere is hidden whole instead of
@@ -932,13 +1057,18 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string
      */
     private static function header_value_for_display( $value, $name ) {
-        $value = preg_replace( '/[\s\p{Zs}]+/u', ' ', html_entity_decode( (string) $value, ENT_QUOTES, 'UTF-8' ) );
+        $value = preg_replace( '/[\s\p{Zs}]+/u', ' ', html_entity_decode( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
         if ( ! is_string( $value ) ) {
             return self::unredactable_text();
         }
         $value = trim( $value );
         if ( 'location' === $name ) {
-            $value = self::redact_url( $value );
+            $value = self::redact_url( self::decode_diagnostic_text( $value ) );
+        } else {
+            $value = self::redact_urls_in_text( $value );
+            if ( ! is_string( $value ) ) {
+                return self::unredactable_text();
+            }
         }
         if ( ! self::mentions_sensitive_name( $value ) ) {
             return $value;
@@ -963,9 +1093,29 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return bool
      */
     private static function mentions_sensitive_name( $text ) {
-        $text = (string) $text;
-        foreach ( array( $text, rawurldecode( $text ) ) as $candidate ) {
-            $candidate = preg_replace( '/\p{Cf}+/u', '', html_entity_decode( $candidate, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+        $text       = (string) $text;
+        $candidates = array( $text );
+        $decoded    = $text;
+        for ( $round = 0; $round < 3; ++$round ) {
+            $next = rawurldecode( html_entity_decode( $decoded, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+            if ( $next === $decoded ) {
+                break;
+            }
+            $candidates[] = $next;
+            $decoded      = $next;
+        }
+
+        $stripped_candidates = array();
+        foreach ( $candidates as $candidate ) {
+            $stripped = wp_strip_all_tags( str_replace( '<', ' <', $candidate ) );
+            if ( $stripped !== $candidate ) {
+                $stripped_candidates[] = $stripped;
+            }
+        }
+        $candidates = array_merge( $candidates, $stripped_candidates );
+
+        foreach ( $candidates as $candidate ) {
+            $candidate = preg_replace( '/\p{Cf}+/u', '', $candidate );
             if ( ! is_string( $candidate ) ) {
                 return true;
             }
@@ -978,15 +1128,12 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
                     return true;
                 }
             }
-            $squeezed = preg_replace( '/[\s\p{Zs}]+/u', '', strtolower( $candidate ) );
-            $tokens   = is_string( $squeezed ) ? preg_split( '/[^a-z0-9_\-]+/', $squeezed, -1, PREG_SPLIT_NO_EMPTY ) : false;
-            if ( false === $tokens ) {
+            if ( self::mentions_sensitive_fragment_sequence( $candidate ) ) {
                 return true;
             }
-            foreach ( $tokens as $token ) {
-                if ( self::is_sensitive_param( $token ) ) {
-                    return true;
-                }
+            $squeezed = preg_replace( '/[^a-z0-9]+/u', '', strtolower( $candidate ) );
+            if ( ! is_string( $squeezed ) ) {
+                return true;
             }
             // The stems also catch a name glued to its value once separators are gone.
             foreach ( self::SENSITIVE_STEMS as $stem ) {
@@ -996,6 +1143,94 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
         }
         return false;
+    }
+
+    /**
+     * Detect a sensitive name split across punctuation, markup, or whitespace.
+     *
+     * Only bounded windows are joined, which covers every configured name
+     * without building an unbounded compact copy of arbitrary response text.
+     *
+     * @param string $text Candidate text.
+     *
+     * @return bool
+     */
+    private static function mentions_sensitive_fragment_sequence( $text ) {
+        $parts = preg_split( '/[^A-Za-z0-9_]+/', $text, -1, PREG_SPLIT_NO_EMPTY );
+        if ( false === $parts ) {
+            return true;
+        }
+
+        $count = count( $parts );
+        for ( $start = 0; $start < $count; ++$start ) {
+            $name = '';
+            $end  = min( $count, $start + 19 );
+            for ( $index = $start; $index < $end; ++$index ) {
+                $name .= $parts[ $index ];
+                if ( strlen( $name ) > 32 ) {
+                    break;
+                }
+                if ( $index > $start && ( self::is_sensitive_fragment_param( $name ) || self::is_sensitive_compact_param( $name ) ) ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Classify a joined fragment window without repeatedly scanning the name list.
+     *
+     * @param string $name Candidate parameter name.
+     *
+     * @return bool
+     */
+    private static function is_sensitive_fragment_param( $name ) {
+        static $exact_names = null;
+
+        $name = strtolower( (string) $name );
+        if ( null === $exact_names ) {
+            $exact_names = array_fill_keys( self::SENSITIVE_PARAM_NAMES, true );
+        }
+        if ( isset( $exact_names[ $name ] ) ) {
+            return true;
+        }
+        foreach ( self::SENSITIVE_PARAM_SUFFIXES as $suffix ) {
+            $needle = '_' . $suffix;
+            $length = strlen( $needle );
+            if ( substr( $name, -$length ) === $needle ) {
+                return true;
+            }
+        }
+        foreach ( self::SENSITIVE_PARAM_BARE_SUFFIXES as $suffix ) {
+            $length = strlen( $suffix );
+            if ( substr( $name, -$length ) === $suffix ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Classify a name after separators, including underscores, have been removed.
+     *
+     * @param string $name Compact candidate name.
+     *
+     * @return bool
+     */
+    private static function is_sensitive_compact_param( $name ) {
+        static $compact_names = null;
+
+        if ( null === $compact_names ) {
+            $compact_names = array();
+            foreach ( self::SENSITIVE_PARAM_NAMES as $sensitive ) {
+                $compact_names[ str_replace( array( '_', '-' ), '', $sensitive ) ] = true;
+            }
+        }
+
+        return isset( $compact_names[ strtolower( (string) $name ) ] );
     }
 
     /**

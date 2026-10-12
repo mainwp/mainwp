@@ -535,7 +535,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_setopt( $ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4 );
         }
 
-        MainWP_Logger::instance()->debug( ' :: trying Visit :: [url=' . $url . ']' );
+        MainWP_Logger::instance()->debug( ' :: trying Visit :: [url=' . MainWP_Connect_Failure_Ux::redact_url( $url ) . ']' );
 
         $http_version = false;
 
@@ -591,7 +591,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
-        MainWP_Logger::instance()->log_execution_time( 'tryVisit :: [url=' . $url . '] [http_status=' . $http_status . ']' );
+        MainWP_Logger::instance()->log_execution_time( 'tryVisit :: [url=' . MainWP_Connect_Failure_Ux::redact_url( $url ) . '] [http_status=' . $http_status . ']' );
 
         $host   = wp_parse_url( ( empty( $realurl ) ? $url : $realurl ), PHP_URL_HOST );
         $ip     = false;
@@ -657,7 +657,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $data = $hidden_data;
         }
 
-        MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . $url . '] [http_status=' . $http_status . '] [http_version=' . ( false === $http_version ? 'N/A' : MainWP_System_Utility::get_http_version_const_str( $http_version ) ) . '] [error=' . $err . '] [data-start]' . $data . '[data-end]' );
+        $response_bytes = is_string( $data ) ? strlen( $data ) : 0;
+        MainWP_Logger::instance()->debug( ' :: tryVisit :: [url=' . MainWP_Connect_Failure_Ux::redact_url( $url ) . '] [http_status=' . $http_status . '] [http_version=' . ( false === $http_version ? 'N/A' : MainWP_System_Utility::get_http_version_const_str( $http_version ) ) . '] [error=' . MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( (string) $err ) . '] [response_bytes=' . $response_bytes . ']' );
 
         if ( false !== $ip ) {
             $out['ip'] = $ip;
@@ -933,8 +934,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             $sign_error .= $msg;
                         }
                     }
-                    $pk_info = ! empty( $website->privkey ) ? substr( $website->privkey, 0, 10 ) : '';
-                    MainWP_Logger::instance()->warning_for_website( $website, 'CONNECT SIGN', 'FAILED :: [what=' . ( is_string( $what ) ? $what : '' ) . '] :: [seclib=' . intval( $use_seclib ) . '] :: [algorithm=' . $alg . '] :: [openssl_sign error =' . $sign_error . '] :: [pkey start =' . $pk_info . '...]', false );
+                    MainWP_Logger::instance()->warning_for_website( $website, 'CONNECT SIGN', 'FAILED :: [what=' . ( is_string( $what ) ? $what : '' ) . '] :: [seclib=' . intval( $use_seclib ) . '] :: [algorithm=' . $alg . '] :: [openssl_sign error =' . $sign_error . ']', false );
                 }
             } else {
                 $signature = 'useadvancedmainwpsignature';
@@ -990,8 +990,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             $sign_error .= $msg;
                         }
                     }
-                    $pk_info = ! empty( $website->privkey ) ? substr( $website->privkey, 0, 10 ) : '';
-                    MainWP_Logger::instance()->warning_for_website( $website, 'CONNECT ADV SIGN', 'FAILED :: [what=' . ( is_string( $what ) ? $what : '' ) . '] :: [seclib=' . intval( $use_seclib ) . '] :: [algorithm=' . $alg . '] :: [openssl_sign error =' . $sign_error . '] :: [pkey start =' . $pk_info . '...]', false );
+                    MainWP_Logger::instance()->warning_for_website( $website, 'CONNECT ADV SIGN', 'FAILED :: [what=' . ( is_string( $what ) ? $what : '' ) . '] :: [seclib=' . intval( $use_seclib ) . '] :: [algorithm=' . $alg . '] :: [openssl_sign error =' . $sign_error . ']', false );
                 }
             }
 
@@ -1069,7 +1068,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $sign_success = static::connect_sign( $sign_value, $signature, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
                 if ( empty( $sign_success ) ) { // error from openssl, openssl_sign().
                     $alg = defined( 'OPENSSL_ALGO_SHA1' ) ? OPENSSL_ALGO_SHA1 : false; // to set default SHA1, to disconnect.
-                    MainWP_Logger::instance()->debug_for_website( $website, 'get_renew_post_data_authed', '[' . $website->url . '] :: [openssl_sign:failed] :: Set sign_algo=SHA1' );
+                    MainWP_Logger::instance()->debug_for_website( $website, 'get_renew_post_data_authed', '[' . MainWP_Connect_Failure_Ux::redact_url( $website->url ) . '] :: [openssl_sign:failed] :: Set sign_algo=SHA1' );
                     $sign_success = static::connect_sign( $sign_value, $signature, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
                 }
 
@@ -1111,7 +1110,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     $sign_success_v2 = static::connect_sign( $sign_value_v2, $signature_v2, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
                     if ( empty( $sign_success_v2 ) ) { // error from openssl, openssl_sign().
                         $alg = defined( 'OPENSSL_ALGO_SHA1' ) ? OPENSSL_ALGO_SHA1 : false; // to set default SHA1, to disconnect.
-                        MainWP_Logger::instance()->debug_for_website( $website, 'get_renew_post_data_authed', '[' . $website->url . '] :: [openssl_sign:failed] :: Set sign_algo=SHA1' );
+                        MainWP_Logger::instance()->debug_for_website( $website, 'get_renew_post_data_authed', '[' . MainWP_Connect_Failure_Ux::redact_url( $website->url ) . '] :: [openssl_sign:failed] :: Set sign_algo=SHA1' );
                         $sign_success_v2 = static::connect_sign( $sign_value_v2, $signature_v2, base64_decode( $website->privkey ), $alg, $website->id ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for keys encoding.
                     }
                     if ( false !== $alg ) {
@@ -2334,10 +2333,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
-        $agent = MainWP_Connect_Failure_Ux::get_user_agent();
+        $agent    = MainWP_Connect_Failure_Ux::get_user_agent();
+        $safe_url = MainWP_Connect_Failure_Ux::redact_url( $url );
 
         if ( ! empty( $website ) ) {
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Request to [' . $url . '] [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Request to [' . $safe_url . ']' );
         }
 
         $identifier = null;
@@ -2358,7 +2358,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         static::init_cookiesdir( $cookieDir );
 
-        $fetch_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $website, $postdata );
+        $fetch_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $website );
 
         $ch = curl_init();
         if ( ! static::is_valid_curl_handle( $ch ) ) {
@@ -2553,7 +2553,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $ip          = gethostbyname( $host );
         $resolved_ip = ( is_string( $ip ) && false !== filter_var( $ip, FILTER_VALIDATE_IP ) ) ? $ip : '';
 
-        MainWP_Execution_Helper::execute_call_track( 'end_point', $website, $postdata, $fetch_track_id, 'fetch site' );
+        MainWP_Execution_Helper::execute_call_track( 'end_point', $website, array(), $fetch_track_id, 'fetch site' );
 
         if ( null !== $website ) {
             MainWP_DB_Common::instance()->insert_or_update_request_log( $website->id, $ip, null, microtime( true ) );
@@ -2585,12 +2585,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             'error'       => $err,
         );
 
-        MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . $err . ']' );
-        if ( '400' === $http_status ) {
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'post data: [' . MainWP_Utility::value_to_string( $postdata, 1 ) . ']' );
-        }
+        MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'http status: [' . $http_status . '] err: [' . MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( (string) $err ) . ']' );
 
-        MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $url . ']' );
+        MainWP_Logger::instance()->log_execution_time( 'fetch_url_site :: [url=' . $safe_url . ']' );
 
         $thr_error = null;
 
@@ -2600,7 +2597,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( 'process_premium_updates' === $what ) {
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] response data: [' . MainWP_Utility::value_to_string( $data ) . ']' );
+            $response_bytes = is_string( $data ) ? strlen( $data ) : 0;
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] response received: [bytes=' . $response_bytes . ']' );
         }
 
         $timeout_kind = static::child_request_timeout_kind( $curl_errno, $err, $http_status, $data );
@@ -2610,7 +2608,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', 'Error: TIMEOUT' );
                 $thr_error = static::new_timeout_exception( $timeout_kind, $output );
             } else {
-                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=0][' . $err . ']' );
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $safe_url . '] HTTP Error: [status=0][' . MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( (string) $err ) . ']' );
                 $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 $output['error_category'] = 'http_error';
             }
@@ -2619,7 +2617,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', 'Error: TIMEOUT' );
                 $thr_error = static::new_timeout_exception( $timeout_kind, $output );
             } else {
-                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] HTTP Error: [status=' . $http_status . '][' . $err . ']' );
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $safe_url . '] HTTP Error: [status=' . $http_status . '][' . MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( (string) $err ) . ']' );
                 $thr_error                = new MainWP_Exception( 'HTTPERROR', $err ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 $output['error_category'] = 'http_error';
                 $output['error_code']     = 'http_request_failed';
@@ -2630,9 +2628,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $result                    = $results[1];
             $information               = MainWP_System_Utility::get_child_response( base64_decode( $result ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
             unset( $output['fetch_data'] ); // hide the data.
-            $pdt      = is_string( $postdata ) ? $postdata : '';
-            $data_log = is_array( $postdata ) ? print_r( $postdata, true ) : $pdt;  //phpcs:ignore -- good.
-            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] postdata [' . $data_log . '] information: [OK]' ); //phpcs:ignore -- ok.
+            MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $safe_url . '] information: [OK]' );
 
             $error_code = is_array( $information ) && isset( $information['error_code'] ) ? sanitize_text_field( wp_unslash( $information['error_code'] ) ) : '';
             if ( ! empty( $error_code ) ) {
@@ -2654,7 +2650,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
 
             if ( 'process_premium_updates' === $what ) {
-                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] decoded data: [' . MainWP_Utility::value_to_string( $information ) . ']' );
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'function: [process_premium_updates] decoded response: [OK]' );
             }
 
             return $information;
@@ -2667,7 +2663,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $output['error_category'] = 'http_error';
                 $output['error_code']     = 'http_request_failed';
                 $output['error_message']  = $err;
-                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $url . '] error [' . $err . ']' ); //phpcs:ignore -- ok.
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', '[' . $safe_url . '] error [' . MainWP_Connect_Failure_Ux::sanitize_diagnostic_text( (string) $err ) . ']' );
             }
         } elseif ( $raw_response ) {
             MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url_site', 'Response: [RAW]' );
@@ -2684,7 +2680,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', 'Error: TIMEOUT' );
                 $thr_error = static::new_timeout_exception( $timeout_kind, $output );
             } else {
-                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $url . '] Error: NOMAINWP [data=' . $hidden_data . ']' );
+                $response_bytes = is_string( $data ) ? strlen( $data ) : 0;
+                MainWP_Logger::instance()->debug_for_website( $website, 'fetch_url', '[' . $safe_url . '] Error: NOMAINWP [response_bytes=' . $response_bytes . ']' );
                 $thr_error                = new MainWP_Exception( 'NOMAINWP', $url ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 $err_msg                  = 'Connection Failed. Please ensure that the MainWP Child plugin is installed and activated on the child site.';
                 $output['error_category'] = 'child_plugin_missing';

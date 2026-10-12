@@ -150,6 +150,7 @@ class MainWP_Settings_Indicator { // phpcs:ignore Generic.Classes.OpeningBraceSa
             'mainwp_backup_before_upgrade_days'            => 7,
             'mainwp_backup_before_upgrade_require_offsite' => 0,
             'mainwp_numberdays_Outdate_Plugin_Theme'       => 365,
+            'mainwp_abandoned_check_by_local_date'         => 0,
             'mainwp_disableSitesHealthMonitoring'          => 1,
             'mainwp_sitehealthThreshold'                   => 80,
             'mainwp_enableNativeBackups'                   => 0,

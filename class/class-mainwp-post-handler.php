@@ -1080,6 +1080,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     public function mainwp_clients_delete_general_field() {
         $this->check_security( 'mainwp_clients_delete_general_field' );
         $ret = array( 'success' => false );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            $ret['error'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
+            MainWP_Client::exit_json( $ret );
+        }
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $field_id  = isset( $_POST['field_id'] ) ? intval( $_POST['field_id'] ) : 0;
         $client_id = 0; // 0 general fields.
@@ -1100,6 +1104,10 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     public function mainwp_clients_bulk_delete_fields() {
         $this->check_security( 'mainwp_clients_bulk_delete_fields' );
         $ret = array( 'success' => false );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
+            $ret['error'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
+            MainWP_Client::exit_json( $ret );
+        }
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $field_ids = isset( $_POST['field_ids'] ) && is_array( $_POST['field_ids'] ) ? array_map( 'intval', $_POST['field_ids'] ) : array();
         // phpcs:enable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

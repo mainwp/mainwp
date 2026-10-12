@@ -117,6 +117,8 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         add_action( 'deleted_user', array( $this, 'delete_user_api_keys' ), 10, 3 );
         add_action( 'remove_user_from_blog', array( $this, 'remove_user_from_blog_api_keys' ), 10, 3 );
         add_action( 'revoked_super_admin', array( $this, 'revoked_super_admin_api_keys' ) );
+        add_action( 'set_user_role', array( $this, 'delete_user_api_keys_on_role_change' ) );
+        add_action( 'remove_user_role', array( $this, 'delete_user_api_keys_on_role_change' ) );
     }
 
     /**
@@ -133,6 +135,25 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         foreach ( $rows as $row ) {
             self::delete_api_key_cache( $row->consumer_key );
         }
+    }
+
+    /**
+     * Delete an owner's API keys when their WordPress role changes.
+     *
+     * Roles and custom roles do not have a reliable privilege ordering, so any
+     * changed or removed role revokes credentials issued under the old role.
+     * On multisite, a role change on another site must not affect keys stored
+     * for the Dashboard site.
+     *
+     * @param int $user_id User whose role changed.
+     */
+    public function delete_user_api_keys_on_role_change( $user_id ) {
+        global $wpdb;
+
+        if ( $wpdb->get_blog_prefix() . 'mainwp_api_keys' !== MainWP_DB::instance()->get_table_name( 'api_keys' ) ) {
+            return;
+        }
+        $this->delete_user_api_keys( $user_id );
     }
 
     /**
@@ -659,6 +680,11 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return false;
         }
 
+        if ( ! in_array( $params['oauth_signature_method'], array( 'HMAC-SHA1', 'HMAC-SHA256' ), true ) ) {
+            $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid signature - signature method is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
+            return false;
+        }
+
         // Fetch WP user by consumer key.
         $user = $this->get_user_data_by_consumer_key( $params['oauth_consumer_key'] );
 
@@ -826,21 +852,10 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         $query_string   = implode( '%26', $this->join_with_equals_sign( $params ) ); // Join with ampersand.
         $string_to_sign = $http_method . '&' . $base_request_uri . '&' . $query_string;
 
-        if ( 'HMAC-SHA1' !== $params['oauth_signature_method'] && 'HMAC-SHA256' !== $params['oauth_signature_method'] ) {
-            return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid signature - signature method is invalid.', 'mainwp' ), array( 'status' => 401 ) );
-        }
-
-        // OAuth 1.0a HMAC verification requires the plaintext secret as the HMAC
-        // key. Keys created after MWP-1540 store the secret hashed at rest and
-        // therefore cannot be used with this auth method. Direct the caller to
-        // Basic Auth over HTTPS or to reissue (and use the new key only via
-        // Basic Auth).
-        //
-        // TODO MWP-1540 sunset (~v6.3): drop this branch. By the sunset target
-        // any plaintext keys still in the wild will already be failing through
-        // Basic Auth as well, so reissue is the only path forward anyway.
+        // HMAC needs the plaintext secret. A distinct error for a hashed secret
+        // would reveal that the submitted consumer key exists.
         if ( ! $this->is_legacy_plaintext_secret( $user->consumer_secret ) ) {
-            return new WP_Error( 'mainwp_rest_authentication_oauth1_unsupported', __( 'OAuth 1.0a is not supported for this API key. Use Basic Auth over HTTPS or reissue the key.', 'mainwp' ), array( 'status' => 401 ) );
+            return $this->refused_key_error();
         }
 
         $hash_algorithm = strtolower( str_replace( 'HMAC-', '', $params['oauth_signature_method'] ) );

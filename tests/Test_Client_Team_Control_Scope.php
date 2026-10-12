@@ -661,8 +661,8 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertStringContainsString( 'permission', strtolower( $body ) );
     }
 
-    /** Global fields retain their owner and existing permission behavior. */
-    public function test_field_edit_keeps_stored_owner_and_global_fields_unchanged(): void {
+    /** Field edits retain their stored owner and global fields require manage_clients. */
+    public function test_field_edit_keeps_stored_owner_and_global_fields_require_manage_clients(): void {
         $client = $this->client();
         $this->scope( array( $this->site( $client ) ) );
         $field = $this->field( $client->client_id );
@@ -670,11 +670,15 @@ class Test_Client_Team_Control_Scope extends \WP_UnitTestCase {
         $this->assertTrue( json_decode( $body, true )['success'] );
         $this->assertSame( (int) $client->client_id, (int) MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $field )->client_id );
         $global = $this->field( 0 );
+        $stored = MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $global );
         $this->scope( array() );
         $this->filter( 'mainwp_currentusercan', '__return_false' );
         $body = $this->dispatch( 'mainwp_clients_save_field', array( 'client_id' => $client->client_id, 'field_id' => $global, 'field_name' => 'global-renamed', 'field_desc' => 'edited' ) );
-        $this->assertTrue( json_decode( $body, true )['success'] );
-        $this->assertSame( 0, (int) MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $global )->client_id );
+        $response = json_decode( $body, true );
+        $current  = MainWP_DB_Client::instance()->get_client_fields_by( 'field_id', $global );
+        $this->assertFalse( $response['success'] );
+        $this->assertStringContainsString( 'permission', strtolower( $response['error'] ) );
+        $this->assertSame( array( $stored->field_name, $stored->field_desc, 0 ), array( $current->field_name, $current->field_desc, (int) $current->client_id ) );
     }
 
     /** A supplied visible parent cannot authorize a hidden field's deletion. */

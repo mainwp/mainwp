@@ -172,6 +172,10 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Added: A child-version check when a restore starts; a site running an older MainWP Child gets an update prompt instead of a failed restore.
 * Note: File backups and restores are refused on sites whose wp-content folder lives outside the WordPress core folder, such as some Pressable, WordPress.com, and Bedrock installs. Database-only backups and restores still work there. A restored site keeps its last pre-restore safety backup on its own server until its next restore, and that backup stays there if the site is removed from the Dashboard.
 
+= 6.2.3 - 10-12-2026 =
+
+* Security: Hardened REST API key authentication, permissions, lifecycle, and caching.
+
 = 6.2.2 - 10-1-2026 =
 
 * Fixed: PHP fatal error when saving Monitoring settings while uptime monitoring is enabled.

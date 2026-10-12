@@ -228,13 +228,13 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
 
             $count_processed_now = 0;
-
+            $ref_count           = 0;
             foreach ( $pluginsToUpdate as $slug => $info ) {
                 if ( ! is_array( $info ) ) {
                     continue;
                 }
                 if ( ! isset( $updated_status['updates_processed']['plugins'][ $slug ] ) ) {
-                    $ignored = MainWP_Common_Functions::instance()->is_ignored_updates( $info, $decodedIgnoredPlugins, 'plugin' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $info, $websiteDecodedIgnoredPlugins, 'plugin' );
+                    $ignored = MainWP_Common_Functions::instance()->is_ignored_updates( $info, $decodedIgnoredPlugins, 'plugin', $ref_count, $slug ) || MainWP_Common_Functions::instance()->is_ignored_updates( $info, $websiteDecodedIgnoredPlugins, 'plugin', $ref_count, $slug );
                     if ( $ignored ) {
                         $info['ignored'] = 1;
                     }
@@ -504,7 +504,8 @@ class MainWP_Cron_Jobs_Batch { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( $website->is_ignorePluginUpdates ) {
                 continue;
             }
-            if ( MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $decodedIgnoredPlugins, 'plugin' ) || MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $websiteDecodedIgnoredPlugins, 'plugin' ) ) {
+            $ref_count = 0;
+            if ( MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $decodedIgnoredPlugins, 'plugin', $ref_count, $pluginSlug ) || MainWP_Common_Functions::instance()->is_ignored_updates( $pluginInfo, $websiteDecodedIgnoredPlugins, 'plugin', $ref_count, $pluginSlug ) ) {
                 continue;
             }
 

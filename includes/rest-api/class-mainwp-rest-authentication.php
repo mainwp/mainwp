@@ -114,46 +114,98 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         add_filter( 'rest_authentication_errors', array( $this, 'check_authentication_error' ), 15 );
         add_filter( 'rest_post_dispatch', array( $this, 'send_unauthorized_headers' ), 50 );
         add_filter( 'rest_pre_dispatch', array( $this, 'check_user_permissions' ), 10, 3 );
+        add_action( 'deleted_user', array( $this, 'delete_user_api_keys' ), 10, 3 );
+        add_action( 'remove_user_from_blog', array( $this, 'remove_user_from_blog_api_keys' ), 10, 3 );
+        add_action( 'revoked_super_admin', array( $this, 'revoked_super_admin_api_keys' ) );
     }
 
     /**
-     * Check if this is a request to MainWP's REST API.
+     * Delete an owner's API keys and their cache entries.
      *
-     * This method determines whether the current request should use MainWP's
-     * custom REST API authentication (API keys, OAuth, Bearer tokens).
+     * @param int          $id       Deleted user ID.
+     * @param int|null     $reassign Content reassignment target. API keys are never reassigned.
+     * @param WP_User|null $user     Deleted user.
+     */
+    public function delete_user_api_keys( $id, $reassign = null, $user = null ) {
+        unset( $reassign, $user );
+        $db   = MainWP_DB::instance();
+        $rows = $db->remove_rest_api_keys_by_user( $id, $db->get_table_name( 'api_keys' ) );
+        foreach ( $rows as $row ) {
+            self::delete_api_key_cache( $row->consumer_key );
+        }
+    }
+
+    /**
+     * Invalidate the row cached for REST API authentication.
      *
-     * Returns TRUE for:
-     *   - /wp-json/mainwp/v2/sites (MainWP core REST API)
-     *   - /wp-json/mainwp-extension/v1/foo (MainWP extension REST APIs)
+     * @param string $consumer_key Stored consumer key, already hashed with mainwp_api_hash().
+     */
+    public static function delete_api_key_cache( $consumer_key ) {
+        wp_cache_delete( self::api_key_cache_key( $consumer_key ) );
+    }
+
+    /**
+     * Object-cache key for a key row.
      *
-     * Returns FALSE for:
-     *   - /wp-json/wp-abilities/v1/abilities/mainwp/list-sites-v1 (Abilities API)
-     *   - /wp-json/wp/v2/posts (WordPress core REST API)
-     *   - Any other REST endpoint not starting with 'mainwp/' or 'mainwp-'
+     * @param string $consumer_key Stored consumer key, already hashed with mainwp_api_hash().
+     * @return string
+     */
+    private static function api_key_cache_key( $consumer_key ) {
+        return 'mainwp_api_key_' . md5( $consumer_key ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+    }
+
+    /**
+     * Delete API keys only when their owner leaves MainWP's blog.
      *
-     * IMPORTANT: The Abilities API endpoints contain 'mainwp' in their path
-     * (as the ability provider namespace) but MUST use native WordPress
-     * authentication (cookie auth, application passwords, etc.) - NOT MainWP's
-     * API key system. This method's exact prefix matching ensures Abilities
-     * endpoints are excluded.
+     * @param int $user_id  Removed user ID.
+     * @param int $blog_id  Blog the user is leaving.
+     * @param int $reassign Content reassignment target. API keys are never reassigned.
+     */
+    public function remove_user_from_blog_api_keys( $user_id, $blog_id, $reassign = 0 ) {
+        global $wpdb;
+
+        unset( $reassign );
+        if ( $wpdb->get_blog_prefix( $blog_id ) . 'mainwp_api_keys' !== MainWP_DB::instance()->get_table_name( 'api_keys' ) ) {
+            return;
+        }
+        $this->delete_user_api_keys( $user_id );
+    }
+
+    /**
+     * Delete a former super admin's API keys when they are not a member of MainWP's blog.
+     *
+     * Super admins may hold keys on a Dashboard subsite they were never added to. Once revoked, those keys
+     * are refused at use time, but would work again if super admin were re-granted.
+     *
+     * @param int $user_id User whose super admin privileges were revoked.
+     */
+    public function revoked_super_admin_api_keys( $user_id ) {
+        global $wpdb;
+
+        if ( $wpdb->get_blog_prefix() . 'mainwp_api_keys' !== MainWP_DB::instance()->get_table_name( 'api_keys' ) || is_user_member_of_blog( $user_id ) ) {
+            return;
+        }
+        $this->delete_user_api_keys( $user_id );
+    }
+
+    /**
+     * Check whether WordPress is dispatching a MainWP REST route.
+     *
+     * Uses the parsed rest_route query variable, which is available during REST
+     * serving. An empty or unset route means no REST request is being served.
+     * The first path segment must be 'mainwp' or start with 'mainwp-', compared
+     * case-insensitively after trimming and normalising the leading slash.
+     *
+     * Abilities routes such as /wp-abilities/v1/abilities/mainwp/list-sites-v1
+     * MUST use native WordPress authentication and are excluded.
      *
      * @return bool True if request is to MainWP REST API, false otherwise.
      */
     protected function is_request_to_rest_api() {
-        if ( empty( $_SERVER['REQUEST_URI'] ) ) {
+        $route = $GLOBALS['wp']->query_vars['rest_route'] ?? '';
+        if ( empty( $route ) || ! is_string( $route ) ) {
             return false;
         }
-
-        $rest_prefix = trailingslashit( rest_get_url_prefix() );
-        $request_uri = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) );
-
-        // Check if the request is to the MainWP API namespace.
-        // Use strpos with exact prefix to avoid false positives from other APIs
-        // that may have 'mainwp/' in their URL path (e.g., wp-abilities/v1/abilities/mainwp/...).
-        $mainwp_api = ( false !== strpos( $request_uri, '/' . $rest_prefix . self::MAINWP_REST_NAMESPACE ) );
-
-        // Allow third party plugins use our authentication methods.
-        $extension_api = ( false !== strpos( $request_uri, '/' . $rest_prefix . self::MAINWP_EXTENSION_REST_NAMESPACE ) );
 
         /**
          * Filter whether a request is considered to be to the MainWP REST API.
@@ -164,7 +216,20 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
          *
          * @param bool $is_mainwp_api True if this is a MainWP REST API request.
          */
-        return apply_filters( 'mainwp_rest_is_request_to_rest_api', $mainwp_api || $extension_api );
+        return apply_filters( 'mainwp_rest_is_request_to_rest_api', $this->is_mainwp_route( $route ) );
+    }
+
+    /**
+     * Match the first route segment to a MainWP namespace.
+     *
+     * @param string $route REST route to classify.
+     * @return bool
+     */
+    private function is_mainwp_route( string $route ) {
+        $route     = '/' . ltrim( trim( $route ), '/' );
+        $namespace = strtolower( explode( '/', $route )[1] );
+
+        return rtrim( self::MAINWP_REST_NAMESPACE, '/' ) === $namespace || 0 === strpos( $namespace, self::MAINWP_EXTENSION_REST_NAMESPACE );
     }
 
     /**
@@ -281,7 +346,26 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return $error;
         }
 
+        // mainwp/v1 routes check their own option-stored v1 keys in each callback and never
+        // read the key user, so a failed v2 attempt there must look like no v2 key was sent.
+        if ( $this->is_v1_route() ) {
+            return $error;
+        }
+
         return $this->get_error();
+    }
+
+    /**
+     * Check whether WordPress is dispatching a mainwp/v1 route.
+     *
+     * Route matching in WP_REST_Server is case-insensitive, so the comparison is too.
+     *
+     * @return bool
+     */
+    private function is_v1_route() {
+        $segments = explode( '/', strtolower( trim( trim( (string) ( $GLOBALS['wp']->query_vars['rest_route'] ?? '' ) ), '/' ) ) );
+
+        return 'mainwp' === $segments[0] && isset( $segments[1] ) && 'v1' === $segments[1];
     }
 
     /**
@@ -303,6 +387,17 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
      */
     protected function get_error() {
         return $this->error;
+    }
+
+    /**
+     * Error for a submitted key that is unknown, disabled, ownerless or paired with the wrong secret.
+     *
+     * One response for all of them, so a caller holding only a consumer key cannot tell whether it exists.
+     *
+     * @return WP_Error
+     */
+    private function refused_key_error() {
+        return new WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) );
     }
 
     /**
@@ -338,6 +433,10 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
      * @return bool True if the submitted secret matches the stored value.
      */
     private function verify_consumer_secret( $stored, $submitted ) {
+        // An array secret (consumer_secret[]=x) would throw here, and only for a live key, which reveals that it exists.
+        if ( ! is_string( $submitted ) ) {
+            return false;
+        }
         if ( $this->is_legacy_plaintext_secret( $stored ) ) {
             return hash_equals( $stored, $submitted ); // @codingStandardsIgnoreLine
         }
@@ -379,15 +478,16 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         }
 
         // Get user data.
-        $this->user = $this->get_user_data_by_consumer_key( $consumer_key );
+        $user = $this->get_user_data_by_consumer_key( $consumer_key );
 
-        if ( empty( $this->user ) ) {
+        if ( empty( $user ) ) {
             return false;
         }
+        $this->user = $user;
 
         // Validate user secret. Handles both legacy plaintext rows and hashed rows.
         if ( ! $this->verify_consumer_secret( $this->user->consumer_secret, $consumer_secret ) ) {
-            $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer secret is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
+            $this->set_error( $this->refused_key_error() );
 
             return false;
         }
@@ -560,13 +660,12 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         }
 
         // Fetch WP user by consumer key.
-        $this->user = $this->get_user_data_by_consumer_key( $params['oauth_consumer_key'] );
+        $user = $this->get_user_data_by_consumer_key( $params['oauth_consumer_key'] );
 
-        if ( empty( $this->user ) ) {
-            $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer key is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
-
+        if ( empty( $user ) ) {
             return false;
         }
+        $this->user = $user;
 
         // Perform OAuth validation.
         $signature = $this->check_oauth_signature( $this->user, $params );
@@ -619,13 +718,14 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return false;
         }
         // Get user data.
-        $this->user = $this->get_user_data_by_consumer_key( $consumer_key );
-        if ( empty( $this->user ) ) {
+        $user = $this->get_user_data_by_consumer_key( $consumer_key );
+        if ( empty( $user ) ) {
             return false;
         }
+        $this->user = $user;
         // Validate user secret. Handles both legacy plaintext rows and hashed rows.
         if ( ! $this->verify_consumer_secret( $this->user->consumer_secret, $consumer_secret ) ) {
-            $this->set_error( new WP_Error( 'mainwp_rest_authentication_error', __( 'Consumer secret is invalid.', 'mainwp' ), array( 'status' => 401 ) ) );
+            $this->set_error( $this->refused_key_error() );
 
             return false;
         }
@@ -707,6 +807,11 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         }
         $base_request_uri = rawurlencode( get_home_url( null, $request_path, $this->is_ssl_request() ? 'https' : 'http' ) );
 
+        // Same reasoning as verify_consumer_secret(): an array signature must not throw only for a live key.
+        if ( ! is_string( $params['oauth_signature'] ) ) {
+            return $this->refused_key_error();
+        }
+
         // Get the signature provided by the consumer and remove it from the parameters prior to checking the signature.
         $consumer_signature = rawurldecode( str_replace( ' ', '+', $params['oauth_signature'] ) );
         unset( $params['oauth_signature'] );
@@ -743,7 +848,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         $signature      = base64_encode( hash_hmac( $hash_algorithm, $string_to_sign, $secret, true ) ); //phpcs:ignore -- ok.
 
         if ( ! hash_equals( $signature, $consumer_signature ) ) { // @codingStandardsIgnoreLine
-            return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid signature - provided signature does not match.', 'mainwp' ), array( 'status' => 401 ) );
+            return $this->refused_key_error();
         }
         return true;
     }
@@ -847,7 +952,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             array( '%d' )
         );
 
-        wp_cache_delete( 'mainwp_api_key_' . md5( $user->consumer_key ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+        self::delete_api_key_cache( $user->consumer_key );
 
         return true;
     }
@@ -862,7 +967,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
         global $wpdb;
 
         $consumer_key = \mainwp_api_hash( sanitize_text_field( $consumer_key ) );
-        $cache_key    = 'mainwp_api_key_' . md5( $consumer_key ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+        $cache_key    = self::api_key_cache_key( $consumer_key );
         $user         = wp_cache_get( $cache_key );
 
         if ( false === $user ) {
@@ -874,12 +979,23 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
                 )
             );
             if ( $user ) {
-                wp_cache_set( $cache_key, $user );
+                // Key edits and deletes clear this entry, but a request that read the row just before the write can
+                // store it again afterwards; the expiry bounds how long that stale row can authenticate.
+                wp_cache_set( $cache_key, $user, '', 5 * MINUTE_IN_SECONDS );
             }
         }
 
         if ( empty( $user->enabled ) ) {
-            $this->set_error( new \WP_Error( 'mainwp_rest_authentication_disabled_key', __( 'The REST API Key are disabled.', 'mainwp' ), array( 'status' => 401 ) ) );
+            $this->set_error( $this->refused_key_error() );
+            return false;
+        }
+
+        $user_id     = (int) $user->user_id;
+        $user_exists = false !== get_userdata( $user_id );
+        // Super admins can hold keys on a Dashboard subsite they were never added to.
+        $outside_blog = is_multisite() && ! is_super_admin( $user_id ) && ! is_user_member_of_blog( $user_id );
+        if ( ! $user_exists || $outside_blog ) {
+            $this->set_error( $this->refused_key_error() );
             return false;
         }
 
@@ -904,7 +1020,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             // an exact match against legacy plaintext values that may
             // contain whitespace or HTML-like characters.
             // phpcs:disable WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $pass = ! empty( $_REQUEST['key_pass'] ) ? wp_unslash( $_REQUEST['key_pass'] ) : '';
+            $pass = ! empty( $_REQUEST['key_pass'] ) && is_string( $_REQUEST['key_pass'] ) ? wp_unslash( $_REQUEST['key_pass'] ) : '';
             // phpcs:enable WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $expected = isset( $user->key_pass ) ? (string) $user->key_pass : '';
             if ( '' === $expected || ! hash_equals( $expected, $pass ) ) {
@@ -988,7 +1104,7 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             array( '%d' )
         );
 
-        wp_cache_delete( 'mainwp_api_key_' . md5( $this->user->consumer_key ) ); // NOSONAR - MD5 used for cache key generation only, not cryptographic (security) purposes.
+        self::delete_api_key_cache( $this->user->consumer_key );
     }
 
     /**
@@ -1019,6 +1135,10 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
     public function check_user_permissions( $result, $server, $request ) {
         unset( $server );
         if ( $this->user ) {
+            if ( ! $this->is_mainwp_route( $request->get_route() ) ) {
+                return new WP_Error( 'mainwp_rest_authentication_error', __( 'MainWP API keys can only authenticate MainWP REST routes.', 'mainwp' ), array( 'status' => 401 ) );
+            }
+
             // Check API Key permissions.
             $allowed = $this->check_permissions( $request->get_method() );
             if ( is_wp_error( $allowed ) ) {

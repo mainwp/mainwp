@@ -432,10 +432,11 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param array  $preflight       This run's negotiated readings.
      * @param int    $diag_task_id    Driving backup task id, or zero for ad-hoc runs.
      * @param bool   $check_dashboard Whether the archive will be stored on the Dashboard.
+     * @param bool   $check_child     Whether the Child's free space still reflects no archive of this run.
      * @return void
      * @throws MainWP_Exception When the file estimate exceeds either server's free space.
      */
-    public static function validate_backup_disk_space( object $website, array $preflight, int $diag_task_id, bool $check_dashboard = true ): void {
+    public static function validate_backup_disk_space( object $website, array $preflight, int $diag_task_id, bool $check_dashboard = true, bool $check_child = true ): void {
         if ( ! isset( $preflight['estimated_bytes'] ) || ! is_numeric( $preflight['estimated_bytes'] ) ) {
             return;
         }
@@ -443,10 +444,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // Float comparisons preserve byte counts above 2 GB on 32-bit hosts.
         $estimated_bytes = (float) $preflight['estimated_bytes'];
         $message         = null;
-        if ( isset( $preflight['disk_free'] ) && false !== $preflight['disk_free'] && is_numeric( $preflight['disk_free'] ) && $estimated_bytes > (float) $preflight['disk_free'] ) {
+        if ( $check_child && isset( $preflight['disk_free'] ) && false !== $preflight['disk_free'] && is_numeric( $preflight['disk_free'] ) && $estimated_bytes > (float) $preflight['disk_free'] ) {
             $message = sprintf(
                 /* translators: 1: estimated backup size, 2: available disk space */
-                esc_html__( 'The child site does not have enough disk space for this backup: estimated size %1$s, free space %2$s. No backup was started. The estimate counts the database and every file in wp-content, including excluded folders. Free up space on the child site and try again.', 'mainwp' ),
+                esc_html__( 'The child site does not have enough disk space for this backup: estimated site size %1$s, free space %2$s. No backup was started. The estimate counts the database and the wp-content folder of the child site, including excluded folders. Free up space on the child site and try again.', 'mainwp' ),
                 esc_html( size_format( $estimated_bytes ) ),
                 esc_html( size_format( (float) $preflight['disk_free'] ) )
             );
@@ -457,7 +458,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 if ( false !== $free_bytes && is_numeric( $free_bytes ) && $estimated_bytes > (float) $free_bytes ) {
                     $message = sprintf(
                         /* translators: 1: estimated backup size, 2: available disk space */
-                        esc_html__( 'The Dashboard server does not have enough disk space to store this backup: estimated size %1$s, free space %2$s. No backup was started. The estimate counts the database and every file in wp-content, including excluded folders. Free up space on the Dashboard server and try again.', 'mainwp' ),
+                        esc_html__( 'The Dashboard server does not have enough disk space to store this backup: estimated site size %1$s, free space %2$s. No backup was started. The estimate counts the database and the wp-content folder of the child site, including excluded folders. Free up space on the Dashboard server and try again.', 'mainwp' ),
                         esc_html( size_format( $estimated_bytes ) ),
                         esc_html( size_format( 0.0 === (float) $free_bytes ? 0 : (float) $free_bytes ) )
                     );

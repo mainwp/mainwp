@@ -598,16 +598,19 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * The sibling's partial archive has already consumed space on the Child.
+	 * The sibling's partial archive has already consumed space on the Child,
+	 * but not on the Dashboard, and the holder row may outlive its Child task.
 	 *
 	 * @dataProvider sibling_disk_cases
 	 * @param string      $type Requested type.
 	 * @param bool|string $base Incremental fixture.
 	 * @param int         $child_free Child free bytes.
+	 * @param int         $dashboard_free Dashboard free bytes.
+	 * @param string      $expect yield|dashboard|floor.
 	 * @return void
 	 */
-	public function test_sibling_holder_yields_without_estimate_refusal( $type, $base, $child_free ) {
-		$this->dashboard_free = 100 * MB_IN_BYTES;
+	public function test_sibling_holder_skips_only_child_estimate( $type, $base, $child_free, $dashboard_free, $expect ) {
+		$this->dashboard_free = $dashboard_free;
 		$reasons              = array();
 		$capture              = static function ( $task_id, $reason ) use ( &$reasons ) {
 			$reasons[] = $reason;
@@ -633,11 +636,15 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			remove_action( 'mainwp_backup_diag_run_reinit', $capture );
 		}
-		if ( $child_free < 50 * MB_IN_BYTES ) {
+		if ( 'floor' === $expect ) {
 			$this->assertInstanceOf( MainWP_Exception::class, $result );
 			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $result->get_message_error_code() );
 			$this->assertEmpty( $result->get_data() );
 			$this->assertSame( array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
+		} elseif ( 'dashboard' === $expect ) {
+			$this->assertInstanceOf( MainWP_Exception::class, $result );
+			$this->assertSame( $this->estimate_message( 'dashboard', '100 MB' ), $result->getMessage() );
+			$this->assertNotContains( 'backup_task_create', array_column( $this->child_calls, 0 ) );
 		} else {
 			$this->assertFalse( $result );
 			$this->assertContains( 'sibling_holds_site_yield', $reasons );
@@ -654,12 +661,15 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function sibling_disk_cases() {
 		return array(
-			'full-child-short'     => array( 'full', false, 100 * MB_IN_BYTES ),
-			'full-dashboard-short' => array( 'full', false, 10 * GB_IN_BYTES ),
-			'files'                => array( 'files', false, 100 * MB_IN_BYTES ),
-			'incremental-no-base'  => array( 'incremental', false, 100 * MB_IN_BYTES ),
-			'incremental-chunk'    => array( 'incremental', 'chunk-failure', 100 * MB_IN_BYTES ),
-			'50mb-still-refuses'   => array( 'full', false, 49 * MB_IN_BYTES ),
+			'full-child-short'                => array( 'full', false, 100 * MB_IN_BYTES, 10 * GB_IN_BYTES, 'yield' ),
+			'files-child-short'               => array( 'files', false, 100 * MB_IN_BYTES, 10 * GB_IN_BYTES, 'yield' ),
+			'incremental-no-base-child-short' => array( 'incremental', false, 100 * MB_IN_BYTES, 10 * GB_IN_BYTES, 'yield' ),
+			'incremental-chunk-child-short'   => array( 'incremental', 'chunk-failure', 100 * MB_IN_BYTES, 10 * GB_IN_BYTES, 'yield' ),
+			'full-dashboard-short'            => array( 'full', false, 10 * GB_IN_BYTES, 100 * MB_IN_BYTES, 'dashboard' ),
+			'files-dashboard-short'           => array( 'files', false, 10 * GB_IN_BYTES, 100 * MB_IN_BYTES, 'dashboard' ),
+			'incremental-no-base-dashboard'   => array( 'incremental', false, 10 * GB_IN_BYTES, 100 * MB_IN_BYTES, 'dashboard' ),
+			'incremental-chunk-dashboard'     => array( 'incremental', 'chunk-failure', 10 * GB_IN_BYTES, 100 * MB_IN_BYTES, 'dashboard' ),
+			'50mb-still-refuses'              => array( 'full', false, 49 * MB_IN_BYTES, 10 * GB_IN_BYTES, 'floor' ),
 		);
 	}
 
@@ -804,21 +814,27 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Append continues the existing archive instead of allocating another one.
+	 * Append continues an archive already on the Child, which the Dashboard
+	 * has not downloaded yet.
 	 *
 	 * @dataProvider append_cases
 	 * @param string $type Requested type.
 	 * @param mixed  $append Legacy continuation flag.
+	 * @param string $short Short disk: child|dashboard.
 	 * @return void
 	 */
-	public function test_legacy_append_skips_estimate_check( $type, $append ) {
-		$this->dashboard_free = 100 * MB_IN_BYTES;
-		$result               = $this->run_executor( 'run-now', $type, array( 'disk_free' => 100 * MB_IN_BYTES ), false, array( 'append' => $append ) );
+	public function test_legacy_append_skips_only_child_estimate( $type, $append, $short ) {
+		$this->dashboard_free = 'dashboard' === $short ? 100 * MB_IN_BYTES : 10 * GB_IN_BYTES;
+		$child_free           = 'child' === $short ? 100 * MB_IN_BYTES : 10 * GB_IN_BYTES;
+		$result               = $this->run_executor( 'run-now', $type, array( 'disk_free' => $child_free ), false, array( 'append' => $append ) );
 		$this->assertInstanceOf( MainWP_Exception::class, $result );
-		$this->assertSame( $append ? MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT : MainWP_Backup_Error_Codes::ERR_DISK_FULL, $result->get_message_error_code() );
-		$this->assertSame( $append ? array( 'backup_preflight', 'backup' ) : array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
-		if ( $append ) {
+		$proceeds = $append && 'child' === $short;
+		$this->assertSame( $proceeds ? MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT : MainWP_Backup_Error_Codes::ERR_DISK_FULL, $result->get_message_error_code() );
+		$this->assertSame( $proceeds ? array( 'backup_preflight', 'backup' ) : array( 'backup_preflight' ), array_column( $this->child_calls, 0 ) );
+		if ( $proceeds ) {
 			$this->assertEquals( 1, $this->child_calls[1][1]['append'] );
+		} else {
+			$this->assertSame( $this->estimate_message( $short, '100 MB' ), $result->getMessage() );
 		}
 	}
 
@@ -829,9 +845,11 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function append_cases() {
 		return array(
-			'full-append'   => array( 'full', 1 ),
-			'files-append'  => array( 'files', '1' ),
-			'fresh-control' => array( 'full', false ),
+			'full-append-child-short'      => array( 'full', 1, 'child' ),
+			'files-append-child-short'     => array( 'files', '1', 'child' ),
+			'full-append-dashboard-short'  => array( 'full', 2, 'dashboard' ),
+			'files-append-dashboard-short' => array( 'files', 1, 'dashboard' ),
+			'fresh-control'                => array( 'full', false, 'child' ),
 		);
 	}
 
@@ -886,8 +904,8 @@ class MainWP_Backup_Preflight_Disk_Test extends MainWP_Abilities_Test_Case {
 	 */
 	private function estimate_message( $disk, $free ) {
 		$message = 'child' === $disk
-			? 'The child site does not have enough disk space for this backup: estimated size %1$s, free space %2$s. No backup was started. The estimate counts the database and every file in wp-content, including excluded folders. Free up space on the child site and try again.'
-			: 'The Dashboard server does not have enough disk space to store this backup: estimated size %1$s, free space %2$s. No backup was started. The estimate counts the database and every file in wp-content, including excluded folders. Free up space on the Dashboard server and try again.';
+			? 'The child site does not have enough disk space for this backup: estimated site size %1$s, free space %2$s. No backup was started. The estimate counts the database and the wp-content folder of the child site, including excluded folders. Free up space on the child site and try again.'
+			: 'The Dashboard server does not have enough disk space to store this backup: estimated site size %1$s, free space %2$s. No backup was started. The estimate counts the database and the wp-content folder of the child site, including excluded folders. Free up space on the Dashboard server and try again.';
 		return sprintf( $message, '5 GB', $free );
 	}
 }

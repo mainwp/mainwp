@@ -374,11 +374,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // Negotiate the archive format before building the request so a
                 // large-site ZIP auto-switch reaches the child in $params['ext'].
                 $archive_ext = MainWP_Backup_Settings::get_current_archive_extension( $website, $pTask );
-                // While a sibling task runs on this site, its partial archive already uses
-                // space the estimate counts, and the Child refuses this create anyway, so
-                // the estimate check waits until the site is free.
+                // While a sibling task holds this site, its partial archive already uses
+                // Child space the estimate counts, so the Child half is skipped. The
+                // Dashboard half still runs: the sibling's archive is downloaded only
+                // after its Child task completes, and a holder row that outlived its
+                // Child task must not let a new archive skip both checks.
                 $sibling_holder = MainWP_DB_Backup::instance()->get_sibling_site_holder( (int) $website->id, (int) $taskId );
                 $preflight      = MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archive_ext, $pTask, true, $sibling_holder > 0 ? '' : $type );
+                if ( $sibling_holder > 0 && in_array( $type, array( 'full', 'files' ), true ) ) {
+                    MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId, true, false );
+                }
                 if ( ! MainWP_Backup_Monitor::child_supports_task_spine( $website ) ) {
                     throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                 }
@@ -411,8 +416,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( 'incremental' === $type ) {
                     $send           = self::resolve_incremental_send( $website, $pTask, $backupTaskProgress );
                     $params['type'] = $send['type'];
-                    if ( 'full' === $send['type'] && 0 === $sibling_holder ) {
-                        MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId );
+                    if ( 'full' === $send['type'] ) {
+                        MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId, true, 0 === $sibling_holder );
                     }
                     foreach ( $send['params'] as $send_key => $send_value ) {
                         $params[ $send_key ] = $send_value;
@@ -436,10 +441,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             $params['parent_manifest_ref']    = $push['mtoken'];
                             $params['parent_manifest_sha256'] = $manifest_sha256;
                         } else {
-                            if ( 0 === $sibling_holder ) {
-                                MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId );
-                            }
                             self::record_incremental_notice( $website, $taskId, MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MANIFEST_CHUNK_SEND_FAILED ) );
+                            MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, (int) $taskId, true, 0 === $sibling_holder );
                             $params['type']          = 'full';
                             $params['emit_manifest'] = '1';
                             unset( $params['parent_snapshot_id'] );
@@ -575,7 +578,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 // the Child's one-task slot can be held by a sibling run that
                 // will finish; that refusal is a delay, never a foreign
                 // blocker, so the persistence clock must not run for it.
-                if ( 0 < $sibling_holder ) {
+                if ( 0 < MainWP_DB_Backup::instance()->get_sibling_site_holder( (int) $website->id, (int) $taskId ) ) {
                     if ( $current && ! empty( $current->foreign_refused_since ) ) {
                         MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'foreign_refused_since' => 0 ) );
                     }
@@ -2574,8 +2577,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         // Negotiate before building the request so a large-site ZIP auto-switch
         // reaches the child in $params['ext']. The driving task, when one
         // exists, carries the keep-ZIP override and receives the outcome note.
-        // Append continues an existing archive whose bytes already consume space.
-        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat, $pTask, true, $append ? '' : $pType );
+        // An append continues an archive whose bytes already use Child space the
+        // estimate counts. It has not been downloaded yet, so the Dashboard half
+        // still applies.
+        $preflight = MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat, $pTask, true, $append ? '' : $pType );
+        if ( $append && in_array( $pType, array( 'full', 'files' ), true ) ) {
+            MainWP_Backup_Monitor::validate_backup_disk_space( $website, $preflight, is_object( $pTask ) && ! empty( $pTask->id ) ? (int) $pTask->id : 0, true, false );
+        }
 
         // This engine is the one remaining caller of the child's legacy backup
         // action, and Run Now is what reaches it. A child too old for the task

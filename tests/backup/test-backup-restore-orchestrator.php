@@ -4884,6 +4884,43 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A safety-backup run that dies after its heartbeat keeps spending attempts (matrix M14).
+	 */
+	public function test_s83_pre_snapshot_heartbeat_after_failed_run_does_not_renew_attempts() {
+		$job        = $this->make_job(
+			array(
+				'pre_snapshot_progress' => array(
+					'phase'            => 'dumping_db',
+					'files'            => 1,
+					'bytes'            => 100,
+					'last_progress_at' => '2026-10-12 12:00:00',
+				),
+			),
+			MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT,
+			array( 'pre_snapshot_task_id' => 's83-dying' )
+		);
+		$heartbeats = array();
+		for ( $death = 1; $death <= 10; ++$death ) {
+			$heartbeats[] = $this->s83_safety_progress_reply( sprintf( '2026-10-12 12:%02d:00', $death ) );
+		}
+		$this->responses['backup_task_run']    = new MainWP_Exception( 'HTTPERROR' );
+		$this->responses['backup_task_status'] = $heartbeats;
+		$previous                              = 0;
+		for ( $slice = 0; $slice < 20 && MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT !== $job->status; ++$slice ) {
+			MainWP_Backup_Restore_Job_Store::instance()->set_status( (int) $job->id, $job->status, array( 'next_retry_at' => 0 ) );
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+			$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+			$this->assertGreaterThanOrEqual( $previous, (int) $job->attempt_count, 'A heartbeat alone must not renew attempts.' );
+			$previous = (int) $job->attempt_count;
+		}
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertArrayNotHasKey( 'last_error_extra', $job->checkpoint, 'No replay was seen, so none is reported.' );
+		$whats = array_column( $this->calls, 'what' );
+		$this->assertContains( 'backup_task_status', $whats );
+		$this->assertSame( 7, count( array_keys( $whats, 'backup_task_run', true ) ) );
+	}
+
+	/**
 	 * Missing and empty timestamps both leave the initial comparison unknown.
 	 *
 	 * @return array Baseline cases.

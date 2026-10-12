@@ -4073,6 +4073,88 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 	}
 
 	/**
+	 * Rows of `.mwpdev/reviews/s83-progress-evidence-matrix.md`: saved work always counts,
+	 * a moved last_progress_at counts only when liveness is allowed to.
+	 *
+	 * @return array Previous position, observed position, expected with and without liveness.
+	 */
+	public function s83_progress_evidence_cases() {
+		$base = array(
+			'phase'            => 'dumping_db',
+			'files'            => 1,
+			'bytes'            => 100,
+			'last_progress_at' => '2026-10-12 12:00:00',
+		);
+		return array(
+			'nothing moved'             => array( $base, $base, false, false ),
+			'phase changed'             => array( $base, array_merge( $base, array( 'phase' => 'archiving_files' ) ), true, true ),
+			'files increased'           => array( $base, array_merge( $base, array( 'files' => 2 ) ), true, true ),
+			'bytes increased'           => array( $base, array_merge( $base, array( 'bytes' => 101 ) ), true, true ),
+			'counters went down'        => array( $base, array_merge( $base, array( 'files' => 0, 'bytes' => 50 ) ), false, false ), // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- one table row.
+			'timestamp only'            => array( $base, array_merge( $base, array( 'last_progress_at' => '2026-10-12 12:00:40' ) ), true, false ),
+			'empty baseline, timestamp' => array( array_merge( $base, array( 'last_progress_at' => '' ) ), $base, true, false ),
+			'no baseline, timestamp'    => array( array_diff_key( $base, array( 'last_progress_at' => 1 ) ), $base, true, false ),
+			'no timestamp observed'     => array( $base, array_merge( $base, array( 'last_progress_at' => '' ) ), false, false ),
+		);
+	}
+
+	/**
+	 * Child movement evidence follows the matrix for both liveness modes.
+	 *
+	 * @dataProvider s83_progress_evidence_cases
+	 * @param array $previous Last observed position.
+	 * @param array $observed Current position.
+	 * @param bool  $with_liveness Expected when a moved timestamp counts.
+	 * @param bool  $saved_only Expected when only saved work counts.
+	 */
+	public function test_s83_progress_evidence_matrix( $previous, $observed, $with_liveness, $saved_only ) {
+		$method = new \ReflectionMethod( MainWP_Backup_Executor::class, 'task_progress_advanced' );
+		$method->setAccessible( true );
+		$this->assertSame( $with_liveness, $method->invoke( null, $observed, $previous ) );
+		$this->assertSame( $with_liveness, $method->invoke( null, $observed, $previous, true ) );
+		$this->assertSame( $saved_only, $method->invoke( null, $observed, $previous, false ) );
+	}
+
+	/**
+	 * A slice that heartbeats and then dies keeps spending attempts until the cap (matrix M6, M8).
+	 */
+	public function test_s83_spine_heartbeat_after_failed_run_does_not_renew_attempts() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$this->seed_progress(
+			$task->id,
+			$site_id,
+			array(
+				'child_backup_task_id' => 's83-dying',
+				'child_phase'          => 'dumping_db',
+				'files_processed'      => 1,
+				'bytes_downloaded'     => 100,
+				'last_error'           => '{"last_progress_at":"2026-10-12 12:00:00"}',
+			)
+		);
+		$replies = array();
+		for ( $death = 1; $death <= 5; ++$death ) {
+			$replies[] = new MainWP_Exception( 'HTTPERROR' );
+			$replies[] = $this->s83_progress_reply( '2026-10-12 12:0' . $death . ':00' );
+		}
+		$replies[] = new MainWP_Exception( 'HTTPERROR' );
+		$calls     = array();
+		$this->a1_wire( $replies, $calls );
+		for ( $death = 1; $death <= 5; ++$death ) {
+			$this->a1_yield( $site_id, $task );
+			$this->assertSame( $death, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts );
+			$this->a1_yield( $site_id, $task );
+			$this->assertSame( $death, (int) MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id )->attempts, 'A heartbeat alone must not renew attempts.' );
+		}
+		try {
+			MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
+			$this->fail( 'Repeated failed runs must exhaust.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_RETRY_EXHAUSTED, $error->get_message_error_code() );
+		}
+		$this->assertSame( array_fill( 0, 11, 'backup_task_run' ), $calls );
+	}
+
+	/**
 	 * Unchanged gate reads are separated by 45 seconds within one budget.
 	 */
 	public function test_delta1_gate_reconcile_reads_are_paced() {

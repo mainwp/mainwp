@@ -858,7 +858,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $run_state['last_progress_at'] = $observed['last_progress_at'];
                 }
                 $values = array( 'last_error' => empty( $run_state ) ? '' : wp_json_encode( $run_state ) );
-                if ( self::task_progress_advanced( $observed, $watermark ) || in_array( (string) $temp['phase'], array( 'completed', 'failed' ), true ) ) {
+                if ( self::task_progress_advanced( $observed, $watermark, false ) || in_array( (string) $temp['phase'], array( 'completed', 'failed' ), true ) ) {
                     $values['attempts'] = 0;
                 }
                 MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, $values );
@@ -2879,15 +2879,21 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Checkpoints and heartbeats reveal movement within a table or file.
      *
+     * The Child also bumps last_progress_at from an in-slice heartbeat before
+     * any work is saved, so a slice the host kills every time still moves it.
+     * Only a confirmed replay may count that as progress: the replayed run is
+     * known to have executed. Elsewhere it would keep resetting the attempt cap.
+     *
      * @param array $observed Current position.
      * @param array $previous Last observed position.
+     * @param bool  $count_liveness Whether a moved last_progress_at alone counts.
      * @return bool Whether progress moved.
      */
-    private static function task_progress_advanced( array $observed, array $previous ): bool {
+    private static function task_progress_advanced( array $observed, array $previous, bool $count_liveness = true ): bool {
         return ( $previous['phase'] ?? '' ) !== $observed['phase']
             || $observed['files'] > (int) ( $previous['files'] ?? 0 )
             || $observed['bytes'] > (int) ( $previous['bytes'] ?? 0 )
-            || ( '' !== $observed['last_progress_at'] && (string) ( $previous['last_progress_at'] ?? '' ) !== $observed['last_progress_at'] );
+            || ( $count_liveness && '' !== $observed['last_progress_at'] && (string) ( $previous['last_progress_at'] ?? '' ) !== $observed['last_progress_at'] );
     }
 
     /**

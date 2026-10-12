@@ -1200,11 +1200,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                     'bytes'            => max( 0, (int) ( $progress['bytes_done'] ?? $previous['bytes'] ?? 0 ) ),
                     'last_progress_at' => isset( $payload['last_progress_at'] ) && is_string( $payload['last_progress_at'] ) && '' !== $payload['last_progress_at'] ? $payload['last_progress_at'] : (string) ( $previous['last_progress_at'] ?? '' ),
                 );
-                $moved    = ( $previous['phase'] ?? '' ) !== $observed['phase']
+                $saved    = ( $previous['phase'] ?? '' ) !== $observed['phase']
                     || $observed['files'] > (int) ( $previous['files'] ?? 0 )
-                    || $observed['bytes'] > (int) ( $previous['bytes'] ?? 0 )
-                    || ( '' !== $observed['last_progress_at'] && (string) ( $previous['last_progress_at'] ?? '' ) !== $observed['last_progress_at'] );
-                if ( $reconcile && ! $moved && ! in_array( $phase, array( 'completed', 'failed' ), true ) ) {
+                    || $observed['bytes'] > (int) ( $previous['bytes'] ?? 0 );
+                $touched  = '' !== $observed['last_progress_at'] && (string) ( $previous['last_progress_at'] ?? '' ) !== $observed['last_progress_at'];
+                // A heartbeat moves last_progress_at before anything is saved, so only a
+                // confirmed replay (the run is known to have executed) lets it renew attempts.
+                $moved = $saved || ( $touched && $confirmed_replay );
+                if ( $reconcile && ! $saved && ! $touched && ! in_array( $phase, array( 'completed', 'failed' ), true ) ) {
                     if ( $confirmed_replay ) {
                         $this->defer_pre_snapshot_reconciliation( $job, $job->checkpoint );
                         return;

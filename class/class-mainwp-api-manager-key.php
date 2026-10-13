@@ -211,11 +211,12 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         );
 
         if ( is_wp_error( $request ) ) {
-            if ( 1 === (int) static::$apisslverify ) {
+            $error_message = $request->get_error_message();
+            if ( 1 === (int) static::$apisslverify && ( false !== stripos( $error_message, 'certificate' ) || false !== stripos( $error_message, 'ssl' ) ) ) {
                 throw new MainWP_Exception( esc_html__( 'Could not verify the TLS certificate of the MainWP license server. Check that the CA certificates on the server hosting this Dashboard are up to date and that no proxy is intercepting TLS, then try again.', 'mainwp' ) );
             }
 
-            throw new MainWP_Exception( $request->get_error_message() ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+            throw new MainWP_Exception( esc_html( $error_message ) );
         }
 
         $code = wp_remote_retrieve_response_code( $request );

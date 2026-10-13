@@ -404,39 +404,146 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
         $this->right( 'manage_extensions', true );
         $this->http_response['body'] = 'fixture non-JSON reply';
         $response                    = json_decode( $this->ajax( 'mainwp_extension_testextensionapilogin' ), true );
-        $this->assertSame( array( 'error' => self::TLS_ERROR ), $response );
+        $this->assertSame( array( 'error' => 'Connection failed to the License Key API server. Try again later.' ), $response );
         $this->assertSame( 1, (int) get_option( 'mainwp_api_sslVerifyCertificate' ) );
         $this->assertCount( 1, $this->http );
         $this->assertSame( 1, $this->http[0]['args']['sslverify'] );
     }
 
-    /** A transport error must raise an error instead of requesting a TLS retry. */
-    public function test_verify_api_key_transport_error(): void {
-        $this->http_response = new \WP_Error( 'http_request_failed', 'fixture TLS error' );
+    /** A missing master key returns a connection error without sending HTTP. */
+    public function test_test_login_without_master_key(): void {
+        $this->right( 'manage_extensions', true );
+        $master_key = get_option( 'mainwp_extensions_master_api_key' );
+        delete_option( 'mainwp_extensions_master_api_key' );
+        try {
+            $response = json_decode( $this->ajax( 'mainwp_extension_testextensionapilogin' ), true );
+            $this->assertSame( array( 'error' => 'Connection failed to the License Key API server. Try again later.' ), $response );
+            $this->assertSame( 1, (int) get_option( 'mainwp_api_sslVerifyCertificate' ) );
+            $this->assertSame( array(), $this->http );
+        } finally {
+            update_option( 'mainwp_extensions_master_api_key', $master_key );
+        }
+    }
+
+    /**
+     * Transport messages under enabled and disabled certificate verification.
+     *
+     * @return array Cases.
+     */
+    public static function transport_errors(): array {
+        $certificate = 'cURL error 60: SSL certificate problem: unable to get local issuer certificate';
+        $timeout     = 'cURL error 28: Operation timed out after 50001 milliseconds';
+        $dns         = 'cURL error 6: Could not resolve host: mainwp.com';
+        $connection  = 'cURL error 7: Failed to connect to mainwp.com port 443';
+        return array(
+            'cURL 60'               => array( 1, $certificate, self::TLS_ERROR ),
+            'cURL 77'               => array( 1, 'cURL error 77: error setting certificate verify locations', self::TLS_ERROR ),
+            'certificate mismatch'  => array( 1, 'SSL certificate did not match the requested domain name', self::TLS_ERROR ),
+            'cURL 35'               => array( 1, 'cURL error 35: OpenSSL SSL_connect: SSL_ERROR_SYSCALL', self::TLS_ERROR ),
+            'cURL 51'               => array( 1, 'cURL error 51: SSL: no alternative certificate subject name matches target host name', self::TLS_ERROR ),
+            'uppercase certificate' => array( 1, 'CERTIFICATE validation failed', self::TLS_ERROR ),
+            'lowercase ssl'         => array( 1, 'ssl handshake failed', self::TLS_ERROR ),
+            'cURL 28'               => array( 1, $timeout, $timeout ),
+            'cURL 6'                => array( 1, $dns, $dns ),
+            'cURL 7'                => array( 1, $connection, $connection ),
+            'unverified cURL 60'    => array( 0, $certificate, $certificate ),
+            'unverified cURL 28'    => array( 0, $timeout, $timeout ),
+            'HTML message'          => array( 1, '<b>Transport failure</b>', '&lt;b&gt;Transport failure&lt;/b&gt;' ),
+        );
+    }
+
+    /**
+     * Transport failures preserve verification and never request a TLS retry.
+     *
+     * @dataProvider transport_errors
+     * @param int    $verify Certificate verification flag.
+     * @param string $message Transport error.
+     * @param string $expected Expected exception message.
+     */
+    public function test_verify_api_key_transport_error( int $verify, string $message, string $expected ): void {
+        $api      = MainWP_Api_Manager_Key::instance();
+        $property = new \ReflectionProperty( MainWP_Api_Manager_Key::class, 'apisslverify' );
+        $property->setAccessible( true );
+        $property->setValue( null, $verify );
+        $this->http_response = new \WP_Error( 'http_request_failed', $message );
         $error               = '';
         $result              = null;
         try {
-            $result = MainWP_Api_Manager_Key::instance()->verify_api_key( array( 'api_key' => 'fixture-license-key' ) );
+            $result = $api->verify_api_key( array( 'api_key' => 'fixture-license-key' ) );
         } catch ( MainWP_Exception $exception ) {
             $error = $exception->getMessage();
         }
-        $this->assertSame( self::TLS_ERROR, $error );
+        $this->assertSame( $expected, $error );
         $this->assertNull( $result, 'No retry_action response may escape.' );
         $this->assertSame( 1, (int) get_option( 'mainwp_api_sslVerifyCertificate' ) );
         $this->assertCount( 1, $this->http );
-        $this->assertSame( 1, $this->http[0]['args']['sslverify'] );
+        $this->assertSame( $verify, $this->http[0]['args']['sslverify'] );
     }
 
     /** Both PHP consumers must convert transport exceptions to AJAX errors. */
     public function test_login_consumers_return_transport_error(): void {
         $this->right( 'manage_extensions', true );
-        $this->http_response = new \WP_Error( 'http_request_failed', 'fixture TLS error' );
-        foreach ( array( 'mainwp_extension_testextensionapilogin', 'mainwp_extension_saveextensionapilogin' ) as $action ) {
-            $response = json_decode( $this->ajax( $action, array( 'api_key' => 'fixture-license-key' ) ), true );
-            $this->assertSame( array( 'error' => self::TLS_ERROR ), $response );
-            $this->assertSame( 1, (int) get_option( 'mainwp_api_sslVerifyCertificate' ) );
+        $errors = array(
+            'cURL error 60: SSL certificate problem: unable to get local issuer certificate' => self::TLS_ERROR,
+            'cURL error 28: Operation timed out after 50001 milliseconds' => 'cURL error 28: Operation timed out after 50001 milliseconds',
+        );
+        foreach ( $errors as $message => $expected ) {
+            $this->http          = array();
+            $this->http_response = new \WP_Error( 'http_request_failed', $message );
+            foreach ( array( 'mainwp_extension_testextensionapilogin', 'mainwp_extension_saveextensionapilogin' ) as $action ) {
+                $response = json_decode( $this->ajax( $action, array( 'api_key' => 'fixture-license-key' ) ), true );
+                $this->assertSame( array( 'error' => $expected ), $response );
+                $this->assertSame( 1, (int) get_option( 'mainwp_api_sslVerifyCertificate' ) );
+            }
+            $this->assertCount( 2, $this->http );
         }
-        $this->assertCount( 2, $this->http );
+    }
+
+    /**
+     * Failed certificate checks and non-JSON activation replies.
+     *
+     * @return array Cases.
+     */
+    public static function activation_failures(): array {
+        return array(
+            'certificate error' => array( true ),
+            'non-JSON reply'    => array( false ),
+        );
+    }
+
+    /**
+     * Failed activation connections return an error and leave the key deactivated.
+     *
+     * @dataProvider activation_failures
+     * @param bool $certificate_error Use a certificate transport error.
+     */
+    public function test_activation_connection_failure( bool $certificate_error ): void {
+        $this->right( 'manage_extensions', true );
+        $info                  = MainWP_Api_Manager::instance()->get_activation_info( self::SLUG );
+        $info['activated_key'] = 'Deactivated';
+        $this->assertTrue( MainWP_Api_Manager::instance()->set_activation_info( self::SLUG, $info ) );
+        if ( $certificate_error ) {
+            $this->http_response = new \WP_Error( 'http_request_failed', 'cURL error 60: SSL certificate problem: unable to get local issuer certificate' );
+        } else {
+            $this->http_response['body'] = 'fixture non-JSON reply';
+        }
+        $response = json_decode(
+            $this->ajax(
+                'mainwp_extension_api_activate',
+                array(
+                    'slug' => self::SLUG . '/fixture.php',
+                    'key'  => 'fixture-license-key',
+                )
+            ),
+            true
+        );
+        $this->assertSame( array( 'error' => 'Connection failed to the License Key API server. Try again later.' ), $response );
+        $info = MainWP_Api_Manager::instance()->get_activation_info( self::SLUG );
+        $this->assertSame( 'Deactivated', $info['activated_key'] );
+        $this->assertSame( '', $info['api_key'] );
+        $this->assertSame( 1, (int) get_option( 'mainwp_api_sslVerifyCertificate' ) );
+        $this->assertCount( 1, $this->http );
+        $this->assertSame( 1, $this->http[0]['args']['sslverify'] );
     }
 
     /** Loading Add-ons must not change the license API TLS option. */

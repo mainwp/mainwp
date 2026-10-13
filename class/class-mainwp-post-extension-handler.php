@@ -487,7 +487,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
                 $return['error'] = $result['error'];
             }
         } else {
-            $return['error'] = esc_html__( 'Could not verify the TLS certificate of the MainWP license server. Check that the CA certificates on the server hosting this Dashboard are up to date and that no proxy is intercepting TLS, then try again.', 'mainwp' );
+            $return['error'] = esc_html__( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
         }
         wp_send_json( $return );
     }

@@ -340,11 +340,12 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             $activate_results = MainWP_Api_Manager_Key::instance()->activate( $args );
             if ( ! empty( $activate_results ) ) {
                 $activate_results = json_decode( $activate_results, true );
-            } else {
-                $activate_results = array();
+            }
+            if ( ! is_array( $activate_results ) ) {
+                $activate_results = false;
             }
 
-            if ( true === $activate_results['activated'] ) {
+            if ( is_array( $activate_results ) && isset( $activate_results['activated'] ) && true === $activate_results['activated'] ) {
                 $return['result']               = 'SUCCESS';
                 $mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
                 $return['message']              = esc_html__( 'The extension has been activated. ', 'mainwp' ) . $mess;

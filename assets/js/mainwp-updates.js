@@ -3552,7 +3552,11 @@ let manageupdates_ignore_updates = function (what, ignore, slug, name, site_id, 
 };
 
 let updatesoverview_upgrade_ignore = function (site_id, obj, ignore_ver) {
-    let ignored_callback = function () {
+    let ignored_callback = function (response) {
+        if (!response?.success) {
+            jQuery(obj).closest('tr').find('td:last-child').html(getErrorMessage(response?.error ?? ''));
+            return;
+        }
         jQuery(obj).closest('tr').find('td:last-child').html('<span data-tooltip="Ignored this version" data-position="left center" data-inverted=""><i class="check green icon"></i></span>');
     };
     manageupdates_ignore_updates('wp', 'this_version', 'core', 'WordPress', site_id, ignore_ver, ignored_callback)
@@ -3560,7 +3564,11 @@ let updatesoverview_upgrade_ignore = function (site_id, obj, ignore_ver) {
 };
 
 let updatesoverview_upgrade_ignore_this_version_globally = function (ignore_ver) {
-    let ignored_callback = function () {
+    let ignored_callback = function (response) {
+        if (!response?.success) {
+            jQuery('tr.mainwp-wordpress-update[last-version="' + ignore_ver + '"]').find('td:last-child').html(getErrorMessage(response?.error ?? ''));
+            return;
+        }
         jQuery('tr.mainwp-wordpress-update[last-version="' + ignore_ver + '"]').find('td:last-child').html('<span data-tooltip="Ignored this version globally" data-position="left center" data-inverted=""><i class="check green icon"></i></span>');
         jQuery('tr.mainwp-wordpress-update[last-version="' + ignore_ver + '"]').attr('updated', '-1');
     };
@@ -3569,7 +3577,11 @@ let updatesoverview_upgrade_ignore_this_version_globally = function (ignore_ver)
 };
 
 let updatesoverview_upgrade_ignore_all_version = function (site_id, obj) {
-    let ignored_callback = function () {
+    let ignored_callback = function (response) {
+        if (!response?.success) {
+            jQuery(obj).closest('tr').find('td:last-child').html(getErrorMessage(response?.error ?? ''));
+            return;
+        }
         jQuery(obj).closest('tr').find('td:last-child').html('<span data-tooltip="Ignored this version" data-position="left center" data-inverted=""><i class="check green icon"></i></span>');
     };
     manageupdates_ignore_updates('wp', 'all_versions', 'core', 'WordPress', site_id, 'all_versions', ignored_callback)

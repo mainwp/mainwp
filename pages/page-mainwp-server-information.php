@@ -140,7 +140,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'show_in_palette'       => true,
                 'left_menu_parent'      => 'ServerInformation',
                 'palette_titles'        => array( esc_html__( 'System Info', 'mainwp' ), esc_html__( '.htaccess File', 'mainwp' ) ),
-                'condition'             => static function() {
+                'condition'             => static function () {
                     return MainWP_Server_Information_Handler::is_apache_server_software();
                 },
             ),
@@ -278,7 +278,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             }
 
             if ( ! empty( $menu_item['before_title'] ) ) {
-                $item['before_title'] = $menu_item['before_title'];
+                $item['before_title']      = $menu_item['before_title'];
                 $item['palette_titles'][1] = trim( wp_strip_all_tags( $menu_item['before_title'] ) . ' ' . $menu_item['title'] );
             }
 
@@ -290,6 +290,8 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
     /**
      * Get the Info navigation items.
+     *
+     * @param string $context Where the items are shown: 'default', 'left_menu_core' or 'command_palette'.
      *
      * @return array<int, array<string, mixed>> Info navigation items.
      */
@@ -418,7 +420,10 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 <div class="mainwp_boxout">
                     <div class="mainwp_boxoutin"></div>
                     <?php foreach ( static::get_navigation_items() as $item ) { ?>
-                        <?php if ( empty( $item['show_in_subpages_menu'] ) ) { continue; } ?>
+                        <?php
+                        if ( empty( $item['show_in_subpages_menu'] ) ) {
+                            continue; }
+                        ?>
                         <a href="<?php echo esc_url( static::get_navigation_item_url( $item['href'] ) ); ?>" class="mainwp-submenu"><?php echo esc_html( $item['title'] ); ?></a>
                     <?php } ?>
                 </div>
@@ -854,6 +859,14 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
         static::render_row( 'SSL Warnings', '=', '', 'get_ssl_warning', 'empty', '', null );
         static::render_row( 'cURL Extension Enabled', '=', true, 'get_curl_support', '', '', null, null, static::ERROR );
         static::render_row( 'cURL Timeout', '>=', '300', 'get_curl_timeout', 'seconds', '=', '0' );
+        ?>
+        <tr>
+            <td<?php echo self::get_export_text_attr( 'MainWP Child request timeout' ); // phpcs:ignore WordPress.Security.EscapeOutput ?>><?php esc_html_e( 'MainWP Child request timeout', 'mainwp' ); ?></td>
+            <td><?php esc_html_e( 'Effective plugin limit', 'mainwp' ); ?></td>
+            <td><?php echo esc_html( MainWP_Server_Information_Handler::get_child_request_timeout() . ' ' . __( 'seconds', 'mainwp' ) ); ?></td>
+            <td></td>
+        </tr>
+        <?php
         if ( function_exists( 'curl_version' ) ) {
             $reuire_curl = '7.18.1';
             if ( version_compare( MainWP_Server_Information_Handler::get_php_version(), '8.0.0' ) >= 0 ) {
@@ -1897,10 +1910,23 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public static function render_action_logs() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( 'action logs', 'mainwp' );
+            return;
+        }
+        if ( isset( $_POST['actionlogs_status'] ) || isset( $_POST['actionlogs_clear'] ) ) {
+            if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+                \mainwp_do_not_have_permissions( 'action logs', 'mainwp' );
+                return;
+            }
+            if ( ! isset( $_POST['_wpnonce'] ) || ! is_string( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'mainwp-admin-nonce' ) ) {
+                wp_die( esc_html__( 'Insecure request! Please try again.', 'mainwp' ), '', array( 'response' => 403 ) );
+            }
+        }
         static::render_header( 'ActionLogs' );
 
-        if ( isset( $_REQUEST['actionlogs_status'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $act_log  = isset( $_REQUEST['actionlogs_status'] ) ? wp_unslash( $_REQUEST['actionlogs_status'] ) : MainWP_Logger::DISABLED; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( isset( $_POST['actionlogs_status'] ) ) {
+            $act_log  = wp_unslash( $_POST['actionlogs_status'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The existing specific-log parsing is followed by intval before use.
             $spec_log = 0;
             if ( is_string( $act_log ) && false !== strpos( $act_log, 'specific_' ) ) {
                 $act_log  = str_replace( 'specific_', '', $act_log );
@@ -1921,7 +1947,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             MainWP_Utility::update_option( 'mainwp_actionlogs_enabled_timestamp', time() );
         }
 
-        if ( isset( $_REQUEST['actionlogs_clear'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( isset( $_POST['actionlogs_clear'] ) ) {
             $log_to_db = apply_filters( 'mainwp_logger_to_db', true );
             if ( $log_to_db ) {
                 MainWP_Logger::instance()->clear_log_db();

@@ -486,10 +486,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                                 <div class="item"><?php echo esc_html__( 'To Activate or Delete a specific plugin, you must search only for Inactive plugin on your child sites. If you search for Active or both Active and Inactive, the Activate and Delete actions will be disabled.', 'mainwp' ); ?></div>
                                 <div class="item"><?php echo esc_html__( 'To Deactivate a specific plugin, you must search only for Active plugins on your child sites. If you search for Inactive or both Active and Inactive, the Deactivate action will be disabled.', 'mainwp' ); ?></div>
                             </div>
-                            <div><?php
+                            <div>
+                            <?php
                             // translators: 1: Opening anchor tag. 2: Closing anchor tag.
                             printf( esc_html__( 'For additional help, please check this %1$shelp documentation%2$s.', 'mainwp' ), '<a href="https://docs.mainwp.com/sites/plugins/managing-plugins-with-mainwp" target="_blank">', '</a> <i class="external alternate icon"></i>' );
-                            ?></div>
+                            ?>
+                            </div>
                         </div>
                     <?php endif; ?>
                     <div id="mainwp-message-zone" class="ui message" style="display:none"></div>
@@ -2219,10 +2221,12 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-disable-auto-updates-info-message' ) ) : ?>
                         <div class="ui message">
                             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp-disable-auto-updates-info-message"></i>
-                            <div><em data-emoji=":bulb:" class="small"></em> <?php
+                            <div><em data-emoji=":bulb:" class="small"></em>
+                            <?php
                             // translators: 1: Opening anchor tag. 2: Closing anchor tag.
                             printf( esc_html__( 'Tip: Check out %1$show to disable the WordPress built in auto-updates feature%2$s.', 'mainwp' ), '<a href="https://mainwp.com/how-to-disable-automatic-plugin-and-theme-updates-on-your-child-sites/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe.
-                            ?></div>
+                            ?>
+                            </div>
                         </div>
                     <?php endif; ?>
                     <div class="ui page dimmer">
@@ -2333,8 +2337,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             if ( 1 === (int) get_option( 'mainwp_optimize', 1 ) || MainWP_Demo_Handle::is_demo_mode() ) {
                 $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
                 while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                    $allPlugins = json_decode( $website->plugins, true );
-                    $_count     = count( $allPlugins );
+                    $allPlugins = ! empty( $website->plugins ) ? json_decode( $website->plugins, true ) : array();
+                    $_count     = $allPlugins ? count( $allPlugins ) : 0;
                     for ( $i = 0; $i < $_count; $i++ ) {
                         $plugin = $allPlugins[ $i ];
 
@@ -2511,7 +2515,9 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                             continue;
                         }
 
-                        if ( 'ignored' === $search_status && ! MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ) {
+                        $ref_count = 0;
+
+                        if ( 'ignored' === $search_status && ! MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin', $ref_count, $slug ) ) {
                             continue;
                         }
                     }
@@ -2523,6 +2529,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     }
 
                     $plugin_directory = dirname( $slug );
+                    $ref_count        = 0;
                     ?>
                     <?php // phpcs:disable WordPress.Security.EscapeOutput ?>
                     <tr plugin-slug="<?php echo esc_attr( rawurlencode( $slug ) ); ?>" plugin-name="<?php echo esc_html( wp_strip_all_tags( $name ) ); ?>" <?php echo ( in_array( $slug, $trustedPlugins ) ) ? 'class=""' : 'class="active"'; ?>>
@@ -2531,8 +2538,8 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         <td><a href="<?php echo esc_url( admin_url() ) . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $wpid ) . '&plugin=' . rawurlencode( dirname( $slug ) ); ?>" target="_blank" class="open-plugin-details-modal"><?php echo esc_html( $name ); ?></a></td>
                         <td class="collapsing center aligned"><?php echo ( 1 === (int) $plugin['active'] ) ? '<span class="ui tiny grey label"><i class="circle green icon"></i> ' . esc_html__( 'Active', 'mainwp' ) . '</span>' : '<span class="ui tiny grey label"><i class="circle red icon"></i> ' . esc_html__( 'Inactive', 'mainwp' ) . '</span>'; //phpcs:ignore -- escaped. ?></td>
                         <td class="collapsing center aligned"><?php echo ( in_array( $slug, $trustedPlugins ) ) ? '<span class="ui mini green label"><i class="lock green icon"></i> ' . esc_html__( 'Trusted', 'mainwp' ) . '</span>' : '<span class="ui mini red label"><i class="lock open red icon"></i> ' . esc_html__( 'Not Trusted', 'mainwp' ) . '</span>'; ?></td>
-                        <td class="collapsing center aligned"><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span class="ui mini basic label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
-                        <td class="collapsing center aligned"><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin' ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
+                        <td class="collapsing center aligned"><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin', $ref_count, $slug ) ? '<span class="ui mini basic label">' . esc_html__( 'Ignored', 'mainwp' ) . '</span>' : ''; ?></td>
+                        <td class="collapsing center aligned"><?php echo MainWP_Common_Functions::instance()->is_ignored_updates( $plugin, $decodedIgnoredPlugins, 'plugin', $ref_count, $slug ) ? '<span data-tooltip="Ignored plugins will not be automatically updated." data-inverted=""><i class="info red circle icon" ></i></span>' : ''; ?></td>
                         <td class="collapsing center aligned">
                         <?php if ( '' === $esc_note ) : ?>
                             <a href="javascript:void(0)" class="mainwp-edit-plugin-note" ><i class="sticky note outline icon"></i></a>
@@ -2660,7 +2667,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <?php esc_html_e( 'Globally Ignored Plugins', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates on global level and not notify you about pending updates.', 'mainwp' ); ?></div>
             </h3>
-            <?php static::render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
+                <?php static::render_global_ignored( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
             <div class="ui hidden divider"></div>
             <?php endif; ?>
             <?php if ( $cnt > 0 ) : ?>
@@ -2668,7 +2675,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <?php esc_html_e( 'Per Site Ignored Plugins', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore updates per site level and not notify you about pending updates.', 'mainwp' ); ?></div>
             </h3>
-            <?php static::render_sites_ignored( $cnt, $websites ); ?>
+                <?php static::render_sites_ignored( $cnt, $websites ); ?>
             <?php endif; ?>
             <?php if ( empty( $ignoredPlugins ) && 0 === $cnt ) : ?>
                 <?php MainWP_UI::render_empty_page_placeholder( __( 'No Ignored Updates', 'mainwp' ), __( 'All plugin updates are being tracked. When you choose to ignore updates for a specific plugin, they will appear here.', 'mainwp' ), '<em data-emoji=":compass:" class="big"></em>' ); ?>
@@ -2956,7 +2963,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <?php esc_html_e( 'Globally Ignored Abandoned Plugins', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore on global level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
             </h3>
-            <?php static::render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
+                <?php static::render_global_ignored_abandoned( $ignoredPlugins, $decodedIgnoredPlugins ); ?>
             <div class="ui hidden divider"></div>
             <?php endif; ?>
             <?php if ( $cnt > 0 ) : ?>
@@ -2964,7 +2971,7 @@ class MainWP_Plugins { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 <?php esc_html_e( 'Per Site Ignored Abandoned Plugins', 'mainwp' ); ?>
                 <div class="sub header"><?php esc_html_e( 'These are plugins you have told your MainWP Dashboard to ignore per site level even though they have passed your Abandoned Plugin Tolerance date', 'mainwp' ); ?></div>
             </h3>
-            <?php static::render_sites_ignored_abandoned( $cnt, $websites ); ?>
+                <?php static::render_sites_ignored_abandoned( $cnt, $websites ); ?>
             <?php endif; ?>
             <?php if ( empty( $ignoredPlugins ) && 0 === $cnt ) : ?>
                 <?php MainWP_UI::render_empty_page_placeholder( __( 'No Ignored Abandoned Plugins', 'mainwp' ), __( 'All plugins are being monitored for abandonment. When you choose to ignore the abandoned status for a specific plugin, it will appear here.', 'mainwp' ), '<em data-emoji=":compass:" class="big"></em>' ); ?>

@@ -826,11 +826,32 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $websiteid Child Site ID.
      * @param mixed $note Note data.
      *
-     * @return void
+     * @return bool True when the note was stored, including a save that did not change the value.
      */
     public function update_note( $websiteid, $note ) {
         $table_wp = esc_sql( $this->table_name( 'wp' ) );
-        $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $this->escape( $note ), $websiteid ) );
+        // Pass $note unescaped. prepare() already escapes %s, and escaping first stores quotes as \'.
+        $updated = $this->wpdb->query( $this->wpdb->prepare( "UPDATE `{$table_wp}` SET note= %s WHERE id=%d", $note, $websiteid ) );
+
+        // query() is false when the UPDATE fails. A failed existence read returns null, same as a missing site.
+        if ( false === $updated ) {
+            return false;
+        }
+
+        if ( (int) $updated > 0 ) {
+            return true;
+        }
+
+        // $wpdb reports rows changed. An identical note, or empty saved over empty, changes 0 rows.
+        $exists = $this->wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Must distinguish an unchanged row from a missing site.
+            $this->wpdb->prepare(
+                'SELECT id FROM %i WHERE id = %d',
+                $this->table_name( 'wp' ),
+                $websiteid
+            )
+        );
+
+        return null !== $exists;
     }
 
     /**
@@ -1016,7 +1037,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         if ( ! empty( $fields ) ) {
-            $this->wpdb->update( $this->table_name( 'users' ), $fields, array( 'userid' => $userid ) );
+            $updated = $this->wpdb->update( $this->table_name( 'users' ), $fields, array( 'userid' => $userid ) );
+            if ( false !== $updated ) {
+                MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( $fields );
+            }
         }
 
         return $this->wpdb->get_row( "SELECT * FROM `{$table_users}` WHERE userid= " . intval( $userid ), OBJECT );
@@ -1507,5 +1531,38 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         return $rollback_success;
+    }
+
+
+    /**
+     * Delete saved widget filters for all users.
+     *
+     * @param string $context The widget context. Accepts 'individual' or 'client'.
+     * @param int    $id      The site or client ID.
+     *
+     * @return int|false Number of deleted filters, or false for an invalid context.
+     */
+    public function delete_widget_saved_filters_for_all_users( $context, $id ) {
+        if ( ! in_array( $context, array( 'individual', 'client' ), true ) ) {
+            return false;
+        }
+
+        $option   = 'mainwp_widget_actions_logs_' . $context . '_filters_saved_' . intval( $id );
+        $meta_key = $this->wpdb->get_blog_prefix() . $option;
+
+        $user_ids = $this->wpdb->get_col(
+            $this->wpdb->prepare(
+                "SELECT DISTINCT user_id
+                FROM {$this->wpdb->usermeta}
+                WHERE meta_key = %s",
+                $meta_key
+            )
+        );
+
+        foreach ( $user_ids as $user_id ) {
+            delete_user_meta( $user_id, $meta_key );
+        }
+
+        return count( $user_ids );
     }
 }

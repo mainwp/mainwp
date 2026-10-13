@@ -144,7 +144,86 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         if ( empty( $client ) ) {
             return $this->get_rest_data_error( $by, 'client' );
         }
+        if ( empty( $this->filter_scoped_clients( array( $client ) ) ) ) {
+            return $this->get_rest_data_error( $by, 'client' );
+        }
         return $client;
+    }
+
+    /**
+     * Tag names resolve for everyone, so a tag outside the caller's allowed groups
+     * is dropped here and reads as unknown, the same as a missing name.
+     *
+     * @param string $name Tag name.
+     * @return object|null Tag row, or null when missing or hidden.
+     */
+    protected function get_scoped_group_by_name( $name ) {
+        $group = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_group_by_name( $name );
+        if ( ! $group ) {
+            return null;
+        }
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+        return ( 'all' === $allowed || in_array( (int) $group->id, $allowed, true ) ) ? $group : null;
+    }
+
+    /**
+     * Visible costs can still link to hidden sites, tags or clients, so their
+     * relationship lists must not disclose those IDs.
+     *
+     * @param array|object $costs Cost rows or formatted cost items.
+     * @return array|object The same structure with hidden relationship ids removed.
+     */
+    protected function scope_cost_relationship_fields( $costs ) {
+        $allowed        = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        $allowed_groups = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+        if ( 'all' === $allowed && 'all' === $allowed_groups ) {
+            return $costs;
+        }
+        $keep      = array(
+            'sites'   => $allowed,
+            'groups'  => $allowed_groups,
+            'clients' => 'all' === $allowed ? 'all' : \MainWP\Dashboard\MainWP_Abilities_Util::get_accessible_client_ids( $allowed ),
+        );
+        $scope_one = static function ( $cost ) use ( $keep ) {
+            foreach ( $keep as $field => $ids ) {
+                if ( 'all' === $ids ) {
+                    continue;
+                }
+                $raw     = is_array( $cost ) ? ( $cost[ $field ] ?? '' ) : ( $cost->$field ?? '' );
+                $current = json_decode( html_entity_decode( (string) $raw ), true );
+                $scoped  = is_array( $current ) ? array_values( array_intersect( array_map( 'intval', $current ), $ids ) ) : array();
+                if ( is_array( $cost ) ) {
+                    $cost[ $field ] = wp_json_encode( $scoped );
+                } else {
+                    $cost->$field = wp_json_encode( $scoped );
+                }
+            }
+            return $cost;
+        };
+        if ( is_object( $costs ) ) {
+            return $scope_one( $costs );
+        }
+        if ( is_array( $costs ) ) {
+            foreach ( $costs as $key => $cost ) {
+                $costs[ $key ] = $scope_one( $cost );
+            }
+        }
+        return $costs;
+    }
+
+    /**
+     * The REST SQL bypass must not expose clients without any accessible sites.
+     *
+     * @param array|false $clients Candidate client rows.
+     * @return array|false Scoped client rows.
+     */
+    protected function filter_scoped_clients( $clients ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' === $allowed ) {
+            return $clients;
+        }
+        $ids = \MainWP\Dashboard\MainWP_Abilities_Util::get_accessible_client_ids( $allowed );
+        return array_values( array_filter( (array) $clients, static fn( $client ) => in_array( (int) ( (array) $client )['client_id'], $ids, true ) ) );
     }
 
     /**
@@ -471,7 +550,32 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         if ( empty( $site ) ) {
             return $this->get_rest_data_error( 'id', 'site' );
         }
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( is_array( $allowed ) && ! in_array( (int) $site->id, $allowed, true ) ) {
+            return $this->get_rest_data_error( $by, 'site' );
+        }
         return $site;
+    }
+
+    /**
+     * Preserve caller scope when REST authentication bypasses the database ACL.
+     *
+     * @param array|false $sites Site rows.
+     * @return array
+     */
+    protected function filter_scoped_sites( $sites ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        $sites   = is_array( $sites ) ? $sites : array();
+        if ( 'all' === $allowed ) {
+            return $sites;
+        }
+        return array_filter(
+            $sites,
+            static function ( $site ) use ( $allowed ) {
+                $site = (array) $site;
+                return in_array( (int) $site['id'], $allowed, true );
+            }
+        );
     }
 
     /**
@@ -531,7 +635,34 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             'minimum'           => 1,
             'description'       => __( 'Item ID.', 'mainwp' ),
             'sanitize_callback' => 'rest_parse_request_arg',
-            'validate_callback' => 'rest_validate_request_arg',
+            // rest_is_integer() accepts anything is_numeric() calls a whole number, so
+            // "01", "1e3", "+5", " 5" and a float past PHP_INT_MAX all survive it and
+            // then get cast to an ID the caller never sent - "1e3" dispatches against
+            // site 1000, and an overflowing JSON number casts to 0. Only a real int, a
+            // float that round-trips through int, or a canonical digit string gets past
+            // this. An integral float stays valid because core treats it as an integer
+            // and existing callers send it.
+            'validate_callback' => static function ( $value, $request, $param ) {
+                $refused = false;
+                if ( is_string( $value ) ) {
+                    $refused = ! ctype_digit( $value ) || (string) (int) $value !== $value;
+                } elseif ( is_float( $value ) ) {
+                    $refused = ! is_finite( $value ) || floor( $value ) !== $value || (float) (int) $value !== $value;
+                } elseif ( ! is_int( $value ) ) {
+                    $refused = true;
+                }
+                if ( $refused ) {
+                    // A bare false would collapse to core's generic "Invalid parameter.",
+                    // and a caller batching 100 items needs to know which one and why.
+                    return new \WP_Error(
+                        'rest_invalid_param',
+                        /* translators: %s: parameter name */
+                        sprintf( __( '%s must be a whole number sent as an integer or an unpadded digit string.', 'mainwp' ), $param ),
+                        array( 'param' => $param )
+                    );
+                }
+                return rest_validate_request_arg( $value, $request, $param );
+            },
         );
     }
 
@@ -1361,6 +1492,29 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
+     * Shared settings cannot be limited to a caller's allowed sites or tags.
+     *
+     * @param WP_REST_Request $request Full details about the request.
+     * @return true|WP_Error
+     */
+    public function get_unrestricted_permissions_check( $request ) {
+        $valid = $this->get_rest_permissions_check( $request );
+        if ( true !== $valid ) {
+            return $valid;
+        }
+        $sites  = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        $groups = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+        if ( 'all' !== $sites || 'all' !== $groups ) {
+            return new WP_Error(
+                'mainwp_restricted_account',
+                __( 'This action is not available for accounts restricted to a subset of sites or tags.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
+        }
+        return true;
+    }
+
+    /**
      * Method get_rest_api_user().
      *
      * @return mixed
@@ -1823,8 +1977,8 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $value    = $this->sanitize_field( $value );
         $site_ids = explode( ',', $value );
         foreach ( $site_ids as $site_id ) {
-            $db_site = \MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( trim( $site_id ) );
-            if ( ! $db_site ) {
+            $db_site = $this->get_site_by( 'id', trim( $site_id ) );
+            if ( is_wp_error( $db_site ) ) {
                 return new WP_Error(
                     'invalid_site',
                     sprintf(
@@ -1869,8 +2023,9 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $clients = array_map( 'trim', explode( ',', $value ) );
 
         foreach ( $clients as $client ) {
-            $db_client = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client );
-            if ( ! $db_client ) {
+            // Scoped lookup: a hidden client fails the same way a missing one does.
+            $db_client = $this->get_client_by( 'id', $client );
+            if ( is_wp_error( $db_client ) ) {
                 return new WP_Error(
                     'invalid_client',
                     sprintf(
@@ -1898,7 +2053,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $group_ids = array();
         $groups    = array_map( 'trim', explode( ',', $value ) );
         foreach ( $groups as $group ) {
-            $db_group = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_group_by_name( $group );
+            $db_group = $this->get_scoped_group_by_name( $group );
             if ( ! $db_group ) {
                 return new WP_Error(
                     'invalid_group',
@@ -1928,7 +2083,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         $value  = $this->sanitize_field( $value );
         $groups = array_map( 'trim', explode( ',', $value ) );
         foreach ( $groups as $group ) {
-            $db_group = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_group_by_name( $group );
+            $db_group = $this->get_scoped_group_by_name( $group );
             if ( ! $db_group ) {
                 return new WP_Error(
                     'invalid_group',
@@ -2018,6 +2173,8 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
             }
         }
 
+        $db_websites = $this->filter_scoped_sites( $db_websites );
+        $website_url = array_intersect_key( $website_url, $db_websites );
         return compact( 'db_websites', 'website_url' );
     }
 }

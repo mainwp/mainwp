@@ -280,6 +280,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     /**
      * Get the Settings navigation items.
      *
+     * @param string $context Navigation context.
      * @return array<int, array<string, mixed>> Settings navigation items.
      */
     public static function get_navigation_items( $context = 'default' ) {
@@ -393,7 +394,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     /** Run the export_sites method that exports the Child Sites .csv file */
     public static function admin_init() { // phpcs:ignore -- NOSONAR - complex.
         static::export_sites();
-        if ( isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             delete_option( 'mainwp_extensions_api_username' );
             delete_option( 'mainwp_extensions_api_password' );
             delete_option( 'mainwp_extensions_api_save_login' );
@@ -604,6 +605,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      */
     public static function handle_settings_post() { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
+            if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+                return false;
+            }
             $userExtension            = MainWP_DB_Common::instance()->get_user_extension();
             $userExtension->pluginDir = '';
 
@@ -692,6 +696,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 }
 
                 MainWP_Utility::update_option( 'mainwp_numberdays_Outdate_Plugin_Theme', ! empty( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) ? intval( $_POST['mainwp_numberdays_Outdate_Plugin_Theme'] ) : 365 );
+                MainWP_Utility::update_option( 'mainwp_abandoned_check_by_local_date', isset( $_POST['mainwp_abandoned_check_by_local_date'] ) ? 1 : 0 );
 
                 $actions_notification_enable = ( isset( $_POST['mainwp_site_actions_notification_enable'] ) ? 1 : 0 );
                 MainWP_Utility::update_option( 'mainwp_site_actions_notification_enable', $actions_notification_enable );
@@ -792,6 +797,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_automatic_update_next_run_timestamp',
             'mainwp_delay_autoupdate',
             'mainwp_numberdays_Outdate_Plugin_Theme',
+            'mainwp_abandoned_check_by_local_date',
             'mainwp_check_http_response',
             'mainwp_check_http_response_method',
             'mainwp_site_actions_notification_enable',
@@ -823,6 +829,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_warm_cache_pages_ttl',
             'mainwp_optimize',
             'mainwp_maximum_uptime_monitoring_requests',
+            'mainwp_child_request_timeout',
             'mainwp_chunksitesnumber',
             'mainwp_chunksleepinterval',
             'mainwp_settings_sync_data',
@@ -1137,6 +1144,18 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </label>
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set how many days without an update before plugin or theme will be considered as abandoned.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <input type="text" class="settings-field-value-change-handler" name="mainwp_numberdays_Outdate_Plugin_Theme" id="mainwp_numberdays_Outdate_Plugin_Theme" value="<?php echo false === get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ? 365 : intval( get_option( 'mainwp_numberdays_Outdate_Plugin_Theme' ) ); ?>"/>
+                        </div>
+                    </div>
+                    <?php $abandoned_check_by_local_date = (int) get_option( 'mainwp_abandoned_check_by_local_date', 0 ); ?>
+                    <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-updates">
+                        <label class="six wide column middle aligned">
+                        <?php
+                        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_abandoned_check_by_local_date', $abandoned_check_by_local_date );
+                        esc_html_e( 'Abandoned check by local file date', 'mainwp' );
+                        ?>
+                        </label>
+                        <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'This is useful for premium plugins/themes since those are not available on WordPress.org. Used only when WordPress.org does not return a last updated date. Age is compared with the tolerance above. ', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_abandoned_check_by_local_date" id="mainwp_abandoned_check_by_local_date" <?php echo 1 === $abandoned_check_by_local_date ? 'checked="true"' : ''; ?>/>
                         </div>
                     </div>
 
@@ -1591,11 +1610,13 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_forceUseIPv4', isset( $_POST['mainwp_forceUseIPv4'] ) ? 1 : 0 );
             $use_wpcron = ! isset( $_POST['mainwp_options_wp_cron'] ) ? 0 : 1;
             MainWP_Utility::update_option( 'mainwp_wp_cron', $use_wpcron );
-            MainWP_Utility::update_option( 'mainwp_warm_cache_pages_ttl', intval( $_POST['mainwp_warm_cache_pages_ttl'] ) );
+            MainWP_Utility::update_option( 'mainwp_warm_cache_pages_ttl', isset( $_POST['mainwp_warm_cache_pages_ttl'] ) ? intval( $_POST['mainwp_warm_cache_pages_ttl'] ) : 0 );
 
             MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
             MainWP_Utility::update_option( 'mainwp_auto_correct_site_url', ( ! isset( $_POST['mainwp_auto_correct_site_url'] ) ? 0 : 1 ) );
             MainWP_Utility::update_option( 'mainwp_maximum_uptime_monitoring_requests', ! empty( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) ? intval( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) : 10 );
+            $child_request_timeout = isset( $_POST['mainwp_child_request_timeout'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_child_request_timeout'] ) ) : '';
+            MainWP_Connect::save_child_request_timeout_setting( $child_request_timeout );
             MainWP_Utility::update_option( 'mainwp_chunksitesnumber', isset( $_POST['mainwp_chunksitesnumber'] ) ? intval( $_POST['mainwp_chunksitesnumber'] ) : 10 );
             MainWP_Utility::update_option( 'mainwp_chunksleepinterval', isset( $_POST['mainwp_chunksleepinterval'] ) ? intval( $_POST['mainwp_chunksleepinterval'] ) : 5 );
 
@@ -1851,6 +1872,32 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                                 <div class="ui input">
                                     <input type="hidden" class="settings-field-value-change-handler" name="mainwp_maximumUptimeMonitoringRequests" id="mainwp_maximumUptimeMonitoringRequests" value="<?php echo false === get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ? 10 : esc_attr( get_option( 'mainwp_maximum_uptime_monitoring_requests' ) ); ?>"/>
                                 </div>
+                            </div>
+                        </div>
+
+                        <h3 class="ui dividing header">
+                            <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-child-request' ); ?>
+                            <?php esc_html_e( 'Child request timeout', 'mainwp' ); ?>
+                            <div class="sub header"><?php esc_html_e( 'How long the Dashboard waits for a child site to finish a request.', 'mainwp' ); ?></div>
+                        </h3>
+                        <div class="ui blue message">
+                            <?php esc_html_e( 'Leave this blank to keep the default of 72000 seconds (20 hours). Enter at least 300 seconds to use a different limit. Site removal waits 300 seconds unless this value is higher.', 'mainwp' ); ?>
+                        </div>
+                        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-child-request" default-indi-value="">
+                            <label class="six wide column middle aligned">
+                            <?php
+                            $normalized_child_timeout = MainWP_Connect::normalize_child_request_timeout_setting( get_option( 'mainwp_child_request_timeout', '' ) );
+                            if ( is_int( $normalized_child_timeout ) ) {
+                                $child_request_timeout_saved = (string) $normalized_child_timeout;
+                            } else {
+                                $child_request_timeout_saved = '';
+                            }
+                            MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_child_request_timeout', $child_request_timeout_saved, true, '' );
+                            esc_html_e( 'Child request timeout (seconds)', 'mainwp' );
+                            ?>
+                            </label>
+                            <div class="five wide column" data-tooltip="<?php esc_attr_e( 'Blank uses 72000 seconds. A saved value must be at least 300 seconds and replaces that default. 72000 clears the override.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                                <input type="number" class="settings-field-value-change-handler" name="mainwp_child_request_timeout" id="mainwp_child_request_timeout" min="300" step="1" placeholder="72000" value="<?php echo esc_attr( $child_request_timeout_saved ); ?>"/>
                             </div>
                         </div>
 
@@ -2748,7 +2795,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         static::render_header( 'Emails' );
         $edit_email = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! empty( $edit_email ) && isset( $notification_emails[ $edit_email ] ) ) {
-            $updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
+            $updated_templ = \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ? MainWP_Notification_Template::instance()->handle_template_file_action() : false;
             MainWP_Notification_Settings::instance()->render_edit_settings( $edit_email, $updated_templ );
         } else {
             $updated = MainWP_Notification_Settings::emails_general_settings_handle();

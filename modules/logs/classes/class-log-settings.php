@@ -69,6 +69,9 @@ class Log_Settings {
      * Handle admin_init action.
      */
     public function admin_init() { // phpcs:ignore -- NOSONAR - complex.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
         //phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_POST['mainwp_module_log_settings_nonce'] ) && wp_verify_nonce( wp_unslash( $_POST['mainwp_module_log_settings_nonce'] ), 'logs_settings_nonce' ) ) {
 
@@ -620,7 +623,6 @@ class Log_Settings {
 
         $list_compatible = array( 1960, 1965, 1970, 1975, 1980 );
 
-        // Convert
         $list_to_render = array(
 
             array(

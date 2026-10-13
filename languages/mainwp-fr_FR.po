@@ -485,6 +485,7 @@ msgstr "La clé d’API principale est nécessaire."
 #: assets/js/mainwp-extensions.js:707 assets/js/mainwp.js:2601
 #: assets/js/mainwp.js:2887 assets/js/mainwp.js:3219 assets/js/mainwp.js:3369
 #: assets/js/mainwp.js:3466 assets/js/mainwp.js:4826
+#: assets/js/mainwp-managesites-action.js:243
 #: pages/page-mainwp-client.php:2550 pages/page-mainwp-extensions.php:541
 #: pages/page-mainwp-manage-backups-handler.php:210
 #: pages/page-mainwp-manage-backups-handler.php:279
@@ -558,10 +559,6 @@ msgstr ""
 #: assets/js/mainwp-managesites-action.js:67
 msgid "You are about to suspend the selected sites?"
 msgstr "Confirmez-vous la suspension des sites choisis ?"
-
-#: assets/js/mainwp-managesites-action.js:243
-msgid "Undefined error occurred. Please try again."
-msgstr "Une erreur est survenue. Veuillez réessayer."
 
 #: assets/js/mainwp-managesites-action.js:302 assets/js/mainwp.js:2135
 #: class/class-mainwp-system-view.php:130
@@ -680,6 +677,26 @@ msgstr ""
 #: class/class-mainwp-system-view.php:72
 msgid "PENDING"
 msgstr "EN ATTENTE"
+
+#: class/class-mainwp-system-utility.php:1107
+msgctxt "Uptime monitoring status"
+msgid "PENDING"
+msgstr "EN ATTENTE"
+
+#: class/class-mainwp-system-utility.php:1099
+msgctxt "Uptime monitoring status"
+msgid "UP"
+msgstr "EN LIGNE"
+
+#: class/class-mainwp-system-utility.php:1103
+msgctxt "Uptime monitoring status"
+msgid "DOWN"
+msgstr "EN PANNE"
+
+#: class/class-mainwp-system-utility.php:1111
+msgctxt "Uptime monitoring status"
+msgid "DISABLED"
+msgstr "DÉSACTIVÉ"
 
 #: assets/js/mainwp-managesites-update.js:71
 msgid "Updating everything: Plugins..."
@@ -944,10 +961,12 @@ msgid "Selected application passwords have been revoked."
 msgstr ""
 "Les mots de passe sélectionnés pour certaines applications ont été révoqués."
 
-#: assets/js/mainwp-rest-api.js:349 assets/js/mainwp-rest-api.js:435
+#: assets/js/mainwp-rest-api.js:349
+#: assets/js/mainwp-rest-api.js:435
 #: assets/js/mainwp-rest-api.js:528
+#: class/class-mainwp-system-view.php:62
 msgid "An error occurred."
-msgstr "Une erreur s’est produite."
+msgstr "Une erreur est survenue."
 
 #: assets/js/mainwp-rest-api.js:358
 msgid "An error occurred while revoking the application passwords."
@@ -1648,10 +1667,6 @@ msgstr "Appliquer les réglages…"
 #: assets/js/mainwp.js:1927
 msgid "Applying settings successful!"
 msgstr "Application des réglages réussie !"
-
-#: assets/js/mainwp.js:1928
-msgid "Successful"
-msgstr "Réussi"
 
 #: assets/js/mainwp.js:1935
 msgid "Applying settings failed!"
@@ -6323,10 +6338,6 @@ msgstr "Mettre à jour les paramètres."
 #: class/class-mainwp-system-view.php:61
 msgid "Settings have been updated."
 msgstr "Les paramètres ont été mis à jour."
-
-#: class/class-mainwp-system-view.php:62
-msgid "An error occurred."
-msgstr "Une erreur est survenue."
 
 #: class/class-mainwp-system-view.php:63
 msgid "Testing login."
@@ -13612,6 +13623,7 @@ msgstr "Confirmez-vous la restauration de cette sauvegarde ?"
 msgid "Are you sure you want to Delete this backup?"
 msgstr "Confirmez-vous la suppression de cette sauvegarde ?"
 
+#: assets/js/mainwp.js:1928
 #: modules/api-backups/assets/js/module-api-backups.js:113
 msgid "Successful"
 msgstr "Avec succès"
@@ -17933,12 +17945,16 @@ msgstr "Description du champ"
 msgid "Custom Field"
 msgstr "Champ personnalisé"
 
-#: pages/page-mainwp-client.php:1339 pages/page-mainwp-client.php:1343
-#: pages/page-mainwp-client.php:1773 pages/page-mainwp-client.php:1906
-#: pages/page-mainwp-client.php:1953 pages/page-mainwp-client.php:2000
-#: pages/page-mainwp-client.php:2381 pages/page-mainwp-setup-wizard.php:1027
-#: pages/page-mainwp-setup-wizard.php:1135 pages/page-mainwp-user.php:1638
-#: pages/page-mainwp-user.php:1646 pages/page-mainwp-user.php:1678
+#: pages/page-mainwp-client.php:2381
+#: pages/page-mainwp-setup-wizard.php:1027
+#: pages/page-mainwp-setup-wizard.php:1135
+#: pages/page-mainwp-user.php:1638
+#: pages/page-mainwp-user.php:1646
+#: pages/page-mainwp-user.php:1678
+#: pages/page-mainwp-setup-wizard.php:726
+#: pages/page-mainwp-setup-wizard.php:737
+#: pages/page-mainwp-setup-wizard.php:962
+#: pages/page-mainwp-setup-wizard.php:965
 msgid "(Required)"
 msgstr "(Requis)"
 
@@ -23704,13 +23720,6 @@ msgstr "Connecter le site"
 #: pages/page-mainwp-setup-wizard.php:726
 msgid "What is the site URL?"
 msgstr "Quelle est l'URL du site ?"
-
-#: pages/page-mainwp-setup-wizard.php:726
-#: pages/page-mainwp-setup-wizard.php:737
-#: pages/page-mainwp-setup-wizard.php:962
-#: pages/page-mainwp-setup-wizard.php:965
-msgid "(Required)"
-msgstr "(Obligatoire)"
 
 #: pages/page-mainwp-setup-wizard.php:737
 msgid "What is your administrator username on that site? "

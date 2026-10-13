@@ -178,7 +178,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                             'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong><a href="' . admin_url() . 'plugin-install.php?tab=plugin-information&wpplugin=' . intval( $website->id ) . '&plugin=' . esc_attr( $plugin_upgrade['update']['slug'] ) . '&url=' . ( isset( $plugin_upgrade['PluginURI'] ) ? rawurlencode( $plugin_upgrade['PluginURI'] ) : '' ) . '&name=' . rawurlencode( $plugin_upgrade['Name'] ) . '&section=changelog" target="_blank" class="open-plugin-details-modal">' . esc_html( $last_version ) . '</a>',
                                             'trusted' => ( in_array( $slug, $trustedPlugins ) ? true : false ),
                                             'status'  => ( isset( $plugin_upgrade['active'] ) && $plugin_upgrade['active'] ) ? true : false,
-                                            'client'  => ( isset( $website->client_name ) && '' !== $website->client_name ) ? '<a href="admin.php?page=ManageClients&client_id=' . intval( $website->client_id ) . '" data-tooltip="' . __( 'Jump to the client', 'mainwp' ) . '" data-position="right center" data-inverted="">' . $website->client_name . '</a>' : '',
+                                            'client'  => ( isset( $website->client_name ) && '' !== $website->client_name ) ? '<a href="' . esc_url( 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ) ) . '" data-tooltip="' . esc_attr__( 'Jump to the client', 'mainwp' ) . '" data-position="right center" data-inverted="">' . esc_html( $website->client_name ) . '</a>' : '',
                                         );
 
                                         $others = array();
@@ -246,7 +246,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * Method render_incompatible_message().
      *
      * @param  mixed $compatible_php Compatible php.
-     * @param  mixed $compatible_wp Compatible wp.     *
+     * @param  mixed $compatible_wp Compatible wp.
      * @param  mixed $echo_content Print content or not.
      *
      * @return string Message
@@ -429,7 +429,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                             'latest'  => '<strong class="mainwp-768-show">' . esc_html__( 'Latest: ', 'mainwp' ) . '</strong>' . esc_html( $last_version ),
                                             'trusted' => ( in_array( $slug, $trustedThemes ) ? true : false ),
                                             'status'  => ( isset( $theme_upgrade['active'] ) && $theme_upgrade['active'] ) ? true : false,
-                                            'client'  => ( isset( $website->client_name ) && '' !== $website->client_name ) ? '<a href="admin.php?page=ManageClients&client_id=' . intval( $website->client_id ) . '" data-tooltip="' . __( 'Jump to the client', 'mainwp' ) . '" data-position="right center" data-inverted="">' . $website->client_name . '</a>' : '',
+                                            'client'  => ( isset( $website->client_name ) && '' !== $website->client_name ) ? '<a href="' . esc_url( 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ) ) . '" data-tooltip="' . esc_attr__( 'Jump to the client', 'mainwp' ) . '" data-position="right center" data-inverted="">' . esc_html( $website->client_name ) . '</a>' : '',
                                         );
 
                                         $others = array();
@@ -632,7 +632,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                             echo MainWP_Manage_Sites_Update_View::get_column_trusted($is_trust ); //phpcs:ignore -- NOSONAR - escaped.
                                             ?>
                                             <?php if ( $user_can_see_client ) { ?>
-                                            <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
+                                            <td><a href="<?php echo esc_url( 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
                                             <?php } ?>
                                             <td class="right aligned">
                                                 <?php if ( MainWP_Updates::user_can_update_trans() ) : ?>
@@ -677,7 +677,9 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public static function render_abandoned_plugins( $websites, $allPluginsOutdate, $decodedDismissedPlugins ) { // phpcs:ignore -- NOSONAR - complex.
         // translators: %s is the number of days since the plugin was last updated.
-        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        // translators: %s is the number of days since the main file was modified.
+        $str_format_file = esc_html__( 'Main file modified %s days ago', 'mainwp' );
         $count_abandoned = count( $allPluginsOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>
@@ -754,14 +756,14 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                 $last_updated             = $plugin_outdate['last_updated'];
                                 $plugin_last_updated_date = new \DateTime( '@' . $last_updated );
                                 $diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
-                                $outdate_notice           = sprintf( $str_format, $diff_in_days );
+                                $outdate_notice           = sprintf( 'file_mtime' === ( $plugin_outdate['detection'] ?? '' ) ? $str_format_file : $str_format, $diff_in_days );
                                 ?>
                                 <tr site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" dismissed="0" <?php echo $first_wpplugin ? 'open-wpplugin-siteid="' . intval( $website->id ) . '"' : ''; ?>>
                                     <td><strong class="mainwp-768-show"><?php esc_html_e( 'Website:', 'mainwp' ); ?></strong> <?php MainWP_Updates::render_site_link_dashboard( $website ); ?>
                                     </td>
                                     <td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $plugin_outdate['Version'] ); ?></td>
                                     <td><strong class="mainwp-768-show"><?php esc_html_e( 'Last Update:', 'mainwp' ); ?></strong> <?php echo esc_html( $outdate_notice ); ?></td>
-                                    <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
+                                    <td><a href="<?php echo esc_url( 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
                                     <td class="right aligned">
                                     <?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
                                         <a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_plugins_dismiss_outdate_detail( '<?php echo esc_js( $plugin_name ); ?>', '<?php echo esc_js( rawurlencode( $plugin_outdate['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>
@@ -804,7 +806,9 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public static function render_abandoned_themes( $websites, $allThemesOutdate, $decodedDismissedThemes ) { // phpcs:ignore -- NOSONAR - complex.
         // translators: %s is the number of days since the theme was last updated.
-        $str_format      = esc_html__( 'Updated %s days ago', 'mainwp' );
+        $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        // translators: %s is the number of days since the main file was modified.
+        $str_format_file = esc_html__( 'Main file modified %s days ago', 'mainwp' );
         $count_abandoned = count( $allThemesOutdate );
         ?>
         <?php if ( 0 < $count_abandoned ) : ?>
@@ -880,7 +884,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                 $last_updated            = $theme_outdate['last_updated'];
                                 $theme_last_updated_date = new \DateTime( '@' . $last_updated );
                                 $diff_in_days            = $now->diff( $theme_last_updated_date )->format( '%a' );
-                                $outdate_notice          = sprintf( $str_format, $diff_in_days );
+                                $outdate_notice          = sprintf( 'file_mtime' === ( $theme_outdate['detection'] ?? '' ) ? $str_format_file : $str_format, $diff_in_days );
                                 ?>
                                 <tr site_id="<?php echo esc_attr( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" outdate="1" dismissed="0">
                                     <td>
@@ -888,7 +892,7 @@ class MainWP_Updates_Per_Item { // phpcs:ignore Generic.Classes.OpeningBraceSame
                                     </td>
                                     <td><strong class="mainwp-768-show"><?php esc_html_e( 'Version:', 'mainwp' ); ?></strong> <?php echo esc_html( $theme_outdate['Version'] ); ?></td>
                                     <td><strong class="mainwp-768-show"><?php esc_html_e( 'Last Update:', 'mainwp' ); ?></strong>  <?php echo esc_html( $outdate_notice ); ?></td>
-                                    <td><a href="<?php echo 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
+                                    <td><a href="<?php echo esc_url( 'admin.php?page=ManageClients&client_id=' . intval( $website->client_id ) ); ?>" data-tooltip="<?php esc_attr_e( 'Jump to the client', 'mainwp' ); ?>" data-position="right center" data-inverted="" ><?php echo esc_html( $website->client_name ); ?></a></td>
                                     <td class="right aligned">
                                     <?php if ( MainWP_Updates::user_can_ignore_updates() ) { ?>
                                         <a href="javascript:void(0)" class="ui mini button" onClick="return updatesoverview_themes_dismiss_outdate_detail( '<?php echo esc_js( $theme_name ); ?>', '<?php echo esc_js( rawurlencode( $theme_outdate['Name'] ) ); ?>', <?php echo intval( $website->id ); ?>, this )"><?php esc_html_e( 'Ignore Now', 'mainwp' ); ?></a>

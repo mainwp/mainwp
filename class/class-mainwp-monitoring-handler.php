@@ -48,7 +48,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $nonce          = sanitize_key( $_POST['wp_nonce'] );
         $is_valid_nonce = wp_verify_nonce( $nonce, 'MonitoringSettings' );
 
-        if ( ! $is_valid_nonce || ! MainWP_System_Utility::is_admin() ) {
+        if ( ! $is_valid_nonce || ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
             return false;
         }
 

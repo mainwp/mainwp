@@ -45,6 +45,7 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         'note'               => true,
         'fields_info'        => true,
         'websites'           => true,
+        'knowledge'          => true,
         'recent_posts'       => true,
         'recent_pages'       => true,
         'non_mainwp_changes' => true,
@@ -110,6 +111,11 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function on_load_page( $page ) {
 
+        $client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ( ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! MainWP_Client::has_client_access( $client_id ) ) {
+            return;
+        }
+
         static::$page = $page;
 
         $val = get_user_option( 'screen_layout_' . $page );
@@ -162,6 +168,11 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @uses \MainWP\Dashboard\MainWP_Updates_Overview::get_class_name()
      */
     public static function add_meta_boxes( $page ) { // phpcs:ignore -- NOSONAR - complex method. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+
+        $client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ( ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! MainWP_Client::has_client_access( $client_id ) ) {
+            return;
+        }
 
         /**
          * Get getmetaboxes
@@ -221,6 +232,10 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             MainWP_UI::add_widget_box( 'websites', array( MainWP_Client_Overview_Sites::get_class_name(), 'render' ), $page, array( -1, -1, 6, 40 ) );
         }
 
+        if ( static::$enable_widgets['knowledge'] && MainWP_Client_Overview_Knowledge::can_read() ) {
+            MainWP_UI::add_widget_box( 'knowledge', array( MainWP_Client_Overview_Knowledge::class, 'render' ), $page, array( -1, -1, 6, 40 ) );
+        }
+
         // Load the Info widget.
         if ( static::$enable_widgets['fields_info'] ) {
             MainWP_UI::add_widget_box( 'fields_info', array( MainWP_Client_Overview_Custom_Info::get_class_name(), 'render' ), $page, array( -1, -1, 6, 30 ) );
@@ -278,7 +293,13 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * When the page loads render the body content.
      */
     public function on_show_page() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainw\mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'client dashboard', 'mainwp' ) );
+            return;
+        }
+
+        $client_id = isset( $_GET['client_id'] ) ? intval( $_GET['client_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ( ! MainWP_Client::has_client_access( $client_id ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'client dashboard', 'mainwp' ) );
             return;
         }
@@ -436,10 +457,15 @@ class MainWP_Client_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             'note'               => esc_html__( 'Notes', 'mainwp' ),
             'fields_info'        => esc_html__( 'Addition Info', 'mainwp' ),
             'websites'           => esc_html__( 'Websites', 'mainwp' ),
+            'knowledge'          => esc_html__( 'Knowledge', 'mainwp' ),
             'recent_posts'       => esc_html__( 'Recent Posts', 'mainwp' ),
             'recent_pages'       => esc_html__( 'Recent Pages', 'mainwp' ),
             'non_mainwp_changes' => esc_html__( 'Network Activity', 'mainwp' ),
         );
+
+        if ( ! MainWP_Client_Overview_Knowledge::can_read() ) {
+            unset( $default_widgets['knowledge'] );
+        }
 
         if ( isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             $client_contacts = MainWP_DB_Client::instance()->get_wp_client_contact_by( 'client_id', intval( $_GET['client_id'] ), ARRAY_A ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

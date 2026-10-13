@@ -4,6 +4,7 @@
 # Optimized for MainWP security patterns and conventions
 #
 language: "en-US"
+inheritance: true
 tone_instructions: "Focus on WordPress security patterns and MainWP conventions. Accept Instance() singleton naming and 4-space indentation."
 
 # Reviews configuration
@@ -18,6 +19,7 @@ reviews:
   auto_review:
     enabled: true
     drafts: false
+    auto_pause_after_reviewed_commits: 1  # pause automatic incremental reviews early; post @coderabbitai review when the branch is ready
     ignore_title_keywords:
       - "WIP"
       - "DO NOT MERGE"
@@ -28,6 +30,7 @@ reviews:
 
   # Path-based filtering
   path_filters:
+    - "**"
     # Exclude vendored/third-party code
     - "!vendor/**"
     - "!libs/**"
@@ -35,36 +38,39 @@ reviews:
     - "!assets/js/gridstack/**"
     - "!assets/js/dropzone/**"
     # Exclude generated/build artifacts
-    - "!bin/**"
-    - "!.github/**"
-    # Include all PHP source code
-    - "class/**"
-    - "pages/**"
-    - "widgets/**"
-    - "includes/**"
-    - "modules/**"
-    - "cron/**"
+    - "!**/node_modules/**"
+    - "!**/coverage/**"
+    - "!**/*.min.js"
+    - "!**/*.min.css"
+    - "!**/*.map"
 
   # Path-specific review instructions
   path_instructions:
+    - path: "**"
+      instructions: |
+        Review MainWP Dashboard6 in mainwp/mainwp-6. Follow the runtime floors
+        declared in readme.txt and composer.json and the repository's PHPCS rules.
+        Preserve public hooks, routes, abilities, schemas, stored values, and
+        Dashboard6-to-Child6 payloads. Trace affected callers and extension consumers.
+        Distinguish default-branch and public-release compatibility from coordinated
+        changes on a named PR or branch. Treat historical learnings as revision-specific
+        context: verify the current implementation and tests before applying an exception.
+        A past deferral or accepted tradeoff does not exempt newly introduced security
+        or data-loss regressions. Do not infer runtime compatibility from source inspection.
     # Security-critical: Admin handlers
     - path: "class/class-mainwp-post-*-handler.php"
       instructions: |
-        CRITICAL SECURITY REVIEW: These files handle POST/AJAX requests.
-
-        MUST verify ALL of these for every handler method:
-        1. Nonce verification: check_ajax_referer() or wp_verify_nonce()
-        2. Capability check: current_user_can('manage_options') or mainwp_current_user_have_right()
-        3. Input sanitization: sanitize_text_field(), absint(), esc_url_raw(), etc.
-        4. SQL prepared statements: $wpdb->prepare() for ALL queries
-        5. Output escaping in responses (if returning HTML)
-
-        Flag ANY missing security check as CRITICAL.
-
-        MainWP-specific patterns to ACCEPT (not false positives):
-        - Instance() singleton method naming is intentional MainWP convention
-        - 4-space indentation (configured in phpcs.xml)
-        - Code with // phpcs:ignore comments has been reviewed
+        Trace each externally reachable POST/AJAX action through its registered
+        handler and shared guards. Verify nonce validation, operation-specific
+        capability/MainWP rights, and site access before returning protected data
+        or mutating state. A check in a caller or shared handler can satisfy the
+        requirement; identify a reachable bypass before reporting a missing check
+        in a helper. Apply operation-specific authorization to disclosure actions
+        as well as mutations.
+        Check unslashing, input types and bounds, SQL values, and escaping for the
+        actual output context. Assign severity from exploitability and impact.
+        Follow existing singleton naming and four-space indentation.
+        PHPCS suppressions document lint exceptions; they do not prove security safety.
 
     # Security-critical: Database operations
     - path: "class/class-mainwp-install.php"
@@ -74,12 +80,14 @@ reviews:
       instructions: |
         DATABASE SECURITY REVIEW:
 
-        1. ALL queries MUST use $wpdb->prepare() - no exceptions
-        2. Table names must use $wpdb->prefix, never hardcoded 'wp_'
-        3. IN clauses need proper placeholder counts: array_fill(0, count($ids), '%d')
-        4. NEVER concatenate user input into SQL, even if sanitized
-
-        Report unprepared queries as CRITICAL security issues.
+        Use $wpdb->prepare() for dynamic SQL values and the existing table-name
+        helpers for MainWP tables. Verify identifier allowlists separately from
+        value placeholders. Static queries without external values do not require
+        placeholders. Check IN-list types, placeholder counts, and empty-list handling.
+        Trace the value's validation and prepared fragments through the complete query
+        before alleging SQL injection; identify the unsafe value and reachable input.
+        Assign severity from exploitability and impact. Check query failures and
+        migration postconditions before advancing a schema marker or changing credentials.
 
         MainWP-specific patterns to ACCEPT (not violations):
         - The wp_options view builders in class-mainwp-db.php
@@ -96,38 +104,41 @@ reviews:
       instructions: |
         CHILD COMMUNICATION SECURITY:
 
-        1. All child site requests MUST use MainWP_Connect::fetch_url_authed()
-        2. NEVER use direct wp_remote_post/get to child sites
-        3. Verify response structure before processing
-        4. SSL/TLS handling must respect site configuration
-
-        Direct HTTP requests to child sites are CRITICAL vulnerabilities.
+        Trace authenticated operations through MainWP_Connect::fetch_url_authed()
+        or fetch_urls_authed(), their signing code, and the matching Child6 dispatcher.
+        Registration, monitoring, connection diagnostics, and lower-level transport
+        have different contracts. Direct HTTP/cURL inside an existing transport is
+        not by itself an authentication bypass. Report a concrete bypass of required
+        signing, replay protection, site scope, origin checks, or TLS policy.
+        Preserve per-site transport settings and response/error shapes. Validate Child
+        responses before use and keep credentials redacted even in diagnostic logs.
 
     # REST API: Different auth model
     - path: "includes/rest-api/**"
       instructions: |
         REST API REVIEW CONTEXT:
 
-        NOTE: REST API uses Bearer token authentication, NOT nonces.
-        - Do NOT flag missing wp_verify_nonce() in REST controllers
-        - DO verify permission_callback is set on all routes
-        - DO verify input sanitization still applies
-        - DO verify capability checks via permission_callback
-
-        Use MainWP_REST_Authentication for auth, not nonces.
+        Trace the route namespace through MainWP_REST_Authentication and the
+        registered permission_callback. MainWP supports multiple authentication
+        paths; do not assume Bearer-only authentication or add browser AJAX nonces
+        to machine API-key requests. Verify API-key read/write permissions, user
+        capabilities, operation rights, and site scope for the operation reached.
+        For WordPress cookie-authenticated routes, check the applicable REST nonce
+        path. Validate input types before lossy sanitization, preserve output schemas
+        and error codes, and distinguish per-item batch errors from transport errors.
 
     # Abilities API: Similar to REST
     - path: "includes/abilities/**"
       instructions: |
         ABILITIES API REVIEW CONTEXT:
 
-        Abilities use Bearer token auth via permission_callback.
-        - Do NOT flag missing nonce verification
-        - DO verify permission_callback is set: MainWP_Abilities_Util::check_rest_api_permission
-        - DO verify input sanitization for all parameters
-        - DO verify schema validation is comprehensive
-
-        Error codes should use: ability_invalid_permissions, ability_invalid_input, mainwp_*
+        Abilities use WordPress authentication on their REST surface and may run
+        through other registered executors. Trace the actual transport and permission
+        callback, including MainWP_Abilities_Util's base, per-site, and operation-right
+        wrappers. Authentication alone does not establish authorization to mutate a site.
+        Do not require a Bearer token or a browser AJAX nonce for every ability call.
+        Verify schemas, operation-specific rights, scoped-site filtering, confirmation
+        requirements, stable result/error shapes, and relevant failure-path tests.
 
     # UI Pages: Output escaping focus
     - path: "pages/page-mainwp-*.php"
@@ -140,7 +151,8 @@ reviews:
            - esc_url() for URLs (NOT esc_html!)
            - esc_js() for JavaScript strings
         2. Use add_query_arg() for URL construction, not string concatenation
-        3. Translations with HTML should use __() not esc_html__()
+        3. For translated HTML, preserve approved markup with an explicit allowlist;
+           escape interpolated values for their context. Translation does not make HTML safe.
 
         Common mistake: Using esc_html() for URLs - should be esc_url().
 
@@ -161,11 +173,12 @@ reviews:
       instructions: |
         CRON JOB REVIEW:
 
-        1. No user session available - cannot use current_user_can()
-        2. Must validate all input from scheduled data
-        3. Error handling critical - failures should log, not crash
-        4. Database operations must use prepared statements
-        5. Long-running operations should check for timeouts
+        Trace how the job is scheduled and how site scope is carried into execution.
+        Background jobs may have no interactive user; do not add a capability check
+        that prevents legitimate cron execution without tracing the authorization boundary.
+        Validate scheduled data, preserve locks and bounded execution, and propagate
+        failures through the job's state/error contract. Logging alone is not success.
+        Prepare dynamic SQL values and verify migration postconditions.
 
     # Tests: Different standards
     - path: "tests/**"
@@ -173,7 +186,7 @@ reviews:
         TEST CODE REVIEW:
 
         1. Assertions must be meaningful - can actually fail
-        2. Test methods should start with test_
+        2. Follow the suite's existing test-discovery conventions
         3. Security tests must verify both success AND failure paths
         4. Mock data is acceptable in tests only
 
@@ -203,7 +216,18 @@ chat:
 
 # Knowledge base (if available)
 knowledge_base:
+  automatic_linking_mode: auto
+  linked_repositories:
+    - repository: mainwp/mainwp-child-6
+      instructions: >-
+        MainWP Child6 executes Dashboard6 remote operations. Trace changed command
+        names, signatures, authentication and replay checks, payload fields,
+        response/error shapes, and third-party adapter behavior against the relevant
+        Dashboard6 caller and Child6 implementation. Identify version requirements
+        and distinguish public-release compatibility from a coordinated named PR or
+        branch. Use evidence from both repositories before reporting a contract
+        mismatch; source inspection does not establish runtime compatibility.
   learnings:
-    scope: auto
+    scope: local
   code_guidelines:
     enabled: true

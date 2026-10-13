@@ -280,8 +280,17 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( ! empty( $emails ) && ! empty( $mail_content ) ) {
             MainWP_Logger::instance()->log_uptime_notice( 'Uptime monitoring status :: send mail :: ' . $subject );
             if ( $site_mo ) {
-                $event_time = ! empty( $site_mo->hb_time_check ) ? gmdate( 'Y-m-d H:i:s', $site_mo->hb_time_check ) : '';
-                MainWP_Logger::instance()->log_uptime_notice( 'Sending notification :: [subject=' . esc_html( $subject ) . '] :: [event-time=' . $event_time . '] :: [monitorid=' . $site_mo->monitor_id . '] :: [monitor-url=' . ( empty( $site_mo->issub ) ? $site_mo->url : $site_mo->suburl ) . ']' );
+                $log_mo = $site_mo;
+                // to fix.
+                if ( is_array( $log_mo ) && isset( $log_mo[0] ) ) {
+                    $log_mo = $log_mo[0];
+                }
+
+                if ( is_array( $log_mo ) ) {
+                    $log_mo = (object) $log_mo;
+                }
+                $event_time = ! empty( $log_mo->hb_time_check ) ? gmdate( 'Y-m-d H:i:s', $log_mo->hb_time_check ) : '';
+                MainWP_Logger::instance()->log_uptime_notice( 'Sending notification :: [subject=' . esc_html( $subject ) . '] :: [event-time=' . $event_time . '] :: [monitorid=' . $log_mo->monitor_id . '] :: [monitor-url=' . ( empty( $log_mo->issub ) ? $log_mo->url : $log_mo->suburl ) . ']' );
             }
             static::send_wp_mail(
                 $emails,
@@ -334,6 +343,10 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return void
      */
     public static function start_notification_auto_updates_info( $admin_email_settings, $params = array() ) {
+
+        if ( ! is_array( $admin_email_settings ) || ! empty( $admin_email_settings['disable'] ) ) {
+            return;
+        }
 
         $email        = isset( $admin_email_settings['recipients'] ) ? $admin_email_settings['recipients'] : '';
         $subject      = isset( $admin_email_settings['subject'] ) ? $admin_email_settings['subject'] : '';

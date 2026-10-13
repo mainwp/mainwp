@@ -69,7 +69,7 @@ $auto_updated_items = isset( $auto_updated_items ) && is_array( $auto_updated_it
                                     <p><?php esc_html_e( 'The following updates were automatically completed via your MainWP Dashboard.', 'mainwp' ); ?></p>
                                         <?php foreach ( $auto_updated_items as $wpid => $updated_items ) : ?>
                                         <p><a href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&dashboard=' . $updated_items['site_id'] ) ); ?>" style="color:#7fb100;"><?php echo esc_html( $updated_items['site_name'] ); ?></a></p>
-                                            <?php if ( ! empty( $updated_items['core'] ) && ! is_array( $updated_items['core'] ) ) : ?>
+                                            <?php if ( ! empty( $updated_items['core'] ) && is_array( $updated_items['core'] ) ) : ?>
                                             <h4 style="color:#444;"><?php esc_html_e( 'WordPress Core', 'mainwp' ); ?></h4>
                                             <table style="border:0;width:100%;text-align:left;padding:0;border-spacing:0;font-size:11px; margin-bottom:30px;">
                                                 <thead style="background: #eee">
@@ -87,15 +87,15 @@ $auto_updated_items = isset( $auto_updated_items ) && is_array( $auto_updated_it
                                                         }
                                                         ?>
                                                     <tr>
-                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo esc_html( $item['old_version'] ); ?></td>
-                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><a href="#" style="color:#7fb100;"><?php echo esc_html( $item['version'] ); ?></a></td>
+                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo esc_html( isset( $item['old_version'] ) ? $item['old_version'] : '' ); ?></td>
+                                                        <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><a href="#" style="color:#7fb100;"><?php echo esc_html( isset( $item['version'] ) ? $item['version'] : '' ); ?></a></td>
                                                         <td style="padding:10px;border-bottom: 1px solid #eee;text-align:center;"><?php echo $item['success'] ? '<span style="background:#7fb100;padding:3px 7px;color:#fff;">Success</span>' : '<span style="background:#444;padding:3px 7px;color:#fff;">Failed</span>'; ?></td>
                                                     </tr>
                                                 <?php endforeach; ?>
                                                 </tbody>
                                             </table>
                                         <?php endif; ?>
-                                            <?php if ( is_array( $updated_items['plugins'] ) && ! empty( $updated_items['plugins'] ) ) : ?>
+                                            <?php if ( ! empty( $updated_items['plugins'] ) && is_array( $updated_items['plugins'] ) ) : ?>
                                             <h4 style="color:#444;"><?php esc_html_e( 'Plugin Updates', 'mainwp' ); ?></h4>
                                             <table style="border:0;width:100%;text-align:left;padding:0;border-spacing:0;font-size:11px; margin-bottom:30px;">
                                                 <thead style="background: #eee">
@@ -122,7 +122,7 @@ $auto_updated_items = isset( $auto_updated_items ) && is_array( $auto_updated_it
                                                 </tbody>
                                             </table>
                                         <?php endif; ?>
-                                            <?php if ( is_array( $updated_items['themes'] ) && ! empty( $updated_items['themes'] ) ) : ?>
+                                            <?php if ( ! empty( $updated_items['themes'] ) && is_array( $updated_items['themes'] ) ) : ?>
                                             <h4 style="color:#444;"><?php esc_html_e( 'Theme Updates', 'mainwp' ); ?></h4>
                                             <table style="border:0;width:100%;text-align:left;padding:0;border-spacing:0;font-size:11px; margin-bottom:30px;">
                                                 <thead style="background: #eee">
@@ -149,7 +149,7 @@ $auto_updated_items = isset( $auto_updated_items ) && is_array( $auto_updated_it
                                             </table>
                                         <?php endif; ?>
 
-                                            <?php if ( is_array( $updated_items['translations'] ) && ! empty( $updated_items['translations'] ) ) : ?>
+                                            <?php if ( ! empty( $updated_items['translations'] ) && is_array( $updated_items['translations'] ) ) : ?>
                                             <h4 style="color:#444;"><?php esc_html_e( 'Translation Updates', 'mainwp' ); ?></h4>
                                             <table style="border:0;width:100%;text-align:left;padding:0;border-spacing:0;font-size:11px; margin-bottom:30px;">
                                                 <thead style="background: #eee">

@@ -271,6 +271,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Handle manage sites screen settings
      */
     public function handle_manage_sites_screen_settings() { // phpcs:ignore -- NOSONAR - required to achieve desired results, pull request solutions appreciated.
+        $can_manage_settings = \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' );
         if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'ManageSitesScrOptions' ) ) {
             $show_cols = array();
             foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
@@ -286,8 +287,10 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                     }
                 }
             }
-            MainWP_Utility::update_option( 'mainwp_use_favicon', 1 );
-            MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
+            if ( $can_manage_settings ) {
+                MainWP_Utility::update_option( 'mainwp_use_favicon', 1 );
+                MainWP_Utility::update_option( 'mainwp_optimize', ( ! isset( $_POST['mainwp_optimize'] ) ? 0 : 1 ) );
+            }
             $user = wp_get_current_user();
             if ( $user ) {
                 $val = ( isset( $_POST['mainwp_sitesviewmode'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_sitesviewmode'] ) ) : 'grid' );
@@ -296,7 +299,9 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
                 update_user_option( $user->ID, 'mainwp_sitesviewmode', $val, true );
                 update_user_option( $user->ID, 'mainwp_settings_show_manage_sites_columns', $show_cols, true );
-                update_option( 'mainwp_default_sites_per_page', ( isset( $_POST['mainwp_default_sites_per_page'] ) ? intval( $_POST['mainwp_default_sites_per_page'] ) : 25 ) );
+                if ( $can_manage_settings ) {
+                    update_option( 'mainwp_default_sites_per_page', ( isset( $_POST['mainwp_default_sites_per_page'] ) ? intval( $_POST['mainwp_default_sites_per_page'] ) : 25 ) );
+                }
             }
         } elseif ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SreenshotsSitesScrOptions' ) ) {
             $user = wp_get_current_user();
@@ -316,6 +321,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Handle monitoring sites screen settings
      */
     public function handle_monitoring_sites_screen_settings() { // phpcs:ignore -- NOSONAR - complex.
+        $can_manage_settings = \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' );
         if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MonitoringSitesScrOptions' ) ) {
             $show_cols = array();
             foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST ) ) as $key => $val ) {
@@ -335,13 +341,18 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $user = wp_get_current_user();
             if ( $user ) {
                 update_user_option( $user->ID, 'mainwp_settings_show_monitoring_sites_columns', $show_cols, true );
-                update_option( 'mainwp_default_monitoring_sites_per_page', ( isset( $_POST['mainwp_default_monitoring_sites_per_page'] ) ? intval( $_POST['mainwp_default_monitoring_sites_per_page'] ) : 25 ) );
+                if ( $can_manage_settings ) {
+                    update_option( 'mainwp_default_monitoring_sites_per_page', ( isset( $_POST['mainwp_default_monitoring_sites_per_page'] ) ? intval( $_POST['mainwp_default_monitoring_sites_per_page'] ) : 25 ) );
+                }
             }
 
-            update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
+            // The Page Settings form includes MainWP_Monitoring_View::render_settings(), so it posts the Site Health fields.
+            if ( $can_manage_settings ) {
+                update_option( 'mainwp_disableSitesHealthMonitoring', ( ! isset( $_POST['mainwp_disable_sitesHealthMonitoring'] ) ? 1 : 0 ) );
 
-            $val = isset( $_POST['mainwp_site_healthThreshold'] ) ? intval( $_POST['mainwp_site_healthThreshold'] ) : 80;
-            update_option( 'mainwp_sitehealthThreshold', $val );
+                $val = isset( $_POST['mainwp_site_healthThreshold'] ) ? intval( $_POST['mainwp_site_healthThreshold'] ) : 80;
+                update_option( 'mainwp_sitehealthThreshold', $val );
+            }
         }
     }
 
@@ -413,6 +424,9 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * Handle manage clients screen settings
      */
     public function handle_updates_screen_settings() { //phpcs:ignore -- NOSONAR - complex.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
         if ( isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdatesScrOptions' ) ) {
             $val = ( ! isset( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) ? 0 : intval( $_POST['mainwp_pluginAutomaticDailyUpdate'] ) );
             MainWP_Utility::update_option( 'mainwp_pluginAutomaticDailyUpdate', $val );
@@ -481,7 +495,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $update_selected_mainwp_themes = false;
         $should_redirect               = false; // Redirect status.
 
-        if ( isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) {
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && isset( $_GET['page'] ) && 'MainWPTools' === $_GET['page'] && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'MainWPTools' ) ) {
 
             $old_settings = MainWP_Settings::get_all_settings_values();
 
@@ -1236,10 +1250,10 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param  mixed $package The package URL.
      * @param  mixed $upgrader  The upgrader instance.
      * @param  mixed $hook_extra Extra information about the upgrade, including the plugin being updated.
-     * @return void
+     * @return mixed The reply from the upgrader.
      */
     public function hook_refresh_trusted_extension_package_url( $reply, $package, $upgrader, $hook_extra ) {
-        if ( isset( $hook_extra['plugin'] ) ) { // && isset( $_POST['mainwpsignature'] ) && isset( $_POST['function'] ) && 'upgradeplugintheme' === $_POST['function'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- NOSONAR - hook for plugin update action, it is safe to use $_POST here.
+        if ( isset( $hook_extra['plugin'] ) ) {
             $ext_api_slug = dirname( $hook_extra['plugin'] );
             if ( ! empty( $ext_api_slug ) ) {
                 $rslt_info = MainWP_API_Handler::get_upgrade_information( $ext_api_slug );

@@ -337,6 +337,11 @@ class Log_Events_Filter_Segment {
                 if ( empty( $values['name'] ) ) {
                     continue;
                 }
+
+                if ( ! empty( $values['seg_users'] ) ) {
+                    $values['seg_users'] = Log_Manage_Insights_Events_Page::convert_legacy_users_filters_values( $values['seg_users'] );
+                }
+
                 $list_segs .= '<option segment-filters="' . esc_attr( wp_json_encode( $values ) ) . '" value="' . esc_attr( $sid ) . '">' . esc_html( $values['name'] ) . '</option>';
             }
             $list_segs .= '</select>';

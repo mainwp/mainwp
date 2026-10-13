@@ -122,11 +122,47 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
                 ),
                 'succeeded'         => array(
                     'type'        => 'integer',
-                    'description' => __( 'Number of successful operations', 'mainwp' ),
+                    'description' => __( 'Sites that completed without error. For update jobs, only sites where at least one update was sent; sites with nothing to send are counted in unchanged.', 'mainwp' ),
                 ),
                 'failed'            => array(
                     'type'        => 'integer',
                     'description' => __( 'Number of failed operations', 'mainwp' ),
+                ),
+                'skipped'           => array(
+                    'type'        => 'object',
+                    'description' => __( 'Updates held back at dispatch time because a hold applied.', 'mainwp' ),
+                    'properties'  => array(
+                        'count' => array(
+                            'type'    => 'integer',
+                            'minimum' => 0,
+                        ),
+                        'items' => array(
+                            'type'  => 'array',
+                            'items' => array(
+                                'type'       => 'object',
+                                'properties' => array(
+                                    'site_id' => array( 'type' => 'integer' ),
+                                    'type'    => array(
+                                        'type' => 'string',
+                                        'enum' => array( 'core', 'plugin', 'theme', 'translation' ),
+                                    ),
+                                    'slug'    => array( 'type' => 'string' ),
+                                    'reason'  => array(
+                                        'type'        => 'string',
+                                        'enum'        => array( 'ignored_site', 'ignored_global', 'ignored_site_flag' ),
+                                        'description' => __( 'Which hold applies. ignored_site: the site\'s own ignore list. ignored_global: the global ignore list. ignored_site_flag: the site ignores every update of this type. The first matching layer wins, in that order.', 'mainwp' ),
+                                    ),
+                                ),
+                                'required'   => array( 'site_id', 'type', 'slug', 'reason' ),
+                            ),
+                        ),
+                    ),
+                    'required'    => array( 'count', 'items' ),
+                ),
+                'unchanged'         => array(
+                    'type'        => 'integer',
+                    'minimum'     => 0,
+                    'description' => __( 'Sites processed without error where nothing was sent: nothing was pending, or every pending item was held.', 'mainwp' ),
                 ),
                 'started_at'        => array(
                     'oneOf' => array(
@@ -181,7 +217,7 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
                     'description' => __( 'Human-readable description of the job-level error. Present when job_timed_out is true.', 'mainwp' ),
                 ),
             ),
-            'required'   => array( 'job_id', 'type', 'status', 'progress', 'processed', 'total', 'succeeded', 'failed' ),
+            'required'   => array( 'job_id', 'type', 'status', 'progress', 'processed', 'total', 'succeeded', 'failed', 'skipped', 'unchanged' ),
         );
     }
 
@@ -254,6 +290,24 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
             );
         }
 
+        // A job ID alone must not grant access to another user's status.
+        // Legacy jobs have no owner stamp and remain readable.
+        $job_owner = isset( $job_data['user_id'] ) ? (int) $job_data['user_id'] : null;
+        if ( null !== $job_owner && get_current_user_id() !== $job_owner ) {
+            if ( 'all' !== MainWP_Abilities_Util::get_allowed_site_ids() ) {
+                return new \WP_Error(
+                    'mainwp_job_not_found',
+                    __( 'Batch job not found. Job may have expired (jobs are kept for 24 hours).', 'mainwp' ),
+                    array( 'status' => 404 )
+                );
+            }
+            return new \WP_Error(
+                'mainwp_permission_denied',
+                __( 'You do not have permission to view this batch job.', 'mainwp' ),
+                array( 'status' => 403 )
+            );
+        }
+
         // Normalize job data fields with defensive fallbacks.
         // This section tolerates partially populated transients to avoid misleading status
         // for malformed or incomplete job data (e.g., from interrupted background processes).
@@ -308,6 +362,20 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
             }
         }
 
+        $skipped_items = array();
+        $skipped_array = isset( $job_data['skipped'] ) && is_array( $job_data['skipped'] ) ? $job_data['skipped'] : array();
+        foreach ( $skipped_array as $item ) {
+            if ( is_array( $item ) ) {
+                $skipped_items[] = array(
+                    'site_id' => isset( $item['site_id'] ) ? (int) $item['site_id'] : 0,
+                    'type'    => isset( $item['type'] ) ? (string) $item['type'] : '',
+                    'slug'    => isset( $item['slug'] ) ? (string) $item['slug'] : '',
+                    'reason'  => isset( $item['reason'] ) ? (string) $item['reason'] : '',
+                );
+            }
+        }
+        $unchanged = isset( $job_data['unchanged'] ) && is_array( $job_data['unchanged'] ) ? count( $job_data['unchanged'] ) : 0;
+
         $failed = count( $normalized_errors );
 
         $response = array(
@@ -319,6 +387,11 @@ class MainWP_Abilities_Batch { //phpcs:ignore -- NOSONAR - multi methods.
             'total'        => $total,
             'succeeded'    => $succeeded,
             'failed'       => $failed,
+            'skipped'      => array(
+                'count' => count( $skipped_items ),
+                'items' => $skipped_items,
+            ),
+            'unchanged'    => $unchanged,
             'started_at'   => $started_at,
             'completed_at' => $completed_at,
             'errors'       => $normalized_errors,

@@ -599,6 +599,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function mwp_setup_introduction_save() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
         check_admin_referer( 'mwp-setup' );
         $enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
@@ -629,6 +632,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function mwp_setup_system_requirements_save() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
         check_admin_referer( 'mwp-setup' );
         if ( isset( $_POST['mwp_setup_openssl_lib_location'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             MainWP_Utility::update_option( 'mainwp_opensslLibLocation', isset( $_POST['mwp_setup_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_setup_openssl_lib_location'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -745,6 +751,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                             <input type="checkbox" id="mainwp-unique-security-id-checkbox-field"><label><?php esc_html_e( 'Unique Security ID', 'mainwp' ); ?></label>
                                         </div>
                                     </div>
+                                    <?php MainWP_Manage_Sites::render_connection_unique_security_id_note(); ?>
                                     <div class="ui hidden divider"></div>
                                     <div class="ui fluid segment accordion" id="mainwp-connection-authentication-accordion" style="margin-top:1em">
                                         <div class="title">
@@ -760,13 +767,14 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                             <span class="ui text"><?php esc_html_e( 'Use the sliders to control the fields shown:', 'mainwp' ); ?></span>
                                             <div class="ui bulleted small list">
                                                 <div class="item"><?php esc_html_e( 'Password On: Displays the Password field.', 'mainwp' ); ?></div>
-                                                <div class="item"><?php esc_html_e( 'Security Key On: Displays the Security Key field.', 'mainwp' ); ?></div>
+                                                <div class="item"><?php esc_html_e( 'Unique Security ID On: Displays the Unique Security ID field.', 'mainwp' ); ?></div>
                                                 <div class="item"><?php esc_html_e( 'Both On: Displays both fields.', 'mainwp' ); ?></div>
                                                 <div class="item"><?php esc_html_e( 'Both Off: Hides both fields.', 'mainwp' ); ?></div>
                                             </div>
                                             <span class="ui  text"><strong><?php esc_html_e( 'This needs to match what is set on your child site. Default is Administrator password.', 'mainwp' ); ?></strong></span>
                                         </div>
                                     </div>
+                                    <?php MainWP_Manage_Sites::render_connection_2fa_note(); ?>
                                     <div class="field" id="mainwp-administrator-password-field">
                                         <label for="mainwp_managesites_add_admin_pwd"><?php esc_html_e( 'What is your administrator password on that site?', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Required if enabled)', 'mainwp' ); ?></span></label>
                                         <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" value="" />
@@ -776,6 +784,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     <div class="field" id="mainwp-unique-security-id-field" style="display:none" >
                                         <label for="mainwp_managesites_add_uniqueId"><?php esc_html_e( 'Did you generate unique security ID on the site? If yes, copy it here, if not, leave this field blank. ', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Required if enabled)', 'mainwp' ); ?></span></label>
                                         <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
+                                        <span class="ui small text"><?php esc_html_e( 'Copy this from the child site under Settings > MainWP Child. Required only when Require Unique Security ID is enabled there.', 'mainwp' ); ?></span>
                                     </div>
                                     <div class="ui hidden divider"></div>
                                     <div class="field">
@@ -1284,6 +1293,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function mwp_setup_monitoring_save() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
         check_admin_referer( 'mwp-setup' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 

@@ -121,9 +121,21 @@ class MainWP_Updates_Report_Manager {
                 return false;
             }
         } elseif ( self::TYPE_CORE === $type ) {
-            $item            = MainWP_Utility::instance()->sanitize_data( $data );
-            $item['success'] = isset( $item['upgrade'] ) && 'SUCCESS' === $item['upgrade'] ? 1 : 0;
-            $save_items[]    = $item;
+            $item = MainWP_Utility::instance()->sanitize_data( $data );
+            // Keep a success flag the caller already computed. The raw child upgrade
+            // value is only a fallback for callers that still pass that shape.
+            if ( isset( $item['success'] ) ) {
+                if ( ! empty( $item['success'] ) ) {
+                    $item['success'] = 1;
+                } else {
+                    $item['success'] = 0;
+                }
+            } elseif ( isset( $item['upgrade'] ) && 'SUCCESS' === $item['upgrade'] ) {
+                $item['success'] = 1;
+            } else {
+                $item['success'] = 0;
+            }
+            $save_items[] = $item;
 
         } else {
             return false;
@@ -220,17 +232,24 @@ class MainWP_Updates_Report_Manager {
      */
     public static function send_auto_update_info() {
 
+        // Saved Auto Updates Email settings, merged with defaults. Daily Digest is a separate type.
+        $admin_email_settings = MainWP_Notification_Settings::get_general_email_settings( 'auto_updates' );
+        if ( ! empty( $admin_email_settings['disable'] ) ) {
+            return;
+        }
+
         $auto_updated_items = static::get_auto_update_notice_data_grouped_by_site();
 
         if ( empty( $auto_updated_items ) ) {
             return;
         }
 
-        // dashboard admin email and default general email settings.
-        $admin_email_settings            = MainWP_Notification_Settings::get_default_emails_fields( 'auto_updates', '', true ); // get default subject and heading only.
-        $admin_email_settings['disable'] = 0;
-        // general email and default admin email.
-        $admin_email_settings['recipients'] = MainWP_Notification_Settings::get_general_email(); // sent to general notification email only.
+        $defaults = MainWP_Notification_Settings::get_default_emails_fields( 'auto_updates', '', true );
+        foreach ( array( 'recipients', 'subject', 'heading' ) as $field ) {
+            if ( empty( $admin_email_settings[ $field ] ) && isset( $defaults[ $field ] ) ) {
+                $admin_email_settings[ $field ] = $defaults[ $field ];
+            }
+        }
 
         $heading = isset( $admin_email_settings['heading'] ) ? $admin_email_settings['heading'] : '';
 
@@ -249,8 +268,7 @@ class MainWP_Updates_Report_Manager {
             'mail_content' => $mail_content,
         );
 
-        // send all individual daily digest to admin in one email.
-        MainWP_Notification::start_notification_auto_updates_info( $admin_email_settings, $params ); // will send email to general notification email.
+        MainWP_Notification::start_notification_auto_updates_info( $admin_email_settings, $params );
     }
 
     /**
@@ -295,7 +313,7 @@ class MainWP_Updates_Report_Manager {
         }
 
         if ( ! empty( $sites_ids ) ) {
-            $websites = MainWP_DB::instance()->query(
+            $websites = MainWP_DB::instance()->get_results_result(
                 MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
                     array(
                         'include' => $sites_ids,

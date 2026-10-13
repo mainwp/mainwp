@@ -80,8 +80,8 @@ class MainWP_Password_Policy_Settings {
     /**
      * Reorder navigation items to place Password Policy after Site Hardening.
      *
-     * @param array  $items Navigation items.
-     * @param int    $site_id Site ID.
+     * @param array $items Navigation items.
+     * @param int   $site_id Site ID.
      * @return array Reordered navigation items.
      */
     public static function reorder_navigation_items( $items, $site_id ) {
@@ -164,7 +164,7 @@ class MainWP_Password_Policy_Settings {
     public static function render_individual_site() {
         do_action( 'mainwp_pageheader_sites', 'PasswordPolicy' );
 
-        $site_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0;
+        $site_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only page navigation parameter.
 
         if ( empty( $site_id ) ) {
             ?>
@@ -214,6 +214,10 @@ class MainWP_Password_Policy_Settings {
         if ( isset( $_POST['bulk_update_password_policy'] ) ) {
             $form_submitted = true;
             check_admin_referer( 'mainwp_password_policy_settings', 'security' );
+            if ( ! \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
+                \mainwp_do_not_have_permissions( 'password policy settings', 'mainwp' );
+                return;
+            }
 
             if ( ! isset( $_POST['mainwp_password_policy_window'] ) ) {
                 $errors[] = esc_html__( 'Please select a password policy window.', 'mainwp' );
@@ -605,14 +609,15 @@ class MainWP_Password_Policy_Settings {
      */
 	public static function posting_handler( $data, $website, &$output, $params = array() ) { // phpcs:ignore -- NOSONAR -- complex.
         if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $data, $results ) > 0 ) {
-            $decoded = base64_decode( $results[1] );
+            $decoded = base64_decode( $results[1] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decodes the Child <mainwp> response envelope, not obfuscated code.
 
             if ( false === $decoded ) {
                 $output->errors[ $website->id ] = esc_html__( 'Failed to decode response from child site.', 'mainwp' );
                 return;
             }
 
-            $information = @unserialize( $decoded );
+            // nosemgrep -- allowed_classes false: the Child response cannot instantiate objects.
+            $information = @unserialize( $decoded, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- Child responses are serialized arrays; allowed_classes false blocks object instantiation.
 
             if ( false === $information && 'b:0;' !== $decoded ) {
                 $output->errors[ $website->id ] = esc_html__( 'Child site does not support password policy settings. Please update MainWP Child plugin.', 'mainwp' );
@@ -635,8 +640,11 @@ class MainWP_Password_Policy_Settings {
      */
 	public static function ajax_save_individual() { // phpcs:ignore -- NOSONAR -- complex.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_password_policy_save_individual' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
+            wp_send_json_error( array( 'message' => \mainwp_do_not_have_permissions( esc_html__( 'password policy settings', 'mainwp' ), false ) ) );
+        }
 
-        $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
+        $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
 
         if ( empty( $site_id ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Invalid site ID', 'mainwp' ) ) );
@@ -648,14 +656,14 @@ class MainWP_Password_Policy_Settings {
             wp_send_json_error( array( 'message' => esc_html__( 'Site not found', 'mainwp' ) ) );
         }
 
-        $overwrite_enabled = isset( $_POST['overwrite_enabled'] ) && '1' === $_POST['overwrite_enabled'];
+        $overwrite_enabled = isset( $_POST['overwrite_enabled'] ) && '1' === $_POST['overwrite_enabled']; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
 
         $settings = array(
             'overwrite_enabled' => $overwrite_enabled,
         );
 
         if ( $overwrite_enabled ) {
-            $max_age_days  = isset( $_POST['max_age_days'] ) ? intval( $_POST['max_age_days'] ) : 0;
+            $max_age_days  = isset( $_POST['max_age_days'] ) ? intval( $_POST['max_age_days'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
             $valid_windows = array( 0, 30, 60, 90, 120, 180, 360 );
 
             if ( ! in_array( $max_age_days, $valid_windows, true ) ) {
@@ -663,9 +671,9 @@ class MainWP_Password_Policy_Settings {
             }
 
             $settings['max_age_days']     = $max_age_days;
-            $settings['due_soon_message'] = isset( $_POST['due_soon_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['due_soon_message'] ) ) : '';
-            $settings['overdue_message']  = isset( $_POST['overdue_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['overdue_message'] ) ) : '';
-            $settings['show_notices_to']  = isset( $_POST['show_notices_to'] ) ? sanitize_text_field( wp_unslash( $_POST['show_notices_to'] ) ) : 'edit_posts';
+            $settings['due_soon_message'] = isset( $_POST['due_soon_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['due_soon_message'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
+            $settings['overdue_message']  = isset( $_POST['overdue_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['overdue_message'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
+            $settings['show_notices_to']  = isset( $_POST['show_notices_to'] ) ? sanitize_text_field( wp_unslash( $_POST['show_notices_to'] ) ) : 'edit_posts'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
 
             if ( ! in_array( $settings['show_notices_to'], array( 'edit_posts', 'all_users' ), true ) ) {
                 $settings['show_notices_to'] = 'edit_posts';
@@ -712,7 +720,7 @@ class MainWP_Password_Policy_Settings {
                 }
 
                 if ( is_string( $result ) && preg_match( '/<mainwp>(.*)<\/mainwp>/', $result, $results ) > 0 ) {
-                    $decoded = base64_decode( $results[1] );
+                    $decoded = base64_decode( $results[1] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decodes the Child <mainwp> response envelope, not obfuscated code.
 
                     if ( false !== $decoded ) {
                         $information = json_decode( $decoded, true );
@@ -745,8 +753,11 @@ class MainWP_Password_Policy_Settings {
      */
 	public static function ajax_update_site() { // phpcs:ignore -- NOSONAR -- complexity.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_password_policy_update_site' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
+            wp_send_json( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'password policy settings', 'mainwp' ), false ) ) );
+        }
 
-        $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
+        $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
 
         if ( empty( $site_id ) ) {
             wp_send_json( array( 'error' => esc_html__( 'Invalid site ID', 'mainwp' ) ) );
@@ -780,11 +791,11 @@ class MainWP_Password_Policy_Settings {
 
         $post_data = array(
             'action'           => 'update_password_policy',
-            'max_age_days'     => isset( $_POST['max_age_days'] ) ? intval( $_POST['max_age_days'] ) : 0,
-            'due_soon_days'    => isset( $_POST['due_soon_days'] ) ? intval( $_POST['due_soon_days'] ) : 7,
-            'due_soon_message' => isset( $_POST['due_soon_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['due_soon_message'] ) ) : '',
-            'overdue_message'  => isset( $_POST['overdue_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['overdue_message'] ) ) : '',
-            'show_notices_to'  => isset( $_POST['show_notices_to'] ) ? sanitize_text_field( wp_unslash( $_POST['show_notices_to'] ) ) : 'edit_posts',
+            'max_age_days'     => isset( $_POST['max_age_days'] ) ? intval( $_POST['max_age_days'] ) : 0, // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
+            'due_soon_days'    => isset( $_POST['due_soon_days'] ) ? intval( $_POST['due_soon_days'] ) : 7, // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
+            'due_soon_message' => isset( $_POST['due_soon_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['due_soon_message'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
+            'overdue_message'  => isset( $_POST['overdue_message'] ) ? sanitize_textarea_field( wp_unslash( $_POST['overdue_message'] ) ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
+            'show_notices_to'  => isset( $_POST['show_notices_to'] ) ? sanitize_text_field( wp_unslash( $_POST['show_notices_to'] ) ) : 'edit_posts', // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
         );
 
         try {
@@ -835,7 +846,7 @@ class MainWP_Password_Policy_Settings {
             }
 
             if ( preg_match( '/<mainwp>(.*)<\/mainwp>/', $result, $results ) > 0 ) {
-                $decoded = base64_decode( $results[1] );
+                $decoded = base64_decode( $results[1] ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- Decodes the Child <mainwp> response envelope, not obfuscated code.
 
                 if ( false === $decoded ) {
                     wp_send_json( array( 'error' => esc_html__( 'Failed to decode response from child site.', 'mainwp' ) ) );

@@ -669,7 +669,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $tour_id = '13210';
             } elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
                 $tour_id = '60206';
-            } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
+            } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['knowledgeid'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
                 if ( 'grid' === $siteViewMode ) {
                     $tour_id = '27217';
                 } else {
@@ -1262,11 +1262,11 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     return false;
                 } );
                 jQuery( '#mainwp-sites-sidebar-menu' ).accordion();
-				jQuery( '#mainwp-sites-sidebar-menu' ).on( 'click', '.mainwp-site-menu-item', function ( e ) {
-					if ( ! jQuery( e.target ).closest( '.content' ).length && ! jQuery( e.target ).closest( '.title' ).length ) {
-						jQuery( this ).find( '.title' ).first().trigger( 'click' );
-					}
-				} );
+                jQuery( '#mainwp-sites-sidebar-menu' ).on( 'click', '.mainwp-site-menu-item', function ( e ) {
+                    if ( ! jQuery( e.target ).closest( '.content' ).length && ! jQuery( e.target ).closest( '.title' ).length ) {
+                        jQuery( this ).find( '.title' ).first().trigger( 'click' );
+                    }
+                } );
 
                 <?php if ( ! $fix_dom_issue_for_wp_editor ) { ?>
 
@@ -1528,20 +1528,20 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
      * @uses \MainWP\Dashboard\MainWP_DB::get_websites_count()
      */
     public static function render_header_actions() { // phpcs:ignore -- NOSONAR - complex method.
-        $sites_count   = MainWP_DB::instance()->get_websites_count();
-        $sidebar_pages = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
-        $sidebar_pages = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
-        $sidebar_pages = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
-        $current_user  = get_current_user_id();
-        $custom_theme  = MainWP_Settings::get_instance()->get_current_user_theme();
-        $screen        = get_current_screen();
+        $sites_count                  = MainWP_DB::instance()->get_websites_count();
+        $sidebar_pages                = array( 'ManageGroups', 'PostBulkManage', 'PostBulkAdd', 'PageBulkManage', 'PageBulkAdd', 'ThemesManage', 'ThemesInstall', 'ThemesAutoUpdate', 'PluginsManage', 'PluginsInstall', 'PluginsAutoUpdate', 'UserBulkManage', 'UserBulkAdd', 'UpdateAdminPasswords', 'Extensions' );
+        $sidebar_pages                = apply_filters( 'mainwp_sidbar_pages', $sidebar_pages ); // deprecated filter.
+        $sidebar_pages                = apply_filters( 'mainwp_sidebar_pages', $sidebar_pages );
+        $current_user                 = get_current_user_id();
+        $custom_theme                 = MainWP_Settings::get_instance()->get_current_user_theme();
+        $screen                       = get_current_screen();
         $show_command_palette_trigger = wp_script_is( 'wp-core-commands', 'enqueued' );
         $command_palette_shortcut     = '';
         $command_palette_label        = '';
 
         if ( $show_command_palette_trigger ) {
             // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Used only to mirror WordPress core shortcut labels.
-            $is_apple_os = (bool) preg_match( '/Macintosh|Mac OS X|Mac_PowerPC/i', $_SERVER['HTTP_USER_AGENT'] ?? '' );
+            $is_apple_os = (bool) preg_match( '/Macintosh|Mac OS X|Mac_PowerPC/i', wp_unslash( $_SERVER['HTTP_USER_AGENT'] ?? '' ) );
 
             $command_palette_shortcut = $is_apple_os
                 ? _x( '⌘K', 'keyboard shortcut to open the command palette', 'mainwp' )
@@ -1571,11 +1571,13 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $page    = isset( $_GET['page'] ) ? wp_unslash( $_GET['page'] ) : '';
         $id      = 0;
         $website = null;
-        if ( isset( $_GET['dashboard'] ) || ( isset( $_GET['id'] ) && 'CostTrackerAdd' !== $page ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) {
+        if ( isset( $_GET['dashboard'] ) || ( isset( $_GET['id'] ) && 'CostTrackerAdd' !== $page ) || isset( $_GET['knowledgeid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) ) {
             if ( isset( $_GET['dashboard'] ) ) {
                 $id = intval( $_GET['dashboard'] );
             } elseif ( isset( $_GET['id'] ) ) {
                 $id = intval( $_GET['id'] );
+            } elseif ( isset( $_GET['knowledgeid'] ) ) {
+                $id = intval( $_GET['knowledgeid'] );
             } elseif ( isset( $_GET['updateid'] ) ) {
                 $id = intval( $_GET['updateid'] );
             } elseif ( isset( $_GET['emailsettingsid'] ) ) {
@@ -1820,7 +1822,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $subitems = apply_filters( 'mainwp_page_navigation', $subitems, $name_caller );
         ?>
         <div id="mainwp-page-navigation-wrapper">
-            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['monitor_wpid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['knowledgeid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['monitor_wpid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
                 <?php
                 //phpcs:disable WordPress.Security.NonceVerification
                 $id = 0;
@@ -1828,6 +1830,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     $id = intval( $_GET['dashboard'] );
                 } elseif ( isset( $_GET['id'] ) ) {
                     $id = intval( $_GET['id'] );
+                } elseif ( isset( $_GET['knowledgeid'] ) ) {
+                    $id = intval( $_GET['knowledgeid'] );
                 } elseif ( isset( $_GET['updateid'] ) ) {
                     $id = intval( $_GET['updateid'] );
                 } elseif ( isset( $_GET['emailsettingsid'] ) ) {
@@ -1891,7 +1895,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                         }
 
                         ?>
-                        <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>" <?php if ( ! empty( $target ) ) : ?>target="<?php echo esc_attr( $target ); ?>"<?php endif; ?> <?php if ( ! empty( $rel ) ) : ?>rel="<?php echo esc_attr( $rel ); ?>"<?php endif; ?>>
+                        <a class="<?php echo esc_attr( $class ); ?> item" style="<?php echo esc_attr( $style ); ?>" href="<?php echo esc_url( $item['href'] ); ?>"<?php echo ! empty( $target ) ? ' target="' . esc_attr( $target ) . '"' : ''; ?><?php echo ! empty( $rel ) ? ' rel="' . esc_attr( $rel ) . '"' : ''; ?>>
                         <?php echo isset( $item['before_title'] ) ? $item['before_title'] : ''; ?> <?php echo esc_html( $item['title'] ); ?> <?php echo isset( $item['after_title'] ) ? $item['after_title'] : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?>
                         </a>
                         <?php
@@ -2531,7 +2535,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                 $video_id = 'k1-4x6h0LfE';
             } elseif ( isset( $_GET['do'] ) && 'bulknew' === $_GET['do'] ) {
                 $tour_id = '60206';
-            } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
+            } elseif ( ! isset( $_GET['dashboard'] ) && ! isset( $_GET['id'] ) && ! isset( $_GET['knowledgeid'] ) && ! isset( $_GET['updateid'] ) && ! isset( $_GET['emailsettingsid'] ) && ! isset( $_GET['scanid'] ) ) {
                 if ( 'grid' === $siteViewMode ) {
                     $tour_id = '27217';
                 } else {
@@ -3323,6 +3327,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             </div>
                         </div>
                     </div>
+                    <?php MainWP_Manage_Sites::render_connection_2fa_note(); ?>
                     <div id="mainwp-administrator-password-field">
                         <input type="password" id="fake-disable-autofill" style="display:none;" name="fake-disable-autofill" />
                         <div class="ui grid field">
@@ -3336,6 +3341,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                             </div>
                         </div>
                     </div>
+                    <?php MainWP_Manage_Sites::render_connection_unique_security_id_note(); ?>
             </div>
             <div class="actions">
                 <input type="button" autofocus name="mainwp-popup-reconnect-site-btn" id="mainwp-popup-reconnect-site-btn" class="ui button green big focus" value="<?php esc_attr_e( 'Reconnect', 'mainwp' ); ?>" />

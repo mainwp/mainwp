@@ -96,14 +96,22 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 if ( isset( $information['wpversion'] ) ) {
                     $ret['response'] = 'OK';
                 } elseif ( isset( $information['error'] ) ) {
-                    $ret['response'] = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
+                    $ret['response']    = 'ERROR ' . MainWP_Utility::esc_content( $information['error'] );
+                    $ret['resp_data']   = MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+                    $ret['failure_ux']  = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
                 } else {
-                    $ret['response']  = 'ERROR';
-                    $ret['resp_data'] = isset( $output['fetch_data'] ) ? $output['fetch_data'] : '';
+                    $ret['response']   = 'ERROR';
+                    $ret['resp_data']  = isset( $output['fetch_data'] ) ? $output['fetch_data'] : MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+                    $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
                 }
             } catch ( MainWP_Exception $e ) {
-                $ret['response']  = $e->getMessage();
-                $ret['resp_data'] = $e->get_data();
+                $ret['response']   = $e->getMessage();
+                $ret['resp_data']  = MainWP_Connect_Failure_Ux::readable_response_from_output( $output, $e );
+                $ret['failure_ux'] = MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( $e, $output ) );
+                if ( 'TIMEOUT' === $e->getMessage() ) {
+                    $ret['timeout_kind'] = $e->get_message_error_code();
+                    $ret['resp_data']    = '';
+                }
             }
         }
         $ret['check_me'] = ( isset( $_POST['check_me'] ) ? intval( $_POST['check_me'] ) : null );
@@ -215,7 +223,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $ret['add_me'] = ( isset( $_POST['add_me'] ) ? intval( $_POST['add_me'] ) : null );
         if ( '' !== $error ) {
-            $ret['response'] = 'ERROR ' . $error;
+            $ret['response']   = 'ERROR ' . $error;
+            $ret['resp_data']  = isset( $output['fetch_data'] ) ? $output['fetch_data'] : MainWP_Connect_Failure_Ux::readable_response_from_output( $output );
+            $ret['failure_ux'] = isset( $output['failure_ux'] ) ? $output['failure_ux'] : MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $output ) );
             die( wp_json_encode( $ret ) );
         }
         $ret['response'] = $message;
@@ -317,9 +327,17 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             if ( MainWP_System_Utility::can_edit_website( $website ) ) {
                 $note     = isset( $_POST['note'] ) ? wp_unslash( $_POST['note'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 $esc_note = MainWP_Utility::esc_content( $note );
-                MainWP_DB_Common::instance()->update_note( $website->id, $esc_note );
+                if ( ! MainWP_DB_Common::instance()->update_note( $website->id, $esc_note ) ) {
+                    wp_die(
+                        wp_json_encode(
+                            array(
+                                'error' => esc_html__( 'The note could not be saved. Please try again.', 'mainwp' ),
+                            )
+                        )
+                    );
+                }
 
-                die(
+                wp_die(
                     wp_json_encode(
                         array(
                             'result'           => 'SUCCESS',
@@ -352,6 +370,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             $error = is_array( $info ) && isset( $info['error'] ) ? $info['error'] : '';
             if ( 'NOMAINWP' === $error ) {
                 $error = esc_html__( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
+            } elseif ( 'TIMEOUT' === $error ) {
+                $timeout_kind = is_array( $info ) && isset( $info['timeout_kind'] ) ? $info['timeout_kind'] : 'operation';
+                $error        = MainWP_Error_Helper::get_timeout_error_message( $timeout_kind );
             }
             if ( '' !== $error ) {
                 throw new MainWP_Extra_Exception( 'mainwp_remove_site_error', $error ); //phpcs:ignore -- ok.
@@ -382,6 +403,9 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
             if ( 'NOMAINWP' === $error ) {
                 $error = esc_html__( 'Be sure to deactivate the child plugin on the child site to avoid potential security issues.', 'mainwp' );
+            } elseif ( 'TIMEOUT' === $error ) {
+                $timeout_kind = is_array( $result ) && isset( $result['timeout_kind'] ) ? $result['timeout_kind'] : 'operation';
+                $error        = MainWP_Error_Helper::get_timeout_error_message( $timeout_kind );
             }
 
             $resp = array(
@@ -414,8 +438,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
      * @throws \MainWP_Exception Error message.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::can_edit_website()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
+     * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Handler::delete_website_favicon()
      */
     public static function remove_website( $site ) {  //phpcs:ignore -- NOSONAR - complex.
 
@@ -443,29 +466,17 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                     );
                 } catch ( MainWP_Exception $e ) {
                     $information['error'] = $e->getMessage();
+                    if ( 'TIMEOUT' === $e->getMessage() ) {
+                        $information['timeout_kind'] = $e->get_message_error_code();
+                    }
                 }
             } else {
                 $information['removed'] = true;
             }
 
-            // Delete icon file.
-            $favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
-            if ( ! empty( $favi ) && ( false !== strpos( $favi, 'favi-' . $website->id . '-' ) ) ) {
-
-                MainWP_System_Utility::get_wp_file_system();
-
-                /**
-                 * WordPress files system object.
-                 *
-                 * @global object
-                 */
-                global $wp_filesystem;
-
-                $dirs = MainWP_System_Utility::get_icons_dir();
-                if ( $wp_filesystem->exists( $dirs[0] . $favi ) ) {
-                    $wp_filesystem->delete( $dirs[0] . $favi );
-                }
-            }
+            // Delete the cached favicon before the DB row. A missing file or a
+            // filesystem error must not stop the site from being removed.
+            self::delete_website_favicon( $website );
 
             // Remove from DB.
             $removed = MainWP_DB::instance()->remove_website( $website->id );
@@ -474,29 +485,201 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
                 $information['removed_site'] = true;
             }
 
-            /**
-             * Delete Child Sites
-             *
-             * Fires after a child site has been removed from MainWP Dashboard
-             *
-             * @param object $website Object containing child site data.
-             *
-             * @since 3.4
-             */
-            ! $is_demo_wp && do_action( 'mainwp_delete_site', $website );
+            // Same success test as execute_delete_site(): false is a database
+            // error and fires nothing. Zero rows (the site was already gone)
+            // still fires the hooks, so this path and the ability path agree.
+            if ( false !== $removed ) {
+                /**
+                 * Delete Child Sites
+                 *
+                 * Fires after a child site has been removed from MainWP Dashboard.
+                 * Demo sites skip the remote deactivate above, then fire the same
+                 * hooks so extension rows for the site are removed.
+                 *
+                 * @param object $website Object containing child site data.
+                 *
+                 * @since 3.4
+                 */
+                do_action( 'mainwp_delete_site', $website );
 
-            /**
-             * Fires immediately after a new website is deleted.
-             *
-             * @since 4.5.1.1
-             *
-             * @param object   $website  website data.
-             */
-            ! $is_demo_wp && do_action( 'mainwp_site_deleted', $website );
-
+                /**
+                 * Fires immediately after a new website is deleted.
+                 *
+                 * @since 4.5.1.1
+                 *
+                 * @param object   $website  website data.
+                 */
+                do_action( 'mainwp_site_deleted', $website );
+            }
         }
 
         return $information ? $information : false;
+    }
+
+    /**
+     * Delete the cached favicon file for a child site.
+     *
+     * The file name comes from the stored favi_icon option, never from request
+     * input. The file is removed only when that name is a single path segment
+     * for this site and the file is a direct child of the MainWP icons
+     * directory. A missing file, a rejected name, or a filesystem error is
+     * ignored so site removal can continue.
+     *
+     * @param object $website Child site object.
+     *
+     * @return void
+     *
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_option()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_wp_file_system()
+     * @uses \MainWP\Dashboard\MainWP_System_Utility::get_icons_dir()
+     */
+    public static function delete_website_favicon( $website ) {
+        try {
+            self::delete_stored_website_favicon( $website );
+        } catch ( \Throwable $e ) {
+            // Favicon cleanup must not block site removal.
+            return;
+        }
+    }
+
+    /**
+     * Remove the stored favicon file when the name and path are safe.
+     *
+     * @param object $website Child site object.
+     *
+     * @return void
+     */
+    private static function delete_stored_website_favicon( $website ) {
+        if ( ! is_object( $website ) || empty( $website->id ) ) {
+            return;
+        }
+
+        $favi = MainWP_DB::instance()->get_website_option( $website, 'favi_icon', '' );
+        if ( ! is_string( $favi ) || '' === $favi ) {
+            return;
+        }
+
+        // Same site marker the UI path required: favi-{id}- in the stored name.
+        if ( false === strpos( $favi, 'favi-' . $website->id . '-' ) ) {
+            return;
+        }
+
+        if ( ! self::is_safe_site_favicon_name( $favi ) ) {
+            return;
+        }
+
+        $has_fs = MainWP_System_Utility::get_wp_file_system();
+
+        /**
+         * WordPress files system object.
+         *
+         * @global object $wp_filesystem
+         */
+        global $wp_filesystem;
+
+        if ( ! $has_fs || ! is_object( $wp_filesystem ) ) {
+            return;
+        }
+
+        $dirs = MainWP_System_Utility::get_icons_dir();
+        if ( empty( $dirs[0] ) || ! is_string( $dirs[0] ) ) {
+            return;
+        }
+
+        $icons_dir = $dirs[0];
+        $target    = $icons_dir . $favi;
+        if ( ! self::favicon_target_is_inside_icons_dir( $target, $icons_dir ) ) {
+            return;
+        }
+
+        // A directory must never be passed to delete(). WordPress defaults to
+        // non-recursive, and is_file() keeps a favicon-named directory in place.
+        if ( $wp_filesystem->is_file( $target ) ) {
+            $wp_filesystem->delete( $target );
+        }
+    }
+
+    /**
+     * Whether a stored favicon name is one path segment with no traversal.
+     *
+     * @param string $favi Stored favicon file name.
+     *
+     * @return bool
+     */
+    private static function is_safe_site_favicon_name( $favi ) {
+        if ( ! is_string( $favi ) || '' === $favi ) {
+            return false;
+        }
+
+        if ( basename( $favi ) !== $favi ) {
+            return false;
+        }
+
+        if ( false !== strpos( $favi, '/' ) || false !== strpos( $favi, '\\' ) || false !== strpos( $favi, "\0" ) ) {
+            return false;
+        }
+
+        return 0 === validate_file( $favi );
+    }
+
+    /**
+     * Whether $target is a direct file inside the icons directory.
+     *
+     * The joined path must stay inside the directory. When the file exists
+     * locally, its resolved path must too, so a symlink cannot point outside.
+     *
+     * @param string $target    Candidate file path.
+     * @param string $icons_dir Icons directory.
+     *
+     * @return bool
+     */
+    private static function favicon_target_is_inside_icons_dir( $target, $icons_dir ) {
+        if ( ! self::path_is_direct_child( $target, $icons_dir ) ) {
+            return false;
+        }
+
+        $real_dir = realpath( $icons_dir );
+        if ( false === $real_dir || ! is_string( $real_dir ) ) {
+            return true;
+        }
+
+        $real_file = realpath( $target );
+        if ( false === $real_file || ! is_string( $real_file ) ) {
+            // Missing locally. Still allow a non-local filesystem (FTP) to
+            // delete a safe direct child. A local path that exists but does
+            // not resolve is refused.
+            if ( file_exists( $target ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_exists -- local containment check.
+                return false;
+            }
+            return true;
+        }
+
+        return self::path_is_direct_child( $real_file, $real_dir );
+    }
+
+    /**
+     * Whether $path is a direct child of $directory.
+     *
+     * @param string $path      File path.
+     * @param string $directory Parent directory.
+     *
+     * @return bool
+     */
+    private static function path_is_direct_child( $path, $directory ) {
+        if ( ! is_string( $path ) || ! is_string( $directory ) || '' === $path || '' === $directory ) {
+            return false;
+        }
+
+        $directory = wp_normalize_path( untrailingslashit( $directory ) );
+        $path      = wp_normalize_path( $path );
+        $prefix    = trailingslashit( $directory );
+
+        if ( 0 !== strpos( $path, $prefix ) ) {
+            return false;
+        }
+
+        $remainder = substr( $path, strlen( $prefix ) );
+        return '' !== $remainder && false === strpos( $remainder, '/' );
     }
 
     /**

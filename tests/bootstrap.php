@@ -28,8 +28,10 @@ require_once $_tests_dir . '/includes/functions.php';
  * The log module tries to create archive tables from `wp_logs` during plugins_loaded,
  * but this fires BEFORE _mainwp_install_tables() runs, so the base table doesn't exist.
  * Enabling the module would require modifying the module to handle test environments.
+ *
+ * Fixed.
  */
-define( 'MAINWP_MODULE_LOG_ENABLED', false );
+
 
 /**
  * Enable testing mode to allow test hooks.
@@ -84,6 +86,7 @@ require $_tests_dir . '/includes/bootstrap.php';
 function _mainwp_install_tables() {
 	// Instantiate DB classes that register table creation hooks.
 	\MainWP\Dashboard\MainWP_DB_Client::instance();
+	\MainWP\Dashboard\MainWP_DB_Knowledge::instance();
 	\MainWP\Dashboard\MainWP_DB_Site_Actions::instance();
 
 	// Run the installation (creates all tables via dbDelta).
@@ -93,3 +96,6 @@ _mainwp_install_tables();
 
 // Load custom test case base classes.
 require_once dirname( __FILE__ ) . '/abilities/class-mainwp-abilities-test-case.php';
+// tests/bootstrap.php
+
+require_once dirname( __FILE__ ) . '/fixtures/Site_Fixture.php';

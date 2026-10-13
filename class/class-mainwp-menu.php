@@ -335,6 +335,38 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             static::init_mainwp_menu_items( $menus_items_low, 'second' );
 
+            // AI pages need the Dashboard parent for their screen assets to load.
+            if ( true === MainWP_Abilities_Util::check_rest_api_permission() ) {
+                static::init_mainwp_menu_items(
+                    array(
+                        array(
+                            'slug'               => 'ai',
+                            'menu_level'         => 2,
+                            'menu_rights'        => true,
+                            'init_menu_callback' => array( MainWP_AI::class, 'init_menu' ),
+                        ),
+                        array(
+                            'slug'               => 'Knowledge',
+                            'menu_level'         => 2,
+                            'menu_rights'        => true,
+                            'init_menu_callback' => array( MainWP_Knowledge::class, 'init_menu' ),
+                        ),
+                        array(
+                            'slug'               => 'mainwp-mcp',
+                            'menu_level'         => 2,
+                            'menu_rights'        => true,
+                            'init_menu_callback' => array( MainWP_MCP::class, 'init_menu' ),
+                        ),
+                        array(
+                            'slug'               => 'mainwp-control',
+                            'menu_level'         => 2,
+                            'menu_rights'        => true,
+                            'init_menu_callback' => array( MainWP_Control::class, 'init_menu' ),
+                        ),
+                    ),
+                    'ai'
+                );
+            }
         }
     }
 
@@ -1182,6 +1214,23 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         </div>
                     </div>
 
+                    <?php if ( MainWP_System_Utility::is_admin() && true === MainWP_Abilities_Util::check_rest_api_permission() && ! static::is_disable_menu_item( 2, 'ai' ) ) : ?>
+                    <div class="item">
+                        <div class="title"><a href="<?php echo esc_url( admin_url( 'admin.php?page=ai' ) ); ?>" class="with-sub"><i class="microchip icon"></i> <?php esc_html_e( 'AI', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
+                        <div class="content menu">
+                            <?php if ( ! static::is_disable_menu_item( 2, 'Knowledge' ) ) : ?>
+                            <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=Knowledge' ) ); ?>"><?php esc_html_e( 'Knowledge', 'mainwp' ); ?></a>
+                            <?php endif; ?>
+                            <?php if ( ! static::is_disable_menu_item( 2, 'mainwp-mcp' ) ) : ?>
+                            <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-mcp' ) ); ?>"><?php esc_html_e( 'MainWP MCP', 'mainwp' ); ?></a>
+                            <?php endif; ?>
+                            <?php if ( ! static::is_disable_menu_item( 2, 'mainwp-control' ) ) : ?>
+                            <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-control' ) ); ?>"><?php esc_html_e( 'MainWP Control', 'mainwp' ); ?></a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
                     <div class="item">
                         <div class="title"><a href="admin.php?page=ManageClients" class="with-sub"><i class="users icon"></i> <?php esc_html_e( 'Clients', 'mainwp' ); ?></a><i class="dropdown icon"></i></div>
                         <div class="content menu">
@@ -1295,7 +1344,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <a href="<?php echo esc_url( $link['url'] ); ?>" class="ui mini basic fluid button small text"><i class="icon wordpress"></i> <?php echo esc_html( $link['text'] ); ?></a><?php //phpcs:ignore -- to avoid auto fix icon wordpress. ?>
                     </div>
                     <div class="column">
-                        <a id="mainwp-help-menu-item-mobile" class="ui mini basic fluid button" href="#"><i class="question circle icon"></i> <?php esc_html_e( 'Help', 'mainwp' ); ?></a><?php //NOSONAR -- ignore double ID, elements not rendered at the same time. ?>
+                        <a id="mainwp-help-menu-item-mobile" class="ui mini basic fluid button" href="#"><i class="question circle icon"></i> <?php esc_html_e( 'Help', 'mainwp' ); ?></a><?php // NOSONAR -- ignore double ID, elements not rendered at the same time. ?>
                     </div>
                     <div class="column item-wp-admin">
                         <a class="ui mini basic fluid button" href="<?php echo esc_url_raw( wp_logout_url() ); ?>"><i class="sign out icon"></i> <?php esc_html_e( 'Log Out', 'mainwp' ); ?></a>

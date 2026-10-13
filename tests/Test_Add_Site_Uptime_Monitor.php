@@ -176,7 +176,7 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
         );
 
         // Delete primary monitor.
-        MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' =>  $site_id ) );
+        MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $site_id );
 
         $primary_monitor = $this->get_primary_monitor( $site_id );
 
@@ -228,9 +228,7 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
         );
 
         // Delete primary monitor.
-        MainWP_DB_Uptime_Monitoring::instance()->delete_monitor(
-            array( 'wpid' => $site_id )
-        );
+        MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $site_id );
 
         $primary_monitor = $this->get_primary_monitor( $site_id );
 
@@ -269,15 +267,12 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
         );
 
          // Delete primary monitor.
-        MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' =>  $site_id ) );
+        MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $site_id );
+        $this->assertEmpty( $this->get_primary_monitor( $site_id ), 'Setup: the primary monitor must be gone before recovery.' );
 
-        // Run recovery twice.
-        $this->repair_missing_monitor(
-            $site_id
-        );
-        $this->repair_missing_monitor(
-            $site_id
-        );
+        // Run recovery twice: the first run creates it, the second finds nothing to repair.
+        $this->assertTrue( $this->repair_missing_monitor( $site_id ) );
+        $this->assertFalse( $this->repair_missing_monitor( $site_id ) );
 
         // Query all monitors for this site and verify exactly one has suburl = ''.
         $primary_monitors = $this->get_primary_monitors( $site_id );
@@ -306,12 +301,11 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
         );
 
         // Delete primaryy monitor.
-        MainWP_DB_Uptime_Monitoring::instance()->delete_monitor( array( 'wpid' =>  $site_id ) );
+        MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $site_id );
+        $this->assertEmpty( $this->get_primary_monitor( $site_id ), 'Setup: the primary monitor must be gone before repair.' );
 
         // Repair the missing primary monitor.
-        $this->repair_missing_monitor(
-            $site_id
-        );
+        $this->assertTrue( $this->repair_missing_monitor( $site_id ) );
 
         $monitor = $this->get_primary_monitor( $site_id );
 

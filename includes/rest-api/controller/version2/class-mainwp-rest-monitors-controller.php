@@ -301,7 +301,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_global_monitoring_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_global_monitor_settings_allowed_fields(),
                 ),
             )
@@ -338,8 +338,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get last 24h hourly key.
         $last24_key = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( $now - DAY_IN_SECONDS );
 
-        // Get data from uptime monitoring DB.
-        $monitors = $this->db->get_monitors( $params ); // get monitors.
+        $monitors = $this->get_scoped_monitors_page( $params );
         if ( empty( $monitors ) || ! is_array( $monitors ) ) {
             return rest_ensure_response(
                 array(
@@ -422,8 +421,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
             'per_page' => ! empty( $args['items_per_page'] ) ? (int) $args['items_per_page'] : 20,
         );
 
-        // Get data from uptime monitoring DB.
-        $monitors = $this->db->get_monitors( $params ); // get monitors.
+        $monitors = $this->get_scoped_monitors_page( $params );
         if ( empty( $monitors ) || ! is_array( $monitors ) ) {
             return rest_ensure_response(
                 array(
@@ -457,6 +455,24 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * A restricted key scopes the monitor query to its allowed sites before the SQL
+     * LIMIT, so hidden monitors neither consume a page nor get loaded at all.
+     *
+     * @param array $params Monitor query parameters including page and per_page.
+     * @return array|false Monitors for the requested page.
+     */
+    private function get_scoped_monitors_page( array $params ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        if ( 'all' !== $allowed ) {
+            if ( empty( $allowed ) ) {
+                return array();
+            }
+            $params['custom_where'] = ( $params['custom_where'] ?? '' ) . ' AND mo.wpid IN (' . implode( ',', array_map( 'intval', $allowed ) ) . ')';
+        }
+        return $this->db->get_monitors( $params );
+    }
+
+    /**
      * Count all Monitors.
      *
      * @param WP_REST_Request $request Full details about the request.
@@ -475,7 +491,7 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         );
 
         // Get data from uptime monitoring DB.
-        $monitors = $this->db->get_monitors( $params );
+        $monitors = $this->filter_scoped_sites( $this->db->get_monitors( $params ) );
         $total    = is_array( $monitors ) ? count( $monitors ) : 0;
 
         return rest_ensure_response(
@@ -1452,13 +1468,17 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get monitor by monitor id.
         if ( ctype_digit( $raw ) ) {
             $monitor_id = (int) $raw;
-            return $this->db->get_monitor_by( false, 'monitor_id', $monitor_id );
+            $monitor    = $this->db->get_monitor_by( false, 'monitor_id', $monitor_id );
+            if ( empty( $monitor ) || empty( $this->filter_scoped_sites( array( $monitor ) ) ) ) {
+                return false;
+            }
+            return $monitor;
         }
 
         // Get monitor by domain.
         $domain  = strtolower( rtrim( rawurldecode( $raw ), '/' ) );
         $website = $this->get_site_by( 'domain', $domain );
-        if ( empty( $website ) ) {
+        if ( empty( $website ) || is_wp_error( $website ) ) {
             return false;
         }
 

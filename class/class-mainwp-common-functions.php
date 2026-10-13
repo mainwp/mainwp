@@ -238,22 +238,28 @@ class MainWP_Common_Functions { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @param array  $ignored Ignored update info.
      * @param string $type theme/plugin/core.
      * @param int    $count_ignored Count ignored.
-
+     * @param string $slug Optional. Consistent slug for the plugin or theme.
+     *
      * @return bool Ignored updates.
      */
-    public function is_ignored_updates( $item, $ignored, $type = 'plugin', &$count_ignored = 0 ) { //phpcs:ignore -- NOSONAR complex function.
+    public function is_ignored_updates( $item, $ignored, $type = 'plugin', &$count_ignored = 0, $slug = '' ) { //phpcs:ignore -- NOSONAR complex function.
 
         if ( ! is_array( $item ) || ! is_array( $ignored ) ) {
             return false;
         }
 
         if ( in_array( $type, array( 'plugin', 'theme' ) ) ) {
-            $item_slug   = isset( $item['update'] ) && is_array( $item['update'] ) && isset( $item['update'][ $type ] ) ? $item['update'][ $type ] : '';
+
+            if ( ! empty( $slug ) ) {
+                $item_slug = $slug;
+            } else {
+                $item_slug   = isset( $item['update'] ) && is_array( $item['update'] ) && isset( $item['update'][ $type ] ) ? $item['update'][ $type ] : '';
+                if ( empty( $item_slug ) && ! empty( $item['slug'] ) ) {
+                    $item_slug = $item['slug']; // for data of plugin/theme of site.
+                }
+            }
             $new_version = isset( $item['update']['new_version'] ) ? $item['update']['new_version'] : '';
 
-            if ( empty( $item_slug ) && ! empty( $item['slug'] ) ) {
-                $item_slug = $item['slug']; // for data of plugin/theme of site.
-            }
             if ( empty( $new_version ) && ! empty( $item['new_version'] ) ) {
                 $new_version = $item['new_version']; // for data of plugin/theme of site.
             }

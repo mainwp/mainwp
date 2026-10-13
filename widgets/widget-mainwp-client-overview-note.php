@@ -50,14 +50,20 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
      */
     public static function render_addition_info( $client_id ) {
 
+        $can_manage_clients = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
+        if ( ( ! $can_manage_clients && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! MainWP_Client::has_client_access( $client_id ) ) {
+            return;
+        }
+
         $client_info = MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $client_id, ARRAY_A );
 
-        $note     = '';
-        $esc_note = '';
-
+        $note      = '';
+        $esc_note  = '';
+        $edit_note = '';
         if ( $client_info ) {
-            $note     = html_entity_decode( $client_info['note'] );
-            $esc_note = MainWP_Utility::esc_content( $note );
+            $note      = (string) $client_info['note'];
+            $edit_note = MainWP_Utility::client_note_for_editor( $note );
+            $esc_note  = MainWP_Utility::client_note_html( $note );
         }
 
         ?>
@@ -98,7 +104,7 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
                 ?>
 
 
-                <div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></div>
+                <div style="display:none" id="mainwp-notes-<?php echo intval( $client_info['client_id'] ); ?>-note" data-note="<?php echo MainWP_Utility::client_note_editor_attr( $edit_note ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped for an attribute without decoding typed entities. ?>"><?php echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput -- client_note_html() returns display HTML. ?></div>
 
                 <?php
 
@@ -114,19 +120,22 @@ class MainWP_Client_Overview_Note { // phpcs:ignore Generic.Classes.OpeningBrace
                 do_action( 'mainwp_clients_overview_note_widget_bottom', $client_info );
                 ?>
             </div>
+            <?php if ( $can_manage_clients ) : ?>
             <div class="ui two columns grid mainwp-widget-footer">
                 <div class="column">
                 <?php if ( empty( $note ) ) : ?>
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui button mini" id="mainwp-notes-<?php echo esc_attr( $client_info['client_id'] ); ?>"><?php esc_attr_e( 'Add Notes', 'mainwp' ); ?></a>
-                <?php else :
-                    $el_id_cl_id_1 = $client_info['client_id'];
-                    ?>
+                <?php else : ?>
+                    <?php $el_id_cl_id_1 = $client_info['client_id']; ?>
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini button" id="mainwp-notes-<?php echo esc_attr( $el_id_cl_id_1 ); ?>"><?php esc_attr_e( 'Edit Notes', 'mainwp' ); ?></a>
                 <?php endif; ?>
                 </div>
                 <div class="column"></div>
             </div>
+            <?php endif; ?>
             <?php
-            MainWP_UI::render_modal_edit_notes();
+            if ( $can_manage_clients ) {
+                MainWP_UI::render_modal_edit_notes();
+            }
     }
 }

@@ -41,6 +41,26 @@ class MainWP_Abilities_Batch_Cron_Handlers_Test extends MainWP_Abilities_Test_Ca
 	// =========================================================================
 
 	/**
+	 * Keep unrelated callbacks on shared hooks intact during cleanup.
+	 *
+	 * @var array<string, callable>
+	 */
+	private $scope_filters = array();
+
+	/**
+	 * Shared hooks may also contain callbacks installed by other tests.
+	 *
+	 * @return void
+	 */
+	public function tearDown(): void {
+		foreach ( $this->scope_filters as $hook => $callback ) {
+			remove_filter( $hook, $callback, 10 );
+		}
+		$this->scope_filters = array();
+		parent::tearDown();
+	}
+
+	/**
 	 * Mock all sync operations to succeed.
 	 *
 	 * Uses mainwp_fetch_url_authed_pre filter to return a valid stats response,
@@ -906,6 +926,237 @@ class MainWP_Abilities_Batch_Cron_Handlers_Test extends MainWP_Abilities_Test_Ca
 		$this->assertCount( 1, $job['updated'], 'Site should be in updated array.' );
 	}
 
+	/**
+	 * Record what a queued update job sends to child sites.
+	 *
+	 * @return array Reference to the recorded calls: site_id, what, type, list.
+	 */
+	private function &record_update_calls(): array {
+		$calls = [];
+		$this->scope_filters['mainwp_fetch_url_authed_pre'] = static function ( $result, $website, $what, $params ) use ( &$calls ) {
+			$calls[] = [
+				'site_id' => (int) $website->id,
+				'what'    => $what,
+				'type'    => $params['type'] ?? '',
+				'list'    => $params['list'] ?? '',
+			];
+			return [ 'sync' => [] ];
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->scope_filters['mainwp_fetch_url_authed_pre'], 10, 4 );
+		return $calls;
+	}
+
+	/**
+	 * A queued job holds back per-site, global and whole-site ignored updates, as the immediate path does.
+	 *
+	 * Runs over the batch threshold are queued, so before this fix a large network got updates the user had put on hold.
+	 *
+	 * @return void
+	 */
+	public function test_process_update_job_skips_ignored_updates() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$held    = $this->create_test_site( [ 'name' => 'Queued Ignore Site' ] );
+		$flagged = $this->create_test_site( [ 'name' => 'Queued Theme Hold Site', 'is_ignoreThemeUpdates' => 1 ] );
+		$plugin  = [
+			'Name'        => 'Plugin',
+			'Version'     => '1.0.0',
+			'new_version' => '2.0.0',
+		];
+		$this->set_site_plugin_upgrades(
+			$held,
+			[
+				'held/held.php'     => $plugin,
+				'global/global.php' => $plugin,
+				'free/free.php'     => $plugin,
+			]
+		);
+		$this->set_site_ignored_plugins( $held, [ 'held/held.php' => [ 'Name' => 'Held', 'ignored_versions' => [ 'all_versions' ] ] ] );
+		$extension = \MainWP\Dashboard\MainWP_DB_Common::instance()->get_user_extension();
+		\MainWP\Dashboard\MainWP_DB_Common::instance()->update_user_extension(
+			[ 'userid' => $extension->userid, 'ignored_plugins' => wp_json_encode( [ 'global/global.php' => [ 'Name' => 'Global', 'ignored_versions' => [ 'all_versions' ] ] ] ) ]
+		);
+		$this->set_site_theme_upgrades( $flagged, [ 'held-theme' => [ 'Name' => 'Held Theme', 'Version' => '1.0', 'new_version' => '2.0' ] ] );
+		foreach ( [ $held, $flagged ] as $site_id ) {
+			$this->set_site_option( $site_id, 'wp_upgrades', wp_json_encode( [ 'current' => '6.5', 'new' => '6.6' ] ) );
+		}
+		$this->set_site_option( $held, 'ignored_wp_upgrades', wp_json_encode( [ 'ignored_versions' => [ 'all_versions' ] ] ) );
+
+		$calls  = &$this->record_update_calls();
+		$job_id = 'test_update_ignored_' . uniqid();
+		$this->seed_update_job( $job_id, [ $held, $flagged ], [ 'core', 'plugins', 'themes' ] );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$job = get_transient( 'mainwp_update_job_' . $job_id );
+		$this->assertSame( 'completed', $job['status'] );
+		$this->assertSame(
+			[
+				[ 'site_id' => $held, 'what' => 'upgradeplugintheme', 'type' => 'plugin', 'list' => 'free/free.php' ],
+				[ 'site_id' => $flagged, 'what' => 'upgrade', 'type' => '', 'list' => '' ],
+			],
+			$calls,
+			'Only the plugin nobody ignored, and the core update on the site without a core hold, may be dispatched.'
+		);
+	}
+
+	/**
+	 * A queued job with specific_items dispatches only those items, as the immediate path does, so core is not updated unless named.
+	 *
+	 * @return void
+	 */
+	public function test_process_update_job_limits_core_to_specific_items() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site( [ 'name' => 'Queued Specific Core Site' ] );
+		$this->set_site_plugin_upgrades( $site_id, [ 'free/free.php' => [ 'Name' => 'Free', 'Version' => '1.0.0', 'new_version' => '2.0.0' ] ] );
+		$this->set_site_option( $site_id, 'wp_upgrades', wp_json_encode( [ 'current' => '6.5', 'new' => '6.6' ] ) );
+
+		$calls  = &$this->record_update_calls();
+		$job_id = 'test_update_specific_core_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'core', 'plugins' ], [ 'specific_items' => [ 'free/free.php' ] ] );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$this->assertSame( [ 'upgradeplugintheme' ], array_column( $calls, 'what' ) );
+
+		$calls  = [];
+		$job_id = 'test_update_specific_core_named_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'core', 'plugins' ], [ 'specific_items' => [ 'wordpress' ] ] );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$this->assertSame( [ 'upgrade' ], array_column( $calls, 'what' ) );
+	}
+
+	/**
+	 * Queued translations need the selected slugs because the Child reads the list parameter.
+	 *
+	 * @return void
+	 */
+	public function test_process_update_job_dispatches_selected_translation_slugs() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$site_id = $this->create_test_site();
+		$this->set_site_translation_upgrades( $site_id, [
+			[ 'slug' => 'akismet', 'language' => 'fr_FR', 'version' => '1.0', 'new_version' => '2.0' ],
+			[ 'slug' => 'wordpress', 'language' => 'fr_FR', 'version' => '6.5', 'new_version' => '6.6' ],
+			[ 'slug' => 'twentytwentyfive', 'language' => 'fr_FR', 'version' => '1.0', 'new_version' => '2.0' ],
+		] );
+
+		$calls  = &$this->record_update_calls();
+		$job_id = 'test_update_translation_selected_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'translations' ], [ 'specific_items' => [ 'twentytwentyfive', 'akismet', 'missing' ] ] );
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+		$this->assertSame(
+			[ [ 'site_id' => $site_id, 'what' => 'upgradetranslation', 'type' => 'translation', 'list' => 'akismet,twentytwentyfive' ] ],
+			$calls
+		);
+
+		$calls  = [];
+		$job_id = 'test_update_translation_all_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'translations' ] );
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+		$this->assertSame(
+			[ [ 'site_id' => $site_id, 'what' => 'upgradetranslation', 'type' => 'translation', 'list' => 'akismet,twentytwentyfive,wordpress' ] ],
+			$calls
+		);
+
+		$calls  = [];
+		$job_id = 'test_update_translation_no_match_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'translations' ], [ 'specific_items' => [ 'missing' ] ] );
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+		$this->assertSame( [], $calls, 'No matching pending translation may be dispatched.' );
+
+		$this->set_site_translation_upgrades( $site_id, [] );
+		$job_id = 'test_update_translation_empty_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'translations' ] );
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+		$this->assertSame( [], $calls, 'A site without pending translations must not be called.' );
+	}
+
+	public function test_process_update_job_records_late_holds_and_completes() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$held = $this->create_test_site();
+		$mixed = $this->create_test_site();
+		$plugin = [ 'Name' => 'Plugin', 'Version' => '1.0', 'new_version' => '1.1' ];
+		$this->set_site_plugin_upgrades( $held, [ 'held/held.php' => $plugin ] );
+		$this->set_site_plugin_upgrades( $mixed, [ 'held/held.php' => $plugin, 'free/free.php' => $plugin ] );
+		$sites = [
+			\MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $held ),
+			\MainWP\Dashboard\MainWP_DB::instance()->get_website_by_id( $mixed ),
+		];
+		$job_id = \MainWP\Dashboard\MainWP_Abilities_Util::queue_batch_updates( $sites, [ 'types' => [ 'plugins' ] ] );
+		$this->assertNotWPError( $job_id );
+		$this->track_update_job( $job_id );
+		$job = get_transient( 'mainwp_update_job_' . $job_id );
+		$this->assertEmpty( $job['skipped'] ?? [] );
+		foreach ( [ $held, $mixed ] as $site_id ) {
+			$this->set_site_ignored_plugins( $site_id, [ 'held/held.php' => 'Held' ] );
+		}
+		$calls = &$this->record_update_calls();
+		$chunk_size = static function () { return 1; };
+		add_filter( 'mainwp_abilities_cron_chunk_size', $chunk_size );
+		try {
+			wp_clear_scheduled_hook( 'mainwp_process_update_job', [ $job_id ] );
+			MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+			$job = get_transient( 'mainwp_update_job_' . $job_id );
+			$this->assertSame( [], $calls );
+			$this->assertSame( [], $job['updated'], 'A site with only held items must not count as updated.' );
+			$this->assertSame( [ $held ], $job['unchanged'] );
+			$this->assertSame( 'processing', $job['status'] );
+			$this->assertNotFalse( wp_next_scheduled( 'mainwp_process_update_job', [ $job_id ] ) );
+			wp_clear_scheduled_hook( 'mainwp_process_update_job', [ $job_id ] );
+			MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+			$job = get_transient( 'mainwp_update_job_' . $job_id );
+			$this->assertSame( [ [ 'site_id' => $mixed, 'what' => 'upgradeplugintheme', 'type' => 'plugin', 'list' => 'free/free.php' ] ], $calls );
+			$this->assertSame( [ $mixed ], $job['updated'] );
+			$this->assertSame( [ $held ], $job['unchanged'] );
+			$skipped = [
+				[ 'site_id' => $held, 'type' => 'plugin', 'slug' => 'held/held.php', 'reason' => 'ignored_site' ],
+				[ 'site_id' => $mixed, 'type' => 'plugin', 'slug' => 'held/held.php', 'reason' => 'ignored_site' ],
+			];
+			$this->assertSame( $skipped, $job['skipped'] );
+			$this->assertSame( 'completed', $job['status'] );
+			$this->assertSame( 2, $job['processed'] );
+			$this->assertFalse( wp_next_scheduled( 'mainwp_process_update_job', [ $job_id ] ), 'Completed jobs must not reschedule unchanged sites.' );
+			$status = $this->execute_ability( 'mainwp/get-batch-job-status-v1', [ 'job_id' => $job_id ] );
+			$this->assertNotWPError( $status );
+			$this->assertSame( 'completed', $status['status'] );
+			$this->assertSame( [ 'count' => 2, 'items' => $skipped ], $status['skipped'] );
+			$this->assertSame( 1, $status['unchanged'] );
+			$this->assertSame( 1, $status['succeeded'] );
+			$this->assertTrue( rest_validate_value_from_schema( $status, wp_get_ability( 'mainwp/get-batch-job-status-v1' )->get_output_schema() ) );
+		} finally {
+			remove_filter( 'mainwp_abilities_cron_chunk_size', $chunk_size );
+		}
+	}
+
+	public function test_update_job_status_reports_skipped_and_unchanged() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$job_id = 'update_' . wp_generate_uuid4();
+		$skipped = [ [ 'site_id' => 23, 'type' => 'theme', 'slug' => 'held-theme', 'reason' => 'ignored_global' ] ];
+		$this->seed_update_job( $job_id, [ 21, 22, 23 ], [ 'themes' ], [
+			'status' => 'completed', 'updated' => [ 21 ], 'unchanged' => [ 22, 23 ], 'skipped' => $skipped,
+			'processed' => 3, 'progress' => 100,
+		] );
+		$status = $this->execute_ability( 'mainwp/get-batch-job-status-v1', [ 'job_id' => $job_id ] );
+		$this->assertNotWPError( $status );
+		$this->assertArrayHasKey( 'skipped', $status );
+		$this->assertSame( [ 'count' => 1, 'items' => $skipped ], $status['skipped'] );
+		$this->assertSame( 2, $status['unchanged'] );
+		$this->assertSame( 1, $status['succeeded'] );
+		$schema = wp_get_ability( 'mainwp/get-batch-job-status-v1' )->get_output_schema();
+		$this->assertTrue( rest_validate_value_from_schema( $status, $schema ) );
+		unset( $status['skipped'] );
+		$this->assertWPError( rest_validate_value_from_schema( $status, $schema ) );
+	}
+
 	// =========================================================================
 	// Batch Job Processing Tests
 	// =========================================================================
@@ -1716,5 +1967,404 @@ class MainWP_Abilities_Batch_Cron_Handlers_Test extends MainWP_Abilities_Test_Ca
 		// Verify job_error_code and job_error_message are NOT present.
 		$this->assertArrayNotHasKey( 'job_error_code', $result, 'Successful job should not have job_error_code.' );
 		$this->assertArrayNotHasKey( 'job_error_message', $result, 'Successful job should not have job_error_message.' );
+	}
+
+	/**
+	 * Restrict a user to a set of allowed sites via the scope filter.
+	 *
+	 * @param int[] $site_ids Allowed site IDs.
+	 * @return void
+	 */
+	private function restrict_owner_to_sites( array $site_ids ): void {
+		$this->scope_filters['mainwp_currentuserallowedaccesssites'] = static function () use ( $site_ids ) {
+			return $site_ids;
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filters['mainwp_currentuserallowedaccesssites'], 10 );
+	}
+
+	/**
+	 * A batch job skips sites the owner lost access to, with no remote call.
+	 *
+	 * @return void
+	 */
+	public function test_batch_job_marks_out_of_scope_sites_access_revoked() {
+		$this->skip_if_no_abilities_api();
+		$owner = $this->set_current_user_as_admin();
+
+		$in_scope  = $this->create_test_site( [ 'name' => 'Cron In Scope' ] );
+		$out_scope = $this->create_test_site( [ 'name' => 'Cron Out Of Scope' ] );
+
+		$this->restrict_owner_to_sites( [ $in_scope ] );
+
+		$this->scope_filters['mainwp_fetch_url_authed_pre'] = static function () {
+			return true;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->scope_filters['mainwp_fetch_url_authed_pre'], 10, 4 );
+
+		$job_id = 'cron_scope_revoke_' . uniqid();
+		$this->seed_batch_job( $job_id, [ $in_scope, $out_scope ], 'suspend', [ 'user_id' => $owner ] );
+
+		MainWP_Abilities_Cron::instance()->process_batch_job( $job_id );
+
+		$job = get_transient( 'mainwp_batch_job_' . $job_id );
+
+		$this->assertContains( $in_scope, $job['successful'], 'The in-scope site must be processed.' );
+		$revoked = array_filter( $job['errors'], static fn( $e ) => 'access_revoked' === $e['code'] );
+		$this->assertCount( 1, $revoked, 'The out-of-scope site must be marked access_revoked.' );
+		$revoked_row = array_values( $revoked )[0];
+		$this->assertSame( $out_scope, $revoked_row['site_id'] );
+	}
+
+	/**
+	 * A batch job whose owner no longer exists fails without processing.
+	 *
+	 * @return void
+	 */
+	public function test_batch_job_fails_when_owner_deleted() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$ghost = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$site  = $this->create_test_site( [ 'name' => 'Cron Ghost Owner' ] );
+
+		$job_id = 'cron_ghost_owner_' . uniqid();
+		$this->seed_batch_job( $job_id, [ $site ], 'suspend', [ 'user_id' => $ghost ] );
+
+		wp_delete_user( $ghost );
+
+		MainWP_Abilities_Cron::instance()->process_batch_job( $job_id );
+
+		$job = get_transient( 'mainwp_batch_job_' . $job_id );
+
+		$this->assertSame( 'failed', $job['status'], 'A job whose owner was deleted must fail.' );
+		$this->assertNotContains( $site, $job['successful'], 'No site may be processed for a deleted owner.' );
+		$codes = array_column( $job['errors'], 'code' );
+		$this->assertContains( 'access_revoked', $codes, 'The failure must be reported as access_revoked.' );
+	}
+
+	/**
+	 * A sync job with an unrestricted owner processes every site (control).
+	 *
+	 * @return void
+	 */
+	public function test_sync_job_with_unrestricted_owner_processes_all() {
+		$this->skip_if_no_abilities_api();
+		$owner = $this->set_current_user_as_admin();
+
+		$site_ids = [];
+		for ( $i = 0; $i < 3; $i++ ) {
+			$site_ids[] = $this->create_test_site( [ 'name' => "Cron Unrestricted {$i}" ] );
+		}
+		$this->mock_sync_success();
+
+		$job_id = 'cron_unrestricted_' . uniqid();
+		$this->seed_sync_job( $job_id, $site_ids, [ 'user_id' => $owner ] );
+
+		MainWP_Abilities_Cron::instance()->process_sync_job( $job_id );
+
+		$job = get_transient( 'mainwp_sync_job_' . $job_id );
+		$revoked = array_filter( $job['errors'], static fn( $e ) => 'access_revoked' === $e['code'] );
+		$this->assertCount( 0, $revoked, 'An unrestricted owner must not trigger access_revoked.' );
+		$this->assertCount( 3, $job['synced'], 'All sites must sync for an unrestricted owner.' );
+	}
+
+	/**
+	 * Later callbacks must not inherit the owner of a completed job.
+	 *
+	 * @return void
+	 */
+	public function test_batch_job_restores_previous_current_user() {
+		$this->skip_if_no_abilities_api();
+		$previous_user_id = $this->set_current_user_as_admin();
+		$owner_id         = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$site_id          = $this->create_test_site( [ 'name' => 'Cron Restored User' ] );
+		$observed_user_id = null;
+
+		$this->scope_filters['mainwp_currentuserallowedaccesssites'] = static function () use ( &$observed_user_id ) {
+			$observed_user_id = get_current_user_id();
+			return 'all';
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filters['mainwp_currentuserallowedaccesssites'], 10 );
+
+		$job_id = 'cron_restore_user_' . uniqid();
+		$this->seed_batch_job( $job_id, [ $site_id ], 'suspend', [ 'user_id' => $owner_id ] );
+
+		MainWP_Abilities_Cron::instance()->process_batch_job( $job_id );
+
+		$this->assertSame( $previous_user_id, get_current_user_id(), 'The processor must restore the previous current user.' );
+		$this->assertSame( $owner_id, $observed_user_id, 'Site access must be checked as the job owner.' );
+		$job = get_transient( 'mainwp_batch_job_' . $job_id );
+		$this->assertSame( 'completed', $job['status'], 'The job must finish under its owner.' );
+		$this->assertContains( $site_id, $job['successful'], 'The owned job must process its site.' );
+	}
+
+	/**
+	 * A sync job skips sites the owner can no longer access.
+	 *
+	 * @return void
+	 */
+	public function test_sync_job_marks_out_of_scope_sites_access_revoked() {
+		$this->skip_if_no_abilities_api();
+		$owner = $this->set_current_user_as_admin();
+
+		$in_scope  = $this->create_test_site( [ 'name' => 'Cron In Scope' ] );
+		$out_scope = $this->create_test_site( [ 'name' => 'Cron Out Of Scope' ] );
+
+		$this->restrict_owner_to_sites( [ $in_scope ] );
+
+		$this->mock_sync_success();
+
+		$job_id = 'cron_scope_revoke_' . uniqid();
+		$this->seed_sync_job( $job_id, [ $in_scope, $out_scope ], [ 'user_id' => $owner ] );
+
+		MainWP_Abilities_Cron::instance()->process_sync_job( $job_id );
+
+		$job = get_transient( 'mainwp_sync_job_' . $job_id );
+
+		$this->assertContains( $in_scope, $job['synced'], 'The in-scope site must be processed.' );
+		$revoked = array_filter( $job['errors'], static fn( $e ) => 'access_revoked' === $e['code'] );
+		$this->assertCount( 1, $revoked, 'The out-of-scope site must be marked access_revoked.' );
+		$revoked_row = array_values( $revoked )[0];
+		$this->assertSame( $out_scope, $revoked_row['site_id'] );
+	}
+
+	/**
+	 * A sync job fails when its owner has been deleted.
+	 *
+	 * @return void
+	 */
+	public function test_sync_job_fails_when_owner_deleted() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$ghost = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$site  = $this->create_test_site( [ 'name' => 'Cron Ghost Owner' ] );
+
+		$job_id = 'cron_ghost_owner_' . uniqid();
+		$this->seed_sync_job( $job_id, [ $site ], [ 'user_id' => $ghost ] );
+
+		wp_delete_user( $ghost );
+
+		MainWP_Abilities_Cron::instance()->process_sync_job( $job_id );
+
+		$job = get_transient( 'mainwp_sync_job_' . $job_id );
+
+		$this->assertSame( 'failed', $job['status'], 'A job whose owner was deleted must fail.' );
+		$this->assertNotContains( $site, $job['synced'], 'No site may be processed for a deleted owner.' );
+		$codes = array_column( $job['errors'], 'code' );
+		$this->assertContains( 'access_revoked', $codes, 'The failure must be reported as access_revoked.' );
+	}
+
+	/**
+	 * A sync job checks scope as its owner and restores the previous user.
+	 *
+	 * @return void
+	 */
+	public function test_sync_job_restores_previous_current_user() {
+		$this->skip_if_no_abilities_api();
+		$previous_user_id = $this->set_current_user_as_admin();
+		$owner_id         = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$site_id          = $this->create_test_site( [ 'name' => 'Cron Restored User' ] );
+		$observed_user_id = null;
+
+		$this->scope_filters['mainwp_currentuserallowedaccesssites'] = static function () use ( &$observed_user_id ) {
+			$observed_user_id = get_current_user_id();
+			return 'all';
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filters['mainwp_currentuserallowedaccesssites'], 10 );
+
+		$this->mock_sync_success();
+
+		$job_id = 'cron_restore_user_' . uniqid();
+		$this->seed_sync_job( $job_id, [ $site_id ], [ 'user_id' => $owner_id ] );
+
+		MainWP_Abilities_Cron::instance()->process_sync_job( $job_id );
+
+		$this->assertSame( $previous_user_id, get_current_user_id(), 'The processor must restore the previous current user.' );
+		$this->assertSame( $owner_id, $observed_user_id, 'Site access must be checked as the job owner.' );
+		$job = get_transient( 'mainwp_sync_job_' . $job_id );
+		$this->assertSame( 'completed', $job['status'], 'The job must finish under its owner.' );
+		$this->assertContains( $site_id, $job['synced'], 'The owned job must process its site.' );
+	}
+
+	/**
+	 * An update job skips sites the owner can no longer access.
+	 *
+	 * @return void
+	 */
+	public function test_update_job_marks_out_of_scope_sites_access_revoked() {
+		$this->skip_if_no_abilities_api();
+		$owner = $this->set_current_user_as_admin();
+
+		$in_scope  = $this->create_test_site( [ 'name' => 'Cron In Scope' ] );
+		$out_scope = $this->create_test_site( [ 'name' => 'Cron Out Of Scope' ] );
+
+		$this->restrict_owner_to_sites( [ $in_scope ] );
+
+		$this->mock_update_success();
+
+		$job_id = 'cron_scope_revoke_' . uniqid();
+		$this->seed_update_job( $job_id, [ $in_scope, $out_scope ], [ 'core' ], [ 'user_id' => $owner ] );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$job = get_transient( 'mainwp_update_job_' . $job_id );
+
+		$this->assertContains( $in_scope, $job['unchanged'], 'The in-scope site without pending updates must be processed.' );
+		$revoked = array_filter( $job['errors'], static fn( $e ) => 'access_revoked' === $e['code'] );
+		$this->assertCount( 1, $revoked, 'The out-of-scope site must be marked access_revoked.' );
+		$revoked_row = array_values( $revoked )[0];
+		$this->assertSame( $out_scope, $revoked_row['site_id'] );
+	}
+
+	/**
+	 * An update job fails when its owner has been deleted.
+	 *
+	 * @return void
+	 */
+	public function test_update_job_fails_when_owner_deleted() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+
+		$ghost = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$site  = $this->create_test_site( [ 'name' => 'Cron Ghost Owner' ] );
+
+		$job_id = 'cron_ghost_owner_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site ], [ 'core' ], [ 'user_id' => $ghost ] );
+
+		wp_delete_user( $ghost );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$job = get_transient( 'mainwp_update_job_' . $job_id );
+
+		$this->assertSame( 'failed', $job['status'], 'A job whose owner was deleted must fail.' );
+		$this->assertNotContains( $site, $job['updated'], 'No site may be processed for a deleted owner.' );
+		$codes = array_column( $job['errors'], 'code' );
+		$this->assertContains( 'access_revoked', $codes, 'The failure must be reported as access_revoked.' );
+	}
+
+	/**
+	 * An update job checks scope as its owner and restores the previous user.
+	 *
+	 * @return void
+	 */
+	public function test_update_job_restores_previous_current_user() {
+		$this->skip_if_no_abilities_api();
+		$previous_user_id = $this->set_current_user_as_admin();
+		$owner_id         = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$site_id          = $this->create_test_site( [ 'name' => 'Cron Restored User' ] );
+		$observed_user_id = null;
+
+		$this->scope_filters['mainwp_currentuserallowedaccesssites'] = static function () use ( &$observed_user_id ) {
+			$observed_user_id = get_current_user_id();
+			return 'all';
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filters['mainwp_currentuserallowedaccesssites'], 10 );
+
+		$this->mock_update_success();
+
+		$job_id = 'cron_restore_user_' . uniqid();
+		$this->seed_update_job( $job_id, [ $site_id ], [ 'core' ], [ 'user_id' => $owner_id ] );
+
+		MainWP_Abilities_Cron::instance()->process_update_job( $job_id );
+
+		$this->assertSame( $previous_user_id, get_current_user_id(), 'The processor must restore the previous current user.' );
+		$this->assertSame( $owner_id, $observed_user_id, 'Site access must be checked as the job owner.' );
+		$job = get_transient( 'mainwp_update_job_' . $job_id );
+		$this->assertSame( 'completed', $job['status'], 'The job must finish under its owner.' );
+		$this->assertContains( $site_id, $job['unchanged'], 'The owned job must process its site without pending updates.' );
+	}
+
+	/**
+	 * Legacy sync jobs keep their queued scope when cron has no current user.
+	 *
+	 * @return void
+	 */
+	public function test_legacy_sync_job_without_owner_attempts_site() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site( [ 'name' => 'Legacy Ownerless Sync' ] );
+		$job_id  = 'sync_ownerless_legacy_' . uniqid();
+		$this->seed_sync_job( $job_id, [ $site_id ] );
+		$this->mock_sync_success();
+
+		$this->scope_filters['mainwp_currentuserallowedaccesssites'] = static function () {
+			return current_user_can( 'administrator' ) ? 'all' : [];
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filters['mainwp_currentuserallowedaccesssites'], 10 );
+		wp_set_current_user( 0 );
+
+		MainWP_Abilities_Cron::instance()->process_sync_job( $job_id );
+
+		$job = get_transient( 'mainwp_sync_job_' . $job_id );
+		$this->assertSame( 'completed', $job['status'] );
+		$this->assertNotContains( 'access_revoked', array_column( $job['errors'], 'code' ) );
+		// Production cron skips DB-layer scoping under DOING_CRON; phpunit cannot define it,
+		// so the lookup after the per-site gate still sees the filter. Assert the gate only.
+		$this->assertSame( 1, $job['processed'], 'The legacy site must pass the per-site gate.' );
+	}
+
+	/**
+	 * Legacy batch jobs keep their queued scope when cron has no current user.
+	 *
+	 * @return void
+	 */
+	public function test_legacy_batch_job_without_owner_attempts_site() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site_id = $this->create_test_site( [ 'name' => 'Legacy Ownerless Batch' ] );
+		$job_id  = 'batch_ownerless_legacy_' . uniqid();
+		$this->seed_batch_job( $job_id, [ $site_id ], 'suspend' );
+
+		$this->scope_filters['mainwp_currentuserallowedaccesssites'] = static function () {
+			return current_user_can( 'administrator' ) ? 'all' : [];
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $this->scope_filters['mainwp_currentuserallowedaccesssites'], 10 );
+		wp_set_current_user( 0 );
+
+		MainWP_Abilities_Cron::instance()->process_batch_job( $job_id );
+
+		$job = get_transient( 'mainwp_batch_job_' . $job_id );
+		$this->assertSame( 'completed', $job['status'] );
+		$this->assertNotContains( 'access_revoked', array_column( $job['errors'], 'code' ) );
+		// Production cron skips DB-layer scoping under DOING_CRON; phpunit cannot define it,
+		// so the lookup after the per-site gate still sees the filter. Assert the gate only.
+		$this->assertSame( 1, $job['processed'], 'The legacy site must pass the per-site gate.' );
+	}
+
+	/**
+	 * A demoted owner cannot continue a queued job without manage_options.
+	 *
+	 * @return void
+	 */
+	public function test_batch_job_fails_when_owner_demoted() {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$owner_id = self::factory()->user->create( [ 'role' => 'administrator' ] );
+		$site_id  = $this->create_test_site( [ 'name' => 'Cron Demoted Owner' ] );
+		$job_id   = 'cron_demoted_owner_' . uniqid();
+		$this->seed_batch_job( $job_id, [ $site_id ], 'reconnect', [ 'user_id' => $owner_id ] );
+		$owner = get_userdata( $owner_id );
+		$owner->set_role( 'subscriber' );
+
+		$remote_calls = [];
+		$this->scope_filters['mainwp_fetch_url_authed_pre'] = static function ( $result, $website, $what ) use ( &$remote_calls ) {
+			$remote_calls[] = [ 'site_id' => (int) $website->id, 'what' => $what ];
+			return [ 'sync' => [] ];
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $this->scope_filters['mainwp_fetch_url_authed_pre'], 10, 3 );
+
+		MainWP_Abilities_Cron::instance()->process_batch_job( $job_id );
+
+		$job = get_transient( 'mainwp_batch_job_' . $job_id );
+		$this->assertSame( 'failed', $job['status'] );
+		$this->assertSame( [], $job['successful'] );
+		$this->assertSame( 0, $job['processed'] );
+		$this->assertCount( 1, $job['errors'] );
+		$this->assertSame( 0, $job['errors'][0]['site_id'] );
+		$this->assertSame( 'access_revoked', $job['errors'][0]['code'] );
+		$this->assertSame( 'The account that queued this job no longer exists or can no longer manage sites; remaining sites were not processed.', $job['errors'][0]['message'] );
+		$this->assertSame( [], $remote_calls, 'No child site may be contacted for a demoted owner.' );
 	}
 }

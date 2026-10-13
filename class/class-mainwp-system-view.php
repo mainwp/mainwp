@@ -36,24 +36,26 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      */
     public static function get_mainwp_translations() { // phpcs:ignore -- NOSONAR - complex.
 
-        /**
-         * Method mainwp_add_translation()
-         *
-         * Grab info needed to build the translation array.
-         *
-         * @param mixed $pArray Array of tranlatable text.
-         * @param mixed $pKey Key for each array enty.
-         * @param mixed $pText Text for each array entry.
-         */
-        function mainwp_add_translation( &$pArray, $pKey, $pText ) {
-            if ( ! is_array( $pArray ) ) {
-                $pArray = array();
+        if ( ! function_exists( __NAMESPACE__ . '\\mainwp_add_translation' ) ) {
+            /**
+             * Method mainwp_add_translation()
+             *
+             * Grab info needed to build the translation array.
+             *
+             * @param mixed $pArray Array of tranlatable text.
+             * @param mixed $pKey Key for each array enty.
+             * @param mixed $pText Text for each array entry.
+             */
+            function mainwp_add_translation( &$pArray, $pKey, $pText ) {
+                if ( ! is_array( $pArray ) ) {
+                    $pArray = array();
+                }
+
+                // Keep this normalization aligned with MainWP.I18n.t() in assets/js/mainwp.js.
+                $strippedText = preg_replace( '/[^\p{L}\p{N}_]/u', '_', $pKey );
+
+                $pArray[ $strippedText ] = $pText;
             }
-
-            // Keep this normalization aligned with MainWP.I18n.t() in assets/js/mainwp.js.
-            $strippedText = preg_replace( '/[^\p{L}\p{N}_]/u', '_', $pKey );
-
-            $pArray[ $strippedText ] = $pText;
         }
 
         $mainwpTranslations = array();
@@ -117,6 +119,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Connection test failed.', esc_html__( 'Connection test failed.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Error message:', esc_html__( 'Error message:', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Received HTTP-code:', esc_html__( 'Received HTTP-code:', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Cloudflare/proxy edge IP', esc_html__( 'Cloudflare/proxy edge IP', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.', esc_html__( 'No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Connection test successful.', esc_html__( 'Connection test successful.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Invalid response from the server, please try again.', esc_html__( 'Invalid response from the server, please try again.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please enter csv file for upload.', esc_html__( 'Please enter csv file for upload.', 'mainwp' ) );
@@ -179,6 +183,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'HTTP error', esc_html__( 'HTTP error', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Error on your child WordPress', esc_html__( 'Error on your child WordPress', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, Please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', esc_html__( 'MainWP Child plugin not detected. First, install and activate the plugin and add your site to MainWP afterwards. If you continue experiencing this issue, Please review MainWP Knowledgebase, and if you still have issues, please let us know in the MainWP Community.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The child site request timed out. You can raise the Child request timeout in Settings → Advanced Settings. This is not a missing MainWP Child plugin.', esc_html__( 'The child site request timed out. You can raise the Child request timeout in Settings → Advanced Settings. This is not a missing MainWP Child plugin.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The connection to the child site timed out before it opened. Use Test Connection to check whether the site is reachable. This is not a missing MainWP Child plugin.', esc_html__( 'The connection to the child site timed out before it opened. Use Test Connection to check whether the site is reachable. This is not a missing MainWP Child plugin.', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'The child site request timed out at a gateway or proxy. This is not a missing MainWP Child plugin. Changing the Child request timeout does not fix this response.', esc_html__( 'The child site request timed out at a gateway or proxy. This is not a missing MainWP Child plugin. Changing the Child request timeout does not fix this response.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Remove', esc_html__( 'Remove', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please reconnect to Dropbox', esc_html__( 'Please reconnect to Dropbox', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please wait', esc_html__( 'Please wait', 'mainwp' ) );
@@ -493,7 +500,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         static::check_rating_notice();
 
         static::render_browser_extensions_notice();
-
     }
 
     /**
@@ -1098,7 +1104,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             if ( isset( $_GET['page'] ) && ( 'CostTrackerSettings' === $_GET['page'] || 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
-            if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {
+            if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
             // phpcs:enable

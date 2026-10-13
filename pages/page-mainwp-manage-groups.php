@@ -206,7 +206,6 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
 
         $groups = MainWP_DB_Common::instance()->get_groups_and_count( null, $for_manager );
 
-
         foreach ( $groups as $group ) {
             static::create_group_item( $group );
         }
@@ -275,9 +274,9 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 <?php if ( empty( $website->note ) ) : ?>
                     <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php esc_attr_e( 'Click to add a note . ', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
                 <?php else : ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                    <a href="javascript:void(0)" class="mainwp-edit-site-note ui mini icon basic button" id="mainwp-notes-<?php echo intval( $website->id ); ?>" data-tooltip="<?php echo esc_attr( substr( $strip_note, 0, 100 ) ); ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                 <?php endif; ?>
-                    <span style="display: none" id="mainwp-notes-<?php echo intval( $website->id ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                    <span style="display: none" id="mainwp-notes-<?php echo intval( $website->id ); ?>-note"><?php echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
                 </td>
             </tr>
             <?php
@@ -594,6 +593,10 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function rename_group() { //phpcs:ignore -- NOSONAR - complex.
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        $groupid = isset( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : 0;
+        if ( ! static::can_write_group( $groupid ) ) {
+            wp_die( wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) ) );
+        }
         if ( isset( $_POST['groupId'] ) ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( intval( $_POST['groupId'] ) );
             if ( ! empty( $group ) ) {
@@ -650,6 +653,9 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
         //phpcs:disable WordPress.Security.NonceVerification.Missing
         $groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
         //phpcs:enable
+        if ( ! static::can_write_group( $groupid, array(), true ) ) {
+            wp_die( 'ERROR ' . esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
+        }
         if ( $groupid ) {
             $success = MainWP_DB_Common::instance()->remove_group( $groupid );
             if ( $success ) {
@@ -708,6 +714,10 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function add_group() {
 
+        if ( ! static::can_write_group() ) {
+            wp_die( wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) ) );
+        }
+
         /**
          * Current user global.
          *
@@ -748,6 +758,10 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @param string $gcolor Tag color.
      */
     public static function add_group_sites( $gname, $site_ids, $gcolor = '' ) {
+        if ( ! static::can_write_group( null, $site_ids ) ) {
+            return false;
+        }
+
         /**
          * Current user global.
          *
@@ -761,7 +775,7 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             $group = MainWP_DB_Common::instance()->get_group_by_id( $groupId );
             if ( ! empty( $group ) && ! empty( $site_ids ) ) {
                 foreach ( $site_ids as $websiteId ) {
-                    $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+                    $website = MainWP_DB::instance()->get_website_by_id_unscoped( $websiteId );
                     if ( MainWP_System_Utility::can_edit_website( $website ) ) {
                         MainWP_DB_Common::instance()->update_group_site( $group->id, $website->id );
                     }
@@ -783,6 +797,43 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
     }
 
     /**
+     * Team Control group grants and site grants authorize separate dimensions.
+     * The full roster must be checked before a replace or delete can remove it.
+     *
+     * @param int|null $groupid       Existing group ID, or null for creation.
+     * @param array    $site_ids      Submitted site IDs.
+     * @param bool     $check_members Whether the current roster will be changed.
+     * @return bool Whether the entire write is authorized.
+     */
+    private static function can_write_group( $groupid = null, $site_ids = array(), $check_members = false ) {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_groups' ) || ! is_array( $site_ids ) ) {
+            return false;
+        }
+
+        if ( null !== $groupid ) {
+            $group          = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
+            $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+            if ( ! $group || ( 'all' !== $allowed_groups && ! in_array( (int) $group->id, $allowed_groups, true ) ) ) {
+                return false;
+            }
+            if ( $check_members ) {
+                $members  = MainWP_DB::instance()->get_websites_by_group_ids( array( $group->id ) );
+                $site_ids = array_merge( $site_ids, wp_list_pluck( $members, 'id' ) );
+            }
+        }
+
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        foreach ( $site_ids as $site_id ) {
+            $website = MainWP_DB::instance()->get_website_by_id_unscoped( $site_id );
+            if ( ! MainWP_System_Utility::can_edit_website( $website ) || ( 'all' !== $allowed_sites && ! in_array( (int) $website->id, $allowed_sites, true ) ) ) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Method update_group()
      *
      * Update groups Sites.
@@ -795,14 +846,25 @@ class MainWP_Manage_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function update_group() { //phpcs:ignore -- NOSONAR - complex.
          // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $groupid = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
+        $groupid  = isset( $_POST['groupId'] ) && ! empty( $_POST['groupId'] ) ? intval( $_POST['groupId'] ) : false;
+        $site_ids = isset( $_POST['websiteIds'] ) ? wp_unslash( $_POST['websiteIds'] ) : array();
+        if ( ! static::can_write_group( $groupid, $site_ids, true ) ) {
+            wp_die(
+                wp_json_encode(
+                    array(
+                        'result' => false,
+                        'error'  => esc_html__( 'Error - insufficient permissions!', 'mainwp' ),
+                    )
+                )
+            );
+        }
         if ( $groupid ) {
             $group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
             if ( ! empty( $group ) ) {
                 MainWP_DB_Common::instance()->clear_group( $group->id );
                 if ( isset( $_POST['websiteIds'] ) ) {
                     foreach ( array_map( 'sanitize_text_field', wp_unslash( $_POST['websiteIds'] ) ) as $websiteId ) {
-                        $website = MainWP_DB::instance()->get_website_by_id( $websiteId );
+                        $website = MainWP_DB::instance()->get_website_by_id_unscoped( $websiteId );
                         if ( MainWP_System_Utility::can_edit_website( $website ) ) {
                             MainWP_DB_Common::instance()->update_group_site( $group->id, $website->id );
                         }

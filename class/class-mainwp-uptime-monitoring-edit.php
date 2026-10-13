@@ -101,7 +101,30 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public function handle_save_settings() {  //phpcs:ignore -- NOSONAR - complexity.
 
-        if ( isset( $_POST['wp_nonce_uptime_settings'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_uptime_settings'] ), 'UpdateMonitorSettings' ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+        if ( isset( $_POST['wp_nonce_uptime_settings'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_uptime_settings'] ), 'UpdateMonitorSettings' ) ) {
+            $individual = ! empty( $_POST['mainwp_edit_monitor_individual_settings'] ) ? 1 : 0;
+            $site_id    = 0;
+            if ( $individual ) {
+                if ( ! \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+                    return;
+                }
+                $site_id = isset( $_REQUEST['monitor_wpid'] ) ? intval( $_REQUEST['monitor_wpid'] ) : 0;
+                if ( empty( $site_id ) && isset( $_REQUEST['id'] ) ) {
+                    $site_id = (int) $_REQUEST['id'];
+                }
+                if ( $site_id <= 0 || ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                    return;
+                }
+                // update_wp_monitor() writes by monitor id alone, so a posted id must belong to the authorized site.
+                foreach ( array( 'mainwp_edit_monitor_id', 'edit_sub_monitor_id' ) as $monitor_field ) {
+                    $posted_monitor_id = isset( $_POST[ $monitor_field ] ) ? intval( $_POST[ $monitor_field ] ) : 0;
+                    if ( 0 !== $posted_monitor_id && ! MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site_id, 'monitor_id', $posted_monitor_id ) ) {
+                        return;
+                    }
+                }
+            } elseif ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+                return;
+            }
             $up_status_codes = isset( $_POST['mainwp_edit_monitor_up_status_codes'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_edit_monitor_up_status_codes'] ) ) : '';
 
             $monitoring_emails = isset( $_POST['mainwp_edit_monitor_monitoring_emails'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_edit_monitor_monitoring_emails'] ) ) : '';
@@ -118,15 +141,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 'timeout'         => isset( $_POST['mainwp_edit_monitor_timeout_number'] ) ? intval( $_POST['mainwp_edit_monitor_timeout_number'] ) : 60,
             );
 
-            $individual = ! empty( $_POST['mainwp_edit_monitor_individual_settings'] ) ? 1 : 0;
-
             if ( $individual ) {
-
-                $site_id = isset( $_REQUEST['monitor_wpid'] ) ? intval( $_REQUEST['monitor_wpid'] ) : 0;
-                if ( empty( $site_id ) && isset( $_REQUEST['id'] ) ) {
-                    $site_id = (int) $_REQUEST['id'];
-                }
-
                 $update['wpid'] = $site_id;
                 $current        = false;
                 $sub_editing    = false;
@@ -205,6 +220,9 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update, $output );
 
+                // This save does not capture the monitor write result. An undefined
+                // $success was always falsy here, so the repair-attempt option stays.
+                $success = false;
                 if ( $site_id && empty( $update['issub'] ) ) {
                     $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $site_id;
                     if ( $success ) {

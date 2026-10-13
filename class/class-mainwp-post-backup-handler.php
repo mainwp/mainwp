@@ -48,19 +48,21 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function init() {
         // Page: ManageBackups.
-        $this->add_action( 'mainwp_addbackup', array( &$this, 'mainwp_addbackup' ) );
+        if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
+            $this->add_action( 'mainwp_addbackup', array( &$this, 'mainwp_addbackup' ) );
+        }
         if ( \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
             $this->add_action( 'mainwp_updatebackup', array( &$this, 'mainwp_updatebackup' ) );
         }
         if ( \mainwp_current_user_can( 'dashboard', 'delete_backup_tasks' ) ) {
             $this->add_action( 'mainwp_removebackup', array( &$this, 'mainwp_removebackup' ) );
         }
-        $this->add_action( 'mainwp_pausebackup', array( &$this, 'mainwp_pausebackup' ) );
-        $this->add_action( 'mainwp_resumebackup', array( &$this, 'mainwp_resumebackup' ) );
-
-        $this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) );
-
+        if ( \mainwp_current_user_can( 'dashboard', 'pause_resume_backup_tasks' ) ) {
+            $this->add_action( 'mainwp_pausebackup', array( &$this, 'mainwp_pausebackup' ) );
+            $this->add_action( 'mainwp_resumebackup', array( &$this, 'mainwp_resumebackup' ) );
+        }
         if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
+            $this->add_action( 'mainwp_backuptask_get_sites', array( &$this, 'mainwp_backuptask_get_sites' ) );
             $this->add_action( 'mainwp_backuptask_run_site', array( &$this, 'mainwp_backuptask_run_site' ) );
         }
         $this->add_action( 'mainwp_backup_upload_file', array( &$this, 'mainwp_backup_upload_file' ) );
@@ -71,15 +73,21 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
         if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
             $this->add_action( 'mainwp_backup', array( &$this, 'ajax_mainwp_backup' ) );
+            $this->add_action( 'mainwp_backup_checkpid', array( &$this, 'mainwp_backup_checkpid' ) );
         }
+        // Task runs share the download, cleanup and progress actions.
+        if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) || \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
+            $this->add_action( 'mainwp_createbackup_getfilesize', array( &$this, 'mainwp_createbackup_getfilesize' ) );
+            $this->add_action( 'mainwp_backup_download_file', array( &$this, 'ajax_mainwp_backup_download_file' ) );
+            $this->add_action( 'mainwp_backup_delete_file', array( &$this, 'mainwp_backup_delete_file' ) );
+            $this->add_action( 'mainwp_backup_getfilesize', array( &$this, 'mainwp_backup_getfilesize' ) );
+            $this->add_action( 'mainwp_backup_upload_getprogress', array( &$this, 'mainwp_backup_upload_getprogress' ) );
+            $this->add_action( 'mainwp_backup_upload_checkstatus', array( &$this, 'mainwp_backup_upload_checkstatus' ) );
+        }
+        // Intentionally not capability-gated: the backup-before-update check is
+        // read-only and used by the updates flow, where a user without backup
+        // rights still needs it.
         $this->add_action( 'mainwp_checkbackups', array( &$this, 'mainwp_checkbackups' ) );
-        $this->add_action( 'mainwp_backup_checkpid', array( &$this, 'mainwp_backup_checkpid' ) );
-        $this->add_action( 'mainwp_createbackup_getfilesize', array( &$this, 'mainwp_createbackup_getfilesize' ) );
-        $this->add_action( 'mainwp_backup_download_file', array( &$this, 'ajax_mainwp_backup_download_file' ) );
-        $this->add_action( 'mainwp_backup_delete_file', array( &$this, 'mainwp_backup_delete_file' ) );
-        $this->add_action( 'mainwp_backup_getfilesize', array( &$this, 'mainwp_backup_getfilesize' ) );
-        $this->add_action( 'mainwp_backup_upload_getprogress', array( &$this, 'mainwp_backup_upload_getprogress' ) );
-        $this->add_action( 'mainwp_backup_upload_checkstatus', array( &$this, 'mainwp_backup_upload_checkstatus' ) );
     }
 
     /*
@@ -264,16 +272,26 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * @uses \MainWP\Dashboard\MainWP_Exception
      */
     public function mainwp_backup_delete_file() {
-        $this->secure_request( 'mainwp_backup_delete_file' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
         try {
+            if ( ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) && ! \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
+                throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
+            }
+            $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
             if ( ! $site_id ) {
                 throw new MainWP_Exception( esc_html__( 'Site ID not found. Please reload the page and try again.', 'mainwp' ) );
             }
+            if ( ! \mainwp_current_user_can( 'site', $site_id ) ) {
+                throw new MainWP_Exception( esc_html__( 'Error - insufficient permissions!', 'mainwp' ) );
+            }
 
-            $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0;
-            $file    = isset( $_POST['file'] ) ? sanitize_text_field( wp_unslash( $_POST['file'] ) ) : '';
+            // Sanitizing first can hide a NUL or change a custom archive's basename.
+            $file = isset( $_POST['file'] ) && is_string( $_POST['file'] ) ? wp_unslash( $_POST['file'] ) : '';
+            if ( ! MainWP_Backup_Handler::is_valid_backup_archive_name( $file ) ) {
+                throw new MainWP_Exception( esc_html__( 'Invalid backup archive name.', 'mainwp' ) );
+            }
+            // Refusals must not record secure_request's duplicate-request marker.
+            $this->secure_request( 'mainwp_backup_delete_file' );
 
             die( wp_json_encode( array( 'result' => MainWP_Backup_Handler::backup_delete_file( $site_id, $file ) ) ) );
         } catch ( MainWP_Exception $e ) {

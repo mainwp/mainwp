@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.2.3'; // NOSONAR.
+    public static $version = '6.3'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -291,6 +291,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         MainWP_Plugins::init();
         MainWP_Updates_Overview::init();
         MainWP_Client::init();
+        MainWP_Knowledge_UI::init();
         MainWP_Rest_Api_Page::init();
         MainWP_Logger::instance();
 
@@ -618,7 +619,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public static function is_mainwp_site_page() {
         $is_page = false;
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) ) {
+        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) ) {
             $is_page = true;
         }
         //phpcs:enable
@@ -733,14 +734,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function parse_init() {
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
+            if ( ! isset( $_REQUEST['mwpdl'] ) || ! is_string( $_REQUEST['mwpdl'] ) || ! is_string( $_GET['sig'] ) ) {
+                return;
+            }
             $mwpDir = MainWP_System_Utility::get_mainwp_dir();
             $mwpDir = $mwpDir[0];
             $mwpdl  = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
             $file   = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
-
-            if ( stristr( rawurldecode( $mwpdl ), '..' ) ) {
-                return;
-            }
 
             $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
@@ -751,16 +751,17 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
              */
             global $wp_filesystem;
             $sig_value = wp_unslash( $_GET['sig'] );
-            $valid_sig = MainWP_System_Utility::valid_download_sig( $file, $sig_value );
-
-            if ( ! $valid_sig ) {
-                MainWP_Logger::instance()->debug( ' :: download :: invalid sig :: ' . base64_decode( $sig_value ) ); // phpcs:ignore -- for debug logging.
-            }
+            $valid_sig = ! stristr( rawurldecode( $mwpdl ), '..' ) && MainWP_System_Utility::valid_download_sig( $file, $sig_value );
 
             if ( $hasWPFileSystem && $wp_filesystem->exists( $file ) && $valid_sig ) {
                 MainWP_System_Handler::instance()->upload_file( $file );
                 exit();
             }
+
+            status_header( 403 );
+            header( 'Content-Type: text/plain; charset=utf-8' );
+            echo 'Download link is invalid or expired.';
+            exit();
         } elseif ( isset( $_GET['page'] ) ) {
             if ( MainWP_System_Utility::is_admin() && 'mainwp-setup' === $_GET['page'] ) {
                 MainWP_Setup_Wizard::get_instance();
@@ -976,6 +977,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             'maximumSyncRequests'              => ( get_option( 'mainwp_maximumSyncRequests' ) === false ) ? 8 : get_option( 'mainwp_maximumSyncRequests' ),
             'maximumInstallUpdateRequests'     => ( get_option( 'mainwp_maximumInstallUpdateRequests' ) === false ) ? 3 : get_option( 'mainwp_maximumInstallUpdateRequests' ),
             'maximumUptimeMonitoringRequests'  => (int) get_option( 'mainwp_maximum_uptime_monitoring_requests', 10 ),
+            'siteRemovalTimeout'               => MainWP_Connect::get_site_removal_ajax_timeout_ms(),
             '_wpnonce'                         => wp_create_nonce( 'mainwp-admin-nonce' ),
             'quickThemeChangeNonce'            => wp_create_nonce( 'mainwp_quick_theme_change' ),
             'demoMode'                         => MainWP_Demo_Handle::is_demo_mode() ? 1 : 0,
@@ -1224,6 +1226,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_script( 'mainwp-posts', MAINWP_PLUGIN_URL . 'assets/js/mainwp-posts.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-users', MAINWP_PLUGIN_URL . 'assets/js/mainwp-users.js', array(), $this->current_version, true );
             wp_enqueue_script( 'mainwp-clients', MAINWP_PLUGIN_URL . 'assets/js/mainwp-clients.js', array(), $this->current_version, true );
+            wp_enqueue_script( 'mainwp-knowledge', MAINWP_PLUGIN_URL . 'assets/js/mainwp-knowledge.js', array( 'jquery', 'fomantic-ui' ), $this->current_version, true );
+            wp_localize_script( 'mainwp-knowledge', 'mainwpKnowledgeStrings', MainWP_Knowledge_UI::js_strings() );
             wp_enqueue_script( 'mainwp-extensions', MAINWP_PLUGIN_URL . 'assets/js/mainwp-extensions.js', array(), $this->current_version, true );
             wp_enqueue_script( 'moment' );
             wp_enqueue_script( 'fomantic-ui', MAINWP_PLUGIN_URL . 'assets/js/fomantic-ui/fomantic-ui.js', array( 'jquery' ), $this->current_version, false );
@@ -1236,7 +1240,8 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             wp_enqueue_script( 'datatables-natural-sorting', MAINWP_PLUGIN_URL . 'assets/js/sorting/natural.min.js', array( 'jquery', 'datatables' ), $this->current_version, true );
 
             wp_enqueue_script( 'clipboard' );
-            wp_enqueue_script( 'mainwp-rest-api', MAINWP_PLUGIN_URL . 'assets/js/mainwp-rest-api.js', array(), time(), true );
+            wp_enqueue_script( 'mainwp-ai-client-setup', MAINWP_PLUGIN_URL . 'assets/js/mainwp-ai-client-setup.js', array(), $this->current_version, true );
+            wp_enqueue_script( 'mainwp-rest-api', MAINWP_PLUGIN_URL . 'assets/js/mainwp-rest-api.js', array( 'mainwp-ai-client-setup' ), time(), true );
 
             if ( isset( $_GET['page'] ) && 'ManageGroups' === $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                 wp_enqueue_script( 'mainwp-groups', MAINWP_PLUGIN_URL . 'assets/js/mainwp-groups.js', array(), $this->current_version, true );
@@ -2022,7 +2027,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         <i class="close icon"></i>
             <div class="header"><?php esc_html_e( 'Child Site Response', 'mainwp' ); ?></div>
             <div class="content">
-                <div class="ui info message"><?php esc_html_e( 'To see the response in a more readable way, you can copy it and paste it into some HTML render tool, such as Codepen.io.', 'mainwp' ); ?>
+                <div class="ui info message"><?php esc_html_e( 'This is the readable child/HTTP response from the failed request (status, headers snippet, and body when it is safe to show). Copy it for support if needed.', 'mainwp' ); ?>
                 </div>
             </div>
             <div class="scrolling content content-response" contenteditable="true"></div>
@@ -2131,6 +2136,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      */
     public function update_install() {
         MainWP_DB_Client::instance();
+        MainWP_DB_Knowledge::instance();
         MainWP_DB_Site_Actions::instance();
         MainWP_Install::instance()->install();
         $this->check_to_updates();
@@ -2188,13 +2194,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      * Method get_selected_sites_with_allowed_sites.
      *
      * @param  array $selected_ids Selected sites IDs.
-     * @param  array $current_sites Current sites IDs.
+     * @param  array $current_sites_ids Current sites IDs.
      * @return array Not selected but in not allowed sites in current sites ids, and selected sites ids.
      */
     public static function get_selected_sites_with_allowed_sites( $selected_ids, $current_sites_ids = array() ) {
 
-        $allowed_sites = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
-        if ( 'all' === $allowed_sites ) {
+        $allowed_ids = MainWP_Abilities_Util::get_allowed_site_ids();
+        if ( 'all' === $allowed_ids ) {
             return $selected_ids;
         }
 
@@ -2206,20 +2212,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             $current_sites_ids = array();
         }
 
-        $allowed_sites = MainWP_DB::instance()->get_websites_for_current_user();
-        if ( empty( $allowed_sites ) ) {
-            return array();
-        }
-
-        $allowed_ids = array_values(
-            array_map(
-                function ( $item ) {
-                    return $item->id;
-                },
-                $allowed_sites
-            )
-        );
-
         $client_site_ids = array();
         foreach ( $selected_ids as $id ) {
             if ( in_array( $id, $allowed_ids ) ) {
@@ -2227,6 +2219,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
             }
         }
 
+        // Team Control cannot remove memberships outside the caller's site grants.
         foreach ( $current_sites_ids as $id ) {
             if ( ! in_array( $id, $selected_ids ) && ! in_array( $id, $allowed_ids ) ) { // If it’s not in the allowed site IDs, the user is not permitted to change it.
                 $client_site_ids[] = $id; // keep this site ids.

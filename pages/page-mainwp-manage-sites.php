@@ -299,7 +299,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             if ( 'new' === $_REQUEST['do'] || 'bulknew' === $_REQUEST['do'] ) {
                 return;
             }
-        } elseif ( isset( $_GET['id'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['monitor_wpid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
+        } elseif ( isset( $_GET['id'] ) || isset( $_GET['knowledgeid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['backupid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['monitor_wpid'] ) || isset( $_GET['emailsettingsid'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
             return;
         }
         // phpcs:enable
@@ -719,6 +719,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <div class="sub header"></div>
                             </div>
                         </h2>
+                        <div id="mainwp-test-connection-details" class="mainwp-connect-failure-ux-wrap"></div>
                     </div>
                 </div>
                 <div class="actions">
@@ -805,6 +806,19 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Render note that password, Unique Security ID, or both can authenticate a connection.
+     *
+     * @return void
+     */
+    public static function render_connection_unique_security_id_note() {
+        ?>
+        <div class="ui blue message">
+            <?php esc_html_e( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. Generate or create a new Unique Security ID on the child site under Settings > MainWP Child: enable Require Unique Security ID and click Save Settings.', 'mainwp' ); ?>
+        </div>
+        <?php
+    }
+
+    /**
      * Renders the Add New Site page navigation.
      *
      * Highlights the specified navigation item as active.
@@ -837,6 +851,19 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <?php
             do_action( 'mainwp_add_site_top_navigation', $active, $item_link );
             ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Render note that WordPress login 2FA does not block MainWP connection auth.
+     *
+     * @return void
+     */
+    public static function render_connection_2fa_note() {
+        ?>
+        <div class="ui blue message">
+            <?php esc_html_e( 'WordPress admin login two-factor authentication (2FA) does not apply to MainWP connections. MainWP authenticates with the administrator username and password and/or Unique Security ID configured on the Child site, not the WordPress login 2FA challenge.', 'mainwp' ); ?>
         </div>
         <?php
     }
@@ -902,6 +929,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="ui toggle checkbox not-auto-init" id="addsite-uniqueid">
                         <input type="checkbox" id="mainwp-unique-security-id-checkbox-field"><label><?php esc_html_e( 'Unique Security ID', 'mainwp' ); ?></label>
                     </div>
+                    <div class="ui hidden fitted divider"></div>
+                    <?php static::render_connection_unique_security_id_note(); ?>
 
                     <div class="ui fluid accordion" id="mainwp-connection-authentication-accordion" style="margin-top:1em">
                         <div class="title">
@@ -920,13 +949,15 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <h4 class="ui small header"><?php esc_html_e( 'Toggle Summary', 'mainwp' ); ?></h4>
                             <div class="ui bulleted small list">
                                 <div class="item"><?php esc_html_e( 'Password On → Displays the Password field.', 'mainwp' ); ?></div>
-                                <div class="item"><?php esc_html_e( 'Security Key On → Displays the Security Key field.', 'mainwp' ); ?></div>
+                                <div class="item"><?php esc_html_e( 'Unique Security ID On → Displays the Unique Security ID field.', 'mainwp' ); ?></div>
                                 <div class="item"><?php esc_html_e( 'Both On → Displays both fields.', 'mainwp' ); ?></div>
                                 <div class="item"><?php esc_html_e( 'Both Off → Hides both fields.', 'mainwp' ); ?></div>
                             </div>
                             <span class="ui text"><strong><?php esc_html_e( 'Your settings must match the Child plugin configuration. If unsure, use the default.', 'mainwp' ); ?></strong></span>
                         </div>
                     </div>
+                    <div class="ui hidden fitted divider"></div>
+                    <?php static::render_connection_2fa_note(); ?>
                 </div>
             </div>
             <div id="mainwp-administrator-password-field">
@@ -949,6 +980,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="ui left labeled input">
                             <input type="text" id="mainwp_managesites_add_uniqueId" name="mainwp_managesites_add_uniqueId" value="" />
                         </div>
+                        <div class="ui hidden fitted divider"></div>
+                        <span class="ui small text"><?php esc_html_e( 'Copy this from the child site under Settings > MainWP Child. Required only when Require Unique Security ID is enabled there.', 'mainwp' ); ?></span>
                     </div>
                 </div>
             </div>
@@ -1041,7 +1074,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             </div>
             <?php
             if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-                $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all' );
+                $clients = MainWP_Client::filter_viewable_clients( MainWP_DB_Client::instance()->get_wp_client_by( 'all' ) );
                 ?>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Client (optional)', 'mainwp' ); ?></label>
@@ -1685,6 +1718,20 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     }
 
     /**
+     * Render the Knowledge page for one child site.
+     *
+     * @param object $website Child Site.
+     *
+     * @return void
+     */
+    public static function render_knowledge( $website ) {
+        MainWP_System_Utility::set_current_wpid( $website->id );
+        static::render_header( 'ManageSitesKnowledge' );
+        MainWP_Manage_Sites_View::render_knowledge( $website );
+        static::render_footer();
+    }
+
+    /**
      * Method render_backup_site()
      *
      * Render Manage Sites Backups.
@@ -1849,7 +1896,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( get_option( 'mainwp_enableLegacyBackupFeature' ) && ! empty( $_GET['backupid'] ) ) {
             $websiteid     = ! empty( $_GET['backupid'] ) ? intval( $_GET['backupid'] ) : false;
             $backupwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            if ( MainWP_System_Utility::can_edit_website( $backupwebsite ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $backupwebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
                 static::render_backup_site( $backupwebsite );
                 return;
             }
@@ -1859,7 +1906,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $websiteid = intval( $_GET['scanid'] );
 
             $scanwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            if ( MainWP_System_Utility::can_edit_website( $scanwebsite ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $scanwebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
                 static::render_scan_site( $scanwebsite );
 
                 return;
@@ -1870,9 +1917,18 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $websiteid = intval( $_GET['dashboard'] );
 
             $dashboardWebsite = MainWP_DB::instance()->get_website_by_id_params( $websiteid, array( 'view_fields' => array( 'child_monitor_data' ) ) );
-            if ( MainWP_System_Utility::can_edit_website( $dashboardWebsite ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $dashboardWebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
                 static::render_dashboard( $dashboardWebsite );
 
+                return;
+            }
+        }
+
+        if ( isset( $_GET['knowledgeid'] ) ) {
+            $websiteid        = intval( $_GET['knowledgeid'] );
+            $knowledgeWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
+            if ( MainWP_System_Utility::can_edit_website( $knowledgeWebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
+                static::render_knowledge( $knowledgeWebsite );
                 return;
             }
         }
@@ -1880,18 +1936,20 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( isset( $_GET['updateid'] ) ) {
             $websiteid      = intval( $_GET['updateid'] );
             $updatesWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            if ( MainWP_System_Utility::can_edit_website( $updatesWebsite ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $updatesWebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
                 static::render_updates( $updatesWebsite );
                 return;
             }
         }
 
         if ( ( isset( $_GET['action'] ) && 'add_submonitor' === $_GET['action'] ) || ! empty( $_GET['sub_monitor_id'] ) ) {
-            $websiteid = intval( $_GET['monitor_wpid'] );
+            $websiteid = isset( $_GET['monitor_wpid'] ) ? intval( $_GET['monitor_wpid'] ) : 0;
             $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            // Show modal.
-            static::render_monitor_site( $website );
-            return;
+            if ( MainWP_System_Utility::can_edit_website( $website ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
+                // Show modal.
+                static::render_monitor_site( $website );
+                return;
+            }
         }
 
         if ( ! empty( $_GET['emailsettingsid'] ) ) {
@@ -1899,21 +1957,21 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $website       = MainWP_DB::instance()->get_website_by_id( $websiteid, false, array( 'settings_notification_emails' ) );
             $updated       = false;
             $updated_templ = false;
-            if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $website ) && \mainwp_current_user_can( 'site', $websiteid ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
                 $updated       = static::update_site_emails_settings_handle( $website );
                 $updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
-            }
-            if ( ! empty( $_GET['edit-email'] ) ) {
-                // Edit email settings show in separated page in site settings.
-                static::render_email_settings( $website, $updated, $updated_templ, true );
-                return;
+                if ( ! empty( $_GET['edit-email'] ) ) {
+                    // Edit email settings show in separated page in site settings.
+                    static::render_email_settings( $website, $updated, $updated_templ, true );
+                    return;
+                }
             }
         }
 
         if ( isset( $_GET['id'] ) ) {
             $websiteid = intval( $_GET['id'] );
             $website   = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $website ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
                 // Edit website.
                 $updated = static::update_site_handle( $website );
                 static::render_edit_site( $websiteid, $updated );
@@ -1948,7 +2006,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     private static function update_site_emails_settings_handle( $website ) { // phpcs:ignore -- NOSONAR - complex.
     // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $updated = false;
-        if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . sanitize_text_field( wp_unslash( $_GET['emailsettingsid'] ) ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
+        if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . sanitize_text_field( wp_unslash( $_GET['emailsettingsid'] ) ) ) && \mainwp_current_user_can( 'site', $website->id ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
             $settings_emails = MainWP_DB::instance()->get_website_option( $website, 'settings_notification_emails', '' );
             $settings_emails = ! empty( $settings_emails ) ? json_decode( $settings_emails, true ) : $settings_emails;
             if ( ! is_array( $settings_emails ) ) {
@@ -2018,12 +2076,34 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
     // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $updated = false;
-        if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+        if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) && \mainwp_current_user_can( 'site', $website->id ) ) {
+            $can_manage_clients = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
+            $new_client_id      = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
+            if ( $new_client_id && ( ! $can_manage_clients || ! MainWP_Client::has_client_access( $new_client_id ) || ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $new_client_id ) ) ) {
+                return false;
+            }
             // update site.
             $groupids   = array();
             $groupnames = array();
             if ( isset( $_POST['mainwp_managesites_edit_addgroups'] ) && ! empty( $_POST['mainwp_managesites_edit_addgroups'] ) ) {
                 $groupids = explode( ',', sanitize_text_field( wp_unslash( $_POST['mainwp_managesites_edit_addgroups'] ) ) );
+            }
+
+            $allowed_groups = MainWP_Abilities_Util::get_allowed_group_ids();
+            foreach ( $groupids as $groupid ) {
+                $group = MainWP_DB_Common::instance()->get_group_by_id( $groupid );
+                if ( ! $group || ( 'all' !== $allowed_groups && ! in_array( (int) $group->id, $allowed_groups, true ) ) ) {
+                    return false;
+                }
+            }
+            // A site edit may only replace memberships in the caller's granted groups.
+            if ( 'all' !== $allowed_groups ) {
+                $existing_groups = MainWP_DB_Common::instance()->get_groups_by_website_id( $website->id );
+                foreach ( (array) $existing_groups as $existing_group ) {
+                    if ( ! in_array( (int) $existing_group->id, $allowed_groups, true ) ) {
+                        $groupids[] = $existing_group->id;
+                    }
+                }
             }
 
             // to fix update staging site.
@@ -2078,8 +2158,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 MainWP_Site_Url_Corrector::after_user_set_url( $website, $url );
             }
 
-            if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
-                $new_client_id = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
+            if ( $can_manage_clients ) {
                 if ( $website->client_id !== $new_client_id ) {
                     $update = array(
                         'client_id' => $new_client_id,
@@ -2291,11 +2370,12 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="item"><?php esc_html_e( 'Enter the username of your Administrator account on the site.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Optionally, enter a custom Site Name, or MainWP will automatically generate a name for it.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Enter the administrator account password. If the requirement is disabled in the MainWP Child plugin settings, leave blank.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'WordPress admin login two-factor authentication (2FA) does not apply to MainWP connections. MainWP authenticates with the administrator username and password and/or Unique Security ID configured on the Child site, not the WordPress login 2FA challenge.', 'mainwp' ); ?></div>
             <?php if ( $is_qsw ) : ?>
             <div class="item"><?php esc_html_e( 'To show additional fields (Tags, Security ID, HTTP Username, HTTP Password, SSL Version, and SSL Verification, click the eye icon at the end of the row.', 'mainwp' ); ?></div>
             <?php endif; ?>
             <div class="item"><?php esc_html_e( 'If needed, you can tag your sites in the Tag field.', 'mainwp' ); ?></div>
-            <div class="item"><?php esc_html_e( 'If you have enabled the Unique Security ID in the MainWP Child plugin settings, enter the Security ID in the corresponding field.', 'mainwp' ); ?></div>
+            <div class="item"><?php esc_html_e( 'Administrator password only, Unique Security ID only, or both are valid, depending on how MainWP Child is configured. If Require Unique Security ID is enabled on the child site (Settings > MainWP Child), enter the Unique Security ID. Generate or create a new ID there by enabling Require Unique Security ID and clicking Save Settings.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'If the website you are trying to connect is protected with HTTP Basic Auth, enter the HTTP Username & Password. If not, leave it blank.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Keep the default value of "1" to verify the SSL certificate for your sites, or change it if you prefer not to verify.', 'mainwp' ); ?></div>
             <div class="item"><?php esc_html_e( 'Leave the SSL Version as "auto" unless you know the specific version required by the site. The "auto" option typically works for most sites.', 'mainwp' ); ?></div>

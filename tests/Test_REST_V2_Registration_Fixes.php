@@ -547,4 +547,42 @@ class Test_REST_V2_Registration_Fixes extends \WP_Test_REST_TestCase {
 		$this->assertInstanceOf( \WP_Error::class, $controller->sanitize_expected_status_text_field( '999', $request ) );
 		$this->assertInstanceOf( \WP_Error::class, $controller->settings_validate_expected_status_param( '999', $request, 'expected_status' ) );
 	}
+
+	/**
+	 * MWP-1823: sending bypass_cache must not fatal, and 1 then 0 must both save.
+	 */
+	public function test_monitoring_edit_saves_bypass_cache(): void {
+		$this->authenticate_as_admin();
+
+		$args = $this->get_route_args( '/mainwp/v2/settings/monitoring/edit', 'PUT' );
+		$this->assertSame( 'integer', $args['mainwp_uptime_monitoring_bypass_cache']['type'] );
+		$this->assertSame( 'absint', $args['mainwp_uptime_monitoring_bypass_cache']['sanitize_callback'] );
+
+		$enable = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/settings/monitoring/edit',
+			[ 'mainwp_uptime_monitoring_bypass_cache' => 1 ]
+		);
+
+		$this->assertSame( 200, $enable->get_status() );
+		$enable_data = $enable->get_data();
+		$this->assertSame( 1, $enable_data['success'] );
+		$this->assertSame( 1, $enable_data['data']['mainwp_uptime_monitoring_bypass_cache'] );
+
+		$enabled = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+		$this->assertSame( 1, $enabled['bypass_cache'] );
+
+		$disable = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/settings/monitoring/edit',
+			[ 'mainwp_uptime_monitoring_bypass_cache' => 0 ]
+		);
+
+		$this->assertSame( 200, $disable->get_status() );
+		$disable_data = $disable->get_data();
+		$this->assertSame( 0, $disable_data['data']['mainwp_uptime_monitoring_bypass_cache'] );
+
+		$disabled = \MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+		$this->assertSame( 0, $disabled['bypass_cache'] );
+	}
 }

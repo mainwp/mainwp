@@ -131,14 +131,13 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
             $newColor = '#cce2ff'; // default.
         }
         $selected_sites = isset( $_POST['selected_sites'] ) && is_array( $_POST['selected_sites'] ) ? array_map( 'intval', wp_unslash( $_POST['selected_sites'] ) ) : array();
-        $selected_sites = array_filter( $selected_sites );
         // phpcs:enable
-        $success = false;
-        if ( ! empty( $newName ) ) {
-            $success = MainWP_Manage_Groups::add_group_sites( $newName, $selected_sites, $newColor );
-        }
-        if ( ! $success ) {
+        if ( empty( $newName ) ) {
             wp_die( wp_json_encode( array( 'error' => esc_html__( 'Unexpected error occurred. Please try again.', 'mainwp' ) ) ) );
+        }
+        $success = MainWP_Manage_Groups::add_group_sites( $newName, $selected_sites, $newColor );
+        if ( ! $success ) {
+            wp_die( wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) ) );
         } else {
             wp_die( wp_json_encode( array( 'success' => $success ) ) );
         }
@@ -434,7 +433,15 @@ class MainWP_Post_Site_Handler extends MainWP_Post_Base_Handler { // phpcs:ignor
 
         $website = MainWP_DB::instance()->get_website_by_id( $website->id );
 
-        die( wp_json_encode( array( 'error' => esc_html( wp_strip_all_tags( $website->sync_errors ) ) ) ) );
+        $error_text = wp_strip_all_tags( $website->sync_errors );
+        die(
+            wp_json_encode(
+                array(
+                    'error'      => esc_html( $error_text ),
+                    'failure_ux' => wp_kses( $website->sync_errors, MainWP_Connect_Failure_Ux::kses_allowed() ),
+                )
+            )
+        );
     }
 
     /**

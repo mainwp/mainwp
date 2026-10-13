@@ -20,12 +20,15 @@ use MainWP\Dashboard\Module\ApiBackups\Api_Backups_Utility;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_Api_Manager;
 use MainWP\Dashboard\MainWP_Connect;
+use MainWP\Dashboard\MainWP_Error_Helper;
+use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Sync;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit;
 use MainWP\Dashboard\MainWP_Credential_Render;
+use MainWP\Dashboard\MainWP_Abilities_Util;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -111,7 +114,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             array(
                 'methods'             => 'PUT, PATCH',
                 'callback'            => array( $this, 'update_general_settings' ),
-                'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                 'args'                => $this->get_update_general_allowed_fields(),
                 'validate_callback'   => array( $this, 'validate_update_general_params' ),
             ),
@@ -136,7 +139,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_advanced_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_update_advanced_allowed_fields(),
                 ),
             )
@@ -161,7 +164,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_monitoring_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_update_monitoring_allowed_fields(),
                 ),
             )
@@ -186,7 +189,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_emails_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_update_emails_allowed_fields(),
                 ),
             )
@@ -211,7 +214,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'edit_cost_tracker_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_cost_tracker_allowed_fields(),
                 ),
             )
@@ -223,7 +226,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => WP_REST_Server::CREATABLE,
                     'callback'            => array( $this, 'add_cost_tracker_product_type' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_add_cost_tracker_product_type_allowed_fields(),
                 ),
             )
@@ -235,7 +238,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_cost_tracker_product_type' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_cost_tracker_product_type_allowed_fields(),
                 ),
             )
@@ -247,7 +250,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => WP_REST_Server::DELETABLE,
                     'callback'            => array( $this, 'delete_cost_tracker_product_type' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_allowed_product_type_slug_field(),
                 ),
             )
@@ -259,7 +262,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => WP_REST_Server::CREATABLE,
                     'callback'            => array( $this, 'add_cost_tracker_payment_method' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_add_cost_tracker_payment_method_allowed_fields(),
                 ),
             )
@@ -271,7 +274,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_cost_tracker_payment_method' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_cost_tracker_payment_method_allowed_fields(),
                 ),
             )
@@ -283,7 +286,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => WP_REST_Server::DELETABLE,
                     'callback'            => array( $this, 'delete_cost_tracker_payment_method' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_allowed_payment_method_slug_field(),
                 ),
             )
@@ -308,7 +311,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_dashboard_insights_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_dashboard_insight_allowed_fields(),
                 ),
             )
@@ -322,7 +325,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => WP_REST_Server::READABLE,
                     'callback'            => array( $this, 'get_api_backup_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                 ),
             )
         );
@@ -333,7 +336,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_api_backup_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_api_backup_allowed_fields(),
                 ),
             )
@@ -358,7 +361,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => 'PUT, PATCH',
                     'callback'            => array( $this, 'update_tools_settings' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                     'args'                => $this->get_edit_tools_allowed_fields(),
                 ),
             )
@@ -454,7 +457,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array(
                     'methods'             => WP_REST_Server::CREATABLE,
                     'callback'            => array( $this, 'clear_activation_data' ),
-                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                    'permission_callback' => array( $this, 'get_unrestricted_permissions_check' ),
                 ),
             )
         );
@@ -501,6 +504,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_general_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         // Check content type.
         $content_type = $this->validate_content_type( $request );
@@ -559,6 +566,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $update_if_present( 'backup_before_upgrade', 'mainwp_backup_before_upgrade', 'int' );
             $update_if_present( 'backup_before_upgrade_days', 'mainwp_backup_before_upgrade_days', 'int' );
             $update_if_present( 'numberdays_outdate_plugin_theme', 'mainwp_numberdays_Outdate_Plugin_Theme', 'int' );
+            $update_if_present( 'abandoned_check_by_local_date', 'mainwp_abandoned_check_by_local_date', 'int' );
             $update_if_present( 'dayinweek_auto_update', 'mainwp_dayinweek_AutoUpdate', 'int' );
             $update_if_present( 'dayinmonth_auto_update', 'mainwp_dayinmonth_AutoUpdate', 'int' );
             $update_if_present( 'delay_autoupdate', 'mainwp_delay_autoupdate', 'int' );
@@ -627,6 +635,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_advanced_settings( $request ) { // phpcs:ignore -- NOSONAR - long method.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -660,6 +673,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $update_if_present( 'mainwp_ssl_verify_certificate', 'mainwp_sslVerifyCertificate', 'int' );
             $update_if_present( 'mainwp_verify_connection_method', 'mainwp_verify_connection_method', 'int' );
             $update_if_present( 'mainwp_force_use_ipv4', 'mainwp_forceUseIPv4', 'int' );
+
+            if ( array_key_exists( 'mainwp_child_request_timeout', $body ) ) {
+                $saved_timeout = MainWP_Connect::save_child_request_timeout_setting( $body['mainwp_child_request_timeout'] );
+                if ( false === $saved_timeout ) {
+                    return new WP_Error(
+                        'invalid_mainwp_child_request_timeout',
+                        __( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default.', 'mainwp' ),
+                        array( 'status' => 400 )
+                    );
+                }
+            }
 
             // Update sync data.
             if ( isset( $body['sync_data'] ) ) {
@@ -729,6 +753,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_monitoring_settings( $request ) { // phpcs:ignore -- NOSONAR - long method.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -869,6 +898,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_emails_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -994,6 +1028,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function edit_cost_tracker_settings( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1045,6 +1084,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function add_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - long method.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $body = $this->get_request_body( $request );
 
         if ( is_wp_error( $body ) ) {
@@ -1107,6 +1151,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - long method.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1181,6 +1230,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function delete_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $slug = $request->get_param( 'slug' );
 
         if ( empty( $slug ) ) {
@@ -1236,6 +1290,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function add_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get request body.
         $body = $this->get_request_body( $request );
         if ( is_wp_error( $body ) ) {
@@ -1284,6 +1343,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1332,6 +1396,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function delete_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $slug = $request->get_param( 'slug' );
 
         // Get all options.
@@ -1383,6 +1452,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_dashboard_insights_settings( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1482,6 +1556,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_api_backup_settings( $request ) {
+        $permission = $this->check_operation_right( 'manage_api_backups' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1587,6 +1666,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_tools_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1632,6 +1716,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function destroy_sessions( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $websites = $this->get_websites();
         if ( is_wp_error( $websites ) ) {
             return $websites;
@@ -1695,7 +1784,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         $destroy_data = get_transient( "mainwp_tool_destroy_job_{$destroy_id}" );
-        if ( ! $destroy_data ) {
+        if ( ! $destroy_data || ! $this->can_access_job_sites( $destroy_data ) ) {
             return new WP_Error(
                 'destroy_session_job_not_found',
                 __( 'Destroy session job not found.', 'mainwp' ),
@@ -1734,7 +1823,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
         $website_ids = $destroy_data['websites'];
         $start_index = $destroy_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -1744,7 +1833,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 }
 
                 if ( MainWP_System_Utility::can_edit_website( $website ) ) {
+                    $response = MainWP_Connect::fetch_url_authed( $website, 'settings_tools', array( 'action' => 'force_destroy_sessions' ) );
                     ++$destroy_data['processed'];
+                    if ( ! is_array( $response ) || empty( $response['success'] ) ) {
+                        // The error text comes from the Child; cap and clean it before it is stored and served back.
+                        $child_error = is_array( $response ) && isset( $response['error'] ) && is_string( $response['error'] ) ? static::sanitize_batch_error_message( $response['error'] ) : '';
+                        ++$destroy_data['failed'];
+                        $destroy_data['errors'][] = array(
+                            'site_id' => $website_id,
+                            'error'   => '' !== $child_error ? $child_error : __( 'Cannot destroy sessions.', 'mainwp' ),
+                        );
+                    }
                 } else {
                     ++$destroy_data['failed'];
                     ++$destroy_data['processed'];
@@ -1756,9 +1855,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             } catch ( \Exception $e ) {
                 ++$destroy_data['failed'];
                 ++$destroy_data['processed'];
+                // Same cap and cleaning as the Child error above; the NOMAINWP text carries an anchor tag.
+                $error_message            = $e instanceof MainWP_Exception ? MainWP_Error_Helper::get_error_message( $e ) : $e->getMessage();
                 $destroy_data['errors'][] = array(
                     'site_id' => $website_id,
-                    'error'   => $e->getMessage(),
+                    'error'   => static::sanitize_batch_error_message( $error_message ),
                 );
             }
         }
@@ -1791,6 +1892,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function renew_connections( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $websites = $this->get_websites();
         if ( is_wp_error( $websites ) ) {
             return $websites;
@@ -1856,7 +1962,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get disconnect data.
         $renew_data = get_transient( "mainwp_tool_renew_job_{$renew_id}" );
 
-        if ( ! $renew_data ) {
+        if ( ! $renew_data || ! $this->can_access_job_sites( $renew_data ) ) {
             return new WP_Error(
                 'renew_connection_job_not_found',
                 __( 'Renew connection job not found.', 'mainwp' ),
@@ -1896,7 +2002,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
         $website_ids = $renew_data['websites'];
         $start_index = $renew_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -1971,6 +2077,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function disconnect_all_sites( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $websites = $this->get_websites();
         if ( is_wp_error( $websites ) ) {
             return $websites;
@@ -2036,7 +2147,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         $website_ids = $disconnect_data['websites'];
         $start_index = $disconnect_data['processed'];
-        $batch       = array_slice( $website_ids, $start_index, $this->batch_size );
+        $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
 
         foreach ( $batch as $website_id ) {
             try {
@@ -2077,7 +2188,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 array( $disconnect_id )
             );
         } else {
-            wp_schedule_single_event( time() + 3, 'mainwp_disconnect_site_batch', array( $disconnect_id ) );
+            wp_schedule_single_event( time() + 3, 'mainwp_cron_disconnect_batch', array( $disconnect_id ) );
             spawn_cron(); // Run Cron now.
         }
 
@@ -2105,7 +2216,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         // Get disconnect data.
         $disconnect_data = get_transient( "mainwp_tool_disconnect_job_{$disconnect_id}" );
 
-        if ( ! $disconnect_data ) {
+        if ( ! $disconnect_data || ! $this->can_access_job_sites( $disconnect_data ) ) {
             return new WP_Error(
                 'disconnect_job_not_found',
                 __( 'Job not found.', 'mainwp' ),
@@ -2129,6 +2240,17 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Job totals and errors can disclose sites outside the caller's scope.
+     *
+     * @param array $job Stored job data.
+     * @return bool Whether the complete job roster is accessible.
+     */
+    protected function can_access_job_sites( $job ) {
+        $allowed = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
+        return 'all' === $allowed || ( isset( $job['websites'] ) && is_array( $job['websites'] ) && ! array_diff( $job['websites'], $allowed ) );
+    }
+
+    /**
      * Clear activation data.
      *
      * @param WP_REST_Request $request Full details about the request.
@@ -2140,6 +2262,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function clear_activation_data( $request ) {  // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Clear activation data.
         delete_option( 'mainwp_extensions_api_username' );
         delete_option( 'mainwp_extensions_api_password' );
@@ -2201,6 +2328,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function restore_info_messages( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $user_id = $this->get_user_id();
         if ( is_wp_error( $user_id ) ) {
             return $user_id;
@@ -2383,6 +2515,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'description'       => __( 'Number of days to consider plugin/theme as outdated.', 'mainwp' ),
                 'type'              => 'integer',
                 'sanitize_callback' => 'absint',
+            ),
+            'abandoned_check_by_local_date'       => array(
+                'required'          => false,
+                'description'       => __( 'Abandoned check by local file date when WordPress.org returns no last updated date.', 'mainwp' ),
+                'type'              => 'integer',
+                'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
+                'validate_callback' => $this->make_enum_validator( $val_bool ),
             ),
             'dayinweek_auto_update'               => array(
                 'required'          => false,
@@ -2580,6 +2719,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
             ),
+            'mainwp_child_request_timeout'              => array(
+                'required'          => false,
+                'description'       => __( 'Child request timeout in seconds. Null, blank, or 72000 clears the stored option (default 72000). A saved value must be at least 300.', 'mainwp' ),
+                'type'              => array( 'integer', 'string', 'null' ),
+                'sanitize_callback' => array( $this, 'sanitize_child_request_timeout' ),
+                'validate_callback' => array( $this, 'validate_child_request_timeout' ),
+            ),
             'mainwp_connect_signature_algo'             => array(
                 'required'          => false,
                 'description'       => __( 'OpenSSL signature algorithm.', 'mainwp' ),
@@ -2671,7 +2817,8 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'required'          => false,
                 'description'       => __( 'Uptime monitoring attempt to bypass page cache.', 'mainwp' ),
                 'type'              => 'integer',
-                'sanitize_callback' => 'intval',
+                // absint accepts the extra REST arguments. intval() throws ArgumentCountError on PHP 8.
+                'sanitize_callback' => 'absint',
             ),
             'mainwp_uptime_monitoring_up_status_codes' => array(
                 'required'          => false,
@@ -3899,6 +4046,27 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
+     * Check the acting API key owner's right without the legacy REST bypass.
+     *
+     * @param string $right Required Team Control operation right.
+     * @return true|WP_Error
+     */
+    private function check_operation_right( string $right ) {
+        if ( ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
+            return new WP_Error(
+                'mainwp_insufficient_right',
+                __( 'Your role does not permit this operation.', 'mainwp' ),
+                array(
+                    'status' => 403,
+                    'right'  => $right,
+                )
+            );
+        }
+
+        return true;
+    }
+
+    /**
      * Get all websites.
      *
      * @uses MainWP_DB::instance()->get_sites()
@@ -3907,6 +4075,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     private function get_websites() {
         $websites = MainWP_DB::instance()->get_sites();
+        $websites = $this->filter_scoped_sites( $websites );
         if ( empty( $websites ) ) {
             return new WP_Error(
                 'no_website_found',
@@ -3928,6 +4097,9 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return object|null
      */
     private function get_website_by_id( $website_id, &$process_data ) {
+        // Workers run from cron as user 0, where the scope check would fail every site;
+        // the site list was scoped when the job was queued and the status routes are
+        // guarded by can_access_job_sites().
         $website = MainWP_DB::instance()->get_website_by_id( $website_id );
         if ( empty( $website ) ) {
             ++$process_data['failed'];
@@ -3939,6 +4111,18 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return null;
         }
         return $website;
+    }
+
+    /**
+     * Sanitize and cap an error stored in a batch job.
+     *
+     * @param string $message Error message.
+     *
+     * @return string
+     */
+    private static function sanitize_batch_error_message( $message ) {
+        $message = function_exists( 'mb_substr' ) ? mb_substr( $message, 0, 500 ) : substr( $message, 0, 500 );
+        return sanitize_text_field( $message );
     }
 
     /**
@@ -4227,6 +4411,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'backup_before_upgrade'               => (int) get_option( 'mainwp_backup_before_upgrade', $default_setting['mainwp_backup_before_upgrade'] ),
             'backup_before_upgrade_days'          => (int) get_option( 'mainwp_backup_before_upgrade_days', $default_setting['mainwp_backup_before_upgrade_days'] ),
             'numberdays_outdate_plugin_theme'     => (int) get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', $default_setting['mainwp_numberdays_Outdate_Plugin_Theme'] ),
+            'abandoned_check_by_local_date'       => (int) get_option( 'mainwp_abandoned_check_by_local_date', $default_setting['mainwp_abandoned_check_by_local_date'] ),
             'dayinweek_auto_update'               => (int) get_option( 'mainwp_dayinweek_AutoUpdate', $default_setting['mainwp_dayinweek_AutoUpdate'] ),
             'dayinmonth_auto_update'              => (int) get_option( 'mainwp_dayinmonth_AutoUpdate', $default_setting['mainwp_dayinmonth_AutoUpdate'] ),
             'delay_autoupdate'                    => (int) get_option( 'mainwp_delay_autoupdate', $default_setting['mainwp_delay_autoupdate'] ),
@@ -4238,6 +4423,68 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'mainwp_notification_on_backup_fail'  => get_option( 'mainwp_notificationOnBackupFail' ),
             'mainwp_notification_on_backup_start' => get_option( 'mainwp_notificationOnBackupStart' ),
             'mainwp_chunked_backup_tasks'         => get_option( 'mainwp_chunkedBackupTasks' ),
+        );
+    }
+
+    /**
+     * Stored child request timeout, or null when the option is unset.
+     *
+     * @return int|null
+     */
+    public static function get_stored_child_request_timeout() {
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( get_option( MainWP_Connect::CHILD_REQUEST_TIMEOUT_OPTION, '' ) );
+        if ( is_int( $normalized ) ) {
+            return $normalized;
+        }
+        return null;
+    }
+
+    /**
+     * Sanitize a child request timeout for the advanced settings route.
+     *
+     * Blank and 72000 become null so the option is deleted. Invalid values are
+     * left for the validator.
+     *
+     * @param mixed $value Submitted value.
+     *
+     * @return mixed
+     */
+    public function sanitize_child_request_timeout( $value ) {
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( $value );
+        if ( 'delete' === $normalized ) {
+            return null;
+        }
+        if ( is_int( $normalized ) ) {
+            return $normalized;
+        }
+        return $value;
+    }
+
+    /**
+     * Validate a child request timeout.
+     *
+     * Omitting the field is handled by WordPress (the argument is not required).
+     * A present null, blank, or 72000 clears the option.
+     *
+     * @param mixed $value Submitted value.
+     *
+     * @return true|WP_Error
+     */
+    public function validate_child_request_timeout( $value ) {
+        if ( null === $value || false === $value || '' === $value ) {
+            return true;
+        }
+        if ( is_string( $value ) && '' === trim( $value ) ) {
+            return true;
+        }
+        $normalized = MainWP_Connect::normalize_child_request_timeout_setting( $value );
+        if ( 'delete' === $normalized || is_int( $normalized ) ) {
+            return true;
+        }
+        return new WP_Error(
+            'invalid_mainwp_child_request_timeout',
+            __( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default.', 'mainwp' ),
+            array( 'status' => 400 )
         );
     }
 
@@ -4275,6 +4522,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'mainwp_verify_connection_method'           => (int) get_option( 'mainwp_verify_connection_method', $default_setting['mainwp_verify_connection_method'] ),
             'mainwp_connect_signature_algo'             => isset( $sign_algs[ $signature_algo ] ) ? $sign_algs[ $signature_algo ] : $default_setting['mainwp_connect_signature_algo'],
             'mainwp_force_use_ipv4'                     => (int) get_option( 'mainwp_forceUseIPv4', $default_setting['mainwp_forceUseIPv4'] ),
+            'mainwp_child_request_timeout'              => self::get_stored_child_request_timeout(),
             'sync_data'                                 => $sync_data_settings,
         );
     }
@@ -4436,6 +4684,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                     'description' => __( 'Number of days to consider plugin/theme as outdated.', 'mainwp' ),
                     'context'     => array( 'view', 'edit' ),
                 ),
+                'abandoned_check_by_local_date'            => array(
+                    'type'        => 'integer',
+                    'description' => __( 'Abandoned check by local file date when WordPress.org returns no last updated date.', 'mainwp' ),
+                    'context'     => array( 'view', 'edit' ),
+                ),
                 'dayinweek_auto_update'                    => array(
                     'type'        => 'integer',
                     'description' => __( 'Day in week for auto updates.', 'mainwp' ),
@@ -4524,6 +4777,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'mainwp_force_use_ipv4'                    => array(
                     'type'        => 'integer',
                     'description' => __( 'Force use IPv4.', 'mainwp' ),
+                    'context'     => array( 'advanced_view', 'advanced_edit' ),
+                ),
+                'mainwp_child_request_timeout'             => array(
+                    'type'        => array( 'integer', 'null' ),
+                    'description' => __( 'Child request timeout in seconds. Null means the option is unset and the effective default is 72000.', 'mainwp' ),
                     'context'     => array( 'advanced_view', 'advanced_edit' ),
                 ),
                 'sync_data'                                => array(

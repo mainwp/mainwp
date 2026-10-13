@@ -131,6 +131,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         MainWP_Logger::instance()->log_execution_sync( 'init', '', $pWebsite );
         $stats_track_id = MainWP_Execution_Helper::execute_call_track( 'start_point', $pWebsite );
+        $information    = array();
 
         try {
 
@@ -224,6 +225,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'othersData'                      => wp_json_encode( $othersData ),
                 'server'                          => get_admin_url(),
                 'numberdaysOutdatePluginTheme'    => get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', 365 ),
+                'abandonedCheckByLocalDate'       => 1 === (int) get_option( 'mainwp_abandoned_check_by_local_date', 0 ) ? 1 : 0,
                 'primaryBackup'                   => $backup_method, // if empty site backup method will not sync the backup info from child site.
                 'siteId'                          => $pWebsite->id,
                 'child_actions_saved_days_number' => intval( $saved_days_number ),
@@ -293,14 +295,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return $return;
         } catch ( MainWP_Exception $e ) {
             MainWP_Execution_Helper::execute_call_track( 'end_point', $pWebsite, array(), $stats_track_id, 'stats site' );
-            $sync_errors = '';
-
-            if ( $e->getMessage() === 'HTTPERROR' ) {
-                $sync_errors = esc_html__( 'HTTP error', 'mainwp' ) . ( ! empty( $e->get_message_extra() ) ? ' - ' . $e->get_message_extra() : '' );
-            } elseif ( $e->getMessage() === 'NOMAINWP' ) {
-                $sync_errors = MainWP_Error_Helper::get_error_not_detected_connect();
-            }
-
+            $fetch_output = ( is_array( $information ) && isset( $information['fetch_url_output'] ) && is_array( $information['fetch_url_output'] ) ) ? $information['fetch_url_output'] : array();
+            $sync_errors  = MainWP_Error_Helper::get_connect_failure_message( $e, $fetch_output );
             MainWP_Logger::instance()->log_execution_time( 'sync :: [siteid=' . $pWebsite->id . ']' );
             return static::sync_information_array( $pWebsite, $information, $sync_errors, false, true, $pAllowDisconnect );
         }
@@ -714,6 +710,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 $error = true;
                 if ( $pAllowDisconnect ) {
                     $sync_errors                      = esc_html__( 'Undefined error! Please, reinstall the MainWP Child plugin on the child site.', 'mainwp' );
+                    $undefined_output                 = ( isset( $information['fetch_url_output'] ) && is_array( $information['fetch_url_output'] ) ) ? $information['fetch_url_output'] : array();
+                    $sync_errors                     .= MainWP_Connect_Failure_Ux::render_html( MainWP_Connect_Failure_Ux::from_exception( null, $undefined_output ) );
                     $websiteSyncValues['sync_errors'] = $sync_errors;
                     $_error                           = $sync_errors;
                 }

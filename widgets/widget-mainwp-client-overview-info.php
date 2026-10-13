@@ -50,6 +50,10 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param object $client_id Client ID.
      */
     public static function render_client_overview( $client_id ) {  // phpcs:ignore -- NOSONAR - complex function.
+
+        if ( ( ! \mainwp_current_user_can( 'dashboard', 'manage_clients' ) && ! \mainwp_current_user_can( 'dashboard', 'access_client_dashboard' ) ) || ! MainWP_Client::has_client_access( $client_id ) ) {
+            return;
+        }
         $params        = array(
             'with_selected_sites' => true,
             'with_tags'           => true,
@@ -174,9 +178,11 @@ class MainWP_Client_Overview_Info { // phpcs:ignore Generic.Classes.OpeningBrace
             ?>
         </div>
         <div class="mainwp-widget-footer" client-id="<?php echo intval( $client_id ); ?>">
+            <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) : ?>
             <a href="admin.php?page=ClientAddNew&client_id=<?php echo intval( $client_id ); ?>" class="ui green mini button"><?php esc_html_e( 'Edit Client', 'mainwp' ); ?></a>
-            <?php if ( 0 === intval( $client_info['suspended'] ) || 1 === intval( $client_info['suspended'] ) ) : ?>
+                <?php if ( 0 === intval( $client_info['suspended'] ) || 1 === intval( $client_info['suspended'] ) ) : ?>
                 <a href="javascript:void(0);" suspend-status="<?php echo intval( $client_info['suspended'] ); ?>" class="ui basic mini button client-suspend-unsuspend-sites"><?php echo empty( $client_info['suspended'] ) ? esc_html__( 'Suspend', 'mainwp' ) : esc_html__( 'Unsuspend', 'mainwp' ); ?></a>
+                <?php endif; ?>
             <?php endif; ?>
             <?php
             if ( is_plugin_active( 'mainwp-pro-reports-extension/mainwp-pro-reports-extension.php' ) ) {

@@ -1,0 +1,1262 @@
+<?php
+/**
+ * Connect/sync failure presentation (MWP-1788).
+ *
+ * Labels Cloudflare/proxy edge IPs separately from the Dashboard outbound IP,
+ * always exposes the MainWP User-Agent, and formats a readable child/HTTP
+ * response. Does not change connection auth, timeouts, or redirects.
+ *
+ * @package MainWP/Dashboard
+ */
+
+namespace MainWP\Dashboard;
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+/**
+ * Class MainWP_Connect_Failure_Ux
+ *
+ * @package MainWP\Dashboard
+ */
+class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
+
+    /**
+     * Maximum readable body characters shown in failure UI.
+     */
+    const BODY_LIMIT = 1200;
+
+    /**
+     * Response headers that help identify WAF / proxy / auth blocks.
+     *
+     * @var array<int,string>
+     */
+    const NOTICE_HEADERS = array(
+        'cf-ray',
+        'cf-mitigated',
+        'cf-cache-status',
+        'server',
+        'x-sucuri-id',
+        'www-authenticate',
+        'x-cache',
+        'x-cache-status',
+        'content-type',
+        'location',
+    );
+
+    /**
+     * Query/body parameter names whose values must not appear in failure diagnostics.
+     *
+     * Compared case-insensitively. Names ending in _token, _code, _key, _nonce,
+     * _secret, _signature, _password, _passwd, _pwd, or _pass are also treated as sensitive.
+     * password, passwd, and pwd match without an underscore (adminpassword).
+     * key, code, token, nonce, and secret still require the underscore.
+     *
+     * @var array<int,string>
+     */
+    const SENSITIVE_STEMS = array( 'password', 'passwd', 'pwd', 'uniqueid', 'mainwpsignature', 'secret', 'token', 'nonce', 'apikey' );
+
+    const SENSITIVE_PARAM_NAMES = array(
+        'password',
+        'passwd',
+        'pwd',
+        'pass',
+        'pass1',
+        'pass2',
+        'adminpwd',
+        'uniqueid',
+        'unique_id',
+        'privkey',
+        'pubkey',
+        'mainwpsignature',
+        'mainwpsignature_adv',
+        'authorization',
+        'token',
+        'code',
+        'key',
+        'nonce',
+        'state',
+        'signature',
+        'secret',
+        'sig',
+        'hmac',
+        'jwt',
+        'bearer',
+        'session',
+        'rp_key',
+        'rp_login',
+        'reset_key',
+        'resetpass',
+        'reset_pass',
+        'apikey',
+        'api_key',
+        'client_secret',
+        'access_token',
+        'id_token',
+        'refresh_token',
+        'oauth_token',
+        'oauth_verifier',
+        '_wpnonce',
+    );
+
+    /**
+     * Parameter-name suffixes treated as sensitive (csrf_token, api_key, …).
+     *
+     * @var array<int,string>
+     */
+    const SENSITIVE_PARAM_SUFFIXES = array(
+        'token',
+        'code',
+        'key',
+        'nonce',
+        'secret',
+        'signature',
+        'password',
+        'passwd',
+        'pwd',
+        'pass',
+    );
+
+    /**
+     * Suffixes that are sensitive even with no leading underscore.
+     *
+     * Password, passwd, and pwd are specific enough for adminpassword and
+     * dbpassword. Key, code, token, nonce, and secret stay underscore-only
+     * so ordinary words such as monkey and keycode stay visible.
+     *
+     * @var array<int,string>
+     */
+    const SENSITIVE_PARAM_BARE_SUFFIXES = array(
+        'password',
+        'passwd',
+        'pwd',
+    );
+
+    /**
+     * Markers that mean Cloudflare, another WAF, or a similar edge block.
+     *
+     * @var array<int,string>
+     */
+    const WAF_MARKERS = array(
+        'cloudflare',
+        'cf-ray',
+        'cf-mitigated',
+        'attention required',
+        'sucuri',
+        'wordfence',
+        'imunify',
+        'incapsula',
+        'akamai',
+        'mod_security',
+        'modsecurity',
+        'blocked by',
+        'waf',
+    );
+
+    /**
+     * User-Agent MainWP sends on connect/sync requests.
+     *
+     * @return string
+     */
+    public static function get_user_agent() {
+        $version = isset( MainWP_System::$version ) ? MainWP_System::$version : '';
+        return 'Mozilla/5.0 (compatible; MainWP/' . $version . '; +http://mainwp.com)';
+    }
+
+    /**
+     * Dashboard outbound IP to allowlist (not a child/Cloudflare edge IP).
+     *
+     * @return string
+     */
+    public static function get_dashboard_outbound_ip() {
+        if ( ! class_exists( __NAMESPACE__ . '\MainWP_Server_Information_Handler' ) ) {
+            return '';
+        }
+
+        return MainWP_Server_Information_Handler::get_dashboard_outbound_ip();
+    }
+
+    /**
+     * Normalize a resolved IP value to a display string.
+     *
+     * @param mixed $ip IP string or list from DNS helpers.
+     *
+     * @return string
+     */
+    public static function format_ip_list( $ip ) {
+        if ( is_array( $ip ) ) {
+            $parts = array();
+            foreach ( $ip as $item ) {
+                if ( self::is_ip_address( $item ) ) {
+                    $parts[] = $item;
+                }
+            }
+            return implode( ', ', $parts );
+        }
+
+        $value = is_scalar( $ip ) ? (string) $ip : '';
+
+        return self::is_ip_address( $value ) ? $value : '';
+    }
+
+    /**
+     * Whether a value is a usable IP (not a failed gethostbyname() hostname).
+     *
+     * @param mixed $value Candidate IP.
+     *
+     * @return bool
+     */
+    public static function is_ip_address( $value ) {
+        return is_string( $value ) && '' !== $value && false !== filter_var( $value, FILTER_VALIDATE_IP );
+    }
+
+    /**
+     * Whether the failure looks like HTTP 403 or a Cloudflare/WAF block.
+     *
+     * @param int    $http_status HTTP status.
+     * @param string $headers     Raw or summarized response headers.
+     * @param string $body        Raw or summarized response body.
+     *
+     * @return bool
+     */
+    public static function is_waf_likely( $http_status, $headers = '', $body = '' ) {
+        if ( 403 === (int) $http_status ) {
+            return true;
+        }
+
+        $haystack = strtolower( (string) $headers . "\n" . (string) $body );
+        foreach ( self::WAF_MARKERS as $marker ) {
+            if ( false !== strpos( $haystack, $marker ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Extract a short, safe headers snippet.
+     *
+     * @param string $raw_headers Raw response headers.
+     *
+     * @return string
+     */
+    public static function summarize_headers( $raw_headers ) {
+        if ( ! is_string( $raw_headers ) || '' === $raw_headers ) {
+            return '';
+        }
+
+        $lines   = preg_split( '/\r\n|\n|\r/', $raw_headers );
+        $kept    = array();
+        $wanted  = array_map( 'strtolower', self::NOTICE_HEADERS );
+        $status  = '';
+
+        foreach ( (array) $lines as $line ) {
+            $line = trim( (string) $line );
+            if ( '' === $line ) {
+                continue;
+            }
+            if ( 0 === stripos( $line, 'HTTP/' ) ) {
+                $status = self::redact_urls_in_text( $line );
+                if ( ! is_string( $status ) ) {
+                    $status = self::unredactable_text();
+                } elseif ( self::mentions_sensitive_name( $line ) || self::mentions_sensitive_name( $status ) ) {
+                    $status = ( preg_match( '/^HTTP\/\S+\s+\d{3}/', $line, $code ) ? $code[0] . ' ' : '' ) . '[redacted]';
+                }
+                continue;
+            }
+            $parts = explode( ':', $line, 2 );
+            if ( 2 !== count( $parts ) ) {
+                continue;
+            }
+            $name = strtolower( trim( $parts[0] ) );
+            if ( in_array( $name, $wanted, true ) ) {
+                $kept[] = $name . ': ' . self::header_value_for_display( $parts[1], $name );
+            }
+        }
+
+        $snippet = $status;
+        if ( ! empty( $kept ) ) {
+            $snippet .= ( '' !== $snippet ? "\n" : '' ) . implode( "\n", $kept );
+        }
+
+        return trim( $snippet );
+    }
+
+    /**
+     * Extract a short, safe body excerpt.
+     *
+     * @param string $body Raw response body.
+     *
+     * @return string
+     */
+    public static function summarize_body( $body ) {
+        if ( ! is_string( $body ) || '' === $body ) {
+            return '';
+        }
+
+        if ( '[hidden response data]' === $body ) {
+            return '';
+        }
+
+        // wp_strip_all_tags() deletes tags without whitespace, so
+        // </title><p>password= becomes Requiredpassword and misses the name check.
+        $text = str_replace( '<', ' <', $body );
+        $text = wp_strip_all_tags( $text );
+        $text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
+        $text = preg_replace( '/\s+/u', ' ', $text );
+        if ( ! is_string( $text ) ) {
+            return self::unredactable_text();
+        }
+        $text = trim( $text );
+
+        // Arbitrary remote text has too many encodings and boundary forms for
+        // field-by-field redaction to be reliable. Scan the complete excerpt
+        // plus enough lookahead for a name crossing its display boundary.
+        $scan_text = mb_substr( $text, 0, self::BODY_LIMIT + 64, 'UTF-8' );
+        if ( self::mentions_sensitive_name( $scan_text ) ) {
+            return self::sensitive_text();
+        }
+
+        $text = self::redact_secrets( $text );
+        // Removing a long URL query can pull later text into the excerpt.
+        // Recheck the exact prefix that can now become visible.
+        $scan_text = mb_substr( $text, 0, self::BODY_LIMIT + 64, 'UTF-8' );
+        if ( self::mentions_sensitive_name( $scan_text ) ) {
+            return self::sensitive_text();
+        }
+
+        if ( mb_strlen( $text, 'UTF-8' ) > self::BODY_LIMIT ) {
+            // Cut on a character boundary: a split UTF-8 sequence makes esc_html() return ''.
+            $text = mb_substr( $text, 0, self::BODY_LIMIT, 'UTF-8' ) . '...';
+        }
+
+        return $text;
+    }
+
+    /**
+     * Build a readable response block (status, headers snippet, body when safe).
+     *
+     * @param int    $http_status HTTP status.
+     * @param string $headers     Raw response headers.
+     * @param string $body        Raw response body.
+     *
+     * @return array<string,string>
+     */
+    public static function summarize_response( $http_status, $headers = '', $body = '' ) {
+        $status      = (int) $http_status;
+        $status_text = $status > 0 ? (string) $status : '';
+        $code_label  = $status > 0 ? MainWP_Utility::get_http_codes( $status ) : '';
+        if ( '' !== $code_label ) {
+            $status_text .= ' (' . $code_label . ')';
+        }
+        if ( '' === $status_text ) {
+            $status_text = esc_html__( 'Unavailable', 'mainwp' );
+        }
+
+        $header_snip = self::summarize_headers( $headers );
+        $body_snip   = self::summarize_body( $body );
+
+        $lines = array(
+            sprintf(
+                /* translators: %s: HTTP status */
+                esc_html__( 'Status: %s', 'mainwp' ),
+                $status_text
+            ),
+        );
+
+        if ( '' !== $header_snip ) {
+            $lines[] = esc_html__( 'Headers:', 'mainwp' ) . "\n" . $header_snip;
+        } else {
+            $lines[] = esc_html__( 'Headers: none captured.', 'mainwp' );
+        }
+
+        if ( '' !== $body_snip ) {
+            $lines[] = esc_html__( 'Body:', 'mainwp' ) . "\n" . $body_snip;
+        } else {
+            $lines[] = esc_html__( 'Body: no readable child response was returned.', 'mainwp' );
+        }
+
+        return array(
+            'status'      => $status_text,
+            'http_status' => $status,
+            'headers'     => $header_snip,
+            'body'        => $body_snip,
+            'text'        => implode( "\n\n", $lines ),
+        );
+    }
+
+    /**
+     * Build structured failure details for connect/sync UI.
+     *
+     * @param array $context {
+     *     Optional context.
+     *
+     *     @type int    $http_status  HTTP status.
+     *     @type string $headers      Raw headers.
+     *     @type string $body         Raw body.
+     *     @type mixed  $resolved_ip  Child/proxy resolved IP.
+     *     @type string $error        Transport error.
+     * }
+     *
+     * @return array<string,mixed>
+     */
+    public static function build_details( $context = array() ) {
+        if ( ! is_array( $context ) ) {
+            $context = array();
+        }
+
+        $http_status = isset( $context['http_status'] ) ? (int) $context['http_status'] : 0;
+        $headers     = isset( $context['headers'] ) ? (string) $context['headers'] : '';
+        $body        = isset( $context['body'] ) ? (string) $context['body'] : '';
+        $resolved_ip = self::format_ip_list( isset( $context['resolved_ip'] ) ? $context['resolved_ip'] : '' );
+        $response    = self::summarize_response( $http_status, $headers, $body );
+        $waf_likely  = self::is_waf_likely( $http_status, $headers . "\n" . $response['headers'], $body . "\n" . $response['body'] );
+        $lookup_ip   = empty( $context['skip_outbound_ip'] );
+
+        return array(
+            'http_status'           => $http_status,
+            'waf_likely'            => $waf_likely,
+            'dashboard_outbound_ip' => $lookup_ip ? self::get_dashboard_outbound_ip() : '',
+            'user_agent'            => self::get_user_agent(),
+            'resolved_ip'           => $resolved_ip,
+            'resolved_ip_label'     => esc_html__( 'Cloudflare/proxy edge IP', 'mainwp' ),
+            'error'                 => isset( $context['error'] ) ? (string) $context['error'] : '',
+            'response'              => $response,
+        );
+    }
+
+    /**
+     * Build details from a MainWP exception plus fetch output.
+     *
+     * @param MainWP_Exception|null $exception Exception.
+     * @param array                 $output    Fetch output.
+     *
+     * @return array<string,mixed>
+     */
+    public static function from_exception( $exception, $output = array() ) {
+        if ( ! is_array( $output ) ) {
+            $output = array();
+        }
+
+        $body                = '';
+        $http_status         = 0;
+        $headers             = '';
+        $resolved_ip         = '';
+        $legacy_text         = '';
+        $has_response_fields = false;
+
+        if ( $exception instanceof MainWP_Exception ) {
+            $data = $exception->get_data();
+            if ( is_array( $data ) ) {
+                $has_response_fields = array_key_exists( 'headers', $data ) || array_key_exists( 'body', $data );
+                if ( isset( $data['http_status'] ) ) {
+                    $http_status = (int) $data['http_status'];
+                }
+                if ( isset( $data['headers'] ) ) {
+                    $headers = (string) $data['headers'];
+                }
+                if ( isset( $data['body'] ) ) {
+                    $body = (string) $data['body'];
+                }
+                if ( isset( $data['resolved_ip'] ) ) {
+                    $resolved_ip = $data['resolved_ip'];
+                }
+                if ( ! empty( $data['text'] ) ) {
+                    $legacy_text = (string) $data['text'];
+                }
+            } elseif ( is_string( $data ) ) {
+                $legacy_text = $data;
+            }
+        }
+
+        if ( isset( $output['http_status'] ) && (int) $output['http_status'] > 0 ) {
+            $http_status = (int) $output['http_status'];
+        } elseif ( isset( $output['httpCode'] ) && (int) $output['httpCode'] > 0 ) {
+            $http_status = (int) $output['httpCode'];
+        }
+
+        if ( array_key_exists( 'response_headers', $output ) ) {
+            $has_response_fields = true;
+            if ( '' !== (string) $output['response_headers'] ) {
+                $headers = (string) $output['response_headers'];
+            }
+        }
+
+        if ( array_key_exists( 'response_body', $output ) ) {
+            $has_response_fields = true;
+            if ( '' !== (string) $output['response_body'] ) {
+                $body = (string) $output['response_body'];
+            }
+        } elseif ( array_key_exists( 'fetch_data', $output ) ) {
+            $has_response_fields = true;
+            if ( is_string( $output['fetch_data'] ) && '[hidden response data]' !== $output['fetch_data'] && '' === $body ) {
+                $body = $output['fetch_data'];
+            }
+        }
+
+        if ( ! $has_response_fields && isset( $output['response_readable'] ) && is_string( $output['response_readable'] ) ) {
+            $legacy_text = $output['response_readable'];
+        }
+
+        if ( ! $has_response_fields && '' === $body && '' !== $legacy_text ) {
+            $body = $legacy_text;
+        }
+
+        if ( isset( $output['resolved_ip'] ) ) {
+            $resolved_ip = $output['resolved_ip'];
+        } elseif ( isset( $output['ip'] ) && '' === self::format_ip_list( $resolved_ip ) ) {
+            $resolved_ip = $output['ip'];
+        }
+
+        if ( $http_status <= 0 && is_string( $body ) && preg_match( '/Status:\s*(\d{3})/', $body, $status_match ) ) {
+            $http_status = (int) $status_match[1];
+        }
+
+        return self::build_details(
+            array(
+                'http_status' => $http_status,
+                'headers'     => $headers,
+                'body'        => $body,
+                'resolved_ip' => $resolved_ip,
+                'error'       => ( $exception instanceof MainWP_Exception ) ? $exception->getMessage() : '',
+            )
+        );
+    }
+
+    /**
+     * Readable response text for View Response / resp_data.
+     *
+     * @param array                 $output    Fetch output.
+     * @param MainWP_Exception|null $exception Exception.
+     *
+     * @return string
+     */
+    public static function readable_response_from_output( $output = array(), $exception = null ) {
+        $details = self::from_exception( $exception, $output );
+        return $details['response']['text'];
+    }
+
+    /**
+     * HTML for connect/sync failure screens.
+     *
+     * @param array $details Details from build_details().
+     *
+     * @return string
+     */
+    public static function render_html( $details ) {
+        if ( ! is_array( $details ) ) {
+            $details = self::build_details();
+        }
+
+        $outbound = isset( $details['dashboard_outbound_ip'] ) ? (string) $details['dashboard_outbound_ip'] : '';
+        $agent    = isset( $details['user_agent'] ) ? (string) $details['user_agent'] : self::get_user_agent();
+        $edge_ip  = isset( $details['resolved_ip'] ) ? (string) $details['resolved_ip'] : '';
+        $waf      = ! empty( $details['waf_likely'] );
+        $response = isset( $details['response']['text'] ) ? (string) $details['response']['text'] : '';
+
+        if ( '' === $outbound ) {
+            $outbound = esc_html__( 'Unavailable. Check Info → Server for Public Dashboard IP, or ask your host.', 'mainwp' );
+        }
+
+        ob_start();
+        ?>
+        <div class="mainwp-connect-failure-ux">
+            <?php if ( $waf ) : ?>
+                <p><strong><?php esc_html_e( 'Cloudflare / WAF / User-Agent allow', 'mainwp' ); ?></strong></p>
+                <ol>
+                    <li><?php esc_html_e( 'In Cloudflare (Security → WAF) or your host WAF, allow the MainWP User-Agent shown below. IP allowlists alone are often not enough.', 'mainwp' ); ?></li>
+                    <li><?php esc_html_e( 'If you allowlist IPs, allow the Dashboard outbound IP — not the Cloudflare/proxy edge IP.', 'mainwp' ); ?></li>
+                    <li><?php esc_html_e( 'After the WAF allows this User-Agent, retry connect or sync. Reinstall MainWP Child only if those steps do not resolve it.', 'mainwp' ); ?></li>
+                </ol>
+            <?php endif; ?>
+            <p><strong><?php esc_html_e( 'Dashboard outbound IP (allowlist this)', 'mainwp' ); ?>:</strong> <code><?php echo esc_html( $outbound ); ?></code></p>
+            <p><strong><?php esc_html_e( 'User-Agent MainWP sends', 'mainwp' ); ?>:</strong> <code><?php echo esc_html( $agent ); ?></code></p>
+            <?php if ( '' !== $edge_ip ) : ?>
+                <p><strong><?php esc_html_e( 'Cloudflare/proxy edge IP (do not allowlist this as the Dashboard IP)', 'mainwp' ); ?>:</strong> <code><?php echo esc_html( $edge_ip ); ?></code></p>
+            <?php endif; ?>
+            <p><strong><?php esc_html_e( 'Child / HTTP response', 'mainwp' ); ?></strong></p>
+            <pre><?php echo esc_html( $response ); ?></pre>
+            <?php if ( ! $waf ) : ?>
+                <p><?php esc_html_e( 'If the child site is behind Cloudflare or another WAF, allow this User-Agent there. Then reinstall or reactivate MainWP Child only if that does not resolve it.', 'mainwp' ); ?></p>
+            <?php endif; ?>
+        </div>
+        <?php
+        return (string) ob_get_clean();
+    }
+
+    /**
+     * Plain-text form for stored sync errors and tooltips.
+     *
+     * @param array $details Details from build_details().
+     *
+     * @return string
+     */
+    public static function format_text( $details ) {
+        if ( ! is_array( $details ) ) {
+            $details = self::build_details();
+        }
+
+        $outbound = isset( $details['dashboard_outbound_ip'] ) ? (string) $details['dashboard_outbound_ip'] : '';
+        $agent    = isset( $details['user_agent'] ) ? (string) $details['user_agent'] : self::get_user_agent();
+        $edge_ip  = isset( $details['resolved_ip'] ) ? (string) $details['resolved_ip'] : '';
+        $waf      = ! empty( $details['waf_likely'] );
+        $response = isset( $details['response']['text'] ) ? (string) $details['response']['text'] : '';
+
+        if ( '' === $outbound ) {
+            $outbound = __( 'Unavailable. Check Info → Server for Public Dashboard IP, or ask your host.', 'mainwp' );
+        }
+
+        $lines = array();
+        if ( $waf ) {
+            $lines[] = __( 'Cloudflare / WAF / User-Agent allow', 'mainwp' );
+            $lines[] = __( '1. In Cloudflare (Security → WAF) or your host WAF, allow the MainWP User-Agent shown below. IP allowlists alone are often not enough.', 'mainwp' );
+            $lines[] = __( '2. If you allowlist IPs, allow the Dashboard outbound IP — not the Cloudflare/proxy edge IP.', 'mainwp' );
+            $lines[] = __( '3. After the WAF allows this User-Agent, retry connect or sync. Reinstall MainWP Child only if those steps do not resolve it.', 'mainwp' );
+        }
+
+        $lines[] = __( 'Dashboard outbound IP (allowlist this):', 'mainwp' ) . ' ' . $outbound;
+        $lines[] = __( 'User-Agent MainWP sends:', 'mainwp' ) . ' ' . $agent;
+        if ( '' !== $edge_ip ) {
+            $lines[] = __( 'Cloudflare/proxy edge IP (do not allowlist this as the Dashboard IP):', 'mainwp' ) . ' ' . $edge_ip;
+        }
+        $lines[] = __( 'Child / HTTP response', 'mainwp' );
+        $lines[] = $response;
+        if ( ! $waf ) {
+            $lines[] = __( 'If the child site is behind Cloudflare or another WAF, allow this User-Agent there. Then reinstall or reactivate MainWP Child only if that does not resolve it.', 'mainwp' );
+        }
+
+        return implode( "\n", $lines );
+    }
+
+    /**
+     * Attach failure fields onto a try_visit / fetch output array.
+     *
+     * @param array $output Existing output.
+     * @param array $context Raw context (http_status, headers, body, resolved_ip, error).
+     *
+     * @return array
+     */
+    public static function enrich_output( $output, $context = array() ) {
+        if ( ! is_array( $output ) ) {
+            $output = array();
+        }
+
+        $details = self::build_details( $context );
+
+        $output['dashboard_outbound_ip'] = $details['dashboard_outbound_ip'];
+        $output['user_agent']            = $details['user_agent'];
+        $output['resolved_ip']           = $details['resolved_ip'];
+        $output['resolved_ip_label']     = $details['resolved_ip_label'];
+        $output['waf_likely']            = $details['waf_likely'];
+        $output['response_headers']      = $details['response']['headers'];
+        $output['response_body']         = $details['response']['body'];
+        $output['response_readable']     = $details['response']['text'];
+        $output['failure_ux']            = self::render_html( $details );
+        $output['failure_ux_text']       = self::format_text( $details );
+
+        return $output;
+    }
+
+    /**
+     * Whether a query or form parameter name is sensitive.
+     *
+     * @param string $name Parameter name (already decoded).
+     *
+     * @return bool
+     */
+    public static function is_sensitive_param( $name ) {
+        $name = strtolower( (string) $name );
+        $name = preg_replace( '/\[.*$/', '', $name );
+        if ( ! is_string( $name ) || '' === $name ) {
+            return false;
+        }
+
+        if ( in_array( $name, self::SENSITIVE_PARAM_NAMES, true ) ) {
+            return true;
+        }
+
+        foreach ( self::SENSITIVE_PARAM_SUFFIXES as $suffix ) {
+            $needle = '_' . $suffix;
+            $len    = strlen( $needle );
+            if ( strlen( $name ) >= $len && substr( $name, -$len ) === $needle ) {
+                return true;
+            }
+        }
+
+        foreach ( self::SENSITIVE_PARAM_BARE_SUFFIXES as $suffix ) {
+            $len = strlen( $suffix );
+            if ( strlen( $name ) > $len && substr( $name, -$len ) === $suffix ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Redact sensitive names in a query or fragment string.
+     *
+     * Handles mixed-case and URL-encoded names/values. Non-sensitive pairs stay intact.
+     *
+     * @param string $query Raw query or fragment (without leading ? or #).
+     *
+     * @return string
+     */
+    public static function redact_query_string( $query ) {
+        if ( ! is_string( $query ) || '' === $query ) {
+            return '';
+        }
+
+        $pairs = array();
+        foreach ( explode( '&', $query ) as $pair ) {
+            if ( '' === $pair ) {
+                continue;
+            }
+            $bits     = explode( '=', $pair, 2 );
+            $raw_name = $bits[0];
+            $decoded  = rawurldecode( str_replace( '+', ' ', $raw_name ) );
+            if ( self::is_sensitive_param( $decoded ) ) {
+                $pairs[] = $raw_name . '=[redacted]';
+            } else {
+                $pairs[] = $pair;
+            }
+        }
+
+        return implode( '&', $pairs );
+    }
+
+    /**
+     * Strip a Location / redirect URL to scheme, host, port, and path.
+     *
+     * Query, fragment, and userinfo are dropped so unknown secrets cannot
+     * leak through a denylist.
+     *
+     * @param string $url URL or relative Location value.
+     *
+     * @return string
+     */
+    public static function redact_url( $url ) {
+        if ( ! is_string( $url ) || '' === $url ) {
+            return '';
+        }
+
+        $parts = function_exists( 'wp_parse_url' ) ? wp_parse_url( $url ) : parse_url( $url );
+        if ( ! is_array( $parts ) ) {
+            return '';
+        }
+
+        return self::rebuild_url( $parts );
+    }
+
+    /**
+     * Rebuild a Location URL from parse_url / wp_parse_url parts.
+     *
+     * Only scheme, hostname, port, and path are emitted.
+     *
+     * @param array $parts URL parts.
+     *
+     * @return string
+     */
+    public static function rebuild_url( $parts ) {
+        if ( ! is_array( $parts ) ) {
+            return '';
+        }
+
+        $url = '';
+        if ( ! empty( $parts['scheme'] ) ) {
+            $url .= $parts['scheme'] . ':';
+        }
+        if ( ! empty( $parts['host'] ) ) {
+            $url .= '//' . $parts['host'];
+            if ( ! empty( $parts['port'] ) ) {
+                $url .= ':' . $parts['port'];
+            }
+        }
+        if ( isset( $parts['path'] ) ) {
+            $url .= $parts['path'];
+        }
+
+        return $url;
+    }
+
+    /**
+     * Redact likely secrets from diagnostic text.
+     *
+     * Quoted values keep their closer so commas, spaces, and similar
+     * characters stay inside the secret. Unquoted values include those
+     * characters and stop at the next name= / name: pair. If any pattern
+     * fails (a PCRE backtrack limit, for example), the whole text is replaced
+     * with a fixed placeholder, because a skipped pass would leave its
+     * secrets in place.
+     *
+     * @param string $text Text.
+     *
+     * @return string
+     */
+    public static function redact_secrets( $text ) {
+        if ( ! is_string( $text ) || '' === $text ) {
+            return '';
+        }
+
+        $text = self::redact_dump_tail( $text );
+
+        $with_urls = self::redact_urls_in_text( $text );
+        if ( ! is_string( $with_urls ) ) {
+            return self::unredactable_text();
+        }
+        $text = $with_urls;
+
+        // The tag split in summarize_body() turns pass<b></b>word= into "pass word=".
+        // Rejoin up to 19 words before = or : (or before a closing quote and
+        // = or :) when their tail forms a sensitive name. Every sensitive name
+        // ends in a sensitive name of at most 19 characters (mainwpsignature_adv),
+        // so even one tag per character is covered. The repeat is bounded and
+        // possessive so large bodies stay linear.
+        $split_failed = false;
+        $rejoined     = preg_replace_callback(
+            '/(?<![A-Za-z0-9_\-])((?:[A-Za-z0-9_\-]++\s++){1,18}[A-Za-z0-9_\-]++)\s*+([\'"]?\s*+[:=])/',
+            static function ( $found ) use ( &$split_failed ) {
+                $parts = preg_split( '/\s+/', $found[1] );
+                if ( ! is_array( $parts ) ) {
+                    $split_failed = true;
+                    return $found[0];
+                }
+                for ( $start = count( $parts ) - 1; $start >= 0; --$start ) {
+                    $candidate = implode( '', array_slice( $parts, $start ) );
+                    if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $candidate ) ) {
+                        $prefix = implode( ' ', array_slice( $parts, 0, $start ) );
+                        return ( '' !== $prefix ? $prefix . ' ' : '' ) . $candidate . $found[2];
+                    }
+                }
+                return $found[0];
+            },
+            $text
+        );
+        if ( ! is_string( $rejoined ) || $split_failed ) {
+            return self::unredactable_text();
+        }
+        $text = $rejoined;
+
+        $quoted = preg_replace_callback(
+            '/([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*[:=]\s*([\'"])((?:\\\\.|(?!\3).)*)\3/',
+            static function ( $match ) {
+                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[2] ) ) {
+                    return $match[1] . $match[2] . $match[1] . '=[redacted]';
+                }
+                return $match[0];
+            },
+            $text
+        );
+        if ( ! is_string( $quoted ) ) {
+            return self::unredactable_text();
+        }
+        $text = $quoted;
+
+        $unquoted = preg_replace_callback(
+            '/(?<![A-Za-z0-9_\-])([A-Za-z_][A-Za-z0-9_\-]*)\s*[:=]\s*(?![\'"])(.+?)(?=(?:\s+|&|;|#)[A-Za-z_][A-Za-z0-9_\-]*\s*[:=]|$)/s',
+            static function ( $match ) {
+                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[1] ) ) {
+                    return $match[1] . '=[redacted]';
+                }
+                return $match[0];
+            },
+            $text
+        );
+
+        return is_string( $unquoted ) ? $unquoted : self::unredactable_text();
+    }
+
+    /**
+     * Make arbitrary diagnostic text safe without changing benign text.
+     *
+     * URLs lose userinfo, query strings, and fragments. Text that names a
+     * sensitive field is hidden as a unit because its value boundary cannot
+     * be trusted in an exception or other free-form diagnostic string.
+     *
+     * @param string $text Diagnostic text.
+     *
+     * @return string
+     */
+    public static function sanitize_diagnostic_text( $text ) {
+        if ( ! is_string( $text ) || '' === $text ) {
+            return '';
+        }
+
+        $with_urls = self::redact_urls_in_text( $text );
+        if ( ! is_string( $with_urls ) ) {
+            return self::unredactable_text();
+        }
+        if ( self::mentions_sensitive_name( $text ) || self::mentions_sensitive_name( $with_urls ) ) {
+            return self::sensitive_text();
+        }
+
+        return $with_urls;
+    }
+
+    /**
+     * Strip unknown secrets from URLs embedded in text.
+     *
+     * @param string $text Text that may contain absolute or relative URLs.
+     *
+     * @return string|null
+     */
+    private static function redact_urls_in_text( $text ) {
+        $with_urls = preg_replace_callback(
+            '#(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}+://[^\s\'"<>]++|//[^\s\'"<>]++|/[^\s\'"<>]*+\?[^\s\'"<>]++)#',
+            static function ( $found ) {
+                return MainWP_Connect_Failure_Ux::redact_url( MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] ) );
+            },
+            $text
+        );
+        if ( ! is_string( $with_urls ) ) {
+            return null;
+        }
+
+        // A fully encoded scheme does not match the URL pattern above. Decode
+        // only the whitespace-delimited token, then replace its URL portion.
+        return preg_replace_callback(
+            '#[^\s\'"<>]+#u',
+            static function ( $found ) {
+                $decoded = MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] );
+                if ( $decoded === $found[0] ) {
+                    return $found[0];
+                }
+                if ( preg_match( '/(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}:\/\//', $decoded, $scheme, PREG_OFFSET_CAPTURE ) ) {
+                    $offset = $scheme[0][1];
+                    return substr( $decoded, 0, $offset ) . MainWP_Connect_Failure_Ux::redact_url( substr( $decoded, $offset ) );
+                }
+                if ( 0 === strpos( $decoded, '//' ) ) {
+                    return MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                }
+                if ( 0 === strpos( $decoded, '/' ) && false !== strpos( $decoded, '?' ) ) {
+                    return MainWP_Connect_Failure_Ux::redact_url( $decoded );
+                }
+                return $found[0];
+            },
+            $with_urls
+        );
+    }
+
+    /**
+     * Repeatedly decode entities and percent encoding in diagnostic text.
+     *
+     * @param string $text Text to decode.
+     *
+     * @return string
+     */
+    private static function decode_diagnostic_text( $text ) {
+        $decoded = (string) $text;
+        for ( $round = 0; $round < 3; ++$round ) {
+            $next = rawurldecode( html_entity_decode( $decoded, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+            if ( $next === $decoded ) {
+                break;
+            }
+            $decoded = $next;
+        }
+
+        return $decoded;
+    }
+
+    /**
+     * Hide everything after the first sensitive print_r() or var_dump() key.
+     *
+     * A dumped value can contain "[x] =>", ")" or a quote, so no delimiter can
+     * be trusted to end it. Cutting to the end of the text over-redacts on
+     * purpose, including any page text that followed the dump. The scan uses
+     * strpos() rather than a pattern so it stays linear and cannot hit a PCRE
+     * limit.
+     *
+     * @param string $text Text.
+     *
+     * @return string
+     */
+    private static function redact_dump_tail( $text ) {
+        $from  = 0;
+        $close = strpos( $text, ']' );
+        while ( false !== $close ) {
+            $open = strrpos( substr( $text, $from, $close - $from ), '[' );
+            if ( false !== $open ) {
+                $key    = substr( $text, $from + $open + 1, $close - $from - $open - 1 );
+                $equals = $close + 1 + strspn( $text, " \t\r\n", $close + 1 );
+                // Tag stripping turns =<b></b>> into "= >", so space is allowed inside the arrow.
+                $arrow = $equals + 1 + strspn( $text, " \t\r\n", $equals + 1 );
+                if ( '=' === substr( $text, $equals, 1 ) && '>' === substr( $text, $arrow, 1 ) && self::is_sensitive_dump_key( $key ) ) {
+                    return substr( $text, 0, $arrow + 1 ) . ' [redacted]';
+                }
+            }
+            $from  = $close + 1;
+            $close = strpos( $text, ']', $from );
+        }
+
+        return $text;
+    }
+
+    /**
+     * Whether a print_r() / var_dump() array key names a secret.
+     *
+     * Tag splitting in summarize_body() leaves spaces inside a key such as
+     * [pass word], so the key is also tried with spaces removed and with
+     * spaces as underscores. Object dumps append the visibility to the
+     * property name ([pwd:protected], ["pwd":"Some\Class":private]), and
+     * only the name before the first colon is classified. Zero-width and
+     * other format characters are invisible on screen but break the name
+     * match, so they are dropped, and Unicode spaces such as U+00A0 count as
+     * spaces. A key that cannot be normalized counts as sensitive.
+     *
+     * @param string $key Text between the brackets.
+     *
+     * @return bool
+     */
+    private static function is_sensitive_dump_key( $key ) {
+        $key = preg_replace( '/\p{Cf}+/u', '', $key );
+        if ( is_string( $key ) ) {
+            $key = preg_replace( '/[\s\p{Zs}]+/u', ' ', $key );
+        }
+        if ( ! is_string( $key ) ) {
+            return true;
+        }
+
+        $key     = trim( $key );
+        $compact = strtolower( str_replace( ' ', '', $key ) );
+        if ( ':protected' === substr( $compact, -10 ) || ':private' === substr( $compact, -8 ) ) {
+            $key = substr( $key, 0, strpos( $key, ':' ) );
+        }
+        $key = trim( trim( $key ), '\'"' );
+
+        return self::is_sensitive_param( str_replace( ' ', '', $key ) ) || self::is_sensitive_param( str_replace( ' ', '_', $key ) );
+    }
+
+    /**
+     * Placeholder shown when a value could not be redacted.
+     *
+     * @return string
+     */
+    private static function unredactable_text() {
+        return __( '[response content hidden: it could not be safely redacted]', 'mainwp' );
+    }
+
+    /**
+     * Placeholder shown when a response names a sensitive field.
+     *
+     * @return string
+     */
+    private static function sensitive_text() {
+        return __( '[response content hidden: it named a sensitive field]', 'mainwp' );
+    }
+
+    /**
+     * Prepare one kept header value for display.
+     *
+     * A header value that names a secret anywhere is hidden whole instead of
+     * redacted piece by piece: entity- or percent-encoded quotes can move a
+     * value's boundary, and every redaction order loses to one of them.
+     *
+     * @param string $value Header value.
+     * @param string $name  Lowercased header name.
+     *
+     * @return string
+     */
+    private static function header_value_for_display( $value, $name ) {
+        $value = preg_replace( '/[\s\p{Zs}]+/u', ' ', html_entity_decode( (string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+        if ( ! is_string( $value ) ) {
+            return self::unredactable_text();
+        }
+        $value = trim( $value );
+        if ( 'location' === $name ) {
+            $value = self::redact_url( self::decode_diagnostic_text( $value ) );
+        } else {
+            $value = self::redact_urls_in_text( $value );
+            if ( ! is_string( $value ) ) {
+                return self::unredactable_text();
+            }
+        }
+        if ( ! self::mentions_sensitive_name( $value ) ) {
+            return $value;
+        }
+        // Keep a known auth scheme so the challenge type stays recognizable. A fixed
+        // list, because the classifier treats "bearer" as a sensitive name.
+        if ( 'www-authenticate' === $name && preg_match( '/^(Basic|Bearer|Digest|Negotiate|NTLM)(?=\s|$)/i', $value, $scheme ) ) {
+            return $scheme[1] . ' [redacted]';
+        }
+        return '[redacted]';
+    }
+
+    /**
+     * Whether the text names a secret, as written or after entity and percent decoding.
+     *
+     * Checks each name-like token, then core stems in a copy with every separator
+     * removed, because a space or invisible character inside a name splits it into
+     * harmless-looking tokens. Fails closed: a normalization error counts as a match.
+     *
+     * @param string $text Text to check.
+     *
+     * @return bool
+     */
+    private static function mentions_sensitive_name( $text ) {
+        $text       = (string) $text;
+        $candidates = array( $text );
+        $decoded    = $text;
+        for ( $round = 0; $round < 3; ++$round ) {
+            $next = rawurldecode( html_entity_decode( $decoded, ENT_QUOTES | ENT_HTML5, 'UTF-8' ) );
+            if ( $next === $decoded ) {
+                break;
+            }
+            $candidates[] = $next;
+            $decoded      = $next;
+        }
+
+        $stripped_candidates = array();
+        foreach ( $candidates as $candidate ) {
+            $stripped = wp_strip_all_tags( str_replace( '<', ' <', $candidate ) );
+            if ( $stripped !== $candidate ) {
+                $stripped_candidates[] = $stripped;
+            }
+        }
+        $candidates = array_merge( $candidates, $stripped_candidates );
+
+        foreach ( $candidates as $candidate ) {
+            $candidate = preg_replace( '/\p{Cf}+/u', '', $candidate );
+            if ( ! is_string( $candidate ) ) {
+                return true;
+            }
+            $tokens = preg_split( '/[^A-Za-z0-9_\-]+/', $candidate, -1, PREG_SPLIT_NO_EMPTY );
+            if ( false === $tokens ) {
+                return true;
+            }
+            foreach ( $tokens as $token ) {
+                if ( self::is_sensitive_param( $token ) ) {
+                    return true;
+                }
+            }
+            if ( self::mentions_sensitive_fragment_sequence( $candidate ) ) {
+                return true;
+            }
+            $squeezed = preg_replace( '/[^a-z0-9]+/u', '', strtolower( $candidate ) );
+            if ( ! is_string( $squeezed ) ) {
+                return true;
+            }
+            // The stems also catch a name glued to its value once separators are gone.
+            foreach ( self::SENSITIVE_STEMS as $stem ) {
+                if ( false !== strpos( $squeezed, $stem ) ) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Detect a sensitive name split across punctuation, markup, or whitespace.
+     *
+     * Only bounded windows are joined, which covers every configured name
+     * without building an unbounded compact copy of arbitrary response text.
+     *
+     * @param string $text Candidate text.
+     *
+     * @return bool
+     */
+    private static function mentions_sensitive_fragment_sequence( $text ) {
+        $parts = preg_split( '/[^A-Za-z0-9_]+/', $text, -1, PREG_SPLIT_NO_EMPTY );
+        if ( false === $parts ) {
+            return true;
+        }
+
+        $count = count( $parts );
+        for ( $start = 0; $start < $count; ++$start ) {
+            $name = '';
+            $end  = min( $count, $start + 19 );
+            for ( $index = $start; $index < $end; ++$index ) {
+                $name .= $parts[ $index ];
+                if ( strlen( $name ) > 32 ) {
+                    break;
+                }
+                if ( $index > $start && ( self::is_sensitive_fragment_param( $name ) || self::is_sensitive_compact_param( $name ) ) ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Classify a joined fragment window without repeatedly scanning the name list.
+     *
+     * @param string $name Candidate parameter name.
+     *
+     * @return bool
+     */
+    private static function is_sensitive_fragment_param( $name ) {
+        static $exact_names = null;
+
+        $name = strtolower( (string) $name );
+        if ( null === $exact_names ) {
+            $exact_names = array_fill_keys( self::SENSITIVE_PARAM_NAMES, true );
+        }
+        if ( isset( $exact_names[ $name ] ) ) {
+            return true;
+        }
+        foreach ( self::SENSITIVE_PARAM_SUFFIXES as $suffix ) {
+            $needle = '_' . $suffix;
+            $length = strlen( $needle );
+            if ( substr( $name, -$length ) === $needle ) {
+                return true;
+            }
+        }
+        foreach ( self::SENSITIVE_PARAM_BARE_SUFFIXES as $suffix ) {
+            $length = strlen( $suffix );
+            if ( substr( $name, -$length ) === $suffix ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Classify a name after separators, including underscores, have been removed.
+     *
+     * @param string $name Compact candidate name.
+     *
+     * @return bool
+     */
+    private static function is_sensitive_compact_param( $name ) {
+        static $compact_names = null;
+
+        if ( null === $compact_names ) {
+            $compact_names = array();
+            foreach ( self::SENSITIVE_PARAM_NAMES as $sensitive ) {
+                $compact_names[ str_replace( array( '_', '-' ), '', $sensitive ) ] = true;
+            }
+        }
+
+        return isset( $compact_names[ strtolower( (string) $name ) ] );
+    }
+
+    /**
+     * Allowed HTML for rendering stored failure UX.
+     *
+     * @return array<string,array<string,bool>>
+     */
+    public static function kses_allowed() {
+        return array(
+            'div'    => array( 'class' => true ),
+            'p'      => array(),
+            'strong' => array(),
+            'em'     => array(),
+            'ol'     => array(),
+            'ul'     => array(),
+            'li'     => array(),
+            'code'   => array(),
+            'pre'    => array(),
+            'br'     => array(),
+            'a'      => array(
+                'href'   => true,
+                'target' => true,
+            ),
+        );
+    }
+}

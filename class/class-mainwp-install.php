@@ -31,7 +31,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.5'; // NOSONAR - no IP. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
+    protected $mainwp_db_version = '9.0.2.8'; // NOSONAR - no IP. 9.0.2.8 adds agency knowledge and required rules. 9.0.2.7 adds skill descriptions. 9.0.2.6 adds the mainwp_knowledge table. 9.0.2.4 drops the stray unique index on backup progress task_id. Bumped for MWP-1566 sibling-dir chmod migration (MWP-1558 follow-up). Original 9.0.2.0 bump for MWP-1557/1558.
 
     /**
      * Protected variable to hold the database option name.
@@ -49,6 +49,21 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
      */
     const WP_GROUP_MISSING_PRIMARY_KEY_REPAIR_PENDING = 'mainwp_wp_group_missing_primary_key_repair_pending';
+
+    /**
+     * Network-scoped like mainwp_db_version. Once set, the per-request schema check stops querying.
+     */
+    const KNOWLEDGE_SCHEMA_CONFIRMED = 'mainwp_knowledge_schema_confirmed';
+
+    /**
+     * A description-only confirmation cannot vouch for agency support or required rules.
+     */
+    const KNOWLEDGE_SCHEMA_REVISION = 'agency-required-description-1';
+
+    /**
+     * Network-scoped like mainwp_db_version, so every blog on a multisite sees the pending repair.
+     */
+    const KNOWLEDGE_SCHEMA_REPAIR_PENDING = 'mainwp_knowledge_schema_repair_pending';
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -115,6 +130,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_backup_progress_index_repair();
 
             $this->maybe_retry_repair_wp_group_primary_key();
+            $this->maybe_create_knowledge_table( $currentVersion );
+            $this->maybe_repair_knowledge_table();
             return;
         }
 
@@ -459,6 +476,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
         $wpdb->suppress_errors( $suppress );
 
+        $this->maybe_repair_knowledge_table();
         $this->post_update();
 
         do_action( 'mainwp_db_after_update', $currentVersion, $this->mainwp_db_version ); // new version: $this->mainwp_db_version.
@@ -662,6 +680,94 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Create the knowledge table when the stored DB version already covers it.
+     *
+     * Errors from dbDelta are suppressed and the version is written regardless,
+     * so a failed CREATE TABLE would otherwise leave every knowledge read and
+     * write against a missing table until the next schema bump.
+     *
+     * @param string|false $currentVersion Stored DB version.
+     *
+     * @return bool True when the table had to be created.
+     */
+    public function maybe_create_knowledge_table( $currentVersion ) {
+        $table  = $this->table_name( 'knowledge' );
+        $exists = $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $table ) ) );
+        if ( null !== $exists ) {
+            return false;
+        }
+
+        require_once ABSPATH . 'wp-admin/includes/upgrade.php';
+        $sql      = MainWP_DB_Knowledge::instance()->hook_db_install_tables( array(), $currentVersion, $this->wpdb->get_charset_collate() );
+        $suppress = $this->wpdb->suppress_errors();
+        foreach ( $sql as $query ) {
+            dbDelta( $query );
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        return true;
+    }
+
+    /**
+     * Retry knowledge schema changes that may have failed before the version was saved.
+     *
+     * The current-version path of install() runs on every request, so a confirmed
+     * schema is remembered and a failing ALTER (a DB user without ALTER) is retried at
+     * most hourly instead of logging an error on each request.
+     *
+     * @return bool Whether a missing schema component was repaired.
+     */
+    public function maybe_repair_knowledge_table() {
+        if ( self::KNOWLEDGE_SCHEMA_REVISION === get_site_option( self::KNOWLEDGE_SCHEMA_CONFIRMED ) ) {
+            return false;
+        }
+        $pending = (int) get_site_option( self::KNOWLEDGE_SCHEMA_REPAIR_PENDING );
+        if ( ! empty( $pending ) && time() - $pending < HOUR_IN_SECONDS ) {
+            return false;
+        }
+
+        $table    = $this->table_name( 'knowledge' );
+        $suppress = $this->wpdb->suppress_errors();
+        if ( null === $this->wpdb->get_var( $this->wpdb->prepare( 'SHOW TABLES LIKE %s', $this->wpdb->esc_like( $table ) ) ) ) {
+            $this->wpdb->suppress_errors( $suppress );
+            return false;
+        }
+        $columns = $this->wpdb->get_results( $this->wpdb->prepare( 'SHOW COLUMNS FROM %i', $table ), OBJECT_K );
+        $repairs = array();
+        if ( ! empty( $columns ) ) {
+            // dbDelta can add columns but does not reliably expand an enum, including on beta installs with a higher version.
+            if ( isset( $columns['scope_type'] ) && false === strpos( $columns['scope_type']->Type, "'agency'" ) ) {
+                $repairs[] = "ALTER TABLE %i MODIFY scope_type enum('agency','site','client') NOT NULL";
+            }
+            if ( ! isset( $columns['required'] ) ) {
+                $repairs[] = 'ALTER TABLE %i ADD COLUMN required tinyint(1) NOT NULL DEFAULT 0 AFTER verified';
+            }
+            if ( ! isset( $columns['description'] ) ) {
+                $repairs[] = "ALTER TABLE %i ADD COLUMN description varchar(1024) NOT NULL DEFAULT '' AFTER title";
+            }
+        }
+        $confirmed = ! empty( $columns ) && isset( $columns['scope_type'] );
+        $repaired  = false;
+        foreach ( $repairs as $sql ) {
+            $success   = false !== $this->wpdb->query( $this->wpdb->prepare( $sql, $table ) ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed schema statements above, with the table identifier bound.
+            $confirmed = $confirmed && $success;
+            $repaired  = $repaired || $success;
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        if ( $confirmed ) {
+            update_site_option( self::KNOWLEDGE_SCHEMA_CONFIRMED, self::KNOWLEDGE_SCHEMA_REVISION );
+            delete_site_option( 'mainwp_knowledge_description_column_confirmed' );
+            delete_site_option( 'mainwp_knowledge_description_column_repair_pending' );
+            delete_site_option( self::KNOWLEDGE_SCHEMA_REPAIR_PENDING );
+        } else {
+            // A timestamp, not a formatted date: the retry throttle compares it against time().
+            update_site_option( self::KNOWLEDGE_SCHEMA_REPAIR_PENDING, time() );
+        }
+        return $repaired;
+    }
+
+    /**
      * Repair the wp_group table primary key for legacy installations.
      *
      * To fix MWP-1794.
@@ -672,16 +778,18 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $wp_group_table = esc_sql( $this->table_name( 'wp_group' ) );
 
         $column_exists = $this->wpdb->get_var(
-            "SHOW COLUMNS FROM {$wp_group_table} LIKE 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
+            "SHOW COLUMNS FROM {$wp_group_table} LIKE 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
         );
 
         if ( empty( $column_exists ) ) {
             $this->wpdb->query(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
                 "ALTER TABLE {$wp_group_table}
                 ADD COLUMN wp_group_id int(11) NOT NULL auto_increment PRIMARY KEY FIRST" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
             );
         } else {
             $primary_key = $this->wpdb->get_var(
+                // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
                 "SHOW INDEX FROM {$wp_group_table}
                 WHERE Key_name = 'PRIMARY'
                 AND Column_name = 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
@@ -689,6 +797,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
             if ( empty( $primary_key ) ) {
                 $this->wpdb->query(
+                    // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
                     "ALTER TABLE {$wp_group_table}
                     ADD PRIMARY KEY (wp_group_id)" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.
                 );
@@ -696,6 +805,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         }
 
         $primary_key = $this->wpdb->get_var(
+            // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name is escaped and query contains no user input.
             "SHOW INDEX FROM {$wp_group_table}
             WHERE Key_name = 'PRIMARY'
             AND Column_name = 'wp_group_id'" // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Table name is escaped and query contains no user input.

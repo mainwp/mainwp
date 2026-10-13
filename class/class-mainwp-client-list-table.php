@@ -33,6 +33,13 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
     protected $column_headers;
 
     /**
+     * Counts stay with the prepared rows so rendering does not query per client.
+     *
+     * @var array|\WP_Error
+     */
+    private $knowledge_counts = array();
+
+    /**
      * MainWP_Client_List_Table constructor.
      *
      * Run each time the class is called.
@@ -78,13 +85,21 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 case 'client_phone':
                     return '<a href="tel:' . esc_attr( $item[ $column_name ] ) . '" class="ui mini icon button" data-tooltip="' . esc_attr( $item[ $column_name ] ) . '" data-inverted="" data-position="left center"><i class="phone grey icon"></i></a>';
                 case 'client_facebook':
-                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="facebook grey icon"></i></a>';
+                    return '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="facebook grey icon"></i></a>';
                 case 'client_twitter':
-                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="twitter grey icon"></i></a>';
+                    return '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="twitter grey icon"></i></a>';
                 case 'client_instagram':
-                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="instagram grey icon"></i></a>';
+                    return '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="instagram grey icon"></i></a>';
                 case 'client_linkedin':
-                    return '<a href="' . esc_attr( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="linkedin grey icon"></i></a>';
+                    return '<a href="' . esc_url( $item[ $column_name ] ) . '" target="_blank" class="ui mini icon button"><i class="linkedin grey icon"></i></a>';
+                case 'contact_name':
+                case 'address_1':
+                case 'address_2':
+                case 'city':
+                case 'zip':
+                case 'state':
+                case 'country':
+                    return esc_html( $item[ $column_name ] );
                 default:
                     return $item[ $column_name ];
             }
@@ -136,6 +151,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
             'client_instagram' => '<i class="instagram grey icon"></i>',
             'client_linkedin'  => '<i class="linkedin grey icon"></i>',
             'websites'         => esc_html__( 'Websites', 'mainwp' ),
+            'knowledge'        => esc_html__( 'Knowledge', 'mainwp' ),
             'address_1'        => esc_html__( 'Address 1', 'mainwp' ),
             'address_2'        => esc_html__( 'Address 2', 'mainwp' ),
             'city'             => esc_html__( 'City', 'mainwp' ),
@@ -326,6 +342,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
 
         $clients = MainWP_DB_Client::instance()->get_wp_client_by( 'all', null, ARRAY_A, $params );
 
+        $clients = MainWP_Client::filter_viewable_clients( $clients );
+
         $totalRecords = ( $clients ? count( $clients ) : 0 );
 
         $clients_ids = array();
@@ -336,6 +354,8 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 }
             }
         }
+
+        $this->knowledge_counts = MainWP_DB_Knowledge::instance()->get_scope_counts( 'client', $clients_ids );
 
         // for compatible.
         $optimize = $optimize ? true : false;
@@ -412,7 +432,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
             'searchDelay'   => 350,
         );
 
-        /**z
+        /**
          * Filter: mainwp_clients_table_features
          *
          * Filter the Clients table features.
@@ -581,7 +601,7 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                 $class[] = 'collapsing';
             }
 
-            if ( 'websites' === $column_client_key ) {
+            if ( 'websites' === $column_client_key || 'knowledge' === $column_client_key ) {
                 $class[] = 'collapsing';
             }
 
@@ -782,20 +802,44 @@ class MainWP_Client_List_Table extends MainWP_Manage_Sites_List_Table { // phpcs
                     <a class="ui mini grey button" href="admin.php?page=managesites&client=<?php echo intval( $item['client_id'] ); ?>"><i class="wordpress icon"></i><?php echo intval( $count ); ?></a>
                 <?php echo '</td>'; ?>
                 <?php
+            } elseif ( 'knowledge' === $column_name ) {
+                ?>
+                <td class="<?php echo esc_attr( $classes ); ?>">
+                    <?php if ( is_wp_error( $this->knowledge_counts ) ) : ?>
+                        <?php $strings = MainWP_Knowledge_UI::js_strings(); ?>
+                        <span><?php echo esc_html( $strings['failed'] ); ?></span>
+                    <?php elseif ( isset( $this->knowledge_counts[ (int) $item['client_id'] ] ) ) : ?>
+                        <?php $count = $this->knowledge_counts[ (int) $item['client_id'] ]; ?>
+                        <a class="ui mini grey button" href="<?php echo esc_url( admin_url( 'admin.php?page=ManageClients&client_id=' . (int) $item['client_id'] ) ); ?>" data-tooltip="<?php esc_attr_e( 'Client knowledge records', 'mainwp' ); ?>" data-inverted=""><i class="book icon"></i><?php echo (int) $count['total']; ?></a>
+                        <?php if ( $count['unverified'] ) : ?>
+                        <span class="ui mini yellow label" data-tooltip="<?php esc_attr_e( 'Saved by AI agents and not yet reviewed by a person.', 'mainwp' ); ?>" data-inverted=""><?php /* translators: %d: record count */ echo esc_html( sprintf( _n( '%d unverified', '%d unverified', $count['unverified'], 'mainwp' ), $count['unverified'] ) ); ?></span>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </td>
+                <?php
             } elseif ( 'notes' === $column_name ) {
-                $note       = html_entity_decode( $item['note'] );
-                $esc_note   = MainWP_Utility::esc_content( $note );
-                $strip_note = wp_strip_all_tags( $esc_note );
+                $note     = isset( $item['note'] ) ? (string) $item['note'] : '';
+                $edit     = MainWP_Utility::client_note_for_editor( $note );
+                $esc_note = MainWP_Utility::client_note_html( $note );
+                // esc_attr() does not double-encode, so a typed "&copy;" would show as ©.
+                $tooltip = MainWP_Utility::client_note_tooltip_text( $esc_note );
+                if ( '' === $tooltip ) {
+                    $tooltip_attr = esc_attr__( 'Edit client notes.', 'mainwp' );
+                } else {
+                    $tooltip_attr = htmlspecialchars( $tooltip, ENT_QUOTES, 'UTF-8', true );
+                }
                 echo "<td $attributes>"; // phpcs:ignore WordPress.Security.EscapeOutput
                 if ( empty( $item['note'] ) ) :
                     $cl_id1 = $item['client_id'];
                     ?>
                     <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id1 ); ?>" data-tooltip="<?php esc_attr_e( 'Edit client notes.', 'mainwp' ); ?>" data-position="left center" data-inverted=""><i class="sticky note outline icon"></i></a>
-                    <?php else :
-                    $cl_id2 = $item['client_id']; ?>
-                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id2 ); ?>" data-tooltip="<?php echo substr( wp_unslash( $strip_note ), 0, 100 ); // phpcs:ignore WordPress.Security.EscapeOutput ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
+                    <?php
+                else :
+                    $cl_id2 = $item['client_id'];
+                    ?>
+                    <a href="javascript:void(0)" class="mainwp-edit-client-note ui mini icon button" id="mainwp-notes-<?php echo intval( $cl_id2 ); ?>" data-tooltip="<?php echo $tooltip_attr; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- htmlspecialchars() with double encoding, or esc_attr__() for an empty tooltip. ?>" data-position="left center" data-inverted=""><i class="sticky green note icon"></i></a>
                     <?php endif; ?>
-                    <span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note"><?php echo wp_unslash( $esc_note ); // phpcs:ignore WordPress.Security.EscapeOutput ?></span>
+                    <span style="display: none" id="mainwp-notes-<?php echo intval( $item['client_id'] ); ?>-note" data-note="<?php echo MainWP_Utility::client_note_editor_attr( $edit ); // phpcs:ignore WordPress.Security.EscapeOutput -- escaped for an attribute without decoding typed entities. ?>"><?php echo $esc_note; // phpcs:ignore WordPress.Security.EscapeOutput -- client_note_html() returns display HTML. ?></span>
                 <?php echo '</td>'; ?>
             <?php } elseif ( 'client_actions' === $column_name ) { ?>
                 <?php $selected_sites = isset( $item['selected_sites'] ) ? trim( $item['selected_sites'] ) : ''; ?>

@@ -918,6 +918,8 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
         }
         /* translators: %s: Number of days since last update */
         $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        /* translators: %s: Number of days since the main file was modified */
+        $str_format_file = esc_html__( 'Main file modified %s days ago', 'mainwp' );
         ?>
 
         <div class="ui <?php echo 'abandoned-plugins' === $active_tab ? 'active' : ''; ?> tab" data-tab="abandoned-plugins">
@@ -940,7 +942,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         $last_updated             = $plugin_outdate['last_updated'];
                         $plugin_last_updated_date = new \DateTime( '@' . $last_updated );
                         $diff_in_days             = $now->diff( $plugin_last_updated_date )->format( '%a' );
-                        $outdate_notice           = sprintf( $str_format, $diff_in_days );
+                        $outdate_notice           = sprintf( 'file_mtime' === ( $plugin_outdate['detection'] ?? '' ) ? $str_format_file : $str_format, $diff_in_days );
 
                         ?>
                         <tr dismissed="0">
@@ -1012,6 +1014,8 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
 
         /* translators: %s: Number of days since last update */
         $str_format = esc_html__( 'Updated %s days ago', 'mainwp' );
+        /* translators: %s: Number of days since the main file was modified */
+        $str_format_file = esc_html__( 'Main file modified %s days ago', 'mainwp' );
 
         ?>
         <div class="ui <?php echo 'abandoned-themes' === $active_tab ? 'active' : ''; ?> tab" data-tab="abandoned-themes">
@@ -1033,7 +1037,7 @@ class MainWP_Manage_Sites_Update_View { // phpcs:ignore Generic.Classes.OpeningB
                         $last_updated            = $theme_outdate['last_updated'];
                         $theme_last_updated_date = new \DateTime( '@' . $last_updated );
                         $diff_in_days            = $now->diff( $theme_last_updated_date )->format( '%a' );
-                        $outdate_notice          = sprintf( $str_format, $diff_in_days );
+                        $outdate_notice          = sprintf( 'file_mtime' === ( $theme_outdate['detection'] ?? '' ) ? $str_format_file : $str_format, $diff_in_days );
                         ?>
                         <tr dismissed="0">
                             <td>

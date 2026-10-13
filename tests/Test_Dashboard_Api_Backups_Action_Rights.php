@@ -246,7 +246,8 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
      * @param string $right Required right.
      */
     public function test_permitted( string $method, string $right ): void {
-        $this->rights( $right, true, array( 'manage_api_backups' ) );
+        // Only discovery writes mapping; every other action must pass on its own operation right.
+        $this->rights( $right, true, in_array( $method, array( 'ajax_cloudways_action_update_ids', 'ajax_gridpane_action_update_ids' ), true ) ? array( 'manage_api_backups' ) : array() );
         if ( 'ajax_cpanel_action_restore_manual_backup' === $method ) {
             $this->scope( true );
         }

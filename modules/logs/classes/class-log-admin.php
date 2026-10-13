@@ -107,6 +107,9 @@ class Log_Admin {
      * Handle archive data action.
      */
     public function handle_post_archive_data() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
         if ( isset( $_GET['clearArchivedSitesChangesData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_archived_sites_changes' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             Log_DB_Archive::instance()->truncate_archive_tables();
             wp_safe_redirect( esc_url( admin_url( 'admin.php?page=MainWPTools' ) ) );
@@ -315,7 +318,7 @@ class Log_Admin {
     /**
      * Render logs db large size notice.
      *
-     * @param int $limit DB size limit in MByte, default 300 MB.
+     * @param int    $limit DB size limit in MByte, default 300 MB.
      * @param string $which The page slug where the notice is displayed.
      */
     public function render_logs_db_notice( $limit = 300, $which = '' ) {
@@ -347,10 +350,11 @@ class Log_Admin {
         if ( version_compare( $dbver, '1.0.1.26', '=' ) && ! get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' ) ) { // NOSONAR - no ip,checks ver <= 22 only.
             $status = get_option( 'mainwp_module_logs_updates_dismissed_db_process_status', '' );
         }
+        $can_manage_settings = \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' );
         ?>
         <div class="ui green message" id="module-log-update-dissmised-logs-running" style="display:none;"></div>
         <?php
-        if ( 'require_update' === $status && MainWP_Utility::show_mainwp_message( 'notice', 'logs-db-update-required' ) ) {
+        if ( $can_manage_settings && 'require_update' === $status && MainWP_Utility::show_mainwp_message( 'notice', 'logs-db-update-required' ) ) {
             delete_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' ); // To ensure it does not retrieve old saved values.
             ?>
             <div class="ui yellow message">
@@ -361,7 +365,7 @@ class Log_Admin {
                 ?>
             </div>
             <?php
-        } elseif ( 'running' === $status ) {
+        } elseif ( $can_manage_settings && 'running' === $status ) {
             ?>
             <script type="text/javascript">
                 jQuery(function ($) {

@@ -95,6 +95,9 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public static function emails_general_settings_handle() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return false;
+        }
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsEmail' ) ) {
             $emails_settings = get_option( 'mainwp_settings_notification_emails' );
             if ( ! is_array( $emails_settings ) ) {
@@ -554,8 +557,8 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
     /**
      * Prepare general email notifications settings.
      *
-     * @param array  $options Email settings.
-     * @param object $website Site data.
+     * @param array        $options Email settings.
+     * @param object       $website Site data.
      * @param object|false $current_heartbeat Current heartbeat data.
      *
      * @return void.

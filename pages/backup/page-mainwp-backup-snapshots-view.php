@@ -349,6 +349,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         jQuery( function ( $ ) {
             var nonces = {
                 list:     '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_snapshot_list' ) ); ?>',
+                download: '<?php echo esc_js( wp_create_nonce( 'mainwp_backup_snapshot_download_url' ) ); ?>',
                 initiate: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_initiate' ) ); ?>',
                 progress: '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_progress' ) ); ?>',
                 cancel:   '<?php echo esc_js( wp_create_nonce( 'mainwp_restore_cancel' ) ); ?>',
@@ -404,6 +405,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 'remote': '<?php echo esc_js( esc_html__( 'Cloud storage', 'mainwp' ) ); ?>',
                 'remote_chunked': '<?php echo esc_js( esc_html__( 'Cloud storage', 'mainwp' ) ); ?>',
                 'unavailable': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>'
+            };
+            var downloadLabels = {
+                action: '<?php echo esc_js( esc_html__( 'Download', 'mainwp' ) ); ?>',
+                incremental: '<?php echo esc_js( esc_html__( 'This backup is a chain of files. Restore it from the Dashboard.', 'mainwp' ) ); ?>',
+                missing: '<?php echo esc_js( esc_html__( 'This backup archive is not on this Dashboard.', 'mainwp' ) ); ?>',
+                failed: '<?php echo esc_js( esc_html__( 'Could not start the download. Try again.', 'mainwp' ) ); ?>'
             };
             var offsiteLabels = {
                 verified: [ 'green', '<?php echo esc_js( esc_html__( 'Offsite Verified', 'mainwp' ) ); ?>' ],
@@ -548,6 +555,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 return '&mdash;';
             }
 
+            function downloadButton( snap ) {
+                var reason = 'incremental' === snap.type ? downloadLabels.incremental : ( 'local' !== snap.source ? downloadLabels.missing : '' );
+                var disabled = siteDisconnected || '' !== reason;
+                return '<a href="#" class="ui mini basic button mainwp-download-snapshot' + ( disabled ? ' disabled' : '' ) + '" data-snapshot="' + snap.id + '"' + ( disabled ? ' aria-disabled="true"' : '' ) + ( reason ? ' title="' + escAttr( reason ) + '"' : '' ) + '>' + downloadLabels.action + '</a>';
+            }
+
             // The static placeholder row is the no-JS fallback; drop it before
             // DataTables takes the tbody over so it can never become a data row.
             $( '#mainwp-restore-snapshots-table tbody' ).empty();
@@ -620,9 +633,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         "orderable": false,
                         "className": "collapsing",
                         "render": function ( data, type, snap ) {
-                            return snap.restorable
+                            var restore = snap.restorable
                                 ? '<a href="#" class="ui mini basic button mainwp-restore-snapshot' + ( siteDisconnected ? ' disabled' : '' ) + '" data-snapshot="' + snap.id + '" data-snapshot-type="' + escAttr( snap.type ) + '" data-snapshot-age="' + ( parseInt( snap.age_days, 10 ) || 0 ) + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
                                 : '';
+                            return restore + downloadButton( snap );
                         }
                     }
                 ],
@@ -630,7 +644,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( snap.restorable ) {
                         return;
                     }
-                    $( row ).addClass( 'disabled' );
+                    if ( 'incremental' === snap.type || 'local' !== snap.source ) {
+                        $( row ).addClass( 'disabled' );
+                    }
                     if ( snap.restore_reason ) {
                         $( row ).attr( 'title', snap.restore_reason );
                     }
@@ -649,6 +665,26 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     "emptyTable": snapshotsPlaceholders.idle,
                     "zeroRecords": '<?php echo esc_js( esc_html__( 'No backups match the current filter.', 'mainwp' ) ); ?>'
                 }
+            } );
+
+            $( '#mainwp-restore-snapshots-table' ).on( 'click', '.mainwp-download-snapshot', function ( event ) {
+                event.preventDefault();
+                var button = $( this );
+                if ( button.hasClass( 'disabled' ) || button.hasClass( 'loading' ) ) {
+                    return;
+                }
+                button.addClass( 'loading' );
+                $.post( ajaxurl, { action: 'mainwp_backup_snapshot_download_url', security: nonces.download, snapshot_id: button.data( 'snapshot' ) }, function ( response ) {
+                    if ( response && response.url ) {
+                        window.location.assign( response.url );
+                    } else {
+                        window.alert( response && response.error ? response.error : downloadLabels.failed );
+                    }
+                }, 'json' ).fail( function () {
+                    window.alert( downloadLabels.failed );
+                } ).always( function () {
+                    button.removeClass( 'loading' );
+                } );
             } );
 
             $( '#mainwp-restore-snapshots-table' ).on( 'click', '.mainwp-snapshot-uploads-toggle', function ( event ) {

@@ -95,6 +95,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // Page: ManageBackupsSnapshots (restore).
         if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
             $this->add_action( 'mainwp_restore_snapshot_list', array( &$this, 'mainwp_restore_snapshot_list' ) );
+            $this->add_action( 'mainwp_backup_snapshot_download_url', array( &$this, 'mainwp_backup_snapshot_download_url' ) );
             $this->add_action( 'mainwp_restore_initiate', array( &$this, 'mainwp_restore_initiate' ) );
             $this->add_action( 'mainwp_restore_progress', array( &$this, 'mainwp_restore_progress' ) );
             $this->add_action( 'mainwp_restore_cancel', array( &$this, 'mainwp_restore_cancel' ) );
@@ -106,6 +107,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_backup_diagnostics_export', array( &$this, 'mainwp_backup_diagnostics_export' ) );
         }
         add_action( 'admin_post_mainwp_backup_diagnostics_download', array( MainWP_Backup_Diagnostics::instance(), 'download_bundle' ) );
+        add_action( 'admin_post_mainwp_backup_snapshot_download', array( MainWP_Backup_Download::class, 'download_snapshot' ) );
+        add_action( 'admin_post_nopriv_mainwp_backup_snapshot_download', array( MainWP_Backup_Download::class, 'download_snapshot' ) );
         // Intentionally not capability-gated: the backup-before-update check is
         // read-only and used by the updates flow, where a user without backup
         // rights still needs it.
@@ -252,6 +255,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public static function restore_needs_confirmation( $snapshot, $confirm_destructive ) {
         return MainWP_Backup_Restore_Orchestrator::restore_needs_confirmation( $snapshot, $confirm_destructive );
+    }
+
+    /** Issue a snapshot download link after checking the AJAX nonce. */
+    public function mainwp_backup_snapshot_download_url() {
+        $this->secure_request( 'mainwp_backup_snapshot_download_url' );
+        $snapshot_id = isset( $_POST['snapshot_id'] ) && is_scalar( $_POST['snapshot_id'] ) ? (int) $_POST['snapshot_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- secure_request checked above.
+        $url         = MainWP_Backup_Download::create_download_url( $snapshot_id );
+        wp_send_json( is_wp_error( $url ) ? array( 'error' => $url->get_error_message() ) : array( 'url' => $url ) );
     }
 
     /**

@@ -1802,7 +1802,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $dh = opendir( $dir );
                 if ( $dh ) {
                     while ( false !== ( $file = readdir( $dh ) ) ) {
-                        if ( '.' !== $file && '..' !== $file ) {
+                        if ( '.' !== $file && '..' !== $file && ! str_ends_with( $file, '.downloading.reclaim' ) ) {
                             $theFile = $dir . $file;
                             if ( MainWP_Backup_File_Manager::is_sql_file( $file ) ) {
                                 $dbBackups[ filemtime( $theFile ) . $file . $dir ] = $theFile;

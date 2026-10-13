@@ -120,7 +120,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             <?php if ( $native_backups ) : ?>
                 <?php // Collapsed so the snapshot list above stays the page's one backup action. ?>
                 <div class="ui basic accordion mainwp-blank-accordion" id="mainwp-downloadable-archives-accordion">
-                    <h3 class="ui dividing header title"><i class="dropdown icon"></i><?php esc_html_e( 'Downloadable archives (not restorable from the Dashboard)', 'mainwp' ); ?></h3>
+                    <h3 class="ui dividing header title"><i class="dropdown icon"></i><?php esc_html_e( 'Downloadable archives', 'mainwp' ); ?></h3>
                     <div class="content">
                         <?php
                         static::render_backup_details( $website->id );

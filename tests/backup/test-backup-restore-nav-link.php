@@ -259,7 +259,7 @@ class MainWP_Backup_Restore_Nav_Link_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'value="Create downloadable archive"', $out, 'Native on: the action button itself is relabelled, not just the heading.' );
 		$this->assertStringNotContainsString( 'value="Backup Now"', $out, 'Native on: the misleading Backup Now button label must be gone.' );
 		$this->assertStringContainsString( 'id="mainwp-downloadable-archives-accordion"', $out, 'Native on: the legacy archives sit in one collapsed section.' );
-		$this->assertStringContainsString( 'Downloadable archives (not restorable from the Dashboard)', $out );
+		$this->assertStringContainsString( '>Downloadable archives</h3>', $out );
 		$this->assertStringContainsString( 'class="ui basic button" value="Create downloadable archive"', $out, 'Native on: the archive button is not a second primary.' );
 	}
 }

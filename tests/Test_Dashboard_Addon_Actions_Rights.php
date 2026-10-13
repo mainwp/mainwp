@@ -509,7 +509,7 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
     /**
      * License server replies to an activation request.
      *
-     * @return array Cases: reply (WP_Error or HTTP response), expected error.
+     * @return array Cases: reply (WP_Error or HTTP response), expected error, key storage failing.
      */
     public static function activation_replies(): array {
         $failed = 'Connection failed to the License Key API server. Try again later.';
@@ -521,13 +521,15 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
             );
         };
         return array(
-            'certificate error' => array( new \WP_Error( 'http_request_failed', 'cURL error 60: SSL certificate problem: unable to get local issuer certificate' ), $failed ),
-            'timeout'           => array( new \WP_Error( 'http_request_failed', 'cURL error 28: Operation timed out after 50001 milliseconds' ), $failed ),
-            'HTTP 500'          => array( $reply( 500, '{"activated":true}' ), $failed ),
-            'empty body'        => array( $reply( 200, '' ), $failed ),
-            'non-JSON body'     => array( $reply( 200, '<html>Maintenance</html>' ), $failed ),
-            'JSON scalar'       => array( $reply( 200, 'null' ), $failed ),
-            'rejected'          => array( $reply( 200, '{"activated":false,"code":"fixture","error":"Fixture license rejected."}' ), 'Fixture license rejected.' ),
+            'certificate error'                      => array( new \WP_Error( 'http_request_failed', 'cURL error 60: SSL certificate problem: unable to get local issuer certificate' ), $failed ),
+            'certificate error, key storage failing' => array( new \WP_Error( 'http_request_failed', 'cURL error 60: SSL certificate problem: unable to get local issuer certificate' ), $failed, true ),
+            'timeout'                                => array( new \WP_Error( 'http_request_failed', 'cURL error 28: Operation timed out after 50001 milliseconds' ), $failed ),
+            'HTTP 500'                               => array( $reply( 500, '{"activated":true}' ), $failed ),
+            'empty body'                             => array( $reply( 200, '' ), $failed ),
+            'non-JSON body'                          => array( $reply( 200, '<html>Maintenance</html>' ), $failed ),
+            'JSON scalar'                            => array( $reply( 200, 'null' ), $failed ),
+            'rejected'                               => array( $reply( 200, '{"activated":false,"code":"fixture","error":"Fixture license rejected."}' ), 'Fixture license rejected.' ),
+            'rejected, key storage failing'          => array( $reply( 200, '{"activated":false,"code":"fixture","error":"Fixture license rejected."}' ), 'Fixture license rejected.', true ),
         );
     }
 
@@ -537,12 +539,16 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
      * @dataProvider activation_replies
      * @param array|\WP_Error $reply License server reply.
      * @param string          $expected Expected error.
+     * @param bool            $storage_fails Key encryption fails, so the activation info cannot be saved.
      */
-    public function test_activation_reply( $reply, string $expected ): void {
+    public function test_activation_reply( $reply, string $expected, bool $storage_fails = false ): void {
         $this->right( 'manage_extensions', true );
         $info                  = MainWP_Api_Manager::instance()->get_activation_info( self::SLUG );
         $info['activated_key'] = 'Deactivated';
         $this->assertTrue( MainWP_Api_Manager::instance()->set_activation_info( self::SLUG, $info ) );
+        if ( $storage_fails ) {
+            $this->filter( 'mainwp_encrypt_key_value', '__return_false' );
+        }
         $post                = array(
             'slug' => self::SLUG . '/fixture.php',
             'key'  => 'fixture-license-key',

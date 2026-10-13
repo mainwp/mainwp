@@ -367,8 +367,9 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             // local persist the dashboard will offer to re-activate and burn a
             // second slot. The encrypt filter only fails on broken installs
             // (missing keyfile, un-writable uploads/mainwp/pk/), but when it
-            // does the operator needs to know.
-            if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+            // does the operator needs to know. A failed or refused activation keeps
+            // its own error: nothing was activated upstream.
+            if ( false === $this->set_activation_info( $api_slug, $options ) && isset( $return['result'] ) ) {
                 $return['error'] = esc_html__( 'License activated upstream but local state could not be saved. Check uploads/mainwp/pk/ permissions and try the activation again.', 'mainwp' );
             }
 

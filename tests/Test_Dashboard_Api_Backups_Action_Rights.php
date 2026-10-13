@@ -1,0 +1,694 @@
+<?php
+/**
+ * API Backups nonces must not bypass rights, site scope or object ownership.
+ *
+ * @package MainWP\Dashboard\Tests
+ */
+
+namespace MainWP\Dashboard\Tests;
+
+// phpcs:disable Generic.Files.OneObjectStructurePerFile.MultipleFound -- Separate Error types distinguish response exits from boundary stops.
+// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Fixtures restore request globals rather than process live GET input.
+// phpcs:disable WordPress.Security.NonceVerification.Missing -- Fixtures exercise production authorization and nonce checks.
+// phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Assertions compare captured responses without browser output.
+// phpcs:disable WordPress.WP.AlternativeFunctions -- Source copies capture legacy exits without changing production code.
+
+use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\Module\ApiBackups\Rights_Api_Backups_3rd_Party;
+use MainWP\Dashboard\Module\ApiBackups\Rights_Api_Backups_Handler;
+
+/** Stop before any transport can run. */
+class Api_Backups_Boundary_Stop extends \Error {}
+
+/** Capture JSON and bare nonce exits. */
+class Api_Backups_Response_Stop extends \Error {}
+
+/** Exercise every registered, implemented provider callback. */
+class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
+
+    use Site_Fixture;
+
+    /**
+     * Test-owned filters.
+     *
+     * @var array
+     */
+    private $filters = array();
+
+    /**
+     * Original hooks replaced during a request.
+     *
+     * @var array
+     */
+    private $hooks = array();
+
+    /**
+     * Original request and user state.
+     *
+     * @var array
+     */
+    private $state = array();
+
+    /**
+     * Accessible site.
+     *
+     * @var int
+     */
+    private $site;
+
+    /**
+     * Hidden site.
+     *
+     * @var int
+     */
+    private $foreign;
+
+    /**
+     * Boundary reads or Child dispatches.
+     *
+     * @var int
+     */
+    private $hits = 0;
+
+    /**
+     * Observed mapping target.
+     *
+     * @var array
+     */
+    private $target = array();
+
+    /** Capture exits and supply AJAX context without process-wide constants. */
+    public static function setUpBeforeClass(): void {
+        parent::setUpBeforeClass();
+        $names = array(
+            'Api_Backups_Helper'       => 'Rights_Api_Backups_Helper',
+            'Api_Backups_3rd_Party'    => 'Rights_Api_Backups_3rd_Party',
+            'Api_Backups_Handler'      => 'Rights_Api_Backups_Handler',
+            'MainWP_Post_Base_Handler' => 'Api_Backups_Rights_Base_Handler',
+        );
+        $files = array(
+            'class/class-mainwp-post-base-handler.php',
+            'modules/api-backups/classes/class-api-backups-helper.php',
+            'modules/api-backups/classes/class-api-backups-3rd-party.php',
+            'modules/api-backups/classes/class-api-backups-handler.php',
+        );
+        foreach ( $files as $file ) {
+            $code = '';
+            foreach ( token_get_all( file_get_contents( dirname( __DIR__ ) . '/' . $file ) ) as $token ) {
+                if ( is_array( $token ) ) {
+                    $code .= T_EXIT === $token[0] ? '\\wp_die' : ( T_STRING === $token[0] && isset( $names[ $token[1] ] ) ? $names[ $token[1] ] : $token[1] );
+                } else {
+                    $code .= $token;
+                }
+            }
+            $code = str_replace( array( '\\wp_die;', "defined( 'DOING_AJAX' ) && DOING_AJAX" ), array( '\\wp_die();', '\\wp_doing_ajax()' ), $code );
+            eval( '?>' . $code ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- Retain production gates and nonce writes while capturing exits and AJAX context.
+        }
+    }
+
+    /** Grant WP administrator capabilities while varying Team Control access. */
+    public function setUp(): void {
+        parent::setUp();
+        $this->state = array( $_GET, $_POST, $_REQUEST, get_current_user_id(), get_current_screen() );
+        wp_create_nonce( 'api-backups-rights-fixture' );
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+        set_current_screen( 'dashboard' );
+        $_GET          = array();
+        $_POST         = array();
+        $_REQUEST      = array();
+        $this->site    = $this->create_test_site();
+        $this->foreign = $this->create_test_site();
+        $this->lists( $this->site, '101', 'snapshot-owned' );
+        $this->lists( $this->foreign, '202', 'snapshot-foreign' );
+        update_option( 'mainwp_ajaxposts', array( 'preserved' => 'original' ) );
+        $this->scope( false );
+        $this->filter( 'wp_doing_ajax', '__return_true' );
+        $this->filter( 'wp_die_ajax_handler', array( $this, 'ajax_die_handler' ) );
+        global $wp_filter;
+        foreach ( array( 'mainwp_secure_request', 'admin_init' ) as $hook ) {
+            $this->hooks[ $hook ] = isset( $wp_filter[ $hook ] ) ? clone $wp_filter[ $hook ] : null;
+            remove_all_actions( $hook );
+        }
+        $base = new class() extends \MainWP\Dashboard\Api_Backups_Rights_Base_Handler {
+            /** No registration is needed for direct nonce dispatch. */
+            protected function init() {}
+        };
+        add_action( 'mainwp_secure_request', array( $base, 'secure_request' ) );
+    }
+
+    /** Restore every hook and request fixture. */
+    public function tearDown(): void {
+        global $wp_filter;
+        foreach ( $this->filters as $hook => $callback ) {
+            remove_filter( $hook, $callback, 'mainwp_getwebsiteoptions' === $hook ? -999 : 999 );
+        }
+        foreach ( $this->hooks as $hook => $value ) {
+            if ( null === $value ) {
+                unset( $wp_filter[ $hook ] );
+            } else {
+                $wp_filter[ $hook ] = $value;
+            }
+        }
+        list( $_GET, $_POST, $_REQUEST, $user, $screen ) = $this->state;
+        wp_set_current_user( $user );
+        $GLOBALS['current_screen'] = $screen;
+        parent::tearDown();
+    }
+
+    /**
+     * Registered action, callback and required right.
+     *
+     * @return array Action matrix.
+     */
+    public static function actions(): array {
+        return array(
+            'cloudways_action_backup'                      => array( 'ajax_cloudways_action_backup', 'execute_backups' ),
+            'cloudways_action_individual_backup'           => array( 'ajax_cloudways_action_individual_backup', 'execute_backups' ),
+            'cloudways_action_update_ids'                  => array( 'ajax_cloudways_action_update_ids', 'execute_backups' ),
+            'cloudways_action_refresh_available_backups'   => array( 'cloudways_action_refresh_available_backups', 'execute_backups' ),
+            'cloudways_action_restore_backup'              => array( 'cloudways_action_restore_backup', 'restore_backups' ),
+            'cloudways_action_delete_backup'               => array( 'cloudways_action_delete_backup', 'execute_backups' ),
+            'gridpane_action_create_backup'                => array( 'ajax_gridpane_action_create_backup', 'execute_backups' ),
+            'gridpane_action_individual_create_backup'     => array( 'ajax_gridpane_action_individual_create_backup', 'execute_backups' ),
+            'gridpane_action_update_ids'                   => array( 'ajax_gridpane_action_update_ids', 'execute_backups' ),
+            'gridpane_action_refresh_available_backups'    => array( 'gridpane_action_refresh_available_backups', 'execute_backups' ),
+            'gridpane_action_restore_backup'               => array( 'gridpane_action_restore_backup', 'restore_backups' ),
+            'gridpane_action_delete_backup'                => array( 'gridpane_action_delete_backup', 'execute_backups' ),
+            'vultr_action_create_snapshot'                 => array( 'ajax_vultr_action_create_snapshot', 'execute_backups' ),
+            'vultr_action_individual_create_snapshot'      => array( 'ajax_vultr_action_individual_create_snapshot', 'execute_backups' ),
+            'vultr_action_refresh_available_backups'       => array( 'vultr_action_refresh_available_backups', 'execute_backups' ),
+            'vultr_action_restore_backup'                  => array( 'ajax_vultr_action_restore_backup', 'restore_backups' ),
+            'vultr_action_delete_backup'                   => array( 'vultr_action_delete_backup', 'execute_backups' ),
+            'linode_action_create_backup'                  => array( 'ajax_linode_action_create_backup', 'execute_backups' ),
+            'linode_action_individual_create_backup'       => array( 'ajax_linode_action_individual_create_backup', 'execute_backups' ),
+            'linode_action_refresh_available_backups'      => array( 'linode_action_refresh_available_backups', 'execute_backups' ),
+            'linode_action_restore_backup'                 => array( 'linode_action_restore_backup', 'restore_backups' ),
+            'linode_action_cancel_backups'                 => array( 'linode_action_cancel_backups', 'execute_backups' ),
+            'digitalocean_action_create_backup'            => array( 'ajax_digitalocean_action_create_backup', 'execute_backups' ),
+            'digitalocean_action_individual_create_backup' => array( 'ajax_digitalocean_action_individual_create_backup', 'execute_backups' ),
+            'digitalocean_action_refresh_available_backups' => array( 'digitalocean_action_refresh_available_backups', 'execute_backups' ),
+            'digitalocean_action_restore_backup'           => array( 'digitalocean_action_restore_backup', 'restore_backups' ),
+            'digitalocean_action_delete_backup'            => array( 'digitalocean_action_delete_backup', 'execute_backups' ),
+            'cpanel_action_refresh_available_backups'      => array( 'ajax_cpanel_action_refresh_available_backups', 'execute_backups' ),
+            'cpanel_action_create_manual_backup'           => array( 'ajax_cpanel_action_create_manual_backup', 'execute_backups' ),
+            'cpanel_action_create_wptk_backup'             => array( 'ajax_cpanel_action_create_wptk_backup', 'execute_backups' ),
+            'cpanel_action_restore_wptk_backup'            => array( 'ajax_cpanel_action_restore_wptk_backup', 'restore_backups' ),
+            'cpanel_action_delete_wptk_backup'             => array( 'ajax_cpanel_action_delete_wptk_backup', 'execute_backups' ),
+            'cpanel_action_restore_backup'                 => array( 'ajax_cpanel_action_restore_backup', 'restore_backups' ),
+            'cpanel_action_restore_database_backup'        => array( 'ajax_cpanel_action_restore_database_backup', 'restore_backups' ),
+            'cpanel_action_restore_manual_backup'          => array( 'ajax_cpanel_action_restore_manual_backup', 'restore_backups' ),
+            'cpanel_action_create_database_backup'         => array( 'ajax_cpanel_action_create_database_backup', 'execute_backups' ),
+            'cpanel_action_create_full_backup'             => array( 'ajax_cpanel_action_create_full_backup', 'execute_backups' ),
+            'plesk_action_refresh_available_backups'       => array( 'ajax_plesk_action_refresh_available_backups', 'execute_backups' ),
+            'plesk_action_create_backup'                   => array( 'ajax_plesk_action_create_backup', 'execute_backups' ),
+            'plesk_action_restore_backup'                  => array( 'ajax_plesk_action_restore_backup', 'restore_backups' ),
+            'plesk_action_delete_backup'                   => array( 'ajax_plesk_action_delete_backup', 'execute_backups' ),
+            'kinsta_action_refresh_available_backups'      => array( 'ajax_kinsta_action_refresh_available_backups', 'execute_backups' ),
+            'kinsta_action_create_backup'                  => array( 'ajax_kinsta_action_create_backup', 'execute_backups' ),
+            'kinsta_action_restore_backup'                 => array( 'ajax_kinsta_action_restore_backup', 'restore_backups' ),
+            'kinsta_action_delete_backup'                  => array( 'ajax_kinsta_action_delete_backup', 'execute_backups' ),
+            'mainwp_api_backups_selected_websites'         => array( 'ajax_backups_selected_websites', 'execute_backups' ),
+        );
+    }
+
+    /**
+     * Every entry needs its own operation right before any boundary or nonce write.
+     *
+     * @dataProvider actions
+     * @param string $method Callback.
+     * @param string $right Required right.
+     */
+    public function test_missing_right( string $method, string $right ): void {
+        $this->rights( $right, false );
+        $this->refused( $method );
+    }
+
+    /**
+     * Posted site ids cannot escape the current user's accessible sites.
+     *
+     * @dataProvider site_actions
+     * @param string $method Callback.
+     * @param string $right Required right.
+     */
+    public function test_hidden_site( string $method, string $right ): void {
+        $this->rights( $right, true );
+        $this->refused( $method, array( $this->site_field( $method ) => (string) $this->foreign ) );
+    }
+
+    /**
+     * In-scope actions reach their existing boundary without network access.
+     *
+     * @dataProvider actions
+     * @param string $method Callback.
+     * @param string $right Required right.
+     */
+    public function test_permitted( string $method, string $right ): void {
+        $this->rights( $right, true );
+        if ( 'ajax_cpanel_action_restore_manual_backup' === $method ) {
+            $this->scope( true );
+        }
+        $response = $this->request( $method, 'ajax_cpanel_action_restore_backup' === $method ? array( 'dts' => null ) : array() );
+        if ( 'ajax_cloudways_action_individual_backup' === $method ) {
+            $this->assertStringContainsString( 'cloudways_action_backup', $response );
+            $this->assertSame( 0, $this->hits, 'This existing callback calls an undefined method.' );
+        } else {
+            $this->assertSame( 'boundary', $response );
+            $this->assertSame( 1, $this->hits );
+            if ( $this->target ) {
+                $this->assertSame( $this->site, $this->target[0] );
+            }
+        }
+    }
+
+    /**
+     * Site-bearing actions only.
+     *
+     * @return array Site action matrix.
+     */
+    public static function site_actions(): array {
+        return array_filter(
+            self::actions(),
+            static function ( $row ) {
+                return ! in_array( $row[0], array( 'ajax_cloudways_action_update_ids', 'ajax_gridpane_action_update_ids', 'digitalocean_action_delete_backup' ), true );
+            }
+        );
+    }
+
+    /**
+     * Unscoped provider ids and per-site cPanel database files.
+     *
+     * @return array Ownership action matrix.
+     */
+    public static function owned_actions(): array {
+        return array_intersect_key(
+            self::actions(),
+            array_flip( array( 'vultr_action_restore_backup', 'vultr_action_delete_backup', 'digitalocean_action_restore_backup', 'kinsta_action_restore_backup', 'kinsta_action_delete_backup', 'cpanel_action_restore_backup', 'cpanel_action_restore_database_backup' ) )
+        );
+    }
+
+    /**
+     * Another site's object must be refused before credentials or mappings.
+     *
+     * @dataProvider owned_actions
+     * @param string $method Callback.
+     * @param string $right Required right.
+     */
+    public function test_foreign_object( string $method, string $right ): void {
+        $this->rights( $right, true );
+        $this->refused(
+            $method,
+            array(
+                'snapshot_id' => 'snapshot-foreign',
+                'backup_id'   => '202',
+            )
+        );
+    }
+
+    /**
+     * Stale lists refuse unknown objects with a refresh instruction.
+     *
+     * @dataProvider owned_actions
+     * @param string $method Callback.
+     * @param string $right Required right.
+     */
+    public function test_stale_object( string $method, string $right ): void {
+        $this->rights( $right, true );
+        $before = $this->snapshot();
+        $body   = $this->request(
+            $method,
+            array(
+                'snapshot_id' => 'missing-snapshot',
+                'backup_id'   => '999',
+            )
+        );
+        $this->assertSame( 0, $this->hits );
+        $this->assertSame( $before, $this->snapshot() );
+        $this->assertStringContainsString( 'Refresh', $body );
+    }
+
+    /** Kinsta restore must validate exactly the integer the worker uses. */
+    public function test_kinsta_coercion_and_leading_zeroes(): void {
+        $this->rights( 'restore_backups', true );
+        foreach ( array( '101junk', '101.5', '+101', array( '101' ) ) as $input ) {
+            $this->refused( 'ajax_kinsta_action_restore_backup', array( 'backup_id' => $input ) );
+        }
+        $this->assertSame( 'boundary', $this->request( 'ajax_kinsta_action_restore_backup', array( 'backup_id' => '00101' ) ) );
+    }
+
+    /** Vultr may own a snapshot through either stored list shape. */
+    public function test_vultr_available_list_shapes(): void {
+        $this->rights( 'restore_backups', true );
+        MainWP_DB::instance()->update_website_option( $this->site, 'mainwp_3rd_party_vultr_snapshot_list', '[]' );
+        $this->assertSame( 'boundary', $this->request( 'ajax_vultr_action_restore_backup' ) );
+        $this->assertSame( 'boundary', $this->request( 'ajax_vultr_action_restore_backup', array( 'snapshot_id' => 'automatic-' . $this->site ) ) );
+    }
+
+    /** A nonexistent site must be refused even with unrestricted rights. */
+    public function test_missing_site_and_leading_zeroes(): void {
+        $this->rights( 'execute_backups', true );
+        $this->scope( true );
+        $this->refused( 'ajax_cloudways_action_backup', array( 'website_id' => '2147483647' ) );
+        $this->assertSame( 'boundary', $this->request( 'ajax_cloudways_action_backup', array( 'website_id' => '00' . $this->site ) ) );
+    }
+
+    /**
+     * Account-wide cPanel restores require unrestricted site access.
+     *
+     * @return array Credential mode and scope matrix.
+     */
+    public static function account_actions(): array {
+        $cases = array();
+        foreach ( array( 'restore_backup', 'restore_database_backup', 'restore_manual_backup' ) as $suffix ) {
+            foreach ( array( false, true ) as $unrestricted ) {
+                $cases[ $suffix . ( $unrestricted ? ' all' : ' scoped' ) ] = array( 'ajax_cpanel_action_' . $suffix, $unrestricted );
+            }
+        }
+        return $cases;
+    }
+
+    /**
+     * Global configured paths and manual account files are not site ownership.
+     *
+     * @dataProvider account_actions
+     * @param string $method Callback.
+     * @param bool   $unrestricted All sites allowed.
+     */
+    public function test_account_restore( string $method, bool $unrestricted ): void {
+        MainWP_DB::instance()->update_website_option( $this->site, 'mainwp_enable_cpanel_individual', '0' );
+        $this->rights( 'restore_backups', true );
+        $this->scope( $unrestricted );
+        if ( $unrestricted ) {
+            $this->assertSame( 'boundary', $this->request( $method, 'ajax_cpanel_action_restore_backup' === $method ? array( 'dts' => null ) : array() ) );
+            $this->assertSame( 1, $this->hits );
+        } else {
+            $this->refused( $method );
+        }
+    }
+
+    /** Snapshot-only deletes search accessible lists and reject ambiguity. */
+    public function test_digitalocean_delete_foreign_and_ambiguous(): void {
+        $this->rights( 'execute_backups', true );
+        $this->refused( 'digitalocean_action_delete_backup', array( 'snapshot_id' => 'snapshot-foreign' ) );
+        $this->scope( true );
+        MainWP_DB::instance()->update_website_option( $this->foreign, 'mainwp_3rd_party_digitalocean_available_backups', wp_json_encode( array( 'snapshots' => array( array( 'id' => 'snapshot-owned' ) ) ) ) );
+        $this->refused( 'digitalocean_action_delete_backup' );
+    }
+
+    /** A known backup cannot authorize another path for the database restore. */
+    public function test_database_path_must_match(): void {
+        $this->rights( 'restore_backups', true );
+        $this->refused( 'ajax_cpanel_action_restore_database_backup', array( 'backup_path' => '/another/site' ) );
+    }
+
+    /**
+     * Raw site values that intval would otherwise turn into an accessible id.
+     *
+     * @return array Invalid input matrix.
+     */
+    public static function invalid_sites(): array {
+        return array(
+            'missing'  => array( null ),
+            'array'    => array( array( '1' ) ),
+            'suffix'   => array( 'suffix' ),
+            'decimal'  => array( 'decimal' ),
+            'signed'   => array( 'signed' ),
+            'space'    => array( 'space' ),
+            'all'      => array( '_ALL_' ),
+            'zero'     => array( '0' ),
+            'negative' => array( '-1' ),
+        );
+    }
+
+    /**
+     * Validate the raw site value before the worker's integer conversion.
+     *
+     * @dataProvider invalid_sites
+     * @param mixed $input Raw site input.
+     */
+    public function test_invalid_site( $input ): void {
+        $values = array(
+            'suffix'  => $this->site . 'junk',
+            'decimal' => $this->site . '.5',
+            'signed'  => '+' . $this->site,
+            'space'   => ' ' . $this->site,
+        );
+        $input  = is_string( $input ) && isset( $values[ $input ] ) ? $values[ $input ] : $input;
+        $this->rights( 'execute_backups', true );
+        $this->refused( 'ajax_cloudways_action_backup', array( 'website_id' => $input ) );
+    }
+
+    /** Invalid nonces stop before the boundary and preserve the deduplication option. */
+    public function test_invalid_nonce(): void {
+        $this->rights( 'execute_backups', true );
+        $this->refused( 'ajax_cloudways_action_backup', array( 'security' => 'invalid' ) );
+    }
+
+    /** The existing automatic-restore worker verifies its nonce a second time. */
+    public function test_automatic_restore_duplicate_nonce(): void {
+        $this->rights( 'restore_backups', true );
+        $this->assertSame( array( 'error' => 'Double request!' ), json_decode( $this->request( 'ajax_cpanel_action_restore_backup' ), true ) );
+        $this->assertSame( 0, $this->hits );
+    }
+
+    /**
+     * Populate only non-secret ownership and mapping fixtures.
+     *
+     * @param int    $site Site id.
+     * @param string $id Backup id.
+     * @param string $snapshot Snapshot id.
+     */
+    private function lists( int $site, string $id, string $snapshot ): void {
+        $options = array(
+            'mainwp_3rd_party_instance_id'              => 'instance-' . $site,
+            'mainwp_3rd_party_app_id'                   => 'app-' . $site,
+            'mainwp_3rd_party_api'                      => 'Cloudways',
+            'mainwp_3rd_party_vultr_snapshot_list'      => wp_json_encode( array( $snapshot ) ),
+            'mainwp_3rd_party_vultr_available_backups'  => wp_json_encode(
+                array(
+                    'snapshots' => array( 'snapshot' => array( 'id' => $snapshot ) ),
+                    'backups'   => array( array( 'id' => 'automatic-' . $site ) ),
+                )
+            ),
+            'mainwp_3rd_party_digitalocean_available_backups' => wp_json_encode( array( 'snapshots' => array( array( 'id' => $snapshot ) ) ) ),
+            'mainwp_3rd_party_kinsta_available_backups' => wp_json_encode( array( 'environment' => array( 'backups' => array( array( 'id' => (int) $id ) ) ) ) ),
+            'mainwp_enable_cpanel_individual'           => 'on',
+            'cpanel_site_path'                          => '/home/account/site-' . $site,
+            'mainwp_3rd_party_cpanel_available_backups' => wp_json_encode(
+                array(
+                    'data' => array(
+                        array(
+                            'backupID' => $id,
+                            'path'     => '/home/account/site-' . $site,
+                        ),
+                    ),
+                )
+            ),
+            'mainwp_3rd_party_cpanel_manual_database_backups' => wp_json_encode(
+                array(
+                    array(
+                        'file_name'    => $id,
+                        'absolute_dir' => '/home/account/site-' . $site,
+                    ),
+                )
+            ),
+            'mainwp_3rd_party_cpanel_manual_backups'    => wp_json_encode(
+                array(
+                    array(
+                        'file_name'    => $id,
+                        'absolute_dir' => '/home/account',
+                    ),
+                )
+            ),
+        );
+        foreach ( $options as $name => $value ) {
+            $this->set_site_option( $site, $name, $value );
+        }
+    }
+
+    /**
+     * Assert the actual Team Control right rather than WP capabilities.
+     *
+     * @param string $right Required right.
+     * @param bool   $allowed Grant.
+     */
+    private function rights( string $right, bool $allowed ): void {
+        $this->filter(
+            'mainwp_currentusercan',
+            static function ( $can, $type, $cap ) use ( $right, $allowed ) {
+                if ( 'site' === $type ) {
+                    $scope = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
+                    return 'all' === $scope || in_array( (int) $cap, $scope, true );
+                }
+                return 'dashboard' === $type ? ( $cap === $right && $allowed ) : $can;
+            }
+        );
+        $this->assertFalse( defined( 'MAINWP_REST_API_DOING' ), 'Run this test before REST tests define MAINWP_REST_API_DOING.' );
+        $this->assertSame( $allowed, \mainwp_current_user_can( 'dashboard', $right ) );
+    }
+
+    /**
+     * Restrict SQL enumeration and the per-site right together.
+     *
+     * @param bool $all Unrestricted.
+     */
+    private function scope( bool $all ): void {
+        $site = $this->site;
+        $this->filter(
+            'mainwp_currentuserallowedaccesssites',
+            static function () use ( $all, $site ) {
+                return $all ? 'all' : array( $site );
+            }
+        );
+    }
+
+    /**
+     * Refusals must preserve all options, including mainwp_ajaxposts.
+     *
+     * @param string $method Callback.
+     * @param array  $post Overrides.
+     */
+    private function refused( string $method, array $post = array() ): void {
+        $before   = $this->snapshot();
+        $response = json_decode( $this->request( $method, $post ), true );
+        $this->assertSame( 0, $this->hits, 'Reached a credential, mapping or transport boundary.' );
+        $this->assertSame( $before, $this->snapshot(), 'A refused action changed stored state.' );
+        $this->assertIsArray( $response );
+        $this->assertNotEmpty( $response['error'] ?? null );
+    }
+
+    /**
+     * Complete raw option and site-option state.
+     *
+     * @return array Stored state.
+     */
+    private function snapshot(): array {
+        global $wpdb;
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Complete raw snapshots detect unauthorized writes, including secure_request deduplication.
+        $options = $wpdb->get_results( "SELECT option_name, option_value FROM {$wpdb->options} ORDER BY option_name", ARRAY_A );
+        $table   = $wpdb->prefix . 'mainwp_wp_options';
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- The table derives only from the configured test prefix.
+        return array( $options, $wpdb->get_results( "SELECT wpid, name, value FROM {$table} ORDER BY wpid, name", ARRAY_A ) );
+    }
+
+    /**
+     * Stop at the first boundary and capture all termination paths.
+     *
+     * @param string $method Callback.
+     * @param array  $post Overrides.
+     * @return string Response.
+     * @throws \Error Unexpected worker error.
+     * @throws \PHPUnit\Framework\Error\Warning Unexpected worker warning.
+     */
+    private function request( string $method, array $post = array() ): string {
+        $actions = array_column( self::actions(), 0 );
+        $action  = array_keys( self::actions() )[ array_search( $method, $actions, true ) ];
+        $_POST   = array_merge(
+            array(
+                'website_id'  => (string) $this->site,
+                'websiteId'   => (string) $this->site,
+                'snapshot_id' => 'snapshot-owned',
+                'backup_id'   => '101',
+                'backup_path' => '/home/account/site-' . $this->site,
+                'backup_name' => 'backup-owned',
+                'backup_type' => 'manual',
+                'backup_date' => '2026-10-12',
+                'backup_api'  => 'vultr',
+                'security'    => wp_create_nonce( $action ),
+                'dts'         => wp_generate_uuid4(),
+            ),
+            $post
+        );
+        if ( in_array( $method, array( 'ajax_cloudways_action_update_ids', 'ajax_gridpane_action_update_ids', 'digitalocean_action_delete_backup' ), true ) ) {
+            unset( $_POST['website_id'], $_POST['websiteId'] );
+        }
+        $_REQUEST     = $_POST;
+        $this->hits   = 0;
+        $this->target = array();
+        $this->filter(
+            'mainwp_getwebsiteoptions',
+            function ( $value, $site, $options ) {
+                ++$this->hits;
+                $this->target = array( is_array( $site ) ? (int) ( $site['id'] ?? 0 ) : ( is_object( $site ) ? (int) $site->id : (int) $site ), $options );
+                throw new Api_Backups_Boundary_Stop();
+            }
+        );
+        $this->filter(
+            'mainwp_fetch_url_authed_pre',
+            function () {
+                ++$this->hits;
+                throw new Api_Backups_Boundary_Stop();
+            }
+        );
+        $names = array( 'mainwp_cloudways_api_account_email', 'mainwp_cpanel_url', 'mainwp_cpanel_account_username', 'mainwp_cpanel_site_path', 'mainwp_plesk_api_url', 'mainwp_kinsta_api_account_email', 'mainwp_kinsta_company_id', 'mainwp_api_backups_cloudways_access_token' );
+        foreach ( array( 'cloudways', 'gridpane', 'vultr', 'linode', 'digitalocean', 'cpanel', 'plesk', 'kinsta' ) as $provider ) {
+            $names[] = 'mainwp_api_backups_' . $provider . '_api_key';
+        }
+        foreach ( $names as $name ) {
+            $this->filter(
+                'pre_option_' . $name,
+                function () {
+                    ++$this->hits;
+                    throw new Api_Backups_Boundary_Stop();
+                }
+            );
+        }
+        ob_start();
+        $body = '';
+        try {
+            $handler = 'ajax_backups_selected_websites' === $method ? new Rights_Api_Backups_Handler() : new Rights_Api_Backups_3rd_Party();
+            $handler->$method();
+        } catch ( Api_Backups_Boundary_Stop $stop ) {
+            $body = 'boundary';
+        } catch ( Api_Backups_Response_Stop $stop ) {
+            $body = $stop->getMessage();
+        } catch ( \Error $error ) {
+            if ( 'ajax_cloudways_action_individual_backup' !== $method ) {
+                throw $error;
+            }
+            $body = $error->getMessage();
+        } catch ( \PHPUnit\Framework\Error\Warning $warning ) {
+            if ( 'ajax_cpanel_action_create_database_backup' !== $method || 'Undefined array key "result"' !== $warning->getMessage() ) {
+                throw $warning;
+            }
+            $body = wp_json_encode( array( 'error' => $warning->getMessage() ) );
+        } finally {
+            $buffer = ob_get_clean();
+        }
+        return $buffer . $body;
+    }
+
+    /**
+     * Selected-websites uses its existing camel-case payload.
+     *
+     * @param string $method Callback.
+     * @return string Site field.
+     */
+    private function site_field( string $method ): string {
+        return 'ajax_backups_selected_websites' === $method ? 'websiteId' : 'website_id';
+    }
+
+    /**
+     * Replace only test-owned callbacks.
+     *
+     * @param string   $hook Hook name.
+     * @param callable $callback Callback.
+     */
+    private function filter( string $hook, callable $callback ): void {
+        if ( isset( $this->filters[ $hook ] ) ) {
+            remove_filter( $hook, $this->filters[ $hook ], 'mainwp_getwebsiteoptions' === $hook ? -999 : 999 );
+        }
+        $this->filters[ $hook ] = $callback;
+        add_filter( $hook, $callback, 'mainwp_getwebsiteoptions' === $hook ? -999 : 999, 3 );
+    }
+
+    /**
+     * AJAX exit capture.
+     *
+     * @return callable Die handler.
+     */
+    public function ajax_die_handler(): callable {
+        return static function ( $message = '' ) {
+            throw new Api_Backups_Response_Stop( (string) $message );
+        };
+    }
+}

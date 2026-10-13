@@ -8,6 +8,8 @@
 
 namespace MainWP\Dashboard\Module\ApiBackups;
 
+use MainWP\Dashboard\MainWP_DB;
+
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
@@ -134,6 +136,173 @@ class Api_Backups_Helper {
             return;
         }
         return apply_filters( 'mainwp_db_free_result', false, $results );
+    }
+
+    /**
+     * Authorize an action before nonce deduplication, mappings or credentials.
+     *
+     * @param string      $right Required Dashboard right.
+     * @param string|null $site_field Posted site field, or null for scoped enumeration.
+     * @param mixed       $site_id Explicit site id for internal database-backup calls.
+     * @return int Authorized site id, or zero for enumeration.
+     */
+    public static function authorize_ajax_action( $right, $site_field = 'website_id', $site_id = null ) {
+        if ( ! \mainwp_current_user_can( 'dashboard', $right ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error: insufficient permissions.', 'mainwp' ) ) );
+        }
+        if ( null === $site_field ) {
+            return 0;
+        }
+        if ( null === $site_id ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended,WordPress.Security.ValidatedSanitizedInput.MissingUnslash,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Validate the raw site value before conversion; authorization must precede the nonce's persistent deduplication write.
+            $site_id = wp_doing_ajax() ? ( $_POST[ $site_field ] ?? null ) : ( $_GET['id'] ?? null );
+        }
+        if ( ( ! is_int( $site_id ) && ! is_string( $site_id ) ) || ! preg_match( '/\A[0-9]+\z/', (string) $site_id ) || (int) $site_id < 1 ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error: invalid site ID.', 'mainwp' ) ) );
+        }
+        $site_id = (int) $site_id;
+        if ( ! \mainwp_current_user_can( 'site', $site_id ) || empty( self::get_website_by_id( $site_id ) ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error: site access denied.', 'mainwp' ) ) );
+        }
+        return $site_id;
+    }
+
+    /**
+     * Read ownership evidence without entering mapping or credential filters.
+     *
+     * @param int    $site_id Already authorized site.
+     * @param string $provider Provider name.
+     * @return array Stored backup entries.
+     */
+    public static function get_owned_backups( $site_id, $provider ) {
+        $stored = MainWP_DB::instance()->get_json_website_option( $site_id, 'mainwp_3rd_party_' . $provider . '_available_backups' );
+        if ( 'kinsta' === $provider ) {
+            return $stored['environment']['backups'] ?? array();
+        }
+        if ( 'digitalocean' === $provider ) {
+            return $stored['snapshots'] ?? array();
+        }
+        if ( 'vultr' === $provider ) {
+            $snapshots = $stored['snapshots'] ?? array();
+            if ( isset( $snapshots['snapshot'] ) ) {
+                $snapshots = array( $snapshots['snapshot'] );
+            }
+            return array_merge( is_array( $snapshots ) ? $snapshots : array(), $stored['backups'] ?? array() );
+        }
+        return array();
+    }
+
+    /**
+     * Match the exact snapshot or backup id used by the provider worker.
+     *
+     * @param int    $site_id Already authorized site.
+     * @param string $provider Provider name.
+     * @param mixed  $object_id Provider object id.
+     * @return bool Whether the stored site list contains the object.
+     */
+    public static function owns_backup( $site_id, $provider, $object_id ) {
+        if ( ! is_scalar( $object_id ) || '' === (string) $object_id ) {
+            return false;
+        }
+        if ( 'vultr' === $provider ) {
+            $snapshots = MainWP_DB::instance()->get_json_website_option( $site_id, 'mainwp_3rd_party_vultr_snapshot_list' );
+            foreach ( $snapshots as $snapshot ) {
+                if ( is_scalar( $snapshot ) && (string) $snapshot === (string) $object_id ) {
+                    return true;
+                }
+            }
+        }
+        foreach ( self::get_owned_backups( $site_id, $provider ) as $backup ) {
+            if ( is_array( $backup ) && isset( $backup['id'] ) && is_scalar( $backup['id'] ) && (string) $backup['id'] === (string) $object_id ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Require ownership before credentials or the nonce's persistent write.
+     *
+     * @param int    $site_id Authorized site.
+     * @param string $provider Provider name.
+     * @param string $field Posted object field.
+     * @param bool   $integer Worker converts the object id to an integer.
+     */
+    public static function require_owned_backup( $site_id, $provider, $field, $integer = false ) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Match the raw unslashed object exactly; ownership authorization precedes nonce deduplication.
+        $object_id = isset( $_POST[ $field ] ) && is_scalar( $_POST[ $field ] ) ? wp_unslash( $_POST[ $field ] ) : '';
+        if ( $integer ) {
+            if ( ! preg_match( '/\A[0-9]+\z/', (string) $object_id ) || (int) $object_id < 1 ) {
+                self::refuse_unlisted_backup();
+            }
+            $object_id = (int) $object_id;
+        }
+        if ( ! self::owns_backup( $site_id, $provider, $object_id ) ) {
+            self::refuse_unlisted_backup();
+        }
+    }
+
+    /** Resolve snapshot-only deletes among accessible sites without credentials. */
+    public static function authorize_digitalocean_delete() {
+        self::authorize_ajax_action( 'execute_backups', null );
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Match the raw unslashed object exactly; ownership authorization precedes nonce deduplication.
+        $snapshot_id = isset( $_POST['snapshot_id'] ) && is_scalar( $_POST['snapshot_id'] ) ? wp_unslash( $_POST['snapshot_id'] ) : '';
+        $matches     = array();
+        $websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_wp_for_current_user() );
+        foreach ( $websites as $website ) {
+            $site_id = (int) $website['id'];
+            if ( \mainwp_current_user_can( 'site', $site_id ) && self::owns_backup( $site_id, 'digitalocean', $snapshot_id ) ) {
+                $matches[] = $site_id;
+            }
+        }
+        if ( 1 !== count( $matches ) ) {
+            self::refuse_unlisted_backup();
+        }
+        self::authorize_ajax_action( 'execute_backups', 'website_id', $matches[0] );
+    }
+
+    /**
+     * Account-wide cPanel lists may describe an entire account rather than one site.
+     *
+     * @param int    $site_id Authorized site.
+     * @param string $kind Automatic, database or manual backup.
+     */
+    public static function authorize_cpanel_restore( $site_id, $kind ) {
+        $db         = MainWP_DB::instance();
+        $individual = 'on' === $db->get_website_option( $site_id, 'mainwp_enable_cpanel_individual' );
+        if ( 'manual' === $kind || ! $individual ) {
+            if ( 'all' !== apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' ) ) {
+                wp_send_json( array( 'error' => esc_html__( 'Error: unrestricted site access is required to restore account-wide backups.', 'mainwp' ) ) );
+            }
+            return;
+        }
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Match the raw unslashed object exactly; ownership authorization precedes nonce deduplication.
+        $backup_id = isset( $_POST['backup_id'] ) && is_scalar( $_POST['backup_id'] ) ? wp_unslash( $_POST['backup_id'] ) : '';
+        if ( 'database' === $kind ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Compare the exact unslashed directory later used by the worker.
+            $path    = isset( $_POST['backup_path'] ) && is_scalar( $_POST['backup_path'] ) ? wp_unslash( $_POST['backup_path'] ) : '';
+            $backups = $db->get_json_website_option( $site_id, 'mainwp_3rd_party_cpanel_manual_database_backups' );
+            $field   = 'file_name';
+            $dir     = 'absolute_dir';
+        } else {
+            // The automatic restore ignores posted backup_path and uses the configured site path.
+            $path    = $db->get_website_option( $site_id, 'cpanel_site_path' );
+            $stored  = $db->get_json_website_option( $site_id, 'mainwp_3rd_party_cpanel_available_backups' );
+            $backups = $stored['data'] ?? array();
+            $field   = 'backupID';
+            $dir     = 'path';
+        }
+        foreach ( $backups as $backup ) {
+            if ( is_array( $backup ) && isset( $backup[ $field ], $backup[ $dir ] ) && is_scalar( $backup[ $field ] ) && (string) $backup[ $field ] === (string) $backup_id && $backup[ $dir ] === $path && '' !== $backup_id && ! empty( $path ) ) {
+                return;
+            }
+        }
+        self::refuse_unlisted_backup();
+    }
+
+    /** Unknown objects may need a fresh provider list before they can be authorized. */
+    private static function refuse_unlisted_backup() {
+        wp_send_json( array( 'error' => esc_html__( 'Error: backup ownership could not be verified for this site. Refresh the backup list and try again.', 'mainwp' ) ) );
     }
 
     /**

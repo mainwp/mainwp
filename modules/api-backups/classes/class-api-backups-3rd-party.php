@@ -1859,6 +1859,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * that app's Server ID & App ID to that Child Site's options table.
      */
     public function ajax_cloudways_action_update_ids() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', null );
         Api_Backups_Helper::security_nonce( 'cloudways_action_update_ids' );
         static::cloudways_action_update_ids();
     }
@@ -1919,6 +1920,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_cloudways_action_individual_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'cloudways_action_individual_backup' );
         static::cloudways_action_backup();
     }
@@ -1931,6 +1933,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_cloudways_action_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'cloudways_action_backup' );
         static::cloudways_action_create_backup();
     }
@@ -2072,6 +2075,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public static function cloudways_action_refresh_available_backups() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
 
         Api_Backups_Helper::security_nonce( 'cloudways_action_refresh_available_backups' );
 
@@ -2082,7 +2086,6 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
             // Grab $_GET['data'] from url if not Ajax call.
             $website_id = isset( $_GET['id'] ) ? intval( $_GET['id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.NonceVerification.Recommended
         }
-
 
         // Grab needed site options from WP_MAINWP_WP_OPTIONS table.
         $site_options = Api_Backups_Helper::get_website_options(
@@ -2141,6 +2144,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function cloudways_action_restore_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
 
         Api_Backups_Helper::security_nonce( 'cloudways_action_restore_backup' );
 
@@ -2193,6 +2197,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function cloudways_action_delete_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
 
         Api_Backups_Helper::security_nonce( 'cloudways_action_delete_backup' );
 
@@ -2312,6 +2317,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_vultr_action_individual_create_snapshot() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'vultr_action_individual_create_snapshot' );
         static::vultr_action_create_snapshot();
     }
@@ -2328,6 +2334,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_vultr_action_create_snapshot() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'vultr_action_create_snapshot' );
         static::vultr_action_create_snapshot();
     }
@@ -2483,6 +2490,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function vultr_action_refresh_available_backups() { //phpcs:ignore -- NOSONAR - complex.
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'vultr_action_refresh_available_backups' );
 
         // Grab website_id & backup_api name from Ajax post.
@@ -2550,6 +2558,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_vultr_action_restore_backup() {
+        $authorized_site = Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
+        Api_Backups_Helper::require_owned_backup( $authorized_site, 'vultr', 'snapshot_id' );
         Api_Backups_Helper::security_nonce( 'vultr_action_restore_backup' );
         static::vultr_action_restore_backup();
     }
@@ -2599,6 +2609,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function vultr_action_delete_backup() {
+        $authorized_site = Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
+        Api_Backups_Helper::require_owned_backup( $authorized_site, 'vultr', 'snapshot_id' );
 
         Api_Backups_Helper::security_nonce( 'vultr_action_delete_backup' );
 
@@ -2738,6 +2750,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void True|False Return True on success & False on failure
      */
     public function ajax_gridpane_action_update_ids() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', null );
         Api_Backups_Helper::security_nonce( 'gridpane_action_update_ids' );
         static::gridpane_action_update_ids();
     }
@@ -2837,6 +2850,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_gridpane_action_individual_create_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'gridpane_action_individual_create_backup' );
         static::gridpane_action_create_backup();
     }
@@ -2850,6 +2864,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_gridpane_action_create_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'gridpane_action_create_backup' );
         static::gridpane_action_create_backup();
     }
@@ -2919,6 +2934,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function gridpane_action_refresh_available_backups() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
 
         Api_Backups_Helper::security_nonce( 'gridpane_action_refresh_available_backups' );
 
@@ -2973,6 +2989,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function gridpane_action_restore_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
 
         Api_Backups_Helper::security_nonce( 'gridpane_action_restore_backup' );
 
@@ -3018,6 +3035,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function gridpane_action_delete_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
 
         Api_Backups_Helper::security_nonce( 'gridpane_action_delete_backup' );
 
@@ -3109,6 +3127,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_linode_action_individual_create_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'linode_action_individual_create_backup' );
         static::linode_action_create_backup();
         die();
@@ -3122,6 +3141,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_linode_action_create_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'linode_action_create_backup' );
         static::linode_action_create_backup();
         die();
@@ -3185,6 +3205,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function linode_action_refresh_available_backups() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'linode_action_refresh_available_backups' );
         // Grab website_id & backup_api name from Ajax post.
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
@@ -3231,6 +3252,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function linode_action_restore_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
 
         Api_Backups_Helper::security_nonce( 'linode_action_restore_backup' );
 
@@ -3329,6 +3351,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function linode_action_cancel_backups() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
 
         Api_Backups_Helper::security_nonce( 'linode_action_cancel_backups' );
 
@@ -3421,6 +3444,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_digitalocean_action_create_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'digitalocean_action_create_backup' );
         static::digitalocean_action_create_backup();
     }
@@ -3433,6 +3457,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_digitalocean_action_individual_create_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'digitalocean_action_individual_create_backup' );
         static::digitalocean_action_create_backup();
     }
@@ -3507,6 +3532,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function digitalocean_action_refresh_available_backups() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
 
         Api_Backups_Helper::security_nonce( 'digitalocean_action_refresh_available_backups' );
 
@@ -3554,6 +3580,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function digitalocean_action_restore_backup() {
+        $authorized_site = Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
+        Api_Backups_Helper::require_owned_backup( $authorized_site, 'digitalocean', 'snapshot_id' );
 
         Api_Backups_Helper::security_nonce( 'digitalocean_action_restore_backup' );
 
@@ -3597,6 +3625,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public static function digitalocean_action_delete_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', null );
+        Api_Backups_Helper::authorize_digitalocean_delete();
 
         Api_Backups_Helper::security_nonce( 'digitalocean_action_delete_backup' );
 
@@ -3776,6 +3806,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_plesk_action_refresh_available_backups() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'plesk_action_refresh_available_backups' );
         static::plesk_action_refresh_available_backups();
         die();
@@ -3789,6 +3820,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_plesk_action_create_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'plesk_action_create_backup' );
         static::plesk_action_create_backup();
         die();
@@ -3802,6 +3834,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_plesk_action_restore_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'plesk_action_restore_backup' );
         static::plesk_action_restore_backup();
         die();
@@ -3815,6 +3848,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_plesk_action_delete_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'plesk_action_delete_backup' );
         static::plesk_action_delete_backup();
         die();
@@ -4383,6 +4417,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_cpanel_action_restore_backup() {
+        $authorized_site = Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
+        Api_Backups_Helper::authorize_cpanel_restore( $authorized_site, 'automatic' );
         Api_Backups_Helper::security_nonce( 'cpanel_action_restore_backup' );
         static::cpanel_action_restore_backup();
         die();
@@ -4396,6 +4432,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_cpanel_action_restore_database_backup() {
+        $authorized_site = Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
+        Api_Backups_Helper::authorize_cpanel_restore( $authorized_site, 'database' );
         Api_Backups_Helper::security_nonce( 'cpanel_action_restore_database_backup' );
         static::cpanel_action_restore_database_backup();
         die();
@@ -4409,6 +4447,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_cpanel_action_restore_manual_backup() {
+        $authorized_site = Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
+        Api_Backups_Helper::authorize_cpanel_restore( $authorized_site, 'manual' );
         Api_Backups_Helper::security_nonce( 'cpanel_action_restore_manual_backup' );
         static::cpanel_action_restore_manual_backup();
         die();
@@ -4422,6 +4462,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_cpanel_action_refresh_available_backups() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'cpanel_action_refresh_available_backups' );
         static::cpanel_action_refresh_available_backups();
         die();
@@ -4435,6 +4476,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_cpanel_action_create_manual_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'cpanel_action_create_manual_backup' );
         static::cpanel_action_create_manual_backup();
         die();
@@ -4448,6 +4490,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_cpanel_action_create_wptk_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'cpanel_action_create_wptk_backup' );
         static::cpanel_action_create_wptk_backup();
         die();
@@ -4461,6 +4504,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_cpanel_action_restore_wptk_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'cpanel_action_restore_wptk_backup' );
         static::cpanel_action_restore_wptk_backup();
         die();
@@ -4474,6 +4518,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_cpanel_action_delete_wptk_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'cpanel_action_delete_wptk_backup' );
         static::cpanel_action_delete_wptk_backup();
         die();
@@ -4487,6 +4532,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public static function ajax_cpanel_action_create_full_backup() { //phpcs:ignore -- NOSONAR - complex.
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'cpanel_action_create_full_backup' );
 
         if ( is_admin() && defined( 'DOING_AJAX' ) && DOING_AJAX ) {
@@ -4554,6 +4600,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return mixed
      */
     public static function ajax_cpanel_action_create_database_backup( $ret_val = false, $website_id = null ) {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id', $website_id );
 
         // Grab website_id & from Ajax post if $website_id is not set.
         if ( empty( $website_id ) ) {
@@ -5045,6 +5092,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_kinsta_action_refresh_available_backups() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'kinsta_action_refresh_available_backups' );
         static::kinsta_action_refresh_available_backups();
         die();
@@ -5058,6 +5106,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_kinsta_action_create_backup() {
+        Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
         Api_Backups_Helper::security_nonce( 'kinsta_action_create_backup' );
         static::kinsta_action_create_backup();
         die();
@@ -5071,6 +5120,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_kinsta_action_delete_backup() {
+        $authorized_site = Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'website_id' );
+        Api_Backups_Helper::require_owned_backup( $authorized_site, 'kinsta', 'backup_id' );
         Api_Backups_Helper::security_nonce( 'kinsta_action_delete_backup' );
         static::kinsta_action_delete_backup();
         die();
@@ -5084,6 +5135,8 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void
      */
     public function ajax_kinsta_action_restore_backup() {
+        $authorized_site = Api_Backups_Helper::authorize_ajax_action( 'restore_backups', 'website_id' );
+        Api_Backups_Helper::require_owned_backup( $authorized_site, 'kinsta', 'backup_id', true );
         Api_Backups_Helper::security_nonce( 'kinsta_action_restore_backup' );
         static::kinsta_action_restore_backup(); // ajax call.
         die();

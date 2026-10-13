@@ -640,6 +640,9 @@ class MainWP_Password_Policy_Settings {
      */
 	public static function ajax_save_individual() { // phpcs:ignore -- NOSONAR -- complex.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_password_policy_save_individual' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
+            wp_send_json_error( array( 'message' => \mainwp_do_not_have_permissions( esc_html__( 'password policy settings', 'mainwp' ), false ) ) );
+        }
 
         $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
 
@@ -750,6 +753,9 @@ class MainWP_Password_Policy_Settings {
      */
 	public static function ajax_update_site() { // phpcs:ignore -- NOSONAR -- complexity.
         MainWP_Post_Handler::instance()->check_security( 'mainwp_password_policy_update_site' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
+            wp_send_json( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'password policy settings', 'mainwp' ), false ) ) );
+        }
 
         $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- check_security() verified the nonce above.
 

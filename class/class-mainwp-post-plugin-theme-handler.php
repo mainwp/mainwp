@@ -790,7 +790,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             return;
         }
         if ( ! MainWP_Utility::ctype_digit( $id ) || ! \mainwp_current_user_can( 'site', intval( $id ) ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'access this site', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'access this site', 'mainwp' ), false ) ) ) );
         }
     }
 
@@ -801,7 +801,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_ignoreplugintheme() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         $this->check_posted_site_access();
@@ -829,7 +829,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_unignore_global_pluginsthemes() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         $this->secure_request( 'mainwp_unignorepluginsthemes' );
@@ -855,7 +855,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_unignoreabandonedplugintheme() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         $this->check_posted_site_access();
@@ -883,7 +883,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_unignoreabandonedpluginsthemes() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         $this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
@@ -908,7 +908,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_dismissoutdateplugintheme() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         $this->check_posted_site_access();
@@ -938,7 +938,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $this->secure_request( 'mainwp_dismissoutdatepluginsthemes' );
 
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -963,7 +963,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_unignoreplugintheme() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         $this->check_posted_site_access();
@@ -994,7 +994,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $this->secure_request( 'mainwp_ignorepluginsthemes' );
 
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1023,7 +1023,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $this->secure_request( 'mainwp_updates_ignore_upgrades' );
 
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1115,7 +1115,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function ajax_unignore_core_updates() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         $this->check_posted_site_access();
@@ -1136,7 +1136,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function ajax_unignore_global_upgrades() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         $this->secure_request( 'mainwp_updates_unignore_global_upgrades' );
@@ -1158,7 +1158,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_trust_plugin() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ), false ) ) ) );
         }
 
         $this->secure_request( 'mainwp_trust_plugin' );
@@ -1174,7 +1174,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      */
     public function mainwp_trust_theme() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ), false ) ) ) );
         }
 
         $this->secure_request( 'mainwp_trust_theme' );

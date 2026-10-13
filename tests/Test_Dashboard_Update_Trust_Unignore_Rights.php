@@ -442,12 +442,14 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
     }
 
     /**
-     * Permission errors retain the existing JSON response shape.
+     * Permission errors return the message in the JSON error field.
      *
      * @param array $response Response.
      */
     private function assert_refused( array $response ): void {
-        $this->assertSame( array( 'error' => false ), $response );
+        $this->assertSame( array( 'error' ), array_keys( $response ) );
+        $this->assertIsString( $response['error'] );
+        $this->assertStringStartsWith( 'You do not have sufficient permissions', $response['error'] );
     }
 
     /**
@@ -483,12 +485,8 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
         } finally {
             $buffer = ob_get_clean();
         }
-        $response_body = $buffer . $body;
-        // The existing permission helper echoes HTML before returning false to the JSON error field.
-        if ( 0 === strpos( $response_body, '<div class="mainwp-permission-error">' ) ) {
-            $response_body = substr( $response_body, strpos( $response_body, '</div>' ) + 6 );
-        }
-        $response = json_decode( $response_body, true );
+        // Any output before the JSON body would break the jQuery JSON callbacks.
+        $response = json_decode( $buffer . $body, true );
         $this->assertIsArray( $response, 'Expected a JSON response; verify the nonce and AJAX context.' );
         return $response;
     }

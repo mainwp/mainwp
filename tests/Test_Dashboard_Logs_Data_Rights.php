@@ -471,6 +471,58 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
     }
 
     /**
+     * Per-site password policy writers with the users right granted and refused.
+     *
+     * @return array
+     */
+    public static function password_policy_ajax_writers(): array {
+        $cases = array();
+        foreach ( array( 'save_individual', 'update_site' ) as $writer ) {
+            $cases[ $writer . ' refused' ] = array( $writer, false );
+            $cases[ $writer . ' allowed' ] = array( $writer, true );
+        }
+        return $cases;
+    }
+
+    /**
+     * The per-site AJAX writers need the same right as the bulk save they serve.
+     *
+     * @dataProvider password_policy_ajax_writers
+     * @param string $writer Writer name.
+     * @param bool   $allowed Users right.
+     */
+    public function test_password_policy_ajax_right( string $writer, bool $allowed ): void {
+        $this->right( 'manage_users', $allowed );
+        $site = $this->create_test_site( array( 'url' => 'https://password-policy-fixture.example/' ) );
+        // A site on individual settings is skipped by update_site before any Child request.
+        MainWP_DB::instance()->update_website_option( $site, 'password_policy_individual_settings', wp_json_encode( array( 'overwrite_enabled' => true ) ) );
+        $action   = 'mainwp_password_policy_' . $writer;
+        $_POST    = array(
+            'security'          => wp_create_nonce( $action ),
+            'site_id'           => (string) $site,
+            'overwrite_enabled' => '0',
+            'max_age_days'      => '90',
+            'due_soon_message'  => 'Due soon',
+            'overdue_message'   => 'Overdue',
+            'show_notices_to'   => 'all_users',
+        );
+        $_REQUEST = $_POST;
+        $before   = $this->snapshot();
+        $response = json_decode( $this->capture( array( MainWP_Password_Policy_Settings::class, 'ajax_' . $writer ) ), true );
+        $this->assertIsArray( $response );
+        if ( ! $allowed ) {
+            $this->assertSame( $before, $this->snapshot(), 'Refusal changed options or site rows.' );
+            $message = 'save_individual' === $writer ? $response['data']['message'] : $response['error'];
+            $this->assertStringStartsWith( 'You do not have sufficient permissions', $message );
+        } elseif ( 'save_individual' === $writer ) {
+            $this->assertTrue( $response['success'] );
+            $this->assertSame( wp_json_encode( array( 'overwrite_enabled' => false ) ), MainWP_DB::instance()->get_website_option( $site, 'password_policy_individual_settings' ) );
+        } else {
+            $this->assertTrue( $response['skipped'] );
+        }
+    }
+
+    /**
      * Effective users rights.
      *
      * @return array

@@ -338,11 +338,11 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             );
 
             $activate_results = MainWP_Api_Manager_Key::instance()->activate( $args );
-            if ( ! empty( $activate_results ) ) {
-                $activate_results = json_decode( $activate_results, true );
-            }
+            $activate_results = is_string( $activate_results ) && '' !== $activate_results ? json_decode( $activate_results, true ) : false;
             if ( ! is_array( $activate_results ) ) {
+                // Keep the stored key and status, so submitting the same key again goes straight back to activation.
                 $activate_results = false;
+                $return['error']  = esc_html__( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
             }
 
             if ( is_array( $activate_results ) && isset( $activate_results['activated'] ) && true === $activate_results['activated'] ) {
@@ -354,12 +354,6 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $options['deactivate_checkbox'] = 'off';
                 $options['mainwp_version']      = MainWP_System::instance()->get_dashboard_version();
                 MainWP_Utility::instance()->get_set_deactivated_licenses_alerted( $api_slug, 0, 'set' ); // so next time deactived it will alerted.
-            }
-
-            if ( false === $activate_results ) {
-                $return['error']          = esc_html__( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
-                $options['api_key']       = '';
-                $options['activated_key'] = 'Deactivated';
             }
 
             $error = $this->check_response_for_api_errors( $activate_results );

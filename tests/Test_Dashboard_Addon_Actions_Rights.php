@@ -137,8 +137,8 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
                 return $this->http_response;
             }
         );
-        $this->fixture_root = dirname( __DIR__ ) . '/.mwpdev/debugging/dashboard-followups/s5/keys-' . wp_generate_uuid4();
-        mkdir( $this->fixture_root );
+        $this->fixture_root = get_temp_dir() . 'mainwp-addon-rights-keys-' . wp_generate_uuid4();
+        mkdir( $this->fixture_root, 0700, true );
         $this->filter(
             'mainwp_get_wp_upload_dir',
             function ( $upload ) {
@@ -435,14 +435,21 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
         $timeout     = 'cURL error 28: Operation timed out after 50001 milliseconds';
         $dns         = 'cURL error 6: Could not resolve host: mainwp.com';
         $connection  = 'cURL error 7: Failed to connect to mainwp.com port 443';
+        $handshake   = 'cURL error 35: OpenSSL SSL_connect: SSL_ERROR_SYSCALL in connection to mainwp.com:443';
+        $reset       = 'cURL error 35: OpenSSL SSL_connect: Connection reset by peer in connection to mainwp.com:443';
+        $protocol    = 'cURL error 35: error:0A000102:SSL routines::unsupported protocol';
+        $read        = 'cURL error 56: OpenSSL SSL_read: Connection reset by peer, errno 104';
         return array(
             'cURL 60'               => array( 1, $certificate, self::TLS_ERROR ),
             'cURL 77'               => array( 1, 'cURL error 77: error setting certificate verify locations', self::TLS_ERROR ),
             'certificate mismatch'  => array( 1, 'SSL certificate did not match the requested domain name', self::TLS_ERROR ),
-            'cURL 35'               => array( 1, 'cURL error 35: OpenSSL SSL_connect: SSL_ERROR_SYSCALL', self::TLS_ERROR ),
             'cURL 51'               => array( 1, 'cURL error 51: SSL: no alternative certificate subject name matches target host name', self::TLS_ERROR ),
             'uppercase certificate' => array( 1, 'CERTIFICATE validation failed', self::TLS_ERROR ),
-            'lowercase ssl'         => array( 1, 'ssl handshake failed', self::TLS_ERROR ),
+            'streams transport'     => array( 1, 'The SSL certificate for the host could not be verified.', self::TLS_ERROR ),
+            'cURL 35 syscall'       => array( 1, $handshake, $handshake ),
+            'cURL 35 reset'         => array( 1, $reset, $reset ),
+            'cURL 35 protocol'      => array( 1, $protocol, $protocol ),
+            'cURL 56'               => array( 1, $read, $read ),
             'cURL 28'               => array( 1, $timeout, $timeout ),
             'cURL 6'                => array( 1, $dns, $dns ),
             'cURL 7'                => array( 1, $connection, $connection ),
@@ -500,50 +507,66 @@ class Test_Dashboard_Addon_Actions_Rights extends \WP_UnitTestCase {
     }
 
     /**
-     * Failed certificate checks and non-JSON activation replies.
+     * License server replies to an activation request.
      *
-     * @return array Cases.
+     * @return array Cases: reply (WP_Error or HTTP response), expected error.
      */
-    public static function activation_failures(): array {
+    public static function activation_replies(): array {
+        $failed = 'Connection failed to the License Key API server. Try again later.';
+        $reply  = static function ( int $code, string $body ): array {
+            return array(
+                'response' => array( 'code' => $code ),
+                'body'     => $body,
+                'headers'  => array(),
+            );
+        };
         return array(
-            'certificate error' => array( true ),
-            'non-JSON reply'    => array( false ),
+            'certificate error' => array( new \WP_Error( 'http_request_failed', 'cURL error 60: SSL certificate problem: unable to get local issuer certificate' ), $failed ),
+            'timeout'           => array( new \WP_Error( 'http_request_failed', 'cURL error 28: Operation timed out after 50001 milliseconds' ), $failed ),
+            'HTTP 500'          => array( $reply( 500, '{"activated":true}' ), $failed ),
+            'empty body'        => array( $reply( 200, '' ), $failed ),
+            'non-JSON body'     => array( $reply( 200, '<html>Maintenance</html>' ), $failed ),
+            'JSON scalar'       => array( $reply( 200, 'null' ), $failed ),
+            'rejected'          => array( $reply( 200, '{"activated":false,"code":"fixture","error":"Fixture license rejected."}' ), 'Fixture license rejected.' ),
         );
     }
 
     /**
-     * Failed activation connections return an error and leave the key deactivated.
+     * A failed or refused activation returns its error, keeps the stored key and status, and the same key can be submitted again.
      *
-     * @dataProvider activation_failures
-     * @param bool $certificate_error Use a certificate transport error.
+     * @dataProvider activation_replies
+     * @param array|\WP_Error $reply License server reply.
+     * @param string          $expected Expected error.
      */
-    public function test_activation_connection_failure( bool $certificate_error ): void {
+    public function test_activation_reply( $reply, string $expected ): void {
         $this->right( 'manage_extensions', true );
         $info                  = MainWP_Api_Manager::instance()->get_activation_info( self::SLUG );
         $info['activated_key'] = 'Deactivated';
         $this->assertTrue( MainWP_Api_Manager::instance()->set_activation_info( self::SLUG, $info ) );
-        if ( $certificate_error ) {
-            $this->http_response = new \WP_Error( 'http_request_failed', 'cURL error 60: SSL certificate problem: unable to get local issuer certificate' );
-        } else {
-            $this->http_response['body'] = 'fixture non-JSON reply';
-        }
-        $response = json_decode(
-            $this->ajax(
-                'mainwp_extension_api_activate',
-                array(
-                    'slug' => self::SLUG . '/fixture.php',
-                    'key'  => 'fixture-license-key',
-                )
-            ),
-            true
+        $post                = array(
+            'slug' => self::SLUG . '/fixture.php',
+            'key'  => 'fixture-license-key',
         );
-        $this->assertSame( array( 'error' => 'Connection failed to the License Key API server. Try again later.' ), $response );
-        $info = MainWP_Api_Manager::instance()->get_activation_info( self::SLUG );
-        $this->assertSame( 'Deactivated', $info['activated_key'] );
-        $this->assertSame( '', $info['api_key'] );
+        $this->http_response = $reply;
+        $response            = json_decode( $this->ajax( 'mainwp_extension_api_activate', $post ), true );
+        $this->assertSame( array( 'error' => $expected ), $response );
+        $after = MainWP_Api_Manager::instance()->get_activation_info( self::SLUG );
+        $this->assertSame( 'fixture-license-key', $after['api_key'] );
+        $this->assertSame( 'Deactivated', $after['activated_key'] );
         $this->assertSame( 1, (int) get_option( 'mainwp_api_sslVerifyCertificate' ) );
         $this->assertCount( 1, $this->http );
         $this->assertSame( 1, $this->http[0]['args']['sslverify'] );
+        $this->assertSame( 'softwareactivation', $this->http[0]['args']['body']['request'] );
+
+        $this->http_response = array(
+            'response' => array( 'code' => 200 ),
+            'body'     => '{"activated":false,"code":"fixture","error":"Fixture license rejected."}',
+            'headers'  => array(),
+        );
+        $retry               = json_decode( $this->ajax( 'mainwp_extension_api_activate', $post ), true );
+        $this->assertSame( array( 'error' => 'Fixture license rejected.' ), $retry, 'The retry must reach activation, not the key replacement path.' );
+        $this->assertCount( 2, $this->http );
+        $this->assertSame( 'softwareactivation', $this->http[1]['args']['body']['request'] );
     }
 
     /** Loading Add-ons must not change the license API TLS option. */

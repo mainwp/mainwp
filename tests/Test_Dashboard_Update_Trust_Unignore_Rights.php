@@ -142,6 +142,23 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
     }
 
     /**
+     * Spellings of the out-of-scope site ID that the handlers turn into that ID.
+     *
+     * @return array Spelling cases; %d is the site ID.
+     */
+    public static function site_id_spellings(): array {
+        $cases = array();
+        foreach ( self::actions() as $name => $action ) {
+            if ( $action[4] ) {
+                foreach ( array( 'trailing text' => '%dabc', 'markup' => '<b>%d</b>', 'percent octet' => '%d%%41', 'array' => array( '%d' ) ) as $label => $spelling ) {
+                    $cases[ "$name $label" ] = array( $action, $spelling );
+                }
+            }
+        }
+        return $cases;
+    }
+
+    /**
      * Only the unignore site routes support the _ALL_ sentinel.
      *
      * @return array Scoped bulk cases.
@@ -199,6 +216,23 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
             $this->assertSame( $before, $this->snapshot(), 'Out-of-scope refusal changed stored state.' );
             $this->assert_refused( $response );
         }
+    }
+
+    /**
+     * Non-numeric spellings of an out-of-scope ID are refused before the request is recorded.
+     *
+     * @dataProvider site_id_spellings
+     * @param array        $action Action specification.
+     * @param string|array $spelling ID spelling; %d is the site ID.
+     */
+    public function test_site_id_spelling_requires_scope( array $action, $spelling ): void {
+        $this->seed( $action );
+        $this->rights( $action, true, array( $this->sites[0] ) );
+        $id       = is_array( $spelling ) ? array( sprintf( $spelling[0], $this->sites[1] ) ) : sprintf( $spelling, $this->sites[1] );
+        $before   = $this->snapshot();
+        $response = $this->ajax( $action, $id );
+        $this->assertSame( $before, $this->snapshot(), 'Out-of-scope refusal changed stored or request state.' );
+        $this->assert_refused( $response );
     }
 
     /**
@@ -373,11 +407,11 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
     /**
      * Exercise real source with a valid AJAX nonce and captured termination.
      *
-     * @param array  $action Action specification.
-     * @param string $id Numeric site ID or _ALL_.
+     * @param array        $action Action specification.
+     * @param string|array $id Site ID, _ALL_, or another posted spelling.
      * @return array Decoded response.
      */
-    private function ajax( array $action, string $id ): array {
+    private function ajax( array $action, $id ): array {
         list( $ajax, $method, $type, $operation ) = $action;
         $slug = 'plugin' === $type ? 'fixture/plugin.php' : 'fixture-theme';
         $_POST = array(

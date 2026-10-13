@@ -768,6 +768,32 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     }
 
     /**
+     * Method check_posted_site_access()
+     *
+     * Refuses the request before secure_request() records it when the posted
+     * site id names a site the current user cannot access.
+     *
+     * The id is read the way the handlers read it, through sanitize_text_field()
+     * or intval(), so spellings such as `12abc` or `<b>12</b>` cannot skip the
+     * check. `_ALL_` passes through: the handlers expand it to the user's sites.
+     */
+    private function check_posted_site_access() {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs before secure_request() so a refusal records nothing.
+        if ( ! isset( $_POST['id'] ) ) {
+            return;
+        }
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized on the next line; arrays are refused.
+        $raw = wp_unslash( $_POST['id'] );
+        $id  = is_scalar( $raw ) ? sanitize_text_field( (string) $raw ) : null;
+        if ( '_ALL_' === $id ) {
+            return;
+        }
+        if ( null === $id || ! \mainwp_current_user_can( 'site', intval( $id ) ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'access this site', 'mainwp' ) ) ) ) );
+        }
+    }
+
+    /**
      * Method mainwp_ignoreplugintheme()
      *
      * Ignores a plugin or a theme.
@@ -777,10 +803,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
         }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Authorize the numeric site before secure_request can persist request state.
-        if ( isset( $_POST['id'] ) && is_numeric( $_POST['id'] ) && ! \mainwp_current_user_can( 'site', (int) $_POST['id'] ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'access this site', 'mainwp' ) ) ) ) );
-        }
+        $this->check_posted_site_access();
 
         $this->secure_request( 'mainwp_ignoreplugintheme' );
 
@@ -834,10 +857,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
         }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Authorize the numeric site before secure_request can persist request state.
-        if ( isset( $_POST['id'] ) && is_numeric( $_POST['id'] ) && ! \mainwp_current_user_can( 'site', (int) $_POST['id'] ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'access this site', 'mainwp' ) ) ) ) );
-        }
+        $this->check_posted_site_access();
 
         $this->secure_request( 'mainwp_unignoreabandonedplugintheme' );
 
@@ -890,10 +910,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
         }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Authorize the numeric site before secure_request can persist request state.
-        if ( isset( $_POST['id'] ) && is_numeric( $_POST['id'] ) && ! \mainwp_current_user_can( 'site', (int) $_POST['id'] ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'access this site', 'mainwp' ) ) ) ) );
-        }
+        $this->check_posted_site_access();
 
         $this->secure_request( 'mainwp_dismissoutdateplugintheme' );
 
@@ -948,10 +965,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
         }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Authorize the numeric site before secure_request can persist request state.
-        if ( isset( $_POST['id'] ) && is_numeric( $_POST['id'] ) && ! \mainwp_current_user_can( 'site', (int) $_POST['id'] ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'access this site', 'mainwp' ) ) ) ) );
-        }
+        $this->check_posted_site_access();
 
         $this->secure_request( 'mainwp_unignoreplugintheme' );
 
@@ -1103,10 +1117,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
             die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
         }
 
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Authorize the numeric site before secure_request can persist request state.
-        if ( isset( $_POST['id'] ) && is_numeric( $_POST['id'] ) && ! \mainwp_current_user_can( 'site', (int) $_POST['id'] ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'access this site', 'mainwp' ) ) ) ) );
-        }
+        $this->check_posted_site_access();
 
         $this->secure_request( 'mainwp_updates_unignore_upgrades' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

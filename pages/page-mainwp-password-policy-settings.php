@@ -214,6 +214,10 @@ class MainWP_Password_Policy_Settings {
         if ( isset( $_POST['bulk_update_password_policy'] ) ) {
             $form_submitted = true;
             check_admin_referer( 'mainwp_password_policy_settings', 'security' );
+            if ( ! \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
+                \mainwp_do_not_have_permissions( 'password policy settings', 'mainwp' );
+                return;
+            }
 
             if ( ! isset( $_POST['mainwp_password_policy_window'] ) ) {
                 $errors[] = esc_html__( 'Please select a password policy window.', 'mainwp' );
@@ -243,10 +247,6 @@ class MainWP_Password_Policy_Settings {
                     'overdue_message'  => $overdue_message,
                     'show_notices_to'  => $show_notices_to,
                 );
-                if ( ! \mainwp_current_user_can( 'dashboard', 'manage_users' ) ) {
-                    \mainwp_do_not_have_permissions( 'password policy settings', 'mainwp' );
-                    return;
-                }
                 update_option( 'mainwp_password_policy_settings', $settings );
 
                 $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user() );
@@ -616,6 +616,7 @@ class MainWP_Password_Policy_Settings {
                 return;
             }
 
+            // nosec -- allowed_classes false: the Child response cannot instantiate objects.
             $information = @unserialize( $decoded, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- Child responses are serialized arrays; allowed_classes false blocks object instantiation.
 
             if ( false === $information && 'b:0;' !== $decoded ) {

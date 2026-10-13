@@ -391,6 +391,13 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
             if ( 'no-view' === $request ) {
                 $this->assertStringContainsString( 'mainwp-permission-error', $body );
                 $this->assertStringNotContainsString( '<form', $body );
+            } elseif ( 'no-right' === $request ) {
+                $this->assertStringContainsString( 'mainwp-permission-error', $body );
+            } elseif ( in_array( $request, array( 'missing-nonce', 'invalid-nonce', 'get-nonce' ), true ) ) {
+                $this->assertStringContainsString( 'Insecure request', $body );
+            } elseif ( 'get' === $request ) {
+                $this->assertStringNotContainsString( 'Insecure request', $body );
+                $this->assertStringNotContainsString( 'mainwp-permission-error', $body );
             }
         } else {
             $this->assertSame( MainWP_Logger::UPTIME_CHECK_LOG_PRIORITY, (int) get_option( 'mainwp_actionlogs' ) );
@@ -429,15 +436,16 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
      * Menu access cannot replace authorization inside the password writer.
      *
      * @dataProvider rights
-     * @param bool $allowed Users right.
+     * @param bool   $allowed Users right.
+     * @param string $window Password policy window.
      */
-    public function test_password_policy_right( bool $allowed ): void {
+    public function test_password_policy_right( bool $allowed, string $window = '90' ): void {
         update_option( 'mainwp_password_policy_settings', array( 'max_age_days' => 30 ) );
         $this->right( 'manage_users', $allowed );
         $_POST    = array(
             'bulk_update_password_policy'             => '1',
             'security'                                => wp_create_nonce( 'mainwp_password_policy_settings' ),
-            'mainwp_password_policy_window'           => '90',
+            'mainwp_password_policy_window'           => $window,
             'mainwp_password_policy_due_soon_message' => 'Due soon',
             'mainwp_password_policy_overdue_message'  => 'Overdue',
             'mainwp_password_policy_show_notices_to'  => 'all_users',
@@ -468,8 +476,9 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
      */
     public static function rights(): array {
         return array(
-            'refused' => array( false ),
-            'allowed' => array( true ),
+            'refused'                => array( false ),
+            'allowed'                => array( true ),
+            'refused-invalid-window' => array( false, '7' ),
         );
     }
 

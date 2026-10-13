@@ -1920,7 +1920,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 return;
             }
             if ( ! isset( $_POST['_wpnonce'] ) || ! is_string( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'mainwp-admin-nonce' ) ) {
-                wp_die( esc_html__( 'Insecure request! Please try again.', 'mainwp' ) );
+                wp_die( esc_html__( 'Insecure request! Please try again.', 'mainwp' ), '', array( 'response' => 403 ) );
             }
         }
         static::render_header( 'ActionLogs' );

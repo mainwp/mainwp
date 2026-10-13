@@ -1860,6 +1860,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public function ajax_cloudways_action_update_ids() {
         Api_Backups_Helper::authorize_ajax_action( 'execute_backups', null );
+        Api_Backups_Helper::authorize_ajax_action( 'manage_api_backups', null );
         Api_Backups_Helper::security_nonce( 'cloudways_action_update_ids' );
         static::cloudways_action_update_ids();
     }
@@ -1872,11 +1873,17 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * that app's Server ID & App ID to that Child Site's options table.
      */
     public static function cloudways_action_update_ids() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) ) {
+            return;
+        }
         // Fetch Child Site domains.
         $child_sites = array();
         $websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_wp_for_current_user() );
 
         foreach ( $websites as $website ) {
+            if ( ! \mainwp_current_user_can( 'site', $website['id'] ) ) {
+                continue;
+            }
             $child_sites[ $website['id'] ] = preg_replace( '#^[^:/.]*[:/]+#i', '', preg_replace( '{/$}', '', urldecode( $website['url'] ) ) );
         }
 
@@ -2751,6 +2758,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public function ajax_gridpane_action_update_ids() {
         Api_Backups_Helper::authorize_ajax_action( 'execute_backups', null );
+        Api_Backups_Helper::authorize_ajax_action( 'manage_api_backups', null );
         Api_Backups_Helper::security_nonce( 'gridpane_action_update_ids' );
         static::gridpane_action_update_ids();
     }
@@ -2765,6 +2773,9 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
      * @return void True|False Return True on success & False on failure
      */
     public static function gridpane_action_update_ids() { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR - complexity.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) ) {
+            return;
+        }
 
         // Get child_sites list from MainWP.
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_wp_for_current_user() );
@@ -2773,6 +2784,9 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         $websites_by_urls = array();
         if ( $websites ) {
             while ( $websites && ( $website = Api_Backups_Helper::fetch_object( $websites ) ) ) {
+                if ( ! \mainwp_current_user_can( 'site', $website->id ) ) {
+                    continue;
+                }
                 $clean_url                      = Api_Backups_Helper::clean_url( $website->url );
                 $websites_by_urls[ $clean_url ] = $website->id;
             }
@@ -2786,6 +2800,9 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Loop through Child Sites.
         while ( $websites && ( $website = Api_Backups_Helper::fetch_object( $websites ) ) ) {
+            if ( ! \mainwp_current_user_can( 'site', $website->id ) ) {
+                continue;
+            }
 
             // Grab non-stagingChild Site ID.
             $website_id = $website->id;

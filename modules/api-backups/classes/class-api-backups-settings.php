@@ -978,6 +978,10 @@ class Api_Backups_Settings {
      * @return void
      */
     public function hook_mainwp_update_site( $website_id ) { //phpcs:ignore -- NOSONAR - complex method.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) || ! \mainwp_current_user_can( 'site', $website_id ) || empty( Api_Backups_Helper::get_website_by_id( $website_id ) ) ) {
+            return;
+        }
+
         /**
          * 3rd-Party Backup API Provider Settings.
          *

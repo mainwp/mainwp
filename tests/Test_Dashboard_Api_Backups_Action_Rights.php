@@ -14,6 +14,9 @@ namespace MainWP\Dashboard\Tests;
 // phpcs:disable WordPress.WP.AlternativeFunctions -- Source copies capture legacy exits without changing production code.
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Credential_Render;
+use MainWP\Dashboard\MainWP_Manage_Sites;
+use MainWP\Dashboard\Module\ApiBackups\Api_Backups_Settings;
 use MainWP\Dashboard\Module\ApiBackups\Rights_Api_Backups_3rd_Party;
 use MainWP\Dashboard\Module\ApiBackups\Rights_Api_Backups_Handler;
 
@@ -243,7 +246,7 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
      * @param string $right Required right.
      */
     public function test_permitted( string $method, string $right ): void {
-        $this->rights( $right, true );
+        $this->rights( $right, true, array( 'manage_api_backups' ) );
         if ( 'ajax_cpanel_action_restore_manual_backup' === $method ) {
             $this->scope( true );
         }
@@ -398,17 +401,17 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
             'unlisted'                           => array( 'snapshot-missing', true, '', 'refused' ),
             'empty id'                           => array( '', true, '', 'refused' ),
             'array id'                           => array( array( 'snapshot-owned' ), true, '', 'refused' ),
-            'two accessible owners'              => array( 'snapshot-owned', true, 'shared', 'refused' ),
+            'two accessible owners'              => array( 'snapshot-owned', true, 'shared', 'boundary' ),
             'accessible and hidden owner'        => array( 'snapshot-owned', false, 'shared', 'boundary' ),
             'duplicate option rows for one site' => array( 'snapshot-owned', true, 'duplicate', 'boundary' ),
             'staging owner only'                 => array( 'snapshot-staging', true, 'staging', 'boundary' ),
-            'production and staging owners'      => array( 'snapshot-owned', true, 'staging-shared', 'refused' ),
+            'production and staging owners'      => array( 'snapshot-owned', true, 'staging-shared', 'boundary' ),
             'row for a deleted site'             => array( 'snapshot-orphan', true, 'orphan', 'refused' ),
         );
     }
 
     /**
-     * Exactly one accessible site may own the snapshot.
+     * At least one accessible site must own the snapshot.
      *
      * @dataProvider digitalocean_delete_owners
      * @param mixed  $snapshot Posted snapshot id.
@@ -419,6 +422,14 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
     public function test_digitalocean_delete_owner_matrix( $snapshot, bool $all, string $fixture, string $expect ): void {
         $this->rights( 'execute_backups', true );
         $this->scope( $all );
+        $checked = array();
+        $this->filter(
+            'mainwp_getwebsite_by_id',
+            static function ( $website, $site ) use ( &$checked ) {
+                $checked[] = (int) $site;
+                return $website;
+            }
+        );
         $name = 'mainwp_3rd_party_digitalocean_available_backups';
         $list = static function ( $id ) {
             return wp_json_encode( array( 'snapshots' => array( array( 'id' => $id ) ) ) );
@@ -442,6 +453,284 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
         }
         $this->assertSame( 'boundary', $this->request( 'digitalocean_action_delete_backup', array( 'snapshot_id' => $snapshot ) ) );
         $this->assertSame( 1, $this->hits );
+        if ( in_array( $fixture, array( 'shared', 'staging-shared' ), true ) ) {
+            $this->assertSame( array( $this->site ), array_values( array_unique( $checked ) ), 'Use the first accessible owner.' );
+        }
+    }
+
+    /**
+     * Mixed forms and direct hook calls must protect the complete mapping block.
+     *
+     * @return array Rights, scope, entry point and key submission matrix.
+     */
+    public static function mapping_site_edits(): array {
+        return array(
+            'mixed denied replacement' => array( false, true, true, 'replace' ),
+            'mixed denied clear'       => array( false, true, true, 'clear' ),
+            'mixed denied retained'    => array( false, true, true, 'retain' ),
+            'mixed permitted replace'  => array( true, true, true, 'replace' ),
+            'mixed permitted clear'    => array( true, true, true, 'clear' ),
+            'mixed permitted retained' => array( true, true, true, 'retain' ),
+            'mixed hidden site'        => array( true, false, true, 'replace' ),
+            'hook denied'              => array( false, true, false, 'replace' ),
+            'hook hidden site'         => array( true, false, false, 'replace' ),
+            'hook permitted'           => array( true, true, false, 'replace' ),
+        );
+    }
+
+    /**
+     * Site settings still save when the mapping right is absent.
+     *
+     * @dataProvider mapping_site_edits
+     * @param bool   $manage Mapping right.
+     * @param bool   $accessible Site right and scope.
+     * @param bool   $form Submit the ordinary site form.
+     * @param string $keys Replace, clear or retain per-site keys.
+     */
+    public function test_mapping_site_edit( bool $manage, bool $accessible, bool $form, string $keys ): void {
+        $this->rights( 'edit_sites', true, $manage ? array( 'manage_api_backups' ) : array() );
+        $site    = $accessible ? $this->site : $this->foreign;
+        $mapping = array(
+            'mainwp_3rd_party_api'            => array( 'mainwp_managesites_edit_module_api_backups_provider', '6', 'Kinsta' ),
+            'mainwp_3rd_party_instance_id'    => array( 'edit_site_module_api_backups_provider_instance_id', 'new-instance', 'new-instance' ),
+            'cpanel_api_url'                  => array( 'cpanel_api_url', 'https://new-cpanel.example:2083', 'https://new-cpanel.example:2083' ),
+            'mainwp_enable_wp_toolkit'        => array( 'mainwp_enable_wp_toolkit', 'on', 'on' ),
+            'mainwp_enable_cpanel_individual' => array( 'mainwp_enable_cpanel_individual', 'on', 'on' ),
+            'cpanel_account_username'         => array( 'mainwp_cpanel_account_username', 'new-account', 'new-account' ),
+            'cpanel_site_path'                => array( 'cpanel_site_path', '/new/site', '/new/site' ),
+            'mainwp_enable_plesk_individual'  => array( 'mainwp_enable_plesk_individual', 'on', 'on' ),
+            'plesk_api_url'                   => array( 'plesk_api_url', 'https://new-plesk.example:8443/', 'https://new-plesk.example:8443' ),
+            'mainwp_plesk_installation_id'    => array( 'plesk_installation_id', 'new-installation', 'new-installation' ),
+            'mainwp_enable_kinsta_individual' => array( 'mainwp_enable_kinsta_individual', 'on', 'on' ),
+            'mainwp_kinsta_environment_id'    => array( 'kinsta_environment_id', 'new-environment', 'new-environment' ),
+            'mainwp_kinsta_account_email'     => array( 'kinsta_account_email', 'fixture@example.com', 'fixture@example.com' ),
+            'mainwp_kinsta_company_id'        => array( 'kinsta_company_id', 'new-company', 'new-company' ),
+        );
+        $_POST   = array(
+            'submit'                                   => 'Save Settings',
+            'wp_nonce'                                 => wp_create_nonce( 'UpdateWebsite' . $site ),
+            'mainwp_managesites_edit_siteadmin'        => 'admin',
+            'mainwp_managesites_edit_sitename'         => 'Changed ordinary setting',
+            'mainwp_managesites_edit_siteurl_protocol' => 'https',
+            'mainwp_automaticDailyUpdate'              => '1',
+            'mainwp_managesites_edit_monitoringNotificationEmails' => 'monitor@example.com',
+        );
+        foreach ( $mapping as $option => $values ) {
+            MainWP_DB::instance()->update_website_option( $site, $option, 'original-' . $option );
+            $_POST[ $values[0] ] = $values[1];
+        }
+        MainWP_DB::instance()->update_website_option( $site, 'mainwp_3rd_party_app_id', 'original-app' );
+        $key_fields = array(
+            'cpanel' => 'mainwp_cpanel_account_password',
+            'plesk'  => 'mainwp_plesk_api_key',
+            'kinsta' => 'mainwp_kinsta_api_key',
+        );
+        foreach ( $key_fields as $provider => $field ) {
+            MainWP_DB::instance()->update_website_option( $site, 'mainwp_api_backups_' . $provider . '_api_key', wp_json_encode( array( 'encrypted_val' => 'original-' . $provider ) ) );
+            $_POST[ $field ] = 'retain' === $keys ? MainWP_Credential_Render::value_for_input( true ) : ( 'clear' === $keys ? '' : 'fixture-' . $provider );
+        }
+        $_REQUEST = array_merge( $_POST, array( 'id' => (string) $site ) );
+        global $wp_filter;
+        foreach ( array( 'mainwp_update_site', 'mainwp_site_updated', 'mainwp_encrypt_key_value' ) as $hook ) {
+            $this->hooks[ $hook ] = isset( $wp_filter[ $hook ] ) ? clone $wp_filter[ $hook ] : null;
+            remove_all_filters( $hook );
+        }
+        $this->filter(
+            'mainwp_encrypt_key_value',
+            static function ( $value, $data ) {
+                return array( 'encrypted_val' => $data );
+            }
+        );
+        $settings = new class() extends Api_Backups_Settings {
+            /** Register only the hook under test. */
+            public function __construct() {}
+        };
+        add_action( 'mainwp_update_site', array( $settings, 'hook_mainwp_update_site' ) );
+        $before = $this->snapshot();
+        if ( $form ) {
+            $method = new \ReflectionMethod( MainWP_Manage_Sites::class, 'update_site_handle' );
+            $method->setAccessible( true );
+            $this->assertSame( $accessible, $method->invoke( null, MainWP_DB::instance()->get_website_by_id_unscoped( $site ) ) );
+            $website = MainWP_DB::instance()->get_website_by_id_unscoped( $site );
+            $this->assertSame( $accessible ? 'Changed ordinary setting' : 'Test Site', $website->name );
+            if ( $accessible ) {
+                $this->assertSame( '1', $website->automatic_update );
+                $this->assertSame( 'monitor@example.com', MainWP_DB::instance()->get_website_option( $site, 'monitoring_notification_emails' ) );
+            }
+        } else {
+            $settings->hook_mainwp_update_site( $site );
+        }
+        $after = $this->snapshot();
+        $this->assertSame( array( 'preserved' => 'original' ), get_option( 'mainwp_ajaxposts' ) );
+        if ( $form && $accessible ) {
+            // Ordinary site saves invalidate the site-list and update-list cache prefixes.
+            $persistent = static function ( $row ) {
+                return ! preg_match( '/^_transient_(timeout_)?mainwp_cache_(manage_sites|updates)_[0-9]+_prefix$/', $row['option_name'] );
+            };
+            $this->assertSame( array_values( array_filter( $before[0], $persistent ) ), array_values( array_filter( $after[0], $persistent ) ) );
+        } else {
+            $this->assertSame( $before[0], $after[0] );
+        }
+        if ( ! $accessible || ( ! $manage && ! $form ) ) {
+            $this->assertSame( $before, $after );
+        }
+        foreach ( $mapping as $option => $values ) {
+            $this->assertSame( $manage && $accessible ? $values[2] : 'original-' . $option, MainWP_DB::instance()->get_website_option( $site, $option ), $option );
+        }
+        $this->assertSame( 'original-app', MainWP_DB::instance()->get_website_option( $site, 'mainwp_3rd_party_app_id' ) );
+        foreach ( $key_fields as $provider => $field ) {
+            $expected = 'original-' . $provider;
+            if ( $manage && $accessible && 'retain' !== $keys ) {
+                $expected = 'clear' === $keys ? '' : 'fixture-' . $provider;
+            }
+            $stored = MainWP_DB::instance()->get_website_option( $site, 'mainwp_api_backups_' . $provider . '_api_key', '' );
+            $this->assertSame( '' === $expected ? '' : wp_json_encode( array( 'encrypted_val' => $expected ) ), $stored, $field );
+        }
+    }
+
+    /**
+     * Discovery writes need a management right and each matched site's right.
+     *
+     * @return array Provider, entry point and rights matrix.
+     */
+    public static function mapping_discovery_actions(): array {
+        $rows = array();
+        foreach ( array( 'cloudways', 'gridpane' ) as $provider ) {
+            foreach ( array( 'ajax', 'worker' ) as $entry ) {
+                foreach ( array( 'denied', 'permitted', 'site-denied', 'hidden-only' ) as $rights ) {
+                    $rows[ $provider . ' ' . $entry . ' ' . $rights ] = array( $provider, $entry, $rights );
+                }
+            }
+        }
+        return $rows;
+    }
+
+    /**
+     * Use fixture provider replies to exercise the actual mapping writes.
+     *
+     * @dataProvider mapping_discovery_actions
+     * @param string $provider Discovery provider.
+     * @param string $entry AJAX callback or settings worker.
+     * @param string $rights Granted access.
+     */
+    public function test_mapping_discovery( string $provider, string $entry, string $rights ): void {
+        $this->rights( 'execute_backups', true, 'denied' === $rights ? array() : array( 'manage_api_backups' ) );
+        $url     = 'mapping-' . $this->site . '.example.com';
+        $staging = $this->create_test_site( array( 'url' => 'https://staging.' . $url . '/' ) );
+        MainWP_DB::instance()->update_website_values( $this->site, array( 'url' => 'https://' . $url . '/' ) );
+        $sites = array( $this->site, $staging );
+        $this->filter(
+            'mainwp_currentuserallowedaccesssites',
+            static function () use ( $sites ) {
+                return $sites;
+            }
+        );
+        if ( 'site-denied' === $rights ) {
+            $this->filter(
+                'mainwp_currentusercan',
+                static function ( $can, $type, $cap ) {
+                    return 'site' === $type ? false : ( 'dashboard' === $type && in_array( $cap, array( 'execute_backups', 'manage_api_backups' ), true ) );
+                }
+            );
+        }
+        foreach ( array( $this->site, $staging, $this->foreign ) as $site ) {
+            foreach ( array( 'mainwp_3rd_party_api', 'mainwp_3rd_party_instance_id', 'mainwp_3rd_party_app_id' ) as $option ) {
+                MainWP_DB::instance()->update_website_option( $site, $option, 'original-' . $option );
+            }
+        }
+        $handler         = new class() extends Rights_Api_Backups_3rd_Party {
+            /**
+             * Fixture provider sites.
+             *
+             * @var array
+             */
+            public static $sites = array();
+            /**
+             * Provider reads.
+             *
+             * @var int
+             */
+            public static $reads = 0;
+            /** Direct calls do not need AJAX registrations. */
+            public function __construct() {}
+            /**
+             * Supply the provider reply without network access.
+             *
+             * @return array Fixture Cloudways servers.
+             */
+            public static function fetch_cloudways_server_list() {
+                ++self::$reads;
+                return array( (object) array( 'apps' => self::$sites ) );
+            }
+            /**
+             * Supply the provider reply without network access.
+             *
+             * @param int $sites_count Requested limit.
+             * @return array Fixture GridPane sites.
+             */
+            public static function gridpane_get_sites_list( $sites_count ) {
+                unset( $sites_count );
+                ++self::$reads;
+                return self::$sites;
+            }
+        };
+        $foreign_url     = wp_parse_url( MainWP_DB::instance()->get_website_by_id_unscoped( $this->foreign )->url, PHP_URL_HOST );
+        $handler::$reads = 0;
+        $handler::$sites = array(
+            (object) array(
+                'url'       => $foreign_url,
+                'cname'     => $foreign_url,
+                'app_fqdn'  => $foreign_url,
+                'id'        => 500,
+                'server_id' => 600,
+            ),
+        );
+        if ( 'hidden-only' !== $rights ) {
+            $handler::$sites[] = (object) array(
+                'url'                   => $url,
+                'cname'                 => $url,
+                'app_fqdn'              => $url,
+                'id'                    => 700,
+                'server_id'             => 800,
+                'staging_site_built_at' => 'fixture',
+            );
+        }
+        $action   = $provider . '_action_update_ids';
+        $_POST    = array(
+            'security' => wp_create_nonce( $action ),
+            'dts'      => wp_generate_uuid4(),
+        );
+        $_REQUEST = $_POST;
+        $before   = $this->snapshot();
+        ob_start();
+        try {
+            $method = ( 'ajax' === $entry ? 'ajax_' : '' ) . $action;
+            $handler->$method();
+        } catch ( Api_Backups_Response_Stop $stop ) {
+            // The AJAX gate returns JSON through the test-owned die handler.
+        } finally {
+            $body = ob_get_clean();
+        }
+        $after = $this->snapshot();
+        if ( 'denied' === $rights ) {
+            $this->assertSame( 0, $handler::$reads );
+            $this->assertSame( $before, $after, 'A denied mapping write must preserve all options and nonce state.' );
+            if ( 'ajax' === $entry ) {
+                $this->assertStringContainsString( 'insufficient permissions', $body );
+            }
+        } else {
+            $this->assertSame( 1, $handler::$reads );
+            if ( 'permitted' !== $rights ) {
+                $this->assertSame( $before[1], $after[1] );
+            }
+        }
+        foreach ( array( $this->site, $staging, $this->foreign ) as $site ) {
+            $writes   = 'permitted' === $rights && $site !== $this->foreign && ( 'gridpane' === $provider || $site === $this->site );
+            $instance = 'cloudways' === $provider ? '800' : ( $site === $staging ? '701' : '700' );
+            $this->assertSame( $writes ? ( 'cloudways' === $provider ? 'Cloudways' : 'GridPane' ) : 'original-mainwp_3rd_party_api', MainWP_DB::instance()->get_website_option( $site, 'mainwp_3rd_party_api' ) );
+            $this->assertSame( $writes ? $instance : 'original-mainwp_3rd_party_instance_id', MainWP_DB::instance()->get_website_option( $site, 'mainwp_3rd_party_instance_id' ) );
+            $this->assertSame( $writes && 'cloudways' === $provider ? '700' : 'original-mainwp_3rd_party_app_id', MainWP_DB::instance()->get_website_option( $site, 'mainwp_3rd_party_app_id' ) );
+        }
     }
 
     /** Bulk workers must use the site authorized through websiteId. */
@@ -674,16 +963,17 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
      *
      * @param string $right Required right.
      * @param bool   $allowed Grant.
+     * @param array  $additional Other granted Dashboard rights.
      */
-    private function rights( string $right, bool $allowed ): void {
+    private function rights( string $right, bool $allowed, array $additional = array() ): void {
         $this->filter(
             'mainwp_currentusercan',
-            static function ( $can, $type, $cap ) use ( $right, $allowed ) {
+            static function ( $can, $type, $cap ) use ( $right, $allowed, $additional ) {
                 if ( 'site' === $type ) {
                     $scope = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
                     return 'all' === $scope || in_array( (int) $cap, $scope, true );
                 }
-                return 'dashboard' === $type ? ( $cap === $right && $allowed ) : $can;
+                return 'dashboard' === $type ? ( ( $cap === $right && $allowed ) || in_array( $cap, $additional, true ) ) : $can;
             }
         );
         $this->assertFalse( defined( 'MAINWP_REST_API_DOING' ), 'Run this test before REST tests define MAINWP_REST_API_DOING.' );

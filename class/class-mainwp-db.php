@@ -113,6 +113,22 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Accept comma-separated identifiers with optional aliases and sort directions.
+     *
+     * @param mixed  $orderBy        Caller-supplied order.
+     * @param string $fallback_order Order to use for unsupported syntax.
+     * @return string Valid order, trimmed, or the default.
+     */
+    public static function validate_order_by( $orderBy, $fallback_order = 'wp.url' ) {
+        if ( ! is_string( $orderBy ) ) {
+            return $fallback_order;
+        }
+        $orderBy = trim( $orderBy );
+        $term    = '(?:[a-z_][a-z0-9_]*\.)?[a-z_][a-z0-9_]*(?:\s+(?:ASC|DESC))?';
+        return preg_match( '/\A' . $term . '(?:\s*,\s*' . $term . ')*\z/i', $orderBy ) ? $orderBy : $fallback_order;
+    }
+
+    /**
      * Get wp_options database table view.
      *
      * @compatible function.
@@ -341,7 +357,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         // legacy support.
         $selectgroups  = isset( $params['with_tags'] ) && $params['with_tags'] ? true : false;
-        $orderBy       = isset( $params['orderby'] ) ? $params['orderby'] : 'wp.url';
+        $orderBy       = static::validate_order_by( isset( $params['orderby'] ) ? $params['orderby'] : 'wp.url' );
         $offset        = isset( $params['offset'] ) ? intval( $params['offset'] ) : false;
         $rowcount      = isset( $params['rowcount'] ) ? (int) $params['rowcount'] : false;
         $count_sql     = isset( $params['count_sql'] ) && $params['count_sql'] ? true : false;
@@ -1343,11 +1359,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
     public function get_sql_websites_by_user_id( $userid, $selectgroups = false, $search_site = null, $orderBy = 'wp.url', $offset = false, $rowcount = false ) {
+        $orderBy = static::validate_order_by( $orderBy );
         if ( MainWP_Utility::ctype_digit( $userid ) ) {
             $where = '';
             if ( null !== $search_site ) {
-                $search_site = trim( $search_site );
-                $where       = ' AND (wp.name LIKE "%' . $search_site . '%" OR wp.url LIKE  "%' . $search_site . '%") ';
+                $like_pattern = '%' . $this->wpdb->esc_like( trim( $search_site ) ) . '%';
+                $where        = $this->wpdb->prepare( ' AND (wp.name LIKE %s OR wp.url LIKE %s) ', $like_pattern, $like_pattern );
             }
 
             $where .= $this->get_sql_where_allow_access_sites( 'wp' );
@@ -1363,6 +1380,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
 
             if ( $selectgroups ) {
+                // nosemgrep -- Order validated by validate_order_by(), user id ctype_digit-checked, search prepared.
                 $qry = 'SELECT wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
@@ -1374,6 +1392,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 GROUP BY wp.id, wp_sync.sync_id
                 ORDER BY " . $orderBy;
             } else {
+                // nosemgrep -- Order validated by validate_order_by(), user id ctype_digit-checked, search prepared.
                 $qry = 'SELECT wp.*,wp_sync.*' . $view_selects . '
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
@@ -1384,9 +1403,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
 
             if ( ( false !== $offset ) && ( false !== $rowcount ) ) {
-                $qry .= ' LIMIT ' . $offset . ', ' . $rowcount;
+                $qry .= ' LIMIT ' . (int) $offset . ', ' . (int) $rowcount;
             } elseif ( false !== $rowcount ) {
-                $qry .= ' LIMIT ' . $rowcount;
+                $qry .= ' LIMIT ' . (int) $rowcount;
             }
 
             return $qry;
@@ -1431,7 +1450,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
          *
          * @since 5.5
          */
-        $params = apply_filters( 'mainwp_get_sql_websites', $params, $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging );
+        $params  = apply_filters( 'mainwp_get_sql_websites', $params, $selectgroups, $search_site, $orderBy, $offset, $rowcount, $extraWhere, $for_manager, $extra_view, $is_staging );
+        $orderBy = static::validate_order_by( $orderBy );
 
         $where = '';
         if ( MainWP_System::instance()->is_multi_user() ) {
@@ -1642,7 +1662,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         $selectgroups      = ! empty( $params['select_groups'] ) ? true : false;
         $search_site       = isset( $params['search_site'] ) && ! empty( $params['search_site'] ) ? $params['search_site'] : null;
-        $orderBy           = isset( $params['order_by'] ) && ! empty( $params['order_by'] ) ? $params['order_by'] : 'wp.url';
+        $orderBy           = static::validate_order_by( isset( $params['order_by'] ) ? $params['order_by'] : 'wp.url' );
         $offset            = isset( $params['offset'] ) ? $params['offset'] : false;
         $rowcount          = isset( $params['row_count'] ) ? $params['row_count'] : false;
         $for_manager       = isset( $params['for_manager'] ) ? $params['for_manager'] : false;
@@ -3045,7 +3065,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * @param string $orderBy      Order list by. Default: URL.
      * @param bool   $offset       Query offset. Default: false.
      * @param bool   $rowcount     Row count. Default: falese.
-     * @param null   $where        SQL WHERE value.
+     * @param null   $where        Trusted SQL fragment from PHP callers only; never request input.
      * @param null   $search_site  Site search field value. Default: null.
      * @param array  $others  Others params.
      *
@@ -3063,7 +3083,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $search_site = null,
         $others = array()
     ) {
-
+        $orderBy    = static::validate_order_by( $orderBy );
         $is_staging = 'no';
         if ( $selectgroups ) {
             $staging_group = get_option( 'mainwp_stagingsites_group_id' );

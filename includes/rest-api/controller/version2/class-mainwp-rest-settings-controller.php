@@ -28,6 +28,7 @@ use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit;
 use MainWP\Dashboard\MainWP_Credential_Render;
+use MainWP\Dashboard\MainWP_Abilities_Util;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -503,6 +504,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_general_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         // Check content type.
         $content_type = $this->validate_content_type( $request );
@@ -630,6 +635,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_advanced_settings( $request ) { // phpcs:ignore -- NOSONAR - long method.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -743,6 +753,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_monitoring_settings( $request ) { // phpcs:ignore -- NOSONAR - long method.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -883,6 +898,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_emails_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1008,6 +1028,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function edit_cost_tracker_settings( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1059,6 +1084,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function add_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - long method.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $body = $this->get_request_body( $request );
 
         if ( is_wp_error( $body ) ) {
@@ -1121,6 +1151,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - long method.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1195,6 +1230,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function delete_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $slug = $request->get_param( 'slug' );
 
         if ( empty( $slug ) ) {
@@ -1250,6 +1290,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function add_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get request body.
         $body = $this->get_request_body( $request );
         if ( is_wp_error( $body ) ) {
@@ -1298,6 +1343,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1346,6 +1396,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function delete_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $slug = $request->get_param( 'slug' );
 
         // Get all options.
@@ -1397,6 +1452,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_dashboard_insights_settings( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1496,6 +1556,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_api_backup_settings( $request ) {
+        $permission = $this->check_operation_right( 'manage_api_backups' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1601,6 +1666,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_tools_settings( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Check content type.
         $content_type = $this->validate_content_type( $request );
         if ( is_wp_error( $content_type ) ) {
@@ -1646,6 +1716,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function destroy_sessions( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $websites = $this->get_websites();
         if ( is_wp_error( $websites ) ) {
             return $websites;
@@ -1817,6 +1892,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function renew_connections( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $websites = $this->get_websites();
         if ( is_wp_error( $websites ) ) {
             return $websites;
@@ -1997,6 +2077,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function disconnect_all_sites( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $websites = $this->get_websites();
         if ( is_wp_error( $websites ) ) {
             return $websites;
@@ -2177,6 +2262,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function clear_activation_data( $request ) {  // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Clear activation data.
         delete_option( 'mainwp_extensions_api_username' );
         delete_option( 'mainwp_extensions_api_password' );
@@ -2238,6 +2328,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function restore_info_messages( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $user_id = $this->get_user_id();
         if ( is_wp_error( $user_id ) ) {
             return $user_id;
@@ -3948,6 +4043,27 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $value = urldecode( $value );
         }
         return $this->get_site_by( $by, $value );
+    }
+
+    /**
+     * Check the acting API key owner's right without the legacy REST bypass.
+     *
+     * @param string $right Required Team Control operation right.
+     * @return true|WP_Error
+     */
+    private function check_operation_right( string $right ) {
+        if ( ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
+            return new WP_Error(
+                'mainwp_insufficient_right',
+                __( 'Your role does not permit this operation.', 'mainwp' ),
+                array(
+                    'status' => 403,
+                    'right'  => $right,
+                )
+            );
+        }
+
+        return true;
     }
 
     /**

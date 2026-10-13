@@ -153,10 +153,6 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $mainwp_api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
         }
 
-        if ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) {
-            update_option( 'mainwp_api_sslVerifyCertificate', 0 );
-        }
-
         $all_available_extensions = static::get_available_extensions( 'all' );
 
         $extensions_disabled = MainWP_Extensions_Handler::get_extensions_disabled();

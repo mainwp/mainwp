@@ -768,11 +768,44 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     }
 
     /**
+     * Method check_posted_site_access()
+     *
+     * Refuses the request before secure_request() records it unless the posted
+     * site id is `_ALL_` or a plain digit string naming a site the current user
+     * can access.
+     *
+     * The handlers read the id through intval() or sanitize_text_field(), which
+     * can turn spellings such as `1<b>2</b>` into different site ids, so only
+     * plain digits are accepted. `_ALL_` passes through: the handlers expand it
+     * to the user's own sites.
+     */
+    private function check_posted_site_access() {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs before secure_request() so a refusal records nothing.
+        if ( ! isset( $_POST['id'] ) ) {
+            return;
+        }
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only `_ALL_` or digits pass the checks below.
+        $id = wp_unslash( $_POST['id'] );
+        if ( '_ALL_' === $id ) {
+            return;
+        }
+        if ( ! MainWP_Utility::ctype_digit( $id ) || ! \mainwp_current_user_can( 'site', intval( $id ) ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'access this site', 'mainwp' ), false ) ) ) );
+        }
+    }
+
+    /**
      * Method mainwp_ignoreplugintheme()
      *
      * Ignores a plugin or a theme.
      */
     public function mainwp_ignoreplugintheme() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
+        }
+
+        $this->check_posted_site_access();
+
         $this->secure_request( 'mainwp_ignoreplugintheme' );
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -795,6 +828,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * Unignore plugins or themes.
      */
     public function mainwp_unignore_global_pluginsthemes() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
+        }
+
         $this->secure_request( 'mainwp_unignorepluginsthemes' );
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -817,6 +854,12 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * @uses \MainWP\Dashboard\MainWP_Updates_Handler::unignore_abandoned_plugin_theme()
      */
     public function mainwp_unignoreabandonedplugintheme() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
+        }
+
+        $this->check_posted_site_access();
+
         $this->secure_request( 'mainwp_unignoreabandonedplugintheme' );
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -839,6 +882,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * @uses \MainWP\Dashboard\MainWP_Updates_Handler::unignore_abandoned_plugins_themes()
      */
     public function mainwp_unignoreabandonedpluginsthemes() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
+        }
+
         $this->secure_request( 'mainwp_unignoreabandonedpluginsthemes' );
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -860,6 +907,12 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * @uses \MainWP\Dashboard\MainWP_Updates_Handler::dismiss_plugin_theme()
      */
     public function mainwp_dismissoutdateplugintheme() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
+        }
+
+        $this->check_posted_site_access();
+
         $this->secure_request( 'mainwp_dismissoutdateplugintheme' );
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -885,7 +938,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $this->secure_request( 'mainwp_dismissoutdatepluginsthemes' );
 
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -909,6 +962,12 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * @uses \MainWP\Dashboard\MainWP_Updates_Handler::unignore_plugin_theme()
      */
     public function mainwp_unignoreplugintheme() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
+        }
+
+        $this->check_posted_site_access();
+
         $this->secure_request( 'mainwp_unignoreplugintheme' );
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -935,7 +994,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $this->secure_request( 'mainwp_ignorepluginsthemes' );
 
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -964,7 +1023,7 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $this->secure_request( 'mainwp_updates_ignore_upgrades' );
 
         if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
-            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ) ) ) ) );
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
         }
 
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1055,6 +1114,12 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * Unignore plugin or theme.
      */
     public function ajax_unignore_core_updates() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
+        }
+
+        $this->check_posted_site_access();
+
         $this->secure_request( 'mainwp_updates_unignore_upgrades' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $id  = isset( $_POST['id'] ) ? sanitize_text_field( wp_unslash( $_POST['id'] ) ) : ''; // numberic id or _ALL_.
@@ -1070,6 +1135,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * Unignore plugin or theme.
      */
     public function ajax_unignore_global_upgrades() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'ignore/unignore updates', 'mainwp' ), false ) ) ) );
+        }
+
         $this->secure_request( 'mainwp_updates_unignore_global_upgrades' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : '';
@@ -1088,6 +1157,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * @uses \MainWP\Dashboard\MainWP_Themes_Handler::trust_post()
      */
     public function mainwp_trust_plugin() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ), false ) ) ) );
+        }
+
         $this->secure_request( 'mainwp_trust_plugin' );
 
         MainWP_Plugins_Handler::trust_post();
@@ -1100,6 +1173,10 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
      * Trust theme.
      */
     public function mainwp_trust_theme() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'trust_untrust_updates' ) ) {
+            die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'trust/untrust updates', 'mainwp' ), false ) ) ) );
+        }
+
         $this->secure_request( 'mainwp_trust_theme' );
 
         MainWP_Themes_Handler::trust_post();

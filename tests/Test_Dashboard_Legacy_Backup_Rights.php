@@ -203,6 +203,54 @@ class Test_Dashboard_Legacy_Backup_Rights extends \WP_UnitTestCase {
     }
 
     /**
+     * Run Now viewers.
+     *
+     * @return array Viewer and the site keys each one may run.
+     */
+    public static function task_run_cases(): array {
+        return array(
+            'scoped' => array( 'scoped', array( 'visible' ) ),
+            'admin'  => array( 'admin', array( 'visible', 'hidden' ) ),
+        );
+    }
+
+    /**
+     * A retained out-of-scope or deleted site id must not reach Run Now as an empty row.
+     *
+     * @dataProvider task_run_cases
+     * @param string $viewer Viewer context.
+     * @param array  $expected Site keys returned in task order.
+     */
+    public function test_task_run_sites_skip_sites_the_viewer_cannot_load( string $viewer, array $expected ): void {
+        $ids = array(
+            'visible' => $this->create_test_site(),
+            'hidden'  => $this->create_test_site( array( 'userid' => self::factory()->user->create( array( 'role' => 'administrator' ) ) ) ),
+            'removed' => $this->create_test_site(),
+        );
+        global $wpdb;
+        $wpdb->delete( $wpdb->prefix . 'mainwp_wp', array( 'id' => $ids['removed'] ), array( '%d' ) );
+        $task = $this->task( $ids['hidden'] . ',' . $ids['visible'] . ',' . $ids['removed'] );
+        if ( 'scoped' === $viewer ) {
+            $visible = $ids['visible'];
+            $this->filter(
+                'mainwp_currentuserallowedaccesssites',
+                static function () use ( $visible ) {
+                    return array( $visible );
+                }
+            );
+        }
+        $result = MainWP_Manage_Backups_Handler::get_backup_task_sites( $task->id );
+        $want   = array();
+        foreach ( array( 'hidden', 'visible' ) as $key ) {
+            if ( in_array( $key, $expected, true ) ) {
+                $want[] = (string) $ids[ $key ];
+            }
+        }
+        $this->assertSame( $want, array_map( 'strval', array_column( $result['sites'], 'id' ) ) );
+        $this->assertSame( $ids['hidden'] . ',' . $ids['visible'] . ',' . $ids['removed'], MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->sites );
+    }
+
+    /**
      * Actions and the independently granted dashboard rights.
      *
      * @return array Refused and accepted rights for each action.

@@ -552,7 +552,11 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         $allSites = array();
         foreach ( $sites as $site ) {
-            $website    = MainWP_DB::instance()->get_website_by_id( $site );
+            $website = MainWP_DB::instance()->get_website_by_id( $site );
+            // Tasks keep sites outside the viewer's scope, so a scoped Run Now skips them.
+            if ( empty( $website ) ) {
+                continue;
+            }
             $allSites[] = array(
                 'id'       => $website->id,
                 'name'     => $website->name,

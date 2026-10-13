@@ -474,7 +474,7 @@ class Test_Abilities_Knowledge extends MainWP_Abilities_Test_Case {
 			$this->assertStringContainsString( $phrase, $result['notice'] );
 		}
 		// Agents that read one named record stop there, so the reply to that read has to send them to the summary.
-		foreach ( array( 'A list or a single record is not the knowledge that applies to a site.', 'load its summary with get-site-knowledge, even when the user named one record', 'If you cannot load a summary, tell the user that client and agency knowledge was not loaded.', 'Showing one record the user asked for needs only that record.' ) as $phrase ) {
+		foreach ( array( 'A list or a single record is not the knowledge that applies to a site.', 'load its summary with get-site-knowledge, even when the user named one record', 'If you cannot load a summary, tell the user which knowledge was not loaded.', 'Showing one record the user asked for needs only that record.' ) as $phrase ) {
 			$this->assertStringContainsString( $phrase, $result['notice'] );
 		}
 	}

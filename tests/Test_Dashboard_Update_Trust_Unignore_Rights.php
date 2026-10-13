@@ -142,16 +142,32 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
     }
 
     /**
-     * Spellings of the out-of-scope site ID that the handlers turn into that ID.
+     * Site ID spellings other than plain digits, for an in-scope and an out-of-scope site.
+     *
+     * The handlers read these through intval() or sanitize_text_field(), which
+     * can name a different site than the one a permission check would read.
      *
      * @return array Spelling cases; %d is the site ID.
      */
     public static function site_id_spellings(): array {
-        $cases = array();
+        $spellings = array(
+            'trailing text'  => '%dabc',
+            'markup'         => '<b>%d</b>',
+            'split markup'   => '1<b>%d</b>',
+            'percent octet'  => '%d%%41',
+            'leading octet'  => '1%%41%d',
+            'leading space'  => ' %d',
+            'plus sign'      => '+%d',
+            'empty'          => '',
+            'array'          => array( '%d' ),
+        );
+        $cases     = array();
         foreach ( self::actions() as $name => $action ) {
             if ( $action[4] ) {
-                foreach ( array( 'trailing text' => '%dabc', 'markup' => '<b>%d</b>', 'percent octet' => '%d%%41', 'array' => array( '%d' ) ) as $label => $spelling ) {
-                    $cases[ "$name $label" ] = array( $action, $spelling );
+                foreach ( array( 'out of scope' => false, 'in scope' => true ) as $scope => $in_scope ) {
+                    foreach ( $spellings as $label => $spelling ) {
+                        $cases[ "$name $scope $label" ] = array( $action, $spelling, $in_scope );
+                    }
                 }
             }
         }
@@ -219,19 +235,21 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
     }
 
     /**
-     * Non-numeric spellings of an out-of-scope ID are refused before the request is recorded.
+     * Site IDs other than plain digits or _ALL_ are refused before the request is recorded.
      *
      * @dataProvider site_id_spellings
      * @param array        $action Action specification.
      * @param string|array $spelling ID spelling; %d is the site ID.
+     * @param bool         $in_scope Whether the spelled site is accessible.
      */
-    public function test_site_id_spelling_requires_scope( array $action, $spelling ): void {
+    public function test_site_id_spelling_is_refused( array $action, $spelling, bool $in_scope ): void {
         $this->seed( $action );
         $this->rights( $action, true, array( $this->sites[0] ) );
-        $id       = is_array( $spelling ) ? array( sprintf( $spelling[0], $this->sites[1] ) ) : sprintf( $spelling, $this->sites[1] );
+        $site     = $this->sites[ $in_scope ? 0 : 1 ];
+        $id       = is_array( $spelling ) ? array( sprintf( $spelling[0], $site ) ) : sprintf( $spelling, $site );
         $before   = $this->snapshot();
         $response = $this->ajax( $action, $id );
-        $this->assertSame( $before, $this->snapshot(), 'Out-of-scope refusal changed stored or request state.' );
+        $this->assertSame( $before, $this->snapshot(), 'Refused site ID spelling changed stored or request state.' );
         $this->assert_refused( $response );
     }
 

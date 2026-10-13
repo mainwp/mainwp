@@ -770,25 +770,26 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
     /**
      * Method check_posted_site_access()
      *
-     * Refuses the request before secure_request() records it when the posted
-     * site id names a site the current user cannot access.
+     * Refuses the request before secure_request() records it unless the posted
+     * site id is `_ALL_` or a plain digit string naming a site the current user
+     * can access.
      *
-     * The id is read the way the handlers read it, through sanitize_text_field()
-     * or intval(), so spellings such as `12abc` or `<b>12</b>` cannot skip the
-     * check. `_ALL_` passes through: the handlers expand it to the user's sites.
+     * The handlers read the id through intval() or sanitize_text_field(), which
+     * can turn spellings such as `1<b>2</b>` into different site ids, so only
+     * plain digits are accepted. `_ALL_` passes through: the handlers expand it
+     * to the user's own sites.
      */
     private function check_posted_site_access() {
         // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Runs before secure_request() so a refusal records nothing.
         if ( ! isset( $_POST['id'] ) ) {
             return;
         }
-        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized on the next line; arrays are refused.
-        $raw = wp_unslash( $_POST['id'] );
-        $id  = is_scalar( $raw ) ? sanitize_text_field( (string) $raw ) : null;
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Only `_ALL_` or digits pass the checks below.
+        $id = wp_unslash( $_POST['id'] );
         if ( '_ALL_' === $id ) {
             return;
         }
-        if ( null === $id || ! \mainwp_current_user_can( 'site', intval( $id ) ) ) {
+        if ( ! MainWP_Utility::ctype_digit( $id ) || ! \mainwp_current_user_can( 'site', intval( $id ) ) ) {
             die( wp_json_encode( array( 'error' => \mainwp_do_not_have_permissions( esc_html__( 'access this site', 'mainwp' ) ) ) ) );
         }
     }

@@ -734,14 +734,13 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public function parse_init() {
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( isset( $_GET['mwpdl'] ) && isset( $_GET['sig'] ) ) {
+            if ( ! isset( $_REQUEST['mwpdl'] ) || ! is_string( $_REQUEST['mwpdl'] ) || ! is_string( $_GET['sig'] ) ) {
+                return;
+            }
             $mwpDir = MainWP_System_Utility::get_mainwp_dir();
             $mwpDir = $mwpDir[0];
             $mwpdl  = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';
             $file   = trailingslashit( $mwpDir ) . rawurldecode( $mwpdl );
-
-            if ( stristr( rawurldecode( $mwpdl ), '..' ) ) {
-                return;
-            }
 
             $hasWPFileSystem = MainWP_System_Utility::get_wp_file_system();
 
@@ -752,16 +751,17 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
              */
             global $wp_filesystem;
             $sig_value = wp_unslash( $_GET['sig'] );
-            $valid_sig = MainWP_System_Utility::valid_download_sig( $file, $sig_value );
-
-            if ( ! $valid_sig ) {
-                MainWP_Logger::instance()->debug( ' :: download :: invalid sig :: ' . base64_decode( $sig_value ) ); // phpcs:ignore -- for debug logging.
-            }
+            $valid_sig = ! stristr( rawurldecode( $mwpdl ), '..' ) && MainWP_System_Utility::valid_download_sig( $file, $sig_value );
 
             if ( $hasWPFileSystem && $wp_filesystem->exists( $file ) && $valid_sig ) {
                 MainWP_System_Handler::instance()->upload_file( $file );
                 exit();
             }
+
+            status_header( 403 );
+            header( 'Content-Type: text/plain; charset=utf-8' );
+            echo 'Download link is invalid or expired.';
+            exit();
         } elseif ( isset( $_GET['page'] ) ) {
             if ( MainWP_System_Utility::is_admin() && 'mainwp-setup' === $_GET['page'] ) {
                 MainWP_Setup_Wizard::get_instance();

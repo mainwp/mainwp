@@ -398,6 +398,7 @@ class Test_Dashboard_Logs_Data_Rights extends \WP_UnitTestCase {
             } elseif ( 'get' === $request ) {
                 $this->assertStringNotContainsString( 'Insecure request', $body );
                 $this->assertStringNotContainsString( 'mainwp-permission-error', $body );
+                $this->assertStringContainsString( 'name="actionlogs_status"', $body );
             }
         } else {
             $this->assertSame( MainWP_Logger::UPTIME_CHECK_LOG_PRIORITY, (int) get_option( 'mainwp_actionlogs' ) );

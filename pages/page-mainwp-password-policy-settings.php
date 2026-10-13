@@ -616,7 +616,7 @@ class MainWP_Password_Policy_Settings {
                 return;
             }
 
-            // nosec -- allowed_classes false: the Child response cannot instantiate objects.
+            // nosemgrep -- allowed_classes false: the Child response cannot instantiate objects.
             $information = @unserialize( $decoded, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- Child responses are serialized arrays; allowed_classes false blocks object instantiation.
 
             if ( false === $information && 'b:0;' !== $decoded ) {

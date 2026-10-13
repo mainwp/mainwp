@@ -385,13 +385,63 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
         }
     }
 
-    /** Snapshot-only deletes search accessible lists and reject ambiguity. */
-    public function test_digitalocean_delete_foreign_and_ambiguous(): void {
+    /**
+     * Snapshot-only DigitalOcean deletes: owner resolution matrix.
+     *
+     * @return array Posted snapshot, unrestricted scope, extra fixture, expected result.
+     */
+    public static function digitalocean_delete_owners(): array {
+        return array(
+            'own listed, restricted'             => array( 'snapshot-owned', false, '', 'boundary' ),
+            'integer id posted as digits'        => array( '9972001', true, 'integer', 'boundary' ),
+            'foreign listed, restricted'         => array( 'snapshot-foreign', false, '', 'refused' ),
+            'unlisted'                           => array( 'snapshot-missing', true, '', 'refused' ),
+            'empty id'                           => array( '', true, '', 'refused' ),
+            'array id'                           => array( array( 'snapshot-owned' ), true, '', 'refused' ),
+            'two accessible owners'              => array( 'snapshot-owned', true, 'shared', 'refused' ),
+            'accessible and hidden owner'        => array( 'snapshot-owned', false, 'shared', 'boundary' ),
+            'duplicate option rows for one site' => array( 'snapshot-owned', true, 'duplicate', 'boundary' ),
+            'staging owner only'                 => array( 'snapshot-staging', true, 'staging', 'boundary' ),
+            'production and staging owners'      => array( 'snapshot-owned', true, 'staging-shared', 'refused' ),
+            'row for a deleted site'             => array( 'snapshot-orphan', true, 'orphan', 'refused' ),
+        );
+    }
+
+    /**
+     * Exactly one accessible site may own the snapshot.
+     *
+     * @dataProvider digitalocean_delete_owners
+     * @param mixed  $snapshot Posted snapshot id.
+     * @param bool   $all Unrestricted scope.
+     * @param string $fixture Extra stored lists.
+     * @param string $expect Boundary or refused.
+     */
+    public function test_digitalocean_delete_owner_matrix( $snapshot, bool $all, string $fixture, string $expect ): void {
         $this->rights( 'execute_backups', true );
-        $this->refused( 'digitalocean_action_delete_backup', array( 'snapshot_id' => 'snapshot-foreign' ) );
-        $this->scope( true );
-        MainWP_DB::instance()->update_website_option( $this->foreign, 'mainwp_3rd_party_digitalocean_available_backups', wp_json_encode( array( 'snapshots' => array( array( 'id' => 'snapshot-owned' ) ) ) ) );
-        $this->refused( 'digitalocean_action_delete_backup' );
+        $this->scope( $all );
+        $name = 'mainwp_3rd_party_digitalocean_available_backups';
+        $list = static function ( $id ) {
+            return wp_json_encode( array( 'snapshots' => array( array( 'id' => $id ) ) ) );
+        };
+        if ( 'integer' === $fixture ) {
+            MainWP_DB::instance()->update_website_option( $this->site, $name, $list( 9972001 ) );
+        } elseif ( 'shared' === $fixture ) {
+            MainWP_DB::instance()->update_website_option( $this->foreign, $name, $list( 'snapshot-owned' ) );
+        } elseif ( 'duplicate' === $fixture ) {
+            // set_site_option() inserts, so this adds a second row for the same site and option.
+            $this->set_site_option( $this->site, $name, $list( 'snapshot-owned' ) );
+        } elseif ( 'orphan' === $fixture ) {
+            $this->set_site_option( 999999, $name, $list( 'snapshot-orphan' ) );
+        } elseif ( 0 === strpos( $fixture, 'staging' ) ) {
+            $staging = $this->create_test_site( array( 'is_staging' => 1 ) );
+            $this->lists( $staging, '303', 'staging' === $fixture ? 'snapshot-staging' : 'snapshot-owned' );
+        }
+        if ( 'refused' === $expect ) {
+            $this->refused( 'digitalocean_action_delete_backup', array( 'snapshot_id' => $snapshot ) );
+            return;
+        }
+        $this->assertSame( 'boundary', $this->request( 'digitalocean_action_delete_backup', array( 'snapshot_id' => $snapshot ) ) );
+        $this->assertSame( 1, $this->hits );
     }
 
     /** Bulk workers must use the site authorized through websiteId. */
@@ -419,29 +469,6 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
         $this->assertSame( $before[1], $this->snapshot()[1], 'Site options, including the hidden site, must remain unchanged.' );
         $this->assertArrayNotHasKey( 'website_id', $_POST );
         $this->assertArrayNotHasKey( 'website_id', $_REQUEST );
-    }
-
-    /** Snapshot-only deletes include an accessible staging owner. */
-    public function test_digitalocean_delete_staging_owner(): void {
-        $this->rights( 'execute_backups', true );
-        $this->scope( true );
-        $staging = $this->create_test_site( array( 'is_staging' => 1 ) );
-        $this->lists( $staging, '303', 'snapshot-staging' );
-        $this->assertSame( 'boundary', $this->request( 'digitalocean_action_delete_backup', array( 'snapshot_id' => 'snapshot-staging' ) ) );
-        $this->assertSame( 1, $this->hits );
-    }
-
-    /** Production and staging owners make a snapshot ambiguous. */
-    public function test_digitalocean_delete_production_and_staging_owners(): void {
-        $this->rights( 'execute_backups', true );
-        $this->scope( true );
-        $staging = $this->create_test_site( array( 'is_staging' => 1 ) );
-        $this->lists( $staging, '303', 'snapshot-owned' );
-        $before = $this->snapshot();
-        $body   = $this->request( 'digitalocean_action_delete_backup' );
-        $this->assertSame( 0, $this->hits );
-        $this->assertSame( $before, $this->snapshot() );
-        $this->assertStringContainsString( 'Refresh', $body );
     }
 
     /** Non-admins receive the same bare response before ownership checks. */

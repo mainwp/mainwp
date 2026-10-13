@@ -253,18 +253,18 @@ class Api_Backups_Helper {
         self::authorize_ajax_action( 'execute_backups', null );
         // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Match the raw unslashed object exactly; ownership authorization precedes nonce deduplication.
         $snapshot_id = isset( $_POST['snapshot_id'] ) && is_scalar( $_POST['snapshot_id'] ) ? wp_unslash( $_POST['snapshot_id'] ) : '';
-        $matches     = array();
-        $site_ids    = MainWP_DB::instance()->get_website_ids_with_nonempty_option( 'mainwp_3rd_party_digitalocean_available_backups', PHP_INT_MAX );
-        foreach ( $site_ids as $site_id ) {
-            $site_id = (int) $site_id;
+        $owners      = array();
+        // Site option rows are not unique per site, so a site can be listed more than once; key owners by site id.
+        foreach ( MainWP_DB::instance()->get_website_ids_with_nonempty_option( 'mainwp_3rd_party_digitalocean_available_backups', PHP_INT_MAX ) as $candidate ) {
+            $site_id = (int) $candidate;
             if ( self::owns_backup( $site_id, 'digitalocean', $snapshot_id ) && \mainwp_current_user_can( 'site', $site_id ) && ! empty( self::get_website_by_id( $site_id ) ) ) {
-                $matches[] = $site_id;
+                $owners[ $site_id ] = true;
             }
         }
-        if ( 1 !== count( $matches ) ) {
+        if ( 1 !== count( $owners ) ) {
             self::refuse_unlisted_backup();
         }
-        self::authorize_ajax_action( 'execute_backups', 'website_id', $matches[0] );
+        self::authorize_ajax_action( 'execute_backups', 'website_id', array_key_first( $owners ) );
     }
 
     /**

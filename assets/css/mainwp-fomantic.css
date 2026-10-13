@@ -178,7 +178,7 @@
 .mainwp-ui [data-tooltip][data-inverted]:after {
     white-space: normal;
     width: max-content;
-    max-width: 500px;
+    max-width: 575px;
 }
 
 .mainwp-ui .progress .bar {

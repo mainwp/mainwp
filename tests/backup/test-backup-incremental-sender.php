@@ -2457,7 +2457,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			'db refused'            => array( 'db', $margin + 399, 400, 0, true ),
 			'full fits exactly'     => array( 'full', $margin + 400, 400, 0, false ),
 			'roles sum refused'     => array( 'incremental', $margin + 300, 372, 0, true ),
-			'roles size missing'    => array( 'incremental', 1, null, 0, false ),
+			'roles size missing'    => array( 'incremental', 1, null, 0, true ),
 			'roles resume fits'     => array( 'incremental', $margin + 272, 372, 100, false ),
 			'roles resume cleans'   => array( 'incremental', $margin + 271, 372, 100, true ),
 			'roles sum fits'        => array( 'incremental', $margin + 372, 372, 0, false ),
@@ -2466,6 +2466,228 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			'size missing'          => array( 'full', 1, null, 0, false ),
 			'resume remaining fits' => array( 'full', $margin + 200, 400, 200, false ),
 			'resume refused cleans' => array( 'full', $margin + 199, 400, 200, true ),
+		);
+	}
+
+	/**
+	 * Re-entry may revisit archives already owned by a snapshot.
+	 *
+	 * @dataProvider refusal_cleanup_cases
+	 * @param bool   $recorded Whether the archives belong to a recorded snapshot.
+	 * @param string $condition Part validity.
+	 */
+	public function test_download_disk_refusal_preserves_credited_and_protected_archives( $recorded, $condition ) {
+		list( $site_id, $task, $base_id ) = $this->arrange_manual_task();
+		$this->assertNull( $this->run_cycle( $site_id, $task )['exception'] );
+		$dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/';
+		wp_mkdir_p( $dir );
+		$db      = $dir . 'dbBackup-1.zip';
+		$part    = $dir . 'uploads.part001.zip';
+		$partial = $dir . 'files.list';
+		$body    = $this->remote_files['uploads.part001.zip'];
+		if ( 'invalid' === $condition ) {
+			$body = str_repeat( 'x', 200 );
+		} elseif ( 'oversized' === $condition ) {
+			$body .= 'x';
+		}
+		file_put_contents( $db, $this->remote_files['dbBackup-1.zip'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- completed archive fixture.
+		file_put_contents( $part, $body ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- archive validity fixture.
+		file_put_contents( $partial, str_repeat( 'm', 10 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- partial fixture.
+		if ( $recorded ) {
+			$this->assertGreaterThan(
+				0,
+				MainWP_Backup_Snapshots::instance()->record_snapshot(
+					array(
+						'task_id'   => $task->id,
+						'site_id'   => $site_id,
+						'type'      => 'incremental',
+						'parent_id' => $base_id,
+						'archives'  => array(
+							array(
+								'path' => $db,
+								'role' => 'db',
+								'size' => 120,
+							),
+							array(
+								'path' => $part,
+								'role' => 'part',
+								'size' => 200,
+							),
+						),
+					)
+				)
+			);
+		}
+		MainWP_Backup_TestRestore_Sandbox_Test::$free_space = 100 * MB_IN_BYTES + 41;
+		try {
+			$finish = $this->run_cycle( $site_id, $task );
+		} finally {
+			MainWP_Backup_TestRestore_Sandbox_Test::$free_space = null;
+		}
+		$this->assertInstanceOf( MainWP_Exception::class, $finish['exception'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $finish['exception']->get_message_error_code() );
+		$this->assertFileExists( $db, 'A validated complete archive must survive refusal cleanup.' );
+		$this->assertSame( $this->remote_files['dbBackup-1.zip'], file_get_contents( $db ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixture assertion.
+		if ( $recorded || 'valid' === $condition ) {
+			$this->assertFileExists( $part );
+			$this->assertSame( $body, file_get_contents( $part ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixture assertion.
+		} else {
+			$this->assertFileDoesNotExist( $part );
+		}
+		$this->assertFileDoesNotExist( $partial, 'A genuine partial must still be removed.' );
+	}
+
+	/**
+	 * Snapshot ownership protects even damaged files from refusal cleanup.
+	 *
+	 * @return array
+	 */
+	public static function refusal_cleanup_cases() {
+		return array(
+			'intact unrecorded'    => array( false, 'valid' ),
+			'intact recorded'      => array( true, 'valid' ),
+			'invalid recorded'     => array( true, 'invalid' ),
+			'oversized recorded'   => array( true, 'oversized' ),
+			'invalid unrecorded'   => array( false, 'invalid' ),
+			'oversized unrecorded' => array( false, 'oversized' ),
+		);
+	}
+
+	/**
+	 * A missing best-effort manifest must not prevent recording intact archives.
+	 *
+	 * @dataProvider manifest_only_types
+	 * @param string $type Backup type.
+	 */
+	public function test_download_disk_guard_allows_manifest_only_reentry( $type ) {
+		list( $site_id, $task ) = $this->arrange_manual_task( 'incremental' === $type );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'type' => $type ) );
+		$task      = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$artifacts = $this->arrange_remote_artifacts( 'incremental' !== $type );
+		$payload   = array(
+			'phase'     => 'completed',
+			'artifacts' => $artifacts,
+		);
+		if ( 'incremental' !== $type ) {
+			$payload['file'] = 'backup-base.zip';
+			$payload['size'] = 400;
+		}
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function ( $result, $website, $what ) use ( $payload ) {
+				return 'backup_task_run' === $what ? $payload : $result;
+			},
+			20,
+			3
+		);
+		$this->assertNull( $this->run_cycle( $site_id, $task )['exception'] );
+		$dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-manual-' . $task->id . '/';
+		wp_mkdir_p( $dir );
+		foreach ( $artifacts as $artifact ) {
+			if ( 'manifest' !== $artifact['role'] ) {
+				file_put_contents( $dir . $artifact['file'], $this->remote_files[ $artifact['file'] ] ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- completed artifact fixture.
+			}
+		}
+		if ( 'incremental' !== $type ) {
+			MainWP_DB_Backup::instance()->update_backup_task_progress(
+				$task->id,
+				$site_id,
+				array(
+					'downloadedFULL'         => $dir . 'backup-base.zip',
+					'downloadedFULLComplete' => 1,
+				)
+			);
+		}
+		MainWP_Backup_TestRestore_Sandbox_Test::$free_space = 1;
+		try {
+			$finish = $this->run_cycle( $site_id, $task );
+		} finally {
+			MainWP_Backup_TestRestore_Sandbox_Test::$free_space = null;
+		}
+		$this->assertNull( $finish['exception'] );
+		$this->assertIsArray( $finish['result'] );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task->id );
+		$this->assertNotNull( $snapshot );
+		$this->assertSame( $type, $snapshot->type );
+		foreach ( $artifacts as $artifact ) {
+			$this->assertFileExists( $dir . $artifact['file'] );
+		}
+	}
+
+	/**
+	 * Each snapshot consumer can complete without a manifest.
+	 *
+	 * @return array
+	 */
+	public static function manifest_only_types() {
+		return array(
+			'full'        => array( 'full' ),
+			'files'       => array( 'files' ),
+			'incremental' => array( 'incremental' ),
+		);
+	}
+
+	/**
+	 * An advisory size cannot exempt a different artifact from its capacity check.
+	 *
+	 * @dataProvider unknown_artifact_sizes
+	 * @param mixed $size Unusable size reading.
+	 */
+	public function test_download_disk_guard_checks_known_sizes_and_preserves_unknown_paths( $size ) {
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$dir     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
+		$unknown = $dir . 'unknown.zip';
+		$known   = $dir . 'known.zip';
+		file_put_contents( $unknown, str_repeat( 'u', 20 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- unknown-size fixture.
+		file_put_contents( $known, 'PK' . str_repeat( 'k', 8 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- partial fixture.
+		$guard = new \ReflectionMethod( MainWP_Backup_Executor::class, 'validate_download_disk_space' );
+		$guard->setAccessible( true );
+		$error = null;
+		MainWP_Backup_TestRestore_Sandbox_Test::$free_space = 100 * MB_IN_BYTES + 89;
+		try {
+			$guard->invoke(
+				null,
+				$website,
+				$dir,
+				array(
+					array(
+						'size' => $size,
+						'path' => $unknown,
+						'role' => 'part',
+					),
+					array(
+						'size' => 100,
+						'path' => $known,
+						'role' => 'part',
+					),
+				)
+			);
+		} catch ( MainWP_Exception $e ) {
+			$error = $e;
+		} finally {
+			MainWP_Backup_TestRestore_Sandbox_Test::$free_space = null;
+		}
+		$this->assertInstanceOf( MainWP_Exception::class, $error );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $error->get_message_error_code() );
+		$this->assertFileExists( $unknown );
+		$this->assertSame( str_repeat( 'u', 20 ), file_get_contents( $unknown ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixture assertion.
+		$this->assertFileDoesNotExist( $known );
+	}
+
+	/**
+	 * Advisory readings must leave known artifact sizes enforceable.
+	 *
+	 * @return array
+	 */
+	public static function unknown_artifact_sizes() {
+		return array(
+			'missing'      => array( false ),
+			'null'         => array( null ),
+			'invalid'      => array( 'unknown' ),
+			'infinite'     => array( INF ),
+			'not a number' => array( NAN ),
+			'negative'     => array( -1 ),
 		);
 	}
 

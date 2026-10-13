@@ -493,9 +493,12 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	 * @param mixed $size Completed size, or null when missing.
 	 * @param int   $partial Bytes already stored.
 	 * @param bool  $refused Expected refusal.
+	 * @param mixed $after_sweep Capacity after deleting an old archive, or null.
 	 */
-	public function test_update_gate_download_disk_guard( $free, $size, $partial, $refused ) {
-		$site_id = $this->create_test_site();
+	public function test_update_gate_download_disk_guard( $free, $size, $partial, $refused, $after_sweep = null ) {
+		global $wp_filesystem;
+		$original_filesystem = $wp_filesystem;
+		$site_id             = $this->create_test_site();
 		$this->give_site_real_privkey( $site_id );
 		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
 		MainWP_DB::instance()->update_website_option(
@@ -524,6 +527,42 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		$this->record_child_actions( $called );
 		$builder = new \ReflectionMethod( MainWP_Backup_Executor::class, 'build_local_backup_file' );
 		$local   = $builder->invoke( null, $website, 'full', 'gate.zip' );
+		$old     = dirname( $local ) . '/older-gate.zip';
+		if ( null !== $after_sweep ) {
+			delete_option( 'mainwp_backupsOnServer' );
+			file_put_contents( $old, "PK\x03\x04" . str_repeat( 'o', 62 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- retention fixture.
+			$wp_filesystem                    = new class( null ) extends \WP_Filesystem_Direct { // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- retain real deletion with deterministic capacity.
+				/**
+				 * Archive whose removal releases capacity.
+				 *
+				 * @var string
+				 */
+				public $old_archive;
+				/**
+				 * Capacity once the archive is gone.
+				 *
+				 * @var float
+				 */
+				public $free_after_delete;
+				/**
+				 * Capacity must change only after the real deletion succeeds.
+				 *
+				 * @param string $file Path.
+				 * @param bool   $recursive Whether to delete recursively.
+				 * @param string $type File type.
+				 * @return bool
+				 */
+				public function delete( $file, $recursive = false, $type = false ) {
+					$deleted = parent::delete( $file, $recursive, $type );
+					if ( $deleted && $file === $this->old_archive ) {
+						MainWP_Backup_TestRestore_Sandbox_Test::$free_space = $this->free_after_delete;
+					}
+					return $deleted;
+				}
+			};
+			$wp_filesystem->old_archive       = $old;
+			$wp_filesystem->free_after_delete = $after_sweep;
+		}
 		if ( $partial > 0 ) {
 			file_put_contents( $local, 'PK' . str_repeat( 'x', $partial - 2 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- resume fixture.
 		}
@@ -547,6 +586,10 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			ob_end_clean();
 			MainWP_Backup_TestRestore_Sandbox_Test::$free_space = null;
+			$wp_filesystem                                      = $original_filesystem; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- restore the shared fixture.
+		}
+		if ( null !== $after_sweep ) {
+			$this->assertFileDoesNotExist( $old, 'Capacity must be measured after retention removes the old gate archive.' );
 		}
 		$this->assertSame( $refused ? 'failed' : 'completed', $status['status'] );
 		if ( $refused ) {
@@ -570,12 +613,14 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 	public static function update_gate_disk_cases() {
 		$margin = 100 * MB_IN_BYTES;
 		return array(
-			'refused'         => array( $margin + 65, 66, 0, true ),
-			'fits exactly'    => array( $margin + 66, 66, 0, false ),
-			'free unknown'    => array( false, 66, 0, false ),
-			'size missing'    => array( 1, null, 0, false ),
-			'resume fits'     => array( $margin + 33, 66, 33, false ),
-			'resume rejected' => array( $margin + 32, 66, 33, true ),
+			'refused'                 => array( $margin + 65, 66, 0, true ),
+			'fits exactly'            => array( $margin + 66, 66, 0, false ),
+			'free unknown'            => array( false, 66, 0, false ),
+			'size missing'            => array( 1, null, 0, false ),
+			'resume fits'             => array( $margin + 33, 66, 33, false ),
+			'resume rejected'         => array( $margin + 32, 66, 33, true ),
+			'retention fits exactly'  => array( $margin, 66, 0, false, $margin + 66 ),
+			'retention still refuses' => array( $margin, 66, 0, true, $margin + 65 ),
 		);
 	}
 

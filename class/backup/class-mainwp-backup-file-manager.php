@@ -93,6 +93,37 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Utility::end_session()
      */
     public static function backup_download_file( int $pSiteId, string $pType, string $pUrl, string $pFile, $pSize = false ): bool {
+        static::sweep_backup_download_files( $pSiteId, $pType, $pFile, $pSize );
+
+        $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
+        if ( empty( $website ) ) {
+            throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
+        }
+        MainWP_Utility::end_session();
+
+        // MWP-1548: decrypt once at function boundary; both branches use the same credentials.
+        $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
+        $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
+
+        if ( 'db' === $pType || 'full' === $pType ) {
+            static::download_backup_artifact( $website, $pUrl, $pFile, $pSize, $http_user_plain, $http_pass_plain );
+            static::validate_backup_file( $pFile, $pSize );
+        }
+
+        return true;
+    }
+
+    /**
+     * Retention must release old archives before download capacity is measured.
+     *
+     * @param int    $pSiteId Child site ID.
+     * @param string $pType   Backup type.
+     * @param string $pFile   Incoming local path.
+     * @param mixed  $pSize   Completed size, or false for legacy callers.
+     * @return void
+     * @throws MainWP_Exception When the path or private storage is unavailable.
+     */
+    public static function sweep_backup_download_files( int $pSiteId, string $pType, string $pFile, $pSize = false ): void {
         if ( ! MainWP_Backup_Private_Root::is_within_private_site_dir( $pFile, $pSiteId ) ) {
             // The local path round-trips through the browser between the
             // create and download requests, so it is attacker-influenced:
@@ -126,7 +157,6 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
             $wp_filesystem->touch( $dir . 'index.php' );
         }
-        // Clean old backups from our system.
         $maxBackups = get_option( 'mainwp_backupsOnServer' );
         if ( false === $maxBackups ) {
             $maxBackups = 1;
@@ -206,23 +236,6 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 $wp_filesystem->delete( $fullBackup );
             }
         }
-
-        $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
-        if ( empty( $website ) ) {
-            throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
-        }
-        MainWP_Utility::end_session();
-
-        // MWP-1548: decrypt once at function boundary; both branches use the same credentials.
-        $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
-        $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-
-        if ( 'db' === $pType || 'full' === $pType ) {
-            static::download_backup_artifact( $website, $pUrl, $pFile, $pSize, $http_user_plain, $http_pass_plain );
-            static::validate_backup_file( $pFile, $pSize );
-        }
-
-        return true;
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.

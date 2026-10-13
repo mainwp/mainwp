@@ -1164,6 +1164,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         $downloads[] = array(
                             'size' => $artifact['size'] ?? false,
                             'path' => $dir . self::run_dir_name( (string) $backupTaskProgress->child_backup_task_id ) . '/' . MainWP_Utility::sanitize_file_name( basename( (string) ( $artifact['file'] ?? '' ) ) ),
+                            'role' => 'manifest',
                         );
                     }
                 }
@@ -3241,6 +3242,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {
             $type  = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
             $local = self::build_local_backup_file( $website, $type, $status['meta']['file'] );
+            MainWP_Backup_File_Manager::sweep_backup_download_files( $site_id, $type, $local, $status['meta']['size'] ?? false );
             try {
                 self::validate_download_disk_space(
                     $website,
@@ -3649,11 +3651,14 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     private static function validate_download_disk_space( object $website, string $directory, array $downloads, int $task_id = 0 ): void {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
-        $total     = 0.0;
-        $remaining = 0.0;
+        $total              = 0.0;
+        $remaining          = 0.0;
+        $required_remaining = 0.0;
+        $partials           = array();
         foreach ( $downloads as $download ) {
             if ( ! is_numeric( $download['size'] ) || ! is_finite( (float) $download['size'] ) || (float) $download['size'] < 0 ) {
-                return;
+                // An advisory size says nothing about the other artifacts' capacity needs.
+                continue;
             }
             $size   = (float) $download['size'];
             $total += $size;
@@ -3668,9 +3673,17 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $stored = false;
                 }
             }
-            $remaining += false !== $stored && (float) $stored <= $size ? $size - (float) $stored : $size;
+            $bytes      = false !== $stored && (float) $stored <= $size ? $size - (float) $stored : $size;
+            $remaining += $bytes;
+            if ( 'manifest' !== ( $download['role'] ?? '' ) ) {
+                $required_remaining += $bytes;
+            }
+            if ( false === $stored || (float) $stored !== $size ) {
+                $partials[] = $download['path'];
+            }
         }
-        if ( $remaining <= 0 ) {
+        // Both snapshot consumers can record intact archives without a manifest.
+        if ( $required_remaining <= 0 ) {
             return;
         }
         $free = function_exists( 'disk_free_space' ) ? @disk_free_space( $directory ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- may be disabled by the host.
@@ -3678,9 +3691,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return;
         }
 
-        foreach ( $downloads as $download ) {
-            $path = $download['path'];
-            if ( ! empty( $download['complete'] ) || ! is_file( $path ) || ! MainWP_Backup_Private_Root::is_within_private_site_dir( $path, (int) $website->id ) ) {
+        $protected = MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( (int) $website->id );
+        foreach ( $partials as $path ) {
+            if ( isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] ) || ! is_file( $path ) || ! MainWP_Backup_Private_Root::is_within_private_site_dir( $path, (int) $website->id ) ) {
                 continue;
             }
             if ( ! MainWP_Backup_File_Manager::acquire_download_lock( $path, (int) $website->id, $task_id ) ) {

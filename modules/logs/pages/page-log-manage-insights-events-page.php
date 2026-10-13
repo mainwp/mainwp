@@ -963,6 +963,12 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
      * Method ajax_sites_changes_dismiss_selected()
      */
     public function ajax_sites_changes_dismiss_selected() {
+        if ( ! \MainWP\Dashboard\MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_insights_actions' ) ) {
+            wp_die( wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) ) );
+        }
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_insight_events_dismiss_actions' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $log_id = isset( $_POST['log_id'] ) ? intval( $_POST['log_id'] ) : 0;
@@ -984,6 +990,12 @@ class Log_Manage_Insights_Events_Page { // phpcs:ignore Generic.Classes.OpeningB
      * Method ajax_sites_changes_dismiss_all()
      */
     public function ajax_sites_changes_dismiss_all() {
+        if ( ! \MainWP\Dashboard\MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_insights_actions' ) ) {
+            wp_die( wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) ) );
+        }
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_insight_events_dismiss_all' );
         Log_DB_Archive::instance()->archive_sites_changes();
         wp_die( wp_json_encode( array( 'success' => 'yes' ) ) );

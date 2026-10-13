@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Post_Handler;
+use MainWP\Dashboard\MainWP_System_Utility;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Connect;
@@ -196,6 +197,12 @@ class Log_Admin {
      * Handle ajax delete logs records.
      */
     public function ajax_delete_records() {
+        if ( ! MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+        }
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_delete_records' );
 
         $start_date = isset( $_POST['startdate'] ) ? sanitize_text_field( wp_unslash( $_POST['startdate'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -218,6 +225,12 @@ class Log_Admin {
      * Handle ajax compact logs records.
      */
     public function ajax_compact_records() {
+        if ( ! MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+        }
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_compact_records' );
 
         $year = isset( $_POST['year'] ) ? intval( $_POST['year'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized

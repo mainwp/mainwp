@@ -479,9 +479,12 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             return false;
         }
 
-        $file = wp_normalize_path( $file );
+        // Backslash is a filename character on POSIX.
+        $normalize_separators = '\\' === DIRECTORY_SEPARATOR;
+
+        $file = $normalize_separators ? wp_normalize_path( $file ) : $file;
         $dirs = static::get_mainwp_dir();
-        $root = trailingslashit( wp_normalize_path( $dirs[0] ) );
+        $root = trailingslashit( $normalize_separators ? wp_normalize_path( $dirs[0] ) : $dirs[0] );
         if ( 0 === strpos( $file, $root ) ) {
             return array(
                 'root' => 'mainwp',
@@ -495,7 +498,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
         return array(
             'root' => 'absolute',
-            'path' => wp_normalize_path( $absolute ),
+            'path' => $normalize_separators ? wp_normalize_path( $absolute ) : $absolute,
         );
     }
 

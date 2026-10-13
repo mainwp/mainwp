@@ -1380,6 +1380,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             }
 
             if ( $selectgroups ) {
+                // nosemgrep -- Order validated by validate_order_by(), user id ctype_digit-checked, search prepared.
                 $qry = 'SELECT wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
@@ -1391,6 +1392,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 GROUP BY wp.id, wp_sync.sync_id
                 ORDER BY " . $orderBy;
             } else {
+                // nosemgrep -- Order validated by validate_order_by(), user id ctype_digit-checked, search prepared.
                 $qry = 'SELECT wp.*,wp_sync.*' . $view_selects . '
                 FROM ' . $this->table_name( 'wp' ) . ' wp
                 JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid

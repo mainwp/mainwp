@@ -192,6 +192,52 @@ class Test_Dashboard_Download_Signature_And_Order extends \WP_UnitTestCase {
         $this->assertFalse( MainWP_System_Utility::valid_download_sig( $this->files[0], $sig ) );
     }
 
+    /** POSIX backslash filenames must retain distinct identities in both roots. */
+    public function test_signature_distinguishes_posix_backslash_filenames() {
+        if ( '\\' === DIRECTORY_SEPARATOR ) {
+            $this->markTestSkipped( 'Backslash is a directory separator on Windows.' );
+        }
+
+        wp_mkdir_p( $this->directory . '/mainwp/0/bulk/pkg' );
+        wp_mkdir_p( $this->directory . '/ext' );
+        $this->files[] = $this->directory . '/mainwp/0/bulk/pkg/item.zip';
+        $this->files[] = $this->directory . '/mainwp/0/bulk/pkg\item.zip';
+        $this->files[] = $this->directory . '/ext/item.zip';
+        $this->files[] = $this->directory . '/ext\item.zip';
+        foreach ( array_slice( $this->files, 2 ) as $file ) {
+            file_put_contents( $file, 'test' );
+            $this->assertFileExists( $file );
+        }
+        $this->assertNotSame( realpath( $this->files[2] ), realpath( $this->files[3] ) );
+        $this->assertSame( filesize( $this->files[2] ), filesize( $this->files[3] ) );
+        $sig = MainWP_System_Utility::get_download_sig( $this->files[2] );
+        $this->assertTrue( MainWP_System_Utility::valid_download_sig( $this->files[2], $sig ) );
+        $this->assertFalse( MainWP_System_Utility::valid_download_sig( $this->files[3], $sig ) );
+        $backslash_sig = MainWP_System_Utility::get_download_sig( $this->files[3] );
+        $value         = json_decode( rawurldecode( $backslash_sig ), true );
+        $this->assertTrue( MainWP_System_Utility::valid_download_sig( $this->files[3], $backslash_sig ) );
+        $this->assertSame( '0/bulk/pkg\item.zip', $value['path'] );
+
+        $result = $this->parse_download(
+            array(
+                'mwpdl' => rawurlencode( '0/bulk/pkg\item.zip' ),
+                'sig'   => $sig,
+            )
+        );
+        $this->assertSame( array( 403 ), $result['status'] );
+        $this->assertTrue( $result['exited'] );
+        $this->assertSame( 'Download link is invalid or expired.', trim( $result['body'] ) );
+        $this->assertSame( array(), Download_Order_Transport::$served );
+
+        $this->assertNotSame( realpath( $this->files[4] ), realpath( $this->files[5] ) );
+        $this->assertSame( filesize( $this->files[4] ), filesize( $this->files[5] ) );
+        $sig   = MainWP_System_Utility::get_download_sig( $this->files[4] );
+        $value = json_decode( rawurldecode( $sig ), true );
+        $this->assertSame( 'absolute', $value['root'] );
+        $this->assertTrue( MainWP_System_Utility::valid_download_sig( $this->files[4], $sig ) );
+        $this->assertFalse( MainWP_System_Utility::valid_download_sig( $this->files[5], $sig ) );
+    }
+
     /**
      * Payload fields whose modification invalidates the MAC.
      *

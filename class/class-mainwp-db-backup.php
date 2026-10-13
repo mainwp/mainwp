@@ -232,6 +232,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( null !== $orderBy ) {
             $orderBy = static::validate_order_by( $orderBy, 'name' );
         }
+        // nosemgrep -- Order validated by validate_order_by(), user id converted with absint().
         return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE ' . ( null === $userid ? '' : 'userid= ' . absint( $userid ) . ' AND ' ) . ' template = 0 ' . ( null !== $orderBy ? 'ORDER BY ' . esc_sql( $orderBy ) : '' ), OBJECT );
     }
 

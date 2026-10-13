@@ -200,7 +200,7 @@ class Api_Backups_Settings {
                         // Save CloudWays Data.
                         //phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
                         ?>
-                        <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_cloudways'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_cloudways'] ), 'cloudways_api_form_general' ) ) : ?>
+                        <?php if ( ! $individual && \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) && isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_cloudways'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_cloudways'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_cloudways_api', ( ! isset( $_POST['mainwp_enable_cloudways_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_cloudways_api_account_email', ( isset( $_POST['mainwp_cloudways_api_account_email'] ) ? wp_unslash( $_POST['mainwp_cloudways_api_account_email'] ) : '' ) ); ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_show_legacy_cloudways_credentials', ! empty( $_POST['mainwp_show_legacy_cloudways_credentials'] ) ? 1 : 0 ); ?>
@@ -214,7 +214,7 @@ class Api_Backups_Settings {
                         <?php endif; ?>
                         <?php // END Save CloudWays Data. ?>
                         <?php // Save GridPane Data. ?>
-                        <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_gridpane'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_gridpane'] ), 'cloudways_api_form_general' ) ) : ?>
+                        <?php if ( ! $individual && \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) && isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_gridpane'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_gridpane'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_gridpane_api', ( ! isset( $_POST['mainwp_enable_gridpane_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'gridpane', ( isset( $_POST['mainwp_gridpane_api_key'] ) ? wp_unslash( $_POST['mainwp_gridpane_api_key'] ) : '' ) ); ?>
                             <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'API credentials have been successfully saved.', 'mainwp' ); ?></div>
@@ -225,7 +225,7 @@ class Api_Backups_Settings {
                         <?php endif; ?>
                         <?php // END Save GridPane Data. ?>
                         <?php // Save Vultr Data. ?>
-                        <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_vultr'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_vultr'] ), 'cloudways_api_form_general' ) ) : ?>
+                        <?php if ( ! $individual && \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) && isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_vultr'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_vultr'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_vultr_api', ( ! isset( $_POST['mainwp_enable_vultr_api'] ) ? 0 : 1 ) ); ?>
                             <?php
                             Api_Backups_Utility::get_instance()->update_api_key( 'vultr', ( isset( $_POST['mainwp_vultr_api_key'] ) ? wp_unslash( $_POST['mainwp_vultr_api_key'] ) : '' ) );
@@ -235,7 +235,7 @@ class Api_Backups_Settings {
                         <?php endif; ?>
                         <?php // END Save Vultr Data. ?>
                         <?php // Save Linode Data. ?>
-                        <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_linode'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_linode'] ), 'cloudways_api_form_general' ) ) : ?>
+                        <?php if ( ! $individual && \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) && isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_linode'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_linode'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_linode_api', ( ! isset( $_POST['mainwp_enable_linode_api'] ) ? 0 : 1 ) ); ?>
                             <?php
                             Api_Backups_Utility::get_instance()->update_api_key( 'linode', ( isset( $_POST['mainwp_linode_api_key'] ) ? wp_unslash( $_POST['mainwp_linode_api_key'] ) : '' ) );
@@ -245,7 +245,7 @@ class Api_Backups_Settings {
                         <?php endif; ?>
                         <?php // END Save Linode Data. ?>
                         <?php // Save DigitalOcean Data. ?>
-                        <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_digitalocean'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_digitalocean'] ), 'cloudways_api_form_general' ) ) : ?>
+                        <?php if ( ! $individual && \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) && isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_digitalocean'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_digitalocean'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_digitalocean_api', ( ! isset( $_POST['mainwp_enable_digitalocean_api'] ) ? 0 : 1 ) ); ?>
                             <?php
                             Api_Backups_Utility::get_instance()->update_api_key( 'digitalocean', ( isset( $_POST['mainwp_digitalocean_api_key'] ) ? wp_unslash( $_POST['mainwp_digitalocean_api_key'] ) : '' ) );
@@ -255,7 +255,7 @@ class Api_Backups_Settings {
                         <?php endif; ?>
                         <?php // END Save Linode Data. ?>
                         <?php // Save cPanel Data. ?>
-                        <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_cpanel'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_cpanel'] ), 'cloudways_api_form_general' ) ) : ?>
+                        <?php if ( ! $individual && \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) && isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_cpanel'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_cpanel'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_cpanel_api', ( ! isset( $_POST['mainwp_enable_cpanel_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_cpanel_url', ( isset( $_POST['mainwp_cpanel_url'] ) ? wp_unslash( $_POST['mainwp_cpanel_url'] ) : '' ) ); ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_cpanel_site_path', ( isset( $_POST['mainwp_cpanel_site_path'] ) ? wp_unslash( $_POST['mainwp_cpanel_site_path'] ) : '' ) ); ?>
@@ -268,7 +268,7 @@ class Api_Backups_Settings {
                         <?php endif; ?>
                         <?php // END Save cPanel Data. ?>
                         <?php // Save Plesk Data. ?>
-                        <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_plesk'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_plesk'] ), 'cloudways_api_form_general' ) ) : ?>
+                        <?php if ( ! $individual && \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) && isset( $_POST['submit'] ) && isset( $_POST['wp_nonce_plesk'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce_plesk'] ), 'cloudways_api_form_general' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_plesk_api', ( ! isset( $_POST['mainwp_enable_plesk_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_plesk_api_url', ( isset( $_POST['mainwp_plesk_api_url'] ) ? wp_unslash( $_POST['mainwp_plesk_api_url'] ) : '' ) ); ?>
                             <?php
@@ -284,7 +284,7 @@ class Api_Backups_Settings {
                         <?php endif; ?>
                         <?php // END Save Plesk Data. ?>
                         <?php // Save Kinsta Data. ?>
-                        <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'kinsta_api_form' ) ) : ?>
+                        <?php if ( ! $individual && \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) && isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'kinsta_api_form' ) ) : ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_enable_kinsta_api', ( ! isset( $_POST['mainwp_enable_kinsta_api'] ) ? 0 : 1 ) ); ?>
                             <?php Api_Backups_Utility::get_instance()->update_api_key( 'kinsta', ! empty( $_POST['mainwp_kinsta_api_key'] ) ? wp_unslash( $_POST['mainwp_kinsta_api_key'] ) : '' ); ?>
                             <?php Api_Backups_Utility::update_option( 'mainwp_kinsta_api_account_email', ( isset( $_POST['mainwp_kinsta_api_account_email'] ) ? wp_unslash( $_POST['mainwp_kinsta_api_account_email'] ) : '' ) ); ?>
@@ -369,12 +369,14 @@ class Api_Backups_Settings {
                                     $show_legacy_cloudways_creds = get_option( 'mainwp_show_legacy_cloudways_credentials' );
                                     if ( false === $show_legacy_cloudways_creds && ! empty( $_api_key ) ) {
                                         $show_legacy_cloudways_creds = 1;
-                                        Api_Backups_Utility::update_option( 'mainwp_show_legacy_cloudways_credentials', $show_legacy_cloudways_creds );
+                                        if ( ! $individual && \mainwp_current_user_can( 'dashboard', 'manage_api_backups' ) ) {
+                                            Api_Backups_Utility::update_option( 'mainwp_show_legacy_cloudways_credentials', $show_legacy_cloudways_creds );
+                                        }
                                     }
                                     ?>
                                     <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-cloudways-settings">
                                         <label class="six wide column middle aligned">
-                                            <?php MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', get_option( 'mainwp_show_legacy_cloudways_credentials', 0 ) ); ?>
+                                            <?php MainWP_Settings_Indicator::render_not_default_indicator( 'none_preset_value', $show_legacy_cloudways_creds ); ?>
                                             <?php esc_html_e( 'Show Legacy API Credentials', 'mainwp' ); ?></label>
                                         <div class="ten wide column ui toggle checkbox mainwp-checkbox-showhide-elements" hide-parent="hide-legacy-cloudways"  data-tooltip="<?php esc_attr_e( 'If enabled, the legacy Cloudways API will be visible.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
                                             <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_show_legacy_cloudways_credentials" id="mainwp_show_legacy_cloudways_credentials" <?php echo 1 === (int) $show_legacy_cloudways_creds ? 'checked="true"' : ''; ?> />

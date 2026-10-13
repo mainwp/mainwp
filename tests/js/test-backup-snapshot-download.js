@@ -29,8 +29,9 @@ for ( const snap of [
     assert.match( html, /title="[^"\n]+"/ );
     assert.match( html, /aria-disabled="true"/ );
 }
+// The archive is on this Dashboard, so a disconnected site can still be downloaded.
 context.siteDisconnected = true;
-assert.match( context.downloadButton( { id: 17, type: 'full', source: 'local' } ), /mainwp-download-snapshot disabled/ );
+assert.doesNotMatch( context.downloadButton( { id: 17, type: 'full', source: 'local' } ), /disabled/ );
 const rowStart = source.indexOf( '"createdRow": function ( row, snap )' );
 const rowEnd = source.indexOf( '\n                },', rowStart );
 context.$ = row => ( {

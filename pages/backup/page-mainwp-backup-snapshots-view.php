@@ -408,8 +408,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             };
             var downloadLabels = {
                 action: '<?php echo esc_js( esc_html__( 'Download', 'mainwp' ) ); ?>',
-                incremental: '<?php echo esc_js( esc_html__( 'This backup is a chain of files. Restore it from the Dashboard.', 'mainwp' ) ); ?>',
-                missing: '<?php echo esc_js( esc_html__( 'This backup archive is not on this Dashboard.', 'mainwp' ) ); ?>',
+                incremental: '<?php echo esc_js( esc_html__( 'Incremental backups are stored as a chain of parts and cannot be downloaded as one file. Use Restore instead.', 'mainwp' ) ); ?>',
+                missing: '<?php echo esc_js( esc_html__( 'This backup\'s archive is not stored on this Dashboard, so it cannot be downloaded here.', 'mainwp' ) ); ?>',
                 failed: '<?php echo esc_js( esc_html__( 'Could not start the download. Try again.', 'mainwp' ) ); ?>'
             };
             var offsiteLabels = {
@@ -557,7 +557,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function downloadButton( snap ) {
                 var reason = 'incremental' === snap.type ? downloadLabels.incremental : ( 'local' !== snap.source ? downloadLabels.missing : '' );
-                var disabled = siteDisconnected || '' !== reason;
+                var disabled = '' !== reason;
                 return '<a href="#" class="ui mini basic button mainwp-download-snapshot' + ( disabled ? ' disabled' : '' ) + '" data-snapshot="' + snap.id + '"' + ( disabled ? ' aria-disabled="true"' : '' ) + ( reason ? ' title="' + escAttr( reason ) + '"' : '' ) + '>' + downloadLabels.action + '</a>';
             }
 

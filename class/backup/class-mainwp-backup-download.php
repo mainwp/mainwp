@@ -27,9 +27,9 @@ class MainWP_Backup_Download {
      */
     private static function refusal( string $kind ): \WP_Error {
         $messages = array(
-            'link'        => __( 'This download link is not valid or has expired. Click Download again.', 'mainwp' ),
+            'link'        => __( 'This download link has expired or was already used. Go back and click Download again.', 'mainwp' ),
             'permission'  => __( 'You do not have permission to download this backup.', 'mainwp' ),
-            'unavailable' => __( 'This backup archive is not available on this Dashboard.', 'mainwp' ),
+            'unavailable' => __( 'This backup\'s archive is not stored on this Dashboard, so it cannot be downloaded here.', 'mainwp' ),
             'read'        => __( 'The backup archive could not be read. Try downloading it again.', 'mainwp' ),
         );
         return new \WP_Error( 'mainwp_backup_download_' . $kind, $messages[ $kind ], array( 'status' => 403 ) );

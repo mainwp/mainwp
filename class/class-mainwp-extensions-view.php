@@ -183,10 +183,10 @@ class MainWP_Extensions_View { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 ?>
                 <div class="ui hidden divider"></div>
                 <div class="ui stackable grid">
-                    <div class="eight wide column" data-tooltip="<?php esc_attr_e( 'Extensions are purpose-built add-ons that expand your Dashboard\'s functionality without relying on external services. Integrations are add-ons that connect MainWP with third-party tools, bringing their power directly into your Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left">
+                    <div class="eight wide column">
                         <button class="ui mini basic green button" id="mainwp-extensions-show-all"><i class="box icon"></i><?php esc_html_e( 'Show All Add-ons', 'mainwp' ); ?></button>
-                        <button class="ui mini basic button" id="mainwp-extensions-show-extensions"><i class="puzzle piece icon"></i><?php esc_html_e( 'Show Extensions', 'mainwp' ); ?></button>
-                        <button class="ui mini basic button" id="mainwp-extensions-show-integrations"><i class="plug icon"></i><?php esc_html_e( 'Show Integrations', 'mainwp' ); ?></button>
+                        <button class="ui mini basic button" id="mainwp-extensions-show-extensions" data-tooltip="<?php esc_attr_e( 'Extensions are purpose-built add-ons that expand your Dashboard\'s functionality without relying on external services.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left"><i class="puzzle piece icon"></i><?php esc_html_e( 'Show Extensions', 'mainwp' ); ?></button>
+                        <button class="ui mini basic button" id="mainwp-extensions-show-integrations" data-tooltip="<?php esc_attr_e( 'Integrations are add-ons that connect MainWP with third-party tools, bringing their power directly into your Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="bottom left"><i class="plug icon"></i><?php esc_html_e( 'Show Integrations', 'mainwp' ); ?></button>
                     </div>
                     <div class="eight wide right aligned column">
                         <div id="mainwp-search-extensions" class="ui mini search">

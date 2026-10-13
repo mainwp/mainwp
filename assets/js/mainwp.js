@@ -1294,7 +1294,7 @@ let dashboard_update_next_int = function (websiteId, data, errors, action) {
             return function (response) {
                 if (response.error) {
                     let extErr = response.error;
-                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
+                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="bottom right" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
                     if (response.failure_ux) {
                         jQuery('#mainwp-sync-sites-modal .sync-sites-content-massage').append(response.failure_ux);
                     }
@@ -1355,7 +1355,7 @@ let mainwp_delete_nonmainwp_data_next_int = function (websiteId, data, errors) {
             return function (response) {
                 if (response.error) {
                     let extErr = response.error;
-                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
+                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="bottom right" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
                 } else {
                     dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process completed successfully.') + '"><i class="check green icon"></i></span>', true);
                 }

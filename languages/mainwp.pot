@@ -2832,23 +2832,27 @@ msgstr ""
 msgid "Manage Add-ons"
 msgstr ""
 
-#: class/class-mainwp-extensions-view.php:166
+#: class/class-mainwp-extensions-view.php:188
 msgid ""
 "Extensions are purpose-built add-ons that expand your Dashboard's "
-"functionality without relying on external services. Integrations are add-ons "
-"that connect MainWP with third-party tools, bringing their power directly "
-"into your Dashboard."
+"functionality without relying on external services."
 msgstr ""
 
-#: class/class-mainwp-extensions-view.php:167
+#: class/class-mainwp-extensions-view.php:187
 msgid "Show All Add-ons"
 msgstr ""
 
-#: class/class-mainwp-extensions-view.php:168
+#: class/class-mainwp-extensions-view.php:188
 msgid "Show Extensions"
 msgstr ""
 
-#: class/class-mainwp-extensions-view.php:169
+#: class/class-mainwp-extensions-view.php:189
+msgid ""
+"Integrations are add-ons that connect MainWP with third-party tools, bringing "
+"their power directly into your Dashboard."
+msgstr ""
+
+#: class/class-mainwp-extensions-view.php:189
 msgid "Show Integrations"
 msgstr ""
 

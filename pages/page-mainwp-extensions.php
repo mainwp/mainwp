@@ -497,12 +497,6 @@ class MainWP_Extensions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.C
                 } elseif ( isset( $result['error'] ) ) {
                     $return = array( 'error' => $result['error'] );
                 }
-            } else {
-                $apisslverify = get_option( 'mainwp_api_sslVerifyCertificate' );
-                if ( 1 === $apisslverify ) {
-                    MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
-                    $return['retry_action'] = 1;
-                }
             }
 
             if ( ! empty( $return ) ) {

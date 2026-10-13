@@ -2047,6 +2047,12 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
      * Method ajax_increase_connection_security
      */
     public function ajax_increase_connection_security() {
+        if ( ! MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            wp_die( wp_json_encode( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) ) );
+        }
         $this->check_security( 'mainwp_increase_connection_security' );
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, true ) );
         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {

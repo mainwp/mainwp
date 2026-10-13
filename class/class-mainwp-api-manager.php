@@ -356,13 +356,7 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             }
 
             if ( false === $activate_results ) {
-                $apisslverify = get_option( 'mainwp_api_sslVerifyCertificate' );
-                if ( 1 === $apisslverify ) {
-                    MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
-                    $return['retry_action'] = 1;
-                } else {
-                    $return['error'] = esc_html__( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
-                }
+                $return['error']          = esc_html__( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
                 $options['api_key']       = '';
                 $options['activated_key'] = 'Deactivated';
             }

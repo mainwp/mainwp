@@ -212,9 +212,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         if ( is_wp_error( $request ) ) {
             if ( 1 === (int) static::$apisslverify ) {
-                MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
-
-                return array( 'retry_action' => 1 );
+                throw new MainWP_Exception( esc_html__( 'Could not verify the TLS certificate of the MainWP license server. Check that the CA certificates on the server hosting this Dashboard are up to date and that no proxy is intercepting TLS, then try again.', 'mainwp' ) );
             }
 
             throw new MainWP_Exception( $request->get_error_message() ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped

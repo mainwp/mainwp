@@ -64,12 +64,12 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
     /** Team Control users retain WordPress administrator capabilities. */
     public function setUp(): void {
         parent::setUp();
-        $this->request_state = array( $_GET, $_POST, $_REQUEST, get_current_user_id() );
+        $this->request_state = array( $_GET, $_POST, $_REQUEST, get_current_user_id() ); // phpcs:ignore WordPress.Security.NonceVerification -- Preserve request globals for teardown.
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
         wp_create_nonce( 'mainwp-update-rights-fixture' );
-        $_GET     = array();
-        $_POST    = array();
-        $_REQUEST = array();
+        $_GET        = array();
+        $_POST       = array();
+        $_REQUEST    = array();
         $this->sites = array( $this->create_test_site(), $this->create_test_site() );
         update_option( 'mainwp_ajaxposts', array( 'preserve' => 'original' ) );
     }
@@ -96,7 +96,7 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
                 $actions[ "$type $operation" ] = array( "mainwp_trust_$type", "mainwp_trust_$type", $type, $operation, false );
             }
             foreach ( array( 'single', 'all' ) as $operation ) {
-                $actions[ "global $type unignore $operation" ] = array( 'mainwp_unignorepluginsthemes', 'mainwp_unignore_global_pluginsthemes', $type, $operation, false );
+                $actions[ "global $type unignore $operation" ]  = array( 'mainwp_unignorepluginsthemes', 'mainwp_unignore_global_pluginsthemes', $type, $operation, false );
                 $actions[ "global $type abandoned $operation" ] = array( 'mainwp_unignoreabandonedpluginsthemes', 'mainwp_unignoreabandonedpluginsthemes', $type, $operation, false );
             }
             $actions[ "site $type ignore" ]    = array( 'mainwp_ignoreplugintheme', 'mainwp_ignoreplugintheme', $type, 'ignore', true );
@@ -117,7 +117,10 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
     public static function action_rights(): array {
         $cases = array();
         foreach ( self::actions() as $name => $action ) {
-            foreach ( array( 'refused' => false, 'allowed' => true ) as $label => $allowed ) {
+            foreach ( array(
+                'refused' => false,
+                'allowed' => true,
+            ) as $label => $allowed ) {
                 $cases[ "$name $label" ] = array( $action, $allowed );
             }
         }
@@ -133,7 +136,10 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
         $cases = array();
         foreach ( self::actions() as $name => $action ) {
             if ( $action[4] ) {
-                foreach ( array( 'out of scope' => false, 'in scope' => true ) as $label => $in_scope ) {
+                foreach ( array(
+                    'out of scope' => false,
+                    'in scope'     => true,
+                ) as $label => $in_scope ) {
                     $cases[ "$name $label" ] = array( $action, $in_scope );
                 }
             }
@@ -151,20 +157,23 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
      */
     public static function site_id_spellings(): array {
         $spellings = array(
-            'trailing text'  => '%dabc',
-            'markup'         => '<b>%d</b>',
-            'split markup'   => '1<b>%d</b>',
-            'percent octet'  => '%d%%41',
-            'leading octet'  => '1%%41%d',
-            'leading space'  => ' %d',
-            'plus sign'      => '+%d',
-            'empty'          => '',
-            'array'          => array( '%d' ),
+            'trailing text' => '%dabc',
+            'markup'        => '<b>%d</b>',
+            'split markup'  => '1<b>%d</b>',
+            'percent octet' => '%d%%41',
+            'leading octet' => '1%%41%d',
+            'leading space' => ' %d',
+            'plus sign'     => '+%d',
+            'empty'         => '',
+            'array'         => array( '%d' ),
         );
         $cases     = array();
         foreach ( self::actions() as $name => $action ) {
             if ( $action[4] ) {
-                foreach ( array( 'out of scope' => false, 'in scope' => true ) as $scope => $in_scope ) {
+                foreach ( array(
+                    'out of scope' => false,
+                    'in scope'     => true,
+                ) as $scope => $in_scope ) {
                     foreach ( $spellings as $label => $spelling ) {
                         $cases[ "$name $scope $label" ] = array( $action, $spelling, $in_scope );
                     }
@@ -183,7 +192,10 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
         $cases = array();
         foreach ( self::actions() as $name => $action ) {
             if ( $action[4] && 'single' === $action[3] ) {
-                foreach ( array( 'refused' => false, 'allowed' => true ) as $label => $allowed ) {
+                foreach ( array(
+                    'refused' => false,
+                    'allowed' => true,
+                ) as $label => $allowed ) {
                     $cases[ "$name _ALL_ $label" ] = array( $action, $allowed );
                 }
             }
@@ -283,10 +295,19 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
     private function seed( array $action ): void {
         $extension = (array) MainWP_DB_Common::instance()->get_user_extension();
         foreach ( array( 'plugin', 'theme' ) as $type ) {
-            $slug = 'plugin' === $type ? 'fixture/plugin.php' : 'fixture-theme';
-            $list = array( $slug => array( 'Name' => 'Fixture', 'ignored_versions' => array( '1.0', '2.0' ) ), 'keep' => 'Keep' );
-            $dismissed = array( $slug => 'Fixture', 'keep' => 'Keep' );
-            $trusted   = 'untrust' === $action[3] ? array( 'keep', $slug ) : array( 'keep' );
+            $slug                              = 'plugin' === $type ? 'fixture/plugin.php' : 'fixture-theme';
+            $list                              = array(
+                $slug  => array(
+                    'Name'             => 'Fixture',
+                    'ignored_versions' => array( '1.0', '2.0' ),
+                ),
+                'keep' => 'Keep',
+            );
+            $dismissed                         = array(
+                $slug  => 'Fixture',
+                'keep' => 'Keep',
+            );
+            $trusted                           = 'untrust' === $action[3] ? array( 'keep', $slug ) : array( 'keep' );
             $extension[ "trusted_{$type}s" ]   = wp_json_encode( $trusted );
             $extension[ "ignored_{$type}s" ]   = wp_json_encode( $list );
             $extension[ "dismissed_{$type}s" ] = wp_json_encode( $dismissed );
@@ -366,9 +387,13 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
         $columns = 'trusted_plugins, trusted_themes, ignored_plugins, ignored_themes, dismissed_plugins, dismissed_themes, ignored_wp_upgrades';
         // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Column names and table prefix are fixed test infrastructure.
         $global = $wpdb->get_row( "SELECT $columns FROM {$wpdb->prefix}mainwp_users WHERE userid = 0", ARRAY_A );
-        $state  = array( 'global' => $global, 'sites' => array(), 'ajaxposts' => get_option( 'mainwp_ajaxposts' ) );
+        $state  = array(
+            'global'    => $global,
+            'sites'     => array(),
+            'ajaxposts' => get_option( 'mainwp_ajaxposts' ),
+        );
         foreach ( $this->sites as $site ) {
-            $row = $wpdb->get_row( $wpdb->prepare( "SELECT ignored_plugins, ignored_themes FROM {$wpdb->prefix}mainwp_wp WHERE id = %d", $site ), ARRAY_A );
+            $row     = $wpdb->get_row( $wpdb->prepare( "SELECT ignored_plugins, ignored_themes FROM {$wpdb->prefix}mainwp_wp WHERE id = %d", $site ), ARRAY_A );
             $options = $wpdb->get_results( $wpdb->prepare( "SELECT name, value FROM {$wpdb->prefix}mainwp_wp_options WHERE wpid = %d AND name IN ('ignored_wp_upgrades', 'plugins_outdate_dismissed', 'themes_outdate_dismissed') ORDER BY name", $site ), ARRAY_A );
             foreach ( $options as $option ) {
                 $row[ $option['name'] ] = $option['value'];
@@ -396,10 +421,13 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
             $value  = 'trust' === $operation ? array( 'keep', $slug ) : array( 'keep' );
         } else {
             $abandoned = false !== strpos( $ajax, 'abandoned' ) || 'dismiss' === $operation;
-            $column = $abandoned ? ( $per_site ? "{$type}s_outdate_dismissed" : "dismissed_{$type}s" ) : "ignored_{$type}s";
-            $value  = 'all' === $operation ? array() : array( 'keep' => 'Keep' );
+            $column    = $abandoned ? ( $per_site ? "{$type}s_outdate_dismissed" : "dismissed_{$type}s" ) : "ignored_{$type}s";
+            $value     = 'all' === $operation ? array() : array( 'keep' => 'Keep' );
             if ( 'ignore' === $operation ) {
-                $value[ $slug ] = array( 'Name' => 'Fixture', 'ignored_versions' => array( '1.0' ) );
+                $value[ $slug ] = array(
+                    'Name'             => 'Fixture',
+                    'ignored_versions' => array( '1.0' ),
+                );
             } elseif ( 'dismiss' === $operation ) {
                 $value[ $slug ] = 'Fixture';
             }
@@ -409,7 +437,7 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
         } else {
             $before['global'][ $column ] = wp_json_encode( $value );
         }
-        $before['ajaxposts'][ $ajax ] = $_POST['dts'];
+        $before['ajaxposts'][ $ajax ] = $_POST['dts']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput, WordPress.Security.NonceVerification -- Compare the marker to the exact test input.
         $this->assertSame( $before, $this->snapshot() );
     }
 
@@ -431,8 +459,8 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
      */
     private function ajax( array $action, $id ): array {
         list( $ajax, $method, $type, $operation ) = $action;
-        $slug = 'plugin' === $type ? 'fixture/plugin.php' : 'fixture-theme';
-        $_POST = array(
+        $slug                                     = 'plugin' === $type ? 'fixture/plugin.php' : 'fixture-theme';
+        $_POST                                    = array(
             'security'   => wp_create_nonce( $ajax ),
             'dts'        => wp_generate_uuid4(),
             'id'         => $id,
@@ -443,7 +471,7 @@ class Test_Dashboard_Update_Trust_Unignore_Rights extends \WP_UnitTestCase {
             'name'       => 'Fixture',
             'ignore_ver' => 'ignore' === $operation ? '1.0' : 'all_versions',
         );
-        $_REQUEST = $_POST;
+        $_REQUEST                                 = $_POST;
         $this->filter( 'wp_doing_ajax', '__return_true' );
         $this->filter( 'wp_die_ajax_handler', array( $this, 'ajax_die_handler' ) );
         ob_start();

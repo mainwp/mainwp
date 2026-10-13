@@ -15,6 +15,8 @@ class Test_REST_Key_Auth_Route_Match extends MainWP_Abilities_Test_Case {
     private $original_server;
     private $original_get;
     private $original_post;
+    private $original_cookie;
+    private $original_request;
     private $original_query_vars;
     private $original_rest_server;
     private $owner_id;
@@ -26,6 +28,8 @@ class Test_REST_Key_Auth_Route_Match extends MainWP_Abilities_Test_Case {
         $this->original_server      = $_SERVER;
         $this->original_get         = $_GET;
         $this->original_post        = $_POST;
+        $this->original_cookie      = $_COOKIE;
+        $this->original_request     = $_REQUEST;
         $this->original_query_vars  = $GLOBALS['wp']->query_vars;
         $this->original_rest_server = $GLOBALS['wp_rest_server'];
         $this->original_instance    = \MainWP_REST_Authentication::$instance;
@@ -62,6 +66,8 @@ class Test_REST_Key_Auth_Route_Match extends MainWP_Abilities_Test_Case {
         $_SERVER                             = $this->original_server;
         $_GET                                = $this->original_get;
         $_POST                               = $this->original_post;
+        $_COOKIE                             = $this->original_cookie;
+        $_REQUEST                            = $this->original_request;
         $GLOBALS['wp']->query_vars            = $this->original_query_vars;
         $GLOBALS['wp_rest_server']            = $this->original_rest_server;
         wp_set_current_user( 0 );
@@ -183,6 +189,30 @@ class Test_REST_Key_Auth_Route_Match extends MainWP_Abilities_Test_Case {
         $GLOBALS['current_user'] = null;
         $this->assertNotWPError( apply_filters( 'rest_authentication_errors', null ) );
         $this->assertSame( $this->owner_id, get_current_user_id() );
+    }
+
+    public function test_late_bearer_authentication_takes_precedence_over_a_logged_in_cookie(): void {
+        $other_user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+        $cookie_users  = array(
+            'same owner'      => $this->owner_id,
+            'different user'  => $other_user_id,
+        );
+
+        foreach ( $cookie_users as $scenario => $cookie_user_id ) {
+            $this->prepare_anonymous_request( '/wp-json/mainwp/v2/sites/count', null );
+            unset( $_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW'], $_SERVER['HTTP_X_WP_NONCE'], $_REQUEST['_wpnonce'] );
+            $_SERVER['HTTP_AUTHORIZATION'] = 'Bearer ' . substr( $this->credentials['consumer_secret'], 3 ) . '==' . substr( $this->credentials['consumer_key'], 3 );
+            $_COOKIE[ LOGGED_IN_COOKIE ]    = wp_generate_auth_cookie( $cookie_user_id, time() + HOUR_IN_SECONDS, 'logged_in' );
+
+            $this->assertSame( $cookie_user_id, wp_get_current_user()->ID, $scenario );
+            $this->assertNull( $this->auth->get_rest_valid_user(), $scenario );
+
+            $GLOBALS['wp']->query_vars['rest_route'] = '/mainwp/v2/sites/count';
+            $this->assertTrue( apply_filters( 'rest_authentication_errors', null ), $scenario );
+            $this->assertSame( $this->owner_id, get_current_user_id(), $scenario );
+            $this->assertSame( $this->owner_id, (int) $this->auth->get_rest_valid_user()->user_id, $scenario );
+            $this->assertTrue( $this->auth->is_valid_permissions( new \WP_REST_Request( 'GET', '/mainwp/v2/sites/count' ) ), $scenario );
+        }
     }
 
     public function test_pre_dispatch_refuses_foreign_subrequests_before_access_logging(): void {

@@ -337,8 +337,8 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             // Another plugin has already declared a failure.
             return $error;
         }
-        if ( empty( $this->error ) && empty( $this->auth_method ) && empty( $this->user ) && 0 === get_current_user_id() ) {
-            // Authentication hasn't occurred during `determine_current_user`, so check auth.
+        if ( empty( $this->error ) && empty( $this->auth_method ) && empty( $this->user ) ) {
+            // Authentication may have been skipped before the REST route was parsed, even if a cookie user was found later.
             $user_id = $this->authenticate( false );
             if ( $user_id ) {
                 wp_set_current_user( $user_id );

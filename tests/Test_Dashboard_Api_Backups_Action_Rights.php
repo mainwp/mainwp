@@ -394,6 +394,143 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
         $this->refused( 'digitalocean_action_delete_backup' );
     }
 
+    /** Bulk workers must use the site authorized through websiteId. */
+    public function test_selected_websites_ignores_conflicting_site_id(): void {
+        $this->rights( 'execute_backups', true );
+        $before = $this->snapshot();
+        $reads  = array();
+        $body   = $this->request(
+            'ajax_backups_selected_websites',
+            array( 'website_id' => (string) $this->foreign ),
+            function ( $value, $site, $options ) use ( &$reads ) {
+                $reads[] = array( (int) $site, $options );
+                if ( 1 === count( $reads ) ) {
+                    return array(
+                        'mainwp_3rd_party_api'         => 'Vultr',
+                        'mainwp_3rd_party_instance_id' => 'instance-' . $this->site,
+                    );
+                }
+                throw new Api_Backups_Boundary_Stop();
+            }
+        );
+        $this->assertSame( 'boundary', $body );
+        $this->assertSame( 2, $this->hits );
+        $this->assertSame( array( $this->site, $this->site ), array_column( $reads, 0 ), 'Every mapping read must target the authorized site.' );
+        $this->assertSame( $before[1], $this->snapshot()[1], 'Site options, including the hidden site, must remain unchanged.' );
+        $this->assertArrayNotHasKey( 'website_id', $_POST );
+        $this->assertArrayNotHasKey( 'website_id', $_REQUEST );
+    }
+
+    /** Snapshot-only deletes include an accessible staging owner. */
+    public function test_digitalocean_delete_staging_owner(): void {
+        $this->rights( 'execute_backups', true );
+        $this->scope( true );
+        $staging = $this->create_test_site( array( 'is_staging' => 1 ) );
+        $this->lists( $staging, '303', 'snapshot-staging' );
+        $this->assertSame( 'boundary', $this->request( 'digitalocean_action_delete_backup', array( 'snapshot_id' => 'snapshot-staging' ) ) );
+        $this->assertSame( 1, $this->hits );
+    }
+
+    /** Production and staging owners make a snapshot ambiguous. */
+    public function test_digitalocean_delete_production_and_staging_owners(): void {
+        $this->rights( 'execute_backups', true );
+        $this->scope( true );
+        $staging = $this->create_test_site( array( 'is_staging' => 1 ) );
+        $this->lists( $staging, '303', 'snapshot-owned' );
+        $before = $this->snapshot();
+        $body   = $this->request( 'digitalocean_action_delete_backup' );
+        $this->assertSame( 0, $this->hits );
+        $this->assertSame( $before, $this->snapshot() );
+        $this->assertStringContainsString( 'Refresh', $body );
+    }
+
+    /** Non-admins receive the same bare response before ownership checks. */
+    public function test_subscriber_restore_does_not_disclose_ownership(): void {
+        $this->rights( 'restore_backups', true );
+        wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+        $before    = $this->snapshot();
+        $responses = array();
+        foreach ( array( 'snapshot-owned', 'unlisted-snapshot' ) as $snapshot ) {
+            $responses[] = $this->request( 'ajax_vultr_action_restore_backup', array( 'snapshot_id' => $snapshot ) );
+            $this->assertSame( 0, $this->hits );
+            $this->assertSame( $before, $this->snapshot(), 'Subscriber requests must preserve all options and nonce state.' );
+        }
+        $this->assertSame( array( '0', '0' ), $responses );
+    }
+
+    /** Automatic lists may normalize the path; the worker uses its configured path. */
+    public function test_cpanel_automatic_restore_accepts_normalized_path(): void {
+        $this->rights( 'restore_backups', true );
+        MainWP_DB::instance()->update_website_option(
+            $this->site,
+            'mainwp_3rd_party_cpanel_available_backups',
+            wp_json_encode(
+                array(
+                    'data' => array(
+                        array(
+                            'backupID' => '101',
+                            'path'     => '/normalized/site',
+                        ),
+                    ),
+                )
+            )
+        );
+        $this->assertSame(
+            'boundary',
+            $this->request(
+                'ajax_cpanel_action_restore_backup',
+                array(
+                    'dts'         => null,
+                    'backup_path' => '/ignored/posted/path',
+                )
+            )
+        );
+        $this->assertSame( 1, $this->hits );
+        $this->assertSame( $this->site, $this->target[0] );
+    }
+
+    /**
+     * Malformed provider list fields must refuse without PHP errors.
+     *
+     * @return array Provider callback and malformed option matrix.
+     */
+    public static function malformed_lists(): array {
+        return array(
+            'kinsta'       => array( 'ajax_kinsta_action_restore_backup', 'kinsta', array( 'environment' => array( 'backups' => 'malformed' ) ) ),
+            'digitalocean' => array( 'digitalocean_action_restore_backup', 'digitalocean', array( 'snapshots' => 'malformed' ) ),
+            'vultr'        => array(
+                'ajax_vultr_action_restore_backup',
+                'vultr',
+                array(
+                    'snapshots' => array(),
+                    'backups'   => 'malformed',
+                ),
+            ),
+            'cpanel'       => array( 'ajax_cpanel_action_restore_backup', 'cpanel', array( 'data' => 'malformed' ) ),
+        );
+    }
+
+    /**
+     * Invalid nested values use the normal ownership refusal and preserve state.
+     *
+     * @dataProvider malformed_lists
+     * @param string $method Callback.
+     * @param string $provider Provider name.
+     * @param array  $stored Malformed stored list.
+     */
+    public function test_malformed_nested_list( string $method, string $provider, array $stored ): void {
+        $this->rights( 'restore_backups', true );
+        MainWP_DB::instance()->update_website_option( $this->site, 'mainwp_3rd_party_' . $provider . '_available_backups', wp_json_encode( $stored ) );
+        if ( 'vultr' === $provider ) {
+            MainWP_DB::instance()->update_website_option( $this->site, 'mainwp_3rd_party_vultr_snapshot_list', '[]' );
+        }
+        $before = $this->snapshot();
+        $body   = $this->request( $method );
+        $this->assertSame( 0, $this->hits );
+        $this->assertSame( $before, $this->snapshot() );
+        $this->assertStringContainsString( 'Refresh', $body );
+    }
+
     /** A known backup cannot authorize another path for the database restore. */
     public function test_database_path_must_match(): void {
         $this->rights( 'restore_backups', true );
@@ -573,13 +710,14 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
     /**
      * Stop at the first boundary and capture all termination paths.
      *
-     * @param string $method Callback.
-     * @param array  $post Overrides.
+     * @param string        $method Callback.
+     * @param array         $post Overrides.
+     * @param callable|null $mapping Optional mapping read callback.
      * @return string Response.
      * @throws \Error Unexpected worker error.
      * @throws \PHPUnit\Framework\Error\Warning Unexpected worker warning.
      */
-    private function request( string $method, array $post = array() ): string {
+    private function request( string $method, array $post = array(), ?callable $mapping = null ): string {
         $actions = array_column( self::actions(), 0 );
         $action  = array_keys( self::actions() )[ array_search( $method, $actions, true ) ];
         $_POST   = array_merge(
@@ -606,9 +744,12 @@ class Test_Dashboard_Api_Backups_Action_Rights extends \WP_UnitTestCase {
         $this->target = array();
         $this->filter(
             'mainwp_getwebsiteoptions',
-            function ( $value, $site, $options ) {
+            function ( $value, $site, $options ) use ( $mapping ) {
                 ++$this->hits;
                 $this->target = array( is_array( $site ) ? (int) ( $site['id'] ?? 0 ) : ( is_object( $site ) ? (int) $site->id : (int) $site ), $options );
+                if ( null !== $mapping ) {
+                    return $mapping( $value, $site, $options );
+                }
                 throw new Api_Backups_Boundary_Stop();
             }
         );

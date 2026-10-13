@@ -72,6 +72,8 @@ class Api_Backups_Handler {
      */
     public function ajax_backups_selected_websites() {
         Api_Backups_Helper::authorize_ajax_action( 'execute_backups', 'websiteId' );
+        // Create workers prefer website_id over the authorized websiteId argument.
+        unset( $_POST['website_id'], $_REQUEST['website_id'] );
         Api_Backups_Helper::security_nonce( 'mainwp_api_backups_selected_websites' );
         static::backups_selected_site( true );
         wp_die( esc_html__( 'Error: backup', 'mainwp' ) );

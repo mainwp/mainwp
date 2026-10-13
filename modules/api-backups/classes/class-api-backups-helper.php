@@ -147,6 +147,9 @@ class Api_Backups_Helper {
      * @return int Authorized site id, or zero for enumeration.
      */
     public static function authorize_ajax_action( $right, $site_field = 'website_id', $site_id = null ) {
+        if ( wp_doing_ajax() && ! \MainWP\Dashboard\MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
         if ( ! \mainwp_current_user_can( 'dashboard', $right ) ) {
             wp_send_json( array( 'error' => esc_html__( 'Error: insufficient permissions.', 'mainwp' ) ) );
         }
@@ -177,17 +180,20 @@ class Api_Backups_Helper {
     public static function get_owned_backups( $site_id, $provider ) {
         $stored = MainWP_DB::instance()->get_json_website_option( $site_id, 'mainwp_3rd_party_' . $provider . '_available_backups' );
         if ( 'kinsta' === $provider ) {
-            return $stored['environment']['backups'] ?? array();
+            $backups = $stored['environment']['backups'] ?? array();
+            return is_array( $backups ) ? $backups : array();
         }
         if ( 'digitalocean' === $provider ) {
-            return $stored['snapshots'] ?? array();
+            $snapshots = $stored['snapshots'] ?? array();
+            return is_array( $snapshots ) ? $snapshots : array();
         }
         if ( 'vultr' === $provider ) {
             $snapshots = $stored['snapshots'] ?? array();
             if ( isset( $snapshots['snapshot'] ) ) {
                 $snapshots = array( $snapshots['snapshot'] );
             }
-            return array_merge( is_array( $snapshots ) ? $snapshots : array(), $stored['backups'] ?? array() );
+            $backups = $stored['backups'] ?? array();
+            return array_merge( is_array( $snapshots ) ? $snapshots : array(), is_array( $backups ) ? $backups : array() );
         }
         return array();
     }
@@ -248,10 +254,10 @@ class Api_Backups_Helper {
         // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Match the raw unslashed object exactly; ownership authorization precedes nonce deduplication.
         $snapshot_id = isset( $_POST['snapshot_id'] ) && is_scalar( $_POST['snapshot_id'] ) ? wp_unslash( $_POST['snapshot_id'] ) : '';
         $matches     = array();
-        $websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_wp_for_current_user() );
-        foreach ( $websites as $website ) {
-            $site_id = (int) $website['id'];
-            if ( \mainwp_current_user_can( 'site', $site_id ) && self::owns_backup( $site_id, 'digitalocean', $snapshot_id ) ) {
+        $site_ids    = MainWP_DB::instance()->get_website_ids_with_nonempty_option( 'mainwp_3rd_party_digitalocean_available_backups', PHP_INT_MAX );
+        foreach ( $site_ids as $site_id ) {
+            $site_id = (int) $site_id;
+            if ( self::owns_backup( $site_id, 'digitalocean', $snapshot_id ) && \mainwp_current_user_can( 'site', $site_id ) && ! empty( self::get_website_by_id( $site_id ) ) ) {
                 $matches[] = $site_id;
             }
         }
@@ -283,18 +289,17 @@ class Api_Backups_Helper {
             $path    = isset( $_POST['backup_path'] ) && is_scalar( $_POST['backup_path'] ) ? wp_unslash( $_POST['backup_path'] ) : '';
             $backups = $db->get_json_website_option( $site_id, 'mainwp_3rd_party_cpanel_manual_database_backups' );
             $field   = 'file_name';
-            $dir     = 'absolute_dir';
         } else {
-            // The automatic restore ignores posted backup_path and uses the configured site path.
-            $path    = $db->get_website_option( $site_id, 'cpanel_site_path' );
+            // Automatic restores use the configured path, which cPanel may normalize in its list.
             $stored  = $db->get_json_website_option( $site_id, 'mainwp_3rd_party_cpanel_available_backups' );
-            $backups = $stored['data'] ?? array();
+            $backups = is_array( $stored['data'] ?? null ) ? $stored['data'] : array();
             $field   = 'backupID';
-            $dir     = 'path';
         }
         foreach ( $backups as $backup ) {
-            if ( is_array( $backup ) && isset( $backup[ $field ], $backup[ $dir ] ) && is_scalar( $backup[ $field ] ) && (string) $backup[ $field ] === (string) $backup_id && $backup[ $dir ] === $path && '' !== $backup_id && ! empty( $path ) ) {
-                return;
+            if ( is_array( $backup ) && isset( $backup[ $field ] ) && is_scalar( $backup[ $field ] ) && (string) $backup[ $field ] === (string) $backup_id && '' !== $backup_id ) {
+                if ( 'database' !== $kind || ( isset( $backup['absolute_dir'] ) && $backup['absolute_dir'] === $path && ! empty( $path ) ) ) {
+                    return;
+                }
             }
         }
         self::refuse_unlisted_backup();

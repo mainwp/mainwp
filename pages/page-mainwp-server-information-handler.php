@@ -1501,7 +1501,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 ),
                 array(
                     'label' => esc_html__( 'Abandoned check by local file date', 'mainwp' ),
-                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_abandoned_check_by_local_date', $default_setting['mainwp_abandoned_check_by_local_date'] ) ),
+                    'value' => self::format_boolean_label( (int) get_option( 'mainwp_abandoned_check_by_local_date', $default_setting['mainwp_abandoned_check_by_local_date'] ) ),
                 ),
                 array(
                     'label' => esc_html__( 'Primary backup system', 'mainwp' ),

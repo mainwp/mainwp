@@ -9,11 +9,13 @@
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
         "masterminds/html5": "^2.9",
+        "phpcsstandards/phpcsutils": "^1.2.3",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^9.6",
+        "squizlabs/php_codesniffer": "^3.13.6",
         "szepeviktor/phpstan-wordpress": "^2.0",
-        "wp-coding-standards/wpcs": "^3.0",
+        "wp-coding-standards/wpcs": "^3.4.1",
         "yoast/phpunit-polyfills": "^4.0"
     },
     "autoload-dev": {

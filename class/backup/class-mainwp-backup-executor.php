@@ -95,6 +95,118 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     const ADHOC_TASK_OPTION = 'adhoc_backup_task';
 
+    /** One atomic WordPress option per site; request owners expire independently. */
+    const BACKUP_HOLD_OPTION_PREFIX = 'mainwp_backup_in_progress_';
+
+    /** Browser recovery polls every ten seconds; allow fifty seconds of delay. */
+    const BACKUP_HOLD_SECONDS = 60;
+
+    /**
+     * Keep a site held through a request and its long transport or hashing steps.
+     *
+     * @param int      $site_id Child site identity.
+     * @param callable $operation Work performed while the marker is live.
+     * @param bool     $browser Keep a short browser-flow expiry after this request.
+     * @return mixed Operation result.
+     * @throws MainWP_Exception When running state cannot be persisted.
+     */
+    public static function with_backup_hold( int $site_id, callable $operation, bool $browser = false ) {
+        $token = wp_generate_uuid4();
+        self::write_backup_hold( $site_id, $token, self::BACKUP_HOLD_SECONDS );
+        $refresh  = static function ( $seconds = 0 ) use ( $site_id, $token ) {
+            self::write_backup_hold( $site_id, $token, max( self::BACKUP_HOLD_SECONDS, (int) $seconds + self::BACKUP_HOLD_SECONDS ) );
+        };
+        $request  = static function ( $timeout ) use ( $refresh ) {
+            $refresh( (int) $timeout > 0 ? (int) $timeout : MainWP_Connect::CHILD_REQUEST_TIMEOUT_DEFAULT );
+            return $timeout;
+        };
+        $transfer = static function ( $timeouts ) use ( $refresh ) {
+            if ( is_array( $timeouts ) ) {
+                $refresh( (int) ( $timeouts['timeout'] ?? 0 ) );
+            }
+            return $timeouts;
+        };
+        $retry    = static function ( $delay ) use ( $refresh ) {
+            $refresh( max( 0, (int) $delay ) );
+            return $delay;
+        };
+        add_filter( 'mainwp_fetch_url_site_timeout', $request, PHP_INT_MAX );
+        add_filter( 'mainwp_download_to_file_timeouts', $transfer, PHP_INT_MAX );
+        add_filter( 'mainwp_backup_retry_delay', $retry, PHP_INT_MAX );
+        add_action( 'mainwp_download_to_file_progress', $refresh, 10, 0 );
+        add_action( 'mainwp_backup_hash_progress', $refresh, 10, 0 );
+        try {
+            return $operation();
+        } finally {
+            remove_filter( 'mainwp_fetch_url_site_timeout', $request, PHP_INT_MAX );
+            remove_filter( 'mainwp_download_to_file_timeouts', $transfer, PHP_INT_MAX );
+            remove_filter( 'mainwp_backup_retry_delay', $retry, PHP_INT_MAX );
+            remove_action( 'mainwp_download_to_file_progress', $refresh );
+            remove_action( 'mainwp_backup_hash_progress', $refresh );
+            self::write_backup_hold( $site_id, $token, null, $browser );
+        }
+    }
+
+    /**
+     * Unique option names and compare-and-swap preserve overlapping requests.
+     *
+     * Direct reads avoid option caches hiding a sibling request's marker.
+     *
+     * @param int      $site_id Child site identity.
+     * @param string   $token This request's owner.
+     * @param int|null $seconds Renewal duration, or null to release this owner.
+     * @param bool     $browser Retain browser-flow evidence on release.
+     * @return void
+     * @throws MainWP_Exception When the state is unreadable or cannot be saved.
+     */
+    private static function write_backup_hold( int $site_id, string $token, ?int $seconds, bool $browser = false ): void {
+        global $wpdb;
+        $key = self::BACKUP_HOLD_OPTION_PREFIX . $site_id;
+        for ( $attempt = 0; $attempt < 5; ++$attempt ) {
+            $raw = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $key ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- WordPress table name; fresh ownership evidence is required.
+            if ( '' !== $wpdb->last_error ) {
+                break;
+            }
+            $owners = null === $raw ? array() : json_decode( $raw, true );
+            if ( ! is_array( $owners ) ) {
+                break;
+            }
+            $now = time();
+            foreach ( $owners as $owner => $expires ) {
+                if ( ! is_int( $expires ) ) {
+                    throw new MainWP_Exception( esc_html__( 'The backup could not save its running state. Try again.', 'mainwp' ) );
+                }
+                if ( $expires <= $now ) {
+                    unset( $owners[ $owner ] );
+                }
+            }
+            if ( null === $seconds ) {
+                unset( $owners[ $token ] );
+                if ( $browser ) {
+                    $owners['browser'] = max( $owners['browser'] ?? 0, $now + self::BACKUP_HOLD_SECONDS );
+                }
+            } else {
+                $owners[ $token ] = max( $owners[ $token ] ?? 0, $now + $seconds );
+            }
+            $next = wp_json_encode( $owners );
+            if ( $raw === $next ) {
+                return;
+            }
+            if ( null === $raw ) {
+                $written = $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'off')", $key, $next ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- unique WordPress option name admits the first writer atomically.
+            } else {
+                $written = $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND BINARY option_value = BINARY %s", $next, $key, $raw ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- replace only the owner set just read.
+            }
+            if ( 1 === $written ) {
+                return;
+            }
+            if ( false === $written ) {
+                break;
+            }
+        }
+        throw new MainWP_Exception( esc_html__( 'The backup could not save its running state. Try again.', 'mainwp' ) );
+    }
+
     /**
      * The option has no heartbeat; use the same two-hour window as
      * MainWP_Backup_Monitor gives a running marker without a lease.
@@ -2543,187 +2655,58 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             throw new MainWP_Exception( esc_html__( 'Site not found.', 'mainwp' ) );
         }
 
-        self::private_site_dir( (int) $pSiteId );
-        MainWP_Backup_Monitor::validate_backup_environment();
+        return self::with_backup_hold(
+            (int) $pSiteId,
+            static function () use ( $website, $pSiteId, $pType, $pSubfolder, $pExclude, $excludebackup, $excludecache, $excludenonwp, $excludezip, $pFilename, $pFileNameUID, $pArchiveFormat, $pMaximumFileDescriptorsOverride, $pMaximumFileDescriptorsAuto, $pMaximumFileDescriptors, $pLoadFilesBeforeZip, $pid, $append, $pTask ) {
+                self::private_site_dir( (int) $pSiteId );
+                MainWP_Backup_Monitor::validate_backup_environment();
 
-        $subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $pSubfolder );
-        $subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
-        $subfolder = str_replace( '%type%', $pType, $subfolder );
-        $subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
-        $subfolder = str_replace( '%task%', '', $subfolder );
-        $subfolder = str_replace( '%', '', $subfolder );
-        $subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
-        $subfolder = MainWP_Backup_File_Manager::normalize_filename( $subfolder );
+                $subfolder = str_replace( '%sitename%', MainWP_Utility::sanitize( $website->name ), $pSubfolder );
+                $subfolder = str_replace( '%url%', MainWP_Utility::sanitize( MainWP_Utility::get_nice_url( $website->url ) ), $subfolder );
+                $subfolder = str_replace( '%type%', $pType, $subfolder );
+                $subfolder = str_replace( '%date%', MainWP_Utility::date( 'Ymd' ), $subfolder );
+                $subfolder = str_replace( '%task%', '', $subfolder );
+                $subfolder = str_replace( '%', '', $subfolder );
+                $subfolder = MainWP_Utility::remove_preslash_spaces( $subfolder );
+                $subfolder = MainWP_Backup_File_Manager::normalize_filename( $subfolder );
 
-        if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
-            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SUSPENDED_SITE ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        }
+                if ( MainWP_System_Utility::is_suspended_site( $website ) ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SUSPENDED_SITE ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                }
 
-        if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
-            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_NO_PERMISSION ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        }
+                if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_NO_PERMISSION ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                }
 
-        $websiteCleanUrl = $website->url;
-        if ( '/' === substr( $websiteCleanUrl, - 1 ) ) {
-            $websiteCleanUrl = substr( $websiteCleanUrl, 0, - 1 );
-        }
-        $websiteCleanUrl = str_replace(
-            array( 'http://', 'https://', '/' ),
-            array( '', '', '-' ),
-            $websiteCleanUrl
-        );
+                $websiteCleanUrl = $website->url;
+                if ( '/' === substr( $websiteCleanUrl, - 1 ) ) {
+                    $websiteCleanUrl = substr( $websiteCleanUrl, 0, - 1 );
+                }
+                $websiteCleanUrl = str_replace(
+                    array( 'http://', 'https://', '/' ),
+                    array( '', '', '-' ),
+                    $websiteCleanUrl
+                );
 
-        if ( false === $pMaximumFileDescriptorsOverride ) {
-            if ( 1 === (int) $website->maximumFileDescriptorsOverride ) {
-                $maximumFileDescriptorsAuto = ( 1 === (int) $website->maximumFileDescriptorsAuto );
-                $maximumFileDescriptors     = $website->maximumFileDescriptors;
-            } else {
-                $maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
-                $maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
-                $maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
-            }
-        } elseif ( ( 'global' !== $pArchiveFormat ) && ( 1 === (int) $pMaximumFileDescriptorsOverride ) ) {
-            $maximumFileDescriptorsAuto = ( 1 === (int) $pMaximumFileDescriptorsAuto );
-            $maximumFileDescriptors     = $pMaximumFileDescriptors;
-        } else {
-            $maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
-            $maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
-            $maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
-        }
+                if ( false === $pMaximumFileDescriptorsOverride ) {
+                    if ( 1 === (int) $website->maximumFileDescriptorsOverride ) {
+                        $maximumFileDescriptorsAuto = ( 1 === (int) $website->maximumFileDescriptorsAuto );
+                        $maximumFileDescriptors     = $website->maximumFileDescriptors;
+                    } else {
+                        $maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
+                        $maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
+                        $maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
+                    }
+                } elseif ( ( 'global' !== $pArchiveFormat ) && ( 1 === (int) $pMaximumFileDescriptorsOverride ) ) {
+                    $maximumFileDescriptorsAuto = ( 1 === (int) $pMaximumFileDescriptorsAuto );
+                    $maximumFileDescriptors     = $pMaximumFileDescriptors;
+                } else {
+                    $maximumFileDescriptorsAuto = get_option( 'mainwp_maximumFileDescriptorsAuto' );
+                    $maximumFileDescriptors     = get_option( 'mainwp_maximumFileDescriptors' );
+                    $maximumFileDescriptors     = ( false === $maximumFileDescriptors ? 150 : $maximumFileDescriptors );
+                }
 
-        $file = ( null === $pFilename ) ? '' : str_replace(
-            array(
-                '%sitename%',
-                '%url%',
-                '%date%',
-                '%time%',
-                '%type%',
-            ),
-            array(
-                MainWP_Utility::sanitize( $website->name ),
-                $websiteCleanUrl,
-                MainWP_Utility::date( 'm-d-Y' ),
-                MainWP_Utility::date( 'G\hi\ms\s' ),
-                $pType,
-            ),
-            $pFilename
-        );
-        $file = str_replace( '%', '', $file );
-        $file = MainWP_Backup_File_Manager::normalize_filename( $file );
-
-        // Normal flow: check site settings & fallback to global.
-        if ( false === $pLoadFilesBeforeZip ) {
-            $loadFilesBeforeZip = (int) $website->loadFilesBeforeZip;
-            if ( 1 === $loadFilesBeforeZip ) {
-                $loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
-                $loadFilesBeforeZip = ( 1 === (int) $loadFilesBeforeZip || false === $loadFilesBeforeZip );
-            } else {
-                $loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
-            }
-        } elseif ( 'global' === $pArchiveFormat || 1 === (int) $pLoadFilesBeforeZip ) { // Overridden flow: only fallback to global.
-            $loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
-            $loadFilesBeforeZip = ( 1 === (int) $loadFilesBeforeZip || false === $loadFilesBeforeZip );
-        } else {
-            $loadFilesBeforeZip = ( 2 === (int) $pLoadFilesBeforeZip );
-        }
-
-        // Normal flow: check site settings & fallback to global.
-        if ( false === $pArchiveFormat ) {
-            $archiveFormat = MainWP_Backup_Settings::get_current_archive_extension( $website );
-        } elseif ( 'global' === $pArchiveFormat ) {
-            $archiveFormat = MainWP_Backup_Settings::get_current_archive_extension();
-        } else {
-            $archiveFormat = $pArchiveFormat;
-        }
-
-        MainWP_Utility::end_session();
-
-        // Negotiate before building the request so a large-site ZIP auto-switch
-        // reaches the child in $params['ext']. The driving task, when one
-        // exists, carries the keep-ZIP override and receives the outcome note.
-        MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat, $pTask );
-
-        // This engine is the one remaining caller of the child's legacy backup
-        // action, and Run Now is what reaches it. A child too old for the task
-        // spine is refused here as well, so an un-updated site cannot be backed
-        // up from the UI either: gating only the scheduled path would leave a
-        // button on every task row that quietly runs the legacy engine.
-        //
-        // The gate sits AFTER the preflight negotiation above so it reads a
-        // freshly negotiated capability, not the stored flag: a site that has
-        // never run a native backup has no flag yet, and a missing flag is
-        // indistinguishable from an unsupported one, so a healthy child would
-        // be refused on a brand-new task. One negotiation serves both the
-        // format switch and this gate; a separate probe call would round-trip
-        // the child twice per Run Now and double the diagnostics events.
-        if ( ! MainWP_Backup_Monitor::child_supports_task_spine( $website ) ) {
-            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        }
-
-        $params = array(
-            'type'                  => $pType,
-            'exclude'               => $pExclude,
-            'excludebackup'         => $excludebackup,
-            'excludecache'          => $excludecache,
-            'excludenonwp'          => $excludenonwp,
-            'excludezip'            => $excludezip,
-            'ext'                   => $archiveFormat,
-            'file_descriptors_auto' => $maximumFileDescriptorsAuto,
-            'file_descriptors'      => $maximumFileDescriptors,
-            'loadFilesBeforeZip'    => $loadFilesBeforeZip,
-            'f'                     => $file,
-            'fileUID'               => $pFileNameUID,
-            'pid'                   => $pid,
-            'append'                => ( $append ? 1 : 0 ),
-        );
-
-        MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params ) );
-
-        $information = MainWP_Connect::fetch_url_authed( $website, 'backup', $params, false, false, false );
-        do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
-
-        if ( isset( $information['error'] ) ) {
-            throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        } elseif ( 'incremental' === $pType ) {
-            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        } elseif ( 'db' === $pType && empty( $information['db'] ) ) {
-            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_QUERY_FAILED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        } elseif ( 'full' === $pType && empty( $information['full'] ) ) {
-            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        } elseif ( 'files' === $pType && empty( $information['full'] ) ) {
-            // A child whose legacy backup action predates the files type
-            // answers with nothing on either slot; failing loudly beats
-            // reporting an empty success.
-            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        } elseif ( ! empty( $information['db'] ) || ! empty( $information['full'] ) ) {
-            if ( ! empty( $information['db'] ) ) {
-                $backup_result['url']  = $information['db'];
-                $backup_result['type'] = 'db';
-            } elseif ( ! empty( $information['full'] ) ) {
-                $backup_result['url']  = $information['full'];
-                $backup_result['type'] = 'full';
-            }
-
-            if ( isset( $information['size'] ) ) {
-                $backup_result['size'] = $information['size'];
-            }
-            $backup_result['subfolder'] = $subfolder;
-
-            $dir = self::private_site_dir( (int) $pSiteId );
-
-            $fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
-            $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
-
-            if ( 'db' === $pType ) {
-                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $information['db'] );
-                $localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
-            } else {
-                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $information['full'] );
-                $localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
-            }
-
-            if ( null !== $pFilename ) {
-                $filename        = str_replace(
+                $file = ( null === $pFilename ) ? '' : str_replace(
                     array(
                         '%sitename%',
                         '%url%',
@@ -2734,31 +2717,165 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     array(
                         MainWP_Utility::sanitize( $website->name ),
                         $websiteCleanUrl,
-                        $fm_date,
-                        $fm_time,
+                        MainWP_Utility::date( 'm-d-Y' ),
+                        MainWP_Utility::date( 'G\hi\ms\s' ),
                         $pType,
                     ),
                     $pFilename
                 );
-                $filename        = str_replace( '%', '', $filename );
-                $localBackupFile = $dir . $filename;
-                $localBackupFile = MainWP_Backup_File_Manager::normalize_filename( $localBackupFile );
+                $file = str_replace( '%', '', $file );
+                $file = MainWP_Backup_File_Manager::normalize_filename( $file );
 
-                if ( 'db' === $pType ) {
-                    $localBackupFile .= MainWP_Backup_File_Manager::get_real_extension( $information['db'] );
+                // Normal flow: check site settings & fallback to global.
+                if ( false === $pLoadFilesBeforeZip ) {
+                    $loadFilesBeforeZip = (int) $website->loadFilesBeforeZip;
+                    if ( 1 === $loadFilesBeforeZip ) {
+                        $loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
+                        $loadFilesBeforeZip = ( 1 === (int) $loadFilesBeforeZip || false === $loadFilesBeforeZip );
+                    } else {
+                        $loadFilesBeforeZip = ( 2 === $loadFilesBeforeZip );
+                    }
+                } elseif ( 'global' === $pArchiveFormat || 1 === (int) $pLoadFilesBeforeZip ) { // Overridden flow: only fallback to global.
+                    $loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
+                    $loadFilesBeforeZip = ( 1 === (int) $loadFilesBeforeZip || false === $loadFilesBeforeZip );
                 } else {
-                    $localBackupFile .= MainWP_Backup_File_Manager::get_real_extension( $information['full'] );
+                    $loadFilesBeforeZip = ( 2 === (int) $pLoadFilesBeforeZip );
+                }
+
+                // Normal flow: check site settings & fallback to global.
+                if ( false === $pArchiveFormat ) {
+                    $archiveFormat = MainWP_Backup_Settings::get_current_archive_extension( $website );
+                } elseif ( 'global' === $pArchiveFormat ) {
+                    $archiveFormat = MainWP_Backup_Settings::get_current_archive_extension();
+                } else {
+                    $archiveFormat = $pArchiveFormat;
+                }
+
+                MainWP_Utility::end_session();
+
+                // Negotiate before building the request so a large-site ZIP auto-switch
+                // reaches the child in $params['ext']. The driving task, when one
+                // exists, carries the keep-ZIP override and receives the outcome note.
+                MainWP_Backup_Monitor::negotiate_backup_preflight( $website, $archiveFormat, $pTask );
+
+                // This engine is the one remaining caller of the child's legacy backup
+                // action, and Run Now is what reaches it. A child too old for the task
+                // spine is refused here as well, so an un-updated site cannot be backed
+                // up from the UI either: gating only the scheduled path would leave a
+                // button on every task row that quietly runs the legacy engine.
+                //
+                // The gate sits AFTER the preflight negotiation above so it reads a
+                // freshly negotiated capability, not the stored flag: a site that has
+                // never run a native backup has no flag yet, and a missing flag is
+                // indistinguishable from an unsupported one, so a healthy child would
+                // be refused on a brand-new task. One negotiation serves both the
+                // format switch and this gate; a separate probe call would round-trip
+                // the child twice per Run Now and double the diagnostics events.
+                if ( ! MainWP_Backup_Monitor::child_supports_task_spine( $website ) ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_CHILD_UPDATE_REQUIRED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                }
+
+                $params = array(
+                    'type'                  => $pType,
+                    'exclude'               => $pExclude,
+                    'excludebackup'         => $excludebackup,
+                    'excludecache'          => $excludecache,
+                    'excludenonwp'          => $excludenonwp,
+                    'excludezip'            => $excludezip,
+                    'ext'                   => $archiveFormat,
+                    'file_descriptors_auto' => $maximumFileDescriptorsAuto,
+                    'file_descriptors'      => $maximumFileDescriptors,
+                    'loadFilesBeforeZip'    => $loadFilesBeforeZip,
+                    'f'                     => $file,
+                    'fileUID'               => $pFileNameUID,
+                    'pid'                   => $pid,
+                    'append'                => ( $append ? 1 : 0 ),
+                );
+
+                MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup: ' . MainWP_Utility::value_to_string( $params ) );
+
+                $information = MainWP_Connect::fetch_url_authed( $website, 'backup', $params, false, false, false );
+                do_action( 'mainwp_managesite_backup', $website, array( 'type' => $pType ), $information );
+
+                if ( isset( $information['error'] ) ) {
+                    throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                } elseif ( 'incremental' === $pType ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                } elseif ( 'db' === $pType && empty( $information['db'] ) ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_QUERY_FAILED ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                } elseif ( 'full' === $pType && empty( $information['full'] ) ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                } elseif ( 'files' === $pType && empty( $information['full'] ) ) {
+                    // A child whose legacy backup action predates the files type
+                    // answers with nothing on either slot; failing loudly beats
+                    // reporting an empty success.
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                } elseif ( ! empty( $information['db'] ) || ! empty( $information['full'] ) ) {
+                    if ( ! empty( $information['db'] ) ) {
+                        $backup_result['url']  = $information['db'];
+                        $backup_result['type'] = 'db';
+                    } elseif ( ! empty( $information['full'] ) ) {
+                        $backup_result['url']  = $information['full'];
+                        $backup_result['type'] = 'full';
+                    }
+
+                    if ( isset( $information['size'] ) ) {
+                        $backup_result['size'] = $information['size'];
+                    }
+                    $backup_result['subfolder'] = $subfolder;
+
+                    $dir = self::private_site_dir( (int) $pSiteId );
+
+                    $fm_date = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'date_format' ) ) );
+                    $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
+
+                    if ( 'db' === $pType ) {
+                        $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $information['db'] );
+                        $localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
+                    } else {
+                        $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $information['full'] );
+                        $localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
+                    }
+
+                    if ( null !== $pFilename ) {
+                        $filename        = str_replace(
+                            array(
+                                '%sitename%',
+                                '%url%',
+                                '%date%',
+                                '%time%',
+                                '%type%',
+                            ),
+                            array(
+                                MainWP_Utility::sanitize( $website->name ),
+                                $websiteCleanUrl,
+                                $fm_date,
+                                $fm_time,
+                                $pType,
+                            ),
+                            $pFilename
+                        );
+                        $filename        = str_replace( '%', '', $filename );
+                        $localBackupFile = $dir . $filename;
+                        $localBackupFile = MainWP_Backup_File_Manager::normalize_filename( $localBackupFile );
+
+                        if ( 'db' === $pType ) {
+                            $localBackupFile .= MainWP_Backup_File_Manager::get_real_extension( $information['db'] );
+                        } else {
+                            $localBackupFile .= MainWP_Backup_File_Manager::get_real_extension( $information['full'] );
+                        }
+                    }
+
+                    $localBackupFile            = MainWP_Backup_File_Manager::reserve_local_archive_path( $localBackupFile, (int) $pSiteId );
+                    $backup_result['local']     = $localBackupFile;
+                    $backup_result['regexfile'] = $localRegexFile;
+
+                    return $backup_result;
+                } else {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_DUMP_EMPTY ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                 }
             }
-
-            $localBackupFile            = MainWP_Backup_File_Manager::reserve_local_archive_path( $localBackupFile, (int) $pSiteId );
-            $backup_result['local']     = $localBackupFile;
-            $backup_result['regexfile'] = $localRegexFile;
-
-            return $backup_result;
-        } else {
-            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DB_DUMP_EMPTY ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
-        }
+        );
     }
 
     /**
@@ -2857,56 +2974,67 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $file_descriptors      = ( false === $file_descriptors ? 150 : $file_descriptors );
         }
 
-        $information = MainWP_Connect::fetch_url_authed(
-            $website,
-            'backup_task_create',
-            array(
-                'type'                  => $type,
-                'exclude'               => '',
-                'excludebackup'         => 0,
-                'excludecache'          => 0,
-                'excludenonwp'          => 0,
-                'excludezip'            => 0,
-                'ext'                   => $archive_ext,
-                'file_descriptors_auto' => $file_descriptors_auto,
-                'file_descriptors'      => $file_descriptors,
-                'loadFilesBeforeZip'    => false,
-                'pid'                   => time(),
-                'f'                     => '',
-            ),
-            false,
-            false,
-            false
+        return self::with_backup_hold(
+            $site_id,
+            static function () use ( $website, $site_id, $type, $owner, $persisted, $archive_ext, $file_descriptors_auto, $file_descriptors ) {
+                $information = MainWP_Connect::fetch_url_authed(
+                    $website,
+                    'backup_task_create',
+                    array(
+                        'type'                  => $type,
+                        'exclude'               => '',
+                        'excludebackup'         => 0,
+                        'excludecache'          => 0,
+                        'excludenonwp'          => 0,
+                        'excludezip'            => 0,
+                        'ext'                   => $archive_ext,
+                        'file_descriptors_auto' => $file_descriptors_auto,
+                        'file_descriptors'      => $file_descriptors,
+                        'loadFilesBeforeZip'    => false,
+                        'pid'                   => time(),
+                        'f'                     => '',
+                    ),
+                    false,
+                    false,
+                    false
+                );
+
+                if ( isset( $information['error'] ) ) {
+                    throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
+                }
+
+                if ( empty( $information['task_id'] ) || ! is_string( $information['task_id'] ) ) {
+                    throw new MainWP_Exception( esc_html__( 'The child site did not return a backup task id. Sync the child site and try again.', 'mainwp' ) );
+                }
+
+                $task_id = sanitize_text_field( $information['task_id'] );
+                $started = time();
+                MainWP_DB::instance()->update_website_option(
+                    $website,
+                    self::ADHOC_TASK_OPTION,
+                    wp_json_encode(
+                        array(
+                            'task_id' => $task_id,
+                            'type'    => $type,
+                            'started' => $started,
+                            'owner'   => $owner,
+                        )
+                    )
+                );
+
+                global $wpdb;
+                $saved = json_decode( (string) MainWP_DB::instance()->get_website_option( $site_id, self::ADHOC_TASK_OPTION ), true );
+                if ( '' !== $wpdb->last_error || ! is_array( $saved ) || ( $saved['task_id'] ?? '' ) !== $task_id || ( $saved['owner'] ?? '' ) !== $owner ) {
+                    throw new MainWP_Exception( esc_html__( 'The backup could not save its running state. Try again.', 'mainwp' ) );
+                }
+
+                self::close_displaced_handle_history( (int) $website->id, $persisted, $task_id );
+
+                MainWP_Backup_Run_History::start( 0, $site_id, $started, '' === $owner ? 'update_gate' : 'restore_safety', 0, '' === $owner ? null : (int) $owner, $task_id );
+
+                return $task_id;
+            }
         );
-
-        if ( isset( $information['error'] ) ) {
-            throw new MainWP_Exception( esc_html( MainWP_Backup_Error_Codes::sanitize_message( $information['error'] ) ), null, isset( $information['error_code'] ) ? $information['error_code'] : '' ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-        }
-
-        if ( empty( $information['task_id'] ) || ! is_string( $information['task_id'] ) ) {
-            throw new MainWP_Exception( esc_html__( 'The child site did not return a backup task id. Sync the child site and try again.', 'mainwp' ) );
-        }
-
-        $task_id = sanitize_text_field( $information['task_id'] );
-        $started = time();
-        MainWP_DB::instance()->update_website_option(
-            $website,
-            self::ADHOC_TASK_OPTION,
-            wp_json_encode(
-                array(
-                    'task_id' => $task_id,
-                    'type'    => $type,
-                    'started' => $started,
-                    'owner'   => $owner,
-                )
-            )
-        );
-
-        self::close_displaced_handle_history( (int) $website->id, $persisted, $task_id );
-
-        MainWP_Backup_Run_History::start( 0, $site_id, $started, '' === $owner ? 'update_gate' : 'restore_safety', 0, '' === $owner ? null : (int) $owner, $task_id );
-
-        return $task_id;
     }
 
     /**

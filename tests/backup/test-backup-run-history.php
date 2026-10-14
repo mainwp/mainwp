@@ -1493,8 +1493,9 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			if ( 'write_refused' === $mode && 0 === stripos( ltrim( $query ), 'UPDATE' ) && false !== strpos( $query, $options ) && false !== strpos( $query, $new_ref ) ) {
 				return 'SELECT * FROM missing_table_s71_handle';
 			}
-			// After the create, the handle write reads `SELECT name`; only the history readback reads `SELECT value`.
-			if ( 'readback_throws' === $mode && $created && ! $readback && 0 === stripos( ltrim( $query ), 'SELECT value FROM ' . $options ) && false !== strpos( $query, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ) {
+			// Handle confirmation must succeed; this fault targets only history work.
+			$frames = 'readback_throws' === $mode ? array_column( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 'function' ) : array(); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- target the history read, not admission evidence.
+			if ( 'readback_throws' === $mode && $created && ! $readback && in_array( 'close_displaced_handle_history', $frames, true ) && 0 === stripos( ltrim( $query ), 'SELECT value FROM ' . $options ) && false !== strpos( $query, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ) {
 				$readback = true;
 				throw new \RuntimeException( 'adapter fault' );
 			}
@@ -1507,13 +1508,18 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		try {
 			$returned = MainWP_Backup_Executor::trigger_backup( $site, 'full', '' === $owner ? '71' : '' );
 		} catch ( \MainWP\Dashboard\MainWP_Exception $e ) {
-			$this->assertSame( 'create_refused', $mode, $e->getMessage() );
+			$this->assertContains( $mode, array( 'create_refused', 'write_refused' ), $e->getMessage() );
+			if ( 'write_refused' === $mode ) {
+				$this->assertSame( 'The backup could not save its running state. Try again.', $e->getMessage() );
+			}
 		} finally {
 			$wpdb->suppress_errors( $suppress );
 			remove_filter( 'query', $fault );
 			remove_filter( 'mainwp_fetch_url_authed_pre', $create, 20 );
 		}
-		if ( 'create_refused' !== $mode ) {
+		if ( in_array( $mode, array( 'create_refused', 'write_refused' ), true ) ) {
+			$this->assertNull( $returned, 'A create without a persisted handle must fail.' );
+		} else {
 			$this->assertSame( $new_ref, $returned );
 		}
 		if ( 'readback_throws' === $mode ) {
@@ -1558,7 +1564,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		return array(
 			'D4 replaced'        => array( 'replaced', 'incomplete', true ),
 			'D5 create refused'  => array( 'create_refused', 'running', false ),
-			'D6 write refused'   => array( 'write_refused', 'running', true ),
+			'D6 write refused'   => array( 'write_refused', 'running', false ),
 			'D7 readback throws' => array( 'readback_throws', 'running', true ),
 			'D8 active restore'  => array( 'replaced', 'running', true, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT ),
 			'D9 terminal owner'  => array( 'replaced', 'incomplete', true, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT ),

@@ -182,16 +182,29 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
     }
 
     /**
-     * An open task holds only a site whose backup is still running.
-     *
-     * Covers the task lanes (scheduled and Back Up Now) and the ad-hoc lane
-     * (pre-update and restore safety backups), which keeps no task or progress
-     * row and is visible only through the site's handle.
+     * Task progress, owned ad-hoc handles and request markers hold the site.
      *
      * @param int $site_id Site identity.
      * @return bool True on active evidence or a failed read.
      */
     public function has_running_backup_for_site( int $site_id ): bool {
+        $raw = $this->wpdb->get_var(
+            $this->wpdb->prepare( "SELECT option_value FROM {$this->wpdb->options} WHERE option_name = %s", MainWP_Backup_Executor::BACKUP_HOLD_OPTION_PREFIX . $site_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- WordPress supplies its options table name.
+        );
+        if ( '' !== $this->wpdb->last_error ) {
+            return true;
+        }
+        if ( null !== $raw ) {
+            $owners = json_decode( $raw, true );
+            if ( ! is_array( $owners ) ) {
+                return true;
+            }
+            foreach ( $owners as $expires ) {
+                if ( ! is_int( $expires ) || $expires > time() ) {
+                    return true;
+                }
+            }
+        }
         $handles = $this->wpdb->get_col(
             $this->wpdb->prepare(
                 'SELECT value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = %s',
@@ -204,9 +217,8 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
         }
         foreach ( $handles as $raw ) {
             $handle = json_decode( (string) $raw, true );
-            // Same abandonment window trigger_backup() uses before it lets another lane take the handle.
-            if ( is_array( $handle ) && isset( $handle['task_id'] ) && is_scalar( $handle['task_id'] ) && '' !== (string) $handle['task_id']
-                && time() - (int) ( $handle['started'] ?? 0 ) <= MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS ) {
+            // The matching owner resumes without an age limit; only release ends its hold.
+            if ( is_array( $handle ) && isset( $handle['task_id'] ) && is_scalar( $handle['task_id'] ) && '' !== (string) $handle['task_id'] ) {
                 return true;
             }
         }

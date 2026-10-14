@@ -1129,7 +1129,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $type      = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
             $subfolder = isset( $_POST['subfolder'] ) ? sanitize_text_field( wp_unslash( $_POST['subfolder'] ) ) : '';
             $filename  = isset( $_POST['filename'] ) ? sanitize_text_field( wp_unslash( $_POST['filename'] ) ) : '';
-            wp_send_json( MainWP_Backup_Monitor::backup_check_pid( $site_id, $pid, $type, $subfolder, $filename ) );
+            $result    = MainWP_Backup_Executor::with_backup_hold(
+                $site_id,
+                static function () use ( $site_id, $pid, $type, $subfolder, $filename ) {
+                    return MainWP_Backup_Monitor::backup_check_pid( $site_id, $pid, $type, $subfolder, $filename );
+                },
+                true
+            );
+            wp_send_json( $result );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );
         }
@@ -1157,10 +1164,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             if ( null === $this->authorize_restore_site( $site_id ) ) {
                 return;
             }
-            $type  = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
-            $url   = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
-            $local = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : '';
-            die( wp_json_encode( array( 'result' => MainWP_Backup_File_Manager::backup_download_file( $site_id, $type, $url, $local ) ) ) );
+            $type   = isset( $_POST['type'] ) ? sanitize_text_field( wp_unslash( $_POST['type'] ) ) : '';
+            $url    = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
+            $local  = isset( $_POST['local'] ) ? sanitize_text_field( wp_unslash( $_POST['local'] ) ) : '';
+            $result = MainWP_Backup_Executor::with_backup_hold(
+                $site_id,
+                static function () use ( $site_id, $type, $url, $local ) {
+                    return MainWP_Backup_File_Manager::backup_download_file( $site_id, $type, $url, $local );
+                },
+                true
+            );
+            die( wp_json_encode( array( 'result' => $result ) ) );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );
         }

@@ -417,6 +417,12 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 break;
             }
             hash_update( $context, $chunk );
+            /**
+             * Renew request evidence while hashing has no transport timeout.
+             *
+             * @since 6.3
+             */
+            do_action( 'mainwp_backup_hash_progress' );
             if ( time() >= $next_tick ) {
                 static::refresh_download_lock( $local_file );
                 MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );

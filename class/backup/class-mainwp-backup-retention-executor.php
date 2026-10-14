@@ -538,7 +538,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         if ( $reservation <= 0 ) {
             $result['remaining_ids'] = array_merge( $result['remaining_ids'], array_map( 'intval', $candidate['snapshot_ids'] ) );
             $result['errors'][]      = sprintf(
-                'Snapshots %s: a restore in progress or another backup action holds this site; they are kept and the prune will retry on a later sweep.',
+                'Snapshots %s: a restore in progress or another backup action is working on this site, so they were kept. Try again once it finishes.',
                 implode( ',', array_map( 'intval', (array) $candidate['snapshot_ids'] ) )
             );
             return false;
@@ -581,12 +581,12 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         }
         $site_id = (int) $first->site_id;
         if ( MainWP_Backup_Restore_Job_Store::instance()->has_active_job_for_snapshots( $ids ) ) {
-            $result['errors'][] = sprintf( 'Snapshots %s: a restore in progress references this backup; it is kept and the prune will retry on a later sweep.', implode( ',', $ids ) );
+            $result['errors'][] = sprintf( 'Snapshots %s: a restore in progress uses this backup, so it was kept. Try again once the restore finishes.', implode( ',', $ids ) );
             return $result;
         }
         if ( MainWP_DB_Backup::instance()->has_inflight_incremental_for_site( $site_id ) ) {
             /* translators: %s: Snapshot IDs. */
-            $result['errors'][] = sprintf( __( 'Snapshots %s: an incremental backup is in progress on this site. They were kept; cleanup will retry after the backup finishes.', 'mainwp' ), implode( ',', $ids ) );
+            $result['errors'][] = sprintf( __( 'Snapshots %s: an incremental backup is running on this site, so they were kept. Try the cleanup again once that backup finishes.', 'mainwp' ), implode( ',', $ids ) );
             return $result;
         }
 
@@ -595,7 +595,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         $child_task_ids = array();
         try {
             if ( ! $store->claim_uploads_for_prune( $ids, $token ) ) {
-                $result['errors'][] = sprintf( 'Snapshots %s: an upload in progress uses this backup; it is kept and the prune will retry on a later run.', implode( ',', $ids ) );
+                $result['errors'][] = sprintf( 'Snapshots %s: an upload in progress uses this backup, so it was kept. Try again once the upload finishes.', implode( ',', $ids ) );
                 return $result;
             }
             foreach ( array_reverse( $ids ) as $snapshot_id ) {
@@ -609,7 +609,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 // Enqueue while checkpoints and local files are intact. A failed
                 // write leaves the source available for the next cleanup.
                 if ( ! empty( $task->delete_cloud_copies ) && ! $this->enqueue_cloud_deletes( $snapshot, $store, $result['cloud_deletes_queued'] ) ) {
-                    $result['errors'][] = sprintf( 'Snapshot %d: a cloud delete job could not be queued; the prune will retry on the next sweep.', $snapshot_id );
+                    $result['errors'][] = sprintf( 'Snapshot %d: a cloud delete job could not be queued, so it was kept. Try again later.', $snapshot_id );
                     break;
                 }
                 if ( ! $this->remove_local_dir( $snapshot, $result['errors'] ) ) {

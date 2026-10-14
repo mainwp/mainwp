@@ -1230,7 +1230,7 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( array( $ids[0] ), $result['remaining_ids'] );
 			$this->assertSame( array(), $result['deleted_ids'] );
 			$this->assertSame( array(), $result['cloud_deletes_queued'] );
-			$this->assertStringContainsString( 'another backup action holds this site', $result['errors'][0]['message'] );
+			$this->assertStringContainsString( 'another backup action is working on this site', $result['errors'][0]['message'] );
 			$this->assertStringNotContainsString( '/private/', wp_json_encode( $result ) );
 			$post                 = $_POST;
 			$request              = $_REQUEST;

@@ -144,7 +144,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             if ( null !== $snapshot && ( $reservation <= 0 || ! $restores->renew_reservation( $reservation ) ) ) {
                 $result['state']      = self::STATE_DEFERRED;
                 $result['error_code'] = self::ERR_DEFERRED;
-                $result['error']      = esc_html__( 'Another backup action holds this site. The test restore will retry later.', 'mainwp' );
+                $result['error']      = esc_html__( 'Another backup action is working on this site. The test restore will try again later.', 'mainwp' );
                 return $result;
             }
             // Resolve only after the site is reserved, then hold through cleanup.
@@ -250,7 +250,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
      */
     private function renew_reader( int $reservation ): void {
         if ( ! MainWP_Backup_Restore_Job_Store::instance()->renew_reservation( $reservation ) ) {
-            throw new MainWP_Exception( esc_html__( 'Another backup action holds this site. The test restore will retry later.', 'mainwp' ), '', self::ERR_DEFERRED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- translated message is escaped.
+            throw new MainWP_Exception( esc_html__( 'Another backup action is working on this site. The test restore will try again later.', 'mainwp' ), '', self::ERR_DEFERRED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- translated message is escaped.
         }
     }
 

@@ -560,8 +560,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( '' === reason ) {
                     return '<a href="#" class="ui mini basic button mainwp-download-snapshot" data-snapshot="' + snap.id + '">' + downloadLabels.action + '</a>';
                 }
-                // Fomantic gives disabled buttons pointer-events: none, so the hover reason sits on a wrapper.
-                return '<span title="' + escAttr( reason ) + '"><a href="#" class="ui mini basic button mainwp-download-snapshot disabled" data-snapshot="' + snap.id + '" aria-disabled="true">' + downloadLabels.action + '</a></span>';
+                // Fomantic gives disabled buttons pointer-events: none, so the wrapper's title shows on hover
+                // and the anchor's own title stays its accessible description.
+                var title = ' title="' + escAttr( reason ) + '"';
+                return '<span' + title + '><a href="#" class="ui mini basic button mainwp-download-snapshot disabled" data-snapshot="' + snap.id + '" aria-disabled="true"' + title + '>' + downloadLabels.action + '</a></span>';
             }
 
             // The static placeholder row is the no-JS fallback; drop it before

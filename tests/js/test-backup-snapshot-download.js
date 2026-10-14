@@ -13,26 +13,34 @@ const context = {
 };
 vm.createContext( context );
 vm.runInContext( source.slice( start, end ), context );
-for ( const type of [ 'full', 'db', 'files' ] ) {
-    const html = context.downloadButton( { id: 17, type, source: 'local' } );
-    assert.match( html, /class="ui mini basic button mainwp-download-snapshot"/ );
-    assert.match( html, /data-snapshot="17"/ );
-    assert.match( html, />Download<\/a>$/ );
-}
-for ( const snap of [
-    { id: 17, type: 'incremental', source: 'local' },
-    { id: 17, type: 'full', source: 'remote' },
-    { id: 17, type: 'db', source: 'unavailable' }
-] ) {
-    const html = context.downloadButton( snap );
-    // Fomantic disabled buttons ignore the pointer, so only a wrapper can show the reason on hover.
-    assert.match( html, /^<span title="[^"\n]+"><a href="#" class="ui mini basic button mainwp-download-snapshot disabled"[^>]*>Download<\/a><\/span>$/ );
-    assert.doesNotMatch( html.slice( html.indexOf( '<a ' ) ), /title=/ );
-    assert.match( html, /aria-disabled="true"/ );
+// Input matrix for downloadButton(): every type/source pair the list can send. Fomantic gives disabled
+// buttons pointer-events: none, so a disabled button needs its reason on a wrapper (hover) and on the
+// anchor itself (accessible description).
+const enabled = '<a href="#" class="ui mini basic button mainwp-download-snapshot" data-snapshot="17">Download</a>';
+const disabled = reason => '<span title="' + reason + '"><a href="#" class="ui mini basic button mainwp-download-snapshot disabled" data-snapshot="17" aria-disabled="true" title="' + reason + '">Download</a></span>';
+const matrix = [
+    [ 'full', 'local', '' ],
+    [ 'db', 'local', '' ],
+    [ 'files', 'local', '' ],
+    [ 'incremental', 'local', 'incremental' ],
+    [ 'incremental', 'remote', 'incremental' ],
+    [ 'incremental', 'unavailable', 'incremental' ],
+    [ 'full', 'remote', 'missing' ],
+    [ 'full', 'remote_chunked', 'missing' ],
+    [ 'db', 'unavailable', 'missing' ],
+    [ 'files', 'remote', 'missing' ]
+];
+for ( const [ type, source, reason ] of matrix ) {
+    const expected = '' === reason ? enabled : disabled( context.downloadLabels[ reason ] );
+    assert.equal( context.downloadButton( { id: 17, type, source } ), expected, type + '/' + source );
 }
 // The archive is on this Dashboard, so a disconnected site can still be downloaded.
 context.siteDisconnected = true;
-assert.doesNotMatch( context.downloadButton( { id: 17, type: 'full', source: 'local' } ), /disabled/ );
+assert.equal( context.downloadButton( { id: 17, type: 'full', source: 'local' } ), enabled );
+context.siteDisconnected = false;
+// Both title attributes carry the escaped reason.
+context.downloadLabels.missing = 'Not "here" <b>';
+assert.equal( context.downloadButton( { id: 17, type: 'full', source: 'remote' } ), disabled( 'Not &quot;here&quot; &lt;b&gt;' ) );
 const rowStart = source.indexOf( '"createdRow": function ( row, snap )' );
 const rowEnd = source.indexOf( '\n                },', rowStart );
 context.$ = row => ( {
@@ -44,4 +52,4 @@ const filesRow = { classes: [] };
 context.createRow( filesRow, { restorable: false, type: 'files', source: 'local', restore_reason: 'Update the Child to restore.' } );
 assert.ok( ! filesRow.classes.includes( 'disabled' ), 'A local files archive stays downloadable when the Child cannot restore it.' );
 assert.equal( filesRow.title, 'Update the Child to restore.' );
-console.log( 'OK (8 snapshot Download row cases)' );
+console.log( 'OK (' + ( matrix.length + 3 ) + ' snapshot Download row cases)' );

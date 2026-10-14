@@ -284,11 +284,11 @@ class MainWP_Backup_Snapshot_Download_Test extends MainWP_Abilities_Test_Case {
 	/**
 	 * Run the real stream with isolated PHP header and connection spies.
 	 *
-	 * @param bool $abort Abort after the first chunk.
+	 * @param string $mode complete, abort (after the first chunk), read-error (second read fails) or first-read-error.
 	 * @return array Stream result and captured bytes.
 	 */
-	private function stream( bool $abort ): array {
-		$command = array( PHP_BINARY, __DIR__ . '/fixtures/snapshot-download-stream.php', $this->path, $abort ? 'abort' : 'complete' );
+	private function stream( string $mode ): array {
+		$command = array( PHP_BINARY, __DIR__ . '/fixtures/snapshot-download-stream.php', $this->path, $mode );
 		$process = proc_open(
 			$command,
 			array(
@@ -328,7 +328,7 @@ class MainWP_Backup_Snapshot_Download_Test extends MainWP_Abilities_Test_Case {
 			list( $query, $key ) = $this->link();
 			$this->assertSame( $this->path, MainWP_Backup_Download::redeem_download( $query ) );
 			$this->assertFalse( get_site_transient( $key ) );
-			$result = $this->stream( false );
+			$result = $this->stream( 'complete' );
 			$this->assertTrue( $result['completed'] );
 			$this->assertSame( file_get_contents( $this->path ), base64_decode( $result['bytes'] ) );
 			$this->assertContains( 'Content-Length: ' . filesize( $this->path ), $result['headers'] );
@@ -339,13 +339,40 @@ class MainWP_Backup_Snapshot_Download_Test extends MainWP_Abilities_Test_Case {
 
 	/** An abort after a chunk returns false and leaves the archive available. */
 	public function test_client_abort_mid_stream_returns_without_fatal_error() {
-		$result = $this->stream( true );
+		$result = $this->stream( 'abort' );
 		$this->assertFalse( $result['completed'] );
 		$bytes = base64_decode( $result['bytes'] );
 		$this->assertNotEmpty( $bytes );
 		$this->assertLessThan( filesize( $this->path ), strlen( $bytes ) );
 		$this->assertSame( substr( file_get_contents( $this->path ), 0, strlen( $bytes ) ), $bytes );
 		$this->assertSame( array( true, false ), $result['ignore_abort'] );
+		$this->assertFileExists( $this->path );
+	}
+
+	/** A multi-gigabyte archive must not hit max_execution_time mid-stream. */
+	public function test_stream_lifts_the_execution_limit() {
+		$result = $this->stream( 'complete' );
+		$this->assertTrue( $result['completed'] );
+		$this->assertSame( array( 0 ), $result['time_limits'] );
+	}
+
+	/** Once bytes are out, a read failure ends the body short instead of appending an error page. */
+	public function test_read_failure_after_output_ends_short_without_error() {
+		$result = $this->stream( 'read-error' );
+		$this->assertFalse( $result['completed'] );
+		$bytes = base64_decode( $result['bytes'] );
+		$this->assertSame( 64 * 1024, strlen( $bytes ) );
+		$this->assertSame( substr( file_get_contents( $this->path ), 0, 64 * 1024 ), $bytes );
+		$this->assertContains( 'Content-Length: ' . filesize( $this->path ), $result['headers'] );
+		$this->assertSame( array( true, false ), $result['ignore_abort'] );
+	}
+
+	/** A failed first read sends no archive headers, so the error page is not saved as the archive. */
+	public function test_read_failure_before_output_sends_no_archive_headers() {
+		$result = $this->stream( 'first-read-error' );
+		$this->assertSame( 'error', $result['completed'] );
+		$this->assertSame( '', base64_decode( $result['bytes'] ) );
+		$this->assertSame( array(), $result['headers'] );
 		$this->assertFileExists( $this->path );
 	}
 

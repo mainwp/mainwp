@@ -177,7 +177,7 @@ class MainWP_Backup_Download {
      * Stream an already authorized file without deleting it or exiting.
      *
      * @param string $path Authorized local file.
-     * @return bool|\WP_Error True on completion, false on client abort, error on read failure.
+     * @return bool|\WP_Error True on completion, false when the body ended short (client abort, or a read failure after output began), error when nothing was sent.
      */
     public static function stream_file( string $path ): bool|\WP_Error {
         // phpcs:disable WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors.Discouraged -- bounded binary reads; failures return a fixed error.
@@ -185,23 +185,31 @@ class MainWP_Backup_Download {
         if ( false === $handle ) {
             return self::refusal( 'read' );
         }
+        // Windows counts wall-clock time against max_execution_time, which a large archive on a slow link exceeds.
+        MainWP_System_Utility::set_time_limit( 0 );
         $previous = ignore_user_abort( true );
         try {
             $stat = fstat( $handle );
             if ( false === $stat ) {
                 return self::refusal( 'read' );
             }
-            header( 'Content-Type: application/octet-stream' );
-            header( 'Content-Disposition: attachment; filename="' . rawurlencode( basename( $path ) ) . '"' );
-            header( 'Cache-Control: private, no-store' );
-            header( 'Content-Length: ' . $stat['size'] );
+            $sent = false;
             while ( ! feof( $handle ) ) {
                 if ( connection_aborted() ) {
                     return false;
                 }
                 $chunk = fread( $handle, 64 * 1024 );
                 if ( false === $chunk ) {
-                    return self::refusal( 'read' );
+                    // After the first byte an error page would land inside the archive; the short body against Content-Length marks it incomplete.
+                    return $sent ? false : self::refusal( 'read' );
+                }
+                // Headers wait for the first good read so a read error is never served as the attachment.
+                if ( ! $sent ) {
+                    header( 'Content-Type: application/octet-stream' );
+                    header( 'Content-Disposition: attachment; filename="' . rawurlencode( basename( $path ) ) . '"' );
+                    header( 'Cache-Control: private, no-store' );
+                    header( 'Content-Length: ' . $stat['size'] );
+                    $sent = true;
                 }
                 echo $chunk; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- authorized binary archive bytes.
                 if ( ob_get_level() && ob_get_length() ) {

@@ -1813,6 +1813,9 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * @param bool $claim_delete Whether the delete lane wins before the failed unlink.
 	 */
 	public function test_s90_r1_failed_unlink_withdraws_new_cloud_deletes( bool $claim_delete ) {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root bypasses directory write permissions.' );
+		}
 		global $wpdb;
 		list( $id, $dir ) = $this->make_snapshot_with_dir();
 		$this->insert_upload_job( $id, 77 );

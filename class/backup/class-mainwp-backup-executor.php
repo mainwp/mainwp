@@ -2334,6 +2334,19 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     && isset( $sent['parent_snapshot_id'] ) && (int) ( $latest->id ?? 0 ) !== (int) $sent['parent_snapshot_id'] ) {
                     // An intervening prune or completion changed the parent.
                     // Escalate directly to full through the existing requeue path.
+                    $staged_paths = array_unique( array_merge( array_column( $archives, 'path' ), array( $manifest_path ) ) );
+                    foreach ( $staged_paths as $path ) {
+                        if ( '' === $path || $record_lock === $path || $record_lock . '.downloading' === $path || ! is_file( $path ) ) {
+                            continue;
+                        }
+                        if ( MainWP_Backup_File_Manager::is_within_site_backup_dir( $path, (int) $website->id ) ) {
+                            wp_delete_file( $path );
+                            clearstatcache( true, $path );
+                        }
+                        if ( is_file( $path ) ) {
+                            MainWP_Logger::instance()->warning_for_website( $website, 'backup', 'Could not remove staged incremental backup artifact before requeue: ' . basename( $path ) );
+                        }
+                    }
                     $sent['incremental_sent'] = 'push';
                     $progress->last_error     = wp_json_encode( $sent );
                     MainWP_DB_Backup::instance()->update_backup_task_progress( $pTask->id, $website->id, array( 'last_error' => $progress->last_error ) );

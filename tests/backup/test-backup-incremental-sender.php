@@ -5365,11 +5365,28 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( array( $base ), $prune['remaining_ids'] );
 			$this->assertFileExists( $dir . 'parent.list' );
 		}
-		$cycle = $this->run_cycle( $site_id, $task );
+		$run_dir            = $dir . MainWP_Backup_Executor::run_dir_name( 'x1-delta' ) . '/';
+		$deleted_under_lock = array();
+		$observe_delete     = static function ( $file ) use ( $run_dir, $artifacts, $site_id, $task, &$deleted_under_lock ) {
+			if ( dirname( $file ) . '/' === $run_dir && in_array( basename( $file ), array_column( $artifacts, 'file' ), true ) ) {
+				$current              = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+				$deleted_under_lock[] = is_file( $run_dir . 'snapshot-record.downloading' ) && 'x1-delta' === $current->child_backup_task_id;
+			}
+			return $file;
+		};
+		add_filter( 'wp_delete_file', $observe_delete );
+		try {
+			$cycle = $this->run_cycle( $site_id, $task );
+		} finally {
+			remove_filter( 'wp_delete_file', $observe_delete );
+		}
 		$this->assertNull( $cycle['exception'] );
 		if ( $replace_parent ) {
 			$this->assertFalse( $cycle['result'], 'A delta cannot be recorded against a different parent.' );
 			$this->assertSame( 'full', MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task->id )->type );
+			$remaining = array_filter( glob( $run_dir . '*' ), static fn( $path ) => ! str_ends_with( $path, '.downloading.reclaim' ) );
+			$this->assertSame( array(), $remaining, 'The abandoned run must leave no staged artifact.' );
+			$this->assertSame( array_fill( 0, count( $artifacts ), true ), $deleted_under_lock, 'Delete every artifact under the record lock before dropping the child handle.' );
 			$this->assertFalse( $this->run_cycle( $site_id, $task )['result'] );
 			$this->assertSame( 'full', $this->last_call_params( 'backup_task_create' )['type'], 'The backstop goes straight to full.' );
 		} else {

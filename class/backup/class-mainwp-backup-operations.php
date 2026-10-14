@@ -1699,20 +1699,23 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( empty( $ids ) ) {
             $refusals[] = self::safe_error( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND );
         }
-        if ( self::snapshot_delete_busy( $site_id ) ) {
-            $refusals[] = self::safe_error( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+        $busy = self::snapshot_delete_busy_message( $site_id );
+        if ( '' !== $busy ) {
+            $refusal            = self::safe_error( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+            $refusal['message'] = $busy;
+            $refusals[]         = $refusal;
         }
         $gate     = self::update_gate_for_site( $site );
         $warn     = $gate['applies'] && MainWP_Backup_Executor::UPDATE_GATE_PASS === $gate['verdict']
             && MainWP_Backup_Executor::UPDATE_GATE_PASS !== MainWP_Backup_Executor::evaluate_update_backup_gate( $site_id, MainWP_Updates_Overview::get_backup_before_upgrade_days(), null, $ids );
         $warnings = array();
         if ( $warn ) {
-            $warnings[] = __( 'Deleting these backups leaves this site without a recent backup, so updates will be held until a new backup finishes.', 'mainwp' );
+            $warnings[] = __( 'After this deletion, updates for this site are held until it has another backup that meets the "Require a backup before an update" setting.', 'mainwp' );
         }
         if ( ! $cloud ) {
             $warnings[] = __( 'Cloud copies stay in your storage, but they will no longer appear in MainWP.', 'mainwp' );
         }
-        $preview            = self::backup_preview(
+        $preview = self::backup_preview(
             array(
                 'site_id'             => $site_id,
                 'snapshot_id'         => $snapshot_id,
@@ -1723,8 +1726,13 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $refusals,
             $warnings
         );
-        $preview['dry_run'] = true;
-        return $preview;
+        return array(
+            'dry_run'      => true,
+            'would_affect' => $preview['would_affect'],
+            'can_proceed'  => $preview['can_proceed'],
+            'warnings'     => $preview['warnings'],
+            'refusals'     => $preview['refusals'],
+        );
     }
 
     /**
@@ -1752,11 +1760,23 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         );
         $result   = MainWP_Backup_Retention_Executor::instance()->delete_snapshot( $site_id, $snapshot_id, array_map( 'intval', $expected_snapshot_ids ), $task );
         unset( $result['snapshot_ids'] );
-        $result['site_id']     = $site_id;
-        $result['snapshot_id'] = $snapshot_id;
-        $result['dry_run']     = false;
-        $result['errors']      = array_map( array( MainWP_Abilities_Backups::class, 'cleanup_error' ), $result['errors'] );
-        $result['preview']     = 'changed' === $result['status'] ? self::preview_delete_snapshot( $site_id, $snapshot_id, $task->delete_cloud_copies ) : null;
+        $result = array(
+            'site_id'     => $site_id,
+            'snapshot_id' => $snapshot_id,
+        ) + $result;
+        foreach ( $result['cloud_deletes_queued'] as &$pair ) {
+            $destination              = MainWP_Backup_Storage_Destinations::instance()->get_destination( $pair['destination_id'] );
+            $pair['destination_name'] = $destination ? (string) $destination->name : '';
+        }
+        unset( $pair );
+        $result['errors'] = array_map( array( MainWP_Abilities_Backups::class, 'cleanup_error' ), $result['errors'] );
+        $fresh_preview    = 'changed' === $result['status'] ? self::preview_delete_snapshot( $site_id, $snapshot_id, $task->delete_cloud_copies ) : null;
+        if ( is_wp_error( $fresh_preview ) ) {
+            $result['errors'][] = MainWP_Abilities_Backups::cleanup_error( array( 'code' => $fresh_preview->get_error_code() ) );
+            $fresh_preview      = null;
+        }
+        $result['preview'] = $fresh_preview;
+        $result['dry_run'] = false;
         return $result;
     }
 
@@ -1767,9 +1787,34 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return bool Whether deletion must wait.
      */
     public static function snapshot_delete_busy( int $site_id ): bool {
-        return null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id )
-            || MainWP_Backup_Retention_Query::instance()->has_site_reservation( $site_id )
-            || MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $site_id );
+        return '' !== self::snapshot_delete_busy_message( $site_id );
+    }
+
+    /**
+     * Preview and confirm must give the same reason for a held site.
+     *
+     * @param bool $restore_or_reserved Whether a restore or site reservation holds the site.
+     * @return string Translated refusal.
+     */
+    public static function snapshot_delete_hold_message( bool $restore_or_reserved ): string {
+        return $restore_or_reserved
+            ? __( 'A restore or another backup action is running on this site. Try again when it finishes.', 'mainwp' )
+            : __( 'A backup is running on this site. Try again when it finishes.', 'mainwp' );
+    }
+
+    /**
+     * Reader locks can keep a reservation alive beyond its timestamp.
+     *
+     * @param int $site_id Site identity.
+     * @return string Refusal, or an empty string when idle.
+     */
+    private static function snapshot_delete_busy_message( int $site_id ): string {
+        global $wpdb;
+        $restores = MainWP_Backup_Restore_Job_Store::instance();
+        if ( null !== $restores->get_active_job_for_site( $site_id ) || $restores->site_is_reserved( $site_id ) || '' !== $wpdb->last_error ) {
+            return self::snapshot_delete_hold_message( true );
+        }
+        return MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $site_id ) ? self::snapshot_delete_hold_message( false ) : '';
     }
 
     /**

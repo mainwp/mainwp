@@ -22,7 +22,7 @@ const context = {
         queued: 'Cloud copies queued for deletion: %s.',
         queuedTo: '%1$s to %2$s'
     },
-    destinationNames: { 3: 'Backblaze', 4: 'Cost $& Co' },
+    destinationNames: {},
     backupTypeLabels: { full: 'Full', incremental: 'Incremental' },
     escAttr: value => String( value ).replace( /&/g, '&amp;' ).replace( /"/g, '&quot;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' )
 };
@@ -38,12 +38,12 @@ console.log( 'OK (5 snapshot Delete row cases)' );
 
 [ 'snapshotIdList', 'cloudQueueLabel', 'deleteResultLines', 'setDeleteMessages', 'deletePreviewItem', 'showDeletePreview', 'showDeleteResponse' ].forEach( load );
 assert.equal( context.snapshotIdList( [ 171, 172 ] ), '#171, #172' );
-assert.equal( context.cloudQueueLabel( { snapshot_id: 171, destination_id: 3 } ), '#171 to Backblaze' );
-assert.equal( context.cloudQueueLabel( { snapshot_id: 171, destination_id: 9 } ), '#171', 'A missing destination name falls back to the id.' );
-assert.equal( context.cloudQueueLabel( { snapshot_id: 172, destination_id: 4 } ), '#172 to Cost $& Co', 'Replacement patterns in a name stay literal.' );
+assert.equal( context.cloudQueueLabel( { snapshot_id: 171, destination_id: 3, destination_name: 'Backblaze' } ), '#171 to Backblaze' );
+assert.equal( context.cloudQueueLabel( { snapshot_id: 171, destination_id: 9, destination_name: '' } ), '#171', 'A missing destination name falls back to the id.' );
+assert.equal( context.cloudQueueLabel( { snapshot_id: 172, destination_id: 4, destination_name: 'Cost $& Co' } ), '#172 to Cost $& Co', 'Replacement patterns in a name stay literal.' );
 assert.deepEqual( Array.from( context.deleteResultLines( {
     status: 'complete', deleted_ids: [ 171, 172 ], remaining_ids: [],
-    cloud_deletes_queued: [ { snapshot_id: 171, destination_id: 3 }, { snapshot_id: 172, destination_id: 9 } ], errors: []
+    cloud_deletes_queued: [ { snapshot_id: 171, destination_id: 3, destination_name: 'Backblaze' }, { snapshot_id: 172, destination_id: 9, destination_name: '' } ], errors: []
 } ) ), [ 'Backups deleted.', 'Deleted backups: #171, #172.', 'Cloud copies queued for deletion: #171 to Backblaze, #172.' ] );
 assert.deepEqual( Array.from( context.deleteResultLines( {
     status: 'refused', deleted_ids: [], remaining_ids: [ 171 ], cloud_deletes_queued: [], errors: [ { code: 'mainwp_operation_failed', message: 'Busy.' } ]

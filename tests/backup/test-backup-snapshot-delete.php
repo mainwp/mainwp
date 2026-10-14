@@ -162,8 +162,9 @@ class MainWP_Backup_Snapshot_Delete_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame(
 			$cloud ? array(
 				array(
-					'snapshot_id'    => $id,
-					'destination_id' => 987654,
+					'snapshot_id'      => $id,
+					'destination_id'   => 987654,
+					'destination_name' => '',
 				),
 			) : array(),
 			$result['cloud_deletes_queued']
@@ -218,6 +219,9 @@ class MainWP_Backup_Snapshot_Delete_Test extends MainWP_Abilities_Test_Case {
 		$plan = $this->preview( $id );
 		$this->assertSame( $warn, $plan['would_affect']['update_gate_warning'] );
 		$this->assertCount( $warn ? 1 : 0, $plan['warnings'] );
+		if ( $warn ) {
+			$this->assertSame( 'After this deletion, updates for this site are held until it has another backup that meets the "Require a backup before an update" setting.', $plan['warnings'][0] );
+		}
 		$this->assertSame( $another, MainWP_Backup_Executor::has_recent_native_backup( $this->site_id, 7, false, array( $id ) ) );
 	}
 
@@ -246,6 +250,7 @@ class MainWP_Backup_Snapshot_Delete_Test extends MainWP_Abilities_Test_Case {
 	public static function busy_cases() {
 		return array(
 			'restore'        => array( 'restore' ),
+			'reservation'    => array( 'reservation' ),
 			'manual backup'  => array( 'manual' ),
 			'scheduled full' => array( 'scheduled' ),
 		);
@@ -258,9 +263,14 @@ class MainWP_Backup_Snapshot_Delete_Test extends MainWP_Abilities_Test_Case {
 	 * @param string $kind Running lane.
 	 */
 	public function test_running_site_refuses( $kind ) {
+		if ( 'scheduled' === $kind ) {
+			$this->use_scheduled_task();
+		}
 		$id   = $this->snapshot();
 		$plan = $this->preview( $id );
 		if ( 'restore' === $kind ) {
+			MainWP_Backup_Restore_Job_Store::instance()->create_job( $this->site_id, $id, array() );
+		} elseif ( 'reservation' === $kind ) {
 			MainWP_Backup_Restore_Job_Store::instance()->reserve_site( $this->site_id );
 		} else {
 			global $wpdb;
@@ -285,6 +295,15 @@ class MainWP_Backup_Snapshot_Delete_Test extends MainWP_Abilities_Test_Case {
 			);
 		}
 		$this->assertFalse( $this->preview( $id )['can_proceed'] );
+		$this->assertSame(
+			array(
+				'code'    => 'mainwp_backup_already_running',
+				'message' => in_array( $kind, array( 'restore', 'reservation' ), true )
+					? 'A restore or another backup action is running on this site. Try again when it finishes.'
+					: 'A backup is running on this site. Try again when it finishes.',
+			),
+			$this->preview( $id )['refusals'][0]
+		);
 		$this->assertSame( 'refused', $this->confirm( $id, $plan )['status'] );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
 	}

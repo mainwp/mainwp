@@ -182,37 +182,30 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
     }
 
     /**
-     * Reader and test-restore reservations also hold snapshot deletion.
-     *
-     * @param int $site_id Site identity.
-     * @return bool True for an unexpired reservation or a failed read.
-     */
-    public function has_site_reservation( int $site_id ): bool {
-        $found = $this->wpdb->get_var(
-            $this->wpdb->prepare(
-                'SELECT id FROM ' . $this->table_name( 'wp_backup_restore_job' ) . " WHERE active_site_id = %d AND status = 'reserved' AND locked_until > %d LIMIT 1",
-                $site_id,
-                time()
-            )
-        );
-        return null !== $found || '' !== $this->wpdb->last_error;
-    }
-
-    /**
      * An open task holds only a site whose backup is still running.
      *
      * @param int $site_id Site identity.
      * @return bool True on active evidence or a failed read.
      */
     public function has_running_backup_for_site( int $site_id ): bool {
-        $found = $this->wpdb->get_var(
+        $tasks = $this->wpdb->get_results(
             $this->wpdb->prepare(
-                'SELECT b.id FROM ' . $this->table_name( 'wp_backup' ) . ' b LEFT JOIN ' . $this->table_name( 'wp_backup_progress' ) . " p ON p.task_id = b.id AND p.wp_id = %d WHERE b.completed < b.last_run AND (b.manual_site_id = %d OR (p.dtsFetched >= b.last_run AND p.removedFiles = 0 AND p.child_phase <> 'failed')) LIMIT 1",
+                'SELECT b.manual_site_id, b.completed_sites FROM ' . $this->table_name( 'wp_backup' ) . ' b LEFT JOIN ' . $this->table_name( 'wp_backup_progress' ) . " p ON p.task_id = b.id AND p.wp_id = %d WHERE b.completed < b.last_run AND (b.manual_site_id = %d OR (p.dtsFetched >= b.last_run AND p.child_phase <> 'failed'))",
                 $site_id,
                 $site_id
             )
         );
-        return null !== $found || '' !== $this->wpdb->last_error;
+        if ( ! is_array( $tasks ) || '' !== $this->wpdb->last_error ) {
+            return true;
+        }
+        foreach ( $tasks as $task ) {
+            // The runner resets these marks per run and writes them after terminal site handling.
+            $completed = json_decode( (string) $task->completed_sites, true );
+            if ( (int) $task->manual_site_id === $site_id || true !== ( $completed[ $site_id ] ?? null ) ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

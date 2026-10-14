@@ -262,7 +262,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             </div>
         </div>
         <?php
-        static::render_script( $site_id, $disconnected, $destination_names );
+        static::render_script( $site_id, $disconnected );
     }
 
     /**
@@ -331,11 +331,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
      * Inline page script: list loading, the confirm flow, progress
      * polling, cancel, and rollback.
      *
-     * @param int   $site_id           Preselected site id.
-     * @param bool  $disconnected      Whether the preselected site has sync errors.
-     * @param array $destination_names Storage destination names keyed by id.
+     * @param int  $site_id      Preselected site id.
+     * @param bool $disconnected Whether the preselected site has sync errors.
      */
-    private static function render_script( int $site_id, bool $disconnected = false, array $destination_names = array() ): void { // phpcs:ignore -- NOSONAR - page script.
+    private static function render_script( int $site_id, bool $disconnected = false ): void { // phpcs:ignore -- NOSONAR - page script.
         $labels = array(
             'pending'          => esc_html__( 'Queued', 'mainwp' ),
             'preflight'        => esc_html__( 'Checking the site is ready', 'mainwp' ),
@@ -411,7 +410,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 queued: '<?php /* translators: %s: comma-separated backups and their storage destinations, e.g. "#171 to Backblaze". */ echo esc_js( esc_html__( 'Cloud copies queued for deletion: %s.', 'mainwp' ) ); ?>',
                 queuedTo: '<?php /* translators: 1: backup ID, e.g. "#171", 2: storage destination name. */ echo esc_js( esc_html__( '%1$s to %2$s', 'mainwp' ) ); ?>'
             };
-            var destinationNames = <?php echo wp_json_encode( (object) $destination_names ); ?>;
             var snapshotsTable = null;
             var showRemovedSnapshots = false;
             var currentSnapshot = 0;
@@ -622,7 +620,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // Function replacements keep a "$&" in a destination name literal.
             function cloudQueueLabel( pair ) {
                 var id = '#' + ( parseInt( pair.snapshot_id, 10 ) || 0 );
-                var name = destinationNames[ pair.destination_id ];
+                var name = pair.destination_name;
                 if ( ! name ) {
                     return id;
                 }
@@ -695,7 +693,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 setDeleteMessages( '#mainwp-snapshot-delete-result', deleteResultLines( response ) ).toggleClass( 'red', 'complete' !== response.status );
             }
 
-            function requestDeletePreview( cloud ) {
+            function requestDeletePreview( cloud, notices ) {
                 var siteId = currentSite;
                 var requestId = ++snapshotDeleteRequest;
                 var fields = { action: 'mainwp_backup_snapshot_delete_preview', security: nonces.deletePreview, site_id: siteId, snapshot_id: snapshotDeleteTarget };
@@ -709,13 +707,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         return;
                     }
                     if ( ! response || response.error ) {
-                        setDeleteMessages( '#mainwp-snapshot-delete-result', [ response && response.error ? response.error : deleteLabels.failed ] );
+                        setDeleteMessages( '#mainwp-snapshot-delete-result', ( notices || [] ).concat( [ response && response.error ? response.error : deleteLabels.failed ] ) );
                         return;
                     }
-                    showDeletePreview( response );
+                    showDeletePreview( response, notices );
                 }, 'json' ).fail( function () {
                     if ( siteId === currentSite && requestId === snapshotDeleteRequest ) {
-                        setDeleteMessages( '#mainwp-snapshot-delete-result', [ deleteLabels.failed ] );
+                        setDeleteMessages( '#mainwp-snapshot-delete-result', ( notices || [] ).concat( [ deleteLabels.failed ] ) );
                     }
                 } );
             }
@@ -1260,7 +1258,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         return;
                     }
                     if ( ! response || response.error ) {
-                        setDeleteMessages( '#mainwp-snapshot-delete-result', [ response && response.error ? response.error : deleteLabels.failed ] );
+                        var error = response && response.error ? response.error : deleteLabels.failed;
+                        setDeleteMessages( '#mainwp-snapshot-delete-result', [ error ] );
+                        requestDeletePreview( effect.delete_cloud_copies, [ error ] );
                         return;
                     }
                     showDeleteResponse( response );
@@ -1268,6 +1268,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }, 'json' ).fail( function () {
                     if ( siteId === currentSite ) {
                         setDeleteMessages( '#mainwp-snapshot-delete-result', [ deleteLabels.failed ] );
+                        requestDeletePreview( effect.delete_cloud_copies, [ deleteLabels.failed ] );
                     }
                 } ).always( function () {
                     $( '#mainwp-snapshot-delete-cloud, #mainwp-snapshot-delete-close' ).prop( 'disabled', false );
@@ -1418,7 +1419,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function reenableBackupBtn() {
-                loadSnapshots( currentSite );
                 $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', siteDisconnected ).toggleClass( 'disabled', siteDisconnected );
             }
 
@@ -1482,6 +1482,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         stopBackupTimers();
                         setBackupStatus( data.error, true );
                         reenableBackupBtn();
+                        loadSnapshots( siteId );
                         return;
                     }
                     if ( 'completed' === data.status ) {
@@ -1504,6 +1505,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         setBackupStatus( data.error || '<?php echo esc_js( esc_html__( 'Backup failed.', 'mainwp' ) ); ?>', true );
                         reenableBackupBtn();
                         showCancelBackup( false );
+                        loadSnapshots( siteId );
                         return;
                     }
 
@@ -1550,6 +1552,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     stopBackupTimers();
                     setBackupStatus( '<?php echo esc_js( esc_html__( 'Lost the connection while backing up. The backup may still be running; reload to check.', 'mainwp' ) ); ?>', true );
                     reenableBackupBtn();
+                    loadSnapshots( siteId );
                 } );
             }
 
@@ -1580,6 +1583,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         stopBackupTimers();
                         setBackupStatus( response.error, true );
                         reenableBackupBtn();
+                        loadSnapshots( siteId );
                         // Keep the Cancel affordance only when the blocker is an
                         // active or stuck backup; hide it for every other error.
                         showCancelBackup( cancelApplies( response.error ) );
@@ -1598,6 +1602,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not start the backup. Please try again.', 'mainwp' ) ); ?>', true );
                     reenableBackupBtn();
                     showCancelBackup( false );
+                    loadSnapshots( siteId );
                 } );
             } );
 
@@ -1628,6 +1633,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         stopBackupTimers();
                         showCancelBackup( false );
                         reenableBackupBtn();
+                        loadSnapshots( siteId );
                     } else {
                         if ( 'already_finished' === response.result || 'already_failed' === response.result ) {
                             window.clearTimeout( backupPollTimer );

@@ -10,6 +10,8 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
+use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 
 require_once __DIR__ . '/../backup/trait-snapshot-delete-fixture.php';
@@ -57,6 +59,132 @@ class MainWP_Backups_Snapshot_Delete_Abilities_Test extends MainWP_Abilities_Tes
 			remove_filter( 'wp_doing_ajax', '__return_true' );
 		}
 		return json_decode( $raw, true );
+	}
+
+	/**
+	 * Both output branches must pass through the declared projection.
+	 *
+	 * @return array
+	 */
+	public static function projection_modes() {
+		return array( array( true ), array( false ) );
+	}
+
+	/**
+	 * Schema projection gives every write the same field order and closed shape.
+	 *
+	 * @dataProvider projection_modes
+	 * @param bool $dry_run Preview mode.
+	 */
+	public function test_delete_results_use_schema_projection( $dry_run ) {
+		$ability = $this->ability();
+		$id      = $this->snapshot();
+		$result  = $ability->execute(
+			array(
+				'site_id_or_domain'              => $this->site_id,
+				'snapshot_id'                    => $id,
+				'expected_snapshot_ids'          => array( $id ),
+				$dry_run ? 'dry_run' : 'confirm' => true,
+			)
+		);
+		$this->assertIsArray( $result );
+		$project = new \ReflectionMethod( MainWP_Abilities_Backups::class, 'serialize' );
+		$schema  = $ability->get_output_schema()['oneOf'][ $dry_run ? 0 : 1 ];
+		$this->assertSame( $project->invoke( null, $result, $schema ), $result );
+		$this->assertTrue( rest_validate_value_from_schema( $result, $ability->get_output_schema() ) );
+	}
+
+	/** Only the deleted snapshot's destinations may be named in either transport. */
+	public function test_cloud_destination_names_match_ui_and_schema() {
+		global $wpdb;
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$name  = 'Cost $& Co';
+		$dest  = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => $name,
+				'settings' => array(),
+			)
+		);
+		$other = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Unrelated destination',
+				'settings' => array(),
+			)
+		);
+		$id    = $this->snapshot();
+		$job   = array(
+			'snapshot_id'    => $id,
+			'destination_id' => $dest,
+			'provider'       => 's3',
+			'status'         => 'complete',
+			'kind'           => 'upload',
+			'created'        => time(),
+			'updated'        => time(),
+		);
+		$wpdb->insert( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), $job );
+		$input = array(
+			'site_id'               => $this->site_id,
+			'snapshot_id'           => $id,
+			'expected_snapshot_ids' => array( $id ),
+			'delete_cloud_copies'   => '1',
+		);
+		try {
+			$ui = $this->ajax( 'mainwp_backup_snapshot_delete', $input );
+			$this->assertSame(
+				array(
+					array(
+						'snapshot_id'      => $id,
+						'destination_id'   => $dest,
+						'destination_name' => $name,
+					),
+				),
+				$ui['cloud_deletes_queued']
+			);
+			$this->assertStringNotContainsString( 'Unrelated destination', wp_json_encode( $ui ) );
+			$row = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+			file_put_contents( $row->archives[0]['path'], 'backup' );
+			MainWP_Backup_Snapshots::instance()->set_status( $id, 'complete' );
+			$wpdb->insert( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), $job );
+			$ability = $this->ability();
+			$result  = $ability->execute(
+				array(
+					'site_id_or_domain'     => $this->site_id,
+					'snapshot_id'           => $id,
+					'expected_snapshot_ids' => array( $id ),
+					'delete_cloud_copies'   => true,
+					'confirm'               => true,
+				)
+			);
+			$this->assertSame( $ui, $result );
+			$this->assertTrue( rest_validate_value_from_schema( $result, $ability->get_output_schema() ) );
+		} finally {
+			$store->delete_destination( $dest );
+			$store->delete_destination( $other );
+		}
+	}
+
+	/** A preview refusal keeps the operations message after schema projection. */
+	public function test_busy_preview_message_matches_ui() {
+		$id = $this->snapshot();
+		\MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance()->reserve_site( $this->site_id );
+		$ui     = $this->ajax(
+			'mainwp_backup_snapshot_delete_preview',
+			array(
+				'site_id'     => $this->site_id,
+				'snapshot_id' => $id,
+			)
+		);
+		$result = $this->ability()->execute(
+			array(
+				'site_id_or_domain' => $this->site_id,
+				'snapshot_id'       => $id,
+				'dry_run'           => true,
+			)
+		);
+		$this->assertSame( 'A restore or another backup action is running on this site. Try again when it finishes.', $result['refusals'][0]['message'] );
+		$this->assertSame( $ui, $result );
 	}
 
 	/** Preview and confirmation must agree byte-for-byte with the UI payload. */

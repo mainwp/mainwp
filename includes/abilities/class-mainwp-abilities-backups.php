@@ -3678,10 +3678,11 @@ class MainWP_Abilities_Backups {
                         'items' => array(
                             'type'                 => 'object',
                             'additionalProperties' => false,
-                            'required'             => array( 'snapshot_id', 'destination_id' ),
+                            'required'             => array( 'snapshot_id', 'destination_id', 'destination_name' ),
                             'properties'           => array(
-                                'snapshot_id'    => array( 'type' => 'integer' ),
-                                'destination_id' => array( 'type' => 'integer' ),
+                                'snapshot_id'      => array( 'type' => 'integer' ),
+                                'destination_id'   => array( 'type' => 'integer' ),
+                                'destination_name' => array( 'type' => 'string' ),
                             ),
                         ),
                     ),
@@ -6368,15 +6369,20 @@ class MainWP_Abilities_Backups {
                 return self::safe_wp_error( $result );
             }
             $result['dry_run'] = $dry_run;
-            if ( 'delete-backup-snapshot' === $name ) {
-                return $result;
-            }
-            $schema_method = str_replace( '-', '_', $name ) . '_output_schema';
-            $schema        = self::$schema_method();
-            $output        = self::serialize( $result, $schema['oneOf'][ $dry_run ? 0 : 1 ] );
+            $schema_method     = str_replace( '-', '_', $name ) . '_output_schema';
+            $schema            = self::$schema_method();
+            $output            = self::serialize( $result, $schema['oneOf'][ $dry_run ? 0 : 1 ] );
             if ( in_array( $name, array( 'cleanup-site-backups', 'delete-backup-snapshot' ), true ) && ! $dry_run ) {
                 // These errors have already been sanitized by cleanup_error().
                 $output['errors'] = $result['errors'];
+            }
+            if ( 'delete-backup-snapshot' === $name ) {
+                // Operations supplies the specific hold message for both transports.
+                if ( $dry_run ) {
+                    $output['refusals'] = $result['refusals'];
+                } elseif ( null !== $result['preview'] ) {
+                    $output['preview']['refusals'] = $result['preview']['refusals'];
+                }
             }
             return $output;
         } catch ( \Throwable $exception ) {

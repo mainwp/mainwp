@@ -525,7 +525,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         $restores    = MainWP_Backup_Restore_Job_Store::instance();
         $reservation = $restores->reserve_site( $site_id );
         if ( $reservation <= 0 ) {
-            $result['errors'][] = __( 'A restore or another backup action is running on this site. Try again when it finishes.', 'mainwp' );
+            $result['errors'][] = MainWP_Backup_Operations::snapshot_delete_hold_message( true );
             return $result;
         }
         try {
@@ -542,7 +542,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 return $result;
             }
             if ( MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $site_id ) ) {
-                $result['errors'][] = __( 'A backup is running on this site. Try again when it finishes.', 'mainwp' );
+                $result['errors'][] = MainWP_Backup_Operations::snapshot_delete_hold_message( false );
                 return $result;
             }
             $unit             = $this->prune_reserved_candidate(
@@ -634,6 +634,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         $snapshots = MainWP_Backup_Snapshots::instance();
         $first     = $snapshots->get_snapshot_by_id( $ids[0] );
         if ( null === $first ) {
+            if ( 'single_snapshot_delete' === $candidate['reason'] ) {
+                $result['errors'][] = $this->missing_snapshot_message();
+            }
             return $result;
         }
         $site_id = (int) $first->site_id;
@@ -657,6 +660,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             foreach ( array_reverse( $ids ) as $snapshot_id ) {
                 $snapshot = $snapshots->get_snapshot_by_id( $snapshot_id );
                 if ( null === $snapshot ) {
+                    if ( 'single_snapshot_delete' === $candidate['reason'] ) {
+                        $result['errors'][] = $this->missing_snapshot_message();
+                    }
                     break;
                 }
                 if ( ! $this->remove_local_dir( $snapshot, $result['errors'], false ) ) {
@@ -665,7 +671,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 // A run that started after admission may already have picked this
                 // snapshot as its parent; the completion backstop covers the instant after this.
                 if ( 'single_snapshot_delete' === $candidate['reason'] && MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $site_id ) ) {
-                    $result['errors'][] = __( 'A backup is running on this site. Try again when it finishes.', 'mainwp' );
+                    $result['errors'][] = MainWP_Backup_Operations::snapshot_delete_hold_message( false );
                     break;
                 }
                 if ( MainWP_DB_Backup::instance()->has_inflight_incremental_for_site( $site_id ) ) {
@@ -748,6 +754,15 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             );
         }
         return $result;
+    }
+
+    /**
+     * A vanished row must leave single-delete callers a reason to refresh.
+     *
+     * @return string Translated message.
+     */
+    private function missing_snapshot_message(): string {
+        return __( 'Some of these backups were removed by another action. Check the list, then try again.', 'mainwp' );
     }
 
     /**

@@ -72,6 +72,15 @@ trait Snapshot_Delete_Fixture {
 		return array( 'result' => 'ok' );
 	}
 
+	/** A manual task's site identity would bypass the scheduled progress predicate. */
+	private function use_scheduled_task() {
+		global $wpdb;
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'id' => $this->task->id ) );
+		$this->task = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'Snapshot delete scheduled test', 'daily', 'full', '', (string) $this->site_id, '', '', '', 0, 0, 0, 0, 0, 'site', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $this->task );
+		$this->assertNull( $this->task->manual_site_id );
+	}
+
 	/**
 	 * Record a snapshot with a real owned artifact.
 	 *

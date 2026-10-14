@@ -142,6 +142,80 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
     }
 
     /**
+     * Walk descendants inside the target's retention unit, parent before child.
+     *
+     * @param int $snapshot_id Target identity.
+     * @return int[] Complete target and descendant ids.
+     */
+    public function get_snapshot_delete_ids( int $snapshot_id ): array {
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+        if ( ! $snapshot || 'complete' !== $snapshot->status ) {
+            return array();
+        }
+        foreach ( $this->get_units_for_site_task( (int) $snapshot->site_id, (int) $snapshot->task_id ) as $unit ) {
+            $rows = array();
+            foreach ( $unit['snapshots'] as $row ) {
+                $rows[ (int) $row->id ] = $row;
+            }
+            if ( ! isset( $rows[ $snapshot_id ] ) ) {
+                continue;
+            }
+            $ids     = array();
+            $pending = array( $snapshot_id );
+            $seen    = array();
+            while ( ! empty( $pending ) ) {
+                $current = array_pop( $pending );
+                if ( isset( $seen[ $current ] ) ) {
+                    continue;
+                }
+                $ids[]            = $current;
+                $seen[ $current ] = true;
+                foreach ( array_reverse( $rows, true ) as $id => $row ) {
+                    if ( (int) $row->parent_id === $current && ! isset( $seen[ $id ] ) ) {
+                        $pending[] = $id;
+                    }
+                }
+            }
+            return $ids;
+        }
+        return array();
+    }
+
+    /**
+     * Reader and test-restore reservations also hold snapshot deletion.
+     *
+     * @param int $site_id Site identity.
+     * @return bool True for an unexpired reservation or a failed read.
+     */
+    public function has_site_reservation( int $site_id ): bool {
+        $found = $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                'SELECT id FROM ' . $this->table_name( 'wp_backup_restore_job' ) . " WHERE active_site_id = %d AND status = 'reserved' AND locked_until > %d LIMIT 1",
+                $site_id,
+                time()
+            )
+        );
+        return null !== $found || '' !== $this->wpdb->last_error;
+    }
+
+    /**
+     * An open task holds only a site whose backup is still running.
+     *
+     * @param int $site_id Site identity.
+     * @return bool True on active evidence or a failed read.
+     */
+    public function has_running_backup_for_site( int $site_id ): bool {
+        $found = $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                'SELECT b.id FROM ' . $this->table_name( 'wp_backup' ) . ' b LEFT JOIN ' . $this->table_name( 'wp_backup_progress' ) . " p ON p.task_id = b.id AND p.wp_id = %d WHERE b.completed < b.last_run AND (b.manual_site_id = %d OR (p.dtsFetched >= b.last_run AND p.removedFiles = 0 AND p.child_phase <> 'failed')) LIMIT 1",
+                $site_id,
+                $site_id
+            )
+        );
+        return null !== $found || '' !== $this->wpdb->last_error;
+    }
+
+    /**
      * Tasks carrying any retention constraint, for the daily prune cron.
      *
      * @return object[] Task rows.

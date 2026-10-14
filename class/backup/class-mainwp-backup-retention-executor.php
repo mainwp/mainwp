@@ -504,6 +504,63 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Reserve the site before comparing consent with current descendants.
+     *
+     * @param int    $site_id Authorized site.
+     * @param int    $snapshot_id Target identity.
+     * @param int[]  $expected_ids Previewed identities.
+     * @param object $task Task with the selected cloud policy.
+     * @return array Exact outcomes, status and current selection.
+     */
+    public function delete_snapshot( int $site_id, int $snapshot_id, array $expected_ids, object $task ): array {
+        $result      = array(
+            'status'               => 'refused',
+            'deleted_ids'          => array(),
+            'remaining_ids'        => $expected_ids,
+            'cloud_deletes_queued' => array(),
+            'bytes_pruned'         => 0,
+            'errors'               => array(),
+            'snapshot_ids'         => array(),
+        );
+        $restores    = MainWP_Backup_Restore_Job_Store::instance();
+        $reservation = $restores->reserve_site( $site_id );
+        if ( $reservation <= 0 ) {
+            $result['errors'][] = __( 'A restore or another backup action is running on this site. Try again when it finishes.', 'mainwp' );
+            return $result;
+        }
+        try {
+            $snapshot               = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+            $ids                    = $snapshot && (int) $snapshot->site_id === $site_id ? MainWP_Backup_Retention_Query::instance()->get_snapshot_delete_ids( $snapshot_id ) : array();
+            $result['snapshot_ids'] = $ids;
+            $sorted                 = $ids;
+            sort( $sorted, SORT_NUMERIC );
+            sort( $expected_ids, SORT_NUMERIC );
+            if ( $sorted !== $expected_ids ) {
+                $result['status']        = 'changed';
+                $result['remaining_ids'] = $ids;
+                $result['errors'][]      = __( 'The snapshots changed since the preview. Review the new list before deleting.', 'mainwp' );
+                return $result;
+            }
+            if ( MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $site_id ) ) {
+                $result['errors'][] = __( 'A backup is running on this site. Try again when it finishes.', 'mainwp' );
+                return $result;
+            }
+            $unit             = $this->prune_reserved_candidate(
+                array(
+                    'snapshot_ids' => $ids,
+                    'reason'       => 'single_snapshot_delete',
+                ),
+                $task
+            );
+            $result           = array_merge( $result, $unit );
+            $result['status'] = empty( $unit['remaining_ids'] ) && empty( $unit['errors'] ) ? 'complete' : ( empty( $unit['deleted_ids'] ) ? 'refused' : 'partial' );
+            return $result;
+        } finally {
+            $restores->release_reservation( $reservation );
+        }
+    }
+
+    /**
      * Prune one candidate unit, leaf first.
      *
      * @param array  $candidate Candidate: snapshot_ids (base first), reason, size_bytes.
@@ -607,6 +664,10 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 }
                 // A run that started after admission may already have picked this
                 // snapshot as its parent; the completion backstop covers the instant after this.
+                if ( 'single_snapshot_delete' === $candidate['reason'] && MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $site_id ) ) {
+                    $result['errors'][] = __( 'A backup is running on this site. Try again when it finishes.', 'mainwp' );
+                    break;
+                }
                 if ( MainWP_DB_Backup::instance()->has_inflight_incremental_for_site( $site_id ) ) {
                     $result['errors'][] = $this->incremental_hold_message( array_values( array_diff( $ids, $result['deleted_ids'] ) ) );
                     break;

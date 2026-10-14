@@ -48,5 +48,6 @@
     ],
     "site_disconnected": false,
     "reconnect_url": "http://example.org/wp-admin/admin.php?page=managesites&dashboard=987670",
+    "snapshot_delete_busy": false,
     "manual_backup_running": false
 }

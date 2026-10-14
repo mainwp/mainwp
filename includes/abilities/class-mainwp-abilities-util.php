@@ -91,6 +91,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         'mainwp/cancel-site-backup-v1'             => 'execute_backups',
         'mainwp/reset-backup-task-run-v1'          => 'pause_resume_backup_tasks',
         'mainwp/cleanup-site-backups-v1'           => 'execute_backups',
+        'mainwp/delete-backup-snapshot-v1'         => 'execute_backups',
         'mainwp/create-backup-task-v1'             => 'add_backup_tasks',
         'mainwp/update-backup-task-v1'             => 'edit_backup_tasks',
         'mainwp/delete-backup-task-v1'             => 'delete_backup_tasks',

@@ -8,7 +8,7 @@ Last Updated: 2025-12-03
 The MainWP Abilities API provides a standardized, schema-validated interface for managing MainWP child sites, updates, clients, tags, batch operations, knowledge records, and backups. Built on WordPress's Abilities API (introduced in WP 6.9), it enables secure, discoverable operations for MCP tools, REST API consumers, and extensions.
 
 **Key Features:**
-- 101 abilities across 7 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge, mainwp-backups
+- 102 abilities across 7 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge, mainwp-backups
 - JSON Schema validation for inputs and outputs; WP_Ability::execute() rejects output that fails its schema with ability_invalid_output
 - Permission callbacks with per-site ACLs
 - Batch operation support with automatic queuing
@@ -50,7 +50,7 @@ includes/abilities/
 ├── class-mainwp-abilities-tags.php     # 7 tag abilities
 ├── class-mainwp-abilities-knowledge.php # 7 knowledge abilities
 ├── class-mainwp-abilities-batch.php    # 1 batch job status ability
-├── class-mainwp-abilities-backups.php  # 31 backup abilities
+├── class-mainwp-abilities-backups.php  # 32 backup abilities
 └── README.md                           # This file
 ```
 
@@ -72,7 +72,7 @@ Each write's `caller_note` describes that write. Omitting it on update clears th
 
 ## Backups
 
-The `mainwp-backups` category has 31 abilities: 13 reads and 18 actions. Reads return stored evidence without contacting a site or advancing a run. Actions require `dry_run: true` for a preview or `confirm: true` to proceed. Passing both is an error. Previews apply the same authorization and refusal rules as confirmation.
+The `mainwp-backups` category has 32 abilities: 13 reads and 19 actions. Reads return stored evidence without contacting a site or advancing a run. Actions require `dry_run: true` for a preview or `confirm: true` to proceed. Passing both is an error. Previews apply the same authorization and refusal rules as confirmation.
 
 Backup abilities require authentication, `manage_options`, the applicable Dashboard right, and access to every target site. Backup abilities answer a missing or inaccessible target with the same not-found code. Destination credentials, encryption keys, recovery passphrases, filesystem paths, and download links are excluded from inputs and outputs. Create destinations on the Dashboard; `mainwp/create-backup-destination-v1` is not registered.
 
@@ -95,6 +95,7 @@ Backup abilities require authentication, `manage_options`, the applicable Dashbo
 | `mainwp/run-backup-task-v1` | POST | Previews or starts a saved task and returns its poll target. |
 | `mainwp/cancel-site-backup-v1` | DELETE | Previews or requests cancellation and reports the confirmed result. |
 | `mainwp/reset-backup-task-run-v1` | DELETE | Previews or resets a stalled task run after the one-hour threshold. |
+| `mainwp/delete-backup-snapshot-v1` | POST | Previews or deletes a snapshot and its descendants after comparing expected_snapshot_ids. Reports deleted and remaining ids and queued cloud deletes. |
 | `mainwp/cleanup-site-backups-v1` | POST | Previews or removes orphaned backup groups under the retention policy. |
 | `mainwp/create-backup-task-v1` | POST | Previews or creates a task from supported configuration fields. |
 | `mainwp/update-backup-task-v1` | POST | Previews or updates a saved task's supported configuration fields. |

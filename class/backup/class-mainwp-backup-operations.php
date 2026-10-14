@@ -1668,6 +1668,111 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Preview the same descendants confirmation will compare under reservation.
+     *
+     * @param int       $site_id Site identity.
+     * @param int       $snapshot_id Target identity.
+     * @param bool|null $delete_cloud_copies Null uses the owning task's policy.
+     * @return array|\WP_Error Shared UI and ability preview.
+     */
+    public static function preview_delete_snapshot( int $site_id, int $snapshot_id, ?bool $delete_cloud_copies = null ) {
+        $site = self::authorize_site( $site_id, 'execute_backups' );
+        if ( is_wp_error( $site ) ) {
+            return $site;
+        }
+        $snapshot = self::authorize_snapshot( $snapshot_id );
+        if ( is_wp_error( $snapshot ) ) {
+            return $snapshot;
+        }
+        if ( (int) $snapshot->site_id !== $site_id ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND );
+        }
+        $error = self::native_task_write_error();
+        if ( $error ) {
+            return $error;
+        }
+        $task  = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $snapshot->task_id );
+        $cloud = $delete_cloud_copies ?? ( ! $task || ! empty( $task->delete_cloud_copies ) );
+        $ids   = MainWP_Backup_Retention_Query::instance()->get_snapshot_delete_ids( $snapshot_id );
+        sort( $ids, SORT_NUMERIC );
+        $refusals = array();
+        if ( empty( $ids ) ) {
+            $refusals[] = self::safe_error( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND );
+        }
+        if ( self::snapshot_delete_busy( $site_id ) ) {
+            $refusals[] = self::safe_error( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING );
+        }
+        $gate     = self::update_gate_for_site( $site );
+        $warn     = $gate['applies'] && MainWP_Backup_Executor::UPDATE_GATE_PASS === $gate['verdict']
+            && MainWP_Backup_Executor::UPDATE_GATE_PASS !== MainWP_Backup_Executor::evaluate_update_backup_gate( $site_id, MainWP_Updates_Overview::get_backup_before_upgrade_days(), null, $ids );
+        $warnings = array();
+        if ( $warn ) {
+            $warnings[] = __( 'Deleting these snapshots will hold updates until this site has another qualifying backup.', 'mainwp' );
+        }
+        if ( ! $cloud ) {
+            $warnings[] = __( 'Cloud copies will stay in storage. MainWP will no longer track them.', 'mainwp' );
+        }
+        $preview            = self::backup_preview(
+            array(
+                'site_id'             => $site_id,
+                'snapshot_id'         => $snapshot_id,
+                'snapshot_ids'        => $ids,
+                'delete_cloud_copies' => $cloud,
+                'update_gate_warning' => $warn,
+            ),
+            $refusals,
+            $warnings
+        );
+        $preview['dry_run'] = true;
+        return $preview;
+    }
+
+    /**
+     * Delete only after the reserved chain still matches the user's selection.
+     *
+     * @param int       $site_id Site identity.
+     * @param int       $snapshot_id Target identity.
+     * @param array     $expected_snapshot_ids Exact ids shown in the preview.
+     * @param bool|null $delete_cloud_copies Null uses the owning task's policy.
+     * @return array|\WP_Error Shared UI and ability result.
+     */
+    public static function delete_snapshot( int $site_id, int $snapshot_id, array $expected_snapshot_ids, ?bool $delete_cloud_copies = null ) {
+        $valid = MainWP_Abilities_Backups::validate_id_input( array( 'expected_snapshot_ids' => $expected_snapshot_ids ), true );
+        if ( is_wp_error( $valid ) || empty( $expected_snapshot_ids ) || count( array_unique( $expected_snapshot_ids ) ) !== count( $expected_snapshot_ids ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        }
+        $preview = self::preview_delete_snapshot( $site_id, $snapshot_id, $delete_cloud_copies );
+        if ( is_wp_error( $preview ) ) {
+            return $preview;
+        }
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+        $task     = (object) array(
+            'id'                  => (int) $snapshot->task_id,
+            'delete_cloud_copies' => $preview['would_affect']['delete_cloud_copies'],
+        );
+        $result   = MainWP_Backup_Retention_Executor::instance()->delete_snapshot( $site_id, $snapshot_id, array_map( 'intval', $expected_snapshot_ids ), $task );
+        unset( $result['snapshot_ids'] );
+        $result['site_id']     = $site_id;
+        $result['snapshot_id'] = $snapshot_id;
+        $result['dry_run']     = false;
+        $result['errors']      = array_map( array( MainWP_Abilities_Backups::class, 'cleanup_error' ), $result['errors'] );
+        $result['preview']     = 'changed' === $result['status'] ? self::preview_delete_snapshot( $site_id, $snapshot_id, $task->delete_cloud_copies ) : null;
+        return $result;
+    }
+
+    /**
+     * The row and both write transports share the running-site refusal.
+     *
+     * @param int $site_id Site identity.
+     * @return bool Whether deletion must wait.
+     */
+    public static function snapshot_delete_busy( int $site_id ): bool {
+        return null !== MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id )
+            || MainWP_Backup_Retention_Query::instance()->has_site_reservation( $site_id )
+            || MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $site_id );
+    }
+
+    /**
      * The consent preview must use the same catalog admission as a restore.
      *
      * @param int   $site_id Target site identity.

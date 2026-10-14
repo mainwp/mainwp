@@ -40,6 +40,7 @@ class MainWP_Abilities_Backups {
         'mainwp/cancel-site-backup-v1',
         'mainwp/reset-backup-task-run-v1',
         'mainwp/cleanup-site-backups-v1',
+        'mainwp/delete-backup-snapshot-v1',
         'mainwp/create-backup-task-v1',
         'mainwp/update-backup-task-v1',
         'mainwp/delete-backup-task-v1',
@@ -82,6 +83,7 @@ class MainWP_Abilities_Backups {
         self::register_cancel_site_backup();
         self::register_reset_backup_task_run();
         self::register_cleanup_site_backups();
+        self::register_delete_backup_snapshot();
         self::register_create_backup_task();
         self::register_update_backup_task();
         self::register_delete_backup_task();
@@ -2479,7 +2481,7 @@ class MainWP_Abilities_Backups {
                 }
             }
             // Read filters retain REST's list coercion; write selections must preserve raw identities.
-            foreach ( $selections ? array( 'site_ids_or_domains', 'group_ids', 'destination_ids' ) : array() as $key ) {
+            foreach ( $selections ? array( 'site_ids_or_domains', 'group_ids', 'destination_ids', 'expected_snapshot_ids' ) : array() as $key ) {
                 if ( ! array_key_exists( $key, $input ) ) {
                     continue;
                 }
@@ -3564,6 +3566,139 @@ class MainWP_Abilities_Backups {
         return self::execute_write( 'reset-backup-task-run', $input );
     }
 
+    /** Register snapshot deletion with the house consent and exact-id rules. */
+    private static function register_delete_backup_snapshot(): void {
+        wp_register_ability(
+            'mainwp/delete-backup-snapshot-v1',
+            array(
+                'label'               => __( 'Delete Backup Snapshot', 'mainwp' ),
+                'description'         => __( 'Delete one snapshot and every snapshot that depends on it. Preview the ids first, then confirm with expected_snapshot_ids. Cloud deletes are queued when selected. Possible errors: mainwp_backup_snapshot_not_found, mainwp_site_not_found, mainwp_backup_legacy_disabled, mainwp_invalid_input.', 'mainwp' ),
+                'category'            => 'mainwp-backups',
+                'ability_class'       => MainWP_Backup_Ability::class,
+                'input_schema'        => self::delete_backup_snapshot_input_schema(),
+                'output_schema'       => self::delete_backup_snapshot_output_schema(),
+                'execute_callback'    => array( self::class, 'execute_delete_backup_snapshot' ),
+                'permission_callback' => self::permission_callback( 'mainwp/delete-backup-snapshot-v1' ),
+                'meta'                => array(
+                    'show_in_rest' => true,
+                    'annotations'  => array(
+                        'readonly'     => false,
+                        'destructive'  => true,
+                        'idempotent'   => false,
+                        'instructions' => __( 'Requires confirm:true or dry_run:true. Show every previewed snapshot id, the cloud choice and warnings before confirming with expected_snapshot_ids.', 'mainwp' ),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * Callback authorization also protects direct PHP callers.
+     *
+     * @param mixed $input Caller input.
+     * @return array|\WP_Error
+     */
+    public static function execute_delete_backup_snapshot( $input ) {
+        return self::execute_write( 'delete-backup-snapshot', $input );
+    }
+
+    /**
+     * Closed consent input.
+     *
+     * @return array
+     */
+    private static function delete_backup_snapshot_input_schema(): array {
+        $schema = self::restore_site_snapshot_input_schema();
+        unset( $schema['properties']['take_safety_backup'], $schema['properties']['preserve_orders'] );
+        $schema['properties']['expected_snapshot_ids'] = array(
+            'type'        => 'array',
+            'minItems'    => 1,
+            'uniqueItems' => true,
+            'items'       => self::snapshot_id_schema(),
+            'description' => 'Every snapshot id returned by dry_run. Required when confirm is true.',
+        );
+        $schema['properties']['delete_cloud_copies']   = array(
+            'type'        => 'boolean',
+            'description' => 'Also delete cloud copies. Omit to use the owning task setting. When false, MainWP stops tracking the cloud copies kept in storage.',
+        );
+        return $schema;
+    }
+
+    /**
+     * Closed preview and exact deletion outcomes.
+     *
+     * @return array
+     */
+    private static function delete_backup_snapshot_output_schema(): array {
+        $ids             = array(
+            'type'  => 'array',
+            'items' => array(
+                'type'    => 'integer',
+                'minimum' => 1,
+            ),
+        );
+        $effect          = array(
+            'type'                 => 'object',
+            'additionalProperties' => false,
+            'required'             => array( 'site_id', 'snapshot_id', 'snapshot_ids', 'delete_cloud_copies', 'update_gate_warning' ),
+            'properties'           => array(
+                'site_id'             => array( 'type' => 'integer' ),
+                'snapshot_id'         => array( 'type' => 'integer' ),
+                'snapshot_ids'        => $ids,
+                'delete_cloud_copies' => array( 'type' => 'boolean' ),
+                'update_gate_warning' => array( 'type' => 'boolean' ),
+            ),
+        );
+        $preview         = self::write_output_schema(
+            $effect,
+            array(
+                'type'       => 'object',
+                'required'   => array(),
+                'properties' => array(),
+            )
+        )['oneOf'][0];
+        $preview['type'] = array( 'object', 'null' );
+        return self::write_output_schema(
+            $effect,
+            array(
+                'type'                 => 'object',
+                'additionalProperties' => false,
+                'required'             => array( 'site_id', 'snapshot_id', 'status', 'deleted_ids', 'remaining_ids', 'cloud_deletes_queued', 'bytes_pruned', 'errors', 'preview' ),
+                'properties'           => array(
+                    'site_id'              => array( 'type' => 'integer' ),
+                    'snapshot_id'          => array( 'type' => 'integer' ),
+                    'status'               => array(
+                        'type' => 'string',
+                        'enum' => array( 'complete', 'partial', 'refused', 'changed' ),
+                    ),
+                    'deleted_ids'          => $ids,
+                    'remaining_ids'        => $ids,
+                    'cloud_deletes_queued' => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array( 'snapshot_id', 'destination_id' ),
+                            'properties'           => array(
+                                'snapshot_id'    => array( 'type' => 'integer' ),
+                                'destination_id' => array( 'type' => 'integer' ),
+                            ),
+                        ),
+                    ),
+                    'bytes_pruned'         => array(
+                        'type'    => 'integer',
+                        'minimum' => 0,
+                    ),
+                    'errors'               => array(
+                        'type'  => 'array',
+                        'items' => self::safe_error_schema(),
+                    ),
+                    'preview'              => $preview,
+                ),
+            )
+        );
+    }
+
     /** Discovery keeps consent and transport requirements alongside each action. */
     private static function register_cleanup_site_backups(): void {
         wp_register_ability(
@@ -3762,7 +3897,7 @@ class MainWP_Abilities_Backups {
      * @param mixed $error Prune diagnostic or registry error.
      * @return array Safe code and message.
      */
-    private static function cleanup_error( $error ): array {
+    public static function cleanup_error( $error ): array {
         if ( is_array( $error ) ) {
             return MainWP_Backup_Operations::safe_error( (string) ( $error['code'] ?? '' ) );
         }
@@ -6014,6 +6149,9 @@ class MainWP_Abilities_Backups {
                     case 'update-backup-settings':
                         $result = MainWP_Backup_Operations::preview_backup_settings( $fields );
                         break;
+                    case 'delete-backup-snapshot':
+                        $result = MainWP_Backup_Operations::preview_delete_snapshot( $site_id, $snapshot_id, $input['delete_cloud_copies'] ?? null );
+                        break;
                     case 'restore-site-snapshot':
                         $result = MainWP_Backup_Operations::preview_restore_snapshot( $site_id, $snapshot_id, $restore_options );
                         break;
@@ -6094,6 +6232,9 @@ class MainWP_Abilities_Backups {
                         if ( ! is_wp_error( $result ) ) {
                             $result = MainWP_Backup_Read_Model::get_settings();
                         }
+                        break;
+                    case 'delete-backup-snapshot':
+                        $result = MainWP_Backup_Operations::delete_snapshot( $site_id, $snapshot_id, $input['expected_snapshot_ids'] ?? array(), $input['delete_cloud_copies'] ?? null );
                         break;
                     case 'restore-site-snapshot':
                     case 'rollback-restore':
@@ -6227,10 +6368,13 @@ class MainWP_Abilities_Backups {
                 return self::safe_wp_error( $result );
             }
             $result['dry_run'] = $dry_run;
-            $schema_method     = str_replace( '-', '_', $name ) . '_output_schema';
-            $schema            = self::$schema_method();
-            $output            = self::serialize( $result, $schema['oneOf'][ $dry_run ? 0 : 1 ] );
-            if ( 'cleanup-site-backups' === $name && ! $dry_run ) {
+            if ( 'delete-backup-snapshot' === $name ) {
+                return $result;
+            }
+            $schema_method = str_replace( '-', '_', $name ) . '_output_schema';
+            $schema        = self::$schema_method();
+            $output        = self::serialize( $result, $schema['oneOf'][ $dry_run ? 0 : 1 ] );
+            if ( in_array( $name, array( 'cleanup-site-backups', 'delete-backup-snapshot' ), true ) && ! $dry_run ) {
                 // These errors have already been sanitized by cleanup_error().
                 $output['errors'] = $result['errors'];
             }

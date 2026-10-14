@@ -3389,6 +3389,28 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return int Newest non-SQL archive mtime, or -1 when none exists.
      */
     public static function latest_backup_archive_mtime( int $site_id ): int {
+        return self::backup_archive_mtime_excluding( $site_id, array() );
+    }
+
+    /**
+     * Excluded native archives must not reappear as legacy gate evidence.
+     *
+     * @param int   $site_id Site identity.
+     * @param int[] $exclude_ids Snapshot ids to exclude.
+     * @return int Latest surviving archive mtime, or -1.
+     */
+    private static function backup_archive_mtime_excluding( int $site_id, array $exclude_ids ): int {
+        $excluded = array();
+        foreach ( $exclude_ids as $id ) {
+            $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+            if ( $snapshot && (int) $snapshot->site_id === $site_id ) {
+                foreach ( (array) $snapshot->archives as $archive ) {
+                    if ( ! empty( $archive['path'] ) ) {
+                        $excluded[ MainWP_Backup_Snapshots::normalise_path( $archive['path'] ) ] = true;
+                    }
+                }
+            }
+        }
         $latest = -1;
         foreach ( array( MainWP_Backup_Private_Root::site_path( $site_id ), MainWP_Backup_Private_Root::legacy_site_dir( $site_id ) ) as $dir ) {
             if ( is_wp_error( $dir ) || ! is_dir( $dir ) ) {
@@ -3400,7 +3422,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     if ( '.' === $file || '..' === $file ) {
                         continue;
                     }
-                    if ( MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) ) {
+                    if ( ! isset( $excluded[ MainWP_Backup_Snapshots::normalise_path( $dir . $file ) ] ) && MainWP_Backup_File_Manager::is_archive( $file ) && ! MainWP_Backup_File_Manager::is_sql_archive( $file ) ) {
                         $mtime = (int) filemtime( $dir . $file );
                         if ( $mtime > $latest ) {
                             $latest = $mtime;
@@ -3428,17 +3450,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * dashboard. Off by default: a site with no cloud destination should not
      * be forced to back up on every update.
      *
-     * @param int  $site_id         Child site ID.
-     * @param int  $max_age_days    Freshness window in days.
-     * @param bool $require_offsite Require offsite_state = 'verified' too.
+     * @param int   $site_id         Child site ID.
+     * @param int   $max_age_days    Freshness window in days.
+     * @param bool  $require_offsite Require offsite_state = 'verified' too.
+     * @param int[] $exclude_ids Snapshot ids omitted from the evidence.
      *
      * @return bool True when a recent native backup exists.
      */
-    public static function has_recent_native_backup( int $site_id, int $max_age_days, bool $require_offsite = false ): bool {
+    public static function has_recent_native_backup( int $site_id, int $max_age_days, bool $require_offsite = false, array $exclude_ids = array() ): bool {
         $snapshots = MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id );
 
         foreach ( $snapshots as $snapshot ) {
-            if ( 'complete' !== (string) $snapshot->status || 'files' === (string) $snapshot->type ) {
+            if ( in_array( (int) $snapshot->id, $exclude_ids, true ) || 'complete' !== (string) $snapshot->status || 'files' === (string) $snapshot->type ) {
                 continue;
             }
 
@@ -3522,20 +3545,21 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param int       $max_age_days    Freshness window in days.
      * @param bool|null $require_offsite Offsite requirement; null reads the
      *                                   mainwp_backup_before_upgrade_require_offsite option.
+     * @param int[]     $exclude_ids Snapshot ids omitted from the evidence.
      *
      * @return string One of the UPDATE_GATE_* verdicts.
      */
-    public static function evaluate_update_backup_gate( int $site_id, int $max_age_days, ?bool $require_offsite = null ): string {
+    public static function evaluate_update_backup_gate( int $site_id, int $max_age_days, ?bool $require_offsite = null, array $exclude_ids = array() ): string {
         if ( null === $require_offsite ) {
             $require_offsite = (bool) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
         }
 
-        if ( $require_offsite && self::has_recent_native_backup( $site_id, $max_age_days, true ) ) {
+        if ( $require_offsite && self::has_recent_native_backup( $site_id, $max_age_days, true, $exclude_ids ) ) {
             return self::UPDATE_GATE_PASS;
         }
 
-        if ( self::has_recent_native_backup( $site_id, $max_age_days )
-            || self::has_recent_backup( $site_id, $max_age_days ) ) {
+        if ( self::has_recent_native_backup( $site_id, $max_age_days, false, $exclude_ids )
+            || self::backup_archive_mtime_excluding( $site_id, $exclude_ids ) >= time() - $max_age_days * DAY_IN_SECONDS ) {
             return $require_offsite ? self::UPDATE_GATE_PENDING_OFFSITE : self::UPDATE_GATE_PASS;
         }
 

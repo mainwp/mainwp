@@ -126,6 +126,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			'mainwp/cancel-site-backup-v1',
 			'mainwp/reset-backup-task-run-v1',
 			'mainwp/cleanup-site-backups-v1',
+			'mainwp/delete-backup-snapshot-v1',
 			'mainwp/create-backup-task-v1',
 			'mainwp/update-backup-task-v1',
 			'mainwp/delete-backup-task-v1',
@@ -166,8 +167,8 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 				return 'mainwp-backups' === $ability->get_category();
 			}
 		);
-		$this->assertCount( 31, $backup_abilities );
-		foreach ( array_slice( $expected, 0, 31 ) as $name ) {
+		$this->assertCount( 32, $backup_abilities );
+		foreach ( array_slice( $expected, 0, 32 ) as $name ) {
 			$this->assertSame( 'mainwp-backups', wp_get_ability( $name )->get_category(), $name );
 		}
 
@@ -351,6 +352,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			'mainwp/cancel-site-backup-v1'       => true,
 			'mainwp/reset-backup-task-run-v1'    => true,
 			'mainwp/cleanup-site-backups-v1'     => false,
+			'mainwp/delete-backup-snapshot-v1'   => false,
 			'mainwp/create-backup-task-v1'       => false,
 			'mainwp/update-backup-task-v1'       => false,
 			'mainwp/delete-backup-task-v1'       => false,
@@ -406,6 +408,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 					'mainwp/cancel-site-backup-v1',
 					'mainwp/reset-backup-task-run-v1',
 					'mainwp/cleanup-site-backups-v1',
+					'mainwp/delete-backup-snapshot-v1',
 					'mainwp/update-backup-task-v1',
 					'mainwp/delete-backup-task-v1',
 				),

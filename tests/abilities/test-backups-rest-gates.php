@@ -276,6 +276,7 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 			array( 'pause-backup-task', 'POST', 'mainwp_backup_task_not_found' ),
 			array( 'resume-backup-task', 'POST', 'mainwp_backup_task_not_found' ),
 			array( 'restore-site-snapshot', 'POST', 'mainwp_backup_snapshot_not_found' ),
+			array( 'delete-backup-snapshot', 'POST', 'mainwp_backup_snapshot_not_found' ),
 			array( 'cancel-restore', 'DELETE', 'mainwp_backup_restore_job_not_found' ),
 			array( 'rollback-restore', 'POST', 'mainwp_backup_restore_job_not_found' ),
 			array( 'test-backup-destination', 'POST', 'mainwp_backup_destination_not_found' ),
@@ -308,7 +309,7 @@ class MainWP_Backups_REST_Gates_Test extends \WP_Test_REST_TestCase {
 				'dry_run'        => true,
 			) + ( 'update-backup-destination' === $name ? array( 'name' => 'REST rename' ) : array() );
 		}
-		if ( 'restore-site-snapshot' === $name ) {
+		if ( in_array( $name, array( 'restore-site-snapshot', 'delete-backup-snapshot' ), true ) ) {
 			return array(
 				'site_id_or_domain' => $this->site_id,
 				'snapshot_id'       => $missing ? $id : 987673,

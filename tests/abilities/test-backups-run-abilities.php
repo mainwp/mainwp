@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Backup_Operations;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_System_Cron_Jobs;
@@ -50,6 +51,13 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 * @var int
 	 */
 	private $polls = 0;
+
+	/**
+	 * Target allocated only for the deletion matrix.
+	 *
+	 * @var int|null
+	 */
+	private $delete_snapshot_id = null;
 
 	/** Each test owns its rows without assigning database identities. */
 	public function set_up() {
@@ -162,11 +170,12 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function actions() {
 		return array(
-			'site start' => array( 'run-site-backup', 'POST', false, 'execute_backups' ),
-			'task start' => array( 'run-backup-task', 'POST', false, 'run_backup_tasks' ),
-			'cancel'     => array( 'cancel-site-backup', 'DELETE', true, 'execute_backups' ),
-			'reset'      => array( 'reset-backup-task-run', 'DELETE', true, 'pause_resume_backup_tasks' ),
-			'cleanup'    => array( 'cleanup-site-backups', 'POST', false, 'execute_backups' ),
+			'site start'      => array( 'run-site-backup', 'POST', false, 'execute_backups' ),
+			'task start'      => array( 'run-backup-task', 'POST', false, 'run_backup_tasks' ),
+			'cancel'          => array( 'cancel-site-backup', 'DELETE', true, 'execute_backups' ),
+			'reset'           => array( 'reset-backup-task-run', 'DELETE', true, 'pause_resume_backup_tasks' ),
+			'cleanup'         => array( 'cleanup-site-backups', 'POST', false, 'execute_backups' ),
+			'delete snapshot' => array( 'delete-backup-snapshot', 'POST', false, 'execute_backups' ),
 		);
 	}
 
@@ -191,6 +200,24 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 * @return array
 	 */
 	private function input( $name ) {
+		if ( 'delete-backup-snapshot' === $name ) {
+			if ( null === $this->delete_snapshot_id ) {
+				$this->delete_snapshot_id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+					array(
+						'site_id'  => $this->site_id,
+						'task_id'  => $this->task_id,
+						'type'     => 'full',
+						'archives' => array(),
+					)
+				);
+			}
+			return array(
+				'site_id_or_domain'     => $this->site_id,
+				'snapshot_id'           => $this->delete_snapshot_id,
+				'expected_snapshot_ids' => array( $this->delete_snapshot_id ),
+			);
+		}
+
 		return false !== strpos( $name, 'task' ) ? array( 'task_id' => $this->task_id ) : array( 'site_id_or_domain' => $this->site_id );
 	}
 
@@ -673,12 +700,15 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 	public function test_all_action_ids_follow_exact_contract( $id, $expected, $schema_accepts ) {
 		foreach ( self::actions() as $action ) {
 			list( $name, $method ) = $action;
-			$key                   = false !== strpos( $name, 'task' ) ? 'task_id' : 'site_id_or_domain';
+			$key                   = 'delete-backup-snapshot' === $name ? 'snapshot_id' : ( false !== strpos( $name, 'task' ) ? 'task_id' : 'site_id_or_domain' );
 			$input                 = array(
 				$key      => $id,
 				'dry_run' => true,
 			);
-			$output                = $this->execute( $name, $input );
+			if ( 'delete-backup-snapshot' === $name ) {
+				$input['site_id_or_domain'] = $this->site_id;
+			}
+			$output = $this->execute( $name, $input );
 			$this->assertWPError( $output );
 			$this->assertSame( null === $expected ? 400 : 404, $output->get_error_data()['status'], $name );
 			global $wp_rest_server;
@@ -704,7 +734,12 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 	public function test_canonical_fixture_ids_succeed_on_php_and_body_routes() {
 		foreach ( self::actions() as $action ) {
 			list( $name, $method ) = $action;
-			$input                 = array_map( 'strval', $this->input( $name ) ) + array( 'dry_run' => true );
+			$input                 = array_map(
+				static function ( $value ) {
+					return is_array( $value ) ? array_map( 'strval', $value ) : strval( $value );
+				},
+				$this->input( $name )
+			) + array( 'dry_run' => true );
 			$this->assert_output( $name, $this->execute( $name, $input ) );
 			global $wp_rest_server;
 			$previous       = $wp_rest_server;

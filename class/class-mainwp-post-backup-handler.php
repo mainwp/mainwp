@@ -95,6 +95,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // Page: ManageBackupsSnapshots (restore).
         if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
             $this->add_action( 'mainwp_restore_snapshot_list', array( &$this, 'mainwp_restore_snapshot_list' ) );
+            $this->add_action( 'mainwp_backup_snapshot_delete_preview', array( &$this, 'mainwp_backup_snapshot_delete_preview' ) );
+            $this->add_action( 'mainwp_backup_snapshot_delete', array( &$this, 'mainwp_backup_snapshot_delete' ) );
             $this->add_action( 'mainwp_backup_snapshot_download_url', array( &$this, 'mainwp_backup_snapshot_download_url' ) );
             $this->add_action( 'mainwp_restore_initiate', array( &$this, 'mainwp_restore_initiate' ) );
             $this->add_action( 'mainwp_restore_progress', array( &$this, 'mainwp_restore_progress' ) );
@@ -356,8 +358,53 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'failed_restore_jobs'   => $failed_rows,
                 'site_disconnected'     => static::site_is_disconnected( $website ),
                 'reconnect_url'         => admin_url( 'admin.php?page=managesites&dashboard=' . (int) $website->id ),
+                'snapshot_delete_busy'  => MainWP_Backup_Operations::snapshot_delete_busy( $site_id ),
                 'manual_backup_running' => ! empty( $manual_task ) && (int) $manual_task->completed < (int) $manual_task->last_run,
             )
+        );
+    }
+
+    /** Preview single-snapshot deletion without contacting the site. */
+    public function mainwp_backup_snapshot_delete_preview() {
+        $this->secure_request( 'mainwp_backup_snapshot_delete_preview' );
+        $this->snapshot_delete_request( true );
+    }
+
+    /** Confirm only the snapshot set the user reviewed. */
+    public function mainwp_backup_snapshot_delete() {
+        $this->secure_request( 'mainwp_backup_snapshot_delete' );
+        $this->snapshot_delete_request( false );
+    }
+
+    /**
+     * Keep exact identities intact until the common validator accepts them.
+     *
+     * @param bool $preview Whether to preview.
+     * @return void
+     */
+    private function snapshot_delete_request( bool $preview ): void {
+        $input = array(
+            'site_id_or_domain' => isset( $_POST['site_id'] ) ? wp_unslash( $_POST['site_id'] ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- secure_request verified; exact ids validated below before use.
+            'snapshot_id'       => isset( $_POST['snapshot_id'] ) ? wp_unslash( $_POST['snapshot_id'] ) : '', // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- exact ids validated below.
+        );
+        if ( ! $preview ) {
+            $input['expected_snapshot_ids'] = isset( $_POST['expected_snapshot_ids'] ) ? wp_unslash( $_POST['expected_snapshot_ids'] ) : array(); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- raw selection validated below.
+        }
+        $valid = MainWP_Abilities_Backups::validate_id_input( $input, true );
+        $cloud = isset( $_POST['delete_cloud_copies'] ) ? wp_unslash( $_POST['delete_cloud_copies'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- restricted boolean values checked below.
+        if ( is_wp_error( $valid ) || ( null !== $cloud && ! in_array( $cloud, array( '0', '1', 0, 1, false, true ), true ) ) ) {
+            wp_send_json( array( 'error' => MainWP_Backup_Operations::safe_error( 'mainwp_invalid_input' )['message'] ) );
+            return;
+        }
+        $cloud  = null === $cloud ? null : (bool) $cloud;
+        $result = $preview
+            ? MainWP_Backup_Operations::preview_delete_snapshot( (int) $input['site_id_or_domain'], (int) $input['snapshot_id'], $cloud )
+            : MainWP_Backup_Operations::delete_snapshot( (int) $input['site_id_or_domain'], (int) $input['snapshot_id'], $input['expected_snapshot_ids'], $cloud );
+        wp_send_json(
+            is_wp_error( $result ) ? array(
+                'error'      => $result->get_error_message(),
+                'error_code' => $result->get_error_code(),
+            ) : $result
         );
     }
 

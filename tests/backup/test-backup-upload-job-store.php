@@ -21,6 +21,77 @@ use MainWP\Dashboard\MainWP_DB;
 class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 
 	/**
+	 * Expiry fences progress even before another worker reclaims the token.
+	 *
+	 * @dataProvider fenced_lease_states
+	 * @param bool $expired Whether the lease has expired.
+	 */
+	public function test_fenced_progress_requires_live_lease( bool $expired ) {
+		global $wpdb;
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 901, array( 7 ) );
+		$job = $store->acquire_next_job( 'holder', 300 );
+		$this->assertNotNull( $job );
+		if ( $expired ) {
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'locked_until' => time() - 60 ), array( 'id' => $job->id ) );
+		}
+		$before = $store->get_job( (int) $job->id );
+		$this->assertSame( ! $expired, $store->save_checkpoint( (int) $job->id, array( 'cursor' => 9 ), 'holder' ) );
+		$this->assertSame( ! $expired, $store->set_status( (int) $job->id, $store::STATUS_UPLOADING, 'holder' ) );
+		$after = $store->get_job( (int) $job->id );
+		$this->assertSame( $expired ? $before->checkpoint : array( 'cursor' => 9 ), $after->checkpoint );
+		$this->assertSame( $expired ? $before->status : $store::STATUS_UPLOADING, $after->status );
+		$this->assertSame( ! $expired, $store->save_checkpoint( (int) $job->id, $after->checkpoint, 'holder' ), 'An unchanged write must still check lease freshness.' );
+		if ( $expired ) {
+			$this->assertEquals( $before, $store->get_job( (int) $job->id ), 'Expired writes must leave every column unchanged.' );
+		}
+	}
+
+	/**
+	 * Expired holders cannot finish a job or announce settlement.
+	 *
+	 * @dataProvider fenced_lease_states
+	 * @param bool $expired Whether the lease has expired.
+	 */
+	public function test_fenced_terminal_requires_live_lease( bool $expired ) {
+		global $wpdb;
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 902, array( 7 ) );
+		$job = $store->acquire_next_job( 'holder', 300 );
+		$this->assertNotNull( $job );
+		if ( $expired ) {
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'locked_until' => time() - 60 ), array( 'id' => $job->id ) );
+		}
+		$before  = $store->get_job( (int) $job->id );
+		$settled = array();
+		add_action(
+			'mainwp_backup_upload_job_settled',
+			static function ( $id ) use ( &$settled ) {
+				$settled[] = $id;
+			}
+		);
+		$this->assertSame( ! $expired, $store->complete_job( (int) $job->id, 'holder' ) );
+		$this->assertSame( $expired ? array() : array( 902 ), $settled );
+		if ( $expired ) {
+			$this->assertEquals( $before, $store->get_job( (int) $job->id ) );
+		} else {
+			$this->assertSame( $store::STATUS_COMPLETE, $store->get_job( (int) $job->id )->status );
+		}
+	}
+
+	/**
+	 * Lease states for progress and terminal writes.
+	 *
+	 * @return array
+	 */
+	public static function fenced_lease_states(): array {
+		return array(
+			'expired' => array( true ),
+			'live'    => array( false ),
+		);
+	}
+
+	/**
 	 * Enqueue inserts one pending row per destination, idempotently.
 	 *
 	 * @return void
@@ -469,7 +540,7 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$store = MainWP_Backup_Upload_Job_Store::instance();
 		$store->enqueue_for_snapshot( 117, array( 7 ) );
 
-		$now    = 1000000;
+		$now    = time();
 		$job    = $store->acquire_next_job( 'token-zombie', 300, $now );
 		$job_id = (int) $job->id;
 
@@ -501,7 +572,7 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$store = MainWP_Backup_Upload_Job_Store::instance();
 		$store->enqueue_for_snapshot( 118, array( 7 ) );
 
-		$now    = 1000000;
+		$now    = time();
 		$job    = $store->acquire_next_job( 'token-zombie', 300, $now );
 		$job_id = (int) $job->id;
 
@@ -530,7 +601,7 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$store = MainWP_Backup_Upload_Job_Store::instance();
 		$store->enqueue_for_snapshot( 119, array( 7 ) );
 
-		$now    = 1000000;
+		$now    = time();
 		$job    = $store->acquire_next_job( 'token-zombie', 300, $now );
 		$job_id = (int) $job->id;
 		$this->assertNotNull( $store->acquire_next_job( 'token-new', 300, $now + 301 ) );

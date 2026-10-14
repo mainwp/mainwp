@@ -132,27 +132,35 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
      *              still holds the lease); false when the lease was lost.
      */
     protected function update_job( int $job_id, array $row, array $format, ?string $lock_token = null ): bool {
-        $row['updated'] = time();
+        $now            = time();
+        $row['updated'] = $now;
         $format[]       = '%d';
 
-        $where        = array( 'id' => $job_id );
-        $where_format = array( '%d' );
-        if ( null !== $lock_token ) {
-            $where['locked_by'] = $lock_token;
-            $where_format[]     = '%s';
-        }
-
-        $updated = $this->wpdb->update(
-            $this->table(),
-            $row,
-            $where,
-            $format,
-            $where_format
-        );
-
         if ( null === $lock_token ) {
+            $updated = $this->wpdb->update( $this->table(), $row, array( 'id' => $job_id ), $format, array( '%d' ) );
             return false !== $updated;
         }
+
+        $set    = array();
+        $values = array();
+        $index  = 0;
+        foreach ( $row as $column => $value ) {
+            if ( ! preg_match( '/^[A-Za-z_][A-Za-z0-9_]*$/D', (string) $column ) ) {
+                return false;
+            }
+            $set[] = '`' . $column . '` = ' . ( null === $value ? 'NULL' : $format[ $index ] );
+            if ( null !== $value ) {
+                $values[] = $value;
+            }
+            ++$index;
+        }
+        $updated = $this->wpdb->query(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- column formats and values grow together.
+                // nosemgrep: AIK_tainted-sql-string -- Column names are validated and backtick-quoted; values and the lease fence use placeholders.
+                'UPDATE ' . $this->table() . ' SET ' . implode( ', ', $set ) . ' WHERE id = %d AND locked_by = %s AND locked_until >= %d',
+                array_merge( $values, array( $job_id, $lock_token, $now ) )
+            )
+        );
         if ( 1 === $updated ) {
             return true;
         }
@@ -163,14 +171,11 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
             return false;
         }
 
-        // Zero affected rows is ambiguous under MySQL: the fence refused the
-        // write, or the values were already identical (a same-second
-        // idempotent checkpoint). Only a confirmed token mismatch is a lost
-        // lease.
-        $holder = $this->wpdb->get_var(
-            $this->wpdb->prepare( 'SELECT locked_by FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+        // An unchanged same-second write succeeds only while the lease is live.
+        $holder = $this->wpdb->get_row(
+            $this->wpdb->prepare( 'SELECT locked_by, locked_until FROM ' . $this->table() . ' WHERE id = %d', $job_id )
         );
-        return $holder === $lock_token;
+        return null !== $holder && $holder->locked_by === $lock_token && (int) $holder->locked_until >= $now;
     }
 
     /**
@@ -213,8 +218,9 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
         $fence = '';
         $binds = array_merge( $values, array( $job_id ), $statuses );
         if ( null !== $lock_token ) {
-            $fence   = ' AND locked_by = %s';
+            $fence   = ' AND locked_by = %s AND locked_until >= %d';
             $binds[] = $lock_token;
+            $binds[] = $row['updated'];
         }
 
         $changed = $this->wpdb->query(

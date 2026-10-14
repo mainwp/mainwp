@@ -150,6 +150,9 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 
 		$this->assertTrue( $provider->put_object( '4/42/chunks/abc.bin', $body ) );
 		$this->assertCount( 2, $this->requests );
+		foreach ( $this->requests as $request ) {
+			$this->assertSame( 0, $request['args']['redirection'] ?? null, 'Credentials and archive bytes must never follow provider redirects.' );
+		}
 
 		$mint = $this->requests[0];
 		$this->assertSame( 'https://api.dropboxapi.com/oauth2/token', $mint['url'] );
@@ -924,6 +927,7 @@ class MainWP_Backup_Storage_Dropbox_Test extends \WP_UnitTestCase {
 		$this->assertArrayNotHasKey( 'error', $result );
 
 		$this->assertSame( 'https://api.dropboxapi.com/oauth2/token', $requests[0]['url'] );
+		$this->assertSame( 0, $requests[0]['args']['redirection'] ?? null, 'OAuth secrets must never follow a redirect.' );
 		$body = $requests[0]['args']['body'];
 		$this->assertSame( 'authorization_code', $body['grant_type'] );
 		$this->assertSame( 'auth-code-1', $body['code'] );

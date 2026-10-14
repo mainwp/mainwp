@@ -5319,7 +5319,17 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		return array(
 			'unreadable response'  => array( '<html>Unavailable</html>', 0, 'failed_retryable', false, $unreadable ),
 			'coerced response'     => array( array( 'fetch_url_output' => 'Service Unavailable' ), 0, 'failed_retryable', false, $unreadable ),
-			'error payload'        => array( array( 'error' => 'Task not found.' ), 0, 'failed_permanent', true, 'Task not found.' ),
+			'error payload'        => array( array( 'error' => 'Task not found.' ), 0, 'failed_retryable', false, $unreadable ),
+			'busy error'           => array(
+				array(
+					'error' => 'Busy.',
+					'phase' => 'running',
+				),
+				0,
+				'failed_retryable',
+				false,
+				$unreadable,
+			),
 			'failed without error' => array( array( 'phase' => 'failed' ), 0, 'failed_permanent', true, 'The pre-restore safety backup failed.' ),
 			'failed phase'         => array(
 				array(

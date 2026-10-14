@@ -389,6 +389,7 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
      */
     private function send( string $url, array $args ) {
         $this->guard_outbound_host( $url );
+        $args['redirection'] = 0;
 
         $response = call_user_func( $this->transport, $url, $args );
 
@@ -453,9 +454,10 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
             $transport,
             static::API_BASE . '/oauth2/token',
             array(
-                'method'  => 'POST',
-                'timeout' => 30,
-                'body'    => array(
+                'method'      => 'POST',
+                'timeout'     => 30,
+                'redirection' => 0,
+                'body'        => array(
                     'grant_type'    => 'authorization_code',
                     'code'          => $code,
                     'client_id'     => $app_key,

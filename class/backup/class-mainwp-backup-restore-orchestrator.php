@@ -1289,7 +1289,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( 'failed' === $phase || '' === $phase || ( $reconcile && isset( $payload['error'] ) ) ) {
                 $error      = is_array( $payload ) && isset( $payload['error'] ) ? MainWP_Backup_Error_Codes::sanitize_message( (string) $payload['error'] ) : esc_html__( 'The pre-restore safety backup failed.', 'mainwp' );
                 $error_code = MainWP_Backup_Error_Codes::code_for_exception( new MainWP_Exception( $error, null, is_array( $payload ) && is_string( $payload['error_code'] ?? null ) ? $payload['error_code'] : '' ) );
-                if ( 'failed' === $phase || ( is_array( $payload ) && isset( $payload['error'] ) ) ) {
+                if ( 'failed' === $phase ) {
                     MainWP_Backup_Run_History::finalize_restore_safety( (int) $job->id, 'failed', $error_code );
                     $this->release_pre_snapshot_handle( $website, (string) $job->pre_snapshot_task_id, (string) $job->id );
                     $this->record_failure( $job, $error, false, $error_code );

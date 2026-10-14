@@ -25,6 +25,19 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Private_Root_Fixture;
 
 	/**
+	 * Deep configured paths must be refused before any directory is created.
+	 */
+	public function test_deep_missing_private_root_is_refused() {
+		$path = $this->private_root . '/deep' . str_repeat( '/child', 100 );
+		add_filter( 'mainwp_backup_private_root', static fn() => $path );
+		MainWP_Backup_Private_Root::reset();
+		$result = MainWP_Backup_Private_Root::site_dir( 7 );
+		$this->assertWPError( $result );
+		$this->assertStringContainsString( 'too deep', $result->get_error_message() );
+		$this->assertDirectoryDoesNotExist( $this->private_root . '/deep' );
+	}
+
+	/**
 	 * Isolate both roots.
 	 *
 	 * @return void

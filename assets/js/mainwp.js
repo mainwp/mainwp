@@ -577,22 +577,18 @@ function shake_element(select) {
  * Required
  */
 globalThis.feedback = function (id, text, type, append) {
+    let target = jQuery('#' + id);
     if (append) {
-        let currentHtml = jQuery('#' + id).html();
-        if (currentHtml == null)
-            currentHtml = "";
-        if (currentHtml == '') {
-            currentHtml = text;
-        } else {
-            currentHtml += '<br />' + text;
+        if (target.contents().length) {
+            target.append(document.createElement('br'));
         }
-        jQuery('#' + id).html(currentHtml);
+        target.append(document.createTextNode(text));
         jQuery('#' + id).removeClass('yellow');
         jQuery('#' + id).removeClass('green');
         jQuery('#' + id).removeClass('red');
         jQuery('#' + id).addClass(type);
     } else {
-        jQuery('#' + id).html(text);
+        target.text(text);
         jQuery('#' + id).removeClass('yellow');
         jQuery('#' + id).removeClass('green');
         jQuery('#' + id).removeClass('red');
@@ -630,23 +626,20 @@ globalThis.scrollElementTop = function (id) {
 
 globalThis.mainwp_showhide_message = function (id, content, cls, append, scroll) {
 
+    let target = jQuery('#' + id);
+
     if ('' === content) {
-        jQuery('#' + id).html('').fadeOut(500);
+        target.empty().fadeOut(500);
         return;
     }
 
     if (append) {
-        let html = jQuery('#' + id).html();
-        if (html == null)
-            html = "";
-        if (html == '') {
-            html = content;
-        } else {
-            html += '<br />' + content;
+        if (target.contents().length) {
+            target.append(document.createElement('br'));
         }
-        jQuery('#' + id).html(html);
+        target.append(document.createTextNode(content));
     } else {
-        jQuery('#' + id).html(content);
+        target.text(content);
     }
 
     jQuery('#' + id).removeClass('yellow green red');

@@ -271,10 +271,18 @@ class MainWP_Backup_Private_Root {
         if ( ! $allow_symlink && is_link( $candidate ) ) {
             return 'directory is a symlink';
         }
+        $canonical = self::canonical_path( $candidate );
+        if ( null === $canonical ) {
+            return 'directory path is too deep';
+        }
         foreach ( array( ABSPATH, WP_CONTENT_DIR ) as $boundary ) {
-            $boundary = untrailingslashit( wp_normalize_path( $boundary ) );
-            foreach ( array( $boundary, self::canonical_path( $boundary ) ) as $served ) {
-                foreach ( array( $candidate, self::canonical_path( $candidate ) ) as $private ) {
+            $boundary    = untrailingslashit( wp_normalize_path( $boundary ) );
+            $served_path = self::canonical_path( $boundary );
+            if ( null === $served_path ) {
+                return 'served directory path is too deep';
+            }
+            foreach ( array( $boundary, $served_path ) as $served ) {
+                foreach ( array( $candidate, $canonical ) as $private ) {
                     // These platforms can resolve case variants to the same served directory.
                     if ( 'Darwin' === PHP_OS_FAMILY || 'Windows' === PHP_OS_FAMILY ) {
                         $private = strtolower( $private );
@@ -328,7 +336,11 @@ class MainWP_Backup_Private_Root {
         }
         $dir       = untrailingslashit( wp_normalize_path( $dir ) );
         $candidate = self::canonical_path( $dir );
-        if ( null !== $required_parent && ( is_link( untrailingslashit( $required_parent ) ) || 0 !== strpos( $candidate . '/', trailingslashit( self::canonical_path( $required_parent ) ) ) ) ) {
+        if ( null === $candidate ) {
+            return self::unavailable( $dir, 'directory path is too deep' );
+        }
+        $parent = null === $required_parent ? null : self::canonical_path( $required_parent );
+        if ( null !== $required_parent && ( null === $parent || is_link( untrailingslashit( $required_parent ) ) || 0 !== strpos( $candidate . '/', trailingslashit( $parent ) ) ) ) {
             return self::unavailable( $dir, 'directory escapes its private parent' );
         }
         $existed = is_dir( $dir );
@@ -372,10 +384,14 @@ class MainWP_Backup_Private_Root {
     /**
      * Resolve existing ancestors and normalize missing path segments.
      *
-     * @param string $path Path.
-     * @return string
+     * @param string $path  Path.
+     * @param int    $depth Missing ancestor count.
+     * @return string|null Null when the ancestor limit is exceeded.
      */
-    private static function canonical_path( string $path ): string {
+    private static function canonical_path( string $path, int $depth = 0 ): ?string {
+        if ( $depth >= 64 ) {
+            return null;
+        }
         $real = realpath( $path );
         if ( false !== $real ) {
             return untrailingslashit( wp_normalize_path( $real ) );
@@ -384,7 +400,10 @@ class MainWP_Backup_Private_Root {
         if ( $parent === $path ) {
             return untrailingslashit( wp_normalize_path( $path ) );
         }
-        $base = self::canonical_path( $parent );
+        $base = self::canonical_path( $parent, $depth + 1 );
+        if ( null === $base ) {
+            return null;
+        }
         $name = basename( $path );
         if ( '..' === $name ) {
             return dirname( $base );

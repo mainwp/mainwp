@@ -323,7 +323,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 $task_id,
                 array(
                     'level'   => $level,
-                    'message' => $message,
+                    'message' => '[redacted]',
                 )
             );
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.
@@ -391,14 +391,18 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * Keep presence markers without retaining restore credentials or signed URLs.
      *
      * @param array $payload Diagnostic payload or decoded event.
+     * @param int   $depth   Current nesting depth.
      * @return array Redacted payload.
      */
-    private function redact_restore_secrets( array $payload ): array {
+    private function redact_restore_secrets( array $payload, int $depth = 0 ): array {
+        if ( $depth >= 64 ) {
+            return array();
+        }
         foreach ( $payload as $key => $value ) {
             if ( 'identity_preserve' === $key || str_starts_with( (string) $key, 'pull_manifest' ) ) {
                 $payload[ $key ] = (bool) $value;
             } elseif ( is_array( $value ) ) {
-                $payload[ $key ] = $this->redact_restore_secrets( $value );
+                $payload[ $key ] = $this->redact_restore_secrets( $value, $depth + 1 );
             }
         }
         return $payload;
@@ -409,9 +413,13 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param array $payload           Diagnostic payload or decoded event.
      * @param bool  $sanitize_messages Whether to sanitize string keys and values.
+     * @param int   $depth             Current nesting depth.
      * @return array Redacted payload.
      */
-    private function redact_backup_payload( array $payload, bool $sanitize_messages = false ): array {
+    private function redact_backup_payload( array $payload, bool $sanitize_messages = false, int $depth = 0 ): array {
+        if ( $depth >= 64 ) {
+            return array();
+        }
         $redacted = array();
         foreach ( $payload as $key => $value ) {
             if ( 'backup_dir_hash' === $key ) {
@@ -422,7 +430,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 $key = MainWP_Backup_Error_Codes::sanitize_message( $key );
             }
             if ( is_array( $value ) ) {
-                $value = $this->redact_backup_payload( $value, $sanitize_messages );
+                $value = $this->redact_backup_payload( $value, $sanitize_messages, $depth + 1 );
             } elseif ( $sanitize_messages && is_string( $value ) ) {
                 $value = MainWP_Backup_Error_Codes::sanitize_message( $value );
             }

@@ -34,6 +34,66 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Cancel_Transport_Guard;
 
 	/**
+	 * Dashboard-wide log hooks must not persist unrestricted personal or secret text.
+	 */
+	public function test_guardrail_omits_unrestricted_log_text() {
+		$this->enable_recorder();
+		do_action( 'mainwp_log_info', 'Backup for Jane Example jane@example.test token=secret-fixture-value', 7, 9 );
+		$events = $this->recorded_events();
+		$this->assertCount( 1, $events );
+		$this->assertSame( 'guardrail', $events[0]['kind'] );
+		$this->assertSame( 7, $events[0]['site_id'] );
+		$this->assertSame( 9, $events[0]['task_id'] );
+		$line = file_get_contents( $this->diag_dir . '/' . $this->event_filename( '_global' ) );
+		foreach ( array( 'Jane Example', 'jane@example.test', 'secret-fixture-value' ) as $secret ) {
+			$this->assertStringNotContainsString( $secret, $line );
+		}
+	}
+
+	/**
+	 * Deep child payloads must be truncated before encoding or exposing their leaves.
+	 *
+	 * @dataProvider deep_poll_kinds
+	 * @param bool $restore Whether to record a restore poll.
+	 */
+	public function test_deep_poll_payload_fails_closed( bool $restore ) {
+		$this->enable_recorder();
+		$payload = array( 'leaf' => 'deep-secret-fixture' );
+		for ( $i = 0; $i < 100; ++$i ) {
+			$payload = array( 'nested' => $payload );
+		}
+		$recorder = MainWP_Backup_Diagnostics::instance();
+		if ( $restore ) {
+			$recorder->on_restore_poll( 9, 7, $payload, 0.25 );
+		} else {
+			$recorder->on_poll(
+				$payload,
+				0.25,
+				array(
+					'site_id' => 7,
+					'task_id' => 9,
+				)
+			);
+		}
+		$events = $this->recorded_events();
+		$this->assertCount( 1, $events );
+		$this->assertSame( 0.25, $events[0]['payload']['poll_duration_s'] );
+		$this->assertStringNotContainsString( 'deep-secret-fixture', wp_json_encode( $events[0] ) );
+	}
+
+	/**
+	 * Both poll entry points redact nested child data.
+	 *
+	 * @return array
+	 */
+	public static function deep_poll_kinds(): array {
+		return array(
+			'restore' => array( true ),
+			'backup'  => array( false ),
+		);
+	}
+
+	/**
 	 * Encoding failures must not leave a corrupt bundle available for download.
 	 */
 	public function test_json_fallback_rejects_unencodable_section() {
@@ -1491,7 +1551,7 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 
 		$guardrails = array_values( array_filter( $events, fn( $event ) => 'guardrail' === $event['kind'] ) );
 		$this->assertCount( 1, $guardrails, 'Only backup-related log messages may be recorded.' );
-		$this->assertStringContainsString( 'Low disk space', $guardrails[0]['payload']['message'] );
+		$this->assertSame( '[redacted]', $guardrails[0]['payload']['message'] );
 	}
 
 	/**
@@ -1789,11 +1849,10 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertStringContainsString( 'allowed-mark', $global, 'The shared stream keeps the caller\'s own lines.' );
 		$this->assertStringNotContainsString( 'denied-mark', $global, 'The shared stream must drop out-of-scope lines.' );
-		$this->assertStringContainsString( 'Backup retention allowed guardrail', $global );
-		$this->assertStringNotContainsString( 'Backup retention denied guardrail', $global );
-		$this->assertStringNotContainsString( 'Restore denied guardrail', $global );
-		$this->assertStringContainsString( 'Backup host guardrail', $global );
-		$this->assertStringContainsString( 'Restore host guardrail', $global );
+		$guardrails = array_values( array_filter( array_map( fn( $line ) => json_decode( $line, true ), explode( "\n", trim( $global ) ) ), fn( $event ) => 'guardrail' === $event['kind'] ) );
+		$this->assertSame( array( $site_allowed, 0, 0 ), array_column( $guardrails, 'site_id' ), 'Only allowed-site and host guardrails may be exported.' );
+		$this->assertSame( array( 'warning', 'warning', 'info' ), array_column( array_column( $guardrails, 'payload' ), 'level' ) );
+		$this->assertSame( array( '[redacted]', '[redacted]', '[redacted]' ), array_column( array_column( $guardrails, 'payload' ), 'message' ) );
 
 		$ticks = array_values( array_filter( array_map( fn( $line ) => json_decode( $line, true ), explode( "\n", trim( $global ) ) ), fn( $event ) => is_array( $event ) && 'tick' === $event['kind'] ) );
 		$this->assertCount( 1, $ticks, 'The tick line on the caller\'s own task rides along.' );

@@ -2056,13 +2056,16 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Replace only the exit-producing streamer and wp_die to retain endpoint checks.
+	 * Isolate binary streams; legacy downloads retain their exit replacement.
 	 *
 	 * @param array $query Request parameters.
 	 * @param bool  $legacy Whether to use the old download route.
 	 * @return array Captured bytes and refusal details.
 	 */
 	private function request_diagnostics_download( array $query, bool $legacy = false ): array {
+		if ( ! $legacy ) {
+			return $this->stream_diagnostics_download( $query );
+		}
 		$streamer = new class() extends MainWP_System_Handler {
 			/**
 			 * The production streamer's exit would terminate the test process.
@@ -2124,6 +2127,131 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Use D1's header, connection and read spies with the real diagnostics endpoint.
+	 *
+	 * @param array  $query Request parameters.
+	 * @param string $mode complete, abort, read-error or first-read-error.
+	 * @return array Captured bytes, headers, consumption and refusal details.
+	 */
+	private function stream_diagnostics_download( array $query, string $mode = 'complete' ): array {
+		$token   = is_string( $query['token'] ?? null ) ? $query['token'] : '';
+		$key     = 'mainwp_backup_diag_download_' . hash( 'sha256', $token );
+		$input   = array(
+			'query'     => $query,
+			'key'       => $key,
+			'record'    => get_site_transient( $key ),
+			'user_id'   => get_current_user_id(),
+			'admin'     => MainWP_System_Utility::is_admin(),
+			'allowed'   => \mainwp_current_user_can( 'dashboard', 'execute_backups' ),
+			'nonce'     => is_string( $query['_wpnonce'] ?? null ) && false !== wp_verify_nonce( $query['_wpnonce'], 'mainwp_backup_diagnostics_download' ),
+			'directory' => $this->diag_dir,
+			'mode'      => $mode,
+		);
+		$fixture = <<<'PHP'
+namespace {
+    function mainwp_current_user_can( $type, $right ) { return $GLOBALS['input']['allowed']; }
+    function do_action( $hook, ...$args ) {}
+}
+namespace MainWP\Dashboard {
+    define( 'ABSPATH', $argv[1] . '/' );
+    require $argv[2];
+    require $argv[1] . '/class/backup/class-mainwp-backup-file-manager.php';
+    require $argv[1] . '/class/backup/class-mainwp-backup-download.php';
+    require $argv[1] . '/class/backup/class-mainwp-backup-diagnostics.php';
+    $input = json_decode( stream_get_contents( STDIN ), true, 512, JSON_THROW_ON_ERROR );
+    $_GET = $input['query'];
+    $bytes = '';
+    $headers = array();
+    $reads = 0;
+    $consumed = false;
+    $upload_called = false;
+    $capturing = false;
+    $message = null;
+    $status = null;
+    function __( $text, $domain ) { return $text; }
+    function esc_html__( $text, $domain ) { return esc_html( $text ); }
+    function esc_html( $text ) { return htmlspecialchars( $text, ENT_QUOTES ); }
+    function is_user_logged_in() { return 0 !== $GLOBALS['input']['user_id']; }
+    function get_current_user_id() { return $GLOBALS['input']['user_id']; }
+    function sanitize_text_field( $value ) { return trim( strip_tags( $value ) ); }
+    function wp_unslash( $value ) { return stripslashes( $value ); }
+    function wp_verify_nonce( $nonce, $action ) { return $GLOBALS['input']['nonce']; }
+    function get_site_transient( $key ) { return $key === $GLOBALS['input']['key'] && ! $GLOBALS['consumed'] ? $GLOBALS['input']['record'] : false; }
+    function delete_site_transient( $key ) {
+        if ( false === get_site_transient( $key ) ) { return false; }
+        $GLOBALS['consumed'] = true;
+        return true;
+    }
+    function apply_filters( $hook, $value ) { return 'mainwp_backup_diagnostics_dir' === $hook ? $GLOBALS['input']['directory'] : $value; }
+    function trailingslashit( $path ) { return rtrim( $path, '/\\' ) . '/'; }
+    function wp_normalize_path( $path ) { return str_replace( '\\', '/', $path ); }
+    function wp_delete_file( $path ) { \unlink( $path ); }
+    function is_wp_error( $value ) { return $value instanceof \WP_Error; }
+    function wp_die( $message, $title, $args ) {
+        $GLOBALS['message'] = $message;
+        $GLOBALS['status'] = $args['response'];
+        throw new \RuntimeException( 'download refused' );
+    }
+    function header( $value ) { $GLOBALS['headers'][] = $value; }
+    function connection_aborted() { return 'abort' === $GLOBALS['input']['mode'] && $GLOBALS['reads'] > 0 ? 1 : 0; }
+    function ignore_user_abort( $value ) { return 0; }
+    function fopen( $path, $mode ) {
+        if ( ! $GLOBALS['consumed'] ) { throw new \LogicException( 'The token must be consumed before streaming.' ); }
+        ob_start( static function ( $chunk ) { $GLOBALS['bytes'] .= $chunk; return ''; } );
+        $GLOBALS['capturing'] = true;
+        return \fopen( $path, $mode );
+    }
+    function fread( $handle, $length ) {
+        ++$GLOBALS['reads'];
+        if ( ( 'first-read-error' === $GLOBALS['input']['mode'] && 1 === $GLOBALS['reads'] ) || ( 'read-error' === $GLOBALS['input']['mode'] && 2 === $GLOBALS['reads'] ) ) { return false; }
+        return \fread( $handle, $length );
+    }
+    class MainWP_System_Utility {
+        public static function is_admin() { return $GLOBALS['input']['admin']; }
+        public static function set_time_limit( $timeout = 0 ) {}
+    }
+    class MainWP_System_Handler {
+        public static function instance() { return new self(); }
+        public function upload_file( $path ) {
+            $GLOBALS['upload_called'] = true;
+            $GLOBALS['bytes'] = file_get_contents( $path );
+        }
+    }
+    try {
+        MainWP_Backup_Diagnostics::instance()->download_bundle();
+    } catch ( \RuntimeException $error ) {
+        if ( 'download refused' !== $error->getMessage() ) { throw $error; }
+    }
+    if ( $capturing ) { ob_end_flush(); }
+    echo json_encode( array( 'bytes' => null !== $message ? null : base64_encode( $bytes ), 'headers' => $headers, 'message' => $message, 'status' => $status, 'consumed' => $consumed, 'upload_called' => $upload_called ), JSON_THROW_ON_ERROR );
+}
+PHP;
+		$process = proc_open(
+			array( PHP_BINARY, '-r', $fixture, dirname( __DIR__, 2 ), ABSPATH . WPINC . '/class-wp-error.php' ),
+			array(
+				0 => array( 'pipe', 'r' ),
+				1 => array( 'pipe', 'w' ),
+				2 => array( 'pipe', 'w' ),
+			),
+			$pipes
+		);
+		fwrite( $pipes[0], wp_json_encode( $input ) );
+		fclose( $pipes[0] );
+		$output = stream_get_contents( $pipes[1] );
+		$error  = stream_get_contents( $pipes[2] );
+		fclose( $pipes[1] );
+		fclose( $pipes[2] );
+		$this->assertSame( 0, proc_close( $process ), $error );
+		$this->assertSame( '', $error );
+		$response = json_decode( $output, true, 512, JSON_THROW_ON_ERROR );
+		if ( $response['consumed'] ) {
+			delete_site_transient( $key );
+		}
+		$response['bytes'] = null === $response['bytes'] ? null : base64_decode( $response['bytes'], true );
+		return $response;
+	}
+
+	/**
 	 * Download validation must also be exercised independently of URL creation.
 	 *
 	 * @return array Query parameters and transient key.
@@ -2162,6 +2290,48 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNull( $second['bytes'] );
 		$this->assertSame( 403, $second['status'] );
 		$this->assertSame( 'This download link is not valid or has expired. Export the diagnostics again.', $second['message'] );
+	}
+
+	/**
+	 * Only a complete stream removes the bundle; every stream consumes its token.
+	 *
+	 * @dataProvider diagnostics_stream_outcomes
+	 * @param string $mode Stream outcome.
+	 * @param bool   $deleted Whether the bundle should be removed.
+	 * @param int    $sent Expected bytes sent before the outcome.
+	 * @param mixed  $status Expected HTTP error status, or null.
+	 */
+	public function test_diagnostics_stream_cleans_only_completed_bundle( string $mode, bool $deleted, int $sent, $status ) {
+		list( $query, $key ) = $this->diagnostics_download_fixture();
+		$path                = $this->diag_dir . '/bundle.json';
+		$bytes               = str_repeat( 'diagnostics bytes ', 10000 );
+		file_put_contents( $path, $bytes );
+		$response = $this->stream_diagnostics_download( $query, $mode );
+
+		$this->assertSame( $deleted, ! is_file( $path ), 'Only a completed stream may remove the bundle.' );
+		$this->assertFalse( $response['upload_called'], 'Diagnostics must use the returning stream.' );
+		$this->assertSame( $status, $response['status'] );
+		$this->assertSame( null === $status ? substr( $bytes, 0, $sent ) : null, $response['bytes'] );
+		$this->assertSame( 0 === $sent ? array() : array( 'Content-Type: application/octet-stream', 'Content-Disposition: attachment; filename="bundle.json"', 'Cache-Control: private, no-store', 'Content-Length: 180000' ), $response['headers'] );
+		$this->assertFalse( get_site_transient( $key ) );
+		$this->assertSame( 403, $this->request_diagnostics_download( $query )['status'] );
+		if ( ! $deleted ) {
+			$this->assertSame( $bytes, file_get_contents( $path ) );
+		}
+	}
+
+	/**
+	 * Completion, client abort and both read-failure positions.
+	 *
+	 * @return array Stream outcomes.
+	 */
+	public static function diagnostics_stream_outcomes(): array {
+		return array(
+			'complete'         => array( 'complete', true, 180000, null ),
+			'abort'            => array( 'abort', false, 65536, null ),
+			'first-read-error' => array( 'first-read-error', false, 0, 500 ),
+			'read-error'       => array( 'read-error', false, 65536, null ),
+		);
 	}
 
 	/**

@@ -834,7 +834,8 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
      */
     public static function tasks_using_destination( $id ) {
         $id    = (int) $id;
-        $tasks = MainWP_DB_Backup::instance()->get_backup_tasks();
+        $db    = MainWP_DB_Backup::instance();
+        $tasks = array_merge( (array) $db->get_backup_tasks(), (array) $db->get_hidden_backup_tasks() );
         $using = array();
 
         foreach ( is_array( $tasks ) ? $tasks : array() as $task ) {

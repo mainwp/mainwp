@@ -567,6 +567,15 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Fetch hidden tasks without changing the scheduled task list.
+     *
+     * @return object[] Hidden task rows.
+     */
+    public function get_hidden_backup_tasks() {
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE template <> 0', OBJECT );
+    }
+
+    /**
      * Method get_manual_backup_task()
      *
      * Fetch the per-site hidden on-demand ("manual") backup task, if it

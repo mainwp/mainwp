@@ -3460,6 +3460,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( is_array( $handle ) && ( $handle['task_id'] ?? '' ) === $task_id ) {
                     $handle['local'] = $local;
                     if ( ! $db->compare_and_swap_website_option( $site_id, self::ADHOC_TASK_OPTION, $raw, wp_json_encode( $handle ) ) ) {
+                        wp_delete_file( $local . '.reserved' );
                         throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                     }
                 }

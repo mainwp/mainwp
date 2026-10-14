@@ -13,6 +13,8 @@ use MainWP\Dashboard\MainWP_Backup_Private_Root;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
+use MainWP\Dashboard\MainWP_Exception;
 
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 
@@ -153,6 +155,59 @@ class MainWP_Backup_Archive_Reservation_Test extends MainWP_Abilities_Test_Case 
 			'site'     => array( '' ),
 			'snapshot' => array( 'snapshot-old/' ),
 		);
+	}
+
+	/** A lost ad-hoc handle CAS releases only the reservation, even if archive bytes arrive. */
+	public function test_adhoc_handle_cas_loss_releases_reservation_only() {
+		$site = $this->create_test_site();
+		$dir  = MainWP_Backup_Private_Root::site_dir( $site );
+		$db   = MainWP_DB::instance();
+		$db->update_website_option(
+			$site,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id'   => 'reservation-race',
+					'owner'     => '',
+					'driven_at' => time(),
+				)
+			)
+		);
+		$child = static function ( $result, $website, $what ) {
+			return 'backup_task_run' === $what ? array(
+				'phase' => 'completed',
+				'file'  => 'remote.zip',
+				'size'  => 10,
+				'type'  => 'full',
+			) : $result;
+		};
+		$path  = '';
+		$lose  = static function ( $query ) use ( $db, $dir, &$path ) {
+			$reservations = glob( $dir . '*.reserved' );
+			if ( str_starts_with( $query, 'UPDATE ' . $db->get_table_name( 'wp_options' ) . ' SET value' ) && str_contains( $query, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) && ! empty( $reservations ) ) {
+				$path = substr( $reservations[0], 0, -strlen( '.reserved' ) );
+				file_put_contents( $path, 'Archive bytes owned by another request' );
+				return $query . ' AND 1 = 0';
+			}
+			return $query;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 10, 3 );
+		add_filter( 'query', $lose );
+		try {
+			try {
+				MainWP_Backup_Executor::get_backup_task_status( $site, 'reservation-race', 1 );
+				$this->fail( 'A lost handle CAS must refuse the download.' );
+			} catch ( MainWP_Exception $error ) {
+				$this->assertSame( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, $error->get_message_error_code() );
+			}
+			$this->assertNotSame( '', $path, 'The fixture must lose the CAS after reserving a path.' );
+			$this->assertSame( 'Archive bytes owned by another request', file_get_contents( $path ) );
+			$this->assertFileDoesNotExist( $path . '.reserved' );
+		} finally {
+			remove_filter( 'query', $lose );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 10 );
+			$db->remove_website_option( $site, array( MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		}
 	}
 
 	/** Sidecars and database claims reserve names even without an archive. */

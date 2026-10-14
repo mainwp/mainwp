@@ -838,7 +838,15 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         if ( ! delete_site_transient( $key ) ) {
             wp_die( esc_html( $message ), '', array( 'response' => 403 ) );
         }
-        MainWP_System_Handler::instance()->upload_file( $path );
+        while ( ob_get_level() ) {
+            ob_end_clean();
+        }
+        $result = MainWP_Backup_Download::stream_file( $path );
+        if ( true === $result ) {
+            wp_delete_file( $path );
+        } elseif ( is_wp_error( $result ) ) {
+            wp_die( esc_html( $result->get_error_message() ), '', array( 'response' => 500 ) );
+        }
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- export failures are caught and returned as an empty path.

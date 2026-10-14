@@ -783,6 +783,69 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $jobs[0]->status );
 	}
 
+	/** Hidden Back Up Now tasks appear in the preview without changing the scheduled task list. */
+	public function test_delete_preview_lists_hidden_backup_now_tasks() {
+		$store   = MainWP_Backup_Storage_Destinations::instance();
+		$dest_id = $store->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Hidden task destination',
+				'settings' => array( 'base_path' => $this->make_temp_dir() ),
+			)
+		);
+		$task_id = $this->insert_task( array( $dest_id ) );
+		$db      = MainWP_DB_Backup::instance();
+		$db->update_backup_task_with_values(
+			$task_id,
+			array(
+				'template'       => 1,
+				'name'           => 'On-demand backup',
+				'manual_site_id' => 991,
+			)
+		);
+
+		$this->assertNotContains( $task_id, array_map( 'intval', wp_list_pluck( $db->get_backup_tasks(), 'id' ) ) );
+		$this->assertSame( array( 'tasks' => array( 'On-demand backup' ) ), MainWP_Backup_Storage_Handler::delete_destination_flow( $dest_id, false ) );
+		$this->assertNotNull( $store->get_destination( $dest_id ) );
+		$this->assertSame( array( $dest_id ), json_decode( $db->get_manual_backup_task( 991 )->destinations, true ) );
+	}
+
+	/** Confirmed deletion detaches every hidden template and preserves other destinations. */
+	public function test_delete_detaches_hidden_backup_now_tasks() {
+		$store   = MainWP_Backup_Storage_Destinations::instance();
+		$dest_id = $store->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Hidden task destination',
+				'settings' => array( 'base_path' => $this->make_temp_dir() ),
+			)
+		);
+		$keep_id = $store->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Keep destination',
+				'settings' => array( 'base_path' => $this->make_temp_dir() ),
+			)
+		);
+		$db      = MainWP_DB_Backup::instance();
+		$tasks   = array();
+		foreach ( array( 0, 1, 2 ) as $template ) {
+			$task_id = $this->insert_task( array( $dest_id, $keep_id ) );
+			$tasks[] = $task_id;
+			$db->update_backup_task_with_values( $task_id, array( 'template' => $template ) );
+		}
+		$unrelated = $this->insert_task( array( $keep_id ) );
+		$db->update_backup_task_with_values( $unrelated, array( 'template' => 1 ) );
+
+		$this->assertSame( array( 'deleted' => true ), MainWP_Backup_Storage_Handler::delete_destination_flow( $dest_id, true ) );
+		foreach ( $tasks as $task_id ) {
+			$this->assertSame( array( $keep_id ), json_decode( $db->get_backup_task_by_id( $task_id )->destinations, true ), 'Every referencing task must lose only the deleted destination.' );
+		}
+		$this->assertSame( array( $keep_id ), json_decode( $db->get_backup_task_by_id( $unrelated )->destinations, true ) );
+		$this->assertNull( $store->get_destination( $dest_id ) );
+		$this->assertNotNull( $store->get_destination( $keep_id ) );
+	}
+
 	/**
 	 * Marking a default routes through the handler.
 	 *

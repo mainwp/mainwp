@@ -182,6 +182,42 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
     }
 
     /**
+     * Renew a reader reservation and pin it for this database connection.
+     *
+     * The connection lock prevents expiry cleanup during a long synchronous
+     * archive read. A crashed connection drops the lock; the TTL then applies.
+     *
+     * @param int $reservation_id Reservation id.
+     * @return bool True while this connection owns the reserved row.
+     */
+    public function renew_reservation( int $reservation_id ): bool {
+        $name       = $this->reservation_lock_name( $reservation_id );
+        $owner      = $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT IS_USED_LOCK(%s)', $name ) );
+        $connection = $this->wpdb->get_var( 'SELECT CONNECTION_ID()' );
+        if ( null === $connection || ( (string) $owner !== (string) $connection && '1' !== (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $name ) ) ) ) {
+            return false;
+        }
+        $renewed = $this->wpdb->query(
+            $this->wpdb->prepare( 'UPDATE ' . $this->table() . ' SET locked_until = GREATEST(locked_until + 1, %d), updated = %d WHERE id = %d AND status = %s', time() + self::RESERVATION_SECONDS, time(), $reservation_id, self::STATUS_RESERVED )
+        );
+        if ( 1 !== (int) $renewed ) {
+            $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $name ) );
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * Keep advisory lock names short and distinct across Dashboard databases.
+     *
+     * @param int $reservation_id Reservation id.
+     * @return string Connection lock name.
+     */
+    private function reservation_lock_name( int $reservation_id ): string {
+        return 'mwp-reader-' . md5( DB_NAME . ':' . $this->table() ) . '-' . $reservation_id;
+    }
+
+    /**
      * Turn a held reservation into a pending restore job, keeping the slot.
      *
      * @param int   $reservation_id Reservation id from reserve_site().
@@ -215,9 +251,13 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * @return void
      */
     public function release_reservation( int $reservation_id ): void {
-        $this->wpdb->query(
-            $this->wpdb->prepare( 'DELETE FROM ' . $this->table() . ' WHERE id = %d AND status = %s', $reservation_id, self::STATUS_RESERVED )
-        );
+        try {
+            $this->wpdb->query(
+                $this->wpdb->prepare( 'DELETE FROM ' . $this->table() . ' WHERE id = %d AND status = %s', $reservation_id, self::STATUS_RESERVED )
+            );
+        } finally {
+            $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $this->reservation_lock_name( $reservation_id ) ) );
+        }
     }
 
     /**
@@ -229,7 +269,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      */
     public function site_is_reserved( int $site_id ): bool {
         return null !== $this->wpdb->get_var(
-            $this->wpdb->prepare( 'SELECT id FROM ' . $this->table() . ' WHERE site_id = %d AND status = %s AND locked_until >= %d LIMIT 1', $site_id, self::STATUS_RESERVED, time() )
+            $this->wpdb->prepare( 'SELECT id FROM ' . $this->table() . ' WHERE site_id = %d AND status = %s AND (locked_until >= %d OR IS_USED_LOCK(CONCAT(%s, id)) IS NOT NULL) LIMIT 1', $site_id, self::STATUS_RESERVED, time(), substr( $this->reservation_lock_name( 0 ), 0, -1 ) )
         );
     }
 
@@ -243,7 +283,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      */
     private function clear_lapsed_reservations( int $site_id ): void {
         $this->wpdb->query(
-            $this->wpdb->prepare( 'DELETE FROM ' . $this->table() . ' WHERE site_id = %d AND status = %s AND locked_until < %d', $site_id, self::STATUS_RESERVED, time() )
+            $this->wpdb->prepare( 'DELETE FROM ' . $this->table() . ' WHERE site_id = %d AND status = %s AND locked_until < %d AND IS_USED_LOCK(CONCAT(%s, id)) IS NULL', $site_id, self::STATUS_RESERVED, time(), substr( $this->reservation_lock_name( 0 ), 0, -1 ) )
         );
     }
 

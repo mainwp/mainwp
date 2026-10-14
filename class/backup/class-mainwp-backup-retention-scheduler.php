@@ -213,12 +213,15 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
         $candidates = $policy->evaluate( $units, $now );
         if ( empty( $candidates ) ) {
             return array(
-                'pruned'           => 0,
-                'snapshots_pruned' => 0,
-                'skipped'          => 0,
-                'errors'           => array(),
-                'dry_run'          => false,
-                'candidates'       => array(),
+                'pruned'               => 0,
+                'snapshots_pruned'     => 0,
+                'deleted_ids'          => array(),
+                'remaining_ids'        => array(),
+                'cloud_deletes_queued' => array(),
+                'skipped'              => 0,
+                'errors'               => array(),
+                'dry_run'              => false,
+                'candidates'           => array(),
             );
         }
 

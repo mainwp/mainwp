@@ -168,11 +168,12 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         // reclaim_count assignment comes first to see the pre-claim
         // locked_by (non-empty only when a prior lease is being reclaimed,
         // not on a fresh pickup or a post-fail_retryable backoff pickup,
-        // both of which leave locked_by empty).
+        // both of which leave locked_by empty). Expired prune claims are
+        // also fresh pickups, never worker reclaims.
         $claimed = $this->wpdb->query(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the merged arrays supply all eleven replacements.
                 'UPDATE ' . $this->table_name( 'wp_backup_upload_job' ) .
-                " SET reclaim_count = CASE WHEN locked_by <> '' THEN reclaim_count + 1 ELSE reclaim_count END, locked_until = %d, locked_by = %s, updated = %d WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND next_retry_at <= %d AND locked_until < %d ORDER BY id ASC LIMIT 1",
+                " SET reclaim_count = CASE WHEN locked_by <> '' AND LEFT(locked_by, 6) <> 'prune:' THEN reclaim_count + 1 ELSE reclaim_count END, locked_until = %d, locked_by = %s, updated = %d WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND next_retry_at <= %d AND locked_until < %d ORDER BY id ASC LIMIT 1",
                 array_merge(
                     array( $now + $lease_seconds, $token, $now, $kind ),
                     $runnable,
@@ -213,7 +214,7 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         $ids = $this->wpdb->get_col(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the merged arrays supply all eight replacements.
                 'SELECT id FROM ' . $this->table_name( 'wp_backup_upload_job' ) .
-                " WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND locked_by <> '' AND locked_until < %d AND reclaim_count >= %d",
+                " WHERE kind = %s AND status IN (%s, %s, %s, %s, %s) AND locked_by <> '' AND LEFT(locked_by, 6) <> 'prune:' AND locked_until < %d AND reclaim_count >= %d",
                 array_merge( array( $kind ), $runnable, array( $now, static::RECLAIM_CEILING ) )
             )
         );
@@ -289,6 +290,54 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         );
 
         return null !== $found;
+    }
+
+    /**
+     * Claim a whole prune unit on the same rows upload acquisition locks.
+     *
+     * @param int[]  $ids           Snapshot ids in the unit.
+     * @param string $token         Prune token, including the prune: prefix.
+     * @param int    $lease_seconds Short hold while deleting local artifacts.
+     * @return bool True when no upload worker owns any row in the unit.
+     */
+    public function claim_uploads_for_prune( array $ids, string $token, int $lease_seconds = 300 ): bool {
+        $ids = array_values( array_filter( array_map( 'intval', $ids ) ) );
+        if ( empty( $ids ) || ! str_starts_with( $token, 'prune:' ) ) {
+            return false;
+        }
+        $holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+        $now     = time();
+        $claimed = $this->wpdb->query(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- counted ids and placeholders grow together.
+                'UPDATE ' . $this->table() . " SET locked_by = %s, locked_until = %d, updated = %d WHERE snapshot_id IN ({$holders}) AND kind = %s AND (locked_until < %d OR locked_by = %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list from the counted ids.
+                array_merge( array( $token, $now + $lease_seconds, $now ), $ids, array( self::KIND_UPLOAD, $now, $token ) )
+            )
+        );
+        if ( false === $claimed ) {
+            return false;
+        }
+        $other = $this->wpdb->get_var(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- counted ids and placeholders grow together.
+                'SELECT id FROM ' . $this->table() . " WHERE snapshot_id IN ({$holders}) AND kind = %s AND locked_by <> %s AND locked_until >= %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list from the counted ids.
+                array_merge( $ids, array( self::KIND_UPLOAD, $token, $now ) )
+            )
+        );
+        return null === $other && '' === $this->wpdb->last_error;
+    }
+
+    /**
+     * Release only this prune's claims; successful snapshots purge their rows.
+     *
+     * @param string $token Prune token.
+     * @return void
+     */
+    public function release_prune_claims( string $token ): void {
+        if ( ! str_starts_with( $token, 'prune:' ) ) {
+            return;
+        }
+        $this->wpdb->query(
+            $this->wpdb->prepare( 'UPDATE ' . $this->table() . " SET locked_by = '', locked_until = 0 WHERE kind = %s AND locked_by = %s", self::KIND_UPLOAD, $token )
+        );
     }
 
     /**

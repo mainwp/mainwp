@@ -540,4 +540,25 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 		$this->assertSame( 'network blip', $stored->last_error );
 		$this->assertSame( '', $stored->locked_by );
 	}
+
+	/** An expired prune claim is a fresh upload pickup, even at the reclaim ceiling. */
+	public function test_x1_expired_prune_claim_does_not_count_as_upload_reclaim() {
+		global $wpdb;
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 901, array( 77 ) );
+		$job = $store->get_jobs_for_snapshot( 901 )[0];
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array(
+				'locked_by'     => 'prune:expired',
+				'locked_until'  => time() - 1,
+				'reclaim_count' => MainWP_Backup_Upload_Job_Store::RECLAIM_CEILING,
+			),
+			array( 'id' => $job->id )
+		);
+		$picked = $store->acquire_next_job( 'upload-after-prune' );
+		$this->assertNotNull( $picked );
+		$this->assertSame( (int) $job->id, (int) $picked->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::RECLAIM_CEILING, (int) $picked->reclaim_count );
+	}
 }

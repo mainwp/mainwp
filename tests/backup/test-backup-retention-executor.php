@@ -429,6 +429,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$store->enqueue_for_snapshot( $base, array( 77 ) );
 		$job = $store->acquire_next_job( 'tok', 300 );
 		$this->assertNotNull( $job );
+		$store->enqueue_for_snapshot( $inc, array( 77 ) );
 		$this->assertTrue( $store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING, 'tok' ) );
 		$staging_dir = MainWP_Backup_Private_Root::staging_dir( 'upload-staging', $base . '-77' );
 		$this->assertNotWPError( $staging_dir );
@@ -446,6 +447,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertSame( 0, $result['snapshots_pruned'] );
 		$this->assertSame( 0, $result['pruned'] );
+		$this->assertSame( 0, $result['skipped'], 'A held unit retries on the daily sweep, not the budget continuation loop.' );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $inc )->status );
 		$this->assertFileExists( $base_dir . '/artifact.tar' );
@@ -453,6 +455,8 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFileExists( $staging_dir . 'chunk.bin' );
 		$this->assertCount( 1, $store->get_jobs_for_snapshot( $base ) );
 		$this->assertSame( 'tok', $store->get_job( (int) $job->id )->locked_by );
+		$this->assertSame( '', $store->get_jobs_for_snapshot( $inc )[0]->locked_by, 'A hold releases the free leaf claimed before discovering the busy base.' );
+		$this->assertSame( 0, (int) $store->get_jobs_for_snapshot( $inc )[0]->reclaim_count );
 		$this->assertStringContainsString( 'upload in progress', $result['errors'][0] );
 
 		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- expire the fixture lease without waiting.
@@ -622,7 +626,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function test_prune_holds_when_delete_enqueue_fails() {
-		list( $snapshot_id ) = $this->make_snapshot_with_dir();
+		list( $snapshot_id, $dir ) = $this->make_snapshot_with_dir();
 		$this->insert_upload_job( $snapshot_id, 77 );
 
 		$failing = new class() extends MainWP_Backup_Upload_Job_Store {
@@ -664,6 +668,11 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 1, MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id, 'upload' ), 'The upload metadata must survive a failed enqueue.' );
 		$this->assertSame( 0, $result['snapshots_pruned'] );
 		$this->assertNotEmpty( $result['errors'], 'The failed enqueue must be reported.' );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertSame( array(), $result['deleted_ids'] );
+		$this->assertSame( array( $snapshot_id ), $result['remaining_ids'] );
+		$this->assertSame( array(), $result['cloud_deletes_queued'] );
+		$this->assertSame( '', MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id )[0]->locked_by );
 	}
 
 	/**
@@ -1780,9 +1789,190 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 			unlink( $outside );
 		}
 		$this->assertSame( 1, $result['snapshots_pruned'] );
+		$this->assertSame( 0, $result['pruned'] );
+		$this->assertSame( array( $leaf ), $result['deleted_ids'] );
+		$this->assertSame( array( $base ), $result['remaining_ids'] );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
 		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $leaf )->status );
 		$this->assertCount( 1, $events );
 		$this->assertSame( array( $leaf ), $events[0]['snapshot_ids'], 'The event must exclude the retained ancestor.' );
+	}
+
+	/** An upload pickup at prune admission cannot outlive the cloud delete sweep. */
+	public function test_x1_upload_acquisition_interleaves_with_prune_claim() {
+		global $wpdb;
+		list( $id ) = $this->make_snapshot_with_dir();
+		$this->insert_upload_job( $id, 77 );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'status' => 'pending' ), array( 'snapshot_id' => $id ) );
+		$store = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Upload won at admission.
+			 *
+			 * @var object|null
+			 */
+			public $acquired = null;
+			/**
+			 * Admission seam was reached.
+			 *
+			 * @var bool
+			 */
+			public $attempted = false;
+			/**
+			 * Exercise the interleaving seam.
+			 *
+			 * @param array $ids Unit ids.
+			 * @return bool Existing admission seam.
+			 */
+			public function has_live_upload_lease( array $ids ): bool {
+				$live            = parent::has_live_upload_lease( $ids );
+				$this->attempted = true;
+				$this->acquired  = $this->acquire_next_job( 'x1-upload' );
+				return $live;
+			}
+			/**
+			 * Exercise the interleaving seam.
+			 *
+			 * @param array  $ids Unit ids.
+			 * @param string $token Prune token.
+			 * @param int    $lease_seconds Lease.
+			 * @return bool Claimed.
+			 */
+			public function claim_uploads_for_prune( array $ids, string $token, int $lease_seconds = 300 ): bool {
+				$claimed         = parent::claim_uploads_for_prune( $ids, $token, $lease_seconds );
+				$this->attempted = true;
+				$this->acquired  = $this->acquire_next_job( 'x1-upload' );
+				return $claimed;
+			}
+			/**
+			 * Exercise the interleaving seam.
+			 *
+			 * @param int   $snapshot_id Snapshot.
+			 * @param int   $destination_id Destination.
+			 * @param array $checkpoint Checkpoint.
+			 * @return bool Queued.
+			 */
+			public function enqueue_delete_job( int $snapshot_id, int $destination_id, array $checkpoint ): bool {
+				$this->acquired = $this->acquired ?? $this->acquire_next_job( 'x1-late-upload' );
+				return parent::enqueue_delete_job( $snapshot_id, $destination_id, $checkpoint );
+			}
+		};
+		$prop  = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$saved = $prop->getValue();
+		$prop->setValue( null, $store );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( $id ),
+						'reason'       => 'count',
+					),
+				),
+				$this->make_task()
+			);
+		} finally {
+			$prop->setValue( null, $saved );
+		}
+		$this->assertTrue( $store->attempted );
+		$this->assertNull( $store->acquired, 'A pickup after admission or during enqueue must lose to the prune claim.' );
+		$this->assertSame( array( $id ), $result['deleted_ids'] );
+		$this->assertSame( array(), $result['remaining_ids'] );
+		$this->assertSame(
+			array(
+				array(
+					'snapshot_id'    => $id,
+					'destination_id' => 77,
+				),
+			),
+			$result['cloud_deletes_queued']
+		);
+	}
+
+	/** A failed tombstone after deleting a leaf leaves only that leaf in deleted_ids. */
+	public function test_x1_tombstone_failure_reports_exact_ids() {
+		global $wpdb;
+		list( $base ) = $this->make_snapshot_with_dir();
+		list( $leaf ) = $this->make_snapshot_with_dir( array( 'parent_id' => $base ) );
+		$this->insert_upload_job( $base, 77 );
+		$this->insert_upload_job( $leaf, 77 );
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$fail     = static function ( $query ) use ( $table, $base ) {
+			if ( str_starts_with( $query, 'UPDATE `' . $table . '` SET ' ) && str_contains( $query, '`status`' ) && str_contains( $query, '`id` = ' . $base ) ) {
+				return str_replace( '`status`', '`missing_status_column`', $query );
+			}
+			return $query;
+		};
+		$suppress = $wpdb->suppress_errors( true );
+		add_filter( 'query', $fail );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( $base, $leaf ),
+						'reason'       => 'count',
+					),
+				),
+				$this->make_task()
+			);
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $suppress );
+		}
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $leaf )->status );
+		$this->assertSame( 0, $result['pruned'] );
+		$this->assertSame( array( $leaf ), $result['deleted_ids'] );
+		$this->assertSame( array( $base ), $result['remaining_ids'] );
+		$this->assertSame(
+			array(
+				array(
+					'snapshot_id'    => $leaf,
+					'destination_id' => 77,
+				),
+				array(
+					'snapshot_id'    => $base,
+					'destination_id' => 77,
+				),
+			),
+			$result['cloud_deletes_queued']
+		);
+	}
+
+	/** Flat archive reservations are removed only with their deleted archive. */
+	public function test_x1_prune_removes_only_deleted_archive_reservation_sidecars() {
+		$id      = $this->make_production_layout_snapshot( $this->site_id, 'full', '', '' );
+		$archive = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives[0]['path'];
+		file_put_contents( $archive . '.reserved', '' );
+		$kept = dirname( $archive ) . '/kept.zip';
+		file_put_contents( $kept, 'kept' );
+		file_put_contents( $kept . '.reserved', '' );
+		MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'site_id'  => $this->site_id,
+				'task_id'  => $this->task_id,
+				'type'     => 'full',
+				'archives' => array(
+					array(
+						'file' => 'kept.zip',
+						'path' => $kept,
+						'role' => 'full',
+						'size' => 4,
+					),
+				),
+			)
+		);
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+			array(
+				array(
+					'snapshot_ids' => array( $id ),
+					'reason'       => 'count',
+				),
+			),
+			$this->make_task()
+		);
+		$this->assertSame( 1, $result['snapshots_pruned'] );
+		$this->assertFileDoesNotExist( $archive );
+		$this->assertFileDoesNotExist( $archive . '.reserved' );
+		$this->assertFileExists( $kept );
+		$this->assertFileExists( $kept . '.reserved' );
 	}
 }

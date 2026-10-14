@@ -30,6 +30,12 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
      */
     const STATE_PASS = 'pass';
 
+    /** Another backup action holds the source; retry without recording a failure. */
+    const STATE_DEFERRED = 'deferred';
+
+    /** Neutral availability outcome that must not consume the sampler cadence. */
+    const ERR_DEFERRED = 'mainwp_testrestore_deferred';
+
     /**
      * The snapshot did not reconstitute: a dump that would not import, an
      * unreadable archive, or assertions that did not hold.
@@ -108,7 +114,7 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
      *                           DEFAULT_STAGE_BUDGET_SECONDS and no mid-flight
      *                           deadline is enforced.
      *
-     * @return array { snapshot_id: int, state: pass|fail|unsupported,
+     * @return array { snapshot_id: int, state: pass|fail|unsupported|deferred,
      *                 checks: array[], error: string|null, error_code: string,
      *                 sandbox: { db_name: string, temp_dir: string } }
      */
@@ -127,25 +133,32 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             ),
         );
 
-        // Resolve the restorable chain. A failure here is an availability
-        // problem (pruned chain, missing artifact), not a reconstitution
-        // failure, so it is reported but not recorded against the snapshot.
-        $resolved = $this->catalog()->resolve_restorable_chain( $snapshot_id, 0 );
-        if ( empty( $resolved['ok'] ) ) {
-            $result['error']      = isset( $resolved['error'] ) ? (string) $resolved['error'] : '';
-            $result['error_code'] = self::ERR_UNRESOLVABLE;
-            return $result;
-        }
-
-        $plan       = (array) $resolved['plan'];
-        $staging_id = self::STAGING_NAMESPACE + $snapshot_id;
-        $transfer   = $this->transfer_driver();
-
-        $own_deadline   = microtime( true ) + (float) self::DEFAULT_STAGE_BUDGET_SECONDS;
-        $stage_deadline = null !== $caller_deadline ? min( $caller_deadline, $own_deadline ) : $own_deadline;
-
+        $snapshots       = MainWP_Backup_Snapshots::instance();
+        $snapshot        = $snapshots->get_snapshot_by_id( $snapshot_id );
+        $restores        = MainWP_Backup_Restore_Job_Store::instance();
+        $reservation     = null !== $snapshot ? $restores->reserve_site( (int) $snapshot->site_id ) : 0;
+        $staging_id      = self::STAGING_NAMESPACE + $snapshot_id;
+        $transfer        = $this->transfer_driver();
+        $staging_started = false;
         try {
-            $outcome = $transfer->stage_artifacts( $staging_id, $plan, $stage_deadline );
+            if ( null !== $snapshot && ( $reservation <= 0 || ! $restores->renew_reservation( $reservation ) ) ) {
+                $result['state']      = self::STATE_DEFERRED;
+                $result['error_code'] = self::ERR_DEFERRED;
+                $result['error']      = esc_html__( 'Another backup action holds this site. The test restore will retry later.', 'mainwp' );
+                return $result;
+            }
+            // Resolve only after the site is reserved, then hold through cleanup.
+            $resolved = $this->catalog()->resolve_restorable_chain( $snapshot_id, 0 );
+            if ( empty( $resolved['ok'] ) ) {
+                $result['error']      = isset( $resolved['error'] ) ? (string) $resolved['error'] : '';
+                $result['error_code'] = self::ERR_UNRESOLVABLE;
+                return $result;
+            }
+            $plan            = (array) $resolved['plan'];
+            $own_deadline    = microtime( true ) + (float) self::DEFAULT_STAGE_BUDGET_SECONDS;
+            $stage_deadline  = null !== $caller_deadline ? min( $caller_deadline, $own_deadline ) : $own_deadline;
+            $staging_started = true;
+            $outcome         = $transfer->stage_artifacts( $staging_id, $plan, $stage_deadline );
             if ( empty( $outcome['done'] ) && empty( $outcome['error'] ) ) {
                 // Staging did not finish, but reported no error: it ran out of
                 // budget mid-flight (a deadline hit between artifacts, or a
@@ -174,8 +187,9 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
                 $result['error_code'] = self::ERR_DEADLINE_EXCEEDED;
                 return $result;
             } else {
+                $this->renew_reader( $reservation );
                 $sandbox->bring_up();
-                $applied = $this->apply_plan( $sandbox, $plan );
+                $applied = $this->apply_plan( $sandbox, $plan, $reservation );
                 $checks  = $this->run_assertions( $sandbox, $applied, $opts );
 
                 $passed = $applied['db'] || $applied['files'];
@@ -198,6 +212,10 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             $result['state']      = $unsupported ? self::STATE_UNSUPPORTED : self::STATE_FAIL;
             $result['error']      = $e->getMessage();
             $result['error_code'] = $code;
+            if ( self::ERR_DEFERRED === $code ) {
+                $result['state'] = self::STATE_DEFERRED;
+                return $result;
+            }
             if ( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE === $code ) {
                 return $result;
             }
@@ -206,12 +224,34 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
             $result['error']      = $e->getMessage();
             $result['error_code'] = 'mainwp_testrestore_error';
         } finally {
-            $sandbox->tear_down();
-            $transfer->cleanup_staging( $staging_id );
+            try {
+                $sandbox->tear_down();
+            } finally {
+                try {
+                    if ( $staging_started ) {
+                        $transfer->cleanup_staging( $staging_id );
+                    }
+                } finally {
+                    $restores->release_reservation( $reservation );
+                }
+            }
         }
 
         $this->record( $snapshot_id, $result['state'] );
         return $result;
+    }
+
+    /**
+     * Stop reading if reservation renewal fails.
+     *
+     * @param int $reservation Reader reservation.
+     * @throws MainWP_Exception When the reader lost its site reservation.
+     * @return void
+     */
+    private function renew_reader( int $reservation ): void {
+        if ( ! MainWP_Backup_Restore_Job_Store::instance()->renew_reservation( $reservation ) ) {
+            throw new MainWP_Exception( esc_html__( 'Another backup action holds this site. The test restore will retry later.', 'mainwp' ), '', self::ERR_DEFERRED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- translated message is escaped.
+        }
     }
 
     /**
@@ -221,9 +261,11 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
      * @param MainWP_Backup_TestRestore_Sandbox $sandbox Sandbox.
      * @param array                             $plan    Staged plan entries.
      *
+     * @param int                               $reservation Reader reservation.
+     *
      * @return array{db:bool,files:bool} Which artifact kinds were applied.
      */
-    private function apply_plan( MainWP_Backup_TestRestore_Sandbox $sandbox, array $plan ): array {
+    private function apply_plan( MainWP_Backup_TestRestore_Sandbox $sandbox, array $plan, int $reservation ): array {
         $db_path    = '';
         $file_paths = array();
 
@@ -243,10 +285,13 @@ class MainWP_Backup_TestRestore_Driver { // phpcs:ignore Generic.Classes.Opening
         }
 
         foreach ( $file_paths as $path ) {
+            $this->renew_reader( $reservation );
             $sandbox->extract_files( $path );
         }
         if ( '' !== $db_path ) {
+            $this->renew_reader( $reservation );
             $this->guard_dump_size( $sandbox, $db_path );
+            $this->renew_reader( $reservation );
             $sandbox->import_database( $db_path );
         }
 

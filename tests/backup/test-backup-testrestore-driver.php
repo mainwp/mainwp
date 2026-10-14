@@ -98,6 +98,22 @@ class Testable_TestRestore_Driver extends MainWP_Backup_TestRestore_Driver {
 	public $driver = null;
 
 	/**
+	 * Pinned sandbox.
+	 *
+	 * @var MainWP_Backup_TestRestore_Sandbox|null
+	 */
+	public $sandbox = null;
+
+	/**
+	 * Exercise the interleaving seam.
+	 *
+	 * @return MainWP_Backup_TestRestore_Sandbox Sandbox seam.
+	 */
+	protected function make_sandbox(): MainWP_Backup_TestRestore_Sandbox {
+		return $this->sandbox ?? parent::make_sandbox();
+	}
+
+	/**
 	 * Pinned driver seam.
 	 *
 	 * @return MainWP_Backup_Restore_Transfer_Driver
@@ -945,5 +961,199 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( '', $result['sandbox']['temp_dir'] );
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
 		$this->assertSame( '', (string) $snapshot->test_restore_state );
+	}
+
+	/**
+	 * Prune cannot delete a test restore's source at either read seam, even past TTL.
+	 *
+	 * @dataProvider x1_restore_prune_interleavings
+	 * @param string $phase Read seam.
+	 * @param string $caller Prune entry point.
+	 */
+	public function test_x1_test_restore_blocks_every_prune_caller_through_import( string $phase, string $caller ) {
+		global $wpdb;
+		$site_dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $this->site_id );
+		wp_mkdir_p( $site_dir );
+		$path = $site_dir . 'test.sql.gz';
+		file_put_contents( $path, gzencode( $this->sentinel_sql() ) );
+		$id = $this->record(
+			'full',
+			array(
+				array(
+					'file' => 'test.sql.gz',
+					'size' => filesize( $path ),
+					'role' => 'db',
+					'path' => $path,
+				),
+			)
+		);
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'created' => time() - 2 * DAY_IN_SECONDS ), array( 'id' => $id ) );
+		if ( 'retention' === $caller ) {
+			copy( $path, $site_dir . 'newer.sql.gz' );
+			$this->record(
+				'full',
+				array(
+					array(
+						'file' => 'newer.sql.gz',
+						'size' => filesize( $path ),
+						'role' => 'db',
+						'path' => $site_dir . 'newer.sql.gz',
+					),
+				)
+			);
+		}
+		$reports                 = array();
+		$pause                   = function () use ( $id, $caller, &$reports, $wpdb ) {
+			$wpdb->update(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+				array( 'locked_until' => time() - 1 ),
+				array(
+					'site_id' => $this->site_id,
+					'status'  => 'reserved',
+				)
+			);
+			$executor = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance();
+			$task     = (object) array(
+				'id'                   => 0,
+				'retention_count'      => 0,
+				'retention_days'       => 1,
+				'retention_storage_mb' => 0,
+				'delete_cloud_copies'  => 0,
+			);
+			if ( 'retention' === $caller ) {
+				$reports[] = \MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::instance()->run_retention_for_pair( $task, $this->site_id );
+			} elseif ( 'cleanup' === $caller ) {
+				$reports[] = $executor->cleanup_site_backups( $this->site_id );
+			} elseif ( 'task_delete' === $caller ) {
+				$reports[] = $executor->purge_snapshots_for_task( 0, false );
+			} else {
+				$reports[] = $executor->run_prune(
+					array(
+						array(
+							'snapshot_ids' => array( $id ),
+							'reason'       => 'age',
+						),
+					),
+					$task
+				);
+			}
+		};
+		$transfer                = new class() extends MainWP_Backup_Restore_Transfer_Driver {
+			/**
+			 * Stage interleaving.
+			 *
+			 * @var callable|null
+			 */
+			public $pause = null;
+			/**
+			 * Cleanup interleaving.
+			 *
+			 * @var callable|null
+			 */
+			public $cleanup_pause = null;
+			/**
+			 * Exercise the interleaving seam.
+			 *
+			 * @param int   $job_id Job.
+			 * @param array $plan Plan.
+			 * @param float $deadline Budget.
+			 * @return array Staged.
+			 */
+			public function stage_artifacts( int $job_id, array &$plan, float $deadline ): array {
+				$outcome = parent::stage_artifacts( $job_id, $plan, $deadline );
+				if ( null !== $this->pause ) {
+					( $this->pause )();
+				}
+				return $outcome;
+			}
+			/**
+			 * Exercise the interleaving seam.
+			 *
+			 * @param int $job_id Job.
+			 */
+			public function cleanup_staging( int $job_id ): void {
+				( $this->cleanup_pause )();
+				parent::cleanup_staging( $job_id );
+			}
+		};
+		$sandbox                 = new class() extends MainWP_Backup_TestRestore_Sandbox {
+			/**
+			 * Import interleaving.
+			 *
+			 * @var callable|null
+			 */
+			public $pause = null;
+			/**
+			 * Exercise the interleaving seam.
+			 *
+			 * @param string $dump_path Dump read in place.
+			 */
+			public function import_database( string $dump_path ): void {
+				if ( null !== $this->pause ) {
+					( $this->pause )();
+				}
+				parent::import_database( $dump_path );
+			}
+		};
+		$transfer->pause         = 'staged' === $phase ? $pause : null;
+		$transfer->cleanup_pause = $pause;
+		$sandbox->pause          = 'import' === $phase ? $pause : null;
+		$driver                  = new Testable_TestRestore_Driver();
+		$driver->driver          = $transfer;
+		$driver->sandbox         = $sandbox;
+		$result                  = $driver->verify_snapshot( $id );
+		$this->assertCount( 2, $reports, 'Both the read and final staging cleanup must be protected.' );
+		foreach ( $reports as $report ) {
+			$this->assertSame( 0, $report['snapshots_pruned'], $caller . ' at ' . $phase );
+			$this->assertSame( array( $id ), $report['remaining_ids'] );
+		}
+		$this->assertSame( 'pass', $result['state'], $result['error'] ?? '' );
+		$this->assertFileExists( $path );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+		$this->assertFalse( \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance()->site_is_reserved( $this->site_id ) );
+		$after = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( 0, false );
+		$this->assertContains( $id, $after['deleted_ids'], 'Cleanup releases the reservation for later prune.' );
+	}
+
+	/**
+	 * Exercise the interleaving seam.
+	 *
+	 * @return array Read phases crossed with all shared callers.
+	 */
+	public static function x1_restore_prune_interleavings(): array {
+		$cases = array();
+		foreach ( array( 'staged', 'import' ) as $phase ) {
+			foreach ( array( 'retention', 'cleanup', 'task_delete', 'direct' ) as $caller ) {
+				$cases[ $phase . '-' . $caller ] = array( $phase, $caller );
+			}
+		}
+		return $cases;
+	}
+
+	/** A occupied site defers verification without consuming its cadence stamp. */
+	public function test_x1_reserved_site_defers_test_restore_without_consuming_cadence() {
+		$id    = $this->record( 'full', array() );
+		$store = \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance();
+		$hold  = $store->reserve_site( $this->site_id );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option(
+			\MainWP\Dashboard\MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION,
+			array(
+				'capable'    => true,
+				'checked_at' => time(),
+			)
+		);
+		try {
+			$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $id );
+			$this->assertSame( 'deferred', $result['state'] );
+			\MainWP\Dashboard\MainWP_Backup_TestRestore_Scheduler::instance()->process_pending_jobs();
+			$row = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+			$this->assertSame( 0, (int) $row->test_restore_at );
+			$this->assertSame( '', $row->test_restore_state );
+		} finally {
+			$store->release_reservation( $hold );
+			delete_option( 'mainwp_enableNativeBackups' );
+			delete_option( \MainWP\Dashboard\MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION );
+		}
 	}
 }

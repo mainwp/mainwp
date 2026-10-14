@@ -135,6 +135,17 @@ class MainWP_Backup_TestRestore_Scheduler { // phpcs:ignore Generic.Classes.Open
             }
 
             $result = $this->verify( $snapshot_id, $deadline );
+            if ( MainWP_Backup_TestRestore_Driver::ERR_DEFERRED === ( $result['error_code'] ?? '' ) ) {
+                // Undo only this tick's claim; preserve the earlier outcome.
+                global $wpdb;
+                $restored = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- release only this sampler tick's cadence claim.
+                    $wpdb->prepare( 'UPDATE ' . MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ) . ' SET test_restore_at = %d WHERE id = %d AND test_restore_at = %d', (int) $candidate->test_restore_at, $snapshot_id, $now ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- custom table identifier from get_table_name(); all values bind through placeholders.
+                );
+                if ( false === $restored ) {
+                    MainWP_Logger::instance()->warning( 'Test restore could not release its cadence claim for snapshot ' . $snapshot_id );
+                }
+                continue;
+            }
             if ( isset( $result['error_code'] )
                 && in_array( $result['error_code'], array( MainWP_Backup_TestRestore_Driver::ERR_UNRESOLVABLE, MainWP_Backup_TestRestore_Driver::ERR_DEADLINE_EXCEEDED ), true ) ) {
                 // The driver reports an unresolvable chain, or a tick budget that

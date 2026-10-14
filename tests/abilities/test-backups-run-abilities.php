@@ -1185,4 +1185,86 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( 'complete', $snapshot->status );
 		}
 	}
+
+	/** Cleanup adapters retain snapshot identities and the specific hold reason. */
+	public function test_x1_cleanup_ability_and_ajax_report_remaining_ids_and_error_detail() {
+		global $wpdb;
+		$manual = MainWP_DB_Backup::instance()->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) );
+		$ids    = array();
+		for ( $i = 0; $i < 2; ++$i ) {
+			$wpdb->insert(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+				array(
+					'site_id'  => $this->site_id,
+					'task_id'  => $manual->id,
+					'type'     => 'full',
+					'status'   => 'complete',
+					'created'  => time() - ( 2 - $i ) * 60,
+					'archives' => wp_json_encode(
+						array(
+							array(
+								'file' => 'fixture.zip',
+								'path' => '/private/fixture.zip',
+								'role' => 'full',
+								'size' => 100,
+							),
+						)
+					),
+				)
+			);
+			$ids[] = (int) $wpdb->insert_id;
+		}
+		$store = \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance();
+		$hold  = $store->reserve_site( $this->site_id );
+		try {
+			$result = $this->execute(
+				'cleanup-site-backups',
+				array(
+					'site_id_or_domain' => $this->site_id,
+					'keep'              => 1,
+					'confirm'           => true,
+				)
+			);
+			$this->assert_output( 'cleanup-site-backups', $result );
+			$this->assertArrayHasKey( 'remaining_ids', $result );
+			$this->assertSame( array( $ids[0] ), $result['remaining_ids'] );
+			$this->assertSame( array(), $result['deleted_ids'] );
+			$this->assertSame( array(), $result['cloud_deletes_queued'] );
+			$this->assertStringContainsString( 'another backup action holds this site', $result['errors'][0]['message'] );
+			$this->assertStringNotContainsString( '/private/', wp_json_encode( $result ) );
+			$post                 = $_POST;
+			$request              = $_REQUEST;
+			$_POST                = array(
+				'site_id'  => $this->site_id,
+				'keep'     => 1,
+				'security' => wp_create_nonce( 'mainwp_snapshots_cleanup' ),
+			);
+			$_REQUEST['security'] = wp_create_nonce( 'mainwp_snapshots_cleanup' );
+			$throw                = static function () {
+				return static function () {
+					throw new \RuntimeException( 'wp_die' );
+				};
+			};
+			add_filter( 'wp_doing_ajax', '__return_true' );
+			add_filter( 'wp_die_ajax_handler', $throw );
+			ob_start();
+			try {
+				\MainWP\Dashboard\MainWP_Post_Backup_Handler::instance()->mainwp_snapshots_cleanup();
+			} catch ( \RuntimeException $e ) {
+				$this->assertSame( 'wp_die', $e->getMessage() );
+			} finally {
+				$raw = ob_get_clean();
+				remove_filter( 'wp_die_ajax_handler', $throw );
+				remove_filter( 'wp_doing_ajax', '__return_true' );
+				$_POST    = $post;
+				$_REQUEST = $request;
+			}
+			$ajax = json_decode( $raw, true );
+			$this->assertSame( array( $ids[0] ), $ajax['remaining_ids'] );
+			$this->assertSame( array(), $ajax['deleted_ids'] );
+			$this->assertSame( array(), $ajax['cloud_deletes_queued'] );
+		} finally {
+			$store->release_reservation( $hold );
+		}
+	}
 }

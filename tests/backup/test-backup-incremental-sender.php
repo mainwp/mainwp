@@ -5291,4 +5291,195 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertSame( $opening_errors, $task->backup_errors );
 	}
+
+	/**
+	 * Parent selection holds this site until its run-keyed snapshot exists.
+	 *
+	 * @dataProvider x1_parent_interleavings
+	 * @param bool $replace_parent Simulate a concurrent completed snapshot instead of prune.
+	 */
+	public function test_x1_incremental_parent_selection_interleaves_with_prune( bool $replace_parent ) {
+		global $wpdb;
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		$row = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'X1 incremental', 'daily', 'incremental', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0 );
+		$run = time() - 100;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$row->id,
+			array(
+				'last_run'  => $run,
+				'completed' => 0,
+			)
+		);
+		$task = $this->make_task( MainWP_DB::instance()->get_website_by_id( $site_id ), $row->id, array( 'last_run' => $run ) );
+		$dir  = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
+		wp_mkdir_p( $dir );
+		copy( $this->manifest_fixture, $dir . 'parent.list' );
+		$base = $this->record_base_snapshot( $site_id, $row->id );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'manifest_path' => $dir . 'parent.list' ), array( 'id' => $base ) );
+		$prune     = null;
+		$artifacts = $this->arrange_remote_artifacts();
+		$this->mock_artifact_downloads();
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => function ( $params ) use ( $site_id, $task, $base, $replace_parent, &$prune ) {
+					if ( 'incremental' === $params['type'] ) {
+						if ( $replace_parent ) {
+							$this->record_base_snapshot( $site_id, $task->id );
+						} else {
+							$prune = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->run_prune(
+								array(
+									array(
+										'snapshot_ids' => array( $base ),
+										'reason'       => 'count',
+									),
+								),
+								$task
+							);
+						}
+					}
+					return array(
+						'task_id' => 'x1-delta',
+						'phase'   => 'queued',
+					);
+				},
+				'backup_task_run'    => array(
+					'task_id'   => 'x1-delta',
+					'phase'     => 'completed',
+					'artifacts' => $artifacts,
+					'file'      => 'files.list',
+					'size'      => 40,
+				),
+				'delete_backup'      => array( 'result' => 'ok' ),
+				'backup_task_prune'  => array( 'result' => 'ok' ),
+			)
+		);
+		$this->assertFalse( $this->run_cycle( $site_id, $task )['result'] );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
+		$marker   = json_decode( $progress->last_error, true );
+		if ( ! $replace_parent ) {
+			$this->assertSame( 0, $prune['snapshots_pruned'] );
+			$this->assertArrayHasKey( 'parent_snapshot_id', $marker );
+			$this->assertSame( $base, $marker['parent_snapshot_id'], 'Admission persists the parent actually sent.' );
+			$this->assertSame( array( $base ), $prune['remaining_ids'] );
+			$this->assertFileExists( $dir . 'parent.list' );
+		}
+		$cycle = $this->run_cycle( $site_id, $task );
+		$this->assertNull( $cycle['exception'] );
+		if ( $replace_parent ) {
+			$this->assertFalse( $cycle['result'], 'A delta cannot be recorded against a different parent.' );
+			$this->assertSame( 'full', MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task->id )->type );
+			$this->assertFalse( $this->run_cycle( $site_id, $task )['result'] );
+			$this->assertSame( 'full', $this->last_call_params( 'backup_task_create' )['type'], 'The backstop goes straight to full.' );
+		} else {
+			$this->assertIsArray( $cycle['result'] );
+			$delta = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task->id );
+			$this->assertSame( $base, (int) $delta->parent_id );
+			$after = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( $base, (int) $delta->id ),
+						'reason'       => 'count',
+					),
+				),
+				$task
+			);
+			$this->assertSame( 2, $after['snapshots_pruned'], 'A finished site in an open task is eligible again.' );
+		}
+	}
+
+	/**
+	 * Exercise the interleaving seam.
+	 *
+	 * @return array Parent held and parent changed interleavings.
+	 */
+	public static function x1_parent_interleavings(): array {
+		return array(
+			'prune'          => array( false ),
+			'parent_changed' => array( true ),
+		);
+	}
+
+	/** A paused full fleet run permits prune on finished and never-started sites. */
+	public function test_x1_paused_multisite_full_run_does_not_hold_finished_or_unstarted_sites() {
+		global $wpdb;
+		$a = $this->create_test_site();
+		$b = $this->create_test_site();
+		$this->give_site_real_privkey( $a );
+		$row = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'X1 fleet', 'daily', 'full', '', $a . ',' . $b, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0 );
+		$run = time() - 100;
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$row->id,
+			array(
+				'last_run'  => $run,
+				'completed' => 0,
+			)
+		);
+		$task = $this->make_task(
+			MainWP_DB::instance()->get_website_by_id( $a ),
+			$row->id,
+			array(
+				'type'     => 'full',
+				'last_run' => $run,
+			)
+		);
+		$dir  = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $b );
+		wp_mkdir_p( $dir );
+		copy( $this->manifest_fixture, $dir . 'unstarted.list' );
+		$base_b = $this->record_base_snapshot( $b, $row->id );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'manifest_path' => $dir . 'unstarted.list' ), array( 'id' => $base_b ) );
+		$artifacts = $this->arrange_remote_artifacts( true );
+		$this->mock_artifact_downloads();
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'x1-full',
+					'phase'   => 'queued',
+				),
+				'backup_task_run'    => array(
+					'task_id'   => 'x1-full',
+					'phase'     => 'completed',
+					'artifacts' => array( $artifacts[2], $artifacts[0] ),
+					'file'      => 'backup-base.zip',
+					'size'      => 400,
+				),
+				'delete_backup'      => array( 'result' => 'ok' ),
+				'backup_task_prune'  => array( 'result' => 'ok' ),
+			)
+		);
+		$reports = array();
+		$pause   = function () use ( $task, $a, $base_b, &$reports ) {
+			MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'paused' => 1 ) );
+			$latest    = MainWP_Backup_Snapshots::instance()->get_latest_complete( $a, $task->id );
+			$reports[] = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( (int) $latest->id ),
+						'reason'       => 'count',
+					),
+					array(
+						'snapshot_ids' => array( $base_b ),
+						'reason'       => 'count',
+					),
+				),
+				$task
+			);
+		};
+		add_action( 'mainwp_backup_snapshot_recorded', $pause );
+		try {
+			$this->assertFalse( $this->run_cycle( $a, $task )['result'] );
+			$cycle = $this->run_cycle( $a, $task );
+		} finally {
+			remove_action( 'mainwp_backup_snapshot_recorded', $pause );
+		}
+		$this->assertNull( $cycle['exception'] );
+		$this->assertCount( 1, $reports );
+		$this->assertSame( 2, $reports[0]['snapshots_pruned'] );
+		$this->assertArrayHasKey( 'remaining_ids', $reports[0] );
+		$this->assertSame( array(), $reports[0]['remaining_ids'] );
+		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$this->assertLessThan( (int) $after->last_run, (int) $after->completed );
+	}
 }

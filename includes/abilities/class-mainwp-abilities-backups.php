@@ -3701,6 +3701,9 @@ class MainWP_Abilities_Backups {
                     'orphan_dirs_removed',
                     'units_pruned',
                     'snapshots_pruned',
+                    'deleted_ids',
+                    'remaining_ids',
+                    'cloud_deletes_queued',
                     'orphaned_snapshots_pruned',
                     'bytes_pruned',
                     'errors',
@@ -3724,6 +3727,26 @@ class MainWP_Abilities_Backups {
                     'bytes_pruned'              => array(
                         'type' => 'integer',
                     ),
+                    'deleted_ids'               => array(
+                        'type'  => 'array',
+                        'items' => array( 'type' => 'integer' ),
+                    ),
+                    'remaining_ids'             => array(
+                        'type'  => 'array',
+                        'items' => array( 'type' => 'integer' ),
+                    ),
+                    'cloud_deletes_queued'      => array(
+                        'type'  => 'array',
+                        'items' => array(
+                            'type'                 => 'object',
+                            'additionalProperties' => false,
+                            'required'             => array( 'snapshot_id', 'destination_id' ),
+                            'properties'           => array(
+                                'snapshot_id'    => array( 'type' => 'integer' ),
+                                'destination_id' => array( 'type' => 'integer' ),
+                            ),
+                        ),
+                    ),
                     'errors'                    => array(
                         'type'  => 'array',
                         'items' => self::safe_error_schema(),
@@ -3731,6 +3754,25 @@ class MainWP_Abilities_Backups {
                 ),
             )
         );
+    }
+
+    /**
+     * Retain prune reasons while excluding local paths and filenames.
+     *
+     * @param mixed $error Prune diagnostic or registry error.
+     * @return array Safe code and message.
+     */
+    private static function cleanup_error( $error ): array {
+        if ( is_array( $error ) ) {
+            return MainWP_Backup_Operations::safe_error( (string) ( $error['code'] ?? '' ) );
+        }
+        $safe = MainWP_Backup_Operations::safe_error( 'mainwp_operation_failed' );
+        if ( is_string( $error ) && preg_match( "/^Snapshots? [0-9,]+: [\p{L}\p{N} .,;'-]+$/uD", $error ) ) {
+            $safe['message'] = $error;
+        } elseif ( is_string( $error ) && ( str_starts_with( $error, 'Could not remove ' ) || str_starts_with( $error, 'Refused to remove ' ) ) ) {
+            $safe['message'] = __( 'A local backup file or folder could not be removed. Check the backup diagnostics and try again.', 'mainwp' );
+        }
+        return $safe;
     }
 
     /**
@@ -6172,7 +6214,7 @@ class MainWP_Abilities_Backups {
                             $result['units_pruned'] = $result['pruned'];
                             $result['errors']       = array_map(
                                 static function ( $error ) {
-                                    return MainWP_Backup_Operations::safe_error( is_array( $error ) ? (string) ( $error['code'] ?? '' ) : '' );
+                                    return self::cleanup_error( $error );
                                 },
                                 $result['errors']
                             );
@@ -6186,7 +6228,12 @@ class MainWP_Abilities_Backups {
             $result['dry_run'] = $dry_run;
             $schema_method     = str_replace( '-', '_', $name ) . '_output_schema';
             $schema            = self::$schema_method();
-            return self::serialize( $result, $schema['oneOf'][ $dry_run ? 0 : 1 ] );
+            $output            = self::serialize( $result, $schema['oneOf'][ $dry_run ? 0 : 1 ] );
+            if ( 'cleanup-site-backups' === $name && ! $dry_run ) {
+                // These errors have already been sanitized by cleanup_error().
+                $output['errors'] = $result['errors'];
+            }
+            return $output;
         } catch ( \Throwable $exception ) {
             return self::safe_wp_error( new \WP_Error( 'mainwp_internal_error', '', array( 'status' => 500 ) ) );
         }

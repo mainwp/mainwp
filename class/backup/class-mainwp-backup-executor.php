@@ -447,8 +447,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         array(
                             'last_error' => wp_json_encode(
                                 array(
-                                    'incremental_sent' => $send['mode'],
-                                    'run'              => (int) $pTask->last_run,
+                                    'incremental_sent'   => $send['mode'],
+                                    'parent_snapshot_id' => isset( $params['parent_snapshot_id'] ) ? (int) $params['parent_snapshot_id'] : 0,
+                                    'run'                => (int) $pTask->last_run,
                                 )
                             ),
                         )
@@ -2328,6 +2329,17 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             $already_saved = null !== $existing;
 
             if ( ! $already_saved ) {
+                $sent = json_decode( (string) $progress->last_error, true );
+                if ( ! $is_base && (int) ( $sent['run'] ?? 0 ) === (int) $pTask->last_run
+                    && isset( $sent['parent_snapshot_id'] ) && (int) ( $latest->id ?? 0 ) !== (int) $sent['parent_snapshot_id'] ) {
+                    // An intervening prune or completion changed the parent.
+                    // Escalate directly to full through the existing requeue path.
+                    $sent['incremental_sent'] = 'push';
+                    $progress->last_error     = wp_json_encode( $sent );
+                    MainWP_DB_Backup::instance()->update_backup_task_progress( $pTask->id, $website->id, array( 'last_error' => $progress->last_error ) );
+                    self::requeue_incremental_after_base_missing( $website, $pTask, $progress );
+                    return false;
+                }
                 $parent_id   = $is_base || null === $latest ? null : (int) $latest->id;
                 $snapshot_id = $snapshots->record_snapshot(
                     array(

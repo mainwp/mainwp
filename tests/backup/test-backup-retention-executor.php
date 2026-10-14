@@ -1969,6 +1969,100 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 2, (int) $reclaimed->reclaim_count );
 	}
 
+	/** A worker lease abandoned past the stale window no longer holds prune, as when native backups are off and no lane reclaims it. */
+	public function test_s90_r2_prune_takes_stale_dead_upload_worker_lease() {
+		global $wpdb;
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		$this->insert_upload_job( $id, 77 );
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array(
+				'status'        => MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING,
+				'locked_by'     => 's90-dead-worker',
+				'locked_until'  => time() - HOUR_IN_SECONDS - 60,
+				'reclaim_count' => 1,
+			),
+			array( 'snapshot_id' => $id )
+		);
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+			array(
+				array(
+					'snapshot_ids' => array( $id ),
+					'reason'       => 'count',
+				),
+			),
+			$this->make_task()
+		);
+		$this->assertSame( array( $id ), $result['deleted_ids'] );
+		$this->assertSame( array(), $result['remaining_ids'] );
+		$this->assertFileDoesNotExist( $dir . '/artifact.tar' );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+	}
+
+	/** An incremental run that starts during a chain prune holds the rest of the walk. */
+	public function test_s90_r2_incremental_run_started_mid_walk_holds_remaining_snapshots() {
+		global $wpdb;
+		$db   = \MainWP\Dashboard\MainWP_DB_Backup::instance();
+		$task = $db->add_backup_task( get_current_user_id(), 'Mid-walk incremental', 'daily', 'incremental', '', (string) $this->site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0 );
+		$run  = time() - 100;
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'  => $run,
+				'completed' => $run + 10,
+			)
+		);
+		list( $base, $base_dir ) = $this->make_snapshot_with_dir();
+		list( $leaf, $leaf_dir ) = $this->make_snapshot_with_dir(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		$table                   = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$started                 = false;
+		$start                   = function ( $sql ) use ( &$started, $db, $task, $run, $table, $leaf ) {
+			if ( ! $started && str_starts_with( $sql, "UPDATE `{$table}` SET `status` = 'pruned'" ) && str_contains( $sql, '`id` = ' . $leaf ) ) {
+				// The run claims its window and writes its creating marker before it picks a parent.
+				$started = true;
+				$db->update_backup_task_with_values( $task->id, array( 'completed' => 0 ) );
+				$db->add_backup_task_progress( $task->id, $this->site_id, array() );
+				$db->update_backup_task_progress(
+					$task->id,
+					$this->site_id,
+					array(
+						'dtsFetched'           => $run,
+						'child_backup_task_id' => 'creating:s90-r2',
+						'child_phase'          => '',
+					)
+				);
+			}
+			return $sql;
+		};
+		add_filter( 'query', $start );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( $base, $leaf ),
+						'reason'       => 'count',
+					),
+				),
+				$this->make_task()
+			);
+		} finally {
+			remove_filter( 'query', $start );
+		}
+		$this->assertTrue( $started, 'The run must start after the leaf is pruned.' );
+		$this->assertSame( array( $leaf ), $result['deleted_ids'] );
+		$this->assertSame( array( $base ), $result['remaining_ids'] );
+		$this->assertSame( 0, $result['pruned'] );
+		$this->assertFileDoesNotExist( $leaf_dir . '/artifact.tar' );
+		$this->assertFileExists( $base_dir . '/artifact.tar' );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
+		$this->assertContains( sprintf( 'Snapshots %d: an incremental backup is running on this site, so they were kept. Try the cleanup again once that backup finishes.', $base ), $result['errors'] );
+	}
+
 	/** An upload pickup at prune admission cannot outlive the cloud delete sweep. */
 	public function test_x1_upload_acquisition_interleaves_with_prune_claim() {
 		global $wpdb;

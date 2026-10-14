@@ -43,6 +43,13 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      */
     const RECLAIM_CEILING = 3;
 
+    /**
+     * Age past which prune treats an expired worker lease as abandoned. The
+     * upload lane reclaims a dead worker's row within a tick, but it does not
+     * run at all while native backups are off, and prune must not wait on it.
+     */
+    const PRUNE_STALE_LEASE_SECONDS = HOUR_IN_SECONDS;
+
     const STATUS_PENDING             = 'pending';
     const STATUS_CHUNKING            = 'chunking';
     const STATUS_UPLOADING           = 'uploading';
@@ -309,11 +316,12 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         $now      = time();
         $runnable = self::active_statuses();
         $statuses = implode( ',', array_fill( 0, count( $runnable ), '%s' ) );
-        // Terminal writes clear locked_by; an expired runnable worker lease still belongs to the reclaim lane.
+        $stale    = $now - self::PRUNE_STALE_LEASE_SECONDS;
+        // Terminal writes clear locked_by; an expired runnable worker lease still belongs to the reclaim lane until it goes stale.
         $claimed = $this->wpdb->query(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- counted ids and placeholders grow together.
-                'UPDATE ' . $this->table() . " SET locked_by = %s, locked_until = %d, updated = %d WHERE snapshot_id IN ({$holders}) AND kind = %s AND ((locked_until < %d AND (locked_by = '' OR locked_by LIKE %s OR status NOT IN ({$statuses}))) OR locked_by = %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder lists from counted arrays.
-                array_merge( array( $token, $now + $lease_seconds, $now ), $ids, array( self::KIND_UPLOAD, $now, 'prune:%' ), $runnable, array( $token ) )
+                'UPDATE ' . $this->table() . " SET locked_by = %s, locked_until = %d, updated = %d WHERE snapshot_id IN ({$holders}) AND kind = %s AND ((locked_until < %d AND (locked_by = '' OR locked_by LIKE %s OR status NOT IN ({$statuses}) OR locked_until < %d)) OR locked_by = %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder lists from counted arrays.
+                array_merge( array( $token, $now + $lease_seconds, $now ), $ids, array( self::KIND_UPLOAD, $now, 'prune:%' ), $runnable, array( $stale, $token ) )
             )
         );
         if ( false === $claimed ) {
@@ -321,8 +329,8 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         }
         $other = $this->wpdb->get_var(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- counted ids and placeholders grow together.
-                'SELECT id FROM ' . $this->table() . " WHERE snapshot_id IN ({$holders}) AND kind = %s AND locked_by <> %s AND (locked_until >= %d OR (status IN ({$statuses}) AND locked_by <> '' AND locked_by NOT LIKE %s)) LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder lists from counted arrays.
-                array_merge( $ids, array( self::KIND_UPLOAD, $token, $now ), $runnable, array( 'prune:%' ) )
+                'SELECT id FROM ' . $this->table() . " WHERE snapshot_id IN ({$holders}) AND kind = %s AND locked_by <> %s AND (locked_until >= %d OR (status IN ({$statuses}) AND locked_by <> '' AND locked_by NOT LIKE %s AND locked_until >= %d)) LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder lists from counted arrays.
+                array_merge( $ids, array( self::KIND_UPLOAD, $token, $now ), $runnable, array( 'prune:%', $stale ) )
             )
         );
         return null === $other && '' === $this->wpdb->last_error;

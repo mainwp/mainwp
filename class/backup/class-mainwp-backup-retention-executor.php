@@ -585,8 +585,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             return $result;
         }
         if ( MainWP_DB_Backup::instance()->has_inflight_incremental_for_site( $site_id ) ) {
-            /* translators: %s: Snapshot IDs. */
-            $result['errors'][] = sprintf( __( 'Snapshots %s: an incremental backup is running on this site, so they were kept. Try the cleanup again once that backup finishes.', 'mainwp' ), implode( ',', $ids ) );
+            $result['errors'][] = $this->incremental_hold_message( $ids );
             return $result;
         }
 
@@ -604,6 +603,12 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     break;
                 }
                 if ( ! $this->remove_local_dir( $snapshot, $result['errors'], false ) ) {
+                    break;
+                }
+                // A run that started after admission may already have picked the
+                // next parent; the completion backstop covers the instant after this.
+                if ( ! empty( $result['deleted_ids'] ) && MainWP_DB_Backup::instance()->has_inflight_incremental_for_site( $site_id ) ) {
+                    $result['errors'][] = $this->incremental_hold_message( array_values( array_diff( $ids, $result['deleted_ids'] ) ) );
                     break;
                 }
                 $inserted_deletes = array();
@@ -682,6 +687,17 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             );
         }
         return $result;
+    }
+
+    /**
+     * Hold message for snapshots kept while an incremental backup runs.
+     *
+     * @param int[] $ids Snapshot ids kept.
+     * @return string Translated message.
+     */
+    private function incremental_hold_message( array $ids ): string {
+        /* translators: %s: Snapshot IDs. */
+        return sprintf( __( 'Snapshots %s: an incremental backup is running on this site, so they were kept. Try the cleanup again once that backup finishes.', 'mainwp' ), implode( ',', $ids ) );
     }
 
     /**

@@ -217,8 +217,8 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
         }
         foreach ( $handles as $raw ) {
             $handle = json_decode( (string) $raw, true );
-            // The matching owner resumes without an age limit; only release ends its hold.
-            if ( is_array( $handle ) && isset( $handle['task_id'] ) && is_scalar( $handle['task_id'] ) && '' !== (string) $handle['task_id'] ) {
+            // Owners can resume old tasks; recent driving evidence bounds abandoned handles.
+            if ( is_array( $handle ) && isset( $handle['task_id'] ) && is_scalar( $handle['task_id'] ) && '' !== (string) $handle['task_id'] && time() - max( (int) ( $handle['started'] ?? 0 ), (int) ( $handle['driven_at'] ?? 0 ) ) <= MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS ) {
                 return true;
             }
         }

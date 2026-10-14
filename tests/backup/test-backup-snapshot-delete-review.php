@@ -5,12 +5,29 @@
  * @package MainWP\Dashboard\Tests
  */
 
-namespace MainWP\Dashboard\Tests;
+namespace MainWP\Dashboard;
+
+/**
+ * Capture shutdown callbacks only while a regression simulates request death.
+ *
+ * @param callable $callback Shutdown cleanup.
+ * @return void
+ */
+function register_shutdown_function( callable $callback ) {
+	if ( null !== Tests\MainWP_Backup_Snapshot_Delete_Review_Test::$shutdown_callbacks ) {
+		Tests\MainWP_Backup_Snapshot_Delete_Review_Test::$shutdown_callbacks[] = $callback;
+		return;
+	}
+	\register_shutdown_function( $callback );
+}
+
+namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- The switchable shutdown stub belongs with its tests.
 
 use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\MainWP_Exception;
+use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_Backup_Retention_Executor;
 use MainWP\Dashboard\MainWP_Backup_Retention_Query;
@@ -23,10 +40,17 @@ use MainWP\Dashboard\MainWP_Post_Backup_Handler;
 require_once __DIR__ . '/trait-snapshot-delete-fixture.php';
 
 /** Real rows and files expose holds that a manual-task fixture bypasses. */
-class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Case {
+class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Case { // phpcs:ignore Universal.Files.SeparateFunctionsFromOO.Mixed, Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- The shutdown stub shares this test file.
 	use Snapshot_Delete_Fixture {
 		tear_down as fixture_tear_down;
 	}
+
+	/**
+	 * Null delegates to PHP; an array captures callbacks for simulated shutdown.
+	 *
+	 * @var array|null
+	 */
+	public static $shutdown_callbacks = null;
 
 	/**
 	 * Reservation allocated by the lane matrix.
@@ -44,6 +68,7 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 
 	/** Remove the marker and release resources owned by this case. */
 	public function tear_down() {
+		self::$shutdown_callbacks = null;
 		delete_option( 'mainwp_backup_in_progress_' . $this->site_id );
 		$this->clear_adhoc_handle();
 		if ( $this->lane_reservation > 0 ) {
@@ -198,7 +223,7 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 			'L06 task create'        => array( 'marker', true ),
 			'L07 compatibility'      => array( 'marker', true ),
 			'L08 adhoc create'       => array( 'marker', true ),
-			'L09 owned handle'       => array( 'adhoc_abandoned', true ),
+			'L09 owned handle'       => array( 'adhoc_driven', true ),
 			'L10 safety backup'      => array( 'restore', true ),
 			'L11 PID recovery'       => array( 'marker', true ),
 			'L12 browser transfer'   => array( 'marker', true ),
@@ -217,6 +242,8 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 			'manual closed'          => array( 'manual_closed', false ),
 			'handle cleared'         => array( 'adhoc_cleared', false ),
 			'handle without task'    => array( 'adhoc_no_task', false ),
+			'handle abandoned'       => array( 'adhoc_abandoned', false ),
+			'handle last drive old'  => array( 'adhoc_drive_expired', false ),
 		);
 	}
 
@@ -270,7 +297,7 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 	public function test_old_pre_update_handle_holds_each_entry_point( $path ) {
 		$id   = $this->snapshot();
 		$plan = $this->preview( $id );
-		$this->set_lane( 'adhoc_abandoned' );
+		$this->set_lane( 'adhoc_driven' );
 		$this->assert_admission_held( $path, $id, $plan );
 		$this->clear_adhoc_handle();
 		$this->assertFalse( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
@@ -305,7 +332,7 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 	 */
 	public static function new_lane_paths() {
 		$rows = array();
-		foreach ( array( 'sync', 'create', 'pid', 'download' ) as $lane ) {
+		foreach ( array( 'sync', 'sync_browser', 'sync_direct', 'create', 'pid', 'download' ) as $lane ) {
 			foreach ( array( 'preview', 'list', 'confirm' ) as $path ) {
 				$rows[ $lane . ' ' . $path ] = array( $lane, $path );
 			}
@@ -330,7 +357,12 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 		$id   = $this->snapshot();
 		$plan = $this->preview( $id );
 		MainWP_Backup_Incremental_Sender_Test::$fixed_time = time();
-		$action   = 'pid' === $lane ? 'mainwp_backup_checkpid' : 'mainwp_backup_download_file';
+		$actions  = array(
+			'sync'         => 'mainwp_backup_run_site',
+			'sync_browser' => 'mainwp_backup',
+			'pid'          => 'mainwp_backup_checkpid',
+		);
+		$action   = $actions[ $lane ] ?? 'mainwp_backup_download_file';
 		$_POST    = array(
 			'site_id'  => $this->site_id,
 			'security' => wp_create_nonce( $action ),
@@ -346,9 +378,11 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 				return array( 'task_spine' => 1 );
 			}
 			$target = array(
-				'sync'   => 'backup',
-				'create' => 'backup_task_create',
-				'pid'    => 'backup_checkpid',
+				'sync'         => 'backup',
+				'sync_browser' => 'backup',
+				'sync_direct'  => 'backup',
+				'create'       => 'backup_task_create',
+				'pid'          => 'backup_checkpid',
 			);
 			if ( ( $target[ $lane ] ?? '' ) === $what ) {
 				$seen = true;
@@ -377,6 +411,10 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 		ob_start();
 		try {
 			if ( 'sync' === $lane ) {
+				MainWP_Post_Backup_Handler::instance()->mainwp_backup_run_site();
+			} elseif ( 'sync_browser' === $lane ) {
+				MainWP_Post_Backup_Handler::instance()->ajax_mainwp_backup();
+			} elseif ( 'sync_direct' === $lane ) {
 				MainWP_Backup_Executor::backup( $this->site_id, 'full', '', '', 1, 1, 1, 1 );
 			} elseif ( 'create' === $lane ) {
 				MainWP_Backup_Executor::trigger_backup( $this->site_id );
@@ -395,7 +433,7 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 			remove_filter( 'wp_die_ajax_handler', $die );
 		}
 		$this->assertTrue( $seen, 'The requested driver reached its transport.' );
-		if ( 'sync' === $lane ) {
+		if ( 'sync_direct' === $lane ) {
 			$this->assertFalse( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
 		} elseif ( 'create' === $lane ) {
 			$this->assertTrue( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
@@ -407,6 +445,259 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 			++MainWP_Backup_Incremental_Sender_Test::$fixed_time;
 			$this->assertFalse( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
 		}
+	}
+
+	/**
+	 * Owner drive paths share the same persisted heartbeat.
+	 *
+	 * @return array
+	 */
+	public static function owner_drive_paths() {
+		return array( array( 'resume', '' ), array( 'resume', '42' ), array( 'budget', '' ) );
+	}
+
+	/**
+	 * Resuming and spending a run budget both renew an old owned handle.
+	 *
+	 * @dataProvider owner_drive_paths
+	 * @param string $drive Owner entry point.
+	 * @param string $owner Handle owner.
+	 */
+	public function test_s93_r1_owner_drive_stamps_handle( $drive, $owner ) {
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = time();
+		$now    = MainWP_Backup_Incremental_Sender_Test::$fixed_time;
+		$db     = MainWP_DB::instance();
+		$handle = array(
+			'task_id'   => 'owned-task',
+			'type'      => 'full',
+			'started'   => $now - 14400,
+			'driven_at' => $now - 7201,
+			'owner'     => $owner,
+			'local'     => 'keep-local-path',
+		);
+		$db->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, wp_json_encode( $handle ) );
+		$reply = static function ( $pre, $site, $what ) {
+			if ( 'backup_preflight' === $what ) {
+				return array( 'task_spine' => 1 );
+			}
+			if ( 'backup_task_run' === $what ) {
+				throw new \RuntimeException( 'budget-observed' );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $reply, 20, 3 );
+		try {
+			if ( 'resume' === $drive ) {
+				$this->assertSame( 'owned-task', MainWP_Backup_Executor::trigger_backup( $this->site_id, 'full', $owner ) );
+			} else {
+				try {
+					MainWP_Backup_Executor::get_backup_task_status( $this->site_id, 'owned-task', 1 );
+					$this->fail( 'The budgeted driver did not dispatch.' );
+				} catch ( \RuntimeException $error ) {
+					$this->assertSame( 'budget-observed', $error->getMessage() );
+				}
+			}
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $reply, 20 );
+		}
+		$handle['driven_at'] = $now;
+		$this->assertSame( $handle, json_decode( $db->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true ) );
+		$this->assertTrue( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time += 7201;
+		$this->assertFalse( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
+	}
+
+	/** Shutdown removes only the unfinished request's token; normal exit is inert. */
+	public function test_s93_r1_shutdown_releases_unfinished_request() {
+		self::$shutdown_callbacks = array();
+		$fiber                    = new \Fiber(
+			function () {
+				MainWP_Backup_Executor::with_backup_hold(
+					$this->site_id,
+					static function () {
+						apply_filters( 'mainwp_fetch_url_site_timeout', 72000 );
+						\Fiber::suspend();
+					}
+				);
+			}
+		);
+		try {
+			$fiber->start();
+			$this->assertTrue( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
+			foreach ( self::$shutdown_callbacks as $callback ) {
+				$callback();
+			}
+			$this->assertFalse( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ), 'Shutdown must release a request whose finally did not run.' );
+		} finally {
+			if ( $fiber->isSuspended() ) {
+				$fiber->resume();
+			}
+		}
+		self::$shutdown_callbacks = array();
+		MainWP_Backup_Executor::with_backup_hold( $this->site_id, '__return_true', true );
+		global $wpdb;
+		$reads = 0;
+		$count = static function ( $query ) use ( &$reads ) {
+			if ( str_contains( $query, 'mainwp_backup_in_progress_' ) ) {
+				++$reads;
+			}
+			return $query;
+		};
+		add_filter( 'query', $count );
+		try {
+			foreach ( self::$shutdown_callbacks as $callback ) {
+				$callback();
+			}
+			$this->assertSame( 0, $reads, 'Completed scopes do nothing at shutdown.' );
+		} finally {
+			remove_filter( 'query', $count );
+		}
+		$this->assertTrue( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ), 'The browser owner survives shutdown.' );
+	}
+
+	/**
+	 * Malformed owner sets must be repairable without dropping valid siblings.
+	 *
+	 * @return array
+	 */
+	public static function malformed_markers() {
+		return array( array( 'null' ), array( '"broken"' ), array( '{"bad":"never","sibling":9999999999}' ) );
+	}
+
+	/**
+	 * Readers fail closed until the next writer repairs the marker with a CAS.
+	 *
+	 * @dataProvider malformed_markers
+	 * @param string $raw Stored malformed JSON.
+	 */
+	public function test_s93_r1_next_writer_repairs_malformed_marker( $raw ) {
+		$key = 'mainwp_backup_in_progress_' . $this->site_id;
+		update_option( $key, $raw, false );
+		$this->assertTrue( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
+		try {
+			MainWP_Backup_Executor::with_backup_hold(
+				$this->site_id,
+				function () {
+					$this->assertTrue( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
+				}
+			);
+		} catch ( MainWP_Exception $error ) {
+			$this->fail( 'The next writer must repair the malformed marker: ' . $error->getMessage() );
+		}
+		global $wpdb;
+		$owners = json_decode( $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $key ) ), true );
+		$this->assertSame( str_contains( $raw, 'sibling' ) ? array( 'sibling' => 9999999999 ) : array(), $owners );
+		$this->assertSame( str_contains( $raw, 'sibling' ), MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
+	}
+
+	/** Fast chunks skip marker reads; elapsed intervals and larger deadlines renew. */
+	public function test_s93_r1_refresh_throttles_marker_reads() {
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = time();
+		$reads = 0;
+		$count = static function ( $query ) use ( &$reads ) {
+			if ( str_starts_with( $query, 'SELECT option_value' ) && str_contains( $query, 'mainwp_backup_in_progress_' ) ) {
+				++$reads;
+			}
+			return $query;
+		};
+		add_filter( 'query', $count );
+		try {
+			MainWP_Backup_Executor::with_backup_hold(
+				$this->site_id,
+				function () use ( &$reads ) {
+					apply_filters( 'mainwp_fetch_url_site_timeout', 72000 );
+					$baseline = $reads;
+					for ( $chunk = 0; $chunk < 25; ++$chunk ) {
+						do_action( 'mainwp_backup_hash_progress' );
+						do_action( 'mainwp_download_to_file_progress' );
+					}
+					$this->assertSame( $baseline, $reads, 'Fast chunks must skip the ownership read.' );
+					MainWP_Backup_Incremental_Sender_Test::$fixed_time += 9;
+					do_action( 'mainwp_backup_hash_progress' );
+					$this->assertSame( $baseline, $reads );
+					++MainWP_Backup_Incremental_Sender_Test::$fixed_time;
+					do_action( 'mainwp_backup_hash_progress' );
+					$this->assertSame( $baseline + 1, $reads, 'Ten seconds permits a refresh.' );
+					apply_filters( 'mainwp_fetch_url_site_timeout', 120000 );
+					$this->assertSame( $baseline + 2, $reads, 'A larger deadline bypasses the throttle.' );
+					MainWP_Backup_Incremental_Sender_Test::$fixed_time += 120030;
+					$this->assertTrue( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
+				}
+			);
+		} finally {
+			remove_filter( 'query', $count );
+		}
+		$this->assertFalse( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
+	}
+
+	/**
+	 * Both success and a coded exception survive a failed release.
+	 *
+	 * @return array
+	 */
+	public static function release_outcomes() {
+		return array( array( false ), array( true ) );
+	}
+
+	/**
+	 * A failed release leaves bounded evidence and preserves the original outcome.
+	 *
+	 * @dataProvider release_outcomes
+	 * @param bool $throws Whether the operation throws.
+	 */
+	public function test_s93_r1_release_failure_preserves_operation_outcome( $throws ) {
+		global $wpdb;
+		$finished = false;
+		$fail     = static function ( $query ) use ( &$finished ) {
+			return $finished && str_starts_with( $query, 'UPDATE' ) && str_contains( $query, 'mainwp_backup_in_progress_' ) ? 'SELECT snapshot_delete_missing_column' : $query;
+		};
+		$suppress = $wpdb->suppress_errors();
+		$original = new MainWP_Exception( 'original-operation', 'operation-detail', 'ERR_ALREADY_RUNNING' );
+		$logger   = MainWP_Logger::instance();
+		$priority = new \ReflectionProperty( $logger, 'logPriority' );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$warnings = array();
+		$capture  = static function ( $text, $level ) use ( &$warnings ) {
+			$warnings[] = array( $text, $level );
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture, 10, 2 );
+		add_filter( 'query', $fail );
+		try {
+			try {
+				$result = MainWP_Backup_Executor::with_backup_hold(
+					$this->site_id,
+					static function () use ( &$finished, $throws, $original ) {
+						$finished = true;
+						if ( $throws ) {
+							throw $original;
+						}
+						return array( 'saved' => 42 );
+					}
+				);
+				$this->assertFalse( $throws );
+				$this->assertSame( array( 'saved' => 42 ), $result );
+			} catch ( MainWP_Exception $error ) {
+				$this->assertTrue( $throws, 'Release must not replace a successful result.' );
+				$this->assertSame( $original, $error, 'Release must preserve the coded operation exception.' );
+				$this->assertSame( 'ERR_ALREADY_RUNNING', $error->get_message_error_code() );
+			}
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $suppress );
+			remove_action( 'mainwp_before_log_data', $capture, 10 );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			$priority->setValue( $logger, $previous );
+			foreach ( $warnings as $warning ) {
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => $warning[0] ) );
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => 'CRON :: ' . $warning[0] ) );
+			}
+		}
+		$this->assertCount( 1, $warnings );
+		$this->assertSame( MainWP_Logger::WARNING, $warnings[0][1] );
+		$this->assertStringContainsString( 'release', $warnings[0][0] );
+		$this->assertTrue( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ), 'A failed release keeps bounded evidence.' );
 	}
 
 	/** A marker read failure cannot establish idleness. */
@@ -799,7 +1090,7 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 			}
 		} elseif ( str_starts_with( $lane, 'adhoc_' ) ) {
 			$handles = array(
-				'adhoc_fresh'     => wp_json_encode(
+				'adhoc_fresh'         => wp_json_encode(
 					array(
 						'task_id' => 'pre-update-task',
 						'type'    => 'full',
@@ -807,7 +1098,7 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 						'owner'   => '',
 					)
 				),
-				'adhoc_abandoned' => wp_json_encode(
+				'adhoc_abandoned'     => wp_json_encode(
 					array(
 						'task_id' => 'pre-update-task',
 						'type'    => 'full',
@@ -815,8 +1106,26 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 						'owner'   => '',
 					)
 				),
-				'adhoc_cleared'   => '',
-				'adhoc_no_task'   => wp_json_encode( array( 'started' => time() ) ),
+				'adhoc_driven'        => wp_json_encode(
+					array(
+						'task_id'   => 'pre-update-task',
+						'type'      => 'full',
+						'started'   => time() - 14400,
+						'driven_at' => time() - 1,
+						'owner'     => '',
+					)
+				),
+				'adhoc_drive_expired' => wp_json_encode(
+					array(
+						'task_id'   => 'pre-update-task',
+						'type'      => 'full',
+						'started'   => time() - 14400,
+						'driven_at' => time() - 7201,
+						'owner'     => '',
+					)
+				),
+				'adhoc_cleared'       => '',
+				'adhoc_no_task'       => wp_json_encode( array( 'started' => time() ) ),
 			);
 			MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handles[ $lane ] );
 		}

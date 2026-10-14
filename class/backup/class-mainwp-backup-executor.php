@@ -113,20 +113,42 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public static function with_backup_hold( int $site_id, callable $operation, bool $browser = false ) {
         $token = wp_generate_uuid4();
         self::write_backup_hold( $site_id, $token, self::BACKUP_HOLD_SECONDS );
-        $refresh  = static function ( $seconds = 0 ) use ( $site_id, $token ) {
-            self::write_backup_hold( $site_id, $token, max( self::BACKUP_HOLD_SECONDS, (int) $seconds + self::BACKUP_HOLD_SECONDS ) );
+        $released = false;
+        $release  = static function () use ( $site_id, $token, $browser, &$released ) {
+            if ( $released ) {
+                return;
+            }
+            $released = true;
+            try {
+                self::write_backup_hold( $site_id, $token, null, $browser );
+            } catch ( MainWP_Exception $error ) {
+                MainWP_Logger::instance()->warning( 'Backup hold release failed for site ' . $site_id . ': ' . $error->getMessage() );
+            }
         };
-        $request  = static function ( $timeout ) use ( $refresh ) {
+        register_shutdown_function( $release );
+        $refreshed_at = time();
+        $expires_at   = $refreshed_at + self::BACKUP_HOLD_SECONDS;
+        $refresh      = static function ( $seconds = 0 ) use ( $site_id, $token, &$refreshed_at, &$expires_at ) {
+            $now      = time();
+            $duration = max( self::BACKUP_HOLD_SECONDS, (int) $seconds + self::BACKUP_HOLD_SECONDS );
+            if ( $now - $refreshed_at < 10 && $now + $duration <= $expires_at ) {
+                return;
+            }
+            self::write_backup_hold( $site_id, $token, $duration );
+            $refreshed_at = $now;
+            $expires_at   = max( $expires_at, $now + $duration );
+        };
+        $request      = static function ( $timeout ) use ( $refresh ) {
             $refresh( (int) $timeout > 0 ? (int) $timeout : MainWP_Connect::CHILD_REQUEST_TIMEOUT_DEFAULT );
             return $timeout;
         };
-        $transfer = static function ( $timeouts ) use ( $refresh ) {
+        $transfer     = static function ( $timeouts ) use ( $refresh ) {
             if ( is_array( $timeouts ) ) {
                 $refresh( (int) ( $timeouts['timeout'] ?? 0 ) );
             }
             return $timeouts;
         };
-        $retry    = static function ( $delay ) use ( $refresh ) {
+        $retry        = static function ( $delay ) use ( $refresh ) {
             $refresh( max( 0, (int) $delay ) );
             return $delay;
         };
@@ -143,7 +165,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             remove_filter( 'mainwp_backup_retry_delay', $retry, PHP_INT_MAX );
             remove_action( 'mainwp_download_to_file_progress', $refresh );
             remove_action( 'mainwp_backup_hash_progress', $refresh );
-            self::write_backup_hold( $site_id, $token, null, $browser );
+            $release();
         }
     }
 
@@ -169,14 +191,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
             $owners = null === $raw ? array() : json_decode( $raw, true );
             if ( ! is_array( $owners ) ) {
-                break;
+                $owners = array();
             }
             $now = time();
             foreach ( $owners as $owner => $expires ) {
-                if ( ! is_int( $expires ) ) {
-                    throw new MainWP_Exception( esc_html__( 'The backup could not save its running state. Try again.', 'mainwp' ) );
-                }
-                if ( $expires <= $now ) {
+                if ( ! is_int( $expires ) || $expires <= $now ) {
                     unset( $owners[ $owner ] );
                 }
             }
@@ -208,8 +227,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
-     * The option has no heartbeat; use the same two-hour window as
-     * MainWP_Backup_Monitor gives a running marker without a lease.
+     * An ad-hoc handle holds deletion for two hours after its last owner drive.
+     * Foreign-owner takeover still uses the original start time.
      *
      * @var int
      */
@@ -2958,6 +2977,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $persisted = self::read_adhoc_task( $website );
         if ( ! empty( $persisted['task_id'] ) && ( empty( $persisted['type'] ) || $persisted['type'] === $type ) ) {
             if ( (string) ( $persisted['owner'] ?? '' ) === $owner ) {
+                self::stamp_adhoc_drive( $website, (string) $persisted['task_id'], $owner );
                 return $persisted['task_id'];
             }
             if ( time() - (int) ( $persisted['started'] ?? 0 ) <= self::ADHOC_TASK_ABANDON_SECONDS ) {
@@ -3014,10 +3034,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     self::ADHOC_TASK_OPTION,
                     wp_json_encode(
                         array(
-                            'task_id' => $task_id,
-                            'type'    => $type,
-                            'started' => $started,
-                            'owner'   => $owner,
+                            'task_id'   => $task_id,
+                            'type'      => $type,
+                            'started'   => $started,
+                            'driven_at' => $started,
+                            'owner'     => $owner,
                         )
                     )
                 );
@@ -3035,6 +3056,32 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return $task_id;
             }
         );
+    }
+
+    /**
+     * Renew only the matching owner's handle without overwriting concurrent state.
+     *
+     * @param object $website Child site.
+     * @param string $task_id Child task identity.
+     * @param string $owner Handle owner.
+     * @return void
+     * @throws MainWP_Exception When the matching handle cannot be saved.
+     */
+    private static function stamp_adhoc_drive( object $website, string $task_id, string $owner ): void {
+        $db = MainWP_DB::instance();
+        for ( $attempt = 0; $attempt < 5; ++$attempt ) {
+            $raw    = (string) $db->get_website_option( $website, self::ADHOC_TASK_OPTION );
+            $handle = json_decode( $raw, true );
+            if ( ! is_array( $handle ) || ( $handle['task_id'] ?? '' ) !== $task_id || (string) ( $handle['owner'] ?? '' ) !== $owner ) {
+                return;
+            }
+            $handle['driven_at'] = time();
+            $next                = wp_json_encode( $handle );
+            if ( $raw === $next || $db->compare_and_swap_website_option( (int) $website->id, self::ADHOC_TASK_OPTION, $raw, $next ) ) {
+                return;
+            }
+        }
+        throw new MainWP_Exception( esc_html__( 'The backup could not save its running state. Try again.', 'mainwp' ) );
     }
 
     /**
@@ -3290,6 +3337,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return $status;
         }
 
+        self::stamp_adhoc_drive( $website, $task_id, '' );
         $handle    = self::read_adhoc_task( $website );
         $pending   = ( $handle['task_id'] ?? '' ) === $task_id ? ( $handle['reconcile_pending'] ?? null ) : null;
         $watermark = is_array( $pending ) ? $pending : ( ( $handle['task_id'] ?? '' ) === $task_id ? (array) ( $handle['progress_watermark'] ?? array() ) : array() );

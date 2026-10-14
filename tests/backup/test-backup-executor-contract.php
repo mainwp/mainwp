@@ -363,9 +363,10 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		// Providers run before the tests. Date the handle here, and retry a
 		// boundary measurement only if the call crossed a wall-clock second.
 		for ( $attempt = 0; $attempt < 3; ++$attempt ) {
-			$now               = time();
-			$handle['started'] = $now - $age;
-			$before            = wp_json_encode( $handle );
+			$now                 = time();
+			$handle['started']   = $now - $age;
+			$handle['driven_at'] = $now - 30;
+			$before              = wp_json_encode( $handle );
 			MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $before );
 			$called  = array();
 			$error   = null;
@@ -399,7 +400,16 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( $owner, $persisted['owner'] );
 		} else {
 			$this->assertNotContains( 'backup_task_create', $called );
-			$this->assertSame( $before, $after );
+			if ( 'resume' === $expect ) {
+				$persisted = json_decode( $after, true );
+				$this->assertIsInt( $persisted['driven_at'] );
+				$this->assertGreaterThanOrEqual( $now, $persisted['driven_at'] );
+				$this->assertLessThanOrEqual( $finished, $persisted['driven_at'] );
+				$handle['driven_at'] = $persisted['driven_at'];
+				$this->assertSame( $handle, $persisted, 'Owner drive preserves every other handle field.' );
+			} else {
+				$this->assertSame( $before, $after );
+			}
 		}
 	}
 

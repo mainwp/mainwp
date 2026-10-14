@@ -1468,9 +1468,10 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		if ( '' !== $owner_status ) {
 			$this->assertTrue( $store->set_status( (int) $owner, $owner_status, array( 'pre_snapshot_task_id' => $old_ref ) ) );
 		}
-		$website           = MainWP_DB::instance()->get_website_by_id( $site );
-		$handle            = json_decode( MainWP_DB::instance()->get_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
-		$handle['started'] = time() - MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS - 1;
+		$website             = MainWP_DB::instance()->get_website_by_id( $site );
+		$handle              = json_decode( MainWP_DB::instance()->get_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
+		$handle['started']   = time() - MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS - 1;
+		$handle['driven_at'] = time();
 		MainWP_DB::instance()->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, wp_json_encode( $handle ) );
 		$new_ref  = 'replacement-safety-child';
 		$created  = false;

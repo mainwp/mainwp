@@ -1001,7 +1001,15 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 return;
             }
 
-            $ret = array( 'result' => MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 1, 1, 1, 1 ) );
+            $ret = array(
+                'result' => MainWP_Backup_Executor::with_backup_hold(
+                    $site_id,
+                    static function () use ( $site_id ) {
+                        return MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 1, 1, 1, 1 );
+                    },
+                    true
+                ),
+            );
             wp_send_json( $ret );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );
@@ -1069,7 +1077,13 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $pid                            = isset( $_POST['pid'] ) ? intval( $_POST['pid'] ) : false;
             $append                         = isset( $_POST['append'] ) ? intval( $_POST['append'] ) : false;
 
-            $result = MainWP_Backup_Executor::backup( $site_id, $type, $subfolder, $excludedFolder, $excludebackup, $excludecache, $excludenonwp, $excludezip, $filename, $fileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $pid, $append );
+            $result = MainWP_Backup_Executor::with_backup_hold(
+                $site_id,
+                static function () use ( $site_id, $type, $subfolder, $excludedFolder, $excludebackup, $excludecache, $excludenonwp, $excludezip, $filename, $fileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $pid, $append ) {
+                    return MainWP_Backup_Executor::backup( $site_id, $type, $subfolder, $excludedFolder, $excludebackup, $excludecache, $excludenonwp, $excludezip, $filename, $fileNameUID, $archiveFormat, $maximumFileDescriptorsOverride, $maximumFileDescriptorsAuto, $maximumFileDescriptors, $loadFilesBeforeZip, $pid, $append );
+                },
+                true
+            );
             wp_send_json( array( 'result' => $result ) );
         } catch ( MainWP_Exception $e ) {
             $this->die_exception_error( $e );

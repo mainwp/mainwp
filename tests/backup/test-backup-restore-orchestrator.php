@@ -8133,8 +8133,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$db      = MainWP_DB::instance();
 		$website = $db->get_website_by_id( $this->site_id );
 		$handle  = array(
-			'task_id' => 'safety-task',
-			'owner'   => '42',
+			'task_id'   => 'safety-task',
+			'owner'     => '42',
+			'driven_at' => time(),
 		);
 		$db->update_website_option( $website, MainWP_Backup_Executor::ADHOC_TASK_OPTION, wp_json_encode( $handle ) );
 		$release = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'release_pre_snapshot_handle' );
@@ -8154,9 +8155,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$website           = $db->get_website_by_id( $this->site_id );
 		$name              = MainWP_Backup_Executor::ADHOC_TASK_OPTION;
 		$handle            = array(
-			'task_id' => 'safety-task',
-			'owner'   => '42',
-			'started' => 1,
+			'task_id'   => 'safety-task',
+			'owner'     => '42',
+			'started'   => 1,
+			'driven_at' => time(),
 		);
 		$old               = wp_json_encode( $handle );
 		$handle['started'] = 2;

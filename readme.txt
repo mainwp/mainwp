@@ -154,6 +154,20 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 == Changelog ==
 
+= 6.3-beta4 - 10-14-2026 =
+
+* Added: Download a backup from its row on Snapshots & Restore through a one-use link that expires after 10 minutes. Incremental and cloud-only backups cannot be downloaded yet.
+* Added: Delete a single backup from Snapshots & Restore, together with every backup that depends on it, with an option to also delete its cloud copies.
+* Added: The delete-backup-snapshot-v1 ability, with a dry-run preview and confirmation against the previewed backups.
+* Changed: Clean Up, retention and task delete report which backups were removed and which remain, and report cloud deletions as queued.
+* Changed: A diagnostics bundle is removed from the Dashboard once it has downloaded completely.
+* Fixed: Two backups of one site started in the same minute could overwrite each other's archive.
+* Fixed: Download, restore, test restore and upload refuse an archive whose size no longer matches its backup.
+* Fixed: Retention, Clean Up and task delete no longer remove a backup that is still uploading, being test-restored, or in use by an incremental backup in progress.
+* Fixed: Deleting a storage destination also removes it from Back Up Now tasks.
+* Fixed: Messages in the Dashboard's notice areas are always shown as text.
+* Fixed: Dropbox connections refuse redirects to other hosts.
+
 = 6.3-beta1 - 10-8-2026 =
 
 * Added: Native Backups (beta): schedule or run full, database-only, files-only, and incremental backups of child sites from the Dashboard, with resumable transfers that survive timeouts and slow hosts.

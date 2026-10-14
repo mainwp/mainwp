@@ -18,17 +18,24 @@ vm.runInContext( source.slice( start, end ), context );
 // anchor itself (accessible description).
 const enabled = '<a href="#" class="ui mini basic button mainwp-download-snapshot" data-snapshot="17">Download</a>';
 const disabled = reason => '<span title="' + reason + '"><a href="#" class="ui mini basic button mainwp-download-snapshot disabled" data-snapshot="17" aria-disabled="true" title="' + reason + '">Download</a></span>';
+// Every type the executor records, crossed with every source snapshot_source() returns.
 const matrix = [
     [ 'full', 'local', '' ],
-    [ 'db', 'local', '' ],
-    [ 'files', 'local', '' ],
-    [ 'incremental', 'local', 'incremental' ],
-    [ 'incremental', 'remote', 'incremental' ],
-    [ 'incremental', 'unavailable', 'incremental' ],
     [ 'full', 'remote', 'missing' ],
     [ 'full', 'remote_chunked', 'missing' ],
+    [ 'full', 'unavailable', 'missing' ],
+    [ 'db', 'local', '' ],
+    [ 'db', 'remote', 'missing' ],
+    [ 'db', 'remote_chunked', 'missing' ],
     [ 'db', 'unavailable', 'missing' ],
-    [ 'files', 'remote', 'missing' ]
+    [ 'files', 'local', '' ],
+    [ 'files', 'remote', 'missing' ],
+    [ 'files', 'remote_chunked', 'missing' ],
+    [ 'files', 'unavailable', 'missing' ],
+    [ 'incremental', 'local', 'incremental' ],
+    [ 'incremental', 'remote', 'incremental' ],
+    [ 'incremental', 'remote_chunked', 'incremental' ],
+    [ 'incremental', 'unavailable', 'incremental' ]
 ];
 for ( const [ type, source, reason ] of matrix ) {
     const expected = '' === reason ? enabled : disabled( context.downloadLabels[ reason ] );

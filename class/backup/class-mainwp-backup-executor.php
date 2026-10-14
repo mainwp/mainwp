@@ -3061,11 +3061,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Renew only the matching owner's handle without overwriting concurrent state.
      *
+     * A missed stamp is bounded by the previous one and retried on the next
+     * drive, so a failed write is logged rather than stopping a running task.
+     *
      * @param object $website Child site.
      * @param string $task_id Child task identity.
      * @param string $owner Handle owner.
      * @return void
-     * @throws MainWP_Exception When the matching handle cannot be saved.
      */
     private static function stamp_adhoc_drive( object $website, string $task_id, string $owner ): void {
         $db = MainWP_DB::instance();
@@ -3081,7 +3083,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return;
             }
         }
-        throw new MainWP_Exception( esc_html__( 'The backup could not save its running state. Try again.', 'mainwp' ) );
+        MainWP_Logger::instance()->warning( 'Backup drive stamp could not be saved for site ' . (int) $website->id );
     }
 
     /**

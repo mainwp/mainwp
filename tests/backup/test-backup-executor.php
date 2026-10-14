@@ -4233,7 +4233,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		$this->assertSame( 'running', MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate-stuck', 1 )['status'] );
 		$handle = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, null, true );
 		$this->assertSame( $same['last_progress_at'], $handle['progress_watermark']['last_progress_at'] ?? null, 'The baseline must survive a budget boundary.' );
-		$this->assertIsInt( $handle['driven_at'] );
+		$this->assertGreaterThan( 123, $handle['driven_at'], 'The budgeted pass stamps its drive.' );
 		$this->assertSame( 'running', MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate-stuck', 1 )['status'] );
 		for ( $attempt = 1; $attempt <= 5; ++$attempt ) {
 			MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 45;
@@ -4285,7 +4285,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		$this->assertSame( 'running', MainWP_Backup_Executor::get_backup_task_status( $site_id, 's83-gate-unknown', 1 )['status'] );
 		$handle = MainWP_DB::instance()->get_website_option( $site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, null, true );
 		$this->assertArrayNotHasKey( 'reconcile_pending', $handle );
-		$this->assertIsInt( $handle['driven_at'] );
+		$this->assertGreaterThan( 123, $handle['driven_at'], 'The budgeted pass stamps its drive.' );
 		$this->assertSame( array( 'backup_task_status' ), $calls );
 	}
 

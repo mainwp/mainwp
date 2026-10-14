@@ -507,6 +507,35 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 		$this->assertFalse( MainWP_Backup_Operations::snapshot_delete_busy( $this->site_id ) );
 	}
 
+	/** A drive stamp that cannot be saved must not stop the owner driving its task. */
+	public function test_s93_r2_failed_drive_stamp_keeps_driving() {
+		global $wpdb;
+		$db     = MainWP_DB::instance();
+		$handle = wp_json_encode(
+			array(
+				'task_id'   => 'owned-task',
+				'type'      => 'full',
+				'started'   => time() - 60,
+				'driven_at' => time() - 60,
+				'owner'     => '',
+			)
+		);
+		$db->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handle );
+		$fail     = static function ( $query ) {
+			return str_starts_with( $query, 'UPDATE' ) && str_contains( $query, 'driven_at' ) ? 'SELECT snapshot_delete_missing_column' : $query;
+		};
+		$suppress = $wpdb->suppress_errors();
+		add_filter( 'query', $fail );
+		try {
+			$stamp = new \ReflectionMethod( MainWP_Backup_Executor::class, 'stamp_adhoc_drive' );
+			$stamp->invoke( null, $db->get_website_by_id( $this->site_id ), 'owned-task', '' );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $suppress );
+		}
+		$this->assertSame( $handle, $db->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+	}
+
 	/** Shutdown removes only the unfinished request's token; normal exit is inert. */
 	public function test_s93_r1_shutdown_releases_unfinished_request() {
 		self::$shutdown_callbacks = array();

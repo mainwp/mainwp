@@ -116,12 +116,14 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		);
 		$first_path = $fiber->start();
 		try {
-			$this->assertFileExists( $first_path, 'The first path must be reserved before transport.' );
+			$this->assertFileExists( $first_path . '.reserved', 'The first path must be reserved before transport.' );
+			$this->assertFileDoesNotExist( $first_path );
+			file_put_contents( $first_path, substr( $content, 0, 100 ) );
 			$before = file_get_contents( $first_path );
 			$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $second, 'backups' ) );
 			$this->assertCount( 2, $paths );
 			$this->assertNotSame( $paths[0], $paths[1] );
-			$this->assertSame( $before, file_get_contents( $first_path ), 'The second run must leave the first reservation untouched.' );
+			$this->assertSame( $before, file_get_contents( $first_path ), 'The second run must leave the first partial download untouched.' );
 		} finally {
 			$fiber->resume();
 			remove_filter( 'mainwp_download_to_file_pre', $download );
@@ -163,7 +165,8 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
 		try {
 			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
-			$this->assertFileExists( $paths[0] );
+			$this->assertFileExists( $paths[0] . '.reserved' );
+			$this->assertFileDoesNotExist( $paths[0] );
 			$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
 			$this->assertSame( $paths[0], $paths[1] );
 		} finally {
@@ -208,8 +211,8 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		$first  = $build();
 		$second = $build();
 		$this->assertNotSame( $first, $second );
-		$this->assertFileExists( $first );
-		$this->assertSame( 0, filesize( $first ) );
+		$this->assertFileExists( $first . '.reserved' );
+		$this->assertFileDoesNotExist( $first );
 	}
 
 	/**

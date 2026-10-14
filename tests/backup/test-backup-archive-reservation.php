@@ -8,6 +8,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_File_Manager;
+use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB_Backup;
@@ -46,8 +47,8 @@ class MainWP_Backup_Archive_Reservation_Test extends MainWP_Abilities_Test_Case 
 		$reserved = MainWP_Backup_File_Manager::reserve_local_archive_path( $path, $site );
 		$this->assertSame( $dir . 'full-x-October-13-2026-8-17-pm-2' . $extension, $reserved );
 		$this->assertSame( 'original', file_get_contents( $path ) );
-		$this->assertFileExists( $reserved );
-		$this->assertSame( 0, filesize( $reserved ) );
+		$this->assertFileExists( $reserved . '.reserved' );
+		$this->assertFileDoesNotExist( $reserved );
 		$this->assertSame( $dir . 'full-x-October-13-2026-8-17-pm-3' . $extension, MainWP_Backup_File_Manager::reserve_local_archive_path( $path, $site ) );
 	}
 
@@ -58,6 +59,100 @@ class MainWP_Backup_Archive_Reservation_Test extends MainWP_Abilities_Test_Case 
 	 */
 	public static function n1_extensions() {
 		return array_map( static fn( $ext ) => array( $ext ), array( '.tar.gz', '.sql.gz', '.sql.tar.gz', '.zip', '.tar', '.tar.bz2', '.sql' ) );
+	}
+
+	/** Unknown-size transport cleanup must leave the name reserved. */
+	public function test_n1_unknown_size_cleanup_preserves_reservation() {
+		$site  = $this->create_test_site();
+		$path  = MainWP_Backup_Private_Root::site_dir( $site ) . 'full.zip';
+		$first = MainWP_Backup_File_Manager::reserve_local_archive_path( $path, $site );
+		if ( file_exists( $first ) ) {
+			unlink( $first );
+		}
+		$second = MainWP_Backup_File_Manager::reserve_local_archive_path( $path, $site );
+		$this->assertNotSame( $first, $second );
+		$this->assertFileExists( $first . '.reserved' );
+		$this->assertFileDoesNotExist( $first );
+		$this->assertFileExists( $second . '.reserved' );
+		$this->assertFileDoesNotExist( $second );
+	}
+
+	/** A reservation sidecar holds its name without an archive. */
+	public function test_n1_reservation_skips_reserved_sidecar() {
+		$site = $this->create_test_site();
+		$dir  = MainWP_Backup_Private_Root::site_dir( $site );
+		$path = $dir . 'full.zip';
+		file_put_contents( $path . '.reserved', '' );
+		$reserved = MainWP_Backup_File_Manager::reserve_local_archive_path( $path, $site );
+		$this->assertSame( $dir . 'full-2.zip', $reserved );
+		$this->assertFileExists( $path . '.reserved' );
+		$this->assertFileExists( $reserved . '.reserved' );
+		$this->assertFileDoesNotExist( $reserved );
+	}
+
+	/** The legacy sweep must leave a slot for bytes that have not landed. */
+	public function test_n1_legacy_sweep_preserves_older_archive() {
+		$site = $this->create_test_site();
+		$dir  = MainWP_Backup_Private_Root::site_dir( $site );
+		$old  = $dir . 'full-old.zip';
+		file_put_contents( $old, 'older full archive' );
+		touch( $old, time() - HOUR_IN_SECONDS );
+		update_option( 'mainwp_backupsOnServer', 2 );
+		try {
+			$reserved = MainWP_Backup_File_Manager::reserve_local_archive_path( $dir . 'full-new.zip', $site );
+			MainWP_Backup_File_Manager::sweep_backup_download_files( $site, 'full', $reserved, false );
+			$this->assertFileExists( $old );
+			$this->assertSame( 'older full archive', file_get_contents( $old ) );
+			$this->assertFileExists( $reserved . '.reserved' );
+			$this->assertFileDoesNotExist( $reserved );
+		} finally {
+			delete_option( 'mainwp_backupsOnServer' );
+		}
+	}
+
+	/** A reservation cannot count as a recent backup. */
+	public function test_n1_reservation_is_not_a_recent_archive() {
+		$site = $this->create_test_site();
+		MainWP_Backup_File_Manager::reserve_local_archive_path( MainWP_Backup_Private_Root::site_dir( $site ) . 'full.zip', $site );
+		$this->assertSame( -1, MainWP_Backup_Executor::latest_backup_archive_mtime( $site ) );
+	}
+
+	/**
+	 * Cleanup reclaims day-old reservations while preserving fresh and unrelated files.
+	 *
+	 * @dataProvider n1_reservation_directories
+	 * @param string $subdir Reservation directory relative to the site.
+	 */
+	public function test_n1_cleanup_reclaims_only_old_reservations( $subdir ) {
+		$site = $this->create_test_site();
+		$dir  = MainWP_Backup_Private_Root::site_dir( $site );
+		$run  = $dir . $subdir;
+		wp_mkdir_p( $run );
+		$old   = $run . 'old.zip.reserved';
+		$fresh = $run . 'fresh.zip.reserved';
+		$other = $run . 'old.zip';
+		file_put_contents( $old, '' );
+		file_put_contents( $fresh, '' );
+		file_put_contents( $other, 'keep' );
+		touch( $old, time() - 2 * DAY_IN_SECONDS );
+		touch( $fresh, time() - DAY_IN_SECONDS + 60 );
+		touch( $other, time() - 2 * DAY_IN_SECONDS );
+		MainWP_Backup_File_Manager::cleanup_stale_download_locks( $dir );
+		$this->assertFileDoesNotExist( $old );
+		$this->assertFileExists( $fresh );
+		$this->assertSame( 'keep', file_get_contents( $other ) );
+	}
+
+	/**
+	 * Both directories covered by the lock sweep.
+	 *
+	 * @return array Reservation directories.
+	 */
+	public static function n1_reservation_directories() {
+		return array(
+			'site'     => array( '' ),
+			'snapshot' => array( 'snapshot-old/' ),
+		);
 	}
 
 	/** Sidecars and database claims reserve names even without an archive. */
@@ -114,7 +209,8 @@ class MainWP_Backup_Archive_Reservation_Test extends MainWP_Abilities_Test_Case 
 		}
 		$path = MainWP_Backup_File_Manager::reserve_local_archive_path( $dir . 'full.tar.gz', $site );
 		$this->assertMatchesRegularExpression( '/full-[a-f0-9-]{36}\.tar\.gz$/', $path );
-		$this->assertSame( 0, filesize( $path ) );
+		$this->assertFileExists( $path . '.reserved' );
+		$this->assertFileDoesNotExist( $path );
 		$this->assertSame( 'keep', file_get_contents( $dir . 'full.tar.gz' ) );
 	}
 }

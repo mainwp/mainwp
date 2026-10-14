@@ -1124,12 +1124,11 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A chunk whose staged copy is gone and whose source was cut short can
-	 * never be rebuilt, so the job fails permanently.
+	 * A truncated source must fail the recorded-size check before upload.
 	 *
 	 * @return void
 	 */
-	public function test_truncated_chunk_source_fails_permanent() {
+	public function test_truncated_chunk_source_fails_recorded_size_check() {
 		list( $dest_id ) = $this->make_local_destination();
 		$snapshot_id     = $this->make_snapshot(
 			array(
@@ -1170,6 +1169,49 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
 		$this->assertSame( 0, (int) $job->next_retry_at );
 		$this->assertStringContainsString( 'was changed or replaced after this backup finished', $job->last_error );
+	}
+
+	/** A matching archive size cannot supply a checkpoint range beyond EOF. */
+	public function test_same_size_source_with_missing_chunk_range_fails_permanent() {
+		list( $dest_id ) = $this->make_local_destination();
+		$snapshot_id     = $this->make_snapshot(
+			array(
+				'large.zip' => array(
+					'size' => 3000,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+		$path            = $snapshot->archives[0]['path'];
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_id ) );
+		$job        = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$driver     = MainWP_Backup_Upload_Driver::instance();
+		$build      = new \ReflectionMethod( $driver, 'new_checkpoint' );
+		$chunking   = new \ReflectionMethod( $driver, 'phase_chunking' );
+		$checkpoint = $build->invoke( $driver, $snapshot );
+		$args       = array( $job, &$checkpoint, microtime( true ) + 60 );
+		$this->assertTrue( $chunking->invokeArgs( $driver, $args ) );
+		$this->assertSame( $snapshot->archives[0]['size'], filesize( $path ) );
+
+		// Keep the size check satisfied while the saved range cannot be rebuilt.
+		$checkpoint['artifacts'][0]['chunks'][0]['offset'] = filesize( $path );
+		$store->save_checkpoint( (int) $job->id, $checkpoint );
+		$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+		$staged = glob( $this->private_root . '/upload-staging/' . $snapshot_id . '-' . $dest_id . '/*.bin' );
+		$this->assertNotEmpty( $staged, 'Chunking must stage chunk bytes.' );
+		foreach ( $staged as $file ) {
+			unlink( $file );
+		}
+
+		$driver->process_pending_jobs( 240, time() );
+
+		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 0, (int) $job->next_retry_at );
+		$this->assertStringContainsString( 'Chunk bytes are unavailable locally', $job->last_error );
+		$this->assertSame( $snapshot->archives[0]['size'], filesize( $path ) );
 	}
 
 	/**

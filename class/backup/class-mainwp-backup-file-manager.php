@@ -546,11 +546,11 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 
     /**
-     * Reserve a fresh archive name with exclusive creation before saving it.
+     * Reserve a fresh archive name through exclusive sidecar creation.
      *
      * @param string $proposed Proposed absolute path.
      * @param int    $site_id  Owning site.
-     * @return string Reserved path, containing an empty resumable archive.
+     * @return string Reserved archive path with a .reserved sidecar.
      * @throws MainWP_Exception When no path can be reserved.
      */
     public static function reserve_local_archive_path( string $proposed, int $site_id ): string {
@@ -567,13 +567,13 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
             $suffix = 1 === $attempt ? '' : '-' . ( $attempt <= 100 ? $attempt : wp_generate_uuid4() );
             $path   = $stem . $suffix . $extension;
             clearstatcache( true, $path );
-            if ( file_exists( $path ) || is_link( $path ) || file_exists( $path . '.downloading' ) || file_exists( $path . '.downloading.reclaim' )
+            if ( file_exists( $path ) || is_link( $path ) || file_exists( $path . '.reserved' ) || file_exists( $path . '.downloading' ) || file_exists( $path . '.downloading.reclaim' )
                 || isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] ) ) {
                 continue;
             }
-            $handle = @fopen( $path, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.PHP.NoSilencedErrors -- exclusive local creation arbitrates concurrent reservations.
+            $handle = @fopen( $path . '.reserved', 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.PHP.NoSilencedErrors -- exclusive sidecar creation arbitrates concurrent reservations.
             if ( false !== $handle ) {
-                fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- close the exclusive reservation.
+                fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- close the exclusive reservation sidecar.
                 return $path;
             }
         }
@@ -956,6 +956,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * the site directory and its immediate snapshot-* run subdirectories.
      * Runs at backup start so an interrupted run never blocks future runs
      * for longer than the lock TTL.
+     * Also reclaims reservation sidecars whose own mtime is older than DAY_IN_SECONDS.
      *
      * Orphan reclaim mutexes are removed only when their own mtime is older
      * than HOUR_IN_SECONDS and the lock is absent before and after clearing
@@ -982,6 +983,21 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 // Refresh sidecars share the owner's mutex so cleanup cannot race a live refresh.
                 $owner_file = preg_replace( '/(\.downloading)(?:\.tmp|\.[^.]+\.tmp)$/', '$1', $lock_file );
                 static::reclaim_stale_lock( $lock_file, $owner_file . '.reclaim' );
+            }
+        }
+
+        // Abandoned reservations must not hold archive names indefinitely.
+        $site_reservations = glob( rtrim( $dir, '/' ) . '/*.reserved' );
+        $run_reservations  = glob( rtrim( $dir, '/' ) . '/snapshot-*/*.reserved' );
+        $reservations      = array_merge(
+            is_array( $site_reservations ) ? $site_reservations : array(),
+            is_array( $run_reservations ) ? $run_reservations : array()
+        );
+        foreach ( $reservations as $reservation_file ) {
+            clearstatcache( true, $reservation_file );
+            $mtime = @filemtime( $reservation_file ); // phpcs:ignore WordPress.PHP.NoSilencedErrors -- a concurrent sweep may have removed the sidecar.
+            if ( false !== $mtime && time() - $mtime > DAY_IN_SECONDS ) {
+                wp_delete_file( $reservation_file );
             }
         }
 

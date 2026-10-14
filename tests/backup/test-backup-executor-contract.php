@@ -53,9 +53,11 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		);
 		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
 		$paths    = array();
-		$download = static function ( $pre, $url, $file ) use ( &$paths ) {
+		$download = function ( $pre, $url, $file ) use ( &$paths ) {
 			$paths[] = $file;
 			if ( 1 === count( $paths ) ) {
+				$this->assertFileExists( $file . '.reserved' );
+				$this->assertFileDoesNotExist( $file );
 				file_put_contents( $file, "PK\x03\x04" );
 				return new MainWP_Exception( 'Interrupted transfer.' );
 			}

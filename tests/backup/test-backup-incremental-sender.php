@@ -5433,6 +5433,50 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFalse( $db->has_inflight_incremental_for_site( $site ) );
 	}
 
+	/** A pending run_key repair cannot turn the in-flight read into a hold on every prune. */
+	public function test_s90_r4_inflight_predicate_skips_run_key_while_repair_pending() {
+		global $wpdb;
+		$site = $this->create_test_site();
+		$db   = MainWP_DB_Backup::instance();
+		$task = $db->add_backup_task( get_current_user_id(), 'Prune run_key repair pending', 'daily', 'incremental', '', (string) $site, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0 );
+		$run  = time() - 100;
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'  => $run,
+				'completed' => 0,
+			)
+		);
+		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		// Stands in for a snapshot table whose run_key column the repair has not added yet.
+		$missing = static function ( $sql ) use ( $snapshot_table ) {
+			return str_contains( $sql, $snapshot_table . ' s ' ) ? str_replace( 's.run_key', 's.run_key_missing', $sql ) : $sql;
+		};
+		update_site_option( \MainWP\Dashboard\MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING, time() );
+		add_filter( 'query', $missing );
+		$suppressed = $wpdb->suppress_errors( true );
+		try {
+			$idle = $db->has_inflight_incremental_for_site( $site );
+			$db->add_backup_task_progress( $task->id, $site, array() );
+			$db->update_backup_task_progress(
+				$task->id,
+				$site,
+				array(
+					'dtsFetched'           => $run,
+					'child_backup_task_id' => MainWP_Backup_Executor::CREATING_MARKER_PREFIX . 's90-r4',
+					'child_phase'          => '',
+				)
+			);
+			$creating = $db->has_inflight_incremental_for_site( $site );
+		} finally {
+			$wpdb->suppress_errors( $suppressed );
+			remove_filter( 'query', $missing );
+			delete_site_option( \MainWP\Dashboard\MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING );
+		}
+		$this->assertFalse( $idle, 'A site with nothing in flight must not read as held.' );
+		$this->assertTrue( $creating, 'A mid-create site is still held.' );
+	}
+
 	/**
 	 * Progress after failure and reset paths.
 	 *

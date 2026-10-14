@@ -1707,10 +1707,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             && MainWP_Backup_Executor::UPDATE_GATE_PASS !== MainWP_Backup_Executor::evaluate_update_backup_gate( $site_id, MainWP_Updates_Overview::get_backup_before_upgrade_days(), null, $ids );
         $warnings = array();
         if ( $warn ) {
-            $warnings[] = __( 'Deleting these snapshots will hold updates until this site has another qualifying backup.', 'mainwp' );
+            $warnings[] = __( 'Deleting these backups leaves this site without a recent backup, so updates will be held until a new backup finishes.', 'mainwp' );
         }
         if ( ! $cloud ) {
-            $warnings[] = __( 'Cloud copies will stay in storage. MainWP will no longer track them.', 'mainwp' );
+            $warnings[] = __( 'Cloud copies stay in your storage, but they will no longer appear in MainWP.', 'mainwp' );
         }
         $preview            = self::backup_preview(
             array(

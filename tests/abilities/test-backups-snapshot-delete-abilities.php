@@ -127,6 +127,8 @@ class MainWP_Backups_Snapshot_Delete_Abilities_Test extends MainWP_Abilities_Tes
 			)
 		);
 		$this->assertSame( 'changed', $result['status'] );
+		// cleanup_error() passes this refusal through unchanged rather than replacing it with a generic error.
+		$this->assertSame( 'This site\'s backups changed since the preview. Check the new list, then delete again.', $result['errors'][0]['message'] );
 		$this->assertSame(
 			$result,
 			$this->ajax(

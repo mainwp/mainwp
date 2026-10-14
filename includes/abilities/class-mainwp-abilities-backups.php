@@ -3572,7 +3572,7 @@ class MainWP_Abilities_Backups {
             'mainwp/delete-backup-snapshot-v1',
             array(
                 'label'               => __( 'Delete Backup Snapshot', 'mainwp' ),
-                'description'         => __( 'Delete one snapshot and every snapshot that depends on it. Preview the ids first, then confirm with expected_snapshot_ids. Cloud deletes are queued when selected. Possible errors: mainwp_backup_snapshot_not_found, mainwp_site_not_found, mainwp_backup_legacy_disabled, mainwp_invalid_input.', 'mainwp' ),
+                'description'         => __( 'Delete one snapshot and every snapshot that depends on it. Preview the ids first, then confirm with expected_snapshot_ids. When delete_cloud_copies is true the cloud deletes are queued and run in the background. Possible errors: mainwp_backup_snapshot_not_found, mainwp_site_not_found, mainwp_backup_legacy_disabled, mainwp_invalid_input.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::delete_backup_snapshot_input_schema(),
@@ -3619,7 +3619,7 @@ class MainWP_Abilities_Backups {
         );
         $schema['properties']['delete_cloud_copies']   = array(
             'type'        => 'boolean',
-            'description' => 'Also delete cloud copies. Omit to use the owning task setting. When false, MainWP stops tracking the cloud copies kept in storage.',
+            'description' => 'Also delete cloud copies. Omit to use the backup task\'s setting. When false, the cloud copies stay in storage and MainWP stops listing them.',
         );
         return $schema;
     }

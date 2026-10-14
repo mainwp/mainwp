@@ -538,7 +538,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             if ( $sorted !== $expected_ids ) {
                 $result['status']        = 'changed';
                 $result['remaining_ids'] = $ids;
-                $result['errors'][]      = __( 'The snapshots changed since the preview. Review the new list before deleting.', 'mainwp' );
+                $result['errors'][]      = __( 'This site\'s backups changed since the preview. Check the new list, then delete again.', 'mainwp' );
                 return $result;
             }
             if ( MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $site_id ) ) {

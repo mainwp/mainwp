@@ -89,6 +89,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         $disconnected   = $site_id > 0 && MainWP_Post_Backup_Handler::site_is_disconnected( MainWP_DB::instance()->get_website_by_id( $site_id ) );
         $reconnect_url  = $site_id > 0 ? admin_url( 'admin.php?page=managesites&dashboard=' . $site_id ) : '';
         $controls_off   = 0 === $site_id || $disconnected;
+        // Filled below when native backups are on; the page script also reads it to name the destinations of queued cloud deletes.
+        $destination_names = array();
         if ( $locked ) :
             ?>
         <div id="mainwp-backup-snapshots" class="ui alt segment">
@@ -103,7 +105,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             if ( $native_enabled ) :
                 $manual_ids = $site_id > 0 ? MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) : array();
                 sort( $manual_ids, SORT_NUMERIC );
-                $destination_names = array();
                 foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
                     $destination_names[ (int) $destination->id ] = (string) $destination->name;
                 }
@@ -190,10 +191,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         </div>
 
         <div class="ui small modal" id="mainwp-snapshot-delete-modal">
-            <div class="header"><?php esc_html_e( 'Delete Backup Snapshot', 'mainwp' ); ?></div>
+            <div class="header"><?php esc_html_e( 'Delete Backup', 'mainwp' ); ?></div>
             <div class="content">
-                <div class="ui yellow message"><?php esc_html_e( 'These snapshots and their local files will be deleted. This cannot be undone.', 'mainwp' ); ?></div>
-                <div class="ui bulleted list" id="mainwp-snapshot-delete-ids"></div>
+                <div class="ui yellow message"><?php esc_html_e( 'These backups and their files on this Dashboard will be deleted. This cannot be undone.', 'mainwp' ); ?></div>
+                <div class="ui divided list" id="mainwp-snapshot-delete-ids" style="max-height: 14em; overflow-y: auto;"></div>
                 <div class="ui form">
                     <div class="field">
                         <div class="ui checkbox">
@@ -261,7 +262,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             </div>
         </div>
         <?php
-        static::render_script( $site_id, $disconnected );
+        static::render_script( $site_id, $disconnected, $destination_names );
     }
 
     /**
@@ -330,10 +331,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
      * Inline page script: list loading, the confirm flow, progress
      * polling, cancel, and rollback.
      *
-     * @param int  $site_id      Preselected site id.
-     * @param bool $disconnected Whether the preselected site has sync errors.
+     * @param int   $site_id           Preselected site id.
+     * @param bool  $disconnected      Whether the preselected site has sync errors.
+     * @param array $destination_names Storage destination names keyed by id.
      */
-    private static function render_script( int $site_id, bool $disconnected = false ): void { // phpcs:ignore -- NOSONAR - page script.
+    private static function render_script( int $site_id, bool $disconnected = false, array $destination_names = array() ): void { // phpcs:ignore -- NOSONAR - page script.
         $labels = array(
             'pending'          => esc_html__( 'Queued', 'mainwp' ),
             'preflight'        => esc_html__( 'Checking the site is ready', 'mainwp' ),
@@ -400,14 +402,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var snapshotDeleteRequest = 0;
             var deleteLabels = {
                 action: '<?php echo esc_js( esc_html__( 'Delete', 'mainwp' ) ); ?>',
-                busy: '<?php echo esc_js( esc_html__( 'Wait for the backup or restore to finish.', 'mainwp' ) ); ?>',
-                failed: '<?php echo esc_js( esc_html__( 'Could not delete the snapshots. Try again.', 'mainwp' ) ); ?>',
-                complete: '<?php echo esc_js( esc_html__( 'Deletion complete.', 'mainwp' ) ); ?>',
-                incomplete: '<?php echo esc_js( esc_html__( 'Deletion is incomplete. Review the remaining ids before trying again.', 'mainwp' ) ); ?>',
-                deleted: '<?php echo esc_js( esc_html__( 'Deleted snapshot ids: %s.', 'mainwp' ) ); ?>',
-                remaining: '<?php echo esc_js( esc_html__( 'Remaining snapshot ids: %s.', 'mainwp' ) ); ?>',
-                queued: '<?php echo esc_js( esc_html__( 'Cloud deletes queued: %s.', 'mainwp' ) ); ?>'
+                busy: '<?php echo esc_js( esc_html__( 'A backup or restore is running on this site. Wait for it to finish.', 'mainwp' ) ); ?>',
+                failed: '<?php echo esc_js( esc_html__( 'The delete request failed. Reload the page and try again.', 'mainwp' ) ); ?>',
+                complete: '<?php echo esc_js( esc_html__( 'Backups deleted.', 'mainwp' ) ); ?>',
+                incomplete: '<?php echo esc_js( esc_html__( 'Deletion did not finish. Check which backups remain, then try again.', 'mainwp' ) ); ?>',
+                deleted: '<?php /* translators: %s: comma-separated backup IDs, e.g. "#171, #172". */ echo esc_js( esc_html__( 'Deleted backups: %s.', 'mainwp' ) ); ?>',
+                remaining: '<?php /* translators: %s: comma-separated backup IDs, e.g. "#171, #172". */ echo esc_js( esc_html__( 'Backups still present: %s.', 'mainwp' ) ); ?>',
+                queued: '<?php /* translators: %s: comma-separated backups and their storage destinations, e.g. "#171 to Backblaze". */ echo esc_js( esc_html__( 'Cloud copies queued for deletion: %s.', 'mainwp' ) ); ?>',
+                queuedTo: '<?php /* translators: 1: backup ID, e.g. "#171", 2: storage destination name. */ echo esc_js( esc_html__( '%1$s to %2$s', 'mainwp' ) ); ?>'
             };
+            var destinationNames = <?php echo wp_json_encode( (object) $destination_names ); ?>;
             var snapshotsTable = null;
             var showRemovedSnapshots = false;
             var currentSnapshot = 0;
@@ -609,16 +613,86 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
             }
 
-            function showDeletePreview( preview ) {
+            function snapshotIdList( ids ) {
+                return ( ids || [] ).map( function ( id ) {
+                    return '#' + ( parseInt( id, 10 ) || 0 );
+                } ).join( ', ' );
+            }
+
+            // Function replacements keep a "$&" in a destination name literal.
+            function cloudQueueLabel( pair ) {
+                var id = '#' + ( parseInt( pair.snapshot_id, 10 ) || 0 );
+                var name = destinationNames[ pair.destination_id ];
+                if ( ! name ) {
+                    return id;
+                }
+                return deleteLabels.queuedTo.replace( '%1$s', function () { return id; } ).replace( '%2$s', function () { return name; } );
+            }
+
+            function deleteResultLines( response ) {
+                var lines = [ 'complete' === response.status ? deleteLabels.complete : deleteLabels.incomplete ];
+                [
+                    [ deleteLabels.deleted, snapshotIdList( response.deleted_ids ) ],
+                    [ deleteLabels.remaining, snapshotIdList( response.remaining_ids ) ],
+                    [ deleteLabels.queued, ( response.cloud_deletes_queued || [] ).map( cloudQueueLabel ).join( ', ' ) ]
+                ].forEach( function ( segment ) {
+                    if ( '' !== segment[1] ) {
+                        lines.push( segment[0].replace( '%s', function () { return segment[1]; } ) );
+                    }
+                } );
+                ( response.errors || [] ).forEach( function ( error ) {
+                    if ( error && error.message ) {
+                        lines.push( error.message );
+                    }
+                } );
+                return lines;
+            }
+
+            function setDeleteMessages( selector, lines ) {
+                var $box = $( selector ).empty();
+                lines.forEach( function ( line ) {
+                    $( '<p></p>' ).text( line ).appendTo( $box );
+                } );
+                return $box.toggle( lines.length > 0 );
+            }
+
+            // backupTypeLabels are already escaped, as in the table's Type column.
+            function deletePreviewItem( id, snap ) {
+                var html = '<div class="item"><strong>#' + ( parseInt( id, 10 ) || 0 ) + '</strong>';
+                if ( snap ) {
+                    html += ' <span class="ui mini basic label">' + ( backupTypeLabels[ snap.type ] || escAttr( snap.type ) ) + '</span> <span style="white-space: nowrap;">' + escAttr( snap.created_label || '' ) + '</span>';
+                }
+                return html + '</div>';
+            }
+
+            function showDeletePreview( preview, notices ) {
                 snapshotDeletePreview = preview;
+                var rows = {};
+                if ( snapshotsTable ) {
+                    snapshotsTable.rows().data().toArray().forEach( function ( snap ) {
+                        rows[ snap.id ] = snap;
+                    } );
+                }
                 var $ids = $( '#mainwp-snapshot-delete-ids' ).empty();
                 preview.would_affect.snapshot_ids.forEach( function ( id ) {
-                    $( '<div class="item"></div>' ).text( '#' + id ).appendTo( $ids );
+                    $( deletePreviewItem( id, rows[ id ] ) ).appendTo( $ids );
                 } );
                 $( '#mainwp-snapshot-delete-cloud' ).prop( 'checked', preview.would_affect.delete_cloud_copies );
-                $( '#mainwp-snapshot-delete-warnings' ).text( preview.warnings.join( ' ' ) ).toggle( preview.warnings.length > 0 );
+                setDeleteMessages( '#mainwp-snapshot-delete-warnings', ( notices || [] ).concat( preview.warnings ) );
                 $( '#mainwp-snapshot-delete-confirm' ).prop( 'disabled', ! preview.can_proceed ).toggleClass( 'disabled', ! preview.can_proceed );
-                $( '#mainwp-snapshot-delete-result' ).text( preview.refusals.map( function ( refusal ) { return refusal.message; } ).join( ' ' ) ).toggle( ! preview.can_proceed );
+                setDeleteMessages( '#mainwp-snapshot-delete-result', preview.refusals.map( function ( refusal ) { return refusal.message; } ) ).removeClass( 'red' );
+            }
+
+            // A changed set is a new consent step, so its message joins the
+            // fresh preview's warnings; the result box reports deletes that ran.
+            function showDeleteResponse( response ) {
+                if ( 'changed' === response.status && response.preview && response.preview.would_affect ) {
+                    showDeletePreview( response.preview, ( response.errors || [] ).map( function ( error ) {
+                        return error.message;
+                    } ) );
+                    return;
+                }
+                setDeleteMessages( '#mainwp-snapshot-delete-result', deleteResultLines( response ) ).toggleClass( 'red', 'complete' !== response.status );
             }
 
             function requestDeletePreview( cloud ) {
@@ -635,13 +709,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         return;
                     }
                     if ( ! response || response.error ) {
-                        $( '#mainwp-snapshot-delete-result' ).text( response && response.error ? response.error : deleteLabels.failed ).show();
+                        setDeleteMessages( '#mainwp-snapshot-delete-result', [ response && response.error ? response.error : deleteLabels.failed ] );
                         return;
                     }
                     showDeletePreview( response );
                 }, 'json' ).fail( function () {
                     if ( siteId === currentSite && requestId === snapshotDeleteRequest ) {
-                        $( '#mainwp-snapshot-delete-result' ).text( deleteLabels.failed ).show();
+                        setDeleteMessages( '#mainwp-snapshot-delete-result', [ deleteLabels.failed ] );
                     }
                 } );
             }
@@ -1155,7 +1229,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
                 snapshotDeleteTarget = parseInt( $( this ).attr( 'data-snapshot' ), 10 );
                 $( '#mainwp-snapshot-delete-ids, #mainwp-snapshot-delete-warnings, #mainwp-snapshot-delete-result' ).empty();
-                $( '#mainwp-snapshot-delete-result' ).hide();
+                $( '#mainwp-snapshot-delete-result' ).removeClass( 'red' ).hide();
                 $( '#mainwp-snapshot-delete-modal' ).modal( 'show' );
                 requestDeletePreview();
             } );
@@ -1186,22 +1260,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         return;
                     }
                     if ( ! response || response.error ) {
-                        $( '#mainwp-snapshot-delete-result' ).text( response && response.error ? response.error : deleteLabels.failed ).show();
+                        setDeleteMessages( '#mainwp-snapshot-delete-result', [ response && response.error ? response.error : deleteLabels.failed ] );
                         return;
                     }
-                    if ( response.preview ) {
-                        showDeletePreview( response.preview );
-                    }
-                    var text = 'complete' === response.status ? deleteLabels.complete : deleteLabels.incomplete;
-                    text += ' ' + deleteLabels.deleted.replace( '%s', response.deleted_ids.join( ', ' ) );
-                    text += ' ' + deleteLabels.remaining.replace( '%s', response.remaining_ids.join( ', ' ) );
-                    text += ' ' + deleteLabels.queued.replace( '%s', response.cloud_deletes_queued.map( function ( pair ) { return '#' + pair.snapshot_id + '/#' + pair.destination_id; } ).join( ', ' ) );
-                    text += ' ' + response.errors.map( function ( error ) { return error.message; } ).join( ' ' );
-                    $( '#mainwp-snapshot-delete-result' ).toggleClass( 'red', 'complete' !== response.status ).text( text ).show();
+                    showDeleteResponse( response );
                     loadSnapshots( siteId );
                 }, 'json' ).fail( function () {
                     if ( siteId === currentSite ) {
-                        $( '#mainwp-snapshot-delete-result' ).text( deleteLabels.failed ).show();
+                        setDeleteMessages( '#mainwp-snapshot-delete-result', [ deleteLabels.failed ] );
                     }
                 } ).always( function () {
                     $( '#mainwp-snapshot-delete-cloud, #mainwp-snapshot-delete-close' ).prop( 'disabled', false );

@@ -557,8 +557,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function downloadButton( snap ) {
                 var reason = 'incremental' === snap.type ? downloadLabels.incremental : ( 'local' !== snap.source ? downloadLabels.missing : '' );
-                var disabled = '' !== reason;
-                return '<a href="#" class="ui mini basic button mainwp-download-snapshot' + ( disabled ? ' disabled' : '' ) + '" data-snapshot="' + snap.id + '"' + ( disabled ? ' aria-disabled="true"' : '' ) + ( reason ? ' title="' + escAttr( reason ) + '"' : '' ) + '>' + downloadLabels.action + '</a>';
+                if ( '' === reason ) {
+                    return '<a href="#" class="ui mini basic button mainwp-download-snapshot" data-snapshot="' + snap.id + '">' + downloadLabels.action + '</a>';
+                }
+                // Fomantic gives disabled buttons pointer-events: none, so the hover reason sits on a wrapper.
+                return '<span title="' + escAttr( reason ) + '"><a href="#" class="ui mini basic button mainwp-download-snapshot disabled" data-snapshot="' + snap.id + '" aria-disabled="true">' + downloadLabels.action + '</a></span>';
             }
 
             // The static placeholder row is the no-JS fallback; drop it before

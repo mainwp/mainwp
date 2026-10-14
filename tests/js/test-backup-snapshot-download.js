@@ -25,8 +25,9 @@ for ( const snap of [
     { id: 17, type: 'db', source: 'unavailable' }
 ] ) {
     const html = context.downloadButton( snap );
-    assert.match( html, /mainwp-download-snapshot disabled/ );
-    assert.match( html, /title="[^"\n]+"/ );
+    // Fomantic disabled buttons ignore the pointer, so only a wrapper can show the reason on hover.
+    assert.match( html, /^<span title="[^"\n]+"><a href="#" class="ui mini basic button mainwp-download-snapshot disabled"[^>]*>Download<\/a><\/span>$/ );
+    assert.doesNotMatch( html.slice( html.indexOf( '<a ' ) ), /title=/ );
     assert.match( html, /aria-disabled="true"/ );
 }
 // The archive is on this Dashboard, so a disconnected site can still be downloaded.

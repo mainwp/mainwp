@@ -605,9 +605,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 if ( ! $this->remove_local_dir( $snapshot, $result['errors'], false ) ) {
                     break;
                 }
-                // A run that started after admission may already have picked the
-                // next parent; the completion backstop covers the instant after this.
-                if ( ! empty( $result['deleted_ids'] ) && MainWP_DB_Backup::instance()->has_inflight_incremental_for_site( $site_id ) ) {
+                // A run that started after admission may already have picked this
+                // snapshot as its parent; the completion backstop covers the instant after this.
+                if ( MainWP_DB_Backup::instance()->has_inflight_incremental_for_site( $site_id ) ) {
                     $result['errors'][] = $this->incremental_hold_message( array_values( array_diff( $ids, $result['deleted_ids'] ) ) );
                     break;
                 }

@@ -2032,7 +2032,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 					$this->site_id,
 					array(
 						'dtsFetched'           => $run,
-						'child_backup_task_id' => 'creating:s90-r2',
+						'child_backup_task_id' => \MainWP\Dashboard\MainWP_Backup_Executor::CREATING_MARKER_PREFIX . 's90-r2',
 						'child_phase'          => '',
 					)
 				);
@@ -2061,6 +2061,61 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFileExists( $base_dir . '/artifact.tar' );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
 		$this->assertContains( sprintf( 'Snapshots %d: an incremental backup is running on this site, so they were kept. Try the cleanup again once that backup finishes.', $base ), $result['errors'] );
+	}
+
+	/** An incremental run that starts between admission and the first snapshot's deletion holds the unit. */
+	public function test_s90_r3_incremental_run_started_after_admission_holds_first_snapshot() {
+		$db   = \MainWP\Dashboard\MainWP_DB_Backup::instance();
+		$task = $db->add_backup_task( get_current_user_id(), 'Post-admission incremental', 'daily', 'incremental', '', (string) $this->site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0 );
+		$run  = time() - 100;
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'  => $run,
+				'completed' => $run + 10,
+			)
+		);
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		$upload_table     = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$started          = false;
+		$start            = function ( $sql ) use ( &$started, $db, $task, $run, $upload_table ) {
+			if ( ! $started && str_starts_with( $sql, 'UPDATE ' . $upload_table . " SET locked_by = 'prune:" ) ) {
+				// Admission has passed; the run claims its window and writes its creating marker now.
+				$started = true;
+				$db->update_backup_task_with_values( $task->id, array( 'completed' => 0 ) );
+				$db->add_backup_task_progress( $task->id, $this->site_id, array() );
+				$db->update_backup_task_progress(
+					$task->id,
+					$this->site_id,
+					array(
+						'dtsFetched'           => $run,
+						'child_backup_task_id' => \MainWP\Dashboard\MainWP_Backup_Executor::CREATING_MARKER_PREFIX . 's90-r3',
+						'child_phase'          => '',
+					)
+				);
+			}
+			return $sql;
+		};
+		add_filter( 'query', $start );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( $id ),
+						'reason'       => 'count',
+					),
+				),
+				$this->make_task()
+			);
+		} finally {
+			remove_filter( 'query', $start );
+		}
+		$this->assertTrue( $started, 'The run must start after prune admission.' );
+		$this->assertSame( array(), $result['deleted_ids'] );
+		$this->assertSame( array( $id ), $result['remaining_ids'] );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+		$this->assertContains( sprintf( 'Snapshots %d: an incremental backup is running on this site, so they were kept. Try the cleanup again once that backup finishes.', $id ), $result['errors'] );
 	}
 
 	/** An upload pickup at prune admission cannot outlive the cloud delete sweep. */

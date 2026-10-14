@@ -200,7 +200,10 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
         $set    = array();
         $values = array();
         foreach ( $row as $column => $value ) {
-            $set[]    = $column . ' = ' . ( is_int( $value ) ? '%d' : '%s' );
+            if ( ! preg_match( '/^[A-Za-z_][A-Za-z0-9_]*$/D', (string) $column ) ) {
+                return false;
+            }
+            $set[]    = '`' . $column . '` = ' . ( is_int( $value ) ? '%d' : '%s' );
             $values[] = $value;
         }
 
@@ -216,6 +219,7 @@ abstract class MainWP_Backup_Job_Store_Base extends MainWP_DB_Base { // phpcs:ig
 
         $changed = $this->wpdb->query(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- replacements and placeholders come from the same counted arrays.
+                // nosemgrep: AIK_tainted-sql-string -- Column names are validated and backtick-quoted, and values use placeholders.
                 'UPDATE ' . $this->table() . ' SET ' . implode( ', ', $set ) . " WHERE id = %d AND status IN ( {$placeholders} ){$fence}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- SET columns are store-internal literals; placeholder list built from a counted array.
                 $binds
             )

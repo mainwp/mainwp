@@ -1613,20 +1613,24 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         // child, and the executor stamps it without advancing dtsFetched, so
         // a dead driver's later reset row can look fresher than the row that
         // can still poll or cancel the run.
+        // nosemgrep: AIK_tainted-sql-string -- This dedupe query uses MainWP's internal progress table and fixed clauses.
         $this->wpdb->query( "DELETE idless FROM {$progress_table} idless INNER JOIN {$progress_table} named ON idless.task_id = named.task_id AND idless.wp_id = named.wp_id AND idless.child_backup_task_id = '' AND named.child_backup_task_id <> ''" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time dedupe; table name escaped via esc_sql.
 
         // Rows that survive the first pass are alike on that test, so the
         // freshest is the one every read path would have been meant to return.
+        // nosemgrep: AIK_tainted-sql-string -- This dedupe query uses MainWP's internal progress table and fixed clauses.
         $this->wpdb->query( "DELETE stale FROM {$progress_table} stale INNER JOIN {$progress_table} fresh ON stale.task_id = fresh.task_id AND stale.wp_id = fresh.wp_id AND stale.dtsFetched < fresh.dtsFetched" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time dedupe; table name escaped via esc_sql.
 
         // The table carries no primary key or row id to tie-break with, so
         // rows still indistinguishable on both tests are culled by count:
         // they are same-second race inserts of the same payload and carry
         // nothing to choose between.
+        // nosemgrep: AIK_tainted-sql-string -- This dedupe query uses MainWP's internal progress table and fixed clauses.
         $tied = $this->wpdb->get_results( "SELECT task_id, wp_id, COUNT(*) AS row_count FROM {$progress_table} GROUP BY task_id, wp_id HAVING row_count > 1" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter, WordPress.DB.DirectDatabaseQuery -- one-time dedupe; table name escaped via esc_sql.
         foreach ( $tied as $pair ) {
             $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- one-time dedupe.
                 $this->wpdb->prepare(
+                    // nosemgrep: AIK_tainted-sql-string -- The progress table is internal, and task_id, wp_id and LIMIT bind via %d.
                     "DELETE FROM {$progress_table} WHERE task_id = %d AND wp_id = %d LIMIT %d", // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table name escaped via esc_sql.
                     $pair->task_id,
                     $pair->wp_id,

@@ -4427,15 +4427,19 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * Delete a user's REST API keys and return their stored consumer keys.
      *
      * @param int         $user_id    Owner ID.
-     * @param string|null $table_name Key table. Defaults to MainWP's captured table.
+     * @param string|null $table_name MainWP's api_keys table or null; other tables are refused.
      * @return array Removed key rows containing consumer_key.
      */
     public function remove_rest_api_keys_by_user( $user_id, $table_name = null ) {
-        $table_name = esc_sql( null === $table_name ? $this->table_name( 'api_keys' ) : $table_name );
+        $internal_table = $this->table_name( 'api_keys' );
+        if ( null !== $table_name && $internal_table !== $table_name ) {
+            return array();
+        }
+        $table_name = esc_sql( $internal_table );
         // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
-        // nosec - $table_name is MainWP's own api_keys table name, never request input.
+        // nosemgrep: AIK_tainted-sql-string -- Only MainWP's internal api_keys table is allowed, and user_id binds via %d.
         $rows = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT consumer_key FROM {$table_name} WHERE user_id = %d", $user_id ) );
-        // nosec - $table_name is MainWP's own api_keys table name, never request input.
+        // nosemgrep: AIK_tainted-sql-string -- Only MainWP's internal api_keys table is allowed, and user_id binds via %d.
         $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE user_id = %d", $user_id ) );
         // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         return $rows;

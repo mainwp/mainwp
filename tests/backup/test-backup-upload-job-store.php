@@ -239,6 +239,59 @@ class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Invalid column names refuse the whole write; valid columns remain quoted.
+	 *
+	 * @return void
+	 */
+	public function test_terminal_update_rejects_invalid_columns_without_query() {
+		global $wpdb;
+
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 109, array( 7 ) );
+		$job    = $store->get_jobs_for_snapshot( 109 )[0];
+		$method = new \ReflectionMethod( $store, 'terminal_update' );
+
+		foreach ( array( 'status ', 'status`', '1status', "status\n", 0 ) as $column ) {
+			$queries  = $wpdb->num_queries;
+			$suppress = $wpdb->suppress_errors( true );
+			try {
+				$result = $method->invoke(
+					$store,
+					(int) $job->id,
+					array(
+						'last_error' => 'refused',
+						$column      => MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE,
+					)
+				);
+			} finally {
+				$wpdb->suppress_errors( $suppress );
+			}
+			$this->assertSame( $queries, $wpdb->num_queries, 'An invalid column must not issue a query.' );
+			$this->assertFalse( $result );
+		}
+
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $fresh->status );
+		$this->assertSame( '', $fresh->last_error );
+		$this->assertTrue(
+			$method->invoke(
+				$store,
+				(int) $job->id,
+				array(
+					'status'     => MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE,
+					'last_error' => "Owner's message",
+				)
+			)
+		);
+		foreach ( array( 'status', 'last_error', 'updated' ) as $column ) {
+			$this->assertStringContainsString( '`' . $column . '` = ', $wpdb->last_query );
+		}
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $fresh->status );
+		$this->assertSame( "Owner's message", $fresh->last_error );
+	}
+
+	/**
 	 * A completed upload can never be relabeled failed by a racing lane.
 	 *
 	 * @return void

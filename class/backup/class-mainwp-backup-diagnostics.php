@@ -1316,8 +1316,9 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
             $table_name = MainWP_DB::instance()->get_table_name( $table );
             $where      = $scoped && '' !== $scope_where ? ' WHERE ' . $scope_where : '';
-            $rows       = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . $table_name . $where . ' LIMIT %d', $cap + 1 ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- bounded diagnostic dump of a known internal table; the scope clause interpolates only intval'd site ids.
-            $rows       = is_array( $rows ) ? $rows : array();
+            // nosemgrep: AIK_tainted-sql-string -- Table names are internal, site ids pass through intval(), and LIMIT is prepared.
+            $rows = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM ' . $table_name . $where . ' LIMIT %d', $cap + 1 ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- bounded diagnostic dump of a known internal table; the scope clause interpolates only intval'd site ids.
+            $rows = is_array( $rows ) ? $rows : array();
             if ( count( $rows ) > $cap ) {
                 $rows      = array_slice( $rows, 0, $cap );
                 $truncated = true;
@@ -1364,6 +1365,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
         $site_where    = $scoped ? ' WHERE w.id IN (' . $site_list . ')' : '';
         $site_rows     = array();
         if ( ! $scoped || ! empty( $allowed ) ) {
+            // nosemgrep: AIK_tainted-sql-string -- Table names are internal, site ids pass through intval(), and LIMIT is prepared.
             $site_rows = $wpdb->get_results( $wpdb->prepare( 'SELECT w.id, w.name, w.url, s.version FROM ' . $wp_table . ' w LEFT JOIN ' . $sync_table . ' s ON s.wpid = w.id' . $site_where . ' LIMIT %d', $cap + 1 ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- bounded diagnostic dump of a known internal table; the scope clause interpolates only intval'd site ids.
         }
         $site_rows = is_array( $site_rows ) ? $site_rows : array();

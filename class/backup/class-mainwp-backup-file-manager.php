@@ -577,7 +577,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 return $path;
             }
         }
-        throw new MainWP_Exception( esc_html__( 'Could not reserve a local backup file. Check that backup storage is writable and try again.', 'mainwp' ) );
+        throw new MainWP_Exception( esc_html__( 'Could not create a file for this backup on the Dashboard. Check that the backup file location is writable and try again.', 'mainwp' ) );
     }
 
     /**

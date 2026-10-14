@@ -31,7 +31,7 @@ class MainWP_Backup_Download {
             'permission'  => __( 'You do not have permission to download this backup.', 'mainwp' ),
             'unavailable' => __( 'This backup\'s archive is not stored on this Dashboard, so it cannot be downloaded here.', 'mainwp' ),
             'read'        => __( 'The backup archive could not be read. Try downloading it again.', 'mainwp' ),
-            'size'        => __( 'The backup file on this Dashboard no longer matches this backup. It cannot be downloaded.', 'mainwp' ),
+            'size'        => __( 'The backup archive on this Dashboard was changed or replaced after this backup finished, so it cannot be downloaded. Use another backup.', 'mainwp' ),
         );
         return new \WP_Error( 'mainwp_backup_download_' . $kind, $messages[ $kind ], array( 'status' => 403 ) );
     }

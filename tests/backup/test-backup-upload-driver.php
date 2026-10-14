@@ -66,7 +66,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$driver->process_pending_jobs( 240 );
 		$job = $store->get_jobs_for_snapshot( $id )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
-		$this->assertStringContainsString( 'no longer matches', $job->last_error );
+		$this->assertStringContainsString( 'was changed or replaced after this backup finished', $job->last_error );
 		$this->assertEmpty( glob( $base . '/*' ) );
 		if ( ! $resumed ) {
 			$this->assertEmpty( $job->checkpoint['artifacts'][0]['sha256'] ?? '' );
@@ -1169,7 +1169,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
 		$this->assertSame( 0, (int) $job->next_retry_at );
-		$this->assertStringContainsString( 'no longer matches', $job->last_error );
+		$this->assertStringContainsString( 'was changed or replaced after this backup finished', $job->last_error );
 	}
 
 	/**

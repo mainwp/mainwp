@@ -441,7 +441,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             if ( 'local' === $entry['source'] && is_file( $entry['local_path'] ) && ! MainWP_Backup_File_Manager::local_archive_size_matches( $entry['local_path'], $recorded_size, true ) ) {
                 return array(
                     'done'       => false,
-                    'error'      => __( 'The backup file on this Dashboard no longer matches this backup. It cannot be restored.', 'mainwp' ),
+                    'error'      => __( 'The backup archive on this Dashboard was changed or replaced after this backup finished, so it cannot be restored. Choose another backup to restore.', 'mainwp' ),
                     'error_code' => 'mainwp_restore_local_archive_size_mismatch',
                 );
             }
@@ -1344,7 +1344,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             if ( 'local' === ( $entry['source'] ?? '' ) && ! MainWP_Backup_File_Manager::local_archive_size_matches( $entry['staged_path'], $recorded_size, true ) ) {
                 return array(
                     'done'       => false,
-                    'error'      => __( 'The backup file on this Dashboard no longer matches this backup. It cannot be restored.', 'mainwp' ),
+                    'error'      => __( 'The backup archive on this Dashboard was changed or replaced after this backup finished, so it cannot be restored. Choose another backup to restore.', 'mainwp' ),
                     'error_code' => 'mainwp_restore_local_archive_size_mismatch',
                     'retryable'  => false,
                 );

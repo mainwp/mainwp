@@ -352,7 +352,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 }
                 foreach ( $checkpoint['artifacts'] as $artifact ) {
                     if ( empty( $artifact['done'] ) && is_file( $artifact['path'] ) && ! MainWP_Backup_File_Manager::local_archive_size_matches( $artifact['path'], $recorded_sizes[ $artifact['path'] ] ?? null ) ) {
-                        throw new \RuntimeException( __( 'The backup file on this Dashboard no longer matches this backup. It cannot be uploaded.', 'mainwp' ), 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
+                        throw new \RuntimeException( __( 'The backup archive on this Dashboard was changed or replaced after this backup finished, so it cannot be uploaded. Run a new backup to get a fresh copy offsite.', 'mainwp' ), 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
                     }
                 }
             }

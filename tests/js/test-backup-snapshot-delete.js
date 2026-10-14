@@ -22,7 +22,6 @@ const context = {
         queued: 'Cloud copies queued for deletion: %s.',
         queuedTo: '%1$s to %2$s'
     },
-    destinationNames: {},
     backupTypeLabels: { full: 'Full', incremental: 'Incremental' },
     escAttr: value => String( value ).replace( /&/g, '&amp;' ).replace( /"/g, '&quot;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' )
 };

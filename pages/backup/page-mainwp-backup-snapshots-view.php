@@ -89,8 +89,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         $disconnected   = $site_id > 0 && MainWP_Post_Backup_Handler::site_is_disconnected( MainWP_DB::instance()->get_website_by_id( $site_id ) );
         $reconnect_url  = $site_id > 0 ? admin_url( 'admin.php?page=managesites&dashboard=' . $site_id ) : '';
         $controls_off   = 0 === $site_id || $disconnected;
-        // Filled below when native backups are on; the page script also reads it to name the destinations of queued cloud deletes.
-        $destination_names = array();
         if ( $locked ) :
             ?>
         <div id="mainwp-backup-snapshots" class="ui alt segment">
@@ -105,6 +103,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             if ( $native_enabled ) :
                 $manual_ids = $site_id > 0 ? MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) : array();
                 sort( $manual_ids, SORT_NUMERIC );
+                $destination_names = array();
                 foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
                     $destination_names[ (int) $destination->id ] = (string) $destination->name;
                 }

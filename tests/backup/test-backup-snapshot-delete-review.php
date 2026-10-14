@@ -8,6 +8,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Abilities_Backups;
+use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_Backup_Retention_Executor;
 use MainWP\Dashboard\MainWP_Backup_Retention_Query;
@@ -145,6 +146,167 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 		$this->assertTrue( $plan['can_proceed'] );
 		$this->assertFalse( $this->snapshot_list()['snapshot_delete_busy'] );
 		$this->assertSame( 'complete', $this->confirm( $id, $plan )['status'] );
+	}
+
+	/**
+	 * Every lane that writes a backup for the site, with its idle and busy evidence.
+	 *
+	 * @return array
+	 */
+	public static function running_lanes() {
+		return array(
+			'nothing open'                     => array( 'idle', false ),
+			'Back Up Now open'                 => array( 'manual_open', true ),
+			'Back Up Now closed'               => array( 'manual_closed', false ),
+			'scheduled downloading'            => array( 'scheduled_download', true ),
+			'scheduled before the sweep'       => array( 'scheduled_unswept', true ),
+			'scheduled site completed'         => array( 'scheduled_completed', false ),
+			'scheduled site not started'       => array( 'scheduled_not_started', false ),
+			'scheduled site failed'            => array( 'scheduled_failed', false ),
+			'pre-update handle'                => array( 'adhoc_fresh', true ),
+			'pre-update handle past abandon'   => array( 'adhoc_abandoned', false ),
+			'pre-update handle cleared'        => array( 'adhoc_cleared', false ),
+			'pre-update handle without a task' => array( 'adhoc_no_task', false ),
+		);
+	}
+
+	/**
+	 * One predicate answers for every backup lane, so each lane is pinned here.
+	 *
+	 * @dataProvider running_lanes
+	 * @param string $lane Lane state.
+	 * @param bool   $held Expected hold.
+	 */
+	public function test_running_backup_predicate_covers_every_lane( $lane, $held ) {
+		try {
+			$this->set_lane( $lane );
+			$this->assertSame( $held, MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $this->site_id ) );
+		} finally {
+			$this->clear_adhoc_handle();
+		}
+	}
+
+	/**
+	 * The pre-update lane keeps no task or progress row, only the site handle.
+	 *
+	 * @dataProvider admission_paths
+	 * @param string $path Entry point.
+	 */
+	public function test_pre_update_backup_holds_each_entry_point( $path ) {
+		$id   = $this->snapshot();
+		$plan = $this->preview( $id );
+		try {
+			$this->set_lane( 'adhoc_fresh' );
+			if ( 'preview' === $path ) {
+				$preview = $this->preview( $id );
+				$this->assertFalse( $preview['can_proceed'] );
+				$this->assertSame( MainWP_Backup_Operations::snapshot_delete_hold_message( false ), $preview['refusals'][0]['message'] );
+			} elseif ( 'list' === $path ) {
+				$this->assertTrue( $this->snapshot_list()['snapshot_delete_busy'] );
+			} else {
+				$result = $this->confirm( $id, $plan );
+				$this->assertSame( 'refused', $result['status'] );
+				$this->assertSame( array(), $result['deleted_ids'] );
+			}
+		} finally {
+			$this->clear_adhoc_handle();
+		}
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+	}
+
+	/**
+	 * Put one lane into the named state.
+	 *
+	 * @param string $lane Lane state from running_lanes().
+	 */
+	private function set_lane( $lane ) {
+		global $wpdb;
+		if ( 'manual_open' === $lane || 'manual_closed' === $lane ) {
+			$now = time();
+			MainWP_DB_Backup::instance()->update_backup_task_with_values(
+				$this->task->id,
+				array(
+					'last_run'  => $now,
+					'completed' => 'manual_open' === $lane ? $now - 10 : $now + 10,
+				)
+			);
+		} elseif ( str_starts_with( $lane, 'scheduled_' ) ) {
+			$this->use_scheduled_task();
+			if ( 'scheduled_not_started' === $lane ) {
+				MainWP_DB_Backup::instance()->update_backup_task_with_values(
+					$this->task->id,
+					array(
+						'last_run'  => time() + 1,
+						'completed' => 0,
+					)
+				);
+				return;
+			}
+			$this->start_download( 'scheduled_unswept' === $lane ? 0 : 1 );
+			if ( 'scheduled_completed' === $lane ) {
+				MainWP_DB_Backup::instance()->update_completed_sites( $this->task->id, array( $this->site_id => true ) );
+			} elseif ( 'scheduled_failed' === $lane ) {
+				$wpdb->update(
+					MainWP_DB::instance()->get_table_name( 'wp_backup_progress' ),
+					array( 'child_phase' => 'failed' ),
+					array(
+						'task_id' => $this->task->id,
+						'wp_id'   => $this->site_id,
+					)
+				);
+			}
+		} elseif ( str_starts_with( $lane, 'adhoc_' ) ) {
+			$handles = array(
+				'adhoc_fresh'     => wp_json_encode(
+					array(
+						'task_id' => 'pre-update-task',
+						'type'    => 'full',
+						'started' => time(),
+						'owner'   => '',
+					)
+				),
+				'adhoc_abandoned' => wp_json_encode(
+					array(
+						'task_id' => 'pre-update-task',
+						'type'    => 'full',
+						'started' => time() - MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS - 60,
+						'owner'   => '',
+					)
+				),
+				'adhoc_cleared'   => '',
+				'adhoc_no_task'   => wp_json_encode( array( 'started' => time() ) ),
+			);
+			MainWP_DB::instance()->update_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION, $handles[ $lane ] );
+		}
+	}
+
+	/** The fixture tear-down does not know this lane's option row. */
+	private function clear_adhoc_handle() {
+		global $wpdb;
+		$wpdb->delete(
+			MainWP_DB::instance()->get_table_name( 'wp_options' ),
+			array(
+				'wpid' => $this->site_id,
+				'name' => MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			)
+		);
+	}
+
+	/** A failed handle read cannot prove the pre-update lane is idle. */
+	public function test_pre_update_handle_read_failure_holds_site() {
+		global $wpdb;
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_options' );
+		$fail     = static function ( $query ) use ( $table ) {
+			return str_contains( $query, 'FROM ' . $table . ' WHERE wpid' ) && str_contains( $query, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ? 'SELECT snapshot_delete_missing_column FROM ' . $table : $query;
+		};
+		$suppress = $wpdb->suppress_errors();
+		add_filter( 'query', $fail );
+		try {
+			$this->assertTrue( MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $this->site_id ) );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $suppress );
+		}
 	}
 
 	/** A failed task read cannot prove the site is idle. */

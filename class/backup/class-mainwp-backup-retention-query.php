@@ -184,10 +184,32 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
     /**
      * An open task holds only a site whose backup is still running.
      *
+     * Covers the task lanes (scheduled and Back Up Now) and the ad-hoc lane
+     * (pre-update and restore safety backups), which keeps no task or progress
+     * row and is visible only through the site's handle.
+     *
      * @param int $site_id Site identity.
      * @return bool True on active evidence or a failed read.
      */
     public function has_running_backup_for_site( int $site_id ): bool {
+        $handles = $this->wpdb->get_col(
+            $this->wpdb->prepare(
+                'SELECT value FROM ' . $this->table_name( 'wp_options' ) . ' WHERE wpid = %d AND name = %s',
+                $site_id,
+                MainWP_Backup_Executor::ADHOC_TASK_OPTION
+            )
+        );
+        if ( '' !== $this->wpdb->last_error ) {
+            return true;
+        }
+        foreach ( $handles as $raw ) {
+            $handle = json_decode( (string) $raw, true );
+            // Same abandonment window trigger_backup() uses before it lets another lane take the handle.
+            if ( is_array( $handle ) && isset( $handle['task_id'] ) && is_scalar( $handle['task_id'] ) && '' !== (string) $handle['task_id']
+                && time() - (int) ( $handle['started'] ?? 0 ) <= MainWP_Backup_Executor::ADHOC_TASK_ABANDON_SECONDS ) {
+                return true;
+            }
+        }
         $tasks = $this->wpdb->get_results(
             $this->wpdb->prepare(
                 'SELECT b.manual_site_id, b.completed_sites FROM ' . $this->table_name( 'wp_backup' ) . ' b LEFT JOIN ' . $this->table_name( 'wp_backup_progress' ) . " p ON p.task_id = b.id AND p.wp_id = %d WHERE b.completed < b.last_run AND (b.manual_site_id = %d OR (p.dtsFetched >= b.last_run AND p.child_phase <> 'failed'))",

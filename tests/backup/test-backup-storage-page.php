@@ -1805,7 +1805,8 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		$this->assertGreaterThan( strpos( $output, 'id="mainwp-storage-form"' ), $zone );
 		$this->assertLessThan( strpos( $output, 'id="mainwp-storage-test-only"' ), $zone );
 		$this->assertStringContainsString( 'class="ui visible message" id="mainwp-storage-form-message-zone"', $output );
-		$this->assertStringContainsString( "feedback( zone, jQuery( '<div>' ).text( message ).html(), color );", $output, 'Messages reach the core HTML sink escaped.' );
+		$this->assertStringContainsString( 'feedback( zone, message, color );', $output, 'Messages go to core feedback(), which renders strings as text.' );
+		$this->assertStringNotContainsString( '.text( message ).html()', $output, 'Pre-escaping would double-escape now that feedback() renders text.' );
 		$this->assertMatchesRegularExpression( "/#mainwp-storage-test-only' \\).on\\( 'click'[^}]*busy\\( button, true \\);[^}]*formFeedback\\(/s", $output );
 	}
 

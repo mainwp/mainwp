@@ -762,7 +762,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $tasks = static::tasks_using_destination( $id );
 
         if ( ! $confirmed && ! empty( $tasks ) ) {
-            return array( 'tasks' => array_values( wp_list_pluck( $tasks, 'name' ) ) );
+            return array( 'tasks' => array_values( array_map( array( static::class, 'task_preview_label' ), $tasks ) ) );
         }
 
         foreach ( $tasks as $task ) {
@@ -823,6 +823,27 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         }
 
         MainWP_DB_Backup::instance()->update_backup_task_with_values( (int) $task_id, array( 'destinations' => wp_json_encode( array_values( array_unique( $valid ) ) ) ) );
+    }
+
+    /**
+     * Name a task for the delete preview.
+     *
+     * Every Back Up Now task is stored as 'On-demand backup', so a hidden
+     * task is named by the site it backs up. The stored name stays when the
+     * site cannot be read.
+     *
+     * @param object $task Task row.
+     *
+     * @return string Task label.
+     */
+    private static function task_preview_label( $task ) {
+        $site_id = empty( $task->template ) ? 0 : (int) ( $task->manual_site_id ?? 0 );
+        $site    = $site_id > 0 ? MainWP_DB::instance()->get_website_by_id( $site_id ) : null;
+        if ( empty( $site ) || '' === (string) $site->name ) {
+            return (string) $task->name;
+        }
+        /* translators: %s: child site name. */
+        return sprintf( __( 'Back Up Now for %s', 'mainwp' ), $site->name );
     }
 
     /**

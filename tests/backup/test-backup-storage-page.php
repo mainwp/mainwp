@@ -810,6 +810,49 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		$this->assertSame( array( $dest_id ), json_decode( $db->get_manual_backup_task( 991 )->destinations, true ) );
 	}
 
+	/** Every Back Up Now task shares one stored name, so the preview names each by its site. */
+	public function test_delete_preview_names_hidden_tasks_by_site() {
+		global $wpdb;
+		$store    = MainWP_Backup_Storage_Destinations::instance();
+		$dest_id  = $store->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Hidden task destination',
+				'settings' => array( 'base_path' => $this->make_temp_dir() ),
+			)
+		);
+		$db       = MainWP_DB_Backup::instance();
+		$expected = array( 'Storage page task' );
+		$this->insert_task( array( $dest_id ) );
+		foreach ( array( 'Alpha Site', 'Beta Site' ) as $site_name ) {
+			$wpdb->insert( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+				MainWP_DB::instance()->get_table_name( 'wp' ),
+				array(
+					'userid'    => get_current_user_id(),
+					'url'       => 'https://' . sanitize_title( $site_name ) . '.example.com/',
+					'name'      => $site_name,
+					'adminname' => 'admin',
+					'pubkey'    => 'test-pubkey',
+					'privkey'   => 'test-privkey',
+				)
+			);
+			$site_id = (int) $wpdb->insert_id;
+			$wpdb->insert( MainWP_DB::instance()->get_table_name( 'wp_sync' ), array( 'wpid' => $site_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$task_id = $this->insert_task( array( $dest_id ) );
+			$db->update_backup_task_with_values(
+				$task_id,
+				array(
+					'template'       => 1,
+					'name'           => 'On-demand backup',
+					'manual_site_id' => $site_id,
+				)
+			);
+			$expected[] = 'Back Up Now for ' . $site_name;
+		}
+
+		$this->assertSame( array( 'tasks' => $expected ), MainWP_Backup_Storage_Handler::delete_destination_flow( $dest_id, false ) );
+	}
+
 	/** Confirmed deletion detaches every hidden template and preserves other destinations. */
 	public function test_delete_detaches_hidden_backup_now_tasks() {
 		$store   = MainWP_Backup_Storage_Destinations::instance();

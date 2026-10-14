@@ -43,6 +43,44 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 		parent::tear_down();
 	}
 
+	/** A sandbox's separate database link must not leave the reader lock idle long enough to expire. */
+	public function test_s90_r1_reader_renewal_raises_session_idle_timeouts() {
+		global $wpdb;
+		$wait        = (int) $wpdb->get_var( 'SELECT @@session.wait_timeout' );
+		$interactive = (int) $wpdb->get_var( 'SELECT @@session.interactive_timeout' );
+		$reservation = $this->store->reserve_site( 8801 );
+		try {
+			$wpdb->query( 'SET SESSION wait_timeout = 60, interactive_timeout = 90' );
+			$this->assertTrue( $this->store->renew_reservation( $reservation ) );
+			$this->assertGreaterThanOrEqual( DAY_IN_SECONDS, (int) $wpdb->get_var( 'SELECT @@session.wait_timeout' ) );
+			$this->assertGreaterThanOrEqual( DAY_IN_SECONDS, (int) $wpdb->get_var( 'SELECT @@session.interactive_timeout' ) );
+			$wpdb->query( 'SET SESSION wait_timeout = 172800, interactive_timeout = 172801' );
+			$this->assertTrue( $this->store->renew_reservation( $reservation ) );
+			$this->assertSame( 172800, (int) $wpdb->get_var( 'SELECT @@session.wait_timeout' ) );
+			$this->assertSame( 172801, (int) $wpdb->get_var( 'SELECT @@session.interactive_timeout' ) );
+			$attempted = false;
+			$refuse    = static function ( $sql ) use ( &$attempted ) {
+				if ( str_starts_with( $sql, 'SET SESSION wait_timeout = ' ) ) {
+					$attempted = true;
+					return 'SET SESSION mainwp_missing_timeout = 86400';
+				}
+				return $sql;
+			};
+			$suppress  = $wpdb->suppress_errors( true );
+			add_filter( 'query', $refuse );
+			try {
+				$this->assertTrue( $this->store->renew_reservation( $reservation ), 'A refused timeout change must not fail renewal of the owned reservation.' );
+			} finally {
+				remove_filter( 'query', $refuse );
+				$wpdb->suppress_errors( $suppress );
+			}
+			$this->assertTrue( $attempted );
+		} finally {
+			$this->store->release_reservation( $reservation );
+			$wpdb->query( $wpdb->prepare( 'SET SESSION wait_timeout = %d, interactive_timeout = %d', $wait, $interactive ) );
+		}
+	}
+
 	/**
 	 * Deferral must merge a concurrent cursor update and keep its original failure.
 	 */

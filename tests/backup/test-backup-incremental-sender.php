@@ -5401,6 +5401,152 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		);
 	}
 
+	/**
+	 * Only a live child handle or creating marker can hold incremental prune.
+	 *
+	 * @dataProvider s90_r1_terminal_progress
+	 * @param string $child_id Child handle after failure or reset.
+	 * @param string $phase Child phase.
+	 */
+	public function test_s90_r1_terminal_incremental_progress_does_not_hold_prune( string $child_id, string $phase ) {
+		$site = $this->create_test_site();
+		$db   = MainWP_DB_Backup::instance();
+		$task = $db->add_backup_task( get_current_user_id(), 'Prune terminal progress', 'daily', 'incremental', '', (string) $site, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0 );
+		$run  = time() - 100;
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'  => $run,
+				'completed' => 0,
+			)
+		);
+		$db->add_backup_task_progress( $task->id, $site, array() );
+		$db->update_backup_task_progress(
+			$task->id,
+			$site,
+			array(
+				'dtsFetched'           => $run,
+				'child_backup_task_id' => $child_id,
+				'child_phase'          => $phase,
+			)
+		);
+		$this->assertFalse( $db->has_inflight_incremental_for_site( $site ) );
+	}
+
+	/**
+	 * Progress after failure and reset paths.
+	 *
+	 * @return array Terminal progress fixtures.
+	 */
+	public static function s90_r1_terminal_progress(): array {
+		return array(
+			'cleared handle' => array( '', 'queued' ),
+			'failed phase'   => array( 'failed-child', 'failed' ),
+			'terminal close' => array( '', 'failed' ),
+		);
+	}
+
+	/** A paused incremental fleet holds only its mid-create site, including before the child returns its id. */
+	public function test_s90_r1_paused_incremental_fleet_prunes_finished_unstarted_and_failed_sites() {
+		global $wpdb;
+		$sites = array();
+		foreach ( array( 'a', 'b', 'c', 'd' ) as $name ) {
+			$sites[ $name ] = $this->create_test_site();
+			$this->give_site_real_privkey( $sites[ $name ] );
+		}
+		$db  = MainWP_DB_Backup::instance();
+		$row = $db->add_backup_task( get_current_user_id(), 'Incremental fleet prune', 'daily', 'incremental', '', implode( ',', $sites ), '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0 );
+		$run = time() - 100;
+		$db->update_backup_task_with_values(
+			$row->id,
+			array(
+				'last_run'  => $run,
+				'completed' => 0,
+			)
+		);
+		$task  = $this->make_task( MainWP_DB::instance()->get_website_by_id( $sites['a'] ), $row->id, array( 'last_run' => $run ) );
+		$bases = array();
+		foreach ( $sites as $name => $site ) {
+			$dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site );
+			wp_mkdir_p( $dir );
+			copy( $this->manifest_fixture, $dir . 'parent.list' );
+			$bases[ $name ] = $this->record_base_snapshot( $site, $row->id );
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'manifest_path' => $dir . 'parent.list' ), array( 'id' => $bases[ $name ] ) );
+		}
+		$db->add_backup_task_progress( $task->id, $sites['b'], array() );
+		$db->update_backup_task_progress( $task->id, $sites['b'], array( 'dtsFetched' => $run - 1 ) );
+		$artifacts = $this->arrange_remote_artifacts();
+		$this->mock_artifact_downloads();
+		$creating_hold = null;
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => function () use ( $db, $task, $sites, $bases, &$creating_hold ) {
+					$progress = $db->get_backup_task_progress( $task->id, $sites['c'] );
+					if ( $progress && MainWP_Backup_Executor::is_creating_marker( $progress->child_backup_task_id ) ) {
+						$creating_hold = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->run_prune(
+							array(
+								array(
+									'snapshot_ids' => array( $bases['c'] ),
+									'reason'       => 'count',
+								),
+							),
+							$task
+						);
+					}
+					return array(
+						'task_id' => 's90-fleet-child',
+						'phase'   => 'queued',
+					);
+				},
+				'backup_task_run'    => array(
+					'task_id'   => 's90-fleet-child',
+					'phase'     => 'completed',
+					'artifacts' => $artifacts,
+					'file'      => 'files.list',
+					'size'      => 40,
+				),
+				'delete_backup'      => array( 'result' => 'ok' ),
+				'backup_task_cancel' => array( 'result' => 'ok' ),
+				'backup_task_prune'  => array( 'result' => 'ok' ),
+			)
+		);
+		$this->assertFalse( $this->run_cycle( $sites['a'], $task )['result'] );
+		$finished = $this->run_cycle( $sites['a'], $task );
+		$this->assertNull( $finished['exception'] );
+		$this->assertIsArray( $finished['result'] );
+		$delta = MainWP_Backup_Snapshots::instance()->get_latest_complete( $sites['a'], $task->id );
+		$this->assertSame( $sites['a'] . ':' . $task->id . ':c:s90-fleet-child', $delta->run_key );
+		$this->assertFalse( $this->run_cycle( $sites['c'], $task )['result'] );
+		$this->assertSame( array( $bases['c'] ), $creating_hold['remaining_ids'] );
+		$this->assertStringContainsString( 'an incremental backup is running', implode( ' ', $creating_hold['errors'] ) );
+		$this->assertFalse( $this->run_cycle( $sites['d'], $task )['result'] );
+		MainWP_Manage_Backups_Handler::close_child_task_after_terminal_mark( $task->id, $sites['d'] );
+		$failed = $db->get_backup_task_progress( $task->id, $sites['d'] );
+		$this->assertSame( '', $failed->child_backup_task_id );
+		$this->assertSame( 'failed', $failed->child_phase );
+		$this->assertGreaterThanOrEqual( $run, (int) $failed->dtsFetched );
+		$db->update_backup_task_with_values( $task->id, array( 'paused' => 1 ) );
+		$candidates = array();
+		foreach ( $bases as $name => $id ) {
+			$candidates[] = array(
+				'snapshot_ids' => 'a' === $name ? array( $id, (int) $delta->id ) : array( $id ),
+				'reason'       => 'count',
+			);
+		}
+		$result = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task );
+		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $bases['d'] )->status, 'D failed terminally; it must no longer be held as running.' );
+		$this->assertSame( array( $bases['c'] ), $result['remaining_ids'] );
+		$this->assertSame( 4, $result['snapshots_pruned'] );
+		$this->assertSame( 3, $result['pruned'] );
+		$this->assertSame( array( (int) $delta->id, $bases['a'], $bases['b'], $bases['d'] ), $result['deleted_ids'] );
+		$this->assertCount( 1, $result['errors'] );
+		$this->assertStringContainsString( 'an incremental backup is running', $result['errors'][0] );
+		$after = $db->get_backup_task_by_id( $task->id );
+		$this->assertLessThan( (int) $after->last_run, (int) $after->completed );
+		$this->assertSame( 1, (int) $after->paused );
+	}
+
 	/** A paused full fleet run permits prune on finished and never-started sites. */
 	public function test_x1_paused_multisite_full_run_does_not_hold_finished_or_unstarted_sites() {
 		global $wpdb;

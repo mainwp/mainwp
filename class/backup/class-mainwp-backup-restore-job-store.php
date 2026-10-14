@@ -48,6 +48,9 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      */
     const RESERVATION_SECONDS = 600;
 
+    /** Minimum session idle timeout while a reader owns its reservation lock. */
+    const READER_IDLE_TIMEOUT_SECONDS = DAY_IN_SECONDS;
+
     /**
      * Expired-lease reclaims allowed before a job is routed to
      * fail_permanent instead of being handed out again. A reclaim means
@@ -197,6 +200,10 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
         if ( null === $connection || ( (string) $owner !== (string) $connection && '1' !== (string) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $name ) ) ) ) {
             return false;
         }
+        // The sandbox's own mysqli link leaves this one idle; a crashed worker still closes it on exit.
+        $this->wpdb->query(
+            $this->wpdb->prepare( 'SET SESSION wait_timeout = CAST(GREATEST(@@session.wait_timeout, %d) AS UNSIGNED), interactive_timeout = CAST(GREATEST(@@session.interactive_timeout, %d) AS UNSIGNED)', self::READER_IDLE_TIMEOUT_SECONDS, self::READER_IDLE_TIMEOUT_SECONDS )
+        );
         $renewed = $this->wpdb->query(
             $this->wpdb->prepare( 'UPDATE ' . $this->table() . ' SET locked_until = GREATEST(locked_until + 1, %d), updated = %d WHERE id = %d AND status = %s', time() + self::RESERVATION_SECONDS, time(), $reservation_id, self::STATUS_RESERVED )
         );

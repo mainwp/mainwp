@@ -3767,10 +3767,11 @@ class MainWP_Abilities_Backups {
             return MainWP_Backup_Operations::safe_error( (string) ( $error['code'] ?? '' ) );
         }
         $safe = MainWP_Backup_Operations::safe_error( 'mainwp_operation_failed' );
-        if ( is_string( $error ) && preg_match( "/^Snapshots? [0-9,]+: [\p{L}\p{N} .,;'-]+$/uD", $error ) ) {
-            $safe['message'] = $error;
-        } elseif ( is_string( $error ) && ( str_starts_with( $error, 'Could not remove ' ) || str_starts_with( $error, 'Refused to remove ' ) ) ) {
-            $safe['message'] = __( 'A local backup file or folder could not be removed. Check the backup diagnostics and try again.', 'mainwp' );
+        if ( is_string( $error ) ) {
+            if ( str_contains( $error, '/' ) || str_contains( $error, '\\' ) || str_starts_with( $error, 'Could not remove ' ) || str_starts_with( $error, 'Refused to remove ' ) ) {
+                $error = __( 'A local backup file or folder could not be removed. Check the backup diagnostics and try again.', 'mainwp' );
+            }
+            $safe['message'] = mb_strlen( $error, 'UTF-8' ) > 500 ? mb_substr( $error, 0, 499, 'UTF-8' ) . '…' : $error;
         }
         return $safe;
     }

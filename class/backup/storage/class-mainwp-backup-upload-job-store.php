@@ -305,12 +305,15 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         if ( empty( $ids ) || ! str_starts_with( $token, 'prune:' ) ) {
             return false;
         }
-        $holders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
-        $now     = time();
+        $holders  = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+        $now      = time();
+        $runnable = self::active_statuses();
+        $statuses = implode( ',', array_fill( 0, count( $runnable ), '%s' ) );
+        // Terminal writes clear locked_by; an expired runnable worker lease still belongs to the reclaim lane.
         $claimed = $this->wpdb->query(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- counted ids and placeholders grow together.
-                'UPDATE ' . $this->table() . " SET locked_by = %s, locked_until = %d, updated = %d WHERE snapshot_id IN ({$holders}) AND kind = %s AND (locked_until < %d OR locked_by = %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list from the counted ids.
-                array_merge( array( $token, $now + $lease_seconds, $now ), $ids, array( self::KIND_UPLOAD, $now, $token ) )
+                'UPDATE ' . $this->table() . " SET locked_by = %s, locked_until = %d, updated = %d WHERE snapshot_id IN ({$holders}) AND kind = %s AND ((locked_until < %d AND (locked_by = '' OR locked_by LIKE %s OR status NOT IN ({$statuses}))) OR locked_by = %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder lists from counted arrays.
+                array_merge( array( $token, $now + $lease_seconds, $now ), $ids, array( self::KIND_UPLOAD, $now, 'prune:%' ), $runnable, array( $token ) )
             )
         );
         if ( false === $claimed ) {
@@ -318,8 +321,8 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         }
         $other = $this->wpdb->get_var(
             $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- counted ids and placeholders grow together.
-                'SELECT id FROM ' . $this->table() . " WHERE snapshot_id IN ({$holders}) AND kind = %s AND locked_by <> %s AND locked_until >= %d LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list from the counted ids.
-                array_merge( $ids, array( self::KIND_UPLOAD, $token, $now ) )
+                'SELECT id FROM ' . $this->table() . " WHERE snapshot_id IN ({$holders}) AND kind = %s AND locked_by <> %s AND (locked_until >= %d OR (status IN ({$statuses}) AND locked_by <> '' AND locked_by NOT LIKE %s)) LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder lists from counted arrays.
+                array_merge( $ids, array( self::KIND_UPLOAD, $token, $now ), $runnable, array( 'prune:%' ) )
             )
         );
         return null === $other && '' === $this->wpdb->last_error;
@@ -353,6 +356,18 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      *              present); false only on a real write failure.
      */
     public function enqueue_delete_job( int $snapshot_id, int $destination_id, array $checkpoint ): bool {
+        return 'failed' !== $this->enqueue_delete_job_result( $snapshot_id, $destination_id, $checkpoint );
+    }
+
+    /**
+     * Distinguish this pass's insert from a delete owned by another flow.
+     *
+     * @param int   $snapshot_id    Snapshot id.
+     * @param int   $destination_id Storage destination id.
+     * @param array $checkpoint     Initial delete checkpoint.
+     * @return string inserted, existing, or failed.
+     */
+    public function enqueue_delete_job_result( int $snapshot_id, int $destination_id, array $checkpoint ): string {
         $result = $this->wpdb->query(
             $this->wpdb->prepare(
                 'INSERT IGNORE INTO ' . $this->table_name( 'wp_backup_upload_job' ) .
@@ -369,12 +384,12 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
         );
 
         if ( ! empty( $result ) ) {
-            return true;
+            return 'inserted';
         }
 
         // INSERT IGNORE reports 0 rows both for a duplicate (the job is
         // already queued - success for an idempotent enqueue) and for a
-        // real failure. Only the latter may surface as false: retention
+        // real failure. Only the latter may report failed: retention
         // holds a snapshot's prune on this answer, and treating an
         // already-queued job as failure would wedge the prune, while
         // treating a failed insert as success would orphan the cloud
@@ -387,7 +402,38 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
                 static::KIND_DELETE
             )
         );
-        return null !== $existing;
+        return null !== $existing ? 'existing' : 'failed';
+    }
+
+    /**
+     * Withdraw only newly inserted deletes that the delete lane has not claimed.
+     *
+     * @param int   $snapshot_id    Snapshot id.
+     * @param int[] $destination_ids Destinations inserted by this prune pass.
+     * @return int[] Destinations whose delete row could not be withdrawn.
+     */
+    public function withdraw_delete_jobs( int $snapshot_id, array $destination_ids ): array {
+        $destination_ids = array_values( array_unique( array_filter( array_map( 'intval', $destination_ids ) ) ) );
+        if ( empty( $destination_ids ) ) {
+            return array();
+        }
+        $holders = implode( ',', array_fill( 0, count( $destination_ids ), '%d' ) );
+        $deleted = $this->wpdb->query(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- counted destinations and placeholders grow together.
+                'DELETE FROM ' . $this->table() . " WHERE snapshot_id = %d AND destination_id IN ({$holders}) AND kind = %s AND status = %s AND locked_by = '' AND locked_until < %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list from counted destinations.
+                array_merge( array( $snapshot_id ), $destination_ids, array( self::KIND_DELETE, self::STATUS_PENDING, time() ) )
+            )
+        );
+        if ( false === $deleted ) {
+            return $destination_ids;
+        }
+        $remaining = $this->wpdb->get_col(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- counted destinations and placeholders grow together.
+                'SELECT destination_id FROM ' . $this->table() . " WHERE snapshot_id = %d AND destination_id IN ({$holders}) AND kind = %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- placeholder list from counted destinations.
+                array_merge( array( $snapshot_id ), $destination_ids, array( self::KIND_DELETE ) )
+            )
+        );
+        return '' === $this->wpdb->last_error ? array_map( 'intval', $remaining ) : $destination_ids;
     }
 
     /**

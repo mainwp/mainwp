@@ -606,31 +606,54 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 if ( ! $this->remove_local_dir( $snapshot, $result['errors'], false ) ) {
                     break;
                 }
-                // Enqueue while checkpoints and local files are intact. A failed
-                // write leaves the source available for the next cleanup.
-                if ( ! empty( $task->delete_cloud_copies ) && ! $this->enqueue_cloud_deletes( $snapshot, $store, $result['cloud_deletes_queued'] ) ) {
-                    $result['errors'][] = sprintf( 'Snapshot %d: a cloud delete job could not be queued, so it was kept. Try again later.', $snapshot_id );
-                    break;
+                $inserted_deletes = array();
+                $keep_deletes     = false;
+                try {
+                    // Enqueue while checkpoints and local files are intact. A failed
+                    // write leaves the source available for the next cleanup.
+                    if ( ! empty( $task->delete_cloud_copies ) && ! $this->enqueue_cloud_deletes( $snapshot, $store, $result['cloud_deletes_queued'], $inserted_deletes ) ) {
+                        $result['errors'][] = sprintf( 'Snapshot %d: a cloud delete job could not be queued, so it was kept. Try again later.', $snapshot_id );
+                        break;
+                    }
+                    if ( ! $this->remove_local_dir( $snapshot, $result['errors'] ) ) {
+                        break;
+                    }
+                    $upload_jobs = $store->get_jobs_for_snapshot( $snapshot_id, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD );
+                    $store->purge_upload_jobs_for_snapshot( $snapshot_id );
+                    foreach ( $upload_jobs as $upload_job ) {
+                        MainWP_Backup_Upload_Driver::instance()->cleanup_staging_for( $snapshot_id, (int) $upload_job->destination_id );
+                    }
+                    // The local files are gone; cloud deletion proceeds even if the status write fails.
+                    $keep_deletes = true;
+                    if ( ! $snapshots->set_status( $snapshot_id, 'pruned' ) ) {
+                        /* translators: %d: Snapshot ID. */
+                        $result['errors'][] = sprintf( __( 'Snapshot %d: the files were deleted but the backup could not be marked as removed. Try again later.', 'mainwp' ), $snapshot_id );
+                        break;
+                    }
+                    $child_task_id = $this->child_task_id_for( $snapshot );
+                    if ( '' !== $child_task_id ) {
+                        $child_task_ids[] = $child_task_id;
+                    }
+                    $result['deleted_ids'][] = $snapshot_id;
+                    $result['bytes_pruned'] += (int) array_sum( array_column( (array) $snapshot->archives, 'size' ) );
+                } finally {
+                    if ( ! $keep_deletes && ! empty( $inserted_deletes ) ) {
+                        $remaining                      = $store->withdraw_delete_jobs( $snapshot_id, $inserted_deletes );
+                        $withdrawn                      = array_diff( $inserted_deletes, $remaining );
+                        $result['cloud_deletes_queued'] = array_values(
+                            array_filter(
+                                $result['cloud_deletes_queued'],
+                                static function ( $pair ) use ( $snapshot_id, $withdrawn ) {
+                                    return $pair['snapshot_id'] !== $snapshot_id || ! in_array( $pair['destination_id'], $withdrawn, true );
+                                }
+                            )
+                        );
+                        if ( ! empty( $remaining ) ) {
+                            /* translators: %d: Snapshot ID. */
+                            $result['errors'][] = sprintf( __( 'Snapshot %d: its cloud copy is already being deleted, but the local files could not be removed. Try again later.', 'mainwp' ), $snapshot_id );
+                        }
+                    }
                 }
-                if ( ! $this->remove_local_dir( $snapshot, $result['errors'] ) ) {
-                    break;
-                }
-                $upload_jobs = $store->get_jobs_for_snapshot( $snapshot_id, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD );
-                $store->purge_upload_jobs_for_snapshot( $snapshot_id );
-                foreach ( $upload_jobs as $upload_job ) {
-                    MainWP_Backup_Upload_Driver::instance()->cleanup_staging_for( $snapshot_id, (int) $upload_job->destination_id );
-                }
-                if ( ! $snapshots->set_status( $snapshot_id, 'pruned' ) ) {
-                    /* translators: %d: Snapshot ID. */
-                    $result['errors'][] = sprintf( __( 'Snapshot %d: the files were deleted but the backup could not be marked as removed. The next daily cleanup will try again.', 'mainwp' ), $snapshot_id );
-                    break;
-                }
-                $child_task_id = $this->child_task_id_for( $snapshot );
-                if ( '' !== $child_task_id ) {
-                    $child_task_ids[] = $child_task_id;
-                }
-                $result['deleted_ids'][] = $snapshot_id;
-                $result['bytes_pruned'] += (int) array_sum( array_column( (array) $snapshot->archives, 'size' ) );
             }
         } finally {
             // Holds and partial failures leave upload rows retryable; only the
@@ -671,10 +694,11 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @param MainWP_Backup_Upload_Job_Store $store    Job store.
      *
      * @param array                          $queued_deletes Queued snapshot/destination pairs, appended in place.
+     * @param int[]                          $inserted_deletes Destinations inserted by this pass, appended in place.
      *
      * @return bool True when every destination's delete job is queued.
      */
-    private function enqueue_cloud_deletes( object $snapshot, MainWP_Backup_Upload_Job_Store $store, array &$queued_deletes ): bool {
+    private function enqueue_cloud_deletes( object $snapshot, MainWP_Backup_Upload_Job_Store $store, array &$queued_deletes, array &$inserted_deletes ): bool {
         $prefix     = (int) $snapshot->site_id . '/' . (int) $snapshot->id . '/';
         $all_queued = true;
 
@@ -696,7 +720,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
 
             $keys[] = $prefix . 'manifest.json';
 
-            $queued = $store->enqueue_delete_job(
+            $queued = $store->enqueue_delete_job_result(
                 (int) $snapshot->id,
                 (int) $upload_job->destination_id,
                 array(
@@ -714,13 +738,16 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     'swept'  => false,
                 )
             );
-            if ( ! $queued ) {
+            if ( 'failed' === $queued ) {
                 $all_queued = false;
             } else {
                 $queued_deletes[] = array(
                     'snapshot_id'    => (int) $snapshot->id,
                     'destination_id' => (int) $upload_job->destination_id,
                 );
+                if ( 'inserted' === $queued ) {
+                    $inserted_deletes[] = (int) $upload_job->destination_id;
+                }
             }
         }
 

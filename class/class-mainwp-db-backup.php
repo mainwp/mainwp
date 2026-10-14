@@ -56,8 +56,9 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function has_inflight_incremental_for_site( int $site_id ): bool {
         $found = $this->wpdb->get_var(
             $this->wpdb->prepare(
-                'SELECT p.task_id FROM ' . $this->table_name( 'wp_backup_progress' ) . ' p JOIN ' . $this->table_name( 'wp_backup' ) . " b ON b.id = p.task_id WHERE p.wp_id = %d AND b.type = 'incremental' AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND NOT EXISTS (SELECT 1 FROM " . $this->table_name( 'wp_backup_snapshot' ) . " s WHERE s.site_id = p.wp_id AND s.task_id = b.id AND s.run_key = CONCAT(p.wp_id, ':', b.id, ':c:', p.child_backup_task_id)) LIMIT 1",
-                $site_id
+                'SELECT p.task_id FROM ' . $this->table_name( 'wp_backup_progress' ) . ' p JOIN ' . $this->table_name( 'wp_backup' ) . " b ON b.id = p.task_id WHERE p.wp_id = %d AND b.type = 'incremental' AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND p.child_backup_task_id <> '' AND p.child_phase <> %s AND NOT EXISTS (SELECT 1 FROM " . $this->table_name( 'wp_backup_snapshot' ) . " s WHERE s.site_id = p.wp_id AND s.task_id = b.id AND s.run_key = CONCAT(p.wp_id, ':', b.id, ':c:', p.child_backup_task_id)) LIMIT 1",
+                $site_id,
+                MainWP_Backup_Task_Phase::FAILED
             )
         );
         return null !== $found || '' !== $this->wpdb->last_error;

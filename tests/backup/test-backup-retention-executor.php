@@ -465,6 +465,13 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 			array( 'id' => (int) $job->id )
 		);
 		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task );
+		$this->assertSame( 0, $result['snapshots_pruned'], 'An expired worker lease must wait for upload-lane reclamation.' );
+		$reclaimed = $store->acquire_next_job( 'tok-reclaimed' );
+		$this->assertNotNull( $reclaimed );
+		$this->assertSame( (int) $job->id, (int) $reclaimed->id );
+		$this->assertSame( 1, (int) $reclaimed->reclaim_count );
+		$this->assertTrue( $store->complete_job( (int) $reclaimed->id, 'tok-reclaimed' ) );
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task );
 
 		$this->assertSame( 2, $result['snapshots_pruned'] );
 		$this->assertSame( array(), $result['errors'] );
@@ -637,11 +644,11 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 			 * @param int   $destination_id Destination id.
 			 * @param array $checkpoint     Checkpoint.
 			 *
-			 * @return bool Always false.
+			 * @return string Always failed.
 			 */
-			public function enqueue_delete_job( int $snapshot_id, int $destination_id, array $checkpoint ): bool {
+			public function enqueue_delete_job_result( int $snapshot_id, int $destination_id, array $checkpoint ): string {
 				unset( $snapshot_id, $destination_id, $checkpoint );
-				return false;
+				return 'failed';
 			}
 		};
 		$prop    = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
@@ -732,6 +739,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 0, $result['pruned'] );
 		$this->assertNotEmpty( $result['errors'], 'A failed status write must be reported.' );
 		$this->assertStringContainsString( 'could not be marked as removed', implode( ' ', $result['errors'] ) );
+		$this->assertContains( sprintf( 'Snapshot %d: the files were deleted but the backup could not be marked as removed. Try again later.', $leaf ), $result['errors'] );
 		$this->assertSame( array(), $events, 'An unrecorded prune must not emit a successful prune event.' );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $leaf )->status );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
@@ -1798,6 +1806,169 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array( $leaf ), $events[0]['snapshot_ids'], 'The event must exclude the retained ancestor.' );
 	}
 
+	/**
+	 * An unlink failure withdraws only this pass's unclaimed cloud deletes.
+	 *
+	 * @dataProvider s90_r1_delete_claims
+	 * @param bool $claim_delete Whether the delete lane wins before the failed unlink.
+	 */
+	public function test_s90_r1_failed_unlink_withdraws_new_cloud_deletes( bool $claim_delete ) {
+		global $wpdb;
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		$this->insert_upload_job( $id, 77 );
+		$this->insert_upload_job( $id, 78 );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$this->assertTrue( $store->enqueue_delete_job( $id, 78, array( 'owner' => 'destination removal' ) ) );
+		$table     = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$armed     = false;
+		$changed   = false;
+		$claimed   = null;
+		$intervene = function ( $sql ) use ( &$intervene, &$armed, &$changed, &$claimed, $table, $dir, $store, $claim_delete ) {
+			if ( $armed ) {
+				remove_filter( 'query', $intervene );
+				$changed = chmod( $dir, 0555 );
+				clearstatcache();
+				if ( $claim_delete ) {
+					// The older destination-removal row is deferred, so this pickup claims the new row.
+					$claimed = $store->acquire_next_job( 's90-delete', 300, null, MainWP_Backup_Upload_Job_Store::KIND_DELETE );
+				}
+			} elseif ( str_starts_with( $sql, 'INSERT IGNORE INTO ' . $table ) && str_contains( $sql, "'delete'" ) ) {
+				$armed = true;
+			}
+			return $sql;
+		};
+		$existing  = $store->get_jobs_for_snapshot( $id, MainWP_Backup_Upload_Job_Store::KIND_DELETE )[0];
+		$wpdb->update( $table, array( 'next_retry_at' => time() + 600 ), array( 'id' => $existing->id ) );
+		add_filter( 'query', $intervene );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( $id ),
+						'reason'       => 'count',
+					),
+				),
+				$this->make_task()
+			);
+		} finally {
+			remove_filter( 'query', $intervene );
+			chmod( $dir, 0755 );
+			clearstatcache();
+		}
+		$this->assertTrue( $changed, 'Permissions must change after preflight and enqueue.' );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertSame( array( $id ), $result['remaining_ids'] );
+		$this->assertSame( array(), $result['deleted_ids'] );
+		$this->assertSame( 0, $result['snapshots_pruned'] );
+		$deletes = $store->get_jobs_for_snapshot( $id, MainWP_Backup_Upload_Job_Store::KIND_DELETE );
+		$this->assertCount( $claim_delete ? 2 : 1, $deletes );
+		$this->assertSame( $existing->checkpoint, $store->get_job( (int) $existing->id )->checkpoint );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, $store->get_job( (int) $existing->id )->status );
+		$destinations = array_column( $result['cloud_deletes_queued'], 'destination_id' );
+		$this->assertContains( 78, $destinations, 'A pre-existing delete remains owned by its original flow.' );
+		$message = sprintf( 'Snapshot %d: its cloud copy is already being deleted, but the local files could not be removed. Try again later.', $id );
+		if ( $claim_delete ) {
+			$this->assertNotNull( $claimed );
+			$this->assertSame( 77, (int) $claimed->destination_id );
+			$this->assertContains( 77, $destinations );
+			$this->assertSame( 1, count( array_keys( $result['errors'], $message, true ) ) );
+			$this->assertSame( 's90-delete', $store->get_job( (int) $claimed->id )->locked_by );
+		} else {
+			$this->assertNotContains( 77, $destinations );
+			$this->assertNotContains( $message, $result['errors'] );
+		}
+	}
+
+	/** A later enqueue failure must withdraw the earlier destination inserted by the same pass. */
+	public function test_s90_r1_partial_enqueue_withdraws_new_cloud_deletes() {
+		global $wpdb;
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		$this->insert_upload_job( $id, 77 );
+		$this->insert_upload_job( $id, 78 );
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$failed   = false;
+		$fail     = static function ( $sql ) use ( $table, $id, &$failed ) {
+			if ( str_starts_with( $sql, 'INSERT IGNORE INTO ' . $table ) && str_contains( $sql, "({$id}, 78, 'delete'" ) ) {
+				$failed = true;
+				return str_replace( '(snapshot_id,', '(missing_snapshot_id,', $sql );
+			}
+			return $sql;
+		};
+		$suppress = $wpdb->suppress_errors( true );
+		add_filter( 'query', $fail );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( $id ),
+						'reason'       => 'count',
+					),
+				),
+				$this->make_task()
+			);
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $suppress );
+		}
+		$this->assertTrue( $failed );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+		$this->assertSame( array( $id ), $result['remaining_ids'] );
+		$this->assertSame( array(), MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id, MainWP_Backup_Upload_Job_Store::KIND_DELETE ) );
+		$this->assertSame( array(), $result['cloud_deletes_queued'] );
+	}
+
+	/**
+	 * Delete lane interleavings.
+	 *
+	 * @return array Claim fixtures.
+	 */
+	public static function s90_r1_delete_claims(): array {
+		return array(
+			'unclaimed' => array( false ),
+			'claimed'   => array( true ),
+		);
+	}
+
+	/** Prune must leave an expired worker lease for the upload lane to reclaim and count. */
+	public function test_s90_r1_prune_preserves_dead_upload_worker_reclaim_evidence() {
+		global $wpdb;
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		$this->insert_upload_job( $id, 77 );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$wpdb->update(
+			$table,
+			array(
+				'status'        => MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING,
+				'locked_by'     => 's90-dead-worker',
+				'locked_until'  => time() - 60,
+				'reclaim_count' => 1,
+			),
+			array( 'snapshot_id' => $id )
+		);
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+			array(
+				array(
+					'snapshot_ids' => array( $id ),
+					'reason'       => 'count',
+				),
+			),
+			$this->make_task()
+		);
+		$this->assertSame( array( $id ), $result['remaining_ids'] );
+		$this->assertStringContainsString( 'an upload in progress', implode( ' ', $result['errors'] ) );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$job   = $store->get_jobs_for_snapshot( $id, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD )[0];
+		$this->assertSame( 's90-dead-worker', $job->locked_by );
+		$this->assertSame( 1, (int) $job->reclaim_count );
+		$reclaimed = $store->acquire_next_job( 's90-replacement' );
+		$this->assertNotNull( $reclaimed );
+		$this->assertSame( (int) $job->id, (int) $reclaimed->id );
+		$this->assertSame( 2, (int) $reclaimed->reclaim_count );
+	}
+
 	/** An upload pickup at prune admission cannot outlive the cloud delete sweep. */
 	public function test_x1_upload_acquisition_interleaves_with_prune_claim() {
 		global $wpdb;
@@ -1849,11 +2020,11 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 			 * @param int   $snapshot_id Snapshot.
 			 * @param int   $destination_id Destination.
 			 * @param array $checkpoint Checkpoint.
-			 * @return bool Queued.
+			 * @return string Enqueue outcome.
 			 */
-			public function enqueue_delete_job( int $snapshot_id, int $destination_id, array $checkpoint ): bool {
+			public function enqueue_delete_job_result( int $snapshot_id, int $destination_id, array $checkpoint ): string {
 				$this->acquired = $this->acquired ?? $this->acquire_next_job( 'x1-late-upload' );
-				return parent::enqueue_delete_job( $snapshot_id, $destination_id, $checkpoint );
+				return parent::enqueue_delete_job_result( $snapshot_id, $destination_id, $checkpoint );
 			}
 		};
 		$prop  = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );

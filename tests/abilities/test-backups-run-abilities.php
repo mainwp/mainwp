@@ -1186,6 +1186,92 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	/**
+	 * Cleanup diagnostics must fit the ability schema without discarding translated reasons or exposing paths.
+	 *
+	 * @dataProvider s90_r1_cleanup_diagnostics
+	 * @param string $message Service diagnostic.
+	 * @param string $expected Safe diagnostic.
+	 */
+	public function test_s90_r1_cleanup_ability_preserves_safe_bounded_diagnostics( string $message, string $expected ) {
+		$executor = new class( $message ) extends \MainWP\Dashboard\MainWP_Backup_Retention_Executor {
+			/**
+			 * Service diagnostic.
+			 *
+			 * @var string
+			 */
+			private $message;
+			/**
+			 * Keep the service diagnostic unchanged.
+			 *
+			 * @param string $message Service diagnostic.
+			 */
+			public function __construct( string $message ) {
+				$this->message = $message;
+			}
+			/**
+			 * Return the service's error boundary without filesystem work.
+			 *
+			 * @param int      $site_id Site id.
+			 * @param int|null $keep Retained count.
+			 * @param int      $orphan_min_age Minimum orphan age.
+			 * @return array Cleanup result.
+			 */
+			public function cleanup_site_backups( int $site_id, ?int $keep = null, int $orphan_min_age = 6 * HOUR_IN_SECONDS ): array {
+				unset( $site_id, $keep, $orphan_min_age );
+				return array(
+					'orphan_dirs_removed'       => 0,
+					'orphaned_snapshots_pruned' => 0,
+					'pruned'                    => 0,
+					'snapshots_pruned'          => 0,
+					'bytes_pruned'              => 0,
+					'deleted_ids'               => array(),
+					'remaining_ids'             => array(),
+					'cloud_deletes_queued'      => array(),
+					'errors'                    => array( $this->message ),
+				);
+			}
+		};
+		$property = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Backup_Retention_Executor::class, 'instance' );
+		$saved    = $property->getValue();
+		$property->setValue( null, $executor );
+		try {
+			$result = $this->execute(
+				'cleanup-site-backups',
+				array(
+					'site_id_or_domain' => $this->site_id,
+					'keep'              => 1,
+					'confirm'           => true,
+				)
+			);
+		} finally {
+			$property->setValue( null, $saved );
+		}
+		$this->assert_output( 'cleanup-site-backups', $result );
+		$this->assertSame( 'mainwp_operation_failed', $result['errors'][0]['code'] );
+		$this->assertSame( $expected, $result['errors'][0]['message'] );
+		$this->assertLessThanOrEqual( 500, mb_strlen( $result['errors'][0]['message'] ) );
+	}
+
+	/**
+	 * Translated, private and long service errors.
+	 *
+	 * @return array Diagnostic fixtures.
+	 */
+	public static function s90_r1_cleanup_diagnostics(): array {
+		$generic = 'A local backup file or folder could not be removed. Check the backup diagnostics and try again.';
+		$long    = 'Snapshots ' . str_repeat( '12345,', 100 ) . ': a restore is running.';
+		return array(
+			'translated'      => array( 'Sauvegardes 12: l’opération est en cours. Réessayez plus tard.', 'Sauvegardes 12: l’opération est en cours. Réessayez plus tard.' ),
+			'unix path'       => array( 'Erreur: /private/backups/archive.zip', $generic ),
+			'windows path'    => array( 'Erreur: C:\\backups\\archive.zip', $generic ),
+			'remove prefix'   => array( 'Could not remove archive.zip', $generic ),
+			'refused prefix'  => array( 'Refused to remove archive.zip', $generic ),
+			'600 char ids'    => array( $long, substr( $long, 0, 499 ) . '…' ),
+			'multibyte limit' => array( str_repeat( 'é', 600 ), str_repeat( 'é', 499 ) . '…' ),
+		);
+	}
+
 	/** Cleanup adapters retain snapshot identities and the specific hold reason. */
 	public function test_x1_cleanup_ability_and_ajax_report_remaining_ids_and_error_detail() {
 		global $wpdb;

@@ -1210,6 +1210,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                     $localBackupFile = MainWP_Backup_File_Manager::normalize_filename( $localBackupFile );
 
+                    $localBackupFile = MainWP_Backup_File_Manager::reserve_local_archive_path( $localBackupFile, (int) $website->id );
+
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedDB' => $localBackupFile ) );
                 } else {
                     $localBackupFile = $backupTaskProgress->downloadedDB;
@@ -1304,6 +1306,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
 
                     $localBackupFile = MainWP_Backup_File_Manager::normalize_filename( $localBackupFile );
+
+                    $localBackupFile = MainWP_Backup_File_Manager::reserve_local_archive_path( $localBackupFile, (int) $website->id );
 
                     $backupTaskProgress = MainWP_DB_Backup::instance()->update_backup_task_progress( $taskId, $website->id, array( 'downloadedFULL' => $localBackupFile ) );
                 } else {
@@ -2722,6 +2726,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
             }
 
+            $localBackupFile            = MainWP_Backup_File_Manager::reserve_local_archive_path( $localBackupFile, (int) $pSiteId );
             $backup_result['local']     = $localBackupFile;
             $backup_result['regexfile'] = $localRegexFile;
 
@@ -3081,8 +3086,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param int    $budget_seconds Wall-clock budget for driving slices; 0 reads without advancing.
      *
      * @return array Status array: status (running|completed|failed) and meta (phase, file, size, local, error, error_code).
-     * @throws MainWP_Exception When the site is unknown or the child is unreachable.
+     * @throws MainWP_Exception When the site is unknown, the child is unreachable, or the reserved path cannot be saved.
      * @throws \Exception When a request fails before the reconciliation cap.
+     *
+     * phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- the registry factory returns MainWP_Exception.
      */
     public static function get_backup_task_status( int $site_id, string $task_id, int $budget_seconds = 0 ): array {
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
@@ -3240,8 +3247,20 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $downloaded = '';
         $rejected   = '';
         if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {
-            $type  = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
-            $local = self::build_local_backup_file( $website, $type, $status['meta']['file'] );
+            $type   = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
+            $db     = MainWP_DB::instance();
+            $raw    = (string) $db->get_website_option( $website, self::ADHOC_TASK_OPTION );
+            $handle = json_decode( $raw, true );
+            $local  = is_array( $handle ) && ( $handle['task_id'] ?? '' ) === $task_id ? (string) ( $handle['local'] ?? '' ) : '';
+            if ( '' === $local || ! MainWP_Backup_Private_Root::is_within_private_site_dir( $local, $site_id ) ) {
+                $local = self::build_local_backup_file( $website, $type, $status['meta']['file'] );
+                if ( is_array( $handle ) && ( $handle['task_id'] ?? '' ) === $task_id ) {
+                    $handle['local'] = $local;
+                    if ( ! $db->compare_and_swap_website_option( $site_id, self::ADHOC_TASK_OPTION, $raw, wp_json_encode( $handle ) ) ) {
+                        throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                    }
+                }
+            }
             MainWP_Backup_File_Manager::sweep_backup_download_files( $site_id, $type, $local, $status['meta']['size'] ?? false );
             try {
                 self::validate_download_disk_space(
@@ -3569,7 +3588,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
         $prefix  = MainWP_Backup_Type::DATABASE === $type ? 'db-' : 'full-';
 
-        return MainWP_Backup_File_Manager::normalize_filename( $dir . $prefix . $clean_url . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $remote_file ) );
+        $proposed = MainWP_Backup_File_Manager::normalize_filename( $dir . $prefix . $clean_url . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $remote_file ) );
+        return MainWP_Backup_File_Manager::reserve_local_archive_path( $proposed, (int) $website->id );
     }
 
     /**

@@ -292,6 +292,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             'file'              => 's' . (int) $snapshot->id . '-' . $file,
             'source_file'       => $file,
             'size'              => isset( $archive['size'] ) ? (int) $archive['size'] : 0,
+            'recorded_size'     => $archive['size'] ?? null,
             'sha256'            => '',
             // Trusted backup-time hash for a remote artifact, empty when the
             // upload predates artifact hashing. The staging fallback verifies

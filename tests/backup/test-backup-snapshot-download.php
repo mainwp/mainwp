@@ -50,6 +50,49 @@ class MainWP_Backup_Snapshot_Download_Test extends MainWP_Abilities_Test_Case {
 	 */
 	private $keys = array();
 
+	/**
+	 * Issued links must recheck the recorded size before serving bytes.
+	 *
+	 * @dataProvider n1_recorded_sizes
+	 * @param mixed $size Invalid recorded size, or null to change disk bytes.
+	 */
+	public function test_n1_download_size_refusal_at_issue_and_redemption( $size ) {
+		list( $query, $key ) = $this->link();
+		if ( null === $size ) {
+			file_put_contents( $this->path, 'replacement bytes' );
+		} else {
+			global $wpdb;
+			$archive = array(
+				'file' => 'snapshot.zip',
+				'path' => $this->path,
+				'role' => 'full',
+			);
+			if ( 'missing' !== $size ) {
+				$archive['size'] = $size;
+			}
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'archives' => wp_json_encode( array( $archive ) ) ), array( 'id' => $this->snapshot_id ) );
+		}
+		foreach ( array( MainWP_Backup_Download::create_download_url( $this->snapshot_id ), MainWP_Backup_Download::redeem_download( $query ) ) as $result ) {
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_backup_download_size', $result->get_error_code() );
+		}
+		$this->assertNotFalse( get_site_transient( $key ) );
+	}
+
+	/**
+	 * Mismatch cases.
+	 *
+	 * @return array Mismatch cases.
+	 */
+	public static function n1_recorded_sizes() {
+		return array(
+			'disk changed'   => array( null ),
+			'missing'        => array( 'missing' ),
+			'numeric string' => array( '168000' ),
+			'fraction'       => array( 168000.5 ),
+		);
+	}
+
 	/** Set up isolated files and auto-assigned database identities. */
 	public function setUp(): void {
 		parent::setUp();

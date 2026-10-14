@@ -31,6 +31,7 @@ class MainWP_Backup_Download {
             'permission'  => __( 'You do not have permission to download this backup.', 'mainwp' ),
             'unavailable' => __( 'This backup\'s archive is not stored on this Dashboard, so it cannot be downloaded here.', 'mainwp' ),
             'read'        => __( 'The backup archive could not be read. Try downloading it again.', 'mainwp' ),
+            'size'        => __( 'The backup file on this Dashboard no longer matches this backup. It cannot be downloaded.', 'mainwp' ),
         );
         return new \WP_Error( 'mainwp_backup_download_' . $kind, $messages[ $kind ], array( 'status' => 403 ) );
     }
@@ -57,6 +58,9 @@ class MainWP_Backup_Download {
                 || ! MainWP_Backup_Private_Root::is_within_private_site_dir( $path, (int) $snapshot->site_id )
                 || ! is_file( $path ) || ! is_readable( $path ) ) {
                 return self::refusal( 'unavailable' );
+            }
+            if ( ! MainWP_Backup_File_Manager::local_archive_size_matches( $path, $archive['size'] ?? null ) ) {
+                return self::refusal( 'size' );
             }
             $real = realpath( $path );
             return false === $real ? self::refusal( 'unavailable' ) : $real;
@@ -140,6 +144,9 @@ class MainWP_Backup_Download {
             return self::refusal( 'permission' );
         }
         $path = self::local_archive( $snapshot );
+        if ( is_wp_error( $path ) && 'mainwp_backup_download_size' === $path->get_error_code() ) {
+            return $path;
+        }
         if ( is_wp_error( $path ) || (int) $snapshot->site_id !== $record['site_id'] || basename( $path ) !== $record['file'] ) {
             return self::refusal( 'link' );
         }

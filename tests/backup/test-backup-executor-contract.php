@@ -26,6 +26,62 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 
 	use Backup_Private_Root_Fixture;
 
+	/** A gate download retry must reuse its persisted reservation. */
+	public function test_n1_update_gate_retry_reuses_reserved_path() {
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'n1-gate',
+					'type'    => 'full',
+					'started' => time(),
+				)
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'phase' => 'completed',
+				'type'  => 'full',
+				'file'  => 'gate.zip',
+				'size'  => 66,
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		$paths    = array();
+		$download = static function ( $pre, $url, $file ) use ( &$paths ) {
+			$paths[] = $file;
+			if ( 1 === count( $paths ) ) {
+				file_put_contents( $file, "PK\x03\x04" );
+				return new MainWP_Exception( 'Interrupted transfer.' );
+			}
+			file_put_contents( $file, "PK\x03\x04" . str_repeat( 'x', 62 ) );
+			return true;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		ob_start();
+		try {
+			try {
+				MainWP_Backup_Executor::get_backup_task_status( $site_id, 'n1-gate', 60 );
+				$this->fail( 'The first transfer must be interrupted.' );
+			} catch ( MainWP_Exception $error ) {
+				$this->assertSame( 'Interrupted transfer.', $error->getMessage() );
+			}
+			$handle = json_decode( MainWP_DB::instance()->get_website_option( $website, 'adhoc_backup_task' ), true );
+			$this->assertSame( $paths[0], $handle['local'] ?? '' );
+			$result = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'n1-gate', 60 );
+			$this->assertSame( 'completed', $result['status'] );
+			$this->assertSame( $paths[0], $paths[1] );
+		} finally {
+			ob_end_clean();
+			remove_filter( 'mainwp_download_to_file_pre', $download );
+		}
+	}
+
 	/**
 	 * Set up: enable the legacy backup feature.
 	 *
@@ -527,7 +583,19 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 		$this->record_child_actions( $called );
 		$builder = new \ReflectionMethod( MainWP_Backup_Executor::class, 'build_local_backup_file' );
 		$local   = $builder->invoke( null, $website, 'full', 'gate.zip' );
-		$old     = dirname( $local ) . '/older-gate.zip';
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'gate-disk',
+					'type'    => 'full',
+					'started' => time() - 60,
+					'local'   => $local,
+				)
+			)
+		);
+		$old = dirname( $local ) . '/older-gate.zip';
 		if ( null !== $after_sweep ) {
 			delete_option( 'mainwp_backupsOnServer' );
 			file_put_contents( $old, "PK\x03\x04" . str_repeat( 'o', 62 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- retention fixture.

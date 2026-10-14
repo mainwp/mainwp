@@ -270,6 +270,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param int    $now      Wall-clock for retry scheduling.
      *
      * @return void
+     * @throws \RuntimeException When a local archive differs from its recorded size; handled as a permanent upload failure.
      */
     private function run_job( object $job, float $deadline, int $now ): void {
         $store = MainWP_Backup_Upload_Job_Store::instance();
@@ -343,6 +344,18 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             }
 
             $status = $job->status;
+
+            if ( in_array( $status, array( MainWP_Backup_Upload_Job_Store::STATUS_PENDING, MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING ), true ) ) {
+                $recorded_sizes = array();
+                foreach ( (array) $snapshot->archives as $archive ) {
+                    $recorded_sizes[ $archive['path'] ?? '' ] = $archive['size'] ?? null;
+                }
+                foreach ( $checkpoint['artifacts'] as $artifact ) {
+                    if ( empty( $artifact['done'] ) && is_file( $artifact['path'] ) && ! MainWP_Backup_File_Manager::local_archive_size_matches( $artifact['path'], $recorded_sizes[ $artifact['path'] ] ?? null ) ) {
+                        throw new \RuntimeException( __( 'The backup file on this Dashboard no longer matches this backup. It cannot be uploaded.', 'mainwp' ), 410 ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
+                    }
+                }
+            }
 
             if ( MainWP_Backup_Upload_Job_Store::STATUS_PENDING === $status || MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE === $status ) {
                 $status = MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING;

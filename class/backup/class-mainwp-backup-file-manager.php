@@ -546,6 +546,57 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 
     /**
+     * Reserve a fresh archive name with exclusive creation before saving it.
+     *
+     * @param string $proposed Proposed absolute path.
+     * @param int    $site_id  Owning site.
+     * @return string Reserved path, containing an empty resumable archive.
+     * @throws MainWP_Exception When no path can be reserved.
+     */
+    public static function reserve_local_archive_path( string $proposed, int $site_id ): string {
+        if ( ! MainWP_Backup_Private_Root::is_within_private_site_dir( $proposed, $site_id ) ) {
+            throw new MainWP_Exception( esc_html__( 'Invalid backup file location.', 'mainwp' ) );
+        }
+        $protected = MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( $site_id );
+        foreach ( MainWP_DB_Backup::instance()->get_open_run_download_paths( $site_id ) as $path ) {
+            $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] = true;
+        }
+        $extension = MainWP_Utility::ends_with( $proposed, '.sql.gz' ) ? '.sql.gz' : static::get_real_extension( $proposed );
+        $stem      = substr( $proposed, 0, -strlen( $extension ) );
+        for ( $attempt = 1; $attempt <= 110; ++$attempt ) {
+            $suffix = 1 === $attempt ? '' : '-' . ( $attempt <= 100 ? $attempt : wp_generate_uuid4() );
+            $path   = $stem . $suffix . $extension;
+            clearstatcache( true, $path );
+            if ( file_exists( $path ) || is_link( $path ) || file_exists( $path . '.downloading' ) || file_exists( $path . '.downloading.reclaim' )
+                || isset( $protected[ MainWP_Backup_Snapshots::normalise_path( $path ) ] ) ) {
+                continue;
+            }
+            $handle = @fopen( $path, 'x' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen, WordPress.PHP.NoSilencedErrors -- exclusive local creation arbitrates concurrent reservations.
+            if ( false !== $handle ) {
+                fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- close the exclusive reservation.
+                return $path;
+            }
+        }
+        throw new MainWP_Exception( esc_html__( 'Could not reserve a local backup file. Check that backup storage is writable and try again.', 'mainwp' ) );
+    }
+
+    /**
+     * Compare local bytes with the snapshot's unmodified recorded size.
+     *
+     * @param string $path          Local archive path.
+     * @param mixed  $recorded_size Size recorded in archives[].
+     * @param bool   $allow_unknown Preserve restore plans predating recorded sizes.
+     * @return bool Whether the archive has exactly its recorded size.
+     */
+    public static function local_archive_size_matches( string $path, mixed $recorded_size, bool $allow_unknown = false ): bool {
+        clearstatcache( true, $path );
+        if ( ! is_int( $recorded_size ) ) {
+            return $allow_unknown;
+        }
+        return $recorded_size >= 0 && is_file( $path ) && filesize( $path ) === $recorded_size;
+    }
+
+    /**
      * Method is_archive()
      *
      * Check if Archive.

@@ -58,6 +58,188 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 	use Backup_Private_Root_Fixture;
 
 	/**
+	 * Concurrent task downloads must keep independent destinations.
+	 *
+	 * @dataProvider n1_task_names
+	 * @param string $role Archive role.
+	 * @param string $template Custom template.
+	 */
+	public function test_n1_same_minute_task_paths_are_reserved( $role, $template ) {
+		list( $site_id, $first ) = $this->site_and_task(
+			array(
+				'filename' => $template,
+				'type'     => $role,
+			)
+		);
+		$first->id               = $this->n1_task_id();
+		$second                  = $this->make_task(
+			$first->userid,
+			array(
+				'id'       => $this->n1_task_id(),
+				'filename' => $template,
+				'type'     => $role,
+			)
+		);
+		$content                 = "PK\x03\x04" . str_repeat( 'a', 4092 );
+		foreach ( array( $first, $second ) as $task ) {
+			$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+			MainWP_DB_Backup::instance()->update_backup_task_progress(
+				$task->id,
+				$site_id,
+				array(
+					'fetchResult' => wp_json_encode(
+						array(
+							'full' => 'full' === $role ? 'backup.zip' : false,
+							'db'   => 'db' === $role ? 'backup.sql.zip' : false,
+							'size' => strlen( $content ),
+						)
+					),
+				)
+			);
+		}
+		update_option( 'date_format', '\\O\\c\\t\\o\\b\\e\\r-\\1\\3-\\2\\0\\2\\6' );
+		update_option( 'time_format', '\\8-\\1\\7-\\p\\m' );
+		$paths    = array();
+		$download = function ( $pre, $url, $file ) use ( &$paths, $content ) {
+			$paths[] = $file;
+			if ( 1 === count( $paths ) ) {
+				\Fiber::suspend( $file );
+			}
+			file_put_contents( $file, $content );
+			return true;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		$fiber      = new \Fiber(
+			static function () use ( $site_id, $first ) {
+				return MainWP_Backup_Executor::backup_site( $site_id, $first, 'backups' );
+			}
+		);
+		$first_path = $fiber->start();
+		try {
+			$this->assertFileExists( $first_path, 'The first path must be reserved before transport.' );
+			$before = file_get_contents( $first_path );
+			$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $second, 'backups' ) );
+			$this->assertCount( 2, $paths );
+			$this->assertNotSame( $paths[0], $paths[1] );
+			$this->assertSame( $before, file_get_contents( $first_path ), 'The second run must leave the first reservation untouched.' );
+		} finally {
+			$fiber->resume();
+			remove_filter( 'mainwp_download_to_file_pre', $download );
+		}
+		$this->assertNotFalse( $fiber->getReturn() );
+		$this->assertSame( $content, file_get_contents( $first_path ) );
+	}
+
+	/**
+	 * Both prefixes and both custom-template forms share reservation.
+	 *
+	 * @return array Cases.
+	 */
+	public static function n1_task_names() {
+		return array(
+			'full default'  => array( 'full', '' ),
+			'db default'    => array( 'db', '' ),
+			'full time'     => array( 'full', '%type%-%time%' ),
+			'db time'       => array( 'db', '%type%-%time%' ),
+			'full constant' => array( 'full', 'constant' ),
+			'db constant'   => array( 'db', 'constant' ),
+		);
+	}
+
+	/** Retries must retain the first reserved path. */
+	public function test_n1_retry_reuses_reserved_path() {
+		list( $site_id, $task ) = $this->site_and_task();
+		$task->id               = $this->n1_task_id();
+		$this->seed_download_ready_progress( $task->id, $site_id, 4096 );
+		$paths    = array();
+		$download = static function ( $pre, $url, $file ) use ( &$paths ) {
+			$paths[] = $file;
+			if ( 1 === count( $paths ) ) {
+				return new MainWP_Exception( 'Interrupted transfer.' );
+			}
+			file_put_contents( $file, "PK\x03\x04" . str_repeat( 'a', 4092 ) );
+			return true;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $download, 10, 3 );
+		try {
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			$this->assertFileExists( $paths[0] );
+			$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+			$this->assertSame( $paths[0], $paths[1] );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $download );
+		}
+	}
+
+	/**
+	 * Other archive naming flows must reserve before returning a path.
+	 *
+	 * @dataProvider n1_other_naming_sites
+	 * @param string $site Naming flow.
+	 */
+	public function test_n1_other_naming_sites_reserve( $site ) {
+		$site_id = $this->create_test_site();
+		$this->mock_child_action( 'backup_preflight', array( 'task_spine' => 1 ) );
+		$this->mock_child_action(
+			'backup',
+			array(
+				'full' => 'backup.zip',
+				'size' => 4096,
+			)
+		);
+		$this->mock_child_action(
+			'backup_checkpid',
+			array(
+				'status' => 'done',
+				'file'   => 'backup.zip',
+				'size'   => 4096,
+			)
+		);
+		$build  = function () use ( $site_id, $site ) {
+			if ( 'gate' === $site ) {
+				$method = new \ReflectionMethod( MainWP_Backup_Executor::class, 'build_local_backup_file' );
+				return $method->invoke( null, MainWP_DB::instance()->get_website_by_id( $site_id ), 'full', 'backup.zip' );
+			}
+			if ( 'monitor' === $site ) {
+				return MainWP_Backup_Monitor::backup_check_pid( $site_id, 1, 'full', '', 'constant' )['result']['local'];
+			}
+			return MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 1, 1, 1, 1, 'constant' )['local'];
+		};
+		$first  = $build();
+		$second = $build();
+		$this->assertNotSame( $first, $second );
+		$this->assertFileExists( $first );
+		$this->assertSame( 0, filesize( $first ) );
+	}
+
+	/**
+	 * Naming flows.
+	 *
+	 * @return array Naming flows.
+	 */
+	public static function n1_other_naming_sites() {
+		return array( array( 'gate' ), array( 'monitor' ), array( 'backup' ) );
+	}
+
+	/**
+	 * Auto-assigned task identity.
+	 *
+	 * @return int Auto-assigned task identity.
+	 */
+	private function n1_task_id() {
+		global $wpdb;
+		$wpdb->insert(
+			MainWP_DB::instance()->get_table_name( 'wp_backup' ),
+			array(
+				'name'      => 'N1 path fixture',
+				'last_run'  => time(),
+				'completed' => 0,
+			)
+		);
+		return (int) $wpdb->insert_id;
+	}
+
+	/**
 	 * An exact-size retry file must pass the downloaded archive validation.
 	 *
 	 * @dataProvider exact_size_archive_cases

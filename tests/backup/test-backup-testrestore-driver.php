@@ -402,6 +402,27 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'], 'The sandbox temp dir must be removed.' );
 	}
 
+	/** Test restore must refuse before replaying a changed local dump. */
+	public function test_n1_testrestore_refuses_local_size_mismatch() {
+		$dump   = $this->write_db_dump( 'changed.sql.gz', $this->sentinel_sql() );
+		$id     = $this->record(
+			'db',
+			array(
+				array(
+					'file' => 'changed.sql.gz',
+					'size' => filesize( $dump ) + 1,
+					'role' => 'db',
+					'path' => $dump,
+				),
+			)
+		);
+		$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $id );
+		$this->assertSame( 'fail', $result['state'] );
+		$this->assertSame( 'mainwp_restore_local_archive_size_mismatch', $result['error_code'] );
+		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ) );
+		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'] );
+	}
+
 	/**
 	 * Local verification works without child restore-create idempotency.
 	 *

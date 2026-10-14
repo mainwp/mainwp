@@ -329,6 +329,68 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 	}
 
 	/**
+	 * Fresh and resumed staging must reject changed local archive bytes.
+	 *
+	 * @dataProvider n1_staging_states
+	 * @param bool $staged Has a prior slice staged the artifact.
+	 */
+	public function test_n1_local_staging_refuses_size_mismatch( $staged ) {
+		$path = $this->dir . '/changed.zip';
+		file_put_contents( $path, 'replacement' );
+		$plan    = array(
+			array(
+				'role'        => 'full',
+				'file'        => 'changed.zip',
+				'size'        => 30,
+				'snapshot_id' => 0,
+				'source'      => 'local',
+				'local_path'  => $path,
+				'sha256'      => $staged ? hash( 'sha256', 'original' ) : '',
+				'staged_path' => $staged ? $path : '',
+			),
+		);
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertSame( 'mainwp_restore_local_archive_size_mismatch', $outcome['error_code'] );
+		$this->assertSame( $staged ? hash( 'sha256', 'original' ) : '', $plan[0]['sha256'] );
+	}
+
+	/** Transfer slices must recheck a previously staged local file. */
+	public function test_n1_local_transfer_refuses_size_mismatch() {
+		$path = $this->dir . '/changed.zip';
+		file_put_contents( $path, 'replacement' );
+		$plan    = array(
+			array(
+				'role'        => 'full',
+				'file'        => 'changed.zip',
+				'size'        => 30,
+				'snapshot_id' => 0,
+				'source'      => 'local',
+				'local_path'  => $path,
+				'sha256'      => hash( 'sha256', 'original' ),
+				'staged_path' => $path,
+				'adopt_only'  => false,
+			),
+		);
+		$cursor  = array();
+		$outcome = $this->driver->transfer_artifacts( (object) array( 'id' => 4 ), 'task', $plan, $cursor, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertSame( 'mainwp_restore_local_archive_size_mismatch', $outcome['error_code'] );
+		$this->assertEmpty( $this->driver->sent );
+	}
+
+	/** Staging state cases.
+	 *
+	 * @return array Staging states.
+	 */
+	public static function n1_staging_states() {
+		return array(
+			'fresh'   => array( false ),
+			'resumed' => array( true ),
+		);
+	}
+
+	/**
 	 * Restored plaintext stays behind deny files after a host recreates uploads.
 	 */
 	public function test_staging_protection_survives_recreation_and_transfer_resume() {

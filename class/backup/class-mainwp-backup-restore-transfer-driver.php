@@ -437,6 +437,14 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         $staging = '';
 
         foreach ( $plan as $index => $entry ) {
+            $recorded_size = array_key_exists( 'recorded_size', $entry ) ? $entry['recorded_size'] : ( $entry['size'] ?? null );
+            if ( 'local' === $entry['source'] && is_file( $entry['local_path'] ) && ! MainWP_Backup_File_Manager::local_archive_size_matches( $entry['local_path'], $recorded_size, true ) ) {
+                return array(
+                    'done'       => false,
+                    'error'      => __( 'The backup file on this Dashboard no longer matches this backup. It cannot be restored.', 'mainwp' ),
+                    'error_code' => 'mainwp_restore_local_archive_size_mismatch',
+                );
+            }
             if ( ! empty( $entry['staged_path'] ) && file_exists( $entry['staged_path'] ) && ! empty( $entry['sha256'] ) ) {
                 continue;
             }
@@ -1332,6 +1340,15 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
                 );
             }
 
+            $recorded_size = array_key_exists( 'recorded_size', $entry ) ? $entry['recorded_size'] : ( $entry['size'] ?? null );
+            if ( 'local' === ( $entry['source'] ?? '' ) && ! MainWP_Backup_File_Manager::local_archive_size_matches( $entry['staged_path'], $recorded_size, true ) ) {
+                return array(
+                    'done'       => false,
+                    'error'      => __( 'The backup file on this Dashboard no longer matches this backup. It cannot be restored.', 'mainwp' ),
+                    'error_code' => 'mainwp_restore_local_archive_size_mismatch',
+                    'retryable'  => false,
+                );
+            }
             $size = (int) filesize( $entry['staged_path'] );
             $raw  = (string) file_get_contents( $entry['staged_path'], false, null, $cursor['offset'], max( 1, min( $cursor['chunk_bytes'], $size - $cursor['offset'] ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded read of the staged artifact.
             $last = $cursor['offset'] + strlen( $raw ) >= $size;

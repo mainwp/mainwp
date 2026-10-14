@@ -160,6 +160,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $localBackupFile .= MainWP_Backup_File_Manager::get_real_extension( $information['file'] );
             }
 
+            $localBackupFile     = MainWP_Backup_File_Manager::reserve_local_archive_path( $localBackupFile, $pSiteId );
             $result['local']     = $localBackupFile;
             $result['regexfile'] = $localRegexFile;
         }

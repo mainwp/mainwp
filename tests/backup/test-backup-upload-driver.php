@@ -34,6 +34,60 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Private_Root_Fixture;
 
 	/**
+	 * Neither whole nor chunked uploads may hash replacement bytes.
+	 *
+	 * @dataProvider n1_upload_sizes
+	 * @param int  $size Recorded size.
+	 * @param bool $resumed Resume with a cached hash.
+	 */
+	public function test_n1_upload_refuses_size_mismatch_before_hashing( $size, $resumed ) {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$id                     = $this->make_snapshot(
+			array(
+				'archive.bin' => array(
+					'size' => $size,
+					'role' => 'full',
+				),
+			)
+		);
+		$snapshot               = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$driver                 = MainWP_Backup_Upload_Driver::instance();
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		if ( $resumed ) {
+			$job                                  = $store->get_jobs_for_snapshot( $id )[0];
+			$build                                = new \ReflectionMethod( $driver, 'new_checkpoint' );
+			$checkpoint                           = $build->invoke( $driver, $snapshot );
+			$checkpoint['artifacts'][0]['sha256'] = hash_file( 'sha256', $snapshot->archives[0]['path'] );
+			$store->save_checkpoint( (int) $job->id, $checkpoint );
+			$store->set_status( (int) $job->id, MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING );
+		}
+		file_put_contents( $snapshot->archives[0]['path'], 'replacement' );
+		$driver->process_pending_jobs( 240 );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertStringContainsString( 'no longer matches', $job->last_error );
+		$this->assertEmpty( glob( $base . '/*' ) );
+		if ( ! $resumed ) {
+			$this->assertEmpty( $job->checkpoint['artifacts'][0]['sha256'] ?? '' );
+			$this->assertNull( $job->checkpoint['artifacts'][0]['chunks'] );
+		}
+	}
+
+	/**
+	 * Upload cases.
+	 *
+	 * @return array Upload cases.
+	 */
+	public static function n1_upload_sizes() {
+		return array(
+			'whole'       => array( 100, false ),
+			'chunked'     => array( 3000, false ),
+			'cached hash' => array( 100, true ),
+		);
+	}
+
+	/**
 	 * Empty and malformed artifact lists must never verify an offsite copy.
 	 */
 	public function test_empty_or_scalar_archives_fail_permanently() {
@@ -1115,7 +1169,7 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$job = $store->get_jobs_for_snapshot( $snapshot_id )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
 		$this->assertSame( 0, (int) $job->next_retry_at );
-		$this->assertStringContainsString( 'Chunk bytes are unavailable locally', $job->last_error );
+		$this->assertStringContainsString( 'no longer matches', $job->last_error );
 	}
 
 	/**

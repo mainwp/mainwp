@@ -466,9 +466,9 @@ class MainWP_Uptime_Monitoring_Site_Widget {
                             jQuery('#mainwp-monitor-widget-loader').hide();
 
                         } else if (response?.error) {
-                            mainwp_showhide_message('mainwp-response-time-message-zone', '<i class="close icon"></i>' + response.error, 'red');
+                            mainwp_showhide_message('mainwp-response-time-message-zone', jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(response.error)), 'red');
                         } else {
-                            mainwp_showhide_message('mainwp-response-time-message-zone', '<i class="close icon"></i>' + __('Undefined error. Please try again.'), 'red');
+                            mainwp_showhide_message('mainwp-response-time-message-zone', jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(__('Undefined error. Please try again.'))), 'red');
                         }
                     }, 'json');
                     return false;

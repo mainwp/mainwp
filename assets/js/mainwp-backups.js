@@ -661,7 +661,7 @@ mainwp_managebackups_update = function () {
     }
 
     if (errors.length > 0) {
-        feedback('mainwp-message-zone', errors.join('<br />'), 'red');
+        feedback('mainwp-message-zone', errors, 'red');
     } else {
         feedback('mainwp-message-zone', MainWP.I18n.t('Adding the task...'), 'green');
 
@@ -745,7 +745,7 @@ mainwp_managebackups_add = function () {
 
 
     if (errors.length > 0) {
-        feedback('mainwp-message-zone', errors.join('<br />'), 'red');
+        feedback('mainwp-message-zone', errors, 'red');
     } else {
         feedback('mainwp-message-zone', MainWP.I18n.t('Adding the task...'), 'green');
 

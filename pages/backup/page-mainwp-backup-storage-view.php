@@ -394,11 +394,10 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         ?>
         <script type="text/javascript">
         jQuery( function () {
-            // Core feedback() writes HTML and clears only green, yellow and red,
-            // so the plain-text messages are escaped and blue is cleared here.
+            // Core feedback() clears only green, yellow and red.
             let showFeedback = function ( zone, message, color ) {
                 jQuery( '#' + zone ).removeClass( 'blue' );
-                feedback( zone, jQuery( '<div>' ).text( message ).html(), color );
+                feedback( zone, message, color );
             };
 
             let feedbackZone = function ( message, color ) {

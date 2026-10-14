@@ -306,14 +306,14 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if ( ! is_string( $message ) || '' === $message ) {
                 return;
             }
-            $related = false;
-            foreach ( array( 'backup', 'restore', 'zip', 'disk', 'memory', 'snapshot' ) as $keyword ) {
+            $topic = '';
+            foreach ( array( 'disk', 'backup', 'restore', 'zip', 'memory', 'snapshot' ) as $keyword ) {
                 if ( false !== stripos( $message, $keyword ) ) {
-                    $related = true;
+                    $topic = $keyword;
                     break;
                 }
             }
-            if ( ! $related ) {
+            if ( '' === $topic ) {
                 return;
             }
             $this->record(
@@ -324,6 +324,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 array(
                     'level'   => $level,
                     'message' => '[redacted]',
+                    'topic'   => $topic,
                 )
             );
         } catch ( \Throwable $e ) { // phpcs:ignore Generic.CodeAnalysis.EmptyStatement -- diagnostics must never break a backup.

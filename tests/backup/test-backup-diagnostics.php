@@ -44,6 +44,8 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'guardrail', $events[0]['kind'] );
 		$this->assertSame( 7, $events[0]['site_id'] );
 		$this->assertSame( 9, $events[0]['task_id'] );
+		$this->assertSame( 'backup', $events[0]['payload']['topic'] );
+		$this->assertSame( '[redacted]', $events[0]['payload']['message'] );
 		$line = file_get_contents( $this->diag_dir . '/' . $this->event_filename( '_global' ) );
 		foreach ( array( 'Jane Example', 'jane@example.test', 'secret-fixture-value' ) as $secret ) {
 			$this->assertStringNotContainsString( $secret, $line );
@@ -1552,6 +1554,7 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$guardrails = array_values( array_filter( $events, fn( $event ) => 'guardrail' === $event['kind'] ) );
 		$this->assertCount( 1, $guardrails, 'Only backup-related log messages may be recorded.' );
 		$this->assertSame( '[redacted]', $guardrails[0]['payload']['message'] );
+		$this->assertSame( 'disk', $guardrails[0]['payload']['topic'], 'Low disk space must remain identifiable after redaction.' );
 	}
 
 	/**

@@ -25,6 +25,7 @@ namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclar
 
 use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Logger;
@@ -1270,6 +1271,47 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 		} finally {
 			$store->release_reservation( $reservation );
 		}
+	}
+
+	/** A hard delete after preview must not dereference the missing row. */
+	public function test_hard_deleted_snapshot_after_preview_returns_not_found() {
+		global $wpdb;
+		$id            = $this->snapshot();
+		$plan          = $this->preview( $id );
+		$table         = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$snapshot_read = 'SELECT * FROM ' . $table . ' WHERE id = ' . $id;
+		$deleted       = false;
+		$between       = static function ( $query ) use ( $table, $id, $snapshot_read, &$deleted ) {
+			if ( ! $deleted && $snapshot_read === $query ) {
+				$frames = array_column( debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ), 'function' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace -- The row must survive preview and disappear before confirmation re-reads it.
+				if ( ! in_array( 'preview_delete_snapshot', $frames, true ) ) {
+					global $wpdb;
+					$deleted = true;
+					$wpdb->delete( $table, array( 'id' => $id ) );
+				}
+			}
+			return $query;
+		};
+		$warnings      = array();
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Null-row warnings must remain observable.
+			static function ( $severity, $message ) use ( &$warnings ) {
+				$warnings[] = $message;
+				return true;
+			},
+			E_WARNING | E_NOTICE
+		);
+		add_filter( 'query', $between );
+		try {
+			$result = $this->confirm( $id, $plan );
+		} finally {
+			remove_filter( 'query', $between );
+			restore_error_handler();
+		}
+		$this->assertTrue( $deleted, 'The row must disappear after preview.' );
+		$this->assertSame( array(), $warnings );
+		$this->assertWPError( $result );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND, $result->get_error_code() );
+		$this->assertSame( array( 'status' => 404 ), $result->get_error_data() );
 	}
 
 	/** A failing refresh must still leave a schema-valid changed result. */

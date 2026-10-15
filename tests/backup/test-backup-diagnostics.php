@@ -2288,22 +2288,25 @@ namespace MainWP\Dashboard {
     echo json_encode( array( 'bytes' => null !== $message ? null : base64_encode( $bytes ), 'headers' => $headers, 'message' => $message, 'status' => $status, 'consumed' => $consumed, 'upload_called' => $upload_called ), JSON_THROW_ON_ERROR );
 }
 PHP;
-		$process = proc_open(
+
+		$stderr_path = tempnam( sys_get_temp_dir(), 'mwp-diag-err-' );
+		$process     = proc_open(
 			array( PHP_BINARY, '-r', $fixture, dirname( __DIR__, 2 ), ABSPATH . WPINC . '/class-wp-error.php' ),
 			array(
 				0 => array( 'pipe', 'r' ),
 				1 => array( 'pipe', 'w' ),
-				2 => array( 'pipe', 'w' ),
+				2 => array( 'file', $stderr_path, 'w' ),
 			),
 			$pipes
 		);
 		fwrite( $pipes[0], wp_json_encode( $input ) );
 		fclose( $pipes[0] );
 		$output = stream_get_contents( $pipes[1] );
-		$error  = stream_get_contents( $pipes[2] );
 		fclose( $pipes[1] );
-		fclose( $pipes[2] );
-		$this->assertSame( 0, proc_close( $process ), $error );
+		$status = proc_close( $process );
+		$error  = file_get_contents( $stderr_path );
+		unlink( $stderr_path );
+		$this->assertSame( 0, $status, $error );
 		$this->assertSame( '', $error );
 		$response = json_decode( $output, true, 512, JSON_THROW_ON_ERROR );
 		if ( $response['consumed'] ) {

@@ -1554,6 +1554,22 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			);
 			$this->assertSame( $old_ref, $polls[0][2]['task_id'] );
 		}
+		if ( 'write_refused' === $mode ) {
+			$pending = json_decode( MainWP_DB::instance()->get_website_option( $site, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION ), true );
+			$this->assertSame( array( $new_ref => 0 ), $pending );
+			$this->calls = array();
+			$this->assertSame( 'history-child-' . $site, MainWP_Backup_Executor::trigger_backup( $site, 'full', '71' ) );
+			$calls = array_values(
+				array_filter(
+					$this->calls,
+					static function ( $call ) {
+						return in_array( $call[0], array( 'backup_task_cancel', 'backup_task_create' ), true );
+					}
+				)
+			);
+			$this->assertSame( array( 'backup_task_cancel', 'backup_task_create' ), array_column( $calls, 0 ) );
+			$this->assertSame( $new_ref, $calls[0][2]['task_id'] );
+		}
 	}
 
 	/**

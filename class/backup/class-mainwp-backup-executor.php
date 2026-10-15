@@ -2997,6 +2997,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         return self::with_backup_hold(
             $site_id,
             static function () use ( $website, $site_id, $type, $owner, $persisted, $archive_ext, $file_descriptors_auto, $file_descriptors ) {
+                // A site with no scheduled native task never reaches the scheduled
+                // lane's flush, so owed cancels are landed here before the child
+                // refuses this create as busy.
+                MainWP_Manage_Backups_Handler::flush_pending_child_cancel( $website );
                 $information = MainWP_Connect::fetch_url_authed(
                     $website,
                     'backup_task_create',
@@ -3046,6 +3050,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 global $wpdb;
                 $saved = json_decode( (string) MainWP_DB::instance()->get_website_option( $site_id, self::ADHOC_TASK_OPTION ), true );
                 if ( '' !== $wpdb->last_error || ! is_array( $saved ) || ( $saved['task_id'] ?? '' ) !== $task_id || ( $saved['owner'] ?? '' ) !== $owner ) {
+                    // Without a saved handle nothing owns this child task, and it would
+                    // hold the child's backup slot until its wall clock expires.
+                    MainWP_Manage_Backups_Handler::record_pending_child_cancel( $website, $task_id );
                     throw new MainWP_Exception( esc_html__( 'The backup could not save its running state. Try again.', 'mainwp' ) );
                 }
 

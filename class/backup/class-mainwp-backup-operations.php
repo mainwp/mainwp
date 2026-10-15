@@ -1754,11 +1754,14 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return $preview;
         }
         $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
-        $task     = (object) array(
+        if ( ! $snapshot ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND );
+        }
+        $task   = (object) array(
             'id'                  => (int) $snapshot->task_id,
             'delete_cloud_copies' => $preview['would_affect']['delete_cloud_copies'],
         );
-        $result   = MainWP_Backup_Retention_Executor::instance()->delete_snapshot( $site_id, $snapshot_id, array_map( 'intval', $expected_snapshot_ids ), $task );
+        $result = MainWP_Backup_Retention_Executor::instance()->delete_snapshot( $site_id, $snapshot_id, array_map( 'intval', $expected_snapshot_ids ), $task );
         unset( $result['snapshot_ids'] );
         $result = array(
             'site_id'     => $site_id,

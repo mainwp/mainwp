@@ -1143,22 +1143,34 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
                 var kept = parseInt( reconcile.kept, 10 ) || 0;
                 if ( kept > 0 ) {
-                    var keptText = ( 1 === kept
-                        ? '<?php /* translators: %d: number of files kept on the site. */ echo esc_js( _n( 'Kept %d file this backup has no copy of.', 'Kept %d files this backup has no copy of.', 1, 'mainwp' ) ); ?>'
-                        : '<?php /* translators: %d: number of files kept on the site. */ echo esc_js( _n( 'Kept %d file this backup has no copy of.', 'Kept %d files this backup has no copy of.', 2, 'mainwp' ) ); ?>'
-                    ).replace( '%d', kept );
-                    var reasons = [];
                     var keptByReason = reconcile.kept_by_reason || {};
-                    if ( ( parseInt( keptByReason.mu_plugins, 10 ) || 0 ) > 0 ) {
-                        reasons.push( '<?php echo esc_js( esc_html__( 'mu-plugins files missing from the backup', 'mainwp' ) ); ?>' );
+                    // Backups from older Child versions hold a copy of each symlinked
+                    // file, so kept links stay out of the "no copy" count.
+                    var keptLinks = Math.min( kept, parseInt( keptByReason.symlink, 10 ) || 0 );
+                    var keptFiles = kept - keptLinks;
+                    if ( keptFiles > 0 ) {
+                        var keptText = ( 1 === keptFiles
+                            ? '<?php /* translators: %d: number of files kept on the site. */ echo esc_js( _n( 'Kept %d file this backup has no copy of.', 'Kept %d files this backup has no copy of.', 1, 'mainwp' ) ); ?>'
+                            : '<?php /* translators: %d: number of files kept on the site. */ echo esc_js( _n( 'Kept %d file this backup has no copy of.', 'Kept %d files this backup has no copy of.', 2, 'mainwp' ) ); ?>'
+                        ).replace( '%d', keptFiles );
+                        var reasons = [];
+                        if ( ( parseInt( keptByReason.mu_plugins, 10 ) || 0 ) > 0 ) {
+                            reasons.push( '<?php echo esc_js( esc_html__( 'mu-plugins files missing from the backup', 'mainwp' ) ); ?>' );
+                        }
+                        if ( ( parseInt( keptByReason.unarchived, 10 ) || 0 ) > 0 ) {
+                            reasons.push( '<?php echo esc_js( esc_html__( 'files the backup could not read', 'mainwp' ) ); ?>' );
+                        }
+                        if ( reasons.length ) {
+                            keptText += ' ' + '<?php /* translators: %s: reasons files were kept, separated by semicolons. */ echo esc_js( esc_html__( 'Reasons: %s.', 'mainwp' ) ); ?>'.replace( '%s', reasons.join( '; ' ) );
+                        }
+                        $note.append( $( '<p>' ).text( keptText ) );
                     }
-                    if ( ( parseInt( keptByReason.unarchived, 10 ) || 0 ) > 0 ) {
-                        reasons.push( '<?php echo esc_js( esc_html__( 'files the backup could not read', 'mainwp' ) ); ?>' );
+                    if ( keptLinks > 0 ) {
+                        $note.append( $( '<p>' ).text( ( 1 === keptLinks
+                            ? '<?php /* translators: %d: number of symbolic links left on the site. */ echo esc_js( _n( 'Left %d symbolic link unchanged on the site.', 'Left %d symbolic links unchanged on the site.', 1, 'mainwp' ) ); ?>'
+                            : '<?php /* translators: %d: number of symbolic links left on the site. */ echo esc_js( _n( 'Left %d symbolic link unchanged on the site.', 'Left %d symbolic links unchanged on the site.', 2, 'mainwp' ) ); ?>'
+                        ).replace( '%d', keptLinks ) ) );
                     }
-                    if ( reasons.length ) {
-                        keptText += ' ' + '<?php /* translators: %s: reasons files were kept, separated by semicolons. */ echo esc_js( esc_html__( 'Reasons: %s.', 'mainwp' ) ); ?>'.replace( '%s', reasons.join( '; ' ) );
-                    }
-                    $note.append( $( '<p>' ).text( keptText ) );
                     var paths = Array.isArray( reconcile.kept_paths ) ? reconcile.kept_paths.slice( 0, 20 ) : [];
                     if ( paths.length ) {
                         var $paths = $( '<ul>' );

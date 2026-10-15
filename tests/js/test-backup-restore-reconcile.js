@@ -85,6 +85,40 @@ test( 'kept-only result is visible, and a later empty result clears samples', ()
     assert.equal( h.text( h.note() ).trim(), '' );
 } );
 
+test( 'kept symlinks get their own sentence and never claim the backup had no copy', () => {
+    const h = harness();
+    h.context.showReconcileNote( { reconcile: { status: 'done', removed: 0, kept: 1, kept_by_reason: { symlink: 1 }, kept_paths: [ 'wp-content/mu-plugins/wp-fail2ban.php' ] } }, 'full', false );
+    const text = h.text( h.note() );
+    assert.match( text, /\b1 symbolic link\b/ );
+    assert.doesNotMatch( text, /no copy of/ );
+    assert.doesNotMatch( text, /Reasons:/ );
+    assert.ok( h.created.some( node => node.tag === '<li>' && node.text === 'wp-content/mu-plugins/wp-fail2ban.php' ) );
+    assert.ok( h.note().visible );
+    assert.ok( h.note().classes.has( 'blue' ) );
+} );
+
+test( 'mixed kept results split symlinks from files the backup has no copy of', () => {
+    const h = harness();
+    const paths = Array.from( { length: 22 }, ( _, i ) => 'wp-content/kept-' + i + '.php' );
+    h.context.showReconcileNote( { reconcile: { status: 'done', removed: 0, kept: 22, kept_by_reason: { mu_plugins: 1, unarchived: 1, symlink: 20 }, kept_paths: paths } }, 'files', false );
+    const text = h.text( h.note() );
+    assert.match( text, /Kept 2 files this backup has no copy of\./ );
+    assert.match( text, /mu-plugins files missing from the backup/ );
+    assert.match( text, /\b20 symbolic links\b/ );
+    assert.match( text, /Showing 20 of 22 kept files/ );
+    assert.equal( h.created.filter( node => node.tag === '<li>' ).length, 20 );
+} );
+
+test( 'kept symlinks still show when reconciliation was skipped', () => {
+    const h = harness();
+    h.context.showReconcileNote( { reconcile: { status: 'skipped', reason: 'no_manifest', kept: 2, kept_by_reason: { symlink: 2 }, kept_paths: [ 'a.php', 'b.php' ] } }, 'full', false );
+    const text = h.text( h.note() );
+    assert.match( text, /no file list to compare against/ );
+    assert.match( text, /\b2 symbolic links\b/ );
+    assert.doesNotMatch( text, /no copy of/ );
+    assert.ok( h.note().classes.has( 'yellow' ) );
+} );
+
 for ( const reason of [ 'unarchived_invalid', 'unarchived_overflow', 'unarchived_unsupported' ] ) {
     test( reason + ' shows a yellow skipped note', () => {
         const h = harness();

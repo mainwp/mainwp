@@ -285,11 +285,11 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param int    $http_status HTTP status.
      * @param string $headers     Raw response headers.
-     * @param string $body        Unused response body, retained for callers.
+     * @param string $body        Raw response body. Only its presence is reported.
      *
      * @return array<string,string>
      */
-    public static function summarize_response( $http_status, $headers = '', $body = '' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Keep the public signature without displaying child bodies.
+    public static function summarize_response( $http_status, $headers = '', $body = '' ) {
         $status      = (int) $http_status;
         $status_text = $status > 0 ? (string) $status : '';
         $code_label  = $status > 0 ? MainWP_Utility::get_http_codes( $status ) : '';
@@ -316,7 +316,14 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $lines[] = esc_html__( 'Headers: none captured.', 'mainwp' );
         }
 
-        $lines[] = esc_html__( 'Body: no readable child response was returned.', 'mainwp' );
+        // The body is never displayed, but saying nothing came back would send
+        // someone debugging a WAF or error page in the wrong direction. The
+        // hidden-data placeholder does not prove a body arrived.
+        if ( is_string( $body ) && '' !== $body && '[hidden response data]' !== $body ) {
+            $lines[] = esc_html__( 'Body: received but not shown, because it may contain sensitive data.', 'mainwp' );
+        } else {
+            $lines[] = esc_html__( 'Body: no readable child response was returned.', 'mainwp' );
+        }
 
         return array(
             'status'      => $status_text,
@@ -756,22 +763,13 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string|null
      */
     private static function redact_urls_in_text( $text ) {
-        $redact = static function ( $found ) {
-            return MainWP_Connect_Failure_Ux::redact_url( MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] ) );
-        };
-
         $with_urls = preg_replace_callback(
-            '#(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}+://[^\s\'"<>]++|//[^\s\'"<>]++)#',
-            $redact,
+            '#(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}+://[^\s\'"<>]++|//[^\s\'"<>]++|/[^\s\'"<>]*+\?[^\s\'"<>]++)#',
+            static function ( $found ) {
+                return MainWP_Connect_Failure_Ux::redact_url( MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] ) );
+            },
             $text
         );
-        if ( ! is_string( $with_urls ) ) {
-            return null;
-        }
-
-        // Relative paths go second. A path match that starts before an
-        // embedded absolute URL would hand its userinfo to redact_url() as path.
-        $with_urls = preg_replace_callback( '#/[^\s\'"<>?]*+\?[^\s\'"<>]++#', $redact, $with_urls );
         if ( ! is_string( $with_urls ) ) {
             return null;
         }

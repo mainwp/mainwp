@@ -219,6 +219,9 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 $update = apply_filters( 'mainwp_uptime_monitoring_update_monitor_data', $update, $site_id, $bypass_cache_opt );
 
                 $success = MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update, $output );
+                if ( is_array( $output ) && isset( $output['saved'] ) && false === $output['saved'] ) {
+                    $success = false;
+                }
                 if ( $site_id && empty( $update['issub'] ) ) {
                     $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $site_id;
                     if ( $success ) {

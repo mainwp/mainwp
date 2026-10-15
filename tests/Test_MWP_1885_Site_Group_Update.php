@@ -17,6 +17,24 @@ class Test_MWP_1885_Site_Group_Update extends \WP_UnitTestCase {
         wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
     }
 
+    /** @dataProvider non_array_payloads */
+    public function test_non_array_payload_keeps_existing_tags( $data ): void {
+        $site = $this->create_test_site();
+        $db = MainWP_DB_Common::instance();
+        $old = $this->group();
+        $db->update_group_site( $old, $site );
+        try {
+            $db->rest_api_update_website( $site, $data );
+        } catch ( \Throwable $error ) {
+            $this->fail( 'Non-array REST payload must not throw: ' . $error->getMessage() );
+        }
+        $this->assertSame( array( $old ), array_values( array_map( 'intval', wp_list_pluck( $db->get_groups_by_website_id( $site ), 'id' ) ) ) );
+    }
+
+    public static function non_array_payloads(): array {
+        return array( 'null' => array( null ), 'string' => array( 'abc' ) );
+    }
+
     /** @dataProvider invalid_group_ids */
     public function test_invalid_groupids_keep_tags_without_group_writes( $input ): void {
         global $wpdb;

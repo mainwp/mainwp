@@ -1684,7 +1684,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 </div>
             <?php endif; ?>
             <?php if ( $timeout_save_failed ) : ?>
-                <div class="ui red message"><i class="close icon"></i><?php esc_html_e( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default.', 'mainwp' ); ?></div>
+                <div class="ui red message"><i class="close icon"></i><?php esc_html_e( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default. Other settings were saved.', 'mainwp' ); ?></div>
             <?php elseif ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsAdvanced' ) ) : ?>
                 <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
             <?php endif; ?>

@@ -1083,6 +1083,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             return false;
         }
 
+        if ( ! is_array( $data ) ) {
+            $data = array();
+        }
+
         $success = false;
 
         $websiteid = (int) $websiteid;

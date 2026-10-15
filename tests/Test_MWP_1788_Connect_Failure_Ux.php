@@ -189,7 +189,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	 * URLs in any kept header drop userinfo, query strings, and fragments.
 	 */
 	public function test_non_location_header_urls_drop_unknown_secrets(): void {
-		$headers = "HTTP/1.1 502 Bad Gateway\r\nx-cache: https://alice:harbor47@example.test/cache/path?ticket=opaque42#trace\r\nserver: https://bob%3Ariver88%40origin.example.test/failure%3Ftrace%3Dopaque99%23tail\r\ncf-cache-status: https%3A%2F%2Fcarol%3Aforest77%40encoded.example.test%2Fedge%3Fopaque%3Dvalue%23tail\r\ncontent-type: https&colon;&sol;&sol;dave&colon;ridge66&commat;entity.example.test&sol;mime&quest;opaque&equals;value\r\nx-cache-status: //erin:stone55@relative.example.test/cache#tail\r\nserver: %2F%2Ffrank%3Acreek44%40encoded-relative.example.test%2Forigin%23tail\r\nx-sucuri-id: ftp://grace:field33@files.example.test/archive?opaque=value#tail\r\n";
+		$headers = "HTTP/1.1 502 Bad Gateway\r\nx-cache: https://alice:harbor47@example.test/cache/path?ticket=opaque42#trace\r\nserver: https://bob%3Ariver88%40origin.example.test/failure%3Ftrace%3Dopaque99%23tail\r\ncf-cache-status: https%3A%2F%2Fcarol%3Aforest77%40encoded.example.test%2Fedge%3Fopaque%3Dvalue%23tail\r\ncontent-type: https&colon;&sol;&sol;dave&colon;ridge66&commat;entity.example.test&sol;mime&quest;opaque&equals;value\r\nx-cache-status: //erin:stone55@relative.example.test/cache#tail\r\nx-cache: /authorize?ticket=opaquevalue\r\nserver: %2F%2Ffrank%3Acreek44%40encoded-relative.example.test%2Forigin%23tail\r\nx-sucuri-id: ftp://grace:field33@files.example.test/archive?opaque=value#tail\r\n";
 		$text    = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
 
 		$this->assertStringContainsString( 'x-cache: https://example.test/cache/path', $text );
@@ -197,9 +197,10 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'cf-cache-status: https://encoded.example.test/edge', $text );
 		$this->assertStringContainsString( 'content-type: https://entity.example.test/mime', $text );
 		$this->assertStringContainsString( 'x-cache-status: //relative.example.test/cache', $text );
+		$this->assertStringContainsString( 'x-cache: /authorize', $text );
 		$this->assertStringContainsString( 'server: //encoded-relative.example.test/origin', $text );
 		$this->assertStringContainsString( 'x-sucuri-id: ftp://files.example.test/archive', $text );
-		foreach ( array( 'alice', 'harbor47', 'ticket=', 'opaque42', '#trace', 'bob', 'river88', 'trace=', 'opaque99', 'carol', 'forest77', 'dave', 'ridge66', 'erin', 'stone55', 'frank', 'creek44', 'grace', 'field33', 'opaque=', '%3F', '%40', '&colon;' ) as $secret ) {
+		foreach ( array( 'alice', 'harbor47', 'ticket=', 'opaque42', 'opaquevalue', '#trace', 'bob', 'river88', 'trace=', 'opaque99', 'carol', 'forest77', 'dave', 'ridge66', 'erin', 'stone55', 'frank', 'creek44', 'grace', 'field33', 'opaque=', '%3F', '%40', '&colon;' ) as $secret ) {
 			$this->assertStringNotContainsString( $secret, $text );
 		}
 	}

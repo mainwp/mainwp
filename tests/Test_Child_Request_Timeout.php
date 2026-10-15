@@ -97,7 +97,7 @@ class Test_Child_Request_Timeout extends \WP_UnitTestCase {
 		$this->assertSame( $saved, false === $actual ? false : (int) $actual );
 		if ( $error ) {
 			$this->assertMatchesRegularExpression( '/class="ui (?:red|error) message"/', $html );
-			$this->assertStringContainsString( 'Child request timeout must be a whole number of seconds, at least 300.', $html );
+			$this->assertStringContainsString( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default. Other settings were saved.', $html );
 			$this->assertStringNotContainsString( 'Settings have been saved successfully!', $html );
 		} else {
 			$this->assertStringContainsString( 'Settings have been saved successfully!', $html );

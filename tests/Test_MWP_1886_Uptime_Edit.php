@@ -50,6 +50,33 @@ class Test_MWP_1886_Uptime_Edit extends \WP_UnitTestCase {
         $this->assertSame( 1, (int) MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site, 'monitor_id', $monitor_id )->maxretries );
     }
 
+    public function test_failed_monitor_update_keeps_repair_attempts(): void {
+        global $wpdb;
+        $site = $this->create_test_site();
+        $monitor_id = $this->monitor( $site );
+        $option = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $site;
+        update_option( $option, 3 );
+        $attempts = 0;
+        $fail_update = static function ( $query ) use ( $wpdb, &$attempts ) {
+            if ( preg_match( '/^\s*UPDATE\s+`?' . preg_quote( $wpdb->prefix . 'mainwp_monitors', '/' ) . '`?\s/i', $query ) ) {
+                ++$attempts;
+                return "UPDATE {$wpdb->prefix}mainwp_monitors SET d57_missing_column = 1";
+            }
+            return $query;
+        };
+        $previous_errors = $wpdb->suppress_errors( true );
+        add_filter( 'query', $fail_update );
+        try {
+            $this->save_monitor( $site, $monitor_id, 0 );
+        } finally {
+            remove_filter( 'query', $fail_update );
+            $wpdb->suppress_errors( $previous_errors );
+        }
+        $this->assertSame( 1, $attempts, 'Saving must attempt a real monitor UPDATE.' );
+        $this->assertSame( 3, (int) get_option( $option ) );
+        $this->assertSame( 1, (int) MainWP_DB_Uptime_Monitoring::instance()->get_monitor_by( $site, 'monitor_id', $monitor_id )->maxretries );
+    }
+
     /** @dataProvider confirmation_settings */
     public function test_down_confirmation_selection_survives_save_and_reopen( $individual, $retries ): void {
         $site = $this->create_test_site();

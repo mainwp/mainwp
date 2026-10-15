@@ -1391,13 +1391,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$withheld = null !== $key && 'supported' !== $capability;
 		if ( $withheld ) {
 			$this->assertArrayNotHasKey( 'reconcile', $options );
-			$this->assertSame(
-				array(
-					'status' => 'skipped',
-					'reason' => 'unarchived_unsupported',
-				),
-				$job->checkpoint['verification']['reconcile']
-			);
+			$this->assertSame( 'unarchived_unsupported', $job->checkpoint['reconcile_withheld'] ?? null );
+			if ( ! $reused ) {
+				$this->assertArrayNotHasKey( 'reconcile', $job->checkpoint['verification'] ?? array() );
+			}
 		} else {
 			$this->assertSame( $walk, $options['reconcile']['walk'] );
 		}
@@ -1430,6 +1427,246 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			}
 		}
 		return $cases;
+	}
+
+	/**
+	 * A stale permission must not authorize deletion after its replacement write fails.
+	 */
+	public function test_mwp1908_failed_capability_persistence_prevents_create() {
+		global $wpdb;
+		$this->set_site_option( $this->site_id, 'reconcile_unarchived_support', '1' );
+		$this->responses['backup_preflight'] = array( 'zip_support' => 1 );
+		$job                                 = $this->make_unarchived_restore_job();
+		$table                               = MainWP_DB::instance()->get_table_name( 'wp_options' );
+		$refused                             = 0;
+		$refuse                              = static function ( $sql ) use ( $table, &$refused ) {
+			if ( 0 === strpos( $sql, 'UPDATE `' . $table . '`' ) && false !== strpos( $sql, "'reconcile_unarchived_support'" ) ) {
+				++$refused;
+				return 'SELECT * FROM mainwp_test_no_such_table';
+			}
+			return $sql;
+		};
+		$suppress                            = $wpdb->suppress_errors( true );
+		add_filter( 'query', $refuse );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+			$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		} finally {
+			remove_filter( 'query', $refuse );
+			$wpdb->suppress_errors( $suppress );
+		}
+		$this->assertSame( 1, $refused );
+		$this->assertSame( '1', MainWP_DB::instance()->get_website_option( $this->site_id, 'reconcile_unarchived_support' ) );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_STAGING, $job->checkpoint['resume_status'] );
+		$this->assertStringContainsString( 'Could not save the child manifest capability.', $job->last_error );
+		$this->assertNotContains( 'restore_task_create', array_column( $this->calls, 'what' ) );
+		$this->assertArrayNotHasKey( 'child_create_attempted', $job->checkpoint );
+	}
+
+	/**
+	 * Replayed params cannot change the task created before a lost reply.
+	 *
+	 * @dataProvider mwp1908_reconcile_replays
+	 * @param bool $first_supported First readiness result.
+	 * @param bool $reused_completed Completion arrives in create rather than poll.
+	 */
+	public function test_mwp1908_reconcile_replay_keeps_child_outcome( $first_supported, $reused_completed ) {
+		$job                                    = $this->make_unarchived_restore_job();
+		$this->responses['backup_preflight']    = $first_supported ? array( 'reconcile_unarchived_support' => 1 ) : new MainWP_Exception( 'Readiness unavailable.' );
+		$this->responses['restore_task_create'] = new MainWP_Exception( 'Create response lost.' );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$job = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertSame( '', $job->child_task_id );
+		$first_create = array_values( array_filter( $this->calls, static fn( $call ) => 'restore_task_create' === $call['what'] ) );
+		$this->assertCount( 1, $first_create );
+		$this->assertSame( $first_supported, isset( json_decode( $first_create[0]['params']['options_json'], true )['reconcile'] ) );
+
+		$reconcile                              = $first_supported ? array(
+			'status'         => 'done',
+			'removed'        => 3,
+			'kept'           => 2,
+			'kept_paths'     => array( 'wp-content/mu-plugins/host.php', 'private/unreadable.php' ),
+			'kept_by_reason' => array(
+				'mu_plugins' => 1,
+				'unarchived' => 1,
+			),
+		) : array(
+			'status' => 'skipped',
+			'reason' => 'no_manifest',
+		);
+		$completed                              = array(
+			'task_id'   => 'replayed-restore',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'reconcile' => $reconcile ) ),
+		);
+		$this->responses['backup_preflight']    = $first_supported ? new MainWP_Exception( 'Readiness unavailable.' ) : array( 'reconcile_unarchived_support' => 1 );
+		$this->responses['restore_task_create'] = $reused_completed ? $completed + array( 'reused' => true ) : array(
+			'task_id' => 'replayed-restore',
+			'phase'   => 'reconciling',
+			'reused'  => true,
+		);
+		$this->responses['restore_task_run']    = $completed;
+		$job                                    = $this->tick( $job );
+		if ( ! $reused_completed ) {
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
+			$job = $this->tick( $job );
+		}
+		$creates = array_values( array_filter( $this->calls, static fn( $call ) => 'restore_task_create' === $call['what'] ) );
+		$this->assertCount( 2, $creates );
+		$this->assertSame( $creates[0]['params']['restore_id'], $creates[1]['params']['restore_id'] );
+		$this->assertSame( ! $first_supported, isset( json_decode( $creates[1]['params']['options_json'], true )['reconcile'] ) );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $job->status );
+		$this->assertSame(
+			$first_supported ? $reconcile : array(
+				'status' => 'skipped',
+				'reason' => 'unarchived_unsupported',
+			),
+			$job->checkpoint['verification']['reconcile']
+		);
+		$this->assertSame( 'unarchived_unsupported', $job->checkpoint['reconcile_withheld'] ?? null );
+	}
+
+	/**
+	 * Both replay directions can complete through either response path.
+	 *
+	 * @return array
+	 */
+	public static function mwp1908_reconcile_replays() {
+		return array(
+			'sent then withheld, poll'   => array( true, false ),
+			'sent then withheld, create' => array( true, true ),
+			'withheld then sent, poll'   => array( false, false ),
+			'withheld then sent, create' => array( false, true ),
+		);
+	}
+
+	/**
+	 * Only the missing-manifest result can explain an earlier withheld request.
+	 *
+	 * @dataProvider mwp1908_completed_reconcile_results
+	 * @param bool       $withheld Whether reconcile is withheld.
+	 * @param array|null $reconcile Child result, or an absent key.
+	 * @param array|null $expected Stored result, or an absent key.
+	 * @param bool       $reused_completed Completion arrives in create rather than poll.
+	 */
+	public function test_mwp1908_completed_reconcile_respects_child_result( $withheld, $reconcile, $expected, $reused_completed ) {
+		$job                                 = $this->make_unarchived_restore_job();
+		$this->responses['backup_preflight'] = $withheld ? array() : array( 'reconcile_unarchived_support' => 1 );
+		$verification                        = array( 'files' => array( 'status' => 'done' ) );
+		if ( null !== $reconcile ) {
+			$verification['reconcile'] = $reconcile;
+		}
+		$completed                              = array(
+			'task_id'   => 'completed-restore',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => $verification ),
+		);
+		$this->responses['restore_task_create'] = $reused_completed ? $completed + array( 'reused' => true ) : array(
+			'task_id' => 'completed-restore',
+			'phase'   => 'reconciling',
+			'reused'  => true,
+		);
+		$this->responses['restore_task_run']    = $completed;
+		$job                                    = $this->tick( $job );
+		if ( ! $reused_completed ) {
+			$job = $this->tick( $job );
+		}
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING, $job->status );
+		$this->assertSame( $expected, $job->checkpoint['verification']['reconcile'] ?? null );
+		$this->assertSame( array( 'status' => 'done' ), $job->checkpoint['verification']['files'] );
+	}
+
+	/**
+	 * Child outcomes that distinguish withholding from completed reconcile work.
+	 *
+	 * @return array
+	 */
+	public static function mwp1908_completed_reconcile_results() {
+		$unsupported = array(
+			'status' => 'skipped',
+			'reason' => 'unarchived_unsupported',
+		);
+		$no_manifest = array(
+			'status' => 'skipped',
+			'reason' => 'no_manifest',
+		);
+		$other_skip  = array(
+			'status' => 'skipped',
+			'reason' => 'manifest_unverified',
+		);
+		$other_state = array(
+			'status'  => 'done',
+			'reason'  => 'no_manifest',
+			'removed' => 2,
+		);
+		$cases       = array();
+		foreach ( array( false, true ) as $reused ) {
+			$path                                      = $reused ? 'create' : 'poll';
+			$cases[ $path . ' withheld absent' ]       = array( true, null, $unsupported, $reused );
+			$cases[ $path . ' withheld no_manifest' ]  = array( true, $no_manifest, $unsupported, $reused );
+			$cases[ $path . ' sent no_manifest' ]      = array( false, $no_manifest, $no_manifest, $reused );
+			$cases[ $path . ' sent absent' ]           = array( false, null, null, $reused );
+			$cases[ $path . ' withheld other reason' ] = array( true, $other_skip, $other_skip, $reused );
+			$cases[ $path . ' withheld other state' ]  = array( true, $other_state, $other_state, $reused );
+		}
+		return $cases;
+	}
+
+	/**
+	 * A withholding decision cannot claim that a running task skipped reconcile.
+	 */
+	public function test_mwp1908_withheld_reconcile_waits_for_completion() {
+		$this->responses['backup_preflight']    = array();
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'withheld-restore',
+			'phase'   => 'queued',
+		);
+		$job                                    = $this->tick( $this->make_unarchived_restore_job() );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING, $job->status );
+		$this->assertArrayNotHasKey( 'reconcile', $job->checkpoint['verification'] ?? array() );
+		$job = $this->tick( $job );
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, $job->status );
+		$this->assertArrayNotHasKey( 'reconcile', $job->checkpoint['verification'] ?? array() );
+		$this->assertSame( 'unarchived_unsupported', $job->checkpoint['reconcile_withheld'] ?? null );
+	}
+
+	/**
+	 * A failed cloud task cannot determine the replacement task's reconcile result.
+	 */
+	public function test_mwp1908_cloud_fallback_drops_withheld_reconcile() {
+		$store                               = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                 = $this->make_job( array( 'reconcile_withheld' => 'unarchived_unsupported' ), $store::STATUS_RUNNING, array( 'child_task_id' => 'failed-cloud' ) );
+		$this->responses['restore_task_run'] = array(
+			'task_id'    => 'failed-cloud',
+			'phase'      => 'failed',
+			'error_code' => 'mainwp_cloud_pull_failed',
+		);
+		$job                                 = $this->tick( $job );
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertNotSame( 'orch01test', $job->checkpoint['restore_id'] );
+		$this->assertArrayNotHasKey( 'reconcile_withheld', $job->checkpoint );
+	}
+
+	/**
+	 * Unarchived metadata reaches the gate through the persisted restore plan.
+	 *
+	 * @return object Staged job.
+	 */
+	private function make_unarchived_restore_job() {
+		$job                 = $this->make_job( array( 'sub_type' => 'files' ), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$checkpoint          = $job->checkpoint;
+		$entry               = $checkpoint['plan'][0];
+		$entry['role']       = 'manifest';
+		$entry['file']       = 'files.list';
+		$entry['walk']       = array( 'unarchived' => array( 'private/unreadable.php' ) );
+		$entry['local_path'] = $this->dir . '/files.list';
+		file_put_contents( $entry['local_path'], "index.php\t10\t100\n" );
+		$entry['size']        = filesize( $entry['local_path'] );
+		$checkpoint['plan'][] = $entry;
+		MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
+		return MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
 	}
 
 	/**
@@ -6777,6 +7014,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	public function test_rollback_builds_adopt_only_plan() {
 		$failed = $this->make_job(
 			array(
+				'reconcile_withheld'     => 'unarchived_unsupported',
 				'pre_snapshot_artifacts' => array(
 					array(
 						'file' => 'backup-pre.tar.gz',
@@ -6795,6 +7033,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( 'backup-pre.tar.gz', $job->checkpoint['plan'][0]['file'] );
 		$this->assertSame( 'full', $job->checkpoint['sub_type'] );
 		$this->assertTrue( $job->checkpoint['is_rollback'] );
+		$this->assertArrayNotHasKey( 'reconcile_withheld', $job->checkpoint );
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$skip_drive           = static fn() => -1;
 		add_filter( 'mainwp_restore_foreground_budget', $skip_drive );

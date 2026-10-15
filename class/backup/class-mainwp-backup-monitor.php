@@ -517,7 +517,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param array  $preflight Child readiness report. Empty for a child whose
      *                          build has no preflight action at all.
      *
-     * @throws MainWP_Exception When the manifest capability cannot be persisted.
+     * @throws MainWP_Exception When a deletion capability cannot be persisted.
      * @return void
      */
     protected static function record_negotiated_capabilities( object $website, array $preflight ): void {
@@ -531,7 +531,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         // compares against '1', so the stored '0' behaves exactly as '' did.
         foreach ( self::NEGOTIATED_CAPABILITY_FLAGS as $option => $reported ) {
             MainWP_DB::instance()->update_website_option( $website, $option, empty( $preflight[ $reported ] ) ? '0' : '1' );
-            if ( 'manifest_writer_identity_support' === $option && ( '' !== $wpdb->last_error || ( empty( $preflight[ $reported ] ) ? '0' : '1' ) !== MainWP_DB::instance()->get_website_option( (int) $website->id, $option ) ) ) {
+            if ( in_array( $option, array( 'manifest_writer_identity_support', 'reconcile_unarchived_support' ), true ) && ( '' !== $wpdb->last_error || ( empty( $preflight[ $reported ] ) ? '0' : '1' ) !== MainWP_DB::instance()->get_website_option( (int) $website->id, $option ) ) ) {
                 throw new MainWP_Exception( esc_html__( 'Could not save the child manifest capability.', 'mainwp' ) );
             }
         }

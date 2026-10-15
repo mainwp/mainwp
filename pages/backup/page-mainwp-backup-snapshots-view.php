@@ -1150,7 +1150,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     var reasons = [];
                     var keptByReason = reconcile.kept_by_reason || {};
                     if ( ( parseInt( keptByReason.mu_plugins, 10 ) || 0 ) > 0 ) {
-                        reasons.push( '<?php echo esc_js( esc_html__( 'mu-plugins files added after the backup', 'mainwp' ) ); ?>' );
+                        reasons.push( '<?php echo esc_js( esc_html__( 'mu-plugins files missing from the backup', 'mainwp' ) ); ?>' );
                     }
                     if ( ( parseInt( keptByReason.unarchived, 10 ) || 0 ) > 0 ) {
                         reasons.push( '<?php echo esc_js( esc_html__( 'files the backup could not read', 'mainwp' ) ); ?>' );

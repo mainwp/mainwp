@@ -63,7 +63,7 @@ test( 'kept files show totals, reasons and at most twenty paths as text', () => 
     } }, 'files', false );
     const text = h.text( h.note() );
     assert.match( text, /Kept 25 files/ );
-    assert.match( text, /mu-plugins files added after the backup/ );
+    assert.match( text, /mu-plugins files missing from the backup/ );
     assert.match( text, /files the backup could not read/ );
     assert.match( text, /Showing 20 of 25/ );
     assert.match( text, /Review the kept mu-plugins files if you did not add them\./ );

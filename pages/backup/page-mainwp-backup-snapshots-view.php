@@ -1144,8 +1144,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 var kept = parseInt( reconcile.kept, 10 ) || 0;
                 if ( kept > 0 ) {
                     var keptByReason = reconcile.kept_by_reason || {};
-                    // Backups from older Child versions hold a copy of each symlinked
-                    // file, so kept links stay out of the "no copy" count.
+                    // Older Child backups can hold the target's bytes at a symlink's
+                    // path, so kept links stay out of the "no copy" count.
                     var keptLinks = Math.min( kept, parseInt( keptByReason.symlink, 10 ) || 0 );
                     var keptFiles = kept - keptLinks;
                     if ( keptFiles > 0 ) {

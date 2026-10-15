@@ -694,13 +694,8 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 if ( $updated ) {
                     $msg = '&message=saved';
                 }
-                if ( MainWP_Backup_Settings::encryption_was_forced_off() ) {
-                    // Settings were still saved (the green banner above still shows), but archive
-                    // encryption itself could not be armed - surface that on the next render.
-                    $msg .= '&backup_encryption_forced_off=1';
-                }
-                if ( '' !== MainWP_Backup_Settings::recovery_passphrase_rejection() ) {
-                    $msg .= '&backup_recovery_passphrase_rejected=' . MainWP_Backup_Settings::recovery_passphrase_rejection();
+                foreach ( MainWP_Backup_Settings::get_save_redirect_args() as $backup_arg => $backup_value ) {
+                    $msg .= '&' . $backup_arg . '=' . $backup_value;
                 }
 
                 // Redirect to the correct page based on the nonce.

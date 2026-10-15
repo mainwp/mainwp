@@ -258,6 +258,22 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Return warning query arguments for the last settings save.
+     *
+     * @return array Redirect query arguments.
+     */
+    public static function get_save_redirect_args(): array {
+        $args = array();
+        if ( self::encryption_was_forced_off() ) {
+            $args['backup_encryption_forced_off'] = 1;
+        }
+        if ( '' !== self::recovery_passphrase_rejection() ) {
+            $args['backup_recovery_passphrase_rejected'] = self::recovery_passphrase_rejection();
+        }
+        return $args;
+    }
+
+    /**
      * Method handle_settings_post()
      *
      * Update Child Site Settings.

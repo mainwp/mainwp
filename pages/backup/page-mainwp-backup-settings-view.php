@@ -34,6 +34,52 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
     }
 
     /**
+     * Return the reason a recovery passphrase was rejected.
+     *
+     * @param string $flag Rejection flag from the save redirect.
+     * @return string Rejection message; callers escape it on output.
+     */
+    private static function get_recovery_passphrase_rejection_message( string $flag ): string {
+        if ( 'mismatch' === $flag ) {
+            return __( 'The backup encryption key file is missing and the passphrase does not match the stored recovery key. To restore the key, enter the original recovery passphrase.', 'mainwp' );
+        } elseif ( 'current' === $flag ) {
+            return __( 'Enter the current recovery passphrase to change it. The passphrase was not changed.', 'mainwp' );
+        } elseif ( 'current_mismatch' === $flag ) {
+            return __( 'The current recovery passphrase is not correct. The passphrase was not changed.', 'mainwp' );
+        } elseif ( 'key_mismatch' === $flag ) {
+            return __( 'The stored recovery key does not match the backup encryption key file. The passphrase was not changed.', 'mainwp' );
+        } elseif ( 'account_password' === $flag ) {
+            return __( 'Your WordPress password is not correct. The recovery passphrase was not set.', 'mainwp' );
+        }
+        return __( 'The recovery passphrase must be at least 12 characters.', 'mainwp' );
+    }
+
+    /**
+     * Render a warning when a settings save could not apply encryption changes.
+     *
+     * @return bool Whether a warning was rendered instead of the success notice.
+     */
+    public static function render_save_notice(): bool {
+        $encryptionForcedOff = isset( $_GET['backup_encryption_forced_off'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['backup_encryption_forced_off'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        $passphraseRejected  = isset( $_GET['backup_recovery_passphrase_rejected'] ) ? sanitize_key( wp_unslash( $_GET['backup_recovery_passphrase_rejected'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if ( ! $encryptionForcedOff && '' === $passphraseRejected ) {
+            return false;
+        }
+
+        if ( $encryptionForcedOff ) {
+            $message = __( 'Settings saved, but backup encryption is still off.', 'mainwp' );
+            $reason  = '' !== $passphraseRejected ? self::get_recovery_passphrase_rejection_message( $passphraseRejected ) : __( 'No recovery passphrase is set.', 'mainwp' );
+            $next    = __( 'Fix this under Backup Settings below, then save again.', 'mainwp' );
+        } else {
+            $message = __( 'Settings saved, but the backup recovery passphrase was rejected.', 'mainwp' );
+            $reason  = self::get_recovery_passphrase_rejection_message( $passphraseRejected );
+            $next    = __( 'Check it under Backup Settings below.', 'mainwp' );
+        }
+        echo '<div class="ui yellow message"><i class="close icon"></i>' . esc_html( $message . ' ' . $reason . ' ' . $next ) . '</div>';
+        return true;
+    }
+
+    /**
      * Method render_settings()
      *
      * Render backup settings.
@@ -229,21 +275,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             <div class="ten wide column">
                 <?php if ( in_array( $passphraseRejected, array( 'short', 'mismatch', 'current', 'current_mismatch', 'key_mismatch', 'account_password' ), true ) ) : ?>
                 <div class="ui small red message" style="margin-top: 1em;">
-                    <?php
-                    if ( 'mismatch' === $passphraseRejected ) {
-                        esc_html_e( 'The backup encryption key file is missing and the passphrase does not match the stored recovery key. To restore the key, enter the original recovery passphrase.', 'mainwp' );
-                    } elseif ( 'current' === $passphraseRejected ) {
-                        esc_html_e( 'Enter the current recovery passphrase to change it. The passphrase was not changed.', 'mainwp' );
-                    } elseif ( 'current_mismatch' === $passphraseRejected ) {
-                        esc_html_e( 'The current recovery passphrase is not correct. The passphrase was not changed.', 'mainwp' );
-                    } elseif ( 'key_mismatch' === $passphraseRejected ) {
-                        esc_html_e( 'The stored recovery key does not match the backup encryption key file. The passphrase was not changed.', 'mainwp' );
-                    } elseif ( 'account_password' === $passphraseRejected ) {
-                        esc_html_e( 'Your WordPress password is not correct. The recovery passphrase was not set.', 'mainwp' );
-                    } else {
-                        esc_html_e( 'The recovery passphrase must be at least 12 characters.', 'mainwp' );
-                    }
-                    ?>
+                    <?php echo esc_html( self::get_recovery_passphrase_rejection_message( $passphraseRejected ) ); ?>
                 </div>
                 <?php endif; ?>
                 <?php if ( $hasRecoveryPassphrase ) : ?>

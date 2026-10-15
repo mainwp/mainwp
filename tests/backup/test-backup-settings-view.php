@@ -14,11 +14,211 @@ use MainWP\Dashboard\MainWP_Backup_Settings_View;
 use MainWP\Dashboard\MainWP_Backup_Settings;
 use MainWP\Dashboard\MainWP_Backup_Encryption;
 use MainWP\Dashboard\MainWP_Keys_Manager;
+use MainWP\Dashboard\MainWP_Settings;
 
 /**
  * Class MainWP_Backup_Settings_View_Test
  */
 class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
+
+	/**
+	 * A short first passphrase saves other settings and reports both refusals.
+	 */
+	public function test_settings_save_redirect_args_for_short_first_passphrase() {
+		wp_set_current_user(
+			$this->factory->user->create(
+				array(
+					'role'      => 'administrator',
+					'user_pass' => 'settings account password',
+				)
+			)
+		);
+		$enc = MainWP_Backup_Encryption::instance();
+		$this->assertEmpty( $enc->get_recovery_blob() );
+		$_POST['submit']                                    = '1';
+		$_POST['wp_nonce']                                  = wp_create_nonce( 'Settings' );
+		$_POST['mainwp_options_enableBackupEncryption']     = '1';
+		$_POST['mainwp_options_backupEncryptionPassphrase'] = '12345678901';
+		$_POST['mainwp_options_backupEncryptionAccountPassword'] = 'settings account password';
+		$_POST['mainwp_options_backupOnServer']                  = '3';
+		try {
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertSame( 3, (int) get_option( 'mainwp_backupsOnServer' ) );
+			$this->assertEmpty( $enc->get_recovery_blob() );
+			$this->assertFalse( $enc->is_enabled_setting() );
+			$this->assertTrue( is_callable( array( MainWP_Backup_Settings::class, 'get_save_redirect_args' ) ) );
+			$this->assertSame(
+				array(
+					'backup_encryption_forced_off'        => 1,
+					'backup_recovery_passphrase_rejected' => 'short',
+				),
+				MainWP_Backup_Settings::get_save_redirect_args()
+			);
+		} finally {
+			unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_enableBackupEncryption'], $_POST['mainwp_options_backupEncryptionPassphrase'], $_POST['mainwp_options_backupEncryptionAccountPassword'], $_POST['mainwp_options_backupOnServer'] );
+			delete_option( 'mainwp_backupsOnServer' );
+		}
+	}
+
+	/**
+	 * A rejected replacement keeps encryption enabled and reports only the refusal.
+	 */
+	public function test_settings_save_redirect_args_for_rejected_replacement() {
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
+		$enc               = MainWP_Backup_Encryption::instance();
+		$original          = $enc->set_recovery_passphrase( 'original recovery passphrase' );
+		$_POST['submit']   = '1';
+		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+		$_POST['mainwp_options_enableBackupEncryption']            = '1';
+		$_POST['mainwp_options_backupEncryptionPassphrase']        = 'replacement recovery passphrase';
+		$_POST['mainwp_options_backupEncryptionCurrentPassphrase'] = 'wrong current recovery passphrase';
+		try {
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertSame( $original, $enc->get_recovery_blob() );
+			$this->assertTrue( $enc->is_enabled_setting() );
+			$this->assertTrue( is_callable( array( MainWP_Backup_Settings::class, 'get_save_redirect_args' ) ) );
+			$this->assertSame( array( 'backup_recovery_passphrase_rejected' => 'current_mismatch' ), MainWP_Backup_Settings::get_save_redirect_args() );
+		} finally {
+			unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_enableBackupEncryption'], $_POST['mainwp_options_backupEncryptionPassphrase'], $_POST['mainwp_options_backupEncryptionCurrentPassphrase'] );
+		}
+	}
+
+	/**
+	 * A clean save clears redirect warnings from the previous handler call.
+	 */
+	public function test_settings_save_redirect_args_for_clean_save() {
+		wp_set_current_user(
+			$this->factory->user->create(
+				array(
+					'role'      => 'administrator',
+					'user_pass' => 'settings account password',
+				)
+			)
+		);
+		$_POST['submit']                                    = '1';
+		$_POST['wp_nonce']                                  = wp_create_nonce( 'Settings' );
+		$_POST['mainwp_options_enableBackupEncryption']     = '1';
+		$_POST['mainwp_options_backupEncryptionPassphrase'] = '12345678901';
+		$_POST['mainwp_options_backupEncryptionAccountPassword'] = 'settings account password';
+		try {
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertTrue( MainWP_Backup_Settings::encryption_was_forced_off() );
+			$this->assertSame( 'short', MainWP_Backup_Settings::recovery_passphrase_rejection() );
+			$_POST['mainwp_options_backupEncryptionPassphrase'] = 'a strong settings passphrase';
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertTrue( MainWP_Backup_Encryption::instance()->is_armed() );
+			$this->assertTrue( is_callable( array( MainWP_Backup_Settings::class, 'get_save_redirect_args' ) ) );
+			$this->assertSame( array(), MainWP_Backup_Settings::get_save_redirect_args() );
+		} finally {
+			unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_enableBackupEncryption'], $_POST['mainwp_options_backupEncryptionPassphrase'], $_POST['mainwp_options_backupEncryptionAccountPassword'] );
+		}
+	}
+
+	/**
+	 * Partial saves show one warning paragraph; clean saves print nothing.
+	 *
+	 * @dataProvider save_notice_flags
+	 * @param array  $query   Redirect query arguments.
+	 * @param string $message Expected warning text, or empty for a clean save.
+	 */
+	public function test_render_save_notice( array $query, string $message ) {
+		$this->assertTrue( is_callable( array( MainWP_Backup_Settings_View::class, 'render_save_notice' ) ) );
+		$saved_get = $_GET;
+		$_GET      = $query;
+		ob_start();
+		try {
+			$rendered = MainWP_Backup_Settings_View::render_save_notice();
+		} finally {
+			$output = ob_get_clean();
+			$_GET   = $saved_get;
+		}
+		$this->assertSame( '' !== $message, $rendered );
+		$this->assertSame( '' === $message ? '' : '<div class="ui yellow message"><i class="close icon"></i>' . $message . '</div>', $output );
+	}
+
+	/**
+	 * The General Settings page replaces its success banner on a partial save.
+	 *
+	 * @dataProvider save_notice_flags
+	 * @param array  $query   Redirect query arguments.
+	 * @param string $message Expected warning text, or empty for a clean save.
+	 */
+	public function test_general_settings_save_notice_suppresses_green_banner( array $query, string $message ) {
+		global $wp_current_filter;
+
+		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
+		$page                 = new class() extends MainWP_Settings {
+			/**
+			 * Leave navigation out of the settings notice test.
+			 *
+			 * @param string $shownPage Unused page slug.
+			 */
+			public static function render_header( $shownPage = '' ) {
+			}
+		};
+		$stop                 = new \RuntimeException( 'Settings form reached.' );
+		$stop_at_form         = static function () use ( $stop ) {
+			throw $stop;
+		};
+		$saved_get            = $_GET;
+		$_GET                 = array_merge( $query, array( 'message' => 'saved' ) );
+		$saved_current_filter = $wp_current_filter;
+		add_action( 'mainwp_settings_form_top', $stop_at_form, -9999 );
+		ob_start();
+		try {
+			$page::render();
+			$this->fail( 'The settings page must reach the form-top hook.' );
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( $stop, $e );
+		} finally {
+			$output            = ob_get_clean();
+			$wp_current_filter = $saved_current_filter; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restore the hook stack after stopping at form-top.
+			remove_action( 'mainwp_settings_form_top', $stop_at_form, -9999 );
+			$_GET = $saved_get;
+		}
+		$this->assertStringContainsString( 'id="mainwp-general-settings"', $output );
+		if ( '' !== $message ) {
+			$this->assertStringContainsString( '<div class="ui yellow message"><i class="close icon"></i>' . $message . '</div>', $output );
+			$this->assertStringNotContainsString( 'ui green message', $output );
+			$this->assertStringNotContainsString( 'Settings have been saved successfully!', $output );
+		} else {
+			$this->assertStringContainsString( '<div class="ui green message"><i class="close icon"></i>Settings have been saved successfully!</div>', $output );
+			$this->assertStringNotContainsString( 'ui yellow message', $output );
+		}
+	}
+
+	/**
+	 * Redirect flags determine the warning and its recovery instructions.
+	 *
+	 * @return array Query arguments and exact warning text.
+	 */
+	public static function save_notice_flags(): array {
+		$cases = array(
+			'forced off and short' => array(
+				array(
+					'backup_encryption_forced_off'        => '1',
+					'backup_recovery_passphrase_rejected' => 'short',
+				),
+				'Settings saved, but backup encryption is still off. The recovery passphrase must be at least 12 characters. Fix this under Backup Settings below, then save again.',
+			),
+			'forced off alone'     => array(
+				array( 'backup_encryption_forced_off' => '1' ),
+				'Settings saved, but backup encryption is still off. No recovery passphrase is set. Fix this under Backup Settings below, then save again.',
+			),
+			'unknown rejection'    => array(
+				array( 'backup_recovery_passphrase_rejected' => 'unknown' ),
+				'Settings saved, but the backup recovery passphrase was rejected. The recovery passphrase must be at least 12 characters. Check it under Backup Settings below.',
+			),
+			'clean save'           => array( array(), '' ),
+		);
+		foreach ( self::recovery_proof_banners() as $name => $rejection ) {
+			$cases[ $name ] = array(
+				array( 'backup_recovery_passphrase_rejected' => $rejection[0] ),
+				'Settings saved, but the backup recovery passphrase was rejected. ' . $rejection[1] . ' Check it under Backup Settings below.',
+			);
+		}
+		return $cases;
+	}
 
 	/**
 	 * A refused passphrase must not change how the other settings save.
@@ -248,6 +448,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 			unset( $_GET['backup_recovery_passphrase_rejected'] );
 		}
 		$this->assertStringContainsString( $message, $output );
+		$this->assertStringContainsString( 'class="ui small red message"', $output );
 	}
 
 	/**
@@ -257,6 +458,8 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function recovery_proof_banners(): array {
 		return array(
+			'short'            => array( 'short', 'The recovery passphrase must be at least 12 characters.' ),
+			'mismatch'         => array( 'mismatch', 'The backup encryption key file is missing and the passphrase does not match the stored recovery key. To restore the key, enter the original recovery passphrase.' ),
 			'current'          => array( 'current', 'Enter the current recovery passphrase to change it. The passphrase was not changed.' ),
 			'current mismatch' => array( 'current_mismatch', 'The current recovery passphrase is not correct. The passphrase was not changed.' ),
 			'key mismatch'     => array( 'key_mismatch', 'The stored recovery key does not match the backup encryption key file. The passphrase was not changed.' ),

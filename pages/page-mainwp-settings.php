@@ -894,7 +894,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         ?>
         <div id="mainwp-general-settings" class="ui padded segment">
 
-            <?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
+            <?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] && ! MainWP_Backup_Settings_View::render_save_notice() ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
                 <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
             <?php endif; ?>
             <div class="ui form">

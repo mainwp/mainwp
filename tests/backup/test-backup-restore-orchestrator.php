@@ -1237,6 +1237,202 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Probe cache settings must preserve the site's URL and HTTP defaults.
+	 *
+	 * @dataProvider mwp1908_probe_urls
+	 * @param string $url Site URL.
+	 */
+	public function test_mwp1908_probe_bypasses_cache_and_preserves_url( $url ) {
+		$requests = array();
+		$http     = static function ( $pre, $args, $request_url ) use ( &$requests ) {
+			$requests[] = array( $request_url, $args );
+			return array( 'response' => array( 'code' => 200 ) );
+		};
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		$before = (int) ( microtime( true ) * 1000000 );
+		$probe  = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'site_responds' );
+		try {
+			$this->assertTrue(
+				$probe->invoke(
+					new MainWP_Backup_Restore_Orchestrator(),
+					(object) array(
+						'url'                => $url,
+						'verify_certificate' => 1,
+					)
+				)
+			);
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+		}
+		$this->assertCount( 1, $requests );
+		list( $request_url, $args ) = $requests[0];
+		parse_str( (string) wp_parse_url( $request_url, PHP_URL_QUERY ), $query );
+		$this->assertArrayHasKey( 'mots', $query );
+		$this->assertMatchesRegularExpression( '/^\d+$/', $query['mots'] );
+		$this->assertGreaterThanOrEqual( $before, (int) $query['mots'] );
+		$this->assertLessThanOrEqual( (int) ( microtime( true ) * 1000000 ), (int) $query['mots'] );
+		$this->assertSame( $url, remove_query_arg( 'mots', $request_url ) );
+		$this->assertSame( 'no-cache, no-store, max-age=0', $args['headers']['Cache-Control'] );
+		$this->assertSame( 'no-cache', $args['headers']['Pragma'] );
+		$this->assertSame( 15, $args['timeout'] );
+		$this->assertTrue( $args['sslverify'] );
+		$this->assertSame( 5, $args['redirection'] );
+	}
+
+	/**
+	 * Site URL variants.
+	 *
+	 * @return array
+	 */
+	public static function mwp1908_probe_urls() {
+		return array(
+			'query'        => array( 'https://example.org/?language=en&preview=1' ),
+			'subdirectory' => array( 'https://example.org/wordpress/site/?language=en' ),
+		);
+	}
+
+	/**
+	 * The public reachability contract remains HTTP 200 through 499.
+	 *
+	 * @dataProvider mwp1908_probe_statuses
+	 * @param int|false $status HTTP code, or false for a transport failure.
+	 * @param bool      $expected Expected reachability.
+	 */
+	public function test_mwp1908_probe_status_boundaries( $status, $expected ) {
+		$http = static function () use ( $status ) {
+			return false === $status ? new \WP_Error( 'transport', 'Offline.' ) : array( 'response' => array( 'code' => $status ) );
+		};
+		add_filter( 'pre_http_request', $http );
+		$probe = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'site_responds' );
+		try {
+			$this->assertSame( $expected, $probe->invoke( new MainWP_Backup_Restore_Orchestrator(), (object) array( 'url' => 'https://example.org/' ) ) );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+		}
+	}
+
+	/**
+	 * Boundary and transport outcomes.
+	 *
+	 * @return array
+	 */
+	public static function mwp1908_probe_statuses() {
+		return array(
+			array( 199, false ),
+			array( 200, true ),
+			array( 499, true ),
+			array( 500, false ),
+			array( false, false ),
+		);
+	}
+
+	/**
+	 * Only a fresh capability answer can authorize the new reconcile metadata.
+	 *
+	 * @dataProvider mwp1908_reconcile_capabilities
+	 * @param string|null $key Walk protection key.
+	 * @param string      $capability Readiness response.
+	 * @param bool        $reused Child completed on a replayed create.
+	 */
+	public function test_mwp1908_reconcile_requires_unarchived_capability( $key, $capability, $reused ) {
+		$walk = array(
+			'excludes'     => array(),
+			'excludenonwp' => 0,
+			'excludezip'   => 0,
+		);
+		if ( null !== $key ) {
+			$walk[ $key ] = 'unarchived' === $key ? array( 'private/unreadable.php' ) : true;
+		}
+		$website = MainWP_DB::instance()->get_website_by_id( $this->site_id );
+		if ( 'stale' === $capability ) {
+			MainWP_DB::instance()->update_website_option( $website, 'reconcile_unarchived_support', '1' );
+		}
+		$this->responses['backup_preflight']    = in_array( $capability, array( 'error', 'stale' ), true )
+			? new MainWP_Exception( 'Readiness unavailable.' )
+			: ( 'supported' === $capability ? array( 'reconcile_unarchived_support' => 1 ) : array( 'zip_support' => 1 ) );
+		$verification                           = array(
+			'reconcile' => array(
+				'status' => 'skipped',
+				'reason' => 'no_manifest',
+			),
+		);
+		$completed                              = array(
+			'task_id'   => 'mwp1908',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => $verification ),
+		);
+		$this->responses['restore_task_create'] = $reused ? array_merge( $completed, array( 'reused' => true ) ) : array(
+			'task_id' => 'mwp1908',
+			'phase'   => 'queued',
+		);
+		$this->responses['restore_task_run']    = $completed;
+		$path                                   = $this->dir . '/files.list';
+		file_put_contents( $path, "index.php\t10\t100\n" );
+		$job                    = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_STAGING );
+		$entry                  = $job->checkpoint['plan'][0];
+		$entry                  = array_merge(
+			$entry,
+			array(
+				'role'       => 'manifest',
+				'file'       => 's5-files.list',
+				'local_path' => $path,
+				'size'       => filesize( $path ),
+				'walk'       => $walk,
+			)
+		);
+		$checkpoint             = $job->checkpoint;
+		$checkpoint['sub_type'] = 'files';
+		$checkpoint['plan'][]   = $entry;
+		MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint );
+		$job     = $this->tick( $job );
+		$creates = array_values( array_filter( $this->calls, static fn( $call ) => 'restore_task_create' === $call['what'] ) );
+		$this->assertCount( 1, $creates );
+		$options  = json_decode( $creates[0]['params']['options_json'], true );
+		$withheld = null !== $key && 'supported' !== $capability;
+		if ( $withheld ) {
+			$this->assertArrayNotHasKey( 'reconcile', $options );
+			$this->assertSame(
+				array(
+					'status' => 'skipped',
+					'reason' => 'unarchived_unsupported',
+				),
+				$job->checkpoint['verification']['reconcile']
+			);
+		} else {
+			$this->assertSame( $walk, $options['reconcile']['walk'] );
+		}
+		$probes = array_values( array_filter( $this->calls, static fn( $call ) => 'backup_preflight' === $call['what'] ) );
+		$this->assertSame( null !== $key, ! empty( $probes ) );
+		if ( null !== $key ) {
+			$this->assertSame( array( 'capabilities_only' => 1 ), $probes[0]['params'] );
+		}
+		if ( $withheld ) {
+			for ( $i = 0; $i < 4 && MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED !== $job->status; ++$i ) {
+				$job = $this->tick( $job );
+			}
+			$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED, $job->status );
+			$this->assertSame( 'unarchived_unsupported', $job->checkpoint['verification']['reconcile']['reason'] );
+		}
+	}
+
+	/**
+	 * Walk metadata, readiness and replay cases.
+	 *
+	 * @return array
+	 */
+	public static function mwp1908_reconcile_capabilities() {
+		$cases = array();
+		foreach ( array( 'unarchived', 'unarchived_overflow', null ) as $key ) {
+			foreach ( array( 'supported', 'absent', 'error', 'stale' ) as $capability ) {
+				foreach ( array( false, true ) as $reused ) {
+					$cases[ ( $key ?? 'legacy' ) . '-' . $capability . '-' . (int) $reused ] = array( $key, $capability, $reused );
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/**
 	 * Completion must retain the child's reconcile result for the progress poll.
 	 */
 	public function test_completed_restore_retains_reconcile_verification() {

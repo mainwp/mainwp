@@ -50,6 +50,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         'cloud_restore_pull_support'         => 'cloud_restore_pull',
         'child_is_multisite'                 => 'is_multisite',
         'restore_multisite_support'          => 'restore_multisite',
+        'reconcile_unarchived_support'       => 'reconcile_unarchived_support',
     );
 
     /**
@@ -448,9 +449,9 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @param object $website Website row.
      *
-     * @return void
+     * @return bool True when a fresh readiness report was recorded.
      */
-    public static function refresh_negotiated_capabilities( object $website ): void {
+    public static function refresh_negotiated_capabilities( object $website ): bool {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
         $deadline = static::capability_probe_time() + self::CAPABILITY_PROBE_TIMEOUT_SECONDS;
         $clamp    = static function ( $timeout, $what = '' ) use ( $deadline ) {
@@ -479,7 +480,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             // An unreachable child says nothing about its capabilities, so the
             // last negotiated flags stand rather than being cleared by a site
             // that is merely down.
-            return;
+            return false;
         } finally {
             remove_filter( 'mainwp_fetch_url_site_timeout', $clamp, PHP_INT_MAX );
         }
@@ -488,10 +489,11 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( is_array( $preflight ) && isset( $preflight['error_code'] ) && self::CHILD_INCOMPATIBLE_CODE === $preflight['error_code'] ) {
                 static::record_negotiated_capabilities( $website, array() );
             }
-            return;
+            return false;
         }
 
         static::record_negotiated_capabilities( $website, $preflight );
+        return true;
     }
 
     /**

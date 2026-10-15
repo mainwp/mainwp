@@ -1819,6 +1819,93 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Both artifact download paths must carry protection metadata to restore-create.
+	 *
+	 * @dataProvider mwp1908_artifact_types
+	 * @param string $type Backup type.
+	 */
+	public function test_mwp1908_unarchived_survives_artifact_to_restore_request( $type ) {
+		global $wpdb;
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		if ( 'incremental' === $type ) {
+			$this->record_base_snapshot( $site_id );
+		}
+		$walk                 = array(
+			'excludes'            => array( 'private' ),
+			'excludenonwp'        => 0,
+			'excludezip'          => 0,
+			'unarchived'          => array( 'wp-content/unreadable.php' ),
+			'unarchived_overflow' => false,
+		);
+		$artifacts            = $this->arrange_remote_artifacts( 'incremental' !== $type );
+		$artifacts[0]['walk'] = $walk;
+		$this->mock_artifact_downloads();
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'    => $this->preflight_response( array( 'reconcile_unarchived_support' => 1 ) ),
+				'backup_task_create'  => array(
+					'task_id' => 'mwp1908-source',
+					'phase'   => 'queued',
+				),
+				'backup_task_run'     => array(
+					'task_id'   => 'mwp1908-source',
+					'phase'     => 'completed',
+					'file'      => 'incremental' === $type ? 'files.list' : 'backup-base.zip',
+					'size'      => 'incremental' === $type ? 40 : 400,
+					'artifacts' => $artifacts,
+				),
+				'delete_backup'       => array( 'result' => 'ok' ),
+				'restore_task_create' => array(
+					'task_id' => 'mwp1908-restore',
+					'phase'   => 'queued',
+				),
+			)
+		);
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$task    = $this->make_task( $website, 11, array( 'type' => $type ) );
+		$this->assertNull( $this->run_cycle( $site_id, $task )['exception'] );
+		$this->assertNull( $this->run_cycle( $site_id, $task )['exception'] );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, 11 );
+		$this->assertNotNull( $snapshot );
+		$manifest = array_values( array_filter( $snapshot->archives, static fn( $entry ) => 'manifest' === $entry['role'] ) );
+		$this->assertSame( $walk, $manifest[0]['walk'] );
+		$catalog = new \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog();
+		$plan    = $catalog->assemble_plan( array( $snapshot ) );
+		$store   = \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance();
+		$job_id  = $store->create_job(
+			$site_id,
+			(int) $snapshot->id,
+			array(
+				'restore_id' => 'mwp1908',
+				'sub_type'   => 'files',
+				'plan'       => $plan,
+				'options'    => array(),
+				'transfer'   => array(),
+			)
+		);
+		$store->set_status( $job_id, $store::STATUS_STAGING );
+		try {
+			$orchestrator = new \MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator();
+			$orchestrator->run_job( $store->get_job( $job_id ), microtime( true ) + 30 );
+			$create = $this->last_call_params( 'restore_task_create' );
+			$this->assertNotNull( $create );
+			$this->assertSame( $walk, json_decode( $create['options_json'], true )['reconcile']['walk'] );
+		} finally {
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'id' => $job_id ) );
+		}
+	}
+
+	/**
+	 * Executor download paths.
+	 *
+	 * @return array
+	 */
+	public static function mwp1908_artifact_types() {
+		return array( array( 'full' ), array( 'incremental' ) );
+	}
+
+	/**
 	 * Both file-producing task types need reconciliation metadata.
 	 *
 	 * @return array

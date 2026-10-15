@@ -1046,6 +1046,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     retryingAbout = ' <?php echo esc_js( esc_html__( 'Retrying automatically about', 'mainwp' ) ); ?> ' + ( data.next_retry_label || '' ) + '.';
                 }
 
+                showReconcileNote( data.verification, data.sub_type, data.is_rollback );
                 if ( terminal ) {
                     var $message = $( '#mainwp-restore-result-message' );
                     var rolledBack = 'mainwp_restore_rolled_back' === data.error_code;
@@ -1055,7 +1056,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( 'completed' === data.status ) {
                         $message.addClass( 'green' ).text( '<?php echo esc_js( esc_html__( 'The site was restored and responds normally.', 'mainwp' ) ); ?>' );
                         showPreserveNote( data.verification );
-                        showReconcileNote( data.verification, data.sub_type, data.is_rollback );
                     } else if ( rolledBack && outcome ) {
                         // The restore failed but the database was recovered:
                         // the data is safe, so this reads as information.
@@ -1107,7 +1107,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function showReconcileNote( verification, subType, isRollback ) {
-                var $note = $( '#mainwp-restore-reconcile-note' ).removeClass( 'blue yellow' ).hide();
+                var $note = $( '#mainwp-restore-reconcile-note' ).removeClass( 'blue yellow' ).empty().hide();
                 if ( 'db' === subType || isRollback || ! verification || ! verification.reconcile ) {
                     return;
                 }
@@ -1117,13 +1117,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed, because the backup has no file list to compare against. Backups made before MainWP Child 6.3-beta1 never have one.', 'mainwp' ) ); ?>' ).show();
                     } else if ( [ 'empty_manifest', 'manifest_unverified' ].indexOf( reconcile.reason ) !== -1 ) {
                         $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( "Files added after this backup were not removed, because the backup's file list could not be verified.", 'mainwp' ) ); ?>' ).show();
+                    } else if ( 'unarchived_invalid' === reconcile.reason ) {
+                        $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed, because the backup\'s list of files it could not read is invalid.', 'mainwp' ) ); ?>' ).show();
+                    } else if ( 'unarchived_overflow' === reconcile.reason ) {
+                        $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed, because too many files were unreadable when the backup was made.', 'mainwp' ) ); ?>' ).show();
+                    } else if ( 'unarchived_unsupported' === reconcile.reason ) {
+                        $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed, because the site\'s MainWP Child could not confirm it supports keeping files the backup could not read.', 'mainwp' ) ); ?>' ).show();
                     }
                 } else if ( 'done' === reconcile.status ) {
                     var removed = parseInt( reconcile.removed, 10 ) || 0;
                     var left = ( parseInt( reconcile.failed, 10 ) || 0 ) + ( parseInt( reconcile.skipped_unsafe, 10 ) || 0 );
-                    if ( 0 === removed && 0 === left ) {
-                        return;
-                    }
                     var text = 0 === removed ? '' : ( 1 === removed
                         ? '<?php /* translators: %d: number of removed files. */ echo esc_js( _n( 'Removed %d file that was added after this backup.', 'Removed %d files that were added after this backup.', 1, 'mainwp' ) ); ?>'
                         : '<?php /* translators: %d: number of removed files. */ echo esc_js( _n( 'Removed %d file that was added after this backup.', 'Removed %d files that were added after this backup.', 2, 'mainwp' ) ); ?>'
@@ -1134,7 +1137,48 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             : '<?php /* translators: %d: number of files that could not be removed. */ echo esc_js( _n( '%d file could not be removed and is still on the site.', '%d files could not be removed and are still on the site.', 2, 'mainwp' ) ); ?>'
                         ).replace( '%d', left );
                     }
-                    $note.addClass( left > 0 ? 'yellow' : 'blue' ).text( text ).show();
+                    if ( text ) {
+                        $note.addClass( left > 0 ? 'yellow' : 'blue' ).text( text ).show();
+                    }
+                }
+                var kept = parseInt( reconcile.kept, 10 ) || 0;
+                if ( kept > 0 ) {
+                    var keptText = ( 1 === kept
+                        ? '<?php /* translators: %d: number of files kept on the site. */ echo esc_js( _n( 'Kept %d file this backup has no copy of.', 'Kept %d files this backup has no copy of.', 1, 'mainwp' ) ); ?>'
+                        : '<?php /* translators: %d: number of files kept on the site. */ echo esc_js( _n( 'Kept %d file this backup has no copy of.', 'Kept %d files this backup has no copy of.', 2, 'mainwp' ) ); ?>'
+                    ).replace( '%d', kept );
+                    var reasons = [];
+                    var keptByReason = reconcile.kept_by_reason || {};
+                    if ( ( parseInt( keptByReason.mu_plugins, 10 ) || 0 ) > 0 ) {
+                        reasons.push( '<?php echo esc_js( esc_html__( 'mu-plugins files added after the backup', 'mainwp' ) ); ?>' );
+                    }
+                    if ( ( parseInt( keptByReason.unarchived, 10 ) || 0 ) > 0 ) {
+                        reasons.push( '<?php echo esc_js( esc_html__( 'files the backup could not read', 'mainwp' ) ); ?>' );
+                    }
+                    if ( reasons.length ) {
+                        keptText += ' ' + '<?php /* translators: %s: reasons files were kept, separated by semicolons. */ echo esc_js( esc_html__( 'Reasons: %s.', 'mainwp' ) ); ?>'.replace( '%s', reasons.join( '; ' ) );
+                    }
+                    $note.append( $( '<p>' ).text( keptText ) );
+                    var paths = Array.isArray( reconcile.kept_paths ) ? reconcile.kept_paths.slice( 0, 20 ) : [];
+                    if ( paths.length ) {
+                        var $paths = $( '<ul>' );
+                        paths.forEach( function ( path ) {
+                            $paths.append( $( '<li>' ).text( path ) );
+                        } );
+                        $note.append( $paths );
+                    }
+                    if ( ( parseInt( keptByReason.mu_plugins, 10 ) || 0 ) > 0 ) {
+                        // A file dropped into mu-plugins after the backup is kept too, malicious or not.
+                        $note.append( $( '<p>' ).text( '<?php echo esc_js( esc_html__( 'Review the kept mu-plugins files if you did not add them.', 'mainwp' ) ); ?>' ) );
+                    }
+                    if ( kept > paths.length ) {
+                        var sampleText = '<?php /* translators: 1: number of sample paths shown, 2: total files kept. */ echo esc_js( esc_html__( 'Showing %1$d of %2$d kept files.', 'mainwp' ) ); ?>';
+                        $note.append( $( '<p>' ).text( sampleText.replace( '%1$d', paths.length ).replace( '%2$d', kept ) ) );
+                    }
+                    if ( ! $note.hasClass( 'yellow' ) ) {
+                        $note.addClass( 'blue' );
+                    }
+                    $note.show();
                 }
             }
 

@@ -1641,8 +1641,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
             $phase = isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
             if ( 'completed' === $phase ) {
-                $checkpoint                 = $job->checkpoint;
-                $checkpoint['verification'] = isset( $payload['sub_state']['verification'] ) && is_array( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
+                $checkpoint   = $job->checkpoint;
+                $verification = isset( $payload['sub_state']['verification'] ) && is_array( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
+                if ( 'unarchived_unsupported' === ( $checkpoint['verification']['reconcile']['reason'] ?? '' ) ) {
+                    $verification['reconcile'] = $checkpoint['verification']['reconcile'];
+                }
+                $checkpoint['verification'] = $verification;
                 // Carry the order-preservation outcome (customers and stock
                 // re-applied) alongside verification so the dashboard reports
                 // what was kept rather than hiding it.
@@ -1749,6 +1753,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             );
         }
 
+        $website   = $this->website( $job );
         $options   = array(
             'sub_type'         => (string) $checkpoint['sub_type'],
             'has_foreign_keys' => null,
@@ -1766,10 +1771,23 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 'adopt_only' => ! empty( $entry['adopt_only'] ),
             );
             if ( 'db' !== $options['sub_type'] && 'manifest' === $entry['role'] && (int) $entry['snapshot_id'] === (int) $job->snapshot_id && isset( $entry['walk'] ) && is_array( $entry['walk'] ) ) {
-                $options['reconcile'] = array(
-                    'manifest' => $entry['file'],
-                    'walk'     => $entry['walk'],
-                );
+                $needs_unarchived = array_key_exists( 'unarchived', $entry['walk'] ) || array_key_exists( 'unarchived_overflow', $entry['walk'] );
+                // A failed refresh leaves cached flags intact; only a fresh answer authorizes deletion.
+                if ( $needs_unarchived && ( ! MainWP_Backup_Monitor::refresh_negotiated_capabilities( $website ) || '1' !== (string) MainWP_DB::instance()->get_website_option( $website, 'reconcile_unarchived_support' ) ) ) {
+                    unset( $options['reconcile'] );
+                    $checkpoint['verification']['reconcile'] = array(
+                        'status' => 'skipped',
+                        'reason' => 'unarchived_unsupported',
+                    );
+                } else {
+                    $options['reconcile'] = array(
+                        'manifest' => $entry['file'],
+                        'walk'     => $entry['walk'],
+                    );
+                    if ( 'unarchived_unsupported' === ( $checkpoint['verification']['reconcile']['reason'] ?? '' ) ) {
+                        unset( $checkpoint['verification']['reconcile'] );
+                    }
+                }
             }
         }
 
@@ -1783,7 +1801,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $params['pull_manifest_json'] = wp_json_encode( $pull_manifest );
         }
 
-        $website = $this->website( $job );
+        if ( ! $this->lease_still_held( $job ) ) {
+            return array(
+                'task_id'       => '',
+                'pull_rejected' => false,
+            );
+        }
         // A lost create response must remain cancellable even when its task id never lands.
         $checkpoint['child_create_attempted'] = true;
         if ( ! MainWP_Backup_Restore_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
@@ -1820,8 +1843,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( 'receiving' === $phase || ( 'queued' === $phase && empty( $payload['sub_state']['params']['pull_manifest'] ) ) ) {
                 $status = null !== $pull_manifest ? MainWP_Backup_Restore_Job_Store::STATUS_STAGING : MainWP_Backup_Restore_Job_Store::STATUS_TRANSFERRING;
             } elseif ( 'completed' === $phase ) {
-                $status                     = MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING;
-                $checkpoint['verification'] = isset( $payload['sub_state']['verification'] ) && is_array( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
+                $status       = MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING;
+                $verification = isset( $payload['sub_state']['verification'] ) && is_array( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
+                if ( 'unarchived_unsupported' === ( $checkpoint['verification']['reconcile']['reason'] ?? '' ) ) {
+                    $verification['reconcile'] = $checkpoint['verification']['reconcile'];
+                }
+                $checkpoint['verification'] = $verification;
                 if ( isset( $payload['sub_state']['progress']['woo_preserve'] ) ) {
                     $checkpoint['verification']['woo_preserve'] = $payload['sub_state']['progress']['woo_preserve'];
                 }
@@ -2613,13 +2640,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     /**
      * External reachability check (test seam).
      *
-     * This is not a bare liveness ping: phase_verifying() completes the
-     * restore on a true and permanently fails it on a false, so the answer
-     * is the restore's verdict. Certificate verification therefore follows
-     * the site's own verify_certificate setting (fetch_url() semantics,
-     * verification on by default) instead of being switched off: a restore
-     * that left the site serving a broken certificate must not be reported
-     * as verified.
+     * A false result is retried with backoff by phase_verifying(). Certificate
+     * verification follows the site's verify_certificate setting.
+     * Cache bypass is best effort: caches ignoring query strings and fatals sent with HTTP 200 still pass.
      *
      * @param object $website Website object.
      *
@@ -2627,10 +2650,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      */
     protected function site_responds( object $website ): bool {
         $response = wp_remote_get(
-            $website->url,
+            add_query_arg( 'mots', (int) ( microtime( true ) * 1000000 ), $website->url ),
             array(
                 'timeout'   => 15,
                 'sslverify' => static::ssl_verify_for( $website ),
+                'headers'   => array(
+                    'Cache-Control' => 'no-cache, no-store, max-age=0',
+                    'Pragma'        => 'no-cache',
+                ),
             )
         );
         if ( is_wp_error( $response ) ) {

@@ -756,13 +756,22 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return string|null
      */
     private static function redact_urls_in_text( $text ) {
+        $redact = static function ( $found ) {
+            return MainWP_Connect_Failure_Ux::redact_url( MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] ) );
+        };
+
         $with_urls = preg_replace_callback(
-            '#(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}+://[^\s\'"<>]++|//[^\s\'"<>]++|/[^\s\'"<>?]*+\?[^\s\'"<>]++)#',
-            static function ( $found ) {
-                return MainWP_Connect_Failure_Ux::redact_url( MainWP_Connect_Failure_Ux::decode_diagnostic_text( $found[0] ) );
-            },
+            '#(?:(?<![A-Za-z0-9+.-])[A-Za-z][A-Za-z0-9+.-]{0,31}+://[^\s\'"<>]++|//[^\s\'"<>]++)#',
+            $redact,
             $text
         );
+        if ( ! is_string( $with_urls ) ) {
+            return null;
+        }
+
+        // Relative paths go second. A path match that starts before an
+        // embedded absolute URL would hand its userinfo to redact_url() as path.
+        $with_urls = preg_replace_callback( '#/[^\s\'"<>?]*+\?[^\s\'"<>]++#', $redact, $with_urls );
         if ( ! is_string( $with_urls ) ) {
             return null;
         }

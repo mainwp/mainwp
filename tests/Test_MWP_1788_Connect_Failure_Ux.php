@@ -206,6 +206,40 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Every URL shape in a kept header value, alone or embedded, loses userinfo, query, and fragment.
+	 *
+	 * @dataProvider header_url_values
+	 *
+	 * @param string $value    Raw x-cache header value.
+	 * @param string $expected Displayed value.
+	 */
+	public function test_header_url_redaction_matrix( $value, $expected ): void {
+		$this->assertSame( 'x-cache: ' . $expected, \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( 'x-cache: ' . $value ) );
+	}
+
+	/**
+	 * Header values and their displayed form.
+	 *
+	 * @return array<string,array{0:string,1:string}>
+	 */
+	public static function header_url_values(): array {
+		return array(
+			'absolute'                          => array( 'https://alice:harbor47@example.test/p?ticket=x#frag', 'https://example.test/p' ),
+			'protocol-relative'                 => array( '//erin:stone55@example.test/cache#tail', '//example.test/cache' ),
+			'relative with query'               => array( '/authorize?ticket=x', '/authorize' ),
+			'relative with sentence end'        => array( 'see /foo?bar=1.', 'see /foo' ),
+			'absolute embedded after a path'    => array( 'proxy/https://alice:harbor47@example.test/path?ticket=x', 'proxy/https://example.test/path' ),
+			'protocol-relative after a path'    => array( 'proxy/cache(//alice:harbor47@example.test/path?ticket=x)', 'proxy/cache(//example.test/path' ),
+			'protocol-relative inside relative' => array( '/a//bob:river88@example.test?x', '/a//example.test' ),
+			'absolute in a relative query'      => array( '/p?next=https://bob:river88@example.test/x', '/p' ),
+			'relative without query'            => array( '/authorize', '/authorize' ),
+			'question without a value'          => array( 'Is /wp-json/ reachable? Check the server.', 'Is /wp-json/ reachable? Check the server.' ),
+			'product version'                   => array( 'nginx/1.24.0', 'nginx/1.24.0' ),
+			'media type'                        => array( 'text/html; charset=UTF-8', 'text/html; charset=UTF-8' ),
+		);
+	}
+
+	/**
 	 * Free-form diagnostics preserve benign text, strip URLs, and hide secret names.
 	 */
 	public function test_free_form_diagnostic_text_is_sanitized(): void {

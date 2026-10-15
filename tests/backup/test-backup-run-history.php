@@ -1486,7 +1486,12 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		$jobs     = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
 		$readback = false;
 		$job_read = false;
-		$fault    = static function ( $query ) use ( $mode, $options, $jobs, $new_ref, &$readback, &$created, &$job_read ) {
+		$confirm  = false;
+		$fault    = static function ( $query ) use ( $mode, $options, $jobs, $new_ref, &$readback, &$created, &$job_read, &$confirm ) {
+			if ( 'confirm_read_fails' === $mode && $created && ! $confirm && 0 === stripos( ltrim( $query ), 'SELECT value FROM ' . $options ) && false !== strpos( $query, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) ) {
+				$confirm = true;
+				return 'SELECT * FROM missing_table_s97_confirm';
+			}
 			if ( 'owner_read_fails' === $mode && $created && 0 === stripos( ltrim( $query ), 'SELECT * FROM ' . $jobs ) ) {
 				$job_read = true;
 				return 'SELECT * FROM missing_table_s72_owner';
@@ -1509,8 +1514,8 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		try {
 			$returned = MainWP_Backup_Executor::trigger_backup( $site, 'full', '' === $owner ? '71' : '' );
 		} catch ( \MainWP\Dashboard\MainWP_Exception $e ) {
-			$this->assertContains( $mode, array( 'create_refused', 'write_refused' ), $e->getMessage() );
-			if ( 'write_refused' === $mode ) {
+			$this->assertContains( $mode, array( 'create_refused', 'write_refused', 'confirm_read_fails' ), $e->getMessage() );
+			if ( in_array( $mode, array( 'write_refused', 'confirm_read_fails' ), true ) ) {
 				$this->assertSame( 'The backup could not save its running state. Try again.', $e->getMessage() );
 			}
 		} finally {
@@ -1518,7 +1523,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			remove_filter( 'query', $fault );
 			remove_filter( 'mainwp_fetch_url_authed_pre', $create, 20 );
 		}
-		if ( in_array( $mode, array( 'create_refused', 'write_refused' ), true ) ) {
+		if ( in_array( $mode, array( 'create_refused', 'write_refused', 'confirm_read_fails' ), true ) ) {
 			$this->assertNull( $returned, 'A create without a persisted handle must fail.' );
 		} else {
 			$this->assertSame( $new_ref, $returned );
@@ -1530,7 +1535,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			$this->assertTrue( $job_read );
 		}
 		$stored = json_decode( MainWP_DB::instance()->get_website_option( $site, MainWP_Backup_Executor::ADHOC_TASK_OPTION ), true );
-		$this->assertSame( in_array( $mode, array( 'replaced', 'readback_throws', 'owner_read_fails' ), true ) ? $new_ref : $old_ref, $stored['task_id'] );
+		$this->assertSame( in_array( $mode, array( 'replaced', 'readback_throws', 'owner_read_fails', 'confirm_read_fails' ), true ) ? $new_ref : $old_ref, $stored['task_id'] );
 		$rows = $this->rows();
 		$this->assertSame( $old_ref, $rows[0]['ref'] );
 		$this->assertSame( '' === $owner ? 'update_gate' : 'restore_safety', $rows[0]['trigger_source'] );
@@ -1570,6 +1575,14 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( array( 'backup_task_cancel', 'backup_task_create' ), array_column( $calls, 0 ) );
 			$this->assertSame( $new_ref, $calls[0][2]['task_id'] );
 		}
+		if ( 'confirm_read_fails' === $mode ) {
+			// The handle landed, so its owner resumes the task; owing a cancel for it would kill a live backup.
+			$this->assertTrue( $confirm );
+			$this->assertSame( '', (string) MainWP_DB::instance()->get_website_option( $site, MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION ) );
+			$this->calls = array();
+			$this->assertSame( $new_ref, MainWP_Backup_Executor::trigger_backup( $site, 'full', '71' ) );
+			$this->assertNotContains( 'backup_task_cancel', array_column( $this->calls, 0 ) );
+		}
 	}
 
 	/**
@@ -1586,6 +1599,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 			'D8 active restore'  => array( 'replaced', 'running', true, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT ),
 			'D9 terminal owner'  => array( 'replaced', 'incomplete', true, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT ),
 			'D10 owner unread'   => array( 'owner_read_fails', 'running', true, MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT ),
+			'D11 confirm unread' => array( 'confirm_read_fails', 'running', false ),
 		);
 	}
 

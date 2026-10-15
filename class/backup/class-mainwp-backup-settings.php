@@ -37,7 +37,8 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
     /**
      * The redirect needs to preserve why a passphrase was refused, for the
-     * settings banner: 'short', 'mismatch', or '' when nothing was refused.
+     * settings banner: 'short', 'mismatch', 'current', 'current_mismatch',
+     * 'key_mismatch', 'account_password', or '' when nothing was refused.
      *
      * @var string
      */
@@ -251,7 +252,8 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Let the save handler carry the refusal through its redirect.
      *
-     * @return string 'short', 'mismatch', or '' when the last save refused no passphrase.
+     * @return string The rejection flag ('short', 'mismatch', 'current', 'current_mismatch',
+     *                'key_mismatch' or 'account_password'), or '' when the last save refused no passphrase.
      */
     public static function recovery_passphrase_rejection(): string {
         return self::$recovery_passphrase_rejected;

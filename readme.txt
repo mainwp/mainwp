@@ -154,6 +154,13 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 == Changelog ==
 
+= 6.3-beta5 - 10-15-2026 =
+
+* Added: The restore result lists the files a restore kept on the site: mu-plugins files missing from the backup and files the backup could not read, with the total and up to 20 paths.
+* Changed: The check that the site responds after a restore asks caches not to answer for it, so a cached page is less likely to hide a broken site.
+* Changed: The restore result still shows its note about added files when the site check after the restore fails.
+* Fixed: When a backup lists files it could not read, added files are removed only if the site's MainWP Child confirms it supports that list.
+
 = 6.3-beta4 - 10-14-2026 =
 
 * Added: Download a backup from its row on Snapshots & Restore through a one-use link that expires after 10 minutes. Incremental and cloud-only backups cannot be downloaded yet.

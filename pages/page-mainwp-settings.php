@@ -1580,6 +1580,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public static function render_advanced() { //phpcs:ignore -- NOSONAR - complex method.
+        $timeout_save_failed = false;
+
         if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
             return;
@@ -1616,7 +1618,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_Utility::update_option( 'mainwp_auto_correct_site_url', ( ! isset( $_POST['mainwp_auto_correct_site_url'] ) ? 0 : 1 ) );
             MainWP_Utility::update_option( 'mainwp_maximum_uptime_monitoring_requests', ! empty( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) ? intval( $_POST['mainwp_maximumUptimeMonitoringRequests'] ) : 10 );
             $child_request_timeout = isset( $_POST['mainwp_child_request_timeout'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_child_request_timeout'] ) ) : '';
-            MainWP_Connect::save_child_request_timeout_setting( $child_request_timeout );
+            $timeout_save_failed   = false === MainWP_Connect::save_child_request_timeout_setting( $child_request_timeout );
             MainWP_Utility::update_option( 'mainwp_chunksitesnumber', isset( $_POST['mainwp_chunksitesnumber'] ) ? intval( $_POST['mainwp_chunksitesnumber'] ) : 10 );
             MainWP_Utility::update_option( 'mainwp_chunksleepinterval', isset( $_POST['mainwp_chunksleepinterval'] ) ? intval( $_POST['mainwp_chunksleepinterval'] ) : 5 );
 
@@ -1681,9 +1683,11 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     <?php echo esc_html__( 'Set how many requests are performed at once and delay between requests in order to optimize your MainWP Dashboard performance.  Both Cross IP and IP Settings handle the majority of work connecting to your Child sites, while the sync, update, and installation request have specialized options under the Frontend Requests Settings section.', 'mainwp' ); ?>
                 </div>
             <?php endif; ?>
-            <?php if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsAdvanced' ) ) : ?>
+            <?php if ( $timeout_save_failed ) : ?>
+                <div class="ui red message"><i class="close icon"></i><?php esc_html_e( 'Child request timeout must be a whole number of seconds, at least 300. Use a blank value or 72000 to keep the default.', 'mainwp' ); ?></div>
+            <?php elseif ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'SettingsAdvanced' ) ) : ?>
                 <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
-                <?php endif; ?>
+            <?php endif; ?>
                 <div class="ui form">
                     <form method="POST" action="">
                         <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>

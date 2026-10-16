@@ -2526,6 +2526,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		};
 		$block    = static function ( $query ) use ( $table, $statement, $no_change ) {
 			if ( str_starts_with( $query, sprintf( $statement, $table ) ) ) {
+				// nosemgrep: AIK_tainted-sql-string -- test-only stand-in statement; the table name is the test's own fixture table and no request input reaches it.
 				return $no_change ? "UPDATE {$table} SET status = 'cancelled' WHERE 1 = 0" : 'SELECT mainwp_site_statement_forced_failure';
 			}
 			return $query;

@@ -154,6 +154,26 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 == Changelog ==
 
+= 6.3-beta6 - 10-16-2026 =
+
+* Security: Deleting a legacy backup file refuses any name that is not a backup archive name before the child site is contacted.
+* Security: Native restore, rollback and cancel require the Restore Backups right as well as Execute Backups, and the restore buttons are hidden without it.
+* Security: Backup settings can only be changed by a WordPress administrator. Team Control staff are refused on the settings page, the abilities and the REST API.
+* Changed: Listing backup tasks through the abilities API requires the Execute Backups right.
+* Added: While the Dashboard keeps retrying to reach a site after a restore, Cancel Restore becomes Stop Checking. It ends the restore as failed and shows Roll Back when a safety backup was taken.
+* Added: With "Show removed backups" on, Snapshots & Restore shows why each backup was removed: deleted manually, removed by retention, deleted with its backup task, or removed by Clean Up. Backups removed before this version show "Removed".
+* Added: The daily backup cleanup asks child sites again to delete removed backups they never confirmed deleting, up to 50 a day. It gives up on a backup after 10 failed attempts.
+* Changed: Back Up Now uses the Default storage destination on sites that no scheduled backup task includes. Snapshots & Restore shows where the backup will go before it starts.
+* Changed: Legacy downloadable archives moved to their own collapsed section below Snapshots & Restore on the site Backups page.
+* Changed: The restore result lists symbolic links it left unchanged on their own line.
+* Fixed: Backup exclusion toggles save as set on new and edited tasks and in the legacy archive form.
+* Fixed: A warning replaces the green saved notice when the backup recovery passphrase is rejected.
+* Fixed: Hovered rows in compact tables stay readable in the Default Dark theme.
+* Fixed: Long Details tooltips on Manage Backups wrap and no longer leave blank space or misalign the table header.
+* Fixed: Screens, reports and the update gate all read the same backup-before-update window, and the REST API stores 7 days for zero, negative or invalid values, like the Settings page.
+* Fixed: Back Up Now first finishes cancelling an earlier backup the child site was asked to stop.
+* Fixed: Deleting a backup another request already removed reports that it was not found.
+
 = 6.3-beta5 - 10-15-2026 =
 
 * Added: The restore result lists the files a restore kept on the site: mu-plugins files missing from the backup and files the backup could not read, with the total and up to 20 paths.

@@ -394,7 +394,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         $reason = trim( preg_replace( '/\s+/', ' ', wp_strip_all_tags( MainWP_Backup_Error_Codes::sanitize_message( $reason ) ) ) );
-        return '<span class="ui small red label" data-tooltip="' . esc_attr( $reason ) . '" data-position="top left" data-variation="wide inverted">' . $label . '</span>';
+        return '<span class="ui small red label" data-tooltip="' . esc_attr( $reason ) . '" data-position="left center" data-inverted="">' . $label . '</span>';
     }
 
     /**
@@ -433,7 +433,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
         );
 
         $output  = '<strong>' . esc_html__( 'Last run', 'mainwp' ) . ':</strong> ' . esc_html( $last_run );
-        $output .= ' <i class="info circle icon" data-tooltip="' . esc_attr( $history ) . '" data-position="top left" data-variation="wide inverted"></i>';
+        $output .= ' <i class="info circle icon" data-tooltip="' . esc_attr( $history ) . '" data-position="left center" data-inverted=""></i>';
         $output .= '<br /><strong>' . esc_html__( 'Next run', 'mainwp' ) . ':</strong> ' . esc_html( $this->next_run_label( $item ) );
 
         if ( ! empty( $item->last_run ) && $item->completed < $item->last_run ) {
@@ -482,7 +482,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $error_text = wp_strip_all_tags( MainWP_Backup_Error_Codes::sanitize_message( $item->backup_errors ) );
             $error_text = trim( preg_replace( '/\s+/', ' ', $error_text ) );
             if ( '' !== $error_text ) {
-                $output .= '<br /><span class="ui small red label" data-tooltip="' . esc_attr( $error_text ) . '" data-position="top left" data-variation="wide inverted">'
+                $output .= '<br /><span class="ui small red label" data-tooltip="' . esc_attr( $error_text ) . '" data-position="left center" data-inverted="">'
                     . '<i class="exclamation triangle icon"></i> ' . esc_html__( 'Last run reported errors', 'mainwp' ) . '</span>';
             }
         }
@@ -494,7 +494,7 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $notice_text = wp_strip_all_tags( MainWP_Backup_Error_Codes::sanitize_message( $item->backup_notices ) );
             $notice_text = trim( preg_replace( '/\s+/', ' ', $notice_text ) );
             if ( '' !== $notice_text ) {
-                $output .= '<br /><span class="ui small blue label" data-tooltip="' . esc_attr( $notice_text ) . '" data-position="top left" data-variation="wide inverted">'
+                $output .= '<br /><span class="ui small blue label" data-tooltip="' . esc_attr( $notice_text ) . '" data-position="left center" data-inverted="">'
                     . '<i class="info circle icon"></i> ' . esc_html__( 'Last run notes', 'mainwp' ) . '</span>';
             }
         }

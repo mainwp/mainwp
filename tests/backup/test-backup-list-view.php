@@ -306,4 +306,50 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 
 		$this->assertSame( '<span class="ui small red label">0</span>', $output );
 	}
+
+	/**
+	 * Every hover text on the row wraps and opens to the left.
+	 *
+	 * Only `data-inverted` tooltips get the wrapping rule in mainwp-fomantic.css.
+	 * The table scrolls horizontally, so a tooltip that opens to the right or
+	 * upwards widens the scroll area even while hidden, or gets cut off on the
+	 * first row.
+	 */
+	public function test_tooltips_wrap_and_open_left() {
+		$view   = new MainWP_Backup_List_View();
+		$item   = $this->make_item(
+			array(
+				'last_run_manually' => 0,
+				'last_run'          => 100,
+				'completed'         => 200,
+				'completed_sites'   => '',
+				'the_sites'         => array(),
+				'backup_errors'     => 'The upload to the remote destination failed after three attempts.',
+				'backup_notices'    => 'ZIP was switched to tar.gz for this large site (estimated 3 GB).',
+			)
+		);
+		$method = new \ReflectionMethod( MainWP_Backup_List_View::class, 'upload_failed_label' );
+		$method->setAccessible( true );
+		$upload = $method->invoke(
+			$view,
+			'Upload failed',
+			array(
+				(object) array(
+					'status'     => 'failed',
+					'last_error' => 'The storage provider refused the credentials.',
+				),
+			),
+			'failed'
+		);
+
+		$details = $view->column_details( $item );
+		$this->assertSame( 3, substr_count( $details, 'data-tooltip=' ), 'History, error and notice tooltips.' );
+		$this->assertSame( 1, substr_count( $upload, 'data-tooltip=' ), 'Upload failure reason tooltip.' );
+		foreach ( array( $details, $upload ) as $html ) {
+			$tooltips = substr_count( $html, 'data-tooltip=' );
+			$this->assertSame( $tooltips, substr_count( $html, 'data-inverted=""' ) );
+			$this->assertSame( $tooltips, substr_count( $html, 'data-position="left center"' ) );
+			$this->assertStringNotContainsString( 'data-variation=', $html );
+		}
+	}
 }

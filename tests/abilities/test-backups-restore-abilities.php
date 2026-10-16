@@ -760,8 +760,8 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertEmpty( $this->calls );
 	}
 
-	/** A live worker can be checking without moving the checkpoint revision. */
-	public function test_stop_checking_ajax_refuses_live_lease_and_accepts_expired_lease() {
+	/** A worker can be checking without moving the checkpoint revision, and a lapsed lease does not prove it stopped. */
+	public function test_stop_checking_ajax_refuses_held_lease_until_released() {
 		$store = MainWP_Backup_Restore_Job_Store::instance();
 		$this->fixture_job( 'failed_retryable', array( 'resume_status' => 'verifying' ) );
 		$before = $store->get_job( $this->job_id );
@@ -776,6 +776,11 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertEquals( $leased, $store->get_job( $this->job_id ) );
 		global $wpdb;
 		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'locked_until' => time() - 1 ), array( 'id' => $this->job_id ) );
+		$expired = $store->get_job( $this->job_id );
+		$result  = $this->ajax( 'mainwp_restore_cancel', array( 'job_id' => $this->job_id ) );
+		$this->assertSame( 'mainwp_restore_checking_changed', $result['error_code'] );
+		$this->assertEquals( $expired, $store->get_job( $this->job_id ) );
+		$store->release_lock( $this->job_id, 'checking-worker' );
 		$this->assertSame( array( 'result' => 'stopped' ), $this->ajax( 'mainwp_restore_cancel', array( 'job_id' => $this->job_id ) ) );
 		$this->assertEmpty( $this->calls );
 	}

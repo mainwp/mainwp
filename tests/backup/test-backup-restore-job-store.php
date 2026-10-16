@@ -46,7 +46,7 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 				return $sql;
 			}
 			++$swaps;
-			$this->assertStringContainsString( "AND ( locked_by = '' OR locked_until < ", $sql );
+			$this->assertStringContainsString( "AND locked_by = ''", $sql );
 			$this->assertStringContainsString( "AND status = 'failed_retryable' AND checkpoint = ", $sql );
 			if ( 1 !== $swaps ) {
 				return $sql;
@@ -55,7 +55,10 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			try {
 				$claimed = $this->store->acquire_next_job( 'racing-worker', 300, time(), $id );
 				$this->assertNotNull( $claimed );
-				if ( 'claim' !== $race ) {
+				if ( 'expired' === $race ) {
+					// A lapsed lease whose worker may still be pruning; only its release frees the row.
+					$wpdb->update( $table, array( 'locked_until' => time() - 1 ), array( 'id' => $id ) );
+				} elseif ( 'claim' !== $race ) {
 					$checkpoint = $claimed->checkpoint;
 					if ( 'phase' === $race ) {
 						$checkpoint['resume_status'] = 'running';
@@ -100,7 +103,7 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 			$this->assertEquals( $raced, $final );
 			$this->assertArrayNotHasKey( 'verify_stopped', $final->checkpoint );
 		}
-		if ( 'claim' === $race ) {
+		if ( in_array( $race, array( 'claim', 'expired' ), true ) ) {
 			$this->assertSame( $before->checkpoint_rev, $final->checkpoint_rev );
 		}
 	}
@@ -113,6 +116,7 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	public static function stop_checking_races() {
 		return array(
 			'claim without revision' => array( 'claim', 'changed' ),
+			'expired lease held'     => array( 'expired', 'changed' ),
 			'checkpoint save'        => array( 'checkpoint', 'written' ),
 			'in-progress phase'      => array( 'phase', 'changed' ),
 			'finished retry'         => array( 'completed', 'terminal' ),

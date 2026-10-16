@@ -125,10 +125,11 @@ class MainWP_Backup_Ajax_Serializer_Parity_Test extends MainWP_Abilities_Test_Ca
 	 * @return array
 	 */
 	public static function removal_cases() {
-		$generic = 'Removed by retention; no copy survives locally or in cloud storage.';
+		// Rows pruned before the cause was recorded must not claim retention removed them.
+		$generic = 'Removed; no copy survives locally or in cloud storage.';
 		return array(
 			'manual'    => array( 'pruned', 'manual', 'manual', 'Deleted manually; no copy survives locally or in cloud storage.' ),
-			'retention' => array( 'pruned', 'retention', 'retention', $generic ),
+			'retention' => array( 'pruned', 'retention', 'retention', 'Removed by retention; no copy survives locally or in cloud storage.' ),
 			'task'      => array( 'pruned', 'task_deleted', 'task_deleted', 'Deleted with its backup task; no copy survives locally or in cloud storage.' ),
 			'cleanup'   => array( 'pruned', 'cleanup', 'cleanup', 'Removed by Clean Up; no copy survives locally or in cloud storage.' ),
 			'older'     => array( 'pruned', '', '', $generic ),

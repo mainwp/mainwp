@@ -10,13 +10,19 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Updates_Overview;
+use MainWP\Dashboard\MainWP_Backup_Settings;
+use MainWP\Dashboard\MainWP_System_Utility;
 use WP_REST_Request;
 use WP_REST_Server;
+
+require_once __DIR__ . '/class-mainwp-backup-settings-staff-fixtures.php';
 
 /**
  * Class MainWP_Backup_Settings_Controller_Test
  */
 class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
+
+	use Backup_Settings_Staff_Fixtures;
 
 	/**
 	 * REST server instance.
@@ -65,6 +71,7 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 	 * @return void
 	 */
 	public function tearDown(): void {
+		$this->clear_settings_staff_fixtures();
 		global $wp_rest_server;
 		$wp_rest_server = null;
 
@@ -125,6 +132,100 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 			$request->set_header( 'content-type', 'application/json' );
 		}
 		return rest_do_request( $request );
+	}
+
+	/**
+	 * All-sites staff must be refused before any field on the dedicated route is written.
+	 *
+	 * @dataProvider settings_writers
+	 * @param string $actor Matrix actor.
+	 * @param bool   $allowed Whether backup settings can save.
+	 */
+	public function test_backups_edit_staff_boundary( string $actor, bool $allowed ): void {
+		$this->settings_actor( $actor );
+		$this->allow_unrestricted_settings_access();
+		$this->assertTrue( MainWP_System_Utility::is_admin() );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		update_option( 'mainwp_enableLegacyBackupFeature', 0 );
+		update_option( 'mainwp_primaryBackup', '' );
+		update_option( 'mainwp_on_demand_retention_count', 5 );
+		$before   = array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS );
+		$body     = array(
+			'mainwp_enable_native_backups'     => 1,
+			'mainwp_on_demand_retention_count' => 7,
+			'mainwp_backups_on_server'         => '4',
+		);
+		$response = $this->do_authenticated_request( 'PUT', '/mainwp/v2/settings/backups/edit', $body );
+		$this->assertSame( $allowed ? 200 : 403, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		if ( $allowed ) {
+			$this->assertSame( 1, (int) get_option( 'mainwp_enableNativeBackups' ) );
+			$this->assertSame( 7, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+		} else {
+			$this->assertSame( 'mainwp_permission_denied', $response->get_data()['code'] );
+			$this->assertSame( $before, array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS ) );
+		}
+	}
+
+	/**
+	 * Mixed general requests must be atomic while non-backup writes retain their behavior.
+	 *
+	 * @dataProvider general_staff_bodies
+	 * @param string $actor Matrix actor.
+	 * @param array  $backup Backup fields in the request.
+	 * @param bool   $allowed Whether the request can save.
+	 */
+	public function test_general_edit_staff_backup_boundary( string $actor, array $backup, bool $allowed ): void {
+		$this->settings_actor( $actor );
+		$this->allow_unrestricted_settings_access();
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		update_option( 'mainwp_enableLegacyBackupFeature', 0 );
+		update_option( 'mainwp_primaryBackup', '' );
+		update_option( 'mainwp_hide_update_everything', 1 );
+		update_option( 'mainwp_backup_before_upgrade_days', 7 );
+		$before   = array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS );
+		$body     = $backup + array(
+			'hide_update_everything'     => 0,
+			'backup_before_upgrade_days' => 12,
+		);
+		$response = $this->do_authenticated_request( 'PUT', '/mainwp/v2/settings/general/edit', $body );
+		$this->assertSame( $allowed ? 200 : 403, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		$this->assertSame( $allowed ? 0 : 1, (int) get_option( 'mainwp_hide_update_everything' ) );
+		$this->assertSame( $allowed ? 12 : 7, (int) get_option( 'mainwp_backup_before_upgrade_days' ) );
+		if ( ! $allowed ) {
+			$this->assertSame( 'mainwp_permission_denied', $response->get_data()['code'] );
+			$this->assertSame( $before, array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS ) );
+		} elseif ( ! empty( $backup ) ) {
+			$this->assertSame( 1, (int) get_option( 'mainwp_enableNativeBackups' ) );
+		}
+	}
+
+	/**
+	 * Null and zero still name backup settings; the native alias must fold before checking.
+	 *
+	 * @return array Actor, request fields and expected permission.
+	 */
+	public static function general_staff_bodies(): array {
+		$cases = array();
+		foreach ( array(
+			'mainwp_primary_backup'               => 'module-api-backups',
+			'mainwp_enable_legacy_backup_feature' => 1,
+			'mainwp_enable_native_backups'        => 1,
+			'mainwp_backups_on_server'            => '4',
+			'mainwp_backup_on_external_sources'   => '4',
+			'mainwp_archive_format'               => 'zip',
+			'mainwp_notification_on_backup_fail'  => 0,
+			'mainwp_notification_on_backup_start' => 0,
+			'mainwp_chunked_backup_tasks'         => 0,
+		) as $key => $value ) {
+			foreach ( array( 'S', 'SL', 'SE' ) as $actor ) {
+				$cases[ $actor . '/' . $key ] = array( $actor, array( $key => $value ), false );
+			}
+		}
+		$cases['staff/null']      = array( 'S', array( 'mainwp_notification_on_backup_fail' => null ), false );
+		$cases['staff/unrelated'] = array( 'S', array(), true );
+		$cases['admin']           = array( 'A', array( 'mainwp_enable_native_backups' => 1 ), true );
+		$cases['admin staff']     = array( 'A+', array( 'mainwp_enable_native_backups' => 1 ), true );
+		return $cases;
 	}
 
 	/**

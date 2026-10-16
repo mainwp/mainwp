@@ -253,7 +253,7 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 1, $pruned );
 		$this->assertSame( 'unavailable', $pruned[0]['source'] );
 		$this->assertFalse( $pruned[0]['restorable'] );
-		$this->assertSame( 'Removed by retention; no copy survives locally or in cloud storage.', $pruned[0]['restore_reason'] );
+		$this->assertSame( 'Removed; no copy survives locally or in cloud storage.', $pruned[0]['restore_reason'] );
 	}
 
 	/**

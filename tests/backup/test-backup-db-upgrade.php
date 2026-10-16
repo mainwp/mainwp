@@ -3133,7 +3133,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 				$this->assertSame( '', $row->removal_reason );
 			}
 			$entries = \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( 999911 );
-			$this->assertSame( 'Removed by retention; no copy survives locally or in cloud storage.', $entries[1]['restore_reason'] );
+			$this->assertSame( 'Removed; no copy survives locally or in cloud storage.', $entries[1]['restore_reason'] );
 		} finally {
 			MainWP_Install::instance()->ensure_backup_snapshot_removal_reason();
 			foreach ( $ids as $id ) {
@@ -3199,7 +3199,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->assertFalse( MainWP_Backup_Snapshots::instance()->mark_pruned( $id, 'manual' ) );
 			$entry = \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( 999912 )[0];
 			$this->assertSame( '', $entry['removal_reason'] );
-			$this->assertSame( 'Removed by retention; no copy survives locally or in cloud storage.', $entry['restore_reason'] );
+			$this->assertSame( 'Removed; no copy survives locally or in cloud storage.', $entry['restore_reason'] );
 			$attempts = $blocked;
 			MainWP_Install::instance()->install();
 			$this->assertSame( $attempts, $blocked );

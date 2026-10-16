@@ -24,6 +24,31 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Shared backup option names; update-gate controls remain part of general settings.
+     *
+     * @var array REST body key to stored option name, with native aliases folded first.
+     */
+    public const SETTINGS_OPTIONS = array(
+        'mainwp_primary_backup'                => 'mainwp_primaryBackup',
+        'mainwp_enable_legacy_backup_feature'  => 'mainwp_enableNativeBackups',
+        'mainwp_backups_on_server'             => 'mainwp_backupsOnServer',
+        'mainwp_backup_on_external_sources'    => 'mainwp_backupOnExternalSources',
+        'mainwp_archive_format'                => 'mainwp_archiveFormat',
+        'mainwp_notification_on_backup_fail'   => 'mainwp_notificationOnBackupFail',
+        'mainwp_notification_on_backup_start'  => 'mainwp_notificationOnBackupStart',
+        'mainwp_chunked_backup_tasks'          => 'mainwp_chunkedBackupTasks',
+        'mainwp_load_files_before_zip'         => 'mainwp_options_loadFilesBeforeZip',
+        'mainwp_maximum_file_descriptors_auto' => 'mainwp_maximumFileDescriptorsAuto',
+        'mainwp_maximum_file_descriptors'      => 'mainwp_maximumFileDescriptors',
+        'mainwp_backup_max_concurrent'         => 'mainwp_backup_max_concurrent',
+        'mainwp_on_demand_retention_count'     => 'mainwp_on_demand_retention_count',
+        'mainwp_backup_diagnostics_enabled'    => MainWP_Backup_Diagnostics::OPTION_ENABLED,
+        'mainwp_backup_encryption_enabled'     => MainWP_Backup_Encryption::ENABLED_OPTION,
+        'mainwp_backup_recovery_kek'           => MainWP_Backup_Encryption::RECOVERY_OPTION,
+        'mainwp_enableLegacyBackupFeature'     => 'mainwp_enableLegacyBackupFeature',
+    );
+
+    /**
      * Whether the most recent handle_settings_post() call silently forced
      * archive encryption off because no recovery passphrase (recovery
      * blob) existed yet. Read by the settings save handler immediately
@@ -288,7 +313,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public static function handle_settings_post(): bool {
         self::$encryption_forced_off        = false;
         self::$recovery_passphrase_rejected = '';
-        if ( MainWP_System_Utility::is_admin() && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+        if ( MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff() && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
                 $old_primaryBackup       = get_option( 'mainwp_primaryBackup' );
                 $old_enableNativeBackups = static::is_native_backups_enabled();

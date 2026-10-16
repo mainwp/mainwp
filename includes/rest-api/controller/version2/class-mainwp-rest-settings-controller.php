@@ -543,7 +543,20 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( is_wp_error( $body ) ) {
             return $body;
         }
-        $body = $this->fold_native_backups_alias( $body );
+        $body          = $this->fold_native_backups_alias( $body );
+        $backup_fields = array(
+            'mainwp_primary_backup'               => 'string',
+            'mainwp_enable_legacy_backup_feature' => 'int',
+            'mainwp_backups_on_server'            => 'string',
+            'mainwp_backup_on_external_sources'   => 'string',
+            'mainwp_archive_format'               => 'string',
+            'mainwp_notification_on_backup_fail'  => 'int',
+            'mainwp_notification_on_backup_start' => 'int',
+            'mainwp_chunked_backup_tasks'         => 'int',
+        );
+        if ( MainWP_System_Utility::is_team_control_staff() && array_intersect_key( $body, $backup_fields ) ) {
+            return new WP_Error( 'mainwp_permission_denied', MainWP_Backup_Operations::safe_error( 'mainwp_permission_denied' )['message'], array( 'status' => 403 ) );
+        }
 
         // Get current user id.
         $user_id = $this->get_user_id();
@@ -599,14 +612,9 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $update_if_present( 'delay_autoupdate', 'mainwp_delay_autoupdate', 'int' );
 
             // Update backup settings.
-            $update_if_present( 'mainwp_primary_backup', 'mainwp_primaryBackup', 'string' );
-            $update_if_present( 'mainwp_enable_legacy_backup_feature', 'mainwp_enableNativeBackups', 'int' );
-            $update_if_present( 'mainwp_backups_on_server', 'mainwp_backupsOnServer', 'string' );
-            $update_if_present( 'mainwp_backup_on_external_sources', 'mainwp_backupOnExternalSources', 'string' );
-            $update_if_present( 'mainwp_archive_format', 'mainwp_archiveFormat', 'string' );
-            $update_if_present( 'mainwp_notification_on_backup_fail', 'mainwp_notificationOnBackupFail', 'int' );
-            $update_if_present( 'mainwp_notification_on_backup_start', 'mainwp_notificationOnBackupStart', 'int' );
-            $update_if_present( 'mainwp_chunked_backup_tasks', 'mainwp_chunkedBackupTasks', 'int' );
+            foreach ( $backup_fields as $key => $cast ) {
+                $update_if_present( $key, MainWP_Backup_Settings::SETTINGS_OPTIONS[ $key ], $cast );
+            }
 
             // Update Sidebar.
             $update_use_option( 'sidebar_position', 'mainwp_sidebarPosition', 'int' );
@@ -1637,6 +1645,9 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         $permission = MainWP_Backup_Operations::authorize_base( 'manage_dashboard_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
+        }
+        if ( MainWP_System_Utility::is_team_control_staff() ) {
+            return new WP_Error( 'mainwp_permission_denied', MainWP_Backup_Operations::safe_error( 'mainwp_permission_denied' )['message'], array( 'status' => 403 ) );
         }
         // Check content type.
         $content_type = $this->validate_content_type( $request );

@@ -12,12 +12,16 @@ use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Backup_Encryption;
 use MainWP\Dashboard\MainWP_Backup_Diagnostics;
 use MainWP\Dashboard\MainWP_Backup_Operations;
+use MainWP\Dashboard\MainWP_Backup_Settings;
+use MainWP\Dashboard\MainWP_System_Utility;
 
 require_once __DIR__ . '/../backup/class-mainwp-backup-read-fixtures.php';
+require_once __DIR__ . '/../backup/class-mainwp-backup-settings-staff-fixtures.php';
 
 /** Global backup policy requires unrestricted Dashboard authority. */
 class MainWP_Backups_Settings_Abilities_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Read_Purity_Guard;
+	use Backup_Settings_Staff_Fixtures;
 
 	/** Stored values above machine write bounds must remain visible in previews. */
 	public function set_up() {
@@ -29,6 +33,51 @@ class MainWP_Backups_Settings_Abilities_Test extends MainWP_Abilities_Test_Case 
 		update_option( 'mainwp_backup_max_concurrent', 12 );
 		update_option( 'mainwp_primaryBackup', 'backupbuddy' );
 		update_option( MainWP_Backup_Encryption::RECOVERY_OPTION, array( 'wrapped_kek' => 'private-recovery-material' ) );
+	}
+
+	/** Bridge and role fixtures must not change subsequent ability checks. */
+	public function tear_down() {
+		$this->clear_settings_staff_fixtures();
+		parent::tear_down();
+	}
+
+	/**
+	 * Permission callbacks and direct execution must both refuse all-sites staff.
+	 *
+	 * @dataProvider settings_writers
+	 * @param string $actor Matrix actor.
+	 * @param bool   $allowed Whether backup settings can save.
+	 */
+	public function test_staff_refused_at_permission_and_direct_execute( string $actor, bool $allowed ): void {
+		$this->settings_actor( $actor );
+		$this->allow_unrestricted_settings_access();
+		$this->assertTrue( MainWP_System_Utility::is_admin() );
+		$this->assertTrue( MainWP_Backup_Operations::authorize_base( 'manage_dashboard_settings' ) );
+		foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+			update_option( 'mainwp_on_demand_retention_count', 5 );
+			update_option( 'mainwp_backup_before_upgrade', 0 );
+			$before     = array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS );
+			$input      = array(
+				'on_demand_retention_count' => 7,
+				'update_gate'               => array( 'enabled' => true ),
+				$mode                       => true,
+			);
+			$permission = $this->ability()->check_permissions( $input );
+			if ( $allowed ) {
+				$this->assertTrue( $permission );
+				$this->assertIsArray( $this->execute( $input, true ) );
+				$this->assertSame( 'confirm' === $mode ? 7 : 5, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+				$this->assertSame( 'confirm' === $mode ? 1 : 0, (int) get_option( 'mainwp_backup_before_upgrade' ) );
+			} else {
+				foreach ( array( $permission, $this->execute( $input, true ) ) as $error ) {
+					$this->assertWPError( $error );
+					$this->assertSame( 'mainwp_permission_denied', $error->get_error_code() );
+					$this->assertSame( 403, $error->get_error_data()['status'] );
+				}
+				$this->assertSame( $before, array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS ) );
+				$this->assertSame( 0, (int) get_option( 'mainwp_backup_before_upgrade' ) );
+			}
+		}
 	}
 
 	/**

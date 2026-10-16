@@ -1399,7 +1399,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $base ) ) {
             return $base;
         }
-        if ( ! self::userless_cli() && ! MainWP_System_Utility::is_admin() ) {
+        if ( MainWP_System_Utility::is_team_control_staff() || ( ! self::userless_cli() && ! MainWP_System_Utility::is_admin() ) ) {
             return new \WP_Error( 'mainwp_permission_denied', self::safe_error( 'mainwp_permission_denied' )['message'], array( 'status' => 403 ) );
         }
         if ( ! in_array( $context, array( 'ui', 'ability' ), true ) ) {

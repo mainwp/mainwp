@@ -75,14 +75,17 @@ for ( const [ reason, label ] of removalCases ) {
     assert.ok( removalMap.includes( "'" + reason + "': '<?php echo esc_js( esc_html__( '" + label + "', 'mainwp' ) ); ?>'" ), reason + ' must be translated and escaped.' );
 }
 vm.runInContext( removalMap.replace( /<\?php echo esc_js\( esc_html__\( '([^']+)', 'mainwp' \) \); \?>/g, '$1' ), context );
-context.sourceLabels = { unavailable: 'Removed by retention', local: 'This dashboard', remote: 'Cloud storage' };
+assert.ok( source.includes( "'removed': '<?php echo esc_js( esc_html__( 'Removed', 'mainwp' ) ); ?>'" ), 'Rows pruned before causes were recorded need a translated neutral label.' );
+context.sourceLabels = { unavailable: 'Removed by retention', removed: 'Removed', local: 'This dashboard', remote: 'Cloud storage' };
 const sourceCellStart = source.indexOf( 'var sourceCell = ' );
 const sourceCellEnd = source.indexOf( "if ( 'display' === type )", sourceCellStart );
 assert.ok( sourceCellStart >= 0 && sourceCellEnd > sourceCellStart );
 vm.runInContext( 'var removalSourceCell = function (snap) { ' + source.slice( sourceCellStart, sourceCellEnd ) + 'return sourceCell; };', context );
-for ( const [ reason, label ] of removalCases.concat( [ [ '', 'Removed by retention' ], [ 'x', 'Removed by retention' ], [ 'constructor', 'Removed by retention' ], [ '__proto__', 'Removed by retention' ], [ 'toString', 'Removed by retention' ], [ undefined, 'Removed by retention' ] ] ) ) {
-    assert.equal( context.removalSourceCell( { source: 'unavailable', removal_reason: reason } ), label, String( reason ) );
+for ( const [ reason, label ] of removalCases.concat( [ [ '', 'Removed' ], [ 'x', 'Removed' ], [ 'constructor', 'Removed' ], [ '__proto__', 'Removed' ], [ 'toString', 'Removed' ], [ undefined, 'Removed' ] ] ) ) {
+    assert.equal( context.removalSourceCell( { source: 'unavailable', status: 'pruned', removal_reason: reason } ), label, String( reason ) );
 }
-assert.equal( context.removalSourceCell( { source: 'local', removal_reason: 'manual' } ), 'This dashboard' );
-assert.equal( context.removalSourceCell( { source: 'remote', removal_reason: 'cleanup' } ), 'Cloud storage' );
-console.log( 'OK (12 snapshot removal label cases)' );
+// A complete backup whose files are missing was not pruned; its label is unchanged.
+assert.equal( context.removalSourceCell( { source: 'unavailable', status: 'complete', removal_reason: '' } ), 'Removed by retention' );
+assert.equal( context.removalSourceCell( { source: 'local', status: 'pruned', removal_reason: 'manual' } ), 'This dashboard' );
+assert.equal( context.removalSourceCell( { source: 'remote', status: 'complete', removal_reason: 'cleanup' } ), 'Cloud storage' );
+console.log( 'OK (13 snapshot removal label cases)' );

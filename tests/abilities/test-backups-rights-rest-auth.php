@@ -11,14 +11,18 @@ use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_Backup_Settings;
+use MainWP\Dashboard\MainWP_System_Utility;
 use MainWP\Dashboard\MainWP_DB;
 
 require_once __DIR__ . '/../backup/class-mainwp-backup-read-fixtures.php';
+require_once __DIR__ . '/../backup/class-mainwp-backup-settings-staff-fixtures.php';
 
 /** Core authentication runs before the real ability REST controller. */
 class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 
 	use Backup_Read_Purity_Guard;
+	use Backup_Settings_Staff_Fixtures;
 
 	/**
 	 * Request globals restored even when authentication clears the current user.
@@ -135,6 +139,7 @@ class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 
 	/** Authentication state must not leak into another REST test. */
 	public function tearDown(): void {
+		$this->clear_settings_staff_fixtures();
 		remove_filter( 'wp_is_application_passwords_available', '__return_true' );
 		remove_filter( 'application_password_is_api_request', '__return_true' );
 		if ( false === $this->cookie_priority ) {
@@ -170,7 +175,7 @@ class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 	 * @return \PHPUnit\Framework\TestResult
 	 */
 	public function run( ?\PHPUnit\Framework\TestResult $result = null ): \PHPUnit\Framework\TestResult {
-		if ( 'test_api_key_owner_cannot_bypass_restore_rights' !== $this->getName( false ) ) {
+		if ( ! in_array( $this->getName( false ), array( 'test_api_key_owner_cannot_bypass_restore_rights', 'test_api_key_settings_follow_owner_roles' ), true ) ) {
 			return parent::run( $result );
 		}
 		$configuration                           = $GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] ?? null;
@@ -320,6 +325,149 @@ class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 			}
 		} finally {
 			remove_filter( 'mainwp_currentusercan', $filter, 10 );
+		}
+	}
+
+	/**
+	 * Cookie precedence must be tested for staff as well as administrators.
+	 *
+	 * @return array Actor and core authentication state.
+	 */
+	public static function settings_auth_states(): array {
+		$cases = array();
+		foreach ( array( 'S', 'A' ) as $actor ) {
+			foreach ( array( 'application-password', 'application-password-cookie', 'cookie-nonce', 'cookie-only' ) as $state ) {
+				$cases[ $actor . '/' . $state ] = array( $actor, $state );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Core authentication must reach the staff guard only while a user remains authenticated.
+	 *
+	 * @dataProvider settings_auth_states
+	 * @param string $actor Matrix actor.
+	 * @param string $state Core authentication state.
+	 */
+	public function test_settings_staff_over_real_rest_authentication( string $actor, string $state ): void {
+		$this->fixture['user'] = $this->settings_actor( $actor );
+		$this->allow_unrestricted_settings_access();
+		$password = \WP_Application_Passwords::create_new_application_password( $this->fixture['user'], array( 'name' => 'Settings role REST fixture' ) );
+		$this->assertNotWPError( $password );
+		$this->fixture['password']               = $password[0];
+		$route                                   = '/wp-abilities/v1/abilities/mainwp/update-backup-settings-v1/run';
+		$GLOBALS['wp']->query_vars['rest_route'] = $route;
+		update_option( 'mainwp_on_demand_retention_count', 5 );
+		$before = array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS );
+		$this->authenticate( $state );
+		$request = new \WP_REST_Request( 'POST', $route );
+		$request->set_header( 'Content-Type', 'application/json' );
+		$request->set_body(
+			wp_json_encode(
+				array(
+					'input' => array(
+						'on_demand_retention_count' => 7,
+						'confirm'                   => true,
+					),
+				)
+			)
+		);
+		$response  = $this->server->dispatch( $request );
+		$anonymous = in_array( $state, array( 'application-password-cookie', 'cookie-only' ), true );
+		$status    = $anonymous ? 401 : ( 'S' === $actor ? 403 : 200 );
+		$this->assertSame( $status, $response->get_status(), wp_json_encode( $response->get_data() ) );
+		if ( 200 === $status ) {
+			$this->assertSame( 7, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+		} else {
+			$this->assertSame( 'mainwp_permission_denied', $response->get_data()['code'] );
+			$this->assertSame( $before, array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS ) );
+		}
+	}
+
+	/**
+	 * API-key authority must follow the owner's roles in the controller and ability callbacks.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_api_key_settings_follow_owner_roles(): void {
+		$this->allow_unrestricted_settings_access();
+		foreach ( array( 'S', 'A' ) as $actor ) {
+			$owner = $this->settings_actor( $actor );
+			$this->assertTrue( MainWP_System_Utility::is_admin() );
+			$credentials = $this->create_rest_api_key( $owner );
+			try {
+				foreach ( array(
+					'user'        => null,
+					'error'       => null,
+					'auth_method' => '',
+				) as $name => $value ) {
+					$property = new \ReflectionProperty( $this->auth, $name );
+					$property->setAccessible( true );
+					$property->setValue( $this->auth, $value );
+				}
+				$_GET     = array();
+				$_POST    = array();
+				$_REQUEST = array();
+				$_COOKIE  = array();
+				unset( $_SERVER['HTTP_X_WP_NONCE'], $_SERVER['HTTP_AUTHORIZATION'], $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] );
+				$_SERVER['HTTPS']                               = 'on';
+				$_SERVER['PHP_AUTH_USER']                       = $credentials['consumer_key'];
+				$_SERVER['PHP_AUTH_PW']                         = $credentials['consumer_secret'];
+				$GLOBALS['wp']->query_vars['rest_route']        = '/mainwp/v2/settings/backups/edit';
+				$GLOBALS['wp_rest_auth_cookie']                 = null;
+				$GLOBALS['wp_rest_application_password_status'] = null;
+				$GLOBALS['wp_rest_application_password_uuid']   = null;
+				wp_set_current_user( 0 );
+				$this->assertSame( $owner, (int) apply_filters( 'determine_current_user', false ) );
+				wp_set_current_user( $owner );
+				$this->assertNotWPError( $this->server->check_authentication() );
+				$this->assertSame( $owner, get_current_user_id() );
+				$this->assertTrue( MainWP_Backup_Operations::authorize_base( 'manage_dashboard_settings' ) );
+				$request = new \WP_REST_Request( 'PUT', '/mainwp/v2/settings/backups/edit' );
+				$request->set_header( 'Content-Type', 'application/json' );
+				$request->set_body( wp_json_encode( array( 'mainwp_on_demand_retention_count' => 7 ) ) );
+				update_option( 'mainwp_on_demand_retention_count', 5 );
+				$before   = array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS );
+				$response = $this->server->dispatch( $request );
+				$this->assertTrue( MAINWP_REST_API_DOING );
+				$this->assertSame( 'S' === $actor ? 403 : 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
+				if ( 'S' === $actor ) {
+					$this->assertSame( 'mainwp_permission_denied', $response->get_data()['code'] );
+					$this->assertSame( $before, array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS ) );
+				} else {
+					$this->assertSame( 7, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+				}
+
+				// Native ability REST routes exclude MainWP keys; integrations call these callbacks in the validated key context.
+				update_option( 'mainwp_on_demand_retention_count', 5 );
+				$before     = array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS );
+				$input      = array(
+					'on_demand_retention_count' => 7,
+					'confirm'                   => true,
+				);
+				$permission = wp_get_ability( 'mainwp/update-backup-settings-v1' )->check_permissions( $input );
+				$result     = MainWP_Abilities_Backups::execute_update_backup_settings( $input );
+				if ( 'S' === $actor ) {
+					foreach ( array( $permission, $result ) as $error ) {
+						$this->assertWPError( $error );
+						$this->assertSame( 'mainwp_permission_denied', $error->get_error_code() );
+						$this->assertSame( 403, $error->get_error_data()['status'] );
+					}
+					$this->assertSame( $before, array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS ) );
+				} else {
+					$this->assertTrue( $permission );
+					$this->assertIsArray( $result );
+					$this->assertSame( 200, rest_ensure_response( $result )->get_status() );
+					$this->assertSame( 7, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+				}
+			} finally {
+				global $wpdb;
+				$hashed = mainwp_api_hash( $credentials['consumer_key'] );
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'api_keys' ), array( 'consumer_key' => $hashed ) );
+				wp_cache_delete( 'mainwp_api_key_' . md5( $hashed ) );
+			}
 		}
 	}
 

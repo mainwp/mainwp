@@ -2374,7 +2374,7 @@ class MainWP_Abilities_Backups {
             }
         }
         $right = $rights[0];
-        if ( 'mainwp/update-backup-settings-v1' === $ability && ! MainWP_System_Utility::is_admin() ) {
+        if ( 'mainwp/update-backup-settings-v1' === $ability && ( ! MainWP_System_Utility::is_admin() || MainWP_System_Utility::is_team_control_staff() ) ) {
             return self::safe_wp_error( new \WP_Error( 'mainwp_permission_denied', '', array( 'status' => 403 ) ) );
         }
         // Global settings and destinations can affect tasks outside the caller's site scope.

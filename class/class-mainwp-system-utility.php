@@ -122,6 +122,25 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Identify Team Control staff while preserving WordPress administrator access.
+     *
+     * @return bool
+     */
+    public static function is_team_control_staff(): bool {
+        $user = wp_get_current_user();
+        // Roles avoid the bridge's injected manage_options and legacy admin caps; Team Control exempts administrators.
+        if ( empty( $user->ID ) || static::current_user_has_role( 'administrator', $user ) ) {
+            return false;
+        }
+        foreach ( $user->roles as $role ) {
+            if ( 0 === strpos( $role, 'mainwp_' ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Method current_user_has_role()
      *
      * Check if the user has role.

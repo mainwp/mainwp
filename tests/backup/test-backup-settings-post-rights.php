@@ -14,9 +14,14 @@ use MainWP\Dashboard\MainWP_Backup_Settings;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Settings;
+use MainWP\Dashboard\MainWP_System_Utility;
+
+require_once __DIR__ . '/class-mainwp-backup-settings-staff-fixtures.php';
 
 /** Shared settings authorization and allowed fields. */
 class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case {
+
+	use Backup_Settings_Staff_Fixtures;
 
 	/** An administrator isolates the granular right from WordPress capabilities. */
 	public function setUp(): void {
@@ -26,11 +31,209 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 
 	/** Recovery key files are outside WordPress's transaction cleanup. */
 	public function tearDown(): void {
+		$this->clear_settings_staff_fixtures();
 		$_POST    = array();
 		$_REQUEST = array();
 		MainWP_Keys_Manager::instance()->delete_key_file( MainWP_Backup_Encryption::instance()->kek_filename() );
 		delete_option( MainWP_Backup_Encryption::RECOVERY_OPTION );
 		parent::tearDown();
+	}
+
+	/**
+	 * Roles must discriminate staff even when their capabilities resemble administrators.
+	 *
+	 * @dataProvider staff_actors
+	 * @param string $actor Matrix actor.
+	 * @param bool   $staff Whether the actor is staff.
+	 */
+	public function test_staff_signal_uses_roles( string $actor, bool $staff ): void {
+		$this->settings_actor( $actor );
+		$this->assertSame( $staff, MainWP_System_Utility::is_team_control_staff() );
+		if ( 'S' === $actor ) {
+			$this->assertFalse( current_user_can( 'manage_options' ) );
+			add_filter( 'user_has_cap', array( self::class, 'settings_bridge_caps' ) );
+			$this->assertTrue( current_user_can( 'manage_options' ) );
+			$this->assertTrue( MainWP_System_Utility::is_team_control_staff() );
+		}
+	}
+
+	/**
+	 * Prefix matches and administrator precedence are role-based.
+	 *
+	 * @return array Actor and staff flag.
+	 */
+	public static function staff_actors(): array {
+		return array(
+			'admin'        => array( 'A', false ),
+			'admin staff'  => array( 'A+', false ),
+			'staff'        => array( 'S', true ),
+			'legacy'       => array( 'SL', true ),
+			'editor staff' => array( 'SE', true ),
+			'editor'       => array( 'N', false ),
+			'userless'     => array( 'C0', false ),
+			'prefix'       => array( 'PX', false ),
+			'infix'        => array( 'IX', false ),
+		);
+	}
+
+	/**
+	 * Refused forms must preserve every setting, including key material and legacy fields.
+	 *
+	 * @dataProvider settings_writers
+	 * @param string $actor Matrix actor.
+	 * @param bool   $allowed Whether the form can save.
+	 */
+	public function test_staff_cannot_save_backup_settings_form( string $actor, bool $allowed ): void {
+		$this->settings_actor( $actor );
+		$this->allow_unrestricted_settings_access();
+		$this->assertTrue( MainWP_System_Utility::is_admin() );
+		foreach ( MainWP_Backup_Settings::SETTINGS_OPTIONS as $option ) {
+			update_option( $option, 0 );
+		}
+		$enc = MainWP_Backup_Encryption::instance();
+		$enc->set_recovery_passphrase( 'original settings recovery passphrase' );
+		$before = array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS );
+		$_POST  = array(
+			'submit'                                    => '1',
+			'wp_nonce'                                  => wp_create_nonce( 'Settings' ),
+			'mainwp_options_enableNativeBackups'        => '1',
+			'mainwp_options_onDemandRetentionCount'     => '9',
+			'mainwp_options_backupOnServer'             => '4',
+			'mainwp_primaryBackup'                      => '',
+			'mainwp_options_enableBackupEncryption'     => '1',
+			'mainwp_options_backupEncryptionPassphrase' => 'replacement settings recovery passphrase',
+			'mainwp_options_backupEncryptionCurrentPassphrase' => 'original settings recovery passphrase',
+		);
+		$this->assertSame( $allowed, MainWP_Backup_Settings::handle_settings_post() );
+		if ( ! $allowed ) {
+			$this->assertSame( $before, array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS ) );
+		} else {
+			$this->assertSame( 1, (int) get_option( 'mainwp_enableNativeBackups' ) );
+			$this->assertSame( 9, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+			$this->assertSame( 1, (int) get_option( MainWP_Backup_Encryption::ENABLED_OPTION ) );
+			$this->assertSame( 4, (int) get_option( 'mainwp_backupsOnServer' ) );
+		}
+	}
+
+	/**
+	 * Direct service callers cannot bypass the form or ability permission callback.
+	 *
+	 * @dataProvider settings_writers
+	 * @param string $actor Matrix actor.
+	 * @param bool   $allowed Whether settings can save.
+	 */
+	public function test_staff_cannot_use_array_saver_in_either_context( string $actor, bool $allowed ): void {
+		$this->settings_actor( $actor );
+		$this->allow_unrestricted_settings_access();
+		$this->assertTrue( MainWP_System_Utility::is_admin() );
+		foreach ( array( 'ui', 'ability' ) as $context ) {
+			update_option( 'mainwp_on_demand_retention_count', 5 );
+			update_option( 'mainwp_backup_before_upgrade', 0 );
+			$before = array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS );
+			$result = MainWP_Backup_Operations::save_backup_settings(
+				array(
+					'on_demand_retention_count' => 9,
+					'update_gate'               => array( 'enabled' => true ),
+				),
+				$context
+			);
+			if ( $allowed ) {
+				$this->assertNotWPError( $result );
+				$this->assertSame( 9, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+				$this->assertSame( 1, (int) get_option( 'mainwp_backup_before_upgrade' ) );
+			} else {
+				$this->assertWPError( $result );
+				$this->assertSame( 'mainwp_permission_denied', $result->get_error_code() );
+				$this->assertSame( 403, $result->get_error_data()['status'] );
+				$this->assertSame( $before, array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS ) );
+				$this->assertSame( 0, (int) get_option( 'mainwp_backup_before_upgrade' ) );
+			}
+		}
+	}
+
+	/**
+	 * CLI constants must be defined after the isolated WordPress harness loads.
+	 *
+	 * @param \PHPUnit\Framework\TestResult|null $result Current result collector.
+	 * @return \PHPUnit\Framework\TestResult
+	 */
+	public function run( ?\PHPUnit\Framework\TestResult $result = null ): \PHPUnit\Framework\TestResult {
+		if ( 'test_cli_settings_distinguishes_userless_and_staff' !== $this->getName( false ) ) {
+			return parent::run( $result );
+		}
+		$configuration                           = $GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] ?? null;
+		$GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] = '';
+		try {
+			return parent::run( $result );
+		} finally {
+			$GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] = $configuration;
+		}
+	}
+
+	/**
+	 * --user must retain staff restrictions while userless automation keeps access.
+	 *
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 */
+	public function test_cli_settings_distinguishes_userless_and_staff(): void {
+		define( 'WP_CLI', true );
+		foreach ( array( 'C0', 'S' ) as $actor ) {
+			$this->settings_actor( $actor );
+			$this->allow_unrestricted_settings_access();
+			foreach ( array( 'ui', 'ability' ) as $context ) {
+				update_option( 'mainwp_on_demand_retention_count', 5 );
+				$result = MainWP_Backup_Operations::save_backup_settings( array( 'on_demand_retention_count' => 9 ), $context );
+				if ( 'C0' === $actor ) {
+					$this->assertNotWPError( $result );
+					$this->assertSame( 9, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+				} else {
+					$this->assertWPError( $result );
+					$this->assertSame( 'mainwp_permission_denied', $result->get_error_code() );
+					$this->assertSame( 403, $result->get_error_data()['status'] );
+					$this->assertSame( 5, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Generic writes must recognize collated backup names and preserve unrelated settings.
+	 *
+	 * @dataProvider settings_writers
+	 * @param string $actor Matrix actor.
+	 * @param bool   $allowed Whether backup settings can save.
+	 */
+	public function test_ajax_staff_backup_option_boundary( string $actor, bool $allowed ): void {
+		$this->settings_actor( $actor );
+		$this->allow_unrestricted_settings_access();
+		foreach ( MainWP_Backup_Settings::SETTINGS_OPTIONS as $option ) {
+			if ( MainWP_Backup_Encryption::RECOVERY_OPTION === $option && $allowed ) {
+				continue;
+			}
+			foreach ( array( substr( $option, 7 ), strtoupper( substr( $option, 7 ) ) ) as $name ) {
+				update_option( $option, 1 );
+				$response = $this->ajax_save_setting( $name );
+				wp_cache_delete( $option, 'options' );
+				wp_cache_delete( 'alloptions', 'options' );
+				$this->assertSame( $allowed ? 0 : 1, (int) get_option( $option ), $name );
+				if ( ! $allowed ) {
+					$this->assertSame(
+						array(
+							'success' => false,
+							'result'  => 'Error - insufficient permissions!',
+							'error'   => 'Error - insufficient permissions!',
+						),
+						json_decode( $response, true )
+					);
+				}
+			}
+		}
+		foreach ( array( 'unrelated_setting', 'backup_before_upgrade', 'backup_before_upgrade_days', 'backup_before_upgrade_require_offsite' ) as $name ) {
+			update_option( 'mainwp_' . $name, 1 );
+			$this->ajax_save_setting( $name );
+			$this->assertSame( 0, (int) get_option( 'mainwp_' . $name ) );
+		}
 	}
 
 	/**

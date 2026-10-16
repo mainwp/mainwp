@@ -464,7 +464,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 'local': '<?php echo esc_js( esc_html__( 'This dashboard', 'mainwp' ) ); ?>',
                 'remote': '<?php echo esc_js( esc_html__( 'Cloud storage', 'mainwp' ) ); ?>',
                 'remote_chunked': '<?php echo esc_js( esc_html__( 'Cloud storage', 'mainwp' ) ); ?>',
-                'unavailable': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>'
+                'unavailable': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>',
+                'removed': '<?php echo esc_js( esc_html__( 'Removed', 'mainwp' ) ); ?>'
             };
             var removalLabels = {
                 'manual': '<?php echo esc_js( esc_html__( 'Deleted manually', 'mainwp' ) ); ?>',
@@ -804,6 +805,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             var sourceCell = sourceLabels[ snap.source ] || escAttr( snap.source );
                             if ( 'unavailable' === snap.source && Object.prototype.hasOwnProperty.call( removalLabels, snap.removal_reason ) ) {
                                 sourceCell = removalLabels[ snap.removal_reason ];
+                            } else if ( 'unavailable' === snap.source && 'pruned' === snap.status ) {
+                                // Pruned before the cause was recorded, so retention may not be why.
+                                sourceCell = sourceLabels.removed;
                             }
                             if ( 'display' === type ) {
                                 var offsite = offsiteLabels[ snap.offsite_state ];

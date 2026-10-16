@@ -68,9 +68,14 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
 
             $reason = '';
             if ( 'unavailable' === $source ) {
-                $reason = 'complete' !== $snapshot->status
-                    ? ( $removal_tooltips[ $removal_reason ] ?? $removal_tooltips[ MainWP_Backup_Snapshots::REMOVAL_REASON_RETENTION ] )
-                    : __( 'The backup files are missing from this Dashboard and no cloud copy finished uploading, so it cannot be restored.', 'mainwp' );
+                if ( 'complete' === $snapshot->status ) {
+                    $reason = __( 'The backup files are missing from this Dashboard and no cloud copy finished uploading, so it cannot be restored.', 'mainwp' );
+                } elseif ( 'pruned' === $snapshot->status && MainWP_Backup_Snapshots::REMOVAL_REASON_UNKNOWN === $removal_reason ) {
+                    // Pruned before the cause was recorded (DB 9.0.2.32), so the retention default would be a guess.
+                    $reason = __( 'Removed; no copy survives locally or in cloud storage.', 'mainwp' );
+                } else {
+                    $reason = $removal_tooltips[ $removal_reason ] ?? $removal_tooltips[ MainWP_Backup_Snapshots::REMOVAL_REASON_RETENTION ];
+                }
             } elseif ( 'files' === $snapshot->type && ! $files_restorable ) {
                 $reason = __( 'Update the MainWP Child plugin on the site to restore files-only backups.', 'mainwp' );
             } elseif ( $multisite_gated ) {

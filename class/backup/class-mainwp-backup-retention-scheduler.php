@@ -181,6 +181,13 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
 
         MainWP_Utility::update_option( 'mainwp_cron_last_backups_prune', time() );
 
+        // Cleanup owed by earlier runs must not be starved by the retention deadline.
+        try {
+            MainWP_Backup_Retention_Executor::instance()->resend_child_prunes();
+        } catch ( \Throwable $e ) {
+            MainWP_Logger::instance()->warning( 'Backup child prune retry failed: ' . $e->getMessage() );
+        }
+
         $deadline = microtime( true ) + static::DAILY_BUDGET_SECONDS;
 
         foreach ( MainWP_Backup_Retention_Query::instance()->list_tasks_with_policy() as $task ) {

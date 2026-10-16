@@ -64,6 +64,13 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     const BACKUP_SNAPSHOT_REMOVAL_REASON_REPAIR_PENDING = 'mainwp_backup_snapshot_removal_reason_repair_pending';
 
     /**
+     * Child cleanup must wait for both columns after a deferred migration.
+     *
+     * @var string
+     */
+    const BACKUP_SNAPSHOT_CHILD_PRUNE_REPAIR_PENDING = 'mainwp_backup_snapshot_child_prune_repair_pending';
+
+    /**
      * Restore checkpoint writes compare this column even after a failed migration stamps the version.
      *
      * @var string
@@ -110,7 +117,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.32'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
+    protected $mainwp_db_version = '9.0.2.33'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
 
     /**
      * Protected variable to hold the database option name.
@@ -226,6 +233,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_native_backup_tables();
             $this->maybe_retry_backup_snapshot_test_restore_result_at();
             $this->maybe_retry_backup_snapshot_removal_reason();
+            $this->maybe_retry_backup_snapshot_child_prune();
             $this->maybe_retry_backup_restore_job_checkpoint_rev();
             $pending = (int) get_site_option( self::BACKUP_SITE_UNIQ_KEYS_REPAIR_PENDING );
             if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
@@ -615,6 +623,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $this->post_update();
         $this->ensure_backup_snapshot_test_restore_result_at();
         $this->ensure_backup_snapshot_removal_reason();
+        $this->ensure_backup_snapshot_child_prune();
         $this->ensure_backup_restore_job_checkpoint_rev();
 
         do_action( 'mainwp_db_after_update', $currentVersion, $this->mainwp_db_version ); // new version: $this->mainwp_db_version.
@@ -721,6 +730,8 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   manifest_path text NOT NULL DEFAULT '',
   status varchar(20) NOT NULL DEFAULT 'complete',
   removal_reason varchar(20) NOT NULL DEFAULT '',
+  child_prune_confirmed_at int(11) NOT NULL DEFAULT 0,
+  child_prune_attempts smallint(5) unsigned NOT NULL DEFAULT 0,
   offsite_state varchar(20) NOT NULL DEFAULT '',
   verified_at int(11) NOT NULL DEFAULT 0,
   encryption text NOT NULL DEFAULT '',
@@ -1924,6 +1935,63 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $pending = (int) get_site_option( static::BACKUP_SNAPSHOT_REMOVAL_REASON_REPAIR_PENDING );
         if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
             $this->ensure_backup_snapshot_removal_reason();
+        }
+    }
+
+    /**
+     * Retry writes must wait until both cleanup columns are available.
+     *
+     * @return bool Whether no schema repair is pending.
+     */
+    public static function backup_snapshot_child_prune_ready(): bool {
+        return ! get_site_option( static::BACKUP_SNAPSHOT_CHILD_PRUNE_REPAIR_PENDING );
+    }
+
+    /**
+     * Pruning must keep working when its cleanup bookkeeping needs a later repair.
+     *
+     * @return bool Whether both columns exist.
+     */
+    public function ensure_backup_snapshot_child_prune(): bool {
+        $suppress = $this->wpdb->suppress_errors();
+        $table    = esc_sql( $this->table_name( 'wp_backup_snapshot' ) );
+        $missing  = array();
+        $columns  = array(
+            'child_prune_confirmed_at' => 'int(11)',
+            'child_prune_attempts'     => 'smallint(5) unsigned',
+        );
+        foreach ( $columns as $name => $definition ) {
+            $column = $this->wpdb->get_var( $this->wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", $name ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table escaped via esc_sql.
+            $error  = '';
+            if ( empty( $column ) ) {
+                $this->wpdb->query( "ALTER TABLE {$table} ADD COLUMN {$name} {$definition} NOT NULL DEFAULT 0" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table escaped; columns and definitions are fixed above.
+                $error  = $this->wpdb->last_error;
+                $column = $this->wpdb->get_var( $this->wpdb->prepare( "SHOW COLUMNS FROM {$table} LIKE %s", $name ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table escaped via esc_sql.
+            }
+            if ( empty( $column ) ) {
+                $missing[] = $name . ': ' . $error;
+            }
+        }
+        $this->wpdb->suppress_errors( $suppress );
+        if ( ! empty( $missing ) ) {
+            // Install precedes the warning listeners, so the logger must receive this directly.
+            MainWP_Logger::instance()->warning( sprintf( 'Backup snapshot child prune repair deferred for %s: %s', $table, implode( '; ', $missing ) ) );
+            update_site_option( static::BACKUP_SNAPSHOT_CHILD_PRUNE_REPAIR_PENDING, time() );
+            return false;
+        }
+        delete_site_option( static::BACKUP_SNAPSHOT_CHILD_PRUNE_REPAIR_PENDING );
+        return true;
+    }
+
+    /**
+     * Denied ALTER statements must not run on every request.
+     *
+     * @return void
+     */
+    public function maybe_retry_backup_snapshot_child_prune(): void {
+        $pending = (int) get_site_option( static::BACKUP_SNAPSHOT_CHILD_PRUNE_REPAIR_PENDING );
+        if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
+            $this->ensure_backup_snapshot_child_prune();
         }
     }
 

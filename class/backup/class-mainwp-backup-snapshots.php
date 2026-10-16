@@ -557,6 +557,101 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Only native run identities can name a Child task safely after pruning.
+     *
+     * @param int $limit        Maximum rows to select.
+     * @param int $max_attempts Failed attempts allowed.
+     * @return object[] Undecoded cleanup rows, least attempted first.
+     */
+    public function get_child_prune_candidates( int $limit, int $max_attempts ): array {
+        if ( ! MainWP_Install::backup_snapshot_child_prune_ready() || $limit < 1 || $max_attempts < 1 ) {
+            return array();
+        }
+        $table = $this->table_name( 'wp_backup_snapshot' );
+        return (array) $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT id, site_id, task_id, run_key, child_prune_attempts FROM `{$table}` WHERE status = 'pruned' AND child_prune_confirmed_at = 0 AND child_prune_attempts < %d AND run_key LIKE CONCAT(site_id, ':', task_id, %s) ORDER BY child_prune_attempts ASC, id ASC LIMIT %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                $max_attempts,
+                ':c:%',
+                $limit
+            )
+        );
+    }
+
+    /**
+     * Preserve the first confirmation when cleanup writers overlap.
+     *
+     * @param array $snapshot_ids Snapshot identities.
+     * @return int Rows changed.
+     */
+    public function mark_child_prune_confirmed( array $snapshot_ids ): int {
+        if ( ! MainWP_Install::backup_snapshot_child_prune_ready() ) {
+            return 0;
+        }
+        $ids = array_filter(
+            array_unique( array_map( 'intval', $snapshot_ids ) ),
+            static function ( $id ) {
+                return $id > 0;
+            }
+        );
+        if ( empty( $ids ) ) {
+            return 0;
+        }
+        $table = $this->table_name( 'wp_backup_snapshot' );
+        $ids   = implode( ',', $ids );
+        return (int) $this->wpdb->query(
+            $this->wpdb->prepare(
+                "UPDATE `{$table}` SET child_prune_confirmed_at = %d WHERE id IN ({$ids}) AND status = 'pruned' AND child_prune_confirmed_at = 0", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifier and integer-only id list.
+                time()
+            )
+        );
+    }
+
+    /**
+     * A late failure must not change a row another writer already confirmed.
+     *
+     * @param int $snapshot_id Snapshot identity.
+     * @return int New attempt count, or zero when no row changed.
+     */
+    public function record_child_prune_attempt( int $snapshot_id ): int {
+        if ( ! MainWP_Install::backup_snapshot_child_prune_ready() ) {
+            return 0;
+        }
+        $table   = $this->table_name( 'wp_backup_snapshot' );
+        $changed = $this->wpdb->query(
+            $this->wpdb->prepare(
+                "UPDATE `{$table}` SET child_prune_attempts = child_prune_attempts + 1 WHERE id = %d AND status = 'pruned' AND child_prune_confirmed_at = 0", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                $snapshot_id
+            )
+        );
+        if ( 1 !== $changed ) {
+            return 0;
+        }
+        return (int) $this->wpdb->get_var( $this->wpdb->prepare( "SELECT child_prune_attempts FROM `{$table}` WHERE id = %d", $snapshot_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+    }
+
+    /**
+     * A deleted site has no Child connection left to retry.
+     *
+     * @param int $snapshot_id Snapshot identity.
+     * @param int $max_attempts Attempt cap.
+     * @return void
+     */
+    public function give_up_child_prune( int $snapshot_id, int $max_attempts ): void {
+        if ( ! MainWP_Install::backup_snapshot_child_prune_ready() ) {
+            return;
+        }
+        $table = $this->table_name( 'wp_backup_snapshot' );
+        $this->wpdb->query(
+            $this->wpdb->prepare(
+                "UPDATE `{$table}` SET child_prune_attempts = %d WHERE id = %d AND status = 'pruned' AND child_prune_confirmed_at = 0", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                $max_attempts,
+                $snapshot_id
+            )
+        );
+    }
+
+    /**
      * Update a snapshot's offsite-verified state and verified time. Kept
      * separate from status so retention, chaining and the catalog keep
      * reading status as a strict complete/pruned lifecycle.

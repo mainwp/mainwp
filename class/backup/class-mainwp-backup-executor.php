@@ -2902,20 +2902,21 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
-     * Whether a Child answer to a one-task backup_task_prune confirms the
-     * task is gone.
+     * Whether a Child answer to backup_task_prune confirms every task sent
+     * is gone.
      *
      * The Child answers counts, not per-task outcomes. Only a clean answer
-     * that accounts for exactly the one target as pruned or missing counts;
+     * that accounts for every target as pruned or missing counts;
      * an error envelope, a still-active task or a malformed count is
      * unconfirmed and the caller retries later.
      *
      * @param mixed $answer Child response.
+     * @param int   $expected Number of distinct tasks sent.
      *
      * @return bool
      */
-    public static function child_prune_confirmed( $answer ): bool {
-        if ( ! is_array( $answer ) || array_key_exists( 'error', $answer ) || 'ok' !== ( $answer['result'] ?? null ) ) {
+    public static function child_prune_confirmed( $answer, int $expected = 1 ): bool {
+        if ( $expected < 1 || ! is_array( $answer ) || array_key_exists( 'error', $answer ) || 'ok' !== ( $answer['result'] ?? null ) ) {
             return false;
         }
         $counts = array();
@@ -2929,7 +2930,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return false;
             }
         }
-        return 0 === $counts['active'] && 1 === $counts['pruned'] + $counts['missing'];
+        return 0 === $counts['active'] && $expected === $counts['pruned'] + $counts['missing'];
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber -- all throws are MainWP_Exception.

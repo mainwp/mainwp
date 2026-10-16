@@ -36,6 +36,11 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      */
     const DEFAULT_BUDGET_SECONDS = 120;
 
+    /** Bound daily cleanup without letting one unreachable site consume the lane. */
+    const CHILD_PRUNE_RESEND_BATCH          = 50;
+    const CHILD_PRUNE_RESEND_BUDGET_SECONDS = 60;
+    const CHILD_PRUNE_MAX_ATTEMPTS          = 10;
+
     /**
      * Instance variable class.
      *
@@ -57,6 +62,111 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             static::$instance = new self();
         }
         return static::$instance;
+    }
+
+    /**
+     * Child copies can survive a successful Dashboard prune when the Child is unreachable.
+     *
+     * @param int $limit          Maximum owed rows to consider.
+     * @param int $budget_seconds Work budget for this pass.
+     * @return array Counts of sent, confirmed, failed, gave_up and skipped rows.
+     */
+    public function resend_child_prunes( int $limit = self::CHILD_PRUNE_RESEND_BATCH, int $budget_seconds = self::CHILD_PRUNE_RESEND_BUDGET_SECONDS ): array {
+        global $wpdb;
+
+        $result    = array(
+            'sent'      => 0,
+            'confirmed' => 0,
+            'failed'    => 0,
+            'gave_up'   => 0,
+            'skipped'   => 0,
+        );
+        $snapshots = MainWP_Backup_Snapshots::instance();
+        $deadline  = microtime( true ) + $budget_seconds;
+        $sites     = array();
+        foreach ( $snapshots->get_child_prune_candidates( $limit, self::CHILD_PRUNE_MAX_ATTEMPTS ) as $row ) {
+            $sites[ (int) $row->site_id ][] = $row;
+        }
+
+        foreach ( $sites as $site_id => $rows ) {
+            if ( microtime( true ) >= $deadline ) {
+                return $result;
+            }
+            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+            if ( empty( $website ) ) {
+                foreach ( $rows as $row ) {
+                    $snapshots->give_up_child_prune( (int) $row->id, self::CHILD_PRUNE_MAX_ATTEMPTS );
+                    ++$result['gave_up'];
+                }
+                MainWP_Logger::instance()->debug( 'retention :: child prune retries stopped for deleted site ' . $site_id );
+                continue;
+            }
+
+            $restores    = MainWP_Backup_Restore_Job_Store::instance();
+            $reservation = $restores->reserve_site( $site_id );
+            if ( $reservation <= 0 ) {
+                $result['skipped'] += count( $rows );
+                continue;
+            }
+            try {
+                foreach ( $rows as $position => $row ) {
+                    if ( microtime( true ) >= $deadline ) {
+                        return $result;
+                    }
+                    $child_task_id = $this->child_task_id_for( $row );
+                    $table         = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+                    // A reused Child identity must never delete a backup still offered for restore.
+                    $live   = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- current ownership must be checked while holding the site reservation.
+                        $wpdb->prepare(
+                            "SELECT id FROM {$table} WHERE site_id = %d AND status <> 'pruned' AND run_key LIKE %s LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                            $site_id,
+                            '%' . $wpdb->esc_like( ':c:' . $child_task_id )
+                        )
+                    );
+                    $answer = null;
+                    $error  = 'The Child did not confirm cleanup.';
+                    if ( '' === $child_task_id || ! empty( $live ) ) {
+                        $error = 'A live snapshot or an invalid run identity prevents Child cleanup.';
+                    } else {
+                        ++$result['sent'];
+                        try {
+                            $answer = MainWP_Connect::fetch_url_authed(
+                                $website,
+                                'backup_task_prune',
+                                array(
+                                    'task_ids' => wp_json_encode( array( $child_task_id ) ),
+                                    'sweep'    => 0,
+                                ),
+                                false,
+                                false,
+                                false
+                            );
+                        } catch ( \Throwable $e ) {
+                            $error = $e->getMessage();
+                        }
+                    }
+                    if ( MainWP_Backup_Executor::child_prune_confirmed( $answer ) ) {
+                        $result['confirmed'] += $snapshots->mark_child_prune_confirmed( array( (int) $row->id ) );
+                        continue;
+                    }
+                    $attempts = $snapshots->record_child_prune_attempt( (int) $row->id );
+                    if ( $attempts > 0 ) {
+                        ++$result['failed'];
+                        $message = 'Child prune unconfirmed for snapshot ' . (int) $row->id . ' (child task: ' . $child_task_id . ', attempts: ' . $attempts . '): ' . $error;
+                        if ( $attempts >= self::CHILD_PRUNE_MAX_ATTEMPTS ) {
+                            MainWP_Logger::instance()->warning_for_website( $website, 'backup', $message, false );
+                        } else {
+                            MainWP_Logger::instance()->debug_for_website( $website, 'backup', $message );
+                        }
+                    }
+                    $result['skipped'] += count( $rows ) - $position - 1;
+                    break;
+                }
+            } finally {
+                $restores->release_reservation( $reservation );
+            }
+        }
+        return $result;
     }
 
     /**
@@ -728,7 +838,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     }
                     $child_task_id = $this->child_task_id_for( $snapshot );
                     if ( '' !== $child_task_id ) {
-                        $child_task_ids[] = $child_task_id;
+                        $child_task_ids[ $snapshot_id ] = $child_task_id;
                     }
                     $result['deleted_ids'][] = $snapshot_id;
                     $result['bytes_pruned'] += (int) array_sum( array_column( (array) $snapshot->archives, 'size' ) );
@@ -913,13 +1023,10 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
-     * Tell the child site to clean up after its pruned runs: terminal
-     * task rows, artifact files and stale legacy markers. Best effort -
-     * an unreachable child never blocks the prune, and the child's
-     * three-hour sweep eventually covers what this call would have.
+     * An unreachable Child must not block pruning; unconfirmed rows remain owed by cron.
      *
      * @param int      $site_id        Child site id.
-     * @param string[] $child_task_ids Child task ids from the pruned snapshots.
+     * @param string[] $child_task_ids Snapshot id to Child task id pairs.
      *
      * @return void
      */
@@ -934,7 +1041,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         }
 
         try {
-            MainWP_Connect::fetch_url_authed(
+            $answer = MainWP_Connect::fetch_url_authed(
                 $website,
                 'backup_task_prune',
                 array(
@@ -945,6 +1052,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 false,
                 false
             );
+            if ( MainWP_Backup_Executor::child_prune_confirmed( $answer, count( array_unique( $child_task_ids ) ) ) ) {
+                MainWP_Backup_Snapshots::instance()->mark_child_prune_confirmed( array_keys( $child_task_ids ) );
+            }
         } catch ( \Throwable $e ) {
             MainWP_Logger::instance()->debug( 'retention :: child prune call skipped :: ' . $e->getMessage() );
         }

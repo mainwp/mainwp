@@ -106,6 +106,11 @@ class MainWP_Backup_Ajax_Registration_Test extends \WP_UnitTestCase {
 			'mainwp_native_backup_cancel'      => 'execute_backups',
 			'mainwp_backup_refresh_archives'   => 'execute_backups',
 			'mainwp_backup_diagnostics_export' => 'execute_backups',
+			'mainwp_restore_initiate'          => 'restore_backups',
+			'mainwp_restore_rollback'          => 'restore_backups',
+			'mainwp_restore_cancel'            => 'restore_backups',
+			'mainwp_restore_progress'          => 'execute_backups',
+			'mainwp_restore_snapshot_list'     => 'execute_backups',
 		);
 	}
 

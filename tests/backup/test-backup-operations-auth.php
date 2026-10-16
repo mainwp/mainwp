@@ -212,6 +212,9 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 		add_filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );
 		try {
 			$this->assertIsObject( MainWP_Backup_Operations::authorize_site( $this->site_id, 'execute_backups' ) );
+			$this->assertIsObject( MainWP_Backup_Operations::authorize_restore_job( 987674, true ) );
+			$this->assertNotWPError( MainWP_Backup_Operations::save_backup_settings( array( 'on_demand_retention_count' => 7 ), 'ui' ) );
+			$this->assertSame( 7, (int) get_option( 'mainwp_on_demand_retention_count' ) );
 			$this->assertFalse( is_wp_error( MainWP_Backup_Operations::authorize_task( 987671, 'run_backup_tasks' ) ) );
 			$this->assertContains( $this->site_id, MainWP_Backup_Operations::authorized_site_ids( '' ) );
 			$this->assertContains( $this->site_id, MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) );

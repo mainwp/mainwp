@@ -94,4 +94,26 @@ class MainWP_Backup_Restore_Ajax_Test extends \WP_UnitTestCase {
 			$this->assertFalse( $this->handler_registered( 'wp_ajax_' . $action ), $action );
 		}
 	}
+
+	/** Polling and listing remain available to staff who cannot restore. */
+	public function test_restore_writes_require_restore_right_but_reads_do_not() {
+		$this->skip_when_capabilities_bypassed();
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		foreach ( $this->actions as $action ) {
+			remove_all_actions( 'wp_ajax_' . $action );
+		}
+		$deny = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'restore_backups' === $right ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			MainWP_Post_Backup_Handler::instance()->init();
+			foreach ( $this->actions as $action ) {
+				$read = in_array( $action, array( 'mainwp_restore_snapshot_list', 'mainwp_restore_progress' ), true );
+				$this->assertSame( $read, $this->handler_registered( 'wp_ajax_' . $action ), $action );
+			}
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+		}
+	}
 }

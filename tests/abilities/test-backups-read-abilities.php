@@ -118,7 +118,7 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public static function reads() {
 		return array(
-			'tasks'        => array( 'list-backup-tasks', array(), '' ),
+			'tasks'        => array( 'list-backup-tasks', array(), 'execute_backups' ),
 			'task'         => array( 'get-backup-task', array( 'task_id' => 987671 ), 'edit_backup_tasks' ),
 			'run'          => array( 'get-backup-task-run', array( 'task_id' => 987671 ), 'run_backup_tasks' ),
 			'progress'     => array( 'get-site-backup-progress', array( 'site_id_or_domain' => 987670 ), 'execute_backups' ),

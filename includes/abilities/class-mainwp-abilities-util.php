@@ -196,6 +196,9 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( isset( self::ABILITY_OPERATION_RIGHTS[ $ability_name ] ) ) {
             $required[] = self::ABILITY_OPERATION_RIGHTS[ $ability_name ];
+            if ( in_array( $ability_name, array( 'mainwp/restore-site-snapshot-v1', 'mainwp/cancel-restore-v1', 'mainwp/rollback-restore-v1' ), true ) ) {
+                $required[] = 'restore_backups';
+            }
         } elseif ( 'mainwp/run-updates-v1' === $ability_name || 'mainwp/update-all-v1' === $ability_name ) {
             $types = ( is_array( $input ) && ! empty( $input['types'] ) && is_array( $input['types'] ) )
                 ? array_map( 'strval', $input['types'] )

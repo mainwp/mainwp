@@ -228,7 +228,7 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 'mainwp-backups', $ability->get_category() );
 		$this->assertNotEmpty( $ability->get_label() );
 		$this->assertStringContainsString( 'Possible errors:', $ability->get_description() );
-		$this->assertSame( array( 'execute_backups' ), MainWP_Abilities_Util::required_rights_for_ability( $ability->get_name() ) );
+		$this->assertSame( array( 'execute_backups', 'restore_backups' ), MainWP_Abilities_Util::required_rights_for_ability( $ability->get_name() ) );
 		$meta = $ability->get_meta();
 		$this->assertTrue( $meta['show_in_rest'] );
 		$this->assertFalse( $meta['annotations']['readonly'] );
@@ -882,19 +882,35 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 * @param string $name Slug.
 	 */
 	public function test_right_and_site_scope_are_enforced( $name ) {
-		$deny = static function ( $allowed, $type, $right ) {
-			return 'execute_backups' === $right ? false : $allowed;
-		};
-		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
-		try {
-			foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
-				$error = $this->execute( $name, $this->input( $name ) + array( $mode => true ), true );
-				$this->assertSame( 'mainwp_insufficient_right', $error->get_error_code() );
-				$this->assertSame( 'execute_backups', $error->get_error_data()['right'] );
+		global $wpdb;
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$before = $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A );
+		foreach ( array( 'execute_backups', 'restore_backups' ) as $missing ) {
+			$deny = static function ( $allowed, $type, $right ) use ( $missing ) {
+				return 'dashboard' === $type && $missing === $right ? false : $allowed;
+			};
+			add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+			try {
+				foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+					$input = $this->input( $name ) + array( $mode => true );
+					foreach ( array( $this->ability( $name )->check_permissions( $input ), $this->execute( $name, $input, true ) ) as $error ) {
+						$this->assertWPError( $error );
+						$this->assertSame( 'mainwp_insufficient_right', $error->get_error_code() );
+						$this->assertSame(
+							array(
+								'status' => 403,
+								'right'  => $missing,
+							),
+							$error->get_error_data()
+						);
+					}
+				}
+			} finally {
+				remove_filter( 'mainwp_currentusercan', $deny, 10 );
 			}
-		} finally {
-			remove_filter( 'mainwp_currentusercan', $deny, 10 );
 		}
+		$this->assertSame( $before, $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A ) );
+		$this->assertSame( array(), $this->calls );
 		$deny = static function ( $allowed, $type ) {
 			return 'site' === $type ? false : $allowed;
 		};
@@ -907,6 +923,132 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 			}
 		} finally {
 			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+		}
+	}
+
+	/**
+	 * Direct service callers must not bypass either restore right.
+	 *
+	 * @dataProvider actions
+	 * @param string $name Slug.
+	 */
+	public function test_service_restore_rights_match_previews( $name ) {
+		$execute = array(
+			'restore-site-snapshot' => array( 'restore_snapshot', array( $this->site_id, $this->snapshot_id, array( 'confirm_destructive' => true ), 'ability' ) ),
+			'rollback-restore'      => array( 'rollback_restore', array( $this->job_id ) ),
+			'cancel-restore'        => array( 'cancel_restore', array( $this->job_id ) ),
+		);
+		$preview = array(
+			'restore-site-snapshot' => array( 'preview_restore_snapshot', array( $this->site_id, $this->snapshot_id, array() ) ),
+			'rollback-restore'      => array( 'preview_restore_rollback', array( $this->job_id ) ),
+			'cancel-restore'        => array( 'preview_restore_cancel', array( $this->job_id ) ),
+		);
+		$before  = MainWP_Backup_Restore_Job_Store::instance()->get_job( $this->job_id );
+		foreach ( array( 'execute_backups', 'restore_backups' ) as $missing ) {
+			$deny = static function ( $allowed, $type, $right ) use ( $missing ) {
+				return 'dashboard' === $type && $missing === $right ? false : $allowed;
+			};
+			add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+			try {
+				foreach ( array( $execute[ $name ], $preview[ $name ] ) as list( $method, $args ) ) {
+					$error = $this->guarded(
+						static function () use ( $method, $args ) {
+							return MainWP_Backup_Operations::$method( ...$args );
+						}
+					);
+					$this->assertWPError( $error );
+					$this->assertSame( 'mainwp_insufficient_right', $error->get_error_code() );
+					$this->assertSame(
+						array(
+							'status' => 403,
+							'right'  => $missing,
+						),
+						$error->get_error_data()
+					);
+				}
+			} finally {
+				remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			}
+		}
+		$this->assertEquals( $before, MainWP_Backup_Restore_Job_Store::instance()->get_job( $this->job_id ) );
+		$this->assertSame( array(), $this->calls );
+	}
+
+	/**
+	 * Handler calls remain protected after registration has already happened.
+	 *
+	 * @dataProvider actions
+	 * @param string $name Slug.
+	 */
+	public function test_ajax_restore_writes_recheck_both_rights( $name ) {
+		if ( 'cancel-restore' === $name ) {
+			$this->fixture_job( 'pending', array() );
+		}
+		$handler = array(
+			'restore-site-snapshot' => 'mainwp_restore_initiate',
+			'rollback-restore'      => 'mainwp_restore_rollback',
+			'cancel-restore'        => 'mainwp_restore_cancel',
+		)[ $name ];
+		global $wpdb;
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$before = $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A );
+		foreach ( array( 'execute_backups', 'restore_backups' ) as $missing ) {
+			$deny = static function ( $allowed, $type, $right ) use ( $missing ) {
+				return 'dashboard' === $type && $missing === $right ? false : $allowed;
+			};
+			add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+			try {
+				$result = $this->ajax(
+					$handler,
+					array(
+						'site_id'             => $this->site_id,
+						'snapshot_id'         => $this->snapshot_id,
+						'job_id'              => $this->job_id,
+						'confirm_destructive' => '1',
+					)
+				);
+				$this->assertArrayHasKey( 'error', $result );
+				$this->assertSame( $before, $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A ) );
+				$this->assertSame( array(), $this->calls );
+			} finally {
+				remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			}
+		}
+		$result = $this->ajax(
+			$handler,
+			array(
+				'site_id'             => $this->site_id,
+				'snapshot_id'         => $this->snapshot_id,
+				'job_id'              => $this->job_id,
+				'confirm_destructive' => '1',
+			)
+		);
+		$this->assertArrayNotHasKey( 'error', $result );
+		$this->assertArrayHasKey( 'cancel-restore' === $name ? 'result' : 'job_id', $result );
+	}
+
+	/** Withholding restore permission must leave existing job and snapshot reads usable. */
+	public function test_ajax_restore_reads_keep_execute_backups_right() {
+		$deny = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'restore_backups' === $right ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		add_filter( 'mainwp_restore_foreground_budget', '__return_zero' );
+		try {
+			foreach ( array( 'mainwp_restore_snapshot_list', 'mainwp_restore_progress' ) as $handler ) {
+				$result = $this->ajax(
+					$handler,
+					array(
+						'site_id' => $this->site_id,
+						'job_id'  => $this->job_id,
+					)
+				);
+				$this->assertIsArray( $result );
+				$this->assertArrayNotHasKey( 'error', $result );
+			}
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+			remove_filter( 'mainwp_restore_foreground_budget', '__return_zero' );
 		}
 	}
 

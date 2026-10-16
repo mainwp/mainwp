@@ -211,13 +211,20 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Reservations are internal until a restore is admitted.
      *
-     * @param int $restore_job_id Restore job identity.
+     * @param int  $restore_job_id Restore job identity.
+     * @param bool $require_restore_right Whether the caller intends to change the job.
      * @return object|\WP_Error
      */
-    public static function authorize_restore_job( int $restore_job_id ) {
+    public static function authorize_restore_job( int $restore_job_id, bool $require_restore_right = false ) {
         $base = self::authorize_base( 'execute_backups' );
         if ( is_wp_error( $base ) ) {
             return $base;
+        }
+        if ( $require_restore_right ) {
+            $restore = self::authorize_base( 'restore_backups' );
+            if ( is_wp_error( $restore ) ) {
+                return $restore;
+            }
         }
         $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
         return ! $job || 'reserved' === $job->status || is_wp_error( self::authorize_site( (int) $job->site_id, 'execute_backups' ) ) ? self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND ) : $job;
@@ -1135,6 +1142,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $site ) ) {
             return $site;
         }
+        $restore = self::authorize_base( 'restore_backups' );
+        if ( is_wp_error( $restore ) ) {
+            return $restore;
+        }
         if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
             return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
         }
@@ -1162,7 +1173,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function rollback_restore( int $restore_job_id, string $context = 'ability' ) {
-        $job = self::authorize_restore_job( $restore_job_id );
+        $job = self::authorize_restore_job( $restore_job_id, true );
         if ( is_wp_error( $job ) ) {
             return $job;
         }
@@ -1388,6 +1399,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $base ) ) {
             return $base;
         }
+        if ( ! self::userless_cli() && ! MainWP_System_Utility::is_admin() ) {
+            return new \WP_Error( 'mainwp_permission_denied', self::safe_error( 'mainwp_permission_denied' )['message'], array( 'status' => 403 ) );
+        }
         if ( ! in_array( $context, array( 'ui', 'ability' ), true ) ) {
             return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
         }
@@ -1599,7 +1613,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
             return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
         }
-        $before = self::authorize_restore_job( $restore_job_id );
+        $before = self::authorize_restore_job( $restore_job_id, true );
         if ( is_wp_error( $before ) ) {
             return $before;
         }
@@ -1833,6 +1847,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $site ) ) {
             return $site;
         }
+        $restore = self::authorize_base( 'restore_backups' );
+        if ( is_wp_error( $restore ) ) {
+            return $restore;
+        }
         $snapshot = self::authorize_snapshot( $snapshot_id );
         if ( is_wp_error( $snapshot ) ) {
             return $snapshot;
@@ -1917,7 +1935,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function preview_restore_cancel( int $restore_job_id ) {
-        $job = self::authorize_restore_job( $restore_job_id );
+        $job = self::authorize_restore_job( $restore_job_id, true );
         if ( is_wp_error( $job ) ) {
             return $job;
         }
@@ -1959,7 +1977,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function preview_restore_rollback( int $restore_job_id ) {
-        $job = self::authorize_restore_job( $restore_job_id );
+        $job = self::authorize_restore_job( $restore_job_id, true );
         if ( is_wp_error( $job ) ) {
             return $job;
         }

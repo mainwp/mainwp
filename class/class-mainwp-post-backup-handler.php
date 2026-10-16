@@ -98,10 +98,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_backup_snapshot_delete_preview', array( &$this, 'mainwp_backup_snapshot_delete_preview' ) );
             $this->add_action( 'mainwp_backup_snapshot_delete', array( &$this, 'mainwp_backup_snapshot_delete' ) );
             $this->add_action( 'mainwp_backup_snapshot_download_url', array( &$this, 'mainwp_backup_snapshot_download_url' ) );
-            $this->add_action( 'mainwp_restore_initiate', array( &$this, 'mainwp_restore_initiate' ) );
             $this->add_action( 'mainwp_restore_progress', array( &$this, 'mainwp_restore_progress' ) );
-            $this->add_action( 'mainwp_restore_cancel', array( &$this, 'mainwp_restore_cancel' ) );
-            $this->add_action( 'mainwp_restore_rollback', array( &$this, 'mainwp_restore_rollback' ) );
+            if ( \mainwp_current_user_can( 'dashboard', 'restore_backups' ) ) {
+                $this->add_action( 'mainwp_restore_initiate', array( &$this, 'mainwp_restore_initiate' ) );
+                $this->add_action( 'mainwp_restore_cancel', array( &$this, 'mainwp_restore_cancel' ) );
+                $this->add_action( 'mainwp_restore_rollback', array( &$this, 'mainwp_restore_rollback' ) );
+            }
             $this->add_action( 'mainwp_native_backup_initiate', array( &$this, 'mainwp_native_backup_initiate' ) );
             $this->add_action( 'mainwp_native_backup_progress', array( &$this, 'mainwp_native_backup_progress' ) );
             $this->add_action( 'mainwp_native_backup_cancel', array( &$this, 'mainwp_native_backup_cancel' ) );
@@ -502,8 +504,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * tab between polls. The job lock serializes the slice against a
      * concurrent cron run (a held lock makes the drive a no-op), and the
      * driver advances the next acquirable job - on a dashboard with one
-     * active restore that is this one. The execute_backups capability was
-     * verified by secure_request before any work runs.
+     * active restore that is this one. Job authorization precedes the drive
+     * because secure_request checks the nonce, not operation rights.
      */
     public function mainwp_restore_progress() {
         $this->secure_request( 'mainwp_restore_progress' );
@@ -543,7 +545,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_restore_cancel' );
         $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $job = MainWP_Backup_Operations::authorize_restore_job( $job_id );
+        $job = MainWP_Backup_Operations::authorize_restore_job( $job_id, true );
         if ( is_wp_error( $job ) ) {
             wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
             return;

@@ -11,6 +11,7 @@ use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Backup_Encryption;
 use MainWP\Dashboard\MainWP_Backup_Diagnostics;
+use MainWP\Dashboard\MainWP_Backup_Operations;
 
 require_once __DIR__ . '/../backup/class-mainwp-backup-read-fixtures.php';
 
@@ -211,19 +212,48 @@ class MainWP_Backups_Settings_Abilities_Test extends MainWP_Abilities_Test_Case 
 			}
 			add_filter( 'mainwp_currentusercan', '__return_false' );
 			try {
-				$this->assertSame(
-					'mainwp_insufficient_right',
-					$this->execute(
-						array(
-							'diagnostics_enabled' => true,
-							$mode                 => true,
-						),
-						true
-					)->get_error_code()
+				$input = array(
+					'diagnostics_enabled' => true,
+					$mode                 => true,
 				);
+				foreach ( array( $this->ability()->check_permissions( $input ), $this->execute( $input, true ) ) as $error ) {
+					$this->assertWPError( $error );
+					$this->assertSame( 'mainwp_insufficient_right', $error->get_error_code() );
+					$this->assertSame( 403, $error->get_error_data()['status'] );
+					$this->assertSame( 'manage_dashboard_settings', $error->get_error_data()['right'] );
+				}
 			} finally {
 				remove_filter( 'mainwp_currentusercan', '__return_false' );
 			}
+		}
+	}
+
+	/** MainWP rights and manage_options alone do not grant the settings screen's admin authority. */
+	public function test_non_admin_with_all_rights_cannot_update_settings() {
+		$user = self::factory()->user->create_and_get( array( 'role' => 'subscriber' ) );
+		$user->add_cap( 'manage_options' );
+		wp_set_current_user( $user->ID );
+		add_filter( 'mainwp_currentusercan', '__return_true' );
+		try {
+			foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+				$input = array(
+					'on_demand_retention_count' => 7,
+					$mode                       => true,
+				);
+				foreach ( array(
+					$this->ability()->check_permissions( $input ),
+					$this->execute( $input, true ),
+					MainWP_Backup_Operations::save_backup_settings( array( 'on_demand_retention_count' => 7 ) ),
+					MainWP_Backup_Operations::save_backup_settings( array( 'on_demand_retention_count' => 7 ), 'ui' ),
+				) as $error ) {
+					$this->assertWPError( $error );
+					$this->assertSame( 'mainwp_permission_denied', $error->get_error_code() );
+					$this->assertSame( 403, $error->get_error_data()['status'] );
+				}
+				$this->assertSame( 101, (int) get_option( 'mainwp_on_demand_retention_count' ) );
+			}
+		} finally {
+			remove_filter( 'mainwp_currentusercan', '__return_true' );
 		}
 	}
 

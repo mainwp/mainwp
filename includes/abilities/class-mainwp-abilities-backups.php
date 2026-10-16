@@ -23,7 +23,7 @@ class MainWP_Abilities_Backups {
         'mainwp/list-backup-destinations-v1' => 'edit_backup_tasks',
         'mainwp/get-backup-destination-v1'   => 'edit_backup_tasks',
         'mainwp/get-backup-settings-v1'      => 'manage_dashboard_settings',
-        'mainwp/list-backup-tasks-v1'        => '',
+        'mainwp/list-backup-tasks-v1'        => 'execute_backups',
         'mainwp/get-backup-task-v1'          => 'edit_backup_tasks',
         'mainwp/get-backup-task-run-v1'      => 'run_backup_tasks',
         'mainwp/get-site-backup-progress-v1' => 'execute_backups',
@@ -2358,18 +2358,24 @@ class MainWP_Abilities_Backups {
         if ( ! array_key_exists( $ability, self::READ_RIGHTS ) && ! in_array( $ability, self::WRITE_ABILITIES, true ) ) {
             return self::safe_wp_error( new \WP_Error( 'mainwp_invalid_input', '', array( 'status' => 400 ) ) );
         }
-        $right = self::READ_RIGHTS[ $ability ] ?? MainWP_Abilities_Util::required_rights_for_ability( $ability )[0];
-        if ( '' !== $right && ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
-            return self::safe_wp_error(
-                new \WP_Error(
-                    'mainwp_insufficient_right',
-                    '',
-                    array(
-                        'status' => 403,
-                        'right'  => $right,
+        $rights = isset( self::READ_RIGHTS[ $ability ] ) ? array( self::READ_RIGHTS[ $ability ] ) : MainWP_Abilities_Util::required_rights_for_ability( $ability );
+        foreach ( $rights as $required_right ) {
+            if ( '' !== $required_right && ! MainWP_Abilities_Util::current_user_has_operation_right( $required_right ) ) {
+                return self::safe_wp_error(
+                    new \WP_Error(
+                        'mainwp_insufficient_right',
+                        '',
+                        array(
+                            'status' => 403,
+                            'right'  => $required_right,
+                        )
                     )
-                )
-            );
+                );
+            }
+        }
+        $right = $rights[0];
+        if ( 'mainwp/update-backup-settings-v1' === $ability && ! MainWP_System_Utility::is_admin() ) {
+            return self::safe_wp_error( new \WP_Error( 'mainwp_permission_denied', '', array( 'status' => 403 ) ) );
         }
         // Global settings and destinations can affect tasks outside the caller's site scope.
         if ( in_array(
@@ -2573,7 +2579,7 @@ class MainWP_Abilities_Backups {
         $safe   = MainWP_Backup_Operations::safe_error( $error->get_error_code() );
         $source = $error->get_error_data();
         $data   = array( 'status' => is_array( $source ) && isset( $source['status'] ) ? (int) $source['status'] : 500 );
-        if ( 'mainwp_insufficient_right' === $safe['code'] && is_array( $source ) && isset( $source['right'] ) && in_array( $source['right'], array_merge( self::READ_RIGHTS, MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS ), true ) ) {
+        if ( 'mainwp_insufficient_right' === $safe['code'] && is_array( $source ) && isset( $source['right'] ) && in_array( $source['right'], array_merge( self::READ_RIGHTS, MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS, array( 'restore_backups' ) ), true ) ) {
             $data['right'] = $source['right'];
         }
         return new \WP_Error( $safe['code'], $safe['message'], $data );

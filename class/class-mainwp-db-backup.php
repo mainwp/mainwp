@@ -573,7 +573,6 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return object[] Hidden task rows.
      */
     public function get_hidden_backup_tasks() {
-        // nosemgrep: AIK_tainted-sql-string -- Fixed table name, absint() user id, and every caller passes a fixed order column.
         return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE template <> 0', OBJECT );
     }
 
@@ -1344,7 +1343,6 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     public function get_backup_tasks_to_complete() {
         // A pending column repair must not prevent unfinished tasks from continuing.
         $order = MainWP_Install::backup_task_last_continued_ready() ? 'last_continued ASC, last_run ASC, id ASC' : 'last_run ASC, id ASC';
-        // nosemgrep: AIK_tainted-sql-string -- Fixed table name, absint() user id, and every caller passes a fixed order column.
         return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND completed < last_run ORDER BY ' . $order, OBJECT );
     }
 
@@ -1375,7 +1373,6 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return object Backup tasks.
      */
     public function get_backup_tasks_todo_daily() {
-        // nosemgrep: AIK_tainted-sql-string -- Fixed table name, absint() user id, and every caller passes a fixed order column.
         return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND schedule="daily" AND ' . absint( time() ) . ' - last_run >= ' . ( 60 * 60 * 24 ), OBJECT );
     }
 
@@ -1387,7 +1384,6 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return object Backup tasks.
      */
     public function get_backup_tasks_todo_weekly() {
-        // nosemgrep: AIK_tainted-sql-string -- Fixed table name, absint() user id, and every caller passes a fixed order column.
         return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND schedule="weekly" AND ' . absint( time() ) . ' - last_run >= ' . ( 60 * 60 * 24 * 7 ), OBJECT );
     }
 
@@ -1399,7 +1395,6 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return object Backup tasks.
      */
     public function get_backup_tasks_todo_monthly() {
-        // nosemgrep: AIK_tainted-sql-string -- Fixed table name, absint() user id, and every caller passes a fixed order column.
         return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND schedule="monthly" AND ' . absint( time() ) . ' - last_run >= ' . ( 60 * 60 * 24 * 30 ), OBJECT );
     }
 }

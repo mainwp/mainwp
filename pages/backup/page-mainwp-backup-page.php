@@ -490,7 +490,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         <div class="ui alt segment">
             <div class="ui yellow message" id="mainwp-native-backups-off-message">
                 <?php esc_html_e( 'Native backups are turned off.', 'mainwp' ); ?>
-                <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) : ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && ! MainWP_System_Utility::is_team_control_staff() ) : ?>
                     <a href="<?php echo esc_url( admin_url( 'admin.php?page=Settings#mainwp_options_enableNativeBackups' ) ); ?>"><?php esc_html_e( 'Turn them on in the Backup Settings', 'mainwp' ); ?></a>
                 <?php else : ?>
                     <?php esc_html_e( 'Ask a Dashboard administrator to turn them on in the Backup Settings.', 'mainwp' ); ?>

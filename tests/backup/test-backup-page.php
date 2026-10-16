@@ -182,6 +182,37 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Team Control staff cannot change backup settings, so the off notice
+	 * sends them to an administrator instead of the settings form.
+	 */
+	public function test_manage_backups_with_native_off_sends_staff_to_an_administrator() {
+		add_role(
+			'mainwp_page_staff',
+			'Page staff',
+			array(
+				'read'     => true,
+				'level_10' => true,
+			)
+		);
+		$user = $this->factory()->user->create_and_get( array( 'role' => 'subscriber' ) );
+		$user->add_role( 'mainwp_page_staff' );
+		wp_set_current_user( $user->ID );
+		add_filter( 'mainwp_currentusercan', '__return_true', PHP_INT_MAX );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		try {
+			$this->assertTrue( MainWP_System_Utility::is_admin() );
+			$output = $this->render_manager();
+		} finally {
+			remove_filter( 'mainwp_currentusercan', '__return_true', PHP_INT_MAX );
+			remove_role( 'mainwp_page_staff' );
+		}
+
+		$this->assertStringContainsString( 'Native backups are turned off.', $output );
+		$this->assertStringContainsString( 'Ask a Dashboard administrator to turn them on in the Backup Settings.', $output );
+		$this->assertStringNotContainsString( 'page=Settings#mainwp_options_enableNativeBackups', $output );
+	}
+
+	/**
 	 * With native backups off only Manage Backups is registered; the other
 	 * backup pages stay gated.
 	 */

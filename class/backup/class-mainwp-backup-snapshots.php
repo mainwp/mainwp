@@ -608,6 +608,31 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * A late failure must not change a row another writer already confirmed.
+     *
+     * @param int $snapshot_id  Snapshot identity.
+     * @param int $max_attempts Attempt cap.
+     * @return int New attempt count, or zero when no row changed.
+     */
+    public function record_child_prune_attempt( int $snapshot_id, int $max_attempts ): int {
+        if ( ! MainWP_Install::backup_snapshot_child_prune_ready() ) {
+            return 0;
+        }
+        $table   = $this->table_name( 'wp_backup_snapshot' );
+        $changed = $this->wpdb->query(
+            $this->wpdb->prepare(
+                "UPDATE `{$table}` SET child_prune_attempts = child_prune_attempts + 1 WHERE id = %d AND status = 'pruned' AND child_prune_confirmed_at = 0 AND child_prune_attempts < %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                $snapshot_id,
+                $max_attempts
+            )
+        );
+        if ( 1 !== $changed ) {
+            return 0;
+        }
+        return (int) $this->wpdb->get_var( $this->wpdb->prepare( "SELECT child_prune_attempts FROM `{$table}` WHERE id = %d", $snapshot_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+    }
+
+    /**
      * Untouched rows on an unreachable site must not monopolize the next batch.
      *
      * @param int $site_id      Site identity.
@@ -621,9 +646,10 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
         $table = $this->table_name( 'wp_backup_snapshot' );
         return (int) $this->wpdb->query(
             $this->wpdb->prepare(
-                "UPDATE `{$table}` SET child_prune_attempts = child_prune_attempts + 1 WHERE site_id = %d AND status = 'pruned' AND child_prune_confirmed_at = 0 AND child_prune_attempts < %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                "UPDATE `{$table}` SET child_prune_attempts = child_prune_attempts + 1 WHERE site_id = %d AND status = 'pruned' AND child_prune_confirmed_at = 0 AND child_prune_attempts < %d AND run_key LIKE CONCAT(site_id, ':', task_id, %s)", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
                 $site_id,
-                $max_attempts
+                $max_attempts,
+                ':c:%'
             )
         );
     }

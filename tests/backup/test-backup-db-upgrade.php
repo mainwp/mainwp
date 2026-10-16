@@ -3331,8 +3331,21 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->assertTrue( $this->column_exists( $table, $other ) );
 			$this->assertFalse( MainWP_Install::backup_snapshot_child_prune_ready() );
 			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( $marker ) );
-			$this->assertSame( array(), MainWP_Backup_Snapshots::instance()->get_child_prune_candidates( 50, 10 ) );
-			$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->resend_child_prunes()['sent'] );
+			$touched = array();
+			$watch   = static function ( $sql ) use ( &$touched ) {
+				if ( false !== stripos( $sql, 'child_prune_' ) ) {
+					$touched[] = $sql;
+				}
+				return $sql;
+			};
+			add_filter( 'query', $watch );
+			try {
+				$this->assertSame( array(), MainWP_Backup_Snapshots::instance()->get_child_prune_candidates( 50, 10 ) );
+				$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->resend_child_prunes()['sent'] );
+			} finally {
+				remove_filter( 'query', $watch );
+			}
+			$this->assertSame( array(), $touched, 'No query may name the cleanup columns while their repair is pending.' );
 			$attempts = $blocked;
 			MainWP_Install::instance()->install();
 			$this->assertSame( $attempts, $blocked );

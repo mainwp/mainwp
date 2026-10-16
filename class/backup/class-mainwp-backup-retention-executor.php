@@ -37,9 +37,10 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
     const DEFAULT_BUDGET_SECONDS = 120;
 
     /** Bound daily cleanup without letting one unreachable site consume the lane. */
-    const CHILD_PRUNE_RESEND_BATCH          = 50;
-    const CHILD_PRUNE_RESEND_BUDGET_SECONDS = 60;
-    const CHILD_PRUNE_MAX_ATTEMPTS          = 10;
+    const CHILD_PRUNE_RESEND_BATCH           = 50;
+    const CHILD_PRUNE_RESEND_BUDGET_SECONDS  = 60;
+    const CHILD_PRUNE_MAX_ATTEMPTS           = 10;
+    const CHILD_PRUNE_RESEND_TIMEOUT_SECONDS = 60;
 
     /**
      * Instance variable class.
@@ -92,26 +93,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             if ( microtime( true ) >= $deadline ) {
                 return $result;
             }
-            $website = MainWP_DB::instance()->get_website_by_id( $site_id );
-            if ( empty( $website ) ) {
-                // The joined lookup also misses sites whose sync row is absent or unreadable.
-                $table  = MainWP_DB::instance()->get_table_name( 'wp' );
-                $exists = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- an absent joined row does not prove the site was deleted.
-                    $wpdb->prepare( "SELECT id FROM {$table} WHERE id = %d", $site_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
-                );
-                if ( empty( $exists ) && '' === $wpdb->last_error ) {
-                    foreach ( $rows as $row ) {
-                        $snapshots->give_up_child_prune( (int) $row->id, self::CHILD_PRUNE_MAX_ATTEMPTS );
-                        ++$result['gave_up'];
-                    }
-                    MainWP_Logger::instance()->debug( 'retention :: child prune retries stopped for deleted site ' . $site_id );
-                } else {
-                    $result['failed']  += $this->record_child_prune_site_failure( $site_id, null, 'Could not load the Child site for cleanup.' );
-                    $result['skipped'] += count( $rows );
-                }
-                continue;
-            }
-
+            // Held before the site lookup so overlapping cron runs cannot both age the same site.
             $restores    = MainWP_Backup_Restore_Job_Store::instance();
             $reservation = $restores->reserve_site( $site_id );
             if ( $reservation <= 0 ) {
@@ -119,6 +101,25 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 continue;
             }
             try {
+                $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+                if ( empty( $website ) ) {
+                    // The joined lookup also misses sites whose sync row is absent or unreadable.
+                    $table  = MainWP_DB::instance()->get_table_name( 'wp' );
+                    $exists = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- an absent joined row does not prove the site was deleted.
+                        $wpdb->prepare( "SELECT id FROM {$table} WHERE id = %d", $site_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                    );
+                    if ( empty( $exists ) && '' === $wpdb->last_error ) {
+                        foreach ( $rows as $row ) {
+                            $snapshots->give_up_child_prune( (int) $row->id, self::CHILD_PRUNE_MAX_ATTEMPTS );
+                            ++$result['gave_up'];
+                        }
+                        MainWP_Logger::instance()->debug( 'retention :: child prune retries stopped for deleted site ' . $site_id );
+                    } else {
+                        $result['failed']  += $this->record_child_prune_site_failure( $site_id, null, 'Could not load the Child site for cleanup.' );
+                        $result['skipped'] += count( $rows );
+                    }
+                    continue;
+                }
                 if ( MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $site_id ) ) {
                     $result['skipped'] += count( $rows );
                     continue;
@@ -146,6 +147,11 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                         $error = 'A live snapshot or an invalid run identity prevents Child cleanup.';
                     } else {
                         ++$result['sent'];
+                        // The default request timeout is hours long, and this lane mostly calls Childs that already failed once.
+                        $timeout = static function ( $seconds, $what = '' ) {
+                            return 'backup_task_prune' === $what ? min( (int) $seconds, self::CHILD_PRUNE_RESEND_TIMEOUT_SECONDS ) : $seconds;
+                        };
+                        add_filter( 'mainwp_fetch_url_site_timeout', $timeout, PHP_INT_MAX, 2 );
                         try {
                             $answer = MainWP_Connect::fetch_url_authed(
                                 $website,
@@ -160,10 +166,28 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                             );
                         } catch ( \Throwable $e ) {
                             $error = $e->getMessage();
+                        } finally {
+                            remove_filter( 'mainwp_fetch_url_site_timeout', $timeout, PHP_INT_MAX );
                         }
                     }
                     if ( MainWP_Backup_Executor::child_prune_confirmed( $answer ) ) {
                         $result['confirmed'] += $snapshots->mark_child_prune_confirmed( array( (int) $row->id ) );
+                        continue;
+                    }
+                    // A guard hit or a Child that keeps this one task is about the row, not the site:
+                    // charging the site would cap siblings that were never sent.
+                    $row_level = '' === $guard_error && ( '' === $child_task_id || ! empty( $live ) || $this->child_kept_task( $answer ) );
+                    if ( $row_level ) {
+                        $attempts = $snapshots->record_child_prune_attempt( (int) $row->id, self::CHILD_PRUNE_MAX_ATTEMPTS );
+                        if ( $attempts > 0 ) {
+                            ++$result['failed'];
+                            $message = 'Child prune unconfirmed for snapshot ' . (int) $row->id . ' (child task: ' . $child_task_id . ', attempts: ' . $attempts . '): ' . $error;
+                            if ( $attempts >= self::CHILD_PRUNE_MAX_ATTEMPTS ) {
+                                MainWP_Logger::instance()->warning_for_website( $website, 'backup', $message, false );
+                            } else {
+                                MainWP_Logger::instance()->debug_for_website( $website, 'backup', $message );
+                            }
+                        }
                         continue;
                     }
                     $result['failed']  += $this->record_child_prune_site_failure( $site_id, $website, $error );
@@ -175,6 +199,19 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             }
         }
         return $result;
+    }
+
+    /**
+     * A well-formed answer that counts the task as active means the Child kept
+     * that task on purpose (a live task claims its files); transport errors and
+     * malformed answers say nothing about the task.
+     *
+     * @param mixed $answer Child response.
+     * @return bool
+     */
+    private function child_kept_task( $answer ): bool {
+        return is_array( $answer ) && ! array_key_exists( 'error', $answer ) && 'ok' === ( $answer['result'] ?? null )
+            && isset( $answer['active'] ) && ( is_int( $answer['active'] ) || ( is_string( $answer['active'] ) && ctype_digit( $answer['active'] ) ) ) && (int) $answer['active'] > 0;
     }
 
     /**

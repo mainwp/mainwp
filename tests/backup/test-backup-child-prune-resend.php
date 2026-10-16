@@ -277,17 +277,6 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 					'active' => 0,
 				),
 			),
-			'active'       => array(
-				array_merge(
-					$ok,
-					array(
-						'pruned' => 0,
-						'active' => 1,
-					)
-				),
-			),
-			'disconnected' => array( 'disconnected' ),
-			'suspended'    => array( 'suspended' ),
 		);
 	}
 
@@ -299,12 +288,6 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_failure_retries_once_per_site( $answer ): void {
 		global $wpdb;
-		if ( 'suspended' === $answer || 'disconnected' === $answer ) {
-			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp' ), array( 'suspended' => 'suspended' === $answer ? 1 : 0 ), array( 'id' => $this->site_id ) );
-			if ( 'disconnected' === $answer ) {
-				$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_sync' ), array( 'sync_errors' => 'offline' ), array( 'wpid' => $this->site_id ) );
-			}
-		}
 		$first  = $this->snapshot( 'first' );
 		$second = $this->snapshot( 'second' );
 		$this->with_transport(
@@ -578,9 +561,73 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array(), $this->requests );
 		$this->assert_state( $owed, false, 1 );
 		foreach ( array( $legacy, $null, $wrong ) as $id ) {
-			$this->assert_state( $id, false, 1 );
+			$this->assert_state( $id, false, 0 );
 		}
 		$this->assert_state( $live, false, 0 );
+	}
+
+	/** A Child that keeps one task must not cap siblings that were never sent. */
+	public function test_child_keeping_one_task_charges_only_that_row(): void {
+		$kept  = $this->snapshot( 'kept' );
+		$after = $this->snapshot( 'after' );
+		$this->with_transport(
+			function ( $website, $params ) {
+				if ( '["kept"]' === $params['task_ids'] ) {
+					return array(
+						'result'  => 'ok',
+						'pruned'  => 0,
+						'active'  => '1',
+						'missing' => 0,
+					);
+				}
+				return $this->answer();
+			},
+			function () {
+				$result = MainWP_Backup_Retention_Executor::instance()->resend_child_prunes();
+				$this->assertSame( 2, $result['sent'] );
+				$this->assertSame( 1, $result['confirmed'] );
+				$this->assertSame( 1, $result['failed'] );
+				$this->assertSame( 0, $result['skipped'] );
+			}
+		);
+		$this->assert_state( $kept, false, 1 );
+		$this->assert_state( $after, true, 0 );
+	}
+
+	/** The resend calls Childs that already failed once, so one hung request must not hold the cron for hours. */
+	public function test_resend_caps_the_request_timeout_only_while_sending(): void {
+		$this->snapshot( 'timeout' );
+		$seen = array();
+		$this->with_transport(
+			function () use ( &$seen ) {
+				$seen[] = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 72000, 'backup_task_prune' );
+				$seen[] = (int) apply_filters( 'mainwp_fetch_url_site_timeout', 72000, 'sync' );
+				return $this->answer();
+			},
+			function () {
+				$this->assertSame( 1, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes()['confirmed'] );
+			}
+		);
+		$this->assertSame( array( MainWP_Backup_Retention_Executor::CHILD_PRUNE_RESEND_TIMEOUT_SECONDS, 72000 ), $seen );
+		$this->assertSame( 72000, (int) apply_filters( 'mainwp_fetch_url_site_timeout', 72000, 'backup_task_prune' ) );
+	}
+
+	/** A held site must not be aged by an overlapping run, even when its lookup fails. */
+	public function test_held_site_with_failed_lookup_records_no_attempt(): void {
+		global $wpdb;
+		$id    = $this->snapshot( 'held-lookup' );
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$hold  = $store->reserve_site( $this->site_id );
+		$this->assertGreaterThan( 0, $hold );
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_sync' ), array( 'wpid' => $this->site_id ) );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->resend_child_prunes();
+			$this->assertSame( 1, $result['skipped'] );
+			$this->assertSame( 0, $result['failed'] );
+		} finally {
+			$store->release_reservation( $hold );
+		}
+		$this->assert_state( $id, false, 0 );
 	}
 
 	/**

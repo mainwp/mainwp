@@ -608,26 +608,24 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
-     * A late failure must not change a row another writer already confirmed.
+     * Untouched rows on an unreachable site must not monopolize the next batch.
      *
-     * @param int $snapshot_id Snapshot identity.
-     * @return int New attempt count, or zero when no row changed.
+     * @param int $site_id      Site identity.
+     * @param int $max_attempts Failed daily passes allowed.
+     * @return int Rows changed.
      */
-    public function record_child_prune_attempt( int $snapshot_id ): int {
+    public function record_child_prune_site_attempt( int $site_id, int $max_attempts ): int {
         if ( ! MainWP_Install::backup_snapshot_child_prune_ready() ) {
             return 0;
         }
-        $table   = $this->table_name( 'wp_backup_snapshot' );
-        $changed = $this->wpdb->query(
+        $table = $this->table_name( 'wp_backup_snapshot' );
+        return (int) $this->wpdb->query(
             $this->wpdb->prepare(
-                "UPDATE `{$table}` SET child_prune_attempts = child_prune_attempts + 1 WHERE id = %d AND status = 'pruned' AND child_prune_confirmed_at = 0", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
-                $snapshot_id
+                "UPDATE `{$table}` SET child_prune_attempts = child_prune_attempts + 1 WHERE site_id = %d AND status = 'pruned' AND child_prune_confirmed_at = 0 AND child_prune_attempts < %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                $site_id,
+                $max_attempts
             )
         );
-        if ( 1 !== $changed ) {
-            return 0;
-        }
-        return (int) $this->wpdb->get_var( $this->wpdb->prepare( "SELECT child_prune_attempts FROM `{$table}` WHERE id = %d", $snapshot_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
     }
 
     /**

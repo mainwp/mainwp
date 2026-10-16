@@ -94,11 +94,21 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             }
             $website = MainWP_DB::instance()->get_website_by_id( $site_id );
             if ( empty( $website ) ) {
-                foreach ( $rows as $row ) {
-                    $snapshots->give_up_child_prune( (int) $row->id, self::CHILD_PRUNE_MAX_ATTEMPTS );
-                    ++$result['gave_up'];
+                // The joined lookup also misses sites whose sync row is absent or unreadable.
+                $table  = MainWP_DB::instance()->get_table_name( 'wp' );
+                $exists = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- an absent joined row does not prove the site was deleted.
+                    $wpdb->prepare( "SELECT id FROM {$table} WHERE id = %d", $site_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                );
+                if ( empty( $exists ) && '' === $wpdb->last_error ) {
+                    foreach ( $rows as $row ) {
+                        $snapshots->give_up_child_prune( (int) $row->id, self::CHILD_PRUNE_MAX_ATTEMPTS );
+                        ++$result['gave_up'];
+                    }
+                    MainWP_Logger::instance()->debug( 'retention :: child prune retries stopped for deleted site ' . $site_id );
+                } else {
+                    $result['failed']  += $this->record_child_prune_site_failure( $site_id, null, 'Could not load the Child site for cleanup.' );
+                    $result['skipped'] += count( $rows );
                 }
-                MainWP_Logger::instance()->debug( 'retention :: child prune retries stopped for deleted site ' . $site_id );
                 continue;
             }
 
@@ -109,6 +119,10 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 continue;
             }
             try {
+                if ( MainWP_Backup_Retention_Query::instance()->has_running_backup_for_site( $site_id ) ) {
+                    $result['skipped'] += count( $rows );
+                    continue;
+                }
                 foreach ( $rows as $position => $row ) {
                     if ( microtime( true ) >= $deadline ) {
                         return $result;
@@ -116,16 +130,19 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     $child_task_id = $this->child_task_id_for( $row );
                     $table         = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
                     // A reused Child identity must never delete a backup still offered for restore.
-                    $live   = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- current ownership must be checked while holding the site reservation.
+                    $live        = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- current ownership must be checked while holding the site reservation.
                         $wpdb->prepare(
                             "SELECT id FROM {$table} WHERE site_id = %d AND status <> 'pruned' AND run_key LIKE %s LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
                             $site_id,
                             '%' . $wpdb->esc_like( ':c:' . $child_task_id )
                         )
                     );
-                    $answer = null;
-                    $error  = 'The Child did not confirm cleanup.';
-                    if ( '' === $child_task_id || ! empty( $live ) ) {
+                    $guard_error = $wpdb->last_error;
+                    $answer      = null;
+                    $error       = 'The Child did not confirm cleanup.';
+                    if ( '' !== $guard_error ) {
+                        $error = 'Could not check live snapshot ownership: ' . $guard_error;
+                    } elseif ( '' === $child_task_id || ! empty( $live ) ) {
                         $error = 'A live snapshot or an invalid run identity prevents Child cleanup.';
                     } else {
                         ++$result['sent'];
@@ -149,16 +166,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                         $result['confirmed'] += $snapshots->mark_child_prune_confirmed( array( (int) $row->id ) );
                         continue;
                     }
-                    $attempts = $snapshots->record_child_prune_attempt( (int) $row->id );
-                    if ( $attempts > 0 ) {
-                        ++$result['failed'];
-                        $message = 'Child prune unconfirmed for snapshot ' . (int) $row->id . ' (child task: ' . $child_task_id . ', attempts: ' . $attempts . '): ' . $error;
-                        if ( $attempts >= self::CHILD_PRUNE_MAX_ATTEMPTS ) {
-                            MainWP_Logger::instance()->warning_for_website( $website, 'backup', $message, false );
-                        } else {
-                            MainWP_Logger::instance()->debug_for_website( $website, 'backup', $message );
-                        }
-                    }
+                    $result['failed']  += $this->record_child_prune_site_failure( $site_id, $website, $error );
                     $result['skipped'] += count( $rows ) - $position - 1;
                     break;
                 }
@@ -167,6 +175,41 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             }
         }
         return $result;
+    }
+
+    /**
+     * Site-wide failures must also age rows outside this pass's selected batch.
+     *
+     * @param int         $site_id Site identity.
+     * @param object|null $website Joined site row, when available.
+     * @param string      $error   Failure reason.
+     * @return int One when failures were recorded, otherwise zero.
+     */
+    private function record_child_prune_site_failure( int $site_id, ?object $website, string $error ): int {
+        global $wpdb;
+
+        if ( ! MainWP_Install::backup_snapshot_child_prune_ready() ) {
+            return 0;
+        }
+        $table   = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+        $sql     = $wpdb->prepare(
+            "SELECT COUNT(*) FROM {$table} WHERE site_id = %d AND status = 'pruned' AND child_prune_confirmed_at = 0 AND child_prune_attempts = %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+            $site_id,
+            self::CHILD_PRUNE_MAX_ATTEMPTS
+        );
+        $before  = (int) $wpdb->get_var( $sql ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- query prepared above; only newly capped rows should produce a warning.
+        $changed = MainWP_Backup_Snapshots::instance()->record_child_prune_site_attempt( $site_id, self::CHILD_PRUNE_MAX_ATTEMPTS );
+        if ( $changed < 1 ) {
+            return 0;
+        }
+        $capped  = max( 0, (int) $wpdb->get_var( $sql ) - $before ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.PreparedSQL.NotPrepared -- query prepared above; existing capped rows must not produce repeated warnings.
+        $message = 'Child prune unconfirmed for site ' . $site_id . ': ' . $error;
+        if ( $capped > 0 ) {
+            MainWP_Logger::instance()->warning_for_website( $website, 'backup', $message . ' Retry cap reached by ' . $capped . ' rows (attempts: ' . self::CHILD_PRUNE_MAX_ATTEMPTS . ').', false );
+        } else {
+            MainWP_Logger::instance()->debug_for_website( $website, 'backup', $message );
+        }
+        return 1;
     }
 
     /**

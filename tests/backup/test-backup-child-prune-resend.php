@@ -292,7 +292,7 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * One failed request must leave the site's other owed rows uncounted.
+	 * Unsent rows must not keep an unreachable site ahead of fresh sites tomorrow.
 	 *
 	 * @dataProvider failure_answers
 	 * @param mixed $answer Child response or transport failure.
@@ -327,7 +327,7 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 					$result
 				);
 				$this->assert_state( $first, false, 1 );
-				$this->assert_state( $second, false, 0 );
+				$this->assert_state( $second, false, 1 );
 			}
 		);
 		$this->assertCount( 1, $this->requests );
@@ -340,15 +340,107 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 			}
 		);
 		$this->assertSame( '["first"]', $this->requests[0]['params']['task_ids'] );
-		$this->assertSame( '["second"]', $this->requests[1]['params']['task_ids'] );
-		$this->assertSame( '["first"]', $this->requests[2]['params']['task_ids'] );
+		$this->assertSame( '["first"]', $this->requests[1]['params']['task_ids'] );
+		$this->assertSame( '["second"]', $this->requests[2]['params']['task_ids'] );
 		$this->assert_state( $first, true, 1 );
-		$this->assert_state( $second, true, 0 );
+		$this->assert_state( $second, true, 1 );
 	}
 
-	/** The capped row must stop consuming requests and leave a warning. */
+	/** A failed site must fall behind fresh sites even when its rows exceed the batch. */
+	public function test_failed_site_does_not_fill_next_batch(): void {
+		$owed = array();
+		for ( $i = 0; $i < 3; ++$i ) {
+			$owed[] = $this->snapshot( 'unreachable-' . $i );
+		}
+		$site = $this->create_test_site();
+		$id   = $this->snapshot(
+			'reachable',
+			array(
+				'site_id' => $site,
+				'run_key' => $site . ':998191:c:reachable',
+			)
+		);
+		$this->with_transport(
+			function ( $website ) {
+				return (int) $website->id === $this->site_id ? array( 'error' => 'offline' ) : $this->answer();
+			},
+			function () use ( $owed, $id ) {
+				$this->assertSame( 1, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes( 2 )['sent'] );
+				foreach ( $owed as $snapshot_id ) {
+					$this->assert_state( $snapshot_id, false, 1 );
+				}
+				$this->assert_state( $id, false, 0 );
+				$this->assertSame( 1, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes( 1 )['confirmed'] );
+			}
+		);
+		$this->assertCount( 2, $this->requests );
+		$this->assertSame( $this->site_id, $this->requests[0]['site_id'] );
+		$this->assertSame( $site, $this->requests[1]['site_id'] );
+		$this->assert_state( $id, true, 0 );
+	}
+
+	/** A failed site's connect timeout must not consume the next day's fresh site's budget. */
+	public function test_failed_site_does_not_consume_next_run_budget(): void {
+		$first  = $this->snapshot( 'slow-a' );
+		$second = $this->snapshot( 'slow-b' );
+		$site   = $this->create_test_site();
+		$id     = $this->snapshot(
+			'fresh',
+			array(
+				'site_id' => $site,
+				'run_key' => $site . ':998191:c:fresh',
+			)
+		);
+		$this->with_transport(
+			function ( $website ) {
+				if ( (int) $website->id === $this->site_id ) {
+					usleep( 1100000 );
+					return array( 'error' => 'timeout' );
+				}
+				return $this->answer();
+			},
+			function () use ( $first, $second, $id ) {
+				$this->assertSame( 1, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes( 50, 1 )['sent'] );
+				$this->assert_state( $first, false, 1 );
+				$this->assert_state( $second, false, 1 );
+				$this->assert_state( $id, false, 0 );
+				$this->assertSame( 1, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes( 1, 1 )['confirmed'] );
+			}
+		);
+		$this->assertCount( 2, $this->requests );
+		$this->assertSame( $site, $this->requests[1]['site_id'] );
+		$this->assert_state( $id, true, 0 );
+	}
+
+	/** A site pass must preserve confirmed, live and already capped rows. */
+	public function test_site_attempt_updates_only_owed_rows(): void {
+		$first     = $this->snapshot( 'owed' );
+		$near_cap  = $this->snapshot( 'near-cap', array( 'child_prune_attempts' => 9 ) );
+		$complete  = $this->snapshot( 'complete', array( 'status' => 'complete' ) );
+		$confirmed = $this->snapshot( 'confirmed', array( 'child_prune_confirmed_at' => 123 ) );
+		$capped    = $this->snapshot( 'capped', array( 'child_prune_attempts' => 10 ) );
+		$site      = $this->create_test_site();
+		$other     = $this->snapshot(
+			'other',
+			array(
+				'site_id' => $site,
+				'run_key' => $site . ':998191:c:other',
+			)
+		);
+		$this->assertSame( 2, MainWP_Backup_Snapshots::instance()->record_child_prune_site_attempt( $this->site_id, 10 ) );
+		$this->assert_state( $first, false, 1 );
+		$this->assert_state( $near_cap, false, 10 );
+		$this->assert_state( $complete, false, 0 );
+		$this->assert_state( $confirmed, true, 0 );
+		$this->assert_state( $capped, false, 10 );
+		$this->assert_state( $other, false, 0 );
+	}
+
+	/** Rows that reach the cap in one site pass must leave one counted warning. */
 	public function test_attempt_cap_warns_and_stops_selection(): void {
-		$id       = $this->snapshot( 'capped', array( 'child_prune_attempts' => MainWP_Backup_Retention_Executor::CHILD_PRUNE_MAX_ATTEMPTS - 1 ) );
+		$id     = $this->snapshot( 'capped', array( 'child_prune_attempts' => MainWP_Backup_Retention_Executor::CHILD_PRUNE_MAX_ATTEMPTS - 1 ) );
+		$second = $this->snapshot( 'capped-outside-batch', array( 'child_prune_attempts' => MainWP_Backup_Retention_Executor::CHILD_PRUNE_MAX_ATTEMPTS - 1 ) );
+		$this->snapshot( 'already-capped', array( 'child_prune_attempts' => MainWP_Backup_Retention_Executor::CHILD_PRUNE_MAX_ATTEMPTS ) );
 		$logger   = MainWP_Logger::instance();
 		$priority = new \ReflectionProperty( $logger, 'logPriority' );
 		$priority->setAccessible( true );
@@ -368,14 +460,17 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 					return array( 'error' => 'offline' );
 				},
 				function () {
-					$this->assertSame( 1, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes()['failed'] );
+					$this->assertSame( 1, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes( 1 )['failed'] );
 					$this->assertSame( 0, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes()['sent'] );
 				}
 			);
 			$this->assertCount( 1, $warnings );
-			$this->assertStringContainsString( 'snapshot ' . $id, $warnings[0] );
+			$this->assertCount( 1, $this->requests );
+			$this->assertStringContainsString( 'site ' . $this->site_id, $warnings[0] );
+			$this->assertStringContainsString( 'Retry cap reached by 2 rows', $warnings[0] );
 			$this->assertStringContainsString( 'attempts: 10', $warnings[0] );
 			$this->assert_state( $id, false, MainWP_Backup_Retention_Executor::CHILD_PRUNE_MAX_ATTEMPTS );
+			$this->assert_state( $second, false, MainWP_Backup_Retention_Executor::CHILD_PRUNE_MAX_ATTEMPTS );
 		} finally {
 			remove_action( 'mainwp_before_log_data', $capture, 10 );
 			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
@@ -428,8 +523,8 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 		global $wpdb;
 		$id    = $this->snapshot( 'overlap' );
 		$store = MainWP_Backup_Snapshots::instance();
-		$this->assertSame( 1, $store->record_child_prune_attempt( $id ) );
-		$this->assertSame( 2, $store->record_child_prune_attempt( $id ) );
+		$this->assertSame( 1, $store->record_child_prune_site_attempt( $this->site_id, 10 ) );
+		$this->assertSame( 1, $store->record_child_prune_site_attempt( $this->site_id, 10 ) );
 		$notify = new \ReflectionMethod( MainWP_Backup_Retention_Executor::class, 'notify_child_prune' );
 		$notify->setAccessible( true );
 		$this->with_transport(
@@ -449,7 +544,7 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'child_prune_confirmed_at' => 123 ), array( 'id' => $id ) );
 		$first = 123;
 		$this->assertSame( 0, $store->mark_child_prune_confirmed( array( $id ) ) );
-		$this->assertSame( 0, $store->record_child_prune_attempt( $id ) );
+		$this->assertSame( 0, $store->record_child_prune_site_attempt( $this->site_id, 10 ) );
 		$store->give_up_child_prune( $id, 10 );
 		$this->assertSame( $first, (int) $store->get_snapshot_by_id( $id )->child_prune_confirmed_at );
 		$this->assert_state( $id, true, 2 );
@@ -482,9 +577,10 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 		);
 		$this->assertSame( array(), $this->requests );
 		$this->assert_state( $owed, false, 1 );
-		foreach ( array( $legacy, $null, $wrong, $live ) as $id ) {
-			$this->assert_state( $id, false, 0 );
+		foreach ( array( $legacy, $null, $wrong ) as $id ) {
+			$this->assert_state( $id, false, 1 );
 		}
+		$this->assert_state( $live, false, 0 );
 	}
 
 	/**
@@ -589,6 +685,153 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 		);
 	}
 
+	/** Known backup work must not spend cleanup attempts waiting for the Child mutex. */
+	public function test_running_backup_skips_site_without_attempt(): void {
+		$first  = $this->snapshot( 'waiting-a' );
+		$second = $this->snapshot( 'waiting-b' );
+		$option = MainWP_Backup_Executor::BACKUP_HOLD_OPTION_PREFIX . $this->site_id;
+		update_option( $option, wp_json_encode( array( 'test-backup' => time() + 600 ) ) );
+		try {
+			$this->with_transport(
+				function () {
+					return $this->answer();
+				},
+				function () {
+					$result = MainWP_Backup_Retention_Executor::instance()->resend_child_prunes();
+					$this->assertSame( 2, $result['skipped'] );
+					$this->assertSame( 0, $result['sent'] );
+					$this->assertSame( 0, $result['failed'] );
+				}
+			);
+			$this->assertSame( array(), $this->requests );
+			$this->assert_state( $first, false, 0 );
+			$this->assert_state( $second, false, 0 );
+		} finally {
+			delete_option( $option );
+		}
+		$this->with_transport(
+			function () {
+				return $this->answer();
+			},
+			function () {
+				$this->assertSame( 2, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes()['confirmed'] );
+			}
+		);
+	}
+
+	/**
+	 * Missing sync rows and failed reads are not proof that the site was deleted.
+	 *
+	 * @return array Lookup failures.
+	 */
+	public static function site_lookup_failures(): array {
+		return array(
+			'missing sync'   => array( 'sync' ),
+			'joined read'    => array( 'joined' ),
+			'existence read' => array( 'exists' ),
+		);
+	}
+
+	/**
+	 * Lookup failures must age all owed rows while leaving the site retryable.
+	 *
+	 * @dataProvider site_lookup_failures
+	 * @param string $failure Failed read.
+	 */
+	public function test_site_lookup_failure_records_site_attempt( string $failure ): void {
+		global $wpdb;
+		$first  = $this->snapshot( 'lookup-a' );
+		$second = $this->snapshot( 'lookup-b' );
+		$wp     = MainWP_DB::instance()->get_table_name( 'wp' );
+		if ( 'joined' !== $failure ) {
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_sync' ), array( 'wpid' => $this->site_id ) );
+		}
+		$deny     = static function ( $sql ) use ( $failure, $wp ) {
+			if ( ( 'joined' === $failure && 0 === strpos( $sql, 'SELECT wp.*,wp_sync.*' ) )
+				|| ( 'exists' === $failure && 0 === strpos( $sql, 'SELECT id FROM ' . $wp . ' WHERE id = ' ) ) ) {
+				return 'SELECT mainwp_child_prune_lookup_forced_failure';
+			}
+			return $sql;
+		};
+		$suppress = $wpdb->suppress_errors();
+		add_filter( 'query', $deny );
+		try {
+			$this->with_transport(
+				function () {
+					return $this->answer();
+				},
+				function () {
+					$result = MainWP_Backup_Retention_Executor::instance()->resend_child_prunes( 1 );
+					$this->assertSame( 0, $result['sent'] );
+					$this->assertSame( 0, $result['gave_up'] );
+					$this->assertSame( 1, $result['failed'] );
+				}
+			);
+			$this->assertSame( array(), $this->requests );
+			$this->assert_state( $first, false, 1 );
+			$this->assert_state( $second, false, 1 );
+		} finally {
+			remove_filter( 'query', $deny );
+			$wpdb->suppress_errors( $suppress );
+			if ( 'joined' !== $failure ) {
+				$this->create_test_site_sync( $this->site_id );
+			}
+		}
+		$this->with_transport(
+			function () {
+				return $this->answer();
+			},
+			function () {
+				$this->assertSame( 2, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes()['confirmed'] );
+			}
+		);
+	}
+
+	/** An unreadable ownership guard must not delete a possibly live Child task. */
+	public function test_live_guard_query_error_records_site_attempt(): void {
+		global $wpdb;
+		$first    = $this->snapshot( 'guard-a' );
+		$second   = $this->snapshot( 'guard-b' );
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$denied   = 0;
+		$deny     = static function ( $sql ) use ( $table, &$denied ) {
+			if ( 0 === strpos( $sql, 'SELECT id FROM ' . $table . ' WHERE site_id = ' ) && false !== strpos( $sql, "status <> 'pruned'" ) ) {
+				++$denied;
+				return 'SELECT mainwp_child_prune_guard_forced_failure';
+			}
+			return $sql;
+		};
+		$suppress = $wpdb->suppress_errors();
+		add_filter( 'query', $deny );
+		try {
+			$this->with_transport(
+				function () {
+					return $this->answer();
+				},
+				function () {
+					$result = MainWP_Backup_Retention_Executor::instance()->resend_child_prunes( 1 );
+					$this->assertSame( 0, $result['sent'] );
+					$this->assertSame( 1, $result['failed'] );
+				}
+			);
+			$this->assertSame( 1, $denied );
+			$this->assertSame( array(), $this->requests );
+			$this->assert_state( $first, false, 1 );
+			$this->assert_state( $second, false, 1 );
+		} finally {
+			remove_filter( 'query', $deny );
+			$wpdb->suppress_errors( $suppress );
+		}
+		$this->with_transport(
+			function () {
+				return $this->answer();
+			},
+			function () {
+				$this->assertSame( 2, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes()['confirmed'] );
+			}
+		);
+	}
+
 	/** A removed site has no remaining authenticated transport. */
 	public function test_deleted_site_gives_up_without_request(): void {
 		global $wpdb;
@@ -664,7 +907,7 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array(), $store->get_child_prune_candidates( 50, 10 ) );
 		$this->assertSame( 0, MainWP_Backup_Retention_Executor::instance()->resend_child_prunes()['sent'] );
 		$this->assertSame( 0, $store->mark_child_prune_confirmed( array( $id ) ) );
-		$this->assertSame( 0, $store->record_child_prune_attempt( $id ) );
+		$this->assertSame( 0, $store->record_child_prune_site_attempt( $this->site_id, 10 ) );
 		$store->give_up_child_prune( $id, 10 );
 		$this->assert_state( $id, false, 0 );
 		$this->assertSame( 'complete', $store->get_snapshot_by_id( $id )->status );
@@ -718,7 +961,7 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 		$store = MainWP_Backup_Snapshots::instance();
 		$this->assertSame( array(), $store->get_child_prune_candidates( 50, 10 ) );
 		$this->assertSame( 0, $store->mark_child_prune_confirmed( array( $id ) ) );
-		$this->assertSame( 0, $store->record_child_prune_attempt( $id ) );
+		$this->assertSame( 0, $store->record_child_prune_site_attempt( $this->site_id, 10 ) );
 		$store->give_up_child_prune( $id, 10 );
 		$this->assert_state( $id, false, 0 );
 		$this->assertCount( 1, $this->requests );

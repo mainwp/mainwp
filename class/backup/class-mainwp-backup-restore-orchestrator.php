@@ -635,7 +635,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( ! in_array( $job->status, $store::active_statuses(), true ) || $store::STATUS_VERIFYING === $job->status ) {
             return 'none';
         }
-        return $store::STATUS_FAILED_RETRYABLE === $job->status && ( $job->checkpoint['resume_status'] ?? '' ) === $store::STATUS_VERIFYING ? 'stop_checking' : 'cancel';
+        if ( $store::STATUS_FAILED_RETRYABLE !== $job->status || ( $job->checkpoint['resume_status'] ?? '' ) !== $store::STATUS_VERIFYING ) {
+            return 'cancel';
+        }
+        // A worker can confirm the site responds and then lose its lease before it
+        // completes the job. The row still reads as a verification retry, but the
+        // next drive completes it, so stopping would record a working restore as failed.
+        return true === ( $job->checkpoint['verification']['site_responds'] ?? null ) ? 'none' : 'stop_checking';
     }
 
     /**
@@ -1718,8 +1724,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // Prune while this job still holds the site's active reservation: a
         // rollback of an earlier restore is refused until it ends, so none can
         // start from a safety backup the child is about to delete.
+        // Only the current lease holder deletes: once the lease lapses another
+        // worker may own the job, or Stop Checking may have ended it as failed
+        // with Roll Back offered. The next drive verifies and prunes again.
+        if ( ! $this->lease_still_held( $job ) ) {
+            return;
+        }
         $this->prune_superseded_pre_snapshots( $job );
-        if ( ! empty( $checkpoint['is_rollback'] ) ) {
+        if ( ! empty( $checkpoint['is_rollback'] ) && $this->lease_still_held( $job ) ) {
             $this->retire_rollback_source( $job, $checkpoint );
         }
 
@@ -2467,6 +2479,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $checkpoint = is_array( $checkpoint ) ? $checkpoint : array();
             if ( $this->safety_backup_held_by_rollback( $row, $checkpoint ) ) {
                 continue;
+            }
+            if ( ! $this->lease_still_held( $job ) ) {
+                return;
             }
             if ( null === $this->prune_safety_backup( $website, (int) $row->id, (string) $row->pre_snapshot_task_id, $checkpoint ) ) {
                 // Best effort: an unreachable site will not answer the next task either.

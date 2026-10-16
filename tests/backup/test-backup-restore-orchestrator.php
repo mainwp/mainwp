@@ -97,6 +97,13 @@ class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
 	public $responds = true;
 
 	/**
+	 * Called during the reachability check, to stage what happens while it runs.
+	 *
+	 * @var callable|null
+	 */
+	public $on_probe = null;
+
+	/**
 	 * Driver override.
 	 *
 	 * @var MainWP_Backup_Restore_Transfer_Driver|null
@@ -119,6 +126,9 @@ class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
 	 * @return bool
 	 */
 	protected function site_responds( object $website ): bool {
+		if ( is_callable( $this->on_probe ) ) {
+			call_user_func( $this->on_probe );
+		}
 		return $this->responds;
 	}
 
@@ -7290,6 +7300,54 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ), array( 'id' => $history_id ) );
 			MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
 		}
+	}
+
+	/**
+	 * A worker whose lease lapsed after a good probe deletes nothing and leaves a row Stop Checking refuses.
+	 */
+	public function test_lapsed_verification_worker_skips_prune_and_blocks_stop_checking() {
+		global $wpdb;
+		$store   = MainWP_Backup_Restore_Job_Store::instance();
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$earlier = $this->make_job( $this->safety_checkpoint(), $store::STATUS_COMPLETED, array( 'pre_snapshot_task_id' => 'task-earlier-pre' ) );
+		$job     = $this->make_job(
+			array( 'resume_status' => 'verifying' ),
+			'failed_retryable',
+			array(
+				'last_error'    => 'Stored unreachable message.',
+				'next_retry_at' => 0,
+				'child_task_id' => 'finished-task',
+			)
+		);
+		$this->responses['backup_task_prune'] = $this->prune_answer( 'pruned' );
+		$this->orchestrator->on_probe         = static function () use ( $wpdb, $table, $job ) {
+			$wpdb->update( $table, array( 'locked_until' => time() - 1 ), array( 'id' => (int) $job->id ) ); // phpcs:ignore WordPress.DB -- test fixture.
+		};
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 15, (int) $job->id );
+		} finally {
+			$this->orchestrator->on_probe = null;
+		}
+		$lapsed = $store->get_job( (int) $job->id );
+		$this->assertSame( 'failed_retryable', $lapsed->status );
+		$this->assertSame( '', $lapsed->locked_by );
+		$this->assertTrue( $lapsed->checkpoint['verification']['site_responds'] );
+		$this->assertNotContains( 'backup_task_prune', array_column( $this->calls, 'what' ) );
+		$this->assertArrayNotHasKey( 'pre_snapshot_pruned', $store->get_job( (int) $earlier->id )->checkpoint );
+
+		$this->assertSame( 'none', MainWP_Backup_Restore_Orchestrator::resolve_cancel_action( $lapsed ) );
+		try {
+			$this->orchestrator->cancel_job( (int) $job->id );
+			$this->fail( 'A verified retry must not be stopped.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertNotSame( MainWP_Backup_Restore_Orchestrator::CANCEL_CHECKING_CHANGED, $e->get_message_error_code() );
+		}
+		$this->assertEquals( $lapsed, $store->get_job( (int) $job->id ) );
+
+		$this->orchestrator->process_pending_restore_jobs( 15, (int) $job->id );
+		$this->assertSame( $store::STATUS_COMPLETED, $store->get_job( (int) $job->id )->status );
+		$this->assertContains( 'backup_task_prune', array_column( $this->calls, 'what' ) );
+		$this->assertTrue( $store->get_job( (int) $earlier->id )->checkpoint['pre_snapshot_pruned'] );
 	}
 
 	/** A cancel admitted before verification must not clear the newer retry's evidence. */

@@ -754,6 +754,18 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 			$this->assertEquals( $before, $store->get_job( $this->job_id ) );
 			$this->assertSame( '', MainWP_Backup_Read_Model::get_restore_job( $this->job_id )['cancel_action'] );
 		}
+		$this->fixture_job(
+			'failed_retryable',
+			array(
+				'resume_status' => 'verifying',
+				'verification'  => array( 'site_responds' => true ),
+			)
+		);
+		$before = $store->get_job( $this->job_id );
+		$this->assertArrayHasKey( 'error', $this->ajax( 'mainwp_restore_cancel', array( 'job_id' => $this->job_id ) ) );
+		$this->assertSame( 'not_cancellable', $this->execute( 'cancel-restore', $this->input( 'cancel-restore' ) + array( 'confirm' => true ) )['result'] );
+		$this->assertEquals( $before, $store->get_job( $this->job_id ) );
+		$this->assertSame( '', MainWP_Backup_Read_Model::get_restore_job( $this->job_id )['cancel_action'] );
 		$this->fixture_job( 'running', array() );
 		$this->assertSame( 'cancel', MainWP_Backup_Read_Model::get_restore_job( $this->job_id )['cancel_action'] );
 		$this->assertFalse( MainWP_Backup_Read_Model::get_restore_job( $this->job_id )['verify_stopped'] );

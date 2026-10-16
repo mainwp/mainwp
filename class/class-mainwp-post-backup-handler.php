@@ -562,7 +562,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             );
             return;
         }
-        wp_send_json( array( 'result' => 'cancel_pending' === $outcome ? 'pending' : 'ok' ) );
+        wp_send_json( array( 'result' => 'stopped' === $outcome ? 'stopped' : ( 'cancel_pending' === $outcome ? 'pending' : 'ok' ) ) );
     }
 
     /**

@@ -1618,7 +1618,11 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return $before;
         }
         $call = 'not called';
-        if ( in_array( $before->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $before->status ) {
+        for ( $attempt = 0; $attempt < 2; $attempt++ ) {
+            $action = MainWP_Backup_Restore_Orchestrator::resolve_cancel_action( $before );
+            if ( 'none' === $action ) {
+                break;
+            }
             try {
                 MainWP_Backup_Restore_Orchestrator::instance()->cancel_job( $restore_job_id );
                 $call = 'returned';
@@ -1629,6 +1633,11 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 // Another lane can finish after admission, so only the re-read job decides the result.
                 $call = MainWP_Backup_Restore_Orchestrator::CANCEL_FINISHED_ON_SITE === $e->get_message_error_code() ? 'finished' : 'failed';
             }
+            $before = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
+            // A changed phase needs its own cancellation decision; stopping checks never cancels a Child task.
+            if ( null === $before || 'stop_checking' !== $action || 'cancel' !== MainWP_Backup_Restore_Orchestrator::resolve_cancel_action( $before ) ) {
+                break;
+            }
         }
         $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
         if ( null === $job || 'reserved' === $job->status ) {
@@ -1636,10 +1645,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         $finished = self::finished_cancel_result( $job );
         $result   = $finished ?? 'not_cancellable';
-        if ( null === $finished && 'verifying' !== $job->status ) {
+        $action   = MainWP_Backup_Restore_Orchestrator::resolve_cancel_action( $job );
+        if ( null === $finished && 'none' !== $action ) {
             $phase = 'failed_retryable' === $job->status ? (string) ( $job->checkpoint['resume_status'] ?? 'pending' ) : $job->status;
-            if ( 'verifying' === $phase ) {
-                // The worker drives a verification retry on, even when it applies an armed intent.
+            if ( 'stop_checking' === $action ) {
                 $result = 'not_cancellable';
             } elseif ( MainWP_Backup_Restore_Orchestrator::has_applicable_cancel_intent( $job ) || ( ! empty( $job->checkpoint['cancel_intent'] ) && in_array( $phase, array( 'pending', 'preflight', 'pre_snapshot' ), true ) ) ) {
                 // An intent armed before staging survives until the worker applies it at staging.
@@ -1667,6 +1676,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return null;
         }
         $confirmation = $job->checkpoint['cancel_confirmation']['outcome'] ?? '';
+        if ( 'failed_permanent' === $job->status && ! empty( $job->checkpoint['verify_stopped'] ) ) {
+            return 'ended_failed';
+        }
         if ( in_array( $job->status, array( 'cancelled', 'failed_permanent' ), true ) ) {
             if ( 'unconfirmed' === $confirmation ) {
                 return 'cancel_unconfirmed';
@@ -1939,11 +1951,16 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $job ) ) {
             return $job;
         }
+        $action      = MainWP_Backup_Restore_Orchestrator::resolve_cancel_action( $job );
         $phase       = 'failed_retryable' === $job->status ? ( $job->checkpoint['resume_status'] ?? 'pending' ) : $job->status;
-        $cancellable = in_array( $job->status, MainWP_Backup_Restore_Job_Store::active_statuses(), true ) && 'verifying' !== $phase;
+        $cancellable = 'none' !== $action;
         $asks_site   = ! empty( $job->child_task_id ) && in_array( $phase, array( 'staging', 'transferring', 'running' ), true );
         $finished    = self::finished_cancel_result( $job );
-        if ( 'cancelled' === $finished ) {
+        if ( 'stop_checking' === $action ) {
+            $warning = __( 'Confirming stops the checks and ends this job as failed. Rollback stays available where a safety backup exists.', 'mainwp' );
+        } elseif ( 'ended_failed' === $finished && ! empty( $job->checkpoint['verify_stopped'] ) ) {
+            $warning = __( 'Checks were already stopped and this job ended as failed. Confirming changes nothing and reports ended_failed.', 'mainwp' );
+        } elseif ( 'cancelled' === $finished ) {
             $warning = __( 'This job is already cancelled. Confirming changes nothing and reports cancelled.', 'mainwp' );
         } elseif ( 'cancel_unconfirmed' === $finished ) {
             $warning = __( 'This job already ended without the site confirming that it stopped. Confirming changes nothing and reports cancel_unconfirmed.', 'mainwp' );

@@ -11,6 +11,7 @@ use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Backup_CLI_Restore_Runner;
 use MainWP\Dashboard\MainWP_Backup_Operations;
+use MainWP\Dashboard\MainWP_Backup_Read_Model;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
@@ -543,7 +544,7 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 			'C5 failed, unconfirmed'                => array( 'failed_permanent', $outcome( 'unconfirmed' ), 'owned-restore', false, false, $unconfirmed, 'cancel_unconfirmed' ),
 			'C6 failed, no confirmation'            => array( 'failed_permanent', array(), '', false, false, $finished, 'not_cancellable' ),
 			'C7 verifying'                          => array( 'verifying', array(), 'owned-restore', false, false, $verifying, 'not_cancellable' ),
-			'C8 retrying verification'              => array( 'failed_retryable', array( 'resume_status' => 'verifying' ), 'owned-restore', false, false, $verifying, 'not_cancellable' ),
+			'C8 retrying verification'              => array( 'failed_retryable', array( 'resume_status' => 'verifying' ), 'owned-restore', true, false, 'Confirming stops the checks and ends this job as failed. Rollback stays available where a safety backup exists.', null ),
 			'C9 pending'                            => array( 'pending', array(), '', true, false, $local, null ),
 			'C9 preflight'                          => array( 'preflight', array(), '', true, false, $local, null ),
 			'C9 pre_snapshot'                       => array( 'pre_snapshot', array(), '', true, false, $local, null ),
@@ -684,6 +685,144 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 			),
 			array( 'id' => $this->job_id )
 		);
+	}
+
+	/** The two callers keep terminal evidence and rollback available after stopping checks. */
+	public function test_stop_checking_ajax_and_ability_keep_failure_and_history() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		foreach ( array( 'ajax', 'ability' ) as $caller ) {
+			$this->fixture_job(
+				'failed_retryable',
+				array(
+					'resume_status'          => 'verifying',
+					'last_error_code'        => 'unreachable_test',
+					'pre_snapshot_artifacts' => array( array( 'file' => 'safety.tar.gz' ) ),
+				),
+				'finished-task'
+			);
+			$store->set_status(
+				$this->job_id,
+				'failed_retryable',
+				array(
+					'last_error'    => 'Stored unreachable message.',
+					'next_retry_at' => time() + 3600,
+				)
+			);
+			$preview = $this->execute( 'cancel-restore', $this->input( 'cancel-restore' ) + array( 'dry_run' => true ) );
+			$this->assert_output( 'cancel-restore', $preview );
+			$this->assertTrue( $preview['would_affect']['cancellable'] );
+			$this->assertFalse( $preview['would_affect']['site_will_be_asked'] );
+			$this->assertStringContainsString( 'ends this job as failed', implode( ' ', $preview['warnings'] ) );
+			$progress = MainWP_Backup_Read_Model::get_restore_job( $this->job_id );
+			$this->assertSame( 'stop_checking', $progress['cancel_action'] );
+			$this->assertFalse( $progress['verify_stopped'] );
+			if ( 'ajax' === $caller ) {
+				$this->assertSame( array( 'result' => 'stopped' ), $this->ajax( 'mainwp_restore_cancel', array( 'job_id' => $this->job_id ) ) );
+			} else {
+				$result = $this->execute( 'cancel-restore', $this->input( 'cancel-restore' ) + array( 'confirm' => true ) );
+				$this->assert_output( 'cancel-restore', $result );
+				$this->assertSame( 'ended_failed', $result['result'] );
+				$this->assertSame( 'failed_permanent', $result['status'] );
+			}
+			$final = $store->get_job( $this->job_id );
+			$this->assertSame( 'Stored unreachable message.', $final->last_error );
+			$this->assertSame( 'unreachable_test', $final->checkpoint['last_error_code'] );
+			$this->assertNotEmpty( $final->checkpoint['verify_stopped'] );
+			$again = $this->execute( 'cancel-restore', $this->input( 'cancel-restore' ) + array( 'confirm' => true ) );
+			$this->assertSame( 'ended_failed', $again['result'] );
+			$this->assertEquals( $final, $store->get_job( $this->job_id ) );
+			$list = MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id );
+			$this->assertSame( 0, $list['active_restore_job_id'] );
+			$this->assertSame( $this->job_id, $list['failed_restore_jobs'][0]['job_id'] );
+			$this->assertTrue( $list['failed_restore_jobs'][0]['has_rollback'] );
+			$progress = $this->ajax( 'mainwp_restore_progress', array( 'job_id' => $this->job_id ) );
+			$this->assertSame( '', $progress['cancel_action'] );
+			$this->assertTrue( $progress['verify_stopped'] );
+			$this->assertEmpty( $this->calls );
+		}
+	}
+
+	/** A first check and terminal verdicts refuse both callers without changing the row. */
+	public function test_stop_checking_refuses_finished_and_first_verification() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		foreach ( array( 'completed', 'failed_permanent', 'verifying' ) as $status ) {
+			$this->fixture_job( $status, array() );
+			$before = $store->get_job( $this->job_id );
+			$this->assertArrayHasKey( 'error', $this->ajax( 'mainwp_restore_cancel', array( 'job_id' => $this->job_id ) ) );
+			$result = $this->execute( 'cancel-restore', $this->input( 'cancel-restore' ) + array( 'confirm' => true ) );
+			$this->assertSame( 'not_cancellable', $result['result'] );
+			$this->assertEquals( $before, $store->get_job( $this->job_id ) );
+			$this->assertSame( '', MainWP_Backup_Read_Model::get_restore_job( $this->job_id )['cancel_action'] );
+		}
+		$this->fixture_job( 'running', array() );
+		$this->assertSame( 'cancel', MainWP_Backup_Read_Model::get_restore_job( $this->job_id )['cancel_action'] );
+		$this->assertFalse( MainWP_Backup_Read_Model::get_restore_job( $this->job_id )['verify_stopped'] );
+		$this->assertEmpty( $this->calls );
+	}
+
+	/** A live worker can be checking without moving the checkpoint revision. */
+	public function test_stop_checking_ajax_refuses_live_lease_and_accepts_expired_lease() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$this->fixture_job( 'failed_retryable', array( 'resume_status' => 'verifying' ) );
+		$before = $store->get_job( $this->job_id );
+		$leased = $store->acquire_next_job( 'checking-worker', 300, time(), $this->job_id );
+		$this->assertNotNull( $leased );
+		$this->assertSame( $before->checkpoint_rev, $leased->checkpoint_rev );
+		$result = $this->ajax( 'mainwp_restore_cancel', array( 'job_id' => $this->job_id ) );
+		$this->assertSame( 'The Dashboard is checking the site right now, or the restore status just changed. Try again in a moment.', $result['error'] );
+		$this->assertEquals( $leased, $store->get_job( $this->job_id ) );
+		$ability = $this->execute( 'cancel-restore', $this->input( 'cancel-restore' ) + array( 'confirm' => true ) );
+		$this->assertSame( 'not_cancellable', $ability['result'] );
+		$this->assertEquals( $leased, $store->get_job( $this->job_id ) );
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'locked_until' => time() - 1 ), array( 'id' => $this->job_id ) );
+		$this->assertSame( array( 'result' => 'stopped' ), $this->ajax( 'mainwp_restore_cancel', array( 'job_id' => $this->job_id ) ) );
+		$this->assertEmpty( $this->calls );
+	}
+
+	/** A stale stop must preserve completion or cancel from the new in-progress phase. */
+	public function test_stop_checking_race_reresolves_phase_for_each_caller() {
+		global $wpdb;
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		foreach ( array( 'completed', 'running' ) as $phase ) {
+			foreach ( array( 'ajax', 'ability' ) as $caller ) {
+				$this->calls = array();
+				$this->fixture_job( 'failed_retryable', array( 'resume_status' => 'verifying' ), 'finished-task' );
+				$raced = null;
+				$hook  = function ( $sql ) use ( &$hook, &$raced, $table, $store, $phase ) {
+					if ( null === $raced && str_starts_with( $sql, 'UPDATE ' . $table . ' SET `status`' ) && str_contains( $sql, 'verify_stopped' ) ) {
+						remove_filter( 'query', $hook );
+						$store->set_status( $this->job_id, $phase );
+						$raced = $store->get_job( $this->job_id );
+					}
+					return $sql;
+				};
+				add_filter( 'query', $hook );
+				try {
+					if ( 'ajax' === $caller ) {
+						$result = $this->ajax( 'mainwp_restore_cancel', array( 'job_id' => $this->job_id ) );
+						$this->assertArrayHasKey( 'error', $result );
+					} else {
+						$result = $this->execute( 'cancel-restore', $this->input( 'cancel-restore' ) + array( 'confirm' => true ) );
+						$this->assert_output( 'cancel-restore', $result );
+						$this->assertSame( 'completed' === $phase ? 'not_cancellable' : 'cancelled', $result['result'] );
+					}
+				} finally {
+					remove_filter( 'query', $hook );
+				}
+				$this->assertNotNull( $raced );
+				$final = $store->get_job( $this->job_id );
+				$this->assertArrayNotHasKey( 'verify_stopped', $final->checkpoint );
+				if ( 'running' === $phase && 'ability' === $caller ) {
+					$this->assertSame( 'cancelled', $final->status );
+					$this->assertSame( array( 'restore_task_cancel' ), $this->calls );
+				} else {
+					$this->assertEquals( $raced, $final );
+					$this->assertEmpty( $this->calls );
+				}
+			}
+		}
 	}
 
 	/**
@@ -882,6 +1021,9 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 * @param string $name Slug.
 	 */
 	public function test_right_and_site_scope_are_enforced( $name ) {
+		if ( 'cancel-restore' === $name ) {
+			$this->fixture_job( 'failed_retryable', array( 'resume_status' => 'verifying' ) );
+		}
 		global $wpdb;
 		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
 		$before = $wpdb->get_results( 'SELECT * FROM ' . $table . ' ORDER BY id', ARRAY_A );
@@ -933,6 +1075,9 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 * @param string $name Slug.
 	 */
 	public function test_service_restore_rights_match_previews( $name ) {
+		if ( 'cancel-restore' === $name ) {
+			$this->fixture_job( 'failed_retryable', array( 'resume_status' => 'verifying' ) );
+		}
 		$execute = array(
 			'restore-site-snapshot' => array( 'restore_snapshot', array( $this->site_id, $this->snapshot_id, array( 'confirm_destructive' => true ), 'ability' ) ),
 			'rollback-restore'      => array( 'rollback_restore', array( $this->job_id ) ),
@@ -982,7 +1127,7 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_ajax_restore_writes_recheck_both_rights( $name ) {
 		if ( 'cancel-restore' === $name ) {
-			$this->fixture_job( 'pending', array() );
+			$this->fixture_job( 'failed_retryable', array( 'resume_status' => 'verifying' ) );
 		}
 		$handler = array(
 			'restore-site-snapshot' => 'mainwp_restore_initiate',

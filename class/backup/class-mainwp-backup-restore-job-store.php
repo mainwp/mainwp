@@ -512,7 +512,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             // later retryable failure reports its own code.
             $stopped = in_array( $row->status, array( self::STATUS_FAILED_PERMANENT, self::STATUS_CANCELLED ), true );
             if ( $stopped || isset( $decoded['cancel_confirmation'] ) || isset( $decoded['terminal_failure'] ) ) {
-                foreach ( array( 'cancel_confirmation', 'terminal_failure', 'last_error_code' ) as $key ) {
+                foreach ( array( 'cancel_confirmation', 'terminal_failure', 'last_error_code', 'verify_stopped' ) as $key ) {
                     if ( array_key_exists( $key, $decoded ) ) {
                         $merged[ $key ] = $decoded[ $key ];
                     }
@@ -611,17 +611,19 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * @param string      $error_code   Code stored as last_error_code alongside $error.
      * @param string|null $confirmation confirmed, unconfirmed or not_needed; null derives it from the row.
      * @param string|null $lock_token   Worker lease token, or null for an unleased cancellation.
+     * @param bool        $verify_stop Require an unleased verification retry and record that checks stopped.
      *
      * @return string written; terminal when the row is missing or another writer
      *                finished it; fenced when the lease was lost; refused when the
      *                write failed on an unchanged row; contended when the row
-     *                kept changing under the swap.
+     *                kept changing under the swap; changed when verification moved or is leased.
      */
-    public function finish_with_cancel_confirmation( int $job_id, string $status, ?string $error, string $error_code, ?string $confirmation, ?string $lock_token = null ): string {
+    public function finish_with_cancel_confirmation( int $job_id, string $status, ?string $error, string $error_code, ?string $confirmation, ?string $lock_token = null, bool $verify_stop = false ): string {
         $missed = null;
         for ( $attempt = 0; $attempt < 5; $attempt++ ) {
-            $row = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
-                $this->wpdb->prepare( 'SELECT checkpoint, status, locked_by, checkpoint_rev FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+            $columns = $verify_stop ? 'checkpoint, status, locked_by, checkpoint_rev, locked_until, last_error' : 'checkpoint, status, locked_by, checkpoint_rev';
+            $row     = $this->wpdb->get_row( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- dedicated restore job table.
+                $this->wpdb->prepare( 'SELECT ' . $columns . ' FROM ' . $this->table() . ' WHERE id = %d', $job_id ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- fixed column lists and trusted table name.
             );
             if ( null === $row || ! in_array( $row->status, self::active_statuses(), true ) ) {
                 return 'terminal';
@@ -629,14 +631,23 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             if ( null !== $lock_token && $row->locked_by !== $lock_token ) {
                 return 'fenced';
             }
-            // A miss against a row nobody changed is a failed write, not a race.
-            if ( null !== $missed && (int) $row->checkpoint_rev === $missed ) {
-                return 'refused';
-            }
-
             $stored  = (string) $row->checkpoint;
             $decoded = json_decode( $stored, true );
             $decoded = is_array( $decoded ) ? $decoded : array();
+            if ( $verify_stop ) {
+                $resolved             = clone $row;
+                $resolved->checkpoint = $decoded;
+                if ( 'stop_checking' !== MainWP_Backup_Restore_Orchestrator::resolve_cancel_action( $resolved ) || ( '' !== $row->locked_by && (int) $row->locked_until >= time() ) ) {
+                    return 'changed';
+                }
+                $decoded['verify_stopped'] = time();
+                $error                     = '' !== (string) $row->last_error ? (string) $row->last_error : __( 'The site did not respond after the restore. The restore completed on the child; check the site directly.', 'mainwp' );
+                $error_code                = (string) ( $decoded['last_error_code'] ?? '' );
+            }
+            // Lease acquisition does not move the revision, so check it before classifying an unchanged miss.
+            if ( null !== $missed && (int) $row->checkpoint_rev === $missed ) {
+                return 'refused';
+            }
             $outcome = $confirmation;
             if ( null === $outcome && ( ! empty( $decoded['cancel_intent'] ) || isset( $decoded['cancel_confirmation'] ) ) ) {
                 $outcome = 'not_needed';
@@ -658,6 +669,11 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             if ( null !== $lock_token ) {
                 $fence   = ' AND locked_by = %s';
                 $binds[] = $lock_token;
+            }
+            if ( $verify_stop ) {
+                // The decoded phase belongs to this checkpoint; claims can change the lease without changing its revision.
+                $fence .= " AND status = %s AND checkpoint = %s AND ( locked_by = '' OR locked_until < %d )";
+                array_push( $binds, self::STATUS_FAILED_RETRYABLE, $stored, time() );
             }
             $swapped = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- compare-and-swap on the stored revision.
                 $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- the optional columns and fence add their binds.

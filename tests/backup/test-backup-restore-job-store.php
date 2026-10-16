@@ -20,6 +20,106 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	use Backup_Cancel_Transport_Guard;
 
 	/**
+	 * A claim does not move the revision; every stop swap must test the lease and resolved phase.
+	 *
+	 * @dataProvider stop_checking_races
+	 * @param string $race Concurrent change.
+	 * @param string $expected Store outcome.
+	 */
+	public function test_stop_checking_cas_rechecks_phase_revision_and_lease( $race, $expected ) {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$id    = $this->store->create_job(
+			8899,
+			42,
+			array(
+				'resume_status'   => 'verifying',
+				'last_error_code' => 'unreachable_test',
+			)
+		);
+		$this->store->set_status( $id, 'failed_retryable', array( 'last_error' => 'Stored unreachable message.' ) );
+		$before = $this->store->get_job( $id );
+		$raced  = null;
+		$swaps  = 0;
+		$hook   = function ( $sql ) use ( &$hook, &$raced, &$swaps, $race, $table, $id, $wpdb ) {
+			if ( ! str_starts_with( $sql, 'UPDATE ' . $table . ' SET `status`' ) || ! str_contains( $sql, 'verify_stopped' ) ) {
+				return $sql;
+			}
+			++$swaps;
+			$this->assertStringContainsString( "AND ( locked_by = '' OR locked_until < ", $sql );
+			$this->assertStringContainsString( "AND status = 'failed_retryable' AND checkpoint = ", $sql );
+			if ( 1 !== $swaps ) {
+				return $sql;
+			}
+			remove_filter( 'query', $hook );
+			try {
+				$claimed = $this->store->acquire_next_job( 'racing-worker', 300, time(), $id );
+				$this->assertNotNull( $claimed );
+				if ( 'claim' !== $race ) {
+					$checkpoint = $claimed->checkpoint;
+					if ( 'phase' === $race ) {
+						$checkpoint['resume_status'] = 'running';
+					}
+					$checkpoint['worker_saved'] = true;
+					$this->assertTrue( $this->store->save_checkpoint( $id, $checkpoint, 'racing-worker' ) );
+					if ( 'completed' === $race ) {
+						$this->assertTrue( $this->store->complete_job( $id, 'racing-worker' ) );
+					} else {
+						$wpdb->update(
+							$table,
+							array(
+								'locked_by'    => '',
+								'locked_until' => 0,
+							),
+							array( 'id' => $id )
+						);
+					}
+				}
+				$raced = $this->store->get_job( $id );
+			} finally {
+				add_filter( 'query', $hook );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $hook );
+		try {
+			$result = $this->store->finish_with_cancel_confirmation( $id, 'failed_permanent', 'Fallback error', '', null, null, true );
+		} finally {
+			remove_filter( 'query', $hook );
+		}
+		$this->assertSame( $expected, $result );
+		$final = $this->store->get_job( $id );
+		if ( 'written' === $expected ) {
+			$this->assertSame( 'failed_permanent', $final->status );
+			$this->assertSame( (int) $raced->checkpoint_rev + 1, (int) $final->checkpoint_rev );
+			$this->assertNotEmpty( $final->checkpoint['verify_stopped'] );
+			$this->assertTrue( $final->checkpoint['worker_saved'] );
+			$this->assertSame( $before->last_error, $final->last_error );
+			$this->assertSame( 'unreachable_test', $final->checkpoint['last_error_code'] );
+		} else {
+			$this->assertEquals( $raced, $final );
+			$this->assertArrayNotHasKey( 'verify_stopped', $final->checkpoint );
+		}
+		if ( 'claim' === $race ) {
+			$this->assertSame( $before->checkpoint_rev, $final->checkpoint_rev );
+		}
+	}
+
+	/**
+	 * Concurrent writers that can beat a stop swap.
+	 *
+	 * @return array
+	 */
+	public static function stop_checking_races() {
+		return array(
+			'claim without revision' => array( 'claim', 'changed' ),
+			'checkpoint save'        => array( 'checkpoint', 'written' ),
+			'in-progress phase'      => array( 'phase', 'changed' ),
+			'finished retry'         => array( 'completed', 'terminal' ),
+		);
+	}
+
+	/**
 	 * Store under test.
 	 *
 	 * @var MainWP_Backup_Restore_Job_Store

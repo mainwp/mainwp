@@ -52,6 +52,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      */
     const CANCEL_FINISHED_ON_SITE = 'mainwp_restore_finished_on_site';
 
+    /** A live or changed verification phase requires a fresh user decision. */
+    const CANCEL_CHECKING_CHANGED = 'mainwp_restore_checking_changed';
+
     /**
      * Singleton.
      *
@@ -571,7 +574,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @throws MainWP_Exception When the job is past the cancel window,
      *                          or another lane already finished it.
      *
-     * @return string 'cancelled' for a cancelled or permanently failed job,
+     * @return string 'stopped' after ending verification checks,
+     *                'cancelled' for a cancelled or permanently failed job,
      *                or 'cancel_pending' when the decision must be retried.
      */
     public function cancel_job( int $job_id ): string {
@@ -582,22 +586,29 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             throw new MainWP_Exception( esc_html__( 'Restore job not found.', 'mainwp' ) );
         }
 
-        switch ( $job->status ) {
-            case MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED:
+        $action = self::resolve_cancel_action( $job );
+        if ( 'none' === $action ) {
+            if ( MainWP_Backup_Restore_Job_Store::STATUS_CANCELLED === $job->status ) {
                 throw new MainWP_Exception( esc_html__( 'The restore is already cancelled.', 'mainwp' ) );
-            case MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING:
-            case MainWP_Backup_Restore_Job_Store::STATUS_COMPLETED:
-            case MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT:
-                throw new MainWP_Exception( esc_html__( 'This restore has already finished on the site and can no longer be cancelled. If it failed, you can roll it back instead.', 'mainwp' ) );
-            default:
-                break;
+            }
+            throw new MainWP_Exception( esc_html__( 'This restore has already finished on the site and can no longer be cancelled. If it failed, you can roll it back instead.', 'mainwp' ) );
         }
         // Every cancel write names the revision column, so nothing could be recorded.
         if ( ! MainWP_Install::backup_restore_job_checkpoint_rev_ready() ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_RESTORE_SCHEMA_REPAIR_PENDING ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
         }
 
-        $outcome = $this->record_terminal_failure( $job, null, '', null );
+        $outcome = $this->record_terminal_failure( $job, 'stop_checking' === $action ? (string) $job->last_error : null, (string) ( $job->checkpoint['last_error_code'] ?? '' ), null, null, '', $action );
+        if ( 'stopped' === $outcome ) {
+            return 'stopped';
+        }
+        if ( 'checking_changed' === $outcome || ( 'stop_checking' === $action && self::TERMINAL_OUTCOME_TERMINAL !== $outcome ) ) {
+            throw new MainWP_Exception( esc_html__( 'The Dashboard is checking the site right now, or the restore status just changed. Try again in a moment.', 'mainwp' ), null, self::CANCEL_CHECKING_CHANGED ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped; the final argument is an error code.
+        }
+        if ( 'stop_checking' === $action ) {
+            throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ), null, self::CANCEL_FINISHED_ON_SITE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped; the final argument is an error code.
+        }
+
         if ( self::TERMINAL_OUTCOME_DEFERRED === $outcome ) {
             return 'cancel_pending';
         }
@@ -611,6 +622,20 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
         }
         throw new MainWP_Exception( esc_html__( 'The restore already finished on the site and can no longer be cancelled.', 'mainwp' ), null, self::CANCEL_FINISHED_ON_SITE ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- The message is escaped; the final argument is an error code.
+    }
+
+    /**
+     * Verification retries follow Child completion, so cancelling them only ends the checks.
+     *
+     * @param object $job Persisted restore job with a decoded checkpoint.
+     * @return string cancel, stop_checking, or none.
+     */
+    public static function resolve_cancel_action( object $job ): string {
+        $store = MainWP_Backup_Restore_Job_Store::class;
+        if ( ! in_array( $job->status, $store::active_statuses(), true ) || $store::STATUS_VERIFYING === $job->status ) {
+            return 'none';
+        }
+        return $store::STATUS_FAILED_RETRYABLE === $job->status && ( $job->checkpoint['resume_status'] ?? '' ) === $store::STATUS_VERIFYING ? 'stop_checking' : 'cancel';
     }
 
     /**
@@ -1999,25 +2024,40 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param string|null $lock_token Captured lease token, or null for an unleased UI cancellation.
      * @param string|null $history_error_code Classification kept separate from restore-facing errors.
      * @param string      $history_error_extra Replay tag and registered transport cause only.
+     * @param string|null $cancel_action User's resolved action; null keeps the worker's failure decision.
      *
-     * @return string One of the TERMINAL_OUTCOME_* constants.
+     * @return string One of the TERMINAL_OUTCOME_* constants, stopped, or checking_changed for a retryable user refusal.
      */
-    private function record_terminal_failure( object $job, ?string $error, string $error_code, ?string $lock_token, ?string $history_error_code = null, string $history_error_extra = '' ): string {
+    private function record_terminal_failure( object $job, ?string $error, string $error_code, ?string $lock_token, ?string $history_error_code = null, string $history_error_extra = '', ?string $cancel_action = null ): string {
         $store = MainWP_Backup_Restore_Job_Store::instance();
         $job   = $store->get_job( (int) $job->id );
         if ( null === $job || ! in_array( $job->status, $store::active_statuses(), true ) || ( null !== $lock_token && $job->locked_by !== $lock_token ) ) {
             return self::TERMINAL_OUTCOME_TERMINAL;
         }
+        $verify_stop = 'stop_checking' === $cancel_action;
+        if ( null !== $cancel_action ) {
+            $action = self::resolve_cancel_action( $job );
+            if ( 'none' === $action ) {
+                return self::TERMINAL_OUTCOME_TERMINAL;
+            }
+            if ( $action !== $cancel_action ) {
+                return 'checking_changed';
+            }
+        }
 
-        $failure            = $job->checkpoint['terminal_failure'] ?? array();
+        $failure            = $verify_stop ? array() : ( $job->checkpoint['terminal_failure'] ?? array() );
         $had_stored_failure = ! empty( $failure );
         $error              = $failure['error'] ?? $error;
         $error_code         = $failure['error_code'] ?? $error_code;
-        $phase              = $store::STATUS_FAILED_RETRYABLE === $job->status ? ( $job->checkpoint['resume_status'] ?? $store::STATUS_PENDING ) : $job->status;
-        $can_cancel         = ( ! empty( $job->child_task_id ) || ( ! empty( $job->checkpoint['child_create_attempted'] ) && ! empty( $job->checkpoint['restore_id'] ) ) ) && in_array( $phase, array( $store::STATUS_STAGING, $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
-        $outcome            = $store::STATUS_VERIFYING === $phase ? 'completed' : 'ok';
-        $by_restore_id      = $can_cancel && empty( $job->child_task_id );
-        $decided_task_id    = (string) $job->child_task_id;
+        if ( $verify_stop ) {
+            $error      = '' !== (string) $job->last_error ? (string) $job->last_error : __( 'The site did not respond after the restore. The restore completed on the child; check the site directly.', 'mainwp' );
+            $error_code = (string) ( $job->checkpoint['last_error_code'] ?? '' );
+        }
+        $phase           = $store::STATUS_FAILED_RETRYABLE === $job->status ? ( $job->checkpoint['resume_status'] ?? $store::STATUS_PENDING ) : $job->status;
+        $can_cancel      = ( ! empty( $job->child_task_id ) || ( ! empty( $job->checkpoint['child_create_attempted'] ) && ! empty( $job->checkpoint['restore_id'] ) ) ) && in_array( $phase, array( $store::STATUS_STAGING, $store::STATUS_TRANSFERRING, $store::STATUS_RUNNING ), true );
+        $outcome         = $store::STATUS_VERIFYING === $phase ? 'completed' : 'ok';
+        $by_restore_id   = $can_cancel && empty( $job->child_task_id );
+        $decided_task_id = (string) $job->child_task_id;
         if ( $can_cancel ) {
             $deferred = $store->defer_terminal_failure( (int) $job->id, $error, $error_code, $lock_token );
             if ( null === $deferred ) {
@@ -2094,9 +2134,13 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $error,
             $error_code,
             $confirmation,
-            $lock_token
+            $lock_token,
+            $verify_stop
         );
         if ( 'written' !== $written ) {
+            if ( $verify_stop ) {
+                return 'terminal' === $written ? self::TERMINAL_OUTCOME_TERMINAL : 'checking_changed';
+            }
             if ( 'contended' === $written && null === $lock_token ) {
                 // The UI lane holds no lease to retry with; a durable intent
                 // lets the next drive finish the cancel.
@@ -2120,7 +2164,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         // will cancel: the cloud-pull fallback replaces the id under a live row,
         // and a worker whose write landed does not run its refused-write cancel.
         $final = $store->get_job( (int) $job->id );
-        if ( null !== $final && ! empty( $final->child_task_id ) && (string) $final->child_task_id !== $decided_task_id ) {
+        if ( $verify_stop && null !== $final ) {
+            $job        = $final;
+            $error      = (string) $final->last_error;
+            $error_code = (string) ( $final->checkpoint['last_error_code'] ?? '' );
+        }
+        if ( ! $verify_stop && null !== $final && ! empty( $final->child_task_id ) && (string) $final->child_task_id !== $decided_task_id ) {
             $this->cancel_task_created_after_terminal( $final, (string) $final->child_task_id );
         }
 
@@ -2165,7 +2214,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 'error_code'  => $error_code,
             )
         );
-        return self::TERMINAL_OUTCOME_TERMINAL;
+        return $verify_stop ? 'stopped' : self::TERMINAL_OUTCOME_TERMINAL;
     }
 
     /**

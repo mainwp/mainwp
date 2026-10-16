@@ -5,8 +5,17 @@ const fs = require( 'node:fs' );
 const vm = require( 'node:vm' );
 const source = fs.readFileSync( require.resolve( '../../pages/backup/page-mainwp-backup-snapshots-view.php' ), 'utf8' );
 
+function phpToJs( code ) {
+    return code.replace( /<\?php[\s\S]*?\?>/g, php => {
+        const strings = [ ...php.matchAll( /(['"])((?:\\.|(?!\1)[\s\S])*?)\1/g ) ];
+        const index = php.includes( '_n(' ) && /, 2,/.test( php ) ? 1 : 0;
+        return strings[ index ][2].replace( /\\'/g, "'" ).replace( /'/g, "\\'" );
+    } );
+}
+
 function harness() {
     const elements = new Map();
+    const handlers = new Map();
     const created = [];
     const context = {
         statusLabels: {}, rollbackStatusLabels: {}, rollbackActionLabels: { retry: 'Retry', rollBack: 'Roll Back' }, restoreOutcomeMessages: {},
@@ -32,25 +41,26 @@ function harness() {
             show() { state.visible = true; return this; },
             hide() { state.visible = false; return this; },
             toggle( value ) { state.visible = value; return this; },
-            attr() { return this; }
+            attr() { return this; },
+            on( event, callback ) { handlers.set( selector + ':' + event, callback ); return this; }
         };
         if ( ! selector.startsWith( '<' ) ) elements.set( selector, element );
         return element;
     };
     vm.createContext( context );
+    const labelsStart = source.indexOf( 'var restoreCancelLabels = ' );
+    vm.runInContext( phpToJs( source.slice( labelsStart, source.indexOf( '\n            };', labelsStart ) + '\n            };'.length ) ), context );
     for ( const name of [ 'showReconcileNote', 'showProgress' ] ) {
         const start = source.indexOf( 'function ' + name + '(' );
         assert.ok( start >= 0 );
         const code = source.slice( start, source.indexOf( '\n            }', start ) + '\n            }'.length );
-        vm.runInContext( code.replace( /<\?php[\s\S]*?\?>/g, php => {
-            const strings = [ ...php.matchAll( /(['"])((?:\\.|(?!\1)[\s\S])*?)\1/g ) ];
-            const index = php.includes( '_n(' ) && /, 2,/.test( php ) ? 1 : 0;
-            return strings[ index ][2].replace( /\\'/g, "'" ).replace( /'/g, "\\'" );
-        } ), context );
+        vm.runInContext( phpToJs( code ), context );
     }
+    const clickStart = source.indexOf( "$( '#mainwp-restore-cancel-btn' ).on( 'click'" );
+    vm.runInContext( phpToJs( source.slice( clickStart, source.indexOf( '\n            } );', clickStart ) + '\n            } );'.length ) ), context );
     const note = () => context.$( '#mainwp-restore-reconcile-note' ).state;
     const text = node => [ node.text, ...node.children.map( text ) ].join( ' ' );
-    return { context, note, text, created };
+    return { context, note, text, created, cancel: () => handlers.get( '#mainwp-restore-cancel-btn:click' )() };
 }
 
 test( 'kept files show totals, reasons and at most twenty paths as text', () => {
@@ -146,10 +156,54 @@ test( 'cancel and rollback stay hidden without the restore right', () => {
     for ( const canRestore of [ true, false ] ) {
         const h = harness();
         h.context.canRestore = canRestore;
-        h.context.showProgress( { status: 'running', sub_type: 'full' } );
+        h.context.showProgress( { status: 'running', sub_type: 'full', cancel_action: 'cancel' } );
         assert.equal( h.context.$( '#mainwp-restore-cancel-btn' ).state.visible, canRestore );
         assert.equal( h.context.$( '#mainwp-restore-cancel-warning' ).state.visible, canRestore );
         h.context.showProgress( { status: 'completed', sub_type: 'full', has_rollback: true } );
         assert.equal( h.context.$( '#mainwp-restore-rollback-btn' ).state.visible, canRestore );
+    }
+} );
+
+test( 'resolved cancel actions control the label and preserve restore rights', () => {
+    for ( const canRestore of [ true, false ] ) {
+        const h = harness();
+        h.context.canRestore = canRestore;
+        for ( const action of [ 'stop_checking', 'cancel', '' ] ) {
+            h.context.showProgress( { status: 'failed_retryable', cancel_action: action, cancel_requested: action === 'stop_checking' } );
+            const button = h.context.$( '#mainwp-restore-cancel-btn' ).state;
+            assert.equal( button.visible, canRestore && action !== '' );
+            if ( action ) assert.equal( button.text, action === 'stop_checking' ? 'Stop Checking' : 'Cancel Restore' );
+            assert.equal( h.context.$( '#mainwp-restore-cancel-warning' ).state.visible, false );
+        }
+    }
+} );
+
+test( 'a stopped verification shows its result and retains rollback', () => {
+    const h = harness();
+    h.context.showProgress( { status: 'failed_permanent', cancel_action: '', verify_stopped: true, has_rollback: true, last_error: 'Raw unreachable error' } );
+    assert.equal( h.context.$( '#mainwp-restore-result-message' ).state.text, 'Stopped checking. The restore finished on the site, but the Dashboard could not reach it afterwards, so this restore is recorded as failed. Open the site to check it.' );
+    assert.equal( h.context.$( '#mainwp-restore-rollback-btn' ).state.visible, true );
+    assert.equal( h.context.$( '#mainwp-restore-cancel-btn' ).state.visible, false );
+} );
+
+test( 'only a successful stop polls at once; refusals paint the error', () => {
+    for ( const response of [ { result: 'stopped' }, { result: 'ok' }, { result: 'pending' }, { error: 'Refused' }, { error: 'Server refusal', error_code: 'mainwp_restore_checking_changed' } ] ) {
+        const h = harness();
+        let polls = 0;
+        let clears = 0;
+        Object.assign( h.context, { ajaxurl: '/ajax', nonces: { cancel: 'nonce' }, currentJob: 42, poll: () => { polls++; } } );
+        h.context.window.clearTimeout = () => { clears++; };
+        h.context.$.post = ( url, data, callback ) => {
+            assert.equal( data.action, 'mainwp_restore_cancel' );
+            assert.equal( data.job_id, 42 );
+            callback( response );
+        };
+        h.cancel();
+        assert.equal( polls, response.result === 'stopped' ? 1 : 0 );
+        assert.equal( clears, polls );
+        if ( response.error ) {
+            const expected = response.error_code ? h.context.restoreCancelLabels.checking : response.error;
+            assert.equal( h.context.$( '#mainwp-restore-result-message' ).state.text, expected );
+        }
     }
 } );

@@ -5202,7 +5202,7 @@ class MainWP_Abilities_Backups {
             'mainwp/cancel-restore-v1',
             array(
                 'label'               => __( 'Cancel Restore', 'mainwp' ),
-                'description'         => __( 'Request cancellation of a restore job that has not reached verification. cancel_pending means the request is recorded but the job has not stopped; a request recorded before staging is applied when the job reaches staging. Poll get-restore-job-v1 until the stop is confirmed. Results: cancelled, cancel_pending, cancel_unconfirmed (the site never confirmed within 15 minutes and may be partly restored), ended_failed, or not_cancellable. Possible errors: mainwp_backup_restore_job_not_found, mainwp_operation_failed, mainwp_restore_schema_repair_pending.', 'mainwp' ),
+                'description'         => __( 'Request cancellation of a restore job that has not reached verification, or stop checking a completed restore when the Dashboard cannot reach the site. Stopping checks ends the job as failed and keeps rollback available where a safety backup exists. cancel_pending means the request is recorded but the job has not stopped; a request recorded before staging is applied when the job reaches staging. Poll get-restore-job-v1 until the stop is confirmed. Results: cancelled, cancel_pending, cancel_unconfirmed (the site never confirmed within 15 minutes and may be partly restored), ended_failed, or not_cancellable. Possible errors: mainwp_backup_restore_job_not_found, mainwp_operation_failed, mainwp_restore_schema_repair_pending.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::cancel_restore_input_schema(),
@@ -5430,7 +5430,7 @@ class MainWP_Abilities_Backups {
                     'result'         => array(
                         'type'        => 'string',
                         'enum'        => array( 'cancelled', 'cancel_pending', 'cancel_unconfirmed', 'ended_failed', 'not_cancellable' ),
-                        'description' => 'cancelled: the job stopped and the site confirmed, or never had a restore task. cancel_pending: the request is recorded but the job has not stopped; a request recorded before staging is applied when the job reaches staging. Poll get-restore-job-v1 until the stop is confirmed. cancel_unconfirmed: the site never confirmed it stopped within 15 minutes. ended_failed: the restore had already failed; the cancel stopped any further attempt and the site confirmed. not_cancellable: the job had already finished or is verifying.',
+                        'description' => 'cancelled: the job stopped and the site confirmed, or never had a restore task. cancel_pending: the request is recorded but the job has not stopped; a request recorded before staging is applied when the job reaches staging. Poll get-restore-job-v1 until the stop is confirmed. cancel_unconfirmed: the site never confirmed it stopped within 15 minutes. ended_failed: the restore had already failed and the site confirmed the cancel, or checks were stopped after the restore finished on the site. Rollback stays available where a safety backup exists. not_cancellable: the job had already finished, is running its first verification check, or a verification retry is checking right now.',
                     ),
                     'status'         => $status,
                 ),

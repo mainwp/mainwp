@@ -266,6 +266,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $reasons  = 'cancel_unconfirmed' === $outcome ? array( 'cancel_unconfirmed' ) : array();
         $transfer = isset( $job->checkpoint['transfer'] ) ? (array) $job->checkpoint['transfer'] : array();
         $plan     = isset( $job->checkpoint['plan'] ) ? (array) $job->checkpoint['plan'] : array();
+        $action   = MainWP_Backup_Restore_Orchestrator::resolve_cancel_action( $job );
 
         return (
             array_merge(
@@ -284,6 +285,8 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'artifact_total'        => count( $plan ),
                     'has_rollback'          => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $job ),
                     'cancel_requested'      => ! empty( $job->checkpoint['cancel_intent'] ),
+                    'cancel_action'         => 'none' === $action ? '' : $action,
+                    'verify_stopped'        => ! empty( $job->checkpoint['verify_stopped'] ),
                     'sub_type'              => (string) ( $job->checkpoint['sub_type'] ?? '' ),
                     'is_rollback'           => ! empty( $job->checkpoint['is_rollback'] ),
                     'verification'          => isset( $job->checkpoint['verification'] ) ? $job->checkpoint['verification'] : array(),

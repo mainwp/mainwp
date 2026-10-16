@@ -384,6 +384,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 snapshotsCleanup: '<?php echo esc_js( wp_create_nonce( 'mainwp_snapshots_cleanup' ) ); ?>'
             };
             var statusLabels = <?php echo wp_json_encode( $labels ); ?>;
+            var restoreCancelLabels = {
+                cancel: '<?php echo esc_js( esc_html__( 'Cancel Restore', 'mainwp' ) ); ?>',
+                stop_checking: '<?php echo esc_js( esc_html__( 'Stop Checking', 'mainwp' ) ); ?>',
+                checking: '<?php echo esc_js( esc_html__( 'The Dashboard is checking the site right now, or the restore status just changed. Try again in a moment.', 'mainwp' ) ); ?>',
+                stopped: '<?php echo esc_js( esc_html__( 'Stopped checking. The restore finished on the site, but the Dashboard could not reach it afterwards, so this restore is recorded as failed. Open the site to check it.', 'mainwp' ) ); ?>'
+            };
             var rollbackStatusLabels = <?php echo wp_json_encode( $rollback_labels ); ?>;
             var rollbackActionLabels = {
                 rollBack: '<?php echo esc_js( esc_html__( 'Roll Back', 'mainwp' ) ); ?>',
@@ -1010,14 +1016,15 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
 
                 var terminal = ( 'completed' === data.status || 'failed_permanent' === data.status || 'cancelled' === data.status );
-                var cancelPending = ! terminal && !! data.cancel_requested;
+                var cancelAction = data.cancel_action || '';
+                var cancelPending = ! terminal && 'cancel' === cancelAction && !! data.cancel_requested;
                 if ( cancelPending ) {
                     label = '<?php echo esc_js( esc_html__( 'Cancelling once the site finishes its current step', 'mainwp' ) ); ?>';
                 }
                 $( '#mainwp-restore-status-text' ).text( label );
 
                 $( '#mainwp-restore-spinner' ).toggle( ! terminal );
-                $( '#mainwp-restore-cancel-btn' ).toggle( canRestore && ! terminal && ! cancelPending && [ 'pending', 'pre_snapshot', 'staging', 'transferring', 'failed_retryable', 'running' ].indexOf( data.status ) !== -1 );
+                $( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels[ cancelAction ] || '' ).toggle( canRestore && ! terminal && ! cancelPending && [ 'cancel', 'stop_checking' ].indexOf( cancelAction ) !== -1 );
                 // A rollback job carries the safety backup it restores from, but
                 // that backup is not a way back from the rollback itself. A
                 // failed rollback still holds it, so it can be tried again.
@@ -1060,6 +1067,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( 'completed' === data.status ) {
                         $message.addClass( 'green' ).text( '<?php echo esc_js( esc_html__( 'The site was restored and responds normally.', 'mainwp' ) ); ?>' );
                         showPreserveNote( data.verification );
+                    } else if ( data.verify_stopped ) {
+                        $message.addClass( 'red' ).text( restoreCancelLabels.stopped );
                     } else if ( rolledBack && outcome ) {
                         // The restore failed but the database was recovered:
                         // the data is safe, so this reads as information.
@@ -1410,7 +1419,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             $( '#mainwp-restore-cancel-btn' ).on( 'click', function () {
                 $.post( ajaxurl, { action: 'mainwp_restore_cancel', security: nonces.cancel, job_id: currentJob }, function ( response ) {
                     if ( response.error ) {
-                        $( '#mainwp-restore-result-message' ).addClass( 'red' ).text( response.error ).show();
+                        $( '#mainwp-restore-result-message' ).addClass( 'red' ).text( 'mainwp_restore_checking_changed' === response.error_code ? restoreCancelLabels.checking : response.error ).show();
+                    } else if ( 'stopped' === response.result ) {
+                        window.clearTimeout( pollTimer );
+                        poll();
                     }
                 }, 'json' );
             } );

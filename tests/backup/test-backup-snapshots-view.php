@@ -86,10 +86,19 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$output = $this->render_page();
 
 		$this->assertMatchesRegularExpression(
-			"/#mainwp-restore-cancel-btn'\s*\)\.toggle\([^;]*'running'/s",
+			"/#mainwp-restore-cancel-btn'\s*\)\.text\([^;]*canRestore[^;]*'cancel', 'stop_checking'/s",
 			$output,
 			'The cancel button must be offered during the running status.'
 		);
+	}
+
+	/** A successful stop refreshes the terminal modal before its next scheduled poll. */
+	public function test_stop_checking_copy_and_immediate_poll_present() {
+		$output = $this->render_page();
+		$this->assertStringContainsString( "stop_checking: 'Stop Checking'", $output );
+		$this->assertStringContainsString( "'stopped' === response.result", $output );
+		$this->assertMatchesRegularExpression( "/'stopped' === response.result[^}]*clearTimeout\( pollTimer \);\s*poll\(\);/s", $output );
+		$this->assertStringContainsString( 'data.verify_stopped', $output );
 	}
 
 	/**
@@ -955,7 +964,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'id="mainwp-restore-snapshots-table"', $output, 'The list stays available.' );
 		$this->assertStringContainsString( 'var restore = snap.restorable && canRestore', $output );
 		$this->assertStringContainsString( 'if ( job.has_rollback && canRestore ) {', $output );
-		$this->assertStringContainsString( "\$( '#mainwp-restore-cancel-btn' ).toggle( canRestore && ", $output );
+		$this->assertStringContainsString( "\$( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels[ cancelAction ] || '' ).toggle( canRestore && ", $output );
 		$this->assertStringContainsString( "\$( '#mainwp-restore-rollback-btn' ).toggle( canRestore && ", $output );
 	}
 }

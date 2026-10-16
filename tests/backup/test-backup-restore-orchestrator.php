@@ -18,6 +18,7 @@ use MainWP\Dashboard\MainWP_Backup_Private_Root;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
+use MainWP\Dashboard\MainWP_Backup_Run_History;
 use MainWP\Dashboard\MainWP_Backup_Retention_Executor;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
@@ -2012,7 +2013,24 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 */
 	public function test_cancellation_decision_matrix( $status, $resume, $answer, $records, $refused, $expected, $lane, $child_task_id = 'task-9-restore', $fixture = array() ) {
 		if ( null !== $lane ) {
-			$this->assert_cancellation_decision( $status, $resume, $answer, $records, $refused, $expected, $lane, $child_task_id, $fixture );
+			if ( 'failed_retryable' === $status && 'verifying' === $resume ) {
+				// Worker completion still clears an old cancel intent; the user's stop ends the checks instead.
+				$stop_expected = $refused ? array( 'failed_retryable', null, array(), false, null, true, null ) : array(
+					'failed_permanent',
+					null,
+					array(),
+					true,
+					array(
+						'error'      => 'The site did not respond after the restore. The restore completed on the child; check the site directly.',
+						'error_code' => '',
+					),
+					true,
+					null,
+				);
+				$this->assert_cancellation_decision( $status, $resume, $answer, $records, $refused, $stop_expected, $refused ? 'throws:retry' : 'stopped', $child_task_id, $fixture );
+			} else {
+				$this->assert_cancellation_decision( $status, $resume, $answer, $records, $refused, $expected, $lane, $child_task_id, $fixture );
+			}
 		}
 		$this->assert_cancellation_decision( $status, $resume, $answer, $records, $refused, $expected, null, $child_task_id, $fixture );
 	}
@@ -2162,8 +2180,8 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				try {
 					$result = $this->orchestrator->cancel_job( (int) $job->id );
 				} catch ( MainWP_Exception $exception ) {
-					$this->assertStringContainsString( 'already finished on the site', $exception->getMessage() );
-					$result = 'throws:finished';
+					$this->assertStringContainsString( 'throws:retry' === $lane ? 'Try again in a moment.' : 'already finished on the site', $exception->getMessage() );
+					$result = 'throws:retry' === $lane ? 'throws:retry' : 'throws:finished';
 				}
 				$this->assertSame( $lane, $result );
 			}
@@ -7197,7 +7215,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 					$exception->getMessage()
 				);
 			}
-			$this->assertSame( $status, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
+			$this->assertEquals( $job, MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id ) );
 			$this->assertSame( array(), $this->calls );
 			MainWP_Backup_Restore_Job_Store::instance()->cancel_job( (int) $job->id );
 		}
@@ -7210,6 +7228,106 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		}
 		$this->assertSame( 'cancelled', MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id )->status );
 		$this->assertSame( array(), $this->calls );
+	}
+
+	/** Stopping verification retains the failure and runs the terminal tail once. */
+	public function test_stop_checking_preserves_failure_and_ends_retries() {
+		global $wpdb;
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$store      = MainWP_Backup_Restore_Job_Store::instance();
+		$job        = $this->make_job(
+			array(
+				'resume_status'          => 'verifying',
+				'last_error_code'        => 'unreachable_test',
+				'pre_snapshot_artifacts' => array( array( 'file' => 'safety.tar.gz' ) ),
+			),
+			'failed_retryable',
+			array(
+				'last_error'           => 'Stored unreachable message.',
+				'next_retry_at'        => time() + 3600,
+				'child_task_id'        => 'finished-task',
+				'pre_snapshot_task_id' => 'safety-task',
+			)
+		);
+		$history_id = MainWP_Backup_Run_History::start( 0, $this->site_id, time(), 'restore_safety', 0, (int) $job->id, 'safety-task' );
+		$this->assertGreaterThan( 0, $history_id );
+		$staging = MainWP_Backup_Restore_Transfer_Driver::instance()->staging_dir( (int) $job->id );
+		wp_mkdir_p( $staging );
+		file_put_contents( $staging . 'backup.zip', 'staged backup' );
+		MainWP_DB::instance()->update_website_option(
+			$this->site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id' => 'safety-task',
+					'owner'   => (string) $job->id,
+				)
+			)
+		);
+		$events = array();
+		$failed = static function ( $event ) use ( &$events ) {
+			$events[] = $event;
+		};
+		add_action( 'mainwp_backup_restore_failed', $failed );
+		try {
+			$this->assertSame( 'stopped', $this->orchestrator->cancel_job( (int) $job->id ) );
+			$final = $store->get_job( (int) $job->id );
+			$this->assertSame( 'failed_permanent', $final->status );
+			$this->assertSame( $job->last_error, $final->last_error );
+			$this->assertSame( 'unreachable_test', $final->checkpoint['last_error_code'] );
+			$this->assertGreaterThan( 0, $final->checkpoint['verify_stopped'] );
+			$this->assertTrue( $this->orchestrator->has_rollback_source( $final ) );
+			$this->assertFileDoesNotExist( $staging . 'backup.zip' );
+			$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+			$this->assertSame( 'failed', $wpdb->get_var( $wpdb->prepare( 'SELECT outcome FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ) . ' WHERE id = %d', $history_id ) ) ); // phpcs:ignore WordPress.DB -- test assertion.
+			$this->orchestrator->process_pending_restore_jobs( 1, (int) $job->id );
+			$this->assertEquals( $final, $store->get_job( (int) $job->id ) );
+			$this->assertCount( 1, $events );
+			$this->assertSame( $job->last_error, $events[0]['error'] );
+			$this->assertEmpty( $this->calls );
+		} finally {
+			remove_action( 'mainwp_backup_restore_failed', $failed );
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ), array( 'id' => $history_id ) );
+			MainWP_Backup_Restore_Transfer_Driver::instance()->cleanup_staging( (int) $job->id );
+		}
+	}
+
+	/** A cancel admitted before verification must not clear the newer retry's evidence. */
+	public function test_cancel_reresolves_before_any_checkpoint_write() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array(), 'running', array( 'child_task_id' => 'finished-task' ) );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$reads = 0;
+		$raced = null;
+		$hook  = function ( $sql ) use ( &$hook, &$reads, &$raced, $table, $store, $job ) {
+			if ( ( 'SELECT * FROM ' . $table . ' WHERE id = ' . $job->id ) === $sql && 2 === ++$reads ) {
+				remove_filter( 'query', $hook );
+				$this->assertTrue(
+					$store->save_checkpoint(
+						(int) $job->id,
+						array(
+							'resume_status'   => 'verifying',
+							'last_error_code' => 'unreachable_test',
+						)
+					)
+				);
+				$store->set_status( (int) $job->id, 'failed_retryable', array( 'last_error' => 'Stored unreachable message.' ) );
+				$raced = $store->get_job( (int) $job->id );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $hook );
+		try {
+			$this->orchestrator->cancel_job( (int) $job->id );
+			$this->fail( 'A changed action must require a fresh decision.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Restore_Orchestrator::CANCEL_CHECKING_CHANGED, $error->get_message_error_code() );
+		} finally {
+			remove_filter( 'query', $hook );
+		}
+		$this->assertNotNull( $raced );
+		$this->assertEquals( $raced, $store->get_job( (int) $job->id ) );
+		$this->assertEmpty( $this->calls );
 	}
 
 	/**

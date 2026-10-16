@@ -10,6 +10,8 @@
     "artifact_total": 1,
     "has_rollback": false,
     "cancel_requested": false,
+    "cancel_action": "",
+    "verify_stopped": false,
     "sub_type": "full",
     "is_rollback": false,
     "verification": [],

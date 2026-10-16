@@ -7319,6 +7319,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				'child_task_id' => 'finished-task',
 			)
 		);
+
 		$this->responses['backup_task_prune'] = $this->prune_answer( 'pruned' );
 		$this->orchestrator->on_probe         = static function () use ( $wpdb, $table, $job ) {
 			$wpdb->update( $table, array( 'locked_until' => time() - 1 ), array( 'id' => (int) $job->id ) ); // phpcs:ignore WordPress.DB -- test fixture.

@@ -11,6 +11,7 @@ use MainWP\Dashboard\MainWP_Abilities_Backups;
 use MainWP\Dashboard\MainWP_Abilities_Util;
 use MainWP\Dashboard\MainWP_Backup_Operations;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_System_Cron_Jobs;
@@ -1387,5 +1388,77 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			$store->release_reservation( $hold );
 		}
+	}
+
+	/**
+	 * Previews and starts must resolve the same configuration without preview writes.
+	 *
+	 * @return array Coverage and Default cases.
+	 */
+	public static function manual_destination_cases() {
+		return array(
+			'default'    => array( false, true, true ),
+			'none'       => array( false, false, false ),
+			'task union' => array( true, true, true ),
+			'empty task' => array( true, true, false ),
+		);
+	}
+
+	/**
+	 * Dry-run must neither create a hidden task nor write options.
+	 *
+	 * @dataProvider manual_destination_cases
+	 * @param bool $covered Keep the scheduled fixture.
+	 * @param bool $has_default Mark a Default.
+	 * @param bool $uploads Expect an upload.
+	 */
+	public function test_manual_destination_preview_matches_start( $covered, $has_default, $uploads ) {
+		global $wpdb;
+		$db    = MainWP_DB_Backup::instance();
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$a     = $store->add_destination(
+			array(
+				'provider'   => 'local',
+				'name'       => 'Default archive',
+				'is_default' => $has_default,
+			)
+		);
+		$b     = $store->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Task archive',
+			)
+		);
+		$this->assertGreaterThan( 0, $a );
+		$this->assertGreaterThan( 0, $b );
+		if ( $covered ) {
+			$db->update_backup_task_with_values( $this->task_id, array( 'destinations' => wp_json_encode( $uploads ? array( $b ) : array() ) ) );
+		} else {
+			$this->assertSame( 1, $wpdb->delete( $table, array( 'id' => $this->task_id ) ) );
+		}
+		$ids   = $uploads ? array( $covered ? $b : $a ) : array();
+		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifier.
+		$this->assertNull( $db->get_manual_backup_task( $this->site_id ) );
+		$direct = $this->guarded(
+			function () {
+				return MainWP_Backup_Operations::preview_site_backup( $this->site_id );
+			}
+		);
+		$output = $this->execute(
+			'run-site-backup',
+			array(
+				'site_id_or_domain' => $this->site_id,
+				'dry_run'           => true,
+			)
+		);
+		$this->assert_output( 'run-site-backup', $output );
+		$this->assertSame( $ids, array_column( $direct['would_affect']['destinations'], 'id' ) );
+		$this->assertSame( $ids, array_column( $output['would_affect']['destinations'], 'id' ) );
+		$this->assertSame( $count, (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifier.
+		$this->assertNull( $db->get_manual_backup_task( $this->site_id ) );
+		$task = $db->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) );
+		$this->assertSame( $ids, json_decode( $task->destinations, true ) );
+		$this->assertSame( array(), $this->child_calls );
 	}
 }

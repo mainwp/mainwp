@@ -5,8 +5,8 @@
  * The Snapshots/restore surface shows a note next to "Back up now" when the
  * site has no offsite destination, so an on-demand backup that will stay on
  * the dashboard does not look like a misconfiguration. The note's initial
- * visibility is decided server-side from the same destinations union the
- * manual task inherits.
+ * visibility is decided server-side from the same destination plan the
+ * manual task uses.
  *
  * @package MainWP\Dashboard\Tests
  */
@@ -104,7 +104,7 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * With no scheduled task, the on-demand backup stays local, so the note
+	 * Without a scheduled task or Default, the backup stays local, so the note
 	 * renders visible (local-only flagged on).
 	 *
 	 * @return void
@@ -138,6 +138,13 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 				'name'     => 'A archive',
 			)
 		);
+		$destinations->add_destination(
+			array(
+				'provider'   => 'local',
+				'name'       => 'Unused Default',
+				'is_default' => 1,
+			)
+		);
 		$this->insert_scheduled_task( (string) $this->site_id, array( $dest_b, $dest_a ) );
 
 		$out = $this->render_surface();
@@ -146,7 +153,7 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'data-local-only="0"', $out );
 		$this->assertMatchesRegularExpression( '/id="mainwp-native-backup-now-note"[^>]*style="margin-top: \.5em; opacity: \.8;"/', $out );
 		$this->assertStringContainsString( '<span class="mainwp-backup-local-note" style="display: none;">', $out );
-		$this->assertStringContainsString( '<span class="mainwp-backup-destinations-note">Back Up Now saves this backup to the destinations of the scheduled backup tasks that include this site: Z &amp; archive, A archive.</span>', $out );
+		$this->assertStringContainsString( '<span class="mainwp-backup-destinations-note">Backup destinations: Dashboard + Z &amp; archive + A archive. These come from the scheduled backup tasks that include this site.</span>', $out );
 	}
 
 	/**
@@ -166,6 +173,58 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 		$out = $this->render_surface();
 
 		$this->assertStringContainsString( 'data-local-only="0"', $out );
-		$this->assertStringContainsString( 'include this site: Destination #' . $dest_id . ' (removed).', $out );
+		$this->assertStringContainsString( 'Backup destinations: Dashboard + Destination #' . $dest_id . ' (removed). These come from the scheduled backup tasks that include this site.', $out );
+	}
+
+	/** The Default must be visible before a site with no scheduled task starts. */
+	public function test_note_names_default_without_covering_task() {
+		$id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider'   => 'local',
+				'name'       => 'Default & archive',
+				'is_default' => 1,
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		$out = $this->render_surface();
+		$this->assertStringContainsString( 'data-local-only="0"', $out );
+		$this->assertStringContainsString( '<span class="mainwp-backup-destinations-note">Backup destinations: Dashboard + Default &amp; archive. No scheduled backup task includes this site, so Back Up Now uses the Default destination.</span>', $out );
+		$this->assertStringContainsString( '<span class="mainwp-backup-local-note" style="display: none;">', $out );
+	}
+
+	/** An empty covering task deliberately keeps its site Dashboard-only. */
+	public function test_empty_covering_task_explains_dashboard_only() {
+		MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider'   => 'local',
+				'name'       => 'Unused Default',
+				'is_default' => 1,
+			)
+		);
+		$this->insert_scheduled_task( (string) $this->site_id, array() );
+		$out = $this->render_surface();
+		$this->assertStringContainsString( 'data-local-only="1"', $out );
+		$this->assertStringContainsString( '<span class="mainwp-backup-local-note">The scheduled backup tasks that include this site have no backup destination, so this backup will be kept on the dashboard.</span>', $out );
+		$this->assertStringContainsString( '<span class="mainwp-backup-destinations-note" style="display: none;">', $out );
+	}
+
+	/** Both sources must treat stored destination names as untrusted text. */
+	public function test_destination_names_are_escaped_for_tasks_and_default() {
+		$name = '<img src=x onerror=alert(1)> & archive';
+		$id   = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider'   => 'local',
+				'name'       => $name,
+				'is_default' => 1,
+			)
+		);
+		foreach ( array( 'default', 'tasks' ) as $source ) {
+			if ( 'tasks' === $source ) {
+				$this->insert_scheduled_task( (string) $this->site_id, array( $id ) );
+			}
+			$out = $this->render_surface();
+			$this->assertStringNotContainsString( $name, $out );
+			$this->assertStringContainsString( 'Backup destinations: Dashboard + &lt;img src=x onerror=alert(1)&gt; &amp; archive.', $out );
+		}
 	}
 }

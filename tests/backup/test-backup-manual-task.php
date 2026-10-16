@@ -8,7 +8,7 @@
  * backstop flow through the existing scheduled-backup machinery. These
  * tests cover the get-or-create, its hidden + standalone shape, the
  * configurable retention, and the destinations inherited from the site's
- * scheduled tasks.
+ * scheduled tasks or the Default for sites outside those tasks.
  *
  * @package MainWP\Dashboard\Tests
  */
@@ -19,6 +19,11 @@ use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Backup_Settings;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
+use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
+use MainWP\Dashboard\MainWP_Backup_Storage_Handler;
+use MainWP\Dashboard\MainWP_Backup_Upload_Driver;
+use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
 
 /**
  * Class MainWP_Backup_Manual_Task_Test
@@ -45,6 +50,7 @@ class MainWP_Backup_Manual_Task_Test extends MainWP_Abilities_Test_Case {
 		$wpdb->query( "DELETE FROM {$table} WHERE name = 'On-demand backup' OR name LIKE 'Manual task test%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test cleanup, identifiers cannot be prepared.
 
 		delete_option( 'mainwp_on_demand_retention_count' );
+		delete_option( 'mainwp_enableNativeBackups' );
 
 		parent::tear_down();
 	}
@@ -235,12 +241,283 @@ class MainWP_Backup_Manual_Task_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A site with no scheduled task inherits no destinations (local-only).
+	 * With neither a scheduled task nor a Default, the backup stays local.
 	 *
 	 * @return void
 	 */
 	public function test_destinations_empty_when_no_scheduled_task() {
 		$this->assertSame( array(), MainWP_DB_Backup::instance()->manual_backup_task_destinations( $this->site_id ) );
+	}
+
+	/**
+	 * Coverage must not depend on destinations, pause state or hidden rows.
+	 *
+	 * @return array Cases.
+	 */
+	public static function destination_plans() {
+		return array(
+			'default'             => array( 'default', 'default' ),
+			'none'                => array( 'none', 'none' ),
+			'task union'          => array( 'union', 'tasks' ),
+			'empty covering task' => array( 'empty', 'tasks' ),
+			'group only'          => array( 'group', 'tasks' ),
+			'paused only'         => array( 'paused', 'tasks' ),
+			'hidden only'         => array( 'hidden', 'default' ),
+			'invalid credentials' => array( 'invalid', 'default' ),
+		);
+	}
+
+	/**
+	 * The persisted plan must drive the existing snapshot upload listener.
+	 *
+	 * @dataProvider destination_plans
+	 * @param string $variant Fixture variant.
+	 * @param string $source Expected origin.
+	 */
+	public function test_plan_drives_hidden_task_and_uploads( $variant, $source ) {
+		global $wpdb;
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$store   = MainWP_Backup_Storage_Destinations::instance();
+		$db      = MainWP_DB_Backup::instance();
+		$default = $this->destination( true );
+		$other   = $this->destination( false );
+		$ids     = array( $default );
+		if ( 'none' === $variant ) {
+			$this->assertTrue( $store->update_destination( $default, array( 'is_default' => 0 ) ) );
+			$ids = array();
+		} elseif ( 'union' === $variant ) {
+			$extra = $this->destination( false );
+			$this->insert_scheduled_task( (string) $this->site_id, array( $extra, $other ) );
+			$this->insert_scheduled_task( (string) $this->site_id, array( $other, $extra ) );
+			$ids = array( $extra, $other );
+		} elseif ( in_array( $variant, array( 'empty', 'group', 'paused' ), true ) ) {
+			$task_id = $this->insert_scheduled_task( (string) $this->site_id, array() );
+			$ids     = array();
+			if ( 'paused' === $variant ) {
+				$db->update_backup_task_with_values( $task_id, array( 'paused' => 1 ) );
+			} elseif ( 'group' === $variant ) {
+				$this->site_id = $this->create_test_site();
+				$this->assertNotFalse(
+					$wpdb->insert(
+						$wpdb->prefix . 'mainwp_wp_group',
+						array(
+							'wpid'    => $this->site_id,
+							'groupid' => 990019,
+						)
+					)
+				);
+				$db->update_backup_task_with_values(
+					$task_id,
+					array(
+						'sites'  => '',
+						'groups' => '990019',
+					)
+				);
+			}
+		} elseif ( 'hidden' === $variant ) {
+			$task = $db->ensure_manual_backup_task( $this->website() );
+			$db->update_backup_task_with_values( (int) $task->id, array( 'destinations' => wp_json_encode( array( $other ) ) ) );
+		} elseif ( 'invalid' === $variant ) {
+			$this->assertNotFalse( $wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), array( 'settings' => 'invalid-envelope' ), array( 'id' => $default ) ) );
+			$this->assertTrue( $store->get_destination( $default )->credentials_invalid );
+		}
+
+		$this->assertSame(
+			array(
+				'ids'    => $ids,
+				'source' => $source,
+			),
+			$db->manual_backup_destination_plan( $this->site_id )
+		);
+		$this->assertSame( $ids, $db->manual_backup_task_destinations( $this->site_id ) );
+		$task = $db->ensure_manual_backup_task( $this->website() );
+		$this->assertSame( $ids, json_decode( $task->destinations, true ) );
+		$this->assertSame( $ids, $this->snapshot_upload_destinations( $task ) );
+	}
+
+	/**
+	 * Public storage writes keep the fixture on the production credential path.
+	 *
+	 * @param bool $is_default Whether to select it.
+	 * @return int Destination identity.
+	 */
+	private function destination( $is_default ) {
+		$id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'Manual task destination',
+				'is_default' => $is_default,
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		return $id;
+	}
+
+	/**
+	 * Snapshot recording must read the hidden row rather than resolve again.
+	 *
+	 * @param object $task Hidden task.
+	 * @return int[] Enqueued destinations.
+	 */
+	private function snapshot_upload_destinations( $task ) {
+		$id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'site_id'  => $this->site_id,
+				'task_id'  => (int) $task->id,
+				'type'     => 'full',
+				'archives' => array(),
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		MainWP_Backup_Upload_Driver::instance()->on_snapshot_recorded( $id, (int) $task->id, $this->site_id );
+		return array_map(
+			static function ( $job ) {
+				return (int) $job->destination_id;
+			},
+			MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id )
+		);
+	}
+
+	/**
+	 * A rendered destination is informational; each click must read current state.
+	 *
+	 * @return array Changes.
+	 */
+	public static function default_changes() {
+		return array(
+			'cleared' => array( 'clear' ),
+			'changed' => array( 'change' ),
+			'deleted' => array( 'delete' ),
+		);
+	}
+
+	/**
+	 * Reusing a hidden task must discard the previous Default after a change.
+	 *
+	 * @dataProvider default_changes
+	 * @param string $change Storage mutation.
+	 */
+	public function test_next_start_uses_current_default( $change ) {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$db    = MainWP_DB_Backup::instance();
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$a     = $this->destination( true );
+		$task  = $db->ensure_manual_backup_task( $this->website() );
+		$this->assertSame( array( $a ), json_decode( $task->destinations, true ) );
+		ob_start();
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		\MainWP\Dashboard\MainWP_Backup_Snapshots_View::render_restore_surface( $this->site_id, true );
+		$rendered = ob_get_clean();
+		$this->assertStringContainsString( 'data-local-only="0"', $rendered );
+		$ids = array();
+		if ( 'change' === $change ) {
+			$ids = array( $this->destination( true ) );
+		} elseif ( 'clear' === $change ) {
+			$this->assertTrue( $store->update_destination( $a, array( 'is_default' => 0 ) ) );
+		} else {
+			$this->assertSame( array( 'deleted' => true ), MainWP_Backup_Storage_Handler::delete_destination_flow( $a, true ) );
+		}
+		$next = $db->ensure_manual_backup_task( $this->website() );
+		$this->assertSame( (int) $task->id, (int) $next->id );
+		$this->assertSame( $ids, json_decode( $next->destinations, true ) );
+		$this->assertSame(
+			array(
+				'ids'    => $ids,
+				'source' => empty( $ids ) ? 'none' : 'default',
+			),
+			$db->manual_backup_destination_plan( $this->site_id )
+		);
+	}
+
+	/** A confirmed deletion must detach the Default before the listener runs. */
+	public function test_deleted_default_after_start_enqueues_nothing() {
+		$id   = $this->destination( true );
+		$db   = MainWP_DB_Backup::instance();
+		$task = $db->ensure_manual_backup_task( $this->website() );
+		$this->assertSame( array( $id ), json_decode( $task->destinations, true ) );
+		$this->assertSame( array( 'deleted' => true ), MainWP_Backup_Storage_Handler::delete_destination_flow( $id, true ) );
+		$this->assertSame( array(), json_decode( $db->get_manual_backup_task( $this->site_id )->destinations, true ) );
+		$this->assertSame( array(), $this->snapshot_upload_destinations( $task ) );
+	}
+
+	/** The fallback must not depend on who owns tasks or can edit storage. */
+	public function test_restricted_user_has_identical_plan() {
+		$id    = $this->destination( true );
+		$db    = MainWP_DB_Backup::instance();
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$staff = self::factory()->user->create( array( 'role' => 'subscriber' ) );
+		$scope = function ( $allowed ) use ( $staff ) {
+			return get_current_user_id() === $staff ? array( $this->site_id ) : $allowed;
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		try {
+			foreach ( array( 'default', 'tasks' ) as $source ) {
+				if ( 'tasks' === $source ) {
+					$this->insert_scheduled_task( (string) $this->site_id, array( $this->destination( false ) ) );
+				}
+				wp_set_current_user( $admin );
+				$plan = $db->manual_backup_destination_plan( $this->site_id );
+				$this->assertSame( $source, $plan['source'] );
+				wp_set_current_user( $staff );
+				$this->assertFalse( current_user_can( 'manage_options' ) );
+				$this->assertSame( $plan, $db->manual_backup_destination_plan( $this->site_id ) );
+			}
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		}
+	}
+
+	/** Removing the last coverage must release the site to the Default. */
+	public function test_removed_coverage_restores_default() {
+		global $wpdb;
+		$id = $this->destination( true );
+		$db = MainWP_DB_Backup::instance();
+		foreach ( array( 'edit', 'delete' ) as $change ) {
+			$task_id = $this->insert_scheduled_task( (string) $this->site_id, array() );
+			$this->assertSame(
+				array(
+					'ids'    => array(),
+					'source' => 'tasks',
+				),
+				$db->manual_backup_destination_plan( $this->site_id )
+			);
+			if ( 'edit' === $change ) {
+				$db->update_backup_task_with_values( $task_id, array( 'sites' => '990011' ) );
+			} else {
+				$this->assertSame( 1, $wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'id' => $task_id ) ) );
+			}
+			$this->assertSame(
+				array(
+					'ids'    => array( $id ),
+					'source' => 'default',
+				),
+				$db->manual_backup_destination_plan( $this->site_id )
+			);
+		}
+	}
+
+	/** Stray Default flags must resolve consistently without loading credentials. */
+	public function test_default_id_matches_latest_default_without_settings() {
+		global $wpdb;
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$this->assertSame( 0, $store->get_default_id() );
+		$a = $this->destination( true );
+		$b = $this->destination( true );
+		$this->assertSame( 1, $wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), array( 'is_default' => 1 ), array( 'id' => $a ) ) );
+		$queries = array();
+		$capture = static function ( $sql ) use ( &$queries ) {
+			$queries[] = $sql;
+			return $sql;
+		};
+		add_filter( 'query', $capture );
+		try {
+			$this->assertSame( $b, $store->get_default_id() );
+		} finally {
+			remove_filter( 'query', $capture );
+		}
+		$this->assertCount( 1, $queries );
+		$this->assertSame( 'SELECT id FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ) . ' WHERE is_default = 1 ORDER BY id DESC LIMIT 1', $queries[0] );
+		$this->assertSame( $b, (int) $store->get_default()->id );
 	}
 
 	/**

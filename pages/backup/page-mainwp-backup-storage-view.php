@@ -53,7 +53,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         </div>
         <?php endif; ?>
         <div class="ui padded segment" id="mainwp-backup-storage">
-            <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-storage-info-message', __( 'Storage destinations are where backup tasks copy their backups after each run. Choose them on each backup task.', 'mainwp' ) ); ?>
+            <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-storage-info-message', __( 'Storage destinations are where backup tasks and Back Up Now copy their backups after each run. Choose them on each backup task, or mark one as Default.', 'mainwp' ) ); ?>
             <?php static::render_oauth_notice(); ?>
             <?php if ( ! empty( $_GET['sftp_trust_reset'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only save notice. ?>
                 <div class="ui yellow message"><?php echo esc_html( MainWP_Backup_Storage_Handler::sftp_trust_reset_notice() ); ?></div>
@@ -372,6 +372,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Use as default destination', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
                         <input type="checkbox" id="mainwp-storage-is-default"/>
+                        <label for="mainwp-storage-is-default"><?php esc_html_e( 'Back Up Now sends backups here for sites that no scheduled backup task includes. New backup tasks also start with this destination selected.', 'mainwp' ); ?></label>
                     </div>
                 </div>
                 <div class="ui divider"></div>

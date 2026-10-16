@@ -34,6 +34,7 @@
     "site_url": "https://parity.example.org/",
     "local_only": true,
     "manual_destinations": [],
+    "destinations_source": "tasks",
     "active_restore_job_id": 0,
     "failed_restore_jobs": [
         {

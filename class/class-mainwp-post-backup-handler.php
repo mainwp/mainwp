@@ -338,7 +338,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
         unset( $failed_row );
         $manual_task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
-        $manual_ids  = MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id );
+        $manual_plan = MainWP_DB_Backup::instance()->manual_backup_destination_plan( $site_id );
+        $manual_ids  = $manual_plan['ids'];
         sort( $manual_ids, SORT_NUMERIC );
         $manual_destinations = array();
         foreach ( $manual_ids as $destination_id ) {
@@ -357,6 +358,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'site_url'              => (string) $website->url,
                 'local_only'            => empty( $manual_ids ),
                 'manual_destinations'   => $manual_destinations,
+                'destinations_source'   => $manual_plan['source'],
                 'active_restore_job_id' => $restore_jobs['active_restore_job_id'],
                 'failed_restore_jobs'   => $failed_rows,
                 'site_disconnected'     => static::site_is_disconnected( $website ),

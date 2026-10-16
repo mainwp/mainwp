@@ -2871,7 +2871,7 @@ class MainWP_Abilities_Backups {
             'mainwp/run-site-backup-v1',
             array(
                 'label'               => __( 'Run Site Backup', 'mainwp' ),
-                'description'         => __( 'Start an on-demand full backup of one site now (Back Up Now). Returns a handle; the backup continues under cron. Poll get-site-backup-progress-v1 with the returned poll.input until on_demand.status is completed or failed. Once the snapshot lands, on-demand snapshots beyond the retention count are pruned; dry_run lists them. Possible errors: mainwp_backup_legacy_disabled, mainwp_backup_site_disconnected, mainwp_backup_already_running, mainwp_backup_start_failed, mainwp_site_not_found.', 'mainwp' ),
+                'description'         => __( 'Start an on-demand full backup of one site now (Back Up Now). Returns a handle; the backup continues under cron. The backup uploads to the destinations of the scheduled backup tasks that include the site, or to the Default destination when no task includes it; dry_run returns them as destinations. Poll get-site-backup-progress-v1 with the returned poll.input until on_demand.status is completed or failed. Once the snapshot lands, on-demand snapshots beyond the retention count are pruned; dry_run lists them. Possible errors: mainwp_backup_legacy_disabled, mainwp_backup_site_disconnected, mainwp_backup_already_running, mainwp_backup_start_failed, mainwp_site_not_found.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::run_site_backup_input_schema(),
@@ -2945,8 +2945,9 @@ class MainWP_Abilities_Backups {
                         'description' => 'An on-demand run is already open; confirm would attach to it instead of starting another.',
                     ),
                     'destinations'             => array(
-                        'type'  => 'array',
-                        'items' => array(
+                        'description' => 'Where the backup uploads, besides the copy kept on the Dashboard: the destinations of the scheduled backup tasks that include the site, or the Default destination when no task includes it. Empty means Dashboard only.',
+                        'type'        => 'array',
+                        'items'       => array(
                             'type'                 => 'object',
                             'additionalProperties' => false,
                             'required'             => array(
@@ -5604,7 +5605,7 @@ class MainWP_Abilities_Backups {
             'mainwp/set-default-backup-destination-v1',
             array(
                 'label'               => __( 'Set Default Backup Destination', 'mainwp' ),
-                'description'         => __( 'Make one destination the default: the one preselected when a backup task is created on the Backups page. Existing tasks keep their destinations. Requires an account with access to all sites. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled, mainwp_restricted_account.', 'mainwp' ),
+                'description'         => __( 'Make one destination the default. Back Up Now uploads to it for sites that no scheduled backup task includes, and new backup tasks on the Backups page start with it selected. Existing tasks keep their destinations. Requires an account with access to all sites. Possible errors: mainwp_backup_destination_not_found, mainwp_backup_legacy_disabled, mainwp_restricted_account.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::set_default_backup_destination_input_schema(),

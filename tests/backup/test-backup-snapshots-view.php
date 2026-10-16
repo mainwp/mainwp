@@ -71,7 +71,10 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		delete_option( 'mainwp_enableNativeBackups' );
 
 		$this->assertStringContainsString( 'No backup destination is configured for this site, so this backup will be kept on the dashboard.', $output );
-		$this->assertStringContainsString( 'Back Up Now saves this backup to the destinations of the scheduled backup tasks that include this site:', $output );
+		$this->assertStringContainsString( 'Backup destinations: Dashboard + %s. These come from the scheduled backup tasks that include this site.', $output );
+		$this->assertStringContainsString( 'response.destinations_source', $output );
+		$this->assertStringContainsString( 'No scheduled backup task includes this site, so Back Up Now uses the Default destination.', $output );
+		$this->assertStringContainsString( 'The scheduled backup tasks that include this site have no backup destination, so this backup will be kept on the dashboard.', $output );
 		$this->assertStringContainsString( 'response.manual_destinations', $output );
 		$this->assertStringContainsString( 'response.local_only', $output );
 	}
@@ -966,5 +969,74 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'if ( job.has_rollback && canRestore ) {', $output );
 		$this->assertStringContainsString( "\$( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels[ cancelAction ] || '' ).toggle( canRestore && ", $output );
 		$this->assertStringContainsString( "\$( '#mainwp-restore-rollback-btn' ).toggle( canRestore && ", $output );
+	}
+
+	/** The rendered refresh code must escape both sources and retain legacy fallbacks. */
+	public function test_ajax_destination_notes_escape_names_and_fallbacks() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$output = $this->render_page();
+		delete_option( 'mainwp_enableNativeBackups' );
+		$this->assertSame( 1, preg_match( '/function escAttr\( text \) \{.*?\n\s*\}/s', $output, $escape ) );
+		$this->assertSame( 1, preg_match( '/var backupNote = .*?(?=\n\s*setSnapshotsPlaceholder)/s', $output, $refresh ) );
+		$responses = array();
+		$expected  = array();
+		$name      = '<img src=x onerror=alert(1)> & archive';
+		foreach ( array( 'tasks', 'default', 'none', 'unknown', null ) as $source ) {
+			foreach ( array( false, true ) as $local ) {
+				$response = array(
+					'local_only'          => $local,
+					'manual_destinations' => array( $name, 'Second & archive' ),
+				);
+				if ( null !== $source ) {
+					$response['destinations_source'] = $source;
+				}
+				$responses[] = $response;
+				$expected[]  = array(
+					'local'        => 'tasks' === $source ? 'The scheduled backup tasks that include this site have no backup destination, so this backup will be kept on the dashboard.' : 'No backup destination is configured for this site, so this backup will be kept on the dashboard.',
+					'destinations' => 'Backup destinations: Dashboard + &lt;img src=x onerror=alert(1)&gt; &amp; archive + Second &amp; archive. ' . ( 'default' === $source ? 'No scheduled backup task includes this site, so Back Up Now uses the Default destination.' : 'These come from the scheduled backup tasks that include this site.' ),
+					'local_only'   => $local ? '1' : '0',
+					'show_local'   => $local,
+					'show_uploads' => ! $local,
+				);
+			}
+		}
+		$script  = $escape[0] . "\n" . 'const results = ' . wp_json_encode( $responses ) . '.map(function(response) {
+			var siteId = 42, state = {};
+			var note = {
+				attr: function(key, value) { state.local_only = value; return this; },
+				toggle: function() { return this; },
+				find: function(selector) {
+					var local = selector === ".mainwp-backup-local-note";
+					return {
+						html: function(value) { state[local ? "local" : "destinations"] = value; return this; },
+						toggle: function(value) { state[local ? "show_local" : "show_uploads"] = value; return this; }
+					};
+				}
+			};
+			var $ = function() { return note; };
+			' . $refresh[0] . '
+			return state;
+		}); process.stdout.write(JSON.stringify(results));';
+		$process = proc_open(
+			array( 'node', '-e', $script ),
+			array(
+				0 => array( 'file', '/dev/null', 'r' ),
+				1 => array( 'pipe', 'w' ),
+				2 => array( 'pipe', 'w' ),
+			),
+			$pipes
+		);
+		$this->assertIsResource( $process );
+		$body   = stream_get_contents( $pipes[1] );
+		$errors = stream_get_contents( $pipes[2] );
+		fclose( $pipes[1] );
+		fclose( $pipes[2] );
+		$this->assertSame( 0, proc_close( $process ), $errors );
+		$actual = json_decode( $body, true );
+		$this->assertIsArray( $actual, $body );
+		$this->assertCount( count( $expected ), $actual );
+		foreach ( $expected as $index => $row ) {
+			$this->assertEquals( $row, $actual[ $index ], wp_json_encode( $responses[ $index ] ) );
+		}
 	}
 }

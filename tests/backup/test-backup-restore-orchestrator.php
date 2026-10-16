@@ -8528,7 +8528,15 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				'name'     => 'Removed archive',
 			)
 		);
-		$snapshot_id  = $this->make_chain_snapshot(
+		$destinations->add_destination(
+			array(
+				'provider'   => 'local',
+				'name'       => 'Unused Default',
+				'is_default' => 1,
+			)
+		);
+
+		$snapshot_id = $this->make_chain_snapshot(
 			null,
 			'db',
 			array(
@@ -8538,7 +8546,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 				),
 			)
 		);
-		$store        = MainWP_Backup_Upload_Job_Store::instance();
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
 		$store->enqueue_for_snapshot( $snapshot_id, array( $dest_a, $dest_b ) );
 		$jobs = $store->get_jobs_for_snapshot( $snapshot_id );
 		$store->fail_permanent( (int) $jobs[1]->id, '<error>' . str_repeat( 'é', 210 ) );
@@ -8568,6 +8576,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$removed_name = 'Destination #' . $dest_b . ' (removed)';
 		$this->assertFalse( $response['local_only'] );
+		$this->assertSame( 'tasks', $response['destinations_source'] );
 		$this->assertSame( array( 'Archive & storage', $removed_name ), $response['manual_destinations'] );
 		$rows = array_column( $response['snapshots'], null, 'id' );
 		$this->assertArrayHasKey( $snapshot_id, $rows );
@@ -8623,6 +8632,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( 0, (int) ( $response['active_restore_job_id'] ?? -1 ) );
 		$this->assertFalse( (bool) ( $response['manual_backup_running'] ?? true ) );
 		$this->assertTrue( $response['local_only'] );
+		$this->assertSame( 'none', $response['destinations_source'] );
 		$this->assertSame( array(), $response['manual_destinations'] );
 		$rows = array_column( $response['snapshots'], null, 'id' );
 		$this->assertSame( array(), $rows[ $snapshot_id ]['uploads'] );
@@ -9946,5 +9956,44 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$this->assertStringContainsString( 'Settings > General', $response['error'] );
 		$this->assertStringNotContainsString( '&gt;', $response['error'] );
+	}
+
+	/** The list must distinguish an uncovered site from an empty covering task. */
+	public function test_snapshots_list_reports_default_and_empty_coverage() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$id = MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider'   => 'local',
+				'name'       => '<img src=x onerror=alert(1)> & archive',
+				'is_default' => 1,
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		$db = MainWP_DB_Backup::instance();
+		foreach ( array( 'default', 'tasks' ) as $source ) {
+			if ( 'tasks' === $source ) {
+				$task = $db->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) );
+				$db->update_backup_task_with_values(
+					(int) $task->id,
+					array(
+						'template'     => 0,
+						'schedule'     => 'daily',
+						'destinations' => '[]',
+					)
+				);
+			}
+			$nonce                = wp_create_nonce( 'mainwp_restore_snapshot_list' );
+			$_POST['security']    = $nonce;
+			$_REQUEST['security'] = $nonce;
+			$_POST['site_id']     = (string) $this->site_id;
+			try {
+				$response = $this->invoke_ajax_handler( 'mainwp_restore_snapshot_list' );
+			} finally {
+				unset( $_POST['security'], $_REQUEST['security'], $_POST['site_id'] );
+			}
+			$this->assertSame( $source, $response['destinations_source'] );
+			$this->assertSame( 'tasks' === $source, $response['local_only'] );
+			$this->assertSame( 'tasks' === $source ? array() : array( '<img src=x onerror=alert(1)> & archive' ), $response['manual_destinations'] );
+		}
 	}
 }

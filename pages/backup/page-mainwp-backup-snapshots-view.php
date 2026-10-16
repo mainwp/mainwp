@@ -101,7 +101,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         <?php endif; ?>
             <?php
             if ( $native_enabled ) :
-                $manual_ids = $site_id > 0 ? MainWP_DB_Backup::instance()->manual_backup_task_destinations( $site_id ) : array();
+                $manual_plan = $site_id > 0 ? MainWP_DB_Backup::instance()->manual_backup_destination_plan( $site_id ) : array(
+                    'ids'    => array(),
+                    'source' => 'none',
+                );
+                $manual_ids  = $manual_plan['ids'];
                 sort( $manual_ids, SORT_NUMERIC );
                 $destination_names = array();
                 foreach ( MainWP_Backup_Storage_Destinations::instance()->list_destinations() as $destination ) {
@@ -116,15 +120,22 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     );
                 }
                 $backup_now_local_only = $site_id > 0 && empty( $manual_ids );
-                $destinations_note     = sprintf(
-                    /* translators: %s: comma-separated storage destination names. */
-                    __( 'Back Up Now saves this backup to the destinations of the scheduled backup tasks that include this site: %s.', 'mainwp' ),
-                    implode( ', ', $manual_destinations )
+                $local_note            = 'tasks' === $manual_plan['source']
+                    ? __( 'The scheduled backup tasks that include this site have no backup destination, so this backup will be kept on the dashboard.', 'mainwp' )
+                    : __( 'No backup destination is configured for this site, so this backup will be kept on the dashboard.', 'mainwp' );
+                $destinations_template = 'default' === $manual_plan['source']
+                    /* translators: %s: storage destination names joined with +. */
+                    ? __( 'Backup destinations: Dashboard + %s. No scheduled backup task includes this site, so Back Up Now uses the Default destination.', 'mainwp' )
+                    /* translators: %s: storage destination names joined with +. */
+                    : __( 'Backup destinations: Dashboard + %s. These come from the scheduled backup tasks that include this site.', 'mainwp' );
+                $destinations_note = sprintf(
+                    $destinations_template,
+                    implode( ' + ', $manual_destinations )
                 );
                 ?>
             <div id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" aria-live="polite" style="margin-top: .5em;"></div>
             <div id="mainwp-native-backup-now-note" class="mainwp-native-backup-now-note" data-local-only="<?php echo $backup_now_local_only ? '1' : '0'; ?>" style="margin-top: .5em; opacity: .8;<?php echo $site_id > 0 ? '' : ' display: none;'; ?>">
-                <i class="info circle icon"></i><span class="mainwp-backup-local-note"<?php echo $backup_now_local_only ? '' : ' style="display: none;"'; ?>><?php esc_html_e( 'No backup destination is configured for this site, so this backup will be kept on the dashboard.', 'mainwp' ); ?></span>
+                <i class="info circle icon"></i><span class="mainwp-backup-local-note"<?php echo $backup_now_local_only ? '' : ' style="display: none;"'; ?>><?php echo esc_html( $local_note ); ?></span>
                 <span class="mainwp-backup-destinations-note"<?php echo $backup_now_local_only ? ' style="display: none;"' : ''; ?>><?php echo esc_html( $destinations_note ); ?></span>
             </div>
             <?php endif; ?>
@@ -934,8 +945,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     siteHasWooCommerce = !! response.site_has_woocommerce;
                     currentSiteUrl = response.site_url || '';
                     var backupNote = $( '#mainwp-native-backup-now-note' ).attr( 'data-local-only', response.local_only ? '1' : '0' ).toggle( siteId > 0 );
-                    backupNote.find( '.mainwp-backup-local-note' ).toggle( !! response.local_only );
-                    var destinationsNote = '<?php /* translators: %s: comma-separated storage destination names. */ echo esc_js( esc_html__( 'Back Up Now saves this backup to the destinations of the scheduled backup tasks that include this site: %s.', 'mainwp' ) ); ?>'.replace( '%s', function () { return escAttr( ( response.manual_destinations || [] ).join( ', ' ) ); } );
+                    var localNote = 'tasks' === response.destinations_source
+                        ? '<?php echo esc_js( esc_html__( 'The scheduled backup tasks that include this site have no backup destination, so this backup will be kept on the dashboard.', 'mainwp' ) ); ?>'
+                        : '<?php echo esc_js( esc_html__( 'No backup destination is configured for this site, so this backup will be kept on the dashboard.', 'mainwp' ) ); ?>';
+                    backupNote.find( '.mainwp-backup-local-note' ).html( localNote ).toggle( !! response.local_only );
+                    var destinationsTemplate = 'default' === response.destinations_source
+                        ? '<?php /* translators: %s: storage destination names joined with +. */ echo esc_js( esc_html__( 'Backup destinations: Dashboard + %s. No scheduled backup task includes this site, so Back Up Now uses the Default destination.', 'mainwp' ) ); ?>'
+                        : '<?php /* translators: %s: storage destination names joined with +. */ echo esc_js( esc_html__( 'Backup destinations: Dashboard + %s. These come from the scheduled backup tasks that include this site.', 'mainwp' ) ); ?>';
+                    var destinationsNote = destinationsTemplate.replace( '%s', function () { return escAttr( ( response.manual_destinations || [] ).join( ' + ' ) ); } );
                     backupNote.find( '.mainwp-backup-destinations-note' ).html( destinationsNote ).toggle( ! response.local_only );
 
                     setSnapshotsPlaceholder( snapshotsPlaceholders.empty );

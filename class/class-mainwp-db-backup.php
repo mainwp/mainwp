@@ -685,31 +685,35 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     /**
      * Method manual_backup_task_destinations()
      *
-     * Build the offsite destinations an on-demand backup should use for a
-     * site: the deduped union of the destinations configured on every
-     * scheduled task that targets the site, whether the site is listed
-     * directly or reached through a group. An empty result means the site
-     * has no configured offsite destination, so the on-demand backup stays
-     * local on the dashboard.
+     * Keep on-demand runs and previews on the same destination plan.
      *
      * @param int $site_id Child site id.
      *
      * @return array List of destination ids (integers), deduped.
      */
     public function manual_backup_task_destinations( $site_id ) {
+        return $this->manual_backup_destination_plan( $site_id )['ids'];
+    }
+
+    /**
+     * Scheduled coverage takes precedence even when its destinations are empty.
+     * Only uncovered sites use the Default, independent of the caller's scope.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return array{ids: int[], source: 'tasks'|'default'|'none'}
+     */
+    public function manual_backup_destination_plan( $site_id ): array {
         $site_id = (int) $site_id;
         $union   = array();
+        $covered = false;
 
-        $tasks = $this->get_backup_tasks();
-        if ( empty( $tasks ) ) {
-            return array();
-        }
-
-        foreach ( $tasks as $task ) {
-            if ( empty( $task->destinations ) || ! $this->task_targets_site( $task, $site_id ) ) {
+        foreach ( (array) $this->get_backup_tasks() as $task ) {
+            if ( ! $this->task_targets_site( $task, $site_id ) ) {
                 continue;
             }
-            $ids = json_decode( (string) $task->destinations, true );
+            $covered = true;
+            $ids     = json_decode( (string) $task->destinations, true );
             if ( is_array( $ids ) ) {
                 foreach ( $ids as $id ) {
                     $union[] = (int) $id;
@@ -717,7 +721,23 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             }
         }
 
-        return array_values( array_unique( $union ) );
+        if ( $covered ) {
+            return array(
+                'ids'    => array_values( array_unique( $union ) ),
+                'source' => 'tasks',
+            );
+        }
+
+        $default_id = MainWP_Backup_Storage_Destinations::instance()->get_default_id();
+        return $default_id > 0
+            ? array(
+                'ids'    => array( $default_id ),
+                'source' => 'default',
+            )
+            : array(
+                'ids'    => array(),
+                'source' => 'none',
+            );
     }
 
     /**

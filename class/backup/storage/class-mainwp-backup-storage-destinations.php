@@ -250,6 +250,17 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     }
 
     /**
+     * Routing needs the Default identity even when its credentials cannot load.
+     *
+     * @return int Destination id, or 0 when no Default is marked.
+     */
+    public function get_default_id(): int {
+        return (int) $this->wpdb->get_var(
+            'SELECT id FROM ' . $this->table_name( 'wp_backup_storage' ) . ' WHERE is_default = 1 ORDER BY id DESC LIMIT 1'
+        );
+    }
+
+    /**
      * List destinations without settings. The list view never needs the
      * credentials, so they never leave the column here.
      *

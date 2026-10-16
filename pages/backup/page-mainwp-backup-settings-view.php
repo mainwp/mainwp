@@ -128,6 +128,14 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             <?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
             <div class="sub header"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Native backups back up your Child Sites directly from this dashboard. %1$sBackup Extensions%2$s for third-party plugins are also available.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
         </h3>
+        <?php
+        if ( MainWP_System_Utility::is_team_control_staff() ) {
+            ?>
+            <div class="ui info visible message"><?php esc_html_e( 'Only WordPress administrators can change backup settings.', 'mainwp' ); ?></div>
+            <?php
+            return;
+        }
+        ?>
         <?php if ( ! empty( $primaryBackupMethods ) ) : ?>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Select primary backup system', 'mainwp' ); ?></label>

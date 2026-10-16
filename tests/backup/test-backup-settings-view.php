@@ -16,10 +16,50 @@ use MainWP\Dashboard\MainWP_Backup_Encryption;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_Settings;
 
+require_once __DIR__ . '/class-mainwp-backup-settings-staff-fixtures.php';
+
 /**
  * Class MainWP_Backup_Settings_View_Test
  */
 class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
+
+	use Backup_Settings_Staff_Fixtures;
+
+	/**
+	 * Staff must not see editable fields whose save is refused.
+	 *
+	 * @dataProvider settings_writers
+	 * @param string $actor Settings actor.
+	 * @param bool   $allowed Whether backup fields are editable.
+	 */
+	public function test_render_settings_staff_boundary( string $actor, bool $allowed ): void {
+		$this->settings_actor( $actor );
+		$this->allow_unrestricted_settings_access();
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		ob_start();
+		try {
+			MainWP_Backup_Settings_View::render_settings();
+		} finally {
+			$output = ob_get_clean();
+		}
+		$this->assertStringContainsString( '<h3 class="ui dividing header">', $output );
+		$this->assertStringContainsString( 'Backup Settings', $output );
+		$this->assertStringContainsString( '<div class="sub header">Native backups back up your Child Sites directly from this dashboard.', $output );
+		// Fomantic hides state messages inside .ui.form unless they carry visible.
+		$message = '<div class="ui info visible message">Only WordPress administrators can change backup settings.</div>';
+		if ( $allowed ) {
+			$this->assertStringNotContainsString( 'Only WordPress administrators', $output );
+			$this->assertStringContainsString( 'mainwp_options_enableNativeBackups', $output );
+			$this->assertStringContainsString( 'mainwp_options_backupEncryptionPassphrase', $output );
+		} else {
+			$this->assertSame( 1, substr_count( $output, $message ) );
+			$this->assertStringNotContainsString( 'mainwp_options_enableNativeBackups', $output );
+			$this->assertStringNotContainsString( 'mainwp_options_backupEncryptionPassphrase', $output );
+			foreach ( array( '<input', '<select', '<textarea' ) as $field ) {
+				$this->assertStringNotContainsString( $field, $output );
+			}
+		}
+	}
 
 	/**
 	 * A short first passphrase saves other settings and reports both refusals.
@@ -326,6 +366,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 	 * @return void
 	 */
 	public function tear_down() {
+		$this->clear_settings_staff_fixtures();
 		delete_option( 'mainwp_on_demand_retention_count' );
 		delete_option( 'mainwp_enableNativeBackups' );
 		delete_option( MainWP_Backup_Diagnostics::OPTION_ENABLED );

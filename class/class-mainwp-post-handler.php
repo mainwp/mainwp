@@ -739,15 +739,11 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             $ret['error']  = $ret['result'];
             MainWP_Client::exit_json( $ret );
         }
-        if ( MainWP_System_Utility::is_team_control_staff() ) {
-            foreach ( MainWP_Backup_Settings::SETTINGS_OPTIONS as $option ) {
-                if ( 0 === strcasecmp( 'mainwp_' . $name, $option ) ) {
-                    $ret           = array( 'success' => false );
-                    $ret['result'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
-                    $ret['error']  = $ret['result'];
-                    MainWP_Client::exit_json( $ret );
-                }
-            }
+        if ( MainWP_System_Utility::is_team_control_staff() && MainWP_Backup_Settings::is_backup_option( 'mainwp_' . $name ) ) {
+            $ret           = array( 'success' => false );
+            $ret['result'] = esc_html__( 'Error - insufficient permissions!', 'mainwp' );
+            $ret['error']  = $ret['result'];
+            MainWP_Client::exit_json( $ret );
         }
         if ( 0 === strcasecmp( 'mainwp_' . $name, MainWP_Backup_Encryption::RECOVERY_OPTION ) ) {
             $ret           = array( 'success' => false );

@@ -26,7 +26,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     /**
      * Shared backup option names; update-gate controls remain part of general settings.
      *
-     * @var array REST body key to stored option name, with native aliases folded first.
+     * @var array Stored backup settings option names, keyed by their REST general/edit body name where one exists.
      */
     public const SETTINGS_OPTIONS = array(
         'mainwp_primary_backup'                => 'mainwp_primaryBackup',
@@ -78,6 +78,29 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     public static function get_class_name(): string {
         return __CLASS__;
+    }
+
+    /**
+     * Backup runtime options need the same staff boundary as the settings form.
+     *
+     * @param string $option Stored option name.
+     * @return bool
+     */
+    public static function is_backup_option( string $option ): bool {
+        $option = strtolower( $option );
+        // The general Settings form still allows staff to change update-gate controls.
+        if ( in_array( $option, array( 'mainwp_backup_before_upgrade', 'mainwp_backup_before_upgrade_days', 'mainwp_backup_before_upgrade_require_offsite' ), true ) ) {
+            return false;
+        }
+        if ( in_array( $option, array_map( 'strtolower', self::SETTINGS_OPTIONS ), true ) ) {
+            return true;
+        }
+        foreach ( array( 'mainwp_backup_', 'mainwp_testrestore_', 'mainwp_restore_' ) as $prefix ) {
+            if ( 0 === strpos( $option, $prefix ) ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

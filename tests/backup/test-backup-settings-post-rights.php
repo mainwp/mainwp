@@ -207,11 +207,28 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 	public function test_ajax_staff_backup_option_boundary( string $actor, bool $allowed ): void {
 		$this->settings_actor( $actor );
 		$this->allow_unrestricted_settings_access();
-		foreach ( MainWP_Backup_Settings::SETTINGS_OPTIONS as $option ) {
+		$options = array_merge(
+			array_values( MainWP_Backup_Settings::SETTINGS_OPTIONS ),
+			array(
+				'mainwp_backup_manual_settle_seconds',
+				'mainwp_backup_sftp_hostkeys',
+				'mainwp_backup_lane_lease',
+				'mainwp_backup_retention_queue',
+				'mainwp_backup_slot_123',
+				'mainwp_backup_in_progress_123',
+				'mainwp_testrestore_capability',
+				'mainwp_restore_woo_sync_mode',
+			)
+		);
+		foreach ( $options as $option ) {
 			if ( MainWP_Backup_Encryption::RECOVERY_OPTION === $option && $allowed ) {
 				continue;
 			}
-			foreach ( array( substr( $option, 7 ), strtoupper( substr( $option, 7 ) ) ) as $name ) {
+			$names = array( substr( $option, 7 ), strtoupper( substr( $option, 7 ) ) );
+			if ( 'mainwp_backup_manual_settle_seconds' === $option ) {
+				$names[] = 'BaCkUp_MaNuAl_SeTtLe_SeCoNdS';
+			}
+			foreach ( $names as $name ) {
 				update_option( $option, 1 );
 				$response = $this->ajax_save_setting( $name );
 				wp_cache_delete( $option, 'options' );
@@ -234,6 +251,40 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 			$this->ajax_save_setting( $name );
 			$this->assertSame( 0, (int) get_option( 'mainwp_' . $name ) );
 		}
+	}
+
+	/**
+	 * Generic writes need the whole backup namespace while preserving update-gate access.
+	 *
+	 * @dataProvider backup_option_names
+	 * @param string $option Stored option name.
+	 * @param bool   $expected Whether the option belongs to the staff boundary.
+	 */
+	public function test_is_backup_option_boundary( string $option, bool $expected ): void {
+		$this->assertSame( $expected, MainWP_Backup_Settings::is_backup_option( $option ), $option );
+	}
+
+	/**
+	 * Exact settings names and runtime prefixes have different near-miss boundaries.
+	 *
+	 * @return array Option name and expected classification.
+	 */
+	public static function backup_option_names(): array {
+		$cases = array();
+		foreach ( MainWP_Backup_Settings::SETTINGS_OPTIONS as $option ) {
+			$cases[ $option ]               = array( $option, true );
+			$cases[ strtoupper( $option ) ] = array( strtoupper( $option ), true );
+		}
+		foreach ( array( 'mainwp_backup_runtime_state', 'mainwp_testrestore_capability', 'mainwp_restore_woo_sync_mode' ) as $option ) {
+			$cases[ $option ]               = array( $option, true );
+			$cases[ strtoupper( $option ) ] = array( strtoupper( $option ), true );
+		}
+		$cases['mixed case'] = array( 'MaInWp_BaCkUp_SfTp_HoStKeYs', true );
+		foreach ( array( 'mainwp_backup_before_upgrade', 'mainwp_backup_before_upgrade_days', 'mainwp_backup_before_upgrade_require_offsite', 'mainwp_backupsOnServerx', 'mainwp_backups_other', 'mainwp_unrelated_setting' ) as $option ) {
+			$cases[ $option ]               = array( $option, false );
+			$cases[ strtoupper( $option ) ] = array( strtoupper( $option ), false );
+		}
+		return $cases;
 	}
 
 	/**

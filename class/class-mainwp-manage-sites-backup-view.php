@@ -51,12 +51,10 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             $output      .= '</div>';
         }
 
-        // Under native backups this list sits in an accordion whose title
-        // already names it, so only the note stays.
+        // Under native backups the section header and its intro already
+        // explain these archives, so the list starts straight away.
         ?>
-        <?php if ( $native_backups ) : ?>
-        <p><?php esc_html_e( 'These are one-off archives you can download. They are separate from the restorable snapshot history shown above and are not restored from this list.', 'mainwp' ); ?></p>
-        <?php else : ?>
+        <?php if ( ! $native_backups ) : ?>
         <h3 class="ui dividing header"><?php esc_html_e( 'Backup Details', 'mainwp' ); ?></h3>
         <?php endif; ?>
         <h3 class="header"><?php echo '' === $output ? esc_html__( 'No full backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your files', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput ?></h3>
@@ -115,31 +113,45 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             MainWP_Backup_Snapshots_View::render_restore_surface( (int) $website->id, true );
         }
         ?>
+        <?php if ( $native_backups ) : ?>
+            <?php
+            // The legacy archive feature gets its own section after
+            // Snapshots & Restore so it no longer reads as part of it. It stays
+            // on the page because backup-before-update and existing users still
+            // rely on these archives, and stays collapsed so Back Up Now above
+            // remains the page's one backup action.
+            ?>
+        <div class="ui hidden divider"></div>
+        <div class="ui alt segment" id="mainwp-legacy-archives">
+            <h3 class="ui dividing header">
+                <?php esc_html_e( 'Legacy downloadable archives', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'Archive files made with the older backup method. They are separate from your snapshots and cannot be restored from this page.', 'mainwp' ); ?></div>
+            </h3>
+            <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
+            <div class="ui basic accordion mainwp-blank-accordion" id="mainwp-downloadable-archives-accordion">
+                <div class="title"><i class="dropdown icon"></i><?php esc_html_e( 'View or create archives', 'mainwp' ); ?></div>
+                <div class="content">
+                    <?php
+                    static::render_backup_details( $website->id );
+                    static::render_backup_options( $website->id );
+                    ?>
+                </div>
+            </div>
+            <script type="text/javascript">
+                jQuery( function () {
+                    jQuery( '#mainwp-downloadable-archives-accordion' ).accordion();
+                } );
+            </script>
+        </div>
+        <?php else : ?>
         <div class="ui alt segment">
             <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
-            <?php if ( $native_backups ) : ?>
-                <?php // Collapsed so the snapshot list above stays the page's one backup action. ?>
-                <div class="ui basic accordion mainwp-blank-accordion" id="mainwp-downloadable-archives-accordion">
-                    <h3 class="ui dividing header title"><i class="dropdown icon"></i><?php esc_html_e( 'Downloadable archives', 'mainwp' ); ?></h3>
-                    <div class="content">
-                        <?php
-                        static::render_backup_details( $website->id );
-                        static::render_backup_options( $website->id );
-                        ?>
-                    </div>
-                </div>
-                <script type="text/javascript">
-                    jQuery( function () {
-                        jQuery( '#mainwp-downloadable-archives-accordion' ).accordion();
-                    } );
-                </script>
-            <?php else : ?>
-                <?php
-                static::render_backup_details( $website->id );
-                static::render_backup_options( $website->id );
-                ?>
-            <?php endif; ?>
+            <?php
+            static::render_backup_details( $website->id );
+            static::render_backup_options( $website->id );
+            ?>
         </div>
+        <?php endif; ?>
 
         <div class="ui modal" id="managesite-backup-status-box">
             <div class="header">

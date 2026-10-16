@@ -209,10 +209,10 @@ class MainWP_Backup_Restore_Nav_Link_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Under native backups the legacy archive section is relabelled
-	 * "Downloadable archives" with a note that it is separate from the
-	 * restorable snapshot history, so the native list reads as the single
-	 * source of truth. Off, the original "Backup Details" heading stays.
+	 * Under native backups the list drops the "Backup Details" heading: the
+	 * legacy section's own header and intro explain the archives, and the
+	 * in-place list refresh returns the same markup. Off, the original
+	 * heading stays.
 	 *
 	 * @return void
 	 */
@@ -233,7 +233,8 @@ class MainWP_Backup_Restore_Nav_Link_Test extends MainWP_Abilities_Test_Case {
 		$native_off = ob_get_clean();
 
 		$this->assertStringNotContainsString( 'Backup Details', $native_on, 'Native on: the accordion title names the section instead.' );
-		$this->assertStringContainsString( 'not restored from this list', $native_on, 'Native on: a note clarifies these are not restorable.' );
+		$this->assertStringNotContainsString( 'snapshot', $native_on, 'Native on: the explanation lives in the section intro, not repeated in the list.' );
+		$this->assertStringContainsString( 'No full backup has been taken yet', $native_on );
 		$this->assertStringNotContainsString( 'Downloadable archives', $native_off, 'Native off: the legacy heading is unchanged.' );
 		$this->assertStringContainsString( 'Backup Details', $native_off, 'Native off: the original heading stays.' );
 	}
@@ -259,7 +260,107 @@ class MainWP_Backup_Restore_Nav_Link_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'value="Create downloadable archive"', $out, 'Native on: the action button itself is relabelled, not just the heading.' );
 		$this->assertStringNotContainsString( 'value="Backup Now"', $out, 'Native on: the misleading Backup Now button label must be gone.' );
 		$this->assertStringContainsString( 'id="mainwp-downloadable-archives-accordion"', $out, 'Native on: the legacy archives sit in one collapsed section.' );
-		$this->assertStringContainsString( '>Downloadable archives</h3>', $out );
 		$this->assertStringContainsString( 'class="ui basic button" value="Create downloadable archive"', $out, 'Native on: the archive button is not a second primary.' );
+	}
+
+	/**
+	 * MWP-1916: under native backups the legacy archive list and form live in
+	 * their own labeled section after Snapshots & Restore, not inside it, and
+	 * stay collapsed. The ids the legacy JS and the in-place list refresh use
+	 * are kept.
+	 *
+	 * @return void
+	 */
+	public function test_native_moves_legacy_archives_out_of_snapshots() {
+		$this->as_admin();
+		update_option( 'mainwp_enableNativeBackups', 1 );
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		ob_start();
+		MainWP_Manage_Sites_Backup_View::render_backup_site( $website );
+		$out = ob_get_clean();
+
+		$xpath     = $this->parse_html( $out );
+		$snapshots = $xpath->query( '//*[@id="mainwp-backup-snapshots"]' )->item( 0 );
+		$legacy    = $xpath->query( '//*[@id="mainwp-legacy-archives"]' )->item( 0 );
+		$this->assertNotNull( $snapshots, 'The Snapshots & Restore surface renders.' );
+		$this->assertNotNull( $legacy, 'The legacy archives get their own section.' );
+		$this->assertMatchesRegularExpression( '/\\bsegment\\b/', $legacy->getAttribute( 'class' ) );
+
+		foreach ( array( 'mainwp-downloadable-archives-accordion', 'mainwp-downloadable-archives-list', 'backup_btnSubmit', 'mainwp-message-zone', 'mainwp-known-backup-locations' ) as $id ) {
+			$node = $xpath->query( '//*[@id="' . $id . '"]' )->item( 0 );
+			$this->assertNotNull( $node, $id . ' is still rendered.' );
+			$this->assertFalse( $this->is_inside( $node, $snapshots ), $id . ' must not sit inside Snapshots & Restore.' );
+			$this->assertTrue( $this->is_inside( $node, $legacy ), $id . ' sits in the legacy section.' );
+		}
+		$this->assertFalse( $this->is_inside( $legacy, $snapshots ), 'The legacy section is a sibling of the snapshots surface, not part of it.' );
+		$this->assertLessThan( strpos( $out, 'id="mainwp-legacy-archives"' ), strpos( $out, 'id="mainwp-backup-snapshots"' ), 'The legacy section comes after Snapshots & Restore.' );
+
+		$header = $xpath->query( './/h3[contains(concat(" ", normalize-space(@class), " "), " header ")]', $legacy )->item( 0 );
+		$this->assertNotNull( $header, 'The legacy section has its own header.' );
+		$this->assertStringContainsString( 'Legacy', $header->textContent, 'The header names the section as the legacy feature.' );
+
+		$accordion = $xpath->query( '//*[@id="mainwp-downloadable-archives-accordion"]' )->item( 0 );
+		$this->assertSame( 0, $xpath->query( './/*[contains(concat(" ", normalize-space(@class), " "), " active ")]', $accordion )->length, 'The list and form stay collapsed by default.' );
+
+		$this->assertSame( 1, $xpath->query( '//*[@id="managesite-backup-status-box"]' )->length, 'The legacy progress modal stays on the page.' );
+	}
+
+	/**
+	 * With native backups off the legacy Backups page keeps its old layout.
+	 *
+	 * @return void
+	 */
+	public function test_native_off_keeps_legacy_layout() {
+		$this->as_admin();
+		update_option( 'mainwp_enableNativeBackups', '' );
+
+		$site_id = $this->create_test_site();
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+
+		ob_start();
+		MainWP_Manage_Sites_Backup_View::render_backup_site( $website );
+		$out = ob_get_clean();
+
+		$this->assertStringNotContainsString( 'mainwp-legacy-archives', $out );
+		$this->assertStringNotContainsString( 'mainwp-downloadable-archives-accordion', $out );
+		$this->assertStringNotContainsString( 'mainwp-backup-snapshots', $out );
+		$this->assertStringContainsString( 'value="Backup Now"', $out );
+		$this->assertStringContainsString( 'Backup Details', $out );
+	}
+
+	/**
+	 * Parse rendered markup for structural assertions.
+	 *
+	 * @param string $html Rendered markup.
+	 *
+	 * @return \DOMXPath
+	 */
+	private function parse_html( $html ) {
+		$dom      = new \DOMDocument();
+		$previous = libxml_use_internal_errors( true );
+		$dom->loadHTML( '<?xml encoding="utf-8"?><div>' . $html . '</div>' );
+		libxml_clear_errors();
+		libxml_use_internal_errors( $previous );
+		return new \DOMXPath( $dom );
+	}
+
+	/**
+	 * Whether $node is $ancestor or one of its descendants.
+	 *
+	 * @param \DOMNode $node     Node.
+	 * @param \DOMNode $ancestor Possible ancestor.
+	 *
+	 * @return bool
+	 */
+	private function is_inside( $node, $ancestor ) {
+		for ( $n = $node; null !== $n; $n = $n->parentNode ) {
+			if ( $n->isSameNode( $ancestor ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

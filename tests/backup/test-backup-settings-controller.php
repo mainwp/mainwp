@@ -9,6 +9,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
+use MainWP\Dashboard\MainWP_Updates_Overview;
 use WP_REST_Request;
 use WP_REST_Server;
 
@@ -80,6 +81,7 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 		delete_option( 'mainwp_options_loadFilesBeforeZip' );
 		delete_option( 'mainwp_maximumFileDescriptors' );
 		delete_option( 'mainwp_on_demand_retention_count' );
+		delete_option( 'mainwp_backup_before_upgrade_days' );
 
 		parent::tearDown();
 	}
@@ -102,20 +104,124 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 	}
 
 	/**
-	 * JSON requests must exercise the controller's real validation and persistence.
+	 * Each body source must exercise the controller's real validation and persistence.
 	 *
 	 * @param string $method HTTP method.
 	 * @param string $route REST route.
-	 * @param array  $body JSON body for write requests.
+	 * @param array  $body Body for write requests.
+	 * @param string $source Controller body source: json, params, or raw.
 	 * @return \WP_REST_Response Response object.
 	 */
-	protected function do_authenticated_request( string $method, string $route, array $body = array() ): \WP_REST_Response {
+	protected function do_authenticated_request( string $method, string $route, array $body = array(), string $source = 'json' ): \WP_REST_Response {
 		$request = new WP_REST_Request( $method, $route );
 		if ( ! empty( $body ) ) {
-			$request->set_header( 'content-type', 'application/json' );
 			$request->set_body( (string) wp_json_encode( $body ) );
+			if ( 'raw' === $source ) {
+				// An already-parsed empty parameter bag forces the controller's raw-body fallback.
+				$request->get_json_params();
+			} elseif ( 'params' === $source ) {
+				$request->set_body_params( $body );
+			}
+			$request->set_header( 'content-type', 'application/json' );
 		}
 		return rest_do_request( $request );
+	}
+
+	/**
+	 * GET must report the window used by the gate, including its fallback.
+	 *
+	 * @dataProvider general_settings_backup_windows
+	 * @param int $stored Stored window.
+	 * @param int $expected Effective window.
+	 */
+	public function test_general_settings_returns_effective_backup_window( int $stored, int $expected ): void {
+		update_option( 'mainwp_backup_before_upgrade_days', $stored );
+		$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/settings/general' );
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( $expected, $response->get_data()['data']['backup_before_upgrade_days'] );
+	}
+
+	/**
+	 * Invalid stored values must not escape through the REST representation.
+	 *
+	 * @return array Stored and effective windows.
+	 */
+	public static function general_settings_backup_windows(): array {
+		return array(
+			'zero'  => array( 0, 7 ),
+			'valid' => array( 3, 3 ),
+		);
+	}
+
+	/**
+	 * All body sources must store the same window as the Settings form.
+	 *
+	 * @dataProvider general_edit_backup_windows
+	 * @param string $method HTTP method.
+	 * @param string $source Controller body source.
+	 * @param mixed  $submitted Submitted window.
+	 * @param int    $expected Stored window.
+	 */
+	public function test_general_edit_normalizes_backup_window( string $method, string $source, $submitted, int $expected ): void {
+		update_option( 'mainwp_backup_before_upgrade_days', 99 );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		update_option( 'mainwp_primaryBackup', '' );
+		$response = $this->do_authenticated_request(
+			$method,
+			'/mainwp/v2/settings/general/edit',
+			array(
+				'backup_before_upgrade_days'   => $submitted,
+				'mainwp_enable_native_backups' => 1,
+			),
+			$source
+		);
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( $expected, (int) get_option( 'mainwp_backup_before_upgrade_days' ) );
+		$this->assertSame( $expected, MainWP_Updates_Overview::get_backup_before_upgrade_days() );
+		$this->assertSame( 1, (int) get_option( 'mainwp_enableNativeBackups' ) );
+	}
+
+	/**
+	 * The raw-body fallback bypasses WordPress argument sanitization.
+	 *
+	 * @return array Methods, body sources, submitted and stored windows.
+	 */
+	public static function general_edit_backup_windows(): array {
+		$windows = array(
+			'valid'           => array( 12, 12 ),
+			'zero'            => array( 0, 7 ),
+			'negative'        => array( -5, 7 ),
+			'negative string' => array( '-5', 7 ),
+			'non-numeric'     => array( 'abc', 7 ),
+			'leading zero'    => array( '030', 30 ),
+			'fraction'        => array( 1.5, 7 ),
+			'empty'           => array( '', 7 ),
+			'null'            => array( null, 7 ),
+			'array'           => array( array( 12 ), 7 ),
+		);
+		$cases   = array();
+		foreach ( array( 'PUT', 'PATCH' ) as $method ) {
+			foreach ( array( 'json', 'params', 'raw' ) as $source ) {
+				foreach ( $windows as $name => $window ) {
+					$cases[ $method . ' ' . $source . ' ' . $name ] = array( $method, $source, $window[0], $window[1] );
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Form-encoded requests remain outside the route's accepted content type.
+	 */
+	public function test_general_edit_rejects_form_encoded_backup_window(): void {
+		update_option( 'mainwp_backup_before_upgrade_days', 99 );
+		$request = new WP_REST_Request( 'PUT', '/mainwp/v2/settings/general/edit' );
+		$request->set_header( 'content-type', 'application/x-www-form-urlencoded' );
+		$request->set_body( 'backup_before_upgrade_days=0' );
+		$response = rest_do_request( $request );
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'invalid_content_type', $response->get_data()['code'] );
+		$this->assertSame( 99, (int) get_option( 'mainwp_backup_before_upgrade_days' ) );
 	}
 
 	/**

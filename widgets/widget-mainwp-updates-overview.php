@@ -1389,6 +1389,28 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
     }
 
     /**
+     * Settings writers must share the update gate's fallback and supported range.
+     *
+     * @param mixed $value Submitted freshness window.
+     * @return int
+     */
+    public static function normalize_backup_before_upgrade_days( $value ): int {
+        if ( ! is_scalar( $value ) ) {
+            return 7;
+        }
+        return filter_var(
+            ltrim( (string) $value, '0' ),
+            FILTER_VALIDATE_INT,
+            array(
+                'options' => array(
+                    'min_range' => 1,
+                    'default'   => 7,
+                ),
+            )
+        );
+    }
+
+    /**
      * Method checkbackups()
      *
      * Check if Child Site needs to be backed up before updates.

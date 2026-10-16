@@ -196,10 +196,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Upgrading %1', esc_html__( 'Upgrading %1', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Updating your plan...', esc_html__( 'Updating your plan...', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Updated your plan', esc_html__( 'Updated your plan', 'mainwp' ) );
-        $mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
-        if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
-            $mainwp_backup_before_upgrade_days = 7;
-        }
+        $mainwp_backup_before_upgrade_days = MainWP_Updates_Overview::get_backup_before_upgrade_days();
         mainwp_add_translation( $mainwpTranslations, 'A full backup has not been taken in the last days for the following sites:', str_replace( '%1', '' . $mainwp_backup_before_upgrade_days, esc_html__( 'A full backup has not been taken in the last %1 days for the following sites:', 'mainwp' ) ) );
         mainwp_add_translation( $mainwpTranslations, 'Starting required backup(s).', esc_html__( 'Starting required backup(s).', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Required backup(s) complete', esc_html__( 'Required backup(s) complete', 'mainwp' ) );

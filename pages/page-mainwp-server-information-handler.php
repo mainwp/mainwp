@@ -1533,7 +1533,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     'value' => sprintf(
                         /* translators: %d: days */
                         esc_html__( '%d days', 'mainwp' ),
-                        (int) get_option( 'mainwp_backup_before_upgrade_days', $default_setting['mainwp_backup_before_upgrade_days'] )
+                        MainWP_Updates_Overview::get_backup_before_upgrade_days()
                     ),
                 ),
                 array(

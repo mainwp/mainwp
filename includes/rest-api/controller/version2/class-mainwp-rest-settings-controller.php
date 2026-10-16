@@ -30,6 +30,7 @@ use MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit;
 use MainWP\Dashboard\MainWP_Credential_Render;
 use MainWP\Dashboard\MainWP_Backup_Settings;
 use MainWP\Dashboard\MainWP_Backup_Operations;
+use MainWP\Dashboard\MainWP_Updates_Overview;
 
 // Exit if accessed directly.
 if ( ! defined( 'ABSPATH' ) ) {
@@ -587,7 +588,9 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             $update_if_present( 'check_http_response', 'mainwp_check_http_response', 'int' );
             $update_if_present( 'check_http_response_method', 'mainwp_check_http_response_method', 'string' );
             $update_if_present( 'backup_before_upgrade', 'mainwp_backup_before_upgrade', 'int' );
-            $update_if_present( 'backup_before_upgrade_days', 'mainwp_backup_before_upgrade_days', 'int' );
+            if ( array_key_exists( 'backup_before_upgrade_days', $body ) ) {
+                MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', MainWP_Updates_Overview::normalize_backup_before_upgrade_days( $body['backup_before_upgrade_days'] ) );
+            }
             $update_if_present( 'backup_before_upgrade_require_offsite', 'mainwp_backup_before_upgrade_require_offsite', 'int' );
             $update_if_present( 'numberdays_outdate_plugin_theme', 'mainwp_numberdays_Outdate_Plugin_Theme', 'int' );
             $update_if_present( 'abandoned_check_by_local_date', 'mainwp_abandoned_check_by_local_date', 'int' );
@@ -2531,7 +2534,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'required'          => false,
                 'description'       => __( 'Days to check for backup before upgrade.', 'mainwp' ),
                 'type'              => 'integer',
-                'sanitize_callback' => 'absint',
+                'sanitize_callback' => array( MainWP_Updates_Overview::class, 'normalize_backup_before_upgrade_days' ),
             ),
             'backup_before_upgrade_require_offsite' => array(
                 'required'          => false,
@@ -4618,7 +4621,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             'check_http_response'                   => (int) get_option( 'mainwp_check_http_response', $default_setting['mainwp_check_http_response'] ),
             'check_http_response_method'            => get_option( 'mainwp_check_http_response_method', $default_setting['mainwp_check_http_response_method'] ),
             'backup_before_upgrade'                 => (int) get_option( 'mainwp_backup_before_upgrade', $default_setting['mainwp_backup_before_upgrade'] ),
-            'backup_before_upgrade_days'            => (int) get_option( 'mainwp_backup_before_upgrade_days', $default_setting['mainwp_backup_before_upgrade_days'] ),
+            'backup_before_upgrade_days'            => MainWP_Updates_Overview::get_backup_before_upgrade_days(),
             'backup_before_upgrade_require_offsite' => (int) get_option( 'mainwp_backup_before_upgrade_require_offsite', $default_setting['mainwp_backup_before_upgrade_require_offsite'] ),
             'numberdays_outdate_plugin_theme'       => (int) get_option( 'mainwp_numberdays_Outdate_Plugin_Theme', $default_setting['mainwp_numberdays_Outdate_Plugin_Theme'] ),
             'abandoned_check_by_local_date'         => (int) get_option( 'mainwp_abandoned_check_by_local_date', $default_setting['mainwp_abandoned_check_by_local_date'] ),

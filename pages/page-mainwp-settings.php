@@ -642,16 +642,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     // 7 for those and keep any positive window, including ones over a year.
                     // The reader accepts leading zeros (030 is 30), so they are stripped first.
                     $days = isset( $_POST['mainwp_backup_before_upgrade_days'] ) && is_scalar( $_POST['mainwp_backup_before_upgrade_days'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_backup_before_upgrade_days'] ) ) : 7;
-                    $val  = filter_var(
-                        ltrim( (string) $days, '0' ),
-                        FILTER_VALIDATE_INT,
-                        array(
-                            'options' => array(
-                                'min_range' => 1,
-                                'default'   => 7,
-                            ),
-                        )
-                    );
+                    $val  = MainWP_Updates_Overview::normalize_backup_before_upgrade_days( $days );
                     MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );
                     $val = ( ! isset( $_POST['mainwp_backup_before_upgrade_require_offsite'] ) ? 0 : 1 );
                     MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_require_offsite', $val );
@@ -1010,11 +1001,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     $snThemeAutomaticDailyUpdate  = (int) get_option( 'mainwp_themeAutomaticDailyUpdate', 0 );
                     $snTransAutomaticUpdate       = (int) get_option( 'mainwp_transAutomaticDailyUpdate', 0 );
 
-                    $backup_before_upgrade             = get_option( 'mainwp_backup_before_upgrade' );
-                    $mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
-                    if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
-                        $mainwp_backup_before_upgrade_days = 7;
-                    }
+                    $backup_before_upgrade                 = get_option( 'mainwp_backup_before_upgrade' );
+                    $mainwp_backup_before_upgrade_days     = MainWP_Updates_Overview::get_backup_before_upgrade_days();
                     $backup_before_upgrade_require_offsite = (int) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
 
                     $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );

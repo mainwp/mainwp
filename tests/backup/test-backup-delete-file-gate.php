@@ -44,6 +44,7 @@ class MainWP_Backup_Delete_File_Gate_Test extends MainWP_Abilities_Test_Case {
 			}
 		}
 		$code = str_replace( '\\wp_die;', '\\wp_die();', $code );
+		// nosemgrep: AIK_eval-use -- Evaluates this repo's own handler source with exits rewritten; no request or user input reaches it.
 		eval( '?>' . $code ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- Capture legacy exits while retaining the source gate and Child dispatch.
 	}
 

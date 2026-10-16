@@ -1206,7 +1206,6 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * @uses \MainWP\Dashboard\MainWP_Exception
      */
     public function mainwp_backup_delete_file() {
-        $this->secure_request( 'mainwp_backup_delete_file' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $site_id = isset( $_POST['site_id'] ) ? intval( $_POST['site_id'] ) : false;
         try {
@@ -1217,7 +1216,13 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 return;
             }
 
-            $file = isset( $_POST['file'] ) ? sanitize_text_field( wp_unslash( $_POST['file'] ) ) : '';
+            // Sanitizing first can hide a NUL or change a custom archive's basename.
+            $file = isset( $_POST['file'] ) && is_string( $_POST['file'] ) ? wp_unslash( $_POST['file'] ) : '';
+            if ( ! MainWP_Backup_Handler::is_valid_backup_archive_name( $file ) ) {
+                throw new MainWP_Exception( esc_html__( 'Invalid backup archive name.', 'mainwp' ) );
+            }
+            // Refusals must not record secure_request's duplicate-request marker.
+            $this->secure_request( 'mainwp_backup_delete_file' );
 
             die( wp_json_encode( array( 'result' => MainWP_Backup_Executor::backup_delete_file( $site_id, $file ) ) ) );
         } catch ( MainWP_Exception $e ) {

@@ -2581,11 +2581,15 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param mixed $pFile File to delete.
      *
      * @return bool true
+     * @throws MainWP_Exception When the archive name is invalid.
      *
      * @uses \MainWP\Dashboard\MainWP_Connect::fetch_url_authed()
      * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
      */
     public static function backup_delete_file( $pSiteId, $pFile ) {
+        if ( ! MainWP_Backup_Handler::is_valid_backup_archive_name( $pFile ) ) {
+            throw new MainWP_Exception( esc_html__( 'Invalid backup archive name.', 'mainwp' ) );
+        }
         $website = MainWP_DB::instance()->get_website_by_id( $pSiteId );
         MainWP_Connect::fetch_url_authed( $website, 'delete_backup', array( 'del' => $pFile ) );
         return true;

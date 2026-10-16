@@ -78,10 +78,30 @@ class MainWP_Backup_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $pFile File to delete.
      *
      * @return bool true
+     * @throws MainWP_Exception When the archive name is invalid.
      */
     public static function backup_delete_file( $pSiteId, $pFile ) {
         _deprecated_function( __METHOD__, '6.3', 'MainWP_Backup_Executor::backup_delete_file' );
-        return MainWP_Backup_Executor::backup_delete_file( (int) $pSiteId, (string) $pFile );
+        return MainWP_Backup_Executor::backup_delete_file( (int) $pSiteId, $pFile );
+    }
+
+    /**
+     * Child archives include custom and resumed names, not just generated prefixes.
+     *
+     * Released Children sanitize the name before deleting; the equality check prevents
+     * sanitizing (tags, octets, extra whitespace) from targeting a different file.
+     *
+     * @param mixed $file Child archive basename.
+     * @return bool Whether the name can be sent to the Child for deletion.
+     */
+    public static function is_valid_backup_archive_name( $file ) {
+        return is_string( $file ) && '' !== $file
+            && false === strpos( $file, '/' )
+            && false === strpos( $file, '\\' )
+            && false === strpos( $file, "\0" )
+            && false === strpos( $file, '..' )
+            && 1 === preg_match( '/\.(?:zip|tar(?:\.gz|\.bz2)?)\z/', $file )
+            && sanitize_text_field( $file ) === $file;
     }
 
     /**

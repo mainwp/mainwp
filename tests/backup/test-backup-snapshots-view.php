@@ -20,6 +20,7 @@ use MainWP\Dashboard\MainWP_DB;
 class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 
 	use Backup_Cancel_Transport_Guard;
+	use MainWP_Capability_Bypass_Guard;
 
 	/**
 	 * Render the page as an administrator.
@@ -929,5 +930,32 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		// The dismiss control is a close icon, which the theme does not draw.
 		$this->assertDoesNotMatchRegularExpression( '/class="ui (?:small )?(?:yellow|info|blue|red|green) message"[^>]*>\s*<i (?!class="close)/', $output );
 		$this->assertStringNotContainsString( 'window.confirm', $output );
+	}
+
+	/**
+	 * Staff with execute_backups but not restore_backups see the list
+	 * without the restore, cancel and rollback controls, whose AJAX actions
+	 * are not registered for them.
+	 */
+	public function test_restore_controls_follow_restore_right() {
+		$this->skip_when_capabilities_bypassed();
+		$output = $this->render_page();
+		$this->assertStringContainsString( 'var canRestore = true;', $output );
+
+		$deny = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'restore_backups' === $right ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			$output = $this->render_page();
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 10 );
+		}
+		$this->assertStringContainsString( 'var canRestore = false;', $output );
+		$this->assertStringContainsString( 'id="mainwp-restore-snapshots-table"', $output, 'The list stays available.' );
+		$this->assertStringContainsString( 'var restore = snap.restorable && canRestore', $output );
+		$this->assertStringContainsString( 'if ( job.has_rollback && canRestore ) {', $output );
+		$this->assertStringContainsString( "\$( '#mainwp-restore-cancel-btn' ).toggle( canRestore && ", $output );
+		$this->assertStringContainsString( "\$( '#mainwp-restore-rollback-btn' ).toggle( canRestore && ", $output );
 	}
 }

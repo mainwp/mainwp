@@ -10,7 +10,7 @@ function harness() {
     const created = [];
     const context = {
         statusLabels: {}, rollbackStatusLabels: {}, rollbackActionLabels: { retry: 'Retry', rollBack: 'Roll Back' }, restoreOutcomeMessages: {},
-        phaseOrder: [], rollbackRequestPending: false, currentSiteUrl: '', pollTimer: 0,
+        phaseOrder: [], rollbackRequestPending: false, currentSiteUrl: '', pollTimer: 0, canRestore: true,
         setSnapshotDeleteBusy() {}, showPreserveNote() {}, window: { clearTimeout() {} }
     };
     context.$ = selector => {
@@ -141,3 +141,15 @@ for ( const status of [ 'completed', 'failed_permanent', 'failed_retryable' ] ) 
         assert.equal( h.note().visible, false );
     } );
 }
+
+test( 'cancel and rollback stay hidden without the restore right', () => {
+    for ( const canRestore of [ true, false ] ) {
+        const h = harness();
+        h.context.canRestore = canRestore;
+        h.context.showProgress( { status: 'running', sub_type: 'full' } );
+        assert.equal( h.context.$( '#mainwp-restore-cancel-btn' ).state.visible, canRestore );
+        assert.equal( h.context.$( '#mainwp-restore-cancel-warning' ).state.visible, canRestore );
+        h.context.showProgress( { status: 'completed', sub_type: 'full', has_rollback: true } );
+        assert.equal( h.context.$( '#mainwp-restore-rollback-btn' ).state.visible, canRestore );
+    }
+} );

@@ -392,6 +392,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var historyStatusColors = { completed: 'green', failed_permanent: 'red', cancelled: 'grey' };
             var safetyNoteText = '<?php echo esc_js( esc_html__( 'A safety backup was taken before this restore. If the result looks wrong, you can roll back to it.', 'mainwp' ) ); ?>';
             var siteDisconnected = <?php echo $disconnected ? 'true' : 'false'; ?>;
+            // The page needs only execute_backups, but restore, cancel and
+            // rollback are registered only for staff who also hold
+            // restore_backups; an unregistered admin-ajax action answers 400.
+            var canRestore = <?php echo \mainwp_current_user_can( 'dashboard', 'restore_backups' ) ? 'true' : 'false'; ?>;
             var backupTypeLabels = <?php echo wp_json_encode( $type_labels ); ?>;
             var currentSite = <?php echo (int) $site_id; ?>;
             var snapshotDeleteBusy = false;
@@ -800,7 +804,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         "orderable": false,
                         "className": "collapsing",
                         "render": function ( data, type, snap ) {
-                            var restore = snap.restorable
+                            var restore = snap.restorable && canRestore
                                 ? '<a href="#" class="ui mini basic button mainwp-restore-snapshot' + ( siteDisconnected ? ' disabled' : '' ) + '" data-snapshot="' + snap.id + '" data-snapshot-type="' + escAttr( snap.type ) + '" data-snapshot-age="' + ( parseInt( snap.age_days, 10 ) || 0 ) + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
                                 : '';
                             return restore + downloadButton( snap ) + deleteButton( snap );
@@ -936,7 +940,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         var $action = $( '<td class="collapsing"></td>' );
                         // A failed rollback still holds the safety backup it
                         // restores from, so it offers another attempt.
-                        if ( job.has_rollback ) {
+                        if ( job.has_rollback && canRestore ) {
                             $( '<button type="button" class="ui mini basic button mainwp-restore-failed-job"></button>' )
                                 .attr( 'data-job-id', job.job_id )
                                 .prop( 'disabled', !! response.active_restore_job_id || siteDisconnected )
@@ -1013,16 +1017,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-status-text' ).text( label );
 
                 $( '#mainwp-restore-spinner' ).toggle( ! terminal );
-                $( '#mainwp-restore-cancel-btn' ).toggle( ! terminal && ! cancelPending && [ 'pending', 'pre_snapshot', 'staging', 'transferring', 'failed_retryable', 'running' ].indexOf( data.status ) !== -1 );
+                $( '#mainwp-restore-cancel-btn' ).toggle( canRestore && ! terminal && ! cancelPending && [ 'pending', 'pre_snapshot', 'staging', 'transferring', 'failed_retryable', 'running' ].indexOf( data.status ) !== -1 );
                 // A rollback job carries the safety backup it restores from, but
                 // that backup is not a way back from the rollback itself. A
                 // failed rollback still holds it, so it can be tried again.
                 var safetyBackup = !! data.has_rollback && ! isRollback;
                 var retryRollback = !! data.has_rollback && isRollback;
-                $( '#mainwp-restore-cancel-warning' ).toggle( 'running' === data.status && ! cancelPending );
+                $( '#mainwp-restore-cancel-warning' ).toggle( canRestore && 'running' === data.status && ! cancelPending );
                 $( '#mainwp-restore-cancel-rollback-note' ).toggle( safetyBackup );
                 $( '#mainwp-restore-rollback-btn' ).text( retryRollback ? rollbackActionLabels.retry : rollbackActionLabels.rollBack );
-                $( '#mainwp-restore-rollback-btn' ).toggle( ! rollbackRequestPending && terminal && ( safetyBackup || retryRollback ) );
+                $( '#mainwp-restore-rollback-btn' ).toggle( canRestore && ! rollbackRequestPending && terminal && ( safetyBackup || retryRollback ) );
 
                 // Surface the safety backup whenever one exists for this run,
                 // so the safety net is visible and not implied (L4).

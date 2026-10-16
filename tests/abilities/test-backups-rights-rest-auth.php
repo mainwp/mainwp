@@ -252,23 +252,25 @@ class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 		wp_set_current_user( 0 );
 		if ( 'application-password' !== $state ) {
 			$_COOKIE[ LOGGED_IN_COOKIE ] = wp_generate_auth_cookie( $this->fixture['user'], time() + HOUR_IN_SECONDS, 'logged_in' );
-			$this->assertSame( $this->fixture['user'], wp_validate_auth_cookie( '', 'logged_in' ) );
-			wp_set_current_user( $this->fixture['user'] );
-			$this->assertTrue( $GLOBALS['wp_rest_auth_cookie'] );
 		}
 		if ( 0 === strpos( $state, 'application-password' ) ) {
 			$_SERVER['PHP_AUTH_USER'] = get_userdata( $this->fixture['user'] )->user_login;
 			$_SERVER['PHP_AUTH_PW']   = $this->fixture['password'];
-			$user_id                  = wp_validate_application_password( false );
-			$this->assertSame( $this->fixture['user'], $user_id );
-			$this->assertInstanceOf( \WP_User::class, $GLOBALS['wp_rest_application_password_status'] );
-			wp_set_current_user( $user_id );
-		} elseif ( 'cookie-nonce' === $state ) {
+		}
+		// Core's own filter order decides which credential wins: the
+		// logged-in cookie runs first, and the application password then
+		// declines to authenticate an already identified user.
+		$user_id = (int) apply_filters( 'determine_current_user', false );
+		$this->assertSame( $this->fixture['user'], $user_id );
+		wp_set_current_user( $user_id );
+		$this->assertSame( 'application-password' === $state, $GLOBALS['wp_rest_application_password_status'] instanceof \WP_User );
+		$this->assertSame( 'application-password' !== $state, true === $GLOBALS['wp_rest_auth_cookie'] );
+		if ( 'cookie-nonce' === $state ) {
 			$_SERVER['HTTP_X_WP_NONCE'] = wp_create_nonce( 'wp_rest' );
 		}
 		$this->assertNotFalse( has_filter( 'rest_authentication_errors', 'rest_cookie_check_errors' ) );
 		$this->assertNotWPError( $this->server->check_authentication() );
-		$this->assertSame( 'cookie-only' === $state ? 0 : $this->fixture['user'], get_current_user_id() );
+		$this->assertSame( in_array( $state, array( 'application-password-cookie', 'cookie-only' ), true ) ? 0 : $this->fixture['user'], get_current_user_id() );
 	}
 
 	/**
@@ -302,7 +304,9 @@ class MainWP_Backups_Rights_REST_Auth_Test extends MainWP_Abilities_Test_Case {
 				}
 			);
 			$data     = $response->get_data();
-			if ( 'cookie-only' === $state ) {
+			// An application password sent with a logged-in cookie and no
+			// nonce is treated as cookie auth, so core clears the user.
+			if ( in_array( $state, array( 'application-password-cookie', 'cookie-only' ), true ) ) {
 				$this->assertSame( 401, $response->get_status(), wp_json_encode( $data ) );
 				$this->assertSame( 'mainwp_permission_denied', $data['code'] );
 			} elseif ( ! $granted ) {

@@ -58,6 +58,15 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     const HEALTH_BUCKET_UNKNOWN   = 'unknown';
 
     /**
+     * Keep removal causes separate from the complete/pruned lifecycle.
+     */
+    const REMOVAL_REASON_UNKNOWN      = '';
+    const REMOVAL_REASON_MANUAL       = 'manual';
+    const REMOVAL_REASON_RETENTION    = 'retention';
+    const REMOVAL_REASON_TASK_DELETED = 'task_deleted';
+    const REMOVAL_REASON_CLEANUP      = 'cleanup';
+
+    /**
      * Age thresholds for backup-health classification, in seconds. A
      * snapshot newer than the at-risk window can be Protected; one older
      * than the critical window is Critical.
@@ -518,6 +527,33 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
             array( '%s' ),
             array( '%d' )
         );
+    }
+
+    /**
+     * Preserve the first removal cause even when a site reservation has expired.
+     *
+     * @param int    $snapshot_id    Snapshot identity.
+     * @param string $removal_reason Removal cause; unrecognized values stay unknown.
+     * @return bool Whether this call changed a live row to pruned.
+     */
+    public function mark_pruned( int $snapshot_id, string $removal_reason ): bool {
+        if ( ! in_array( $removal_reason, array( self::REMOVAL_REASON_MANUAL, self::REMOVAL_REASON_RETENTION, self::REMOVAL_REASON_TASK_DELETED, self::REMOVAL_REASON_CLEANUP ), true ) ) {
+            $removal_reason = self::REMOVAL_REASON_UNKNOWN;
+        }
+        $table = $this->table_name( 'wp_backup_snapshot' );
+        if ( MainWP_Install::backup_snapshot_removal_reason_ready() ) {
+            $sql = $this->wpdb->prepare(
+                "UPDATE `{$table}` SET `status` = 'pruned', `removal_reason` = %s WHERE `id` = %d AND `status` <> 'pruned'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                $removal_reason,
+                $snapshot_id
+            );
+        } else {
+            $sql = $this->wpdb->prepare(
+                "UPDATE `{$table}` SET `status` = 'pruned' WHERE `id` = %d AND `status` <> 'pruned'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                $snapshot_id
+            );
+        }
+        return 1 === $this->wpdb->query( $sql );
     }
 
     /**

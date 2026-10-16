@@ -320,6 +320,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'source'             => (string) $entry['source'],
                 'restorable'         => (bool) $entry['catalog_restorable'],
                 'restore_reason'     => (string) $entry['catalog_restore_reason'],
+                'removal_reason'     => (string) $entry['removal_reason'],
                 'size_label'         => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
                 'test_restore_state' => isset( $entry['snapshot']->test_restore_state ) ? (string) $entry['snapshot']->test_restore_state : '',
                 'test_restore_at'    => $test_restore_at,

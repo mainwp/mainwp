@@ -60,3 +60,29 @@ context.createRow( filesRow, { restorable: false, type: 'files', source: 'local'
 assert.ok( ! filesRow.classes.includes( 'disabled' ), 'A local files archive stays downloadable when the Child cannot restore it.' );
 assert.equal( filesRow.title, 'Update the Child to restore.' );
 console.log( 'OK (' + ( matrix.length + 3 ) + ' snapshot Download row cases)' );
+
+const removalMapStart = source.indexOf( 'var removalLabels = {' );
+assert.ok( removalMapStart >= 0, 'Removed snapshots need cause-specific labels.' );
+const removalMapEnd = source.indexOf( '\n            };', removalMapStart ) + '\n            };'.length;
+const removalMap = source.slice( removalMapStart, removalMapEnd );
+const removalCases = [
+    [ 'manual', 'Deleted manually' ],
+    [ 'retention', 'Removed by retention' ],
+    [ 'task_deleted', 'Deleted with its backup task' ],
+    [ 'cleanup', 'Removed by Clean Up' ]
+];
+for ( const [ reason, label ] of removalCases ) {
+    assert.ok( removalMap.includes( "'" + reason + "': '<?php echo esc_js( esc_html__( '" + label + "', 'mainwp' ) ); ?>'" ), reason + ' must be translated and escaped.' );
+}
+vm.runInContext( removalMap.replace( /<\?php echo esc_js\( esc_html__\( '([^']+)', 'mainwp' \) \); \?>/g, '$1' ), context );
+context.sourceLabels = { unavailable: 'Removed by retention', local: 'This dashboard', remote: 'Cloud storage' };
+const sourceCellStart = source.indexOf( 'var sourceCell = ' );
+const sourceCellEnd = source.indexOf( "if ( 'display' === type )", sourceCellStart );
+assert.ok( sourceCellStart >= 0 && sourceCellEnd > sourceCellStart );
+vm.runInContext( 'var removalSourceCell = function (snap) { ' + source.slice( sourceCellStart, sourceCellEnd ) + 'return sourceCell; };', context );
+for ( const [ reason, label ] of removalCases.concat( [ [ '', 'Removed by retention' ], [ 'x', 'Removed by retention' ], [ 'constructor', 'Removed by retention' ], [ '__proto__', 'Removed by retention' ], [ 'toString', 'Removed by retention' ], [ undefined, 'Removed by retention' ] ] ) ) {
+    assert.equal( context.removalSourceCell( { source: 'unavailable', removal_reason: reason } ), label, String( reason ) );
+}
+assert.equal( context.removalSourceCell( { source: 'local', removal_reason: 'manual' } ), 'This dashboard' );
+assert.equal( context.removalSourceCell( { source: 'remote', removal_reason: 'cleanup' } ), 'Cloud storage' );
+console.log( 'OK (12 snapshot removal label cases)' );

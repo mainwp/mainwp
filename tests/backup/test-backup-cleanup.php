@@ -251,8 +251,11 @@ class MainWP_Backup_Cleanup_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( 2, $result['pruned'] );
 		$this->assertSame( 2, $result['snapshots_pruned'] );
 		$this->assertSame( 'pruned', $this->snapshot_status( $old_id ) );
+		$this->assertSame( 'cleanup', \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $old_id )->removal_reason );
 		$this->assertSame( 'pruned', $this->snapshot_status( $middle_id ) );
+		$this->assertSame( 'cleanup', \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $middle_id )->removal_reason );
 		$this->assertSame( 'complete', $this->snapshot_status( $new_id ) );
+		$this->assertSame( '', \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $new_id )->removal_reason );
 		$this->assertDirectoryDoesNotExist( $old_dir );
 		$this->assertDirectoryDoesNotExist( $middle_dir );
 		$this->assertDirectoryExists( $new_dir );
@@ -351,6 +354,7 @@ class MainWP_Backup_Cleanup_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertSame( 1, $result['pruned'] );
 		$this->assertSame( 'pruned', $this->snapshot_status( $broken_id ) );
+		$this->assertSame( 'cleanup', \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $broken_id )->removal_reason );
 		$this->assertDirectoryDoesNotExist( $broken_dir );
 		$this->assertSame( 'complete', $this->snapshot_status( $full_id ) );
 		$this->assertDirectoryExists( $full_dir );
@@ -415,5 +419,24 @@ class MainWP_Backup_Cleanup_Test extends MainWP_Abilities_Test_Case {
 			}
 		}
 		return false;
+	}
+
+	/** Orphaned task candidates must record Clean Up as their cause. */
+	public function test_cleanup_orphaned_task_records_cleanup_reason() {
+		list( $base ) = $this->make_snapshot_with_dir( array( 'task_id' => 999999991 ) );
+		list( $leaf ) = $this->make_snapshot_with_dir(
+			array(
+				'task_id'   => 999999991,
+				'parent_id' => $base,
+				'type'      => 'incremental',
+			)
+		);
+		$result       = MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $this->site_id );
+		$this->assertSame( 2, $result['orphaned_snapshots_pruned'] );
+		$this->assertSame( array(), $result['errors'] );
+		foreach ( array( $base, $leaf ) as $id ) {
+			$this->assertSame( 'pruned', $this->snapshot_status( $id ) );
+			$this->assertSame( 'cleanup', \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->removal_reason );
+		}
 	}
 }

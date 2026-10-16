@@ -512,7 +512,9 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array(), $result['errors'] );
 
 		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
+		$this->assertSame( 'retention', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->removal_reason );
 		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $inc )->status );
+		$this->assertSame( 'retention', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $inc )->removal_reason );
 		$this->assertDirectoryDoesNotExist( $base_dir );
 		$this->assertDirectoryDoesNotExist( $inc_dir );
 	}
@@ -742,7 +744,9 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertContains( sprintf( 'Snapshot %d: the files were deleted but the backup could not be marked as removed. Try again later.', $leaf ), $result['errors'] );
 		$this->assertSame( array(), $events, 'An unrecorded prune must not emit a successful prune event.' );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $leaf )->status );
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $leaf )->removal_reason );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->status );
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->removal_reason );
 		if ( 'cleanup' === $path ) {
 			$this->assertSame( 0, $result['bytes_pruned'], 'Unrecorded prunes must not contribute reclaimed bytes.' );
 		}
@@ -817,6 +821,7 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $result['dry_run'] );
 		$this->assertSame( 1, $result['pruned'], 'Dry-run reports what would prune.' );
 		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status );
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->removal_reason );
 		$this->assertDirectoryExists( $dir );
 		$this->assertCount( 1, MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id, 'upload' ) );
 		$this->assertSame( array(), MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $snapshot_id, 'delete' ) );
@@ -1719,7 +1724,9 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertSame( 2, $result['snapshots_pruned'] );
 		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first_id )->status );
+		$this->assertSame( 'task_deleted', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $first_id )->removal_reason );
 		$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $second_id )->status );
+		$this->assertSame( 'task_deleted', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $second_id )->removal_reason );
 		$this->assertDirectoryDoesNotExist( $first_dir );
 		$this->assertDirectoryDoesNotExist( $dir );
 
@@ -1797,6 +1804,8 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 			unlink( $outside );
 		}
 		$this->assertSame( 1, $result['snapshots_pruned'] );
+		$this->assertSame( 'retention', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $leaf )->removal_reason );
+		$this->assertSame( '', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $base )->removal_reason );
 		$this->assertSame( 0, $result['pruned'] );
 		$this->assertSame( array( $leaf ), $result['deleted_ids'] );
 		$this->assertSame( array( $base ), $result['remaining_ids'] );
@@ -2297,5 +2306,169 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFileDoesNotExist( $archive . '.reserved' );
 		$this->assertFileExists( $kept );
 		$this->assertFileExists( $kept . '.reserved' );
+	}
+
+	/** A stale candidate must neither re-delete files nor report another prune. */
+	public function test_already_pruned_leaf_is_skipped() {
+		global $wpdb;
+		list( $base ) = $this->make_snapshot_with_dir( array( 'run_key' => $this->site_id . ':' . $this->task_id . ':c:base-child' ) );
+		list( $leaf ) = $this->make_snapshot_with_dir(
+			array(
+				'parent_id' => $base,
+				'type'      => 'incremental',
+				'run_key'   => $this->site_id . ':' . $this->task_id . ':c:leaf-child',
+			)
+		);
+		$executor     = MainWP_Backup_Retention_Executor::instance();
+		$first        = $executor->delete_snapshot( $this->site_id, $leaf, array( $leaf ), $this->make_task() );
+		$this->assertSame( array( $leaf ), $first['deleted_ids'] );
+		$this->create_test_site( array( 'id' => $this->site_id ) );
+		$this->insert_upload_job( $leaf, 77 );
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$outside = tempnam( sys_get_temp_dir(), 'pruned-outside-' );
+		file_put_contents( $outside, 'protected' );
+		$wpdb->update(
+			$table,
+			array(
+				'archives' => wp_json_encode(
+					array(
+						array(
+							'path' => $outside,
+							'size' => 999,
+						),
+					)
+				),
+			),
+			array( 'id' => $leaf )
+		);
+		$events    = array();
+		$child     = array();
+		$writes    = array();
+		$capture   = static function ( $event ) use ( &$events ) {
+			$events[] = $event;
+		};
+		$transport = static function ( $value, $website, $what, $params ) use ( &$child ) {
+			if ( 'backup_task_prune' === $what ) {
+				$child[] = $params;
+			}
+			return array( 'result' => 'ok' );
+		};
+		$query     = static function ( $sql ) use ( &$writes, $table ) {
+			if ( str_starts_with( $sql, 'UPDATE `' . $table . '`' ) ) {
+				$writes[] = $sql;
+			}
+			return $sql;
+		};
+		add_action( 'mainwp_backup_pruned', $capture );
+		add_filter( 'mainwp_fetch_url_authed_pre', $transport, 10, 4 );
+		add_filter( 'query', $query );
+		try {
+			$result = $executor->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( $base, $leaf ),
+						'reason'       => 'count',
+					),
+				),
+				$this->make_task()
+			);
+		} finally {
+			remove_action( 'mainwp_backup_pruned', $capture );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $transport, 10 );
+			remove_filter( 'query', $query );
+			$outside_survived = file_exists( $outside );
+			unlink( $outside );
+		}
+		$this->assertTrue( $outside_survived );
+		$this->assertSame( array( $base ), $result['deleted_ids'] );
+		$this->assertSame( array(), $result['remaining_ids'] );
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertSame( array(), $result['cloud_deletes_queued'] );
+		$this->assertCount( 1, $writes );
+		$this->assertSame( array( $base ), $events[0]['snapshot_ids'] );
+		$this->assertCount( 1, $events );
+		$this->assertSame( 100, $events[0]['size_bytes'] );
+		$this->assertSame( 'manual', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $leaf )->removal_reason );
+		$this->assertCount( 1, MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $leaf, 'upload' ) );
+		$this->assertSame( array(), MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $leaf, 'delete' ) );
+		$this->assertCount( 1, $child );
+		$this->assertSame( array( 'base-child' ), json_decode( $child[0]['task_ids'], true ) );
+	}
+
+	/** The guarded UPDATE must not attribute a rival's removal to this pass. */
+	public function test_guarded_prune_loser_preserves_first_reason() {
+		$this->create_test_site( array( 'id' => $this->site_id ) );
+		list( $base ) = $this->make_snapshot_with_dir( array( 'run_key' => $this->site_id . ':' . $this->task_id . ':c:base-child' ) );
+		list( $leaf ) = $this->make_snapshot_with_dir(
+			array(
+				'parent_id' => $base,
+				'type'      => 'incremental',
+				'run_key'   => $this->site_id . ':' . $this->task_id . ':c:leaf-child',
+			)
+		);
+		$this->insert_upload_job( $leaf, 77 );
+		$table     = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$raced     = false;
+		$race      = static function ( $sql ) use ( $table, $leaf, &$raced ) {
+			if ( ! $raced && str_starts_with( $sql, 'UPDATE `' . $table . '` SET ' ) && str_contains( $sql, '`status`' ) ) {
+				$raced = true;
+				MainWP_Backup_Snapshots::instance()->mark_pruned( $leaf, 'manual' );
+			}
+			return $sql;
+		};
+		$events    = array();
+		$capture   = static function ( $event ) use ( &$events ) {
+			$events[] = $event;
+		};
+		$child     = array();
+		$transport = static function ( $value, $website, $what, $params ) use ( &$child ) {
+			if ( 'backup_task_prune' === $what ) {
+				$child[] = $params;
+			}
+			return array( 'result' => 'ok' );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $transport, 10, 4 );
+		add_filter( 'query', $race );
+		add_action( 'mainwp_backup_pruned', $capture );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+				array(
+					array(
+						'snapshot_ids' => array( $base, $leaf ),
+						'reason'       => 'count',
+					),
+				),
+				$this->make_task()
+			);
+		} finally {
+			remove_filter( 'query', $race );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $transport, 10 );
+			remove_action( 'mainwp_backup_pruned', $capture );
+		}
+		$this->assertTrue( $raced );
+		$this->assertCount( 1, $child );
+		$this->assertSame( array( 'base-child' ), json_decode( $child[0]['task_ids'], true ) );
+		$this->assertSame( 'manual', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $leaf )->removal_reason );
+		$this->assertSame( array( $base ), $result['deleted_ids'] );
+		$this->assertSame( array(), $result['remaining_ids'] );
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertSame( array(), $result['cloud_deletes_queued'] );
+		$this->assertCount( 1, MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $leaf, 'delete' ), 'Both prunes may rely on the same cloud job once local files are gone.' );
+		$this->assertCount( 1, $events );
+		$this->assertSame( array( $base ), $events[0]['snapshot_ids'] );
+		$this->assertSame( 100, $events[0]['size_bytes'] );
+	}
+
+	/** Invalid values must not become durable causes, and repeat writes lose. */
+	public function test_mark_pruned_normalizes_unknown_reasons() {
+		foreach ( array( '', 'constructor', 'x' ) as $reason ) {
+			list( $id ) = $this->make_snapshot_with_dir();
+			$store      = MainWP_Backup_Snapshots::instance();
+			$this->assertTrue( $store->mark_pruned( $id, $reason ) );
+			$this->assertSame( 'pruned', $store->get_snapshot_by_id( $id )->status );
+			$this->assertSame( '', $store->get_snapshot_by_id( $id )->removal_reason );
+			$this->assertFalse( $store->mark_pruned( $id, 'manual' ) );
+			$this->assertSame( '', $store->get_snapshot_by_id( $id )->removal_reason );
+		}
 	}
 }

@@ -54,14 +54,22 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         $files_restorable = $this->site_supports_restore_files( $site_id );
         $multisite_gated  = $this->site_is_multisite( $site_id ) && ! $this->site_supports_restore_multisite( $site_id );
 
-        $entries = array();
+        $removal_tooltips = array(
+            MainWP_Backup_Snapshots::REMOVAL_REASON_MANUAL => __( 'Deleted manually; no copy survives locally or in cloud storage.', 'mainwp' ),
+            MainWP_Backup_Snapshots::REMOVAL_REASON_RETENTION => __( 'Removed by retention; no copy survives locally or in cloud storage.', 'mainwp' ),
+            MainWP_Backup_Snapshots::REMOVAL_REASON_TASK_DELETED => __( 'Deleted with its backup task; no copy survives locally or in cloud storage.', 'mainwp' ),
+            MainWP_Backup_Snapshots::REMOVAL_REASON_CLEANUP => __( 'Removed by Clean Up; no copy survives locally or in cloud storage.', 'mainwp' ),
+        );
+        $entries          = array();
         foreach ( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) as $snapshot ) {
-            $source = $this->snapshot_source( $snapshot );
+            $source         = $this->snapshot_source( $snapshot );
+            $removal_reason = 'pruned' === $snapshot->status && isset( $removal_tooltips[ $snapshot->removal_reason ?? '' ] )
+                ? (string) $snapshot->removal_reason : MainWP_Backup_Snapshots::REMOVAL_REASON_UNKNOWN;
 
             $reason = '';
             if ( 'unavailable' === $source ) {
                 $reason = 'complete' !== $snapshot->status
-                    ? __( 'Removed by retention; no copy survives locally or in cloud storage.', 'mainwp' )
+                    ? ( $removal_tooltips[ $removal_reason ] ?? $removal_tooltips[ MainWP_Backup_Snapshots::REMOVAL_REASON_RETENTION ] )
                     : __( 'The backup files are missing from this Dashboard and no cloud copy finished uploading, so it cannot be restored.', 'mainwp' );
             } elseif ( 'files' === $snapshot->type && ! $files_restorable ) {
                 $reason = __( 'Update the MainWP Child plugin on the site to restore files-only backups.', 'mainwp' );
@@ -74,6 +82,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
                 'source'         => $source,
                 'restorable'     => '' === $reason,
                 'restore_reason' => $reason,
+                'removal_reason' => $removal_reason,
             );
         }
         return $entries;

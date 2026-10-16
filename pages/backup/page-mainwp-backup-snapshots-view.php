@@ -455,6 +455,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 'remote_chunked': '<?php echo esc_js( esc_html__( 'Cloud storage', 'mainwp' ) ); ?>',
                 'unavailable': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>'
             };
+            var removalLabels = {
+                'manual': '<?php echo esc_js( esc_html__( 'Deleted manually', 'mainwp' ) ); ?>',
+                'retention': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>',
+                'task_deleted': '<?php echo esc_js( esc_html__( 'Deleted with its backup task', 'mainwp' ) ); ?>',
+                'cleanup': '<?php echo esc_js( esc_html__( 'Removed by Clean Up', 'mainwp' ) ); ?>'
+            };
             var downloadLabels = {
                 action: '<?php echo esc_js( esc_html__( 'Download', 'mainwp' ) ); ?>',
                 incremental: '<?php echo esc_js( esc_html__( 'Incremental backups are stored as a chain of parts and cannot be downloaded as one file. Use Restore instead.', 'mainwp' ) ); ?>',
@@ -785,6 +791,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         "data": null,
                         "render": function ( data, type, snap ) {
                             var sourceCell = sourceLabels[ snap.source ] || escAttr( snap.source );
+                            if ( 'unavailable' === snap.source && Object.prototype.hasOwnProperty.call( removalLabels, snap.removal_reason ) ) {
+                                sourceCell = removalLabels[ snap.removal_reason ];
+                            }
                             if ( 'display' === type ) {
                                 var offsite = offsiteLabels[ snap.offsite_state ];
                                 if ( offsite ) {

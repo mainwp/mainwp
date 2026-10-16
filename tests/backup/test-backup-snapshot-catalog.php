@@ -674,4 +674,35 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $entry['remote_candidates'][1]['chunked'] );
 		$this->assertSame( 'bbb222', $entry['remote_candidates'][1]['sha256'] );
 	}
+
+	/** A cause does not make a removed chain link restorable. */
+	public function test_removal_reason_does_not_change_chain_admission() {
+		$base    = $this->make_snapshot(
+			array(),
+			array(
+				'status'         => 'pruned',
+				'removal_reason' => 'manual',
+			)
+		);
+		$leaf    = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'leaf.tar',
+					'role' => 'full',
+				),
+			),
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		$catalog = MainWP_Backup_Snapshot_Catalog::instance();
+		$result  = $catalog->resolve_restorable_chain( $leaf, 9901 );
+		$this->assertFalse( $result['ok'] );
+		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_CHAIN_PRUNED, $result['code'] );
+		$entries = array_column( $catalog->list_snapshots_for_site( 9901 ), null, 'removal_reason' );
+		$this->assertSame( 'unavailable', $entries['manual']['source'] );
+		$this->assertFalse( $entries['manual']['restorable'] );
+		$this->assertSame( 'local', $entries['']['source'] );
+	}
 }

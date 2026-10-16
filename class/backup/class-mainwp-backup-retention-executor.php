@@ -115,7 +115,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 continue;
             }
 
-            if ( $this->prune_candidate( $candidate, $task, $result ) ) {
+            if ( $this->prune_candidate( $candidate, $task, $result, MainWP_Backup_Snapshots::REMOVAL_REASON_RETENTION ) ) {
                 ++$result['pruned'];
             }
         }
@@ -179,7 +179,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     'size_bytes'   => (int) $unit['size_bytes'],
                 );
 
-                if ( $this->prune_candidate( $candidate, $task, $result ) ) {
+                if ( $this->prune_candidate( $candidate, $task, $result, MainWP_Backup_Snapshots::REMOVAL_REASON_TASK_DELETED ) ) {
                     ++$result['pruned'];
                 }
             }
@@ -269,7 +269,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     'size_bytes'   => $this->selected_snapshot_bytes( $ids ),
                 ),
                 $task,
-                $result
+                $result,
+                MainWP_Backup_Snapshots::REMOVAL_REASON_CLEANUP
             ) ) {
                 ++$result['pruned'];
             }
@@ -282,7 +283,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         foreach ( $plan['on_demand_units'] as $unit ) {
             $unit['size_bytes'] = $this->selected_snapshot_bytes( $unit['snapshot_ids'] );
             $unit['reason']     = 'beyond_keep' === $unit['reason'] ? 'manual_cleanup' : $unit['reason'];
-            if ( $task && $this->prune_candidate( $unit, $task, $result ) ) {
+            if ( $task && $this->prune_candidate( $unit, $task, $result, MainWP_Backup_Snapshots::REMOVAL_REASON_CLEANUP ) ) {
                 ++$result['pruned'];
             }
         }
@@ -550,7 +551,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     'snapshot_ids' => $ids,
                     'reason'       => 'single_snapshot_delete',
                 ),
-                $task
+                $task,
+                MainWP_Backup_Snapshots::REMOVAL_REASON_MANUAL
             );
             $result           = array_merge( $result, $unit );
             $result['status'] = empty( $unit['remaining_ids'] ) && empty( $unit['errors'] ) ? 'complete' : ( empty( $unit['deleted_ids'] ) ? 'refused' : 'partial' );
@@ -566,13 +568,14 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @param array  $candidate Candidate: snapshot_ids (base first), reason, size_bytes.
      * @param object $task      Task row.
      * @param array  $result    Result accumulator, modified in place.
+     * @param string $removal_reason Entry-point cause, independent of the policy reason.
      *
      * @return bool True when the entire unit was pruned;
      *              false when the unit was held (a restore or another
      *              backup action holds the site) or the first leaf could not
      *              be removed, so nothing was deleted.
      */
-    private function prune_candidate( array $candidate, object $task, array &$result ): bool {
+    private function prune_candidate( array $candidate, object $task, array &$result, string $removal_reason ): bool {
         $site_id = 0;
         foreach ( (array) $candidate['snapshot_ids'] as $snapshot_id ) {
             $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot_id );
@@ -601,7 +604,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             return false;
         }
         try {
-            $unit = $this->prune_reserved_candidate( $candidate, $task );
+            $unit = $this->prune_reserved_candidate( $candidate, $task, $removal_reason );
             foreach ( array( 'deleted_ids', 'remaining_ids', 'cloud_deletes_queued', 'errors' ) as $key ) {
                 $result[ $key ] = array_merge( $result[ $key ], $unit[ $key ] );
             }
@@ -620,9 +623,12 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      *
      * @param array  $candidate Snapshot ids, reason and size estimate.
      * @param object $task      Task row.
+     * @param string $removal_reason Entry-point cause, independent of the policy reason.
      * @return array Deleted and remaining ids, queued cloud deletes, bytes and errors.
      */
-    private function prune_reserved_candidate( array $candidate, object $task ): array {
+    private function prune_reserved_candidate( array $candidate, object $task, string $removal_reason ): array {
+        global $wpdb;
+
         $ids       = array_map( 'intval', $candidate['snapshot_ids'] );
         $result    = array(
             'deleted_ids'          => array(),
@@ -649,9 +655,10 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             return $result;
         }
 
-        $store          = MainWP_Backup_Upload_Job_Store::instance();
-        $token          = 'prune:' . wp_generate_password( 32, false );
-        $child_task_ids = array();
+        $store              = MainWP_Backup_Upload_Job_Store::instance();
+        $token              = 'prune:' . wp_generate_password( 32, false );
+        $child_task_ids     = array();
+        $already_pruned_ids = array();
         try {
             if ( ! $store->claim_uploads_for_prune( $ids, $token ) ) {
                 $result['errors'][] = sprintf( 'Snapshots %s: an upload in progress uses this backup, so it was kept. Try again once the upload finishes.', implode( ',', $ids ) );
@@ -664,6 +671,10 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                         $result['errors'][] = $this->missing_snapshot_message();
                     }
                     break;
+                }
+                if ( 'pruned' === $snapshot->status ) {
+                    $already_pruned_ids[] = $snapshot_id;
+                    continue;
                 }
                 if ( ! $this->remove_local_dir( $snapshot, $result['errors'], false ) ) {
                     break;
@@ -697,7 +708,20 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     }
                     // The local files are gone; cloud deletion proceeds even if the status write fails.
                     $keep_deletes = true;
-                    if ( ! $snapshots->set_status( $snapshot_id, 'pruned' ) ) {
+                    if ( ! $snapshots->mark_pruned( $snapshot_id, $removal_reason ) ) {
+                        $current = '' === $wpdb->last_error ? $snapshots->get_snapshot_by_id( $snapshot_id ) : null;
+                        if ( null !== $current && 'pruned' === $current->status ) {
+                            $already_pruned_ids[]           = $snapshot_id;
+                            $result['cloud_deletes_queued'] = array_values(
+                                array_filter(
+                                    $result['cloud_deletes_queued'],
+                                    static function ( $pair ) use ( $snapshot_id ) {
+                                        return $pair['snapshot_id'] !== $snapshot_id;
+                                    }
+                                )
+                            );
+                            continue;
+                        }
                         /* translators: %d: Snapshot ID. */
                         $result['errors'][] = sprintf( __( 'Snapshot %d: the files were deleted but the backup could not be marked as removed. Try again later.', 'mainwp' ), $snapshot_id );
                         break;
@@ -732,7 +756,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             // successful snapshots have already purged their claims.
             $store->release_prune_claims( $token );
         }
-        $result['remaining_ids'] = array_values( array_diff( $ids, $result['deleted_ids'] ) );
+        $result['remaining_ids'] = array_values( array_diff( $ids, $result['deleted_ids'], $already_pruned_ids ) );
         $this->notify_child_prune( $site_id, $child_task_ids );
         if ( ! empty( $result['deleted_ids'] ) ) {
             /**

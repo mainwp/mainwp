@@ -118,4 +118,93 @@ class MainWP_Backup_Ajax_Serializer_Parity_Test extends MainWP_Abilities_Test_Ca
 		$this->assertFileExists( $path );
 		$this->assertSame( json_decode( file_get_contents( $path ), true ), $actual );
 	}
+
+	/**
+	 * Older and unexpected values must retain the existing presentation.
+	 *
+	 * @return array
+	 */
+	public static function removal_cases() {
+		$generic = 'Removed by retention; no copy survives locally or in cloud storage.';
+		return array(
+			'manual'    => array( 'pruned', 'manual', 'manual', 'Deleted manually; no copy survives locally or in cloud storage.' ),
+			'retention' => array( 'pruned', 'retention', 'retention', $generic ),
+			'task'      => array( 'pruned', 'task_deleted', 'task_deleted', 'Deleted with its backup task; no copy survives locally or in cloud storage.' ),
+			'cleanup'   => array( 'pruned', 'cleanup', 'cleanup', 'Removed by Clean Up; no copy survives locally or in cloud storage.' ),
+			'older'     => array( 'pruned', '', '', $generic ),
+			'prototype' => array( 'pruned', 'constructor', '', $generic ),
+			'unknown'   => array( 'pruned', 'x', '', $generic ),
+			'complete'  => array( 'complete', 'manual', '', '' ),
+		);
+	}
+
+	/**
+	 * The UI gets removal evidence while closed ability summaries keep their keys.
+	 *
+	 * @dataProvider removal_cases
+	 * @param string $status Stored status.
+	 * @param string $stored Stored cause.
+	 * @param string $expected Expected UI cause.
+	 * @param string $tooltip Expected catalog tooltip.
+	 */
+	public function test_removed_snapshot_ajax_and_abilities_keep_their_contracts( $status, $stored, $expected, $tooltip ) {
+		global $wpdb;
+		$wpdb->update(
+			\MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'status'         => $status,
+				'removal_reason' => $stored,
+			),
+			array( 'id' => 987673 )
+		);
+		$entry = \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( $this->site_id )[0];
+		$this->assertSame( $expected, $entry['removal_reason'] );
+		$this->assertSame( $tooltip, $entry['restore_reason'] );
+		$_POST    = array(
+			'site_id'  => $this->site_id,
+			'security' => wp_create_nonce( 'mainwp_restore_snapshot_list' ),
+		);
+		$_REQUEST = $_POST;
+		$die      = static function () {
+			return static function () {
+				throw new \RuntimeException( 'removal-json-end' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $die );
+		ob_start();
+		try {
+			MainWP_Post_Backup_Handler::instance()->mainwp_restore_snapshot_list();
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'removal-json-end', $e->getMessage() );
+		} finally {
+			$raw = ob_get_clean();
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			remove_filter( 'wp_die_ajax_handler', $die );
+		}
+		$output = json_decode( $raw, true );
+		$this->assertIsArray( $output, $raw );
+		$row = $output['snapshots'][0];
+		$this->assertSame( $expected, $row['removal_reason'] );
+		$this->assertSame( $tooltip, $row['restore_reason'] );
+		$this->assertSame( 'complete' === $status ? 'local' : 'unavailable', $row['source'] );
+		$this->assertSame( 'complete' === $status, $row['restorable'] );
+		foreach ( array(
+			'list-backup-snapshots' => array(
+				'site_id_or_domain' => $this->site_id,
+				'include_pruned'    => true,
+			),
+			'get-backup-snapshot'   => array( 'snapshot_id' => 987673 ),
+		) as $name => $input ) {
+			$ability = wp_get_ability( 'mainwp/' . $name . '-v1' );
+			$this->assertNotNull( $ability );
+			$value = $ability->execute( $input );
+			$this->assertIsArray( $value, is_wp_error( $value ) ? $value->get_error_message() : '' );
+			$valid = rest_validate_value_from_schema( $value, $ability->get_output_schema() );
+			$this->assertTrue( $valid, is_wp_error( $valid ) ? $valid->get_error_message() : '' );
+			$summary = 'list-backup-snapshots' === $name ? $value['items'][0]['snapshot'] : $value['snapshot'];
+			$this->assertSame( $status, $summary['status'] );
+			$this->assertArrayNotHasKey( 'removal_reason', $summary );
+		}
+	}
 }

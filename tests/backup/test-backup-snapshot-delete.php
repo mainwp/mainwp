@@ -59,6 +59,7 @@ class MainWP_Backup_Snapshot_Delete_Test extends MainWP_Abilities_Test_Case {
 		foreach ( $ids as $id ) {
 			$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
 			$this->assertSame( in_array( $id, $wanted, true ) ? 'pruned' : 'complete', $snapshot->status );
+			$this->assertSame( in_array( $id, $wanted, true ) ? 'manual' : '', $snapshot->removal_reason );
 			$this->assertSame( ! in_array( $id, $wanted, true ), file_exists( $snapshot->archives[0]['path'] ) );
 		}
 	}

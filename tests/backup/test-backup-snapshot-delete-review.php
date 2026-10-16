@@ -1263,7 +1263,8 @@ class MainWP_Backup_Snapshot_Delete_Review_Test extends MainWP_Abilities_Test_Ca
 					'snapshot_ids' => array( $base, $leaf ),
 					'reason'       => $reason,
 				),
-				$this->task
+				$this->task,
+				'single_snapshot_delete' === $reason ? MainWP_Backup_Snapshots::REMOVAL_REASON_MANUAL : MainWP_Backup_Snapshots::REMOVAL_REASON_RETENTION
 			);
 			$this->assertSame( array( $base, $leaf ), $result['remaining_ids'] );
 			$this->assertSame( array(), $result['deleted_ids'] );

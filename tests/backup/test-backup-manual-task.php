@@ -261,6 +261,8 @@ class MainWP_Backup_Manual_Task_Test extends MainWP_Abilities_Test_Case {
 			'task union'          => array( 'union', 'tasks' ),
 			'empty covering task' => array( 'empty', 'tasks' ),
 			'group only'          => array( 'group', 'tasks' ),
+			'staging group only'  => array( 'staging_group', 'tasks' ),
+			'staging group union' => array( 'staging_group_dest', 'tasks' ),
 			'paused only'         => array( 'paused', 'tasks' ),
 			'hidden only'         => array( 'hidden', 'default' ),
 			'invalid credentials' => array( 'invalid', 'default' ),
@@ -290,13 +292,14 @@ class MainWP_Backup_Manual_Task_Test extends MainWP_Abilities_Test_Case {
 			$this->insert_scheduled_task( (string) $this->site_id, array( $extra, $other ) );
 			$this->insert_scheduled_task( (string) $this->site_id, array( $other, $extra ) );
 			$ids = array( $extra, $other );
-		} elseif ( in_array( $variant, array( 'empty', 'group', 'paused' ), true ) ) {
-			$task_id = $this->insert_scheduled_task( (string) $this->site_id, array() );
-			$ids     = array();
+		} elseif ( in_array( $variant, array( 'empty', 'group', 'paused', 'staging_group', 'staging_group_dest' ), true ) ) {
+			$task_id = $this->insert_scheduled_task( (string) $this->site_id, 'staging_group_dest' === $variant ? array( $other ) : array() );
+			$ids     = 'staging_group_dest' === $variant ? array( $other ) : array();
 			if ( 'paused' === $variant ) {
 				$db->update_backup_task_with_values( $task_id, array( 'paused' => 1 ) );
-			} elseif ( 'group' === $variant ) {
-				$this->site_id = $this->create_test_site();
+			} elseif ( 'empty' !== $variant ) {
+				// The scheduled run includes staging members of its groups, so they count as covered too.
+				$this->site_id = $this->create_test_site( 'group' === $variant ? array() : array( 'is_staging' => 1 ) );
 				$this->assertNotFalse(
 					$wpdb->insert(
 						$wpdb->prefix . 'mainwp_wp_group',

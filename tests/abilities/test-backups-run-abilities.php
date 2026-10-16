@@ -1438,7 +1438,8 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( 1, $wpdb->delete( $table, array( 'id' => $this->task_id ) ) );
 		}
 		$ids   = $uploads ? array( $covered ? $b : $a ) : array();
-		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifier.
+		$count   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifier.
+		$options = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->options}" );
 		$this->assertNull( $db->get_manual_backup_task( $this->site_id ) );
 		$direct = $this->guarded(
 			function () {
@@ -1456,6 +1457,7 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( $ids, array_column( $direct['would_affect']['destinations'], 'id' ) );
 		$this->assertSame( $ids, array_column( $output['would_affect']['destinations'], 'id' ) );
 		$this->assertSame( $count, (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifier.
+		$this->assertSame( $options, (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->options}" ) );
 		$this->assertNull( $db->get_manual_backup_task( $this->site_id ) );
 		$task = $db->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) );
 		$this->assertSame( $ids, json_decode( $task->destinations, true ) );

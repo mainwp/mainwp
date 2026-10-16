@@ -78,23 +78,23 @@ function load( rendered, live ) {
 }
 
 const builders = {
-    'per-site archive (mainwp_backup)': ctx => vm.runInContext( 'backup()', ctx ),
-    'add task (mainwp_addbackup)': ctx => vm.runInContext( 'mainwp_managebackups_add()', ctx ),
-    'update task (mainwp_updatebackup)': ctx => vm.runInContext( 'mainwp_managebackups_update()', ctx )
+    mainwp_backup: ctx => vm.runInContext( 'backup()', ctx ),
+    mainwp_addbackup: ctx => vm.runInContext( 'mainwp_managebackups_add()', ctx ),
+    mainwp_updatebackup: ctx => vm.runInContext( 'mainwp_managebackups_update()', ctx )
 };
 
 const selectors = Object.keys( TOGGLES );
 const states = selectors.map( on => ( { label: `only ${ TOGGLES[ on ] } on`, live: Object.fromEntries( selectors.map( s => [ s, s === on ] ) ) } ) )
     .concat( [ false, true ].map( on => ( { label: `all ${ on ? 'on' : 'off' }`, live: Object.fromEntries( selectors.map( s => [ s, on ] ) ) } ) ) );
 
-for ( const [ name, run ] of Object.entries( builders ) ) {
+for ( const [ action, run ] of Object.entries( builders ) ) {
     for ( const { label, live } of states ) {
-        test( `${ name } sends each toggle as the user left it (${ label }, rendered the opposite way)`, () => {
+        test( `${ action } sends each toggle as the user left it (${ label }, rendered the opposite way)`, () => {
             const rendered = Object.fromEntries( selectors.map( s => [ s, ! live[ s ] ] ) );
             const { context, sent } = load( rendered, live );
             run( context );
-            const data = sent.find( p => p && /^mainwp_(backup|addbackup|updatebackup)$/.test( p.action ) );
-            assert.ok( data, 'the builder sent its request' );
+            const data = sent.find( p => p && p.action === action );
+            assert.ok( data, `the builder sent ${ action }` );
             for ( const selector of selectors ) {
                 assert.equal( data[ TOGGLES[ selector ] ], live[ selector ] ? 1 : 0, `${ TOGGLES[ selector ] } follows ${ selector }` );
             }

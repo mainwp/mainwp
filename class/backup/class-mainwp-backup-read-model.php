@@ -440,11 +440,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'id'           => (int) $snapshot->id,
             'type'         => (string) $snapshot->type,
             'created_at'   => (int) $snapshot->created,
-            'evidence'     => array(
-                'recorded_by'       => 'dashboard_after_download',
-                'archive_integrity' => 'transfer_hash_only',
-                'skipped_files'     => 'not_reported',
-            ),
+            'evidence'     => self::snapshot_content_evidence( $snapshot ),
             'offsite'      => array(
                 'state'       => $offsite,
                 'evidence'    => 'verified' === $offsite ? 'remote_size_match' : 'none',
@@ -452,6 +448,99 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
             'test_restore' => self::snapshot_test_restore( $snapshot ),
         );
+    }
+
+    /**
+     * A content claim covers every stored artifact back to the full base.
+     *
+     * @param object $snapshot Decoded snapshot row.
+     * @param array  $snapshot_map Rows already loaded for this site, keyed by id.
+     * @return array Claims supported by the stored archive evidence.
+     */
+    private static function snapshot_content_evidence( object $snapshot, array &$snapshot_map = array() ): array {
+        $integrity = true;
+        $current   = $snapshot;
+        $seen      = array();
+        while ( true ) {
+            if ( isset( $seen[ $current->id ] ) || empty( $current->archives ) || ! is_array( $current->archives ) ) {
+                $integrity = false;
+                break;
+            }
+            $seen[ $current->id ] = true;
+            foreach ( $current->archives as $archive ) {
+                if ( ! is_array( $archive ) || array_key_exists( 'hash_skipped', $archive ) || ! MainWP_Backup_File_Manager::is_sha256( $archive['sha256'] ?? null ) ) {
+                    $integrity = false;
+                    break;
+                }
+            }
+            if ( ! $integrity || 'incremental' !== $snapshot->type ) {
+                break;
+            }
+            if ( empty( $current->parent_id ) ) {
+                $integrity = 'full' === $current->type;
+                break;
+            }
+            $parent_id = (int) $current->parent_id;
+            if ( ! array_key_exists( $parent_id, $snapshot_map ) ) {
+                $snapshot_map[ $parent_id ] = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $parent_id );
+            }
+            $current = $snapshot_map[ $parent_id ];
+            if ( ! $current || (int) $current->site_id !== (int) $snapshot->site_id ) {
+                $integrity = false;
+                break;
+            }
+        }
+
+        $skipped = 'not_reported';
+        foreach ( (array) ( $snapshot->archives ?? array() ) as $archive ) {
+            if ( 'manifest' !== ( $archive['role'] ?? '' ) ) {
+                continue;
+            }
+            $count = $archive['walk']['skipped_count'] ?? null;
+            if ( 'partial' === ( $archive['content_status'] ?? null ) || ( is_int( $count ) && $count > 0 ) ) {
+                $skipped = 'reported';
+            } elseif ( 0 === $count ) {
+                $skipped = 'none';
+            }
+            break;
+        }
+        return array(
+            'recorded_by'       => 'dashboard_after_download',
+            'archive_integrity' => $integrity ? 'child_content_hash' : 'transfer_hash_only',
+            'skipped_files'     => $skipped,
+        );
+    }
+
+    /**
+     * Bound untrusted path samples before returning them to the list.
+     *
+     * @param object $snapshot Decoded snapshot row.
+     * @return array Bounded samples for the snapshot list, outside the ability contract.
+     */
+    public static function snapshot_skipped_files( object $snapshot ): array {
+        $result = array(
+            'count' => 0,
+            'paths' => array(),
+        );
+        foreach ( (array) ( $snapshot->archives ?? array() ) as $archive ) {
+            if ( 'manifest' !== ( $archive['role'] ?? '' ) ) {
+                continue;
+            }
+            $walk = isset( $archive['walk'] ) && is_array( $archive['walk'] ) ? $archive['walk'] : array();
+            if ( isset( $walk['skipped_count'] ) && is_int( $walk['skipped_count'] ) && $walk['skipped_count'] >= 0 ) {
+                $result['count'] = $walk['skipped_count'];
+            }
+            foreach ( (array) ( $walk['skipped_paths'] ?? array() ) as $path ) {
+                if ( is_string( $path ) ) {
+                    $result['paths'][] = mb_substr( $path, 0, 1024 );
+                    if ( 20 === count( $result['paths'] ) ) {
+                        break;
+                    }
+                }
+            }
+            break;
+        }
+        return $result;
     }
 
     /**
@@ -788,10 +877,15 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array Neutral snapshot list.
      */
     public static function query_backup_snapshots( int $site_id, bool $include_pruned = false, int $page = 1, int $per_page = 50 ): array {
-        $items = array();
-        foreach ( self::list_backup_snapshots( $site_id ) as $entry ) {
+        $items        = array();
+        $entries      = self::list_backup_snapshots( $site_id );
+        $snapshot_map = array();
+        foreach ( $entries as $entry ) {
+            $snapshot_map[ (int) $entry['snapshot']->id ] = $entry['snapshot'];
+        }
+        foreach ( $entries as $entry ) {
             if ( $include_pruned || 'pruned' !== $entry['snapshot']->status ) {
-                $items[] = self::snapshot_details_from_entry( $entry );
+                $items[] = self::snapshot_details_from_entry( $entry, $snapshot_map );
             }
         }
         $active = MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $site_id );
@@ -822,9 +916,10 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Only recorded evidence can support a snapshot's recovery claims.
      *
      * @param array $entry Neutral catalog entry.
+     * @param array $snapshot_map Rows already loaded for this site, keyed by id.
      * @return array Neutral snapshot details.
      */
-    private static function snapshot_details_from_entry( array $entry ): array {
+    private static function snapshot_details_from_entry( array $entry, array &$snapshot_map = array() ): array {
         $snapshot     = $entry['snapshot'];
         $task         = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $snapshot->task_id );
         $offsite      = '' === $snapshot->offsite_state ? 'none' : (string) $snapshot->offsite_state;
@@ -837,11 +932,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'parent_id'      => $snapshot->parent_id,
             'created_at'     => (int) $snapshot->created,
             'status'         => (string) $snapshot->status,
-            'evidence'       => array(
-                'recorded_by'       => 'dashboard_after_download',
-                'archive_integrity' => 'transfer_hash_only',
-                'skipped_files'     => 'not_reported',
-            ),
+            'evidence'       => self::snapshot_content_evidence( $snapshot, $snapshot_map ),
             'size_bytes'     => array_sum(
                 array_map(
                     static function ( $archive ) {
@@ -1184,7 +1275,8 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         foreach ( $paged['items'] as &$item ) {
             $snapshot = $snapshots[ $item['site_id'] ] ?? null;
             // A deleted snapshot must still produce null evidence for existing status clients.
-            $item['latest_snapshot'] = $snapshot && MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot->id ) ? self::snapshot_status_summary( $snapshot ) : null;
+            $decoded_snapshot        = $snapshot ? MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot->id ) : null;
+            $item['latest_snapshot'] = $decoded_snapshot ? self::snapshot_status_summary( $decoded_snapshot ) : null;
         }
         unset( $item );
         return array(

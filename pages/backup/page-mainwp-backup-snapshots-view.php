@@ -786,10 +786,19 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     },
                     {
                         "data": "type",
-                        "render": function ( data ) {
+                        "render": function ( data, type, snap ) {
                             // backup_type_label() already escaped these; an
                             // unrecognised type falls back to the raw value.
-                            return backupTypeLabels[ data ] || escAttr( data );
+                            var label = backupTypeLabels[ data ] || escAttr( data );
+                            var n = parseInt( snap.skipped_count, 10 ) || 0;
+                            if ( 'display' === type && n > 0 ) {
+                                var skipped = ( 1 === n
+                                    ? '<?php /* translators: %d: number of files not backed up. */ echo esc_js( _n( '%d file not backed up', '%d files not backed up', 1, 'mainwp' ) ); ?>'
+                                    : '<?php /* translators: %d: number of files not backed up. */ echo esc_js( _n( '%d file not backed up', '%d files not backed up', 2, 'mainwp' ) ); ?>'
+                                ).replace( '%d', n );
+                                label += ' <a href="#" class="mainwp-snapshot-skipped-toggle"><small>' + escAttr( skipped ) + '</small></a>';
+                            }
+                            return label;
                         }
                     },
                     {
@@ -901,10 +910,52 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 } );
             } );
 
+            function skippedFilesNote( snap ) {
+                var n = parseInt( snap.skipped_count, 10 ) || 0;
+                if ( n <= 0 ) {
+                    return null;
+                }
+                var $note = $( '<div>' ).addClass( 'ui small yellow message' );
+                var sentence = ( 1 === n
+                    ? '<?php /* translators: %d: number of files not backed up. */ echo esc_js( _n( '%d file was not backed up.', '%d files were not backed up.', 1, 'mainwp' ) ); ?>'
+                    : '<?php /* translators: %d: number of files not backed up. */ echo esc_js( _n( '%d file was not backed up.', '%d files were not backed up.', 2, 'mainwp' ) ); ?>'
+                ).replace( '%d', n );
+                $note.append( $( '<p>' ).text( sentence ) );
+                var paths = ( Array.isArray( snap.skipped_paths ) ? snap.skipped_paths : [] ).filter( function ( path ) {
+                    return 'string' === typeof path;
+                } ).slice( 0, 20 );
+                var $paths = $( '<ul>' );
+                paths.forEach( function ( path ) {
+                    $paths.append( $( '<li>' ).text( path ) );
+                } );
+                $note.append( $paths );
+                if ( n > paths.length ) {
+                    var sample = '<?php /* translators: 1: displayed paths, 2: total files not backed up. */ echo esc_js( __( 'Showing %1$d of %2$d files that were not backed up.', 'mainwp' ) ); ?>';
+                    $note.append( $( '<p>' ).text( sample.replace( '%1$d', paths.length ).replace( '%2$d', n ) ) );
+                }
+                return $note;
+            }
+
+            $( '#mainwp-restore-snapshots-table' ).on( 'click', '.mainwp-snapshot-skipped-toggle', function ( event ) {
+                event.preventDefault();
+                var row = snapshotsTable.row( $( this ).closest( 'tr' ) );
+                var $row = $( row.node() );
+                if ( row.child.isShown() && 'skipped' === $row.attr( 'data-mainwp-snapshot-child' ) ) {
+                    row.child.hide();
+                    return;
+                }
+                var note = skippedFilesNote( row.data() );
+                if ( note ) {
+                    row.child( note ).show();
+                    $row.attr( 'data-mainwp-snapshot-child', 'skipped' );
+                }
+            } );
+
             $( '#mainwp-restore-snapshots-table' ).on( 'click', '.mainwp-snapshot-uploads-toggle', function ( event ) {
                 event.preventDefault();
                 var row = snapshotsTable.row( $( this ).closest( 'tr' ) );
-                if ( row.child.isShown() ) {
+                var $row = $( row.node() );
+                if ( row.child.isShown() && 'uploads' === $row.attr( 'data-mainwp-snapshot-child' ) ) {
                     row.child.hide();
                     return;
                 }
@@ -918,6 +969,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     details += '</div>';
                 } );
                 row.child( details + '</div>' ).show();
+                $row.attr( 'data-mainwp-snapshot-child', 'uploads' );
             } );
 
             // The search stack is global to the page, so scope the callback to

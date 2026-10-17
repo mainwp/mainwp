@@ -305,6 +305,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $archives        = isset( $entry['snapshot']->archives ) && is_array( $entry['snapshot']->archives ) ? $entry['snapshot']->archives : array();
             $size_bytes      = (int) array_sum( array_column( $archives, 'size' ) );
             $test_restore_at = isset( $entry['snapshot']->test_restore_at ) ? (int) $entry['snapshot']->test_restore_at : 0;
+            $skipped         = MainWP_Backup_Read_Model::snapshot_skipped_files( $entry['snapshot'] );
             $rows[]          = array(
                 'id'                 => (int) $entry['snapshot']->id,
                 'task_id'            => (int) $entry['snapshot']->task_id,
@@ -321,6 +322,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'restorable'         => (bool) $entry['catalog_restorable'],
                 'restore_reason'     => (string) $entry['catalog_restore_reason'],
                 'removal_reason'     => (string) $entry['removal_reason'],
+                'skipped_count'      => $skipped['count'],
+                'skipped_paths'      => $skipped['paths'],
                 'size_label'         => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
                 'test_restore_state' => isset( $entry['snapshot']->test_restore_state ) ? (string) $entry['snapshot']->test_restore_state : '',
                 'test_restore_at'    => $test_restore_at,

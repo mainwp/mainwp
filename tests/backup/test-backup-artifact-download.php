@@ -741,4 +741,94 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 		$this->assertCount( 0, $events );
 		$this->assertFileDoesNotExist( $local, 'The empty leftover must be removed so the retry starts clean.' );
 	}
+
+	/**
+	 * Child hashes must hold even when the transfer hash matches.
+	 *
+	 * @dataProvider child_hash_download_cases
+	 * @param bool   $token Use a download token.
+	 * @param string $expected Expected digest or legacy input.
+	 * @param bool   $matches Whether the download should pass.
+	 */
+	public function test_child_hash_download_comparison( $token, $expected, $matches ) {
+		$website = $this->make_site( $token );
+		$local   = $this->local_file( $website );
+		$content = 'downloaded-content';
+		$calls   = array();
+		$urls    = array();
+		$this->mock_token_callable(
+			array(
+				'token' => str_repeat( 'a', 32 ),
+				'hash'  => hash( 'sha256', $content ),
+			),
+			$calls
+		);
+		$this->mock_download( array( $content ), $urls );
+		$events = array();
+		$hashes = 0;
+		add_action(
+			'mainwp_backup_hash_progress',
+			static function () use ( &$hashes ) {
+				++$hashes;
+			}
+		);
+		add_action(
+			'mainwp_backup_downloaded',
+			static function ( $event ) use ( &$events ) {
+				$events[] = $event;
+			}
+		);
+		try {
+			MainWP_Backup_File_Manager::download_backup_artifact( $website, 'archive.zip', $local, false, null, null, false, $expected );
+			$this->assertTrue( $matches, 'A Child mismatch must throw.' );
+			$this->assertFileExists( $local );
+			$this->assertCount( 1, $events );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertFalse( $matches );
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH, $e->get_message_error_code() );
+			$this->assertStringContainsString( 'hash the child site recorded', $e->get_message_extra( false ) );
+			$this->assertFileDoesNotExist( $local );
+			$this->assertCount( 0, $events );
+		}
+		$this->assertSame( $token || ( is_string( $expected ) && 1 === preg_match( '/^[a-f0-9]{64}$/D', $expected ) ) ? 1 : 0, $hashes );
+	}
+
+	/**
+	 * Download contracts.
+	 *
+	 * @return array Test cases.
+	 */
+	public static function child_hash_download_cases() {
+		$cases = array();
+		foreach ( array( false, true ) as $token ) {
+			foreach ( array(
+				'match'     => hash( 'sha256', 'downloaded-content' ),
+				'mismatch'  => str_repeat( 'a', 64 ),
+				'absent'    => null,
+				'invalid'   => 'NOT-A-DIGEST',
+				'uppercase' => str_repeat( 'A', 64 ),
+			) as $name => $expected ) {
+				$cases[ ( $token ? 'token ' : 'legacy ' ) . $name ] = array( $token, $expected, 'mismatch' !== $name );
+			}
+		}
+		return $cases;
+	}
+	/**
+	 * Invalid digests and unbounded skip strings cannot become hash evidence.
+	 */
+	public function test_child_artifact_hash_evidence_validation() {
+		foreach ( array( 'bad', str_repeat( 'A', 64 ), str_repeat( 'a', 64 ) . "\n", 12, array() ) as $digest ) {
+			$this->assertSame( array(), MainWP_Backup_File_Manager::artifact_hash_evidence( array( 'sha256' => $digest ) ) );
+		}
+		$this->assertSame( array( 'sha256' => str_repeat( 'a', 64 ) ), MainWP_Backup_File_Manager::artifact_hash_evidence( array( 'sha256' => str_repeat( 'a', 64 ) ) ) );
+		$this->assertSame(
+			array( 'hash_skipped' => str_repeat( 'a', 32 ) ),
+			MainWP_Backup_File_Manager::artifact_hash_evidence(
+				array(
+					'hash_skipped' => str_repeat( 'A', 40 ) . '<>',
+					'sha256'       => str_repeat( 'a', 64 ),
+				)
+			)
+		);
+	}
 }

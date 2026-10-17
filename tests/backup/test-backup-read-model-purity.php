@@ -9,6 +9,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Read_Model;
 use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Backup;
 
@@ -130,6 +131,8 @@ class MainWP_Backup_Read_Model_Purity_Test extends MainWP_Abilities_Test_Case {
 				return MainWP_Backup_Read_Model::query_backup_snapshots( $this->site_id ); },
 			'snapshot_details'         => function () {
 				return MainWP_Backup_Read_Model::snapshot_details( 987673 ); },
+			'snapshot_skipped_files'   => static function () {
+				return MainWP_Backup_Read_Model::snapshot_skipped_files( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( 987673 ) ); },
 			'query_restore_jobs'       => function () {
 				return MainWP_Backup_Read_Model::query_restore_jobs(); },
 			'restore_job_details'      => function () {

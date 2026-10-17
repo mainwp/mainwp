@@ -1000,8 +1000,19 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		$this->assertNull( $snapshot->parent_id );
 		$this->assertCount( 1, $snapshot->archives );
 		$this->assertSame( 'full', $snapshot->archives[0]['role'] );
+		$this->assertSame( array( 'file', 'size', 'role', 'path' ), array_keys( $snapshot->archives[0] ) );
 		$this->assertSame( strlen( $content ), (int) $snapshot->archives[0]['size'] );
 		$this->assertFileExists( $snapshot->archives[0]['path'] );
+		$summary = new \ReflectionMethod( \MainWP\Dashboard\MainWP_Backup_Read_Model::class, 'snapshot_status_summary' );
+		$summary->setAccessible( true );
+		$this->assertSame(
+			array(
+				'recorded_by'       => 'dashboard_after_download',
+				'archive_integrity' => 'transfer_hash_only',
+				'skipped_files'     => 'not_reported',
+			),
+			$summary->invoke( null, $snapshot )['evidence']
+		);
 	}
 
 	/**
@@ -1291,11 +1302,22 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		$this->assertSame( 'db', $snapshot->type );
 		$this->assertCount( 1, $snapshot->archives );
 		$this->assertSame( 'db', $snapshot->archives[0]['role'] );
+		$this->assertSame( array( 'file', 'size', 'role', 'path' ), array_keys( $snapshot->archives[0] ) );
 		$this->assertSame( strlen( $content ), (int) $snapshot->archives[0]['size'] );
 		$this->assertSame( 1, (int) $progress->downloadedDBComplete );
 		$this->assertSame( $progress->downloadedDB, $snapshot->archives[0]['path'] );
 		$this->assertSame( 0, (int) $progress->downloadedFULLComplete );
 		$this->assertFileExists( $snapshot->archives[0]['path'] );
+		$summary = new \ReflectionMethod( \MainWP\Dashboard\MainWP_Backup_Read_Model::class, 'snapshot_status_summary' );
+		$summary->setAccessible( true );
+		$this->assertSame(
+			array(
+				'recorded_by'       => 'dashboard_after_download',
+				'archive_integrity' => 'transfer_hash_only',
+				'skipped_files'     => 'not_reported',
+			),
+			$summary->invoke( null, $snapshot )['evidence']
+		);
 	}
 
 	/**
@@ -5493,7 +5515,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 					MainWP_DB_Backup::instance()->update_backup_task_progress(
 						$task->id,
 						$site_id,
-						array( 'fetchResult' => wp_json_encode( array( 'full' => 'winner.tar.gz', 'db' => false, 'size' => 4096 ) ) ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- compact test fixture.
+						array( 'fetchResult' => wp_json_encode( array( 'full' => 'winner.tar.gz', 'db' => false, 'size' => 4096, 'sha256' => str_repeat( 'a', 64 ) ) ) ) // phpcs:ignore WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound -- compact test fixture.
 					);
 					return array(
 						'task_id' => 'bk-term-race',
@@ -5523,6 +5545,7 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 
 		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site_id );
 		$this->assertSame( 'winner.tar.gz', $progress->fetchResult['full'], 'The winning projection must survive the race.' );
+		$this->assertSame( str_repeat( 'a', 64 ), $progress->fetchResult['sha256'] );
 	}
 
 	/**
@@ -5764,6 +5787,84 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		$this->assertNull(
 			\MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id ),
 			'No snapshot may be fabricated for a vanished artifact.'
+		);
+	}
+	/**
+	 * Only a projection written before a compared download survives as hash evidence.
+	 *
+	 * @dataProvider completed_download_projections
+	 * @param bool $new_projection Whether the completion claim carried a top-level hash.
+	 */
+	public function test_completed_download_resume_hash_evidence( $new_projection ) {
+		list( $site_id, $task ) = $this->site_and_task();
+		$content                = "PK\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		$dir = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
+		wp_mkdir_p( $dir );
+		$file = $dir . 'resumed.zip';
+		file_put_contents( $file, $content );
+		$this->snapshot_files[] = $file;
+		$fetch                  = array(
+			'full'      => 'resumed.zip',
+			'db'        => false,
+			'size'      => strlen( $content ),
+			'artifacts' => array(
+				array(
+					'role'   => 'full',
+					'sha256' => hash( 'sha256', $content ),
+				),
+			),
+		);
+		if ( $new_projection ) {
+			$fetch['sha256'] = hash( 'sha256', $content );
+		}
+		MainWP_DB_Backup::instance()->update_backup_task_progress(
+			$task->id,
+			$site_id,
+			array(
+				'fetchResult'            => wp_json_encode( $fetch ),
+				'downloadedFULLComplete' => 1,
+				'downloadedFULL'         => $file,
+			)
+		);
+		$downloads = 0;
+		$hashes    = 0;
+		add_filter(
+			'mainwp_download_to_file_pre',
+			static function ( $pre ) use ( &$downloads ) {
+				++$downloads;
+				return $pre;
+			}
+		);
+		add_action(
+			'mainwp_backup_hash_progress',
+			static function () use ( &$hashes ) {
+				++$hashes;
+			}
+		);
+		$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$this->assertNotNull( $snapshot );
+		$this->assertSame( 0, $downloads );
+		$this->assertSame( 0, $hashes );
+		$this->assertSame( $new_projection, isset( $snapshot->archives[0]['sha256'] ) );
+		if ( $new_projection ) {
+			$this->assertSame( $fetch['sha256'], $snapshot->archives[0]['sha256'] );
+		}
+		$evidence = new \ReflectionMethod( \MainWP\Dashboard\MainWP_Backup_Read_Model::class, 'snapshot_content_evidence' );
+		$evidence->setAccessible( true );
+		$this->assertSame( $new_projection ? 'child_content_hash' : 'transfer_hash_only', $evidence->invoke( null, $snapshot )['archive_integrity'] );
+	}
+
+	/**
+	 * Claims straddling the Dashboard update must remain distinguishable.
+	 *
+	 * @return array Completion projections.
+	 */
+	public static function completed_download_projections() {
+		return array(
+			'new claim'   => array( true ),
+			'older claim' => array( false ),
 		);
 	}
 }

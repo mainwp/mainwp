@@ -1305,17 +1305,17 @@ class MainWP_Abilities_Backups {
                 'recorded_by'       => array(
                     'type'        => 'string',
                     'enum'        => array( 'dashboard_after_download' ),
-                    'description' => 'status complete is written by the Dashboard when it records the downloaded archives. The site reports no content hash for the main archive.',
+                    'description' => 'The Dashboard sets status complete after it downloads and records the archives. archive_integrity says whether the site\'s own hash was checked.',
                 ),
                 'archive_integrity' => array(
                     'type'        => 'string',
-                    'enum'        => array( 'transfer_hash_only' ),
-                    'description' => 'The download hash is taken when the download token is issued. It proves the transfer, not the archive content.',
+                    'enum'        => array( 'transfer_hash_only', 'child_content_hash' ),
+                    'description' => 'child_content_hash: the site recorded a sha256 hash for every archive in this backup (for an incremental backup, every archive in its chain back to the full backup), and every downloaded file matched it. transfer_hash_only: at least one archive in this backup or its chain has no hash from the site (older MainWP Child versions, or a file the site could not hash: too large to hash in time, or unreadable), so only the transfer was checked, against a hash taken when the download token was issued.',
                 ),
                 'skipped_files'     => array(
                     'type'        => 'string',
-                    'enum'        => array( 'not_reported' ),
-                    'description' => 'The site can skip unreadable files without reporting them.',
+                    'enum'        => array( 'not_reported', 'none', 'reported' ),
+                    'description' => 'none: the site reported no skipped files; files excluded by the backup\'s settings are not counted as skipped. reported: the site marked the backup as partial or reported one or more files it left out, for example unreadable files or links. not_reported: the site did not report skipped files (older MainWP Child versions, and database-only backups).',
                 ),
             ),
         );

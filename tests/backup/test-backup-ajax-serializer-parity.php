@@ -212,4 +212,49 @@ class MainWP_Backup_Ajax_Serializer_Parity_Test extends MainWP_Abilities_Test_Ca
 			$this->assertArrayNotHasKey( 'removal_reason', $summary );
 		}
 	}
+	/**
+	 * Only the AJAX list carries path samples; ability output keeps its closed schema.
+	 */
+	public function test_snapshot_ajax_carries_skipped_files() {
+		global $wpdb;
+		$table  = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$row    = \MainWP\Dashboard\MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( 987673 );
+		$rows   = $row->archives;
+		$rows[] = array(
+			'role' => 'manifest',
+			'file' => 'files.list',
+			'size' => 0,
+			'walk' => array(
+				'skipped_count' => 1,
+				'skipped_paths' => array( 'host-link.php' ),
+			),
+		);
+		$wpdb->update( $table, array( 'archives' => wp_json_encode( $rows ) ), array( 'id' => 987673 ) );
+		$_POST    = array(
+			'site_id'  => $this->site_id,
+			'security' => wp_create_nonce( 'mainwp_restore_snapshot_list' ),
+		);
+		$_REQUEST = $_POST;
+		$die      = static function () {
+			return static function () {
+				throw new \RuntimeException( 'skipped-json-end' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $die );
+		ob_start();
+		try {
+			MainWP_Post_Backup_Handler::instance()->mainwp_restore_snapshot_list();
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'skipped-json-end', $e->getMessage() );
+		} finally {
+			$raw = ob_get_clean();
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+			remove_filter( 'wp_die_ajax_handler', $die );
+		}
+		$output = json_decode( $raw, true );
+		$this->assertIsArray( $output, $raw );
+		$this->assertSame( 1, $output['snapshots'][0]['skipped_count'] );
+		$this->assertSame( array( 'host-link.php' ), $output['snapshots'][0]['skipped_paths'] );
+	}
 }

@@ -250,7 +250,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * transfer layer can retry the same URL internally) surfaces as an
      * HTTP 401/403 response; a fresh token is requested and the download
      * resumes from the partial file. Children without the capability are
-     * served by the token-less path with no hash verification.
+     * served by the token-less path. A recorded Child digest is checked on either path.
      *
      * @param object      $website         Child site object.
      * @param string      $remote_filename Remote backup file name.
@@ -259,6 +259,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @param string|null $http_user       HTTP Basic Auth username (plaintext).
      * @param string|null $http_pass       HTTP Basic Auth password (plaintext).
      * @param bool        $allow_empty     Allow an explicitly empty tombstones artifact.
+     * @param string|null $expected_sha256 Digest recorded when the Child closed the artifact.
      *
      * @throws MainWP_Exception On transfer failure, token failure, or hash mismatch.
      *
@@ -266,7 +267,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
      * @uses \MainWP\Dashboard\MainWP_Connect::download_to_file()
      * @uses \MainWP\Dashboard\MainWP_Connect::get_get_data_authed()
      */
-    public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass, bool $allow_empty = false ): void {
+    public static function download_backup_artifact( object $website, string $remote_filename, string $local_file, $size, $http_user, $http_pass, bool $allow_empty = false, ?string $expected_sha256 = null ): void {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.WrongNumber
         if ( ! MainWP_Backup_Private_Root::is_within_private_site_dir( $local_file, (int) $website->id ) ) {
             throw new MainWP_Exception( esc_html__( 'Invalid backup file location.', 'mainwp' ) );
@@ -295,6 +296,13 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                     // is not yet servable, and announcing that as a download
                     // poisons the resume state with a vacuous success.
                     static::assert_download_landed( $local_file, $allow_empty && 0 === $size );
+                    if ( static::is_sha256( $expected_sha256 ) ) {
+                        $actual_hash = static::hash_artifact( $local_file );
+                        if ( ! hash_equals( $expected_sha256, $actual_hash ) ) {
+                            wp_delete_file( $local_file );
+                            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH, 'the downloaded file does not match the hash the child site recorded: expected ' . $expected_sha256 . ', got ' . $actual_hash ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped; hashes are hex digests.
+                        }
+                    }
                     if ( ! MainWP_Backup_Monitor::confirm_native_lease() ) {
                         // The token path's hash makes this same call: the slot
                         // may already be re-owned by a process writing this same
@@ -347,6 +355,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             static::assert_download_landed( $local_file, $allow_empty && 0 === $size );
 
+            $actual_hash = null;
             if ( ! empty( $token_info['hash'] ) && file_exists( $local_file ) ) {
                 static::refresh_download_lock( $local_file );
                 $actual_hash = static::hash_artifact( $local_file );
@@ -361,6 +370,16 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 }
             }
 
+            if ( static::is_sha256( $expected_sha256 ) ) {
+                if ( null === $actual_hash ) {
+                    $actual_hash = static::hash_artifact( $local_file );
+                }
+                if ( ! hash_equals( $expected_sha256, $actual_hash ) ) {
+                    wp_delete_file( $local_file );
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH, 'the downloaded file does not match the hash the child site recorded: expected ' . $expected_sha256 . ', got ' . $actual_hash ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped; hashes are hex digests.
+                }
+            }
+
             if ( $escalated ) {
                 MainWP_DB::instance()->update_website_option( $website, 'download_token_support', '1' );
             }
@@ -369,6 +388,44 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         } finally {
             remove_action( 'mainwp_download_to_file_progress', $progress );
         }
+    }
+
+    /**
+     * Reject digests outside the Child hash contract.
+     *
+     * @param mixed $value Untrusted Child digest.
+     * @return bool Whether the digest can support a content comparison.
+     */
+    public static function is_sha256( $value ): bool {
+        return is_string( $value ) && 1 === preg_match( '/^[a-f0-9]{64}$/D', $value );
+    }
+
+    /**
+     * Keep skipped hashes distinct from compared content.
+     *
+     * @param array $artifact Child artifact or completion projection.
+     * @return array Validated hash evidence, with an explicit skip taking precedence.
+     */
+    public static function artifact_hash_evidence( array $artifact ): array {
+        if ( isset( $artifact['hash_skipped'] ) && is_string( $artifact['hash_skipped'] ) ) {
+            $reason = substr( sanitize_key( $artifact['hash_skipped'] ), 0, 32 );
+            if ( '' !== $reason ) {
+                return array( 'hash_skipped' => $reason );
+            }
+        }
+        return static::is_sha256( $artifact['sha256'] ?? null ) ? array( 'sha256' => $artifact['sha256'] ) : array();
+    }
+
+    /**
+     * Cached reuse requires the same lease-aware comparison as a download.
+     *
+     * @param string $path Cached artifact path.
+     * @param string $expected Child digest.
+     * @return bool Whether the cached bytes match the recorded digest.
+     * @throws MainWP_Exception When hashing loses its lease or cannot open the artifact.
+     */
+    public static function matches_sha256( string $path, string $expected ): bool {
+        return static::is_sha256( $expected ) && hash_equals( $expected, static::hash_artifact( $path ) );
     }
 
     // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag -- the registry factory throws MainWP_Exception.

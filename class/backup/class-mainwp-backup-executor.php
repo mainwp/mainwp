@@ -1057,6 +1057,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $information['db']   = isset( $temp['file'] ) ? $temp['file'] : false;
                 }
                 $information['size'] = isset( $temp['size'] ) ? $temp['size'] : 0;
+                $information         = array_merge( $information, MainWP_Backup_File_Manager::artifact_hash_evidence( $temp ) );
+                if ( in_array( $temp['content_status'] ?? null, array( 'complete', 'partial' ), true ) ) {
+                    $information['content_status'] = $temp['content_status'];
+                }
 
                 // The child's Woo order-storage facts ride along so the
                 // snapshot record step can stamp them without another
@@ -1359,7 +1363,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
                             $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
                             $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-                            MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['db'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
+                            MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['db'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain, false, empty( $information['hash_skipped'] ) ? ( $information['sha256'] ?? null ) : null );
                             MainWP_Backup_File_Manager::validate_backup_file( $localBackupFile, $information['size'] );
                         } catch ( \Exception $e ) {
                             self::record_thrown_request(
@@ -1456,7 +1460,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                             // MWP-1548: decrypt at the boundary so download_to_file sees plaintext credentials.
                             $http_user_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_user );
                             $http_pass_plain = MainWP_Credential_Storage::decrypt_credential( $website->http_pass );
-                            MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['full'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain );
+                            MainWP_Backup_File_Manager::download_backup_artifact( $website, $information['full'], $localBackupFile, $information['size'], $http_user_plain, $http_pass_plain, false, empty( $information['hash_skipped'] ) ? ( $information['sha256'] ?? null ) : null );
                             MainWP_Backup_File_Manager::validate_backup_file( $localBackupFile, $information['size'] );
                         } catch ( \Exception $e ) {
                             self::record_thrown_request(
@@ -2125,12 +2129,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( empty( $complete ) || empty( $path ) || ! is_file( $path ) ) {
                 continue;
             }
-            $archives[] = array(
+            $archive = array(
                 'file' => basename( $path ),
                 'size' => (int) filesize( $path ),
                 'role' => $role,
                 'path' => $path,
             );
+            // Older claims copied artifacts before comparing their hashes. Only the new projection proves the download.
+            $claimed_role = ! empty( $progress->fetchResult['full'] ) ? 'full' : 'db';
+            if ( $role === $claimed_role ) {
+                $archive = array_merge( $archive, MainWP_Backup_File_Manager::artifact_hash_evidence( $progress->fetchResult ) );
+            }
+            $archives[] = $archive;
         }
 
         if ( empty( $archives ) ) {
@@ -2193,6 +2203,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     'role' => 'manifest',
                     'path' => $manifest_path,
                 );
+                $manifest = array_merge( $manifest, MainWP_Backup_File_Manager::artifact_hash_evidence( $artifact ) );
+                if ( in_array( $progress->fetchResult['content_status'] ?? null, array( 'complete', 'partial' ), true ) ) {
+                    $manifest['content_status'] = $progress->fetchResult['content_status'];
+                }
                 if ( isset( $artifact['walk'] ) && is_array( $artifact['walk'] ) ) {
                     $manifest['walk'] = $artifact['walk'];
                 }
@@ -2319,6 +2333,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             $local = MainWP_Backup_File_Manager::normalize_filename( $run_dir . MainWP_Utility::sanitize_file_name( $remote ) );
 
+            $hash_evidence    = MainWP_Backup_File_Manager::artifact_hash_evidence( $artifact );
+            $expected_sha256  = in_array( $role, array( 'part', 'db', 'full', 'tombstones' ), true ) ? ( $hash_evidence['sha256'] ?? null ) : null;
             $allow_empty      = 'tombstones' === $role && isset( $artifact['size'] ) && 0 === $size;
             $already_complete = file_exists( $local ) && (int) filesize( $local ) === $size && ( $size > 0 || $allow_empty );
             $invalid_archive  = false;
@@ -2329,6 +2345,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $already_complete = false;
                     $invalid_archive  = true;
                 }
+            }
+            if ( $already_complete && null !== $expected_sha256 && ! MainWP_Backup_File_Manager::matches_sha256( $local, $expected_sha256 ) ) {
+                $already_complete = false;
+                $invalid_archive  = true;
             }
             if ( ! $already_complete && ! MainWP_Backup_File_Manager::acquire_download_lock( $local, $website->id, $pTask->id ) ) {
                 throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $local ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
@@ -2341,7 +2361,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 }
                 if ( ! $already_complete ) {
                     try {
-                        MainWP_Backup_File_Manager::download_backup_artifact( $website, $remote, $local, $size, $http_user_plain, $http_pass_plain, $allow_empty );
+                        MainWP_Backup_File_Manager::download_backup_artifact( $website, $remote, $local, $size, $http_user_plain, $http_pass_plain, $allow_empty, $expected_sha256 );
                     } catch ( MainWP_Exception $e ) {
                         // Transport and ownership failures need the handler's mid_download retry.
                         if ( 'manifest' !== $role || ! in_array( $e->get_message_error_code(), array( MainWP_Backup_Error_Codes::ERR_FILE_TOO_SMALL, MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ), true ) ) {
@@ -2394,6 +2414,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 'role' => $role,
                 'path' => $local,
             );
+            if ( 'manifest' === $role || in_array( $role, array( 'part', 'db', 'full', 'tombstones' ), true ) ) {
+                $archive = array_merge( $archive, $hash_evidence );
+            }
+            if ( 'manifest' === $role && in_array( $progress->fetchResult['content_status'] ?? null, array( 'complete', 'partial' ), true ) ) {
+                $archive['content_status'] = $progress->fetchResult['content_status'];
+            }
             if ( 'manifest' === $role && isset( $artifact['walk'] ) && is_array( $artifact['walk'] ) ) {
                 $archive['walk'] = $artifact['walk'];
             }

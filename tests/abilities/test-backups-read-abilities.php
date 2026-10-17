@@ -2231,6 +2231,222 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 			}
 		}
 	}
+	/**
+	 * Stored evidence cases, including older archives.
+	 *
+	 * @return array Test cases.
+	 */
+	public static function snapshot_content_cases() {
+		return array(
+			'old full'       => array( 'old', 'transfer_hash_only', 'not_reported' ),
+			'new full'       => array( 'new', 'child_content_hash', 'reported' ),
+			'clean files'    => array( 'clean', 'child_content_hash', 'none' ),
+			'database'       => array( 'db', 'child_content_hash', 'not_reported' ),
+			'hashed chain'   => array( 'chain', 'child_content_hash', 'reported' ),
+			'older base'     => array( 'old_base', 'transfer_hash_only', 'reported' ),
+			'missing parent' => array( 'missing', 'transfer_hash_only', 'reported' ),
+			'cycle'          => array( 'cycle', 'transfer_hash_only', 'reported' ),
+			'skipped hash'   => array( 'skipped', 'transfer_hash_only', 'reported' ),
+			'skipped part'   => array( 'skipped_part', 'transfer_hash_only', 'reported' ),
+			'empty'          => array( 'empty', 'transfer_hash_only', 'not_reported' ),
+			'invalid hash'   => array( 'invalid', 'transfer_hash_only', 'reported' ),
+			'string count'   => array( 'string', 'child_content_hash', 'not_reported' ),
+			'negative count' => array( 'negative', 'child_content_hash', 'not_reported' ),
+			'partial zero'   => array( 'partial_zero', 'child_content_hash', 'reported' ),
+			'partial absent' => array( 'partial_absent', 'child_content_hash', 'reported' ),
+		);
+	}
+
+	/**
+	 * All ability reads must derive the same claims from stored archive evidence.
+	 *
+	 * @dataProvider snapshot_content_cases
+	 * @param string $variant Fixture variant.
+	 * @param string $integrity Expected integrity enum.
+	 * @param string $skipped Expected skipped-files enum.
+	 */
+	public function test_snapshot_content_evidence_reads( $variant, $integrity, $skipped ) {
+		global $wpdb;
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$hash   = str_repeat( 'a', 64 );
+		$rows   = array(
+			array(
+				'file'   => 'full.zip',
+				'path'   => __FILE__,
+				'role'   => 'full',
+				'size'   => 1024,
+				'sha256' => $hash,
+			),
+			array(
+				'file'           => 'files.list',
+				'path'           => __FILE__,
+				'role'           => 'manifest',
+				'size'           => 1,
+				'sha256'         => $hash,
+				'walk'           => array(
+					'skipped_count' => 1,
+					'skipped_paths' => array( 'host-link.php' ),
+				),
+				'content_status' => 'partial',
+			),
+		);
+		$type   = 'full';
+		$parent = null;
+		if ( in_array( $variant, array( 'chain', 'old_base', 'missing', 'cycle', 'skipped_part' ), true ) ) {
+			$type   = 'incremental';
+			$parent = 'cycle' === $variant ? 987673 : 987669;
+			$base   = array( $rows[0] );
+			if ( 'old_base' === $variant ) {
+				unset( $base[0]['sha256'] );
+			}
+			if ( ! in_array( $variant, array( 'missing', 'cycle' ), true ) ) {
+				$this->insert_read_fixture(
+					'wp_backup_snapshot',
+					array(
+						'id'       => 987669,
+						'site_id'  => $this->site_id,
+						'task_id'  => 987671,
+						'type'     => 'full',
+						'archives' => wp_json_encode( $base ),
+					)
+				);
+			}
+			$rows[0]['role'] = 'part';
+		}
+		if ( 'old' === $variant ) {
+			$rows = array( array_diff_key( $rows[0], array( 'sha256' => true ) ) );
+		} elseif ( 'db' === $variant ) {
+			$type            = 'db';
+			$rows            = array( $rows[0] );
+			$rows[0]['role'] = 'db';
+		} elseif ( 'clean' === $variant ) {
+			$type                             = 'files';
+			$rows[1]['walk']['skipped_count'] = 0;
+			$rows[1]['content_status']        = 'complete';
+		} elseif ( 'empty' === $variant ) {
+			$rows = array();
+		} elseif ( in_array( $variant, array( 'skipped', 'skipped_part' ), true ) ) {
+			$rows[0]['hash_skipped'] = 'too_large';
+		} elseif ( 'invalid' === $variant ) {
+			$rows[0]['sha256'] = str_repeat( 'A', 64 );
+		} elseif ( in_array( $variant, array( 'string', 'negative' ), true ) ) {
+			$rows[1]['walk']['skipped_count'] = 'string' === $variant ? '1' : -1;
+			unset( $rows[1]['content_status'] );
+		} elseif ( 'partial_zero' === $variant ) {
+			$rows[1]['walk']['skipped_count'] = 0;
+		} elseif ( 'partial_absent' === $variant ) {
+			unset( $rows[1]['walk'] );
+		}
+		$wpdb->update(
+			$table,
+			array(
+				'archives'  => wp_json_encode( $rows ),
+				'type'      => $type,
+				'parent_id' => $parent,
+			),
+			array( 'id' => 987673 )
+		);
+		$detail = $this->read( 'get-backup-snapshot', array( 'snapshot_id' => 987673 ) );
+		$list   = $this->read( 'list-backup-snapshots', array( 'site_id_or_domain' => $this->site_id ) );
+		$status = $this->read( 'get-backup-status', array( 'per_page' => 1 ) );
+		$this->assert_output( 'get-backup-snapshot', $detail );
+		$this->assert_output( 'list-backup-snapshots', $list );
+		$this->assert_output( 'get-backup-status', $status );
+		$expected = array(
+			'recorded_by'       => 'dashboard_after_download',
+			'archive_integrity' => $integrity,
+			'skipped_files'     => $skipped,
+		);
+		$this->assertSame( $expected, $detail['snapshot']['evidence'] );
+		$this->assertSame( $expected, $list['items'][0]['snapshot']['evidence'] );
+		$this->assertSame( $expected, $status['items'][0]['latest_snapshot']['evidence'] );
+	}
+
+	/**
+	 * Counts retain strict JSON types, while path samples stay bounded text.
+	 */
+	public function test_snapshot_skipped_files_sanitizes_samples() {
+		$long     = str_repeat( 'é', 1100 );
+		$paths    = array_merge( array( false, 12, array(), '<img src=x onerror=alert(1)>', $long ), array_fill( 0, 30, 'path.php' ) );
+		$snapshot = (object) array(
+			'archives' => array(
+				array(
+					'role' => 'manifest',
+					'walk' => array(
+						'skipped_count' => 25,
+						'skipped_paths' => $paths,
+					),
+				),
+			),
+		);
+		$sample   = \MainWP\Dashboard\MainWP_Backup_Read_Model::snapshot_skipped_files( $snapshot );
+		$this->assertSame( 25, $sample['count'] );
+		$this->assertCount( 20, $sample['paths'] );
+		$this->assertSame( '<img src=x onerror=alert(1)>', $sample['paths'][0] );
+		$this->assertSame( str_repeat( 'é', 1024 ), $sample['paths'][1] );
+		foreach ( array( '2', -1, null ) as $count ) {
+			$snapshot->archives[0]['walk']['skipped_count'] = $count;
+			$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Read_Model::snapshot_skipped_files( $snapshot )['count'] );
+		}
+	}
+	/**
+	 * List rows supply parents without another read, and missing-map reads are shared.
+	 */
+	public function test_snapshot_content_chain_reuses_loaded_rows() {
+		$archive = array(
+			'role'   => 'full',
+			'sha256' => str_repeat( 'a', 64 ),
+		);
+		$base    = (object) array(
+			'id'        => 987679,
+			'site_id'   => $this->site_id,
+			'type'      => 'full',
+			'parent_id' => null,
+			'archives'  => array( $archive ),
+		);
+		$leaf    = (object) array(
+			'id'        => 987673,
+			'site_id'   => $this->site_id,
+			'type'      => 'incremental',
+			'parent_id' => 987679,
+			'archives'  => array( $archive ),
+		);
+		$this->insert_read_fixture(
+			'wp_backup_snapshot',
+			array(
+				'id'       => 987679,
+				'site_id'  => $this->site_id,
+				'task_id'  => 987671,
+				'type'     => 'full',
+				'archives' => wp_json_encode( array( $archive ) ),
+			)
+		);
+		$helper = new \ReflectionMethod( \MainWP\Dashboard\MainWP_Backup_Read_Model::class, 'snapshot_content_evidence' );
+		$helper->setAccessible( true );
+		$queries = array();
+		$count   = static function ( $sql ) use ( &$queries ) {
+			if ( str_contains( $sql, 'wp_backup_snapshot' ) ) {
+				$queries[] = $sql;
+			}
+			return $sql;
+		};
+		add_filter( 'query', $count );
+		try {
+			$map = array(
+				987673 => $leaf,
+				987679 => $base,
+			);
+			$this->assertSame( 'child_content_hash', $helper->invokeArgs( null, array( $leaf, &$map ) )['archive_integrity'] );
+			$this->assertCount( 0, $queries );
+			$map = array( 987673 => $leaf );
+			foreach ( array( 1, 2 ) as $read ) {
+				$this->assertSame( 'child_content_hash', $helper->invokeArgs( null, array( $leaf, &$map ) )['archive_integrity'], 'Read ' . $read );
+			}
+			$this->assertCount( 1, $queries );
+		} finally {
+			remove_filter( 'query', $count );
+		}
+	}
 }
 
 /** Dynamic identities keep destination scope tests independent of recorded fixtures. */

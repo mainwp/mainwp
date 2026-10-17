@@ -47,7 +47,8 @@
             "last_error": "Restore & disk error.",
             "error_code": "mainwp_restore_disk_full",
             "has_rollback": false,
-            "is_rollback": false
+            "is_rollback": false,
+            "restore_outcome": null
         }
     ],
     "site_disconnected": false,

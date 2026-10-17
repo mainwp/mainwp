@@ -1038,10 +1038,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         if ( 'completed' === job.status && ! jobMessage ) {
                             jobMessage = safetyNoteText;
                         }
+                        var showRollback = job.has_rollback && canRestore;
+                        var sentence = restoreOutcomeSentence( job, showRollback && ! job.is_rollback );
+                        var $details = $( '<td></td>' ).text( jobMessage );
+                        if ( sentence ) {
+                            $details.append( $( '<div></div>' ).text( sentence ) );
+                        }
                         var $action = $( '<td class="collapsing"></td>' );
                         // A failed rollback still holds the safety backup it
                         // restores from, so it offers another attempt.
-                        if ( job.has_rollback && canRestore ) {
+                        if ( showRollback ) {
                             $( '<button type="button" class="ui mini basic button mainwp-restore-failed-job"></button>' )
                                 .attr( 'data-job-id', job.job_id )
                                 .prop( 'disabled', !! response.active_restore_job_id || siteDisconnected )
@@ -1054,7 +1060,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             $( '<td class="collapsing"></td>' ).append(
                                 $( '<span class="ui small label"></span>' ).addClass( historyStatusColors[ job.status ] || 'grey' ).text( jobLabels[ job.status ] || statusLabels[ job.status ] || job.status )
                             ),
-                            $( '<td></td>' ).text( jobMessage ),
+                            $details,
                             $action
                         ).appendTo( $history );
                     } );
@@ -1194,22 +1200,27 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function showRestoreOutcomeNote( data, showRollback ) {
                 var $note = $( '#mainwp-restore-outcome-note' ).text( '' ).hide();
+                var sentence = restoreOutcomeSentence( data, showRollback );
+                if ( null !== sentence ) {
+                    $note.text( sentence ).show();
+                }
+            }
+
+            function restoreOutcomeSentence( data, showRollback ) {
                 var terminal = [ 'completed', 'failed_permanent', 'cancelled' ].indexOf( data.status ) !== -1;
                 var report = data.restore_outcome;
                 if ( ! terminal || 'completed' === data.status || ! report || [ 'mainwp_restore_rolled_back', 'mainwp_restore_rollback_failed' ].indexOf( data.error_code ) !== -1 ) {
-                    return;
+                    return null;
                 }
                 if ( ! report.valid ) {
-                    $note.text( restoreReportLabels.unknown ).show();
-                    return;
+                    return restoreReportLabels.unknown;
                 }
                 var halves = [ report.files, report.database ].filter( function( value ) { return 'not_applicable' !== value; } );
                 if ( halves.every( function( value ) { return 'not_started' === value; } ) ) {
-                    $note.text( restoreReportLabels.nothingChanged ).show();
-                    return;
+                    return restoreReportLabels.nothingChanged;
                 }
                 if ( halves.every( function( value ) { return 'applied' === value; } ) ) {
-                    return;
+                    return null;
                 }
                 var files = { applied: restoreReportLabels.filesApplied, left_partial: restoreReportLabels.filesPartial, not_started: restoreReportLabels.filesNotStarted };
                 var database = { applied: restoreReportLabels.databaseApplied, left_partial: restoreReportLabels.databasePartial, not_started: restoreReportLabels.databaseNotStarted, rolled_back: restoreReportLabels.databaseRolledBack };
@@ -1223,7 +1234,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( showRollback ) {
                     sentences.push( restoreReportLabels.rollBack );
                 }
-                $note.text( sentences.join( ' ' ) ).show();
+                return sentences.join( ' ' );
             }
 
             // Report the WooCommerce order-preservation outcome on a completed

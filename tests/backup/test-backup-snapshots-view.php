@@ -966,7 +966,8 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'var canRestore = false;', $output );
 		$this->assertStringContainsString( 'id="mainwp-restore-snapshots-table"', $output, 'The list stays available.' );
 		$this->assertStringContainsString( 'var restore = snap.restorable && canRestore', $output );
-		$this->assertStringContainsString( 'if ( job.has_rollback && canRestore ) {', $output );
+		$this->assertStringContainsString( 'var showRollback = job.has_rollback && canRestore;', $output );
+		$this->assertStringContainsString( 'if ( showRollback ) {', $output );
 		$this->assertStringContainsString( "\$( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels[ cancelAction ] || '' ).toggle( canRestore && ", $output );
 		$this->assertStringContainsString( "\$( '#mainwp-restore-rollback-btn' ).toggle( canRestore && ", $output );
 	}

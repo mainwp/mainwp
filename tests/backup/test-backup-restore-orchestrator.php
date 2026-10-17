@@ -15,6 +15,7 @@ use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Executor;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
+use MainWP\Dashboard\MainWP_Backup_Read_Model;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Restore_Orchestrator;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
@@ -26,6 +27,7 @@ use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
 use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Install;
+use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Post_Backup_Handler;
@@ -7540,6 +7542,159 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		} finally {
 			unset( $_POST['security'], $_REQUEST['security'], $_POST['site_id'] );
 		}
+	}
+
+	/**
+	 * Older Child jobs retain the history fields the page already consumes.
+	 */
+	public function test_restore_history_without_report_preserves_existing_fields() {
+		$job = $this->make_job(
+			array( 'last_error_code' => 'mainwp_restore_disk_full' ),
+			MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT,
+			array( 'last_error' => 'Restore stopped' )
+		);
+		$row = MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id )['failed_restore_jobs'][0];
+		unset( $row['restore_outcome'] );
+		$this->assertSame(
+			array(
+				'job_id'       => (int) $job->id,
+				'snapshot_id'  => 5,
+				'status'       => 'failed_permanent',
+				'date_label'   => MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $job->created ) ),
+				'last_error'   => array(
+					'code'        => 'mainwp_restore_disk_full',
+					'source_text' => 'Restore stopped',
+				),
+				'error_code'   => 'mainwp_restore_disk_full',
+				'has_rollback' => false,
+				'is_rollback'  => false,
+			),
+			$row
+		);
+	}
+
+	/**
+	 * Missing reports must remain distinguishable from unreadable reports.
+	 */
+	public function test_restore_history_without_report_has_null_outcome() {
+		$this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT );
+		$row = MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id )['failed_restore_jobs'][0];
+		$this->assertArrayHasKey( 'restore_outcome', $row );
+		$this->assertNull( $row['restore_outcome'] );
+		$this->assertSame( array( 'job_id', 'snapshot_id', 'status', 'date_label', 'last_error', 'error_code', 'has_rollback', 'is_rollback', 'restore_outcome' ), array_keys( $row ) );
+	}
+
+	/**
+	 * Reloaded history and modal polling must describe the same stored Child report.
+	 *
+	 * @dataProvider restore_history_child_reports
+	 * @param string $fixture Child payload name.
+	 * @param string $status Terminal job status.
+	 * @param bool   $verification Report exists only in verification.
+	 * @param string $database Expected database outcome.
+	 */
+	public function test_restore_history_child_report_matches_modal_and_ajax( $fixture, $status, $verification, $database ) {
+		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$payload    = json_decode( file_get_contents( __DIR__ . '/fixtures/child-restore-outcome/restore-outcome-' . $fixture . '.json' ), true );
+		$report     = $payload['sub_state']['verification']['outcome'] ?? $payload['verification']['outcome'];
+		$checkpoint = array( 'sub_type' => 'full' );
+		if ( $verification ) {
+			$checkpoint['verification'] = array( 'outcome' => $report );
+		} else {
+			$checkpoint['restore_outcome'] = $report;
+		}
+		if ( 'completed' === $status ) {
+			$checkpoint['pre_snapshot_artifacts'] = array( array( 'file' => 'backup-pre.tar.gz' ) );
+		}
+		$job      = $this->make_job( $checkpoint, $status );
+		$row      = MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id )['failed_restore_jobs'][0];
+		$modal    = MainWP_Backup_Read_Model::get_restore_job( (int) $job->id );
+		$response = $this->b194_reload_snapshots();
+		$this->assertSame( (int) $job->id, $row['job_id'] );
+		$this->assertArrayHasKey( 'restore_outcome', $row );
+		$this->assertSame(
+			array(
+				'valid'    => true,
+				'files'    => 'applied',
+				'database' => $database,
+			),
+			$row['restore_outcome']
+		);
+		$this->assertSame( $modal['restore_outcome'], $row['restore_outcome'] );
+		$this->assertSame( $row['restore_outcome'], $response['failed_restore_jobs'][0]['restore_outcome'] );
+	}
+
+	/**
+	 * Both Child response shapes and the older verification location remain readable.
+	 *
+	 * @return array
+	 */
+	public static function restore_history_child_reports() {
+		return array(
+			'failed report'         => array( 'failed-after-swap', 'failed_permanent', false, 'left_partial' ),
+			'cancelled report'      => array( 'cancelled-after-files-before-swap', 'cancelled', false, 'not_started' ),
+			'verification fallback' => array( 'failed-after-swap', 'failed_permanent', true, 'left_partial' ),
+			'completed report'      => array( 'completed-full', 'completed', false, 'applied' ),
+		);
+	}
+
+	/**
+	 * Corrupt or scalar checkpoints cannot satisfy the report helper's array contract.
+	 *
+	 * @dataProvider restore_history_non_array_checkpoints
+	 * @param string $checkpoint Stored checkpoint JSON.
+	 */
+	public function test_restore_history_non_array_checkpoint_has_null_outcome( $checkpoint ) {
+		global $wpdb;
+		$job = $this->make_job( array(), MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT );
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'checkpoint' => $checkpoint ), array( 'id' => $job->id ) );
+		$row = MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id )['failed_restore_jobs'][0];
+		$this->assertSame( (int) $job->id, $row['job_id'] );
+		$this->assertArrayHasKey( 'restore_outcome', $row );
+		$this->assertNull( $row['restore_outcome'] );
+	}
+
+	/**
+	 * JSON decoding can succeed without producing an array.
+	 *
+	 * @return array
+	 */
+	public static function restore_history_non_array_checkpoints() {
+		return array(
+			'invalid JSON' => array( '{not-json' ),
+			'null'         => array( 'null' ),
+			'boolean'      => array( 'false' ),
+			'number'       => array( '7' ),
+			'string'       => array( '"checkpoint"' ),
+		);
+	}
+
+	/**
+	 * Reports already live in the selected checkpoints and need no per-job read.
+	 */
+	public function test_restore_history_reports_do_not_add_queries() {
+		global $wpdb;
+		$jobs = array();
+		for ( $index = 0; $index < 3; ++$index ) {
+			$jobs[] = $this->make_job( array( 'sub_type' => 'full' ), MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT );
+		}
+		MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id );
+		$before        = $wpdb->num_queries;
+		$plain         = MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id );
+		$plain_queries = $wpdb->num_queries - $before;
+		foreach ( $jobs as $job ) {
+			$checkpoint                    = $job->checkpoint;
+			$checkpoint['restore_outcome'] = array(
+				'files'    => 'applied',
+				'database' => 'left_partial',
+			);
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'checkpoint' => wp_json_encode( $checkpoint ) ), array( 'id' => $job->id ) );
+		}
+		$before  = $wpdb->num_queries;
+		$reports = MainWP_Backup_Read_Model::list_restore_jobs( $this->site_id );
+		$this->assertSame( $plain_queries, $wpdb->num_queries - $before, 'Stored reports must not add a query per row.' );
+		$this->assertCount( 3, $plain['failed_restore_jobs'] );
+		$this->assertSame( array_column( $plain['failed_restore_jobs'], 'job_id' ), array_column( $reports['failed_restore_jobs'], 'job_id' ) );
 	}
 
 	/**

@@ -595,15 +595,21 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             if ( ! is_array( $failed_job->checkpoint ) ) {
                 $failed_job->checkpoint = json_decode( (string) $failed_job->checkpoint, true );
             }
+            $report        = is_array( $failed_job->checkpoint ) ? self::restore_outcome_report( $failed_job->checkpoint, (string) ( $failed_job->checkpoint['sub_type'] ?? '' ), true ) : null;
             $failed_rows[] = array(
-                'job_id'       => (int) $failed_job->id,
-                'snapshot_id'  => (int) $failed_job->snapshot_id,
-                'status'       => (string) $failed_job->status,
-                'date_label'   => (int) $failed_job->created > 0 ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $failed_job->created ) ) : '',
-                'last_error'   => self::error_value( (string) $failed_job->last_error, (string) ( $failed_job->checkpoint['last_error_code'] ?? '' ) ),
-                'error_code'   => (string) ( $failed_job->checkpoint['last_error_code'] ?? '' ),
-                'has_rollback' => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $failed_job ),
-                'is_rollback'  => ! empty( $failed_job->checkpoint['is_rollback'] ),
+                'job_id'          => (int) $failed_job->id,
+                'snapshot_id'     => (int) $failed_job->snapshot_id,
+                'status'          => (string) $failed_job->status,
+                'date_label'      => (int) $failed_job->created > 0 ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $failed_job->created ) ) : '',
+                'last_error'      => self::error_value( (string) $failed_job->last_error, (string) ( $failed_job->checkpoint['last_error_code'] ?? '' ) ),
+                'error_code'      => (string) ( $failed_job->checkpoint['last_error_code'] ?? '' ),
+                'has_rollback'    => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $failed_job ),
+                'is_rollback'     => ! empty( $failed_job->checkpoint['is_rollback'] ),
+                'restore_outcome' => null === $report ? null : array(
+                    'valid'    => $report['valid'],
+                    'files'    => $report['files'],
+                    'database' => $report['database'],
+                ),
             );
         }
         return array(

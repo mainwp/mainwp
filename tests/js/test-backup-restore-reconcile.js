@@ -52,7 +52,7 @@ function harness() {
         const labelsStart = source.indexOf( 'var ' + name + ' = ' );
         vm.runInContext( phpToJs( source.slice( labelsStart, source.indexOf( '\n            };', labelsStart ) + '\n            };'.length ) ), context );
     }
-    for ( const name of [ 'showReconcileNote', 'showRestoreOutcomeNote', 'showProgress' ] ) {
+    for ( const name of [ 'showReconcileNote', 'restoreOutcomeSentence', 'showRestoreOutcomeNote', 'showProgress' ] ) {
         const start = source.indexOf( 'function ' + name + '(' );
         assert.ok( start >= 0 );
         const code = source.slice( start, source.indexOf( '\n            }', start ) + '\n            }'.length );

@@ -589,6 +589,96 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A replacement task cannot inherit another task's cancellation evidence.
+	 *
+	 * @dataProvider cancel_report_task_binding_cases
+	 * @param bool        $replaced Whether the task changes during cancellation.
+	 * @param string|null $error Dashboard failure, or a user cancel.
+	 * @param string      $child_code Child failure code.
+	 */
+	public function test_cancel_report_is_bound_to_decided_child_task( $replaced, $error, $child_code ) {
+		$store   = MainWP_Backup_Restore_Job_Store::instance();
+		$job     = $this->make_job( array( 'sub_type' => 'full' ), $store::STATUS_RUNNING, array( 'child_task_id' => 'report-task' ) );
+		$payload = $this->restore_report_fixture( 'failed-before-any-change' );
+		$report  = $payload['sub_state']['verification']['outcome'];
+
+		$this->responses['restore_task_cancel'] = array(
+			array(
+				'result'       => 'already_terminal',
+				'phase'        => 'failed',
+				'verification' => array( 'outcome' => $report ),
+				'failure'      => array( 'code' => $child_code ),
+			),
+			array( 'result' => 'ok' ),
+		);
+
+		$landed  = false;
+		$replace = static function ( $pre, $website, $what, $params ) use ( $store, $job, $replaced, &$landed ) {
+			if ( $replaced && 'restore_task_cancel' === $what && 'report-task' === ( $params['task_id'] ?? '' ) ) {
+				$landed = $store->set_status( (int) $job->id, $store::STATUS_RUNNING, array( 'child_task_id' => 'replacement-task' ) );
+			}
+			return $pre;
+		};
+		$events  = array();
+		$observe = static function ( $event ) use ( &$events ) {
+			$events[] = $event;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $replace, 20, 4 );
+		add_action( 'mainwp_backup_restore_failed', $observe );
+		try {
+			$call = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
+			$this->assertSame( MainWP_Backup_Restore_Orchestrator::TERMINAL_OUTCOME_TERMINAL, $call->invoke( $this->orchestrator, $job, $error, 'mainwp_restore_failed', null ) );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $replace, 20 );
+			remove_action( 'mainwp_backup_restore_failed', $observe );
+		}
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $replaced, $landed );
+		$this->assertSame( $replaced ? 'replacement-task' : 'report-task', $job->child_task_id );
+		$this->assertSame( null === $error ? 'cancelled' : 'failed_permanent', $job->status );
+		$this->assertSame( 'confirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
+		$this->assertSame( $error ?? '', $job->last_error );
+		$code = $replaced ? ( null === $error ? '' : 'mainwp_restore_failed' ) : $child_code;
+		$this->assertSame( $code, $job->checkpoint['last_error_code'] ?? '' );
+		if ( $replaced ) {
+			$this->assertArrayNotHasKey( 'restore_outcome', $job->checkpoint );
+			$this->assertArrayNotHasKey( 'child_failure_code', $job->checkpoint );
+		} else {
+			$this->assertSame( $report, $job->checkpoint['restore_outcome'] );
+			$this->assertSame( $child_code, $job->checkpoint['child_failure_code'] );
+		}
+		$detail = \MainWP\Dashboard\MainWP_Backup_Read_Model::restore_job_details( (int) $job->id );
+		$this->assertSame( $replaced ? 'possible' : 'none', $detail['partial_state_risk'] );
+		$this->assertSame( $replaced ? array( 'child_apply_started', 'no_files_rollback', 'db_applied_after_files' ) : array(), $detail['partial_state_reasons'] );
+		$this->assertSame( $replaced ? array( 'restore_task_cancel', 'restore_task_cancel' ) : array( 'restore_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'task_id' => 'report-task' ), $this->calls[0]['params'] );
+		if ( $replaced ) {
+			$this->assertSame( array( 'task_id' => 'replacement-task' ), $this->calls[1]['params'] );
+		}
+		if ( null !== $error ) {
+			$this->assertCount( 1, $events );
+			$this->assertSame( $code, $events[0]['error_code'] );
+		}
+	}
+
+	/**
+	 * Both recovery codes and user cancellations remain bound to their task.
+	 *
+	 * @return array
+	 */
+	public static function cancel_report_task_binding_cases() {
+		$cases = array();
+		foreach ( array( false, true ) as $replaced ) {
+			foreach ( array( null, 'Dashboard failure' ) as $error ) {
+				foreach ( array( 'mainwp_restore_rolled_back', 'mainwp_restore_rollback_failed' ) as $code ) {
+					$cases[] = array( $replaced, $error, $code );
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/**
 	 * Old terminal answers require one status read only when the task id is known.
 	 *
 	 * @dataProvider cancel_status_report_cases
@@ -599,8 +689,13 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * @param bool   $fetch Whether status is requested.
 	 */
 	public function test_cancel_status_report_fallback( $result, $phase, $child, $status_reply, $fetch ) {
-		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
-		$job                                    = $this->make_job( array( 'child_create_attempted' => true ), $store::STATUS_RUNNING, array( 'child_task_id' => $child ? 'report-task' : '' ) );
+		$store      = MainWP_Backup_Restore_Job_Store::instance();
+		$checkpoint = array( 'child_create_attempted' => true );
+		if ( 'error envelope' === $status_reply ) {
+			$checkpoint['last_error_code'] = 'mainwp_restore_failed';
+		}
+		$job = $this->make_job( $checkpoint, $store::STATUS_RUNNING, array( 'child_task_id' => $child ? 'report-task' : '' ) );
+
 		$this->responses['restore_task_cancel'] = array(
 			'result' => $result,
 			'phase'  => $phase,
@@ -613,6 +708,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$status = new \RuntimeException( 'Status unavailable.' );
 		} elseif ( 'empty' === $status_reply ) {
 			$status = false;
+		} elseif ( 'error envelope' === $status_reply ) {
+			$status = array(
+				'error'      => 'Restore task not found.',
+				'error_code' => 'mainwp_restore_task_missing',
+			);
 		}
 		$this->responses['restore_task_status'] = $status;
 		if ( 'completed' === $phase ) {
@@ -631,6 +731,9 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			$this->assertSame( $usable && 'report' === $status_reply, isset( $job->checkpoint['restore_outcome'] ) );
 			if ( $usable ) {
 				$this->assertSame( 'mainwp_restore_db_replay', $job->checkpoint['child_failure_code'] );
+			}
+			if ( 'error envelope' === $status_reply ) {
+				$this->assertSame( 'mainwp_restore_failed', $job->checkpoint['last_error_code'] );
 			}
 			if ( 'completed' !== $phase ) {
 				$this->assertSame( 'cancelled', $job->status );
@@ -651,6 +754,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			'old status'         => array( 'ok', 'failed', true, 'no report', true ),
 			'unreachable status' => array( 'ok', 'failed', true, 'throws', true ),
 			'empty status'       => array( 'ok', 'failed', true, 'empty', true ),
+			'error-only status'  => array( 'ok', 'failed', true, 'error envelope', true ),
 			'already completed'  => array( 'already_terminal', 'completed', true, 'report', false ),
 			'absent task'        => array( 'not_found', '', true, 'report', false ),
 			'lost create'        => array( 'ok', 'failed', false, 'report', false ),
@@ -992,6 +1096,16 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			),
 		);
 		$this->assertSame( $expected, $call->invoke( $this->orchestrator, array( 'outcome' => $report ) ) );
+		$report['database']      = INF;
+		$report['phase_reached'] = 17;
+		unset( $expected['restore_outcome']['database'] );
+		$evidence = $call->invoke( $this->orchestrator, array( 'outcome' => $report ) );
+		$this->assertSame( $expected, $evidence );
+		$job        = $this->make_job();
+		$checkpoint = array_replace( $job->checkpoint, $evidence );
+		$store      = MainWP_Backup_Restore_Job_Store::instance();
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+		$this->assertSame( $checkpoint, $store->get_job( (int) $job->id )->checkpoint );
 		foreach ( array( null, false, 'bad', 1 ) as $value ) {
 			$this->assertSame( array( 'restore_outcome' => 'malformed' ), $call->invoke( $this->orchestrator, array( 'outcome' => $value ) ) );
 		}
@@ -5041,7 +5155,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 			// before_swap_select lands the id before the terminal write reads the row,
 			// before_terminal_write between that read and its UPDATE.
 			$prefix = 'before_swap_select' === $landing
-				? 'SELECT checkpoint, status, locked_by, checkpoint_rev FROM ' . $table . ' WHERE id = '
+				? 'SELECT checkpoint, status, locked_by, checkpoint_rev, child_task_id FROM ' . $table . ' WHERE id = '
 				: 'UPDATE ' . $table . ' SET `status` = \'' . $terminal . '\'';
 			$inject = static function ( $sql ) use ( $table, $id, $prefix, $wpdb, &$landed ) {
 				if ( ! $landed && str_starts_with( $sql, $prefix ) ) {

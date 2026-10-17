@@ -404,10 +404,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             };
             var restoreReportLabels = {
                 filesApplied: '<?php echo esc_js( esc_html__( 'The files from the backup were copied to the site and stay in place.', 'mainwp' ) ); ?>',
-                filesPartial: '<?php echo esc_js( esc_html__( 'Some files from the backup were copied to the site before the restore stopped. They stay in place.', 'mainwp' ) ); ?>',
+                filesPartial: '<?php echo esc_js( esc_html__( 'Some files from the backup may have been copied to the site before the restore stopped. Any copied files stay in place.', 'mainwp' ) ); ?>',
                 filesNotStarted: '<?php echo esc_js( esc_html__( 'No files were changed.', 'mainwp' ) ); ?>',
                 databaseApplied: '<?php echo esc_js( esc_html__( 'The database was restored from the backup.', 'mainwp' ) ); ?>',
-                databasePartial: '<?php echo esc_js( esc_html__( 'The database was partly restored and may not match the backup.', 'mainwp' ) ); ?>',
+                databasePartial: '<?php echo esc_js( esc_html__( 'The database may be partly restored and may not match the backup.', 'mainwp' ) ); ?>',
                 databaseNotStarted: '<?php echo esc_js( esc_html__( 'The database was not changed.', 'mainwp' ) ); ?>',
                 databaseRolledBack: '<?php echo esc_js( esc_html__( 'The database was put back the way it was before the restore.', 'mainwp' ) ); ?>',
                 nothingChanged: '<?php echo esc_js( esc_html__( 'The restore stopped before it changed anything on the site.', 'mainwp' ) ); ?>',
@@ -1077,7 +1077,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-cancel-rollback-note' ).toggle( safetyBackup );
                 $( '#mainwp-restore-rollback-btn' ).text( retryRollback ? rollbackActionLabels.retry : rollbackActionLabels.rollBack );
                 $( '#mainwp-restore-rollback-btn' ).toggle( canRestore && ! rollbackRequestPending && terminal && ( safetyBackup || retryRollback ) );
-                showRestoreOutcomeNote( data, canRestore && ! rollbackRequestPending && terminal && ( safetyBackup || retryRollback ) );
+                showRestoreOutcomeNote( data, canRestore && ! rollbackRequestPending && terminal && safetyBackup );
 
                 // Surface the safety backup whenever one exists for this run,
                 // so the safety net is visible and not implied (L4).

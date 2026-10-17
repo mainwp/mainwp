@@ -252,7 +252,7 @@ for ( const [ files, database ] of [ [ 'not_started', 'not_started' ], [ 'not_st
     } );
 }
 
-test( 'partial outcome follows the same permission and pending gates as Roll Back', () => {
+test( 'partial outcome suggests Roll Back only for a restore safety backup', () => {
     for ( const canRestore of [ true, false ] ) {
         for ( const rollbackRequestPending of [ true, false ] ) {
             for ( const has_rollback of [ true, false ] ) {
@@ -263,11 +263,17 @@ test( 'partial outcome follows the same permission and pending gates as Roll Bac
                     const visible = h.context.$( '#mainwp-restore-rollback-btn' ).state.visible;
                     assert.equal( visible, canRestore && ! rollbackRequestPending && has_rollback );
                     assert.equal( h.context.$( '#mainwp-restore-outcome-note' ).state.text,
-                        h.context.restoreReportLabels.filesApplied + ' ' + h.context.restoreReportLabels.databasePartial + ( visible ? ' ' + h.context.restoreReportLabels.rollBack : '' ) );
+                        h.context.restoreReportLabels.filesApplied + ' ' + h.context.restoreReportLabels.databasePartial + ( visible && ! is_rollback ? ' ' + h.context.restoreReportLabels.rollBack : '' ) );
                 }
             }
         }
     }
+} );
+
+test( 'partial-state copy preserves uncertainty about site changes', () => {
+    const h = harness();
+    assert.equal( h.context.restoreReportLabels.filesPartial, 'Some files from the backup may have been copied to the site before the restore stopped. Any copied files stay in place.' );
+    assert.equal( h.context.restoreReportLabels.databasePartial, 'The database may be partly restored and may not match the backup.' );
 } );
 
 for ( const [ files, database, labels ] of [

@@ -813,6 +813,19 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A partial report cannot prove that a file write completed.
+	 *
+	 * @return void
+	 */
+	public function test_partial_state_reason_description_preserves_uncertainty() {
+		$schema = $this->ability( 'get-restore-job' )->get_output_schema();
+		$this->assertStringContainsString(
+			'no_files_rollback: the site may have changed files from the backup and has no automatic file rollback, or, for a site without a usable report, file changes could not be ruled out.',
+			$schema['properties']['partial_state_reasons']['description']
+		);
+	}
+
+	/**
 	 * Sites without reports retain the original risk rule.
 	 *
 	 * @dataProvider legacy_restore_report_cases

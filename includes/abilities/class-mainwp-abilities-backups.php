@@ -1114,7 +1114,7 @@ class MainWP_Abilities_Backups {
                         'type' => 'string',
                         'enum' => array( 'child_apply_started', 'no_files_rollback', 'db_applied_after_files', 'cancel_unconfirmed' ),
                     ),
-                    'description' => 'child_apply_started: the site began applying the restore, or its report could not confirm what changed. no_files_rollback: the site copied some or all files from the backup and has no automatic file rollback, or, for a site without a usable report, file changes could not be ruled out. db_applied_after_files: files are applied before the database, and the database step did not finish or could not be confirmed. cancel_unconfirmed: the site never confirmed it stopped.',
+                    'description' => 'child_apply_started: the site began applying the restore, or its report could not confirm what changed. no_files_rollback: the site may have changed files from the backup and has no automatic file rollback, or, for a site without a usable report, file changes could not be ruled out. db_applied_after_files: files are applied before the database, and the database step did not finish or could not be confirmed. cancel_unconfirmed: the site never confirmed it stopped.',
                 ),
                 'files_rollback_available' => array(
                     'type'        => 'boolean',

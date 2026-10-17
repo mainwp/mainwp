@@ -2000,7 +2000,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( is_array( $report ) ) {
                 $evidence['restore_outcome'] = array();
                 foreach ( array( 'files', 'database', 'files_copy_taken', 'phase_reached' ) as $key ) {
-                    if ( isset( $report[ $key ] ) && is_scalar( $report[ $key ] ) ) {
+                    if ( isset( $report[ $key ] ) && ( is_string( $report[ $key ] ) || is_bool( $report[ $key ] ) ) ) {
                         $evidence['restore_outcome'][ $key ] = is_string( $report[ $key ] ) ? substr( $report[ $key ], 0, 64 ) : $report[ $key ];
                     }
                 }
@@ -2187,7 +2187,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 try {
                     $website = $this->website( $job );
                     $status  = MainWP_Connect::fetch_url_authed( $website, 'restore_task_status', array( 'task_id' => $decided_task_id ), false, false, false );
-                    if ( is_array( $status ) ) {
+                    if ( is_array( $status ) && isset( $status['phase'] ) ) {
                         $reported     = $status['sub_state']['verification'] ?? array();
                         $verification = is_array( $reported ) ? $reported : array();
                         $child_code   = ! empty( $status['error_code'] ) ? $status['error_code'] : ( $status['sub_state']['error']['code'] ?? $child_code );
@@ -2201,7 +2201,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( $cancelled && '' !== $child_code && 'mainwp_restore_cancelled' !== $child_code ) {
                 $evidence['last_error_code'] = $child_code;
             } elseif ( ! $cancelled && in_array( $child_code, array( 'mainwp_restore_rolled_back', 'mainwp_restore_rollback_failed' ), true ) ) {
-                $error_code = $child_code;
+                $evidence['last_error_code'] = $child_code;
             }
         }
         // Terminal status and its stop evidence land together, so no
@@ -2214,7 +2214,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $confirmation,
             $lock_token,
             $verify_stop,
-            $evidence
+            $evidence,
+            empty( $evidence ) ? null : $decided_task_id
         );
         if ( 'written' !== $written ) {
             if ( $verify_stop ) {
@@ -2247,6 +2248,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $job        = $final;
             $error      = (string) $final->last_error;
             $error_code = (string) ( $final->checkpoint['last_error_code'] ?? '' );
+        } elseif ( null !== $final && ! $cancelled && isset( $evidence['last_error_code'] ) ) {
+            $error_code = (string) ( $final->checkpoint['last_error_code'] ?? $error_code );
         }
         if ( ! $verify_stop && null !== $final && ! empty( $final->child_task_id ) && (string) $final->child_task_id !== $decided_task_id ) {
             $this->cancel_task_created_after_terminal( $final, (string) $final->child_task_id );

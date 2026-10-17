@@ -74,6 +74,76 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * A CAS retry must reconsider which task the evidence describes.
+	 *
+	 * @dataProvider report_task_binding_races
+	 * @param bool $replaced Whether a concurrent write replaces the task.
+	 * @param bool $leased Whether a worker owns the write.
+	 */
+	public function test_terminal_report_task_binding_is_rechecked_after_cas_miss( $replaced, $leased ) {
+		$job_id = $this->store->create_job( 8801, 42, array( 'cursor' => 1 ) );
+		$this->assertTrue( $this->store->set_status( $job_id, 'running', array( 'child_task_id' => 'report-task' ) ) );
+		$token = $leased ? 'report-owner' : null;
+		if ( $leased ) {
+			$this->assertNotNull( $this->store->acquire_next_job( $token, 300, null, $job_id ) );
+		}
+		$evidence    = array(
+			'restore_outcome'    => array(
+				'files'    => 'not_started',
+				'database' => 'not_started',
+			),
+			'child_failure_code' => 'mainwp_restore_rollback_failed',
+			'last_error_code'    => 'mainwp_restore_rollback_failed',
+		);
+		$table       = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$interleaved = false;
+		$race        = function ( $sql ) use ( &$race, &$interleaved, $table, $job_id, $token, $replaced ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table ) && str_contains( $sql, "`status` = 'failed_permanent'" ) ) {
+				remove_filter( 'query', $race );
+				$interleaved = true;
+				$this->assertTrue( $this->store->set_status( $job_id, 'running', array( 'child_task_id' => $replaced ? 'replacement-task' : 'report-task' ), $token ) );
+				$this->assertTrue( $this->store->save_checkpoint( $job_id, array( 'cursor' => 9 ), $token ) );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $race );
+		try {
+			$result = $this->store->finish_with_cancel_confirmation( $job_id, 'failed_permanent', 'Dashboard failure', 'mainwp_restore_failed', 'confirmed', $token, false, $evidence, 'report-task' );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$job = $this->store->get_job( $job_id );
+		$this->assertTrue( $interleaved );
+		$this->assertSame( 'written', $result );
+		$this->assertSame( 'failed_permanent', $job->status );
+		$this->assertSame( 'Dashboard failure', $job->last_error );
+		$this->assertSame( 9, $job->checkpoint['cursor'] );
+		$this->assertSame( $replaced ? 'replacement-task' : 'report-task', $job->child_task_id );
+		$this->assertSame( $replaced ? 'mainwp_restore_failed' : 'mainwp_restore_rollback_failed', $job->checkpoint['last_error_code'] );
+		if ( $replaced ) {
+			$this->assertArrayNotHasKey( 'restore_outcome', $job->checkpoint );
+			$this->assertArrayNotHasKey( 'child_failure_code', $job->checkpoint );
+		} else {
+			$this->assertSame( $evidence['restore_outcome'], $job->checkpoint['restore_outcome'] );
+			$this->assertSame( $evidence['child_failure_code'], $job->checkpoint['child_failure_code'] );
+		}
+	}
+
+	/**
+	 * Leased and unleased terminal writes share the same task check.
+	 *
+	 * @return array
+	 */
+	public static function report_task_binding_races() {
+		return array(
+			array( false, false ),
+			array( false, true ),
+			array( true, false ),
+			array( true, true ),
+		);
+	}
+
+	/**
 	 * A stale terminal write cannot attach evidence to the live holder's row.
 	 */
 	public function test_terminal_report_refuses_reclaimed_lease() {

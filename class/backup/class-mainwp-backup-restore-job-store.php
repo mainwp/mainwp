@@ -612,13 +612,14 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
      * @param string|null $confirmation confirmed, unconfirmed or not_needed; null derives it from the row.
      * @param string|null $lock_token   Worker lease token, or null for an unleased cancellation.
      * @param bool        $verify_stop Require a verification retry no worker holds and record that checks stopped.
+     * @param array       $checkpoint_updates Child evidence to store with the terminal status.
      *
      * @return string written; terminal when the row is missing or another writer
      *                finished it; fenced when the lease was lost; refused when the
      *                write failed on an unchanged row; contended when the row
      *                kept changing under the swap; changed when verification moved or is leased.
      */
-    public function finish_with_cancel_confirmation( int $job_id, string $status, ?string $error, string $error_code, ?string $confirmation, ?string $lock_token = null, bool $verify_stop = false ): string {
+    public function finish_with_cancel_confirmation( int $job_id, string $status, ?string $error, string $error_code, ?string $confirmation, ?string $lock_token = null, bool $verify_stop = false, array $checkpoint_updates = array() ): string {
         $missed = null;
         for ( $attempt = 0; $attempt < 5; $attempt++ ) {
             $columns = $verify_stop ? 'checkpoint, status, locked_by, checkpoint_rev, last_error' : 'checkpoint, status, locked_by, checkpoint_rev';
@@ -634,6 +635,7 @@ class MainWP_Backup_Restore_Job_Store extends MainWP_Backup_Job_Store_Base { // 
             $stored  = (string) $row->checkpoint;
             $decoded = json_decode( $stored, true );
             $decoded = is_array( $decoded ) ? $decoded : array();
+            $decoded = array_replace( $decoded, $checkpoint_updates );
             if ( $verify_stop ) {
                 $resolved             = clone $row;
                 $resolved->checkpoint = $decoded;

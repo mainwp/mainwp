@@ -20,6 +20,77 @@ class MainWP_Backup_Restore_Job_Store_Test extends \WP_UnitTestCase {
 	use Backup_Cancel_Transport_Guard;
 
 	/**
+	 * Child evidence and terminal status must survive a retry of the same CAS.
+	 *
+	 * @dataProvider report_terminal_cas_cases
+	 * @param bool $leased Whether a worker owns the write.
+	 */
+	public function test_terminal_report_merges_each_cas_attempt( $leased ) {
+		$job_id = $this->store->create_job( 8801, 42, array( 'cursor' => 1 ) );
+		$token  = $leased ? 'report-owner' : null;
+		if ( $leased ) {
+			$this->assertNotNull( $this->store->acquire_next_job( $token, 300, null, $job_id ) );
+		}
+		$evidence    = array(
+			'restore_outcome'    => array(
+				'files'    => 'applied',
+				'database' => 'left_partial',
+			),
+			'child_failure_code' => 'mainwp_restore_cancelled',
+		);
+		$table       = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$interleaved = false;
+		$race        = function ( $sql ) use ( &$race, &$interleaved, $table, $job_id, $token ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table ) && str_contains( $sql, "`status` = 'cancelled'" ) ) {
+				remove_filter( 'query', $race );
+				$interleaved = true;
+				$this->store->save_checkpoint( $job_id, array( 'cursor' => 9 ), $token );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $race );
+		try {
+			$result = $this->store->finish_with_cancel_confirmation( $job_id, 'cancelled', null, '', 'confirmed', $token, false, $evidence );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$job = $this->store->get_job( $job_id );
+		$this->assertTrue( $interleaved );
+		$this->assertSame( 'written', $result );
+		$this->assertSame( 'cancelled', $job->status );
+		$this->assertSame( 9, $job->checkpoint['cursor'] );
+		$this->assertSame( $evidence['restore_outcome'], $job->checkpoint['restore_outcome'] );
+		$this->assertSame( $evidence['child_failure_code'], $job->checkpoint['child_failure_code'] );
+		$this->assertSame( 'confirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
+	}
+
+	/**
+	 * Both writers use the same evidence merge inside the CAS loop.
+	 *
+	 * @return array
+	 */
+	public static function report_terminal_cas_cases() {
+		return array( array( true ), array( false ) );
+	}
+
+	/**
+	 * A stale terminal write cannot attach evidence to the live holder's row.
+	 */
+	public function test_terminal_report_refuses_reclaimed_lease() {
+		$job_id = $this->store->create_job( 8801, 42, array( 'cursor' => 'live' ) );
+		$this->store->acquire_next_job( 'report-old', 90, time() - 100, $job_id );
+		$this->assertNotNull( $this->store->acquire_next_job( 'report-new', 90, time(), $job_id ) );
+		$before = $this->store->get_job( $job_id );
+		$this->assertSame( 'fenced', $this->store->finish_with_cancel_confirmation( $job_id, 'cancelled', null, '', 'confirmed', 'report-old', false, array( 'restore_outcome' => 'malformed' ) ) );
+		$after = $this->store->get_job( $job_id );
+		$this->assertSame( $before->checkpoint, $after->checkpoint );
+		$this->assertSame( $before->checkpoint_rev, $after->checkpoint_rev );
+		$this->assertSame( $before->locked_by, $after->locked_by );
+		$this->assertSame( $before->status, $after->status );
+	}
+
+
+	/**
 	 * A claim does not move the revision; every stop swap must test the lease and resolved phase.
 	 *
 	 * @dataProvider stop_checking_races

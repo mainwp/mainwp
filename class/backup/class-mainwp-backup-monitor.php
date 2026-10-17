@@ -51,6 +51,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         'child_is_multisite'                 => 'is_multisite',
         'restore_multisite_support'          => 'restore_multisite',
         'reconcile_unarchived_support'       => 'reconcile_unarchived_support',
+        'restore_outcome_report'             => 'restore_outcome_report',
     );
 
     /**

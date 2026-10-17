@@ -15,6 +15,7 @@
     "sub_type": "full",
     "is_rollback": false,
     "verification": [],
+    "restore_outcome": null,
     "bytes_transferred": 512,
     "bytes_total": 1024
 }

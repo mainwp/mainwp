@@ -48,9 +48,11 @@ function harness() {
         return element;
     };
     vm.createContext( context );
-    const labelsStart = source.indexOf( 'var restoreCancelLabels = ' );
-    vm.runInContext( phpToJs( source.slice( labelsStart, source.indexOf( '\n            };', labelsStart ) + '\n            };'.length ) ), context );
-    for ( const name of [ 'showReconcileNote', 'showProgress' ] ) {
+    for ( const name of [ 'restoreCancelLabels', 'restoreReportLabels', 'restoreOutcomeMessages' ] ) {
+        const labelsStart = source.indexOf( 'var ' + name + ' = ' );
+        vm.runInContext( phpToJs( source.slice( labelsStart, source.indexOf( '\n            };', labelsStart ) + '\n            };'.length ) ), context );
+    }
+    for ( const name of [ 'showReconcileNote', 'showRestoreOutcomeNote', 'showProgress' ] ) {
         const start = source.indexOf( 'function ' + name + '(' );
         assert.ok( start >= 0 );
         const code = source.slice( start, source.indexOf( '\n            }', start ) + '\n            }'.length );
@@ -206,4 +208,89 @@ test( 'only a successful stop polls at once; refusals paint the error', () => {
             assert.equal( h.context.$( '#mainwp-restore-result-message' ).state.text, expected );
         }
     }
+} );
+
+for ( const data of [
+    { status: 'running', restore_outcome: { valid: false } },
+    { status: 'completed', restore_outcome: { valid: false } },
+    { status: 'failed_permanent', restore_outcome: null },
+    { status: 'failed_permanent', restore_outcome: { valid: true, files: 'applied', database: 'applied' } },
+    { status: 'failed_permanent', restore_outcome: { valid: true, files: 'applied', database: 'not_applicable' } },
+    { status: 'failed_permanent', restore_outcome: { valid: true, files: 'not_applicable', database: 'applied' } },
+    { status: 'cancelled', error_code: 'mainwp_restore_rolled_back', restore_outcome: { valid: false } },
+    { status: 'cancelled', error_code: 'mainwp_restore_rollback_failed', restore_outcome: { valid: false } }
+] ) {
+    test( 'outcome note clears stale text for ' + JSON.stringify( data ), () => {
+        const h = harness();
+        const note = h.context.$( '#mainwp-restore-outcome-note' );
+        note.text( 'Old report' ).show();
+        h.context.showProgress( data );
+        assert.equal( note.state.visible, false );
+        assert.equal( note.state.text, '' );
+        if ( data.error_code === 'mainwp_restore_rollback_failed' ) {
+            assert.equal( h.context.$( '#mainwp-restore-maintenance-note' ).state.visible, true );
+            assert.equal( h.context.$( '#mainwp-restore-result-message' ).state.text, h.context.restoreOutcomeMessages.mainwp_restore_rollback_failed );
+        }
+    } );
+}
+
+test( 'incomplete outcome is plain text and does not suggest rollback', () => {
+    const h = harness();
+    h.context.showProgress( { status: 'failed_permanent', has_rollback: true, restore_outcome: { valid: false, files: '<img src=x>' } } );
+    const note = h.context.$( '#mainwp-restore-outcome-note' ).state;
+    assert.equal( note.visible, true );
+    assert.equal( note.text, h.context.restoreReportLabels.unknown );
+} );
+
+for ( const [ files, database ] of [ [ 'not_started', 'not_started' ], [ 'not_started', 'not_applicable' ], [ 'not_applicable', 'not_started' ] ] ) {
+    test( 'unchanged applicable halves use one sentence: ' + files + '/' + database, () => {
+        const h = harness();
+        h.context.showProgress( { status: 'cancelled', has_rollback: true, restore_outcome: { valid: true, files, database } } );
+        const note = h.context.$( '#mainwp-restore-outcome-note' ).state;
+        assert.equal( note.visible, true );
+        assert.equal( note.text, h.context.restoreReportLabels.nothingChanged );
+    } );
+}
+
+test( 'partial outcome follows the same permission and pending gates as Roll Back', () => {
+    for ( const canRestore of [ true, false ] ) {
+        for ( const rollbackRequestPending of [ true, false ] ) {
+            for ( const has_rollback of [ true, false ] ) {
+                for ( const is_rollback of [ true, false ] ) {
+                    const h = harness();
+                    Object.assign( h.context, { canRestore, rollbackRequestPending } );
+                    h.context.showProgress( { status: 'failed_permanent', has_rollback, is_rollback, restore_outcome: { valid: true, files: 'applied', database: 'left_partial' } } );
+                    const visible = h.context.$( '#mainwp-restore-rollback-btn' ).state.visible;
+                    assert.equal( visible, canRestore && ! rollbackRequestPending && has_rollback );
+                    assert.equal( h.context.$( '#mainwp-restore-outcome-note' ).state.text,
+                        h.context.restoreReportLabels.filesApplied + ' ' + h.context.restoreReportLabels.databasePartial + ( visible ? ' ' + h.context.restoreReportLabels.rollBack : '' ) );
+                }
+            }
+        }
+    }
+} );
+
+for ( const [ files, database, labels ] of [
+    [ 'left_partial', 'not_started', [ 'filesPartial', 'databaseNotStarted' ] ],
+    [ 'applied', 'not_started', [ 'filesApplied', 'databaseNotStarted' ] ],
+    [ 'not_started', 'applied', [ 'filesNotStarted', 'databaseApplied' ] ],
+    [ 'not_applicable', 'rolled_back', [ 'databaseRolledBack' ] ],
+    [ 'left_partial', 'not_applicable', [ 'filesPartial' ] ]
+] ) {
+    test( 'applicable halves use their own sentences: ' + files + '/' + database, () => {
+        const h = harness();
+        h.context.showProgress( { status: 'cancelled', restore_outcome: { valid: true, files, database } } );
+        assert.equal( h.context.$( '#mainwp-restore-outcome-note' ).state.text, labels.map( label => h.context.restoreReportLabels[ label ] ).join( ' ' ) );
+    } );
+}
+
+test( 'following another job hides the previous outcome before polling', () => {
+    const h = harness();
+    h.context.setPane = () => {};
+    h.context.poll = () => {};
+    const start = source.indexOf( 'function startJobFollow(' );
+    vm.runInContext( source.slice( start, source.indexOf( '\n            }', start ) + '\n            }'.length ), h.context );
+    h.context.$( '#mainwp-restore-outcome-note' ).text( 'Old report' ).show();
+    h.context.startJobFollow( 123 );
+    assert.equal( h.context.$( '#mainwp-restore-outcome-note' ).state.visible, false );
 } );

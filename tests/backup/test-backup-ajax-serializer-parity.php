@@ -114,6 +114,10 @@ class MainWP_Backup_Ajax_Serializer_Parity_Test extends MainWP_Abilities_Test_Ca
 		}
 		$actual = json_decode( $raw, true );
 		$this->assertIsArray( $actual, $raw );
+		if ( 'mainwp_restore_progress' === $handler ) {
+			$this->assertArrayHasKey( 'restore_outcome', $actual );
+			$this->assertNull( $actual['restore_outcome'] );
+		}
 		$path = __DIR__ . '/fixtures/ajax-' . $handler . '.json';
 		$this->assertFileExists( $path );
 		$this->assertSame( json_decode( file_get_contents( $path ), true ), $actual );

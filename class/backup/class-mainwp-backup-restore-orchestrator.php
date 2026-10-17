@@ -742,7 +742,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * cannot be cancelled - the restore happened - while one that
      * already failed needs no child-side work.
      *
-     * @param object $job Job row.
+     * @param object     $job   Job row.
+     * @param array|null $reply Child payload for the terminal write.
      *
      * @throws MainWP_Exception When the child returned an error.
      *
@@ -750,13 +751,14 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      *                to cancel), 'completed' (restore happened),
      *                'busy' (slice in flight), or 'rolling_back' (rollback in progress).
      */
-    private function request_child_cancel( object $job ): string {
+    private function request_child_cancel( object $job, ?array &$reply = null ): string {
         $website = $this->website( $job );
 
         $params  = ! empty( $job->child_task_id )
             ? array( 'task_id' => $job->child_task_id )
             : array( 'restore_id' => $job->checkpoint['restore_id'] );
         $payload = MainWP_Connect::fetch_url_authed( $website, 'restore_task_cancel', $params, false, false, false );
+        $reply   = is_array( $payload ) ? $payload : array();
         $result  = is_array( $payload ) && isset( $payload['result'] ) ? (string) $payload['result'] : '';
         $phase   = is_array( $payload ) && isset( $payload['phase'] ) ? (string) $payload['phase'] : '';
 
@@ -780,13 +782,15 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     /**
      * Ask the Child to cancel, reading a thrown or unreadable reply as unconfirmed.
      *
-     * @param object $job Job row; a recorded child_task_id sends the cancel by id.
+     * @param object     $job   Job row; a recorded child_task_id sends the cancel by id.
+     * @param array|null $reply Child payload for the terminal write.
      *
      * @return string request_child_cancel()'s answer, or 'unconfirmed'.
      */
-    private function request_child_cancel_or_unconfirmed( object $job ): string {
+    private function request_child_cancel_or_unconfirmed( object $job, ?array &$reply = null ): string {
+        $reply = array();
         try {
-            return $this->request_child_cancel( $job );
+            return $this->request_child_cancel( $job, $reply );
         } catch ( \Throwable $e ) {
             do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its child task: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
             return 'unconfirmed';
@@ -1675,6 +1679,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $checkpoint                 = $job->checkpoint;
                 $verification               = isset( $payload['sub_state']['verification'] ) && is_array( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
                 $checkpoint['verification'] = $this->apply_withheld_reconcile_reason( $verification, $checkpoint );
+                $checkpoint                 = array_replace( $checkpoint, $this->restore_report_evidence( $verification ) );
                 // Carry the order-preservation outcome (customers and stock
                 // re-applied) alongside verification so the dashboard reports
                 // what was kept rather than hiding it.
@@ -1874,6 +1879,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 $status                     = MainWP_Backup_Restore_Job_Store::STATUS_VERIFYING;
                 $verification               = isset( $payload['sub_state']['verification'] ) && is_array( $payload['sub_state']['verification'] ) ? $payload['sub_state']['verification'] : array();
                 $checkpoint['verification'] = $this->apply_withheld_reconcile_reason( $verification, $checkpoint );
+                $checkpoint                 = array_replace( $checkpoint, $this->restore_report_evidence( $verification ) );
                 if ( isset( $payload['sub_state']['progress']['woo_preserve'] ) ) {
                     $checkpoint['verification']['woo_preserve'] = $payload['sub_state']['progress']['woo_preserve'];
                 }
@@ -1951,7 +1957,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $checkpoint['transfer']         = array();
             // The child pins each restore_id to its first task for replay safety; the fallback needs its own identity.
             $checkpoint['restore_id'] = strtolower( wp_generate_password( 12, false ) );
-            unset( $checkpoint['child_create_attempted'], $checkpoint['reconcile_withheld'] );
+            unset( $checkpoint['child_create_attempted'], $checkpoint['reconcile_withheld'], $checkpoint['restore_outcome'], $checkpoint['child_failure_code'] );
             if ( ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array( 'child_task_id' => '' ), $this->lock_token ) ) {
                 return false;
             }
@@ -1969,8 +1975,41 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( '' !== $task_id && ! $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_RUNNING, array( 'child_task_id' => $task_id ), $this->lock_token ) ) {
             return false;
         }
+        $fresh        = $store->get_job( (int) $job->id );
+        $verification = $payload['sub_state']['verification'] ?? array();
+        $evidence     = $this->restore_report_evidence( is_array( $verification ) ? $verification : array() );
+        if ( null !== $fresh && ! empty( $evidence ) ) {
+            $store->save_checkpoint( (int) $job->id, array_replace( $checkpoint ?? $fresh->checkpoint, $evidence ), $this->lock_token );
+        }
         $this->record_failure( $job, $error, false, $error_code );
         return true;
+    }
+
+    /**
+     * Bound stored evidence without hiding unknown values from the read model.
+     *
+     * @param array $verification Child verification.
+     * @param mixed $failure_code Child failure code, when cancelling.
+     * @return array Checkpoint additions.
+     */
+    private function restore_report_evidence( array $verification, $failure_code = null ): array {
+        $evidence = array();
+        if ( array_key_exists( 'outcome', $verification ) ) {
+            $report                      = $verification['outcome'];
+            $evidence['restore_outcome'] = 'malformed';
+            if ( is_array( $report ) ) {
+                $evidence['restore_outcome'] = array();
+                foreach ( array( 'files', 'database', 'files_copy_taken', 'phase_reached' ) as $key ) {
+                    if ( isset( $report[ $key ] ) && is_scalar( $report[ $key ] ) ) {
+                        $evidence['restore_outcome'][ $key ] = is_string( $report[ $key ] ) ? substr( $report[ $key ], 0, 64 ) : $report[ $key ];
+                    }
+                }
+            }
+        }
+        if ( is_string( $failure_code ) && strlen( $failure_code ) <= 64 && preg_match( '/^mainwp_[a-z0-9_]+$/D', $failure_code ) ) {
+            $evidence['child_failure_code'] = $failure_code;
+        }
+        return $evidence;
     }
 
     /**
@@ -2070,6 +2109,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $outcome         = $store::STATUS_VERIFYING === $phase ? 'completed' : 'ok';
         $by_restore_id   = $can_cancel && empty( $job->child_task_id );
         $decided_task_id = (string) $job->child_task_id;
+        $cancel_payload  = array();
         if ( $can_cancel ) {
             $deferred = $store->defer_terminal_failure( (int) $job->id, $error, $error_code, $lock_token );
             if ( null === $deferred ) {
@@ -2083,7 +2123,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 }
                 return self::TERMINAL_OUTCOME_DEFERRED;
             }
-            $outcome = $this->request_child_cancel_or_unconfirmed( $job );
+            $outcome = $this->request_child_cancel_or_unconfirmed( $job, $cancel_payload );
             $fresh   = $store->get_job( (int) $job->id );
             if ( null === $fresh || ! in_array( $fresh->status, $store::active_statuses(), true ) || $store::STATUS_VERIFYING === $fresh->status ) {
                 return self::TERMINAL_OUTCOME_TERMINAL;
@@ -2094,7 +2134,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( 'failed' === $outcome && $by_restore_id && ! empty( $fresh->child_task_id ) ) {
                 do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site had no task for this restore when the cancel arrived, but task %s was recorded meanwhile; cancelling it by id.', (int) $job->id, $fresh->child_task_id ), (int) $job->site_id, 0 );
                 $decided_task_id = (string) $fresh->child_task_id;
-                $outcome         = $this->request_child_cancel_or_unconfirmed( $fresh );
+                $outcome         = $this->request_child_cancel_or_unconfirmed( $fresh, $cancel_payload );
                 $fresh           = $store->get_job( (int) $job->id );
                 if ( null === $fresh || ! in_array( $fresh->status, $store::active_statuses(), true ) || $store::STATUS_VERIFYING === $fresh->status ) {
                     return self::TERMINAL_OUTCOME_TERMINAL;
@@ -2138,6 +2178,32 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         } elseif ( $cancelled ) {
             $confirmation = 'not_needed';
         }
+        $evidence = array();
+        if ( $can_cancel && ( 'ok' === $outcome || ( 'already_terminal' === ( $cancel_payload['result'] ?? '' ) && 'failed' === ( $cancel_payload['phase'] ?? '' ) ) ) ) {
+            $verification = $cancel_payload['verification'] ?? array();
+            $verification = is_array( $verification ) ? $verification : array();
+            $child_code   = $cancel_payload['failure']['code'] ?? null;
+            if ( ! array_key_exists( 'outcome', $verification ) && '' !== $decided_task_id ) {
+                try {
+                    $website = $this->website( $job );
+                    $status  = MainWP_Connect::fetch_url_authed( $website, 'restore_task_status', array( 'task_id' => $decided_task_id ), false, false, false );
+                    if ( is_array( $status ) ) {
+                        $reported     = $status['sub_state']['verification'] ?? array();
+                        $verification = is_array( $reported ) ? $reported : array();
+                        $child_code   = ! empty( $status['error_code'] ) ? $status['error_code'] : ( $status['sub_state']['error']['code'] ?? $child_code );
+                    }
+                } catch ( \Throwable $e ) {
+                    do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not return its final restore report: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
+                }
+            }
+            $evidence   = $this->restore_report_evidence( $verification, $child_code );
+            $child_code = $evidence['child_failure_code'] ?? '';
+            if ( $cancelled && '' !== $child_code && 'mainwp_restore_cancelled' !== $child_code ) {
+                $evidence['last_error_code'] = $child_code;
+            } elseif ( ! $cancelled && in_array( $child_code, array( 'mainwp_restore_rolled_back', 'mainwp_restore_rollback_failed' ), true ) ) {
+                $error_code = $child_code;
+            }
+        }
         // Terminal status and its stop evidence land together, so no
         // concurrent checkpoint write can separate them.
         $written = $store->finish_with_cancel_confirmation(
@@ -2147,7 +2213,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             $error_code,
             $confirmation,
             $lock_token,
-            $verify_stop
+            $verify_stop,
+            $evidence
         );
         if ( 'written' !== $written ) {
             if ( $verify_stop ) {
@@ -2483,7 +2550,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             if ( ! $this->lease_still_held( $job ) ) {
                 return;
             }
-            if ( null === $this->prune_safety_backup( $website, (int) $row->id, (string) $row->pre_snapshot_task_id, $checkpoint ) ) {
+            if ( null === $this->prune_safety_backup( $website, (int) $row->id, (string) $row->pre_snapshot_task_id, $checkpoint, $job ) ) {
                 // Best effort: an unreachable site will not answer the next task either.
                 return;
             }
@@ -2527,7 +2594,7 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         } catch ( \Throwable $e ) {
             return;
         }
-        $this->prune_safety_backup( $website, (int) $source->id, (string) $source->pre_snapshot_task_id, (array) $source->checkpoint );
+        $this->prune_safety_backup( $website, (int) $source->id, (string) $source->pre_snapshot_task_id, (array) $source->checkpoint, $job );
     }
 
     /**
@@ -2540,22 +2607,29 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * mark again; if even that write fails, Roll Back stays off, which is
      * the safe side.
      *
-     * @param object $website    Website object.
-     * @param int    $job_id     Restore job that took the safety backup.
-     * @param string $task_id    Its pre-snapshot task id.
-     * @param array  $checkpoint That job's decoded checkpoint.
+     * @param object      $website    Website object.
+     * @param int         $job_id     Restore job that took the safety backup.
+     * @param string      $task_id    Its pre-snapshot task id.
+     * @param array       $checkpoint That job's decoded checkpoint.
+     * @param object|null $held_job   Job holding the calling worker's lease, or null when the caller's own terminal write already ended it.
      *
      * @return bool|null Whether the child confirmed the removal, or null when
-     *                   the request threw.
+     *                   the request threw or the calling lease was lost.
      */
-    private function prune_safety_backup( object $website, int $job_id, string $task_id, array $checkpoint ): ?bool {
+    private function prune_safety_backup( object $website, int $job_id, string $task_id, array $checkpoint, ?object $held_job ): ?bool {
         $store                              = MainWP_Backup_Restore_Job_Store::instance();
         $checkpoint['pre_snapshot_pruning'] = true;
+        if ( null !== $held_job && ! $this->lease_still_held( $held_job ) ) {
+            return null;
+        }
         if ( ! $store->save_checkpoint( $job_id, $checkpoint ) ) {
             return false;
         }
         unset( $checkpoint['pre_snapshot_pruning'] );
 
+        if ( null !== $held_job && ! $this->lease_still_held( $held_job ) ) {
+            return null;
+        }
         try {
             $answer = MainWP_Connect::fetch_url_authed(
                 $website,
@@ -2661,7 +2735,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         if ( is_array( $answer ) && 'already_terminal' === ( $answer['result'] ?? '' ) && empty( $job->checkpoint['pre_snapshot_artifacts'] ) ) {
             // The failure path stamped its error code after $job was read.
             $fresh = MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
-            $this->prune_safety_backup( $website, (int) $job->id, $task_id, (array) ( null !== $fresh ? $fresh->checkpoint : $job->checkpoint ) );
+            // This worker's terminal write already landed and released the lease, so no lease is left to check.
+            $this->prune_safety_backup( $website, (int) $job->id, $task_id, (array) ( null !== $fresh ? $fresh->checkpoint : $job->checkpoint ), null );
         }
     }
 

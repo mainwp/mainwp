@@ -813,6 +813,267 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Sites without reports retain the original risk rule.
+	 *
+	 * @dataProvider legacy_restore_report_cases
+	 * @param string $status Job status.
+	 * @param string $type Restore type.
+	 * @param bool   $child Whether an apply task exists.
+	 * @param string $risk Expected risk.
+	 * @param array  $reasons Expected reasons.
+	 * @return void
+	 */
+	public function test_legacy_restore_report_risk_is_unchanged( $status, $type, $child, $risk, $reasons ) {
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+			array(
+				'status'        => $status,
+				'child_task_id' => $child ? 'legacy-child' : '',
+				'checkpoint'    => wp_json_encode( array( 'sub_type' => $type ) ),
+			),
+			array( 'id' => 987674 )
+		);
+		$output = $this->read( 'get-restore-job', array( 'restore_job_id' => 987674 ) );
+		$this->assert_output( 'get-restore-job', $output );
+		$this->assertSame( $risk, $output['partial_state_risk'] );
+		$this->assertSame( $reasons, $output['partial_state_reasons'] );
+		$this->assertFalse( $output['files_rollback_available'] );
+		$this->assertNull( \MainWP\Dashboard\MainWP_Backup_Read_Model::get_restore_job( 987674 )['restore_outcome'] );
+	}
+
+	/**
+	 * Every active and terminal status is covered with and without a task.
+	 *
+	 * @return array
+	 */
+	public static function legacy_restore_report_cases() {
+		$cases = array();
+		foreach ( array( 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'verifying', 'failed_retryable', 'completed', 'failed_permanent', 'cancelled' ) as $status ) {
+			foreach ( array( '', 'full', 'files', 'db' ) as $type ) {
+				foreach ( array( false, true ) as $child ) {
+					$terminal = in_array( $status, array( 'failed_permanent', 'cancelled' ), true );
+					$started  = $child && ( $terminal || in_array( $status, array( 'running', 'verifying', 'failed_retryable' ), true ) );
+					$reasons  = $started ? array( 'child_apply_started' ) : array();
+					if ( $started && 'db' !== $type ) {
+						$reasons[] = 'no_files_rollback';
+						if ( 'full' === $type ) {
+							$reasons[] = 'db_applied_after_files';
+						}
+					}
+					$cases[ $status . '-' . $type . '-' . (int) $child ] = array( $status, $type, $child, $started ? ( $terminal ? 'possible' : 'unknown' ) : 'none', $reasons );
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Reports determine risk independently of Dashboard status and snapshot age.
+	 *
+	 * @dataProvider child_restore_report_cases
+	 * @param string $name Child fixture suffix.
+	 * @param string $type Restore type.
+	 * @param string $risk Expected risk.
+	 * @param array  $reasons Expected reasons.
+	 * @return void
+	 */
+	public function test_child_restore_report_controls_risk( $name, $type, $risk, $reasons ) {
+		global $wpdb;
+		$payload = json_decode( file_get_contents( dirname( __DIR__ ) . '/backup/fixtures/child-restore-outcome/restore-outcome-' . $name . '.json' ), true );
+		$report  = $payload['sub_state']['verification']['outcome'] ?? $payload['verification']['outcome'];
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		foreach ( array( 'completed', 'failed_permanent', 'cancelled', 'running', 'verifying', 'failed_retryable' ) as $status ) {
+			foreach ( array( false, true ) as $legacy ) {
+				$checkpoint = array( 'sub_type' => $type );
+				if ( $legacy ) {
+					$checkpoint['verification'] = array( 'outcome' => $report );
+				} else {
+					$checkpoint['restore_outcome'] = $report;
+				}
+				$wpdb->update(
+					$table,
+					array(
+						'status'     => $status,
+						'checkpoint' => wp_json_encode( $checkpoint ),
+					),
+					array( 'id' => 987674 )
+				);
+				$output = $this->read( 'get-restore-job', array( 'restore_job_id' => 987674 ) );
+				$this->assert_output( 'get-restore-job', $output );
+				$this->assertSame( $risk, $output['partial_state_risk'], $status . '/' . (int) $legacy );
+				$this->assertSame( $reasons, $output['partial_state_reasons'] );
+				$this->assertFalse( $output['files_rollback_available'] );
+				$this->assertArrayNotHasKey( 'restore_outcome', $output );
+				$this->assertSame(
+					array(
+						'valid'    => true,
+						'files'    => $report['files'],
+						'database' => $report['database'],
+					),
+					\MainWP\Dashboard\MainWP_Backup_Read_Model::get_restore_job( 987674 )['restore_outcome']
+				);
+			}
+		}
+	}
+
+	/**
+	 * Expected risks come from the committed Child contract.
+	 *
+	 * @return array
+	 */
+	public static function child_restore_report_cases() {
+		$files = array( 'child_apply_started', 'no_files_rollback' );
+		$both  = array( 'child_apply_started', 'no_files_rollback', 'db_applied_after_files' );
+		return array(
+			'full'              => array( 'completed-full', 'full', 'none', array() ),
+			'files'             => array( 'completed-files-only', 'files', 'none', array() ),
+			'database'          => array( 'completed-db-only', 'db', 'none', array() ),
+			'before apply'      => array( 'failed-before-any-change', 'full', 'none', array() ),
+			'mid files'         => array( 'failed-mid-files', 'full', 'possible', $files ),
+			'before swap'       => array( 'failed-after-files-before-swap', 'full', 'possible', $files ),
+			'after swap'        => array( 'failed-after-swap', 'full', 'possible', $both ),
+			'fk recovered'      => array( 'fk-rolled-back', 'db', 'none', array() ),
+			'fk unrecovered'    => array( 'fk-rollback-failed', 'db', 'possible', array( 'child_apply_started' ) ),
+			'cancel before'     => array( 'cancelled-before-any-change', 'full', 'none', array() ),
+			'cancel mid files'  => array( 'cancelled-mid-files', 'full', 'possible', $files ),
+			'cancel before db'  => array( 'cancelled-after-files-before-swap', 'full', 'possible', $files ),
+			'cancel after swap' => array( 'cancelled-after-swap', 'full', 'possible', $both ),
+		);
+	}
+
+	/**
+	 * Unusable reports cannot inherit a completed job's optimistic legacy rule.
+	 *
+	 * @dataProvider invalid_restore_reports
+	 * @param mixed  $report Stored report.
+	 * @param string $type Restore type.
+	 * @param string $files Poll files value.
+	 * @param string $database Poll database value.
+	 * @return void
+	 */
+	public function test_invalid_restore_reports_never_fall_back( $report, $type, $files, $database ) {
+		global $wpdb;
+		foreach ( array( 'completed', 'failed_permanent', 'cancelled', 'running' ) as $status ) {
+			$checkpoint = array(
+				'sub_type'        => $type,
+				'restore_outcome' => $report,
+				'verification'    => array(
+					'outcome' => array(
+						'files'    => 'applied',
+						'database' => 'applied',
+					),
+				),
+			);
+			$wpdb->update(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+				array(
+					'status'     => $status,
+					'checkpoint' => wp_json_encode( $checkpoint ),
+				),
+				array( 'id' => 987674 )
+			);
+			$output  = $this->read( 'get-restore-job', array( 'restore_job_id' => 987674 ) );
+			$reasons = array( 'child_apply_started' );
+			if ( 'db' !== $type ) {
+				$reasons[] = 'no_files_rollback';
+				$reasons[] = 'db_applied_after_files';
+			}
+			$this->assert_output( 'get-restore-job', $output );
+			$this->assertSame( 'running' === $status ? 'unknown' : 'possible', $output['partial_state_risk'] );
+			$this->assertSame( $reasons, $output['partial_state_reasons'] );
+			$this->assertSame(
+				array(
+					'valid'    => false,
+					'files'    => $files,
+					'database' => $database,
+				),
+				\MainWP\Dashboard\MainWP_Backup_Read_Model::get_restore_job( 987674 )['restore_outcome']
+			);
+		}
+	}
+
+	/**
+	 * Missing keys, unknown values and incompatible halves are distinct failures.
+	 *
+	 * @return array
+	 */
+	public static function invalid_restore_reports() {
+		return array(
+			'missing'       => array( array( 'files' => 'applied' ), 'full', 'applied', '' ),
+			'unknown'       => array(
+				array(
+					'files'    => 'weird',
+					'database' => 'applied',
+				),
+				'full',
+				'weird',
+				'applied',
+			),
+			'malformed'     => array( 'malformed', 'full', '', '' ),
+			'null'          => array( null, 'full', '', '' ),
+			'scalar half'   => array(
+				array(
+					'files'    => 1,
+					'database' => 'applied',
+				),
+				'full',
+				'',
+				'applied',
+			),
+			'full mismatch' => array(
+				array(
+					'files'    => 'not_applicable',
+					'database' => 'applied',
+				),
+				'full',
+				'not_applicable',
+				'applied',
+			),
+			'db mismatch'   => array(
+				array(
+					'files'    => 'applied',
+					'database' => 'applied',
+				),
+				'db',
+				'applied',
+				'applied',
+			),
+			'files undo'    => array(
+				array(
+					'files'    => 'rolled_back',
+					'database' => 'applied',
+				),
+				'full',
+				'rolled_back',
+				'applied',
+			),
+		);
+	}
+
+	/**
+	 * Cancellation uncertainty adds its reason without overriding a known apply result.
+	 *
+	 * @return void
+	 */
+	public function test_report_risk_keeps_cancel_uncertainty_separate() {
+		global $wpdb;
+		$checkpoint = array(
+			'restore_outcome'     => array(
+				'files'    => 'applied',
+				'database' => 'applied',
+			),
+			'cancel_confirmation' => array( 'outcome' => 'unconfirmed' ),
+		);
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'checkpoint' => wp_json_encode( $checkpoint ) ), array( 'id' => 987674 ) );
+		$output = $this->read( 'get-restore-job', array( 'restore_job_id' => 987674 ) );
+		$this->assert_output( 'get-restore-job', $output );
+		$this->assertSame( 'none', $output['partial_state_risk'] );
+		$this->assertSame( array( 'cancel_unconfirmed' ), $output['partial_state_reasons'] );
+	}
+
+
+	/**
 	 * An unconfirmed cancellation must not imply the site recovered.
 	 *
 	 * @return void

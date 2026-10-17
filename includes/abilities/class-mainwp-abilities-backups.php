@@ -1104,8 +1104,9 @@ class MainWP_Abilities_Backups {
                     ),
                 ),
                 'partial_state_risk'       => array(
-                    'type' => 'string',
-                    'enum' => array( 'none', 'possible', 'unknown' ),
+                    'type'        => 'string',
+                    'enum'        => array( 'none', 'possible', 'unknown' ),
+                    'description' => 'none: the restore completed, never began changing the site, or the site reported every step as fully applied or a database-only restore as rolled back. possible: the site may be partly restored. unknown: the restore is still running, so its state is not known yet. Based on the site\'s restore report when it sent one. Older sites send no report; the value then rests on whether the site began applying the restore.',
                 ),
                 'partial_state_reasons'    => array(
                     'type'        => 'array',
@@ -1113,7 +1114,7 @@ class MainWP_Abilities_Backups {
                         'type' => 'string',
                         'enum' => array( 'child_apply_started', 'no_files_rollback', 'db_applied_after_files', 'cancel_unconfirmed' ),
                     ),
-                    'description' => 'child_apply_started: the site began applying the restore. no_files_rollback: the site keeps no copy to undo file changes. db_applied_after_files: files are applied before the database, so a failed database step leaves new files with the old database. cancel_unconfirmed: the site never confirmed it stopped.',
+                    'description' => 'child_apply_started: the site began applying the restore, or its report could not confirm what changed. no_files_rollback: the site copied some or all files from the backup and has no automatic file rollback, or, for a site without a usable report, file changes could not be ruled out. db_applied_after_files: files are applied before the database, and the database step did not finish or could not be confirmed. cancel_unconfirmed: the site never confirmed it stopped.',
                 ),
                 'files_rollback_available' => array(
                     'type'        => 'boolean',

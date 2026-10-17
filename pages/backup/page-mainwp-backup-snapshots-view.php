@@ -258,6 +258,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <div class="ui small blue message" id="mainwp-restore-safety-note" style="display:none;"><?php esc_html_e( 'A safety backup was taken before this restore. If the result looks wrong, you can roll back to it.', 'mainwp' ); ?></div>
                     <div class="ui small yellow message" id="mainwp-restore-cancel-warning" style="display:none;"><?php esc_html_e( 'Cancelling now stops the restore partway through. Files already copied stay in place and the previous database tables are kept aside.', 'mainwp' ); ?> <span id="mainwp-restore-cancel-rollback-note" style="display:none;"><?php esc_html_e( 'You can roll back to the safety backup afterwards.', 'mainwp' ); ?></span></div>
                     <div class="ui message" id="mainwp-restore-result-message" style="display:none;"></div>
+                    <div class="ui small yellow message" id="mainwp-restore-outcome-note" style="display:none;"></div>
                     <div class="ui small message" id="mainwp-restore-preserve-note" style="display:none;"></div>
                     <div class="ui small message" id="mainwp-restore-reconcile-note" style="display:none;"></div>
                     <div class="ui small red message" id="mainwp-restore-maintenance-note" style="display:none;"><?php esc_html_e( 'The site is in maintenance mode until the database is checked, so it will not serve visitors until then.', 'mainwp' ); ?></div>
@@ -400,6 +401,18 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 stop_checking: '<?php echo esc_js( esc_html__( 'Stop Checking', 'mainwp' ) ); ?>',
                 checking: '<?php echo esc_js( esc_html__( 'The Dashboard is checking the site right now, or the restore status just changed. Try again in a moment.', 'mainwp' ) ); ?>',
                 stopped: '<?php echo esc_js( esc_html__( 'Stopped checking. The restore finished on the site, but the Dashboard could not reach it afterwards, so this restore is recorded as failed. Open the site to check it.', 'mainwp' ) ); ?>'
+            };
+            var restoreReportLabels = {
+                filesApplied: '<?php echo esc_js( esc_html__( 'The files from the backup were copied to the site and stay in place.', 'mainwp' ) ); ?>',
+                filesPartial: '<?php echo esc_js( esc_html__( 'Some files from the backup were copied to the site before the restore stopped. They stay in place.', 'mainwp' ) ); ?>',
+                filesNotStarted: '<?php echo esc_js( esc_html__( 'No files were changed.', 'mainwp' ) ); ?>',
+                databaseApplied: '<?php echo esc_js( esc_html__( 'The database was restored from the backup.', 'mainwp' ) ); ?>',
+                databasePartial: '<?php echo esc_js( esc_html__( 'The database was partly restored and may not match the backup.', 'mainwp' ) ); ?>',
+                databaseNotStarted: '<?php echo esc_js( esc_html__( 'The database was not changed.', 'mainwp' ) ); ?>',
+                databaseRolledBack: '<?php echo esc_js( esc_html__( 'The database was put back the way it was before the restore.', 'mainwp' ) ); ?>',
+                nothingChanged: '<?php echo esc_js( esc_html__( 'The restore stopped before it changed anything on the site.', 'mainwp' ) ); ?>',
+                unknown: '<?php echo esc_js( esc_html__( 'The site\'s restore report could not be read, so files or database tables may be partly restored.', 'mainwp' ) ); ?>',
+                rollBack: '<?php echo esc_js( esc_html__( 'Use Roll Back to apply the safety backup.', 'mainwp' ) ); ?>'
             };
             var rollbackStatusLabels = <?php echo wp_json_encode( $rollback_labels ); ?>;
             var rollbackActionLabels = {
@@ -1064,6 +1077,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-cancel-rollback-note' ).toggle( safetyBackup );
                 $( '#mainwp-restore-rollback-btn' ).text( retryRollback ? rollbackActionLabels.retry : rollbackActionLabels.rollBack );
                 $( '#mainwp-restore-rollback-btn' ).toggle( canRestore && ! rollbackRequestPending && terminal && ( safetyBackup || retryRollback ) );
+                showRestoreOutcomeNote( data, canRestore && ! rollbackRequestPending && terminal && ( safetyBackup || retryRollback ) );
 
                 // Surface the safety backup whenever one exists for this run,
                 // so the safety net is visible and not implied (L4).
@@ -1124,6 +1138,40 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 } else {
                     $( '#mainwp-restore-result-message' ).hide();
                 }
+            }
+
+            function showRestoreOutcomeNote( data, showRollback ) {
+                var $note = $( '#mainwp-restore-outcome-note' ).text( '' ).hide();
+                var terminal = [ 'completed', 'failed_permanent', 'cancelled' ].indexOf( data.status ) !== -1;
+                var report = data.restore_outcome;
+                if ( ! terminal || 'completed' === data.status || ! report || [ 'mainwp_restore_rolled_back', 'mainwp_restore_rollback_failed' ].indexOf( data.error_code ) !== -1 ) {
+                    return;
+                }
+                if ( ! report.valid ) {
+                    $note.text( restoreReportLabels.unknown ).show();
+                    return;
+                }
+                var halves = [ report.files, report.database ].filter( function( value ) { return 'not_applicable' !== value; } );
+                if ( halves.every( function( value ) { return 'not_started' === value; } ) ) {
+                    $note.text( restoreReportLabels.nothingChanged ).show();
+                    return;
+                }
+                if ( halves.every( function( value ) { return 'applied' === value; } ) ) {
+                    return;
+                }
+                var files = { applied: restoreReportLabels.filesApplied, left_partial: restoreReportLabels.filesPartial, not_started: restoreReportLabels.filesNotStarted };
+                var database = { applied: restoreReportLabels.databaseApplied, left_partial: restoreReportLabels.databasePartial, not_started: restoreReportLabels.databaseNotStarted, rolled_back: restoreReportLabels.databaseRolledBack };
+                var sentences = [];
+                if ( files[ report.files ] ) {
+                    sentences.push( files[ report.files ] );
+                }
+                if ( database[ report.database ] ) {
+                    sentences.push( database[ report.database ] );
+                }
+                if ( showRollback ) {
+                    sentences.push( restoreReportLabels.rollBack );
+                }
+                $note.text( sentences.join( ' ' ) ).show();
             }
 
             // Report the WooCommerce order-preservation outcome on a completed
@@ -1279,6 +1327,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 currentJob = jobId;
                 restorePollRetries = 0;
                 setPane( false );
+                $( '#mainwp-restore-outcome-note' ).hide();
                 $( '#mainwp-restore-result-message' ).hide();
                 $( '#mainwp-restore-reconcile-note' ).hide();
                 $( '#mainwp-restore-maintenance-note' ).hide();

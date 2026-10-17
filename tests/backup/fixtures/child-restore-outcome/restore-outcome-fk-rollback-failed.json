@@ -1,0 +1,28 @@
+{
+    "task_id": "<task_id>",
+    "phase": "failed",
+    "type": "restore_db",
+    "sub_state": {
+        "verification": {
+            "outcome": {
+                "files": "not_applicable",
+                "database": "left_partial",
+                "files_copy_taken": false,
+                "phase_reached": "fk_rollback"
+            }
+        },
+        "params": [],
+        "error": {
+            "message": "rollback fixture failed",
+            "code": "mainwp_restore_rollback_failed"
+        },
+        "identity_preserved": true
+    },
+    "started_at": "<started_at>",
+    "last_progress_at": "<last_progress_at>",
+    "max_wall_clock_at": "<max_wall_clock_at>",
+    "resume_count": 0,
+    "max_resumes": 20,
+    "error": "rollback fixture failed",
+    "error_code": "mainwp_restore_rollback_failed"
+}

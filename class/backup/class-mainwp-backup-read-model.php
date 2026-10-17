@@ -267,6 +267,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $transfer = isset( $job->checkpoint['transfer'] ) ? (array) $job->checkpoint['transfer'] : array();
         $plan     = isset( $job->checkpoint['plan'] ) ? (array) $job->checkpoint['plan'] : array();
         $action   = MainWP_Backup_Restore_Orchestrator::resolve_cancel_action( $job );
+        $report   = self::restore_outcome_report( $job->checkpoint, (string) ( $job->checkpoint['sub_type'] ?? '' ), $terminal );
 
         return (
             array_merge(
@@ -290,6 +291,11 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'sub_type'              => (string) ( $job->checkpoint['sub_type'] ?? '' ),
                     'is_rollback'           => ! empty( $job->checkpoint['is_rollback'] ),
                     'verification'          => isset( $job->checkpoint['verification'] ) ? $job->checkpoint['verification'] : array(),
+                    'restore_outcome'       => null === $report ? null : array(
+                        'valid'    => $report['valid'],
+                        'files'    => $report['files'],
+                        'database' => $report['database'],
+                    ),
                 ),
                 self::transfer_byte_progress( $plan, $transfer )
             )
@@ -957,6 +963,11 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             }
         }
+        $report = self::restore_outcome_report( $cp, $detail['sub_type'], $terminal );
+        if ( null !== $report ) {
+            $risk    = $report['risk'];
+            $reasons = array_merge( $detail['partial_state_reasons'], $report['reasons'] );
+        }
         $verification = $detail['verification'];
         $child_report = $verification;
         unset( $child_report['site_responds'] );
@@ -997,6 +1008,64 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'partial_state_risk'       => $risk,
             'partial_state_reasons'    => $reasons,
             'files_rollback_available' => false,
+        );
+    }
+
+    /**
+     * A stored report takes precedence even when it cannot establish the site's state.
+     *
+     * @param array  $checkpoint Stored checkpoint.
+     * @param string $type Restore type; an empty type means full.
+     * @param bool   $terminal Whether the Dashboard job has ended.
+     * @return array|null Report and risk, or null when the Child sent no report.
+     */
+    private static function restore_outcome_report( array $checkpoint, string $type, bool $terminal ): ?array {
+        if ( array_key_exists( 'restore_outcome', $checkpoint ) ) {
+            $report = $checkpoint['restore_outcome'];
+        } elseif ( isset( $checkpoint['verification'] ) && is_array( $checkpoint['verification'] ) && array_key_exists( 'outcome', $checkpoint['verification'] ) ) {
+            $report = $checkpoint['verification']['outcome'];
+        } else {
+            return null;
+        }
+        $type     = '' === $type ? 'full' : $type;
+        $files    = is_array( $report ) && is_string( $report['files'] ?? null ) ? $report['files'] : '';
+        $database = is_array( $report ) && is_string( $report['database'] ?? null ) ? $report['database'] : '';
+        $valid    = is_array( $report ) && in_array( $files, array( 'not_applicable', 'not_started', 'left_partial', 'applied' ), true ) && in_array( $database, array( 'not_applicable', 'not_started', 'left_partial', 'applied', 'rolled_back' ), true );
+        $valid    = $valid && (
+            ( 'full' === $type && 'not_applicable' !== $files && 'not_applicable' !== $database ) ||
+            ( 'db' === $type && 'not_applicable' === $files && 'not_applicable' !== $database ) ||
+            ( 'files' === $type && 'not_applicable' === $database && 'not_applicable' !== $files )
+        );
+        $risk     = $terminal ? 'possible' : 'unknown';
+        $reasons  = array();
+        if ( $valid ) {
+            $unchanged = ( 'not_applicable' === $files || 'not_started' === $files ) && ( 'not_applicable' === $database || 'not_started' === $database );
+            $applied   = ( 'not_applicable' === $files || 'applied' === $files ) && ( 'not_applicable' === $database || 'applied' === $database );
+            $risk      = $unchanged || $applied || ( 'db' === $type && 'rolled_back' === $database ) ? 'none' : 'possible';
+            if ( 'possible' === $risk ) {
+                $reasons[] = 'child_apply_started';
+                if ( in_array( $files, array( 'applied', 'left_partial' ), true ) ) {
+                    $reasons[] = 'no_files_rollback';
+                }
+                if ( 'full' === $type && 'left_partial' === $database ) {
+                    $reasons[] = 'db_applied_after_files';
+                }
+            }
+        } else {
+            $reasons[] = 'child_apply_started';
+            if ( 'db' !== $type ) {
+                $reasons[] = 'no_files_rollback';
+                if ( 'full' === $type ) {
+                    $reasons[] = 'db_applied_after_files';
+                }
+            }
+        }
+        return array(
+            'valid'    => $valid,
+            'files'    => $files,
+            'database' => $database,
+            'risk'     => $risk,
+            'reasons'  => $reasons,
         );
     }
 

@@ -42,6 +42,41 @@ class MainWP_Backup_Restore_Outcome_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Snapshot metadata cannot change what the site reported for its restore.
+	 *
+	 * @return void
+	 */
+	public function test_old_snapshot_restore_report_matches_new_snapshot_reading() {
+		global $wpdb;
+		$payload    = json_decode( file_get_contents( __DIR__ . '/fixtures/child-restore-outcome/restore-outcome-failed-after-swap.json' ), true );
+		$checkpoint = array(
+			'sub_type'        => 'full',
+			'restore_outcome' => $payload['sub_state']['verification']['outcome'],
+		);
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'checkpoint' => wp_json_encode( $checkpoint ) ), array( 'id' => 987674 ) );
+		$readings = array();
+		foreach ( array(
+			array(
+				'file' => 'backup.zip',
+				'size' => 1024,
+				'role' => 'full',
+			),
+			array(
+				'file' => 'backup.zip',
+				'size' => 1024,
+				'role' => 'full',
+				'walk' => array( 'unarchived' => array() ),
+			),
+		) as $archive ) {
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'archives' => wp_json_encode( array( $archive ) ) ), array( 'id' => 987673 ) );
+			$readings[] = MainWP_Backup_Read_Model::restore_job_details( 987674 );
+		}
+		$this->assertSame( $readings[0], $readings[1] );
+		$this->assertSame( 'possible', $readings[0]['partial_state_risk'] );
+		$this->assertSame( array( 'child_apply_started', 'no_files_rollback', 'db_applied_after_files' ), $readings[0]['partial_state_reasons'] );
+	}
+
+	/**
 	 * Stored failures survive each distinct cancellation outcome.
 	 *
 	 * @dataProvider cancellation_outcomes

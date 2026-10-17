@@ -833,7 +833,8 @@ class MainWP_Backups_Restore_Abilities_Test extends MainWP_Abilities_Test_Case {
 				$this->assertArrayNotHasKey( 'verify_stopped', $final->checkpoint );
 				if ( 'running' === $phase && 'ability' === $caller ) {
 					$this->assertSame( 'cancelled', $final->status );
-					$this->assertSame( array( 'restore_task_cancel' ), $this->calls );
+					// The answer carries no report, so one evidence-only status read follows the cancel.
+					$this->assertSame( array( 'restore_task_cancel', 'restore_task_status' ), $this->calls );
 				} else {
 					$this->assertEquals( $raced, $final );
 					$this->assertEmpty( $this->calls );

@@ -432,15 +432,16 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * Fleet status needs recorded evidence without the cost of restore admission.
      *
      * @param object $snapshot Latest complete snapshot row.
+     * @param array  $snapshot_map Rows already loaded for this site, keyed by id.
      * @return array
      */
-    private static function snapshot_status_summary( object $snapshot ): array {
+    private static function snapshot_status_summary( object $snapshot, array $snapshot_map = array() ): array {
         $offsite = '' === $snapshot->offsite_state ? 'none' : (string) $snapshot->offsite_state;
         return array(
             'id'           => (int) $snapshot->id,
             'type'         => (string) $snapshot->type,
             'created_at'   => (int) $snapshot->created,
-            'evidence'     => self::snapshot_content_evidence( $snapshot ),
+            'evidence'     => self::snapshot_content_evidence( $snapshot, $snapshot_map ),
             'offsite'      => array(
                 'state'       => $offsite,
                 'evidence'    => 'verified' === $offsite ? 'remote_size_match' : 'none',
@@ -1275,8 +1276,14 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         foreach ( $paged['items'] as &$item ) {
             $snapshot = $snapshots[ $item['site_id'] ] ?? null;
             // A deleted snapshot must still produce null evidence for existing status clients.
-            $decoded_snapshot        = $snapshot ? MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot->id ) : null;
-            $item['latest_snapshot'] = $decoded_snapshot ? self::snapshot_status_summary( $decoded_snapshot ) : null;
+            $decoded_snapshot = $snapshot ? MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot->id ) : null;
+            $snapshot_map     = array();
+            if ( $decoded_snapshot && 'incremental' === $decoded_snapshot->type ) {
+                foreach ( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( (int) $item['site_id'] ) as $row ) {
+                    $snapshot_map[ (int) $row->id ] = $row;
+                }
+            }
+            $item['latest_snapshot'] = $decoded_snapshot ? self::snapshot_status_summary( $decoded_snapshot, $snapshot_map ) : null;
         }
         unset( $item );
         return array(

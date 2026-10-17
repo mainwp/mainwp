@@ -783,6 +783,7 @@ class MainWP_Backup_Artifact_Download_Test extends MainWP_Abilities_Test_Case {
 			$this->assertTrue( $matches, 'A Child mismatch must throw.' );
 			$this->assertFileExists( $local );
 			$this->assertCount( 1, $events );
+			$this->assertSame( $token || hash( 'sha256', $content ) === $expected, $events[0]['hash_verified'] );
 		} catch ( MainWP_Exception $e ) {
 			$this->assertFalse( $matches );
 			$this->assertSame( MainWP_Backup_Error_Codes::ERR_HASH_MISMATCH, $e->get_message_error_code() );

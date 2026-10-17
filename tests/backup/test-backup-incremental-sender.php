@@ -5793,23 +5793,56 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertLessThan( (int) $after->last_run, (int) $after->completed );
 	}
 	/**
-	 * Replace only fixture placeholders; each artifact uses known valid archive bytes.
+	 * Distinct artifact bytes make digest swaps between roles observable.
 	 *
 	 * @param string $name Contract fixture name.
 	 * @return array Completed Child payload.
 	 */
 	private function backup_status_fixture( $name ) {
-		$bytes   = "PK\x03\x04" . str_repeat( 'e', 4092 );
 		$raw     = str_replace(
 			array( '<task_id>', '<archive>', '<core-part>', '<plugins-part>', '<size>', '<sha256>', '<db_prefix>', '<parent_manifest_file>', '<started_at>', '<last_progress_at>', '<max_wall_clock_at>' ),
-			array( 'child-evidence', 'backup-evidence.zip', 'core.part001.zip', 'plugins.part001.zip', (string) strlen( $bytes ), hash( 'sha256', $bytes ), 'wp_', 'parent.list', '1', '2', '3' ),
+			array( 'child-evidence', 'backup-evidence.zip', 'core.part001.zip', 'plugins.part001.zip', '4096', str_repeat( '0', 64 ), 'wp_', 'parent.list', '1', '2', '3' ),
 			file_get_contents( __DIR__ . '/fixtures/child-backup-status/backup-status-completed-' . $name . '.json' )
 		);
 		$payload = json_decode( $raw, true );
 		$this->assertIsArray( $payload );
 		$this->assertStringNotContainsString( '<', $raw );
-		foreach ( $payload['artifacts'] ?? array( array( 'file' => $payload['file'] ) ) as $artifact ) {
-			$this->remote_files[ $artifact['file'] ] = $bytes;
+		$artifacts = $payload['artifacts'] ?? array(
+			array(
+				'file' => $payload['file'],
+				'role' => 'db',
+			),
+		);
+		foreach ( $artifacts as &$artifact ) {
+			$file = $artifact['file'];
+			if ( 'manifest' === $artifact['role'] ) {
+				$bytes = "a.php\t10\t100\nb.php\t20\t200\n";
+			} elseif ( 'tombstones' === $artifact['role'] ) {
+				$bytes = "deleted.php\n";
+			} else {
+				$bytes = "PK\x03\x04" . str_pad( $artifact['role'] . ':' . $file, 4092, 'e' );
+			}
+			$this->remote_files[ $file ] = $bytes;
+			$artifact['size']            = strlen( $bytes );
+			if ( ! isset( $artifact['hash_skipped'] ) ) {
+				$artifact['sha256'] = hash( 'sha256', $bytes );
+			}
+		}
+		unset( $artifact );
+		if ( isset( $payload['artifacts'] ) ) {
+			$payload['artifacts']              = $artifacts;
+			$payload['sub_state']['artifacts'] = $artifacts;
+		}
+		$payload['size']                          = strlen( $this->remote_files[ $payload['file'] ] );
+		$payload['sub_state']['artifact']['size'] = $payload['size'];
+		if ( ! isset( $payload['hash_skipped'] ) ) {
+			$payload['sha256']                          = hash( 'sha256', $this->remote_files[ $payload['file'] ] );
+			$payload['sub_state']['artifact']['sha256'] = $payload['sha256'];
+		}
+		if ( isset( $payload['sub_state']['manifest'] ) ) {
+			$manifest                                   = $this->remote_files[ $payload['sub_state']['manifest']['file'] ];
+			$payload['sub_state']['manifest']['size']   = strlen( $manifest );
+			$payload['sub_state']['manifest']['sha256'] = hash( 'sha256', $manifest );
 		}
 		return $payload;
 	}
@@ -5861,6 +5894,13 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_child_fixture_completion_records_evidence( $name ) {
 		$payload = $this->backup_status_fixture( $name );
+		$digests = array_map(
+			static function ( $bytes ) {
+				return hash( 'sha256', $bytes );
+			},
+			$this->remote_files
+		);
+		$this->assertCount( count( $this->remote_files ), array_unique( $digests ) );
 		if ( 'full-hash-skipped' === $name ) {
 			$payload['sha256']                 = str_repeat( '0', 64 );
 			$payload['artifacts'][0]['sha256'] = str_repeat( '0', 64 );
@@ -5872,13 +5912,29 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, 11 );
 		$this->assertNotNull( $snapshot );
 		$this->assertCount( count( $payload['artifacts'] ?? array( 1 ) ), $snapshot->archives );
+		$expected_artifacts = $payload['artifacts'] ?? array(
+			array(
+				'file'   => $payload['file'],
+				'role'   => 'db',
+				'sha256' => $payload['sha256'],
+			),
+		);
 		foreach ( $snapshot->archives as $archive ) {
 			if ( 'full-hash-skipped' === $name && 'full' === $archive['role'] ) {
 				$this->assertSame( 'too_large', $archive['hash_skipped'] );
 				$this->assertArrayNotHasKey( 'sha256', $archive );
 			} else {
-				// Full and database rows keep the Dashboard's local file name, so match by digest: every fixture artifact serves the same bytes.
-				$this->assertSame( hash( 'sha256', reset( $this->remote_files ) ), $archive['sha256'] );
+				// Full and database rows keep the Dashboard's local file name.
+				$expected = array_values(
+					array_filter(
+						$expected_artifacts,
+						static function ( $artifact ) use ( $archive ) {
+							return $artifact['role'] === $archive['role'] && ( in_array( $archive['role'], array( 'full', 'db' ), true ) || $artifact['file'] === $archive['file'] );
+						}
+					)
+				);
+				$this->assertCount( 1, $expected );
+				$this->assertSame( $expected[0]['sha256'], $archive['sha256'] );
 			}
 			if ( 'manifest' === $archive['role'] ) {
 				$this->assertSame( $payload['content_status'], $archive['content_status'] );
@@ -5942,7 +5998,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_child_fixture_hash_mismatch( $name, $role ) {
 		$payload = $this->backup_status_fixture( $name );
-		if ( 'db' === $name ) {
+		if ( 'db' === $name || 'full' === $role ) {
 			$payload['sha256'] = str_repeat( '0', 64 );
 		} else {
 			foreach ( $payload['artifacts'] as &$artifact ) {
@@ -5951,9 +6007,6 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 				}
 			}
 			unset( $artifact );
-			if ( 'full' === $role ) {
-				$payload['sha256'] = str_repeat( '0', 64 );
-			}
 		}
 		list( $site_id, $task ) = $this->start_evidence_backup( $name, $payload );
 		$cycle                  = $this->run_cycle( $site_id, $task );
@@ -6060,7 +6113,8 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$token = MainWP_Backup_Monitor::acquire_backup_slot( 2, 'native' );
 		$this->assertIsString( $token );
 		MainWP_Backup_Monitor::begin_native_lease( $token );
-		$lose = static function () use ( $token ) {
+		$lose = function () use ( $token, $file ) {
+			$this->assertFileExists( $file . '.downloading' );
 			MainWP_Backup_Monitor::release_backup_slot( $token );
 			MainWP_Backup_Monitor::touch_native_leases( MainWP_Backup_Monitor::DEFAULT_SLOT_LEASE_SECONDS );
 		};
@@ -6069,6 +6123,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$cycle = $this->run_cycle( $site_id, $task );
 			$this->assertSame( MainWP_Backup_Error_Codes::ERR_SLOT_LOST, $cycle['exception']->get_message_error_code() );
 			$this->assertFileDoesNotExist( $file );
+			$this->assertFileDoesNotExist( $file . '.downloading' );
 			$this->assertSame( 'full', MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, 11 )->type );
 			$this->assertCount( 1, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
 		} finally {
@@ -6102,5 +6157,74 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertArrayNotHasKey( 'sha256', $progress->fetchResult );
 		$this->assertArrayNotHasKey( 'content_status', $progress->fetchResult );
 		$this->assertSame( 0, $hashes );
+	}
+	/**
+	 * A cached hash cannot delete bytes while another driver owns the download lock.
+	 *
+	 * @dataProvider cached_child_hash_lock_cases
+	 * @param bool $held Whether another driver holds the download lock.
+	 * @param bool $with_hash Whether the cached part has a Child digest.
+	 */
+	public function test_cached_incremental_child_hash_respects_download_lock( $held, $with_hash ) {
+		$payload = $this->backup_status_fixture( 'incremental' );
+		$part    = $payload['artifacts'][3];
+		if ( ! $with_hash ) {
+			unset( $part['sha256'] );
+		}
+		unset( $payload['artifacts'][3] );
+		array_unshift( $payload['artifacts'], $part );
+		list( $site_id, $task ) = $this->start_evidence_backup( 'incremental', $payload );
+		$dir                    = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id ) . 'snapshot-child-evidence/';
+		wp_mkdir_p( $dir );
+		$file  = $dir . $part['file'];
+		$bytes = $this->remote_files[ $part['file'] ];
+		file_put_contents( $file, $bytes );
+		if ( $held ) {
+			$this->assertTrue( \MainWP\Dashboard\MainWP_Backup_File_Manager::acquire_download_lock( $file, $site_id, 999 ) );
+		}
+		$downloads = 0;
+		add_filter(
+			'mainwp_download_to_file_pre',
+			static function ( $pre ) use ( &$downloads ) {
+				++$downloads;
+				return $pre;
+			}
+		);
+		try {
+			$cycle = $this->run_cycle( $site_id, $task );
+			$this->assertFileExists( $file );
+			$this->assertSame( $bytes, file_get_contents( $file ) );
+			if ( $held && $with_hash ) {
+				$this->assertSame( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, $cycle['exception']->get_message_error_code() );
+				$this->assertSame( 0, $downloads );
+				$this->assertCount( 1, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+			} else {
+				$this->assertNull( $cycle['exception'] );
+				$this->assertCount( 2, MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) );
+				$this->assertSame( count( $payload['artifacts'] ) - 1, $downloads );
+			}
+			if ( $held ) {
+				$this->assertFileExists( $file . '.downloading' );
+			} else {
+				$this->assertFileDoesNotExist( $file . '.downloading' );
+			}
+		} finally {
+			if ( $held ) {
+				\MainWP\Dashboard\MainWP_Backup_File_Manager::release_download_lock( $file );
+			}
+		}
+	}
+
+	/**
+	 * Older cached files still need no content-comparison lock.
+	 *
+	 * @return array Cache lock cases.
+	 */
+	public static function cached_child_hash_lock_cases() {
+		return array(
+			'held hash'   => array( true, true ),
+			'free hash'   => array( false, true ),
+			'held legacy' => array( true, false ),
+		);
 	}
 }

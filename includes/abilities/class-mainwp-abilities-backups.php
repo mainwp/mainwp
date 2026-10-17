@@ -1310,12 +1310,12 @@ class MainWP_Abilities_Backups {
                 'archive_integrity' => array(
                     'type'        => 'string',
                     'enum'        => array( 'transfer_hash_only', 'child_content_hash' ),
-                    'description' => 'child_content_hash: the site recorded a sha256 hash for every archive in this backup (for an incremental backup, every archive in its chain back to the full backup), and every downloaded file matched it. transfer_hash_only: at least one archive in this backup or its chain has no hash from the site (older MainWP Child versions, or a file the site could not hash: too large to hash in time, or unreadable), so only the transfer was checked, against a hash taken when the download token was issued.',
+                    'description' => 'child_content_hash: every archive recorded for this backup (for an incremental backup, every archive in its chain back to the full backup) carries a sha256 hash from the site, and each downloaded file matched it. transfer_hash_only: the stored evidence does not cover every archive: at least one archive in this backup or its chain has no hash from the site (older MainWP Child versions, or a file the site could not hash: too large to hash in time, or unreadable), or part of the chain is missing. Only the transfer was checked, against the hash the site issues with a download token, where the site uses download tokens.',
                 ),
                 'skipped_files'     => array(
                     'type'        => 'string',
                     'enum'        => array( 'not_reported', 'none', 'reported' ),
-                    'description' => 'none: the site reported no skipped files; files excluded by the backup\'s settings are not counted as skipped. reported: the site marked the backup as partial or reported one or more files it left out, for example unreadable files or links. not_reported: the site did not report skipped files (older MainWP Child versions, and database-only backups).',
+                    'description' => 'none: the site reported no skipped files; files excluded by the backup\'s settings are not counted as skipped. reported: the site marked the backup as partial or reported one or more files it left out, for example unreadable files or links. not_reported: the backup holds no usable skipped-file report: older MainWP Child versions and database-only backups do not send one, and a backup whose file list was missing or failed its hash check has none stored.',
                 ),
             ),
         );

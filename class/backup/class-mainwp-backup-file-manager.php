@@ -311,7 +311,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                         wp_delete_file( $local_file );
                         throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_SLOT_LOST ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
                     }
-                    static::fire_downloaded_action( $website, $local_file, false );
+                    static::fire_downloaded_action( $website, $local_file, static::is_sha256( $expected_sha256 ) );
                     return;
                 } catch ( MainWP_Exception $e ) {
                     $extra        = (string) $e->get_message_extra( false );

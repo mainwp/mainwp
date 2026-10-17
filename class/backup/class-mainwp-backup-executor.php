@@ -2346,15 +2346,19 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $invalid_archive  = true;
                 }
             }
-            if ( $already_complete && null !== $expected_sha256 && ! MainWP_Backup_File_Manager::matches_sha256( $local, $expected_sha256 ) ) {
-                $already_complete = false;
-                $invalid_archive  = true;
-            }
-            if ( ! $already_complete && ! MainWP_Backup_File_Manager::acquire_download_lock( $local, $website->id, $pTask->id ) ) {
-                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $local ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+            $download_locked = false;
+            if ( ! $already_complete || null !== $expected_sha256 ) {
+                $download_locked = MainWP_Backup_File_Manager::acquire_download_lock( $local, $website->id, $pTask->id );
+                if ( ! $download_locked ) {
+                    throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING, 'download lock held for ' . basename( $local ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- registry messages are pre-escaped.
+                }
             }
             $manifest_error = null;
             try {
+                if ( $already_complete && null !== $expected_sha256 && ! MainWP_Backup_File_Manager::matches_sha256( $local, $expected_sha256 ) ) {
+                    $already_complete = false;
+                    $invalid_archive  = true;
+                }
                 if ( $invalid_archive ) {
                     // The downloader skips exact-size files, so discard this one while holding its lock.
                     wp_delete_file( $local );
@@ -2400,7 +2404,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     continue;
                 }
             } finally {
-                if ( ! $already_complete ) {
+                if ( $download_locked ) {
                     MainWP_Backup_File_Manager::release_download_lock( $local );
                 }
             }

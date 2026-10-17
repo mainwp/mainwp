@@ -725,7 +725,11 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		}
 		$this->assert_output( 'get-backup-status', $status );
 		$this->assertSame( array_intersect_key( $detail['snapshot'], array_flip( array( 'id', 'type', 'created_at', 'evidence', 'offsite', 'test_restore' ) ) ), $status['items'][0]['latest_snapshot'] );
-		$this->assertSame( array( 'SELECT * FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ) . ' WHERE id = 987673' ), $queries, 'Only the returned snapshot needs a presence check; admission and upload queries are unnecessary.' );
+		$expected_queries = array( 'SELECT * FROM ' . $table . ' WHERE id = 987673' );
+		if ( 'incremental' === $detail['snapshot']['type'] ) {
+			$expected_queries[] = 'SELECT * FROM ' . $table . ' WHERE site_id = ' . $this->site_id . ' ORDER BY id DESC';
+		}
+		$this->assertSame( $expected_queries, $queries, 'Only the returned snapshot and its incremental parent map need reads; admission and upload queries are unnecessary.' );
 	}
 
 	/**
@@ -2446,6 +2450,99 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			remove_filter( 'query', $count );
 		}
+	}
+	/**
+	 * Fleet evidence can read a chain in one site query, including retained pruned rows.
+	 *
+	 * @dataProvider incremental_status_parent_states
+	 * @param string $base_status Stored base status.
+	 */
+	public function test_incremental_status_loads_parent_chain_once( $base_status ) {
+		global $wpdb;
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$archives = array(
+			array(
+				'file'   => 'backup.zip',
+				'path'   => __FILE__,
+				'size'   => 1024,
+				'role'   => 'full',
+				'sha256' => str_repeat( 'a', 64 ),
+			),
+		);
+		$this->insert_read_fixture(
+			'wp_backup_snapshot',
+			array(
+				'id'       => 987668,
+				'site_id'  => $this->site_id,
+				'task_id'  => 987671,
+				'type'     => 'full',
+				'status'   => $base_status,
+				'archives' => wp_json_encode( $archives ),
+			)
+		);
+		$archives[0]['role'] = 'part';
+		$this->insert_read_fixture(
+			'wp_backup_snapshot',
+			array(
+				'id'        => 987669,
+				'site_id'   => $this->site_id,
+				'task_id'   => 987671,
+				'type'      => 'incremental',
+				'parent_id' => 987668,
+				'archives'  => wp_json_encode( $archives ),
+			)
+		);
+		$wpdb->update(
+			$table,
+			array(
+				'type'      => 'incremental',
+				'parent_id' => 987669,
+				'archives'  => wp_json_encode( $archives ),
+			),
+			array( 'id' => 987673 )
+		);
+		$detail = $this->read( 'get-backup-snapshot', array( 'snapshot_id' => 987673 ) );
+		$this->assert_output( 'get-backup-snapshot', $detail );
+		$queries = array();
+		$count   = static function ( $sql ) use ( &$queries, $table ) {
+			if ( str_contains( $sql, $table ) && ! str_contains( $sql, 'JOIN ( SELECT site_id' ) ) {
+				$queries[] = $sql;
+			}
+			return $sql;
+		};
+		add_filter( 'query', $count );
+		try {
+			$status = $this->read( 'get-backup-status', array( 'per_page' => 1 ) );
+		} finally {
+			remove_filter( 'query', $count );
+		}
+		$this->assert_output( 'get-backup-status', $status );
+		$this->assertCount( 2, $queries, implode( "\n", $queries ) );
+		$this->assertSame( 'SELECT * FROM ' . $table . ' WHERE id = 987673', $queries[0] );
+		$this->assertSame( 'SELECT * FROM ' . $table . ' WHERE site_id = ' . $this->site_id . ' ORDER BY id DESC', $queries[1] );
+		$this->assertSame( 987673, $status['items'][0]['latest_snapshot']['id'] );
+		$this->assertSame( 'child_content_hash', $status['items'][0]['latest_snapshot']['evidence']['archive_integrity'] );
+		$this->assertSame( $detail['snapshot']['evidence'], $status['items'][0]['latest_snapshot']['evidence'] );
+	}
+
+	/**
+	 * Pruning does not erase the archive evidence kept in a snapshot row.
+	 *
+	 * @return array Parent states.
+	 */
+	public static function incremental_status_parent_states() {
+		return array( array( 'complete' ), array( 'pruned' ) );
+	}
+
+	/**
+	 * Schema descriptions distinguish stored evidence from missing reports.
+	 */
+	public function test_snapshot_evidence_schema_descriptions() {
+		$schema = new \ReflectionMethod( MainWP_Abilities_Backups::class, 'snapshot_evidence_schema' );
+		$schema->setAccessible( true );
+		$properties = $schema->invoke( null )['properties'];
+		$this->assertSame( 'child_content_hash: every archive recorded for this backup (for an incremental backup, every archive in its chain back to the full backup) carries a sha256 hash from the site, and each downloaded file matched it. transfer_hash_only: the stored evidence does not cover every archive: at least one archive in this backup or its chain has no hash from the site (older MainWP Child versions, or a file the site could not hash: too large to hash in time, or unreadable), or part of the chain is missing. Only the transfer was checked, against the hash the site issues with a download token, where the site uses download tokens.', $properties['archive_integrity']['description'] );
+		$this->assertSame( 'none: the site reported no skipped files; files excluded by the backup\'s settings are not counted as skipped. reported: the site marked the backup as partial or reported one or more files it left out, for example unreadable files or links. not_reported: the backup holds no usable skipped-file report: older MainWP Child versions and database-only backups do not send one, and a backup whose file list was missing or failed its hash check has none stored.', $properties['skipped_files']['description'] );
 	}
 }
 

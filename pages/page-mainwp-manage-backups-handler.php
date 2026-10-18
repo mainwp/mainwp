@@ -1401,6 +1401,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $outcome['budget_exhausted'] = true;
                 break;
             }
+            $cancel_task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $task->id );
+            if ( $cancel_task && MainWP_Backup_Run_Cancel::site_settled( $cancel_task, $history_started, (int) $siteid ) ) {
+                continue;
+            }
             $website = MainWP_DB::instance()->get_website_by_id( $siteid );
 
             // An earlier terminal mark can leave a cancel the child refused

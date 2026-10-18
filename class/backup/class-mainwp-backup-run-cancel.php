@@ -43,6 +43,19 @@ class MainWP_Backup_Run_Cancel {
     }
 
     /**
+     * Confirmed cancellations must not be driven again while other sites stop.
+     *
+     * @param object $task Fresh task row.
+     * @param int    $run Driven run identity.
+     * @param int    $site_id Site identity.
+     * @return bool Whether this run recorded a cancellation answer for the site.
+     */
+    public static function site_settled( object $task, int $run, int $site_id ): bool {
+        $request = json_decode( (string) ( $task->run_cancel ?? '' ), true );
+        return self::blocks_run( $task, $run ) && isset( $request['settled'][ $site_id ] ) && ! empty( $request['tasks'][ $site_id ] );
+    }
+
+    /**
      * Ignore requests left behind by a previous run.
      *
      * @param object $task Fresh task row.
@@ -110,6 +123,7 @@ class MainWP_Backup_Run_Cancel {
         $request['lease']       = $token;
         $request['lease_until'] = $now + 120;
         $request['settled']     = is_array( $request['settled'] ?? null ) ? $request['settled'] : array();
+        $request['tasks']       = is_array( $request['tasks'] ?? null ) ? $request['tasks'] : array();
         $raw                    = self::request_bytes( $request );
         if ( ! $db->compare_and_swap_run_cancel( $task_id, $run, $task->run_cancel, $raw ) ) {
             return self::result( 'busy', count( self::waiting_sites( $task, $sites, $request ) ) );
@@ -155,30 +169,32 @@ class MainWP_Backup_Run_Cancel {
                     }
                     $next                        = $request;
                     $next['settled'][ $site_id ] = $reply['result'];
+                    $next['tasks'][ $site_id ]   = $child_id;
                     $bytes                       = self::request_bytes( $next );
                     if ( ! $db->compare_and_swap_run_cancel( $task_id, $run, $raw, $bytes ) ) {
                         return self::result( 'busy', count( self::waiting_sites( $task, $sites, $request ) ) );
                     }
                     $request = $next;
                     $raw     = $bytes;
+                    MainWP_Backup_Run_History::finalize_run( $task_id, $run, 'cancelled', (int) $site_id );
                 }
             }
             $waiting = self::waiting_sites( $task, $sites, $request );
             $expired = time() >= (int) $request['deadline'];
-            if ( $expired || ( empty( $waiting ) && ! $db->has_live_child_task_for_run( $task_id ) && ! $db->has_pending_record_for_run( $task_id ) ) ) {
+            if ( $expired || ( empty( $waiting ) && ! $db->has_live_child_task_for_run( $task_id ) && ! $db->has_pending_record_for_run( $task_id ) && ! self::has_mid_download_for_run( $task, $sites ) ) ) {
                 if ( ! self::renew( $task, $request, $raw, $token ) ) {
                     return self::result( 'busy', count( $waiting ) );
                 }
                 if ( $db->update_backup_completed( $task_id, $run ) ) {
+                    $db->append_backup_notices_for_run( $task_id, $run, self::close_note( $expired, array_keys( $waiting ) ) . "\n" );
                     MainWP_Backup_Run_History::finalize_run( $task_id, $run, 'cancelled' );
-                    $db->update_backup_notices( $task_id, self::close_note( $expired, array_keys( $waiting ) ) . "\n" );
                     foreach ( $request['settled'] as $site_id => $answer ) {
-                        $progress = $db->get_backup_task_progress( $task_id, (int) $site_id );
-                        if ( $progress && (int) $progress->dtsFetched >= $run ) {
+                        $child_id = (string) ( $request['tasks'][ $site_id ] ?? '' );
+                        if ( '' !== $child_id ) {
                             $db->update_backup_task_progress_if_marker(
                                 $task_id,
                                 (int) $site_id,
-                                (string) $progress->child_backup_task_id,
+                                $child_id,
                                 array(
                                     'child_backup_task_id' => '',
                                     'child_phase'          => '',
@@ -252,6 +268,22 @@ class MainWP_Backup_Run_Cancel {
     }
 
     /**
+     * A completed Child task can still have an archive in transit to the Dashboard.
+     *
+     * @param object $task Run identity.
+     * @param array  $sites Run's site ids.
+     * @return bool Whether a site still needs its download finished.
+     */
+    private static function has_mid_download_for_run( object $task, array $sites ): bool {
+        foreach ( $sites as $site_id ) {
+            if ( 'mid_download' === MainWP_DB_Backup::instance()->is_backup_site_resumable_for_run( $task, $site_id ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Keep empty settlement maps as JSON objects across renewals.
      *
      * @param array $request Cancellation state.
@@ -259,6 +291,7 @@ class MainWP_Backup_Run_Cancel {
      */
     private static function request_bytes( array $request ): string {
         $request['settled'] = (object) ( $request['settled'] ?? array() );
+        $request['tasks']   = (object) ( $request['tasks'] ?? array() );
         return (string) wp_json_encode( $request );
     }
 

@@ -466,6 +466,123 @@ class MainWP_Backup_Run_Cancel_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( '', MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $sites[0] )->child_backup_task_id );
 	}
 
+	/**
+	 * A successor may publish either kind of tracking before the old closer resumes.
+	 *
+	 * @return array Successor progress identities.
+	 */
+	public static function successor_child_ids(): array {
+		return array(
+			'marker' => array( '__creating_successor123' ),
+			'id'     => array( 'successor-child' ),
+		);
+	}
+
+	/**
+	 * The successor claims after the close UPDATE lands and before its side effects.
+	 *
+	 * @dataProvider successor_child_ids
+	 * @param string $successor_id Successor progress identity.
+	 */
+	public function test_cancel_close_preserves_successor_progress_and_notices( string $successor_id ) {
+		global $wpdb;
+		list( $task, $sites ) = $this->running();
+		$this->progress( $task, $sites[0], 'cancelled-child' );
+		$this->request( $task );
+		$db                = MainWP_DB_Backup::instance();
+		$successor         = 0;
+		$expected_progress = null;
+		$notes             = "Successor note.\n";
+		$interleave        = function ( $sql ) use ( &$interleave, &$successor, &$expected_progress, $wpdb, $db, $task, $sites, $successor_id, $notes ) {
+			if ( str_contains( $sql, 'SET completed = GREATEST(' ) ) {
+				remove_filter( 'query', $interleave );
+				$state = json_decode( $this->fresh( $task )->run_cancel, true );
+				$this->assertSame( 'ok', $state['settled'][ $sites[0] ] ?? null );
+				$this->assertSame( 'cancelled-child', $state['tasks'][ $sites[0] ] ?? null );
+				$this->assertSame( 1, $wpdb->query( $sql ) );
+				$this->assertTrue( $db->claim_backup_run( $task->id, 0, $successor ) );
+				$db->update_backup_notices( $task->id, '' );
+				$db->update_backup_notices( $task->id, $notes );
+				$db->update_backup_task_progress(
+					$task->id,
+					$sites[0],
+					array(
+						'dtsFetched'           => $successor,
+						'child_backup_task_id' => $successor_id,
+						'child_phase'          => 'queued',
+					)
+				);
+				$expected_progress = $db->get_backup_task_progress( $task->id, $sites[0] );
+				$this->assertGreaterThan( 0, MainWP_Backup_Run_History::start( (int) $task->id, $sites[0], $successor, 'schedule', get_current_user_id() ) );
+				return 'SELECT 1';
+			}
+			return $sql;
+		};
+		add_filter( 'query', $interleave );
+		try {
+			$this->assertSame( 'closed', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+			$this->assertGreaterThan( (int) $task->last_run, $successor );
+			$this->assertEquals( $expected_progress, $db->get_backup_task_progress( $task->id, $sites[0] ) );
+			$this->assertSame( $notes, $this->fresh( $task )->backup_notices );
+			$this->assertNull( $this->fresh( $task )->run_cancel );
+			$table = MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' );
+			$this->assertSame( 'cancelled', $wpdb->get_var( $wpdb->prepare( 'SELECT outcome FROM ' . $table . ' WHERE task_id = %d AND started = %d', $task->id, $task->last_run ) ) );
+			$this->assertSame( 'running', $wpdb->get_var( $wpdb->prepare( 'SELECT outcome FROM ' . $table . ' WHERE task_id = %d AND started = %d', $task->id, $successor ) ) );
+		} finally {
+			remove_filter( 'query', $interleave );
+		}
+	}
+
+	/** A settled site cannot be driven into a failed history outcome while others stop. */
+	public function test_driver_skips_settled_cancelled_site_while_another_site_is_busy() {
+		global $wpdb;
+		list( $task, $sites ) = $this->running( 2 );
+		$this->progress( $task, $sites[0], 'cancelled-A' );
+		$this->progress( $task, $sites[1], 'busy-B' );
+		$this->reply = static function ( $website ) use ( $sites ) {
+			return array( 'result' => (int) $website->id === $sites[0] ? 'ok' : 'busy' );
+		};
+		$this->assertSame(
+			array(
+				'result'  => 'cancelling',
+				'waiting' => 1,
+			),
+			$this->ajax( $task )
+		);
+		$history = MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' );
+		$this->assertSame( 'cancelled', $wpdb->get_var( $wpdb->prepare( 'SELECT outcome FROM ' . $history . ' WHERE task_id = %d AND site_id = %d', $task->id, $sites[0] ) ) );
+		$this->assertTrue( MainWP_Backup_Run_Cancel::site_settled( $this->fresh( $task ), (int) $task->last_run, $sites[0] ) );
+		$this->assertFalse( MainWP_Backup_Run_Cancel::site_settled( $this->fresh( $task ), (int) $task->last_run, $sites[1] ) );
+		$failed_child = static function ( $pre, $website, $what ) use ( $sites ) {
+			if ( (int) $website->id === $sites[0] && 'backup_task_run' === $what ) {
+				return array(
+					'phase'      => 'failed',
+					'error'      => 'Cancelled on child',
+					'error_code' => \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_RUN_CANCELLED,
+				);
+			}
+			return $pre;
+		};
+		$this->calls  = array();
+		add_filter( 'mainwp_fetch_url_authed_pre', $failed_child, 20, 3 );
+		try {
+			$this->drive( $this->fresh( $task ) );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $failed_child, 20 );
+		}
+		$this->assertCount( 0, array_filter( $this->calls, static fn( $call ) => $sites[0] === $call[1] ) );
+		$this->assertNotEmpty( array_filter( $this->calls, static fn( $call ) => $sites[1] === $call[1] ) );
+		$this->assertSame( '', $this->fresh( $task )->backup_errors );
+		$this->assertSame( 'cancelled', $wpdb->get_var( $wpdb->prepare( 'SELECT outcome FROM ' . $history . ' WHERE task_id = %d AND site_id = %d', $task->id, $sites[0] ) ) );
+		$this->assertSame( 'running', $wpdb->get_var( $wpdb->prepare( 'SELECT outcome FROM ' . $history . ' WHERE task_id = %d AND site_id = %d', $task->id, $sites[1] ) ) );
+		$this->calls = array();
+		$this->reply = array( 'result' => 'ok' );
+		$this->assertSame( 'closed', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		$this->assertCount( 1, $this->calls );
+		$this->assertSame( 'busy-B', $this->calls[0][2]['task_id'] );
+		$this->assertSame( "Cancelled.\n", $this->fresh( $task )->backup_notices );
+	}
+
 	/** Another driver's lane can stay live throughout cancellation. */
 	public function test_cancel_runs_while_another_task_renews_the_lane() {
 		list( $task, $sites ) = $this->running();
@@ -591,6 +708,12 @@ class MainWP_Backup_Run_Cancel_Test extends MainWP_Abilities_Test_Case {
 		$this->request( $task );
 		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $this->now + 1799;
 		$this->assertSame( 'pending', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		$before = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $sites[0] );
+		$this->assertGreaterThan( MainWP_Backup_Executor::CREATE_MARKER_TTL_SECONDS, MainWP_Backup_Incremental_Sender_Test::$fixed_time - (int) $before->dtsFetched );
+		$this->assertFalse( MainWP_Backup_Executor::backup_site( $sites[0], $this->fresh( $task ), 'backups' ) );
+		$this->assertEquals( $before, MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $sites[0] ) );
+		$this->assertSame( 'pending', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		$this->assertLessThan( (int) $task->last_run, (int) $this->fresh( $task )->completed );
 		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $this->now + 1800;
 		$this->assertSame( 'not_confirmed', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['closed_as'] );
 		$this->assertSame( "Cancelled. Not confirmed for: Site 0.\n", $this->fresh( $task )->backup_notices );
@@ -643,6 +766,45 @@ class MainWP_Backup_Run_Cancel_Test extends MainWP_Abilities_Test_Case {
 		MainWP_System_Cron_Jobs::instance()->cron_backups_continue();
 		$this->assertSame( "Cancelled.\n", $this->fresh( $task )->backup_notices );
 		$this->assertSame( array(), $this->calls );
+		$this->assertFalse( get_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION ) );
+	}
+
+	/**
+	 * The general schedule must finish stops with the backup schedules disabled.
+	 *
+	 * @return array Cancellation completion modes.
+	 */
+	public static function general_cancel_modes(): array {
+		return array(
+			'ok'       => array( false ),
+			'deadline' => array( true ),
+		);
+	}
+
+	/**
+	 * The always-scheduled event handles confirmed and deadline closes.
+	 *
+	 * @dataProvider general_cancel_modes
+	 * @param bool $expired Whether the request reached its deadline.
+	 */
+	public function test_general_cron_processes_cancel_with_native_backups_off( bool $expired ) {
+		list( $task, $sites ) = $this->running();
+		$this->progress( $task, $sites[0], 'general-child' );
+		$this->request( $task, array( 'deadline' => $expired ? $this->now : $this->now + 1800 ) );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		$cron = MainWP_System_Cron_Jobs::instance();
+		$jobs = $cron->get_cron_jobs();
+		$this->assertSame( 'minutely', $jobs['mainwp_cron_perform_general_process'] ?? null );
+		$this->assertArrayNotHasKey( 'mainwp_cronbackups_continue_action', $jobs );
+		add_filter( 'mainwp_register_regular_sequence_process', '__return_empty_array', PHP_INT_MAX );
+		try {
+			$cron->cron_perform_general_process();
+		} finally {
+			remove_filter( 'mainwp_register_regular_sequence_process', '__return_empty_array', PHP_INT_MAX );
+		}
+		$this->assertGreaterThanOrEqual( (int) $task->last_run, (int) $this->fresh( $task )->completed );
+		$this->assertSame( $expired ? "Cancelled. Not confirmed for: Site 0.\n" : "Cancelled.\n", $this->fresh( $task )->backup_notices );
+		$this->assertCount( $expired ? 0 : 1, $this->calls );
 		$this->assertFalse( get_option( MainWP_Backup_Monitor::LANE_LEASE_OPTION ) );
 	}
 
@@ -1037,6 +1199,65 @@ class MainWP_Backup_Run_Cancel_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 		$this->assertSame( 'closed', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+	}
+
+	/** Completed Child work must keep its download and snapshot before cancellation closes. */
+	public function test_cancel_waits_for_mid_download_then_preserves_recorded_snapshot() {
+		list( $task, $sites ) = $this->running( 2 );
+		$this->progress( $task, $sites[0], 'finished-child', 'completed' );
+		$this->progress( $task, $sites[1], 'cancelled-child' );
+		$db    = MainWP_DB_Backup::instance();
+		$local = $this->diag . '/downloading.tar.gz';
+		$db->update_backup_task_progress(
+			$task->id,
+			$sites[0],
+			array(
+				'downloadedFULL'         => $local,
+				'downloadedFULLComplete' => 0,
+				'fetchResult'            => wp_json_encode(
+					array(
+						'full' => 'downloading.tar.gz',
+						'size' => 17,
+					)
+				),
+			)
+		);
+		$this->assertSame( 'mid_download', $db->is_backup_site_resumable_for_run( $task, $sites[0] ) );
+		$this->assertSame(
+			array(
+				'result'  => 'cancelling',
+				'waiting' => 0,
+			),
+			$this->ajax( $task )
+		);
+		$this->assertFalse( MainWP_Backup_Run_Cancel::site_settled( $this->fresh( $task ), (int) $task->last_run, $sites[0] ) );
+		$this->assertTrue( MainWP_Backup_Run_Cancel::site_settled( $this->fresh( $task ), (int) $task->last_run, $sites[1] ) );
+		$this->assertLessThan( (int) $task->last_run, (int) $this->fresh( $task )->completed );
+		file_put_contents( $local, 'validated archive' );
+		$db->update_backup_task_progress( $task->id, $sites[0], array( 'downloadedFULLComplete' => 1 ) );
+		$snapshots = MainWP_Backup_Snapshots::instance();
+		$id        = $snapshots->record_snapshot(
+			array(
+				'task_id'  => (int) $task->id,
+				'site_id'  => $sites[0],
+				'type'     => 'full',
+				'archives' => array(
+					array(
+						'file' => $local,
+						'role' => 'full',
+					),
+				),
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		$before = $snapshots->get_snapshot_by_id( $id );
+		MainWP_Backup_Run_History::finalize_run( (int) $task->id, (int) $task->last_run, 'completed', $sites[0], '', $id );
+		$this->assertSame( 'closed', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		$this->assertEquals( $before, $snapshots->get_snapshot_by_id( $id ) );
+		$this->assertFileExists( $local );
+		$this->assertCount( 1, $this->calls );
+		$this->assertSame( $sites[1], $this->calls[0][1] );
+		$this->assertSame( "Cancelled.\n", $this->fresh( $task )->backup_notices );
 	}
 
 	/** Refreshing the same request cannot move its deadline. */

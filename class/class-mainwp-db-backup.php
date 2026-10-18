@@ -1411,6 +1411,26 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * A closer must not append its note to a successor run.
+     *
+     * @param int    $id Task identity.
+     * @param int    $last_run Closed run identity.
+     * @param string $text Note to append.
+     * @return bool Whether the note was appended.
+     */
+    public function append_backup_notices_for_run( int $id, int $last_run, string $text ): bool {
+        return 1 === $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_notices = CONCAT( COALESCE( backup_notices, '' ), %s ) WHERE id = %d AND last_run = %d AND ( backup_notices IS NULL OR backup_notices NOT LIKE CAST( %s AS BINARY ) )",
+                $text,
+                $id,
+                $last_run,
+                '%' . $this->wpdb->esc_like( $text ) . '%'
+            )
+        );
+    }
+
+    /**
      * Method update_completed_sites()
      *
      * Update completed sites.

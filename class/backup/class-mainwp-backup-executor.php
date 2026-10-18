@@ -815,6 +815,12 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 return false;
             }
 
+            $cancel_task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $taskId );
+            if ( $cancel_task && MainWP_Backup_Run_Cancel::blocks_run( $cancel_task, (int) $pTask->last_run ) ) {
+                // The create may have reached the Child, so cancellation still needs its deadline.
+                return false;
+            }
+
             // Nobody cleared this marker inside its window, which can only
             // be a driver that died mid-request. Reset the row the same way
             // an escalated incremental retry does, so the next cycle creates

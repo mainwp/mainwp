@@ -380,9 +380,12 @@ class MainWP_Backup_Rights_Surfaces_Test extends MainWP_Abilities_Test_Case {
 		$this->authenticate( 'cookie-only' );
 		$legacy = MainWP_System_Utility::get_mainwp_specific_dir( $this->fixture['site'] ) . 'legacy.zip';
 		file_put_contents( $legacy, 'legacy bytes' );
-		$site = MainWP_DB::instance()->get_website_by_id( $this->fixture['site'] );
+		$site   = MainWP_DB::instance()->get_website_by_id( $this->fixture['site'] );
+		$native = get_option( 'mainwp_enableNativeBackups' );
 		try {
-			foreach ( array( 'denied', 'default' ) as $mode ) {
+			foreach ( array( 'denied/native', 'default/native', 'denied/legacy', 'default/legacy' ) as $case ) {
+				list( $mode, $toggle ) = explode( '/', $case );
+				update_option( 'mainwp_enableNativeBackups', 'native' === $toggle ? 1 : 0 );
 				$filter = $this->rights( $mode );
 				ob_start();
 				try {
@@ -393,11 +396,18 @@ class MainWP_Backup_Rights_Surfaces_Test extends MainWP_Abilities_Test_Case {
 				}
 				$this->assertSame( 4, substr_count( $output, '<label ' ) );
 				$this->assertSame( 'denied' === $mode ? 0 : 4, substr_count( $output, '>Download</a>' ) );
+				$this->assertSame( 'default/legacy' === $case ? 2 : 0, substr_count( $output, 'page=SiteRestore' ) );
 				if ( 'denied' === $mode ) {
 					$this->assertStringNotContainsString( 'sig=', $output );
+					$this->assertStringNotContainsString( 'SiteRestore', $output );
+					preg_match_all( '/[?&;]f=([A-Za-z0-9+\/=%]+)/', $output, $encoded );
+					foreach ( $encoded[1] as $value ) {
+						$this->assertStringNotContainsString( 'sig=', (string) base64_decode( rawurldecode( $value ) ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode -- the legacy restore link base64-encodes the signed URL.
+					}
 				}
 			}
 		} finally {
+			update_option( 'mainwp_enableNativeBackups', $native );
 			unlink( $legacy );
 		}
 	}

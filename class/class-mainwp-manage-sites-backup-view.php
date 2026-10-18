@@ -37,7 +37,8 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         // phpcs:disable WordPress.Security.EscapeOutput
         // Native backups surface restore on their own panel on this tab, so the
         // legacy per-file SiteRestore link (the broken legacy restore path) is
-        // suppressed when native is enabled.
+        // suppressed when native is enabled. It carries the signed download URL in
+        // its f parameter, so it also needs the download right.
         $native_backups = MainWP_Backup_Settings::is_native_backups_enabled();
         $can_download   = \mainwp_current_user_can( 'dashboard', 'download_backups' );
         $output         = '';
@@ -46,7 +47,7 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             $downloadLink = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $fullBackup ) . ( $private ? '&root=private&mwpdl=' : '&mwpdl=' ) . rawurlencode( $private ? substr( realpath( $fullBackup ), strlen( $private_root ) ) : str_replace( $mwpDir, '', $fullBackup ) ) );
             $output      .= '<div class="ui grid field">';
             $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
-            $restoreLink  = $native_backups ? '' : '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . esc_attr( basename( $fullBackup ) ) . '">' . esc_html__( 'Restore', 'mainwp' ) . '</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
+            $restoreLink  = $native_backups || ! $can_download ? '' : '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . esc_attr( basename( $fullBackup ) ) . '">' . esc_html__( 'Restore', 'mainwp' ) . '</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
             $output      .= '<div class="ten wide column ui toggle checkbox">';
             if ( $can_download ) {
                 $output .= '<a title="' . esc_attr( basename( $fullBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" class="ui mini basic button">' . esc_html__( 'Download', 'mainwp' ) . '</a>';

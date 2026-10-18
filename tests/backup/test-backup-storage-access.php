@@ -22,6 +22,7 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 	 */
 	private function call_handler( string $action, $scope, string $actor = 'N' ): array {
 		$process = proc_open(
+			// nosemgrep: AIK_exec-use -- test harness; the argv array bypasses the shell and every element is a test constant or fixture value.
 			array( PHP_BINARY, __DIR__ . '/fixtures/storage-request.php', $action, wp_json_encode( $scope ), $actor ),
 			array(
 				0 => array( 'file', '/dev/null', 'r' ),

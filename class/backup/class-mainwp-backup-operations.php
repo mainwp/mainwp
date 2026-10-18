@@ -1715,7 +1715,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( ! in_array( $context, array( 'ui', 'cli', 'ability' ), true ) ) {
             return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
         }
-        $before = self::authorize_restore_job( $restore_job_id, true );
+        $before = self::authorize_restore_job( $restore_job_id, true, $context );
         if ( is_wp_error( $before ) ) {
             return $before;
         }

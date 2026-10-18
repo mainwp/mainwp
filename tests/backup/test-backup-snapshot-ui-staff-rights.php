@@ -503,6 +503,14 @@ class MainWP_Backup_Snapshot_UI_Staff_Rights_Test extends MainWP_Abilities_Test_
 		$this->assertFalse( get_site_transient( end( $this->tokens ) ) );
 	}
 
+	/** Progress is a read: staff without restore_backups still follow a restore. */
+	public function test_progress_needs_no_restore_right(): void {
+		$this->actor( 'S-right', 'restore_backups' );
+		$this->assertWPError( MainWP_Backup_Operations::authorize_ui( 'restore_backups' ) );
+		$result = $this->observe( fn() => $this->request( 'mainwp_restore_progress' ), false );
+		$this->assert_admitted( 'mainwp_restore_progress', $result );
+	}
+
 	/** Withholding only download_backups must preserve the issued token. */
 	public function test_missing_download_right_preserves_token(): void {
 		$this->actor( 'S-right', 'download_backups' );

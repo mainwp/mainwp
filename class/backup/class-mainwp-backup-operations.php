@@ -895,9 +895,26 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $settle > 0 && '' === (string) $task->backup_errors && (int) $task->completed > time() - $settle ) {
             /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
             do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'settle_absorbed', (int) $task->last_run, (int) $task->completed );
+            if ( 'ability' !== $context ) {
+                $snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+                if ( null !== $snapshot && (int) $snapshot->created < (int) $task->last_run ) {
+                    $snapshot = null;
+                }
+                $message = __( 'This site finished a backup a few seconds ago, so a new one was not started.', 'mainwp' );
+                if ( null !== $snapshot ) {
+                    $message .= ' ' . sprintf(
+                        /* translators: %s: Date and time the finished snapshot was taken. */
+                        __( 'Snapshot time: %s.', 'mainwp' ),
+                        MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $snapshot->created ) )
+                    );
+                }
+            }
             return array( 'job_id' => (int) $task->id ) + ( 'ability' === $context ? self::ability_start_status( true, null, null, (int) $task->last_run ) : array(
-                'started' => (int) $task->last_run,
-                'status'  => 'queued',
+                'started'     => (int) $task->last_run,
+                'status'      => 'queued',
+                'settled'     => true,
+                'snapshot_id' => null !== $snapshot ? (int) $snapshot->id : 0,
+                'message'     => $message,
             ) );
         }
 

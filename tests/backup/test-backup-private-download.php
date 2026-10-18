@@ -144,6 +144,7 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 				'mwpdl' => '0/' . $site_id . '/legacy.zip',
 				'sig'   => MainWP_System_Utility::get_download_sig( $file ),
 			);
+			wp_set_current_user( 0 );
 			$this->assertSame( 'legacy archive bytes', $this->request_download( $query ) );
 			$this->assertSame( 'legacy archive bytes', $this->request_download( array_merge( $query, array( 'root' => 'unknown' ) ) ) );
 		} finally {

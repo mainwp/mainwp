@@ -82,6 +82,9 @@ class MainWP_Backup_Download {
         if ( is_wp_error( $snapshot ) ) {
             return self::refusal( 'permission' );
         }
+        if ( is_wp_error( MainWP_Backup_Operations::authorize_base( 'download_backups' ) ) ) {
+            return self::refusal( 'permission' );
+        }
         $path = self::local_archive( $snapshot );
         if ( is_wp_error( $path ) ) {
             return $path;
@@ -141,6 +144,9 @@ class MainWP_Backup_Download {
         }
         $snapshot = MainWP_Backup_Operations::authorize_snapshot( $record['snapshot_id'] );
         if ( is_wp_error( $snapshot ) ) {
+            return self::refusal( 'permission' );
+        }
+        if ( is_wp_error( MainWP_Backup_Operations::authorize_base( 'download_backups' ) ) ) {
             return self::refusal( 'permission' );
         }
         $path = self::local_archive( $snapshot );

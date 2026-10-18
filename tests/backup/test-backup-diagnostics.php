@@ -34,6 +34,145 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Cancel_Transport_Guard;
 
 	/**
+	 * Beta cursors expose host paths while projected Child cursors keep their values.
+	 *
+	 * @dataProvider cursor_payloads
+	 * @param array $payload Child response.
+	 * @param array $expected Expected cursor values.
+	 */
+	public function test_cursor_record_and_export( array $payload, array $expected ) {
+		$this->enable_recorder();
+		$this->set_current_user_as_admin();
+		$site     = $this->create_test_site();
+		$recorder = MainWP_Backup_Diagnostics::instance();
+		$recorder->on_poll(
+			$payload,
+			0.25,
+			array(
+				'site_id' => $site,
+				'task_id' => 0,
+				'op'      => 'run',
+			)
+		);
+		$events = $this->recorded_events();
+		$this->assertCount( 1, $events );
+		$this->assertSame( $expected, $events[0]['payload']['sub_state'] );
+		$this->assertSame( $payload['file'], $events[0]['payload']['file'] );
+		$this->assertSame( $payload['artifacts'], $events[0]['payload']['artifacts'] );
+		$exported = $this->cursor_export_events();
+		$this->assertCount( 1, $exported );
+		$this->assertSame( $expected, $exported[0]['payload']['sub_state'] );
+		$this->assertSame( $payload['file'], $exported[0]['payload']['file'] );
+		$this->assertSame( $payload['artifacts'], $exported[0]['payload']['artifacts'] );
+	}
+
+	/**
+	 * Both old and new Child shapes use the same record and export surfaces.
+	 *
+	 * @return array
+	 */
+	public static function cursor_payloads(): array {
+		$projected                                  = array(
+			'db_prefix'         => 'backup-[redacted]',
+			'db_files'          => array( 'database.sql' ),
+			'db_cursor'         => array( 'files' => array( 'part.sql' ) ),
+			'walk_cursor'       => array( 'stack' => array( array( 'dir' => 'plugins' ) ) ),
+			'failed_add_paths'  => array( 'image.jpg', 'windows.txt', 'network.txt' ),
+			'walk'              => 'wp-content/uploads/relative.jpg',
+			'file'              => 'archive.zip',
+			'code'              => 'dumping_db',
+			'number'            => 12,
+			'flag'              => true,
+			'backup-[redacted]' => 'backup-[redacted]',
+			'key.sql'           => 'kept',
+			'windows-key.sql'   => 'kept',
+		);
+		$absolute                                   = $projected;
+		$root                                       = '/srv/www/wp-content/uploads/mainwp/backup-AbCdEfGh12345678/';
+		$absolute['db_prefix']                      = $root;
+		$absolute['db_files']                       = array( $root . 'database.sql' );
+		$absolute['db_cursor']['files']             = array( $root . 'part.sql' );
+		$absolute['walk_cursor']['stack'][0]['dir'] = '/srv/www/wp-content/plugins/';
+		$absolute['failed_add_paths']               = array( '/srv/www/image.jpg', 'C:\sites\wp\windows.txt', '\\server\share\network.txt' );
+		unset( $absolute['backup-[redacted]'], $absolute['key.sql'], $absolute['windows-key.sql'] );
+		$absolute['backup-AbCdEfGh12345678']    = 'backup-AbCdEfGh12345678';
+		$absolute[ $root . 'key.sql' ]          = 'kept';
+		$absolute['C:\\sites\\windows-key.sql'] = 'kept';
+		$outside                                = array(
+			'file'      => '/dashboard/archives/full.zip',
+			'artifacts' => array( array( 'file' => 'D:\archives\db.zip' ) ),
+		);
+		$new_child                              = $projected;
+		unset( $new_child['backup-[redacted]'] );
+		$new_child['db_prefix'] = 'wp-content/uploads/mainwp/database-prefix';
+		$new_child['db_files']  = array( 'wp-content/uploads/mainwp/database.sql' );
+		return array(
+			'beta'      => array( $outside + array( 'sub_state' => $absolute ), $projected ),
+			'projected' => array( $outside + array( 'sub_state' => $new_child ), $new_child ),
+		);
+	}
+
+	/** Old event files need export redaction without an on-disk rewrite. */
+	public function test_old_cursor_export() {
+		$this->enable_recorder();
+		$this->set_current_user_as_admin();
+		$site                       = $this->create_test_site();
+		list( $payload, $expected ) = self::cursor_payloads()['beta'];
+		$path                       = $this->diag_dir . '/' . $this->event_filename( 'old-' . $site );
+		$raw                        = wp_json_encode(
+			array(
+				'run_key' => 'old-' . $site,
+				'site_id' => $site,
+				'kind'    => 'poll',
+				'payload' => $payload,
+			)
+		) . "\n";
+		file_put_contents( $path, $raw );
+		$events = $this->cursor_export_events();
+		$this->assertCount( 1, $events );
+		$this->assertSame( $expected, $events[0]['payload']['sub_state'] );
+		$this->assertSame( $raw, file_get_contents( $path ) );
+	}
+
+	/** Restore polls must project paths before the event reaches disk. */
+	public function test_restore_cursor_record() {
+		$this->enable_recorder();
+		list( $payload, $expected ) = self::cursor_payloads()['beta'];
+		MainWP_Backup_Diagnostics::instance()->on_restore_poll( 9, 7, $payload, 0.25 );
+		$events = $this->recorded_events();
+		$this->assertCount( 1, $events );
+		$this->assertSame( $expected, $events[0]['payload']['sub_state'] );
+		$this->assertSame( $payload['file'], $events[0]['payload']['file'] );
+	}
+
+	/**
+	 * Support bundles can use ZIP or the streamed JSON fallback.
+	 *
+	 * @return array Exported events.
+	 */
+	private function cursor_export_events(): array {
+		$bundle = MainWP_Backup_Diagnostics::instance()->export_bundle();
+		$this->assertFileExists( $bundle );
+		$lines = array();
+		if ( str_ends_with( $bundle, '.zip' ) ) {
+			$zip = new \ZipArchive();
+			$this->assertTrue( $zip->open( $bundle ) );
+			for ( $i = 0; $i < $zip->numFiles; ++$i ) {
+				if ( str_starts_with( $zip->getNameIndex( $i ), 'events/' ) ) {
+					$lines = array_merge( $lines, array_filter( explode( "\n", $zip->getFromIndex( $i ) ) ) );
+				}
+			}
+			$zip->close();
+		} else {
+			$data = json_decode( file_get_contents( $bundle ), true );
+			foreach ( $data['events'] as $events ) {
+				$lines = array_merge( $lines, $events );
+			}
+		}
+		return array_map( static fn( $line ) => json_decode( $line, true ), $lines );
+	}
+
+	/**
 	 * Dashboard-wide log hooks must not persist unrestricted personal or secret text.
 	 */
 	public function test_guardrail_omits_unrestricted_log_text() {

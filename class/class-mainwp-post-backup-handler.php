@@ -317,7 +317,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'created_label'      => MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $entry['snapshot']->created ) ),
                 'age_days'           => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
                 'status'             => (string) $entry['snapshot']->status,
-                'offsite_state'      => isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
+                'offsite_state'      => 'pruned' !== $entry['snapshot']->status && isset( $entry['snapshot']->offsite_state ) ? (string) $entry['snapshot']->offsite_state : '',
                 'uploads'            => $uploads,
                 'source'             => (string) $entry['source'],
                 'restorable'         => (bool) $entry['catalog_restorable'],

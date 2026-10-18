@@ -210,7 +210,8 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             );
 
         } elseif ( $enable_native_backups ) {
-                    add_submenu_page( 'mainwp_tab', esc_html__( 'Backups', 'mainwp' ), '<span id="mainwp-Backups">' . esc_html__( 'Backups', 'mainwp' ) . '</span>', 'read', 'ManageBackups', array( static::get_class_name(), 'render_manager' ) );
+            $menu_label = \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ? '<span id="mainwp-Backups">' . esc_html__( 'Backups', 'mainwp' ) . '</span>' : '<div class="mainwp-hidden">' . esc_html__( 'Backups', 'mainwp' ) . '</div>';
+            add_submenu_page( 'mainwp_tab', esc_html__( 'Backups', 'mainwp' ), $menu_label, 'read', 'ManageBackups', array( static::get_class_name(), 'render_manager' ) );
             if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) && ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) {
                 add_submenu_page( 'mainwp_tab', esc_html__( 'Add New Schedule', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'read', 'ManageBackupsAddNew', array( MainWP_Backup_Task_Form::class, 'render_new' ) );
             }
@@ -269,7 +270,9 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     if ( ! static::$hideSubmenuBackups ) {
                         ?>
                         <div class="mainwp_boxoutin"></div>
+                        <?php if ( \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) { ?>
                         <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackups' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Manage Backups', 'mainwp' ); ?></a>
+                        <?php } ?>
                         <?php if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) { ?>
                             <?php if ( ! MainWP_Menu::is_disable_menu_item( 3, 'ManageBackupsAddNew' ) ) { ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ); ?>" class="mainwp-submenu"><?php esc_html_e( 'Add New', 'mainwp' ); ?></a>
@@ -334,7 +337,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     'parent_key' => 'ManageBackups',
                     'href'       => 'admin.php?page=ManageBackups',
                     'slug'       => 'ManageBackups',
-                    'right'      => '',
+                    'right'      => 'execute_backups',
                 ),
                 array(
                     'title'      => esc_html__( 'Add New', 'mainwp' ),
@@ -423,6 +426,10 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         }
 
         if ( null === $backupTask ) {
+            if ( ! MainWP_Abilities_Util::current_user_has_operation_right( 'execute_backups' ) ) {
+                \mainwp_do_not_have_permissions( esc_html__( 'manage backups', 'mainwp' ) );
+                return;
+            }
 
             $backup_items = MainWP_DB_Backup::instance()->get_backup_tasks_for_user();
             if ( ! MainWP_Manage_Backups_Handler::validate_backup_tasks( $backup_items ) ) {

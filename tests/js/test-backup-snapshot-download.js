@@ -8,6 +8,7 @@ assert.ok( start >= 0, 'The snapshot row must render a Download action.' );
 const end = source.indexOf( '\n            }', start ) + '\n            }'.length;
 const context = {
     siteDisconnected: false,
+    canDownload: true,
     downloadLabels: { action: 'Download', incremental: 'Restore this file chain from the Dashboard.', missing: 'The archive is not on this Dashboard.' },
     escAttr: value => String( value ).replace( /&/g, '&amp;' ).replace( /"/g, '&quot;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' )
 };
@@ -41,6 +42,11 @@ for ( const [ type, source, reason ] of matrix ) {
     const expected = '' === reason ? enabled : disabled( context.downloadLabels[ reason ] );
     assert.equal( context.downloadButton( { id: 17, type, source } ), expected, type + '/' + source );
 }
+context.canDownload = false;
+for ( const [ type, source ] of matrix ) {
+    assert.equal( context.downloadButton( { id: 17, type, source } ), '', 'No right: ' + type + '/' + source );
+}
+context.canDownload = true;
 // The archive is on this Dashboard, so a disconnected site can still be downloaded.
 context.siteDisconnected = true;
 assert.equal( context.downloadButton( { id: 17, type: 'full', source: 'local' } ), enabled );
@@ -89,3 +95,11 @@ assert.equal( context.removalSourceCell( { source: 'unavailable', status: 'compl
 assert.equal( context.removalSourceCell( { source: 'local', status: 'pruned', removal_reason: 'manual' } ), 'This dashboard' );
 assert.equal( context.removalSourceCell( { source: 'remote', status: 'complete', removal_reason: 'cleanup' } ), 'Cloud storage' );
 console.log( 'OK (13 snapshot removal label cases)' );
+
+const badgeStart = source.indexOf( 'var offsite = ' );
+const badgeEnd = source.indexOf( 'if ( snap.uploads', badgeStart );
+assert.ok( badgeStart >= 0 && badgeEnd > badgeStart );
+context.offsiteLabels = { verified: [ 'green', 'Offsite Verified' ] };
+vm.runInContext( 'var offsiteBadge = function (snap) { var sourceCell = "Removed"; ' + source.slice( badgeStart, badgeEnd ) + ' return sourceCell; };', context );
+assert.equal( context.offsiteBadge( { status: 'pruned', offsite_state: 'verified' } ), 'Removed' );
+assert.equal( context.offsiteBadge( { status: 'complete', offsite_state: 'verified' } ), 'Removed <span class="ui mini green label">Offsite Verified</span>' );

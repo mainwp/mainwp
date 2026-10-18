@@ -436,7 +436,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array
      */
     private static function snapshot_status_summary( object $snapshot, array $snapshot_map = array() ): array {
-        $offsite = '' === $snapshot->offsite_state ? 'none' : (string) $snapshot->offsite_state;
+        $offsite = 'pruned' === $snapshot->status || '' === $snapshot->offsite_state ? 'none' : (string) $snapshot->offsite_state;
         return array(
             'id'           => (int) $snapshot->id,
             'type'         => (string) $snapshot->type,
@@ -445,7 +445,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'offsite'      => array(
                 'state'       => $offsite,
                 'evidence'    => 'verified' === $offsite ? 'remote_size_match' : 'none',
-                'verified_at' => (int) $snapshot->verified_at,
+                'verified_at' => 'pruned' === $snapshot->status ? 0 : (int) $snapshot->verified_at,
             ),
             'test_restore' => self::snapshot_test_restore( $snapshot ),
         );
@@ -929,7 +929,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
     private static function snapshot_details_from_entry( array $entry, array &$snapshot_map = array() ): array {
         $snapshot     = $entry['snapshot'];
         $task         = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $snapshot->task_id );
-        $offsite      = '' === $snapshot->offsite_state ? 'none' : (string) $snapshot->offsite_state;
+        $offsite      = 'pruned' === $snapshot->status || '' === $snapshot->offsite_state ? 'none' : (string) $snapshot->offsite_state;
         $summary      = array(
             'id'             => (int) $snapshot->id,
             'site_id'        => (int) $snapshot->site_id,
@@ -954,7 +954,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'offsite'        => array(
                 'state'       => $offsite,
                 'evidence'    => 'verified' === $offsite ? 'remote_size_match' : 'none',
-                'verified_at' => (int) $snapshot->verified_at,
+                'verified_at' => 'pruned' === $snapshot->status ? 0 : (int) $snapshot->verified_at,
             ),
             'test_restore'   => $entry['test_restore'],
         );

@@ -14,6 +14,8 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Executor;
+use MainWP\Dashboard\MainWP_Backup_Operations;
+use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_Backup_Monitor;
 use MainWP\Dashboard\MainWP_Backup_Restore_Job_Store;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
@@ -585,13 +587,22 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 		$site_id      = $this->create_test_site();
 		$old_last_run = time() - 30;
 
-		$this->manual_task_in_state(
+		$task = $this->manual_task_in_state(
 			$site_id,
 			array(
 				'last_run'  => $old_last_run,
 				'completed' => time() - 4,
 			)
 		);
+
+		$snapshot_id = MainWP_Backup_Snapshots::instance()->record_snapshot(
+			array(
+				'task_id' => (int) $task->id,
+				'site_id' => $site_id,
+				'type'    => 'full',
+			)
+		);
+		$snapshot    = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
 
 		$child_calls = array();
 		add_filter(
@@ -610,10 +621,100 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 		$this->assertIsArray( $response );
 		$this->assertSame( 'queued', $response['status'] ?? null );
 		$this->assertSame( $old_last_run, (int) ( $response['started'] ?? 0 ), 'The absorbed duplicate must key its poll to the run that produced the snapshot, not to its own click.' );
+		$this->assertTrue( $response['settled'] ?? false );
+		$this->assertSame( $snapshot_id, $response['snapshot_id'] ?? null );
+		$this->assertSame( 'This site finished a backup a few seconds ago, so a new one was not started. Snapshot time: ' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $snapshot->created ) ) . '.', $response['message'] ?? null );
 		$this->assertSame( array(), $child_calls, 'An absorbed duplicate must reach no child site.' );
 
 		$task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
 		$this->assertSame( $old_last_run, (int) $task->last_run, 'An absorbed duplicate must not reopen the run.' );
+	}
+
+	/** The settle notice must not borrow an older run's snapshot. */
+	public function test_settled_without_snapshot() {
+		$this->set_current_user_as_admin();
+		$site = $this->create_test_site();
+		$this->manual_task_in_state(
+			$site,
+			array(
+				'last_run'  => time() - 30,
+				'completed' => time() - 4,
+			)
+		);
+		$response = $this->initiate_on_demand( $site );
+		$this->assertTrue( $response['settled'] ?? false );
+		$this->assertSame( 0, $response['snapshot_id'] ?? null );
+		$this->assertSame( 'This site finished a backup a few seconds ago, so a new one was not started.', $response['message'] ?? null );
+	}
+
+	/** Ability callers retain their existing schema during settlement. */
+	public function test_settled_ability_schema() {
+		$this->set_current_user_as_admin();
+		$site     = $this->create_test_site();
+		$task     = $this->manual_task_in_state(
+			$site,
+			array(
+				'last_run'  => time() - 30,
+				'completed' => time() - 4,
+			)
+		);
+		$response = MainWP_Backup_Operations::start_site_backup( $site, 'ability' );
+		$this->assertIsArray( $response );
+		$this->assertArrayNotHasKey( 'settled', $response );
+		$this->assertArrayNotHasKey( 'message', $response );
+		$this->assertSame( (int) $task->last_run, $response['started'] );
+		$this->assertSame( array( 'job_id', 'started', 'status' ), array_keys( $response ) );
+		$this->assertSame( 'already_running', $response['status'] );
+	}
+
+	/**
+	 * Only a recent successful close absorbs a click.
+	 *
+	 * @dataProvider initiate_run_states
+	 * @param string $state Run state.
+	 */
+	public function test_initiate_run_state( string $state ) {
+		$this->set_current_user_as_admin();
+		$site = $this->create_test_site();
+		$task = $this->manual_task_in_state(
+			$site,
+			array(
+				'last_run'      => time() - 60,
+				'completed'     => 'inflight' === $state ? 0 : time() - ( 'expired' === $state ? 20 : 4 ),
+				'backup_errors' => 'failed' === $state ? 'A previous backup failed.' : '',
+			)
+		);
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array( 'task_id' => 'new-run' ),
+			)
+		);
+		$response = $this->initiate_on_demand( $site );
+		$this->assertSame( 'running', $response['status'] ?? null );
+		$this->assertArrayNotHasKey( 'settled', $response );
+		$current = MainWP_DB_Backup::instance()->get_manual_backup_task( $site );
+		if ( 'inflight' === $state ) {
+			$this->assertSame( (int) $task->last_run, (int) $current->last_run );
+			$this->assertSame( (int) $task->last_run, $response['started'] );
+		} else {
+			$this->assertGreaterThan( (int) $task->last_run, (int) $current->last_run );
+			$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site );
+			$this->assertSame( 'new-run', $progress->child_backup_task_id );
+		}
+	}
+
+	/**
+	 * Compatibility cases for admission and following an existing run.
+	 *
+	 * @return array
+	 */
+	public static function initiate_run_states(): array {
+		return array(
+			'expired'  => array( 'expired' ),
+			'failed'   => array( 'failed' ),
+			'inflight' => array( 'inflight' ),
+		);
 	}
 
 	/**

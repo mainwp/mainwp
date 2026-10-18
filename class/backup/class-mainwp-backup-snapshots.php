@@ -543,13 +543,13 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
         $table = $this->table_name( 'wp_backup_snapshot' );
         if ( MainWP_Install::backup_snapshot_removal_reason_ready() ) {
             $sql = $this->wpdb->prepare(
-                "UPDATE `{$table}` SET `status` = 'pruned', `removal_reason` = %s WHERE `id` = %d AND `status` <> 'pruned'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                "UPDATE `{$table}` SET `status` = 'pruned', `offsite_state` = '', `verified_at` = 0, `removal_reason` = %s WHERE `id` = %d AND `status` <> 'pruned'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
                 $removal_reason,
                 $snapshot_id
             );
         } else {
             $sql = $this->wpdb->prepare(
-                "UPDATE `{$table}` SET `status` = 'pruned' WHERE `id` = %d AND `status` <> 'pruned'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
+                "UPDATE `{$table}` SET `status` = 'pruned', `offsite_state` = '', `verified_at` = 0 WHERE `id` = %d AND `status` <> 'pruned'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifiers cannot be prepared.
                 $snapshot_id
             );
         }

@@ -37,8 +37,9 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         // phpcs:disable WordPress.Security.EscapeOutput
         // Native backups surface restore on their own panel on this tab, so the
         // legacy per-file SiteRestore link (the broken legacy restore path) is
-        // suppressed when native is enabled. The Download link stays either way.
+        // suppressed when native is enabled.
         $native_backups = MainWP_Backup_Settings::is_native_backups_enabled();
+        $can_download   = \mainwp_current_user_can( 'dashboard', 'download_backups' );
         $output         = '';
         foreach ( $fullBackups as $fullBackup ) {
             $private      = ! is_wp_error( $private_root ) && MainWP_Backup_File_Manager::path_is_confined_to( $fullBackup, $private_root );
@@ -46,9 +47,13 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             $output      .= '<div class="ui grid field">';
             $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $fullBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $fullBackup ) ) . '</label>';
             $restoreLink  = $native_backups ? '' : '<a href="admin.php?page=SiteRestore&websiteid=' . intval( $website->id ) . '&f=' . base64_encode( $downloadLink ) . '&size=' . filesize( $fullBackup ) . '&_opennonce=' . wp_create_nonce( 'mainwp-admin-nonce' ) . '" class="mainwp-upgrade-button button" target="_blank" title="' . esc_attr( basename( $fullBackup ) ) . '">' . esc_html__( 'Restore', 'mainwp' ) . '</a>'; // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
-            $output      .= '<div class="ten wide column ui toggle checkbox"><a title="' . esc_attr( basename( $fullBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" class="ui mini basic button">' . esc_html__( 'Download', 'mainwp' ) . '</a>' . $restoreLink;
-            $output      .= '</div>';
-            $output      .= '</div>';
+            $output      .= '<div class="ten wide column ui toggle checkbox">';
+            if ( $can_download ) {
+                $output .= '<a title="' . esc_attr( basename( $fullBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" class="ui mini basic button">' . esc_html__( 'Download', 'mainwp' ) . '</a>';
+            }
+            $output .= $restoreLink;
+            $output .= '</div>';
+            $output .= '</div>';
         }
 
         // Under native backups the section header and its intro already
@@ -66,8 +71,12 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             $private      = ! is_wp_error( $private_root ) && MainWP_Backup_File_Manager::path_is_confined_to( $dbBackup, $private_root );
             $downloadLink = admin_url( '?sig=' . MainWP_System_Utility::get_download_sig( $dbBackup ) . ( $private ? '&root=private&mwpdl=' : '&mwpdl=' ) . rawurlencode( $private ? substr( realpath( $dbBackup ), strlen( $private_root ) ) : str_replace( $mwpDir, '', $dbBackup ) ) );
             $output      .= '<div class="ui grid field">';
-            $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $dbBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $dbBackup ) ) . '</label><div class="ten wide column ui toggle checkbox"><a title="' . esc_attr( basename( $dbBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" download class="ui mini basic button">' . esc_html__( 'Download', 'mainwp' ) . '</a></div>';
-            $output      .= '</div>';
+            $output      .= '<label class="six wide column middle aligned">' . MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( filemtime( $dbBackup ) ) ) . ' - ' . MainWP_Utility::human_filesize( filesize( $dbBackup ) ) . '</label><div class="ten wide column ui toggle checkbox">';
+            if ( $can_download ) {
+                $output .= '<a title="' . esc_attr( basename( $dbBackup ) ) . '" href="' . esc_url( $downloadLink ) . '" download class="ui mini basic button">' . esc_html__( 'Download', 'mainwp' ) . '</a>';
+            }
+            $output .= '</div>';
+            $output .= '</div>';
         }
         ?>
         <h3 class="header"><?php echo '' === $output ? esc_html__( 'No database only backup has been taken yet', 'mainwp' ) : esc_html__( 'Last backups from your database', 'mainwp' ); ?></h3>

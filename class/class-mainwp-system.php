@@ -777,7 +777,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                 if ( wp_doing_cron() || ( defined( 'WP_CLI' ) && WP_CLI ) ) {
                     return;
                 }
-                if ( ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) ) {
+                if ( ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'execute_backups' ) || ! \mainwp_current_user_can( 'dashboard', 'download_backups' ) ) {
                     return;
                 }
                 $mwpdl    = isset( $_REQUEST['mwpdl'] ) ? wp_unslash( $_REQUEST['mwpdl'] ) : '';

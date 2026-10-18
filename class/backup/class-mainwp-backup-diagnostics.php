@@ -393,20 +393,29 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      *
      * @param array $payload Diagnostic payload or decoded event.
      * @param int   $depth   Current nesting depth.
+     * @param bool  $in_sub_state Whether Child cursor paths must be projected.
      * @return array Redacted payload.
      */
-    private function redact_restore_secrets( array $payload, int $depth = 0 ): array {
+    private function redact_restore_secrets( array $payload, int $depth = 0, bool $in_sub_state = false ): array {
         if ( $depth >= 64 ) {
             return array();
         }
+        $redacted = array();
         foreach ( $payload as $key => $value ) {
-            if ( 'identity_preserve' === $key || str_starts_with( (string) $key, 'pull_manifest' ) ) {
-                $payload[ $key ] = (bool) $value;
-            } elseif ( is_array( $value ) ) {
-                $payload[ $key ] = $this->redact_restore_secrets( $value, $depth + 1 );
+            $child_state = $in_sub_state || 'sub_state' === $key;
+            if ( $in_sub_state && is_string( $key ) ) {
+                $key = $this->redact_sub_state_path( $key );
             }
+            if ( 'identity_preserve' === $key || str_starts_with( (string) $key, 'pull_manifest' ) ) {
+                $value = (bool) $value;
+            } elseif ( is_array( $value ) ) {
+                $value = $this->redact_restore_secrets( $value, $depth + 1, $child_state );
+            } elseif ( $child_state && is_string( $value ) ) {
+                $value = $this->redact_sub_state_path( $value );
+            }
+            $redacted[ $key ] = $value;
         }
-        return $payload;
+        return $redacted;
     }
 
     /**
@@ -415,9 +424,10 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @param array $payload           Diagnostic payload or decoded event.
      * @param bool  $sanitize_messages Whether to sanitize string keys and values.
      * @param int   $depth             Current nesting depth.
+     * @param bool  $in_sub_state      Whether Child cursor paths must be projected.
      * @return array Redacted payload.
      */
-    private function redact_backup_payload( array $payload, bool $sanitize_messages = false, int $depth = 0 ): array {
+    private function redact_backup_payload( array $payload, bool $sanitize_messages = false, int $depth = 0, bool $in_sub_state = false ): array {
         if ( $depth >= 64 ) {
             return array();
         }
@@ -426,18 +436,38 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if ( 'backup_dir_hash' === $key ) {
                 continue;
             }
-            // A Child response can be keyed by path, and the path names the directory.
+            $child_state = $in_sub_state || 'sub_state' === $key;
+            if ( $in_sub_state && is_string( $key ) ) {
+                $key = $this->redact_sub_state_path( $key );
+            }
+            if ( $child_state && is_string( $value ) ) {
+                $value = $this->redact_sub_state_path( $value );
+            }
             if ( $sanitize_messages && is_string( $key ) ) {
                 $key = MainWP_Backup_Error_Codes::sanitize_message( $key );
             }
             if ( is_array( $value ) ) {
-                $value = $this->redact_backup_payload( $value, $sanitize_messages, $depth + 1 );
+                $value = $this->redact_backup_payload( $value, $sanitize_messages, $depth + 1, $child_state );
             } elseif ( $sanitize_messages && is_string( $value ) ) {
                 $value = MainWP_Backup_Error_Codes::sanitize_message( $value );
             }
             $redacted[ $key ] = $value;
         }
         return $redacted;
+    }
+
+    /**
+     * Beta Child cursors can contain host paths and the private archive directory.
+     *
+     * @param string $value Child cursor key or value.
+     * @return string Projected value.
+     */
+    private function redact_sub_state_path( string $value ): string {
+        $normalized = str_replace( '\\', '/', $value );
+        if ( str_starts_with( $normalized, '/' ) || preg_match( '~^[A-Za-z]:/~', $normalized ) ) {
+            $value = basename( rtrim( $normalized, '/' ) );
+        }
+        return preg_replace( '/(?<![A-Za-z0-9])backup-[A-Za-z0-9]{16}(?![A-Za-z0-9])/', 'backup-[redacted]', $value );
     }
 
     /**

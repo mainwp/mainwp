@@ -425,6 +425,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // The page needs only execute_backups, but restore, cancel and
             // rollback are registered only for staff who also hold
             // restore_backups; an unregistered admin-ajax action answers 400.
+            var canDownload = <?php echo MainWP_Abilities_Util::current_user_has_operation_right( 'download_backups' ) ? 'true' : 'false'; ?>;
             var canRestore = <?php echo \mainwp_current_user_can( 'dashboard', 'restore_backups' ) ? 'true' : 'false'; ?>;
             var backupTypeLabels = <?php echo wp_json_encode( $type_labels ); ?>;
             var currentSite = <?php echo (int) $site_id; ?>;
@@ -759,6 +760,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function downloadButton( snap ) {
+                if ( ! canDownload ) {
+                    return '';
+                }
                 var reason = 'incremental' === snap.type ? downloadLabels.incremental : ( 'local' !== snap.source ? downloadLabels.missing : '' );
                 if ( '' === reason ) {
                     return '<a href="#" class="ui mini basic button mainwp-download-snapshot" data-snapshot="' + snap.id + '">' + downloadLabels.action + '</a>';
@@ -832,7 +836,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                                 sourceCell = sourceLabels.removed;
                             }
                             if ( 'display' === type ) {
-                                var offsite = offsiteLabels[ snap.offsite_state ];
+                                var offsite = 'pruned' === snap.status ? null : offsiteLabels[ snap.offsite_state ];
                                 if ( offsite ) {
                                     sourceCell += ' <span class="ui mini ' + offsite[0] + ' label">' + offsite[1] + '</span>';
                                 }
@@ -1807,6 +1811,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         // Keep the Cancel affordance only when the blocker is an
                         // active or stuck backup; hide it for every other error.
                         showCancelBackup( cancelApplies( response.error ) );
+                        return;
+                    }
+                    if ( response.settled ) {
+                        stopBackupTimers();
+                        setBackupStatus( response.message, false );
+                        reenableBackupBtn();
+                        showCancelBackup( false );
+                        loadSnapshots( siteId );
                         return;
                     }
                     var sinceTs = response.started || 0;

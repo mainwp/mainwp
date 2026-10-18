@@ -208,6 +208,22 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     }
 
     /**
+     * Native browser actions accept staff rights without changing legacy access.
+     *
+     * @param int    $site_id Child site id.
+     * @param string $right Operation right for the calling endpoint.
+     * @return object|null
+     */
+    private function authorize_native_backup_site( $site_id, string $right = 'execute_backups' ) {
+        $website = MainWP_Backup_Operations::authorize_site( (int) $site_id, $right, 'ui' );
+        if ( is_wp_error( $website ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) );
+            return null;
+        }
+        return $website;
+    }
+
+    /**
      * Whether the Dashboard's last contact with a site failed.
      *
      * A site with sync errors cannot take a backup or a restore: the request
@@ -277,7 +293,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_restore_snapshot_list' );
         $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $website = $this->authorize_restore_site( $site_id );
+        $website = $this->authorize_native_backup_site( $site_id );
         if ( null === $website ) {
             return;
         }
@@ -407,8 +423,8 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
         $cloud  = null === $cloud ? null : (bool) $cloud;
         $result = $preview
-            ? MainWP_Backup_Operations::preview_delete_snapshot( (int) $input['site_id_or_domain'], (int) $input['snapshot_id'], $cloud )
-            : MainWP_Backup_Operations::delete_snapshot( (int) $input['site_id_or_domain'], (int) $input['snapshot_id'], $input['expected_snapshot_ids'], $cloud );
+            ? MainWP_Backup_Operations::preview_delete_snapshot( (int) $input['site_id_or_domain'], (int) $input['snapshot_id'], $cloud, 'ui' )
+            : MainWP_Backup_Operations::delete_snapshot( (int) $input['site_id_or_domain'], (int) $input['snapshot_id'], $input['expected_snapshot_ids'], $cloud, 'ui' );
         wp_send_json(
             is_wp_error( $result ) ? array(
                 'error'      => $result->get_error_message(),
@@ -433,14 +449,14 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_snapshots_cleanup' );
         $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $website = $this->authorize_restore_site( $site_id );
+        $website = $this->authorize_native_backup_site( $site_id );
         if ( null === $website ) {
             return;
         }
 
         $keep = isset( $_POST['keep'] ) && '' !== $_POST['keep'] ? max( 1, (int) $_POST['keep'] ) : null; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $result = MainWP_Backup_Operations::cleanup_site_backups( $site_id, $keep, false );
+        $result = MainWP_Backup_Operations::cleanup_site_backups( $site_id, $keep, false, 'ui' );
         if ( is_wp_error( $result ) ) {
             wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage backups for this site.', 'mainwp' ) ) );
             return;
@@ -518,7 +534,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_restore_progress' );
         $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $job = MainWP_Backup_Operations::authorize_restore_job( $job_id );
+        $job = MainWP_Backup_Operations::authorize_restore_job( $job_id, false, 'ui' );
         if ( is_wp_error( $job ) ) {
             wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
             return;
@@ -552,7 +568,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_restore_cancel' );
         $job_id = isset( $_POST['job_id'] ) ? (int) $_POST['job_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $job = MainWP_Backup_Operations::authorize_restore_job( $job_id, true );
+        $job = MainWP_Backup_Operations::authorize_restore_job( $job_id, true, 'ui' );
         if ( is_wp_error( $job ) ) {
             wp_send_json( array( 'error' => esc_html__( 'Restore job not found.', 'mainwp' ) ) );
             return;
@@ -724,7 +740,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $site_id = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
         $since   = isset( $_POST['since'] ) ? (int) $_POST['since'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $website = $this->authorize_restore_site( $site_id );
+        $website = $this->authorize_native_backup_site( $site_id );
         if ( null === $website ) {
             return;
         }
@@ -789,7 +805,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     public function mainwp_native_backup_cancel() {
         $this->secure_request( 'mainwp_native_backup_cancel' );
         $site_id  = isset( $_POST['site_id'] ) ? (int) $_POST['site_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
-        $response = MainWP_Backup_Operations::cancel_site_backup( $site_id );
+        $response = MainWP_Backup_Operations::cancel_site_backup( $site_id, 'ui' );
         wp_send_json( $this->serialize_backup_operation( $response ) );
     }
 

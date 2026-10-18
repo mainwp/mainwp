@@ -83,6 +83,32 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Browser staff use Dashboard rights without an ability capability bridge.
+     *
+     * @param string $right Granular operation right.
+     * @return true|\WP_Error
+     */
+    public static function authorize_ui( string $right ) {
+        if ( ! is_user_logged_in() ) {
+            return new \WP_Error( 'mainwp_permission_denied', self::safe_error( 'mainwp_permission_denied' )['message'], array( 'status' => 401 ) );
+        }
+        if ( ! MainWP_System_Utility::is_admin() ) {
+            return new \WP_Error( 'mainwp_permission_denied', self::safe_error( 'mainwp_permission_denied' )['message'], array( 'status' => 403 ) );
+        }
+        if ( '' !== $right && ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
+            return new \WP_Error(
+                'mainwp_insufficient_right',
+                self::safe_error( 'mainwp_insufficient_right' )['message'],
+                array(
+                    'status' => 403,
+                    'right'  => $right,
+                )
+            );
+        }
+        return true;
+    }
+
+    /**
      * Single-site and fleet access use the same scope and ownership rules.
      *
      * @param object $site Website row.
@@ -104,10 +130,11 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param int    $site_id Website identity.
      * @param string $right Operation right.
+     * @param string $context Calling transport.
      * @return object|\WP_Error
      */
-    public static function authorize_site( int $site_id, string $right ) {
-        $base = self::authorize_base( $right );
+    public static function authorize_site( int $site_id, string $right, string $context = 'ability' ) {
+        $base = 'ui' === $context ? self::authorize_ui( $right ) : self::authorize_base( $right );
         if ( is_wp_error( $base ) ) {
             return $base;
         }
@@ -196,38 +223,40 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Snapshot access follows the owning site.
      *
-     * @param int $snapshot_id Snapshot identity.
+     * @param int    $snapshot_id Snapshot identity.
+     * @param string $context Calling transport.
      * @return object|\WP_Error
      */
-    public static function authorize_snapshot( int $snapshot_id ) {
-        $base = self::authorize_base( 'execute_backups' );
+    public static function authorize_snapshot( int $snapshot_id, string $context = 'ability' ) {
+        $base = 'ui' === $context ? self::authorize_ui( 'execute_backups' ) : self::authorize_base( 'execute_backups' );
         if ( is_wp_error( $base ) ) {
             return $base;
         }
         $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
-        return ! $snapshot || is_wp_error( self::authorize_site( (int) $snapshot->site_id, 'execute_backups' ) ) ? self::not_found( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND ) : $snapshot;
+        return ! $snapshot || is_wp_error( self::authorize_site( (int) $snapshot->site_id, 'execute_backups', $context ) ) ? self::not_found( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_NOT_FOUND ) : $snapshot;
     }
 
     /**
      * Reservations are internal until a restore is admitted.
      *
-     * @param int  $restore_job_id Restore job identity.
-     * @param bool $require_restore_right Whether the caller intends to change the job.
+     * @param int    $restore_job_id Restore job identity.
+     * @param bool   $require_restore_right Whether the caller intends to change the job.
+     * @param string $context Calling transport.
      * @return object|\WP_Error
      */
-    public static function authorize_restore_job( int $restore_job_id, bool $require_restore_right = false ) {
-        $base = self::authorize_base( 'execute_backups' );
+    public static function authorize_restore_job( int $restore_job_id, bool $require_restore_right = false, string $context = 'ability' ) {
+        $base = 'ui' === $context ? self::authorize_ui( 'execute_backups' ) : self::authorize_base( 'execute_backups' );
         if ( is_wp_error( $base ) ) {
             return $base;
         }
         if ( $require_restore_right ) {
-            $restore = self::authorize_base( 'restore_backups' );
+            $restore = 'ui' === $context ? self::authorize_ui( 'restore_backups' ) : self::authorize_base( 'restore_backups' );
             if ( is_wp_error( $restore ) ) {
                 return $restore;
             }
         }
         $job = MainWP_Backup_Restore_Job_Store::instance()->get_job( $restore_job_id );
-        return ! $job || 'reserved' === $job->status || is_wp_error( self::authorize_site( (int) $job->site_id, 'execute_backups' ) ) ? self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND ) : $job;
+        return ! $job || 'reserved' === $job->status || is_wp_error( self::authorize_site( (int) $job->site_id, 'execute_backups', $context ) ) ? self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND ) : $job;
     }
 
     /**
@@ -849,7 +878,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return new \WP_Error( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, esc_html__( 'Native backups are not enabled.', 'mainwp' ), array( 'status' => 409 ) );
         }
 
-        $website = self::authorize_site( $site_id, 'execute_backups' );
+        $website = self::authorize_site( $site_id, 'execute_backups', $context );
         if ( is_wp_error( $website ) ) {
             return $website;
         }
@@ -970,11 +999,12 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * its known backup task, then stops treating the local manual run as
      * in-flight only after the child confirms the cancel.
      *
-     * @param int $site_id Website identity.
+     * @param int    $site_id Website identity.
+     * @param string $context Calling transport.
      * @return array|\WP_Error
      */
-    public static function cancel_site_backup( int $site_id ) {
-        $website = self::authorize_site( $site_id, 'execute_backups' );
+    public static function cancel_site_backup( int $site_id, string $context = 'ability' ) {
+        $website = self::authorize_site( $site_id, 'execute_backups', $context );
         if ( is_wp_error( $website ) ) {
             return $website;
         }
@@ -1210,11 +1240,11 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function restore_snapshot( int $site_id, int $snapshot_id, array $options, string $context ) {
-        $site = self::authorize_site( $site_id, 'execute_backups' );
+        $site = self::authorize_site( $site_id, 'execute_backups', $context );
         if ( is_wp_error( $site ) ) {
             return $site;
         }
-        $restore = self::authorize_base( 'restore_backups' );
+        $restore = 'ui' === $context ? self::authorize_ui( 'restore_backups' ) : self::authorize_base( 'restore_backups' );
         if ( is_wp_error( $restore ) ) {
             return $restore;
         }
@@ -1245,7 +1275,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function rollback_restore( int $restore_job_id, string $context = 'ability' ) {
-        $job = self::authorize_restore_job( $restore_job_id, true );
+        $job = self::authorize_restore_job( $restore_job_id, true, $context );
         if ( is_wp_error( $job ) ) {
             return $job;
         }
@@ -1253,7 +1283,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( null === $job || 'reserved' === $job->status ) {
             return self::not_found( MainWP_Backup_Error_Codes::ERR_RESTORE_JOB_NOT_FOUND );
         }
-        $site = self::authorize_site( (int) $job->site_id, 'execute_backups' );
+        $site = self::authorize_site( (int) $job->site_id, 'execute_backups', $context );
         if ( is_wp_error( $site ) ) {
             return $site;
         }
@@ -1771,14 +1801,15 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param int       $site_id Site identity.
      * @param int       $snapshot_id Target identity.
      * @param bool|null $delete_cloud_copies Null uses the owning task's policy.
+     * @param string    $context Calling transport.
      * @return array|\WP_Error Shared UI and ability preview.
      */
-    public static function preview_delete_snapshot( int $site_id, int $snapshot_id, ?bool $delete_cloud_copies = null ) {
-        $site = self::authorize_site( $site_id, 'execute_backups' );
+    public static function preview_delete_snapshot( int $site_id, int $snapshot_id, ?bool $delete_cloud_copies = null, string $context = 'ability' ) {
+        $site = self::authorize_site( $site_id, 'execute_backups', $context );
         if ( is_wp_error( $site ) ) {
             return $site;
         }
-        $snapshot = self::authorize_snapshot( $snapshot_id );
+        $snapshot = self::authorize_snapshot( $snapshot_id, $context );
         if ( is_wp_error( $snapshot ) ) {
             return $snapshot;
         }
@@ -1840,14 +1871,15 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param int       $snapshot_id Target identity.
      * @param array     $expected_snapshot_ids Exact ids shown in the preview.
      * @param bool|null $delete_cloud_copies Null uses the owning task's policy.
+     * @param string    $context Calling transport.
      * @return array|\WP_Error Shared UI and ability result.
      */
-    public static function delete_snapshot( int $site_id, int $snapshot_id, array $expected_snapshot_ids, ?bool $delete_cloud_copies = null ) {
+    public static function delete_snapshot( int $site_id, int $snapshot_id, array $expected_snapshot_ids, ?bool $delete_cloud_copies = null, string $context = 'ability' ) {
         $valid = MainWP_Abilities_Backups::validate_id_input( array( 'expected_snapshot_ids' => $expected_snapshot_ids ), true );
         if ( is_wp_error( $valid ) || empty( $expected_snapshot_ids ) || count( array_unique( $expected_snapshot_ids ) ) !== count( $expected_snapshot_ids ) ) {
             return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
         }
-        $preview = self::preview_delete_snapshot( $site_id, $snapshot_id, $delete_cloud_copies );
+        $preview = self::preview_delete_snapshot( $site_id, $snapshot_id, $delete_cloud_copies, $context );
         if ( is_wp_error( $preview ) ) {
             return $preview;
         }
@@ -1871,7 +1903,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         unset( $pair );
         $result['errors'] = array_map( array( MainWP_Abilities_Backups::class, 'cleanup_error' ), $result['errors'] );
-        $fresh_preview    = 'changed' === $result['status'] ? self::preview_delete_snapshot( $site_id, $snapshot_id, $task->delete_cloud_copies ) : null;
+        $fresh_preview    = 'changed' === $result['status'] ? self::preview_delete_snapshot( $site_id, $snapshot_id, $task->delete_cloud_copies, $context ) : null;
         if ( is_wp_error( $fresh_preview ) ) {
             $result['errors'][] = MainWP_Abilities_Backups::cleanup_error( array( 'code' => $fresh_preview->get_error_code() ) );
             $fresh_preview      = null;
@@ -2101,10 +2133,11 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param int      $site_id Website identity.
      * @param int|null $keep Optional keep-count override.
      * @param bool     $dry_run Whether to preview deletion.
+     * @param string   $context Calling transport.
      * @return array|\WP_Error
      */
-    public static function cleanup_site_backups( int $site_id, ?int $keep, bool $dry_run = false ) {
-        $site = self::authorize_site( $site_id, 'execute_backups' );
+    public static function cleanup_site_backups( int $site_id, ?int $keep, bool $dry_run = false, string $context = 'ability' ) {
+        $site = self::authorize_site( $site_id, 'execute_backups', $context );
         if ( is_wp_error( $site ) ) {
             return $site;
         }

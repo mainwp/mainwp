@@ -78,11 +78,11 @@ class MainWP_Backup_Download {
         if ( ! is_user_logged_in() ) {
             return self::refusal( 'permission' );
         }
-        $snapshot = MainWP_Backup_Operations::authorize_snapshot( $snapshot_id );
+        $snapshot = MainWP_Backup_Operations::authorize_snapshot( $snapshot_id, 'ui' );
         if ( is_wp_error( $snapshot ) ) {
             return self::refusal( 'permission' );
         }
-        if ( is_wp_error( MainWP_Backup_Operations::authorize_base( 'download_backups' ) ) ) {
+        if ( is_wp_error( MainWP_Backup_Operations::authorize_ui( 'download_backups' ) ) ) {
             return self::refusal( 'permission' );
         }
         $path = self::local_archive( $snapshot );
@@ -142,11 +142,11 @@ class MainWP_Backup_Download {
             || ! is_string( $record['file'] ) || $record['file'] !== $query['file'] ) {
             return self::refusal( 'link' );
         }
-        $snapshot = MainWP_Backup_Operations::authorize_snapshot( $record['snapshot_id'] );
+        $snapshot = MainWP_Backup_Operations::authorize_snapshot( $record['snapshot_id'], 'ui' );
         if ( is_wp_error( $snapshot ) ) {
             return self::refusal( 'permission' );
         }
-        if ( is_wp_error( MainWP_Backup_Operations::authorize_base( 'download_backups' ) ) ) {
+        if ( is_wp_error( MainWP_Backup_Operations::authorize_ui( 'download_backups' ) ) ) {
             return self::refusal( 'permission' );
         }
         $path = self::local_archive( $snapshot );

@@ -92,6 +92,11 @@ class MainWP_Backup_Rights_Surfaces_Test extends MainWP_Abilities_Test_Case {
 
 	/** Request identities and transient tokens must not leak between cases. */
 	public function tearDown(): void {
+		// A setUp() skip runs before any fixture or saved global exists.
+		if ( ! array_key_exists( 'query_vars', $this->saved ) ) {
+			parent::tearDown();
+			return;
+		}
 		foreach ( $this->tokens as $key ) {
 			delete_site_transient( $key );
 		}

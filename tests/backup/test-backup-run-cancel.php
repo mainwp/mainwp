@@ -269,12 +269,15 @@ class MainWP_Backup_Run_Cancel_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * @param object $task Task identity.
 	 * @param bool   $start Whether to claim a new run.
+	 * @param array  $outcome Per-call driver counts.
 	 * @return mixed Driver result.
 	 */
-	private function drive( object $task, bool $start = false ) {
+	private function drive( object $task, bool $start = false, &$outcome = null ) {
 		$method = new \ReflectionMethod( MainWP_Manage_Backups_Handler::class, 'execute_backup_task_run' );
 		$method->setAccessible( true );
-		return $method->invokeArgs( null, array( $task, 5, $start ) );
+		$claimed = null;
+		$started = 0;
+		return $method->invokeArgs( null, array( $task, 5, $start, 0, &$claimed, &$started, false, &$outcome ) );
 	}
 
 	/**
@@ -1391,6 +1394,310 @@ class MainWP_Backup_Run_Cancel_Test extends MainWP_Abilities_Test_Case {
 		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $this->now + 1800;
 		$this->assertSame( 'not_confirmed', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['closed_as'] );
 		$this->assertSame( "Cancelled. Not confirmed for: Site 0.\n", $this->fresh( $task )->backup_notices );
+	}
+
+	/**
+	 * Both failures can happen after the Child accepted the create.
+	 *
+	 * @return array Unanswered create modes.
+	 */
+	public static function driver_create_failure_modes(): array {
+		return array(
+			'transport lost after delivery' => array( 'throw' ),
+			'answer without task id'        => array( 'empty' ),
+		);
+	}
+
+	/**
+	 * The driver's catch must leave cancellation able to report an unconfirmed create.
+	 *
+	 * @dataProvider driver_create_failure_modes
+	 * @param string $mode How the create fails.
+	 */
+	public function test_driver_yields_unanswered_create_while_cancel_pending( string $mode ) {
+		global $wpdb;
+		list( $task, $sites )               = $this->running( 1, array( 'type' => 'db' ) );
+		$this->during['backup_task_create'] = function () use ( $task, $mode ) {
+			$this->request( $this->fresh( $task ) );
+			if ( 'throw' === $mode ) {
+				throw new \MainWP\Dashboard\MainWP_Exception( 'HTTPERROR' );
+			}
+			return array( 'phase' => 'queued' );
+		};
+		$marks                              = array();
+		$capture                            = static function ( $task_id, $site_id, $outcome, $detail ) use ( &$marks ) {
+			$marks[] = array( $task_id, $site_id, $outcome, $detail );
+		};
+		add_action( 'mainwp_backup_diag_site_mark', $capture, 10, 4 );
+		try {
+			$this->assertFalse( $this->drive( $task, false, $outcome ) );
+		} finally {
+			remove_action( 'mainwp_backup_diag_site_mark', $capture, 10 );
+		}
+		$db       = MainWP_DB_Backup::instance();
+		$progress = $db->get_backup_task_progress( $task->id, $sites[0] );
+		$this->assertTrue( MainWP_Backup_Executor::is_creating_marker( $progress->child_backup_task_id ) );
+		$this->assertSame( '', $progress->last_error );
+		$this->assertSame( array(), $progress->fetchResult );
+		$this->assertSame( '', $this->fresh( $task )->backup_errors );
+		$this->assertLessThan( (int) $task->last_run, (int) $this->fresh( $task )->completed );
+		$this->assertEmpty( json_decode( $this->fresh( $task )->completed_sites, true ) );
+		$this->assertSame( 1, $outcome['sites_yielded'] );
+		$this->assertSame( 0, $outcome['sites_advanced'] );
+		$this->assertSame( 0, $outcome['sites_finished'] );
+		$this->assertFalse( $outcome['run_closed'] );
+		$this->assertCount( 1, $marks );
+		$this->assertSame( array( (int) $task->id, $sites[0], 'yield_resumable' ), array_slice( $marks[0], 0, 3 ) );
+		$this->assertStringContainsString( 'pending cancel', $marks[0][3] );
+		$history = MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' );
+		$this->assertSame( 'running', $wpdb->get_var( $wpdb->prepare( 'SELECT outcome FROM ' . $history . ' WHERE task_id = %d AND started = %d', $task->id, $task->last_run ) ) );
+		$this->assertSame( array( 'backup_preflight', 'backup_task_create' ), array_column( $this->calls, 0 ) );
+		$this->assertSame( 'pending', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		$this->assertEquals( $progress, $db->get_backup_task_progress( $task->id, $sites[0] ) );
+		$this->assertCount( 0, $this->closes );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $this->now + 1800;
+		$closed = MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' );
+		$this->assertSame( 'closed', $closed['status'] );
+		$this->assertSame( 'not_confirmed', $closed['closed_as'] );
+		$this->assertSame( "Cancelled. Not confirmed for: Site 0.\n", $this->fresh( $task )->backup_notices );
+		$this->assertSame( '', $this->fresh( $task )->backup_errors );
+		$this->assertSame( 'cancelled', $wpdb->get_var( $wpdb->prepare( 'SELECT outcome FROM ' . $history . ' WHERE task_id = %d AND started = %d', $task->id, $task->last_run ) ) );
+		$this->assertSame( array( 'backup_preflight', 'backup_task_create' ), array_column( $this->calls, 0 ) );
+	}
+
+	/**
+	 * A late hand-off must still name the Child task for cancellation.
+	 *
+	 * @dataProvider driver_create_failure_modes
+	 * @param string $mode How the create fails.
+	 */
+	public function test_driver_unanswered_create_late_id_is_cancelled( string $mode ) {
+		list( $task, $sites )               = $this->running( 1, array( 'type' => 'db' ) );
+		$this->during['backup_task_create'] = function () use ( $task, $mode ) {
+			$this->request( $this->fresh( $task ) );
+			if ( 'throw' === $mode ) {
+				throw new \MainWP\Dashboard\MainWP_Exception( 'HTTPERROR' );
+			}
+			return array( 'phase' => 'queued' );
+		};
+		$this->drive( $task );
+		$db       = MainWP_DB_Backup::instance();
+		$progress = $db->get_backup_task_progress( $task->id, $sites[0] );
+		$this->assertTrue( MainWP_Backup_Executor::is_creating_marker( $progress->child_backup_task_id ) );
+		$this->assertSame( 'pending', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		$this->assertSame( 1, $db->update_backup_task_progress_if_marker( $task->id, $sites[0], $progress->child_backup_task_id, array( 'child_backup_task_id' => 'late-created-child' ) ) );
+		$closed = MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' );
+		$this->assertSame( 'closed', $closed['status'] );
+		$this->assertSame( 'cancelled', $closed['closed_as'] );
+		$this->assertSame( array( 'backup_preflight', 'backup_task_create', 'backup_task_cancel' ), array_column( $this->calls, 0 ) );
+		$this->assertSame( $sites[0], $this->calls[2][1] );
+		$this->assertSame( 'late-created-child', $this->calls[2][2]['task_id'] );
+		$this->assertSame( "Cancelled.\n", $this->fresh( $task )->backup_notices );
+		$this->assertSame( '', $this->fresh( $task )->backup_errors );
+		$this->assertSame( '', $db->get_backup_task_progress( $task->id, $sites[0] )->child_backup_task_id );
+	}
+
+	/**
+	 * Without cancellation, unanswered creates must still become visible failures.
+	 *
+	 * @dataProvider driver_create_failure_modes
+	 * @param string $mode How the create fails.
+	 */
+	public function test_driver_marks_unanswered_create_failed_without_cancel( string $mode ) {
+		global $wpdb;
+		list( $task, $sites )               = $this->running( 1, array( 'type' => 'db' ) );
+		$this->during['backup_task_create'] = static function () use ( $mode ) {
+			if ( 'throw' === $mode ) {
+				throw new \MainWP\Dashboard\MainWP_Exception( 'HTTPERROR' );
+			}
+			return array( 'phase' => 'queued' );
+		};
+		$this->assertFalse( $this->drive( $task, false, $outcome ) );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $sites[0] );
+		$this->assertSame( '', $progress->child_backup_task_id );
+		$this->assertNotEmpty( $progress->last_error );
+		$this->assertNotEmpty( $progress->fetchResult['error_code'] );
+		$this->assertNotEmpty( $this->fresh( $task )->backup_errors );
+		$this->assertGreaterThanOrEqual( (int) $task->last_run, (int) $this->fresh( $task )->completed );
+		$this->assertSame( 0, $outcome['sites_yielded'] );
+		$this->assertSame( 1, $outcome['sites_finished'] );
+		$history = MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' );
+		$this->assertSame( 'failed', $wpdb->get_var( $wpdb->prepare( 'SELECT outcome FROM ' . $history . ' WHERE task_id = %d AND started = %d', $task->id, $task->last_run ) ) );
+		$this->assertSame( 'none', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+	}
+
+	/**
+	 * A stalled driver can resume at any of the three create admission checks.
+	 *
+	 * @return array Admission point and whether the successor replaced the marker.
+	 */
+	public static function superseded_create_admission_cases(): array {
+		return array(
+			'before marker publication'                 => array( 'before_marker', false ),
+			'after marker publication'                  => array( 'after_marker', false ),
+			'before create send'                        => array( 'before_send', false ),
+			'after publication, successor owns the row' => array( 'after_marker', true ),
+			'before send, successor owns the row'       => array( 'before_send', true ),
+		);
+	}
+
+	/**
+	 * Cancel close, successor claim, and old-driver resumption must occur in that order.
+	 *
+	 * @dataProvider superseded_create_admission_cases
+	 * @param string $point Admission point.
+	 * @param bool   $replace Whether the successor already owns this site's row.
+	 */
+	public function test_cancelled_run_successor_refuses_stale_create_at_each_admission( string $point, bool $replace ) {
+		global $wpdb;
+		list( $task, $sites ) = $this->running( 2 );
+		$db                   = MainWP_DB_Backup::instance();
+		$db->add_backup_task_progress( $task->id, $sites[0], array() );
+		$db->update_backup_task_progress( $task->id, $sites[0], array( 'dtsFetched' => 0 ) );
+		$successor  = null;
+		$expected   = array();
+		$resume     = function () use ( $task, $sites, $db, $replace, &$successor, &$expected ) {
+			$this->request( $this->fresh( $task ) );
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = $this->now + 1800;
+			$this->assertSame( 'closed', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+			$this->assertGreaterThanOrEqual( (int) $task->last_run, (int) $this->fresh( $task )->completed );
+			$this->assertTrue( $db->claim_backup_run( $task->id ) );
+			$successor = $this->fresh( $task );
+			$this->assertGreaterThan( (int) $task->last_run, (int) $successor->last_run );
+			$this->assertNull( $successor->run_cancel );
+			foreach ( $replace ? $sites : array( $sites[1] ) as $site ) {
+				$this->progress( $successor, $site, '__creating_successor', '' );
+				$db->update_backup_task_progress( $task->id, $site, array( 'dtsFetched' => (int) $successor->last_run ) );
+				$expected[ $site ] = $db->get_backup_task_progress( $task->id, $site );
+			}
+		};
+		$interleave = null;
+		if ( 'before_marker' === $point ) {
+			$resume();
+		} elseif ( 'after_marker' === $point ) {
+			$interleave = function ( $sql ) use ( &$interleave, $wpdb, $resume ) {
+				if ( str_starts_with( $sql, 'UPDATE' ) && str_contains( $sql, '__creating_' ) && str_contains( $sql, 'child_backup_task_id' ) ) {
+					remove_filter( 'query', $interleave );
+					$this->assertSame( 1, $wpdb->query( $sql ) );
+					$resume();
+					return 'SELECT 1';
+				}
+				return $sql;
+			};
+			add_filter( 'query', $interleave );
+		} else {
+			$this->during['backup_preflight'] = function () use ( $resume ) {
+				unset( $this->during['backup_preflight'] );
+				$resume();
+				return null;
+			};
+		}
+		try {
+			$this->assertFalse( MainWP_Backup_Executor::backup_site( $sites[0], $task, 'backups' ) );
+			$this->assertNotNull( $successor, 'The successor must claim before the old driver resumes.' );
+			$this->assertSame( 'before_send' === $point ? array( 'backup_preflight' ) : array(), array_column( $this->calls, 0 ) );
+			$this->assertEquals( $successor, $this->fresh( $task ) );
+			foreach ( $expected as $site => $progress ) {
+				$this->assertEquals( $progress, $db->get_backup_task_progress( $task->id, $site ) );
+			}
+			if ( ! $replace ) {
+				$progress = $db->get_backup_task_progress( $task->id, $sites[0] );
+				$this->assertSame( '', $progress->child_backup_task_id );
+				$this->assertSame( 0, (int) $progress->dtsFetched );
+				$this->assertSame( '', $progress->last_error );
+				MainWP_Backup_Executor::backup_site( $sites[0], $successor, 'backups' );
+				$this->assertCount( 1, array_filter( $this->calls, static fn( $call ) => 'backup_task_create' === $call[0] ) );
+			}
+		} finally {
+			if ( null !== $interleave ) {
+				remove_filter( 'query', $interleave );
+			}
+		}
+	}
+
+	/** A normal successor claim must also fence a driver stalled in preflight. */
+	public function test_successor_without_cancel_refuses_stale_create() {
+		list( $task, $sites )             = $this->running();
+		$this->during['backup_preflight'] = function () use ( $task ) {
+			unset( $this->during['backup_preflight'] );
+			$this->assertTrue( MainWP_DB_Backup::instance()->claim_backup_run( $task->id ) );
+			$this->assertGreaterThan( (int) $task->last_run, (int) $this->fresh( $task )->last_run );
+			$this->assertNull( $this->fresh( $task )->run_cancel );
+			return null;
+		};
+		$this->assertFalse( MainWP_Backup_Executor::backup_site( $sites[0], $task, 'backups' ) );
+		$this->assertSame( array( 'backup_preflight' ), array_column( $this->calls, 0 ) );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $sites[0] );
+		$this->assertSame( '', $progress->child_backup_task_id );
+		$this->assertSame( 0, (int) $progress->dtsFetched );
+	}
+
+	/** A persisted but never-claimed fixture must retain executor compatibility. */
+	public function test_never_claimed_row_still_allows_create() {
+		list( $task, $sites ) = $this->running();
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'last_run' => 0 ) );
+		$this->assertSame( 0, (int) $this->fresh( $task )->last_run );
+		MainWP_Backup_Executor::backup_site( $sites[0], $task, 'backups' );
+		$this->assertSame( array( 'backup_preflight', 'backup_task_create' ), array_column( $this->calls, 0 ) );
+		$this->assertSame( 'created-' . $sites[0], MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $sites[0] )->child_backup_task_id );
+	}
+
+	/**
+	 * An unanswered create can lose its run before the response arrives.
+	 *
+	 * @return array Failure mode and whether successor progress has already landed.
+	 */
+	public static function superseded_unanswered_create_cases(): array {
+		return array(
+			'thrown, old marker'           => array( 'throw', false ),
+			'no task id, old marker'       => array( 'empty', false ),
+			'thrown, successor marker'     => array( 'throw', true ),
+			'no task id, successor marker' => array( 'empty', true ),
+		);
+	}
+
+	/**
+	 * Superseded cleanup must free a same-second create window without erasing its successor.
+	 *
+	 * @dataProvider superseded_unanswered_create_cases
+	 * @param string $mode How the create fails.
+	 * @param bool   $replace Whether successor progress has already landed.
+	 */
+	public function test_superseded_unanswered_create_frees_only_its_own_window( string $mode, bool $replace ) {
+		list( $task, $sites )               = $this->running();
+		$db                                 = MainWP_DB_Backup::instance();
+		$expected                           = null;
+		$this->during['backup_task_create'] = function () use ( $task, $sites, $db, $mode, $replace, &$expected ) {
+			$this->assertTrue( $db->claim_backup_run( $task->id ) );
+			$successor = $this->fresh( $task );
+			$this->assertSame( $this->now, (int) $successor->last_run );
+			$this->assertSame( (int) $successor->last_run, (int) $db->get_backup_task_progress( $task->id, $sites[0] )->dtsFetched );
+			if ( $replace ) {
+				$db->update_backup_task_progress( $task->id, $sites[0], array( 'child_backup_task_id' => '__creating_successor' ) );
+				$expected = $db->get_backup_task_progress( $task->id, $sites[0] );
+			}
+			if ( 'throw' === $mode ) {
+				throw new \MainWP\Dashboard\MainWP_Exception( 'HTTPERROR' );
+			}
+			return array( 'phase' => 'queued' );
+		};
+		try {
+			MainWP_Backup_Executor::backup_site( $sites[0], $task, 'backups' );
+			$this->fail( 'An unanswered create must surface as an exception.' );
+		} catch ( \MainWP\Dashboard\MainWP_Exception $e ) {
+			$this->assertNotSame( '', $e->getMessage() );
+		}
+		unset( $this->during['backup_task_create'] );
+		$progress = $db->get_backup_task_progress( $task->id, $sites[0] );
+		if ( $replace ) {
+			$this->assertEquals( $expected, $progress );
+		} else {
+			$this->assertSame( '', $progress->child_backup_task_id );
+			$this->assertSame( 0, (int) $progress->dtsFetched );
+			MainWP_Backup_Executor::backup_site( $sites[0], $this->fresh( $task ), 'backups' );
+			$this->assertSame( 'created-' . $sites[0], $db->get_backup_task_progress( $task->id, $sites[0] )->child_backup_task_id );
+			$this->assertCount( 2, array_filter( $this->calls, static fn( $call ) => 'backup_task_create' === $call[0] ) );
+		}
 	}
 
 	/** Sites that keep failing cannot hold every pass's send budget. */

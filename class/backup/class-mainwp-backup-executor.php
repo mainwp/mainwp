@@ -1719,14 +1719,19 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
-     * A cancel can close the run between admission and marker publication, so
-     * the request outlives the close and is matched on the run this driver drives.
+     * A stalled driver can outlive both cancellation and a successor claim,
+     * which clears the cancel request. The stored run identity still fences it.
+     * A missing row, or one never claimed (last_run 0), still admits the create
+     * as before.
      *
      * @param object $task Run this driver observed.
      * @return bool Whether a fresh row still permits a create.
      */
     private static function task_run_accepts_create( object $task ): bool {
         $current = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $task->id );
+        if ( $current && (int) $current->last_run > 0 && (int) $current->last_run !== (int) $task->last_run ) {
+            return false;
+        }
         return ! ( $current && MainWP_Backup_Run_Cancel::blocks_run( $current, (int) $task->last_run ) );
     }
 
@@ -1742,9 +1747,16 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @param object $task    Run this driver drives.
      */
     private static function clear_unanswered_create_marker( $task_id, $site_id, $marker, object $task ) {
-        if ( self::task_run_accepts_create( $task ) ) {
-            self::clear_creating_marker_if_mine( $task_id, $site_id, $marker );
+        $current = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $task->id );
+        if ( $current && MainWP_Backup_Run_Cancel::blocks_run( $current, (int) $task->last_run ) ) {
+            return;
         }
+        if ( $current && (int) $current->last_run > 0 && (int) $current->last_run !== (int) $task->last_run ) {
+            // A same-second successor needs the create window back, not just an empty id.
+            self::reset_create_window_if_mine( $task_id, $site_id, $marker );
+            return;
+        }
+        self::clear_creating_marker_if_mine( $task_id, $site_id, $marker );
     }
 
     /**

@@ -1517,6 +1517,21 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     $task = $_fresh_task;
                 }
 
+                $_fresh_progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, (int) $siteid );
+                if ( $_fresh_task && $_fresh_progress
+                    && MainWP_Backup_Executor::is_creating_marker( $_fresh_progress->child_backup_task_id )
+                    && (int) $_fresh_progress->dtsFetched >= $history_started
+                    && MainWP_Backup_Run_Cancel::blocks_run( $_fresh_task, $history_started )
+                ) {
+                    // The Child may have accepted the create, so cancellation still needs its id or deadline.
+                    /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
+                    do_action( 'mainwp_backup_diag_site_mark', (int) $task->id, (int) $siteid, 'yield_resumable', $_mark_detail . ' (pending cancel)' );
+                    if ( ! $advanced ) {
+                        ++$outcome['sites_yielded'];
+                    }
+                    continue;
+                }
+
                 // A failed snapshot insert must surface now, even when downloads classify as record_pending.
                 $_error_data    = $e instanceof MainWP_Exception ? $e->get_data() : null;
                 $_disk_refused  = $e instanceof MainWP_Exception && MainWP_Backup_Error_Codes::ERR_DISK_FULL === $e->get_message_error_code() && is_array( $_error_data ) && true === ( $_error_data['dashboard_disk_space'] ?? false );

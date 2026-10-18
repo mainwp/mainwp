@@ -59,7 +59,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 <div class="ui yellow message"><?php echo esc_html( MainWP_Backup_Storage_Handler::sftp_trust_reset_notice() ); ?></div>
             <?php endif; ?>
             <?php if ( $restricted ) : ?>
-                <div id="mainwp-storage-message-zone"><div class="ui message"><?php esc_html_e( 'Storage destinations are shared by the whole Dashboard, so accounts limited to some sites can view them but not change them.', 'mainwp' ); ?></div></div>
+                <div id="mainwp-storage-message-zone"><div class="ui info visible message"><?php esc_html_e( 'Only WordPress administrators can add or change storage destinations. Destinations are shared by every site on this Dashboard.', 'mainwp' ); ?></div></div>
             <?php else : ?>
                 <div class="ui message" id="mainwp-storage-message-zone" style="display:none"></div>
             <?php endif; ?>

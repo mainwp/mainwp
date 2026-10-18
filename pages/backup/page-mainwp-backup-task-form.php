@@ -150,7 +150,11 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <label class="six wide column middle aligned"><?php esc_html_e( 'Upload to storage', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <?php if ( empty( $destinations ) ) : ?>
-                    <em><?php esc_html_e( 'No storage destinations configured. Backups stay on this dashboard.', 'mainwp' ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ); ?>"><?php esc_html_e( 'Add a destination', 'mainwp' ); ?></a></em>
+                    <em><?php esc_html_e( 'No storage destinations configured. Backups stay on this dashboard.', 'mainwp' ); ?>
+                        <?php if ( ! is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) : ?>
+                            <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ); ?>"><?php esc_html_e( 'Add a destination', 'mainwp' ); ?></a>
+                        <?php endif; ?>
+                    </em>
                 <?php else : ?>
                     <select name="mainwp-backup-task-destinations" id="mainwp-backup-task-destinations" multiple="" class="ui multiple selection dropdown">
                         <option value=""><?php esc_html_e( 'Keep on dashboard only', 'mainwp' ); ?></option>

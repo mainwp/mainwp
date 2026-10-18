@@ -828,7 +828,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_native_backup_task_reset' );
         $task_id = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request above.
 
-        $response = MainWP_Backup_Operations::reset_task_run( $task_id );
+        $response = MainWP_Backup_Operations::reset_task_run( $task_id, 'ui' );
         if ( is_wp_error( $response ) ) {
             wp_send_json( array( 'error' => $response->get_error_message() ) );
             return;
@@ -844,7 +844,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_native_backup_task_cancel_run' );
         $task_id = isset( $_POST['task_id'] ) ? absint( $_POST['task_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
         $run     = isset( $_POST['run'] ) ? absint( $_POST['run'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $reply   = MainWP_Backup_Operations::cancel_task_run( $task_id, $run );
+        $reply   = MainWP_Backup_Operations::cancel_task_run( $task_id, $run, 'ui' );
         wp_send_json( is_wp_error( $reply ) ? array( 'error' => $reply->get_error_message() ) : $reply );
     }
 
@@ -1433,19 +1433,32 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
     public function mainwp_backuptask_run_now() {
         $this->secure_request( 'mainwp_backuptask_run_now' );
         $task_id = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
-        $result  = MainWP_Backup_Operations::run_task( $task_id );
+        $result  = MainWP_Backup_Operations::run_task( $task_id, 'ui' );
         if ( is_wp_error( $result ) ) {
-            $message = $result->get_error_message();
-            if ( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND === $result->get_error_code() ) {
-                $task    = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
-                $message = $task && empty( $task->template ) && MainWP_Manage_Backups_Handler::can_edit_backuptask( $task )
-                    ? __( 'You are not allowed to run backups for one or more of this task\'s sites.', 'mainwp' )
-                    : esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' );
-            }
-            wp_send_json( array( 'error' => $message ) );
+            wp_send_json( array( 'error' => $this->task_run_refusal( $result, $task_id ) ) );
             return;
         }
         wp_send_json( $result );
+    }
+
+    /**
+     * Task identity refusals must agree before either entry can drive a run.
+     *
+     * @param \WP_Error $error Admission error.
+     * @param int       $task_id Submitted task identity.
+     * @return string
+     */
+    private function task_run_refusal( \WP_Error $error, int $task_id ): string {
+        if ( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND !== $error->get_error_code() ) {
+            return $error->get_error_message();
+        }
+        if ( in_array( 'administrator', wp_get_current_user()->roles, true ) ) {
+            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+            if ( $task && empty( $task->template ) && MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) ) {
+                return __( 'You are not allowed to run backups for one or more of this task\'s sites.', 'mainwp' );
+            }
+        }
+        return esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' );
     }
 
     /**
@@ -1456,7 +1469,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      */
     public function mainwp_backuptask_run_status() {
         $this->secure_request( 'mainwp_backuptask_run_status' );
-        $task_id       = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $task_id = isset( $_POST['task_id'] ) ? (int) $_POST['task_id'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $task    = MainWP_Backup_Operations::authorize_task( $task_id, 'run_backup_tasks', 'ui' );
+        if ( is_wp_error( $task ) ) {
+            wp_send_json( array( 'error' => $this->task_run_refusal( $task, $task_id ) ) );
+            return;
+        }
         $started       = isset( $_POST['started'] ) ? (int) $_POST['started'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
         $click         = isset( $_POST['click'] ) ? (int) $_POST['click'] : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
         $initiation_id = isset( $_POST['initiation_id'] ) && is_string( $_POST['initiation_id'] ) ? wp_unslash( $_POST['initiation_id'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- UUID validation below rejects malformed tokens without altering their identity.

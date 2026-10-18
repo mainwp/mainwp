@@ -306,7 +306,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         if ( ! is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
             return null;
         }
-        $refusal = array( 'error' => esc_html__( 'Storage destinations are shared by the whole Dashboard. Accounts limited to some sites cannot change them.', 'mainwp' ) );
+        $refusal = array( 'error' => esc_html__( 'Only WordPress administrators can change storage destinations.', 'mainwp' ) );
         if ( $ajax ) {
             die( wp_json_encode( $refusal ) );
         }

@@ -17,11 +17,12 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 	 *
 	 * @param string       $action Handler action.
 	 * @param array|string $scope Allowed site scope.
+	 * @param string       $actor Browser role.
 	 * @return array Captured response and database evidence.
 	 */
-	private function call_handler( string $action, $scope ): array {
+	private function call_handler( string $action, $scope, string $actor = 'N' ): array {
 		$process = proc_open(
-			array( PHP_BINARY, __DIR__ . '/fixtures/storage-request.php', $action, wp_json_encode( $scope ) ),
+			array( PHP_BINARY, __DIR__ . '/fixtures/storage-request.php', $action, wp_json_encode( $scope ), $actor ),
 			array(
 				0 => array( 'file', '/dev/null', 'r' ),
 				1 => array( 'pipe', 'w' ),
@@ -52,7 +53,9 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 				'empty'   => array(),
 				'partial' => array( 17 ),
 			) as $label => $scope ) {
-				$cases[ $action . '-' . $label ] = array( $action, $scope );
+				foreach ( array( 'N', 'S+' ) as $actor ) {
+					$cases[ $action . '-' . $label . '-' . $actor ] = array( $action, $scope, $actor );
+				}
 			}
 		}
 		return $cases;
@@ -64,11 +67,12 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 	 * @dataProvider restricted_writes
 	 * @param string $action Handler action.
 	 * @param array  $scope Allowed site ids.
+	 * @param string $actor Browser role.
 	 * @return void
 	 */
-	public function test_restricted_storage_write_refused( string $action, array $scope ): void {
-		$data = $this->call_handler( $action, $scope );
-		$this->assertSame( array( 'error' => 'Storage destinations are shared by the whole Dashboard. Accounts limited to some sites cannot change them.' ), $data['response'] );
+	public function test_restricted_storage_write_refused( string $action, array $scope, string $actor ): void {
+		$data = $this->call_handler( $action, $scope, $actor );
+		$this->assertSame( array( 'error' => 'Only WordPress administrators can change storage destinations.' ), $data['response'] );
 		$this->assertSame( $data['before'], $data['after'] );
 		$this->assertSame( 0, $data['lookups'] );
 		$this->assertSame( 0, $data['http_calls'] );
@@ -80,20 +84,36 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 	 * @return void
 	 */
 	public function test_unrestricted_storage_writes_still_work(): void {
-		foreach ( array( 'mainwp_storage_save', 'mainwp_storage_test', 'mainwp_storage_default', 'mainwp_storage_delete_confirmed' ) as $action ) {
-			$data = $this->call_handler( $action, 'all' );
-			$this->assertEmpty( $data['response']['error'] ?? null, $action );
-			if ( 'mainwp_storage_save' === $action ) {
-				$this->assertSame( 'Changed destination', $data['after']['row']['name'] );
-			} elseif ( 'mainwp_storage_test' === $action ) {
-				$this->assertTrue( $data['response']['ok'] );
-				$this->assertSame( $data['before'], $data['after'] );
-			} elseif ( 'mainwp_storage_default' === $action ) {
-				$this->assertSame( '1', $data['after']['row']['is_default'] );
-			} else {
-				$this->assertTrue( $data['response']['deleted'] );
-				$this->assertNull( $data['after']['row'] );
+		foreach ( array( 'N', 'A' ) as $actor ) {
+			foreach ( array( 'mainwp_storage_save', 'mainwp_storage_test', 'mainwp_storage_default', 'mainwp_storage_delete_confirmed' ) as $action ) {
+				$data = $this->call_handler( $action, 'all', $actor );
+				$this->assertEmpty( $data['response']['error'] ?? null, $action );
+				if ( 'mainwp_storage_save' === $action ) {
+					$this->assertSame( 'Changed destination', $data['after']['row']['name'] );
+				} elseif ( 'mainwp_storage_test' === $action ) {
+					$this->assertTrue( $data['response']['ok'] );
+					$this->assertSame( $data['before'], $data['after'] );
+				} elseif ( 'mainwp_storage_default' === $action ) {
+					$this->assertSame( '1', $data['after']['row']['is_default'] );
+				} else {
+					$this->assertTrue( $data['response']['deleted'] );
+					$this->assertNull( $data['after']['row'] );
+				}
 			}
+		}
+	}
+
+	/** The unchanged OAuth paths still admit either administrator actor. */
+	public function test_administrator_oauth_paths_still_work(): void {
+		foreach ( array( 'N', 'A' ) as $actor ) {
+			$start = $this->call_handler( 'mainwp_dropbox_oauth_start', 'all', $actor );
+			$this->assertArrayHasKey( 'authorize_url', $start['response'] );
+			$this->assertSame( $start['before'], $start['after'] );
+			$callback = $this->call_handler( 'oauth_callback_declined', 'all', $actor );
+			$this->assertSame( array( 'error' => 'The Dropbox authorization was declined. Nothing was saved.' ), $callback['response'] );
+			$this->assertSame( $callback['before'], $callback['after'] );
+			$this->assertSame( 0, $start['http_calls'] );
+			$this->assertSame( 1, $callback['http_calls'], 'The declined callback consumes state through an intercepted empty-code exchange.' );
 		}
 	}
 
@@ -109,6 +129,15 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 			$this->assertArrayNotHasKey( 'password', $data['response']['settings'] );
 			$this->assertSame( $data['before'], $data['after'] );
 		}
+	}
+
+	/** OAuth without the storage right must not redirect or save a notice. */
+	public function test_oauth_callback_without_right_stays_silent(): void {
+		$data = $this->call_handler( 'oauth_callback', array( 17 ), 'S-right' );
+		$this->assertNull( $data['response'] );
+		$this->assertSame( $data['before'], $data['after'] );
+		$this->assertSame( 0, $data['lookups'] );
+		$this->assertSame( 0, $data['http_calls'] );
 	}
 
 	/**
@@ -148,10 +177,10 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 			foreach ( array( 'mainwp-storage-form', 'mainwp-storage-add-new' ) as $control ) {
 				$this->assertSame( 'all' === $scope ? 1 : 0, $xpath->query( '//*[@id="' . $control . '"]' )->length );
 			}
-			$notice = $xpath->query( '//*[@id="mainwp-storage-message-zone"]/div[@class="ui message"]' );
+			$notice = $xpath->query( '//*[@id="mainwp-storage-message-zone"]/div[@class="ui info visible message"]' );
 			$this->assertSame( 'all' === $scope ? 0 : 1, $notice->length );
 			if ( 'all' !== $scope ) {
-				$this->assertSame( 'Storage destinations are shared by the whole Dashboard, so accounts limited to some sites can view them but not change them.', trim( $notice->item( 0 )->textContent ) );
+				$this->assertSame( 'Only WordPress administrators can add or change storage destinations. Destinations are shared by every site on this Dashboard.', trim( $notice->item( 0 )->textContent ) );
 			}
 			$this->assertStringContainsString( 'Visible destination', $html );
 		}

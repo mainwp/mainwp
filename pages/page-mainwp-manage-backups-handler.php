@@ -977,8 +977,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             if ( 'pause' === $action || 'resume' === $action ) {
                 return array( 'notask' => true );
             }
-            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
-            if ( ! $task || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
+            $task   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+            $hidden = ! in_array( 'administrator', wp_get_current_user()->roles, true ) && is_wp_error( MainWP_Backup_Operations::authorize_task( $task_id, 'update' === $action ? 'edit_backup_tasks' : 'delete_backup_tasks', 'ui' ) );
+            if ( $hidden || ! $task || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
                 return 'remove' === $action ? array( 'notask' => true ) : array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
             }
         }
@@ -2210,7 +2211,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         // Only an explicit 0 keeps the snapshots; older clients send nothing and purge as before.
         $delete_snapshots = ! isset( $_POST['delete_snapshots'] ) || '0' !== sanitize_text_field( wp_unslash( $_POST['delete_snapshots'] ) );
         //phpcs:enable WordPress.Security.NonceVerification.Missing
-        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::delete_task( $id, $delete_snapshots ), 'remove', $id ) );
+        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::delete_task( $id, $delete_snapshots, 'ui' ), 'remove', $id ) );
     }
 
     /**
@@ -2309,7 +2310,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public static function resume_backup() {
         $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Missing
-        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::resume_task( (int) $id ), 'resume', (int) $id ) );
+        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::resume_task( (int) $id, 'ui' ), 'resume', (int) $id ) );
     }
 
     /**
@@ -2361,7 +2362,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public static function pause_backup() {
         $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : false; //phpcs:ignore WordPress.Security.NonceVerification.Missing
-        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::pause_task( (int) $id ), 'pause', (int) $id ) );
+        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::pause_task( (int) $id, 'ui' ), 'pause', (int) $id ) );
     }
 
     /**

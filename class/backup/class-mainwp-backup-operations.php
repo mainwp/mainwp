@@ -199,10 +199,11 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param int    $task_id Task identity.
      * @param string $right Operation right.
+     * @param string $context Calling transport.
      * @return object|\WP_Error
      */
-    public static function authorize_task( int $task_id, string $right ) {
-        $base = self::authorize_base( $right );
+    public static function authorize_task( int $task_id, string $right, string $context = 'ability' ) {
+        $base = 'ui' === $context ? self::authorize_ui( $right ) : self::authorize_base( $right );
         if ( is_wp_error( $base ) ) {
             return $base;
         }
@@ -212,8 +213,12 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         // Only the run set is checked: no task action touches a deleted site
         // or a group member added after the authorized snapshot.
-        foreach ( MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task ) as $site_id ) {
-            if ( is_wp_error( self::authorize_site( $site_id, $right ) ) ) {
+        $sites = MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task );
+        if ( 'ui' === $context && empty( $sites ) && is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
+            return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
+        }
+        foreach ( $sites as $site_id ) {
+            if ( is_wp_error( self::authorize_site( $site_id, $right, $context ) ) ) {
                 return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
             }
         }
@@ -512,13 +517,14 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param array  $values Validated selections.
      * @param string $right Task operation right.
+     * @param string $context Calling transport.
      * @return true|\WP_Error
      */
-    private static function authorize_task_input_scope( array $values, string $right ) {
+    private static function authorize_task_input_scope( array $values, string $right, string $context = 'ability' ) {
         $sites  = implode( ',', $values['site_ids'] );
         $groups = implode( ',', $values['group_ids'] );
         foreach ( MainWP_Manage_Backups_Handler::expand_task_site_ids( $sites, $groups ) as $id ) {
-            $site = self::authorize_site( $id, $right );
+            $site = self::authorize_site( $id, $right, $context );
             if ( is_wp_error( $site ) ) {
                 return $site;
             }
@@ -543,7 +549,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function create_task( array $fields, string $context ) {
-        $base = self::authorize_base( 'add_backup_tasks' );
+        $base = 'ui' === $context ? self::authorize_ui( 'add_backup_tasks' ) : self::authorize_base( 'add_backup_tasks' );
         if ( is_wp_error( $base ) ) {
             return $base;
         }
@@ -567,7 +573,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function update_task( int $task_id, array $fields, string $context ) {
-        $task = self::authorize_task( $task_id, 'edit_backup_tasks' );
+        $task = self::authorize_task( $task_id, 'edit_backup_tasks', $context );
         if ( is_wp_error( $task ) ) {
             return $task;
         }
@@ -599,7 +605,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $values ) ) {
             return $values;
         }
-        $scope = self::authorize_task_input_scope( $values, $right );
+        $scope = self::authorize_task_input_scope( $values, $right, $context );
         if ( is_wp_error( $scope ) ) {
             return $scope;
         }
@@ -609,7 +615,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
         }
         if ( null !== $task ) {
-            $history = self::authorize_task_history_sites( (int) $task->id );
+            $history = self::authorize_task_history_sites( (int) $task->id, 'edit_backup_tasks', $context );
             if ( is_wp_error( $history ) ) {
                 return $history;
             }
@@ -622,15 +628,16 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param int    $task_id Task identity.
      * @param string $right Required operation right.
+     * @param string $context Calling transport.
      * @return true|\WP_Error
      */
-    private static function authorize_task_history_sites( int $task_id, string $right = 'edit_backup_tasks' ) {
+    private static function authorize_task_history_sites( int $task_id, string $right = 'edit_backup_tasks', string $context = 'ability' ) {
         foreach ( MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( $task_id ) as $site_id ) {
             // A scoped lookup would mistake a hidden site for a deleted one.
             if ( empty( MainWP_DB::instance()->get_website_by_id_unscoped( $site_id ) ) ) {
                 continue;
             }
-            if ( is_wp_error( self::authorize_site( $site_id, $right ) ) ) {
+            if ( is_wp_error( self::authorize_site( $site_id, $right, $context ) ) ) {
                 return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
             }
         }
@@ -705,7 +712,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function delete_task( int $task_id, bool $delete_snapshots = true, string $context = 'ui' ) {
-        $task = self::authorize_task( $task_id, 'delete_backup_tasks' );
+        $task = self::authorize_task( $task_id, 'delete_backup_tasks', $context );
         if ( is_wp_error( $task ) ) {
             return $task;
         }
@@ -716,7 +723,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
-        $history = self::authorize_task_history_sites( $task_id, 'delete_backup_tasks' );
+        $history = self::authorize_task_history_sites( $task_id, 'delete_backup_tasks', $context );
         if ( is_wp_error( $history ) ) {
             return $history;
         }
@@ -731,7 +738,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function pause_task( int $task_id, string $context = 'ui' ) {
-        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks', $context );
         if ( is_wp_error( $task ) ) {
             return $task;
         }
@@ -749,7 +756,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function resume_task( int $task_id, string $context = 'ui' ) {
-        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks', $context );
         if ( is_wp_error( $task ) ) {
             return $task;
         }
@@ -768,7 +775,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     public static function run_task( int $task_id, string $context = 'ui' ) {
-        $task = self::authorize_task( $task_id, 'run_backup_tasks' );
+        $task = self::authorize_task( $task_id, 'run_backup_tasks', $context );
         if ( is_wp_error( $task ) ) {
             return $task;
         }
@@ -1092,12 +1099,13 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * A repeated request keeps its original deadline and settled sites.
      *
-     * @param int $task_id Scheduled task identity.
-     * @param int $run Identity shown to the user.
+     * @param int    $task_id Scheduled task identity.
+     * @param int    $run Identity shown to the user.
+     * @param string $context Calling transport.
      * @return array|\WP_Error AJAX result.
      */
-    public static function cancel_task_run( int $task_id, int $run ) {
-        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+    public static function cancel_task_run( int $task_id, int $run, string $context = 'ability' ) {
+        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks', $context );
         if ( is_wp_error( $task ) ) {
             return $task;
         }
@@ -1122,7 +1130,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'settled'     => (object) array(),
             );
             if ( ! MainWP_DB_Backup::instance()->compare_and_swap_run_cancel( $task_id, $run, $task->run_cancel, (string) wp_json_encode( $request ) ) ) {
-                $current = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+                $current = self::authorize_task( $task_id, 'pause_resume_backup_tasks', $context );
                 if ( is_wp_error( $current ) ) {
                     return $current;
                 }
@@ -1147,11 +1155,12 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * A stale Dashboard run can close even when its Child stop is unconfirmed.
      *
-     * @param int $task_id Scheduled task identity.
+     * @param int    $task_id Scheduled task identity.
+     * @param string $context Calling transport.
      * @return array|\WP_Error Reset evidence.
      */
-    public static function reset_task_run( int $task_id ) {
-        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+    public static function reset_task_run( int $task_id, string $context = 'ability' ) {
+        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks', $context );
         if ( is_wp_error( $task ) ) {
             return $task;
         }

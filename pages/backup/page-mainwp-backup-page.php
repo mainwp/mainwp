@@ -415,9 +415,18 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             // Back Up Now keeps one hidden task per site. It is not in the
             // list and has no schedule, so the schedule form must not open
             // it: saving that form would turn it into a daily task.
+            // Site-limited accounts get a task they can't fully reach handled
+            // like a missing id, so the page never confirms that it exists.
+            $restricted = is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() );
             if ( ! empty( $backupTask ) && ! empty( $backupTask->template ) ) {
-                static::render_on_demand_task_refusal( $backupTask );
-                return;
+                $site_id = (int) strtok( (string) $backupTask->sites, ',' );
+                if ( ! $restricted || ! is_wp_error( MainWP_Backup_Operations::authorize_site( $site_id, 'execute_backups', 'ui' ) ) ) {
+                    static::render_on_demand_task_refusal( $backupTask );
+                    return;
+                }
+                $backupTask = null;
+            } elseif ( $restricted && is_wp_error( MainWP_Backup_Operations::authorize_task( $backupTaskId, 'edit_backup_tasks', 'ui' ) ) ) {
+                $backupTask = null;
             }
 
             if ( ! empty( $backupTask ) && ! MainWP_Manage_Backups_Handler::validate_backup_tasks( array( $backupTask ) ) ) {
@@ -432,8 +441,18 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             }
 
             $backup_items = MainWP_DB_Backup::instance()->get_backup_tasks_for_user();
+            $restricted   = is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() );
+            $visible      = static function ( $task ) {
+                return ! is_wp_error( MainWP_Backup_Operations::authorize_task( (int) $task->id, 'execute_backups', 'ui' ) );
+            };
+            if ( $restricted ) {
+                $backup_items = array_filter( $backup_items, $visible );
+            }
             if ( ! MainWP_Manage_Backups_Handler::validate_backup_tasks( $backup_items ) ) {
                 $backup_items = MainWP_DB_Backup::instance()->get_backup_tasks_for_user();
+                if ( $restricted ) {
+                    $backup_items = array_filter( $backup_items, $visible );
+                }
             }
 
             static::render_header( '' );

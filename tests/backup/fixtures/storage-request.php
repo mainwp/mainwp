@@ -9,6 +9,7 @@ use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Backup_Storage_Handler;
 use MainWP\Dashboard\MainWP_Credential_Storage;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_System;
 
 $repo = dirname( __DIR__, 3 );
 require $repo . '/vendor/autoload.php';
@@ -17,6 +18,11 @@ define( 'MAINWP_MODULE_LOG_ENABLED', false );
 define( 'DISABLE_WP_CRON', true );
 require ABSPATH . 'wp-settings.php';
 require_once $repo . '/mainwp.php';
+
+// This subprocess loads the plugin after WordPress has fired plugins_loaded.
+if ( ! function_exists( 'MainWP\\Dashboard\\mainwp_current_user_have_right' ) ) {
+	MainWP_System::instance()->plugins_loaded();
+}
 
 $storage_action = $argv[1];
 $scope          = json_decode( $argv[2], true );
@@ -74,8 +80,12 @@ $wpdb->insert(
 $http_calls = 0;
 add_filter(
 	'pre_http_request',
-	static function () use ( &$http_calls ) {
+	static function ( $pre, $args, $url ) use ( &$http_calls ) {
 		++$http_calls;
+		// Consuming declined OAuth state exchanges an empty code, which cannot issue tokens.
+		if ( 'https://api.dropboxapi.com/oauth2/token' === $url && 'authorization_code' === ( $args['body']['grant_type'] ?? '' ) && '' === ( $args['body']['code'] ?? '' ) ) {
+			return new WP_Error( 'empty_oauth_code', 'No authorization code was supplied.' );
+		}
 		return array(
 			'response' => array( 'code' => 200 ),
 			'body'     => wp_json_encode(
@@ -85,7 +95,9 @@ add_filter(
 				)
 			),
 		);
-	}
+	},
+	10,
+	3
 );
 $input = array(
 	'id'         => $destination_id,
@@ -94,7 +106,7 @@ $input = array(
 	'is_default' => 1,
 	'settings'   => array( 'base_path' => $dir ),
 );
-if ( 'oauth_callback' === $storage_action ) {
+if ( in_array( $storage_action, array( 'oauth_callback', 'oauth_callback_declined' ), true ) ) {
 	$pending = MainWP_Backup_Storage_Handler::start_dropbox_oauth(
 		array(
 			'id'       => $destination_id,
@@ -111,6 +123,9 @@ if ( 'oauth_callback' === $storage_action ) {
 		'state'                => $params['state'],
 		'code'                 => 'fixture-code',
 	);
+	if ( 'oauth_callback_declined' === $storage_action ) {
+		$_GET['error'] = 'access_denied';
+	}
 } elseif ( 'mainwp_dropbox_oauth_start' === $storage_action ) {
 	$input['settings'] = array(
 		'app_key'    => 'fixture-key',
@@ -120,6 +135,38 @@ if ( 'oauth_callback' === $storage_action ) {
 if ( 'mainwp_storage_delete_confirmed' === $storage_action ) {
 	$storage_action     = 'mainwp_storage_delete';
 	$input['confirmed'] = '1';
+}
+$actor = $argv[3] ?? 'N';
+if ( str_starts_with( $actor, 'S' ) ) {
+	add_role(
+		'mainwp_storage_staff',
+		'Storage staff',
+		array(
+			'read'     => true,
+			'level_10' => true,
+		)
+	);
+	$user = new WP_User( $user_id );
+	$user->set_role( 'mainwp_storage_staff' );
+	wp_set_current_user( 0 );
+	wp_set_current_user( $user_id );
+	if ( current_user_can( 'manage_options' ) ) {
+		throw new RuntimeException( 'Staff fixture must not hold manage_options.' );
+	}
+	add_filter(
+		'mainwp_currentusercan',
+		static function ( $allowed, $type, $cap ) use ( $actor, $scope ) {
+			return 'site' === $type ? in_array( (int) $cap, (array) $scope, true ) : 'S+' === $actor && 'dashboard' === $type && 'edit_backup_tasks' === $cap;
+		},
+		10,
+		3
+	);
+} elseif ( 'A' === $actor ) {
+	add_filter( 'mainwp_currentusercan', '__return_true' );
+	add_filter( 'mainwp_currentuserallowedaccesssites', static fn() => 'all' );
+}
+if ( mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) !== ( 'S-right' !== $actor ) ) {
+	throw new RuntimeException( 'Storage fixture did not establish the requested Dashboard right.' );
 }
 $_POST    = $input + array( 'security' => wp_create_nonce( $storage_action ) );
 $_REQUEST = $_POST;
@@ -187,7 +234,7 @@ register_shutdown_function(
 		);
 	}
 );
-if ( 'oauth_callback' === $storage_action ) {
+if ( in_array( $storage_action, array( 'oauth_callback', 'oauth_callback_declined' ), true ) ) {
 	MainWP_Backup_Storage_Handler::instance()->handle_dropbox_oauth_callback();
 } else {
 	$method = 'ajax_' . substr( $storage_action, strlen( 'mainwp_' ) );

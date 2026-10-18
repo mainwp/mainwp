@@ -599,6 +599,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function mwp_setup_introduction_save() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
         check_admin_referer( 'mwp-setup' );
         $enabled_tours = ! isset( $_POST['mainwp-guided-tours-option'] ) ? 0 : 1; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         MainWP_Utility::update_option( 'mainwp_enable_guided_tours', $enabled_tours );
@@ -629,6 +632,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function mwp_setup_system_requirements_save() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
         check_admin_referer( 'mwp-setup' );
         if ( isset( $_POST['mwp_setup_openssl_lib_location'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             MainWP_Utility::update_option( 'mainwp_opensslLibLocation', isset( $_POST['mwp_setup_openssl_lib_location'] ) ? sanitize_text_field( wp_unslash( $_POST['mwp_setup_openssl_lib_location'] ) ) : '' ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -1287,6 +1293,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function mwp_setup_monitoring_save() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            return;
+        }
         check_admin_referer( 'mwp-setup' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 

@@ -80,7 +80,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_group_by_id()
-     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id()
+     * @uses \MainWP\Dashboard\MainWP_DB::get_website_by_id_unscoped()
      */
     public static function validate_backup_tasks( $pBackupTasks ) {  //phpcs:ignore -- NOSONAR - complex.
         if ( ! is_array( $pBackupTasks ) ) {
@@ -93,7 +93,8 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $newSiteIds = '';
                 $siteIds    = ( '' === $backupTask->sites ? array() : explode( ',', $backupTask->sites ) );
                 foreach ( $siteIds as $siteId ) {
-                    $site = MainWP_DB::instance()->get_website_by_id( $siteId );
+                    // Only deleted sites should be removed; the viewer's scope does not determine existence.
+                    $site = MainWP_DB::instance()->get_website_by_id_unscoped( $siteId );
                     if ( ! empty( $site ) ) {
                         $newSiteIds .= ',' . $siteId;
                     }

@@ -100,19 +100,19 @@ let mainwp_api_backups_do_backups_specific = function (pObj, bulk, selector) {
         let succ_msg = '';
         let rsp = '';
 
-        if (response && !response.success) {
-            rsp = response.data;
+        if (response?.error) {
+            err_msg = MainWP.I18n.t(response.error);
+        } else if (response && !response.success) {
+            rsp = response.data?.[0];
             // Check for gridPane error..
-            if (rsp && rsp['0'].code === 429) {
+            if (rsp?.code === 429) {
                 err_msg = 'API rate limit has been met. Please wait 30 seconds and try again.';
             } else {
                 // Everything else. (API provided error message)
-                err_msg = rsp['0'].message;
+                err_msg = rsp?.message || _('Undefined error.');
             }
         } else if (response?.success) {
             succ_msg = MainWP.I18n.t('Successful');
-        } else if (response?.error) { // Check for cPanel error..
-            err_msg = MainWP.I18n.t(response.error);
         } else {
             err_msg = _('Undefined error.');
         }

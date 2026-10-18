@@ -289,6 +289,42 @@ class MainWP_Backup_Rights_Surfaces_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Cancel run admits only a cookie with its nonce, then applies the task right.
+	 *
+	 * @dataProvider browser_rights
+	 * @param string $state Authentication state.
+	 * @param string $mode Team Control mode.
+	 */
+	public function test_cancel_run_rights( string $state, string $mode ) {
+		$task = MainWP_DB_Backup::instance()->add_backup_task( $this->fixture['user'], 'Cancel run rights', 'daily', 'full', '', (string) $this->fixture['site'], '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 0, 150, 0 );
+		$this->assertIsObject( $task );
+		$this->authenticate( $state );
+		$filter           = $this->rights( $mode, 'pause_resume_backup_tasks' );
+		$_POST['task_id'] = (string) $task->id;
+		$_POST['run']     = (string) $task->last_run;
+		if ( 'cookie-nonce' === $state ) {
+			$_POST['security']    = wp_create_nonce( 'mainwp_native_backup_task_cancel_run' );
+			$_REQUEST['security'] = wp_create_nonce( 'mainwp_native_backup_task_cancel_run' );
+		}
+		$before = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		try {
+			$handler  = $this->ajax_handler();
+			$response = $this->ajax( array( $handler, 'mainwp_native_backup_task_cancel_run' ) );
+			if ( 'cookie-nonce' !== $state ) {
+				$this->assertSame( array(), $response );
+			} elseif ( 'denied' === $mode ) {
+				$this->assertSame( array( 'error' => 'Your role does not permit this operation.' ), $response );
+			} else {
+				// Past both gates, the idle fixture task is refused on its run state.
+				$this->assertSame( array( 'error' => 'This task is not currently running.' ), $response );
+			}
+			$this->assertEquals( $before, MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $filter, 10 );
+		}
+	}
+
+	/**
 	 * Token expiry and bindings stay real across the next simulated request.
 	 *
 	 * @param string $url Issued URL.

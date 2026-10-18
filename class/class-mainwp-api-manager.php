@@ -367,13 +367,14 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             );
 
             $activate_results = MainWP_Api_Manager_Key::instance()->activate( $args );
-            if ( ! empty( $activate_results ) ) {
-                $activate_results = json_decode( $activate_results, true );
-            } else {
-                $activate_results = array();
+            $activate_results = is_string( $activate_results ) && '' !== $activate_results ? json_decode( $activate_results, true ) : false;
+            if ( ! is_array( $activate_results ) ) {
+                // Keep the stored key and status, so submitting the same key again goes straight back to activation.
+                $activate_results = false;
+                $return['error']  = esc_html__( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
             }
 
-            if ( true === $activate_results['activated'] ) {
+            if ( is_array( $activate_results ) && isset( $activate_results['activated'] ) && true === $activate_results['activated'] ) {
                 $return['result']               = 'SUCCESS';
                 $mess                           = isset( $activate_results['message'] ) ? $activate_results['message'] : '';
                 $return['message']              = esc_html__( 'The extension has been activated. ', 'mainwp' ) . $mess;
@@ -382,18 +383,6 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 $options['deactivate_checkbox'] = 'off';
                 $options['mainwp_version']      = MainWP_System::instance()->get_dashboard_version();
                 MainWP_Utility::instance()->get_set_deactivated_licenses_alerted( $api_slug, 0, 'set' ); // so next time deactived it will alerted.
-            }
-
-            if ( false === $activate_results ) {
-                $apisslverify = get_option( 'mainwp_api_sslVerifyCertificate' );
-                if ( 1 === $apisslverify ) {
-                    MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
-                    $return['retry_action'] = 1;
-                } else {
-                    $return['error'] = esc_html__( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
-                }
-                $options['api_key']       = '';
-                $options['activated_key'] = 'Deactivated';
             }
 
             $error = $this->check_response_for_api_errors( $activate_results );
@@ -407,8 +396,9 @@ class MainWP_Api_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             // local persist the dashboard will offer to re-activate and burn a
             // second slot. The encrypt filter only fails on broken installs
             // (missing keyfile, un-writable uploads/mainwp/pk/), but when it
-            // does the operator needs to know.
-            if ( false === $this->set_activation_info( $api_slug, $options ) ) {
+            // does the operator needs to know. A failed or refused activation keeps
+            // its own error: nothing was activated upstream.
+            if ( false === $this->set_activation_info( $api_slug, $options ) && isset( $return['result'] ) ) {
                 $return['error'] = esc_html__( 'License activated upstream but local state could not be saved. Check uploads/mainwp/pk/ permissions and try the activation again.', 'mainwp' );
             }
 

@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.2
 Requires PHP: 8.3
-Stable tag: 6.3-beta6
+Stable tag: 6.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -212,6 +212,40 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Added: A backups diagnostics log and a restore preflight that checks storage, disk space, and database privileges before anything on the site changes.
 * Added: A child-version check when a restore starts; a site running an older MainWP Child gets an update prompt instead of a failed restore.
 * Note: File backups and restores are refused on sites whose wp-content folder lives outside the WordPress core folder, such as some Pressable, WordPress.com, and Bedrock installs. Database-only backups and restores still work there. A restored site keeps its last pre-restore safety backup on its own server until its next restore, and that backup stays there if the site is removed from the Dashboard.
+
+= 6.3 - 10-13-2026 =
+
+* Security: Strengthened permission checks, site-access validation, and request handling throughout the Dashboard.
+* Added: Introduced Knowledge, a central place to store your agency’s information and working instructions for clients and sites, which connected MCP and AI tools can access and manage according to each user’s permissions.
+* Added: Introduced a “Connect an AI Tool” panel in the Application Password success dialog and onboarding notice, with prefilled MainWP MCP server configurations for Claude Code, Cursor, and VS Code.
+* Added: Introduced an “AI” menu with a landing page for Knowledge, MainWP MCP, and MainWP Control.
+* Added: Introduced guided setup pages for MainWP MCP and MainWP Control, allowing users to create an Application Password and copy the ready-to-use configuration without leaving the page.
+* Added: General Settings option to check for abandoned plugins and themes using their local file date when WordPress.org has no last-updated date. ([PR906](https://github.com/mainwp/mainwp/pull/906)) - thanks [laukatudev](https://github.com/laukatudev)
+* Fixed: Automatic-update emails now follow their saved notification settings.
+* Fixed: Ignored updates no longer appear in Dashboard update counters.
+* Fixed: Cost Tracker prices no longer lose their value after an upgrade.
+* Fixed: Client Overview now works correctly for restricted Team Control users and hides management controls they cannot use.
+* Fixed: Client notes now preserve supported formatting while safely handling potentially unsafe content.
+* Fixed: Saving a site no longer removes its Google Analytics mapping or displays an unnecessary uptime-monitoring warning.
+* Fixed: Client imports and management now validate and safely handle client details and images.
+* Fixed: Site deletion now cleans related data consistently and avoids partially removing a site when deletion
+* Fixed: Resolved an issue where successful WordPress core auto-updates were incorrectly recorded as failed.
+* Fixed: Resolved issues with automatic update notification emails by including WordPress core updates with their previous and new version numbers and preventing PHP warnings for sites with core-only updates.
+* Fixed: Improved uptime monitoring accuracy when multiple heartbeat records have the same timestamp.
+* Fixed: Improved reliability of website uptime notifications when monitoring data is returned in different formats.
+* Fixed: Plugin and theme pages now handle missing or empty website data as an empty list and display a count of zero.
+* Fixed: Plugin update checks now use the plugin’s key when update information does not provide a slug, helping ignored-update settings apply consistently across automatic, scheduled, and manual checks.
+* Fixed: Ignored plugin updates are now counted consistently when filtering and displaying updates.
+* Updated: Improved the redaction of sensitive data in connection failure details when raw response data is displayed.
+* Updated: Restored user, event, and site filtering to the Network Activity widget, including saved filters and the User column.
+* Updated: Improved site connection and synchronization with clearer setup guidance, more useful diagnostics, and configurable MainWP Child request timeouts.
+* Updated: Updates started through MCP and AI tools can now be previewed and require confirmation before running. Ignored updates and site-wide update exclusions are no longer installed.
+* Updated: Improved Team Control permissions throughout the Dashboard so users and API keys can access only the sites and information assigned to them.
+* Updated: Upgraded the bundled PHPSecLib library to address upstream security issues and improve compatibility.
+* Updated: REST and Abilities responses so restricted requests receive a not-found response for inaccessible records.
+* Updated: API-key authentication to apply only to MainWP REST routes and reject keys whose owners no longer exist.
+* Updated: REST v2 behavior for batch operations, session destruction, monitoring settings, and per-site update results.
+* Updated: Site-deletion hooks to run only after successful deletion and removed the mainwp_ga_delete_site hook from ordinary site updates.
 
 = 6.2.3 - 10-12-2026 =
 

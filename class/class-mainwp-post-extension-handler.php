@@ -113,6 +113,12 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @uses \MainWP\Dashboard\MainWP_Extensions_Handler::add_extension_menu()
      */
     public function add_extension_menu() {
+        if ( ! MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage Add-ons.', 'mainwp' ) ) );
+        }
         $this->check_security( 'mainwp_extension_add_menu' );
         $slug = isset( $_POST['slug'] ) ? wp_unslash( $_POST['slug'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         MainWP_Extensions_Handler::add_extension_menu( $slug );
@@ -128,6 +134,12 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
      */
     public function activate_api_extension() {
+        if ( ! MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage Add-ons.', 'mainwp' ) ) );
+        }
         $this->check_security( 'mainwp_extension_api_activate' );
         MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook();
         $api_slug = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -144,9 +156,15 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      */
     public function ajax_extension_plugin_action() {
         $this->check_security( 'mainwp_extension_plugin_action' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage Add-ons.', 'mainwp' ) ) );
+        }
         $plugin_slug = isset( $_POST['slug'] ) ? sanitize_text_field( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $action      = isset( $_POST['what'] ) ? sanitize_text_field( wp_unslash( $_POST['what'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! empty( $plugin_slug ) && in_array( $action, array( 'active', 'disable', 'remove' ) ) ) {
+            if ( ! current_user_can( 'remove' === $action ? 'delete_plugins' : 'activate_plugins' ) ) {
+                wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage Add-ons.', 'mainwp' ) ) );
+            }
             $this->invalidate_warm_cache();
             if ( 'disable' === $action ) {
                 if ( is_plugin_active( $plugin_slug ) ) {
@@ -228,6 +246,12 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @uses \MainWP\Dashboard\MainWP_Deprecated_Hooks::maybe_handle_deprecated_hook()
      */
     public function deactivate_extension() {
+        if ( ! MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage Add-ons.', 'mainwp' ) ) );
+        }
         $this->check_security( 'mainwp_extension_deactivate' );
         $api_slug = isset( $_POST['slug'] ) ? dirname( wp_unslash( $_POST['slug'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $api_key  = isset( $_POST['api_key'] ) ? wp_unslash( $_POST['api_key'] ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
@@ -434,6 +458,12 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function test_extensions_api_login() {
+        if ( ! MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage Add-ons.', 'mainwp' ) ) );
+        }
         $this->check_security( 'mainwp_extension_testextensionapilogin' );
         $api_key = MainWP_Api_Manager_Key::instance()->get_decrypt_master_api_key();
         $result  = array();
@@ -457,11 +487,7 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
                 $return['error'] = $result['error'];
             }
         } else {
-            $apisslverify = get_option( 'mainwp_api_sslVerifyCertificate' );
-            if ( 1 === (int) $apisslverify ) {
-                MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', 0 );
-                $return['retry_action'] = 1;
-            }
+            $return['error'] = esc_html__( 'Connection failed to the License Key API server. Try again later.', 'mainwp' );
         }
         wp_send_json( $return );
     }
@@ -529,6 +555,12 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function remove_extension_menu_from_mainwp_menu() {
+        if ( ! MainWP_System_Utility::is_admin() ) {
+            die( 0 );
+        }
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_extensions' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'You are not allowed to manage Add-ons.', 'mainwp' ) ) );
+        }
         $this->check_security( 'mainwp_extension_remove_menu' );
         $snMenuExtensions = get_option( 'mainwp_extmenu' );
         if ( ! is_array( $snMenuExtensions ) ) {

@@ -291,7 +291,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Get the Info navigation items.
      *
-     * @param string $context Navigation context.
+     * @param string $context Where the items are shown: 'default', 'left_menu_core' or 'command_palette'.
      *
      * @return array<int, array<string, mixed>> Info navigation items.
      */
@@ -1963,10 +1963,23 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @uses \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public static function render_action_logs() { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+        if ( ! \mainwp_current_user_can( 'dashboard', 'see_server_information' ) ) {
+            \mainwp_do_not_have_permissions( 'action logs', 'mainwp' );
+            return;
+        }
+        if ( isset( $_POST['actionlogs_status'] ) || isset( $_POST['actionlogs_clear'] ) ) {
+            if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+                \mainwp_do_not_have_permissions( 'action logs', 'mainwp' );
+                return;
+            }
+            if ( ! isset( $_POST['_wpnonce'] ) || ! is_string( $_POST['_wpnonce'] ) || ! wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'mainwp-admin-nonce' ) ) {
+                wp_die( esc_html__( 'Insecure request! Please try again.', 'mainwp' ), '', array( 'response' => 403 ) );
+            }
+        }
         static::render_header( 'ActionLogs' );
 
-        if ( isset( $_REQUEST['actionlogs_status'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-            $act_log  = isset( $_REQUEST['actionlogs_status'] ) ? wp_unslash( $_REQUEST['actionlogs_status'] ) : MainWP_Logger::DISABLED; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( isset( $_POST['actionlogs_status'] ) ) {
+            $act_log  = wp_unslash( $_POST['actionlogs_status'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- The existing specific-log parsing is followed by intval before use.
             $spec_log = 0;
             if ( is_string( $act_log ) && false !== strpos( $act_log, 'specific_' ) ) {
                 $act_log  = str_replace( 'specific_', '', $act_log );
@@ -1987,7 +2000,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             MainWP_Utility::update_option( 'mainwp_actionlogs_enabled_timestamp', time() );
         }
 
-        if ( isset( $_REQUEST['actionlogs_clear'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( isset( $_POST['actionlogs_clear'] ) ) {
             $log_to_db = apply_filters( 'mainwp_logger_to_db', true );
             if ( $log_to_db ) {
                 MainWP_Logger::instance()->clear_log_db();

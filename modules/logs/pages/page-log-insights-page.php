@@ -812,7 +812,7 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Method load_sites_table()
      *
-     * @param string $tbl_id Table Id
+     * @param string $tbl_id Table ID.
      * @param bool   $optimize Whether optimize data query.
      *
      *   Load sites table.
@@ -919,6 +919,9 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function ajax_archive_dismissed_db() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_update_dismissed_db' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+        }
         $user_cancel = get_option( 'mainwp_module_logs_updates_dismissed_db_cancelled' );
         if ( $user_cancel ) {
             $status = 'cancelled';
@@ -940,6 +943,9 @@ class Log_Insights_Page { //phpcs:ignore -- NOSONAR - multi methods.
      */
     public static function ajax_cancel_update_dismissed_db() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_cancel_update_dismissed_db' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+        }
         update_option( 'mainwp_module_logs_updates_dismissed_db_cancelled', 1 );
         die( wp_json_encode( array( 'ok' => 1 ) ) );
     }

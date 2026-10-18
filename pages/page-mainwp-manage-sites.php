@@ -1929,7 +1929,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( isset( $_GET['knowledgeid'] ) ) {
             $websiteid        = intval( $_GET['knowledgeid'] );
             $knowledgeWebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
-            if ( MainWP_System_Utility::can_edit_website( $knowledgeWebsite ) ) {
+            if ( MainWP_System_Utility::can_edit_website( $knowledgeWebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {
                 static::render_knowledge( $knowledgeWebsite );
                 return;
             }
@@ -2008,7 +2008,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
     private static function update_site_emails_settings_handle( $website ) { // phpcs:ignore -- NOSONAR - complex.
     // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $updated = false;
-        if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . sanitize_text_field( wp_unslash( $_GET['emailsettingsid'] ) ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
+        if ( isset( $_POST['submit'] ) && isset( $_GET['emailsettingsid'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsiteEmailSettings' . sanitize_text_field( wp_unslash( $_GET['emailsettingsid'] ) ) ) && \mainwp_current_user_can( 'site', $website->id ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,ized
             $settings_emails = MainWP_DB::instance()->get_website_option( $website, 'settings_notification_emails', '' );
             $settings_emails = ! empty( $settings_emails ) ? json_decode( $settings_emails, true ) : $settings_emails;
             if ( ! is_array( $settings_emails ) ) {
@@ -2078,7 +2078,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
     // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $updated = false;
-        if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) ) {
+        if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && isset( $_REQUEST['id'] ) && isset( $_POST['mainwp_managesites_edit_siteadmin'] ) && ( '' !== $_POST['mainwp_managesites_edit_siteadmin'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'UpdateWebsite' . sanitize_key( $_REQUEST['id'] ) ) && \mainwp_current_user_can( 'dashboard', 'edit_sites' ) && \mainwp_current_user_can( 'site', $website->id ) ) {
             $can_manage_clients = \mainwp_current_user_can( 'dashboard', 'manage_clients' );
             $new_client_id      = isset( $_POST['mainwp_managesites_edit_client_id'] ) ? intval( $_POST['mainwp_managesites_edit_client_id'] ) : 0;
             if ( $new_client_id && ( ! $can_manage_clients || ! MainWP_Client::has_client_access( $new_client_id ) || ! MainWP_DB_Client::instance()->get_wp_client_by( 'client_id', $new_client_id ) ) ) {

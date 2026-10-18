@@ -395,7 +395,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     /** Run the export_sites method that exports the Child Sites .csv file */
     public static function admin_init() { // phpcs:ignore -- NOSONAR - complex.
         static::export_sites();
-        if ( isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && isset( $_GET['clearActivationData'] ) && isset( $_GET['_wpnonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_wpnonce'] ), 'clear_activation_data' ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             delete_option( 'mainwp_extensions_api_username' );
             delete_option( 'mainwp_extensions_api_password' );
             delete_option( 'mainwp_extensions_api_save_login' );
@@ -606,6 +606,9 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      */
     public static function handle_settings_post() { // phpcs:ignore -- NOSONAR - complex.
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
+            if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+                return false;
+            }
             $userExtension            = MainWP_DB_Common::instance()->get_user_extension();
             $userExtension->pluginDir = '';
 
@@ -2814,7 +2817,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         static::render_header( 'Emails' );
         $edit_email = isset( $_GET['edit-email'] ) ? sanitize_text_field( wp_unslash( $_GET['edit-email'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         if ( ! empty( $edit_email ) && isset( $notification_emails[ $edit_email ] ) ) {
-            $updated_templ = MainWP_Notification_Template::instance()->handle_template_file_action();
+            $updated_templ = \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ? MainWP_Notification_Template::instance()->handle_template_file_action() : false;
             MainWP_Notification_Settings::instance()->render_edit_settings( $edit_email, $updated_templ );
         } else {
             $updated = MainWP_Notification_Settings::emails_general_settings_handle();

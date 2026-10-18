@@ -72,6 +72,14 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 		$original = $property->getValue();
 		$get      = $_GET;
 		$request  = $_REQUEST;
+		// A failed signature ends in a 403 and exit(); stop at the status header instead.
+		$refuse = static function ( $header, $code ) {
+			if ( 403 === $code ) {
+				throw new \RuntimeException( 'download refused' );
+			}
+			return $header;
+		};
+		add_filter( 'status_header', $refuse, 10, 2 );
 		try {
 			$property->setValue( null, $streamer );
 			$_GET     = $query;
@@ -79,10 +87,11 @@ class MainWP_Backup_Private_Download_Test extends MainWP_Abilities_Test_Case {
 			try {
 				MainWP_System::instance()->parse_init();
 			} catch ( \RuntimeException $error ) {
-				$this->assertSame( 'download captured', $error->getMessage() );
+				$this->assertContains( $error->getMessage(), array( 'download captured', 'download refused' ) );
 			}
 			return $streamer->bytes;
 		} finally {
+			remove_filter( 'status_header', $refuse, 10 );
 			$property->setValue( null, $original );
 			$_GET     = $get;
 			$_REQUEST = $request;

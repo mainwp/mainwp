@@ -406,22 +406,26 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return string Sig Download URL.
      */
     public static function get_download_sig( $fullFile ) {
-        $key_value    = uniqid( 'sig_', true ) . filesize( $fullFile ) . time();
-        $secret_value = uniqid( 'sig_secret_', true ) . filesize( $fullFile ) . time();
+        static::get_download_sig_upgrade_timestamp();
+        $identity = static::get_download_file_identity( $fullFile );
+        if ( false === $identity ) {
+            return '';
+        }
 
-        $hashkey = wp_hash( $key_value );
+        $secret = static::get_or_create_filename_secret();
+        if ( ! is_string( $secret ) || ! preg_match( '/^[a-f0-9]{64}$/', $secret ) ) {
+            return '';
+        }
 
-        $sig_values = array(
-            'sig'       => md5( filesize( $fullFile ) ), // NOSONAR - safe for sig file size.
-            'key_value' => $key_value,
-            'hash_key'  => $secret_value,
+        $value        = array(
+            'version' => 1,
+            'root'    => $identity['root'],
+            'path'    => $identity['path'],
+            'expires' => time() + 3 * HOUR_IN_SECONDS,
         );
+        $value['mac'] = hash_hmac( 'sha256', wp_json_encode( array( $value['version'], $value['root'], $value['path'], $value['expires'] ) ), $secret );
 
-        set_site_transient( 'mainwp_fdl_' . $hashkey, $secret_value, 3 * HOUR_IN_SECONDS );
-
-        $sig_values = wp_json_encode( $sig_values );
-        $sig_values = rawurlencode( $sig_values );
-        return $sig_values;
+        return rawurlencode( wp_json_encode( $value ) );
     }
 
 
@@ -434,22 +438,87 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @return bool true|false.
      */
     public static function valid_download_sig( $file, $sig ) {
-
-        $sig   = rawurldecode( $sig );
-        $value = json_decode( $sig, true );
-
-        if ( ! is_array( $value ) || empty( $value['key_value'] ) || empty( $value['sig'] ) || md5( filesize( $file ) ) !== $value['sig'] ) { // NOSONAR - it's safe for size matching, file in uploads folder.
+        $upgrade_timestamp = static::get_download_sig_upgrade_timestamp();
+        if ( ! is_string( $sig ) || '' === $sig ) {
             return false;
         }
 
-        $hash_key   = wp_hash( $value['key_value'] );
-        $secure_key = get_site_transient( 'mainwp_fdl_' . $hash_key );
-
-        if ( empty( $secure_key ) || empty( $value['hash_key'] ) || ! hash_equals( $secure_key, $value['hash_key'] ) ) {
+        $value    = json_decode( rawurldecode( $sig ), true );
+        $identity = static::get_download_file_identity( $file );
+        if ( ! is_array( $value ) || false === $identity ) {
             return false;
         }
 
-        return true;
+        if ( array_key_exists( 'version', $value ) ) {
+            if ( 1 !== $value['version'] || ! isset( $value['root'], $value['path'], $value['expires'], $value['mac'] ) ||
+                ! is_string( $value['root'] ) || ! is_string( $value['path'] ) || ! is_int( $value['expires'] ) ||
+                ! is_string( $value['mac'] ) || ! preg_match( '/^[a-f0-9]{64}$/', $value['mac'] ) ||
+                $value['expires'] <= time() || $identity['root'] !== $value['root'] || $identity['path'] !== $value['path'] ) {
+                return false;
+            }
+
+            $secret = static::get_or_create_filename_secret();
+            if ( ! is_string( $secret ) || ! preg_match( '/^[a-f0-9]{64}$/', $secret ) ) {
+                return false;
+            }
+            $mac = hash_hmac( 'sha256', wp_json_encode( array( $value['version'], $value['root'], $value['path'], $value['expires'] ) ), $secret );
+            return hash_equals( $mac, $value['mac'] );
+        }
+
+        // Legacy links retain their transient expiry, but cannot outlive the upgrade drain.
+        if ( $upgrade_timestamp + 3 * HOUR_IN_SECONDS <= time() ||
+            ! isset( $value['sig'], $value['key_value'], $value['hash_key'] ) ||
+            ! is_string( $value['sig'] ) || ! is_string( $value['key_value'] ) || ! is_string( $value['hash_key'] ) ||
+            '' === $value['key_value'] || '' === $value['hash_key'] || md5( filesize( $file ) ) !== $value['sig'] ) {
+            return false;
+        }
+
+        $secure_key = get_site_transient( 'mainwp_fdl_' . wp_hash( $value['key_value'] ) );
+        return is_string( $secure_key ) && '' !== $secure_key && hash_equals( $secure_key, $value['hash_key'] );
+    }
+
+    /**
+     * Start the upgrade drain once, on the first signature issue or validation.
+     *
+     * @return int Upgrade timestamp.
+     */
+    private static function get_download_sig_upgrade_timestamp() {
+        add_option( 'mainwp_download_sig_upgrade_timestamp', time(), '', false );
+        return (int) get_option( 'mainwp_download_sig_upgrade_timestamp' );
+    }
+
+    /**
+     * Bind MainWP files to their resolved relative path, and custom files to an absolute path.
+     *
+     * @param string $file File path.
+     * @return array|false Root and path, or false for an unresolved file.
+     */
+    private static function get_download_file_identity( $file ) {
+        if ( ! is_string( $file ) || '' === $file || false !== strpos( $file, "\0" ) || ! is_file( $file ) ) {
+            return false;
+        }
+
+        // Backslash is a filename character on POSIX.
+        $normalize_separators = '\\' === DIRECTORY_SEPARATOR;
+
+        $file = $normalize_separators ? wp_normalize_path( $file ) : $file;
+        $dirs = static::get_mainwp_dir();
+        $root = trailingslashit( $normalize_separators ? wp_normalize_path( $dirs[0] ) : $dirs[0] );
+        if ( 0 === strpos( $file, $root ) ) {
+            return array(
+                'root' => 'mainwp',
+                'path' => substr( $file, strlen( $root ) ),
+            );
+        }
+
+        $absolute = realpath( $file );
+        if ( false === $absolute ) {
+            return false;
+        }
+        return array(
+            'root' => 'absolute',
+            'path' => $normalize_separators ? wp_normalize_path( $absolute ) : $absolute,
+        );
     }
 
     /**
@@ -1421,7 +1490,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $cached_icons[ $slug ] = $value;
 
         /**
-         * Filter the cached icons before they are saved.
+         * Filters the cached icons before they are saved.
          *
          * @since 5.4.0.18
          */

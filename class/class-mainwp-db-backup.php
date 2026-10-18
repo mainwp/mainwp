@@ -338,7 +338,10 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @return (object|null) Database query result for backup tasks for current user or null on failer.
      */
     public function get_backup_tasks( $userid = null, $orderBy = null ) {
-        // nosemgrep: AIK_tainted-sql-string -- Fixed table name, absint() user id, and every caller passes a fixed order column.
+        if ( null !== $orderBy ) {
+            $orderBy = static::validate_order_by( $orderBy, 'name' );
+        }
+        // nosemgrep: AIK_tainted-sql-string -- Order validated by validate_order_by(), fixed table name, user id converted with absint().
         return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE ' . ( null === $userid ? '' : 'userid= ' . absint( $userid ) . ' AND ' ) . ' template = 0 ' . ( null !== $orderBy ? 'ORDER BY ' . esc_sql( $orderBy ) : '' ), OBJECT );
     }
 

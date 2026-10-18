@@ -89,6 +89,9 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_RESTORE_DB_PERMS         = 'mainwp_restore_db_perms';
     const ERR_RESTORE_NATIVE_DISABLED  = 'mainwp_restore_native_backups_disabled';
 
+    // Restore create: the Child's answer for a restore cancelled before its task existed.
+    const ERR_RESTORE_CANCELLED_BEFORE_START = 'mainwp_restore_cancelled_before_start';
+
     // Restore staging.
     const ERR_RESTORE_DISK_FULL       = 'mainwp_restore_disk_full';
     const ERR_RESTORE_DECRYPT_CORRUPT = 'mainwp_restore_decrypt_corrupt';
@@ -96,8 +99,6 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
     // Restore apply.
     const ERR_RESTORE_TARGET_NOT_WRITABLE = 'mainwp_restore_target_not_writable';
-
-    const ERR_RESTORE_CANCELLED_BEFORE_START = 'mainwp_restore_cancelled_before_start';
 
     // WooCommerce preserve-orders gate. The same codes the child's
     // apply-phase gate emits, so an initiate-time refusal and a late

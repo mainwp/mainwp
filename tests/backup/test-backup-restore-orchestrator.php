@@ -60,6 +60,13 @@ class Cloud_Pull_Stub_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dri
 	public $remote_checks = 0;
 
 	/**
+	 * Runs during the artifact check, standing in for a save from another request.
+	 *
+	 * @var callable|null
+	 */
+	public $during_remote_check = null;
+
+	/**
 	 * Preserve the real artifact check while observing its ordering.
 	 *
 	 * @param array $plan Transfer plan.
@@ -67,6 +74,9 @@ class Cloud_Pull_Stub_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dri
 	 */
 	public function remote_artifacts_present( array $plan ): bool {
 		++$this->remote_checks;
+		if ( null !== $this->during_remote_check ) {
+			call_user_func( $this->during_remote_check );
+		}
 		return parent::remote_artifacts_present( $plan );
 	}
 
@@ -786,8 +796,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$store = MainWP_Backup_Restore_Job_Store::instance();
 		$job   = $this->make_job( array( 'options' => array( 'pre_snapshot' => true ) ), $store::STATUS_PREFLIGHT );
 		$reads = 0;
-		$flip  = static function () use ( &$reads ) {
-			return 1 === ++$reads ? 1 : 0;
+		// The orchestrator reads the stored toggle (still on); trigger_backup() reads it through get_option().
+		$flip = static function () use ( &$reads ) {
+			++$reads;
+			return 0;
 		};
 		add_filter( 'option_mainwp_enableNativeBackups', $flip );
 		try {
@@ -795,7 +807,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		} finally {
 			remove_filter( 'option_mainwp_enableNativeBackups', $flip );
 		}
-		$this->assertGreaterThanOrEqual( 2, $reads );
+		$this->assertGreaterThanOrEqual( 1, $reads );
 		$this->assert_native_disabled_failure( $store->get_job( (int) $job->id ) );
 		$this->assertSame( array(), $this->calls );
 	}
@@ -918,6 +930,80 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assert_native_disabled_failure( $store->get_job( (int) $job->id ) );
 		$this->assertSame( array( 'backup_task_run', 'backup_task_cancel' ), array_column( $this->calls, 'what' ) );
 		$this->assertSame( array( 'task_id' => 'disabled-safety' ), $this->calls[1]['params'] );
+	}
+
+	/**
+	 * A toggle saved while the last run request is in flight stops the restore before staging, and the finished safety backup is pruned.
+	 */
+	public function test_native_disabled_during_final_safety_backup_request_stops_before_staging() {
+		$store                                 = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                   = $this->make_owned_safety_job();
+		$this->responses['backup_task_run']    = array(
+			'task_id'   => 'disabled-safety',
+			'phase'     => 'completed',
+			'artifacts' => array(
+				array(
+					'role' => 'full',
+					'file' => 'full-site.zip',
+					'size' => 1024,
+				),
+			),
+		);
+		$this->responses['backup_task_cancel'] = array(
+			'result' => 'already_terminal',
+			'phase'  => 'completed',
+		);
+		$turn_off                              = static function ( $pre, $website, $what ) {
+			if ( 'backup_task_run' === $what ) {
+				global $wpdb;
+				$wpdb->update( $wpdb->options, array( 'option_value' => '0' ), array( 'option_name' => 'mainwp_enableNativeBackups' ) ); // phpcs:ignore WordPress.DB -- simulates a save from another request.
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $turn_off, 20, 3 );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $turn_off, 20 );
+		}
+		$job = $store->get_job( (int) $job->id );
+		$this->assert_native_disabled_failure( $job );
+		$this->assertArrayNotHasKey( 'pre_snapshot_artifacts', $job->checkpoint );
+		$this->assertSame( array( 'backup_task_run', 'backup_task_cancel', 'backup_task_prune' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'task_id' => 'disabled-safety' ), $this->calls[1]['params'] );
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+	}
+
+	/**
+	 * A toggle saved during the artifact check stops preflight before the safety backup or staging.
+	 *
+	 * @dataProvider native_disabled_artifact_check_cases
+	 * @param bool $safety Whether a safety backup was requested.
+	 */
+	public function test_native_disabled_during_artifact_check_stops_preflight( $safety ) {
+		$store                       = MainWP_Backup_Restore_Job_Store::instance();
+		$job                         = $this->make_job( array( 'options' => array( 'pre_snapshot' => $safety ) ), $store::STATUS_PREFLIGHT );
+		$driver                      = $this->use_cloud_pull_driver( null );
+		$driver->during_remote_check = static function () {
+			global $wpdb;
+			$wpdb->update( $wpdb->options, array( 'option_value' => '0' ), array( 'option_name' => 'mainwp_enableNativeBackups' ) ); // phpcs:ignore WordPress.DB -- simulates a save from another request.
+		};
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$this->assert_native_disabled_failure( $store->get_job( (int) $job->id ) );
+		$this->assertSame( 1, $driver->remote_checks );
+		$this->assertSame( array(), $this->calls );
+	}
+
+	/**
+	 * Both preflight exits.
+	 *
+	 * @return array
+	 */
+	public static function native_disabled_artifact_check_cases() {
+		return array(
+			'no safety backup' => array( false ),
+			'safety backup'    => array( true ),
+		);
 	}
 
 	/**

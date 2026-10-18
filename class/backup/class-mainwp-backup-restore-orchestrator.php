@@ -1141,6 +1141,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             return;
         }
 
+        // The artifact check can contact cloud storage for a while.
+        if ( $this->stopped_because_native_backups_are_off( $job ) ) {
+            return;
+        }
+
         if ( ! empty( $job->checkpoint['options']['pre_snapshot'] ) ) {
             try {
                 $task_id = MainWP_Backup_Executor::trigger_backup( (int) $job->site_id, 'full', (string) $job->id );
@@ -1303,6 +1308,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             }
 
             if ( 'completed' === $phase ) {
+                // The toggle can be turned off while the last run request is in flight.
+                // Failing before the artifacts are recorded lets the terminal path
+                // prune the finished safety backup.
+                if ( $this->stopped_because_native_backups_are_off( $job ) ) {
+                    return;
+                }
                 $artifacts = $this->safety_backup_artifacts( $payload, (string) $job->pre_snapshot_task_id );
                 if ( empty( $artifacts ) ) {
                     MainWP_Backup_Run_History::finalize_restore_safety( (int) $job->id, 'failed' );
@@ -1362,26 +1373,41 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
-     * Fail a restore that has not created its Child restore task once native backups are off.
+     * Fail a restore in preflight or pre-snapshot once native backups are off.
      *
-     * Later phases keep running: by then the Child may be changing the site.
+     * Staging and later phases keep running, as the restore cron lanes do.
      *
      * @param object $job Job row.
      *
      * @return bool Whether the toggle was off and the job was failed.
      */
     private function stopped_because_native_backups_are_off( object $job ): bool {
-        // Options stay cached for the whole request and a slice can poll for
-        // minutes, so a toggle saved by another request is read from the table.
-        wp_cache_delete( 'alloptions', 'options' );
-        wp_cache_delete( 'notoptions', 'options' );
-        wp_cache_delete( 'mainwp_enableNativeBackups', 'options' );
-        wp_cache_delete( 'mainwp_enableLegacyBackupFeature', 'options' );
-        if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
+        if ( self::native_backups_enabled_in_table() ) {
             return false;
         }
         $this->stop_restore_because_native_backups_are_off( $job );
         return true;
+    }
+
+    /**
+     * Read the native backups toggle from the options table.
+     *
+     * MainWP primes its options into the request's option cache and a slice can
+     * poll for minutes, so a toggle saved by another request would stay unseen.
+     * Clearing the cache instead would make every request reload it on sites
+     * with a persistent object cache. Same fallback as
+     * MainWP_Backup_Settings::is_native_backups_enabled().
+     *
+     * @return bool
+     */
+    private static function native_backups_enabled_in_table(): bool {
+        global $wpdb;
+        $rows  = $wpdb->get_results( $wpdb->prepare( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ( %s, %s )", 'mainwp_enableNativeBackups', 'mainwp_enableLegacyBackupFeature' ), OBJECT_K ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the cached value is what this read avoids.
+        $value = isset( $rows['mainwp_enableNativeBackups'] ) ? $rows['mainwp_enableNativeBackups']->option_value : null;
+        if ( null === $value ) {
+            $value = isset( $rows['mainwp_enableLegacyBackupFeature'] ) ? $rows['mainwp_enableLegacyBackupFeature']->option_value : '';
+        }
+        return ! empty( $value );
     }
 
     /**

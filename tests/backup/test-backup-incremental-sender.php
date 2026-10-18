@@ -4439,6 +4439,12 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 */
 	private function assert_error_flush_gap_is_not_adopted() {
 		global $wpdb;
+		$diag_dir = sys_get_temp_dir() . '/mainwp-error-flush-' . uniqid();
+		wp_mkdir_p( $diag_dir );
+		$diag_filter = static function () use ( $diag_dir ) {
+			return $diag_dir;
+		};
+		add_filter( 'mainwp_backup_diagnostics_dir', $diag_filter );
 		list( $site_id, $task ) = $this->arrange_manual_task( false );
 		$started                = time() - 10;
 		MainWP_DB_Backup::instance()->update_backup_task_with_values(
@@ -4485,9 +4491,24 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 			MainWP_Manage_Backups_Handler::execute_backup_task( $task, 5, false );
 			$this->assertTrue( $observed, 'The competing continuation must run after the terminal mark and before the error flush.' );
-			$this->assertNotEmpty( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->backup_errors );
+			$this->assertSame( '', MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->backup_errors );
+			$filename = \MainWP\Dashboard\MainWP_System_Utility::get_private_filename( \MainWP\Dashboard\MainWP_Backup_Diagnostics::SUBDIR, '_global', 'events' ) . '.jsonl';
+			$this->assertFileExists( $diag_dir . '/' . $filename );
+			$events = array_map( static fn( $line ) => json_decode( $line, true ), file( $diag_dir . '/' . $filename, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES ) );
+			$events = array_values( array_filter( $events, static fn( $event ) => 'error_append_refused' === $event['kind'] && (int) $task->id === $event['task_id'] && str_contains( $event['payload']['errors'], MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_MANIFEST_WALK_FAILED ) ) ) );
+			$this->assertCount( 1, $events );
+			$this->assertSame( $started, $events[0]['payload']['last_run'] );
+			$this->assertSame( 'closed', $events[0]['payload']['reason'] );
+			$this->assertTrue( MainWP_DB_Backup::instance()->claim_backup_run( $task->id, 0, $next_started ) );
+			MainWP_DB_Backup::instance()->clear_backup_errors( (int) $task->id, $next_started );
+			$this->assertSame( '', MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->backup_errors );
 		} finally {
 			remove_filter( 'query', $interleave );
+			remove_filter( 'mainwp_backup_diagnostics_dir', $diag_filter );
+			foreach ( glob( $diag_dir . '/*' ) as $file ) {
+				unlink( $file );
+			}
+			rmdir( $diag_dir );
 			delete_option( 'mainwp_backup_max_concurrent' );
 			delete_option( 'mainwp_backup_manual_settle_seconds' );
 		}

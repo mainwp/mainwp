@@ -1043,6 +1043,61 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * A repeated request keeps its original deadline and settled sites.
+     *
+     * @param int $task_id Scheduled task identity.
+     * @param int $run Identity shown to the user.
+     * @return array|\WP_Error AJAX result.
+     */
+    public static function cancel_task_run( int $task_id, int $run ) {
+        $task = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+        if ( is_wp_error( $task ) ) {
+            return $task;
+        }
+        if ( ! MainWP_Install::backup_task_run_cancel_ready() ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_NOT_STALLED, esc_html__( 'Cancel run is not available until the database update finishes.', 'mainwp' ) );
+        }
+        if ( $run !== (int) $task->last_run ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_NOT_STALLED, esc_html__( 'This run already ended.', 'mainwp' ) );
+        }
+        if ( (int) $task->completed >= (int) $task->last_run ) {
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_NOT_STALLED, esc_html__( 'This task is not currently running.', 'mainwp' ) );
+        }
+        if ( null === MainWP_Backup_Run_Cancel::pending_request( $task ) ) {
+            $now     = time();
+            $request = array(
+                'run'         => $run,
+                'requested'   => $now,
+                'deadline'    => $now + 1800,
+                'user'        => get_current_user_id(),
+                'lease'       => '',
+                'lease_until' => 0,
+                'settled'     => (object) array(),
+            );
+            if ( ! MainWP_DB_Backup::instance()->compare_and_swap_run_cancel( $task_id, $run, $task->run_cancel, (string) wp_json_encode( $request ) ) ) {
+                $current = self::authorize_task( $task_id, 'pause_resume_backup_tasks' );
+                if ( is_wp_error( $current ) ) {
+                    return $current;
+                }
+                if ( $run !== (int) $current->last_run || (int) $current->completed >= $run ) {
+                    return new \WP_Error( MainWP_Backup_Error_Codes::ERR_NOT_STALLED, esc_html__( 'This run already ended.', 'mainwp' ) );
+                }
+                if ( null === MainWP_Backup_Run_Cancel::pending_request( $current ) ) {
+                    return new \WP_Error( 'mainwp_operation_failed', self::safe_error( 'mainwp_operation_failed' )['message'] );
+                }
+            }
+        }
+        $pass = MainWP_Backup_Run_Cancel::process( $task_id, 'ajax' );
+        if ( 'closed' === $pass['status'] ) {
+            return array( 'result' => $pass['closed_as'] );
+        }
+        return array(
+            'result'  => 'cancelling',
+            'waiting' => $pass['waiting'],
+        );
+    }
+
+    /**
      * A stale Dashboard run can close even when its Child stop is unconfirmed.
      *
      * @param int $task_id Scheduled task identity.

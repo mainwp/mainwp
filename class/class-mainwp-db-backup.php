@@ -840,13 +840,16 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( empty( $previous ) ) {
             return false;
         }
-        $now = time();
+        $now          = time();
+        $cancel_ready = MainWP_Install::backup_task_run_cancel_ready();
+        $cancel_set   = $cancel_ready ? ', run_cancel = NULL' : '';
+        $cancel_guard = $cancel_ready ? " AND ( completed >= last_run OR run_cancel IS NULL OR run_cancel = '' )" : '';
 
         // Compare both stamps so GREATEST uses the close we read. A lost race refuses the claim.
         if ( (int) $grace_seconds <= 0 ) {
             $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the pause guard and run identity must be atomic with the claim.
                 $this->wpdb->prepare(
-                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1, last_run + 1 ), last = %d, completed_sites = '[]' WHERE id = %d AND paused = 0 AND last_run = %d AND completed = %d", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1, last_run + 1 ), last = %d, completed_sites = '[]'{$cancel_set} WHERE id = %d AND paused = 0 AND last_run = %d AND completed = %d{$cancel_guard}", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table and fixed readiness fragments; values use placeholders.
                     $now,
                     $now,
                     $id,
@@ -857,7 +860,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         } else {
             $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic claim gate; must hit the DB engine.
                 $this->wpdb->prepare(
-                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]' WHERE id = %d AND paused = 0 AND completed >= last_run AND ( completed < %d OR backup_errors <> '' ) AND last_run = %d AND completed = %d", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]'{$cancel_set} WHERE id = %d AND paused = 0 AND completed >= last_run AND ( completed < %d OR backup_errors <> '' ) AND last_run = %d AND completed = %d{$cancel_guard}", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table and fixed readiness fragments; values use placeholders.
                     $now,
                     $now,
                     $id,
@@ -903,29 +906,26 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     /**
      * Method update_backup_completed()
      *
-     * Close the open run by stamping completed, guarded so exactly one of
-     * several concurrent drivers reaching the close block wins. The winner
-     * owns the close side effects (the failure email); a repeat close of an
-     * already-closed run is a no-op, which is what lets backup_errors stay
-     * on the row for the on-demand poll to surface without the email firing
-     * again.
+     * Only the winner owns the close side effects and freezes the run's errors.
      *
      * @param mixed $id Task ID.
+     * @param int   $last_run Run identity captured by the driver.
      *
      * @return bool True when this call closed an open run.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public function update_backup_completed( $id ) {
+    public function update_backup_completed( $id, int $last_run ) {
         if ( ! MainWP_Utility::ctype_digit( $id ) ) {
             return false;
         }
 
         $closed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic close gate; must hit the DB engine.
             $this->wpdb->prepare(
-                'UPDATE ' . $this->table_name( 'wp_backup' ) . ' SET completed = GREATEST(%d, last_run) WHERE id = %d AND completed < last_run', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                'UPDATE ' . $this->table_name( 'wp_backup' ) . ' SET completed = GREATEST(%d, last_run) WHERE id = %d AND last_run = %d AND completed < last_run', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
                 time(),
-                $id
+                $id,
+                $last_run
             )
         );
 
@@ -1268,13 +1268,110 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             if ( '' === $errors ) {
                 return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'backup_errors' => '' ), array( 'id' => $id ) );
             } else {
-                $task = $this->get_backup_task_by_id( $id );
-
-                return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'backup_errors' => $task->backup_errors . $errors ), array( 'id' => $id ) );
+                return $this->wpdb->query(
+                    $this->wpdb->prepare(
+                        'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_errors = CONCAT( COALESCE( backup_errors, '' ), %s ) WHERE id = %d",
+                        $errors,
+                        $id
+                    )
+                );
             }
         }
 
         return false;
+    }
+
+    /**
+     * Late errors belong in diagnostics once the run can no longer accept them.
+     *
+     * @param int    $id Task identity.
+     * @param int    $last_run Run identity.
+     * @param string $errors Formatted errors.
+     * @return bool Whether the append landed.
+     */
+    public function append_backup_errors( int $id, int $last_run, string $errors ): bool {
+        $changed = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_errors = CONCAT( COALESCE( backup_errors, '' ), %s ) WHERE id = %d AND last_run = %d AND completed < last_run",
+                $errors,
+                $id,
+                $last_run
+            )
+        );
+        if ( 1 === $changed ) {
+            return true;
+        }
+        $task = $this->get_backup_task_by_id( $id );
+        if ( '' === $errors && $task && (int) $task->last_run === $last_run && (int) $task->completed < $last_run && false !== $changed ) {
+            return true;
+        }
+        $reason = ! $task ? 'missing' : ( (int) $task->last_run !== $last_run ? 'superseded' : 'closed' );
+        MainWP_Backup_Diagnostics::instance()->record(
+            '_global',
+            'error_append_refused',
+            0,
+            $id,
+            array(
+                'last_run' => $last_run,
+                'reason'   => $reason,
+                'errors'   => MainWP_Backup_Error_Codes::sanitize_message( $errors ),
+            )
+        );
+        return false;
+    }
+
+    /**
+     * A starter may clear only the identity it claimed.
+     *
+     * @param int $id Task identity.
+     * @param int $last_run Run identity.
+     * @return bool Whether errors were cleared.
+     */
+    public function clear_backup_errors( int $id, int $last_run ): bool {
+        return 1 === $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_errors = '' WHERE id = %d AND last_run = %d",
+                $id,
+                $last_run
+            )
+        );
+    }
+
+    /**
+     * Compare bytes because the table collation folds mixed-case lease tokens.
+     *
+     * @param int         $id Task identity.
+     * @param int         $last_run Run identity.
+     * @param string|null $expected Previously read bytes.
+     * @param string|null $replacement New bytes, or null to clear.
+     * @return bool Whether the state is persisted.
+     */
+    public function compare_and_swap_run_cancel( int $id, int $last_run, ?string $expected, ?string $replacement ): bool {
+        if ( ! MainWP_Install::backup_task_run_cancel_ready() ) {
+            return false;
+        }
+        $set   = null === $replacement ? 'NULL' : '%s';
+        $where = null === $expected ? 'run_cancel IS NULL' : 'BINARY run_cancel = %s';
+        $binds = null === $replacement ? array() : array( $replacement );
+        $binds = array_merge( $binds, array( $id, $last_run ) );
+        if ( null !== $expected ) {
+            $binds[] = $expected;
+        }
+        $changed = $this->wpdb->query(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- fixed fragments and their binds grow together.
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET run_cancel = {$set} WHERE id = %d AND last_run = %d AND {$where}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fragments; all values use placeholders.
+                $binds
+            )
+        );
+        if ( 0 !== $changed ) {
+            return 1 === $changed;
+        }
+        if ( $expected !== $replacement ) {
+            return false;
+        }
+        // A same-second lease renewal can write identical bytes.
+        $task = $this->get_backup_task_by_id( $id );
+        return $task && (int) $task->last_run === $last_run && $task->run_cancel === $replacement;
     }
 
     /**

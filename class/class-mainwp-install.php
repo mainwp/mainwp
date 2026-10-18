@@ -49,6 +49,9 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      */
     const BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING = 'mainwp_backup_task_last_continued_repair_pending';
 
+    /** Network-scoped so every blog sees a deferred column repair. */
+    const BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING = 'mainwp_backup_task_run_cancel_repair_pending';
+
     /**
      * Result writes need this column even after a failed migration stamps the version.
      *
@@ -117,7 +120,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
      *
      * @var string DB version info.
      */
-    protected $mainwp_db_version = '9.0.2.33'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
+    protected $mainwp_db_version = '9.0.2.34'; // NOSONAR - no IP. The native backups line numbers its migrations past main's 9.0.2.x line; where the two lines reused a number, the step checks table state instead of the version.
 
     /**
      * Protected variable to hold the database option name.
@@ -230,6 +233,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             $this->maybe_retry_backup_progress_unique_key();
             $this->maybe_retry_backup_snapshot_run_key();
             $this->maybe_retry_backup_task_last_continued();
+            $this->maybe_retry_backup_task_run_cancel();
             $this->maybe_retry_native_backup_tables();
             $this->maybe_retry_backup_snapshot_test_restore_result_at();
             $this->maybe_retry_backup_snapshot_removal_reason();
@@ -510,6 +514,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
   day_of_month tinyint(2) unsigned NOT NULL DEFAULT 1,
   next_run int(11) NOT NULL DEFAULT 0,
   last_continued int(11) NOT NULL DEFAULT 0,
+  run_cancel text NULL,
   retention_count int(11) NOT NULL DEFAULT 0,
   retention_days int(11) NOT NULL DEFAULT 0,
   retention_storage_mb int(11) NOT NULL DEFAULT 0,
@@ -948,6 +953,10 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
 
         if ( version_compare( $currentVersion, '9.0.2.26', '<' ) ) { // NOSONAR - none IP.
             $this->ensure_backup_snapshot_run_key();
+        }
+
+        if ( version_compare( $currentVersion, '9.0.2.34', '<' ) ) { // NOSONAR - no IP.
+            $this->ensure_backup_task_run_cancel();
         }
 
         if ( version_compare( $currentVersion, '9.0.2.27', '<' ) ) { // NOSONAR - none IP.
@@ -1833,6 +1842,43 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
     }
 
     /**
+     * Retry the column addition because dbDelta failures do not hold back the version stamp.
+     *
+     * @return bool Whether the column exists.
+     */
+    public function ensure_backup_task_run_cancel() {
+        $suppress = $this->wpdb->suppress_errors();
+        $table    = esc_sql( $this->table_name( 'wp_backup' ) );
+        $column   = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'run_cancel'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
+        $error    = '';
+
+        if ( empty( $column ) ) {
+            $this->wpdb->query( "ALTER TABLE {$table} ADD COLUMN run_cancel text NULL" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL; table escaped via esc_sql.
+            $error  = $this->wpdb->last_error;
+            $column = $this->wpdb->get_var( "SHOW COLUMNS FROM {$table} LIKE 'run_cancel'" ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table escaped via esc_sql.
+        }
+        $this->wpdb->suppress_errors( $suppress );
+
+        if ( empty( $column ) ) {
+            // Install runs before the mainwp_log_warning listeners are registered; use the logger directly.
+            MainWP_Logger::instance()->warning( sprintf( 'Backup task run_cancel repair deferred for %s: %s', $table, $error ) );
+            update_site_option( static::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING, time() );
+            return false;
+        }
+        delete_site_option( static::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+        return true;
+    }
+
+    /**
+     * Whether cancellation can use its persisted request column.
+     *
+     * @return bool Whether no schema repair is pending.
+     */
+    public static function backup_task_run_cancel_ready(): bool {
+        return ! get_site_option( static::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+    }
+
+    /**
      * Whether restore job writes can use the checkpoint revision column.
      *
      * @return bool Whether no schema repair is pending.
@@ -1850,6 +1896,18 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
         $pending = (int) get_site_option( static::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
         if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
             $this->ensure_backup_task_last_continued();
+        }
+    }
+
+    /**
+     * Avoid retrying denied ALTER statements on every request.
+     *
+     * @return void
+     */
+    public function maybe_retry_backup_task_run_cancel() {
+        $pending = (int) get_site_option( static::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+        if ( $pending && time() - $pending >= HOUR_IN_SECONDS ) {
+            $this->ensure_backup_task_run_cancel();
         }
     }
 

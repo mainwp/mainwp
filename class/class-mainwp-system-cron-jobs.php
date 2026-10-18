@@ -1560,6 +1560,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
     public function cron_backups_continue() {
+        MainWP_Backup_Run_Cancel::process_pending( 'cron' );
         $started = microtime( true );
 
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {

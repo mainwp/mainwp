@@ -271,7 +271,7 @@ class MainWP_Backup_Run_Claim_Test extends MainWP_Abilities_Test_Case {
 
 		$fresh = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertGreaterThan( (int) $fresh->completed, (int) $fresh->last_run, 'A reclaim must land strictly after the previous close.' );
-		$this->assertTrue( MainWP_DB_Backup::instance()->update_backup_completed( (int) $task->id ), 'The reopened run must be closable.' );
+		$this->assertTrue( MainWP_DB_Backup::instance()->update_backup_completed( (int) $task->id, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id )->last_run ), 'The reopened run must be closable.' );
 	}
 
 	/**

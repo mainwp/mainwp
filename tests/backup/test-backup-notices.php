@@ -627,6 +627,15 @@ class MainWP_Backup_Notices_Test extends MainWP_Abilities_Test_Case {
 		$site_id = $this->create_test_site();
 		$task    = $this->create_task_row( $site_id );
 
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'  => time(),
+				'completed' => 0,
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+
 		$this->mock_child_actions(
 			array(
 				'backup_preflight'   => $this->preflight_response( array( 'estimated_bytes' => 3 * GB_IN_BYTES ) ),

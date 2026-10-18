@@ -239,6 +239,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			'day_of_month'         => 'tinyint(2) unsigned NOT NULL DEFAULT 1',
 			'next_run'             => 'int(11) NOT NULL DEFAULT 0',
 			'last_continued'       => 'int(11) NOT NULL DEFAULT 0',
+			'run_cancel'           => 'text NULL',
 			'retention_count'      => 'int(11) NOT NULL DEFAULT 0',
 			'retention_days'       => 'int(11) NOT NULL DEFAULT 0',
 			'retention_storage_mb' => 'int(11) NOT NULL DEFAULT 0',
@@ -479,7 +480,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $legacy_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test probe.
 		$this->assertNotNull( $row );
 		$this->assertNull( $row->run_key );
-		$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 		$this->assertFalse( get_site_option( MainWP_Install::BACKUP_SNAPSHOT_RUN_KEY_REPAIR_PENDING ) );
 		$wpdb->delete( $table, array( 'id' => $legacy_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- DDL committed this fixture.
 	}
@@ -1082,7 +1083,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
 		$pending = get_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING );
 		try {
-			update_site_option( 'mainwp_db_version', '9.0.2.33' );
+			update_site_option( 'mainwp_db_version', '9.0.2.34' );
 			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN last_continued" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
 			$marked = time() - 60;
 			update_site_option( MainWP_Install::BACKUP_TASK_LAST_CONTINUED_REPAIR_PENDING, $marked );
@@ -1188,6 +1189,182 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			$this->column_exists( $table, 'last_continued' ),
 			'Upgrade must add last_continued to existing installs; the shipped db version needs a bump or dbDelta never runs.'
 		);
+	}
+
+	/**
+	 * A failed dbDelta column addition must remain repairable after the version stamp.
+	 *
+	 * @return void
+	 */
+	public function test_ensure_run_cancel_repairs_missing_column() {
+		global $wpdb;
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$pending = get_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+		try {
+			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN run_cancel" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+			update_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING, time() );
+
+			$this->assertTrue( MainWP_Install::instance()->ensure_backup_task_run_cancel() );
+			$this->assertTrue( $this->column_exists( $table, 'run_cancel' ) );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING ) );
+		} finally {
+			MainWP_Install::instance()->ensure_backup_task_run_cancel();
+			if ( false === $pending ) {
+				delete_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+			} else {
+				update_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING, $pending );
+			}
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * Current-version installs must retry an overdue repair without retrying every request.
+	 *
+	 * @return void
+	 */
+	public function test_stale_run_cancel_marker_repairs_current_install() {
+		global $wpdb;
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$pending = get_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+		try {
+			update_site_option( 'mainwp_db_version', '9.0.2.34' );
+			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN run_cancel" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$marked = time() - 60;
+			update_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING, $marked );
+
+			MainWP_Install::instance()->install();
+
+			$this->assertFalse( $this->column_exists( $table, 'run_cancel' ) );
+			$this->assertSame( $marked, (int) get_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING ) );
+			update_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING, time() - HOUR_IN_SECONDS - 1 );
+
+			MainWP_Install::instance()->install();
+
+			$this->assertTrue( $this->column_exists( $table, 'run_cancel' ) );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING ) );
+		} finally {
+			MainWP_Install::instance()->ensure_backup_task_run_cancel();
+			if ( false === $pending ) {
+				delete_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+			} else {
+				update_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING, $pending );
+			}
+			if ( false === $this->saved_db_version ) {
+				delete_site_option( 'mainwp_db_version' );
+			} else {
+				update_site_option( 'mainwp_db_version', $this->saved_db_version );
+			}
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * A failed ALTER must leave an hourly repair marker even after the version is current.
+	 *
+	 * @return void
+	 */
+	public function test_failed_run_cancel_alter_marks_pending() {
+		global $wpdb;
+		$table      = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$pending    = get_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+		$skip_alter = static function ( $sql ) use ( $table ) {
+			return "ALTER TABLE {$table} ADD COLUMN run_cancel text NULL" === $sql ? 'SELECT mainwp_run_cancel_forced_failure' : $sql;
+		};
+		$logger     = MainWP_Logger::instance();
+		$priority   = new \ReflectionProperty( $logger, 'logPriority' );
+		$priority->setAccessible( true );
+		$previous = $priority->getValue( $logger );
+		$priority->setValue( $logger, MainWP_Logger::WARNING );
+		$messages = array();
+		$capture  = static function ( $text ) use ( &$messages ) {
+			$messages[] = $text;
+		};
+		add_filter( 'mainwp_log_do_to_db', '__return_true' );
+		add_action( 'mainwp_before_log_data', $capture );
+		add_filter( 'query', $skip_alter );
+		try {
+			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN run_cancel" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture.
+			$this->assertFalse( MainWP_Install::instance()->ensure_backup_task_run_cancel() );
+			$this->assertCount( 1, $messages );
+			$this->assertFalse( $this->column_exists( $table, 'run_cancel' ) );
+			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING ) );
+			remove_filter( 'query', $skip_alter );
+			$this->assertTrue( MainWP_Install::instance()->ensure_backup_task_run_cancel() );
+			$this->assertFalse( get_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING ) );
+		} finally {
+			remove_filter( 'query', $skip_alter );
+			remove_action( 'mainwp_before_log_data', $capture );
+			remove_filter( 'mainwp_log_do_to_db', '__return_true' );
+			$priority->setValue( $logger, $previous );
+			MainWP_Install::instance()->ensure_backup_task_run_cancel();
+			foreach ( $messages as $message ) {
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+				$wpdb->delete( MainWP_DB::instance()->get_table_name( 'action_log' ), array( 'log_content' => 'CRON :: ' . $message ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+			}
+			if ( false === $pending ) {
+				delete_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+			} else {
+				update_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING, $pending );
+			}
+			self::commit_transaction();
+		}
+	}
+
+	/**
+	 * Cancellation needs a persisted request on both fresh and upgraded installs.
+	 *
+	 * @return void
+	 */
+	public function test_upgrade_adds_run_cancel_column_to_backup_task_table() {
+		global $wpdb;
+
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$this->assertTrue( $this->column_exists( $table, 'run_cancel' ), 'Precondition: fresh install has run_cancel.' );
+
+		$wpdb->query( "ALTER TABLE {$table} DROP COLUMN run_cancel" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery -- test fixture, identifiers cannot be prepared.
+		$this->assertFalse( $this->column_exists( $table, 'run_cancel' ), 'Precondition: column dropped to simulate an older install.' );
+
+		update_site_option( 'mainwp_db_version', '9.0.2.33' );
+
+		MainWP_Install::instance()->install();
+
+		$this->assertTrue(
+			$this->column_exists( $table, 'run_cancel' ),
+			'Upgrade must add run_cancel to existing installs; the shipped db version needs a bump or dbDelta never runs.'
+		);
+	}
+
+	/** Missing cancellation storage leaves legacy claims usable without unknown-column SQL. */
+	public function test_missing_run_cancel_column_gates_claims_and_cancel_step() {
+		global $wpdb;
+		$db      = MainWP_DB_Backup::instance();
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$pending = get_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+		$task    = $db->add_backup_task( 1, 'Missing cancel column', 'daily', 'full', '', '', '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		try {
+			$wpdb->query( "ALTER TABLE {$table} DROP COLUMN run_cancel" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- DDL fixture.
+			update_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING, time() );
+			$this->assertFalse( MainWP_Install::backup_task_run_cancel_ready() );
+			$this->assertTrue( $db->claim_backup_run( $task->id, 0, $started ) );
+			$this->assertSame( '', $wpdb->last_error );
+			$this->assertTrue( $db->update_backup_completed( $task->id, $started ) );
+			$db->update_backup_errors( $task->id, 'retry' );
+			$this->assertTrue( $db->claim_backup_run( $task->id, 15 ) );
+			$this->assertSame( 'none', \MainWP\Dashboard\MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+			\MainWP\Dashboard\MainWP_Backup_Run_Cancel::process_pending( 'cron' );
+			$this->assertSame( '', $wpdb->last_error );
+		} finally {
+			MainWP_Install::instance()->ensure_backup_task_run_cancel();
+			$db->remove_backup_task( $task->id );
+			if ( false === $pending ) {
+				delete_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING );
+			} else {
+				update_site_option( MainWP_Install::BACKUP_TASK_RUN_CANCEL_REPAIR_PENDING, $pending );
+			}
+			self::commit_transaction();
+		}
 	}
 
 	/**
@@ -1355,7 +1532,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		MainWP_Install::instance()->install();
 
 		$this->assertTrue( $this->column_exists( $table, 'checkpoint_rev' ), 'Upgrade from 9.0.2.30 must add checkpoint_rev.' );
-		$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 
 		update_site_option( 'mainwp_db_version', '9.0.2.30' );
 		MainWP_Install::instance()->install();
@@ -1830,7 +2007,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $this->column_exists( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), 'removal_reason' ) );
 		$this->assertTrue( $this->column_exists( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), 'child_prune_confirmed_at' ) );
 		$this->assertTrue( $this->column_exists( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), 'child_prune_attempts' ) );
-		$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
+		$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ), 'Fresh install must preserve the merged native-backups db version.' );
 
 		$property = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
 		$property->setAccessible( true );
@@ -1878,7 +2055,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		);
 
 		$this->assertSame( array( 'repair_backup_progress_index', 'repair_backup_progress_index' ), $installer->calls );
-		$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 	}
 
 	/**
@@ -1928,7 +2105,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$saved_pending = get_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING );
 
 		try {
-			update_site_option( 'mainwp_db_version', '9.0.2.33' );
+			update_site_option( 'mainwp_db_version', '9.0.2.34' );
 			update_site_option( MainWP_Install::BACKUP_PROGRESS_INDEX_REPAIR_PENDING, time() - 2 * HOUR_IN_SECONDS );
 			$installer->install();
 
@@ -2799,7 +2976,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			MainWP_Install::instance()->install();
 
 			$this->assertSame( 1, (int) get_option( 'mainwp_enableNativeBackups' ) );
-			$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+			$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 		} finally {
 			// install()'s DDL committed both flags as enabled, and tear_down's
 			// restore would be rolled back with the test transaction, leaving
@@ -2874,7 +3051,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->with_real_tables(
 			function () use ( $wpdb, $table ) {
 				$wpdb->query( "DROP TABLE {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery, WordPress.DB.RestrictedFunctions -- test fixture, identifiers cannot be prepared.
-				update_site_option( 'mainwp_db_version', '9.0.2.33' );
+				update_site_option( 'mainwp_db_version', '9.0.2.34' );
 
 				$checked = time() - 60;
 				update_site_option( MainWP_Install::NATIVE_BACKUP_TABLES_CHECKED, $checked );
@@ -2952,7 +3129,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		update_site_option( 'mainwp_db_version', '9.0.2.28' );
 		MainWP_Install::instance()->install();
 		$this->assertTrue( $this->column_exists( $table, 'test_restore_result_at' ), 'Upgrading 9.0.2.28 must add the result timestamp.' );
-		$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 	}
 
 	/**
@@ -2991,7 +3168,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			MainWP_Install::instance()->install();
 			$this->assertGreaterThan( 0, $blocked, 'The upgrade must attempt the denied column addition.' );
 			$this->assertFalse( $this->column_exists( $table, 'test_restore_result_at' ) );
-			$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+			$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( $marker ), 'The failed column addition must arm a repair marker.' );
 			remove_filter( 'query', $deny );
 			MainWP_Install::instance()->install();
@@ -3047,7 +3224,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			MainWP_Install::instance()->install();
 			$this->assertGreaterThan( 0, $blocked, 'The upgrade must attempt the denied column addition.' );
 			$this->assertFalse( $this->column_exists( $table, 'checkpoint_rev' ) );
-			$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+			$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( $marker ), 'The failed column addition must arm a repair marker.' );
 			$this->assertFalse( MainWP_Install::backup_restore_job_checkpoint_rev_ready(), 'Restores must stay paused while the repair is pending.' );
 			remove_filter( 'query', $deny );
@@ -3094,7 +3271,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			}
 		);
 		$this->assertTrue( $this->table_exists( $table ) );
-		$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+		$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 		$this->assertSame( array( 'id' ), $this->index_columns( $table, 'PRIMARY' ) );
 		$this->assertSame( array( 'task_id', 'site_id', 'started' ), $this->index_columns( $table, 'idx_task_site_started' ) );
 		$this->assertSame( array( 'site_id', 'finished' ), $this->index_columns( $table, 'idx_site_finished' ) );
@@ -3125,7 +3302,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			update_site_option( 'mainwp_db_version', '9.0.2.31' );
 			MainWP_Install::instance()->install();
 			$this->assertTrue( $this->column_exists( $table, 'removal_reason' ) );
-			$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+			$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 			$this->assertTrue( MainWP_Install::backup_snapshot_removal_reason_ready() );
 			foreach ( $ids as $index => $id ) {
 				$row = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
@@ -3166,7 +3343,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			MainWP_Install::instance()->install();
 			$this->assertGreaterThan( 0, $blocked );
 			$this->assertFalse( $this->column_exists( $table, 'removal_reason' ) );
-			$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+			$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 			$this->assertFalse( MainWP_Install::backup_snapshot_removal_reason_ready() );
 			$this->assertGreaterThanOrEqual( time() - 5, (int) get_site_option( $marker ) );
 			$this->assertNotFalse(
@@ -3258,7 +3435,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			}
 			update_site_option( 'mainwp_db_version', '9.0.2.32' );
 			MainWP_Install::instance()->install();
-			$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+			$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 			$this->assertTrue( MainWP_Install::backup_snapshot_child_prune_ready() );
 			$this->assertFalse( get_site_option( $marker ) );
 			foreach ( $ids as $index => $id ) {
@@ -3326,7 +3503,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 			add_filter( 'query', $deny );
 			MainWP_Install::instance()->install();
 			$this->assertGreaterThan( 0, $blocked );
-			$this->assertSame( '9.0.2.33', get_site_option( 'mainwp_db_version' ) );
+			$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
 			$this->assertFalse( $this->column_exists( $table, $failed ) );
 			$this->assertTrue( $this->column_exists( $table, $other ) );
 			$this->assertFalse( MainWP_Install::backup_snapshot_child_prune_ready() );

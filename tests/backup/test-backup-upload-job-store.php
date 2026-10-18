@@ -21,6 +21,74 @@ use MainWP\Dashboard\MainWP_DB;
 class MainWP_Backup_Upload_Job_Store_Test extends \WP_UnitTestCase {
 
 	/**
+	 * Equality belongs to the holder; one second past expiry belongs to the next worker.
+	 *
+	 * @return array Lease boundary offsets.
+	 */
+	public static function retry_lease_boundaries() {
+		return array(
+			'equal'   => array( 0 ),
+			'expired' => array( -1 ),
+		);
+	}
+
+	/**
+	 * An expired retry leaves every column available for reclamation.
+	 *
+	 * @dataProvider retry_lease_boundaries
+	 * @param int $offset Lease deadline relative to the store clock.
+	 */
+	public function test_retryable_write_requires_live_lease_at_clock_boundary( int $offset ) {
+		global $wpdb;
+		$now = time();
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $now;
+		try {
+			$store = MainWP_Backup_Upload_Job_Store::instance();
+			$store->enqueue_for_snapshot( 98201, array( 7 ) );
+			$job = $store->acquire_next_job( 'old-holder', 300 );
+			$this->assertNotNull( $job );
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'locked_until' => $now + $offset ), array( 'id' => $job->id ) );
+			$before = $store->get_job( (int) $job->id );
+			$this->assertSame( 0 === $offset, $store->fail_retryable( (int) $job->id, 'retry', $now + 60, 'old-holder' ) );
+			if ( $offset < 0 ) {
+				$this->assertEquals( $before, $store->get_job( (int) $job->id ) );
+				$next = $store->acquire_next_job( 'next-holder', 300 );
+				$this->assertNotNull( $next );
+				$this->assertSame( (int) $job->id, (int) $next->id );
+				$this->assertSame( 'next-holder', $next->locked_by );
+			} else {
+				$this->assertSame( $store::STATUS_FAILED_RETRYABLE, $store->get_job( (int) $job->id )->status );
+			}
+		} finally {
+			MainWP_Backup_Incremental_Sender_Test::$fixed_time = null;
+		}
+	}
+
+	/** The zero-row fallback still requires the same token and a live lease. */
+	public function test_retryable_same_second_zero_row_fallback() {
+		global $wpdb;
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( 98202, array( 7 ) );
+		$job = $store->acquire_next_job( 'same-second', 300 );
+		$this->assertNotNull( $job );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$noop  = static function ( $sql ) use ( $wpdb, $table, $job ) {
+			if ( str_contains( $sql, 'attempt_count = attempt_count + 1' ) ) {
+				return $wpdb->prepare( 'UPDATE ' . $table . ' SET locked_until = locked_until WHERE id = %d', $job->id );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $noop );
+		try {
+			$this->assertTrue( $store->fail_retryable( (int) $job->id, 'retry', time() + 60, 'same-second' ) );
+			$wpdb->update( $table, array( 'locked_until' => time() - 10 ), array( 'id' => $job->id ) );
+			$this->assertFalse( $store->fail_retryable( (int) $job->id, 'retry', time() + 60, 'same-second' ) );
+		} finally {
+			remove_filter( 'query', $noop );
+		}
+	}
+
+	/**
 	 * Expiry fences progress even before another worker reclaims the token.
 	 *
 	 * @dataProvider fenced_lease_states

@@ -552,18 +552,20 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
      *              refused it because the lease was lost.
      */
     public function fail_retryable( int $job_id, string $error, int $next_retry_at, ?string $lock_token = null ): bool {
+        $now   = time();
         $fence = '';
         $binds = array(
             static::STATUS_FAILED_RETRYABLE,
             $next_retry_at,
             $error,
             '',
-            time(),
+            $now,
             $job_id,
         );
         if ( null !== $lock_token ) {
-            $fence   = ' AND locked_by = %s';
+            $fence   = ' AND locked_by = %s AND locked_until >= %d';
             $binds[] = $lock_token;
+            $binds[] = $now;
         }
 
         $changed = $this->wpdb->query(
@@ -574,10 +576,18 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
             )
         );
 
-        // attempt_count always increments, so a landed write is never
-        // reported as zero affected rows; only a fenced refusal (or a
-        // missing row) is.
-        return 1 === $changed;
+        if ( 1 === $changed ) {
+            return true;
+        }
+        if ( false === $changed || null === $lock_token ) {
+            return false;
+        }
+
+        // An unchanged same-second write succeeds only while the lease is live.
+        $holder = $this->wpdb->get_row(
+            $this->wpdb->prepare( 'SELECT locked_by, locked_until FROM ' . $this->table() . ' WHERE id = %d', $job_id )
+        );
+        return null !== $holder && $holder->locked_by === $lock_token && (int) $holder->locked_until >= $now;
     }
 
     /**

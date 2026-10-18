@@ -660,13 +660,13 @@ class MainWP_Backup_Mark_Close_Guard_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 
-		$first = MainWP_DB_Backup::instance()->update_backup_completed( $task->id );
+		$first = MainWP_DB_Backup::instance()->update_backup_completed( $task->id, (int) $task->last_run );
 		$this->assertTrue( $first, 'The first call against an open run must win the close.' );
 
 		$closed = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertGreaterThanOrEqual( (int) $closed->last_run, (int) $closed->completed, 'A won close must stamp completed at or past last_run.' );
 
-		$second = MainWP_DB_Backup::instance()->update_backup_completed( $task->id );
+		$second = MainWP_DB_Backup::instance()->update_backup_completed( $task->id, (int) $task->last_run );
 		$this->assertFalse( $second, 'A second call against an already-closed run must not report a win.' );
 	}
 
@@ -683,10 +683,10 @@ class MainWP_Backup_Mark_Close_Guard_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 
-		$this->assertTrue( MainWP_DB_Backup::instance()->update_backup_completed( $task->id ) );
+		$this->assertTrue( MainWP_DB_Backup::instance()->update_backup_completed( $task->id, (int) $task->last_run ) );
 		$closed = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$this->assertSame( (int) $closed->last_run, (int) $closed->completed, 'The close must reach last_run even when the local clock is behind.' );
-		$this->assertFalse( MainWP_DB_Backup::instance()->update_backup_completed( $task->id ), 'The same run cannot close twice.' );
+		$this->assertFalse( MainWP_DB_Backup::instance()->update_backup_completed( $task->id, (int) $task->last_run ), 'The same run cannot close twice.' );
 	}
 
 	/**

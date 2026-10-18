@@ -783,6 +783,16 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Slot lost mid-request task', 'manual', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
 
+		// Errors are appended only to an open run.
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'  => time(),
+				'completed' => 0,
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+
 		// A child task already created and not yet consumed, so the one
 		// round trip this run makes is the slice call answered below.
 		MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, $site_id, array() );
@@ -881,6 +891,15 @@ class MainWP_Backup_Slot_Lease_Test extends MainWP_Abilities_Test_Case {
 		);
 		$task    = MainWP_DB_Backup::instance()->add_backup_task( $user, 'Slot lost after create task', 'manual', 'full', '', (string) $site_id, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 		$this->assertNotFalse( $task, 'Precondition: the task row must insert.' );
+
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'  => time(),
+				'completed' => 0,
+			)
+		);
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 
 		return array( (int) $site_id, $task );
 	}

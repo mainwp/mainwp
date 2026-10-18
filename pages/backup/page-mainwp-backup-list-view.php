@@ -455,6 +455,16 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $elapsed_seconds = time() - (int) $item->last_run;
             $elapsed_label   = $this->format_elapsed_time( $elapsed_seconds );
 
+            // A recorded cancel replaces the action: the request is already
+            // bound to this run, and a second click would only add a pass.
+            $cancel_pending = MainWP_Backup_Run_Cancel::pending_request( $item );
+            $cancel_action  = '';
+            if ( null !== $cancel_pending ) {
+                $cancel_action = '<br /><strong>' . esc_html__( 'Cancelling', 'mainwp' ) . ':</strong> ' . esc_html__( 'Waiting for the sites to confirm they stopped (up to 30 minutes).', 'mainwp' );
+            } elseif ( MainWP_Install::backup_task_run_cancel_ready() && \mainwp_current_user_can( 'dashboard', 'pause_resume_backup_tasks' ) ) {
+                $cancel_action = ' | <a href="#" class="mainwp-native-backup-task-cancel-run" task_id="' . (int) $item->id . '" run="' . (int) $item->last_run . '" onClick="return managebackups_cancel_run(this);">' . esc_html__( 'Cancel run', 'mainwp' ) . '</a>';
+            }
+
             if ( $elapsed_seconds > MainWP_Backup_Executor::STALL_THRESHOLD_SECONDS ) {
                 $output .= '<br /><strong>' . esc_html__( 'Stale', 'mainwp' ) . ':</strong> '
                     . sprintf(
@@ -462,7 +472,8 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         esc_html__( 'Running for %s. May be stuck.', 'mainwp' ),
                         esc_html( $elapsed_label )
                     )
-                    . ' <a href="#" class="mainwp-native-backup-task-reset" task_id="' . (int) $item->id . '" onClick="return managebackups_reset_stale(this);">' . esc_html__( 'Reset', 'mainwp' ) . '</a>';
+                    . ' <a href="#" class="mainwp-native-backup-task-reset" task_id="' . (int) $item->id . '" onClick="return managebackups_reset_stale(this);">' . esc_html__( 'Reset', 'mainwp' ) . '</a>'
+                    . $cancel_action;
             } else {
                 $output .= '<br /><strong>' . esc_html__( 'Currently running', 'mainwp' ) . ':</strong> '
                     . count( $completed_sites ) . '/' . count( $item->the_sites )
@@ -470,7 +481,8 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         /* translators: %s: elapsed time since the run started, e.g. "12m". */
                         esc_html__( 'running for %s', 'mainwp' ),
                         esc_html( $elapsed_label )
-                    ) . ')';
+                    ) . ')'
+                    . $cancel_action;
             }
         }
 

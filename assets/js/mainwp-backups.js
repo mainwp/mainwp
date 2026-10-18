@@ -968,6 +968,50 @@ managebackups_reset_stale = function (element) {
     return false;
 };
 
+// The handler records the cancel and runs one pass at once, so a run with no
+// site in flight is already closed in the answer; otherwise the sites still
+// have to confirm on a later pass and the row shows the pending state.
+managebackups_cancel_run_message = function (response) {
+    if (response.error != undefined) {
+        return { text: response.error, color: 'red' };
+    }
+    if ('cancelled' === response.result) {
+        return { text: MainWP.I18n.t('Run cancelled.'), color: 'green' };
+    }
+    if ('not_confirmed' === response.result) {
+        return { text: MainWP.I18n.t('Run cancelled. Some sites did not confirm they stopped. See the task\'s Last run notes.'), color: 'yellow' };
+    }
+    let waiting = response.waiting != undefined ? response.waiting : 0;
+    if (waiting < 1) {
+        return { text: MainWP.I18n.t('Cancel requested. Waiting for the run to close.'), color: 'yellow' };
+    }
+    return { text: MainWP.I18n.t('Cancel requested. Waiting for %1 site(s) to confirm they stopped.', waiting), color: 'yellow' };
+};
+managebackups_cancel_run = function (element) {
+    let id = jQuery(element).attr('task_id');
+    let run = jQuery(element).attr('run');
+
+    mainwp_confirm(MainWP.I18n.t('Cancel this backup run? No new sites will start, sites backing up now are asked to stop, and finished sites keep their backups. The schedule does not change.'), function () {
+        let data = mainwp_secure_data({
+            action: 'mainwp_native_backup_task_cancel_run',
+            task_id: id,
+            run: run
+        });
+        jQuery.post(ajaxurl, data, function (response) {
+            let message = managebackups_cancel_run_message(response);
+            managebackups_show_message(message.text, message.color);
+            if ('red' === message.color) {
+                return;
+            }
+            setTimeout(function () {
+                location.reload();
+            }, 'green' === message.color ? 1500 : 5000);
+        }, 'json');
+    });
+
+    return false;
+};
+
 
 jQuery(document).on('click', '#updatesoverview-backup-ignore', function () {
     if (updatesoverviewContinueAfterBackup != undefined) {

@@ -74,6 +74,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             $this->add_action( 'mainwp_pausebackup', array( &$this, 'mainwp_pausebackup' ) );
             $this->add_action( 'mainwp_resumebackup', array( &$this, 'mainwp_resumebackup' ) );
             $this->add_action( 'mainwp_native_backup_task_reset', array( &$this, 'mainwp_native_backup_task_reset' ) );
+            $this->add_action( 'mainwp_native_backup_task_cancel_run', array( &$this, 'mainwp_native_backup_task_cancel_run' ) );
         }
         if ( \mainwp_current_user_can( 'dashboard', 'run_backup_tasks' ) ) {
             $this->add_action( 'mainwp_backuptask_run_now', array( &$this, 'mainwp_backuptask_run_now' ) );
@@ -818,6 +819,17 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         }
         unset( $response['sites_uncancelled'] );
         wp_send_json( $response );
+    }
+
+    /**
+     * Stop the run identity shown by the task list.
+     */
+    public function mainwp_native_backup_task_cancel_run() {
+        $this->secure_request( 'mainwp_native_backup_task_cancel_run' );
+        $task_id = isset( $_POST['task_id'] ) ? absint( $_POST['task_id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $run     = isset( $_POST['run'] ) ? absint( $_POST['run'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+        $reply   = MainWP_Backup_Operations::cancel_task_run( $task_id, $run );
+        wp_send_json( is_wp_error( $reply ) ? array( 'error' => $reply->get_error_message() ) : $reply );
     }
 
     /**

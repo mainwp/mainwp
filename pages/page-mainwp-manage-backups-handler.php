@@ -375,6 +375,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         if ( empty( $task ) || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'error' => esc_html__( 'Insufficient permissions. Is this task set by you?', 'mainwp' ) );
         }
+        if ( ! empty( $task->run_cancel ) ) {
+            MainWP_Backup_Run_Cancel::process( $task_id, 'status' );
+            $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
+        }
         $error = static::manual_task_start_error( $task );
         if ( '' !== $error ) {
             return array( 'error' => $error );
@@ -1202,6 +1206,17 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
 
         if ( $updateRun ) {
             $previous = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+            // A run with a pending cancel is never re-claimed: the starter drives
+            // the cancel instead, so its deadline close still frees the schedule.
+            if ( $previous && ! empty( $previous->run_cancel ) ) {
+                $pending = MainWP_Backup_Run_Cancel::pending_request( $previous );
+                MainWP_Backup_Run_Cancel::process( (int) $task->id, 'starter' );
+                if ( null !== $pending ) {
+                    $claimed = false;
+                    return false;
+                }
+                $previous = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+            }
             if ( $previous && (int) $previous->last_run > 0 && (int) $previous->completed >= (int) $previous->last_run ) {
                 // Pollers can adopt scheduled runs too; every closed result must survive the next claim clearing progress and errors.
                 $saved = array(
@@ -1216,11 +1231,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                         $saved['snapshots'][ $site_id ] = $snapshot;
                     }
                 }
-                // The re-read row is authoritative and is what gets saved. A driver
-                // that lost its lease can still flush its errors after another driver
-                // stamped the close, so gating on the error and notice text saved
-                // nothing at all in exactly that race and a later poll read
-                // run_not_found instead of the errors. Only the run identity gates.
+                // The close freezes accepted errors; re-read after it to retain every accepted append.
                 $current = MainWP_DB_Backup::instance()->get_backup_task_by_id( $previous->id );
                 if ( $current && (int) $current->last_run === (int) $previous->last_run && (int) $current->completed >= (int) $current->last_run ) {
                     $saved['task'] = $current;
@@ -1267,7 +1278,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             // Continue-loop ticks pass $updateRun = false, so per-site errors
             // accumulated earlier in the same run are preserved. Notices follow
             // the same lifecycle: they describe the latest run only.
-            MainWP_DB_Backup::instance()->update_backup_errors( $task->id, '' );
+            MainWP_DB_Backup::instance()->clear_backup_errors( (int) $task->id, $claimed_started );
             MainWP_DB_Backup::instance()->update_backup_notices( $task->id, '' );
         }
 
@@ -1406,7 +1417,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $subfolder = str_replace( '%task%', MainWP_Utility::sanitize( $task->name ), $task->subfolder );
 
                 ++$outcome['sites_visited'];
-                $backupResult = MainWP_Backup_Executor::backup_site( $siteid, $task, $subfolder, $advanced, count( $sites ) > 1 );
+                $drive_task           = clone $task;
+                $drive_task->last_run = $history_started;
+                $backupResult         = MainWP_Backup_Executor::backup_site( $siteid, $drive_task, $subfolder, $advanced, count( $sites ) > 1 );
 
                 if ( false === $backupResult ) {
                     if ( ! $advanced ) {
@@ -1623,7 +1636,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
 
         if ( null !== $errorOutput ) {
-            MainWP_DB_Backup::instance()->update_backup_errors( $task->id, MainWP_Backup_Monitor::format_backup_errors( $errorEntries ) );
+            MainWP_DB_Backup::instance()->append_backup_errors( (int) $task->id, $history_started, MainWP_Backup_Monitor::format_backup_errors( $errorEntries ) );
         }
 
         if ( $lease_lost ) {
@@ -1637,6 +1650,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return false;
         }
 
+        // The cancel step owns the close of a cancelled run, so history reads
+        // Cancelled rather than the incomplete outcome of an all-sites close.
+        $close_task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+        if ( $close_task && (int) $close_task->last_run === $history_started && null !== MainWP_Backup_Run_Cancel::pending_request( $close_task ) ) {
+            return false;
+        }
         if ( count( $completed_sites ) === count( $sites ) ) {
             if ( MainWP_DB_Backup::instance()->has_live_child_task_for_run( $task->id ) ) {
                 // A create request for this run has not resolved yet. Closing
@@ -1653,7 +1672,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 // finishes releases the close instead of wedging it.
                 /** This action is documented in pages/page-mainwp-manage-backups-handler.php */
                 do_action( 'mainwp_backup_diag_run_reinit', (int) $task->id, 'close_refused_pending_record', (int) $task->last_run, (int) $task->completed );
-            } elseif ( MainWP_DB_Backup::instance()->update_backup_completed( $task->id ) ) {
+            } elseif ( MainWP_DB_Backup::instance()->update_backup_completed( $task->id, $history_started ) ) {
                 MainWP_Backup_Run_History::finalize_run( (int) $task->id, $history_started, 'incomplete' );
                 // Only the driver whose guarded close stamped the run owns
                 // the close side effects: with backup_errors persisting on

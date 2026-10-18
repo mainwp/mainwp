@@ -463,6 +463,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $information        = false;
         $backupTaskProgress = MainWP_DB_Backup::instance()->get_backup_task_progress( $taskId, $website->id );
         if ( empty( $backupTaskProgress ) || ( $backupTaskProgress->dtsFetched < $pTask->last_run ) ) {
+            if ( ! self::task_run_accepts_create( $pTask ) ) {
+                return false;
+            }
             $start = microtime( true );
             try {
                 $pid = time();
@@ -504,6 +507,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         'files_total'            => 0,
                     )
                 );
+
+                if ( ! self::task_run_accepts_create( $pTask ) ) {
+                    self::reset_create_window_if_mine( $taskId, $siteid, $creating_marker );
+                    return false;
+                }
 
                 // Negotiate the archive format before building the request so a
                 // large-site ZIP auto-switch reaches the child in $params['ext'].
@@ -1691,6 +1699,18 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             return $prefix . ':l:' . $progress->fetchResult['snapshot_run_token'];
         }
         return null;
+    }
+
+    /**
+     * A cancel can close the run between admission and marker publication, so
+     * the request outlives the close and is matched on the run this driver drives.
+     *
+     * @param object $task Run this driver observed.
+     * @return bool Whether a fresh row still permits a create.
+     */
+    private static function task_run_accepts_create( object $task ): bool {
+        $current = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $task->id );
+        return ! ( $current && MainWP_Backup_Run_Cancel::blocks_run( $current, (int) $task->last_run ) );
     }
 
     /**

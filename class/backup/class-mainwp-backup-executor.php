@@ -597,6 +597,13 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
                 MainWP_Logger::instance()->debug_for_website( $website, 'backup', 'Requesting backup task: ' . MainWP_Utility::value_to_string( $params ) );
 
+                // Preflight and a chunked manifest push can outlast a cancel's
+                // deadline, so admission is checked once more before the send.
+                if ( ! self::task_run_accepts_create( $pTask ) ) {
+                    self::reset_create_window_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    return false;
+                }
+
                 // A create may replace the shared files.list before its snapshot is recorded.
                 if ( 'incremental' === $params['type'] || ( in_array( $params['type'], array( 'full', 'files' ), true ) && ! empty( $params['emit_manifest'] ) ) ) {
                     if ( ! self::claim_manifest_writer( $website, $taskId, $creating_marker ) ) {
@@ -659,7 +666,11 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     );
                 }
 
-                self::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                if ( isset( $diag_start ) ) {
+                    self::clear_unanswered_create_marker( $taskId, (int) $website->id, $creating_marker, $pTask );
+                } else {
+                    self::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                }
                 throw $e;
             }
 
@@ -773,7 +784,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
             if ( empty( $information['error'] ) ) {
                 if ( empty( $information['task_id'] ) || ! is_string( $information['task_id'] ) ) {
-                    self::clear_creating_marker_if_mine( $taskId, (int) $website->id, $creating_marker );
+                    self::clear_unanswered_create_marker( $taskId, (int) $website->id, $creating_marker, $pTask );
                     throw new MainWP_Exception( esc_html__( 'The child site did not return a backup task id. Sync the child site and try again.', 'mainwp' ) );
                 }
 
@@ -1717,6 +1728,23 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     private static function task_run_accepts_create( object $task ): bool {
         $current = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $task->id );
         return ! ( $current && MainWP_Backup_Run_Cancel::blocks_run( $current, (int) $task->last_run ) );
+    }
+
+    /**
+     * A create that left without a usable answer may still have started a
+     * Child task, so while a cancel names this run the marker stays and the
+     * cancel waits for it until its deadline instead of reading the site as
+     * never started.
+     *
+     * @param int    $task_id Task id.
+     * @param int    $site_id Site id.
+     * @param string $marker  This driver's creating marker.
+     * @param object $task    Run this driver drives.
+     */
+    private static function clear_unanswered_create_marker( $task_id, $site_id, $marker, object $task ) {
+        if ( self::task_run_accepts_create( $task ) ) {
+            self::clear_creating_marker_if_mine( $task_id, $site_id, $marker );
+        }
     }
 
     /**

@@ -1112,7 +1112,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_completed_sites()
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_errors()
+     * @uses \MainWP\Dashboard\MainWP_DB_Backup::append_backup_errors()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_completed()
      * @uses \MainWP\Dashboard\MainWP_DB_Common::get_user_notification_email()
      * @uses \MainWP\Dashboard\MainWP_Format::format_email()

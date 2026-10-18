@@ -63,6 +63,13 @@ class MainWP_Backup_Run_Cancel_Test extends MainWP_Abilities_Test_Case {
 	private $copies = array();
 
 	/**
+	 * Callbacks run inside a Child round trip, keyed by action, before it is answered.
+	 *
+	 * @var array
+	 */
+	private $during = array();
+
+	/**
 	 * Close events observed during the test.
 	 *
 	 * @var array
@@ -138,6 +145,12 @@ class MainWP_Backup_Run_Cancel_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function transport( $pre, $website, $what, $params ) {
 		$this->calls[] = array( $what, (int) $website->id, $params );
+		if ( isset( $this->during[ $what ] ) ) {
+			$answer = ( $this->during[ $what ] )( $website, $params );
+			if ( null !== $answer ) {
+				return $answer;
+			}
+		}
 		if ( 'backup_task_cancel' === $what ) {
 			return is_callable( $this->reply ) ? ( $this->reply )( $website, $params ) : $this->reply;
 		}
@@ -1298,5 +1311,162 @@ class MainWP_Backup_Run_Cancel_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringNotContainsString( 'run_cancel', wp_json_encode( MainWP_Backup_Read_Model::get_task( $fresh ) ) );
 		unset( $fresh->run_cancel );
 		$this->assertNull( MainWP_Backup_Run_Cancel::pending_request( $fresh ) );
+	}
+
+	/**
+	 * Owed Child cancels recorded on a site.
+	 *
+	 * @param int $site Site id.
+	 * @return array Child task ids owed a cancel.
+	 */
+	private function owed( int $site ): array {
+		$raw = MainWP_DB::instance()->get_website_option( MainWP_DB::instance()->get_website_by_id( $site ), MainWP_Manage_Backups_Handler::PENDING_CANCEL_OPTION );
+		return array_keys( (array) json_decode( (string) $raw, true ) );
+	}
+
+	/** A cancel recorded while preflight runs stops the create before it is sent. */
+	public function test_cancel_during_preflight_stops_the_create_send() {
+		list( $task, $sites )             = $this->running();
+		$this->during['backup_preflight'] = function () use ( $task ) {
+			unset( $this->during['backup_preflight'] );
+			$this->request( $this->fresh( $task ) );
+			return null;
+		};
+		$this->assertFalse( MainWP_Backup_Executor::backup_site( $sites[0], $task, 'backups' ) );
+		$this->assertSame( array( 'backup_preflight' ), array_column( $this->calls, 0 ), 'Preflight ran and no create was sent after the cancel.' );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $sites[0] );
+		$this->assertSame( 0, (int) $progress->dtsFetched, 'The create window is handed back, so the site reads as never started.' );
+		$this->assertSame( '', $progress->child_backup_task_id );
+		$this->assertSame( 'closed', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		$this->assertSame( "Cancelled.\n", $this->fresh( $task )->backup_notices );
+	}
+
+	/**
+	 * Create outcomes that leave no usable answer.
+	 *
+	 * @return array Failure mode and whether a cancel is pending.
+	 */
+	public static function unanswered_create_cases(): array {
+		return array(
+			'thrown, cancel pending'     => array( 'throw', true ),
+			'no task id, cancel pending' => array( 'empty', true ),
+			'thrown, no cancel'          => array( 'throw', false ),
+			'no task id, no cancel'      => array( 'empty', false ),
+		);
+	}
+
+	/**
+	 * A create sent without a usable answer may have started a Child task, so
+	 * its marker survives while a cancel names the run.
+	 *
+	 * @dataProvider unanswered_create_cases
+	 * @param string $mode    How the create fails.
+	 * @param bool   $pending Whether a cancel is recorded during the create.
+	 */
+	public function test_unanswered_create_keeps_marker_while_cancel_pending( string $mode, bool $pending ) {
+		list( $task, $sites )               = $this->running();
+		$this->during['backup_task_create'] = function () use ( $task, $mode, $pending ) {
+			if ( $pending ) {
+				$this->request( $this->fresh( $task ) );
+			}
+			if ( 'throw' === $mode ) {
+				throw new \MainWP\Dashboard\MainWP_Exception( 'HTTPERROR' );
+			}
+			return array( 'phase' => 'queued' );
+		};
+		try {
+			MainWP_Backup_Executor::backup_site( $sites[0], $task, 'backups' );
+			$this->fail( 'An unanswered create must surface as an exception.' );
+		} catch ( \MainWP\Dashboard\MainWP_Exception $e ) {
+			$this->assertNotSame( '', $e->getMessage() );
+		}
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $sites[0] );
+		if ( ! $pending ) {
+			$this->assertSame( '', $progress->child_backup_task_id, 'Without a cancel the marker is cleared as before.' );
+			return;
+		}
+		$this->assertTrue( MainWP_Backup_Executor::is_creating_marker( $progress->child_backup_task_id ) );
+		unset( $this->during['backup_task_create'] );
+		$this->assertSame( 'pending', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $this->now + 1800;
+		$this->assertSame( 'not_confirmed', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['closed_as'] );
+		$this->assertSame( "Cancelled. Not confirmed for: Site 0.\n", $this->fresh( $task )->backup_notices );
+	}
+
+	/** Sites that keep failing cannot hold every pass's send budget. */
+	public function test_send_order_reaches_a_site_behind_three_failing_ones() {
+		list( $task, $sites ) = $this->running( 4 );
+		foreach ( $sites as $i => $site ) {
+			$this->progress( $task, $site, 'child-' . $i );
+		}
+		$reachable   = $sites[3];
+		$this->reply = static function ( $website ) use ( $reachable ) {
+			if ( (int) $website->id !== $reachable ) {
+				throw new \MainWP\Dashboard\MainWP_Exception( 'HTTPERROR' );
+			}
+			return array( 'result' => 'ok' );
+		};
+		$this->request( $task );
+		$this->assertSame( 'pending', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		$this->assertSame( array_slice( $sites, 0, 3 ), array_column( $this->calls, 1 ) );
+		$this->calls                                       = array();
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $this->now + 1;
+		MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' );
+		$this->assertSame( $reachable, $this->calls[0][1], 'The never-tried site goes first.' );
+		$this->assertTrue( MainWP_Backup_Run_Cancel::site_settled( $this->fresh( $task ), (int) $task->last_run, $reachable ) );
+	}
+
+	/** A Child task left unconfirmed at the deadline is owed a cancel the next run flushes. */
+	public function test_deadline_close_owes_cancel_for_unconfirmed_task() {
+		list( $task, $sites ) = $this->running();
+		$this->progress( $task, $sites[0], 'stuck-child' );
+		$this->reply = array( 'result' => 'busy' );
+		$this->request( $task );
+		$this->assertSame( 'pending', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		$this->assertSame( array(), $this->owed( $sites[0] ) );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $this->now + 1800;
+		$this->assertSame( 'not_confirmed', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['closed_as'] );
+		$this->assertSame( array( 'stuck-child' ), $this->owed( $sites[0] ) );
+	}
+
+	/** A finished archive answered at cancel time is pruned by the next run, since nothing records it. */
+	public function test_already_finished_answer_owes_a_prune() {
+		list( $task, $sites ) = $this->running();
+		$this->progress( $task, $sites[0], 'finished-before-cancel' );
+		$this->reply = array(
+			'result' => 'already_terminal',
+			'phase'  => 'completed',
+		);
+		$this->request( $task );
+		$this->assertSame( 'cancelled', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['closed_as'] );
+		$this->assertSame( array( 'finished-before-cancel' ), $this->owed( $sites[0] ) );
+	}
+
+	/** Every site confirmed, but the close was held past the deadline: the run reads plainly cancelled. */
+	public function test_deadline_close_with_every_site_confirmed_reads_cancelled() {
+		list( $task, $sites ) = $this->running();
+		$this->progress( $task, $sites[0], 'confirmed-child' );
+		$this->request( $task );
+		$db = MainWP_DB_Backup::instance();
+		$db->update_backup_task_progress(
+			$task->id,
+			$sites[0],
+			array(
+				'child_phase'            => 'completed',
+				'downloadedFULL'         => $this->diag . '/held.tar.gz',
+				'downloadedFULLComplete' => 0,
+				'fetchResult'            => wp_json_encode(
+					array(
+						'full' => 'held.tar.gz',
+						'size' => 9,
+					)
+				),
+			)
+		);
+		$this->assertSame( 'mid_download', $db->is_backup_site_resumable_for_run( $task, $sites[0] ) );
+		$this->assertSame( 'pending', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['status'] );
+		MainWP_Backup_Incremental_Sender_Test::$fixed_time = $this->now + 1800;
+		$this->assertSame( 'cancelled', MainWP_Backup_Run_Cancel::process( (int) $task->id, 'cron' )['closed_as'] );
+		$this->assertSame( "Cancelled.\n", $this->fresh( $task )->backup_notices );
 	}
 }

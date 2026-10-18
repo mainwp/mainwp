@@ -124,13 +124,14 @@ class MainWP_Backup_Run_Cancel {
         $request['lease_until'] = $now + 120;
         $request['settled']     = is_array( $request['settled'] ?? null ) ? $request['settled'] : array();
         $request['tasks']       = is_array( $request['tasks'] ?? null ) ? $request['tasks'] : array();
+        $request['tried']       = is_array( $request['tried'] ?? null ) ? $request['tried'] : array();
         $raw                    = self::request_bytes( $request );
         if ( ! $db->compare_and_swap_run_cancel( $task_id, $run, $task->run_cancel, $raw ) ) {
             return self::result( 'busy', count( self::waiting_sites( $task, $sites, $request ) ) );
         }
         try {
             $sent = 0;
-            foreach ( self::waiting_sites( $task, $sites, $request ) as $site_id => $progress ) {
+            foreach ( self::send_order( self::waiting_sites( $task, $sites, $request ), $request ) as $site_id => $progress ) {
                 if ( time() >= (int) $request['deadline'] || $sent >= 3 ) {
                     break;
                 }
@@ -142,7 +143,7 @@ class MainWP_Backup_Run_Cancel {
                 if ( ! $website ) {
                     continue;
                 }
-                if ( ! self::renew( $task, $request, $raw, $token ) ) {
+                if ( ! self::renew( $task, $request, $raw, $token, (int) $site_id ) ) {
                     return self::result( 'busy', count( self::waiting_sites( $task, $sites, $request ) ) );
                 }
                 $now     = time();
@@ -177,6 +178,11 @@ class MainWP_Backup_Run_Cancel {
                     $request = $next;
                     $raw     = $bytes;
                     MainWP_Backup_Run_History::finalize_run( $task_id, $run, 'cancelled', (int) $site_id );
+                    if ( 'already_terminal' === $reply['result'] && 'completed' === ( $reply['phase'] ?? '' ) ) {
+                        // The driver no longer visits a settled site, so its finished
+                        // archive would stay on the Child; the next run's flush prunes it.
+                        MainWP_Manage_Backups_Handler::record_pending_child_cancel( $website, $child_id );
+                    }
                 }
             }
             $waiting = self::waiting_sites( $task, $sites, $request );
@@ -186,7 +192,16 @@ class MainWP_Backup_Run_Cancel {
                     return self::result( 'busy', count( $waiting ) );
                 }
                 if ( $db->update_backup_completed( $task_id, $run ) ) {
-                    $db->append_backup_notices_for_run( $task_id, $run, self::close_note( $expired, array_keys( $waiting ) ) . "\n" );
+                    $db->append_backup_notices_for_run( $task_id, $run, self::close_note( array_keys( $waiting ) ) . "\n" );
+                    // An unconfirmed Child task stays active and refuses the site's
+                    // next backup; owe it a cancel that the next run flushes first.
+                    foreach ( $waiting as $site_id => $progress ) {
+                        $child_id = (string) ( $progress->child_backup_task_id ?? '' );
+                        $website  = '' === $child_id || MainWP_Backup_Executor::is_creating_marker( $child_id ) ? null : MainWP_DB::instance()->get_website_by_id( (int) $site_id );
+                        if ( $website ) {
+                            MainWP_Manage_Backups_Handler::record_pending_child_cancel( $website, $child_id );
+                        }
+                    }
                     MainWP_Backup_Run_History::finalize_run( $task_id, $run, 'cancelled' );
                     foreach ( $request['settled'] as $site_id => $answer ) {
                         $child_id = (string) ( $request['tasks'][ $site_id ] ?? '' );
@@ -203,7 +218,7 @@ class MainWP_Backup_Run_Cancel {
                         }
                     }
                     do_action( 'mainwp_backup_diag_run_close', $task_id, $run, 'cancelled', count( $sites ) );
-                    return self::result( 'closed', count( $waiting ), $expired ? 'not_confirmed' : 'cancelled' );
+                    return self::result( 'closed', count( $waiting ), empty( $waiting ) ? 'cancelled' : 'not_confirmed' );
                 }
                 return self::result( 'stale' );
             }
@@ -225,9 +240,10 @@ class MainWP_Backup_Run_Cancel {
      * @param array  $request Held request.
      * @param string $raw Held bytes, updated on success.
      * @param string $token This pass's token.
+     * @param int    $send_site Site about to be sent a cancel, stamped so the next pass tries others first.
      * @return bool Whether this pass still owns a live request.
      */
-    private static function renew( object $task, array &$request, string &$raw, string $token ): bool {
+    private static function renew( object $task, array &$request, string &$raw, string $token, int $send_site = 0 ): bool {
         $now = time();
         if ( $request['lease'] !== $token || (int) $request['lease_until'] < $now ) {
             return false;
@@ -238,7 +254,10 @@ class MainWP_Backup_Run_Cancel {
         }
         $next                = $request;
         $next['lease_until'] = $now + 120;
-        $bytes               = self::request_bytes( $next );
+        if ( $send_site > 0 ) {
+            $next['tried'][ $send_site ] = $now;
+        }
+        $bytes = self::request_bytes( $next );
         if ( ! MainWP_DB_Backup::instance()->compare_and_swap_run_cancel( (int) $task->id, (int) $task->last_run, $raw, $bytes ) ) {
             return false;
         }
@@ -268,6 +287,29 @@ class MainWP_Backup_Run_Cancel {
     }
 
     /**
+     * Least recently tried first, so sites that keep failing cannot use up every
+     * pass's send budget while a reachable site waits.
+     *
+     * @param array $waiting Site ids mapped to progress rows, in run order.
+     * @param array $request Held request.
+     * @return array The same entries, least recently tried first.
+     */
+    private static function send_order( array $waiting, array $request ): array {
+        $position = 0;
+        $order    = array();
+        foreach ( array_keys( $waiting ) as $site_id ) {
+            $order[ $site_id ] = array( (int) ( $request['tried'][ $site_id ] ?? 0 ), $position++ );
+        }
+        uksort(
+            $waiting,
+            static function ( $a, $b ) use ( $order ) {
+                return $order[ $a ] <=> $order[ $b ];
+            }
+        );
+        return $waiting;
+    }
+
+    /**
      * A completed Child task can still have an archive in transit to the Dashboard.
      *
      * @param object $task Run identity.
@@ -292,18 +334,18 @@ class MainWP_Backup_Run_Cancel {
     private static function request_bytes( array $request ): string {
         $request['settled'] = (object) ( $request['settled'] ?? array() );
         $request['tasks']   = (object) ( $request['tasks'] ?? array() );
+        $request['tried']   = (object) ( $request['tried'] ?? array() );
         return (string) wp_json_encode( $request );
     }
 
     /**
      * Keep the close wording in one place.
      *
-     * @param bool  $expired Whether the deadline was reached.
-     * @param array $waiting Unsettled site ids.
+     * @param array $waiting Site ids that never confirmed the stop.
      * @return string Escaped task note.
      */
-    private static function close_note( bool $expired, array $waiting ): string {
-        if ( ! $expired ) {
+    private static function close_note( array $waiting ): string {
+        if ( empty( $waiting ) ) {
             return esc_html__( 'Cancelled.', 'mainwp' );
         }
         $names = array();

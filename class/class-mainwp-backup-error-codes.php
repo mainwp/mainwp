@@ -87,6 +87,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     // Restore preflight.
     const ERR_RESTORE_ARTIFACT_MISSING = 'mainwp_restore_artifact_missing';
     const ERR_RESTORE_DB_PERMS         = 'mainwp_restore_db_perms';
+    const ERR_RESTORE_NATIVE_DISABLED  = 'mainwp_restore_native_backups_disabled';
 
     // Restore staging.
     const ERR_RESTORE_DISK_FULL       = 'mainwp_restore_disk_full';
@@ -95,6 +96,8 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
 
     // Restore apply.
     const ERR_RESTORE_TARGET_NOT_WRITABLE = 'mainwp_restore_target_not_writable';
+
+    const ERR_RESTORE_CANCELLED_BEFORE_START = 'mainwp_restore_cancelled_before_start';
 
     // WooCommerce preserve-orders gate. The same codes the child's
     // apply-phase gate emits, so an initiate-time refusal and a late
@@ -330,10 +333,13 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_SLOT_LOST                     => esc_html__( 'This backup lost its concurrency slot because it stopped checking in for too long. It will run again on the next cycle.', 'mainwp' ),
             self::ERR_RESTORE_ARTIFACT_MISSING      => esc_html__( 'A backup file this restore needs is no longer in offsite storage, so the restore was stopped before any changes were made. The cloud copy may have been removed by retention or deleted at the storage provider. Run a fresh backup for this site, then restore again.', 'mainwp' ),
             self::ERR_RESTORE_DB_PERMS              => esc_html__( 'The site database user is missing a permission the restore needs to swap tables, so the restore was stopped before any changes were made. Grant the database user the CREATE, DROP, and ALTER permissions, or ask your host, then try again.', 'mainwp' ),
+            self::ERR_RESTORE_NATIVE_DISABLED       => esc_html__( 'Native backups were turned off, so this restore stopped before changing the site.', 'mainwp' ),
             self::ERR_RESTORE_DISK_FULL             => esc_html__( 'There is not enough free disk space on the dashboard to stage this backup file. Free up disk space on the dashboard server and try the restore again.', 'mainwp' ),
             self::ERR_RESTORE_DECRYPT_CORRUPT       => esc_html__( 'The backup file is truncated and could not be decrypted. This is not a key problem; the stored file itself is incomplete or corrupted. Run a fresh backup for this site, then restore again.', 'mainwp' ),
             self::ERR_RESTORE_DECRYPT_KEY           => esc_html__( 'The backup file could not be decrypted. The encryption key may be wrong, or the file is corrupted. Check the encryption key in Settings and try again.', 'mainwp' ),
             self::ERR_RESTORE_TARGET_NOT_WRITABLE   => esc_html__( 'The restore stopped because a folder on the site is not writable. Files restored before that point may already have been replaced. Ask your host to give the web server write access to the site files, then run the restore again.', 'mainwp' ),
+            self::ERR_RESTORE_CANCELLED_BEFORE_START
+                => esc_html__( 'This restore was cancelled before the site started it.', 'mainwp' ),
             self::ERR_RESTORE_WOO_LEGACY_ORDERS     => esc_html__( 'Keeping live orders needs both this store and the backup to use the WooCommerce High-Performance Order Storage tables, and one of them still uses the older post-based order storage. Run the restore again without the keep-orders option, or move the store to High-Performance Order Storage and use a backup taken afterwards.', 'mainwp' ),
             self::ERR_RESTORE_WOO_SYNC_MODE         => esc_html__( 'Keeping live orders needs the WooCommerce High-Performance Order Storage tables to be the only source of orders, and this store still synchronizes orders to the older posts table. Turn off the WooCommerce orders-table synchronization setting, then run the restore again.', 'mainwp' ),
             self::ERR_RESTORE_WOO_VERSION_SKEW      => esc_html__( 'Keeping live orders needs the store to run the same WooCommerce version as the backup, and the WooCommerce version changed since this backup was taken. Run the restore again without the keep-orders option, or use a backup from the current WooCommerce version.', 'mainwp' ),

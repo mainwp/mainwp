@@ -19,6 +19,40 @@ use MainWP\Dashboard\MainWP_Backup_Operations;
 class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 
 	/**
+	 * Restore readers must retain these codes instead of reporting an unclassified error.
+	 *
+	 * @dataProvider restore_lifecycle_errors
+	 * @param string $constant Registry constant name.
+	 * @param string $code Expected code.
+	 * @param string $message Expected message.
+	 */
+	public function test_restore_lifecycle_errors_are_registered( $constant, $code, $message ) {
+		$this->assertContains( $code, MainWP_Backup_Error_Codes::get_registered_codes() );
+		$this->assertSame( $code, constant( MainWP_Backup_Error_Codes::class . '::' . $constant ) );
+		$this->assertSame( $message, MainWP_Backup_Error_Codes::message( $code ) );
+		$this->assertSame(
+			array(
+				'code'    => $code,
+				'message' => $message,
+			),
+			MainWP_Backup_Operations::safe_error( $code )
+		);
+		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( $code ) );
+	}
+
+	/**
+	 * Exact copy must survive storage and the ability reader unchanged.
+	 *
+	 * @return array
+	 */
+	public static function restore_lifecycle_errors() {
+		return array(
+			'cancelled before start' => array( 'ERR_RESTORE_CANCELLED_BEFORE_START', 'mainwp_restore_cancelled_before_start', 'This restore was cancelled before the site started it.' ),
+			'native disabled'        => array( 'ERR_RESTORE_NATIVE_DISABLED', 'mainwp_restore_native_backups_disabled', 'Native backups were turned off, so this restore stopped before changing the site.' ),
+		);
+	}
+
+	/**
 	 * Refusals need the approved recovery instructions in the message registry.
 	 *
 	 * @dataProvider recovery_messages

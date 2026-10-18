@@ -324,6 +324,49 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A stopped restore must retain its actionable error through the ability schema.
+	 *
+	 * @dataProvider restore_lifecycle_errors
+	 * @param string $code Stored error code.
+	 * @param string $message Registry message.
+	 */
+	public function test_restore_job_returns_lifecycle_error( $code, $message ) {
+		global $wpdb;
+		$this->assertSame(
+			1,
+			$wpdb->update(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+				array(
+					'checkpoint' => wp_json_encode( array( 'last_error_code' => $code ) ),
+					'last_error' => $message,
+				),
+				array( 'id' => 987674 )
+			)
+		);
+		$output = $this->read( 'get-restore-job', array( 'restore_job_id' => 987674 ) );
+		$this->assert_output( 'get-restore-job', $output );
+		$this->assertSame(
+			array(
+				'code'    => $code,
+				'message' => $message,
+			),
+			$output['job']['error']
+		);
+	}
+
+	/**
+	 * These codes fit the existing error object without adding ability fields.
+	 *
+	 * @return array
+	 */
+	public static function restore_lifecycle_errors() {
+		return array(
+			'cancelled before start' => array( 'mainwp_restore_cancelled_before_start', 'This restore was cancelled before the site started it.' ),
+			'native disabled'        => array( 'mainwp_restore_native_backups_disabled', 'Native backups were turned off, so this restore stopped before changing the site.' ),
+		);
+	}
+
+	/**
 	 * A granular denial must not alter ownership or site access.
 	 *
 	 * @param string $right Required operation right.

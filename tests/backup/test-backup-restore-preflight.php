@@ -95,6 +95,8 @@ class MainWP_Backup_Restore_Preflight_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function set_up() {
 		parent::set_up();
+		// Restore preflight fails at once while native backups are off.
+		update_option( 'mainwp_enableNativeBackups', 1 );
 		$this->site_id              = $this->create_test_site();
 		$this->driver               = new Preflight_Stub_Transfer_Driver();
 		$this->orchestrator         = new Preflight_Test_Orchestrator();
@@ -107,6 +109,7 @@ class MainWP_Backup_Restore_Preflight_Test extends MainWP_Abilities_Test_Case {
 	public function tear_down() {
 		global $wpdb;
 		$wpdb->query( 'DELETE FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ) ); // phpcs:ignore WordPress.DB -- test cleanup.
+		delete_option( 'mainwp_enableNativeBackups' );
 		parent::tear_down();
 	}
 

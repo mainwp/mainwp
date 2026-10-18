@@ -121,6 +121,30 @@ test( 'mixed kept results split symlinks from files the backup has no copy of', 
     assert.equal( h.created.filter( node => node.tag === '<li>' ).length, 20 );
 } );
 
+test( 'a file wp-config.php loads gets its own sentence after the kept count', () => {
+    const h = harness();
+    h.context.showReconcileNote( { reconcile: { status: 'done', removed: 0, kept: 2, kept_by_reason: { config_include: 1, symlink: 1 }, kept_paths: [ 'host-include.php', 'wp-content/mu-plugins/link.php' ] } }, 'full', false );
+    const paragraphs = h.created.filter( node => node.tag === '<p>' ).map( node => node.text );
+    assert.deepEqual( paragraphs.slice( 0, 2 ), [ 'Kept 1 file this backup has no copy of.', '1 file was kept because wp-config.php loads it.' ] );
+    assert.doesNotMatch( h.text( h.note() ), /Reasons:/ );
+    assert.ok( h.created.some( node => node.tag === '<li>' && node.text === 'host-include.php' ) );
+    assert.ok( h.note().classes.has( 'blue' ) );
+} );
+
+test( 'several files wp-config.php loads read in the plural beside other reasons', () => {
+    const h = harness();
+    h.context.showReconcileNote( { reconcile: { status: 'done', removed: 0, kept: 5, kept_by_reason: { config_include: 3, mu_plugins: 1, unarchived: 1 }, kept_paths: [ 'a.php', 'b.php', 'c.php', 'wp-content/mu-plugins/m.php', 'wp-content/u.txt' ] } }, 'files', false );
+    const paragraphs = h.created.filter( node => node.tag === '<p>' ).map( node => node.text );
+    assert.equal( paragraphs[0], 'Kept 5 files this backup has no copy of. Reasons: mu-plugins files missing from the backup; files the backup could not read.' );
+    assert.equal( paragraphs[1], '3 files were kept because wp-config.php loads them.' );
+} );
+
+test( 'a config_include count never exceeds the kept files outside symlinks', () => {
+    const h = harness();
+    h.context.showReconcileNote( { reconcile: { status: 'done', removed: 0, kept: 2, kept_by_reason: { config_include: 5, symlink: 1 }, kept_paths: [ 'a.php', 'link.php' ] } }, 'full', false );
+    assert.match( h.text( h.note() ), /\b1 file was kept because wp-config\.php loads it\./ );
+} );
+
 test( 'kept symlinks still show when reconciliation was skipped', () => {
     const h = harness();
     h.context.showReconcileNote( { reconcile: { status: 'skipped', reason: 'no_manifest', kept: 2, kept_by_reason: { symlink: 2 }, kept_paths: [ 'a.php', 'b.php' ] } }, 'full', false );

@@ -1124,6 +1124,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @throws MainWP_Exception When the safety backup cannot start for a reason other than the site layout.
      */
     private function phase_preflight( object $job ): void {
+        if ( $this->stopped_because_native_backups_are_off( $job ) ) {
+            return;
+        }
+
         $store = MainWP_Backup_Restore_Job_Store::instance();
         $plan  = isset( $job->checkpoint['plan'] ) ? (array) $job->checkpoint['plan'] : array();
 
@@ -1141,6 +1145,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             try {
                 $task_id = MainWP_Backup_Executor::trigger_backup( (int) $job->site_id, 'full', (string) $job->id );
             } catch ( MainWP_Exception $e ) {
+                // The toggle can be turned off between the check above and this call.
+                if ( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED === $e->get_message_error_code() ) {
+                    $this->stop_restore_because_native_backups_are_off( $job );
+                    return;
+                }
                 if ( MainWP_Backup_Error_Codes::ERR_UNSUPPORTED_LAYOUT !== $e->get_message_error_code() ) {
                     throw $e;
                 }
@@ -1176,6 +1185,10 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      * @param float  $deadline Slice deadline.
      */
     private function phase_pre_snapshot( object $job, float $deadline ): void {
+        if ( $this->stopped_because_native_backups_are_off( $job ) ) {
+            return;
+        }
+
         $store   = MainWP_Backup_Restore_Job_Store::instance();
         $website = $this->website( $job );
 
@@ -1184,6 +1197,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         }
 
         while ( microtime( true ) < $deadline ) {
+            // One slice can poll the safety backup for its whole budget, so the
+            // toggle is read again before every request.
+            if ( $this->stopped_because_native_backups_are_off( $job ) ) {
+                return;
+            }
             $reconcile = ! empty( $job->checkpoint['pre_snapshot_reconcile_pending'] );
             // A marker without the flag cannot tell an arm before the run from a replay; read it as armed.
             $confirmed_replay = $reconcile && ! empty( $job->checkpoint['pre_snapshot_replay_confirmed'] );
@@ -1341,6 +1359,43 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 return;
             }
         }
+    }
+
+    /**
+     * Fail a restore that has not created its Child restore task once native backups are off.
+     *
+     * Later phases keep running: by then the Child may be changing the site.
+     *
+     * @param object $job Job row.
+     *
+     * @return bool Whether the toggle was off and the job was failed.
+     */
+    private function stopped_because_native_backups_are_off( object $job ): bool {
+        // Options stay cached for the whole request and a slice can poll for
+        // minutes, so a toggle saved by another request is read from the table.
+        wp_cache_delete( 'alloptions', 'options' );
+        wp_cache_delete( 'notoptions', 'options' );
+        wp_cache_delete( 'mainwp_enableNativeBackups', 'options' );
+        wp_cache_delete( 'mainwp_enableLegacyBackupFeature', 'options' );
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            return false;
+        }
+        $this->stop_restore_because_native_backups_are_off( $job );
+        return true;
+    }
+
+    /**
+     * Record the permanent native-backups-off failure; the terminal path stops an owned safety backup.
+     *
+     * @param object $job Job row.
+     */
+    private function stop_restore_because_native_backups_are_off( object $job ): void {
+        $this->record_failure(
+            $job,
+            MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_RESTORE_NATIVE_DISABLED ),
+            false,
+            MainWP_Backup_Error_Codes::ERR_RESTORE_NATIVE_DISABLED
+        );
     }
 
     /**
@@ -2729,6 +2784,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
         $answer = null;
         try {
             $answer = MainWP_Backup_Executor::send_backup_task_cancel( $website, (string) $task_id );
+            if ( is_array( $answer ) && 'busy' === ( $answer['result'] ?? '' ) ) {
+                do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site is still running its safety backup; the Child deadline will stop it.', (int) $job->id ), (int) $job->site_id, 0 );
+            }
         } catch ( \Throwable $e ) {
             do_action( 'mainwp_log_info', sprintf( 'Restore job %d: the site did not confirm cancelling its safety backup: %s', (int) $job->id, $e->getMessage() ), (int) $job->site_id, 0 );
         } finally {

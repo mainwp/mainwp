@@ -53,6 +53,24 @@ class Cloud_Pull_Stub_Transfer_Driver extends MainWP_Backup_Restore_Transfer_Dri
 	public $manifest = null;
 
 	/**
+	 * Count artifact checks so disabled preflight cannot contact storage first.
+	 *
+	 * @var int
+	 */
+	public $remote_checks = 0;
+
+	/**
+	 * Preserve the real artifact check while observing its ordering.
+	 *
+	 * @param array $plan Transfer plan.
+	 * @return bool
+	 */
+	public function remote_artifacts_present( array $plan ): bool {
+		++$this->remote_checks;
+		return parent::remote_artifacts_present( $plan );
+	}
+
+	/**
 	 * Scripted gate.
 	 *
 	 * @param object $website    Website.
@@ -403,6 +421,665 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	private function tick( $job ) {
 		$this->orchestrator->run_job( MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id ), microtime( true ) + 30 );
 		return MainWP_Backup_Restore_Job_Store::instance()->get_job( (int) $job->id );
+	}
+
+	/**
+	 * Tombstones must end active jobs without retrying the cancelled identity.
+	 *
+	 * @dataProvider restore_create_paths
+	 * @param bool $cloud Whether the create carries a pull manifest.
+	 */
+	public function test_cancelled_before_start_replay_is_permanent( $cloud ) {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array(), $store::STATUS_STAGING );
+		if ( $cloud ) {
+			$this->use_cloud_pull_driver( $this->pull_manifest_fixture() );
+		}
+		$this->responses['restore_task_create'] = array(
+			'task_id'    => 'cancel-tombstone',
+			'reused'     => true,
+			'phase'      => 'failed',
+			'error_code' => 'mainwp_restore_cancelled_before_start',
+			'error'      => 'This restore was cancelled before the site started it.',
+		);
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'already_terminal',
+			'phase'  => 'failed',
+		);
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 'This restore was cancelled before the site started it.', $job->last_error );
+		$this->assertSame( 'mainwp_restore_cancelled_before_start', $job->checkpoint['last_error_code'] );
+		$this->assertSame( 'cancel-tombstone', $job->child_task_id );
+		$this->assertSame( 0, (int) $job->attempt_count );
+		$this->assertSame( 0, (int) $job->next_retry_at );
+		$calls = $this->calls;
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$this->assertSame( $calls, $this->calls );
+	}
+
+	/**
+	 * A terminal row must survive a late tombstone answer unchanged.
+	 *
+	 * @dataProvider restore_create_paths
+	 * @param bool $cloud Whether the create carries a pull manifest.
+	 */
+	public function test_late_tombstone_replay_cancels_by_task_id( $cloud ) {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array(), $store::STATUS_STAGING );
+		if ( $cloud ) {
+			$this->use_cloud_pull_driver( $this->pull_manifest_fixture() );
+		}
+		$this->responses['restore_task_create'] = array(
+			'task_id'    => 'late-tombstone',
+			'reused'     => true,
+			'phase'      => 'failed',
+			'error_code' => 'mainwp_restore_cancelled_before_start',
+			'error'      => 'This restore was cancelled before the site started it.',
+		);
+		$this->responses['restore_task_cancel'] = array(
+			'result' => 'already_terminal',
+			'phase'  => 'failed',
+		);
+		$terminal                               = null;
+		$end                                    = function ( $pre, $website, $what ) use ( $store, $job, &$terminal ) {
+			if ( 'restore_task_create' === $what ) {
+				$this->assertSame( 'written', $store->finish_with_cancel_confirmation( (int) $job->id, $store::STATUS_CANCELLED, null, '', null ) );
+				$terminal = $store->get_job( (int) $job->id );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $end, 20, 3 );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $end, 20 );
+		}
+		$this->assertNotNull( $terminal );
+		$this->assertEquals( $terminal, $store->get_job( (int) $job->id ) );
+		$this->assertSame( array( 'restore_task_create', 'restore_task_cancel' ), $this->calls_without_report_reads() );
+		$this->assertSame( array( 'task_id' => 'late-tombstone' ), $this->calls[1]['params'] );
+	}
+
+	/**
+	 * Both create paths share the Child's restore identity contract.
+	 *
+	 * @return array
+	 */
+	public static function restore_create_paths() {
+		return array(
+			'standard'   => array( false ),
+			'cloud pull' => array( true ),
+		);
+	}
+
+	/**
+	 * Lose the actual lease after the Child answers, before the fenced id write.
+	 *
+	 * @param bool       $cloud Whether to send a pull manifest.
+	 * @param array|null $answer Optional failed replay instead of a fresh create.
+	 * @return object Job held by the replacement worker.
+	 */
+	private function create_with_lost_lease( $cloud, $answer = null ) {
+		global $wpdb;
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array(), $store::STATUS_STAGING );
+		if ( $cloud ) {
+			$this->use_cloud_pull_driver( $this->pull_manifest_fixture() );
+		}
+		$this->responses['restore_task_create'] = $answer ?? array(
+			'task_id' => 'lease-task',
+			'phase'   => 'queued',
+		);
+		$holder                                 = null;
+		$swap                                   = function ( $pre, $website, $what ) use ( $wpdb, $store, $job, &$holder ) {
+			if ( 'restore_task_create' === $what ) {
+				$before = $store->get_job( (int) $job->id );
+				$holder = $before->locked_by;
+				$this->assertNotEmpty( $holder );
+				$this->assertTrue( $before->checkpoint['child_create_attempted'] );
+				$this->assertSame(
+					1,
+					$wpdb->update(
+						MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+						array(
+							'locked_by'    => 'replacement-holder',
+							'locked_until' => time() + 300,
+						),
+						array( 'id' => $job->id )
+					)
+				);
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $swap, 20, 3 );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $swap, 20 );
+		}
+		$job = $store->get_job( (int) $job->id );
+		$this->assertNotNull( $holder );
+		$this->assertSame( 'replacement-holder', $job->locked_by );
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', $job->child_task_id );
+		$this->assertSame( array( 'restore_task_create' ), $this->calls_without_report_reads() );
+		return $job;
+	}
+
+	/**
+	 * A new holder must recover the first Child task through the same restore identity.
+	 *
+	 * @dataProvider restore_create_paths
+	 * @param bool $cloud Whether the create carries a pull manifest.
+	 */
+	public function test_lost_create_lease_reclaims_same_child_task( $cloud ) {
+		global $wpdb;
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->create_with_lost_lease( $cloud );
+		$this->assertSame( 1, $wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'locked_until' => time() - 1 ), array( 'id' => $job->id ) ) );
+		$this->responses['restore_task_create'] = array(
+			'task_id'   => 'lease-task',
+			'reused'    => true,
+			'phase'     => 'queued',
+			'sub_state' => array( 'params' => array( 'pull_manifest' => $cloud ? $this->pull_manifest_fixture() : null ) ),
+		);
+		$this->responses['restore_task_run']    = array(
+			'task_id'   => 'lease-task',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'db_ok' => true ) ),
+		);
+		$reclaim_token                          = null;
+		$recorded                               = null;
+		$observe                                = static function ( $pre, $website, $what ) use ( $store, $job, &$reclaim_token, &$recorded ) {
+			if ( 'restore_task_create' === $what ) {
+				$reclaim_token = $store->get_job( (int) $job->id )->locked_by;
+			} elseif ( 'restore_task_run' === $what ) {
+				$recorded = $store->get_job( (int) $job->id );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $observe, 20, 3 );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $observe, 20 );
+		}
+		$job     = $store->get_job( (int) $job->id );
+		$creates = array_values( array_filter( $this->calls, static fn( $call ) => 'restore_task_create' === $call['what'] ) );
+		$this->assertCount( 2, $creates );
+		$this->assertSame( 'orch01test', $creates[0]['params']['restore_id'] );
+		$this->assertSame( $creates[0]['params']['restore_id'], $creates[1]['params']['restore_id'] );
+		$this->assertSame( $cloud, isset( $creates[1]['params']['pull_manifest_json'] ) );
+		$this->assertNotEmpty( $reclaim_token );
+		$this->assertNotSame( 'replacement-holder', $reclaim_token );
+		$this->assertNotNull( $recorded );
+		$this->assertSame( $reclaim_token, $recorded->locked_by );
+		$this->assertSame( 'lease-task', $recorded->child_task_id );
+		$this->assertSame( 1, (int) $recorded->reclaim_count );
+		$this->assertSame( $store::STATUS_COMPLETED, $job->status );
+		$this->assertSame( 'lease-task', $job->child_task_id );
+		$this->assertNotContains( 'restore_task_cancel', $this->calls_without_report_reads() );
+	}
+
+	/**
+	 * A terminal decision must reach an answered task whose id the old lease could not record.
+	 *
+	 * @dataProvider lost_create_terminal_cases
+	 * @param bool   $cloud Whether the create carries a pull manifest.
+	 * @param string $trigger Terminal decision source.
+	 */
+	public function test_lost_create_lease_terminal_cancels_restore_identity( $cloud, $trigger ) {
+		global $wpdb;
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                    = $this->create_with_lost_lease( $cloud );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'ok' );
+		if ( 'user' === $trigger ) {
+			$this->assertSame( 'cancelled', $this->orchestrator->cancel_job( (int) $job->id ) );
+		} elseif ( 'ceiling' === $trigger ) {
+			$this->assertSame(
+				1,
+				$wpdb->update(
+					MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+					array(
+						'locked_until'  => time() - 1,
+						'reclaim_count' => $store::RECLAIM_CEILING,
+					),
+					array( 'id' => $job->id )
+				)
+			);
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} else {
+			$record = new \ReflectionMethod( MainWP_Backup_Restore_Orchestrator::class, 'record_terminal_failure' );
+			$record->invoke( $this->orchestrator, $job, 'Restore stopped.', 'test_restore_failure', 'replacement-holder' );
+		}
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( 'user' === $trigger ? $store::STATUS_CANCELLED : $store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 'confirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
+		$this->assertSame( array( 'restore_task_create', 'restore_task_cancel' ), $this->calls_without_report_reads() );
+		$this->assertSame( array( 'restore_id' => $this->calls[0]['params']['restore_id'] ), $this->calls[1]['params'] );
+	}
+
+	/**
+	 * Terminal sources apply equally to standard and cloud-pull creates.
+	 *
+	 * @return array
+	 */
+	public static function lost_create_terminal_cases() {
+		$cases = array();
+		foreach ( array( false, true ) as $cloud ) {
+			foreach ( array( 'user', 'ceiling', 'failure' ) as $trigger ) {
+				$cases[ ( $cloud ? 'cloud ' : 'standard ' ) . $trigger ] = array( $cloud, $trigger );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Once a successor records the handle, UI cancellation must name that task.
+	 *
+	 * @dataProvider restore_create_paths
+	 * @param bool $cloud Whether the create carries a pull manifest.
+	 */
+	public function test_lost_create_lease_recorded_by_successor_cancels_task_id( $cloud ) {
+		global $wpdb;
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->create_with_lost_lease( $cloud );
+		$this->assertSame( 1, $wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'locked_until' => time() - 1 ), array( 'id' => $job->id ) ) );
+		$this->responses['restore_task_create'] = array(
+			'task_id' => 'lease-task',
+			'reused'  => true,
+			'phase'   => 'queued',
+		);
+		// One phase records the recovered id before a later slice can run the task.
+		$this->orchestrator->process_pending_restore_jobs( 0, (int) $job->id );
+		$successor = $store->get_job( (int) $job->id );
+		$this->assertSame( 'lease-task', $successor->child_task_id );
+		$this->assertSame( 1, (int) $successor->reclaim_count );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'ok' );
+		$this->assertSame( 'cancelled', $this->orchestrator->cancel_job( (int) $job->id ) );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_CANCELLED, $job->status );
+		$this->assertSame( 'confirmed', $job->checkpoint['cancel_confirmation']['outcome'] );
+		$this->assertSame( array( 'restore_task_create', 'restore_task_create', 'restore_task_cancel' ), $this->calls_without_report_reads() );
+		$this->assertSame( $this->calls[0]['params']['restore_id'], $this->calls[1]['params']['restore_id'] );
+		$this->assertSame( array( 'task_id' => 'lease-task' ), $this->calls[2]['params'] );
+	}
+
+	/**
+	 * A refused rotation must leave the failed identity available for the next holder's replay.
+	 */
+	public function test_cloud_pull_rotation_after_lost_create_lease_replays_original_identity() {
+		global $wpdb;
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$answer = array(
+			'task_id'    => 'failed-pull',
+			'reused'     => true,
+			'phase'      => 'failed',
+			'error_code' => 'mainwp_cloud_pull_failed',
+		);
+		$job    = $this->create_with_lost_lease( true, $answer );
+		$this->assertSame( 'orch01test', $job->checkpoint['restore_id'] );
+		$this->assertArrayNotHasKey( 'cloud_pull_tried', $job->checkpoint );
+		$this->assertTrue( $job->checkpoint['child_create_attempted'] );
+		$this->assertSame( 1, $wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ), array( 'locked_until' => time() - 1 ), array( 'id' => $job->id ) ) );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertSame( '', $job->child_task_id );
+		$this->assertNotSame( 'orch01test', $job->checkpoint['restore_id'] );
+		$this->assertTrue( $job->checkpoint['cloud_pull_tried'] );
+		$this->assertArrayNotHasKey( 'child_create_attempted', $job->checkpoint );
+		$this->assertSame( array(), $job->checkpoint['transfer'] );
+		$this->assertSame( array( 'restore_task_create', 'restore_task_create' ), $this->calls_without_report_reads() );
+		$this->assertSame( 'orch01test', $this->calls[1]['params']['restore_id'] );
+	}
+
+	/**
+	 * Disabling backups must release a restore before any safety or restore work starts.
+	 *
+	 * @dataProvider disabled_preflight_cases
+	 * @param bool $safety Whether a safety backup was requested.
+	 * @param bool $retry Whether the job resumes preflight from backoff.
+	 * @param bool $rollback Whether this is a rollback job.
+	 */
+	public function test_native_disabled_preflight_releases_site_without_child_calls( $safety, $retry, $rollback ) {
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job    = $this->make_job(
+			array(
+				'options'       => array( 'pre_snapshot' => $safety ),
+				'resume_status' => $store::STATUS_PREFLIGHT,
+				'is_rollback'   => $rollback,
+			),
+			$retry ? $store::STATUS_FAILED_RETRYABLE : $store::STATUS_PREFLIGHT
+		);
+		$driver = $this->use_cloud_pull_driver( null );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$this->assert_native_disabled_failure( $store->get_job( (int) $job->id ) );
+		$this->assertSame( array(), $this->calls );
+		$this->assertSame( 0, $driver->remote_checks );
+	}
+
+	/**
+	 * Safety selection and retry routing cannot bypass the global toggle, including rollback.
+	 *
+	 * @return array
+	 */
+	public static function disabled_preflight_cases() {
+		$cases = array();
+		foreach ( array( false, true ) as $safety ) {
+			foreach ( array( false, true ) as $retry ) {
+				foreach ( array( false, true ) as $rollback ) {
+					$cases[ (int) $safety . '-' . (int) $retry . '-' . (int) $rollback ] = array( $safety, $retry, $rollback );
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * A toggle change after preflight's check must receive the same permanent refusal.
+	 */
+	public function test_native_disabled_during_trigger_backup_is_permanent() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job( array( 'options' => array( 'pre_snapshot' => true ) ), $store::STATUS_PREFLIGHT );
+		$reads = 0;
+		$flip  = static function () use ( &$reads ) {
+			return 1 === ++$reads ? 1 : 0;
+		};
+		add_filter( 'option_mainwp_enableNativeBackups', $flip );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_filter( 'option_mainwp_enableNativeBackups', $flip );
+		}
+		$this->assertGreaterThanOrEqual( 2, $reads );
+		$this->assert_native_disabled_failure( $store->get_job( (int) $job->id ) );
+		$this->assertSame( array(), $this->calls );
+	}
+
+	/**
+	 * A safety task already created by preflight must receive one best-effort cancellation.
+	 *
+	 * @dataProvider disabled_safety_cancel_answers
+	 * @param array|\Throwable $answer Child cancellation answer.
+	 * @param bool             $prune Whether an already-terminal answer permits pruning.
+	 * @param string           $log Expected log fragment, or empty.
+	 */
+	public function test_native_disabled_pre_snapshot_cancels_once_and_finalizes_history( $answer, $prune, $log ) {
+		global $wpdb;
+		$store      = MainWP_Backup_Restore_Job_Store::instance();
+		$job        = $this->make_owned_safety_job();
+		$history_id = MainWP_Backup_Run_History::start( 0, $this->site_id, time(), 'restore_safety', 0, (int) $job->id, 'disabled-safety' );
+		$this->assertGreaterThan( 0, $history_id );
+		$this->responses['backup_task_cancel'] = $answer;
+		$logs                                  = array();
+		$listener                              = static function ( $message ) use ( &$logs ) {
+			$logs[] = $message;
+		};
+		add_action( 'mainwp_log_info', $listener );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+			$job = $store->get_job( (int) $job->id );
+			$this->assert_native_disabled_failure( $job );
+			$this->assertSame( $prune ? array( 'backup_task_cancel', 'backup_task_prune' ) : array( 'backup_task_cancel' ), array_column( $this->calls, 'what' ) );
+			$this->assertSame( array( 'task_id' => 'disabled-safety' ), $this->calls[0]['params'] );
+			$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+			$history = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ) . ' WHERE id = %d', $history_id ) ); // phpcs:ignore WordPress.DB -- test assertion.
+			$this->assertSame( 'failed', $history->outcome );
+			$this->assertSame( 'mainwp_restore_native_backups_disabled', $history->error_code );
+			if ( '' !== $log ) {
+				$this->assertStringContainsString( $log, implode( "\n", $logs ) );
+			}
+			$calls = $this->calls;
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+			$this->assertSame( $calls, $this->calls );
+		} finally {
+			remove_action( 'mainwp_log_info', $listener );
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ), array( 'id' => $history_id ) );
+		}
+	}
+
+	/**
+	 * These answers are also supported by older Children.
+	 *
+	 * @return array
+	 */
+	public static function disabled_safety_cancel_answers() {
+		return array(
+			'ok'                => array( array( 'result' => 'ok' ), false, '' ),
+			'already completed' => array(
+				array(
+					'result' => 'already_terminal',
+					'phase'  => 'completed',
+				),
+				true,
+				'',
+			),
+			'already failed'    => array(
+				array(
+					'result' => 'already_terminal',
+					'phase'  => 'failed',
+				),
+				true,
+				'',
+			),
+			'busy'              => array( array( 'result' => 'busy' ), false, 'the site is still running its safety backup' ),
+			'transport failure' => array( new MainWP_Exception( 'Site unreachable.' ), false, 'the site did not confirm cancelling its safety backup: Site unreachable.' ),
+		);
+	}
+
+	/**
+	 * A reconcile delay must not keep a disabled restore reserved when its phase is driven.
+	 */
+	public function test_native_disabled_pre_snapshot_precedes_reconcile_deferral() {
+		$store    = MainWP_Backup_Restore_Job_Store::instance();
+		$retry_at = time() + 3600;
+		$job      = $this->make_owned_safety_job( array( 'pre_snapshot_reconcile_pending' => true ), array( 'next_retry_at' => $retry_at ) );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		$job = $this->tick( $job );
+		$this->assert_native_disabled_failure( $job );
+		$this->assertSame( array( 'backup_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		$this->assertSame( $retry_at, (int) $store->get_job( (int) $job->id )->next_retry_at );
+	}
+
+	/**
+	 * A slice keeps polling the safety backup, so a toggle another request turns off during a run request stops it before the next one.
+	 */
+	public function test_native_disabled_during_safety_backup_slice_stops_before_next_poll() {
+		$store                                 = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                   = $this->make_owned_safety_job();
+		$progress                              = static function ( $files ) {
+			return array(
+				'phase'    => 'archiving_files',
+				'progress' => array( 'files_scanned' => $files ),
+			);
+		};
+		$this->responses['backup_task_run']    = array( $progress( 10 ), $progress( 20 ), $progress( 30 ) );
+		$this->responses['backup_task_cancel'] = array( 'result' => 'ok' );
+		$turn_off                              = static function ( $pre, $website, $what ) {
+			if ( 'backup_task_run' === $what ) {
+				global $wpdb;
+				// Another request saves the setting; this one still holds the old value in its option cache.
+				$wpdb->update( $wpdb->options, array( 'option_value' => '0' ), array( 'option_name' => 'mainwp_enableNativeBackups' ) ); // phpcs:ignore WordPress.DB -- simulates a save from another request.
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $turn_off, 20, 3 );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 5, (int) $job->id );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $turn_off, 20 );
+		}
+		$this->assert_native_disabled_failure( $store->get_job( (int) $job->id ) );
+		$this->assertSame( array( 'backup_task_run', 'backup_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'task_id' => 'disabled-safety' ), $this->calls[1]['params'] );
+	}
+
+	/**
+	 * Only the worker whose terminal write lands may cancel the owned safety task.
+	 */
+	public function test_native_disabled_pre_snapshot_successor_cancels_after_terminal_write() {
+		global $wpdb;
+		$store   = MainWP_Backup_Restore_Job_Store::instance();
+		$job     = $this->make_owned_safety_job();
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$swapped = false;
+		$swap    = function ( $sql ) use ( $wpdb, $table, $job, &$swapped ) {
+			if ( ! $swapped && str_starts_with( $sql, 'UPDATE ' . $table . " SET `status` = 'failed_permanent'" ) ) {
+				$swapped = true;
+				$this->assertSame(
+					1,
+					$wpdb->update(
+						$table,
+						array(
+							'locked_by'    => 'safety-successor',
+							'locked_until' => time() + 300,
+						),
+						array( 'id' => $job->id )
+					)
+				);
+			}
+			return $sql;
+		};
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		add_filter( 'query', $swap );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_filter( 'query', $swap );
+		}
+		$this->assertTrue( $swapped );
+		$this->assertSame( array(), $this->calls );
+		$fresh = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_PRE_SNAPSHOT, $fresh->status );
+		$this->assertSame( 'safety-successor', $fresh->locked_by );
+		$this->assertNotNull( $fresh->active_site_id );
+		$this->assertNotNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+		$this->assertSame( 1, $wpdb->update( $table, array( 'locked_until' => time() - 1 ), array( 'id' => $job->id ) ) );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$this->assert_native_disabled_failure( $store->get_job( (int) $job->id ) );
+		$this->assertSame( array( 'backup_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertSame( array( 'task_id' => 'disabled-safety' ), $this->calls[0]['params'] );
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+	}
+
+	/**
+	 * A user cancel of a safety-backup phase ends the job at once, so a later drive with backups off finds nothing to fail.
+	 */
+	public function test_cancel_precedes_native_disabled_failure() {
+		$store                                 = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                   = $this->make_owned_safety_job();
+		$this->responses['backup_task_cancel'] = array( 'result' => 'ok' );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		$this->orchestrator->cancel_job( (int) $job->id );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_CANCELLED, $job->status );
+		$this->assertNotSame( 'mainwp_restore_native_backups_disabled', $job->checkpoint['last_error_code'] ?? '' );
+		$this->assertNull( $job->active_site_id );
+		$this->assertSame( array( 'backup_task_cancel' ), array_column( $this->calls, 'what' ) );
+		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+	}
+
+	/**
+	 * A stored cancel intent on a phase that has a Child restore task is applied before anything reads the toggle.
+	 */
+	public function test_cancel_intent_after_create_precedes_native_disabled() {
+		$store                                  = MainWP_Backup_Restore_Job_Store::instance();
+		$job                                    = $this->make_job( array( 'cancel_intent' => true ), $store::STATUS_RUNNING, array( 'child_task_id' => 'intent-task' ) );
+		$this->responses['restore_task_cancel'] = array( 'result' => 'ok' );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+		$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		$job = $store->get_job( (int) $job->id );
+		$this->assertSame( $store::STATUS_CANCELLED, $job->status );
+		$this->assertNotSame( 'mainwp_restore_native_backups_disabled', $job->checkpoint['last_error_code'] ?? '' );
+		$this->assertSame( array( 'restore_task_cancel' ), array_slice( $this->calls_without_report_reads(), 0, 1 ) );
+		$this->assertSame( array( 'task_id' => 'intent-task' ), $this->calls[0]['params'] );
+	}
+
+	/**
+	 * Once a restore task exists, turning backups off must not interrupt its recovery work.
+	 *
+	 * @dataProvider native_toggle_later_phases
+	 * @param string $phase Entry phase.
+	 * @param string $expected Resulting phase.
+	 * @param bool   $enabled Toggle state.
+	 */
+	public function test_native_toggle_does_not_interrupt_created_restore( $phase, $expected, $enabled ) {
+		$overrides                           = 'transferring' === $phase ? array( 'plan' => $this->staged_plan_fixture() ) : array();
+		$job                                 = $this->make_job( $overrides, $phase, array( 'child_task_id' => 'created-restore' ) );
+		$this->responses['restore_task_run'] = array(
+			'task_id'   => 'created-restore',
+			'phase'     => 'completed',
+			'sub_state' => array( 'verification' => array( 'db_ok' => true ) ),
+		);
+		update_option( 'mainwp_enableNativeBackups', $enabled ? 1 : 0 );
+		$job = $this->tick( $job );
+		$this->assertSame( $expected, $job->status );
+		$this->assertSame( 'created-restore', $job->child_task_id );
+		$this->assertSame( '', (string) $job->last_error );
+		$this->assertSame( 'running' === $phase ? array( 'restore_task_run' ) : ( 'transferring' === $phase ? array( 'restore_artifact_chunk' ) : array() ), $this->calls_without_report_reads() );
+	}
+
+	/**
+	 * The toggle gates admission, while existing restore work must finish.
+	 *
+	 * @return array
+	 */
+	public static function native_toggle_later_phases() {
+		$cases = array();
+		foreach ( array(
+			'staging'      => 'transferring',
+			'transferring' => 'running',
+			'running'      => 'verifying',
+			'verifying'    => 'completed',
+		) as $phase => $next ) {
+			foreach ( array( false, true ) as $enabled ) {
+				$cases[ $phase . '-' . (int) $enabled ] = array( $phase, $next, $enabled );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * These fixtures represent the safety task and handle preflight already created.
+	 *
+	 * @param array $checkpoint Checkpoint overrides.
+	 * @param array $extra Extra row columns.
+	 * @return object
+	 */
+	private function make_owned_safety_job( $checkpoint = array(), $extra = array() ) {
+		$job = $this->make_job( $checkpoint, MainWP_Backup_Restore_Job_Store::STATUS_PRE_SNAPSHOT, array_merge( array( 'pre_snapshot_task_id' => 'disabled-safety' ), $extra ) );
+		MainWP_DB::instance()->update_website_option(
+			$this->site_id,
+			MainWP_Backup_Executor::ADHOC_TASK_OPTION,
+			wp_json_encode(
+				array(
+					'task_id' => 'disabled-safety',
+					'owner'   => (string) $job->id,
+				)
+			)
+		);
+		return $job;
+	}
+
+	/**
+	 * All early-toggle refusals must free the site's reservation without entering backoff.
+	 *
+	 * @param object $job Fresh job row.
+	 */
+	private function assert_native_disabled_failure( $job ) {
+		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
+		$this->assertSame( 'Native backups were turned off, so this restore stopped before changing the site.', $job->last_error );
+		$this->assertSame( 'mainwp_restore_native_backups_disabled', $job->checkpoint['last_error_code'] );
+		$this->assertSame( 0, (int) $job->attempt_count );
+		$this->assertNull( $job->active_site_id );
+		$this->assertNull( MainWP_Backup_Restore_Job_Store::instance()->get_active_job_for_site( $this->site_id ) );
 	}
 
 	/**

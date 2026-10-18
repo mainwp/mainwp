@@ -1318,6 +1318,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             keptText += ' ' + '<?php /* translators: %s: reasons files were kept, separated by semicolons. */ echo esc_js( esc_html__( 'Reasons: %s.', 'mainwp' ) ); ?>'.replace( '%s', reasons.join( '; ' ) );
                         }
                         $note.append( $( '<p>' ).text( keptText ) );
+                        var keptConfig = Math.min( keptFiles, parseInt( keptByReason.config_include, 10 ) || 0 );
+                        if ( keptConfig > 0 ) {
+                            $note.append( $( '<p>' ).text( ( 1 === keptConfig
+                                ? '<?php /* translators: %d: number of files kept because the site configuration file loads them. */ echo esc_js( _n( '%d file was kept because wp-config.php loads it.', '%d files were kept because wp-config.php loads them.', 1, 'mainwp' ) ); ?>'
+                                : '<?php /* translators: %d: number of files kept because the site configuration file loads them. */ echo esc_js( _n( '%d file was kept because wp-config.php loads it.', '%d files were kept because wp-config.php loads them.', 2, 'mainwp' ) ); ?>'
+                            ).replace( '%d', keptConfig ) ) );
+                        }
                     }
                     if ( keptLinks > 0 ) {
                         $note.append( $( '<p>' ).text( ( 1 === keptLinks

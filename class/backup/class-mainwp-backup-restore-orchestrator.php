@@ -1347,6 +1347,12 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
                 // the site, so no rollback of an older restore can start.
                 $this->prune_superseded_pre_snapshots( $job );
 
+                // The prune requests above can take a while too. This safety
+                // backup stays recorded and can still be rolled back to.
+                if ( $this->stopped_because_native_backups_are_off( $job ) ) {
+                    return;
+                }
+
                 $store->set_status( (int) $job->id, MainWP_Backup_Restore_Job_Store::STATUS_STAGING, array(), $this->lock_token );
                 return;
             }
@@ -1402,7 +1408,11 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
      */
     private static function native_backups_enabled_in_table(): bool {
         global $wpdb;
-        $rows  = $wpdb->get_results( $wpdb->prepare( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ( %s, %s )", 'mainwp_enableNativeBackups', 'mainwp_enableLegacyBackupFeature' ), OBJECT_K ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the cached value is what this read avoids.
+        $rows = $wpdb->get_results( $wpdb->prepare( "SELECT option_name, option_value FROM {$wpdb->options} WHERE option_name IN ( %s, %s )", 'mainwp_enableNativeBackups', 'mainwp_enableLegacyBackupFeature' ), OBJECT_K ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the cached value is what this read avoids.
+        if ( '' !== $wpdb->last_error || ! is_array( $rows ) ) {
+            // A failed read is no evidence the toggle was turned off.
+            return MainWP_Backup_Settings::is_native_backups_enabled();
+        }
         $value = isset( $rows['mainwp_enableNativeBackups'] ) ? $rows['mainwp_enableNativeBackups']->option_value : null;
         if ( null === $value ) {
             $value = isset( $rows['mainwp_enableLegacyBackupFeature'] ) ? $rows['mainwp_enableLegacyBackupFeature']->option_value : '';

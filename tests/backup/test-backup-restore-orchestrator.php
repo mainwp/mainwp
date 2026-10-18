@@ -975,6 +975,61 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * A toggle saved while older safety backups are pruned stops the restore before staging; the new safety backup stays recorded.
+	 */
+	public function test_native_disabled_during_superseded_prune_stops_before_staging() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$this->make_job( $this->safety_checkpoint(), $store::STATUS_FAILED_PERMANENT, array( 'pre_snapshot_task_id' => 'task-failed-pre' ) );
+		$this->responses['backup_task_prune'] = $this->prune_answer( 'pruned' );
+		$job                                  = $this->make_pre_snapshot_job( 'task-new-pre' );
+		$turn_off                             = static function ( $pre, $website, $what ) {
+			if ( 'backup_task_prune' === $what ) {
+				global $wpdb;
+				$wpdb->update( $wpdb->options, array( 'option_value' => '0' ), array( 'option_name' => 'mainwp_enableNativeBackups' ) ); // phpcs:ignore WordPress.DB -- simulates a save from another request.
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $turn_off, 20, 3 );
+		try {
+			$this->orchestrator->process_pending_restore_jobs( 30, (int) $job->id );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $turn_off, 20 );
+		}
+		$job = $store->get_job( (int) $job->id );
+		$this->assert_native_disabled_failure( $job );
+		$this->assertNotEmpty( $job->checkpoint['pre_snapshot_artifacts'] ?? array() );
+		$this->assertSame( array( 'backup_task_run', 'backup_task_prune' ), array_column( $this->calls, 'what' ) );
+	}
+
+	/**
+	 * A failed toggle read is no evidence the toggle was turned off, so the restore goes on.
+	 */
+	public function test_failed_toggle_read_does_not_stop_the_restore() {
+		global $wpdb;
+		$store  = MainWP_Backup_Restore_Job_Store::instance();
+		$job    = $this->make_pre_snapshot_job( 'task-new-pre' );
+		$break  = static function ( $sql ) {
+			if ( false !== strpos( $sql, 'SELECT option_name, option_value FROM' ) && false !== strpos( $sql, "'mainwp_enableNativeBackups'" ) ) {
+				return str_replace( 'SELECT option_name, option_value FROM', 'SELECT no_such_column FROM', $sql );
+			}
+			return $sql;
+		};
+		$quiet  = $wpdb->suppress_errors( true );
+		$failed = $wpdb->show_errors( false );
+		add_filter( 'query', $break );
+		try {
+			$job = $this->tick( $job );
+		} finally {
+			remove_filter( 'query', $break );
+			$wpdb->suppress_errors( $quiet );
+			$wpdb->show_errors( $failed );
+		}
+		$this->assertSame( $store::STATUS_STAGING, $job->status );
+		$this->assertNotSame( 'mainwp_restore_native_backups_disabled', $job->checkpoint['last_error_code'] ?? '' );
+		$this->assertNotEmpty( $job->checkpoint['pre_snapshot_artifacts'] ?? array() );
+	}
+
+	/**
 	 * A toggle saved during the artifact check stops preflight before the safety backup or staging.
 	 *
 	 * @dataProvider native_disabled_artifact_check_cases

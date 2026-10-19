@@ -249,6 +249,7 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
             protected function cost_tracker_null_price_ids( $table ) {
                 $ids = parent::cost_tracker_null_price_ids( $table );
                 global $wpdb;
+                // nosemgrep: AIK_tainted-sql-string -- test-only race write; $table is the cost tracker table the code under test passes in, and both values bind through prepare().
                 $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET price = %f WHERE id = %d", 9.99, $this->race_id ) );
                 return $ids;
             }
@@ -288,6 +289,7 @@ class Test_Cost_Tracker_Price_Not_Null extends WP_UnitTestCase {
              */
             protected function apply_cost_tracker_price_not_null( $table ) {
                 global $wpdb;
+                // nosemgrep: AIK_tainted-sql-string -- test-only race write; $table is the cost tracker table the code under test passes in, and both values bind through prepare().
                 $wpdb->query( $wpdb->prepare( "UPDATE {$table} SET price = %f WHERE id = %d", 15, $this->race_id ) );
             }
         };

@@ -57,6 +57,8 @@
              process, which turns off site scoping and userless rights in every later test,
              so these tests run after the other suites. -->
         <testsuite name="REST Key Authentication">
+            <!-- First, so its check that a route mismatch leaves the constant undefined can still fail. -->
+            <file>tests/abilities/test-rest-key-auth-route-match.php</file>
             <file>tests/Test_REST_Settings_Write_Rights.php</file>
             <file>tests/Test_REST_V2_Cleanup_Round_2.php</file>
             <file>tests/Test_REST_V2_Cleanup_Round_3.php</file>
@@ -68,7 +70,6 @@
             <file>tests/Test_REST_V2_Cleanup_Round_9.php</file>
             <file>tests/Test_REST_V2_Registration_Fixes.php</file>
             <file>tests/abilities/test-rest-integration.php</file>
-            <file>tests/abilities/test-rest-key-auth-route-match.php</file>
             <file>tests/abilities/test-rest-key-auth-v1-routes.php</file>
         </testsuite>
     </testsuites>

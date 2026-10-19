@@ -248,15 +248,16 @@ class MainWP_Backup_Manual_Task_Identity_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A run that closes after the refused refresh must not hand the next run the old owner.
+	 * Call ensure_manual_backup_task() as $caller while the open run closes
+	 * between the refused refresh and the re-read that follows it.
+	 *
+	 * @param object $before Task row with an open run.
+	 * @param int    $caller User making the call.
+	 * @return object Row the call returned.
 	 */
-	public function test_run_closed_after_refused_refresh_refreshes_again() {
-		$db     = MainWP_DB_Backup::instance();
-		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup' );
-		$owner  = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		$second = self::factory()->user->create( array( 'role' => 'administrator' ) );
-		$before = $this->running_manual_task( $owner );
-
+	private function call_while_run_closes_after_refused_refresh( $before, $caller ) {
+		$db      = MainWP_DB_Backup::instance();
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
 		$refused = false;
 		$close   = function ( $query ) use ( &$close, &$refused, $db, $before, $table ) {
 			if ( ! $refused && str_starts_with( ltrim( $query ), 'UPDATE' ) && str_contains( $query, $table ) && str_contains( $query, 'userid' ) ) {
@@ -269,17 +270,55 @@ class MainWP_Backup_Manual_Task_Identity_Test extends \WP_UnitTestCase {
 			}
 			return $query;
 		};
-		wp_set_current_user( $second );
+		wp_set_current_user( $caller );
 		add_filter( 'query', $close );
 		try {
 			$after = $db->ensure_manual_backup_task( (object) array( 'id' => 887701 ) );
 		} finally {
 			remove_filter( 'query', $close );
 		}
+		$this->assertTrue( $refused, 'The first refresh must run while the run is open.' );
+		$this->assertIsObject( $after );
+		return $after;
+	}
 
-		$this->assertTrue( $refused );
+	/**
+	 * A run that closes after the refused refresh must not hand the next run the old owner.
+	 */
+	public function test_run_closed_after_refused_refresh_refreshes_again() {
+		$owner  = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$second = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$before = $this->running_manual_task( $owner );
+
+		$after = $this->call_while_run_closes_after_refused_refresh( $before, $second );
+
 		$this->assertSame( (string) $second, (string) $after->userid );
 		$this->assertSame( '887701', $after->authorized_sites );
+	}
+
+	/**
+	 * The run's own initiator calling again must still pick up settings changed during the run.
+	 */
+	public function test_initiator_call_after_run_closes_refreshes_settings() {
+		$owner           = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$before          = $this->running_manual_task( $owner );
+		$saved_retention = get_option( 'mainwp_on_demand_retention_count' );
+		update_option( 'mainwp_on_demand_retention_count', 7 );
+
+		try {
+			$after = $this->call_while_run_closes_after_refused_refresh( $before, $owner );
+		} finally {
+			if ( false === $saved_retention ) {
+				delete_option( 'mainwp_on_demand_retention_count' );
+			} else {
+				update_option( 'mainwp_on_demand_retention_count', $saved_retention );
+			}
+		}
+
+		$this->assertSame( (string) $owner, (string) $after->userid );
+		$this->assertSame( 7, (int) $after->retention_count );
+		$this->assertSame( '887701', $after->authorized_sites );
+		$this->assertNotSame( '[41]', $after->destinations );
 	}
 
 	/**

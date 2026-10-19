@@ -675,7 +675,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         // check first would lose to a claim landing between read and write.
         $user_id = get_current_user_id();
         for ( $attempt = 0; $attempt < 2; $attempt++ ) {
-            $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- guarded write; must hit the DB engine.
+            $changed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- guarded write; must hit the DB engine.
                 $this->wpdb->prepare(
                     'UPDATE ' . $this->table_name( 'wp_backup' ) . ' SET userid = %d, authorized_sites = %s, destinations = %s, retention_count = %d, next_run = 0, paused = 0, max_chain_length = 0 WHERE id = %d AND completed >= last_run', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
                     $user_id,
@@ -685,10 +685,14 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                     (int) $task->id
                 )
             );
+
             $task = $this->get_manual_backup_task( $site_id );
             // A refresh refused by a run that closed before this read would
-            // start the next run with the old initiator; refresh once more.
-            if ( empty( $task ) || (int) $task->completed < (int) $task->last_run || (int) $task->userid === $user_id ) {
+            // start the next run with the previous run's initiator and
+            // settings, even when that initiator is the caller; refresh once
+            // more. MySQL counts changed rows, so a refresh with nothing new
+            // to write also reads as 0 and repeats once, which is harmless.
+            if ( empty( $task ) || (int) $task->completed < (int) $task->last_run || ( is_int( $changed ) && $changed > 0 ) ) {
                 break;
             }
         }

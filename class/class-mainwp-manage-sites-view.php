@@ -2496,6 +2496,9 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     // add_website() returns false when the row or its credentials cannot be saved; callers read an empty $error as success.
                     if ( ! $id ) {
                         $error = esc_html__( 'The site could not be saved to the Dashboard. Please try again.', 'mainwp' );
+                        // Both Add Site screens show failure_ux in place of the error, and the handler would otherwise
+                        // fill it with HTTP diagnostics for a handshake that succeeded.
+                        $output['failure_ux'] = '<p>' . $error . '</p>';
                     }
 
                     // Keep tags visible to the monitor filter inside add_website(), and grant only saved tags.

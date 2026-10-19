@@ -31,12 +31,17 @@ class Test_Add_Site_Save_Failure extends \WP_UnitTestCase {
 				return array();
 			}
 		);
-		$table = $wpdb->prefix . 'mainwp_wp';
+		$table       = $wpdb->prefix . 'mainwp_wp';
+		$intercepted = false;
 		// wpdb returns false for an empty query, which is how a failed insert reaches add_website().
 		add_filter(
 			'query',
-			static function ( $query ) use ( $table ) {
-				return 0 === strpos( $query, 'INSERT INTO `' . $table . '`' ) ? '' : $query;
+			static function ( $query ) use ( $table, &$intercepted ) {
+				if ( 0 !== strpos( $query, 'INSERT INTO `' . $table . '`' ) ) {
+					return $query;
+				}
+				$intercepted = true;
+				return '';
 			}
 		);
 		$url   = 'https://save-failure-' . wp_generate_uuid4() . '.example.com/';
@@ -46,9 +51,12 @@ class Test_Add_Site_Save_Failure extends \WP_UnitTestCase {
 			'managesites_add_wpadmin' => 'admin',
 		);
 
-		list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_site();
+		$output                            = array();
+		list( $message, $error, $site_id ) = MainWP_Manage_Sites_View::add_site( false, $output );
 
+		$this->assertTrue( $intercepted, 'The site insert must be the failure under test.' );
 		$this->assertSame( 'The site could not be saved to the Dashboard. Please try again.', $error );
+		$this->assertSame( '<p>' . $error . '</p>', $output['failure_ux'] );
 		$this->assertEmpty( $site_id );
 		$this->assertNull( $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE url = %s", $url ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 	}

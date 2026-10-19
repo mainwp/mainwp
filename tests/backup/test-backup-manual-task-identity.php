@@ -149,6 +149,169 @@ class MainWP_Backup_Manual_Task_Identity_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Create the site's task as $owner and open a run on it.
+	 *
+	 * @param int $owner User the task was refreshed for.
+	 * @return object Task row with an open run.
+	 */
+	private function running_manual_task( $owner ) {
+		$db      = MainWP_DB_Backup::instance();
+		$website = (object) array(
+			'id'     => 887701,
+			'userid' => 1,
+		);
+		wp_set_current_user( $owner );
+		$task = $db->ensure_manual_backup_task( $website );
+		$this->assertIsObject( $task );
+		$db->update_backup_task_with_values(
+			(int) $task->id,
+			array(
+				'retention_count'  => 2,
+				'destinations'     => '[41]',
+				'authorized_sites' => '887701,887702',
+				'last_run'         => time(),
+				'completed'        => time() - 60,
+			)
+		);
+		return $db->get_manual_backup_task( 887701 );
+	}
+
+	/**
+	 * Assert the task row still holds what the run's initiator stored.
+	 *
+	 * @param object $before Row read before the second user's call.
+	 * @param object $after  Row the call returned.
+	 */
+	private function assert_task_unchanged( $before, $after ) {
+		$this->assertIsObject( $after );
+		foreach ( array( 'userid', 'retention_count', 'destinations', 'authorized_sites', 'last_run', 'completed' ) as $field ) {
+			$this->assertSame( (string) $before->$field, (string) $after->$field, $field );
+		}
+	}
+
+	/**
+	 * A second user attaching to a running backup must not take over the task.
+	 */
+	public function test_attach_to_running_run_leaves_task_unchanged() {
+		$owner  = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$second = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$before = $this->running_manual_task( $owner );
+
+		wp_set_current_user( $second );
+		$after = MainWP_DB_Backup::instance()->ensure_manual_backup_task( (object) array( 'id' => 887701 ) );
+
+		$this->assert_task_unchanged( $before, $after );
+		$this->assertLessThan( (int) $after->last_run, (int) $after->completed, 'The caller must still see the run as open so it attaches.' );
+	}
+
+	/**
+	 * A run claimed between the task read and the refresh must keep its row.
+	 */
+	public function test_run_claimed_before_refresh_leaves_task_unchanged() {
+		global $wpdb;
+		$db      = MainWP_DB_Backup::instance();
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$owner   = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$second  = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$before  = $this->running_manual_task( $owner );
+		$started = (int) $before->last_run;
+		// Present the task as idle to the first read, then let the run be claimed.
+		$db->update_backup_task_with_values( (int) $before->id, array( 'completed' => $started ) );
+
+		$claim = function ( $query ) use ( &$claim, $db, $before, $started, $table ) {
+			if ( str_starts_with( ltrim( $query ), 'UPDATE' ) && str_contains( $query, $table ) && str_contains( $query, 'userid' ) ) {
+				remove_filter( 'query', $claim );
+				$db->update_backup_task_with_values(
+					(int) $before->id,
+					array(
+						'last_run'  => $started + 1,
+						'completed' => $started - 60,
+					)
+				);
+			}
+			return $query;
+		};
+		wp_set_current_user( $second );
+		add_filter( 'query', $claim );
+		try {
+			$after = $db->ensure_manual_backup_task( (object) array( 'id' => 887701 ) );
+		} finally {
+			remove_filter( 'query', $claim );
+		}
+
+		$this->assertSame( (string) ( $started + 1 ), (string) $after->last_run, 'The claim must have landed before the refresh executed.' );
+		$this->assertSame( (string) $owner, (string) $after->userid );
+		$this->assertSame( '2', (string) $after->retention_count );
+		$this->assertSame( '[41]', $after->destinations );
+		$this->assertSame( '887701,887702', $after->authorized_sites );
+		$this->assertSame( 1, (int) $wpdb->get_var( $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE id = %d AND userid = %d", $before->id, $owner ) ) ); // phpcs:ignore WordPress.DB -- test probe.
+	}
+
+	/**
+	 * A run that closes after the refused refresh must not hand the next run the old owner.
+	 */
+	public function test_run_closed_after_refused_refresh_refreshes_again() {
+		$db     = MainWP_DB_Backup::instance();
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$owner  = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$second = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$before = $this->running_manual_task( $owner );
+
+		$refused = false;
+		$close   = function ( $query ) use ( &$close, &$refused, $db, $before, $table ) {
+			if ( ! $refused && str_starts_with( ltrim( $query ), 'UPDATE' ) && str_contains( $query, $table ) && str_contains( $query, 'userid' ) ) {
+				$refused = true;
+				return $query;
+			}
+			if ( $refused && str_starts_with( ltrim( $query ), 'SELECT' ) && str_contains( $query, 'manual_site_id' ) ) {
+				remove_filter( 'query', $close );
+				$db->update_backup_task_with_values( (int) $before->id, array( 'completed' => (int) $before->last_run ) );
+			}
+			return $query;
+		};
+		wp_set_current_user( $second );
+		add_filter( 'query', $close );
+		try {
+			$after = $db->ensure_manual_backup_task( (object) array( 'id' => 887701 ) );
+		} finally {
+			remove_filter( 'query', $close );
+		}
+
+		$this->assertTrue( $refused );
+		$this->assertSame( (string) $second, (string) $after->userid );
+		$this->assertSame( '887701', $after->authorized_sites );
+	}
+
+	/**
+	 * With no run in progress the task takes the caller and current settings.
+	 */
+	public function test_idle_task_refreshes_for_the_caller() {
+		$db     = MainWP_DB_Backup::instance();
+		$owner  = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$second = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$before = $this->running_manual_task( $owner );
+		$db->update_backup_task_with_values( (int) $before->id, array( 'completed' => (int) $before->last_run ) );
+		$saved_retention = get_option( 'mainwp_on_demand_retention_count' );
+		update_option( 'mainwp_on_demand_retention_count', 9 );
+
+		wp_set_current_user( $second );
+		try {
+			$after = $db->ensure_manual_backup_task( (object) array( 'id' => 887701 ) );
+		} finally {
+			if ( false === $saved_retention ) {
+				delete_option( 'mainwp_on_demand_retention_count' );
+			} else {
+				update_option( 'mainwp_on_demand_retention_count', $saved_retention );
+			}
+		}
+
+		$this->assertSame( (string) $second, (string) $after->userid );
+		$this->assertSame( 9, (int) $after->retention_count );
+		$this->assertSame( '887701', $after->authorized_sites );
+		$this->assertNotSame( '[41]', $after->destinations );
+	}
+
+	/**
 	 * Exercise both the real duplicate key and a localized failure response.
 	 *
 	 * @return array Error message modes.

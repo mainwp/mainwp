@@ -13,7 +13,10 @@ defined( 'ABSPATH' ) || exit;
 class MainWP_Abilities_Backups {
 
     /**
-     * Summary reads skip granular rights while retaining owner and site checks.
+     * Granular right each backup read requires, on top of the
+     * manage_options gate and the owner and site checks. Backup writes
+     * resolve their rights through
+     * MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS instead.
      *
      * @var array<string,string>
      */
@@ -1581,8 +1584,9 @@ class MainWP_Abilities_Backups {
                 ),
                 'rollback_of'         => self::id_or_null_schema(),
                 'safety_backup'       => array(
-                    'type' => 'string',
-                    'enum' => array( 'not_requested', 'pending', 'taken', 'failed', 'pruned' ),
+                    'type'        => 'string',
+                    'enum'        => array( 'not_requested', 'pending', 'taken', 'failed', 'pruned', 'not_attempted' ),
+                    'description' => 'Status of the safety backup the Dashboard takes before the restore overwrites the site. not_requested: the restore did not ask for a safety backup, or it is a rollback. pending: the restore has not reached its safety backup step or is still running it. taken: the safety backup is kept; rollback_available says whether a rollback would be accepted. pruned: the safety backup was taken and later removed. failed: the safety backup step started but produced no backup. not_attempted: the restore failed or was cancelled before its safety backup step started, so none was made.',
                 ),
                 'rollback_available'  => array(
                     'type'        => 'boolean',

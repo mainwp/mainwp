@@ -1044,6 +1044,8 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $safety = 'pruned';
         } elseif ( ! empty( $cp['pre_snapshot_artifacts'] ) ) {
             $safety = 'taken';
+        } elseif ( '' === (string) $job->pre_snapshot_task_id ) {
+            $safety = $terminal ? 'not_attempted' : 'pending';
         } elseif ( $terminal || in_array( $job->status, array( 'staging', 'transferring', 'running', 'verifying' ), true ) ) {
             $safety = 'failed';
         }

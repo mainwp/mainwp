@@ -606,10 +606,10 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * Method ensure_manual_backup_task()
      *
      * Get-or-create the per-site hidden on-demand backup task and refresh
-     * its destinations and retention on every call. The task is a
-     * standalone full backup (never incremental) so each on-demand
-     * snapshot restores on its own; it runs as the authorized initiator,
-     * refreshed on every call; and it stays off the schedule list
+     * its initiator, destinations and retention when no run is open. The
+     * task is a standalone full backup (never incremental) so each on-demand
+     * snapshot restores on its own; a call made while a run is open leaves
+     * the row as that run's initiator stored it; and it stays off the schedule list
      * (template = 1) and out of the schedulers (schedule 'manual',
      * next_run 0), driven only on demand and by the existing continue cron.
      *
@@ -669,21 +669,31 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         }
 
         // Refresh destinations and retention each run so a settings or
-        // schedule change takes effect on the next on-demand backup.
-        $this->update_backup_task_with_values(
-            (int) $task->id,
-            array(
-                'userid'           => get_current_user_id(),
-                'authorized_sites' => (string) $site_id,
-                'destinations'     => wp_json_encode( $this->manual_backup_task_destinations( $site_id ) ),
-                'retention_count'  => MainWP_Backup_Settings::get_on_demand_retention_count(),
-                'next_run'         => 0,
-                'paused'           => 0,
-                'max_chain_length' => 0,
-            )
-        );
+        // schedule change takes effect on the next on-demand backup. A call
+        // that attaches to an open run must leave the task to the run's
+        // initiator, so the open-run test sits in the UPDATE itself: a PHP
+        // check first would lose to a claim landing between read and write.
+        $user_id = get_current_user_id();
+        for ( $attempt = 0; $attempt < 2; $attempt++ ) {
+            $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- guarded write; must hit the DB engine.
+                $this->wpdb->prepare(
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . ' SET userid = %d, authorized_sites = %s, destinations = %s, retention_count = %d, next_run = 0, paused = 0, max_chain_length = 0 WHERE id = %d AND completed >= last_run', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                    $user_id,
+                    (string) $site_id,
+                    wp_json_encode( $this->manual_backup_task_destinations( $site_id ) ),
+                    MainWP_Backup_Settings::get_on_demand_retention_count(),
+                    (int) $task->id
+                )
+            );
+            $task = $this->get_manual_backup_task( $site_id );
+            // A refresh refused by a run that closed before this read would
+            // start the next run with the old initiator; refresh once more.
+            if ( empty( $task ) || (int) $task->completed < (int) $task->last_run || (int) $task->userid === $user_id ) {
+                break;
+            }
+        }
 
-        return $this->get_manual_backup_task( $site_id );
+        return empty( $task ) ? false : $task;
     }
 
     /**

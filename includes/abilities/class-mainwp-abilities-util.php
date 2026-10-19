@@ -37,9 +37,10 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Ability → granular Team Control dashboard right required to run it.
      *
-     * Read-only abilities (list/get/count) are intentionally absent: they are
-     * gated by manage_options plus site scoping and are out of scope for
-     * granular rights.
+     * Read-only abilities (list/get/count) are absent. Backup reads still
+     * need a granular right, mapped in MainWP_Abilities_Backups::READ_RIGHTS;
+     * every other family's reads are gated by manage_options plus site
+     * scoping only.
      *
      * The update family (run-updates / update-all) is intentionally absent
      * here: it needs per-type rights derived from its `types` input, handled

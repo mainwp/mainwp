@@ -929,6 +929,62 @@ class MainWP_Backups_Read_Abilities_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A restore ending before its safety step starts must not report a failed backup.
+	 *
+	 * @dataProvider restore_safety_backup_cases
+	 * @param string $status Job status.
+	 * @param string $task_id Safety backup task identity.
+	 * @param array  $checkpoint Recorded restore evidence.
+	 * @param string $safety Expected safety backup state.
+	 * @return void
+	 */
+	public function test_restore_safety_backup_distinguishes_unstarted_steps( $status, $task_id, $checkpoint, $safety ) {
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' ),
+			array(
+				'status'               => $status,
+				'pre_snapshot_task_id' => $task_id,
+				'checkpoint'           => wp_json_encode( $checkpoint ),
+			),
+			array( 'id' => 987674 )
+		);
+		$output = $this->read( 'get-restore-job', array( 'restore_job_id' => 987674 ) );
+		$this->assert_output( 'get-restore-job', $output );
+		$this->assertSame( $safety, $output['job']['safety_backup'] );
+	}
+
+	/**
+	 * Task creation distinguishes a failed safety step from one that never started.
+	 *
+	 * @return array
+	 */
+	public static function restore_safety_backup_cases() {
+		$requested = array(
+			'sub_type' => 'full',
+			'options'  => array( 'pre_snapshot' => true ),
+		);
+		$taken     = array_merge( $requested, array( 'pre_snapshot_artifacts' => array( array( 'path' => __FILE__ ) ) ) );
+		$pruned    = array_merge( $taken, array( 'pre_snapshot_pruned' => true ) );
+		$rollback  = array(
+			'is_rollback' => true,
+			'options'     => array( 'pre_snapshot' => false ),
+		);
+		return array(
+			'not requested'                 => array( 'completed', '', array( 'options' => array( 'pre_snapshot' => false ) ), 'not_requested' ),
+			'rollback'                      => array( 'completed', '', $rollback, 'not_requested' ),
+			'preflight without task'        => array( 'preflight', '', $requested, 'pending' ),
+			'pre_snapshot with task'        => array( 'pre_snapshot', 'safety-task', $requested, 'pending' ),
+			'staging with task'             => array( 'staging', 'safety-task', $requested, 'failed' ),
+			'taken'                         => array( 'completed', 'safety-task', $taken, 'taken' ),
+			'pruned'                        => array( 'completed', 'safety-task', $pruned, 'pruned' ),
+			'failed_permanent with task'    => array( 'failed_permanent', 'safety-task', $requested, 'failed' ),
+			'failed_permanent without task' => array( 'failed_permanent', '', $requested, 'not_attempted' ),
+			'cancelled without task'        => array( 'cancelled', '', $requested, 'not_attempted' ),
+		);
+	}
+
+	/**
 	 * Reports determine risk independently of Dashboard status and snapshot age.
 	 *
 	 * @dataProvider child_restore_report_cases

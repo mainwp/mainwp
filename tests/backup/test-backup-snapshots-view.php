@@ -532,7 +532,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		);
 		$incapable = $this->render_page();
 		$this->assertStringContainsString( 'class="ui small info visible message"', $incapable );
-		$this->assertStringContainsString( 'Test Restore is not available on this Dashboard host. The sandbox needs a database user with the CREATE privilege; ask your host to grant it.', $incapable );
+		$this->assertStringContainsString( 'Test Restore is not available on this Dashboard host because the restore sandbox could not be set up. The usual cause is a database user without the CREATE privilege; ask your host to grant it. For the exact reason, set the Custom Event Monitor log level to Debug, reload this page, and check the log.', $incapable );
 		foreach ( array( 'db_user_private', 'scratch_db_private', 'raw_mysql_error_private' ) as $private_text ) {
 			$this->assertStringNotContainsString( $private_text, $incapable, 'Cached database details must not appear anywhere in the HTML.' );
 		}
@@ -548,7 +548,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		);
 		$capable = $this->render_page();
 		$this->assertStringNotContainsString( 'class="ui small info visible message"', $capable );
-		$this->assertStringNotContainsString( 'Test Restore is not available on this Dashboard host. The sandbox needs a database user with the CREATE privilege; ask your host to grant it.', $capable, 'A capable host shows no notice.' );
+		$this->assertStringNotContainsString( 'Test Restore is not available on this Dashboard host because the restore sandbox could not be set up. The usual cause is a database user without the CREATE privilege; ask your host to grant it. For the exact reason, set the Custom Event Monitor log level to Debug, reload this page, and check the log.', $capable, 'A capable host shows no notice.' );
 
 		delete_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION );
 	}

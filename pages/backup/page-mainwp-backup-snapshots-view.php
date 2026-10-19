@@ -152,7 +152,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     MainWP_Logger::instance()->debug( 'test-restore capability :: ' . $test_restore_notice );
                     ?>
                 <div class="ui small info visible message">
-                    <?php esc_html_e( 'Test Restore is not available on this Dashboard host. The sandbox needs a database user with the CREATE privilege; ask your host to grant it.', 'mainwp' ); ?>
+                    <?php esc_html_e( 'Test Restore is not available on this Dashboard host because the restore sandbox could not be set up. The usual cause is a database user without the CREATE privilege; ask your host to grant it. For the exact reason, set the Custom Event Monitor log level to Debug, reload this page, and check the log.', 'mainwp' ); ?>
                 </div>
                 <?php endif; ?>
 
@@ -1815,6 +1815,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( this ).prop( 'disabled', true ).addClass( 'disabled' );
                 showCancelBackup( true );
                 stopBackupTimers();
+                // Cancel is offered before the kickoff reply arrives. A
+                // cancelled reply that lands first ends this follow, so the
+                // kickoff reply must not restart it or repaint the status.
+                var gen = backupFollowGen;
                 backupStartTime = Date.now();
                 backupLastPhase = null;
                 backupPhaseStartTime = null;
@@ -1823,8 +1827,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
                 setBackupStatus( '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', false );
                 $.post( ajaxurl, { action: 'mainwp_native_backup_initiate', security: nonces.nativeBackupInitiate, site_id: siteId }, function ( response ) {
-                    if ( siteId !== currentSite ) {
-                        return; // The page moved on; the run continues server-side.
+                    if ( siteId !== currentSite || gen !== backupFollowGen ) {
+                        return; // The page moved on or the follow ended; the run continues server-side.
                     }
                     if ( response.error ) {
                         stopBackupTimers();
@@ -1848,7 +1852,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     backupSinceTs = sinceTs;
                     backupPollTimer = window.setTimeout( function () { pollBackup( siteId, sinceTs ); }, 1500 );
                 }, 'json' ).fail( function () {
-                    if ( siteId !== currentSite ) {
+                    if ( siteId !== currentSite || gen !== backupFollowGen ) {
                         return;
                     }
                     // The kickoff request never reached the handler, so nothing

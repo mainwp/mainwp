@@ -81,6 +81,23 @@ for ( const reply of [ 'success', 'fail' ] ) {
     } );
 }
 
+for ( const reply of [ 'success', 'error', 'settled', 'fail' ] ) {
+    test( 'cancelled reply before the kickoff reply keeps the follow ended (' + reply + ')', () => {
+        const h = harness();
+        h.click( '#mainwp-native-backup-now-btn' );
+        h.click( '#mainwp-native-backup-cancel-btn' );
+        h.requests[1].success( { result: 'cancelled' } );
+        const afterCancel = h.calls.slice();
+        if ( reply === 'success' ) h.requests[0].success( { started: 456 } );
+        else if ( reply === 'error' ) h.requests[0].success( { error: 'Another backup is running.' } );
+        else if ( reply === 'settled' ) h.requests[0].success( { settled: true, message: 'Backup complete.' } );
+        else h.requests[0].fail();
+        assert.deepEqual( h.calls, afterCancel, 'The kickoff reply must not repaint the cancelled status.' );
+        assert.equal( h.calls.at( -3 )[1], 'Backup cancelled.' );
+        assert.equal( h.timers.size, 0, 'The kickoff reply must not restart the follow.' );
+    } );
+}
+
 for ( const follow of [ 'click', 'resume' ] ) {
     test( 'new ' + follow + ' follow paints after a terminal state and rejects the old poll', () => {
         const h = harness();

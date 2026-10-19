@@ -124,6 +124,9 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Received HTTP-code:', esc_html__( 'Received HTTP-code:', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Cloudflare/proxy edge IP', esc_html__( 'Cloudflare/proxy edge IP', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.', esc_html__( 'No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.', 'mainwp' ) );
+        // feedback() inserts this as a text node, so esc_html__() would show an apostrophe as &#039;.
+        /* translators: %1 and %2 wrap the link text to the site's Dashboard. */
+        mainwp_add_translation( $mainwpTranslations, 'Site successfully added - Visit the Site\'s %1Dashboard%2 now.', __( 'Site successfully added - Visit the Site\'s %1Dashboard%2 now.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Connection test successful.', esc_html__( 'Connection test successful.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Invalid response from the server, please try again.', esc_html__( 'Invalid response from the server, please try again.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Please enter csv file for upload.', esc_html__( 'Please enter csv file for upload.', 'mainwp' ) );

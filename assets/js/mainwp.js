@@ -550,6 +550,12 @@ globalThis.mainwp_feedback_linked_message = function (message, links) {
     }));
 };
 
+// MainWP_Connect_Failure_Ux::render_html() escapes every value it prints, so its markup is parsed
+// into nodes here; feedback() would show a string's tags as text.
+globalThis.mainwp_failure_ux_nodes = function (html) {
+    return jQuery(jQuery.parseHTML(html));
+};
+
 globalThis.mainwp_get_reconnect_error = function (response, siteId) { // NOSONAR - complexity.
     if ('reconnect_failed' === response) {
         return mainwp_feedback_linked_message(MainWP.I18n.t('Reconnect failed. Please try again from the %1Site Settings page%2.'), [{ href: 'admin.php?page=managesites&id=' + encodeURIComponent(siteId) }]);
@@ -1936,7 +1942,7 @@ let mainwp_managesites_add = function () {
         jQuery('#mainwp-response-data-container').attr('resp-data', resp_data);
 
         if (res_things.failure_ux) {
-            errors.push(res_things.failure_ux);
+            errors.push(mainwp_failure_ux_nodes(res_things.failure_ux));
         } else if (response == 'HTTPERROR') {
             errors.push(mainwp_feedback_linked_message(MainWP.I18n.t('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review this %1Knowledgebase document%2, and if you still have issues, please let us know in the %3MainWP Community%4.'), [{ href: 'https://docs.mainwp.com/troubleshooting/potential-issues/' }, { href: 'https://managers.mainwp.com/c/community-support/5' }]));
         } else if (response == 'NOMAINWP') {
@@ -2008,7 +2014,7 @@ let mainwp_managesites_add = function () {
 
                 if (response.substring(0, 5) == 'ERROR') {
                     mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
-                    let add_err = [res_things.failure_ux ? res_things.failure_ux : response.substring(6)];
+                    let add_err = [res_things.failure_ux ? mainwp_failure_ux_nodes(res_things.failure_ux) : response.substring(6)];
                     if (resp_data != '') {
                         add_err.push(show_resp);
                     } else {
@@ -2017,7 +2023,9 @@ let mainwp_managesites_add = function () {
                     feedback('mainwp-message-zone', add_err, 'red');
                 } else {
                     mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
-                    feedback('mainwp-message-zone', response, 'green');
+                    // The response is HTML for the CSV import log; feedback() needs the link as a node.
+                    let added = mainwp_feedback_linked_message(MainWP.I18n.t('Site successfully added - Visit the Site\'s %1Dashboard%2 now.'), [{ href: 'admin.php?page=managesites&dashboard=' + encodeURIComponent(site_id), style: 'text-decoration: none;' }]);
+                    feedback('mainwp-message-zone', added, 'green');
 
                     if (site_id > 0) {
                         jQuery('.sync-ext-row').attr('status', 'queue');

@@ -64,6 +64,10 @@ function jQuery( selector, attributes ) {
     }
     this.nodes.forEach( ( node, index ) => { this[index] = node; } );
 }
+jQuery.parseHTML = html => {
+    jQuery.parsedHtml = html;
+    return [ new Node( 1, 'div' ) ];
+};
 jQuery.prototype.add = function ( node ) {
     assert.ok( node instanceof Node );
     this.nodes.push( node );
@@ -77,7 +81,7 @@ const context = {
     scrollElementTop() {}
 };
 vm.createContext( context );
-for ( const name of [ 'feedback', 'mainwp_showhide_message', 'mainwp_feedback_linked_message', 'mainwp_get_reconnect_error' ] ) {
+for ( const name of [ 'feedback', 'mainwp_showhide_message', 'mainwp_feedback_linked_message', 'mainwp_failure_ux_nodes', 'mainwp_get_reconnect_error' ] ) {
     const start = source.indexOf( 'globalThis.' + name + ' = function ' );
     assert.ok( start >= 0, name + ' must be loadable from mainwp.js.' );
     const end = source.indexOf( '\n};', start ) + '\n};'.length;
@@ -167,4 +171,32 @@ test( 'jQuery and DOM node arguments preserve node identity', () => {
     context.mainwp_showhide_message( 'feedback', '', 'red', false );
     assert.deepEqual( element.children, [] );
     assert.equal( element.visible, false );
+} );
+test( 'add-site success notice links the Dashboard as a node', () => {
+    const caller = source.match( /^\s*let added = (.*);$/m );
+    assert.ok( caller, 'The add-site success caller must be loadable.' );
+    context.site_id = 57;
+    checkRendering( () => vm.runInContext( caller[1], context ), nodes => {
+        assert.equal( nodes.length, 3 );
+        assert.deepEqual( nodes[0], textNode( 'Site successfully added - Visit the Site\'s ' ) );
+        assert.equal( nodes[1].tagName, 'A' );
+        assert.equal( nodes[1].href, 'admin.php?page=managesites&dashboard=57' );
+        assert.deepEqual( nodes[1].children, [ textNode( 'Dashboard' ) ] );
+        assert.deepEqual( nodes[2], textNode( ' now.' ) );
+    } );
+} );
+test( 'add-site connection failure details render as parsed nodes', () => {
+    const html = '<div class="mainwp-connect-failure-ux"><p>details</p></div>';
+    for ( const pattern of [ /^\s*errors\.push\((mainwp_failure_ux_nodes\(res_things\.failure_ux\))\);$/m, /^\s*let add_err = \[res_things\.failure_ux \? (mainwp_failure_ux_nodes\(res_things\.failure_ux\)) :/m ] ) {
+        const caller = source.match( pattern );
+        assert.ok( caller, 'The add-site failure_ux caller must be loadable.' );
+        context.res_things = { failure_ux: html };
+        checkRendering( () => [ vm.runInContext( caller[1], context ), 'No child response body was returned.' ], nodes => {
+            assert.equal( jQuery.parsedHtml, html );
+            assert.equal( nodes.length, 3 );
+            assert.equal( nodes[0].tagName, 'DIV' );
+            assert.equal( nodes[1].tagName, 'BR' );
+            assert.deepEqual( nodes[2], textNode( 'No child response body was returned.' ) );
+        } );
+    }
 } );

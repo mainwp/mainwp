@@ -57,6 +57,7 @@ class Test_Add_Site_Save_Failure extends \WP_UnitTestCase {
 		$this->assertTrue( $intercepted, 'The site insert must be the failure under test.' );
 		$this->assertSame( 'The site could not be saved to the Dashboard. Please try again.', $error );
 		$this->assertSame( '<p>' . $error . '</p>', $output['failure_ux'] );
+		$this->assertSame( '', $message );
 		$this->assertEmpty( $site_id );
 		$this->assertNull( $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE url = %s", $url ) ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name from $wpdb->prefix.
 	}

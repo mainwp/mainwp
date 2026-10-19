@@ -23,11 +23,26 @@
             <!-- Playwright/TypeScript only today; excluded so a future stray .php helper can't get picked up silently. -->
             <exclude>tests/e2e</exclude>
             <exclude>tests/test-case.php</exclude>
+            <!-- These authenticate REST API keys; they run in the REST Key Authentication suite. -->
+            <exclude>tests/Test_REST_Settings_Write_Rights.php</exclude>
+            <exclude>tests/Test_REST_V2_Cleanup_Round_2.php</exclude>
+            <exclude>tests/Test_REST_V2_Cleanup_Round_3.php</exclude>
+            <exclude>tests/Test_REST_V2_Cleanup_Round_4.php</exclude>
+            <exclude>tests/Test_REST_V2_Cleanup_Round_5.php</exclude>
+            <exclude>tests/Test_REST_V2_Cleanup_Round_6.php</exclude>
+            <exclude>tests/Test_REST_V2_Cleanup_Round_7.php</exclude>
+            <exclude>tests/Test_REST_V2_Cleanup_Round_8.php</exclude>
+            <exclude>tests/Test_REST_V2_Cleanup_Round_9.php</exclude>
+            <exclude>tests/Test_REST_V2_Registration_Fixes.php</exclude>
         </testsuite>
         <testsuite name="Abilities">
             <directory suffix=".php">tests/abilities</directory>
             <exclude>tests/abilities/class-mainwp-abilities-test-case.php</exclude>
             <exclude>tests/abilities/README.md</exclude>
+            <!-- These authenticate REST API keys; they run in the REST Key Authentication suite. -->
+            <exclude>tests/abilities/test-rest-integration.php</exclude>
+            <exclude>tests/abilities/test-rest-key-auth-route-match.php</exclude>
+            <exclude>tests/abilities/test-rest-key-auth-v1-routes.php</exclude>
         </testsuite>
         <testsuite name="Backup">
             <directory suffix=".php">tests/backup</directory>
@@ -37,6 +52,24 @@
                  from the capability-denial tests. -->
             <exclude>tests/backup/test-backup-settings-controller.php</exclude>
             <file>tests/backup/test-backup-settings-controller.php</file>
+        </testsuite>
+        <!-- Authenticating a REST API key defines MAINWP_REST_API_DOING for the rest of the
+             process, which turns off site scoping and userless rights in every later test,
+             so these tests run after the other suites. -->
+        <testsuite name="REST Key Authentication">
+            <file>tests/Test_REST_Settings_Write_Rights.php</file>
+            <file>tests/Test_REST_V2_Cleanup_Round_2.php</file>
+            <file>tests/Test_REST_V2_Cleanup_Round_3.php</file>
+            <file>tests/Test_REST_V2_Cleanup_Round_4.php</file>
+            <file>tests/Test_REST_V2_Cleanup_Round_5.php</file>
+            <file>tests/Test_REST_V2_Cleanup_Round_6.php</file>
+            <file>tests/Test_REST_V2_Cleanup_Round_7.php</file>
+            <file>tests/Test_REST_V2_Cleanup_Round_8.php</file>
+            <file>tests/Test_REST_V2_Cleanup_Round_9.php</file>
+            <file>tests/Test_REST_V2_Registration_Fixes.php</file>
+            <file>tests/abilities/test-rest-integration.php</file>
+            <file>tests/abilities/test-rest-key-auth-route-match.php</file>
+            <file>tests/abilities/test-rest-key-auth-v1-routes.php</file>
         </testsuite>
     </testsuites>
 

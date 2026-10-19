@@ -10,7 +10,12 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Utility;
 
-/** Tests authenticated REST writes after the process-wide REST constant is set. */
+/**
+ * Tests authenticated REST writes after the process-wide REST constant is set.
+ *
+ * Runs in its own "REST Key Authentication" suite after the others (phpunit.xml.dist):
+ * the constant cannot be undefined and turns off site scoping for every later test.
+ */
 class Test_REST_Settings_Write_Rights extends MainWP_Abilities_Test_Case {
 
     /**

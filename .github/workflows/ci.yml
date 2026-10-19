@@ -90,6 +90,9 @@ jobs:
       - name: Run PHPUnit - Backup
         run: ./vendor/bin/phpunit --testsuite=Backup
 
+      - name: Run PHPUnit - REST Key Authentication
+        run: ./vendor/bin/phpunit --testsuite="REST Key Authentication"
+
   phpcs:
     name: PHPCS
     runs-on: ubuntu-latest

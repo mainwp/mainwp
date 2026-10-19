@@ -62,11 +62,13 @@ use MainWP\Dashboard\MainWP_DB_Client;
  *
  * `mainwp_current_user_have_right()` returns true unconditionally while
  * DOING_CRON, WP_CLI, or MAINWP_REST_API_DOING is defined, and a constant
- * defined by any earlier test lives for the whole phpunit process. Denial
- * tests use this guard so a single-process aggregate run (bare
- * `vendor/bin/phpunit` with no --testsuite) skips them loudly instead of
- * failing confusingly; the per-suite invocations CI and `composer test`
- * use never define these constants, so nothing skips there. A trait so
+ * defined by any earlier test lives for the whole phpunit process. Tests
+ * that authenticate a REST API key (and so define MAINWP_REST_API_DOING)
+ * sit in the last suite, "REST Key Authentication", and the cron and CLI
+ * tests that define the others run in separate processes, so neither the
+ * per-suite runs nor a bare `vendor/bin/phpunit` reach a denial test with a
+ * bypass constant defined. Denial tests keep this guard so a new test that
+ * leaks one skips them loudly instead of failing confusingly. A trait so
  * test classes outside MainWP_Abilities_Test_Case share the one
  * implementation.
  */

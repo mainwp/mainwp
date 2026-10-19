@@ -853,13 +853,17 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 			return $read_fails && str_starts_with( $query, 'SELECT value ' ) ? $query . ' AND no_such_column = 1' : $query;
 		};
 
+		global $wpdb;
 		$ob_level = ob_get_level();
 		ob_start();
+		// The failing read-back is the point of the case; wpdb would print its error past the buffer.
+		$suppressed = $wpdb->suppress_errors( true );
 		add_filter( 'query', $keep_handle );
 		try {
 			$first = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'task-adhoc', 60 );
 		} finally {
 			remove_filter( 'query', $keep_handle );
+			$wpdb->suppress_errors( $suppressed );
 			while ( ob_get_level() > $ob_level ) {
 				ob_end_clean();
 			}

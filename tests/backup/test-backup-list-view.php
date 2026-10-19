@@ -296,6 +296,39 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Run-only staff need no menu until another row action is permitted.
+	 */
+	public function test_row_actions_dropdown_requires_permitted_items(): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$view = new MainWP_Backup_List_View();
+		foreach ( array( false, true ) as $can_edit ) {
+			$filter = static function ( $allowed, $type, $cap ) use ( $can_edit ) {
+				if ( 'dashboard' === $type ) {
+					return 'run_backup_tasks' === $cap || ( $can_edit && 'edit_backup_tasks' === $cap );
+				}
+				return $allowed;
+			};
+			add_filter( 'mainwp_currentusercan', $filter, 10, 3 );
+			try {
+				$output = $view->column_actions( $this->make_item() );
+			} finally {
+				remove_filter( 'mainwp_currentusercan', $filter, 10 );
+			}
+			$this->assertStringContainsString( 'class="ui mini button backup_run_now"', $output );
+			$this->assertStringNotContainsString( 'submitdelete', $output );
+			$this->assertStringNotContainsString( 'managebackups_pause', $output );
+			if ( $can_edit ) {
+				$this->assertStringContainsString( 'ui right pointing dropdown', $output );
+				$this->assertStringContainsString( 'Backup Actions', $output );
+				$this->assertStringContainsString( '<i class="edit outline icon"></i> Edit</a>', $output );
+			} else {
+				$this->assertStringNotContainsString( 'ui right pointing dropdown', $output );
+				$this->assertStringNotContainsString( 'Backup Actions', $output );
+			}
+		}
+	}
+
+	/**
 	 * A task with no sites flags the count with a theme label, not inline red.
 	 */
 	public function test_zero_sites_uses_red_label() {

@@ -193,16 +193,18 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         $out = $this->primary_row_action( $item );
 
-        $out .= '<div class="ui right pointing dropdown" style="z-index:999">
+        if ( ! empty( $actions ) ) {
+            $out .= '<div class="ui right pointing dropdown" style="z-index:999">
                         <i class="ellipsis vertical icon"></i>
                         <div class="menu">
                         <div class="header">' . esc_html__( 'Backup Actions', 'mainwp' ) . '</div>
                         <div class="divider"></div>';
-        foreach ( $actions as $link ) {
-            $out .= $link;
-        }
-        $out .= '</div>
+            foreach ( $actions as $link ) {
+                $out .= $link;
+            }
+            $out .= '</div>
                         </div>';
+        }
 
         return $out;
     }

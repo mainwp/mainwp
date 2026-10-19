@@ -104,7 +104,7 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 		}
 	}
 
-	/** The unchanged OAuth paths still admit either administrator actor. */
+	/** Administrator declines must retire credentials without contacting Dropbox. */
 	public function test_administrator_oauth_paths_still_work(): void {
 		foreach ( array( 'N', 'A' ) as $actor ) {
 			$start = $this->call_handler( 'mainwp_dropbox_oauth_start', 'all', $actor );
@@ -114,7 +114,10 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 			$this->assertSame( array( 'error' => 'The Dropbox authorization was declined. Nothing was saved.' ), $callback['response'] );
 			$this->assertSame( $callback['before'], $callback['after'] );
 			$this->assertSame( 0, $start['http_calls'] );
-			$this->assertSame( 1, $callback['http_calls'], 'The declined callback consumes state through an intercepted empty-code exchange.' );
+			$this->assertSame( 0, $callback['http_calls'] );
+			$this->assertTrue( $callback['oauth_state_consumed'] );
+			$this->assertTrue( $callback['oauth_key_existed'] );
+			$this->assertTrue( $callback['oauth_key_retired'] );
 		}
 	}
 

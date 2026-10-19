@@ -167,17 +167,13 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     }
 
     /**
-     * Complete the Connect Dropbox flow: consume the single-use state
-     * stash, exchange the code for a refresh token, and save the
-     * destination through the normal test-then-persist path.
+     * Consume pending credentials even when authorization is declined.
      *
-     * @param string        $state     State token from the callback.
-     * @param string        $code      Single-use authorization code.
-     * @param callable|null $transport Exchange transport override for tests.
+     * @param string $state State token from the callback.
      *
-     * @return array {id} on success, {error} on failure.
+     * @return array Pending credentials, or {error} on failure.
      */
-    public static function complete_dropbox_oauth( $state, $code, $transport = null ) {
+    private static function consume_dropbox_oauth_state( $state ) {
         if ( ! is_string( $state ) || ! preg_match( '/^[a-f0-9]{32}$/', $state ) ) {
             return array( 'error' => esc_html__( 'The Dropbox connection request is not valid. Start the connection again.', 'mainwp' ) );
         }
@@ -201,6 +197,26 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         $stash = json_decode( (string) $plaintext, true );
         if ( ! is_array( $stash ) || empty( $stash['app_key'] ) || empty( $stash['app_secret'] ) ) {
             return array( 'error' => esc_html__( 'The Dropbox connection could not be read back. Start the connection again.', 'mainwp' ) );
+        }
+
+        return $stash;
+    }
+
+    /**
+     * Complete the Connect Dropbox flow: consume the single-use state
+     * stash, exchange the code for a refresh token, and save the
+     * destination through the normal test-then-persist path.
+     *
+     * @param string        $state     State token from the callback.
+     * @param string        $code      Single-use authorization code.
+     * @param callable|null $transport Exchange transport override for tests.
+     *
+     * @return array {id} on success, {error} on failure.
+     */
+    public static function complete_dropbox_oauth( $state, $code, $transport = null ) {
+        $stash = static::consume_dropbox_oauth_state( $state );
+        if ( isset( $stash['error'] ) ) {
+            return $stash;
         }
 
         if ( get_current_user_id() !== (int) $stash['user_id'] ) {
@@ -257,8 +273,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         if ( null !== $refusal ) {
             $result = $refusal;
         } elseif ( isset( $_GET['error'] ) ) {
-            // The user declined on the Dropbox side; consume the stash anyway.
-            static::complete_dropbox_oauth( $state, '' );
+            static::consume_dropbox_oauth_state( $state );
             $result = array( 'error' => esc_html__( 'The Dropbox authorization was declined. Nothing was saved.', 'mainwp' ) );
         } elseif ( '' === $code ) {
             $result = array( 'error' => esc_html__( 'Dropbox returned no access code. Start the connection again.', 'mainwp' ) );

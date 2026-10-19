@@ -1281,6 +1281,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed, because too many files were unreadable when the backup was made.', 'mainwp' ) ); ?>' ).show();
                     } else if ( 'unarchived_unsupported' === reconcile.reason ) {
                         $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed, because the site\'s MainWP Child could not confirm it supports keeping files the backup could not read.', 'mainwp' ) ); ?>' ).show();
+                    } else if ( 'walk_invalid' === reconcile.reason ) {
+                        $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'Files added after this backup were not removed, because the site\'s MainWP Child could not use the folder list this Dashboard sent for the comparison. Check that the Dashboard and the site\'s MainWP Child are both up to date.', 'mainwp' ) ); ?>' ).show();
                     }
                 } else if ( 'done' === reconcile.status ) {
                     var removed = parseInt( reconcile.removed, 10 ) || 0;

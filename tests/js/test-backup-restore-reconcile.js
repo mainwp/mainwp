@@ -4,6 +4,7 @@ const test = require( 'node:test' );
 const fs = require( 'node:fs' );
 const vm = require( 'node:vm' );
 const source = fs.readFileSync( require.resolve( '../../pages/backup/page-mainwp-backup-snapshots-view.php' ), 'utf8' );
+const WALK_INVALID_NOTE = "Files added after this backup were not removed, because the site's MainWP Child could not use the folder list this Dashboard sent for the comparison. Check that the Dashboard and the site's MainWP Child are both up to date.";
 
 function phpToJs( code ) {
     return code.replace( /<\?php[\s\S]*?\?>/g, php => {
@@ -155,7 +156,15 @@ test( 'kept symlinks still show when reconciliation was skipped', () => {
     assert.ok( h.note().classes.has( 'yellow' ) );
 } );
 
-for ( const reason of [ 'unarchived_invalid', 'unarchived_overflow', 'unarchived_unsupported' ] ) {
+test( 'walk_invalid explains why added files were kept', () => {
+    const h = harness();
+    h.context.showReconcileNote( { reconcile: { status: 'skipped', reason: 'walk_invalid' } }, 'full', false );
+    assert.ok( h.note().visible );
+    assert.ok( h.note().classes.has( 'yellow' ) );
+    assert.equal( h.text( h.note() ), WALK_INVALID_NOTE );
+} );
+
+for ( const reason of [ 'unarchived_invalid', 'unarchived_overflow', 'unarchived_unsupported', 'walk_invalid' ] ) {
     test( reason + ' shows a yellow skipped note', () => {
         const h = harness();
         h.context.showReconcileNote( { reconcile: { status: 'skipped', reason } }, 'files', false );

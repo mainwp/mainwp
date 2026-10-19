@@ -9,6 +9,7 @@ use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Backup_Storage_Handler;
 use MainWP\Dashboard\MainWP_Credential_Storage;
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_System;
 
 $repo = dirname( __DIR__, 3 );
@@ -82,7 +83,6 @@ add_filter(
 	'pre_http_request',
 	static function ( $pre, $args, $url ) use ( &$http_calls ) {
 		++$http_calls;
-		// Consuming declined OAuth state exchanges an empty code, which cannot issue tokens.
 		if ( 'https://api.dropboxapi.com/oauth2/token' === $url && 'authorization_code' === ( $args['body']['grant_type'] ?? '' ) && '' === ( $args['body']['code'] ?? '' ) ) {
 			return new WP_Error( 'empty_oauth_code', 'No authorization code was supplied.' );
 		}
@@ -106,6 +106,9 @@ $input = array(
 	'is_default' => 1,
 	'settings'   => array( 'base_path' => $dir ),
 );
+
+$oauth_key_path    = '';
+$oauth_key_existed = false;
 if ( in_array( $storage_action, array( 'oauth_callback', 'oauth_callback_declined' ), true ) ) {
 	$pending = MainWP_Backup_Storage_Handler::start_dropbox_oauth(
 		array(
@@ -118,6 +121,11 @@ if ( in_array( $storage_action, array( 'oauth_callback', 'oauth_callback_decline
 		)
 	);
 	parse_str( wp_parse_url( $pending['authorize_url'], PHP_URL_QUERY ), $params );
+	$envelope          = get_transient( 'mainwp_dropbox_oauth_' . $params['state'] );
+	$data              = json_decode( substr( $envelope, strlen( MainWP_Credential_Storage::ENVELOPE_PREFIX ) ), true );
+	$oauth_key_path    = MainWP_Keys_Manager::get_keys_dir() . $data['file_key'];
+	$oauth_key_existed = is_file( $oauth_key_path );
+
 	$_GET = array(
 		'mainwp_dropbox_oauth' => '1',
 		'state'                => $params['state'],
@@ -198,12 +206,15 @@ add_filter( 'query', $query );
 remove_all_actions( 'shutdown' );
 ob_start();
 register_shutdown_function(
-	static function () use ( $wpdb, $snapshot, $before, $query, &$lookups, &$http_calls, $user_id, $dir, $store, $destination_id, $other ) {
+	static function () use ( $wpdb, $snapshot, $before, $query, &$lookups, &$http_calls, $user_id, $dir, $store, $destination_id, $other, $oauth_key_path, $oauth_key_existed ) {
 		$body = ob_get_clean();
 		remove_filter( 'query', $query );
 		$after  = $snapshot();
 		$notice = get_transient( 'mainwp_dropbox_oauth_notice_' . $user_id );
 		$result = $notice ?: json_decode( $body, true );
+		clearstatcache( true, $oauth_key_path );
+		$oauth_key_retired    = '' !== $oauth_key_path && ! is_file( $oauth_key_path );
+		$oauth_state_consumed = false;
 		// Database rollback cannot retire credential key files created by the fixture.
 		$store->delete_destination( $destination_id );
 		$store->delete_destination( $other );
@@ -214,6 +225,8 @@ register_shutdown_function(
 		if ( '' !== $state ) {
 			$key      = 'mainwp_dropbox_oauth_' . $state;
 			$envelope = get_transient( $key );
+
+			$oauth_state_consumed = false === $envelope;
 			if ( is_string( $envelope ) ) {
 				$data = json_decode( substr( $envelope, strlen( MainWP_Credential_Storage::ENVELOPE_PREFIX ) ), true );
 				MainWP_Credential_Storage::retire_key_file_if_changed( (string) ( $data['file_key'] ?? '' ), '' );
@@ -225,11 +238,14 @@ register_shutdown_function(
 		rmdir( $dir );
 		echo wp_json_encode(
 			array(
-				'response'   => $result,
-				'before'     => $before,
-				'after'      => $after,
-				'lookups'    => $lookups,
-				'http_calls' => $http_calls,
+				'response'             => $result,
+				'before'               => $before,
+				'after'                => $after,
+				'lookups'              => $lookups,
+				'http_calls'           => $http_calls,
+				'oauth_state_consumed' => $oauth_state_consumed,
+				'oauth_key_existed'    => $oauth_key_existed,
+				'oauth_key_retired'    => $oauth_key_retired,
 			)
 		);
 	}

@@ -2493,6 +2493,11 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                     $id = MainWP_DB::instance()->add_website( $current_user->ID, $params['name'], $params['url'], $params['wpadmin'], base64_encode( $pubkey ), base64_encode( $privkey ), $others ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode() used for http encoding compatible.
 
+                    // add_website() returns false when the row or its credentials cannot be saved; callers read an empty $error as success.
+                    if ( ! $id ) {
+                        $error = esc_html__( 'The site could not be saved to the Dashboard. Please try again.', 'mainwp' );
+                    }
+
                     // Keep tags visible to the monitor filter inside add_website(), and grant only saved tags.
                     if ( $id && ! empty( $params['group_creation_ui'] ) && ! empty( $groupnames ) ) {
                         $existing_groupids = array_map( 'intval', $groupids );

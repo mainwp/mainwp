@@ -12,7 +12,7 @@ assert.ok( request >= 0 && start > request && end > start );
 function callback() {
     const calls = [];
     const context = {
-        siteId: 7, currentSite: 7, backupSinceTs: 0,
+        siteId: 7, currentSite: 7, backupSinceTs: 0, cancelGen: 0, backupCancelGen: 0,
         stopBackupTimers: () => calls.push( 'stop' ),
         setBackupStatus: ( message, error ) => calls.push( [ message, error ] ),
         reenableBackupBtn: () => calls.push( 'enable' ),

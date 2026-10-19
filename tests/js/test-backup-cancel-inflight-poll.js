@@ -98,6 +98,20 @@ for ( const reply of [ 'success', 'error', 'settled', 'fail' ] ) {
     } );
 }
 
+test( 'a site switch away and back before a queued kickoff reply keeps its follow', () => {
+    const h = harness();
+    h.click( '#mainwp-native-backup-now-btn' );
+    // The selector handler calls stopBackupTimers() on each switch.
+    h.context.currentSite = 8;
+    h.context.stopBackupTimers();
+    h.context.currentSite = 7;
+    h.context.stopBackupTimers();
+    h.requests[0].success( { status: 'queued', started: 456 } );
+    assert.equal( h.timers.size, 1, 'The queued kickoff must still schedule the poll that opens its run.' );
+    h.next();
+    assert.deepEqual( h.requests.at( -1 ).data.since, 456 );
+} );
+
 for ( const follow of [ 'click', 'resume' ] ) {
     test( 'new ' + follow + ' follow paints after a terminal state and rejects the old poll', () => {
         const h = harness();

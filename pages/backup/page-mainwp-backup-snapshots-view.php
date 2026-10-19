@@ -456,6 +456,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var restorePollRetries = 0;
             var backupPollTimer = null;
             var backupFollowGen = 0;
+            var backupCancelGen = 0;
             var backupElapsedTimer = null;
             var backupStartTime = null;
             var backupProgressCache = null;
@@ -1610,6 +1611,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-rollback-btn' ).prop( 'disabled', true ).hide();
                 $( '.mainwp-restore-failed-job' ).prop( 'disabled', true );
                 $( '#mainwp-restore-result-message' ).hide();
+                $( '#mainwp-restore-visit-site-wrap' ).hide();
                 function rollbackRefused( message, retryable ) {
                     $( '#mainwp-restore-spinner' ).hide();
                     $( '#mainwp-restore-status-text' ).text( '' );
@@ -1818,7 +1820,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // Cancel is offered before the kickoff reply arrives. A
                 // cancelled reply that lands first ends this follow, so the
                 // kickoff reply must not restart it or repaint the status.
-                var gen = backupFollowGen;
+                // Only a cancel counts here, not a site switch: a queued
+                // kickoff opens its run from the polls it schedules, so
+                // dropping it after a switch away and back would lose it.
+                var cancelGen = backupCancelGen;
                 backupStartTime = Date.now();
                 backupLastPhase = null;
                 backupPhaseStartTime = null;
@@ -1827,8 +1832,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
                 setBackupStatus( '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', false );
                 $.post( ajaxurl, { action: 'mainwp_native_backup_initiate', security: nonces.nativeBackupInitiate, site_id: siteId }, function ( response ) {
-                    if ( siteId !== currentSite || gen !== backupFollowGen ) {
-                        return; // The page moved on or the follow ended; the run continues server-side.
+                    if ( siteId !== currentSite || cancelGen !== backupCancelGen ) {
+                        return; // The page moved on or the backup was cancelled.
                     }
                     if ( response.error ) {
                         stopBackupTimers();
@@ -1852,7 +1857,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     backupSinceTs = sinceTs;
                     backupPollTimer = window.setTimeout( function () { pollBackup( siteId, sinceTs ); }, 1500 );
                 }, 'json' ).fail( function () {
-                    if ( siteId !== currentSite || gen !== backupFollowGen ) {
+                    if ( siteId !== currentSite || cancelGen !== backupCancelGen ) {
                         return;
                     }
                     // The kickoff request never reached the handler, so nothing
@@ -1889,6 +1894,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     var cancelResult = window.MainWPBackupCancelResult.describeCancelResult( response.result );
                     setBackupStatus( cancelResult.message, false );
                     if ( 'cancelled' === response.result ) {
+                        backupCancelGen++;
                         stopBackupTimers();
                         showCancelBackup( false );
                         reenableBackupBtn();
@@ -1899,6 +1905,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             backupPollTimer = window.setTimeout( function () { pollBackup( siteId, backupSinceTs ); }, 100 );
                         }
                         if ( ! cancelResult.keepPolling ) {
+                            backupCancelGen++;
                             stopBackupTimers();
                         }
                         $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );

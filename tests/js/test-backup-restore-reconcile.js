@@ -130,6 +130,21 @@ test( 'a new follow hides Visit site from the completed restore', () => {
     assert.equal( h.context.$( '#mainwp-restore-visit-site-wrap' ).state.visible, false );
 } );
 
+test( 'Roll Back hides Visit site from the completed restore before its request answers', () => {
+    const h = harness();
+    const start = source.indexOf( 'function startRollback(' );
+    vm.runInContext( phpToJs( source.slice( start, source.indexOf( '\n            }', start ) + '\n            }'.length ) ), h.context );
+    const base = h.context.$;
+    h.context.$ = selector => Object.assign( base( selector ), { prop() { return this; } } );
+    h.context.$.post = ( url, data, success ) => { h.requests.push( { data, success } ); return { fail() { return this; }, always() { return this; } }; };
+    h.context.currentSiteUrl = 'https://example.com';
+    h.context.showProgress( { status: 'completed' } );
+    assert.equal( h.context.$( '#mainwp-restore-visit-site-wrap' ).state.visible, true );
+    h.context.startRollback( 123 );
+    assert.equal( h.requests.at( -1 ).data.action, 'mainwp_restore_rollback' );
+    assert.equal( h.context.$( '#mainwp-restore-visit-site-wrap' ).state.visible, false );
+} );
+
 test( 'cache advisory has a small message container hidden on initial render', () => {
     assert.match( source, /class="ui small message" id="mainwp-restore-cache-note" style="display:none;"/ );
 } );

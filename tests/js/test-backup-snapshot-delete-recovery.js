@@ -14,7 +14,7 @@ function harness() {
         currentSite: 12, siteDisconnected: false, snapshotDeleteBusy: false,
         snapshotDeleteTarget: 17, snapshotDeleteRequest: 0, snapshotsTable: null,
         deleteLabels: { failed: 'The delete request failed. Reload the page and try again.' },
-        nonces: {}, ajaxurl: 'ajax', backupPollRetries: 0,
+        nonces: {}, ajaxurl: 'ajax', backupPollRetries: 0, backupFollowGen: 0,
         stopBackupTimers() {}, setBackupStatus() {}, showCancelBackup() {}, renderBackupStatus() {},
         setSnapshotDeleteBusy() {}, cancelApplies() { return false; },
         backupSinceTs: 0, backupProgressCache: null, backupStartTime: null,

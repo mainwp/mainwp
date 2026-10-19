@@ -19,9 +19,9 @@ function harness() {
     const handlers = new Map();
     const created = [];
     const context = {
-        statusLabels: {}, rollbackStatusLabels: {}, rollbackActionLabels: { retry: 'Retry', rollBack: 'Roll Back' }, restoreOutcomeMessages: {},
+        statusLabels: { pending: 'Queued' }, rollbackStatusLabels: {}, rollbackActionLabels: { retry: 'Retry', rollBack: 'Roll Back' }, restoreOutcomeMessages: {},
         phaseOrder: [], rollbackRequestPending: false, currentSiteUrl: '', pollTimer: 0, canRestore: true,
-        setSnapshotDeleteBusy() {}, showPreserveNote() {}, window: { clearTimeout() {} }
+        setSnapshotDeleteBusy() {}, showPreserveNote() {}, loadSnapshots() {}, window: { clearTimeout() {} }
     };
     context.$ = selector => {
         if ( typeof selector === 'object' ) return selector;
@@ -53,7 +53,7 @@ function harness() {
         const labelsStart = source.indexOf( 'var ' + name + ' = ' );
         vm.runInContext( phpToJs( source.slice( labelsStart, source.indexOf( '\n            };', labelsStart ) + '\n            };'.length ) ), context );
     }
-    for ( const name of [ 'showReconcileNote', 'restoreOutcomeSentence', 'showRestoreOutcomeNote', 'showProgress' ] ) {
+    for ( const name of [ 'showReconcileNote', 'restoreOutcomeSentence', 'showRestoreOutcomeNote', 'showProgress', 'setPane', 'startJobFollow', 'showCachePurgeNote' ] ) {
         const start = source.indexOf( 'function ' + name + '(' );
         assert.ok( start >= 0 );
         const code = source.slice( start, source.indexOf( '\n            }', start ) + '\n            }'.length );
@@ -63,8 +63,105 @@ function harness() {
     vm.runInContext( phpToJs( source.slice( clickStart, source.indexOf( '\n            } );', clickStart ) + '\n            } );'.length ) ), context );
     const note = () => context.$( '#mainwp-restore-reconcile-note' ).state;
     const text = node => [ node.text, ...node.children.map( text ) ].join( ' ' );
-    return { context, note, text, created, cancel: () => handlers.get( '#mainwp-restore-cancel-btn:click' )() };
+    const requests = [];
+    Object.assign( context, { ajaxurl: '/ajax', nonces: {}, currentJob: 0, currentSite: 7 } );
+    context.window.setTimeout = () => 99;
+    context.$.post = ( url, data, success ) => { requests.push( { data, success } ); return { fail() { return this; } }; };
+    const pollStart = source.indexOf( 'function poll()' );
+    vm.runInContext( phpToJs( source.slice( pollStart, source.indexOf( '\n            }', pollStart ) + '\n            }'.length ) ), context );
+    return { context, note, text, created, requests, cancel: () => handlers.get( '#mainwp-restore-cancel-btn:click' )() };
 }
+
+function createdJobCallback( h, action ) {
+    const request = source.indexOf( "action: '" + action + "'" );
+    const start = source.indexOf( 'function ( response ) {', request );
+    const end = source.indexOf( "}, 'json' )", start );
+    assert.ok( request >= 0 && start > request && end > start );
+    vm.runInContext( phpToJs( 'var createdJob = ' + source.slice( start, end ) + '};' ), h.context );
+    return h.context.createdJob;
+}
+
+for ( const [ action, label ] of [ [ 'mainwp_restore_initiate', 'Cancel Restore' ], [ 'mainwp_restore_rollback', 'Cancel Rollback' ] ] ) {
+    for ( const canRestore of [ true, false ] ) {
+        test( action + ' paints Queued and the permitted cancel before the first poll reply: ' + canRestore, () => {
+            const h = harness();
+            h.context.canRestore = canRestore;
+            createdJobCallback( h, action )( { job_id: 123 } );
+            assert.equal( h.requests.length, 1 );
+            assert.equal( h.requests[0].data.action, 'mainwp_restore_progress' );
+            assert.equal( h.context.$( '#mainwp-restore-status-text' ).state.text, 'Queued' );
+            assert.equal( h.context.$( '#mainwp-restore-cancel-btn' ).state.text, label );
+            assert.equal( h.context.$( '#mainwp-restore-cancel-btn' ).state.visible, canRestore );
+        } );
+    }
+}
+
+test( 'page-load resume waits for verifying progress without painting Queued or Cancel', () => {
+    const h = harness();
+    const start = source.indexOf( 'if ( response.active_restore_job_id && ! currentJob )' );
+    const end = source.indexOf( 'if ( response.manual_backup_running', start );
+    h.context.response = { active_restore_job_id: 123 };
+    const element = h.context.$( '#mainwp-restore-modal' );
+    element.modal = () => true;
+    vm.runInContext( source.slice( start, end ), h.context );
+    assert.equal( h.context.$( '#mainwp-restore-status-text' ).state.text, '' );
+    assert.equal( h.context.$( '#mainwp-restore-cancel-btn' ).state.visible, false );
+    h.requests[0].success( { status: 'verifying', cancel_action: '' } );
+    assert.equal( h.context.$( '#mainwp-restore-status-text' ).state.text, 'verifying' );
+    assert.equal( h.context.$( '#mainwp-restore-cancel-btn' ).state.visible, false );
+} );
+
+test( 'running rollback uses Cancel Rollback while restore keeps Cancel Restore', () => {
+    const h = harness();
+    for ( const is_rollback of [ true, false ] ) {
+        h.context.showProgress( { status: 'running', is_rollback, cancel_action: 'cancel' } );
+        assert.equal( h.context.$( '#mainwp-restore-cancel-btn' ).state.text, is_rollback ? 'Cancel Rollback' : 'Cancel Restore' );
+    }
+    h.context.showProgress( { status: 'verifying', is_rollback: true, cancel_action: 'stop_checking' } );
+    assert.equal( h.context.$( '#mainwp-restore-cancel-btn' ).state.text, 'Stop Checking' );
+} );
+
+test( 'a new follow hides Visit site from the completed restore', () => {
+    const h = harness();
+    h.context.currentSiteUrl = 'https://example.com';
+    h.context.showProgress( { status: 'completed' } );
+    assert.equal( h.context.$( '#mainwp-restore-visit-site-wrap' ).state.visible, true );
+    h.context.startJobFollow( 456 );
+    assert.equal( h.context.$( '#mainwp-restore-visit-site-wrap' ).state.visible, false );
+} );
+
+test( 'cache advisory has a small message container hidden on initial render', () => {
+    assert.match( source, /class="ui small message" id="mainwp-restore-cache-note" style="display:none;"/ );
+} );
+
+for ( const is_rollback of [ true, false ] ) {
+    test( 'completed cache purge advisory and reset for rollback=' + is_rollback, () => {
+        const h = harness();
+        const note = h.context.$( '#mainwp-restore-cache-note' ).state;
+        h.context.showProgress( { status: 'completed', is_rollback, verification: { cache_purge: { error: '<private provider error>' } } } );
+        assert.equal( note.visible, true );
+        assert.ok( note.classes.has( 'yellow' ) );
+        assert.equal( note.text, "The site's cache could not be purged after the restore. If pages look out of date, purge the cache on the site." );
+        h.context.currentSiteUrl = 'https://example.com';
+        h.context.showProgress( { status: 'completed', is_rollback, verification: { cache_purge: { error: true } } } );
+        assert.equal( h.context.$( '#mainwp-restore-visit-site-wrap' ).state.visible, true );
+        h.context.startJobFollow( 456 );
+        assert.equal( note.visible, false );
+        assert.equal( h.context.$( '#mainwp-restore-visit-site-wrap' ).state.visible, false );
+        h.context.showProgress( { status: 'completed', is_rollback, verification: { cache_purge: { error: true } } } );
+        h.context.setPane( true );
+        assert.equal( note.visible, false );
+    } );
+}
+
+test( 'completed jobs without a cache purge error have no advisory, including after an earlier failure', () => {
+    const h = harness();
+    for ( const verification of [ undefined, {}, { cache_purge: { attempted: false } }, { cache_purge: { error: '' } }, { cache_purge: { attempted: true } } ] ) {
+        h.context.showProgress( { status: 'completed', verification: { cache_purge: { error: true } } } );
+        h.context.showProgress( { status: 'completed', verification } );
+        assert.equal( h.context.$( '#mainwp-restore-cache-note' ).state.visible, false );
+    }
+} );
 
 test( 'kept files show totals, reasons and at most twenty paths as text', () => {
     const h = harness();

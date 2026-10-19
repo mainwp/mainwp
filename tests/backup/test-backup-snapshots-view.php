@@ -525,13 +525,17 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 			MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION,
 			array(
 				'capable'    => false,
-				'reason'     => 'Sandbox needs the CREATE privilege here',
+				'reason'     => 'CREATE denied for db_user_private on scratch_db_private: raw_mysql_error_private',
 				'checked_at' => time(),
 			),
 			false
 		);
 		$incapable = $this->render_page();
-		$this->assertStringContainsString( 'Sandbox needs the CREATE privilege here', $incapable, 'An incapable host surfaces the operator notice.' );
+		$this->assertStringContainsString( 'class="ui small info visible message"', $incapable );
+		$this->assertStringContainsString( 'Test Restore is not available on this Dashboard host. The sandbox needs a database user with the CREATE privilege; ask your host to grant it.', $incapable );
+		foreach ( array( 'db_user_private', 'scratch_db_private', 'raw_mysql_error_private' ) as $private_text ) {
+			$this->assertStringNotContainsString( $private_text, $incapable, 'Cached database details must not appear anywhere in the HTML.' );
+		}
 
 		update_option(
 			MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION,
@@ -543,7 +547,8 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 			false
 		);
 		$capable = $this->render_page();
-		$this->assertStringNotContainsString( 'Sandbox needs the CREATE privilege here', $capable, 'A capable host shows no notice.' );
+		$this->assertStringNotContainsString( 'class="ui small info visible message"', $capable );
+		$this->assertStringNotContainsString( 'Test Restore is not available on this Dashboard host. The sandbox needs a database user with the CREATE privilege; ask your host to grant it.', $capable, 'A capable host shows no notice.' );
 
 		delete_option( MainWP_Backup_TestRestore_Scheduler::CAPABILITY_OPTION );
 	}
@@ -968,7 +973,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'var restore = snap.restorable && canRestore', $output );
 		$this->assertStringContainsString( 'var showRollback = job.has_rollback && canRestore;', $output );
 		$this->assertStringContainsString( 'if ( showRollback ) {', $output );
-		$this->assertStringContainsString( "\$( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels[ cancelAction ] || '' ).toggle( canRestore && ", $output );
+		$this->assertStringContainsString( "\$( '#mainwp-restore-cancel-btn' ).text( isRollback && 'cancel' === cancelAction ? restoreCancelLabels.cancelRollback : ( restoreCancelLabels[ cancelAction ] || '' ) ).toggle( canRestore && ", $output );
 		$this->assertStringContainsString( "\$( '#mainwp-restore-rollback-btn' ).toggle( canRestore && ", $output );
 	}
 

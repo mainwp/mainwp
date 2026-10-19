@@ -501,7 +501,7 @@ managebackups_run_now = function (el) {
         if (queuedExpired()) {
             return;
         }
-        waiting.text(response.status === 'queued' ? MainWP.I18n.t('Queued; another backup is running. This one starts when it finishes. Keep this tab open until then.') : '');
+        waiting.text(response.status === 'queued' ? MainWP.I18n.t('Queued behind another backup step. This one starts as soon as that step finishes. Keep this tab open until then.') : '');
         if (queued && Date.now() - queuedSince >= QUEUED_NOTICE_MS) {
             waiting.text(MainWP.I18n.t('Still queued while another backup is running. Elapsed wait: %d minutes. Keep this tab open until this backup starts.').replace('%d', Math.floor((Date.now() - queuedSince) / 60000)));
         } else if (response.status !== 'queued' && response.run_open && response.lane === 'busy') {

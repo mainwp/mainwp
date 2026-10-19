@@ -149,9 +149,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 <?php
                 $test_restore_notice = MainWP_Backup_TestRestore_Scheduler::instance()->get_capability_notice();
                 if ( ! $locked && '' !== $test_restore_notice ) :
+                    MainWP_Logger::instance()->debug( 'test-restore capability :: ' . $test_restore_notice );
                     ?>
-                <div class="ui small info message">
-                    <?php echo esc_html( $test_restore_notice ); ?>
+                <div class="ui small info visible message">
+                    <?php esc_html_e( 'Test Restore is not available on this Dashboard host. The sandbox needs a database user with the CREATE privilege; ask your host to grant it.', 'mainwp' ); ?>
                 </div>
                 <?php endif; ?>
 
@@ -261,6 +262,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <div class="ui small yellow message" id="mainwp-restore-outcome-note" style="display:none;"></div>
                     <div class="ui small message" id="mainwp-restore-preserve-note" style="display:none;"></div>
                     <div class="ui small message" id="mainwp-restore-reconcile-note" style="display:none;"></div>
+                    <div class="ui small message" id="mainwp-restore-cache-note" style="display:none;"></div>
                     <div class="ui small red message" id="mainwp-restore-maintenance-note" style="display:none;"><?php esc_html_e( 'The site is in maintenance mode until the database is checked, so it will not serve visitors until then.', 'mainwp' ); ?></div>
                     <div id="mainwp-restore-visit-site-wrap" style="display:none;margin-top:.5em;"><a id="mainwp-restore-visit-site" href="#" target="_blank" rel="noopener" class="ui tiny basic button"><i class="external alternate icon"></i><?php esc_html_e( 'Visit site', 'mainwp' ); ?></a></div>
                 </div>
@@ -398,6 +400,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var statusLabels = <?php echo wp_json_encode( $labels ); ?>;
             var restoreCancelLabels = {
                 cancel: '<?php echo esc_js( esc_html__( 'Cancel Restore', 'mainwp' ) ); ?>',
+                cancelRollback: '<?php echo esc_js( esc_html__( 'Cancel Rollback', 'mainwp' ) ); ?>',
                 stop_checking: '<?php echo esc_js( esc_html__( 'Stop Checking', 'mainwp' ) ); ?>',
                 checking: '<?php echo esc_js( esc_html__( 'The Dashboard is checking the site right now, or the restore status just changed. Try again in a moment.', 'mainwp' ) ); ?>',
                 stopped: '<?php echo esc_js( esc_html__( 'Stopped checking. The restore finished on the site, but the Dashboard could not reach it afterwards, so this restore is recorded as failed. Open the site to check it.', 'mainwp' ) ); ?>'
@@ -452,6 +455,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var pollTimer = null;
             var restorePollRetries = 0;
             var backupPollTimer = null;
+            var backupFollowGen = 0;
             var backupElapsedTimer = null;
             var backupStartTime = null;
             var backupProgressCache = null;
@@ -572,6 +576,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function stopBackupTimers() {
+                backupFollowGen++;
                 window.clearTimeout( backupPollTimer );
                 // Null the handle too: the reload/switch resume in
                 // loadSnapshots is gated on `! backupPollTimer`, and a stale
@@ -1101,6 +1106,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             function setPane( confirming ) {
                 if ( confirming ) {
                     $( '#mainwp-restore-reconcile-note' ).hide();
+                    $( '#mainwp-restore-cache-note' ).hide();
                 }
                 $( '#mainwp-restore-confirm-pane' ).toggle( confirming );
                 $( '#mainwp-restore-progress-pane' ).toggle( ! confirming );
@@ -1129,7 +1135,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-status-text' ).text( label );
 
                 $( '#mainwp-restore-spinner' ).toggle( ! terminal );
-                $( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels[ cancelAction ] || '' ).toggle( canRestore && ! terminal && ! cancelPending && [ 'cancel', 'stop_checking' ].indexOf( cancelAction ) !== -1 );
+                $( '#mainwp-restore-cancel-btn' ).text( isRollback && 'cancel' === cancelAction ? restoreCancelLabels.cancelRollback : ( restoreCancelLabels[ cancelAction ] || '' ) ).toggle( canRestore && ! terminal && ! cancelPending && [ 'cancel', 'stop_checking' ].indexOf( cancelAction ) !== -1 );
                 // A rollback job carries the safety backup it restores from, but
                 // that backup is not a way back from the rollback itself. A
                 // failed rollback still holds it, so it can be tried again.
@@ -1173,6 +1179,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( 'completed' === data.status ) {
                         $message.addClass( 'green' ).text( '<?php echo esc_js( esc_html__( 'The site was restored and responds normally.', 'mainwp' ) ); ?>' );
                         showPreserveNote( data.verification );
+                        showCachePurgeNote( data.verification );
                     } else if ( data.verify_stopped ) {
                         $message.addClass( 'red' ).text( restoreCancelLabels.stopped );
                     } else if ( rolledBack && outcome ) {
@@ -1262,6 +1269,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     $note.addClass( 'blue' );
                 }
                 $note.text( text ).show();
+            }
+
+            function showCachePurgeNote( verification ) {
+                var $note = $( '#mainwp-restore-cache-note' ).empty().hide();
+                if ( verification && verification.cache_purge && verification.cache_purge.error ) {
+                    $note.addClass( 'yellow' ).text( '<?php echo esc_js( esc_html__( 'The site\'s cache could not be purged after the restore. If pages look out of date, purge the cache on the site.', 'mainwp' ) ); ?>' ).show();
+                }
             }
 
             function showReconcileNote( verification, subType, isRollback ) {
@@ -1406,7 +1420,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-outcome-note' ).hide();
                 $( '#mainwp-restore-result-message' ).hide();
                 $( '#mainwp-restore-reconcile-note' ).hide();
+                $( '#mainwp-restore-cache-note' ).hide();
                 $( '#mainwp-restore-maintenance-note' ).hide();
+                $( '#mainwp-restore-visit-site-wrap' ).hide();
                 poll();
             }
 
@@ -1567,6 +1583,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         $( '#mainwp-restore-result-message' ).addClass( 'red' ).text( response.error ).show();
                         return;
                     }
+                    $( '#mainwp-restore-status-text' ).text( statusLabels.pending );
+                    $( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels.cancel ).toggle( canRestore );
                     startJobFollow( response.job_id );
                 }, 'json' );
             } );
@@ -1614,6 +1632,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         rollbackResponseLost();
                         return;
                     }
+                    $( '#mainwp-restore-status-text' ).text( statusLabels.pending );
+                    $( '#mainwp-restore-cancel-btn' ).text( restoreCancelLabels.cancelRollback ).toggle( canRestore );
                     startJobFollow( response.job_id );
                     loadSnapshots( currentSite );
                 }, 'json' ).fail( rollbackResponseLost ).always( function () {
@@ -1699,9 +1719,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // server judges snapshot freshness against this click's own run,
                 // so a later re-init bumping last_run cannot flip a completed
                 // backup into a false failure.
+                var gen = backupFollowGen;
                 $.post( ajaxurl, { action: 'mainwp_native_backup_progress', security: nonces.nativeBackupProgress, site_id: siteId, since: sinceTs }, function ( data ) {
-                    if ( siteId !== currentSite ) {
-                        return; // The page moved to another site; this response is nobody's.
+                    if ( siteId !== currentSite || gen !== backupFollowGen ) {
+                        return; // Another site is shown, or this follow ended (a cancel reply landed first): the reply is stale.
                     }
                     backupPollRetries = 0; // A response arrived: clear the transient-failure count.
                     if ( data.error ) {
@@ -1740,7 +1761,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     // phase string is used only to reset the per-phase ETA.
                     var label = data.label || '<?php echo esc_js( esc_html__( 'Backing up...', 'mainwp' ) ); ?>';
                     if ( 'queued' === data.status ) {
-                        label = '<?php echo esc_js( esc_html__( 'Queued; another backup is running. This one starts when it finishes. Keep this tab open until then.', 'mainwp' ) ); ?>';
+                        label = '<?php echo esc_js( esc_html__( 'Queued behind another backup step. This one starts as soon as that step finishes. Keep this tab open until then.', 'mainwp' ) ); ?>';
                     }
                     var pct = ( data.percent !== null && data.percent !== undefined ) ? data.percent : null;
 
@@ -1762,8 +1783,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     renderBackupStatus();
                     backupPollTimer = window.setTimeout( function () { pollBackup( siteId, sinceTs ); }, 5000 );
                 }, 'json' ).fail( function () {
-                    if ( siteId !== currentSite ) {
-                        return; // A stale transport failure for a site no longer shown.
+                    if ( siteId !== currentSite || gen !== backupFollowGen ) {
+                        return; // A stale transport failure for a site no longer shown, or for a follow that ended.
                     }
                     // A transport error (lost connection, timeout, a 503 while the
                     // child is in maintenance) skips the success callback. Retry a

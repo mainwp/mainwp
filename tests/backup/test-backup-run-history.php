@@ -302,10 +302,13 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	 * A poll that claims a queued click must retain the polling user's attribution.
 	 */
 	public function test_poll_claim_records_manual_trigger_and_polling_user(): void {
-		$user_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$owner_id = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$user_id  = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		$this->assertNotSame( 1, $user_id );
+		wp_set_current_user( $owner_id );
+		$task = $this->task( array( $this->site() ) );
+		$this->assertSame( $owner_id, (int) $task->userid );
 		wp_set_current_user( $user_id );
-		$task         = $this->task( array( $this->site() ) );
 		$this->answer = array( 'phase' => 'archiving_files' );
 
 		$status = MainWP_Manage_Backups_Handler::get_backup_task_run_status( (int) $task->id, 0, time() );

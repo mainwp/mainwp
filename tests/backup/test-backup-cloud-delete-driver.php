@@ -419,6 +419,53 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 		);
 	}
 
+	/** Time remains after a reclaimed lease, so only the yield keeps the tick from claiming the next job. */
+	public function test_lost_lease_stops_the_drain_before_another_claim() {
+		global $wpdb;
+
+		list( $dest_id ) = $this->make_local_destination();
+		$this->enqueue_delete( 980030, $dest_id, '', array( 'first', 'second' ) );
+		$this->enqueue_delete( 980031, $dest_id, '', array( 'later' ) );
+		$store    = MainWP_Backup_Upload_Job_Store::instance();
+		$job_id   = (int) $store->get_jobs_for_snapshot( 980030, 'delete' )[0]->id;
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$keys     = array();
+		$provider = $this->createMock( \MainWP\Dashboard\MainWP_Backup_Storage_Provider::class );
+		$provider->method( 'delete_object' )->willReturnCallback(
+			function ( $key ) use ( &$keys, $wpdb, $table, $job_id ) {
+				$keys[] = $key;
+				if ( 'first' === $key ) {
+					$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture handing the lease to another worker mid-walk.
+						$table,
+						array(
+							'locked_by'    => 'delete_thief',
+							'locked_until' => time() + 300,
+						),
+						array( 'id' => $job_id )
+					);
+				}
+				return true;
+			}
+		);
+		$destinations = $this->createMock( MainWP_Backup_Storage_Destinations::class );
+		$destinations->method( 'get_destination' )->willReturn( MainWP_Backup_Storage_Destinations::instance()->get_destination( $dest_id ) );
+		$destinations->method( 'make_provider' )->willReturn( $provider );
+		$instance = new \ReflectionProperty( MainWP_Backup_Storage_Destinations::class, 'instance' );
+		$original = $instance->getValue();
+		$instance->setValue( null, $destinations );
+		try {
+			MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
+		} finally {
+			$instance->setValue( null, $original );
+		}
+		$this->assertSame( array( 'first' ), $keys );
+		$this->assertSame( 'delete_thief', $store->get_jobs_for_snapshot( 980030, 'delete' )[0]->locked_by );
+		$later = $store->get_jobs_for_snapshot( 980031, 'delete' )[0];
+		$this->assertSame( 'pending', $later->status );
+		$this->assertSame( 0, $later->checkpoint['cursor'] );
+		$this->assertSame( '', $later->locked_by );
+	}
+
 	/**
 	 * Auth rejections park the job for re-entered credentials.
 	 *

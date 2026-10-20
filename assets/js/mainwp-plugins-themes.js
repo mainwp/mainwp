@@ -1147,9 +1147,9 @@ let mainwp_manages_checkBackups = function (sitesToUpdate, siteNames, continueAf
                 }
 
                 if (siteFeedback != undefined) {
-                    mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
+                    let title = mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
                     mainwpPopup('#managesites-backup-box').init({
-                        title: MainWP.I18n.t("Full backup required!"), callback: function () {
+                        title: title, callback: function () {
                             continueAfterBackup = undefined;
                             mainwp_forceReload();
                         }

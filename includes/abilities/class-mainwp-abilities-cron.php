@@ -501,10 +501,11 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
             }
 
             // Normalize result arrays defensively (transient data could be corrupted).
-            $job['updated']   = isset( $job['updated'] ) && is_array( $job['updated'] ) ? $job['updated'] : array();
-            $job['errors']    = isset( $job['errors'] ) && is_array( $job['errors'] ) ? $job['errors'] : array();
-            $job['skipped']   = isset( $job['skipped'] ) && is_array( $job['skipped'] ) ? $job['skipped'] : array();
-            $job['unchanged'] = isset( $job['unchanged'] ) && is_array( $job['unchanged'] ) ? $job['unchanged'] : array();
+            $job['updated']     = isset( $job['updated'] ) && is_array( $job['updated'] ) ? $job['updated'] : array();
+            $job['errors']      = isset( $job['errors'] ) && is_array( $job['errors'] ) ? $job['errors'] : array();
+            $job['skipped']     = isset( $job['skipped'] ) && is_array( $job['skipped'] ) ? $job['skipped'] : array();
+            $job['unchanged']   = isset( $job['unchanged'] ) && is_array( $job['unchanged'] ) ? $job['unchanged'] : array();
+            $job['backup_gate'] = isset( $job['backup_gate'] ) && is_array( $job['backup_gate'] ) ? $job['backup_gate'] : array();
 
             // Calculate already processed site IDs.
             $processed_ids = array_merge(
@@ -562,7 +563,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                         : array();
 
                     // The restored owner's global lists and current holds are read at dispatch time.
-                    $plan = MainWP_Abilities_Updates::build_update_plan( array( $website ), $job['types'], $specific_items );
+                    $plan = MainWP_Abilities_Updates::build_update_plan( array( $website ), $job['types'], $specific_items, MainWP_Abilities_Util::get_boolean_input( $job, 'ignore_backup_gate' ) );
                     if ( ! empty( $plan['errors'] ) ) {
                         foreach ( $plan['errors'] as $error ) {
                             $job['errors'][] = array(
@@ -581,6 +582,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                         'translation' => array(),
                     );
                     foreach ( $plan['sites'] as $entry ) {
+                        $job['backup_gate'][ $site_id ] = array( 'site_id' => (int) $site_id ) + $entry['backup_gate'];
                         foreach ( $entry['skipped'] as $item ) {
                             $job['skipped'][] = array(
                                 'site_id' => $site_id,
@@ -592,6 +594,9 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
                         foreach ( $entry['items'] as $item ) {
                             $planned_slugs[ $item['type'] ][] = $item['slug'];
                         }
+                    }
+                    if ( ! empty( $job['backup_gate'][ $site_id ]['overridden'] ) && array_filter( $planned_slugs ) ) {
+                        MainWP_Backup_Run_History::record_gate_override( (int) $site_id, $job['backup_gate'][ $site_id ]['verdict'], $job_id );
                     }
 
                     // Process each update type.

@@ -16,6 +16,11 @@ namespace MainWP\Dashboard\Tests;
  */
 class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //phpcs:ignore -- NOSONAR - multi methods.
 
+	/**
+	 * Discovery must distinguish removal of holds from adding them.
+	 *
+	 * @return void
+	 */
 	public function test_c3_unignore_discovery_and_add_only_annotations() {
 		$this->skip_if_no_abilities_api();
 		$ability = wp_get_ability( 'mainwp/unignore-site-updates-v1' );
@@ -28,42 +33,54 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 		$this->assertTrue( $meta['annotations']['idempotent'] );
 		$this->assertStringStartsWith( 'Removes update holds on the Dashboard. Requires confirm:true or dry_run:true. Call dry_run first and show the plan to the user.', $meta['annotations']['instructions'] );
 		$schema = $ability->get_input_schema();
-		$this->assertSame( [ 'site_id_or_domain', 'type' ], $schema['required'] );
-		$this->assertSame( [ 'core', 'plugin', 'theme' ], $schema['properties']['type']['enum'] );
+		$this->assertSame( array( 'site_id_or_domain', 'type' ), $schema['required'] );
+		$this->assertSame( array( 'core', 'plugin', 'theme' ), $schema['properties']['type']['enum'] );
 		$this->assertSame( 1, $schema['properties']['slugs']['minItems'] );
-		foreach ( [ 'confirm', 'dry_run' ] as $flag ) {
+		foreach ( array( 'confirm', 'dry_run' ) as $flag ) {
 			$this->assertSame( 'boolean', $schema['properties'][ $flag ]['type'] );
 			$this->assertFalse( $schema['properties'][ $flag ]['default'] );
 		}
 		$output = $ability->get_output_schema();
 		$this->assertCount( 2, $output['oneOf'] );
-		foreach ( [ true, false ] as $index => $value ) {
+		foreach ( array( true, false ) as $index => $value ) {
 			$this->assertSame( $value, $output['oneOf'][ $index ]['properties']['dry_run']['const'] );
 			$this->assertContains( 'dry_run', $output['oneOf'][ $index ]['required'] );
 		}
-		foreach ( [ 'set-ignored-updates', 'ignore-site-core', 'ignore-site-plugins', 'ignore-site-themes' ] as $name ) {
-			$old = wp_get_ability( 'mainwp/' . $name . '-v1' );
+		foreach ( array( 'set-ignored-updates', 'ignore-site-core', 'ignore-site-plugins', 'ignore-site-themes' ) as $name ) {
+			$old         = wp_get_ability( 'mainwp/' . $name . '-v1' );
 			$annotations = $old->get_meta()['annotations'];
 			$this->assertFalse( $annotations['readonly'] );
 			$this->assertFalse( $annotations['destructive'] );
 			$this->assertTrue( $annotations['idempotent'] );
 			$this->assertStringContainsString( 'mainwp/unignore-site-updates-v1', $annotations['instructions'] );
-			$this->assertSame( 'set-ignored-updates' === $name ? [ 'ignore', 'unignore' ] : [ 'add', 'remove' ], $old->get_input_schema()['properties']['action']['enum'] );
+			$this->assertSame( 'set-ignored-updates' === $name ? array( 'ignore', 'unignore' ) : array( 'add', 'remove' ), $old->get_input_schema()['properties']['action']['enum'] );
 		}
 	}
 
+	/**
+	 * Shared instruction sentences must remain discoverable by tool consumers.
+	 *
+	 * @return array
+	 */
 	public static function c3_hold_ability_instruction_sentences(): array {
 		$replacement = 'To remove holds, use mainwp/unignore-site-updates-v1.';
-		return [
-			'set-ignored-updates' => [ 'mainwp/set-ignored-updates-v1', $replacement ],
-			'ignore-site-core' => [ 'mainwp/ignore-site-core-v1', $replacement ],
-			'ignore-site-plugins' => [ 'mainwp/ignore-site-plugins-v1', $replacement ],
-			'ignore-site-themes' => [ 'mainwp/ignore-site-themes-v1', $replacement ],
-			'unignore-site-updates' => [ 'mainwp/unignore-site-updates-v1', 'Global holds and whole-site ignore flags remain in effect.' ],
-		];
+		return array(
+			'set-ignored-updates'   => array( 'mainwp/set-ignored-updates-v1', $replacement ),
+			'ignore-site-core'      => array( 'mainwp/ignore-site-core-v1', $replacement ),
+			'ignore-site-plugins'   => array( 'mainwp/ignore-site-plugins-v1', $replacement ),
+			'ignore-site-themes'    => array( 'mainwp/ignore-site-themes-v1', $replacement ),
+			'unignore-site-updates' => array( 'mainwp/unignore-site-updates-v1', 'Global holds and whole-site ignore flags remain in effect.' ),
+		);
 	}
 
-	/** @dataProvider c3_hold_ability_instruction_sentences */
+	/**
+	 * Descriptions must leave workflow instructions in their dedicated field.
+	 *
+	 * @dataProvider c3_hold_ability_instruction_sentences
+	 * @param string $name Registered ability name.
+	 * @param string $sentence Instruction sentence.
+	 * @return void
+	 */
 	public function test_c3_hold_ability_description_does_not_repeat_instructions( $name, $sentence ) {
 		$this->skip_if_no_abilities_api();
 		$ability = wp_get_ability( $name );
@@ -90,7 +107,40 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 		);
 
 		// Verify the expected abilities exist.
-		$expected = [
+		$expected = array(
+			'mainwp/get-backup-status-v1',
+			'mainwp/list-backup-history-v1',
+			'mainwp/list-backup-tasks-v1',
+			'mainwp/get-backup-task-v1',
+			'mainwp/get-backup-task-run-v1',
+			'mainwp/get-site-backup-progress-v1',
+			'mainwp/list-backup-snapshots-v1',
+			'mainwp/get-backup-snapshot-v1',
+			'mainwp/list-restore-jobs-v1',
+			'mainwp/get-restore-job-v1',
+			'mainwp/list-backup-destinations-v1',
+			'mainwp/get-backup-destination-v1',
+			'mainwp/get-backup-settings-v1',
+			'mainwp/run-site-backup-v1',
+			'mainwp/run-backup-task-v1',
+			'mainwp/cancel-site-backup-v1',
+			'mainwp/reset-backup-task-run-v1',
+			'mainwp/cleanup-site-backups-v1',
+			'mainwp/delete-backup-snapshot-v1',
+			'mainwp/create-backup-task-v1',
+			'mainwp/update-backup-task-v1',
+			'mainwp/delete-backup-task-v1',
+			'mainwp/pause-backup-task-v1',
+			'mainwp/resume-backup-task-v1',
+			'mainwp/restore-site-snapshot-v1',
+			'mainwp/cancel-restore-v1',
+			'mainwp/rollback-restore-v1',
+			'mainwp/test-backup-destination-v1',
+			'mainwp/set-default-backup-destination-v1',
+			'mainwp/update-backup-destination-v1',
+			'mainwp/delete-backup-destination-v1',
+			'mainwp/update-backup-settings-v1',
+
 			'mainwp/list-sites-v1',
 			'mainwp/get-site-v1',
 			'mainwp/sync-sites-v1',
@@ -101,7 +151,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			'mainwp/list-ignored-updates-v1',
 			'mainwp/set-ignored-updates-v1',
 			'mainwp/unignore-site-updates-v1',
-		];
+		);
 
 		$ability_names = array_map(
 			function ( $ability ) {
@@ -109,6 +159,18 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			},
 			$mainwp_abilities
 		);
+
+		$this->assertNotContains( 'mainwp/create-backup-destination-v1', $ability_names );
+		$backup_abilities = array_filter(
+			$mainwp_abilities,
+			static function ( $ability ) {
+				return 'mainwp-backups' === $ability->get_category();
+			}
+		);
+		$this->assertCount( 32, $backup_abilities );
+		foreach ( array_slice( $expected, 0, 32 ) as $name ) {
+			$this->assertSame( 'mainwp-backups', wp_get_ability( $name )->get_category(), $name );
+		}
 
 		foreach ( $expected as $name ) {
 			$this->assertContains(
@@ -139,6 +201,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 		}
 
 		$categories = wp_get_ability_categories();
+		$this->assertArrayHasKey( 'mainwp-backups', $categories );
 
 		$this->assertArrayHasKey(
 			'mainwp-sites',
@@ -176,27 +239,27 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 		// These are keys that must exist in the output schema definition.
 		// Note: Some properties are conditional at runtime (e.g., 'synced' only
 		// for immediate responses, 'job_id' only for queued responses).
-		$abilities_with_expected_output = [
+		$abilities_with_expected_output = array(
 			// List abilities should have items and total.
-			'mainwp/list-sites-v1'           => [ 'items', 'total' ],
+			'mainwp/list-sites-v1'            => array( 'items', 'total' ),
 			// Get abilities return single object, properties vary.
-			'mainwp/get-site-v1'             => [ 'id', 'url', 'name' ],
+			'mainwp/get-site-v1'              => array( 'id', 'url', 'name' ),
 			// Sync abilities - schema includes both immediate and queued response properties.
 			// At runtime, 'synced' only present for immediate; 'job_id' only for queued.
-			'mainwp/sync-sites-v1'           => [ 'synced', 'errors', 'queued' ],
+			'mainwp/sync-sites-v1'            => array( 'synced', 'errors', 'queued' ),
 			// Plugin getter returns site_id and plugins array.
-			'mainwp/get-site-plugins-v1'     => [ 'site_id', 'plugins' ],
+			'mainwp/get-site-plugins-v1'      => array( 'site_id', 'plugins' ),
 			// Theme getter returns site_id, themes array, and active_theme.
-			'mainwp/get-site-themes-v1'      => [ 'site_id', 'themes', 'active_theme' ],
+			'mainwp/get-site-themes-v1'       => array( 'site_id', 'themes', 'active_theme' ),
 			// Update abilities.
-			'mainwp/list-updates-v1'         => [ 'updates', 'summary' ],
-			'mainwp/run-updates-v1'          => [ 'updated', 'errors', 'queued' ],
+			'mainwp/list-updates-v1'          => array( 'updates', 'summary' ),
+			'mainwp/run-updates-v1'           => array( 'updated', 'errors', 'queued' ),
 			// List ignored returns 'ignored' array and 'total' count.
-			'mainwp/list-ignored-updates-v1' => [ 'ignored', 'total' ],
+			'mainwp/list-ignored-updates-v1'  => array( 'ignored', 'total' ),
 			// Set ignored echoes back the action performed.
-			'mainwp/set-ignored-updates-v1'  => [ 'success', 'action', 'site_id', 'type', 'slug' ],
-			'mainwp/unignore-site-updates-v1' => [ 'dry_run', 'would_affect', 'count', 'warnings', 'errors', 'removed', 'not_held' ],
-		];
+			'mainwp/set-ignored-updates-v1'   => array( 'success', 'action', 'site_id', 'type', 'slug' ),
+			'mainwp/unignore-site-updates-v1' => array( 'dry_run', 'would_affect', 'count', 'warnings', 'errors', 'removed', 'not_held' ),
+		);
 
 		foreach ( $abilities_with_expected_output as $name => $expected_keys ) {
 			$ability = wp_get_ability( $name );
@@ -207,7 +270,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			$this->assertIsArray( $input_schema, "Input schema for {$name} should be an array." );
 			$this->assertArrayHasKey( 'type', $input_schema, "Input schema for {$name} should have 'type' key." );
 			// Type can be a string ('object') or an array (['object', 'null']) for nullable schemas.
-			$type = $input_schema['type'];
+			$type           = $input_schema['type'];
 			$is_object_type = ( 'object' === $type ) || ( is_array( $type ) && in_array( 'object', $type, true ) );
 			$this->assertTrue( $is_object_type, "Input schema for {$name} should include 'object' type." );
 			$this->assertArrayHasKey( 'properties', $input_schema, "Input schema for {$name} should have 'properties' key." );
@@ -223,7 +286,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 			// for immediate vs queued execution modes.
 			if ( isset( $output_schema['oneOf'] ) && is_array( $output_schema['oneOf'] ) ) {
 				// For oneOf schemas, collect all properties from all variants.
-				$output_properties = [];
+				$output_properties = array();
 				foreach ( $output_schema['oneOf'] as $variant ) {
 					if ( isset( $variant['properties'] ) ) {
 						$output_properties = array_merge( $output_properties, $variant['properties'] );
@@ -261,30 +324,41 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 	public function test_ability_annotations_are_present() {
 		$this->skip_if_no_abilities_api();
 
-		$readonly_abilities = [
+		$readonly_abilities = array(
 			'mainwp/list-sites-v1',
 			'mainwp/get-site-v1',
 			'mainwp/get-site-plugins-v1',
 			'mainwp/get-site-themes-v1',
 			'mainwp/list-updates-v1',
 			'mainwp/list-ignored-updates-v1',
-		];
+		);
 
 		// Write abilities with their expected idempotent values per integration plan.
-		$write_abilities = [
-			'mainwp/sync-sites-v1'          => true,  // Syncing same sites again has no additional effect.
-			'mainwp/run-updates-v1'         => false, // Each run may apply different updates.
-			'mainwp/update-all-v1'          => false,
-			'mainwp/update-site-core-v1'   => false,
-			'mainwp/update-site-plugins-v1' => false,
-			'mainwp/update-site-themes-v1'  => false,
+		$write_abilities = array(
+			'mainwp/sync-sites-v1'               => true,  // Syncing same sites again has no additional effect.
+			'mainwp/run-updates-v1'              => false, // Each run may apply different updates.
+			'mainwp/update-all-v1'               => false,
+			'mainwp/update-site-core-v1'         => false,
+			'mainwp/update-site-plugins-v1'      => false,
+			'mainwp/update-site-themes-v1'       => false,
 			'mainwp/update-site-translations-v1' => false,
-			'mainwp/set-ignored-updates-v1' => true,  // Ignoring same item again has no additional effect.
-			'mainwp/ignore-site-core-v1' => true,
-			'mainwp/ignore-site-plugins-v1' => true,
-			'mainwp/ignore-site-themes-v1' => true,
-			'mainwp/unignore-site-updates-v1' => true,
-		];
+			'mainwp/set-ignored-updates-v1'      => true,  // Ignoring same item again has no additional effect.
+			'mainwp/ignore-site-core-v1'         => true,
+			'mainwp/ignore-site-plugins-v1'      => true,
+			'mainwp/ignore-site-themes-v1'       => true,
+			'mainwp/unignore-site-updates-v1'    => true,
+			'mainwp/run-site-backup-v1'          => false,
+			'mainwp/run-backup-task-v1'          => false,
+			'mainwp/cancel-site-backup-v1'       => true,
+			'mainwp/reset-backup-task-run-v1'    => true,
+			'mainwp/cleanup-site-backups-v1'     => false,
+			'mainwp/delete-backup-snapshot-v1'   => false,
+			'mainwp/create-backup-task-v1'       => false,
+			'mainwp/update-backup-task-v1'       => false,
+			'mainwp/delete-backup-task-v1'       => false,
+			'mainwp/pause-backup-task-v1'        => true,
+			'mainwp/resume-backup-task-v1'       => true,
+		);
 
 		// Check readonly abilities - all should be idempotent.
 		foreach ( $readonly_abilities as $name ) {
@@ -319,11 +393,27 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 
 			$annotations = $meta['annotations'];
 			$this->assertFalse( $annotations['readonly'], "Ability {$name} should not be readonly." );
-			$expected_destructive = in_array( $name, [
-				'mainwp/run-updates-v1', 'mainwp/update-all-v1', 'mainwp/update-site-core-v1',
-				'mainwp/update-site-plugins-v1', 'mainwp/update-site-themes-v1', 'mainwp/update-site-translations-v1',
-				'mainwp/unignore-site-updates-v1',
-			], true );
+			$expected_destructive = in_array(
+				$name,
+				array(
+					'mainwp/run-updates-v1',
+					'mainwp/update-all-v1',
+					'mainwp/update-site-core-v1',
+					'mainwp/update-site-plugins-v1',
+					'mainwp/update-site-themes-v1',
+					'mainwp/update-site-translations-v1',
+					'mainwp/unignore-site-updates-v1',
+					'mainwp/run-site-backup-v1',
+					'mainwp/run-backup-task-v1',
+					'mainwp/cancel-site-backup-v1',
+					'mainwp/reset-backup-task-run-v1',
+					'mainwp/cleanup-site-backups-v1',
+					'mainwp/delete-backup-snapshot-v1',
+					'mainwp/update-backup-task-v1',
+					'mainwp/delete-backup-task-v1',
+				),
+				true
+			);
 			$this->assertSame( $expected_destructive, $annotations['destructive'], "Ability {$name} destructive annotation should match its update behavior." );
 
 			// Check idempotent flag matches expected value.
@@ -331,7 +421,7 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 				$this->assertSame(
 					$expected_idempotent,
 					$annotations['idempotent'],
-					"Ability {$name} idempotent should be " . ( $expected_idempotent ? 'true' : 'false' ) . "."
+					"Ability {$name} idempotent should be " . ( $expected_idempotent ? 'true' : 'false' ) . '.'
 				);
 			}
 		}
@@ -414,13 +504,13 @@ class MainWP_Abilities_Discovery_Test extends MainWP_Abilities_Test_Case { //php
 	public function test_update_abilities_are_registered() {
 		$this->skip_if_no_abilities_api();
 
-		$update_abilities = [
+		$update_abilities = array(
 			'mainwp/list-updates-v1',
 			'mainwp/run-updates-v1',
 			'mainwp/list-ignored-updates-v1',
 			'mainwp/set-ignored-updates-v1',
 			'mainwp/unignore-site-updates-v1',
-		];
+		);
 
 		foreach ( $update_abilities as $name ) {
 			$ability = wp_get_ability( $name );

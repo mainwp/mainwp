@@ -1,0 +1,60 @@
+{
+    "snapshots": [
+        {
+            "id": 987673,
+            "task_id": 987671,
+            "type": "full",
+            "created": 2000000000,
+            "created_elapsed": "0 seconds",
+            "created_label": "May 18, 2033 3:33 am",
+            "age_days": 0,
+            "status": "complete",
+            "offsite_state": "",
+            "uploads": [
+                {
+                    "destination_id": 987676,
+                    "name": "Destination #987676 (removed)",
+                    "provider": "s3",
+                    "status": "failed_permanent",
+                    "updated": 1700000000,
+                    "last_error": "[mainwp_backup_s3_failed] Upload & disk error."
+                }
+            ],
+            "source": "local",
+            "restorable": true,
+            "restore_reason": "",
+            "removal_reason": "",
+            "skipped_count": 0,
+            "skipped_paths": [],
+            "size_bytes": 1024,
+            "size_label": "1.00kB",
+            "test_restore_state": "",
+            "test_restore_at": 0,
+            "test_restore_label": ""
+        }
+    ],
+    "multisite": false,
+    "site_has_woocommerce": false,
+    "site_url": "https://parity.example.org/",
+    "local_only": true,
+    "manual_destinations": [],
+    "destinations_source": "tasks",
+    "active_restore_job_id": 0,
+    "failed_restore_jobs": [
+        {
+            "job_id": 987674,
+            "snapshot_id": 987673,
+            "status": "failed_permanent",
+            "date_label": "November 14, 2023 10:13 pm",
+            "last_error": "Restore & disk error.",
+            "error_code": "mainwp_restore_disk_full",
+            "has_rollback": false,
+            "is_rollback": false,
+            "restore_outcome": null
+        }
+    ],
+    "site_disconnected": false,
+    "reconnect_url": "http://example.org/wp-admin/admin.php?page=managesites&dashboard=987670",
+    "snapshot_delete_busy": false,
+    "manual_backup_running": false
+}

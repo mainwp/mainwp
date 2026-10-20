@@ -965,6 +965,11 @@
   background-color: var(--mainwp-element-background-secondary) !important;
 }
 
+/* Compact cells skip the cell color rule above, so hovered rows took Fomantic's near-black text. */
+.mainwp-ui.mainwp-custom-theme .ui.compact.selectable.table > tbody > tr:hover {
+  color: var(--mainwp-text);
+}
+
 .mainwp-ui.mainwp-custom-theme .ui.table > tbody > tr.active {
   background-color: var(--mainwp-element-background-secondary) !important;
   color: var(--mainwp-text) !important;

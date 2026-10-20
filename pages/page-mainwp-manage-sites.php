@@ -1785,8 +1785,8 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param mixed $website Child Site.
      *
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_sql_file()
-     * @uses \MainWP\Dashboard\MainWP_Backup_Handler::is_archive()
+     * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::is_sql_file()
+     * @uses \MainWP\Dashboard\MainWP_Backup_File_Manager::is_archive()
      * @uses \MainWP\Dashboard\MainWP_Manage_Sites_Backup_View::show_backups()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_mainwp_specific_dir()
      */
@@ -1797,20 +1797,22 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
         $dbBackups   = array();
         $fullBackups = array();
-        if ( file_exists( $dir ) ) {
-            $dh = opendir( $dir );
-            if ( $dh ) {
-                while ( false !== ( $file = readdir( $dh ) ) ) {
-                    if ( '.' !== $file && '..' !== $file ) {
-                        $theFile = $dir . $file;
-                        if ( MainWP_Backup_Handler::is_sql_file( $file ) ) {
-                            $dbBackups[ filemtime( $theFile ) . $file ] = $theFile;
-                        } elseif ( MainWP_Backup_Handler::is_archive( $file ) ) {
-                            $fullBackups[ filemtime( $theFile ) . $file ] = $theFile;
+        foreach ( array( MainWP_Backup_Private_Root::site_path( (int) $website->id ), $dir ) as $dir ) {
+            if ( ! is_wp_error( $dir ) && file_exists( $dir ) ) {
+                $dh = opendir( $dir );
+                if ( $dh ) {
+                    while ( false !== ( $file = readdir( $dh ) ) ) {
+                        if ( '.' !== $file && '..' !== $file && ! str_ends_with( $file, '.downloading.reclaim' ) ) {
+                            $theFile = $dir . $file;
+                            if ( MainWP_Backup_File_Manager::is_sql_file( $file ) ) {
+                                $dbBackups[ filemtime( $theFile ) . $file . $dir ] = $theFile;
+                            } elseif ( MainWP_Backup_File_Manager::is_archive( $file ) ) {
+                                $fullBackups[ filemtime( $theFile ) . $file . $dir ] = $theFile;
+                            }
                         }
                     }
+                    closedir( $dh );
                 }
-                closedir( $dh );
             }
         }
         krsort( $dbBackups );
@@ -1893,7 +1895,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             return;
         }
 
-        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) && ! empty( $_GET['backupid'] ) ) {
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() && ! empty( $_GET['backupid'] ) ) {
             $websiteid     = ! empty( $_GET['backupid'] ) ? intval( $_GET['backupid'] ) : false;
             $backupwebsite = MainWP_DB::instance()->get_website_by_id( $websiteid );
             if ( MainWP_System_Utility::can_edit_website( $backupwebsite ) && \mainwp_current_user_can( 'site', $websiteid ) ) {

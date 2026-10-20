@@ -63,6 +63,8 @@ class MainWP_Abilities {
             );
         }
 
+        add_filter( 'rest_endpoints', array( MainWP_Abilities_Backups::class, 'validate_rest_run_routes' ) );
+
         // Hook into MainWP REST authentication to include Abilities API routes.
         // This allows consumer_key/consumer_secret authentication to work for abilities.
         add_filter(
@@ -314,6 +316,14 @@ class MainWP_Abilities {
             )
         );
 
+        wp_register_ability_category(
+            'mainwp-backups',
+            array(
+                'label'       => __( 'MainWP Backups', 'mainwp' ),
+                'description' => __( 'Abilities for native backups: status, tasks, snapshots, restores, storage destinations and backup settings.', 'mainwp' ),
+            )
+        );
+
         // Batch category.
         wp_register_ability_category(
             'mainwp-batch',
@@ -347,8 +357,9 @@ class MainWP_Abilities {
 
         // Knowledge abilities.
         MainWP_Abilities_Knowledge::register();
+        MainWP_Abilities_Backups::register();
 
         // NOTE: Extensions register their own abilities in their own codebases.
-        // Total core abilities: 69 (30 sites + 13 updates + 11 clients + 7 tags + 1 batch + 7 knowledge).
+        // Total core abilities: 101 (30 sites + 14 updates + 11 clients + 7 tags + 1 batch + 7 knowledge + 31 backups).
     }
 }

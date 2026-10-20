@@ -6,7 +6,7 @@ Author URI: https://mainwp.com
 Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.2
-Requires PHP: 7.4
+Requires PHP: 8.3
 Stable tag: 6.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -135,6 +135,9 @@ Yes, we have a quick FAQ with many more questions and answers [here](https://mai
 = Where do I report security bugs found in this plugin? =
 Please report security bugs found in the source code of the MainWP plugin through the [Patchstack Vulnerability Disclosure Program](https://patchstack.com/database/vdp/9e5fb39c-dd7e-4c6b-a871-c6a046430f0f). The Patchstack team will assist you with verification, CVE assignment, and notify the developers of this plugin.
 
+= Why do large backups take a long time to finish? =
+The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron only runs when the Dashboard gets visits. On a Dashboard with little traffic, set DISABLE_WP_CRON in wp-config.php and add a system cron that requests wp-cron.php every minute. Server Information shows when the slice job last ran.
+
 == Screenshots ==
 
 1. Sites - Operations
@@ -150,6 +153,65 @@ Please report security bugs found in the source code of the MainWP plugin throug
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.3-beta6 - 10-16-2026 =
+
+* Security: Deleting a legacy backup file refuses any name that is not a backup archive name before the child site is contacted.
+* Security: Native restore, rollback and cancel require the Restore Backups right as well as Execute Backups, and the restore buttons are hidden without it.
+* Security: Backup settings can only be changed by a WordPress administrator. Team Control staff are refused on the settings page, the abilities and the REST API.
+* Changed: Listing backup tasks through the abilities API requires the Execute Backups right.
+* Added: While the Dashboard keeps retrying to reach a site after a restore, Cancel Restore becomes Stop Checking. It ends the restore as failed and shows Roll Back when a safety backup was taken.
+* Added: With "Show removed backups" on, Snapshots & Restore shows why each backup was removed: deleted manually, removed by retention, deleted with its backup task, or removed by Clean Up. Backups removed before this version show "Removed".
+* Added: The daily backup cleanup asks child sites again to delete removed backups they never confirmed deleting, up to 50 a day. It gives up on a backup after 10 failed attempts.
+* Changed: Back Up Now uses the Default storage destination on sites that no scheduled backup task includes. Snapshots & Restore shows where the backup will go before it starts.
+* Changed: Legacy downloadable archives moved to their own collapsed section below Snapshots & Restore on the site Backups page.
+* Changed: The restore result lists symbolic links it left unchanged on their own line.
+* Fixed: Backup exclusion toggles save as set on new and edited tasks and in the legacy archive form.
+* Fixed: A warning replaces the green saved notice when the backup recovery passphrase is rejected.
+* Fixed: Hovered rows in compact tables stay readable in the Default Dark theme.
+* Fixed: Long Details tooltips on Manage Backups wrap and no longer leave blank space or misalign the table header.
+* Fixed: Screens, reports and the update gate all read the same backup-before-update window, and the REST API stores 7 days for zero, negative or invalid values, like the Settings page.
+* Fixed: Back Up Now first finishes cancelling an earlier backup the child site was asked to stop.
+* Fixed: Deleting a backup another request already removed reports that it was not found.
+
+= 6.3-beta5 - 10-15-2026 =
+
+* Added: The restore result lists the files a restore kept on the site: mu-plugins files missing from the backup and files the backup could not read, with the total and up to 20 paths.
+* Changed: The check that the site responds after a restore asks caches not to answer for it, so a cached page is less likely to hide a broken site.
+* Changed: The restore result still shows its note about added files when the site check after the restore fails.
+* Fixed: When a backup lists files it could not read, added files are removed only if the site's MainWP Child confirms it supports that list.
+
+= 6.3-beta4 - 10-14-2026 =
+
+* Added: Download a backup from its row on Snapshots & Restore through a one-use link that expires after 10 minutes. Incremental and cloud-only backups cannot be downloaded yet.
+* Added: Delete a single backup from Snapshots & Restore, together with every backup that depends on it, with an option to also delete its cloud copies.
+* Added: The delete-backup-snapshot-v1 ability, with a dry-run preview and confirmation against the previewed backups.
+* Changed: Clean Up, retention and task delete report which backups were removed and which remain, and report cloud deletions as queued.
+* Changed: A diagnostics bundle is removed from the Dashboard once it has downloaded completely.
+* Fixed: Two backups of one site started in the same minute could overwrite each other's archive.
+* Fixed: Download, restore, test restore and upload refuse an archive whose size no longer matches its backup.
+* Fixed: Retention, Clean Up and task delete no longer remove a backup that is still uploading, being test-restored, or in use by an incremental backup in progress.
+* Fixed: Deleting a storage destination also removes it from Back Up Now tasks.
+* Fixed: Messages in the Dashboard's notice areas are always shown as text.
+* Fixed: Dropbox connections refuse redirects to other hosts.
+
+= 6.3-beta1 - 10-8-2026 =
+
+* Added: Native Backups (beta): schedule or run full, database-only, files-only, and incremental backups of child sites from the Dashboard, with resumable transfers that survive timeouts and slow hosts.
+* Added: Storage destinations for backups: S3-compatible storage, Google Cloud Storage, Dropbox, SFTP, and a local directory on the Dashboard server, with per-task destination selection and retention that covers cloud copies.
+* Added: Snapshots & Restore page: restore any recorded backup, including any point in an incremental chain, with an optional safety backup taken first and a Roll Back button to return to it.
+* Added: Restores load the database into temporary tables and switch to them in one step, so the site never runs on a half-restored database. Tables linked by foreign keys are restored in place while the site is in maintenance mode.
+* Added: Restores keep the site connected to the Dashboard by preserving the child's connection identity across the restored database.
+* Added: Restoring a full or files-only backup removes files added to the site after that backup was taken. A files-only restore keeps uploads, because the database still refers to them. A backup needs a file list for this: backups made before this version have none, and the restore result says so when a list is missing.
+* Added: Direct-from-storage restore transfer for S3-compatible and Google Cloud Storage destinations, with an automatic fall back to the standard transfer.
+* Added: WooCommerce order preservation on restore: keep orders placed after the backup and re-merge the customers and stock they reference.
+* Added: Multisite network backups and restores.
+* Added: Retention by count, age, or storage size per backup task, applied to whole incremental chains.
+* Added: Backup health on the Manage Sites page and a pre-update check for a recent native backup.
+* Added: One-time authorized download links for backup archives.
+* Added: A backups diagnostics log and a restore preflight that checks storage, disk space, and database privileges before anything on the site changes.
+* Added: A child-version check when a restore starts; a site running an older MainWP Child gets an update prompt instead of a failed restore.
+* Note: File backups and restores are refused on sites whose wp-content folder lives outside the WordPress core folder, such as some Pressable, WordPress.com, and Bedrock installs. Database-only backups and restores still work there. A restored site keeps its last pre-restore safety backup on its own server until its next restore, and that backup stays there if the site is removed from the Dashboard.
 
 = 6.3 - 10-13-2026 =
 

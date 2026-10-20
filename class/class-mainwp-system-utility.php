@@ -122,6 +122,25 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     }
 
     /**
+     * Identify Team Control staff while preserving WordPress administrator access.
+     *
+     * @return bool
+     */
+    public static function is_team_control_staff(): bool {
+        $user = wp_get_current_user();
+        // Roles avoid the bridge's injected manage_options and legacy admin caps; Team Control exempts administrators.
+        if ( empty( $user->ID ) || static::current_user_has_role( 'administrator', $user ) ) {
+            return false;
+        }
+        foreach ( $user->roles as $role ) {
+            if ( 0 === strpos( $role, 'mainwp_' ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Method current_user_has_role()
      *
      * Check if the user has role.
@@ -159,14 +178,15 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     /**
      * Method get_primary_backup()
      *
-     * Check if using Legacy Backup Solution.
+     * Get the external primary backup method, or false when native
+     * backups are enabled.
      *
-     * @return mixed False|$enable_legacy_backup.
+     * @return mixed False|string Primary backup method.
      */
     public static function get_primary_backup() {
-        $enable_legacy_backup = get_option( 'mainwp_enableLegacyBackupFeature' );
-        $global_method        = false;
-        if ( ! $enable_legacy_backup ) {
+        $enable_native_backups = MainWP_Backup_Settings::is_native_backups_enabled();
+        $global_method         = false;
+        if ( ! $enable_native_backups ) {
             $global_method = get_option( 'mainwp_primaryBackup', false );
         }
         return $global_method;
@@ -285,10 +305,11 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      *
      * @param string|null $subdir mainwp sub diectories.
      * @param bool        $direct_access Return true if Direct access file system. Default: false.
+     * @param array|null  $upload_dir Explicit uploads root for paths already stored in checkpoints.
      *
      * @return array $dir, $url
      */
-    public static function get_mainwp_dir( $subdir = null, $direct_access = false ) {
+    public static function get_mainwp_dir( $subdir = null, $direct_access = false, $upload_dir = null ) {
         static::get_wp_file_system();
 
         /**
@@ -297,8 +318,6 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          * @global object
          */
         global $wp_filesystem;
-
-        $upload_dir = wp_upload_dir();
 
         /**
          * Allow filtering the upload directory array used by MainWP.
@@ -309,7 +328,7 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          * @param string $subdir      Optional. Sub Directory requested.
          * @param bool $direct_access Optional. Direct access.
          */
-        $upload_dir = apply_filters( 'mainwp_get_wp_upload_dir', $upload_dir, $subdir, $direct_access );
+        $upload_dir = null === $upload_dir ? apply_filters( 'mainwp_get_wp_upload_dir', wp_upload_dir(), $subdir, $direct_access ) : $upload_dir;
 
         $dir = $upload_dir['basedir'] . DIRECTORY_SEPARATOR . 'mainwp' . DIRECTORY_SEPARATOR;
         $url = $upload_dir['baseurl'] . '/mainwp/';
@@ -329,10 +348,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $wp_filesystem->mkdir( $newdir, $direct_access ? 0755 : 0750 );
             }
 
+            if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . 'index.php' ) ) {
+                $wp_filesystem->touch( trailingslashit( $newdir ) . 'index.php' );
+            }
             if ( $direct_access ) {
-                if ( ! $wp_filesystem->exists( trailingslashit( $newdir ) . 'index.php' ) ) {
-                    $wp_filesystem->touch( trailingslashit( $newdir ) . 'index.php' );
-                }
                 if ( $wp_filesystem->exists( trailingslashit( $newdir ) . '.htaccess' ) ) {
                     $wp_filesystem->delete( trailingslashit( $newdir ) . '.htaccess' );
                 }
@@ -513,23 +532,15 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param null $dir Current MainWP directory.
      *
      * @return string $newdir
-     *
-     * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
      */
     public static function get_mainwp_specific_dir( $dir = null ) { // phpcs:ignore -- NOSONAR - complex.
-        if ( MainWP_System::instance()->is_single_user() ) {
-            $userid = 0;
-        } else {
-
-            /**
-             * Current user global.
-             *
-             * @global string
-             */
-            global $current_user;
-
-            $userid = $current_user->ID;
-        }
+        // Pinned to the userid-0 root. Every existing install's private
+        // files (encryption keys under pk/, backup staging) live there
+        // because single-user mode was the only shipped mode; keying this
+        // off is_single_user() would let arming multi-user mode (the
+        // mainwp_is_single_user filter) silently reparent key storage to
+        // a per-user path and orphan the existing files.
+        $userid = 0;
 
         $hasWPFileSystem = static::get_wp_file_system();
 
@@ -590,24 +601,13 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param mixed $dir MainWP Directory.
      *
      * @return string MainWP URL.
-     *
-     * @uses \MainWP\Dashboard\MainWP_System::is_single_user()
      */
     public static function get_mainwp_specific_url( $dir ) {
-        if ( MainWP_System::instance()->is_single_user() ) {
-            $userid = 0;
-        } else {
-
-            /**
-             * Current user global.
-             *
-             * @global string
-             */
-            global $current_user;
-
-            $userid = $current_user->ID;
-        }
-        $dirs = static::get_mainwp_dir();
+        // Pinned to the userid-0 root for the same reason as
+        // get_mainwp_specific_dir(): the private-files location must not
+        // move when multi-user mode is armed.
+        $userid = 0;
+        $dirs   = static::get_mainwp_dir();
 
         return $dirs[1] . $userid . '/' . $dir . '/';
     }
@@ -779,7 +779,10 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
          */
         global $current_user;
 
-        return $website->userid === $current_user->ID;
+        // Cron and REST run with no current user; ID 0 must never match a userid-0 row.
+        $current_id = (int) $current_user->ID;
+
+        return $current_id > 0 && (int) $website->userid === $current_id;
     }
 
     /**

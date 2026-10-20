@@ -1246,6 +1246,40 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Flag missed slice ticks only while native backups are enabled.
+     *
+     * @return bool Whether the last tick is more than three minutes old.
+     */
+    public static function is_backup_slice_stale(): bool {
+        return MainWP_Backup_Settings::is_native_backups_enabled()
+            && (int) get_option( 'mainwp_cron_last_backups_slice', 0 ) < time() - 180;
+    }
+
+    /**
+     * Render the slice row's loopback warning for the cron mode MainWP is running in.
+     *
+     * The copy depends on the cron mode alone. Whether the server cron is firing is the
+     * stale-slice warning's job, so this copy makes no claim about it.
+     *
+     * @param bool $use_wp_cron Whether MainWP schedules run on WP-Cron rather than the cron/ scripts.
+     * @return void
+     */
+    public static function render_backup_loopback_warning( bool $use_wp_cron ): void {
+        ?>
+        <span class="ui yellow label"><i class="exclamation icon"></i>
+        <?php
+        if ( $use_wp_cron ) {
+            esc_html_e( 'This site cannot reach its own wp-cron.php, so backups cannot keep themselves running. Check loopback requests or add a system cron.', 'mainwp' );
+        } else {
+            // The cron/ scripts drive continuation here; only the same-request chain after a budget exit is lost.
+            esc_html_e( 'This site cannot reach its own wp-cron.php. A backup that uses its full time budget waits for the next server cron run instead of continuing right away.', 'mainwp' );
+        }
+        ?>
+        </span>
+        <?php
+    }
+
+    /**
      * Renders the Cron Schedule page.
      *
      * @return void
@@ -1282,9 +1316,11 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $cron_jobs['Site Health monitoring'] = array( 'mainwp_cron_checksiteshealth_last_timestamp', 'mainwp_cronsitehealthcheck_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' );
         }
 
-        if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
-            $cron_jobs['Start backups (Legacy)']    = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' );
-            $cron_jobs['Continue backups (Legacy)'] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', esc_html__( 'Once every five minutes', 'mainwp' ), '5minutely' );
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            $cron_jobs[ esc_html__( 'Start scheduled backups', 'mainwp' ) ]  = array( 'mainwp_cron_last_backups', 'mainwp_cronbackups_action', esc_html__( 'Once hourly', 'mainwp' ), 'hourly' );
+            $cron_jobs[ esc_html__( 'Continue running backups', 'mainwp' ) ] = array( 'mainwp_cron_last_backups_continue', 'mainwp_cronbackups_continue_action', esc_html__( 'Once every five minutes (maintenance)', 'mainwp' ), '5minutely' );
+            $cron_jobs[ esc_html__( 'Run backup steps', 'mainwp' ) ]         = array( 'mainwp_cron_last_backups_slice', 'mainwp_cronbackups_slice_action', esc_html__( 'Once every minute', 'mainwp' ), 'minutely' );
+            $cron_jobs[ esc_html__( 'Clean up old backups', 'mainwp' ) ]     = array( 'mainwp_cron_last_backups_prune', 'mainwp_cronbackups_prune_action', esc_html__( 'Once daily', 'mainwp' ), 'daily' );
         }
 
         $cron_jobs = apply_filters( 'mainwp_info_schedules_cron_listing', $cron_jobs );
@@ -1382,7 +1418,24 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
                         <td><?php echo esc_html( $job_title ); ?></td>
                         <td><?php echo esc_html( $job_action ); ?></td>
                         <td><?php echo esc_html( $job_freq ); ?></td>
-                        <td><?php echo esc_html( $job_last_run ); ?></td>
+                        <td><?php echo esc_html( $job_last_run ); ?>
+                            <?php if ( 'mainwp_cronbackups_slice_action' === $job_action && static::is_backup_slice_stale() ) : ?>
+                                <span class="ui yellow label"><i class="exclamation icon"></i>
+                                <?php
+                                if ( $useWPCron ) {
+                                    esc_html_e( 'WP-Cron is not firing every minute. Add a system cron for wp-cron.php so backups keep moving.', 'mainwp' );
+                                } else {
+                                    esc_html_e( 'The backup slice job is not running every minute. Add a system cron that runs cron/backups_slice.php every minute.', 'mainwp' );
+                                }
+                                ?>
+                                </span>
+                            <?php endif; ?>
+                            <?php
+                            if ( 'mainwp_cronbackups_slice_action' === $job_action && MainWP_Backup_Settings::is_native_backups_enabled() && ! MainWP_Server_Information_Handler::is_backup_loopback_ok() ) {
+                                static::render_backup_loopback_warning( $useWPCron );
+                            }
+                            ?>
+                        </td>
                         <td><?php echo ! empty( $job_next_run ) ? esc_html( $job_next_run ) : ''; ?></td>
                     </tr>
                     <?php

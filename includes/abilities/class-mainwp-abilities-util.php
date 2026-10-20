@@ -37,9 +37,12 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     /**
      * Ability → granular Team Control dashboard right required to run it.
      *
-     * Read-only abilities (list/get/count) are intentionally absent: they are
-     * gated by manage_options plus site scoping and are out of scope for
-     * granular rights.
+     * Read-only abilities (list/get/count) are absent. Two read families
+     * still need a granular right outside this map: backup reads, mapped in
+     * MainWP_Abilities_Backups::READ_RIGHTS, and knowledge reads, which
+     * MainWP_DB_Knowledge checks per record (access_individual_dashboard
+     * for site records, manage_clients for client records). Every other
+     * family's reads are gated by manage_options plus site scoping only.
      *
      * The update family (run-updates / update-all) is intentionally absent
      * here: it needs per-type rights derived from its `types` input, handled
@@ -50,45 +53,66 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      */
     const ABILITY_OPERATION_RIGHTS = array(
         // Site lifecycle.
-        'mainwp/add-site-v1'                 => 'add_sites',
-        'mainwp/update-site-v1'              => 'edit_sites',
-        'mainwp/delete-site-v1'              => 'delete_sites',
-        'mainwp/reconnect-site-v1'           => 'edit_sites',
-        'mainwp/reconnect-sites-v1'          => 'edit_sites',
-        'mainwp/disconnect-site-v1'          => 'edit_sites',
-        'mainwp/disconnect-sites-v1'         => 'edit_sites',
-        'mainwp/suspend-site-v1'             => 'edit_sites',
-        'mainwp/suspend-sites-v1'            => 'edit_sites',
-        'mainwp/unsuspend-site-v1'           => 'edit_sites',
-        'mainwp/check-site-v1'               => 'edit_sites',
-        'mainwp/check-sites-v1'              => 'edit_sites',
+        'mainwp/add-site-v1'                       => 'add_sites',
+        'mainwp/update-site-v1'                    => 'edit_sites',
+        'mainwp/delete-site-v1'                    => 'delete_sites',
+        'mainwp/reconnect-site-v1'                 => 'edit_sites',
+        'mainwp/reconnect-sites-v1'                => 'edit_sites',
+        'mainwp/disconnect-site-v1'                => 'edit_sites',
+        'mainwp/disconnect-sites-v1'               => 'edit_sites',
+        'mainwp/suspend-site-v1'                   => 'edit_sites',
+        'mainwp/suspend-sites-v1'                  => 'edit_sites',
+        'mainwp/unsuspend-site-v1'                 => 'edit_sites',
+        'mainwp/check-site-v1'                     => 'edit_sites',
+        'mainwp/check-sites-v1'                    => 'edit_sites',
         // Plugins / themes on a site.
-        'mainwp/activate-site-plugins-v1'    => 'activate_deactivate_plugins',
-        'mainwp/deactivate-site-plugins-v1'  => 'activate_deactivate_plugins',
-        'mainwp/delete-site-plugins-v1'      => 'delete_plugins',
-        'mainwp/activate-site-theme-v1'      => 'activate_themes',
-        'mainwp/delete-site-themes-v1'       => 'delete_themes',
+        'mainwp/activate-site-plugins-v1'          => 'activate_deactivate_plugins',
+        'mainwp/deactivate-site-plugins-v1'        => 'activate_deactivate_plugins',
+        'mainwp/delete-site-plugins-v1'            => 'delete_plugins',
+        'mainwp/activate-site-theme-v1'            => 'activate_themes',
+        'mainwp/delete-site-themes-v1'             => 'delete_themes',
         // Per-type single-site updates.
-        'mainwp/update-site-core-v1'         => 'update_wordpress',
-        'mainwp/update-site-plugins-v1'      => 'update_plugins',
-        'mainwp/update-site-themes-v1'       => 'update_themes',
-        'mainwp/update-site-translations-v1' => 'update_translations',
+        'mainwp/update-site-core-v1'               => 'update_wordpress',
+        'mainwp/update-site-plugins-v1'            => 'update_plugins',
+        'mainwp/update-site-themes-v1'             => 'update_themes',
+        'mainwp/update-site-translations-v1'       => 'update_translations',
         // Ignore / unignore updates.
-        'mainwp/set-ignored-updates-v1'      => 'ignore_unignore_updates',
-        'mainwp/unignore-site-updates-v1'    => 'ignore_unignore_updates',
-        'mainwp/ignore-site-core-v1'         => 'ignore_unignore_updates',
-        'mainwp/ignore-site-plugins-v1'      => 'ignore_unignore_updates',
-        'mainwp/ignore-site-themes-v1'       => 'ignore_unignore_updates',
+        'mainwp/set-ignored-updates-v1'            => 'ignore_unignore_updates',
+        'mainwp/unignore-site-updates-v1'          => 'ignore_unignore_updates',
+        'mainwp/ignore-site-core-v1'               => 'ignore_unignore_updates',
+        'mainwp/ignore-site-plugins-v1'            => 'ignore_unignore_updates',
+        'mainwp/ignore-site-themes-v1'             => 'ignore_unignore_updates',
         // Clients.
-        'mainwp/add-client-v1'               => 'manage_clients',
-        'mainwp/update-client-v1'            => 'manage_clients',
-        'mainwp/delete-client-v1'            => 'manage_clients',
-        'mainwp/suspend-client-v1'           => 'manage_clients',
-        'mainwp/unsuspend-client-v1'         => 'manage_clients',
+        'mainwp/add-client-v1'                     => 'manage_clients',
+        'mainwp/update-client-v1'                  => 'manage_clients',
+        'mainwp/delete-client-v1'                  => 'manage_clients',
+        'mainwp/suspend-client-v1'                 => 'manage_clients',
+        'mainwp/unsuspend-client-v1'               => 'manage_clients',
+        // Native backups.
+        'mainwp/run-site-backup-v1'                => 'execute_backups',
+        'mainwp/run-backup-task-v1'                => 'run_backup_tasks',
+        'mainwp/cancel-site-backup-v1'             => 'execute_backups',
+        'mainwp/reset-backup-task-run-v1'          => 'pause_resume_backup_tasks',
+        'mainwp/cleanup-site-backups-v1'           => 'execute_backups',
+        'mainwp/delete-backup-snapshot-v1'         => 'execute_backups',
+        'mainwp/create-backup-task-v1'             => 'add_backup_tasks',
+        'mainwp/update-backup-task-v1'             => 'edit_backup_tasks',
+        'mainwp/delete-backup-task-v1'             => 'delete_backup_tasks',
+        'mainwp/pause-backup-task-v1'              => 'pause_resume_backup_tasks',
+        'mainwp/resume-backup-task-v1'             => 'pause_resume_backup_tasks',
+        'mainwp/restore-site-snapshot-v1'          => 'execute_backups',
+        'mainwp/cancel-restore-v1'                 => 'execute_backups',
+        'mainwp/rollback-restore-v1'               => 'execute_backups',
+        'mainwp/test-backup-destination-v1'        => 'edit_backup_tasks',
+        'mainwp/set-default-backup-destination-v1' => 'edit_backup_tasks',
+        'mainwp/update-backup-destination-v1'      => 'edit_backup_tasks',
+        'mainwp/delete-backup-destination-v1'      => 'edit_backup_tasks',
+        'mainwp/update-backup-settings-v1'         => 'manage_dashboard_settings',
+
         // Tags (groups).
-        'mainwp/add-tag-v1'                  => 'manage_groups',
-        'mainwp/update-tag-v1'               => 'manage_groups',
-        'mainwp/delete-tag-v1'               => 'manage_groups',
+        'mainwp/add-tag-v1'                        => 'manage_groups',
+        'mainwp/update-tag-v1'                     => 'manage_groups',
+        'mainwp/delete-tag-v1'                     => 'manage_groups',
     );
 
     /**
@@ -175,6 +199,9 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
         if ( isset( self::ABILITY_OPERATION_RIGHTS[ $ability_name ] ) ) {
             $required[] = self::ABILITY_OPERATION_RIGHTS[ $ability_name ];
+            if ( in_array( $ability_name, array( 'mainwp/restore-site-snapshot-v1', 'mainwp/cancel-restore-v1', 'mainwp/rollback-restore-v1' ), true ) ) {
+                $required[] = 'restore_backups';
+            }
         } elseif ( 'mainwp/run-updates-v1' === $ability_name || 'mainwp/update-all-v1' === $ability_name ) {
             $types = ( is_array( $input ) && ! empty( $input['types'] ) && is_array( $input['types'] ) )
                 ? array_map( 'strval', $input['types'] )
@@ -1458,7 +1485,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * Stores job data in a transient and schedules a cron event for processing.
      *
      * @param array $sites         Array of site objects to update.
-     * @param array $update_params Update parameters with keys: types (array), specific_items (array).
+     * @param array $update_params Update selection and optional ignore_backup_gate flag.
      * @return string|\WP_Error Job ID for status polling, or WP_Error on failure.
      */
     public static function queue_batch_updates( array $sites, array $update_params ) {
@@ -1493,22 +1520,23 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         // Structure aligns with REST v2 job status endpoint expectations.
         // Status values: 'queued' -> 'processing' -> 'completed' | 'failed'.
         $job_data = array(
-            'job_type'        => 'update',            // Distinguishes from 'sync' jobs.
-            'user_id'         => get_current_user_id(), // Polling must enforce ownership.
-            'sites'           => $site_ids,
-            'types'           => $types,
-            'specific_items'  => $specific_items,
+            'job_type'           => 'update',            // Distinguishes from 'sync' jobs.
+            'user_id'            => get_current_user_id(), // Polling must enforce ownership.
+            'sites'              => $site_ids,
+            'types'              => $types,
+            'specific_items'     => $specific_items,
+            'ignore_backup_gate' => self::get_boolean_input( $update_params, 'ignore_backup_gate' ),
             // Rights can change between chunks; empty types require every update right.
-            'required_rights' => self::required_rights_for_ability( 'mainwp/run-updates-v1', array( 'types' => $types ) ),
-            'status'          => 'queued',            // queued | processing | completed | failed.
-            'created'         => time(),
-            'started'         => null,
-            'completed'       => null,
-            'updated'         => array(),             // Successful updates array.
-            'errors'          => array(),             // Failed updates array.
-            'progress'        => 0,                   // 0-100 percentage.
-            'total'           => count( $site_ids ),  // Total sites to process.
-            'processed'       => 0,                   // Sites processed so far.
+            'required_rights'    => self::required_rights_for_ability( 'mainwp/run-updates-v1', array( 'types' => $types ) ),
+            'status'             => 'queued',            // queued | processing | completed | failed.
+            'created'            => time(),
+            'started'            => null,
+            'completed'          => null,
+            'updated'            => array(),             // Successful updates array.
+            'errors'             => array(),             // Failed updates array.
+            'progress'           => 0,                   // 0-100 percentage.
+            'total'              => count( $site_ids ),  // Total sites to process.
+            'processed'          => 0,                   // Sites processed so far.
         );
 
         set_transient( 'mainwp_update_job_' . $job_id, $job_data, DAY_IN_SECONDS );

@@ -97,7 +97,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Themes::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Plugins::init_menu()
      * @uses \MainWP\Dashboard\MainWP_User::init_menu()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::init_menu()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Page::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Manage_Groups::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Monitoring::init_menu()
      * @uses \MainWP\Dashboard\MainWP_Settings::init_menu()
@@ -241,7 +241,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 'slug'               => 'ManageBackups',
                 'menu_level'         => 2,
                 'menu_rights'        => true,
-                'init_menu_callback' => array( MainWP_Manage_Backups::class, 'init_menu' ),
+                'init_menu_callback' => array( MainWP_Backup_Page::class, 'init_menu' ),
             );
 
             // Manage Settings.
@@ -1278,6 +1278,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             <a class="item" href="admin.php?page=Settings"><?php esc_html_e( 'General Settings', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=SettingsAdvanced"><?php esc_html_e( 'Advanced Settings', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=MonitoringSettings"><?php esc_html_e( 'Monitoring Settings', 'mainwp' ); ?></a>
+                            <a class="item" href="admin.php?page=BackupSettings"><?php esc_html_e( 'Backup Settings', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=SettingsEmail"><?php esc_html_e( 'Email Settings', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=PremiumUpdates"><?php esc_html_e( 'Premium Updates', 'mainwp' ); ?></a>
                             <a class="item" href="admin.php?page=MainWPTools"><?php esc_html_e( 'Tools', 'mainwp' ); ?></a>

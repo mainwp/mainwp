@@ -4,16 +4,18 @@
     "type": "wordpress-plugin",
     "license": "GPL-3.0-or-later",
     "require": {
-        "php": ">=7.4"
+        "php": ">=8.3"
     },
     "require-dev": {
         "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
         "masterminds/html5": "^2.9",
+        "phpcsstandards/phpcsutils": "^1.2.3",
         "phpstan/extension-installer": "^1.4",
         "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^9.6",
+        "squizlabs/php_codesniffer": "^3.13.6",
         "szepeviktor/phpstan-wordpress": "^2.0",
-        "wp-coding-standards/wpcs": "^3.0",
+        "wp-coding-standards/wpcs": "^3.4.1",
         "yoast/phpunit-polyfills": "^4.0"
     },
     "autoload-dev": {
@@ -21,7 +23,8 @@
             "MainWP\\Dashboard\\Tests\\": "tests/"
         },
         "classmap": [
-            "tests/abilities/"
+            "tests/abilities/",
+            "tests/integration/"
         ]
     },
     "config": {
@@ -30,5 +33,20 @@
             "phpstan/extension-installer": true
         },
         "sort-packages": true
+    },
+    "scripts": {
+        "test": [
+            "@test:dashboard",
+            "@test:abilities",
+            "@test:backup",
+            "@test:rest-key-auth"
+        ],
+        "test:dashboard": "phpunit --testsuite=\"MainWP Dashboard Test Suite\"",
+        "test:abilities": "phpunit --testsuite=Abilities",
+        "test:backup": "phpunit --testsuite=Backup",
+        "test:rest-key-auth": "phpunit --testsuite=\"REST Key Authentication\""
+    },
+    "scripts-descriptions": {
+        "test": "Run the four phpunit testsuites as separate processes, the same shape CI uses. A single-process aggregate run (bare vendor/bin/phpunit) lets constants like DOING_CRON defined by one suite leak into another and silently bypass capability-denial tests. Requires WP_TESTS_DIR in the environment."
     }
 }

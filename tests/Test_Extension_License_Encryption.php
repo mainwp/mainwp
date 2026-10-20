@@ -167,6 +167,126 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 	}
 
 	// ---------------------------------------------------------------------
+	// Key-file retirement on license writes
+	// ---------------------------------------------------------------------
+
+	/**
+	 * Capture mainwp_delete_key_file emissions.
+	 *
+	 * @param array $deleted Collector, by reference.
+	 */
+	private function capture_deletes( array &$deleted ): void {
+		add_action(
+			'mainwp_delete_key_file',
+			function ( $file_key ) use ( &$deleted ) {
+				$deleted[] = $file_key;
+			}
+		);
+	}
+
+	/**
+	 * Seed the stored activation option with an envelope referencing a
+	 * known key file. The stub encryptor reuses one file_key per prefix,
+	 * so observing a retirement needs a distinct seeded key.
+	 *
+	 * @param string $ext_key  Extension key.
+	 * @param string $file_key Key file id the seeded envelope references.
+	 */
+	private function seed_stored_activation( string $ext_key, string $file_key ): void {
+		update_option(
+			$ext_key . '_APIManAdder',
+			array(
+				'api_key'       => array(
+					'encrypted_val' => 'STUB:' . base64_encode( 'old-key' ),
+					'file_key'      => $file_key,
+				),
+				'activated_key' => 'Activated',
+			)
+		);
+	}
+
+	public function test_set_activation_info_retires_old_key_file_on_api_key_change(): void {
+		$deleted = array();
+		$this->capture_deletes( $deleted );
+		$this->seed_stored_activation( 'foo', 'extension_foo_oldkey' );
+
+		\MainWP\Dashboard\MainWP_Api_Manager::instance()->set_activation_info(
+			'foo',
+			array(
+				'api_key'       => 'replacement-license-key',
+				'activated_key' => 'Activated',
+			)
+		);
+
+		$this->assertSame( array( 'extension_foo_oldkey' ), $deleted );
+	}
+
+	public function test_set_activation_info_keeps_key_file_when_envelope_reuses_it(): void {
+		$deleted = array();
+		$this->capture_deletes( $deleted );
+		// The stub reuses extension_foo_stubkey for every foo encryption;
+		// deleting it would orphan the envelope just written.
+		$this->seed_stored_activation( 'foo', 'extension_foo_stubkey' );
+
+		\MainWP\Dashboard\MainWP_Api_Manager::instance()->set_activation_info(
+			'foo',
+			array(
+				'api_key'       => 'replacement-license-key',
+				'activated_key' => 'Activated',
+			)
+		);
+
+		$this->assertSame( array(), $deleted );
+	}
+
+	public function test_set_activation_info_retires_key_file_when_api_key_cleared(): void {
+		$deleted = array();
+		$this->capture_deletes( $deleted );
+		$this->seed_stored_activation( 'foo', 'extension_foo_oldkey' );
+
+		// The deactivation path (remove_activation_info) writes an empty
+		// api_key; the stored envelope's key file has nothing left to
+		// decrypt.
+		\MainWP\Dashboard\MainWP_Api_Manager::instance()->set_activation_info(
+			'foo',
+			array(
+				'api_key'       => '',
+				'activated_key' => 'Deactivated',
+			)
+		);
+
+		$this->assertSame( array( 'extension_foo_oldkey' ), $deleted );
+	}
+
+	public function test_set_activation_info_deletes_nothing_without_stored_envelope(): void {
+		$deleted = array();
+		$this->capture_deletes( $deleted );
+
+		\MainWP\Dashboard\MainWP_Api_Manager::instance()->set_activation_info(
+			'fresh-ext',
+			array(
+				'api_key'       => 'first-license-key',
+				'activated_key' => 'Activated',
+			)
+		);
+
+		$this->assertSame( array(), $deleted );
+	}
+
+	public function test_retire_key_file_if_changed_helper_contract(): void {
+		$deleted = array();
+		$this->capture_deletes( $deleted );
+
+		\MainWP\Dashboard\MainWP_Credential_Storage::retire_key_file_if_changed( 'old-key', 'new-key' );
+		\MainWP\Dashboard\MainWP_Credential_Storage::retire_key_file_if_changed( 'same-key', 'same-key' );
+		\MainWP\Dashboard\MainWP_Credential_Storage::retire_key_file_if_changed( '', 'new-key' );
+		\MainWP\Dashboard\MainWP_Credential_Storage::retire_key_file_if_changed( null, 'new-key' );
+		\MainWP\Dashboard\MainWP_Credential_Storage::retire_key_file_if_changed( 'cleared-key', '' );
+
+		$this->assertSame( array( 'old-key', 'cleared-key' ), $deleted );
+	}
+
+	// ---------------------------------------------------------------------
 	// End-to-end round-trip
 	// ---------------------------------------------------------------------
 

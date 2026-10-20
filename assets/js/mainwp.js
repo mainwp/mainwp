@@ -91,7 +91,7 @@ jQuery(function ($) {
 
 let mainwp_get_remove_calback = function (side_id) {
     return function () {
-        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Removing the site. Please wait...'), '');
+        feedback('mainwp-message-zone', jQuery('<i>', { class: 'notched circle loading icon' }).add(document.createTextNode(' ' + MainWP.I18n.t('Removing the site. Please wait...'))), '');
         let data = mainwp_secure_data({
             action: 'mainwp_removesite',
             id: side_id
@@ -537,9 +537,28 @@ globalThis.mainwp_js_request_timeout_message = function (kind) {
     return text;
 };
 
+globalThis.mainwp_feedback_linked_message = function (message, links) {
+    let parts = message.split(/(%[13579][\s\S]*?%[2468])/g);
+    return jQuery(parts.map(function (part) {
+        let match = /^%([13579])([\s\S]*?)%([2468])$/.exec(part);
+        if (match && Number(match[3]) === Number(match[1]) + 1 && links[(Number(match[1]) - 1) / 2]) {
+            let link = jQuery('<a>', links[(Number(match[1]) - 1) / 2])[0];
+            link.appendChild(document.createTextNode(match[2]));
+            return link;
+        }
+        return document.createTextNode(part);
+    }));
+};
+
+// MainWP_Connect_Failure_Ux::render_html() escapes every value it prints, so its markup is parsed
+// into nodes here; feedback() would show a string's tags as text.
+globalThis.mainwp_failure_ux_nodes = function (html) {
+    return jQuery(jQuery.parseHTML(html));
+};
+
 globalThis.mainwp_get_reconnect_error = function (response, siteId) { // NOSONAR - complexity.
     if ('reconnect_failed' === response) {
-        return MainWP.I18n.t('Reconnect failed. Please try again from the %1Site Settings page%2.', '<a href="admin.php?page=managesites&id=' + siteId + '">', '</a>');
+        return mainwp_feedback_linked_message(MainWP.I18n.t('Reconnect failed. Please try again from the %1Site Settings page%2.'), [{ href: 'admin.php?page=managesites&id=' + encodeURIComponent(siteId) }]);
     } else {
         return response;
     }
@@ -577,27 +596,31 @@ function shake_element(select) {
  * Required
  */
 globalThis.feedback = function (id, text, type, append) {
+    let target = jQuery('#' + id);
     if (append) {
-        let currentHtml = jQuery('#' + id).html();
-        if (currentHtml == null)
-            currentHtml = "";
-        if (currentHtml == '') {
-            currentHtml = text;
-        } else {
-            currentHtml += '<br />' + text;
+        if (target.contents().length) {
+            target.append(document.createElement('br'));
         }
-        jQuery('#' + id).html(currentHtml);
-        jQuery('#' + id).removeClass('yellow');
-        jQuery('#' + id).removeClass('green');
-        jQuery('#' + id).removeClass('red');
-        jQuery('#' + id).addClass(type);
     } else {
-        jQuery('#' + id).html(text);
-        jQuery('#' + id).removeClass('yellow');
-        jQuery('#' + id).removeClass('green');
-        jQuery('#' + id).removeClass('red');
-        jQuery('#' + id).addClass(type);
+        target.empty();
     }
+
+    let lines = Array.isArray(text) ? text : [text];
+    lines.forEach(function (line, index) {
+        if (index) {
+            target.append(document.createElement('br'));
+        }
+        if (line instanceof Node || line instanceof jQuery) {
+            target.append(line);
+        } else {
+            target.append(document.createTextNode(line));
+        }
+    });
+
+    jQuery('#' + id).removeClass('yellow');
+    jQuery('#' + id).removeClass('green');
+    jQuery('#' + id).removeClass('red');
+    jQuery('#' + id).addClass(type);
     jQuery('#' + id).show();
 
     // automatically scroll to error message if it's not visible
@@ -630,24 +653,32 @@ globalThis.scrollElementTop = function (id) {
 
 globalThis.mainwp_showhide_message = function (id, content, cls, append, scroll) {
 
+    let target = jQuery('#' + id);
+
     if ('' === content) {
-        jQuery('#' + id).html('').fadeOut(500);
+        target.empty().fadeOut(500);
         return;
     }
 
     if (append) {
-        let html = jQuery('#' + id).html();
-        if (html == null)
-            html = "";
-        if (html == '') {
-            html = content;
-        } else {
-            html += '<br />' + content;
+        if (target.contents().length) {
+            target.append(document.createElement('br'));
         }
-        jQuery('#' + id).html(html);
     } else {
-        jQuery('#' + id).html(content);
+        target.empty();
     }
+
+    let lines = Array.isArray(content) ? content : [content];
+    lines.forEach(function (line, index) {
+        if (index) {
+            target.append(document.createElement('br'));
+        }
+        if (line instanceof Node || line instanceof jQuery) {
+            target.append(line);
+        } else {
+            target.append(document.createTextNode(line));
+        }
+    });
 
     jQuery('#' + id).removeClass('yellow green red');
     jQuery('#' + id).addClass(cls);
@@ -841,6 +872,8 @@ globalThis.mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
 
     let selectedIds = [], excludeIds = [];
     if (Array.isArray(siteIds)) {
+        // Earlier runs on this page may have hidden rows.
+        dashboard_update_site_show_all();
         jQuery.grep(allWebsiteIds, function (el) {
             if (jQuery.inArray(el, siteIds) === -1) {
                 excludeIds.push(el);
@@ -851,6 +884,12 @@ globalThis.mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
         for (let id of excludeIds) {
             dashboard_update_site_hide(id);
         }
+        jQuery('.dashboard_wp_id[error-status=1]').each(function () {
+            let id = jQuery(this).val();
+            if (jQuery.inArray(id, siteIds) === -1) {
+                dashboard_update_site_hide(id);
+            }
+        });
         allWebsiteIds = selectedIds;
     }
 
@@ -982,6 +1021,8 @@ jQuery(function () {
 });
 
 globalThis.mainwp_sync_sites_data = function (syncSiteIds, pAction) {
+    // An update or Check Abandoned run on this page may have hidden rows.
+    dashboard_update_site_show_all();
     let allWebsiteIds = [];
     jQuery('.dashboard_wp_id[error-status=0]').map(function (indx, el) {
         allWebsiteIds.push(jQuery(el).val());
@@ -1144,6 +1185,17 @@ globalThis.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
         if (!rowEl) return;
 
         rowEl.style.display = 'none';
+    };
+
+    globalThis.dashboard_update_site_show_all = function () {
+        const sync = globalThis.dashboardSync;
+        if (!sync?.initialized) return;
+
+        for (const rowEl of sync.rowMap.values()) {
+            if (rowEl) {
+                rowEl.style.display = '';
+            }
+        }
     };
 
     // -----------------------------
@@ -1519,10 +1571,25 @@ let mainwp_tool_confirm_to_process = function (pObj) {
 
 jQuery(function ($) {
     jQuery('#mainwp-backup-type').on('change', function () {
-        if (jQuery(this).val() == 'full')
-            jQuery('.mainwp-backup-full-exclude').show();
-        else
+        if (jQuery(this).val() == 'db')
             jQuery('.mainwp-backup-full-exclude').hide();
+        else
+            jQuery('.mainwp-backup-full-exclude').show();
+        if (jQuery(this).val() == 'incremental') {
+            jQuery('#mainwp-backup-incremental-note').show();
+            jQuery('#mainwp-backup-max-chain-length-wrapper').show();
+        } else {
+            jQuery('#mainwp-backup-incremental-note').hide();
+            jQuery('#mainwp-backup-max-chain-length-wrapper').hide();
+        }
+        jQuery('#mainwp-backup-files-note').toggle(jQuery(this).val() == 'files');
+    });
+    jQuery('#mainwp-backup-task-schedule').on('change', function () {
+        let schedule = jQuery(this).val();
+        jQuery('#mainwp-schedule-interval-wrapper').toggle(schedule == 'interval');
+        jQuery('#mainwp-schedule-time-of-day-wrapper').toggle(schedule == 'daily' || schedule == 'weekly' || schedule == 'monthly');
+        jQuery('#mainwp-schedule-day-of-week-wrapper').toggle(schedule == 'weekly');
+        jQuery('#mainwp-schedule-day-of-month-wrapper').toggle(schedule == 'monthly');
     });
     jQuery('.mainwp-checkbox-showhide-elements').on('click', function () {
         let hiel = $(this).attr('hide-parent');
@@ -1669,7 +1736,7 @@ globalThis.managesites_init = function () {
 };
 
 let mainwp_site_overview_reconnect = function (pElement) {
-    feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + 'Trying to reconnect. Please wait...', '');
+    feedback('mainwp-message-zone', jQuery('<i>', { class: 'notched circle loading icon' }).add(document.createTextNode(' ' + 'Trying to reconnect. Please wait...')), '');
     let data = mainwp_secure_data({
         action: 'mainwp_reconnectwp',
         siteid: pElement.attr('siteid')
@@ -1681,7 +1748,7 @@ let mainwp_site_overview_reconnect = function (pElement) {
             if (response.substring(0, 5) == 'ERROR') {
                 let error;
                 if (response.length == 5) {
-                    error = 'Undefined error! Please try again. If the process keeps failing, please review <a href="https://docs.mainwp.com/">MainWP Knowledgebase</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+                    error = mainwp_feedback_linked_message('Undefined error! Please try again. If the process keeps failing, please review %1MainWP Knowledgebase%2, and if you still have issues, please let us know in the %3MainWP Community%4.', [{ href: 'https://docs.mainwp.com/' }, { href: 'https://community.mainwp.com/c/community-support/5' }]);
                     feedback('mainwp-message-zone', error, 'red');
                 } else {
                     error = response.substring(6);
@@ -1778,7 +1845,7 @@ let mainwp_managesites_reconnect = function (pElement) {
             if (response.substring(0, 5) == 'ERROR') {
                 let error;
                 if (response.length == 5) {
-                    error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://docs.mainwp.com/troubleshooting/potential-issues">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+                    error = mainwp_feedback_linked_message('Undefined error! Please try again. If the process keeps failing, please review this %1Knowledgebase document%2, and if you still have issues, please let us know in the %3MainWP Community%4.', [{ href: 'https://docs.mainwp.com/troubleshooting/potential-issues' }, { href: 'https://community.mainwp.com/c/community-support/5' }]);
                     feedback('mainwp-message-zone', error, 'red');
                 } else {
                     error = response.substring(6);
@@ -1815,7 +1882,7 @@ let mainwp_managesites_cards_reconnect = function (element) {
             if (response.substring(0, 5) == 'ERROR') {
                 let error;
                 if (response.length == 5) {
-                    error = 'Undefined error! Please try again. If the process keeps failing, please review this <a href="https://docs.mainwp.com/troubleshooting/potential-issues">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://community.mainwp.com/c/community-support/5">MainWP Community</a>.'; // NOSONAR - noopener - open safe.
+                    error = mainwp_feedback_linked_message('Undefined error! Please try again. If the process keeps failing, please review this %1Knowledgebase document%2, and if you still have issues, please let us know in the %3MainWP Community%4.', [{ href: 'https://docs.mainwp.com/troubleshooting/potential-issues' }, { href: 'https://community.mainwp.com/c/community-support/5' }]);
                     feedback('mainwp-message-zone', error, 'red');
                 } else {
                     error = response.substring(6);
@@ -1884,7 +1951,7 @@ let mainwp_managesites_add = function () {
 
         url = url.replaceAll('"', '&quot;');
 
-        let show_resp = MainWP.I18n.t('Click %1here%2 to see response from the child site.', '<a href="javascript:void(0)" class="mainwp-show-response">', '</a>');
+        let show_resp = mainwp_feedback_linked_message(MainWP.I18n.t('Click %1here%2 to see response from the child site.'), [{ href: '#', class: 'mainwp-show-response' }]);
 
         let resp_data = res_things.resp_data ? res_things.resp_data : '';
         if ('0' == resp_data || '[hidden response data]' == resp_data) {
@@ -1896,9 +1963,9 @@ let mainwp_managesites_add = function () {
         jQuery('#mainwp-response-data-container').attr('resp-data', resp_data);
 
         if (res_things.failure_ux) {
-            errors.push(res_things.failure_ux);
+            errors.push(mainwp_failure_ux_nodes(res_things.failure_ux));
         } else if (response == 'HTTPERROR') {
-            errors.push(MainWP.I18n.t('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review this <a href="https://docs.mainwp.com/troubleshooting/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.')); // NOSONAR - noopener - open safe.
+            errors.push(mainwp_feedback_linked_message(MainWP.I18n.t('This site can not be reached! Please use the Test Connection feature and see if the positive response will be returned. For additional help, please review this %1Knowledgebase document%2, and if you still have issues, please let us know in the %3MainWP Community%4.'), [{ href: 'https://docs.mainwp.com/troubleshooting/potential-issues/' }, { href: 'https://managers.mainwp.com/c/community-support/5' }]));
         } else if (response == 'NOMAINWP') {
             errors.push(mainwp_js_get_error_not_detected_connect());
         } else if (response == 'TIMEOUT') {
@@ -1906,7 +1973,7 @@ let mainwp_managesites_add = function () {
             errors.push(mainwp_js_request_timeout_message(timeoutKind));
         } else if (response.substring(0, 5) == 'ERROR') {
             if (response.length == 5) {
-                errors.push(MainWP.I18n.t('Undefined error occurred. Please try again. If the issue does not resolve, please review this <a href="https://docs.mainwp.com/troubleshooting/potential-issues/">Knowledgebase document</a>, and if you still have issues, please let us know in the <a href="https://managers.mainwp.com/c/community-support/5">MainWP Community</a>.')); // NOSONAR - noopener - open safe.
+                errors.push(mainwp_feedback_linked_message(MainWP.I18n.t('Undefined error occurred. Please try again. If the issue does not resolve, please review this %1Knowledgebase document%2, and if you still have issues, please let us know in the %3MainWP Community%4.'), [{ href: 'https://docs.mainwp.com/troubleshooting/potential-issues/' }, { href: 'https://managers.mainwp.com/c/community-support/5' }]));
             } else {
                 errors.push(MainWP.I18n.t('Error detected: ') + response.substring(6));
             }
@@ -1968,16 +2035,18 @@ let mainwp_managesites_add = function () {
 
                 if (response.substring(0, 5) == 'ERROR') {
                     mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
-                    let add_err = (res_things.failure_ux ? res_things.failure_ux : response.substring(6));
+                    let add_err = [res_things.failure_ux ? mainwp_failure_ux_nodes(res_things.failure_ux) : response.substring(6)];
                     if (resp_data != '') {
-                        add_err += '<br>' + show_resp;
-                    } else if (res_things.failure_ux) {
-                        add_err += '<br>' + MainWP.I18n.t('No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.');
+                        add_err.push(show_resp);
+                    } else {
+                        add_err.push(MainWP.I18n.t('No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.'));
                     }
                     feedback('mainwp-message-zone', add_err, 'red');
                 } else {
                     mainwp_set_message_zone('#mainwp-message-zone', '', '', true);
-                    feedback('mainwp-message-zone', response, 'green');
+                    // The response is HTML for the CSV import log; feedback() needs the link as a node.
+                    let added = mainwp_feedback_linked_message(MainWP.I18n.t('Site successfully added - Visit the Site\'s %1Dashboard%2 now.'), [{ href: 'admin.php?page=managesites&dashboard=' + encodeURIComponent(site_id), style: 'text-decoration: none;' }]);
+                    feedback('mainwp-message-zone', added, 'green');
 
                     if (site_id > 0) {
                         jQuery('.sync-ext-row').attr('status', 'queue');
@@ -2018,7 +2087,7 @@ let mainwp_managesites_add = function () {
             } else if (res_things.failure_ux) {
                 errors.push(MainWP.I18n.t('No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.'));
             }
-            feedback('mainwp-message-zone', errors.join('<br />'), 'red');
+            feedback('mainwp-message-zone', errors, 'red');
         }
     }, 'json');
 };
@@ -2057,7 +2126,7 @@ let mainwp_managesites_add_valid = function () {
     }
 
     if (errors.length > 0) {
-        feedback('mainwp-message-zone', errors.join('<br />'), 'yellow');
+        feedback('mainwp-message-zone', errors, 'yellow');
         return false;
     }
     return true;
@@ -2298,7 +2367,7 @@ let mainwp_managesites_test = function () {
     }
 
     if (errors.length > 0) {
-        feedback('mainwp-message-zone', errors.join('<br />'), 'red');
+        feedback('mainwp-message-zone', errors, 'red');
     } else {
         jQuery('#mainwp-test-connection-modal').modal('setting', 'closable', false).modal('show');
         jQuery('#mainwp-test-connection-modal .dimmer').show();
@@ -2386,11 +2455,11 @@ let managesites_remove = function (obj) {
             if (response.error != undefined) {
                 error = response.error;
             } else if (response.result == 'SUCCESS') {
-                result = '<i class="close icon"></i>' + MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled.');
+                result = jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled.')));
             } else if (response.result == 'NOSITE') {
-                error = '<i class="close icon"></i>' + MainWP.I18n.t('The requested site has not been found.');
+                error = jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(MainWP.I18n.t('The requested site has not been found.')));
             } else {
-                result = '<i class="close icon"></i>' + MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly.');
+                result = jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly.')));
             }
 
             if (error != '') {
@@ -2420,7 +2489,7 @@ jQuery(function () {
         let error_messages = mainwp_managesites_import_handle_form_before_submit();
         // If there is an error, prevent submission and display the error
         if (error_messages.length > 0) {
-            feedback('mainwp-message-zone', error_messages.join("<br/>"), "red");
+            feedback('mainwp-message-zone', error_messages, "red");
         } else {
             jQuery('#mainwp_managesites_bulkadd_form').submit();
         }
@@ -2457,7 +2526,7 @@ jQuery(function () {
         has_table_data = mainwp_managesites_validate_import_rows(error_messages, true);
         // If there is an error, prevent submission and display the error
         if (error_messages.length > 0 && !has_table_data) {
-            feedback('mainwp-add-multi-new-site-message-zone', error_messages.join("<br/>"), "red");
+            feedback('mainwp-add-multi-new-site-message-zone', error_messages, "red");
         } else {
             jQuery('#mainwp_managesites_add_form').submit();
         }
@@ -2571,15 +2640,8 @@ let mainwp_createuser = function () {
                 let responseObj = JSON.parse(response.substring(6));
                 if (responseObj.error == undefined) {
                     let errorMessageList = responseObj[1];
-                    let errorMessage = '';
-                    for (let iem of errorMessageList) {
-                        if (errorMessage != '') {
-                            errorMessage = errorMessage + "<br />";
-                        }
-                        errorMessage = errorMessage + iem;
-                    }
-                    if (errorMessage != '') {
-                        feedback('mainwp-message-zone', errorMessage, 'red');
+                    if (errorMessageList.length) {
+                        feedback('mainwp-message-zone', errorMessageList, 'red');
                     }
                 }
             } else {
@@ -3920,6 +3982,9 @@ let mainwp_notes_site_save = function () {
 };
 
 globalThis.getErrorMessage = function (pError, msgOnly) { // NOSONAR - complex.
+    if (pError == undefined || pError == null) {
+        return '';
+    }
     if (pError.message == 'HTTPERROR') {
         return MainWP.I18n.t('HTTP error') + '! ' + pError.extra;
     } else if (pError.message == 'NOMAINWP' || pError == 'NOMAINWP') {
@@ -3944,9 +4009,47 @@ globalThis.getErrorMessage = function (pError, msgOnly) { // NOSONAR - complex.
 
     } else if (pError.message != undefined && pError.message != '') {
         return pError.message;
+    } else if (pError.error != undefined && pError.error != '') {
+        // Structured error response, optionally carrying an error_code.
+        return String(pError.error);
+    } else if (typeof pError === 'object') {
+        // Malformed error shape - never render as [object Object].
+        try {
+            return JSON.stringify(pError);
+        } catch (err) {
+            return __('The request could not be completed. Please check the dashboard error logs.');
+        }
     } else {
         return pError;
     }
+};
+
+/**
+ * Maps a backup error response to a display severity.
+ * Recognizes the error code on structured shapes; defaults to 'error'.
+ */
+globalThis.mainwp_backup_error_severity = function (pError) {
+    let code = '';
+    if (pError && typeof pError === 'object') {
+        if (pError.code != undefined && pError.code != '') {
+            code = pError.code;
+        } else if (pError.error_code != undefined && pError.error_code != '') {
+            code = pError.error_code;
+        }
+    }
+    let warningCodes = ['mainwp_backup_memory_limit', 'mainwp_backup_file_skipped', 'mainwp_backup_already_running', 'mainwp_backup_incremental_base_missing', 'mainwp_backup_manifest_chunk_send_failed'];
+    return warningCodes.indexOf(code) !== -1 ? 'warning' : 'error';
+};
+
+/**
+ * Renders a backup error as a severity-colored span.
+ * Errors render red, warnings yellow, matching the error code severity.
+ */
+globalThis.mainwp_backup_error_html = function (pError) {
+    let severity = mainwp_backup_error_severity(pError);
+    let cssClass = severity == 'warning' ? 'ui yellow text' : 'ui red text mainwp-red';
+    let label = severity == 'warning' ? __('WARNING') : __('ERROR');
+    return jQuery('<span>').addClass(cssClass).text(label + ': ' + getErrorMessage(pError)).prop('outerHTML');
 };
 
 globalThis.getErrorMessageInfo = function (repError, outputType) { // NOSONAR - complex.
@@ -4226,18 +4329,6 @@ jQuery.mwp_strCut = function (i, l, s, w) {
     }
     return o;
 };
-
-globalThis.updateExcludedFolders = function () {
-    let excludedBackupFiles = jQuery('#excludedBackupFiles').html();
-    jQuery('#mainwp-kbl-content').val(excludedBackupFiles == undefined ? '' : excludedBackupFiles);
-
-    let excludedCacheFiles = jQuery('#excludedCacheFiles').html();
-    jQuery('#mainwp-kcl-content').val(excludedCacheFiles == undefined ? '' : excludedCacheFiles);
-
-    let excludedNonWPFiles = jQuery('#excludedNonWPFiles').html();
-    jQuery('#mainwp-nwl-content').val(excludedNonWPFiles == undefined ? '' : excludedNonWPFiles);
-};
-
 
 jQuery(document).on('click', '.mainwp-events-notice-dismiss', function () {
     let notice = jQuery(this).attr('notice');
@@ -4631,7 +4722,7 @@ let mainwp_sites_changes_actions_dismiss_all = function () {
     let data = mainwp_secure_data({
         action: 'mainwp_insight_events_dismiss_all',
     });
-    mainwp_showhide_message('mainwp-message-zone-top', '<i class="notched circle loading icon"></i> Please wait...', '');
+    mainwp_showhide_message('mainwp-message-zone-top', jQuery('<i>', { class: 'notched circle loading icon' }).add(document.createTextNode(' Please wait...')), '');
     jQuery.post(ajaxurl, data, function (response) {
         if (response) {
             if (response['error']) {
@@ -4990,6 +5081,10 @@ let mainwp_force_destroy_sessions_websites = [];
 
 jQuery(document).on('change', '#mainwp_archiveFormat', function () {
     let zipMethod = jQuery(this).val();
+
+    // The keep-Zip override only applies when Zip is the chosen format.
+    jQuery('#mainwp-backup-zip-force-override-wrapper').toggle(zipMethod === 'zip');
+
     zipMethod = zipMethod.replaceAll('.', '\\.'); // NOSONAR - escape is correct.
     jQuery('span.archive_info').hide();
     jQuery('span#info_' + zipMethod).show();
@@ -5006,7 +5101,7 @@ let mainwp_import_demo_data_action = function (obj) {
     let confirmation = "Are you sure you want to import demo content into your MainWP Dashboard?";
     let msg_import = (jQuery(obj).attr('page-import') == 'qsw-import') ? '&message=qsw-import' : '';
     mainwp_confirm(confirmation, function () {
-        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Importing. Please wait...'), '');
+        feedback('mainwp-message-zone', jQuery('<i>', { class: 'notched circle loading icon' }).add(document.createTextNode(' ' + MainWP.I18n.t('Importing. Please wait...'))), '');
         let data = mainwp_secure_data({
             action: 'mainwp_import_demo_data',
         });
@@ -5032,7 +5127,7 @@ let mainwp_import_demo_data_action = function (obj) {
 let mainwp_remove_demo_data_action = function () {
     let confirmation = "Are you sure you want to delete demo content from your MainWP Dashboard?";
     mainwp_confirm(confirmation, function () {
-        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Deleting. Please wait...'), '');
+        feedback('mainwp-message-zone', jQuery('<i>', { class: 'notched circle loading icon' }).add(document.createTextNode(' ' + MainWP.I18n.t('Deleting. Please wait...'))), '');
         let data = mainwp_secure_data({
             action: 'mainwp_delete_demo_data',
         });
@@ -5218,7 +5313,8 @@ jQuery(document).on('click', '.mainwp-action-log-show-more', function () {
 });
 
 // MainWP Show Response
-jQuery(document).on('click', '.mainwp-show-response', function () {
+jQuery(document).on('click', '.mainwp-show-response', function (event) {
+    event.preventDefault();
     let content = jQuery('#mainwp-response-data-container').attr('resp-data');
     jQuery('#mainwp-response-data-modal').modal({
         closable: false,
@@ -5519,7 +5615,7 @@ jQuery(function ($) {
 
     let mainwp_uptime_monitoring_remove = function (wpid, moid) {
 
-        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Removing Uptime Monitor...'), 'green');
+        feedback('mainwp-message-zone', jQuery('<i>', { class: 'notched circle loading icon' }).add(document.createTextNode(' ' + MainWP.I18n.t('Removing Uptime Monitor...'))), 'green');
 
         let data = mainwp_secure_data({
             action: 'mainwp_uptime_monitoring_remove_monitor',
@@ -5544,7 +5640,7 @@ jQuery(function ($) {
     };
 
     $(document).on('click', '#increase-connection-security-btn', function () {
-        feedback('mainwp-message-zone', '<i class="notched circle loading icon"></i> ' + MainWP.I18n.t('Encryption in progress! Securing your OpenSSL private keys, this may take a few moments. Please wait until completed.'), 'green');
+        feedback('mainwp-message-zone', jQuery('<i>', { class: 'notched circle loading icon' }).add(document.createTextNode(' ' + MainWP.I18n.t('Encryption in progress! Securing your OpenSSL private keys, this may take a few moments. Please wait until completed.'))), 'green');
         let data = mainwp_secure_data({
             action: 'mainwp_increase_connection_security',
         });

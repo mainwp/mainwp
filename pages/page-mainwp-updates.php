@@ -297,6 +297,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
     /**
      * Sets the MainWP Update page page title and pass it off to method MainWP_UI::render_top_header().
      *
+     * @param string $current_tab Current tab being rendered.
+     *
      * @uses \MainWP\Dashboard\MainWP_UI::render_top_header()
      */
     public static function render_header( $current_tab = '' ) {
@@ -398,6 +400,62 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             static::$user_can_update_plugins = \mainwp_current_user_can( 'dashboard', 'update_plugins' );
         }
         return static::$user_can_update_plugins;
+    }
+
+    /**
+     * Build the per-site native-backup indicator for the Updates screen.
+     *
+     * Shows at a glance whether a site has a recent restorable native backup
+     * before its updates are run. Renders nothing when native backups are off,
+     * so it costs nothing on dashboards that do not use them.
+     *
+     * @param object   $website      Website row; only $website->id is read.
+     * @param int|null $max_age_days Freshness window in days. Defaults to the
+     *                               mainwp_updates_native_backup_max_age_days filter (7).
+     *
+     * @return string Label markup, or '' when native backups are disabled.
+     */
+    public static function get_native_backup_indicator( $website, $max_age_days = null ) {
+        if ( empty( $website ) || ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
+            return '';
+        }
+
+        if ( null === $max_age_days ) {
+            /**
+             * Freshness window, in days, for the Updates-screen native-backup
+             * indicator. A site whose newest complete, database-bearing
+             * snapshot is older than this shows as unprotected.
+             *
+             * @param int $days Configured update-gate window, or 7 when unset or invalid.
+             */
+            $max_age_days = (int) apply_filters( 'mainwp_updates_native_backup_max_age_days', MainWP_Updates_Overview::get_backup_before_upgrade_days() );
+        }
+
+        $max_age_days = (int) $max_age_days;
+
+        // The badge honors the same offsite requirement the update gates
+        // enforce, so it cannot show "ready" for a snapshot the automatic
+        // and interactive checks would refuse under a strict policy.
+        $require_offsite = (bool) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
+
+        $recent     = MainWP_Backup_Executor::get_recent_native_backup_map( array(), $max_age_days, $require_offsite );
+        $has_recent = $recent[ (int) $website->id ] ?? false;
+
+        if ( $has_recent ) {
+            $tooltip = sprintf(
+                /* translators: %d: number of days. */
+                esc_attr__( 'A restorable native backup was taken within the last %d days.', 'mainwp' ),
+                $max_age_days
+            );
+            return ' <span class="ui tiny basic green label" data-tooltip="' . $tooltip . '" data-position="top center" data-inverted="">' . esc_html__( 'Backup ready', 'mainwp' ) . '</span>';
+        }
+
+        $tooltip = sprintf(
+            /* translators: %d: number of days. */
+            esc_attr__( 'No restorable native backup in the last %d days.', 'mainwp' ),
+            $max_age_days
+        );
+        return ' <span class="ui tiny basic grey label" data-tooltip="' . $tooltip . '" data-position="top center" data-inverted="">' . esc_html__( 'No recent backup', 'mainwp' ) . '</span>';
     }
 
     /**
@@ -2085,8 +2143,9 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         //phpcs:disable WordPress.Security.NonceVerification.Missing
         if ( isset( $_POST['mainwpStagingNonceView'] ) && wp_verify_nonce( sanitize_key( $_POST['mainwpStagingNonceView'] ), 'mainwpStagingNonceView' ) ) {
             global $current_user;
-            if ( isset( $_POST['select_staging_options_siteview'] ) && in_array( $_POST['select_staging_options_siteview'], array( 'live', 'staging' ), true ) ) {
-                update_user_option( $current_user->ID, 'mainwp_staging_options_updates_view', $_POST['select_staging_options_siteview'] );
+            $staging_options_siteview = isset( $_POST['select_staging_options_siteview'] ) ? sanitize_key( wp_unslash( $_POST['select_staging_options_siteview'] ) ) : '';
+            if ( in_array( $staging_options_siteview, array( 'live', 'staging' ), true ) ) {
+                update_user_option( $current_user->ID, 'mainwp_staging_options_updates_view', $staging_options_siteview );
             }
         }
        //phpcs:enable WordPress.Security.NonceVerification.Missing

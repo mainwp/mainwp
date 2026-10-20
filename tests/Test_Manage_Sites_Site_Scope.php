@@ -438,6 +438,8 @@ class Test_Manage_Sites_Site_Scope extends \WP_UnitTestCase {
 
         $site = $this->create_test_site();
         update_option( 'mainwp_enableLegacyBackupFeature', 1 );
+        // The backupid route follows the native backups toggle.
+        update_option( 'mainwp_enableNativeBackups', 1 );
         if ( 'backupid' === $route ) {
             $wpdb->insert(
                 $wpdb->prefix . 'mainwp_wp_settings_backup',

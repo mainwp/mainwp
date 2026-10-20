@@ -685,6 +685,51 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
+     * Probe wp-cron.php and cache the result so page refreshes do not repeat the request.
+     *
+     * @return bool Whether loopback is reachable or the cron mode needs no loopback.
+     */
+    public static function is_backup_loopback_ok(): bool {
+        // The continuation sender makes no loopback request in either mode, so there is nothing to
+        // probe. Checked before the cache so a failure cached under WP-Cron cannot outlive a switch
+        // to system cron.
+        if ( ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON )
+            || ( defined( 'ALTERNATE_WP_CRON' ) && ALTERNATE_WP_CRON ) ) {
+            return true;
+        }
+
+        $cached = get_transient( 'mainwp_backup_loopback_ok' );
+        if ( false !== $cached ) {
+            return 'ok' === $cached;
+        }
+
+        // This proves self-reachability, not delivery of the 0.01 s non-blocking spawn;
+        // core's spawn_cron() and Site Health's loopback test share that limit.
+        $request = MainWP_Post_Backup_Handler::get_cron_loopback_request();
+        // wp-cron.php uses the GET value as its lock without taking a new lock. This non-numeric
+        // value cannot match a real doing_cron lock (a formatted microtime), so WordPress loads
+        // and exits before running any cron event.
+        $url         = add_query_arg( 'doing_wp_cron', 'mainwp-loopback-probe', $request['url'] );
+        $response    = wp_remote_get(
+            $url,
+            array_merge(
+                $request['args'],
+                array(
+                    'blocking'    => true,
+                    'timeout'     => 15,
+                    'redirection' => 0,
+                )
+            )
+        );
+        $code        = (int) wp_remote_retrieve_response_code( $response );
+        $loopback_ok = ! is_wp_error( $response ) && 200 === $code;
+        // A 503 is usually a maintenance window, so it is re-probed after a minute rather than ten.
+        $ttl = ( ! $loopback_ok && 503 === $code ) ? MINUTE_IN_SECONDS : 10 * MINUTE_IN_SECONDS;
+        set_transient( 'mainwp_backup_loopback_ok', $loopback_ok ? 'ok' : 'failed', $ttl );
+        return $loopback_ok;
+    }
+
+    /**
      * Method server_self_connect()
      *
      * Check if server self-connect is possible.
@@ -875,7 +920,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             'mainwp_maximumPosts'                         => esc_html__( 'Maximum number of posts to return', 'mainwp' ),
             'mainwp_maximumPages'                         => esc_html__( 'Maximum number of pages to return', 'mainwp' ),
             'mainwp_maximumComments'                      => esc_html__( 'Maximum number of comments', 'mainwp' ),
-            'mainwp_enableLegacyBackupFeature'            => esc_html__( 'MainWP legacy backups enabled', 'mainwp' ),
+            'mainwp_enableNativeBackups'                  => esc_html__( 'MainWP native backups enabled', 'mainwp' ),
             'mainwp_primaryBackup'                        => esc_html__( 'Primary backup system', 'mainwp' ),
             'is_enable_automatic_check_uptime_monitoring' => esc_html__( 'Enable Uptime Monitoring', 'mainwp' ),
             'mainwp_disableSitesHealthMonitoring'         => esc_html__( 'Site health monitoring enabled', 'mainwp' ),
@@ -1488,7 +1533,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     'value' => sprintf(
                         /* translators: %d: days */
                         esc_html__( '%d days', 'mainwp' ),
-                        (int) get_option( 'mainwp_backup_before_upgrade_days', $default_setting['mainwp_backup_before_upgrade_days'] )
+                        MainWP_Updates_Overview::get_backup_before_upgrade_days()
                     ),
                 ),
                 array(
@@ -1508,8 +1553,8 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     'value' => static::get_primary_backup_method_label(),
                 ),
                 array(
-                    'label' => esc_html__( 'MainWP legacy backups enabled', 'mainwp' ),
-                    'value' => static::format_boolean_label( (int) get_option( 'mainwp_enableLegacyBackupFeature', 0 ) ),
+                    'label' => esc_html__( 'MainWP native backups enabled', 'mainwp' ),
+                    'value' => static::format_boolean_label( (int) MainWP_Backup_Settings::is_native_backups_enabled() ),
                 ),
                 array(
                     'label' => esc_html__( 'Backups kept on server', 'mainwp' ),
@@ -1571,7 +1616,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'Full backup tolerance before update',
                 'Abandoned plugins/themes tolerance',
                 'Primary backup system',
-                'MainWP legacy backups enabled',
+                'MainWP native backups enabled',
                 'Backups kept on server',
                 'Backup to external sources',
                 'Archive format',
@@ -2963,7 +3008,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             );
         }
 
-        if ( is_writable( $path ) ) {
+        if ( is_writable( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_is_writable -- server info report probes the real filesystem state.
             return array(
                 'value'  => esc_html__( 'Writable', 'mainwp' ),
                 'status' => 'pass',

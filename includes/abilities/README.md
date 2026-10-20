@@ -5,11 +5,11 @@ Last Updated: 2025-12-03
 
 ## Overview
 
-The MainWP Abilities API provides a standardized, schema-validated interface for managing MainWP child sites, updates, clients, tags, batch operations, and knowledge records. Built on WordPress's Abilities API (introduced in WP 6.9), it enables secure, discoverable operations for MCP tools, REST API consumers, and extensions.
+The MainWP Abilities API provides a standardized, schema-validated interface for managing MainWP child sites, updates, clients, tags, batch operations, knowledge records, and backups. Built on WordPress's Abilities API (introduced in WP 6.9), it enables secure, discoverable operations for MCP tools, REST API consumers, and extensions.
 
 **Key Features:**
-- 69 abilities across 6 categories
-- JSON Schema validation for inputs (outputs documented but not enforced)
+- 102 abilities across 7 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge, mainwp-backups
+- JSON Schema validation for inputs and outputs; WP_Ability::execute() rejects output that fails its schema with ability_invalid_output
 - Permission callbacks with per-site ACLs
 - Batch operation support with automatic queuing
 - Feature-gated module integration (Cost Tracker, Logs)
@@ -25,7 +25,7 @@ The MainWP Abilities API provides a standardized, schema-validated interface for
    - When Abilities API is available: hook into `wp_abilities_api_categories_init` and `wp_abilities_api_init`
 
 2. **Category Registration** (`MainWP_Abilities::register_categories()`)
-   - Register 6 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge
+   - Register 7 categories: mainwp-sites, mainwp-updates, mainwp-clients, mainwp-tags, mainwp-batch, mainwp-knowledge, mainwp-backups
    - Each category has label and description for discoverability
 
 3. **Ability Registration** (`MainWP_Abilities::register_abilities()`)
@@ -36,7 +36,7 @@ The MainWP Abilities API provides a standardized, schema-validated interface for
    - Abilities API validates input against `input_schema`
    - Calls permission callback (checks `manage_options` + site access)
    - Calls execute callback (delegates to MainWP core logic)
-   - Returns output (documented by `output_schema` for tooling, not enforced at runtime)
+   - Validates output against `output_schema`; rejects invalid output with `ability_invalid_output`
 
 ### File Structure
 
@@ -45,11 +45,12 @@ includes/abilities/
 ├── class-mainwp-abilities.php          # Bootstrap
 ├── class-mainwp-abilities-util.php     # Shared utilities
 ├── class-mainwp-abilities-sites.php    # 30 site abilities
-├── class-mainwp-abilities-updates.php  # 13 update abilities
+├── class-mainwp-abilities-updates.php  # 14 update abilities
 ├── class-mainwp-abilities-clients.php  # 11 client abilities
 ├── class-mainwp-abilities-tags.php     # 7 tag abilities
 ├── class-mainwp-abilities-knowledge.php # 7 knowledge abilities
 ├── class-mainwp-abilities-batch.php    # 1 batch job status ability
+├── class-mainwp-abilities-backups.php  # 32 backup abilities
 └── README.md                           # This file
 ```
 
@@ -68,6 +69,55 @@ The `mainwp-knowledge` category provides seven abilities:
 Every knowledge ability requires an authenticated user with `manage_options`, like every other ability. A userless WP-CLI or API-key request (user 0) is denied even in machine context. Pass `--user` when using WP-CLI. Site and client scope checks and the applicable Dashboard rights also apply.
 
 Each write's `caller_note` describes that write. Omitting it on update clears the stored note. Ability writes store `source=ability` and `verified=false`; only a Dashboard UI save sets `verified=true`. The three writes require `confirm: true` or `dry_run: true`. Records cannot override these gates or grant permission.
+
+## Backups
+
+The `mainwp-backups` category has 32 abilities: 13 reads and 19 actions. Reads return stored evidence without contacting a site or advancing a run. Actions require `dry_run: true` for a preview or `confirm: true` to proceed. Passing both is an error. Previews apply the same authorization and refusal rules as confirmation.
+
+Backup abilities require authentication, `manage_options`, the applicable Dashboard right, and access to every target site. Backup abilities answer a missing or inaccessible target with the same not-found code. Destination credentials, encryption keys, recovery passphrases, filesystem paths, and download links are excluded from inputs and outputs. Create destinations on the Dashboard; `mainwp/create-backup-destination-v1` is not registered.
+
+| Ability | Method | Behavior |
+|---------|--------|----------|
+| `mainwp/get-backup-status-v1` | GET | Reports each site's last known backup, staleness, native health, and update gate verdict. |
+| `mainwp/list-backup-history-v1` | GET | Lists durable per-site run outcomes and gate overrides, with the overridden verdict, provenance and timestamps. |
+| `mainwp/list-backup-tasks-v1` | GET | Lists visible tasks with pagination and filters. |
+| `mainwp/get-backup-task-v1` | GET | Returns one task's configuration and current or last run summary. |
+| `mainwp/get-backup-task-run-v1` | GET | Returns stored progress for a task run without driving it. |
+| `mainwp/get-site-backup-progress-v1` | GET | Returns stored progress for the site's on-demand backup. |
+| `mainwp/list-backup-snapshots-v1` | GET | Lists a site's snapshots and restore eligibility. |
+| `mainwp/get-backup-snapshot-v1` | GET | Returns one snapshot's evidence and restore eligibility. |
+| `mainwp/list-restore-jobs-v1` | GET | Lists recorded restore jobs with outcomes and evidence. |
+| `mainwp/get-restore-job-v1` | GET | Returns one restore job's progress, rollback availability, and partial state risk. |
+| `mainwp/list-backup-destinations-v1` | GET | Lists destinations without credentials or filesystem paths. |
+| `mainwp/get-backup-destination-v1` | GET | Returns one destination's public configuration. |
+| `mainwp/get-backup-settings-v1` | GET | Returns backup policy settings and boolean encryption and recovery configuration flags. |
+| `mainwp/run-site-backup-v1` | POST | Previews or starts an on-demand backup and returns its poll target. |
+| `mainwp/run-backup-task-v1` | POST | Previews or starts a saved task and returns its poll target. |
+| `mainwp/cancel-site-backup-v1` | DELETE | Previews or requests cancellation and reports the confirmed result. |
+| `mainwp/reset-backup-task-run-v1` | DELETE | Previews or resets a stalled task run after the one-hour threshold. |
+| `mainwp/delete-backup-snapshot-v1` | POST | Previews or deletes a snapshot and its descendants after comparing expected_snapshot_ids. Reports deleted and remaining ids and queued cloud deletes. |
+| `mainwp/cleanup-site-backups-v1` | POST | Previews or removes orphaned backup groups under the retention policy. |
+| `mainwp/create-backup-task-v1` | POST | Previews or creates a task from supported configuration fields. |
+| `mainwp/update-backup-task-v1` | POST | Previews or updates a saved task's supported configuration fields. |
+| `mainwp/delete-backup-task-v1` | POST | Previews or deletes a task, optionally removing its snapshots. |
+| `mainwp/pause-backup-task-v1` | POST | Previews or pauses a task's schedule. |
+| `mainwp/resume-backup-task-v1` | POST | Previews or resumes a task's schedule. |
+| `mainwp/restore-site-snapshot-v1` | POST | Previews or starts a restore and returns its poll target and partial state risk. |
+| `mainwp/cancel-restore-v1` | DELETE | Previews or requests restore cancellation and reports what was confirmed. |
+| `mainwp/rollback-restore-v1` | POST | Previews or starts rollback from the restore job's available safety backup. |
+| `mainwp/test-backup-destination-v1` | POST | Previews or tests a destination using its stored credentials. |
+| `mainwp/set-default-backup-destination-v1` | POST | Previews or sets the default destination. |
+| `mainwp/update-backup-destination-v1` | POST | Previews or changes a destination's name or default flag. |
+| `mainwp/delete-backup-destination-v1` | POST | Previews or deletes a destination's configuration. |
+| `mainwp/update-backup-settings-v1` | POST | Previews or changes supported backup policy settings. |
+
+Backup and restore starts continue through cron. Follow the returned `poll.ability` and `poll.input` to read progress. A stored `running` row may await reconciliation; it does not prove that work is executing. Evidence fields describe what the Dashboard observed, including the limits of offsite verification and test restores. Reads remain available when native backups are disabled; starts return `mainwp_backup_legacy_disabled`.
+
+The six update abilities (`run-updates-v1`, `update-all-v1`, and `update-site-{core,plugins,themes,translations}-v1`) check backups when native backups and the global pre-update backup setting are enabled and the site's `backup_before_upgrade` flag is nonzero. A preview includes `would_affect.sites[].backup_gate` with `applies`, `verdict`, and `overridden`. Its summary counts `backup_gate_blocked_sites` and `backup_gate_overridden_sites`.
+
+A non-pass verdict skips eligible items with `backup_missing` or `backup_pending_offsite`. Existing hold reasons take precedence. Multi-site confirmation reports skips; single-site confirmation returns 409 `mainwp_backup_gate_blocked` with `site_id` and `verdict` when the gate would hold at least one requested item. Pass `ignore_backup_gate: true` to proceed under the same authorization and hold checks. Immediate results include `backup_gate` as a per-site array for multi-site abilities or an object for single-site abilities. Queued jobs retain the flag, recheck evidence at dispatch time, and expose per-site gate decisions and skip reasons through `get-batch-job-status-v1`.
+
+Each site dispatched through an override records one `gate_overridden` history row. Its fixed message is `backup_missing` or `backup_pending_offsite`; `ref` is the queued update job ID, or null for an immediate update. History write failures are logged without interrupting updates. The REST v2 update endpoints retain their existing advisory behavior.
 
 ## Registration Patterns
 
@@ -252,11 +302,50 @@ All MainWP-specific error codes use the `mainwp_*` prefix:
 | `mainwp_no_updates` | 400 | No updates available for requested operation |
 | `mainwp_module_not_available` | 501 | Required module not active |
 | `mainwp_site_offline` | 503 | Site unreachable |
-| `mainwp_operation_failed` | 500 | Generic operation failure |
+| `mainwp_operation_failed` | 500/502 | Generic operation failure; 502 when a backup or restore action fails on the Child |
 | `mainwp_internal_error` | 500 | Unexpected internal error |
 | `mainwp_client_creation_failed` | 500 | Failed to create client |
 | `mainwp_client_update_failed` | 500 | Failed to update client |
 | `mainwp_client_deletion_failed` | 500 | Failed to delete client |
+| `mainwp_insufficient_right` | 403 | The required Dashboard operation right is missing |
+| `mainwp_restricted_account` | 403 | A site-restricted account attempted a backup settings write or destination action |
+| `mainwp_backup_task_not_found` | 404 | Task missing, hidden, not owned, or outside the caller's scope |
+| `mainwp_backup_snapshot_not_found` | 404 | Snapshot missing or outside the caller's scope |
+| `mainwp_backup_restore_job_not_found` | 404 | Restore job missing or outside the caller's scope |
+| `mainwp_backup_destination_not_found` | 404 | Destination missing |
+| `mainwp_backup_legacy_disabled` | 409 | Native backups are disabled for a start action |
+| `mainwp_backup_already_running` | 409 | A conflicting backup or restore is open |
+| `mainwp_backup_concurrency_limit` | 409 | No backup slot is available |
+| `mainwp_backup_site_disconnected` | 409 | The site has sync errors |
+| `mainwp_backup_not_stalled` | 409 | The task has no open run or has not reached the stall threshold |
+| `mainwp_backup_destination_credentials_required` | 400 | The destination needs credentials configured on the Dashboard |
+| `mainwp_backup_gate_blocked` | 409 | Single-site update refused by its pre-update backup gate |
+| `mainwp_backup_child_update_required` | 409 | The Child plugin cannot perform the requested backup operation |
+| `mainwp_restore_child_update_required` | 409 | The Child plugin cannot perform the requested restore operation |
+| `mainwp_backup_no_sites` | 409 | The task has no eligible sites |
+| `mainwp_backup_task_paused` | 409 | The task is paused |
+| `mainwp_backup_start_failed` | 500/502 | The backup could not be started |
+| `mainwp_restore_rollback_status` | 409 | The restore job is not in a state that permits rollback |
+| `mainwp_restore_woo_legacy_orders` | 409 | WooCommerce preserve-orders refused legacy order storage |
+| `mainwp_restore_woo_sync_mode` | 409 | WooCommerce preserve-orders refused the order sync mode |
+| `mainwp_restore_woo_version_skew` | 409 | WooCommerce preserve-orders refused incompatible versions |
+| `mainwp_backup_local_failed` | 409 or output | A destination test could not write to local storage |
+| `mainwp_backup_run_cancelled` | Output | The backup run was cancelled |
+| `mainwp_backup_run_reset` | Output | The backup run was reset |
+| `mainwp_backup_run_incomplete` | Output | The run closed without a confirmed result for the site |
+| `mainwp_restore_cancel_unconfirmed` | Output | The Child did not confirm restore cancellation |
+| `mainwp_backup_unclassified_error` | Output or 500 | The failure has no recognized code; fixed fallback text is returned |
+| `mainwp_backup_snapshot_unrestorable_wrong_site` | 409 or output | Snapshot belongs to a different site |
+| `mainwp_backup_snapshot_unrestorable_pruned` | 409 or output | Snapshot was pruned |
+| `mainwp_backup_snapshot_unrestorable_files_child_outdated` | 409 or output | Child cannot restore files backups |
+| `mainwp_backup_snapshot_unrestorable_multisite_child_outdated` | 409 or output | Child cannot restore the multisite backup |
+| `mainwp_backup_snapshot_unrestorable_empty` | 409 or output | Snapshot contains no restorable data |
+| `mainwp_backup_snapshot_unrestorable_base_missing` | 409 or output | Incremental base is missing |
+| `mainwp_backup_snapshot_unrestorable_chain_pruned` | 409 or output | Part of the incremental chain was pruned |
+| `mainwp_backup_snapshot_unrestorable_no_artifacts` | 409 or output | Snapshot has no local or cloud artifacts |
+| `mainwp_backup_snapshot_unrestorable_artifact_unavailable` | 409 or output | A required artifact is unavailable locally and in cloud storage |
+
+Backup progress and history also use the existing codes in `MainWP_Backup_Error_Codes`, including transport, archive, database, and provider failures. An output code describes recorded evidence and does not change the successful read's HTTP status. Backup action failures from the Child use `mainwp_operation_failed` with 502; unexpected Dashboard failures use `mainwp_internal_error` with 500. Skip reasons `backup_missing` and `backup_pending_offsite` are item outcomes, not error codes.
 
 ### Error Response Format
 

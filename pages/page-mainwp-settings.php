@@ -153,6 +153,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'active_keys' => array( 'Advanced', 'SettingsAdvanced' ),
             ),
             array(
+                'slug'        => 'BackupSettings',
+                'page_title'  => __( 'Backup Settings', 'mainwp' ),
+                'menu_title'  => '<div class="mainwp-hidden">' . esc_html__( 'Backup Settings', 'mainwp' ) . '</div>',
+                'nav_title'   => esc_html__( 'Backup Settings', 'mainwp' ),
+                'callback'    => array( static::get_class_name(), 'render_backups' ),
+                'active_keys' => array( 'BackupSettings' ),
+            ),
+            array(
                 'slug'        => 'MonitoringSettings',
                 'page_title'  => __( 'Monitoring Options', 'mainwp' ),
                 'menu_title'  => ' <div class="mainwp-hidden">' . esc_html__( 'Monitoring Options', 'mainwp' ) . '</div>',
@@ -281,6 +289,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * Get the Settings navigation items.
      *
      * @param string $context Navigation context.
+     *
      * @return array<int, array<string, mixed>> Settings navigation items.
      */
     public static function get_navigation_items( $context = 'default' ) {
@@ -330,7 +339,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             }
         }
 
-        $base_order = array( 'Settings', 'SettingsAdvanced', 'MonitoringSettings', 'SettingsEmail', 'PremiumUpdates' );
+        $base_order = array( 'Settings', 'SettingsAdvanced', 'MonitoringSettings', 'BackupSettings', 'SettingsEmail', 'PremiumUpdates' );
 
         if ( in_array( $context, array( 'left_menu', 'left_menu_core' ), true ) ) {
             $base_order[] = 'MainWPTools';
@@ -637,10 +646,18 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 MainWP_Utility::update_option( 'mainwp_show_language_updates', $val );
                 $val = ( ! isset( $_POST['mainwp_disable_update_confirmations'] ) ? 0 : intval( $_POST['mainwp_disable_update_confirmations'] ) );
                 MainWP_Utility::update_option( 'mainwp_disable_update_confirmations', $val );
-                $val = ( ! isset( $_POST['mainwp_backup_before_upgrade'] ) ? 0 : 1 );
-                MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
-                $val = ( ! isset( $_POST['mainwp_backup_before_upgrade_days'] ) ? 7 : intval( $_POST['mainwp_backup_before_upgrade_days'] ) );
-                MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );
+                if ( isset( $_POST['mainwp_backup_before_upgrade_section'] ) && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+                    $val = ( ! isset( $_POST['mainwp_backup_before_upgrade'] ) ? 0 : 1 );
+                    MainWP_Utility::update_option( 'mainwp_backup_before_upgrade', $val );
+                    // The reader treats a non-positive or non-integer value as 7, so store
+                    // 7 for those and keep any positive window, including ones over a year.
+                    // The reader accepts leading zeros (030 is 30), so they are stripped first.
+                    $days = isset( $_POST['mainwp_backup_before_upgrade_days'] ) && is_scalar( $_POST['mainwp_backup_before_upgrade_days'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_backup_before_upgrade_days'] ) ) : 7;
+                    $val  = MainWP_Updates_Overview::normalize_backup_before_upgrade_days( $days );
+                    MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_days', $val );
+                    $val = ( ! isset( $_POST['mainwp_backup_before_upgrade_require_offsite'] ) ? 0 : 1 );
+                    MainWP_Utility::update_option( 'mainwp_backup_before_upgrade_require_offsite', $val );
+                }
 
                 if ( is_plugin_active( 'mainwp-comments-extension/mainwp-comments-extension.php' ) ) {
                     MainWP_Utility::update_option( 'mainwp_maximumComments', isset( $_POST['mainwp_maximumComments'] ) ? intval( $_POST['mainwp_maximumComments'] ) : 50 );
@@ -793,6 +810,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_disable_update_confirmations',
             'mainwp_backup_before_upgrade',
             'mainwp_backup_before_upgrade_days',
+            'mainwp_backup_before_upgrade_require_offsite',
             'mainwp_maximumComments',
             'mainwp_automatic_update_next_run_timestamp',
             'mainwp_delay_autoupdate',
@@ -811,7 +829,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             'mainwp_notificationOnBackupStart',
             'mainwp_chunkedBackupTasks',
             'mainwp_primaryBackup',
-            'mainwp_enableLegacyBackupFeature',
+            'mainwp_enableNativeBackups',
             'mainwp_global_uptime_monitoring_settings',
             'mainwp_disableSitesHealthMonitoring',
             'mainwp_sitehealthThreshold',
@@ -865,7 +883,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * Render the MainWP Settings Page.
      *
      * @uses \MainWP\Dashboard\MainWP_Monitoring_View
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups::render_settings()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Settings_View::render_settings()
      * @uses \MainWP\Dashboard\MainWP_Utility::get_http_codes()
      */
     public static function render() { //phpcs:ignore -- NOSONAR - complex method.
@@ -994,13 +1012,12 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     $snThemeAutomaticDailyUpdate  = (int) get_option( 'mainwp_themeAutomaticDailyUpdate', 0 );
                     $snTransAutomaticUpdate       = (int) get_option( 'mainwp_transAutomaticDailyUpdate', 0 );
 
-                    $backup_before_upgrade             = get_option( 'mainwp_backup_before_upgrade' );
-                    $mainwp_backup_before_upgrade_days = get_option( 'mainwp_backup_before_upgrade_days' );
-                    if ( empty( $mainwp_backup_before_upgrade_days ) || ! ctype_digit( $mainwp_backup_before_upgrade_days ) ) {
-                        $mainwp_backup_before_upgrade_days = 7;
-                    }
+                    $backup_before_upgrade                 = get_option( 'mainwp_backup_before_upgrade' );
+                    $mainwp_backup_before_upgrade_days     = MainWP_Updates_Overview::get_backup_before_upgrade_days();
+                    $backup_before_upgrade_require_offsite = (int) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
+
                     $mainwp_show_language_updates = get_option( 'mainwp_show_language_updates', 1 );
-                    $enableLegacyBackupFeature    = get_option( 'mainwp_enableLegacyBackupFeature' );
+                    $enableNativeBackups          = MainWP_Backup_Settings::is_native_backups_enabled();
                     $primaryBackup                = get_option( 'mainwp_primaryBackup' );
                     $disableUpdateConfirmations   = (int) get_option( 'mainwp_disable_update_confirmations', 0 );
                     ?>
@@ -1109,7 +1126,8 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                             </select>
                         </div>
                     </div>
-                    <?php if ( ( $enableLegacyBackupFeature && empty( $primaryBackup ) ) || ( empty( $enableLegacyBackupFeature ) && ! empty( $primaryBackup ) ) ) { ?>
+                    <?php if ( ( $enableNativeBackups && empty( $primaryBackup ) ) || ( empty( $enableNativeBackups ) && ! empty( $primaryBackup ) ) ) { ?>
+                    <input type="hidden" name="mainwp_backup_before_upgrade_section" value="1" />
                     <div class="ui grid field mainwp-parent-toggle settings-field-indicator-wrapper settings-field-indicator-updates">
                         <label class="six wide column middle aligned">
                         <?php
@@ -1119,6 +1137,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </label>
                         <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'If enabled, your MainWP Dashboard will check if full backups exists before updating.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_backup_before_upgrade" id="mainwp_backup_before_upgrade" <?php echo 1 === (int) $backup_before_upgrade ? 'checked="true"' : ''; ?>/>
+                            <label for="mainwp_backup_before_upgrade"><?php esc_html_e( 'Applies to updates started from Manage Sites.', 'mainwp' ); ?></label>
                         </div>
                     </div>
                     <div class="ui grid field mainwp-child-field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="7" <?php echo 1 === (int) $backup_before_upgrade ? '' : 'style="display:none"'; ?> >
@@ -1130,6 +1149,17 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </label>
                         <div class="ten wide column" data-tooltip="<?php esc_attr_e( 'Set the number of days without of backup tolerance.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <input type="text"  class="settings-field-value-change-handler" name="mainwp_backup_before_upgrade_days" id="mainwp_backup_before_upgrade_days" value="<?php echo esc_attr( $mainwp_backup_before_upgrade_days ); ?>" />
+                        </div>
+                    </div>
+                    <div class="ui grid field mainwp-child-field settings-field-indicator-wrapper settings-field-indicator-updates" default-indi-value="0" <?php echo 1 === (int) $backup_before_upgrade ? '' : 'style="display:none"'; ?> >
+                        <label class="six wide column middle aligned">
+                        <?php
+                        MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_before_upgrade_require_offsite', $backup_before_upgrade_require_offsite );
+                        esc_html_e( 'Require an offsite-verified backup', 'mainwp' );
+                        ?>
+                        </label>
+                        <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'When enabled, a native backup only counts if a copy was uploaded and verified on offsite storage. Leave off to count a recent native backup stored on the Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                            <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_backup_before_upgrade_require_offsite" id="mainwp_backup_before_upgrade_require_offsite" <?php echo 1 === (int) $backup_before_upgrade_require_offsite ? 'checked="true"' : ''; ?>/>
                         </div>
                     </div>
                     <?php } ?>
@@ -1159,7 +1189,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
                     </div>
 
-                    <?php MainWP_Manage_Backups::render_settings(); ?>
                     <?php
                     /**
                      * Action: mainwp_settings_form_bottom
@@ -2814,7 +2843,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
-        if ( isset( $_GET['page'] ) && ( 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( isset( $_GET['page'] ) && ( 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'BackupSettings' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             ?>
             <p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
@@ -2835,6 +2864,34 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             do_action( 'mainwp_settings_help_item' );
 
         }
+    }
+
+    /**
+     * Render the dedicated Backup Settings page.
+     */
+    public static function render_backups() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
+            return;
+        }
+        static::render_header( 'BackupSettings' );
+        ?>
+        <div id="mainwp-backup-settings" class="ui padded segment">
+            <?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] && ! MainWP_Backup_Settings_View::render_save_notice() ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only feedback. ?>
+                <div class="ui green message"><?php esc_html_e( 'Backup settings have been saved successfully.', 'mainwp' ); ?><i class="close icon"></i></div>
+            <?php endif; ?>
+            <form method="post" action="" class="ui form">
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
+                <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'BackupSettings' ) ); ?>" />
+                <?php MainWP_Backup_Settings_View::render_settings(); ?>
+                <?php if ( MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff() ) : ?>
+                <div class="ui divider"></div>
+                <input type="submit" name="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+                <?php endif; ?>
+            </form>
+        </div>
+        <?php
+        static::render_footer();
     }
 
     /**

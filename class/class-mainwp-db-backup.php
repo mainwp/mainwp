@@ -46,6 +46,28 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * A started incremental site stays protected until its snapshot is recorded.
+     *
+     * Finished and never-started sites in an open fleet run do not hold prune.
+     *
+     * @param int $site_id Candidate site.
+     * @return bool True while a started incremental run has no snapshot, or the read fails.
+     */
+    public function has_inflight_incremental_for_site( int $site_id ): bool {
+        // While the run_key column repair is pending the column may be missing, and a
+        // failed read would hold every prune; finished sites then wait for the run to close.
+        $finished = MainWP_Install::backup_snapshot_run_key_ready() ? ' AND NOT EXISTS (SELECT 1 FROM ' . $this->table_name( 'wp_backup_snapshot' ) . " s WHERE s.site_id = p.wp_id AND s.task_id = b.id AND s.run_key = CONCAT(p.wp_id, ':', b.id, ':c:', p.child_backup_task_id))" : '';
+        $found    = $this->wpdb->get_var(
+            $this->wpdb->prepare(
+                'SELECT p.task_id FROM ' . $this->table_name( 'wp_backup_progress' ) . ' p JOIN ' . $this->table_name( 'wp_backup' ) . " b ON b.id = p.task_id WHERE p.wp_id = %d AND b.type = 'incremental' AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND p.child_backup_task_id <> '' AND p.child_phase <> %s" . $finished . ' LIMIT 1',
+                $site_id,
+                MainWP_Backup_Task_Phase::FAILED
+            )
+        );
+        return null !== $found || '' !== $this->wpdb->last_error;
+    }
+
+    /**
      * Method get_website_backup_settings()
      *
      * Get Child Site backup settings.
@@ -89,6 +111,37 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Method update_backup_task_progress_if_marker()
+     *
+     * Update a progress row only while it still carries the creating
+     * marker the caller wrote. A driver that lost its slot mid-create, or
+     * one cleaning up after a refused create, must not overwrite a
+     * replacement driver's claim - and reading the row first and updating
+     * it after leaves exactly the window where that claim lands, so the
+     * marker is part of the WHERE clause instead.
+     *
+     * @param mixed  $task_id Task ID.
+     * @param mixed  $site_id Child Site ID.
+     * @param string $marker  Creating marker the row must still carry.
+     * @param array  $values  Values to update.
+     *
+     * @return int Rows updated: 1 when the marker was still there, 0 when it was not.
+     */
+    public function update_backup_task_progress_if_marker( $task_id, $site_id, $marker, array $values ): int {
+        $updated = $this->wpdb->update(
+            $this->table_name( 'wp_backup_progress' ),
+            $values,
+            array(
+                'task_id'              => $task_id,
+                'wp_id'                => $site_id,
+                'child_backup_task_id' => $marker,
+            )
+        );
+
+        return is_numeric( $updated ) ? (int) $updated : 0;
+    }
+
+    /**
      * Method add_backup_task_progress()
      *
      * Add backup task progress.
@@ -97,24 +150,29 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $wp_id Child Site ID.
      * @param mixed $information Task info to add.
      *
-     * @return (array|null) $this->get_backup_task_progress() or null on failure
+     * @return (object|null) $this->get_backup_task_progress() or null on failure
      */
     public function add_backup_task_progress( $task_id, $wp_id, $information ) {
-        $values = array(
-            'task_id'        => $task_id,
-            'wp_id'          => $wp_id,
-            'dtsFetched'     => time(),
-            'fetchResult'    => wp_json_encode( $information ),
-            'removedFiles'   => 0,
-            'downloadedDB'   => '',
-            'downloadedFULL' => '',
+        // Callers reach here only after reading no row for the pair, which
+        // races: a second driver reading the same gap inserts too. The pair
+        // is UNIQUE, so the loser adopts the row that landed first instead
+        // of failing - the self-assignment leaves the winner's row exactly
+        // as written, and either way the caller gets the row back.
+        $inserted = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'INSERT INTO ' . $this->table_name( 'wp_backup_progress' ) . " ( task_id, wp_id, dtsFetched, fetchResult, removedFiles, downloadedDB, downloadedFULL ) VALUES ( %d, %d, %d, %s, 0, '', '' ) ON DUPLICATE KEY UPDATE task_id = task_id", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                $task_id,
+                $wp_id,
+                time(),
+                wp_json_encode( $information )
+            )
         );
 
-        if ( $this->wpdb->insert( $this->table_name( 'wp_backup_progress' ), $values ) ) {
-            return $this->get_backup_task_progress( $task_id, $wp_id );
+        if ( false === $inserted ) {
+            return null;
         }
 
-        return null;
+        return $this->get_backup_task_progress( $task_id, $wp_id );
     }
 
     /**
@@ -138,6 +196,55 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Protect unrecorded downloads while tasks sharing a site interleave on the continue lane.
+     *
+     * @param int $wp_id Child Site ID.
+     * @return string[] Non-empty download paths fetched during the current open task runs.
+     */
+    public function get_open_run_download_paths( $wp_id ) {
+        $rows  = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT p.downloadedDB, p.downloadedFULL FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' p INNER JOIN ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' b ON p.task_id = b.id WHERE p.wp_id = %d AND b.completed < b.last_run AND p.dtsFetched >= b.last_run', $wp_id ) );
+        $paths = array();
+        foreach ( (array) $rows as $row ) {
+            foreach ( array( $row->downloadedDB, $row->downloadedFULL ) as $path ) {
+                if ( '' !== (string) $path ) {
+                    $paths[] = (string) $path;
+                }
+            }
+        }
+        return $paths;
+    }
+
+    /**
+     * Protect open runs' staging directories from the orphan sweep until their snapshot is recorded.
+     *
+     * Paused runs are included: a paused run still owns its directory.
+     *
+     * @param int $wp_id Child Site ID.
+     * @return string[] Child backup task ids of the site's open task runs.
+     */
+    public function get_open_run_child_task_ids( $wp_id ) {
+        return array_map( 'strval', (array) $this->wpdb->get_col( $this->wpdb->prepare( 'SELECT p.child_backup_task_id FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' p INNER JOIN ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " b ON p.task_id = b.id WHERE p.wp_id = %d AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND p.child_backup_task_id <> ''", $wp_id ) ) );
+    }
+
+    /**
+     * Find another open run of this Dashboard that holds the site's single Child backup slot.
+     *
+     * Paused tasks are left out because nothing advances them, so a task
+     * yielding to one would wait forever. A row whose fetchResult is set has
+     * finished on the Child, which frees the slot, but its task id is kept
+     * for the snapshot run key; matching it would hide a real blocker for the
+     * rest of the sibling's run. A terminal child_phase frees the slot too,
+     * and is recorded before the fetchResult claim or the failure cleanup.
+     *
+     * @param int $wp_id   Child Site ID.
+     * @param int $task_id Task that was refused.
+     * @return int Holding task id, or 0 when no sibling run holds the site.
+     */
+    public function get_sibling_site_holder( $wp_id, $task_id ) {
+        return (int) $this->wpdb->get_var( $this->wpdb->prepare( 'SELECT b.id FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' b INNER JOIN ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . " p ON p.task_id = b.id WHERE p.wp_id = %d AND b.id <> %d AND b.paused = 0 AND b.completed < b.last_run AND p.dtsFetched >= b.last_run AND p.child_backup_task_id <> '' AND p.fetchResult IN ( '', '[]' ) AND p.child_phase NOT IN ( 'completed', 'failed' ) LIMIT 1", $wp_id, $task_id ) );
+    }
+
+    /**
      * Method backup_full_task_running()
      *
      * Check if full backup task is running.
@@ -148,7 +255,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function backup_full_task_running( $wp_id ) { // phpcs:ignore -- NOSONAR - complex.
 
-        if ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             return false;
         }
 
@@ -169,7 +276,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     /**
      * Method remove_backup_task()
      *
-     * Remove backup task.
+     * Remove backup task. The task's per-site progress rows leave with it -
+     * they key on the task id and are unreachable once the task row is gone.
      *
      * @param mixed $id Task ID.
      *
@@ -177,6 +285,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function remove_backup_task( $id ) {
         $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE id = %d', $id ) );
+        $this->wpdb->query( $this->wpdb->prepare( 'DELETE FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' WHERE task_id = %d', $id ) );
     }
 
     /**
@@ -232,7 +341,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         if ( null !== $orderBy ) {
             $orderBy = static::validate_order_by( $orderBy, 'name' );
         }
-        // nosemgrep -- Order validated by validate_order_by(), user id converted with absint().
+        // nosemgrep: AIK_tainted-sql-string -- Order validated by validate_order_by(), fixed table name, user id converted with absint().
         return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE ' . ( null === $userid ? '' : 'userid= ' . absint( $userid ) . ' AND ' ) . ' template = 0 ' . ( null !== $orderBy ? 'ORDER BY ' . esc_sql( $orderBy ) : '' ), OBJECT );
     }
 
@@ -260,8 +369,10 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $maximumFileDescriptorsAuto     Auto maximum file discriptors.
      * @param mixed $maximumFileDescriptors         Maximum file descriptors.
      * @param mixed $loadFilesBeforeZip             Load files before Zip.
+     * @param mixed $zip_force_override             Keep Zip over the large-site guardrail (1) instead of auto-switching to tar.gz (0).
+     * @param mixed $manual_site_id                 Site identity for hidden on-demand tasks; NULL for scheduled tasks.
      *
-     * @return int|false The number of rows added, or false on error.
+     * @return object|false The created task row, or false on error.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      * @uses \MainWP\Dashboard\MainWP_Utility::remove_preslash_spaces()
@@ -285,7 +396,9 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $maximumFileDescriptorsOverride,
         $maximumFileDescriptorsAuto,
         $maximumFileDescriptors,
-        $loadFilesBeforeZip
+        $loadFilesBeforeZip,
+        $zip_force_override = 0,
+        $manual_site_id = null
     ) {
 
         // to fix null value.
@@ -308,6 +421,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 'completed_sites'                => '',
                 'completed'                      => 0,
                 'backup_errors'                  => '',
+                'backup_notices'                 => '',
                 'subfolder'                      => MainWP_Utility::remove_preslash_spaces( $subfolder ),
                 'filename'                       => $filename,
                 'paused'                         => 0,
@@ -321,6 +435,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 'maximumFileDescriptorsOverride' => $maximumFileDescriptorsOverride,
                 'maximumFileDescriptorsAuto'     => $maximumFileDescriptorsAuto,
                 'maximumFileDescriptors'         => $maximumFileDescriptors,
+                'zip_force_override'             => $zip_force_override,
+                'manual_site_id'                 => $manual_site_id,
             );
 
             if ( $this->wpdb->insert( $this->table_name( 'wp_backup' ), $values ) ) {
@@ -355,6 +471,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * @param mixed $maximumFileDescriptorsAuto Auto maximum file discriptors.
      * @param mixed $maximumFileDescriptors Maximum file descriptors.
      * @param mixed $loadFilesBeforeZip Load files before Zip.
+     * @param mixed $zip_force_override Keep Zip over the large-site guardrail (1) instead of auto-switching to tar.gz (0).
      *
      * @return int|false The number of rows updated, or false on error.
      *
@@ -380,7 +497,8 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $maximumFileDescriptorsOverride,
         $maximumFileDescriptorsAuto,
         $maximumFileDescriptors,
-        $loadFilesBeforeZip
+        $loadFilesBeforeZip,
+        $zip_force_override = 0
     ) {
 
         if ( MainWP_Utility::ctype_digit( $userid ) && MainWP_Utility::ctype_digit( $id ) ) {
@@ -405,6 +523,7 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                     'maximumFileDescriptorsOverride' => $maximumFileDescriptorsOverride,
                     'maximumFileDescriptorsAuto'     => $maximumFileDescriptorsAuto,
                     'maximumFileDescriptors'         => $maximumFileDescriptors,
+                    'zip_force_override'             => $zip_force_override,
                 ),
                 array( 'id' => $id )
             );
@@ -432,9 +551,253 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Preserve schedule edits made after a cron reader loaded the task.
+     *
+     * @param int $id          Task id.
+     * @param int $observed    Previously read next_run.
+     * @param int $replacement Computed next_run.
+     *
+     * @return int|false Rows updated, or false on error.
+     */
+    public function update_backup_task_next_run( $id, $observed, $replacement ) {
+        return $this->wpdb->update(
+            $this->table_name( 'wp_backup' ),
+            array( 'next_run' => $replacement ),
+            array(
+                'id'       => $id,
+                'next_run' => $observed,
+            )
+        );
+    }
+
+    /**
+     * Fetch hidden tasks without changing the scheduled task list.
+     *
+     * @return object[] Hidden task rows.
+     */
+    public function get_hidden_backup_tasks() {
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE template <> 0', OBJECT );
+    }
+
+    /**
+     * Method get_manual_backup_task()
+     *
+     * Fetch the per-site hidden on-demand ("manual") backup task, if it
+     * exists. The unique site identity keeps concurrent requests attached
+     * to the same task and snapshot history.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return object|null The task row, or null when none exists.
+     */
+    public function get_manual_backup_task( $site_id ) {
+        $site_id = (int) $site_id;
+
+        return $this->wpdb->get_row(
+            $this->wpdb->prepare(
+                'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE manual_site_id = %d LIMIT 1',
+                $site_id
+            ),
+            OBJECT
+        );
+    }
+
+    /**
+     * Method ensure_manual_backup_task()
+     *
+     * Get-or-create the per-site hidden on-demand backup task and refresh
+     * its initiator, destinations and retention when no run is open. The
+     * task is a standalone full backup (never incremental) so each on-demand
+     * snapshot restores on its own; a call made while a run is open leaves
+     * the row as that run's initiator stored it; and it stays off the schedule list
+     * (template = 1) and out of the schedulers (schedule 'manual',
+     * next_run 0), driven only on demand and by the existing continue cron.
+     *
+     * @param object $website Authorized child site object (needs id).
+     *
+     * @return object|false The refreshed task row, or false on failure.
+     */
+    public function ensure_manual_backup_task( $website ) {
+        if ( empty( $website ) || empty( $website->id ) ) {
+            return false;
+        }
+
+        $site_id = (int) $website->id;
+        $task    = $this->get_manual_backup_task( $site_id );
+
+        if ( empty( $task ) ) {
+            $suppress = $this->wpdb->suppress_errors();
+            try {
+                $created = $this->add_backup_task(
+                    get_current_user_id(),
+                    'On-demand backup',
+                    'manual',
+                    'full',
+                    '',
+                    (string) $site_id,
+                    '',
+                    '',
+                    '',
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                    'site',
+                    0,
+                    1,
+                    150,
+                    0,
+                    0,
+                    $site_id
+                );
+            } finally {
+                $this->wpdb->suppress_errors( $suppress );
+            }
+            if ( false === $created && empty( $this->get_manual_backup_task( $site_id ) ) ) {
+                return false;
+            }
+            if ( ! empty( $created ) ) {
+                // The on-demand caller authorized this one site at creation.
+                $this->update_backup_task_with_values( (int) $created->id, array( 'authorized_sites' => (string) $site_id ) );
+            }
+            $task = $this->get_manual_backup_task( $site_id );
+        }
+
+        if ( empty( $task ) ) {
+            return false;
+        }
+
+        // Refresh destinations and retention each run so a settings or
+        // schedule change takes effect on the next on-demand backup. A call
+        // that attaches to an open run must leave the task to the run's
+        // initiator, so the open-run test sits in the UPDATE itself: a PHP
+        // check first would lose to a claim landing between read and write.
+        $user_id = get_current_user_id();
+        for ( $attempt = 0; $attempt < 2; $attempt++ ) {
+            $changed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- guarded write; must hit the DB engine.
+                $this->wpdb->prepare(
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . ' SET userid = %d, authorized_sites = %s, destinations = %s, retention_count = %d, next_run = 0, paused = 0, max_chain_length = 0 WHERE id = %d AND completed >= last_run', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                    $user_id,
+                    (string) $site_id,
+                    wp_json_encode( $this->manual_backup_task_destinations( $site_id ) ),
+                    MainWP_Backup_Settings::get_on_demand_retention_count(),
+                    (int) $task->id
+                )
+            );
+
+            $task = $this->get_manual_backup_task( $site_id );
+            // A refresh refused by a run that closed before this read would
+            // start the next run with the previous run's initiator and
+            // settings, even when that initiator is the caller; refresh once
+            // more. MySQL counts changed rows, so a refresh with nothing new
+            // to write also reads as 0 and repeats once, which is harmless.
+            if ( empty( $task ) || (int) $task->completed < (int) $task->last_run || ( is_int( $changed ) && $changed > 0 ) ) {
+                break;
+            }
+        }
+
+        return empty( $task ) ? false : $task;
+    }
+
+    /**
+     * Method manual_backup_task_destinations()
+     *
+     * Keep on-demand runs and previews on the same destination plan.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return array List of destination ids (integers), deduped.
+     */
+    public function manual_backup_task_destinations( $site_id ) {
+        return $this->manual_backup_destination_plan( $site_id )['ids'];
+    }
+
+    /**
+     * Scheduled coverage takes precedence even when its destinations are empty.
+     * Only uncovered sites use the Default, independent of the caller's scope.
+     *
+     * @param int $site_id Child site id.
+     *
+     * @return array{ids: int[], source: 'tasks'|'default'|'none'}
+     */
+    public function manual_backup_destination_plan( $site_id ): array {
+        $site_id = (int) $site_id;
+        $union   = array();
+        $covered = false;
+
+        foreach ( (array) $this->get_backup_tasks() as $task ) {
+            if ( ! $this->task_targets_site( $task, $site_id ) ) {
+                continue;
+            }
+            $covered = true;
+            $ids     = json_decode( (string) $task->destinations, true );
+            if ( is_array( $ids ) ) {
+                foreach ( $ids as $id ) {
+                    $union[] = (int) $id;
+                }
+            }
+        }
+
+        if ( $covered ) {
+            return array(
+                'ids'    => array_values( array_unique( $union ) ),
+                'source' => 'tasks',
+            );
+        }
+
+        $default_id = MainWP_Backup_Storage_Destinations::instance()->get_default_id();
+        return $default_id > 0
+            ? array(
+                'ids'    => array( $default_id ),
+                'source' => 'default',
+            )
+            : array(
+                'ids'    => array(),
+                'source' => 'none',
+            );
+    }
+
+    /**
+     * Method task_targets_site()
+     *
+     * Whether a scheduled task backs up a given site, either listed
+     * directly in its sites column or reached through one of its groups.
+     *
+     * @param object $task    Backup task row.
+     * @param int    $site_id Child site id.
+     *
+     * @return bool True when the task targets the site.
+     */
+    protected function task_targets_site( $task, $site_id ) {
+        $site_id = (int) $site_id;
+
+        if ( ! empty( $task->sites ) ) {
+            foreach ( explode( ',', (string) $task->sites ) as $id ) {
+                if ( (int) $id === $site_id ) {
+                    return true;
+                }
+            }
+        }
+
+        if ( ! empty( $task->groups ) ) {
+            // The scheduled run backs up staging members of a task's groups,
+            // and get_websites_by_group_id() leaves staging sites out, so use
+            // the run's own membership expansion.
+            return in_array( $site_id, MainWP_Manage_Backups_Handler::expand_task_site_ids( '', (string) $task->groups ), true );
+        }
+
+        return false;
+    }
+
+    /**
      * Method update_backup_run()
      *
-     * Update backup run.
+     * Update backup run. The new last_run lands strictly after the
+     * previous close: a reopen in the same clock second as that close
+     * would leave completed = last_run, and the close gate
+     * (completed < last_run) could never fire again - the run wedges
+     * open forever.
      *
      * @param mixed $id Task ID.
      *
@@ -444,18 +807,93 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      */
     public function update_backup_run( $id ) {
         if ( MainWP_Utility::ctype_digit( $id ) ) {
-            return $this->wpdb->update(
-                $this->table_name( 'wp_backup' ),
-                array(
-                    'last_run'        => time(),
-                    'last'            => time(),
-                    'completed_sites' => wp_json_encode( array() ),
-                ),
-                array( 'id' => $id )
+            $now = time();
+            return $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the stamp must be computed against the row's own completed value.
+                $this->wpdb->prepare(
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]' WHERE id = %d", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                    $now,
+                    $now,
+                    $id
+                )
             );
         }
 
         return false;
+    }
+
+    /**
+     * Method claim_backup_run()
+     *
+     * Open a new run by stamping last_run, refusably. With no settle
+     * window this is the scheduled cron path's stamp: it refuses a paused
+     * task in the same statement that opens the run, so a pause landing
+     * after the loop's re-read still takes effect, and it keeps recovering
+     * a stuck open run. With
+     * a settle window (the on-demand path) the stamp is a single guarded
+     * UPDATE that refuses when another driver already holds the run open,
+     * or when the previous run closed successfully within the window - a
+     * duplicate initiate must not reopen the run that just finished and
+     * poison its freshness check. A run that closed with errors may
+     * retry immediately; failure retries are never debounced. Either way
+     * the new last_run lands strictly after the previous close, so the
+     * close gate (completed < last_run) stays reachable even for a
+     * same-second retry.
+     *
+     * @param mixed $id            Task ID.
+     * @param int   $grace_seconds Settle window in seconds; 0 allows unpaused open runs.
+     * @param int   $claimed_started Exact timestamp written by this claim, or zero on refusal.
+     *
+     * @return bool True when this caller opened the run.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function claim_backup_run( $id, $grace_seconds = 0, &$claimed_started = 0 ) {
+        $claimed_started = 0;
+        if ( ! MainWP_Utility::ctype_digit( $id ) ) {
+            return false;
+        }
+
+        $previous = $this->get_backup_task_by_id( $id );
+        if ( empty( $previous ) ) {
+            return false;
+        }
+        $now          = time();
+        $cancel_ready = MainWP_Install::backup_task_run_cancel_ready();
+        $cancel_set   = $cancel_ready ? ', run_cancel = NULL' : '';
+        $cancel_guard = $cancel_ready ? " AND ( completed >= last_run OR run_cancel IS NULL OR run_cancel = '' )" : '';
+
+        // Compare both stamps so GREATEST uses the close we read. A lost race refuses the claim.
+        if ( (int) $grace_seconds <= 0 ) {
+            $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the pause guard and run identity must be atomic with the claim.
+                $this->wpdb->prepare(
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1, last_run + 1 ), last = %d, completed_sites = '[]'{$cancel_set} WHERE id = %d AND paused = 0 AND last_run = %d AND completed = %d{$cancel_guard}", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table and fixed readiness fragments; values use placeholders.
+                    $now,
+                    $now,
+                    $id,
+                    $previous->last_run,
+                    $previous->completed
+                )
+            );
+        } else {
+            $claimed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic claim gate; must hit the DB engine.
+                $this->wpdb->prepare(
+                    'UPDATE ' . $this->table_name( 'wp_backup' ) . " SET last_run = GREATEST( %d, completed + 1 ), last = %d, completed_sites = '[]'{$cancel_set} WHERE id = %d AND paused = 0 AND completed >= last_run AND ( completed < %d OR backup_errors <> '' ) AND last_run = %d AND completed = %d{$cancel_guard}", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted table and fixed readiness fragments; values use placeholders.
+                    $now,
+                    $now,
+                    $id,
+                    $now - (int) $grace_seconds,
+                    $previous->last_run,
+                    $previous->completed
+                )
+            );
+        }
+
+        // Only a successful guarded UPDATE owns the new identity.
+        if ( 1 !== (int) $claimed ) {
+            return false;
+        }
+        $claimed_started = max( $now, (int) $previous->completed + 1, (int) $previous->last_run + 1 );
+        return true;
     }
 
     /**
@@ -464,14 +902,19 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
      * Update backup run manually.
      *
      * @param mixed $id Task ID.
+     * @param int   $started Restrict the stamp to this run when supplied.
      *
      * @return int|false The number of rows updated, or false on error.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public function update_backup_run_manually( $id ) {
+    public function update_backup_run_manually( $id, $started = 0 ) {
         if ( MainWP_Utility::ctype_digit( $id ) ) {
-            return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'last_run_manually' => time() ), array( 'id' => $id ) );
+            $where = array( 'id' => $id );
+            if ( $started > 0 ) {
+                $where['last_run'] = $started;
+            }
+            return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'last_run_manually' => $started > 0 ? $started : time() ), $where );
         }
 
         return false;
@@ -480,20 +923,349 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     /**
      * Method update_backup_completed()
      *
-     * Update backup completed()
+     * Only the winner owns the close side effects and freezes the run's errors.
      *
      * @param mixed $id Task ID.
+     * @param int   $last_run Run identity captured by the driver.
      *
-     * @return int|false The number of rows updated, or false on error.
+     * @return bool True when this call closed an open run.
      *
      * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
      */
-    public function update_backup_completed( $id ) {
-        if ( MainWP_Utility::ctype_digit( $id ) ) {
-            return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'completed' => time() ), array( 'id' => $id ) );
+    public function update_backup_completed( $id, int $last_run ) {
+        if ( ! MainWP_Utility::ctype_digit( $id ) ) {
+            return false;
+        }
+
+        $closed = $this->wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- the atomic close gate; must hit the DB engine.
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table_name( 'wp_backup' ) . ' SET completed = GREATEST(%d, last_run) WHERE id = %d AND last_run = %d AND completed < last_run', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                time(),
+                $id,
+                $last_run
+            )
+        );
+
+        return 1 === (int) $closed;
+    }
+
+    /**
+     * Method has_live_child_task_for_run()
+     *
+     * Whether any site under this task still carries a creating marker for
+     * the current run cycle - a create request to a child that has not
+     * resolved yet. Rows are scoped to dtsFetched at or after the task's
+     * last_run so leftovers from earlier runs never count, and a marker
+     * past its window reads as abandoned rather than live, so an orphaned
+     * marker can never hold the close hostage. Real child task ids never
+     * count either: a run that exhausted its retries must still close.
+     *
+     * @param mixed $id Task ID.
+     *
+     * @return bool True when a live create marker exists for the current cycle.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     * @uses \MainWP\Dashboard\MainWP_Backup_Executor::is_creating_marker()
+     */
+    public function has_live_child_task_for_run( $id ) {
+        if ( ! MainWP_Utility::ctype_digit( $id ) ) {
+            return false;
+        }
+
+        $task = $this->get_backup_task_by_id( $id );
+        if ( ! $task ) {
+            return false;
+        }
+
+        $rows = $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                'SELECT child_backup_task_id, dtsFetched FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE task_id = %d AND dtsFetched >= %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table_name() returns the prefixed identifier.
+                $id,
+                (int) $task->last_run
+            )
+        );
+
+        if ( ! is_array( $rows ) ) {
+            return false;
+        }
+
+        foreach ( $rows as $row ) {
+            if ( MainWP_Backup_Executor::is_creating_marker( $row->child_backup_task_id )
+                && ( time() - (int) $row->dtsFetched ) < MainWP_Backup_Executor::CREATE_MARKER_TTL_SECONDS ) {
+                return true;
+            }
         }
 
         return false;
+    }
+
+    /**
+     * How long a downloaded-but-unrecorded artifact counts as a live,
+     * resumable record-pending state, measured from the artifact's mtime.
+     * Anchoring on the artifact (not the run-open stamp) keeps the guard
+     * alive for sites that finish late in a long fleet run, while still
+     * bounding it so a permanently failing record can never wedge a close.
+     */
+    const RECORD_PENDING_TTL_SECONDS = 900;
+
+    /**
+     * Method is_backup_site_resumable_for_run()
+     *
+     * Whether a site's progress row is still resumable for the task's
+     * current open run - the site-loop catch consults this before marking
+     * a site complete on an exception, because a terminal-looking throw
+     * against a resumable row closes the run mid-flight and loses the
+     * snapshot the next cycle would have landed.
+     *
+     * Two resumable shapes, classified over the row's SET artifact paths
+     * so a mixed db+full state cannot misread:
+     * - mid_download: a claimed terminal projection (that does not itself
+     *   carry a child error - a stored error replays identically forever
+     *   and must mark), downloads not complete, retry budget not
+     *   exhausted. The caller consumes one attempt per yield so ANY
+     *   repeating throw exhausts the budget within the cap.
+     * - record_pending: downloads complete, every flagged artifact still
+     *   on disk, no snapshot for this run yet, and the newest artifact
+     *   younger than RECORD_PENDING_TTL_SECONDS. Not budget-consuming;
+     *   the TTL bounds it.
+     *
+     * @param object $task  Task row (fresh read; uses id and last_run).
+     * @param mixed  $wp_id Child site ID.
+     *
+     * @return string|false 'mid_download', 'record_pending', or false.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Backup_Snapshots::get_latest_complete()
+     */
+    public function is_backup_site_resumable_for_run( $task, $wp_id ) { // phpcs:ignore -- NOSONAR - complex state classification.
+        if ( empty( $task ) || empty( $task->id ) || ! MainWP_Utility::ctype_digit( $wp_id ) ) {
+            return false;
+        }
+
+        $progress = $this->get_backup_task_progress( (int) $task->id, (int) $wp_id );
+        if ( empty( $progress ) || (int) $progress->dtsFetched < (int) $task->last_run ) {
+            return false;
+        }
+
+        $set_paths = array();
+        if ( '' !== (string) $progress->downloadedDB ) {
+            $set_paths[] = array( (string) $progress->downloadedDB, ! empty( $progress->downloadedDBComplete ) );
+        }
+        if ( '' !== (string) $progress->downloadedFULL ) {
+            $set_paths[] = array( (string) $progress->downloadedFULL, ! empty( $progress->downloadedFULLComplete ) );
+        }
+
+        $downloads_complete = ! empty( $set_paths );
+        foreach ( $set_paths as $path ) {
+            if ( ! $path[1] ) {
+                $downloads_complete = false;
+                break;
+            }
+        }
+
+        if ( $downloads_complete ) {
+            return $this->classify_record_pending( $task, $progress, $set_paths );
+        }
+
+        $claimed = is_array( $progress->fetchResult ) && ! empty( $progress->fetchResult );
+        if ( $claimed && empty( $progress->fetchResult['error'] ) && (int) $progress->attempts < 5 ) {
+            return 'mid_download';
+        }
+
+        return false;
+    }
+
+    /**
+     * Method classify_record_pending()
+     *
+     * Whether a downloads-complete row is a live record-pending state:
+     * every flagged artifact on disk, no snapshot for the current run,
+     * newest artifact inside the TTL window.
+     *
+     * @param object $task      Task row.
+     * @param object $progress  Progress row.
+     * @param array  $set_paths Set artifact paths with their complete flags.
+     *
+     * @return string|false 'record_pending' or false.
+     */
+    private function classify_record_pending( $task, $progress, $set_paths ) {
+        // Terminal record failures must prevent site re-drive and release the run-close guard.
+        if ( MainWP_Backup_Task_Phase::FAILED === $progress->child_phase ) {
+            return false;
+        }
+
+        $newest_mtime = 0;
+        foreach ( $set_paths as $path ) {
+            clearstatcache( true, $path[0] );
+            if ( ! is_file( $path[0] ) ) {
+                // A vanished artifact is the loud ERR_FILE_CORRUPT shape,
+                // not a resumable state: the honest failure must mark.
+                return false;
+            }
+            $mtime        = (int) filemtime( $path[0] );
+            $newest_mtime = $mtime > $newest_mtime ? $mtime : $newest_mtime;
+        }
+
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( (int) $progress->wp_id, (int) $task->id );
+        if ( null !== $snapshot && (int) $snapshot->created >= (int) $task->last_run ) {
+            // The record already landed; nothing is pending.
+            return false;
+        }
+
+        if ( ( time() - $newest_mtime ) >= self::RECORD_PENDING_TTL_SECONDS ) {
+            // Past the window a failing record is a wedge, not a wait.
+            return false;
+        }
+
+        return 'record_pending';
+    }
+
+    /**
+     * Method has_pending_record_for_run()
+     *
+     * Whether any current-run progress row is a live record-pending
+     * state: a validated artifact on disk whose snapshot has not landed
+     * yet, inside the TTL window. The run close consults this alongside
+     * the live-create guard, because closing over a pending record is
+     * how a snapshot gets lost - the record that lands seconds later has
+     * no open run to credit. The scan reads progress rows, never
+     * completed_sites, so a site wrongly marked complete cannot blind it.
+     *
+     * @param mixed $id Task ID.
+     *
+     * @return bool True when a record-pending row exists for the current cycle.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function has_pending_record_for_run( $id ) {
+        if ( ! MainWP_Utility::ctype_digit( $id ) ) {
+            return false;
+        }
+
+        $task = $this->get_backup_task_by_id( $id );
+        if ( ! $task ) {
+            return false;
+        }
+
+        $rows = $this->wpdb->get_col(
+            $this->wpdb->prepare(
+                'SELECT wp_id FROM ' . $this->table_name( 'wp_backup_progress' ) . ' WHERE task_id = %d AND dtsFetched >= %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table_name() returns the prefixed identifier.
+                $id,
+                (int) $task->last_run
+            )
+        );
+
+        if ( ! is_array( $rows ) ) {
+            return false;
+        }
+
+        foreach ( $rows as $wp_id ) {
+            if ( 'record_pending' === $this->is_backup_site_resumable_for_run( $task, (int) $wp_id ) ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Method claim_backup_file_sweep()
+     *
+     * Claim the run's one local-file sweep, SQL-side. The sweep deletes
+     * unrecorded archives in the site dir, and the current run's own
+     * downloaded artifact is unrecorded until its snapshot lands - so a
+     * driver re-running the sweep off a stale in-memory removedFiles
+     * view deletes the winner's validated artifact and loses the backup.
+     * The conditional write makes the gate the row's truth, not the
+     * caller's memory: exactly one driver per run wins it.
+     *
+     * @param mixed $task_id Task ID.
+     * @param mixed $wp_id   Child site ID.
+     *
+     * @return bool True when this caller won the sweep.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function claim_backup_file_sweep( $task_id, $wp_id ) {
+        if ( ! MainWP_Utility::ctype_digit( $task_id ) || ! MainWP_Utility::ctype_digit( $wp_id ) ) {
+            return false;
+        }
+
+        $affected = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table_name( 'wp_backup_progress' ) . ' SET removedFiles = 1 WHERE task_id = %d AND wp_id = %d AND removedFiles <> 1', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table_name() returns the prefixed identifier.
+                $task_id,
+                $wp_id
+            )
+        );
+
+        return is_numeric( $affected ) && $affected > 0;
+    }
+
+    /**
+     * Method consume_backup_attempt()
+     *
+     * Burn one retry attempt on the progress row, SQL-side so racing
+     * drivers cannot double-count through a read-modify-write. The
+     * site-loop catch calls this on every mid-download resumable yield,
+     * which is what bounds a repeating exception to the retry cap.
+     *
+     * @param mixed $task_id Task ID.
+     * @param mixed $wp_id   Child site ID.
+     *
+     * @return bool Whether a row was updated.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function consume_backup_attempt( $task_id, $wp_id ) {
+        if ( ! MainWP_Utility::ctype_digit( $task_id ) || ! MainWP_Utility::ctype_digit( $wp_id ) ) {
+            return false;
+        }
+
+        $affected = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table_name( 'wp_backup_progress' ) . ' SET attempts = attempts + 1 WHERE task_id = %d AND wp_id = %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table_name() returns the prefixed identifier.
+                $task_id,
+                $wp_id
+            )
+        );
+
+        return is_numeric( $affected ) && $affected > 0;
+    }
+
+    /**
+     * Method claim_backup_fetch_result()
+     *
+     * Land a completed child task's terminal projection on the progress
+     * row only when no other driver has landed one first. Concurrent
+     * drivers can poll the same completed child task; the conditional
+     * write makes exactly one of them the consumer, so the download and
+     * snapshot-record phase is never entered twice for one terminal. An
+     * unclaimed row holds either the column default or the entry reset's
+     * encoded empty array.
+     *
+     * @param mixed  $task_id           Task ID.
+     * @param mixed  $wp_id             Child site ID.
+     * @param string $fetch_result_json Encoded terminal projection.
+     *
+     * @return bool True when this driver's projection landed, false when another driver already claimed the terminal.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function claim_backup_fetch_result( $task_id, $wp_id, $fetch_result_json ) {
+        if ( ! MainWP_Utility::ctype_digit( $task_id ) || ! MainWP_Utility::ctype_digit( $wp_id ) ) {
+            return false;
+        }
+
+        $affected = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . $this->table_name( 'wp_backup_progress' ) . " SET fetchResult = %s WHERE task_id = %d AND wp_id = %d AND ( fetchResult = '' OR fetchResult = '[]' )", // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table_name() returns the prefixed identifier.
+                $fetch_result_json,
+                $task_id,
+                $wp_id
+            )
+        );
+
+        return is_numeric( $affected ) && $affected > 0;
     }
 
     /**
@@ -513,13 +1285,166 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             if ( '' === $errors ) {
                 return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'backup_errors' => '' ), array( 'id' => $id ) );
             } else {
-                $task = $this->get_backup_task_by_id( $id );
-
-                return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'backup_errors' => $task->backup_errors . $errors ), array( 'id' => $id ) );
+                return $this->wpdb->query(
+                    $this->wpdb->prepare(
+                        'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_errors = CONCAT( COALESCE( backup_errors, '' ), %s ) WHERE id = %d",
+                        $errors,
+                        $id
+                    )
+                );
             }
         }
 
         return false;
+    }
+
+    /**
+     * Late errors belong in diagnostics once the run can no longer accept them.
+     *
+     * @param int    $id Task identity.
+     * @param int    $last_run Run identity.
+     * @param string $errors Formatted errors.
+     * @return bool Whether the append landed.
+     */
+    public function append_backup_errors( int $id, int $last_run, string $errors ): bool {
+        $changed = $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_errors = CONCAT( COALESCE( backup_errors, '' ), %s ) WHERE id = %d AND last_run = %d AND completed < last_run",
+                $errors,
+                $id,
+                $last_run
+            )
+        );
+        if ( 1 === $changed ) {
+            return true;
+        }
+        $task = $this->get_backup_task_by_id( $id );
+        if ( '' === $errors && $task && (int) $task->last_run === $last_run && (int) $task->completed < $last_run && false !== $changed ) {
+            return true;
+        }
+        $reason = ! $task ? 'missing' : ( (int) $task->last_run !== $last_run ? 'superseded' : 'closed' );
+        MainWP_Backup_Diagnostics::instance()->record(
+            '_global',
+            'error_append_refused',
+            0,
+            $id,
+            array(
+                'last_run' => $last_run,
+                'reason'   => $reason,
+                'errors'   => MainWP_Backup_Error_Codes::sanitize_message( $errors ),
+            )
+        );
+        return false;
+    }
+
+    /**
+     * A starter may clear only the identity it claimed.
+     *
+     * @param int $id Task identity.
+     * @param int $last_run Run identity.
+     * @return bool Whether errors were cleared.
+     */
+    public function clear_backup_errors( int $id, int $last_run ): bool {
+        return 1 === $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_errors = '' WHERE id = %d AND last_run = %d",
+                $id,
+                $last_run
+            )
+        );
+    }
+
+    /**
+     * Compare bytes because the table collation folds mixed-case lease tokens.
+     *
+     * @param int         $id Task identity.
+     * @param int         $last_run Run identity.
+     * @param string|null $expected Previously read bytes.
+     * @param string|null $replacement New bytes, or null to clear.
+     * @return bool Whether the state is persisted.
+     */
+    public function compare_and_swap_run_cancel( int $id, int $last_run, ?string $expected, ?string $replacement ): bool {
+        if ( ! MainWP_Install::backup_task_run_cancel_ready() ) {
+            return false;
+        }
+        $set   = null === $replacement ? 'NULL' : '%s';
+        $where = null === $expected ? 'run_cancel IS NULL' : 'BINARY run_cancel = %s';
+        $binds = null === $replacement ? array() : array( $replacement );
+        $binds = array_merge( $binds, array( $id, $last_run ) );
+        if ( null !== $expected ) {
+            $binds[] = $expected;
+        }
+        $changed = $this->wpdb->query(
+            $this->wpdb->prepare( // phpcs:ignore WordPress.DB.PreparedSQLPlaceholders.ReplacementsWrongNumber -- fixed fragments and their binds grow together.
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET run_cancel = {$set} WHERE id = %d AND last_run = %d AND {$where}", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- fixed fragments; all values use placeholders.
+                $binds
+            )
+        );
+        if ( 0 !== $changed ) {
+            return 1 === $changed;
+        }
+        if ( $expected !== $replacement ) {
+            return false;
+        }
+        // A same-second lease renewal can write identical bytes.
+        $task = $this->get_backup_task_by_id( $id );
+        return $task && (int) $task->last_run === $last_run && $task->run_cancel === $replacement;
+    }
+
+    /**
+     * Method update_backup_notices()
+     *
+     * Append an informational run note to the task, or clear the channel
+     * with an empty string. Notices are advisory (the large-site ZIP
+     * auto-switch, a user cancel) and deliberately live apart from
+     * backup_errors, whose consumers treat any content as a failed run.
+     * A note already present is not appended again: a multi-site task
+     * negotiates per site and would otherwise repeat the same message.
+     *
+     * @param mixed  $id      Task ID.
+     * @param string $notices Note to append, or '' to clear.
+     *
+     * @return int|false The number of rows updated, or false on error.
+     *
+     * @uses \MainWP\Dashboard\MainWP_Utility::ctype_digit()
+     */
+    public function update_backup_notices( $id, $notices ) {
+        if ( ! MainWP_Utility::ctype_digit( $id ) ) {
+            return false;
+        }
+
+        if ( '' === $notices ) {
+            return $this->wpdb->update( $this->table_name( 'wp_backup' ), array( 'backup_notices' => '' ), array( 'id' => $id ) );
+        }
+
+        return $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_notices = CONCAT( COALESCE( backup_notices, '' ), %s ) WHERE id = %d AND ( backup_notices IS NULL OR backup_notices NOT LIKE CAST( %s AS BINARY ) )",
+                $notices,
+                $id,
+                '%' . $this->wpdb->esc_like( $notices ) . '%'
+            )
+        );
+    }
+
+    /**
+     * A closer must not append its note to a successor run.
+     *
+     * @param int    $id Task identity.
+     * @param int    $last_run Closed run identity.
+     * @param string $text Note to append.
+     * @return bool Whether the note was appended.
+     */
+    public function append_backup_notices_for_run( int $id, int $last_run, string $text ): bool {
+        return 1 === $this->wpdb->query(
+            $this->wpdb->prepare(
+                'UPDATE ' . esc_sql( $this->table_name( 'wp_backup' ) ) . " SET backup_notices = CONCAT( COALESCE( backup_notices, '' ), %s ) WHERE id = %d AND last_run = %d AND ( backup_notices IS NULL OR backup_notices NOT LIKE CAST( %s AS BINARY ) )",
+                $text,
+                $id,
+                $last_run,
+                '%' . $this->wpdb->esc_like( $text ) . '%'
+            )
+        );
     }
 
     /**
@@ -545,12 +1470,33 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
     /**
      * Method get_backup_tasks_to_complete()
      *
-     * Get backup tasks to complete.
+     * Get backup tasks to complete, least recently continued first.
      *
      * @return object Backup tasks.
      */
     public function get_backup_tasks_to_complete() {
-        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND completed < last_run', OBJECT );
+        // A pending column repair must not prevent unfinished tasks from continuing.
+        $order = MainWP_Install::backup_task_last_continued_ready() ? 'last_continued ASC, last_run ASC, id ASC' : 'last_run ASC, id ASC';
+        return $this->wpdb->get_results( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup' ) ) . ' WHERE paused = 0 AND completed < last_run ORDER BY ' . $order, OBJECT );
+    }
+
+    /**
+     * Method get_backup_tasks_due_by_next_run()
+     *
+     * Get tasks whose computed next_run has arrived. Legacy elapsed-mode
+     * tasks carry next_run = 0 and stay on the threshold queries below.
+     *
+     * @return object[] Backup tasks.
+     */
+    public function get_backup_tasks_due_by_next_run() {
+        $table_wp_backup = esc_sql( $this->table_name( 'wp_backup' ) );
+        return $this->wpdb->get_results(
+            $this->wpdb->prepare(
+                "SELECT * FROM `{$table_wp_backup}` WHERE paused = 0 AND next_run > 0 AND next_run <= %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name escaped via esc_sql, cutoff prepared.
+                time()
+            ),
+            OBJECT
+        );
     }
 
     /**

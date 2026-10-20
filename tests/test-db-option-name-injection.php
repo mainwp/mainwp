@@ -30,6 +30,46 @@ namespace MainWP\Dashboard\Tests;
 class MainWP_DB_Option_Name_Injection_Test extends MainWP_Abilities_Test_Case {
 
 	/**
+	 * Key deletion refuses other tables and preserves keys belonging to other users.
+	 *
+	 * @return void
+	 */
+	public function test_remove_rest_api_keys_by_user_rejects_other_tables_without_query() {
+		global $wpdb;
+
+		$db           = \MainWP\Dashboard\MainWP_DB::instance();
+		$owner_id     = self::factory()->user->create();
+		$other_id     = self::factory()->user->create();
+		$owner_key    = $this->create_rest_api_key( $owner_id );
+		$owner_key_id = (int) $wpdb->insert_id;
+		$other_key    = $this->create_rest_api_key( $other_id );
+		$other_key_id = (int) $wpdb->insert_id;
+		$api_table    = $db->get_table_name( 'api_keys' );
+		$queries      = $wpdb->num_queries;
+		$suppress     = $wpdb->suppress_errors( true );
+		try {
+			$rows = $db->remove_rest_api_keys_by_user( $owner_id, $wpdb->users );
+		} finally {
+			$wpdb->suppress_errors( $suppress );
+		}
+		$this->assertSame( $queries, $wpdb->num_queries, 'Another table must be refused before any query.' );
+		$this->assertSame( array(), $rows );
+		$this->assertNotEmpty( $db->get_rest_api_key_by( $owner_key_id ) );
+
+		foreach ( array( $api_table, null ) as $table_name ) {
+			$rows = $db->remove_rest_api_keys_by_user( $owner_id, $table_name );
+			$this->assertCount( 1, $rows );
+			$this->assertSame( mainwp_api_hash( $owner_key['consumer_key'] ), $rows[0]->consumer_key );
+			$this->assertEmpty( $db->get_rest_api_key_by( $owner_key_id ) );
+			$this->assertNotEmpty( $db->get_rest_api_key_by( $other_key_id ), 'Another owner retains their key.' );
+			if ( null !== $table_name ) {
+				$owner_key    = $this->create_rest_api_key( $owner_id );
+				$owner_key_id = (int) $wpdb->insert_id;
+			}
+		}
+	}
+
+	/**
 	 * An option name that closes the alias backtick and appends its own SELECT.
 	 *
 	 * @var string

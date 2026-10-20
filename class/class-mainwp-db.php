@@ -1138,6 +1138,23 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
 
     /**
+     * Prevent a stale owner from overwriting a newer option value.
+     *
+     * @param int    $website_id Child site id.
+     * @param string $name       Option name.
+     * @param string $expected   Previously read value.
+     * @param string $value      Replacement value.
+     *
+     * @return bool Whether exactly one row changed.
+     */
+    public function compare_and_swap_website_option( int $website_id, string $name, string $expected, string $value ): bool {
+        $table_name = esc_sql( $this->table_name( 'wp_options' ) );
+        return 1 === $this->wpdb->query(
+            $this->wpdb->prepare( "UPDATE {$table_name} SET value = %s WHERE wpid = %d AND name = %s AND value = %s", $value, $website_id, $name, $expected ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        );
+    }
+
+    /**
      * Remove child site options.
      *
      * @param object $website Child site object.
@@ -2000,21 +2017,21 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 // The option-backed columns are SQL NULL until a first sync writes them, and
                 // map_site() copies a null property through, so an '' check alone leaves
                 // json_decode() a null on PHP 8.1+.
-                if ( ! empty( $obj_data->plugin_upgrades ) ) {
+                if ( ! empty( $obj_data->plugin_upgrades ) && is_string( $obj_data->plugin_upgrades ) ) {
                     $plugin_upgrades = json_decode( $obj_data->plugin_upgrades, true );
                     if ( is_array( $plugin_upgrades ) ) {
                         $sum_upgrades += count( $plugin_upgrades );
                     }
                 }
 
-                if ( ! empty( $obj_data->theme_upgrades ) ) {
+                if ( ! empty( $obj_data->theme_upgrades ) && is_string( $obj_data->theme_upgrades ) ) {
                     $theme_upgrades = json_decode( $obj_data->theme_upgrades, true );
                     if ( is_array( $theme_upgrades ) ) {
                         $sum_upgrades += count( $theme_upgrades );
                     }
                 }
 
-                if ( ! empty( $obj_data->wp_upgrades ) ) {
+                if ( ! empty( $obj_data->wp_upgrades ) && is_string( $obj_data->wp_upgrades ) ) {
                     $wp_upgrades = json_decode( $obj_data->wp_upgrades, true );
                     if ( is_array( $wp_upgrades ) ) {
                         $sum_upgrades += count( $wp_upgrades );
@@ -2908,6 +2925,31 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     }
 
     /**
+     * Ids among the given ones that still have a site row, ignoring the
+     * current user's access scope.
+     *
+     * A task's saved site list can outlive a deleted site. Callers that must
+     * tell "deleted" from "no longer allowed" need existence alone: every
+     * other site read applies the allowed-sites filter, which would report a
+     * scope narrowing as a missing site and defeat the scope-pause gate.
+     *
+     * @param int[] $ids Site ids.
+     *
+     * @return int[] Ids that have a row.
+     */
+    public function get_existing_website_ids( $ids ) {
+        $ids = array_values( array_filter( array_map( 'intval', (array) $ids ) ) );
+        if ( empty( $ids ) ) {
+            return array();
+        }
+        $table_name   = esc_sql( $this->table_name( 'wp' ) );
+        $placeholders = implode( ',', array_fill( 0, count( $ids ), '%d' ) );
+        $sql          = "SELECT id FROM {$table_name} WHERE id IN ({$placeholders})";
+
+        return array_map( 'intval', $this->wpdb->get_col( $this->wpdb->prepare( $sql, ...$ids ) ) ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- table name escaped, ids are integer placeholders.
+    }
+
+    /**
      * Get child sites by groups IDs.
      *
      * @param array $ids    Groups IDs.
@@ -3273,16 +3315,22 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $force_use_ipv4 = isset( $params['force_use_ipv4'] ) ? ( 2 === (int) $params['force_use_ipv4'] ? 2 : (int) mainwp_string_to_bool( $params['force_use_ipv4'] ) ) : null;
 
         // MWP-1548: encrypt http_user / http_pass at rest. Empty / null
-        // values pass through unchanged (encrypt_credential is a no-op
-        // for those). A non-empty value that fails to encrypt produces
-        // false here, which we treat as a hard failure -- refuse to
-        // persist plaintext credentials when the encryption layer is
-        // unhealthy (missing keyfile, un-writable uploads dir).
-        $encrypted_http_user = MainWP_Credential_Storage::encrypt_credential( $http_user, 'http_user' );
-        $encrypted_http_pass = MainWP_Credential_Storage::encrypt_credential( $http_pass, 'http_pass' );
-        if ( false === $encrypted_http_user || false === $encrypted_http_pass ) {
+        // values pass through unchanged (staging is a no-op for those).
+        // A non-empty value that fails to encrypt produces false here,
+        // which we treat as a hard failure -- refuse to persist plaintext
+        // credentials when the encryption layer is unhealthy (missing
+        // keyfile, un-writable uploads dir). Staged, not committed: a
+        // create that never inserts deletes the keys it minted instead
+        // of orphaning them.
+        $user_intent = MainWP_Credential_Storage::stage_credential_encryption( $http_user, 'http_user' );
+        $pass_intent = MainWP_Credential_Storage::stage_credential_encryption( $http_pass, 'http_pass' );
+        if ( false === $user_intent || false === $pass_intent ) {
+            MainWP_Credential_Storage::rollback_credential_intent( $user_intent );
+            MainWP_Credential_Storage::rollback_credential_intent( $pass_intent );
             return false;
         }
+        $encrypted_http_user = $user_intent['value'];
+        $encrypted_http_pass = $pass_intent['value'];
 
         if ( MainWP_Utility::ctype_digit( $userid ) ) {
             if ( '/' !== substr( $url, - 1 ) ) {
@@ -3400,10 +3448,16 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 }
 
                 MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
+                MainWP_Credential_Storage::commit_credential_intent( $user_intent );
+                MainWP_Credential_Storage::commit_credential_intent( $pass_intent );
                 return $websiteid;
             }
         }
 
+        // The insert never happened (bad user id or a failed write):
+        // delete the freshly minted key files instead of orphaning them.
+        MainWP_Credential_Storage::rollback_credential_intent( $user_intent );
+        MainWP_Credential_Storage::rollback_credential_intent( $pass_intent );
         return false;
     }
 
@@ -3457,20 +3511,50 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             // is present in $fields. Generic-fields updaters (clone
             // flow in extensions-handler, callers that pass arbitrary
             // column subsets) must go through the same fail-closed
-            // contract as add_website / update_website.
-            if ( array_key_exists( 'http_user', $fields ) ) {
-                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_user'], 'http_user' );
-                if ( false === $encrypted ) {
-                    return false;
+            // contract as add_website / update_website. The stored values
+            // are read first so each superseded envelope's key file is
+            // retired; the retirement is best-effort, so this read does
+            // not need the FOR UPDATE lock taken below.
+            // An explicit null credential means "not provided" and must
+            // behave exactly like an absent key; leaving it in $fields
+            // would write NULL over the stored envelope without retiring
+            // its key file.
+            foreach ( array( 'http_user', 'http_pass' ) as $cred_field ) {
+                if ( array_key_exists( $cred_field, $fields ) && null === $fields[ $cred_field ] ) {
+                    unset( $fields[ $cred_field ] );
                 }
-                $fields['http_user'] = $encrypted;
             }
-            if ( array_key_exists( 'http_pass', $fields ) ) {
-                $encrypted = MainWP_Credential_Storage::encrypt_credential( $fields['http_pass'], 'http_pass' );
-                if ( false === $encrypted ) {
+            if ( empty( $fields ) ) {
+                return false;
+            }
+            $prior = null;
+            if ( array_key_exists( 'http_user', $fields ) || array_key_exists( 'http_pass', $fields ) ) {
+                $prior = $this->wpdb->get_row(
+                    $this->wpdb->prepare(
+                        'SELECT http_user, http_pass FROM ' . $this->table_name( 'wp' ) . ' WHERE id = %d', // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- table name from trusted helper.
+                        $websiteid
+                    )
+                );
+            }
+            // Key files are staged, not retired inline: retirement fires
+            // only after the row update lands, and a failed update (or a
+            // failed second-field encryption) deletes the freshly minted
+            // keys instead - otherwise the row keeps an envelope whose
+            // key file is already gone and the credential is lost.
+            $cred_intents = array();
+            foreach ( array( 'http_user', 'http_pass' ) as $cred_field ) {
+                if ( ! array_key_exists( $cred_field, $fields ) ) {
+                    continue;
+                }
+                $intent = MainWP_Credential_Storage::stage_credential_encryption( $fields[ $cred_field ], $cred_field, $prior ? $prior->{$cred_field} : null );
+                if ( false === $intent ) {
+                    foreach ( $cred_intents as $staged ) {
+                        MainWP_Credential_Storage::rollback_credential_intent( $staged );
+                    }
                     return false;
                 }
-                $fields['http_pass'] = $encrypted;
+                $fields[ $cred_field ] = $intent['value'];
+                $cred_intents[]        = $intent;
             }
             // Lock the data stream to prevent other processes from updating at the same time.
             $table_name = esc_sql( $this->table_name( 'wp' ) );
@@ -3481,6 +3565,14 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $this->wpdb->get_row( $sql );
 
             $updated = $this->wpdb->update( $this->table_name( 'wp' ), $fields, array( 'id' => $websiteid ) );
+            foreach ( $cred_intents as $staged ) {
+                if ( false === $updated ) {
+                    MainWP_Credential_Storage::rollback_credential_intent( $staged );
+                } else {
+                    MainWP_Credential_Storage::commit_credential_intent( $staged );
+                }
+            }
+
             if ( false !== $updated ) {
                 MainWP_Cache_Helper::invalidate_updates_cache_if_ignore_fields( $fields );
             }
@@ -3509,26 +3601,26 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     /**
      * Update child site.
      *
-     * @param int    $websiteid Website ID.
-     * @param string $url Child site URL.
-     * @param int    $userid Current user ID.
-     * @param string $name Child site name.
-     * @param string $siteadmin Child site administrator username.
-     * @param array  $groupids Group IDs.
-     * @param array  $groupnames Group Names.
-     * @param string $pluginDir Plugin directory.
-     * @param mixed  $maximumFileDescriptorsOverride Overwrite the Maximum File Descriptors option.
-     * @param mixed  $maximumFileDescriptorsAuto Auto set the Maximum File Descriptors option.
-     * @param mixed  $maximumFileDescriptors Set the Maximum File Descriptors option.
-     * @param int    $verifyCertificate Whether or not to verify SSL Certificate.
-     * @param mixed  $archiveFormat Backup archive formate.
-     * @param string $uniqueId Unique security ID.
-     * @param string $http_user HTTP Basic Authentication username.
-     * @param string $http_pass HTTP Basic Authentication password.
-     * @param int    $sslVersion SSL Version.
-     * @param bool   $disableHealthChecking Disable Site health threshold.
-     * @param int    $healthThreshold Site health threshold.
-     * @param string $backup_method Primary backup method.
+     * @param int         $websiteid Website ID.
+     * @param string      $url Child site URL.
+     * @param int         $userid Current user ID.
+     * @param string      $name Child site name.
+     * @param string      $siteadmin Child site administrator username.
+     * @param array       $groupids Group IDs.
+     * @param array       $groupnames Group Names.
+     * @param string      $pluginDir Plugin directory.
+     * @param mixed       $maximumFileDescriptorsOverride Overwrite the Maximum File Descriptors option.
+     * @param mixed       $maximumFileDescriptorsAuto Auto set the Maximum File Descriptors option.
+     * @param mixed       $maximumFileDescriptors Set the Maximum File Descriptors option.
+     * @param int         $verifyCertificate Whether or not to verify SSL Certificate.
+     * @param mixed       $archiveFormat Backup archive formate.
+     * @param string      $uniqueId Unique security ID.
+     * @param string|null $http_user HTTP Basic Authentication username. Null means not provided; the stored value is kept.
+     * @param string|null $http_pass HTTP Basic Authentication password. Null means not provided; the stored value is kept.
+     * @param int         $sslVersion SSL Version.
+     * @param bool        $disableHealthChecking Disable Site health threshold.
+     * @param int         $healthThreshold Site health threshold.
+     * @param string      $backup_method Primary backup method.
      *
      * @return boolean ture on success or false on failure.
      *
@@ -3568,38 +3660,63 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 // value that fails to encrypt aborts the update so we
                 // never overwrite an existing encrypted row with
                 // plaintext when the encryption layer is unhealthy.
-                $encrypted_http_user = MainWP_Credential_Storage::encrypt_credential( $http_user, 'http_user' );
-                $encrypted_http_pass = MainWP_Credential_Storage::encrypt_credential( $http_pass, 'http_pass' );
-                if ( false === $encrypted_http_user || false === $encrypted_http_pass ) {
+                // Staged, not encrypted inline: the superseded key files
+                // retire only after the row update lands, and an aborted
+                // update deletes the freshly minted keys instead.
+                $user_intent = MainWP_Credential_Storage::stage_credential_encryption( $http_user, 'http_user', $website->http_user );
+                $pass_intent = MainWP_Credential_Storage::stage_credential_encryption( $http_pass, 'http_pass', $website->http_pass );
+                if ( false === $user_intent || false === $pass_intent ) {
+                    MainWP_Credential_Storage::rollback_credential_intent( $user_intent );
+                    MainWP_Credential_Storage::rollback_credential_intent( $pass_intent );
                     return false;
                 }
+                $encrypted_http_user = $user_intent['value'];
+                $encrypted_http_pass = $pass_intent['value'];
+                $update_values       = array(
+                    'url'                   => $url,
+                    'name'                  => wp_strip_all_tags( $name ),
+                    'adminname'             => $siteadmin,
+                    'pluginDir'             => $pluginDir,
+                    'verify_certificate'    => intval( $verifyCertificate ),
+                    'ssl_version'           => intval( $sslVersion ),
+                    'wpe'                   => intval( $wpe ),
+                    'uniqueId'              => $uniqueId,
+                    'disable_health_check'  => $disableHealthChecking,
+                    'health_threshold'      => $healthThreshold,
+                    'primary_backup_method' => $backup_method,
+                );
+                // A null credential means "not provided": leave the
+                // stored column alone. Writing it through would replace
+                // the envelope with NULL and orphan its key file.
+                if ( null !== $encrypted_http_user ) {
+                    $update_values['http_user'] = $encrypted_http_user;
+                }
+                if ( null !== $encrypted_http_pass ) {
+                    $update_values['http_pass'] = $encrypted_http_pass;
+                }
                 // update admin.
-                $this->wpdb->update(
+                $updated = $this->wpdb->update(
                     $this->table_name( 'wp' ),
-                    array(
-                        'url'                   => $url,
-                        'name'                  => wp_strip_all_tags( $name ),
-                        'adminname'             => $siteadmin,
-                        'pluginDir'             => $pluginDir,
-                        'verify_certificate'    => intval( $verifyCertificate ),
-                        'ssl_version'           => intval( $sslVersion ),
-                        'wpe'                   => intval( $wpe ),
-                        'uniqueId'              => $uniqueId,
-                        'http_user'             => $encrypted_http_user,
-                        'http_pass'             => $encrypted_http_pass,
-                        'disable_health_check'  => $disableHealthChecking,
-                        'health_threshold'      => $healthThreshold,
-                        'primary_backup_method' => $backup_method,
-                    ),
+                    $update_values,
                     array( 'id' => $websiteid )
                 );
+                // Settle the staged credential keys by outcome: a failed
+                // row update keeps the stored envelopes, so their key
+                // files must survive and the fresh ones go instead.
+                foreach ( array( $user_intent, $pass_intent ) as $staged ) {
+                    if ( false === $updated ) {
+                        MainWP_Credential_Storage::rollback_credential_intent( $staged );
+                    } else {
+                        MainWP_Credential_Storage::commit_credential_intent( $staged );
+                    }
+                }
                 $this->wpdb->update(
                     $this->table_name( 'wp_settings_backup' ),
                     array( 'archiveFormat' => $archiveFormat ),
                     array( 'wpid' => $websiteid )
                 );
 
-                if ( get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+                if ( MainWP_Backup_Settings::is_native_backups_enabled() ) {
                     $this->wpdb->update(
                         $this->table_name( 'wp' ),
                         array(
@@ -3801,11 +3918,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $view_selects = ',' . $opts_view['selects'];
             $view_joins   = $opts_view['joins'];
         }
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- internal fragments: tables esc_sql'd, option joins built with sanitized aliases and escaped names, thresholds are literals.
         return $this->wpdb->get_results( // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- $option_view is a validated SQL subquery
             "SELECT wp.*,wp_sync.* {$view_selects} FROM {$wp_table} wp JOIN {$wp_sync_table} wp_sync ON wp.id = wp_sync.wpid {$view_joins} WHERE wp.disable_health_check <> 1 AND wp.offline_check_result = 1 AND ( {$where_global_threshold} OR{$where_site_threshold} ) AND wp_sync.health_site_noticed = 0 " . // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table names are esc_sql'd, the view fragments come from get_wp_options_join(), which allowlists option names, and both threshold fragments are literals picked above.
             $where . ' GROUP BY wp.id ',
             OBJECT
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
 
     /**
@@ -3828,12 +3947,14 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $view_joins   = $opts_view['joins'];
         }
 
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- internal fragments: table esc_sql'd, option joins built with sanitized aliases and escaped names.
         // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- is a validated SQL subquery.
         return $this->wpdb->get_results(
             "SELECT wp.*{$view_selects} FROM {$wp_table} wp {$view_joins}" . ' WHERE wp.suspended = 0 AND wp.http_code_noticed = 0  AND wp.offline_check_result = -1 ' . // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd; the view fragments come from get_wp_options_join(), which allowlists option names.
             $where . ' GROUP BY wp.id ',
             OBJECT
         );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
 
     /**
@@ -4283,7 +4404,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function is_existed_enabled_rest_key() {
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
-        $enabled    = $this->wpdb->get_row( "SELECT * FROM {$table_name} WHERE enabled = 1 LIMIT 1" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, no user input.
+        $enabled = $this->wpdb->get_row( "SELECT * FROM {$table_name} WHERE enabled = 1 LIMIT 1" );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         return $enabled ? true : false;
     }
 
@@ -4296,7 +4419,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_rest_api_key_by( $id ) {
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
-        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM {$table_name} WHERE key_id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
+        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT * FROM {$table_name} WHERE key_id = %d", $id ) );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
 
     /**
@@ -4309,7 +4434,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     public function remove_rest_api_key( $id ) {
         $key        = $this->get_rest_api_key_by( $id );
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
-        $deleted    = $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE key_id = %d", $id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
+        $deleted = $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE key_id = %d", $id ) );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         if ( $key ) {
             \MainWP_REST_Authentication::delete_api_key_cache( $key->consumer_key );
         }
@@ -4320,15 +4447,21 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      * Delete a user's REST API keys and return their stored consumer keys.
      *
      * @param int         $user_id    Owner ID.
-     * @param string|null $table_name Key table. Defaults to MainWP's captured table.
+     * @param string|null $table_name MainWP's api_keys table or null; other tables are refused.
      * @return array Removed key rows containing consumer_key.
      */
     public function remove_rest_api_keys_by_user( $user_id, $table_name = null ) {
-        $table_name = esc_sql( null === $table_name ? $this->table_name( 'api_keys' ) : $table_name );
-        // nosec - $table_name is MainWP's own api_keys table name, never request input.
-        $rows = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT consumer_key FROM {$table_name} WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
-        // nosec - $table_name is MainWP's own api_keys table name, never request input.
-        $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE user_id = %d", $user_id ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        $internal_table = $this->table_name( 'api_keys' );
+        if ( null !== $table_name && $internal_table !== $table_name ) {
+            return array();
+        }
+        $table_name = esc_sql( $internal_table );
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
+        // nosemgrep: AIK_tainted-sql-string -- Only MainWP's internal api_keys table is allowed, and user_id binds via %d.
+        $rows = $this->wpdb->get_results( $this->wpdb->prepare( "SELECT consumer_key FROM {$table_name} WHERE user_id = %d", $user_id ) );
+        // nosemgrep: AIK_tainted-sql-string -- Only MainWP's internal api_keys table is allowed, and user_id binds via %d.
+        $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM {$table_name} WHERE user_id = %d", $user_id ) );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         return $rows;
     }
 
@@ -4339,7 +4472,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_rest_api_keys() {
         $table_name = esc_sql( $this->table_name( 'api_keys' ) );
-        return $this->wpdb->get_results( "SELECT * FROM {$table_name} ORDER BY key_id DESC" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, no user input.
+        return $this->wpdb->get_results( "SELECT * FROM {$table_name} ORDER BY key_id DESC" );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
 
 
@@ -4411,7 +4546,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function get_regular_process_by_item_id_type_slug( $item_id, $type, $process_slug ) {
         $table_name = esc_sql( $this->table_name( 'schedule_processes' ) );
-        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT pr.* FROM {$table_name} pr WHERE pr.item_id = %d AND pr.type = %s AND pr.process_slug = %s", $item_id, $type, $process_slug ) ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table name is esc_sql'd.
+        // phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name escaped via esc_sql, values prepared.
+        return $this->wpdb->get_row( $this->wpdb->prepare( "SELECT pr.* FROM {$table_name} pr WHERE pr.item_id = %d AND pr.type = %s AND pr.process_slug = %s", $item_id, $type, $process_slug ) );
+        // phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
     }
 
     /**
@@ -4473,6 +4610,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             $this->table_name( 'lookup_item_objects' ),
             $this->table_name( 'wp_backup_progress' ),
             $this->table_name( 'wp_backup' ),
+            $this->table_name( 'wp_backup_snapshot' ),
+            $this->table_name( 'wp_backup_storage' ),
+            $this->table_name( 'wp_backup_upload_job' ),
+            $this->table_name( 'wp_backup_restore_job' ),
             $this->table_name( 'api_keys' ),
             $this->table_name( 'action_log' ),
             $this->table_name( 'request_log' ),

@@ -259,7 +259,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         if ( ! empty( $mainwpUseExternalPrimaryBackupsMethod ) ) {
             unset( $site_pages['ManageSitesBackups'] );
-        } elseif ( ! get_option( 'mainwp_enableLegacyBackupFeature' ) ) {
+        } elseif ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             if ( isset( $site_pages['ManageSitesBackups'] ) ) {
                 unset( $site_pages['ManageSitesBackups'] );
             }
@@ -1501,7 +1501,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                 MainWP_Manage_Sites::render_email_settings( $website );
 
-                MainWP_Manage_Backups::render_individual_settings( $website );
+                MainWP_Backup_Settings_View::render_individual_settings( $website );
 
                 do_action_deprecated( 'mainwp-manage-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
                 do_action_deprecated( 'mainwp-extension-sites-edit', array( $website ), '4.0.7.2', 'mainwp_manage_sites_edit' ); // @deprecated Use 'mainwp_manage_sites_edit' instead. NOSONAR - not IP.
@@ -2527,7 +2527,13 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         MainWP_DB::instance()->update_website_option( $obj_site, 'cust_site_icon_info', $icon_info );
                     }
 
-                    if ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
+                    // add_website() returns false when the row or its credentials cannot be saved; callers read an empty $error as success.
+                    if ( ! $id ) {
+                        $error = esc_html__( 'The site could not be saved to the Dashboard. Please try again.', 'mainwp' );
+                        // Both Add Site screens show failure_ux in place of the error, and the handler would otherwise
+                        // fill it with HTTP diagnostics for a handshake that succeeded.
+                        $output['failure_ux'] = '<p>' . $error . '</p>';
+                    } elseif ( isset( $params['qsw_page'] ) && $params['qsw_page'] ) {
                         set_transient( 'mainwp_transient_just_connected_site_id', $id, HOUR_IN_SECONDS );
                         /* translators: 1: Opening div tag, 2: Site name wrapped in strong tag, 3: Closing div tag, 4: Continue button anchor tag. */
                         $message = sprintf( esc_html__( '%4$s%1$sCongratulations you have connected %2$s.%3$s After finishing the Quick Setup Wizard, you can add additional sites from the Add New Sites page. Proceeding to the next step in 3 seconds...', 'mainwp' ), '<div class="ui header">', '<strong>' . esc_html( $params['name'] ) . '</strong>', '</div>', '<a href="admin.php?page=mainwp-setup&step=monitoring" class="ui mini basic green right floated button">Continue</a>' );

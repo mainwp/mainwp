@@ -1,0 +1,180 @@
+{
+    "task_id": "<task_id>",
+    "phase": "completed",
+    "type": "incremental",
+    "sub_state": {
+        "params": {
+            "ext": "tar",
+            "emit_manifest": true,
+            "parent_manifest_file": "<parent_manifest_file>"
+        },
+        "db_prefix": "<db_prefix>",
+        "db_tier": 1,
+        "tier1_started": 1,
+        "woo_meta": {
+            "has_wc_orders": false,
+            "woocommerce_db_version": ""
+        },
+        "walk_done": true,
+        "manifest": {
+            "sha256": "<sha256>",
+            "file": "files.list",
+            "size": "<size>",
+            "total_files": 4,
+            "total_bytes": "<size>"
+        },
+        "diff_done": true,
+        "changes_count": 3,
+        "tombstones_count": 1,
+        "pack_cursor": {
+            "line": 3,
+            "component": "",
+            "part_index": 0,
+            "part_entry_count": 0,
+            "part_byte_count": 0,
+            "part_start_line": 2,
+            "next_index": {
+                "core": 2
+            }
+        },
+        "completed_parts": [
+            {
+                "file": "<core-part>",
+                "size": "<size>",
+                "entries": 1,
+                "index": 1
+            },
+            {
+                "file": "<plugins-part>",
+                "size": "<size>",
+                "entries": 1,
+                "index": 1
+            }
+        ],
+        "artifact": {
+            "file": "files.list",
+            "size": "<size>",
+            "sha256": "<sha256>"
+        },
+        "artifacts": [
+            {
+                "file": "files.list",
+                "size": "<size>",
+                "role": "manifest",
+                "sha256": "<sha256>",
+                "walk": {
+                    "excludes": [],
+                    "excludenonwp": 0,
+                    "excludezip": 0,
+                    "skipped_count": 1,
+                    "skipped_paths": [
+                        "changed.php"
+                    ],
+                    "skipped_by_reason": {
+                        "link": 1
+                    },
+                    "unarchived": [
+                        "changed.php"
+                    ]
+                }
+            },
+            {
+                "file": "tombstones.list",
+                "size": "<size>",
+                "role": "tombstones",
+                "sha256": "<sha256>"
+            },
+            {
+                "file": "<archive>",
+                "size": "<size>",
+                "role": "db",
+                "sha256": "<sha256>"
+            },
+            {
+                "file": "<core-part>",
+                "size": "<size>",
+                "role": "part",
+                "sha256": "<sha256>"
+            },
+            {
+                "file": "<plugins-part>",
+                "size": "<size>",
+                "role": "part",
+                "sha256": "<sha256>"
+            }
+        ],
+        "upload_accepted": true,
+        "submit_accepted": true,
+        "content_status": "partial",
+        "progress": {
+            "current_file": "files.list",
+            "bytes_done": "<size>",
+            "bytes_total": "<size>"
+        }
+    },
+    "started_at": "<started_at>",
+    "last_progress_at": "<last_progress_at>",
+    "max_wall_clock_at": "<max_wall_clock_at>",
+    "resume_count": 0,
+    "max_resumes": 6,
+    "file": "files.list",
+    "size": "<size>",
+    "content_status": "partial",
+    "progress": {
+        "current_file": "files.list",
+        "bytes_done": "<size>",
+        "bytes_total": "<size>"
+    },
+    "sha256": "<sha256>",
+    "artifacts": [
+        {
+            "file": "files.list",
+            "size": "<size>",
+            "role": "manifest",
+            "sha256": "<sha256>",
+            "walk": {
+                "excludes": [],
+                "excludenonwp": 0,
+                "excludezip": 0,
+                "skipped_count": 1,
+                "skipped_paths": [
+                    "changed.php"
+                ],
+                "skipped_by_reason": {
+                    "link": 1
+                },
+                "unarchived": [
+                    "changed.php"
+                ]
+            }
+        },
+        {
+            "file": "tombstones.list",
+            "size": "<size>",
+            "role": "tombstones",
+            "sha256": "<sha256>"
+        },
+        {
+            "file": "<archive>",
+            "size": "<size>",
+            "role": "db",
+            "sha256": "<sha256>"
+        },
+        {
+            "file": "<core-part>",
+            "size": "<size>",
+            "role": "part",
+            "sha256": "<sha256>"
+        },
+        {
+            "file": "<plugins-part>",
+            "size": "<size>",
+            "role": "part",
+            "sha256": "<sha256>"
+        }
+    ],
+    "woo": {
+        "has_wc_orders": false,
+        "woocommerce_db_version": ""
+    }
+}

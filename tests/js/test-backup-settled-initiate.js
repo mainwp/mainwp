@@ -12,17 +12,23 @@ assert.ok( request >= 0 && start > request && end > start );
 function callback() {
     const calls = [];
     const context = {
-        siteId: 7, currentSite: 7, backupSinceTs: 0, cancelGen: 0, backupCancelGen: 0,
+        siteId: 7, currentSite: 7, backupSinceTs: 0, cancelGen: 0, backupCancelGen: {}, backupPendingStarts: {}, backupElapsedTimer: 99,
         stopBackupTimers: () => calls.push( 'stop' ),
         setBackupStatus: ( message, error ) => calls.push( [ message, error ] ),
         reenableBackupBtn: () => calls.push( 'enable' ),
         showCancelBackup: visible => calls.push( [ 'cancel', visible ] ),
         loadSnapshots: site => calls.push( [ 'load', site ] ),
         cancelApplies: () => false,
+        setBackupFollowControls: () => calls.push( 'follow' ),
         pollBackup: () => calls.push( 'poll' ),
         window: { setTimeout: ( fn, delay ) => { calls.push( [ 'timer', delay ] ); return 99; } }
     };
     vm.createContext( context );
+    const schedule = source.indexOf( 'function scheduleBackupPoll(' );
+    context.backupFollowGen = 0;
+    context.backupPollTimer = null;
+    context.window.clearTimeout = () => {};
+    vm.runInContext( source.slice( schedule, source.indexOf( '\n            }', schedule ) + '\n            }'.length ), context );
     vm.runInContext( 'var initiate = ' + source.slice( start, end ) + '};', context );
     return { context, calls };
 }
@@ -38,6 +44,6 @@ test( 'settled initiate displays the server message and never polls', () => {
 test( 'ordinary initiate keeps polling the run handle', () => {
     const { context, calls } = callback();
     context.initiate( { started: 123, status: 'running' } );
-    assert.deepEqual( calls, [ [ 'timer', 1500 ] ] );
+    assert.deepEqual( calls, [ 'follow', [ 'timer', 1500 ] ] );
     assert.equal( context.backupSinceTs, 123 );
 } );

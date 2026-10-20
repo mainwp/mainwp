@@ -42,6 +42,7 @@ function harness() {
             show() { state.visible = true; return this; },
             hide() { state.visible = false; return this; },
             toggle( value ) { state.visible = value; return this; },
+            is() { return state.visible; },
             attr() { return this; },
             on( event, callback ) { handlers.set( selector + ':' + event, callback ); return this; }
         };
@@ -144,6 +145,37 @@ test( 'Roll Back hides Visit site from the completed restore before its request 
     assert.equal( h.requests.at( -1 ).data.action, 'mainwp_restore_rollback' );
     assert.equal( h.context.$( '#mainwp-restore-visit-site-wrap' ).state.visible, false );
 } );
+
+for ( const outcome of [ 'refused', 'accepted', 'unanswered', 'transport' ] ) {
+    test( 'AR3-2 Roll Back ' + outcome + ' reconciles Visit site visibility', () => {
+        const h = harness();
+        const start = source.indexOf( 'function startRollback(' );
+        vm.runInContext( phpToJs( source.slice( start, source.indexOf( '\n            }', start ) + '\n            }'.length ) ), h.context );
+        const base = h.context.$;
+        h.context.$ = selector => Object.assign( base( selector ), { prop() { return this; } } );
+        h.context.$.post = ( url, data, success ) => {
+            const request = { data, success }; h.requests.push( request );
+            return { fail( fn ) { request.fail = fn; return this; }, always() { return this; } };
+        };
+        h.context.currentSiteUrl = 'https://example.com';
+        h.context.showProgress( { status: 'completed' } );
+        const visit = h.context.$( '#mainwp-restore-visit-site-wrap' ).state;
+        assert.equal( visit.visible, true );
+        h.context.startRollback( 123 );
+        assert.equal( visit.visible, false );
+        const request = h.requests.at( -1 );
+        if ( outcome === 'transport' ) request.fail();
+        else request.success( outcome === 'refused' ? { error: 'Disconnected', retryable: true } : outcome === 'accepted' ? { job_id: 456 } : {} );
+        assert.equal( visit.visible, outcome === 'refused' );
+        if ( outcome === 'accepted' ) {
+            assert.equal( h.context.currentJob, 456 );
+            h.requests.at( -1 ).success( { status: 'running', is_rollback: true } );
+            assert.equal( visit.visible, false );
+            h.context.showProgress( { status: 'completed', is_rollback: true } );
+            assert.equal( visit.visible, true );
+        }
+    } );
+}
 
 test( 'cache advisory has a small message container hidden on initial render', () => {
     assert.match( source, /class="ui small message" id="mainwp-restore-cache-note" style="display:none;"/ );

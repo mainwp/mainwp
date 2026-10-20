@@ -456,7 +456,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var restorePollRetries = 0;
             var backupPollTimer = null;
             var backupFollowGen = 0;
-            var backupCancelGen = 0;
+            var backupCancelGen = {};
+            var backupPendingStarts = {};
             var backupElapsedTimer = null;
             var backupStartTime = null;
             var backupProgressCache = null;
@@ -587,6 +588,19 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     window.clearInterval( backupElapsedTimer );
                     backupElapsedTimer = null;
                 }
+            }
+
+            function scheduleBackupPoll( siteId, sinceTs, delay ) {
+                window.clearTimeout( backupPollTimer );
+                // Replacing a chain also supersedes its in-flight reply. A
+                // lost timer handle must not acquire a new generation on fire.
+                var gen = ++backupFollowGen;
+                backupPollTimer = window.setTimeout( function () {
+                    if ( siteId !== currentSite || gen !== backupFollowGen ) {
+                        return;
+                    }
+                    pollBackup( siteId, sinceTs );
+                }, delay );
             }
 
             var snapshotsPlaceholders = {
@@ -1001,6 +1015,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // backup, a cleanup - comes through here, so the table is only ever
             // refilled through the DataTables API.
             function loadSnapshots( siteId ) {
+                var followGen = backupFollowGen;
                 if ( currentSite !== siteId ) {
                     ++snapshotDeleteRequest;
                     snapshotDeletePreview = null;
@@ -1086,8 +1101,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         }
                         startJobFollow( response.active_restore_job_id );
                     }
-                    if ( response.manual_backup_running && ! backupPollTimer ) {
-                        resumeBackupFollow();
+                    if ( response.manual_backup_running || Object.prototype.hasOwnProperty.call( backupPendingStarts, siteId ) ) {
+                        // A list requested before an end cannot restart that follow.
+                        if ( ! backupPollTimer && followGen === backupFollowGen ) {
+                            var pendingSince = backupPendingStarts[ siteId ] || 0;
+                            resumeBackupFollow( pendingSince );
+                        }
+                    }
+                    // The list may predate a kickoff that is already being followed.
+                    if ( backupPollTimer ) {
+                        setBackupFollowControls();
                     }
                 }, 'json' ).fail( function () {
                     // A transport error skips the success callback: without this
@@ -1611,19 +1634,25 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( '#mainwp-restore-rollback-btn' ).prop( 'disabled', true ).hide();
                 $( '.mainwp-restore-failed-job' ).prop( 'disabled', true );
                 $( '#mainwp-restore-result-message' ).hide();
+                var visitSiteWasVisible = $( '#mainwp-restore-visit-site-wrap' ).is( ':visible' );
                 $( '#mainwp-restore-visit-site-wrap' ).hide();
-                function rollbackRefused( message, retryable ) {
+                function rollbackRefused( message, retryable, unanswered ) {
                     $( '#mainwp-restore-spinner' ).hide();
                     $( '#mainwp-restore-status-text' ).text( '' );
                     $( '#mainwp-restore-rollback-btn' ).toggle( retryable === true );
                     $( '#mainwp-restore-result-message' ).removeClass( 'green blue' ).addClass( 'red' ).text( message ).show();
+                    // A definite refusal leaves the completed restore in place.
+                    // An unanswered request may have opened a rollback instead.
+                    if ( ! unanswered ) {
+                        $( '#mainwp-restore-visit-site-wrap' ).toggle( visitSiteWasVisible );
+                    }
                     if ( retryable !== true ) {
                         currentJob = 0;
                     }
                     loadSnapshots( currentSite );
                 }
                 function rollbackResponseLost() {
-                    rollbackRefused( '<?php echo esc_js( __( 'The rollback request got no answer. Reloading the list to show where it stands.', 'mainwp' ) ); ?>', false );
+                    rollbackRefused( '<?php echo esc_js( __( 'The rollback request got no answer. Reloading the list to show where it stands.', 'mainwp' ) ); ?>', false, true );
                 }
                 $.post( ajaxurl, { action: 'mainwp_restore_rollback', security: nonces.rollback, job_id: jobId }, function ( response ) {
                     if ( response && response.error ) {
@@ -1689,17 +1718,20 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 return /in progress|try again|already/i.test( msg );
             }
 
-            // Resume following an on-demand run this tab did not start (a
-            // reload, or a site switch onto a site mid-backup). No `since`
-            // is available for a resumed view, so the poll judges the
-            // current run by its own last_run - exactly what a viewer who
-            // did not click wants to see.
-            function resumeBackupFollow() {
+            function setBackupFollowControls() {
                 setSnapshotDeleteBusy( true );
                 $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', true ).addClass( 'disabled' );
                 showCancelBackup( true );
+            }
+
+            // Resume following an on-demand run this tab did not start (a
+            // reload, or a site switch onto a site mid-backup). A retained
+            // kickoff keeps its since; other resumed views use the current run.
+            function resumeBackupFollow( sinceTs ) {
+                setBackupFollowControls();
                 stopBackupTimers();
-                backupSinceTs = 0;
+                backupSinceTs = sinceTs || 0;
+                backupPollRetries = 0;
                 backupStartTime = Date.now();
                 backupLastPhase = null;
                 backupPhaseStartTime = null;
@@ -1707,7 +1739,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 backupProgressCache = { label: '<?php echo esc_js( esc_html__( 'Backing up...', 'mainwp' ) ); ?>', percent: null, eta: '' };
                 backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
                 var siteId = currentSite;
-                backupPollTimer = window.setTimeout( function () { pollBackup( siteId, 0 ); }, 100 );
+                scheduleBackupPoll( siteId, backupSinceTs, 100 );
             }
 
             // The whole poll chain is keyed to the site and since captured
@@ -1727,6 +1759,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         return; // Another site is shown, or this follow ended (a cancel reply landed first): the reply is stale.
                     }
                     backupPollRetries = 0; // A response arrived: clear the transient-failure count.
+                    if ( 'queued' !== data.status ) {
+                        delete backupPendingStarts[ siteId ];
+                    }
                     if ( data.error ) {
                         stopBackupTimers();
                         setBackupStatus( data.error, true );
@@ -1783,7 +1818,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
                     backupProgressCache = { label: label, percent: pct, eta: eta };
                     renderBackupStatus();
-                    backupPollTimer = window.setTimeout( function () { pollBackup( siteId, sinceTs ); }, 5000 );
+                    scheduleBackupPoll( siteId, sinceTs, 5000 );
                 }, 'json' ).fail( function () {
                     if ( siteId !== currentSite || gen !== backupFollowGen ) {
                         return; // A stale transport failure for a site no longer shown, or for a follow that ended.
@@ -1795,10 +1830,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     // the timer ticking and the button stuck.
                     backupPollRetries++;
                     if ( backupPollRetries <= 3 ) {
-                        backupPollTimer = window.setTimeout( function () { pollBackup( siteId, sinceTs ); }, 3000 );
+                        scheduleBackupPoll( siteId, sinceTs, 3000 );
                         return;
                     }
                     stopBackupTimers();
+                    delete backupPendingStarts[ siteId ];
                     setBackupStatus( '<?php echo esc_js( esc_html__( 'Lost the connection while backing up. The backup may still be running; reload to check.', 'mainwp' ) ); ?>', true );
                     reenableBackupBtn();
                     loadSnapshots( siteId );
@@ -1813,17 +1849,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // click spawns is keyed to it, so a selection change can
                 // never redirect this run's follow-up at another site.
                 var siteId = currentSite;
-                setSnapshotDeleteBusy( true );
-                $( this ).prop( 'disabled', true ).addClass( 'disabled' );
-                showCancelBackup( true );
+                setBackupFollowControls();
                 stopBackupTimers();
-                // Cancel is offered before the kickoff reply arrives. A
-                // cancelled reply that lands first ends this follow, so the
-                // kickoff reply must not restart it or repaint the status.
-                // Only a cancel counts here, not a site switch: a queued
-                // kickoff opens its run from the polls it schedules, so
-                // dropping it after a switch away and back would lose it.
-                var cancelGen = backupCancelGen;
+                // Only this site's cancel can discard its kickoff. A switch
+                // or another site's cancel must preserve a queued start.
+                var cancelGen = backupCancelGen[ siteId ] || 0;
+                delete backupPendingStarts[ siteId ];
+                backupPollRetries = 0;
                 backupStartTime = Date.now();
                 backupLastPhase = null;
                 backupPhaseStartTime = null;
@@ -1832,8 +1864,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
                 setBackupStatus( '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', false );
                 $.post( ajaxurl, { action: 'mainwp_native_backup_initiate', security: nonces.nativeBackupInitiate, site_id: siteId }, function ( response ) {
-                    if ( siteId !== currentSite || cancelGen !== backupCancelGen ) {
-                        return; // The page moved on or the backup was cancelled.
+                    if ( cancelGen !== ( backupCancelGen[ siteId ] || 0 ) ) {
+                        return;
+                    }
+                    // Keep the intent through switches until a progress reply
+                    // confirms the run opened, or this site's cancel ends it.
+                    if ( ! response.error && ! response.settled ) {
+                        backupPendingStarts[ siteId ] = response.started || 0;
+                    }
+                    if ( siteId !== currentSite ) {
+                        return;
                     }
                     if ( response.error ) {
                         stopBackupTimers();
@@ -1853,11 +1893,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         loadSnapshots( siteId );
                         return;
                     }
+                    // A switch away and back can reset controls before this reply.
+                    setBackupFollowControls();
                     var sinceTs = response.started || 0;
                     backupSinceTs = sinceTs;
-                    backupPollTimer = window.setTimeout( function () { pollBackup( siteId, sinceTs ); }, 1500 );
+                    if ( ! backupElapsedTimer ) {
+                        backupStartTime = Date.now();
+                        backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
+                    }
+                    scheduleBackupPoll( siteId, sinceTs, 1500 );
                 }, 'json' ).fail( function () {
-                    if ( siteId !== currentSite || cancelGen !== backupCancelGen ) {
+                    if ( siteId !== currentSite || cancelGen !== ( backupCancelGen[ siteId ] || 0 ) ) {
                         return;
                     }
                     // The kickoff request never reached the handler, so nothing
@@ -1883,6 +1929,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 $( this ).prop( 'disabled', true ).addClass( 'disabled' );
                 setBackupStatus( '<?php echo esc_js( esc_html__( 'Cancelling backup...', 'mainwp' ) ); ?>', false );
                 $.post( ajaxurl, { action: 'mainwp_native_backup_cancel', security: nonces.nativeBackupCancel, site_id: siteId }, function ( response ) {
+                    var cancelResult = window.MainWPBackupCancelResult.describeCancelResult( response.result );
+                    if ( ! response.error && ! cancelResult.keepPolling ) {
+                        // The request still cancels its own site while away;
+                        // only painting and the visible follow depend on selection.
+                        backupCancelGen[ siteId ] = ( backupCancelGen[ siteId ] || 0 ) + 1;
+                        delete backupPendingStarts[ siteId ];
+                    }
                     if ( siteId !== currentSite ) {
                         return;
                     }
@@ -1891,21 +1944,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                         return;
                     }
-                    var cancelResult = window.MainWPBackupCancelResult.describeCancelResult( response.result );
                     setBackupStatus( cancelResult.message, false );
                     if ( 'cancelled' === response.result ) {
-                        backupCancelGen++;
                         stopBackupTimers();
                         showCancelBackup( false );
                         reenableBackupBtn();
                         loadSnapshots( siteId );
                     } else {
                         if ( 'already_finished' === response.result || 'already_failed' === response.result ) {
-                            window.clearTimeout( backupPollTimer );
-                            backupPollTimer = window.setTimeout( function () { pollBackup( siteId, backupSinceTs ); }, 100 );
+                            scheduleBackupPoll( siteId, backupSinceTs, 100 );
                         }
                         if ( ! cancelResult.keepPolling ) {
-                            backupCancelGen++;
                             stopBackupTimers();
                         }
                         $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );

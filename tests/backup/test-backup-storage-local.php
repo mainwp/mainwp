@@ -158,6 +158,47 @@ class MainWP_Backup_Storage_Local_Test extends \WP_UnitTestCase {
 		$this->assertTrue( $provider->delete_object( 'a/b.bin' ), 'Deleting a missing object must succeed.' );
 	}
 
+	/** Shared site folders must survive cleanup of a snapshot's private folders. */
+	public function test_delete_removes_empty_snapshot_directories() {
+		$provider = $this->make_provider();
+		$base     = $this->temp_dirs[0];
+		$keys     = array( '4/42/chunks/a.bin', '4/42/chunks/b.bin', '4/42/files/archive.zip', '4/42/manifest.json' );
+		foreach ( $keys as $key ) {
+			$this->assertTrue( $provider->put_object( $key, 'payload' ) );
+		}
+		$this->assertTrue( $provider->put_object( '4/43/chunks/sibling.bin', 'keep' ) );
+		foreach ( $keys as $key ) {
+			$this->assertTrue( $provider->delete_object( $key ) );
+		}
+		$this->assertDirectoryDoesNotExist( $base . '/4/42' );
+		$this->assertDirectoryExists( $base . '/4' );
+		$this->assertSame( 'keep', file_get_contents( $base . '/4/43/chunks/sibling.bin' ) );
+		$this->assertTrue( $provider->delete_object( '4/43/chunks/sibling.bin' ) );
+		$this->assertDirectoryDoesNotExist( $base . '/4/43' );
+		$this->assertDirectoryExists( $base . '/4' );
+		$this->assertDirectoryExists( $base );
+	}
+
+	/** A remaining object must not turn a successful unlink into a retry. */
+	public function test_delete_keeps_nonempty_directory_and_succeeds() {
+		$provider = $this->make_provider();
+		$this->assertTrue( $provider->put_object( '4/42/chunks/a.bin', 'remove' ) );
+		$this->assertTrue( $provider->put_object( '4/42/chunks/b.bin', 'keep' ) );
+		$this->assertTrue( $provider->delete_object( '4/42/chunks/a.bin' ) );
+		$this->assertFileDoesNotExist( $this->temp_dirs[0] . '/4/42/chunks/a.bin' );
+		$this->assertDirectoryExists( $this->temp_dirs[0] . '/4/42/chunks' );
+		$this->assertSame( 'keep', file_get_contents( $this->temp_dirs[0] . '/4/42/chunks/b.bin' ) );
+	}
+
+	/** Root-level connection probes must never retire the destination itself. */
+	public function test_delete_root_probe_keeps_base_path() {
+		$provider = $this->make_provider();
+		$this->assertTrue( $provider->put_object( '.mainwp-probe-test.txt', 'probe' ) );
+		$this->assertTrue( $provider->delete_object( '.mainwp-probe-test.txt' ) );
+		$this->assertDirectoryExists( $this->temp_dirs[0] );
+		$this->assertFileDoesNotExist( $this->temp_dirs[0] . '/.mainwp-probe-test.txt' );
+	}
+
 	/**
 	 * Prefix listing returns matching keys with sizes.
 	 *

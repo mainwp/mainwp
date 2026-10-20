@@ -1204,6 +1204,127 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), array( 'id' => $destination ) );
 		}
 	}
+	/**
+	 * Partial uploads can leave objects just as complete Local Path uploads do.
+	 *
+	 * @dataProvider task_delete_copy_cases
+	 * @param string $provider Destination provider.
+	 * @param string $status Upload status.
+	 * @param int    $delete_cloud Whether copies should be deleted.
+	 */
+	public function test_delete_cloud_preview_matches_confirm( $provider, $status, $delete_cloud ) {
+		global $wpdb;
+		$db = MainWP_DB::instance();
+		$this->assertNotFalse(
+			$wpdb->insert(
+				$db->get_table_name( 'wp_backup_snapshot' ),
+				array(
+					'site_id'  => $this->site_id,
+					'task_id'  => $this->task_id,
+					'type'     => 'full',
+					'status'   => 'complete',
+					'created'  => time(),
+					'archives' => '[]',
+				)
+			)
+		);
+		$snapshot_id  = (int) $wpdb->insert_id;
+		$destinations = array();
+		$expected     = array();
+		try {
+			foreach ( array( array( $provider, $status ), array( 's3', 'complete' ) ) as $case ) {
+				$this->assertNotFalse(
+					$wpdb->insert(
+						$db->get_table_name( 'wp_backup_storage' ),
+						array(
+							'name'     => 'Copy fixture',
+							'provider' => $case[0],
+							'settings' => '',
+						)
+					)
+				);
+				$destination    = (int) $wpdb->insert_id;
+				$destinations[] = $destination;
+				$this->assertNotFalse(
+					$wpdb->insert(
+						$db->get_table_name( 'wp_backup_upload_job' ),
+						array(
+							'snapshot_id'    => $snapshot_id,
+							'destination_id' => $destination,
+							'provider'       => $case[0],
+							'status'         => $case[1],
+							'checkpoint'     => '',
+							'last_error'     => '',
+						)
+					)
+				);
+				if ( $delete_cloud ) {
+					$expected[] = array(
+						'snapshot_id'      => $snapshot_id,
+						'destination_id'   => $destination,
+						'destination_name' => 'Copy fixture',
+					);
+				}
+			}
+			MainWP_DB_Backup::instance()->update_backup_task_with_values( $this->task_id, array( 'delete_cloud_copies' => $delete_cloud ) );
+			$preview = $this->execute(
+				'delete-backup-task',
+				array(
+					'task_id' => $this->task_id,
+					'dry_run' => true,
+				)
+			);
+			$this->assert_output( 'delete-backup-task', $preview );
+			$this->assertSame( $expected, $preview['would_affect']['cloud_copies'] );
+			$purge_result = null;
+			$capture      = static function ( $task_id, $result ) use ( &$purge_result ) {
+				$purge_result = $result;
+			};
+			add_action( 'mainwp_backup_task_snapshots_purged', $capture, 10, 2 );
+			try {
+				$output = $this->execute(
+					'delete-backup-task',
+					array(
+						'task_id' => $this->task_id,
+						'confirm' => true,
+					)
+				);
+			} finally {
+				remove_action( 'mainwp_backup_task_snapshots_purged', $capture );
+			}
+			$this->assert_output( 'delete-backup-task', $output );
+			$this->assertTrue( $output['snapshots_deleted'] );
+			$this->assertIsArray( $purge_result );
+			foreach ( $preview['would_affect']['snapshots'] as $snapshot ) {
+				$for_snapshot = static function ( $copy ) use ( $snapshot ) {
+					return $copy['snapshot_id'] === $snapshot['id'];
+				};
+				$this->assertSame(
+					array_column( array_filter( $preview['would_affect']['cloud_copies'], $for_snapshot ), 'destination_id' ),
+					array_column( array_filter( $purge_result['cloud_deletes_queued'], $for_snapshot ), 'destination_id' )
+				);
+			}
+		} finally {
+			$wpdb->delete( $db->get_table_name( 'wp_backup_upload_job' ), array( 'snapshot_id' => $snapshot_id ) );
+			foreach ( $destinations as $destination ) {
+				$wpdb->delete( $db->get_table_name( 'wp_backup_storage' ), array( 'id' => $destination ) );
+			}
+		}
+	}
+
+	/**
+	 * Delete intent applies equally to every upload provider and terminal state.
+	 *
+	 * @return array Cases.
+	 */
+	public static function task_delete_copy_cases() {
+		return array(
+			'local complete'   => array( 'local', 'complete', 1 ),
+			'failed permanent' => array( 's3', 'failed_permanent', 1 ),
+			'copies retained'  => array( 'local', 'complete', 0 ),
+		);
+	}
+
 	/** Older form tasks can have names beyond the machine-input ceiling. */
 	public function test_delete_preview_preserves_long_stored_task_name() {
 		$name = str_repeat( 'Task', 100 );

@@ -47,6 +47,13 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const RETENTION_DAYS = 14;
 
     /**
+     * Seconds an exported bundle survives (one hour): long enough for a
+     * download in progress. A literal so the class loads without the
+     * WordPress time constants, as the isolated download-stream tests do.
+     */
+    const BUNDLE_TTL_SECONDS = 3600;
+
+    /**
      * Directory size cap in bytes (200MB); the prune deletes oldest-first
      * past it.
      */
@@ -919,6 +926,8 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 return '';
             }
 
+            $this->prune_bundles( $dir );
+
             $event_files = (array) glob( $dir . '*.jsonl' );
             if ( empty( $event_files ) ) {
                 return '';
@@ -1458,6 +1467,21 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
+     * Bundle downloads need a shorter expiry than retained event history.
+     *
+     * @param string $dir Diagnostics directory with trailing slash.
+     * @return void
+     */
+    private function prune_bundles( string $dir ): void {
+        $cutoff = time() - self::BUNDLE_TTL_SECONDS;
+        foreach ( array_merge( (array) glob( $dir . '*.zip' ), (array) glob( $dir . '*.json' ) ) as $file ) {
+            if ( is_file( $file ) && (int) filemtime( $file ) < $cutoff ) {
+                wp_delete_file( $file );
+            }
+        }
+    }
+
+    /**
      * Retention prune: delete diagnostics files past the age limit, then
      * oldest-first until the directory fits the size cap. Runs on the
      * daily backups prune cron.
@@ -1470,6 +1494,8 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             if ( '' === $dir || ! is_dir( $dir ) ) {
                 return;
             }
+
+            $this->prune_bundles( $dir );
 
             /**
              * Filters how many days diagnostics files are kept.
@@ -1490,6 +1516,10 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $total  = 0;
             foreach ( (array) glob( $dir . '*' ) as $file ) {
                 if ( ! is_file( $file ) || in_array( basename( $file ), array( 'index.php', '.htaccess' ), true ) ) {
+                    continue;
+                }
+                // Active bundle downloads remain protected even at the event size cap.
+                if ( in_array( pathinfo( $file, PATHINFO_EXTENSION ), array( 'zip', 'json' ), true ) ) {
                     continue;
                 }
                 $mtime = (int) filemtime( $file );

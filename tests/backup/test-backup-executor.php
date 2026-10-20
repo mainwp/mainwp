@@ -148,6 +148,68 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		);
 	}
 
+	/**
+	 * Content names must not change the archive slot or legacy hook contract.
+	 *
+	 * @dataProvider archive_content_names
+	 * @param string $type Task content type.
+	 * @param string $template Custom filename template.
+	 * @param string $prefix Expected archive prefix.
+	 */
+	public function test_archive_name_matches_task_content( $type, $template, $prefix ) {
+		list( $site_id, $task ) = $this->site_and_task(
+			array(
+				'type'     => $type,
+				'filename' => $template,
+			)
+		);
+		$content                = "PK\x03\x04" . str_repeat( 'x', 4092 );
+		$this->seed_download_ready_progress( $task->id, $site_id, strlen( $content ) );
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file ) use ( $content ) {
+				$this->snapshot_files[] = $file;
+				file_put_contents( $file, $content );
+				return true;
+			},
+			10,
+			3
+		);
+		$postprocessed = array();
+		add_action(
+			'mainwp_postprocess_backup_site',
+			static function ( $file, $what, $subfolder, $regex ) use ( &$postprocessed ) {
+				$postprocessed[] = array( $file, $what, $regex );
+			},
+			10,
+			4
+		);
+		$this->assertNotFalse( MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' ) );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, (int) $task->id );
+		$this->assertNotNull( $snapshot );
+		$this->assertStringStartsWith( $prefix, basename( $snapshot->archives[0]['path'] ) );
+		$this->assertSame( $type, $snapshot->type );
+		$this->assertSame( array( 'full' ), array_column( $snapshot->archives, 'role' ) );
+		$this->assertCount( 1, $postprocessed );
+		$this->assertSame( $snapshot->archives[0]['path'], $postprocessed[0][0] );
+		$this->assertSame( 'full', $postprocessed[0][1] );
+		$this->assertStringStartsWith( $type . '-', $postprocessed[0][2] );
+	}
+
+	/**
+	 * Both default and custom names must describe a files-only archive.
+	 *
+	 * @return array Cases.
+	 */
+	public static function archive_content_names() {
+		return array(
+			'files default'  => array( 'files', '', 'files-' ),
+			'full default'   => array( 'full', '', 'full-' ),
+			'files template' => array( 'files', 'custom-%type%-%url%', 'custom-files-' ),
+		);
+	}
+
 	/** Retries must retain the first reserved path. */
 	public function test_n1_retry_reuses_reserved_path() {
 		list( $site_id, $task ) = $this->site_and_task();

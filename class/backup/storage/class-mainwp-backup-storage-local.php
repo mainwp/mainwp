@@ -134,7 +134,22 @@ class MainWP_Backup_Storage_Local implements MainWP_Backup_Storage_Provider { //
             return true;
         }
 
-        return unlink( $path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- destination delete outside WP uploads helpers.
+        if ( ! unlink( $path ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink -- destination delete outside WP uploads helpers.
+            return false;
+        }
+
+        // The site folder is shared with uploads for other snapshots.
+        $segments = explode( '/', str_replace( '\\', '/', $key ) );
+        $stop     = $this->base_path . DIRECTORY_SEPARATOR . $segments[0];
+        $dir      = dirname( $path );
+        while ( $dir !== $this->base_path && $dir !== $stop ) {
+            if ( ! @rmdir( $dir ) ) { // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- a non-empty directory must not fail the object delete.
+                break;
+            }
+            $dir = dirname( $dir );
+        }
+
+        return true;
     }
 
     /**

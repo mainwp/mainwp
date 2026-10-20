@@ -428,6 +428,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
     public function ajax_storage_get() {
         $this->secure_request( 'mainwp_storage_get' );
         $this->check_permission();
+        $this->check_unrestricted_permission();
         $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified by secure_request.
         die( wp_json_encode( static::destination_for_edit( $id ) ) );
     }

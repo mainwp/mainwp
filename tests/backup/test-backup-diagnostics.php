@@ -2120,6 +2120,67 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFileExists( $big_b, 'The newest file must survive the size-cap prune.' );
 	}
 
+	/** Bundle links expire long before the event retention window. */
+	public function test_prune_expires_bundles_without_expiring_recent_events() {
+		$this->enable_recorder();
+		$stale_zip  = $this->diag_dir . '/stale.zip';
+		$stale_json = $this->diag_dir . '/stale.json';
+		$events     = $this->diag_dir . '/recent.jsonl';
+		$fresh_zip  = $this->diag_dir . '/fresh.zip';
+		$fresh_json = $this->diag_dir . '/fresh.json';
+		$index      = $this->diag_dir . '/index.php';
+		$htaccess   = $this->diag_dir . '/.htaccess';
+		foreach ( array( $stale_zip, $stale_json, $events, $index, $htaccess ) as $file ) {
+			file_put_contents( $file, "{}\n" );
+			touch( $file, time() - 2 * HOUR_IN_SECONDS );
+		}
+		foreach ( array( $fresh_zip, $fresh_json ) as $file ) {
+			file_put_contents( $file, "{}\n" );
+			touch( $file, time() - 60 );
+		}
+		try {
+			MainWP_Backup_Diagnostics::instance()->prune();
+			$this->assertFileDoesNotExist( $stale_zip );
+			$this->assertFileDoesNotExist( $stale_json );
+			foreach ( array( $events, $fresh_zip, $fresh_json, $index, $htaccess ) as $file ) {
+				$this->assertFileExists( $file );
+			}
+		} finally {
+			unlink( $htaccess );
+		}
+	}
+
+	/** Frequent exports must expire unused links without pruning event history. */
+	public function test_export_sweeps_only_expired_bundles() {
+		$this->enable_recorder();
+		$this->set_current_user_as_admin();
+		$stale_zip  = $this->diag_dir . '/stale.zip';
+		$stale_json = $this->diag_dir . '/stale.json';
+		$fresh_zip  = $this->diag_dir . '/fresh.zip';
+		$fresh_json = $this->diag_dir . '/fresh.json';
+		$events     = $this->diag_dir . '/old-events.jsonl';
+		$index      = $this->diag_dir . '/index.php';
+		$htaccess   = $this->diag_dir . '/.htaccess';
+		foreach ( array( $stale_zip, $stale_json, $events, $index, $htaccess ) as $file ) {
+			file_put_contents( $file, "{}\n" );
+			touch( $file, time() - 20 * DAY_IN_SECONDS );
+		}
+		foreach ( array( $fresh_zip, $fresh_json ) as $file ) {
+			file_put_contents( $file, "{}\n" );
+			touch( $file, time() - 60 );
+		}
+		try {
+			$this->assertNotSame( '', MainWP_Backup_Diagnostics::instance()->export_bundle() );
+			$this->assertFileDoesNotExist( $stale_zip );
+			$this->assertFileDoesNotExist( $stale_json );
+			foreach ( array( $events, $fresh_zip, $fresh_json, $index, $htaccess ) as $file ) {
+				$this->assertFileExists( $file );
+			}
+		} finally {
+			unlink( $htaccess );
+		}
+	}
+
 	/**
 	 * Files recorded before diagnostics was disabled still need to expire.
 	 *

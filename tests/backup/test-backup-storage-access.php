@@ -122,17 +122,31 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Restricted readers may still load the edit-form metadata without secrets.
+	 * The edit form is unavailable to site-scoped accounts.
 	 *
 	 * @return void
 	 */
-	public function test_restricted_storage_get_still_works(): void {
+	public function test_restricted_storage_get_refused(): void {
 		foreach ( array( array(), array( 17 ) ) as $scope ) {
 			$data = $this->call_handler( 'mainwp_storage_get', $scope );
-			$this->assertSame( 'Shared destination', $data['response']['name'] );
-			$this->assertArrayNotHasKey( 'password', $data['response']['settings'] );
+			$this->assertSame( array( 'error' => 'Only WordPress administrators can change storage destinations.' ), $data['response'] );
+			$this->assertArrayNotHasKey( 'settings', $data['response'] );
 			$this->assertSame( $data['before'], $data['after'] );
+			$this->assertSame( 0, $data['lookups'] );
 		}
+	}
+
+	/** Unrestricted staff still need non-secret settings to edit a destination. */
+	public function test_unrestricted_storage_get_still_works(): void {
+		$data = $this->call_handler( 'mainwp_storage_get', 'all' );
+		$this->assertSame( array( 'id', 'name', 'provider', 'is_default', 'settings', 'credentials_invalid' ), array_keys( $data['response'] ) );
+		$this->assertSame( 'Shared destination', $data['response']['name'] );
+		$this->assertSame( 'local', $data['response']['provider'] );
+		$this->assertNotEmpty( $data['response']['settings']['base_path'] );
+		foreach ( \MainWP\Dashboard\MainWP_Backup_Storage_Handler::SECRET_FIELDS as $field ) {
+			$this->assertArrayNotHasKey( $field, $data['response']['settings'] );
+		}
+		$this->assertSame( $data['before'], $data['after'] );
 	}
 
 	/** OAuth without the storage right must not redirect or save a notice. */

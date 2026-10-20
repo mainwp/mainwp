@@ -1821,7 +1821,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFileExists( $postprocessed[0][0] );
 		$this->assertSame( 'full', $postprocessed[0][1] );
 		$this->assertSame( 'backups', $postprocessed[0][2] );
-		$this->assertStringStartsWith( 'full-', basename( $postprocessed[0][0] ) );
+		$this->assertStringStartsWith( $type . '-', basename( $postprocessed[0][0] ) );
 		$this->assertNotEmpty( $postprocessed[0][3] );
 		$this->assertSame( $site_id, (int) $postprocessed[0][4]->id );
 		$this->assertSame( 11, (int) $postprocessed[0][5] );

@@ -2563,9 +2563,6 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         continue;
                     }
                     foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $snapshot->id ) as $job ) {
-                        if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE !== $job->status || 'local' === $job->provider ) {
-                            continue;
-                        }
                         $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
                         $cloud[]     = array(
                             'snapshot_id'      => (int) $snapshot->id,

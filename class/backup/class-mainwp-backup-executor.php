@@ -1440,9 +1440,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             if ( $information['full'] ) {
                 $realExt         = MainWP_Backup_File_Manager::get_real_extension( $information['full'] );
                 $what            = 'full';
-                $regexBackupFile = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
+                $name_type       = 'files' === $pTask->type ? 'files' : 'full';
+                $regexBackupFile = $name_type . '-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
                 if ( '' === self::resumable_download_path( $backupTaskProgress->downloadedFULL, (int) $backupTaskProgress->downloadedFULLComplete, (int) $website->id ) ) {
-                    $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $realExt;
+                    $localBackupFile = $dir . $name_type . '-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $realExt;
 
                     if ( null !== $pFilename ) {
                         $filename        = str_replace(
@@ -1458,7 +1459,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                                 $websiteCleanUrl,
                                 $fm_date,
                                 $fm_time,
-                                $what,
+                                $name_type,
                             ),
                             $pFilename
                         );

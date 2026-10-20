@@ -190,12 +190,12 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 			@$dom->loadHTML( $html );
 			$xpath = new \DOMXPath( $dom );
 			foreach ( array( 'edit', 'test', 'make-default', 'delete' ) as $control ) {
-				$this->assertSame( 'all' === $scope ? 1 : 0, $xpath->query( '//*[self::button or self::a][contains(concat(" ", @class, " "), " mainwp-storage-' . $control . ' ")]' )->length, $control );
+				$this->assertSame( 'all' === $scope ? ( 'edit' === $control ? 2 : 1 ) : 0, $xpath->query( '//*[self::button or self::a][contains(concat(" ", @class, " "), " mainwp-storage-' . $control . ' ")]' )->length, $control );
 			}
 			foreach ( array( 'mainwp-storage-form', 'mainwp-storage-add-new' ) as $control ) {
 				$this->assertSame( 'all' === $scope ? 1 : 0, $xpath->query( '//*[@id="' . $control . '"]' )->length );
 			}
-			$notice = $xpath->query( '//*[@id="mainwp-storage-message-zone"]/div[@class="ui info visible message"]' );
+			$notice = $xpath->query( '//*[@id="mainwp-storage-message-zone"]/div[@class="ui blue visible message"]' );
 			$this->assertSame( 'all' === $scope ? 0 : 1, $notice->length );
 			if ( 'all' !== $scope ) {
 				$this->assertSame( 'Only WordPress administrators can add or change storage destinations. Destinations are shared by every site on this Dashboard.', trim( $notice->item( 0 )->textContent ) );

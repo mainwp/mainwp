@@ -782,8 +782,8 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 		foreach ( array( 'mainwp-kbl-content', 'mainwp-kcl-content', 'mainwp-nwl-content' ) as $area ) {
 			$this->assertStringNotContainsString( $area, $output );
 		}
-		$this->assertMatchesRegularExpression( '/id="mainwp-known-backup-locations"[^>]*>\s*<em>This adds known backup locations/', $output );
+		$this->assertMatchesRegularExpression( '/id="mainwp-known-backup-locations"[^>]*>\s*<span class="ui small text">This adds known backup locations/', $output );
 		$this->assertStringContainsString( 'id="excluded_folders_list"', $output );
-		$this->assertStringContainsString( '<div><em class="mainwp-archive-format-note">', $output );
+		$this->assertStringContainsString( '<div><span class="ui small text mainwp-archive-format-note">', $output );
 	}
 }

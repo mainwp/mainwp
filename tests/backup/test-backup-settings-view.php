@@ -46,7 +46,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'Backup Settings', $output );
 		$this->assertStringContainsString( '<div class="sub header">Native backups back up your Child Sites directly from this dashboard.', $output );
 		// Fomantic hides state messages inside .ui.form unless they carry visible.
-		$message = '<div class="ui info visible message">Only WordPress administrators can change backup settings.</div>';
+		$message = '<div class="ui blue message">Only WordPress administrators can change backup settings.</div>';
 		if ( $allowed ) {
 			$this->assertStringNotContainsString( 'Only WordPress administrators', $output );
 			$this->assertStringContainsString( 'mainwp_options_enableNativeBackups', $output );
@@ -668,7 +668,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		ob_start();
 		MainWP_Backup_Settings_View::render_settings();
 		$without = ob_get_clean();
-		$this->assertStringNotContainsString( 'mainwp-backup-diagnostics-export', $without );
+		$this->assertStringNotContainsString( 'id="mainwp-backup-diagnostics-export"', $without );
 
 		update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, '1' );
 

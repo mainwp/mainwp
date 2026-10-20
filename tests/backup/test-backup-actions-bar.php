@@ -15,6 +15,7 @@ use MainWP\Dashboard\MainWP_Backup_Storage_View;
 use MainWP\Dashboard\MainWP_Backup_Task_Form;
 use MainWP\Dashboard\MainWP_DB_Backup;
 use MainWP\Dashboard\MainWP_System_View;
+use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 
 /**
  * Class MainWP_Backup_Actions_Bar_Test
@@ -135,7 +136,7 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 		$this->assert_in_bar( $xp, 'mainwp-snapshots-cleanup-btn', 'right' );
 
 		$this->assertSame( 0, $xp->query( '//div[@id="mainwp-backup-snapshots-toolbar"][not(' . $this->has_class( 'mainwp-actions-bar' ) . ')]' )->length, 'The old toolbar row is gone.' );
-		$this->assertSame( 1, $xp->query( '//div[' . $this->has_class( 'mainwp-actions-bar' ) . ']/following-sibling::div[@id="mainwp-backup-snapshots"][' . $this->has_class( 'segment' ) . ']//table[@id="mainwp-restore-snapshots-table"]' )->length, 'The table sits in the segment after the bar.' );
+		$this->assertSame( 1, $xp->query( '//div[@id="mainwp-backup-snapshots"][' . $this->has_class( 'padded' ) . '][.//div[' . $this->has_class( 'mainwp-actions-bar' ) . ']]//table[@id="mainwp-restore-snapshots-table"]' )->length, 'The bar and table share the padded segment.' );
 		$this->assertStringNotContainsString( 'mainwp-native-backup-now-row', $output );
 	}
 
@@ -152,8 +153,8 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 		);
 		$standalone = $this->render( array( MainWP_Backup_Snapshots_View::class, 'render' ) );
 
-		$this->assertStringContainsString( '<div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar" style="margin-left: 0 !important; margin-right: 0 !important;">', $locked );
-		$this->assertStringContainsString( '<div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar">', $standalone );
+		$this->assertStringContainsString( '<div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar" style="margin-top: 0 !important; margin-left: 0 !important; margin-right: 0 !important;">', $locked );
+		$this->assertStringContainsString( '<div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar" style="margin-top: 0 !important; margin-left: 0 !important; margin-right: 0 !important;">', $standalone );
 	}
 
 	/**
@@ -162,7 +163,7 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 	public function test_created_cell_keeps_date_and_time_on_one_line() {
 		$output = $this->render( array( MainWP_Backup_Snapshots_View::class, 'render' ) );
 
-		$this->assertStringContainsString( "'<span style=\"white-space: nowrap;\">' + escAttr( snap.created_label || '' ) + '</span>'", $output );
+		$this->assertStringContainsString( "escAttr( snap.created_elapsed || snap.created_label || '' )", $output );
 	}
 
 	/**
@@ -177,7 +178,7 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Manage Backups: Add New Task on the bar's left when tasks exist.
+	 * Manage Backups: Add New Task on the bar's right when tasks exist.
 	 */
 	public function test_manage_backups_add_new_task_sits_in_the_actions_bar() {
 		$task = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'Actions bar test task', 'daily', 'full', '', '', '', '', '', 0, 0, 0, 0, 0, 'tar.gz', 0, 1, 150, 0, 0 );
@@ -187,11 +188,11 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 		$output = $this->render( array( MainWP_Backup_Page::class, 'render_manager' ) );
 		$xp     = $this->xpath( $output );
 
-		$this->assert_in_bar( $xp, 'mainwp-backup-add-new-task', 'left' );
+		$this->assert_in_bar( $xp, 'mainwp-backup-add-new-task', 'right' );
 		$link = $xp->query( '//*[@id="mainwp-backup-add-new-task"]' )->item( 0 );
 		$this->assertStringContainsString( 'page=ManageBackupsAddNew', $link->getAttribute( 'href' ) );
 		$this->assertSame( 'ui mini green button', $link->getAttribute( 'class' ) );
-		$this->assertSame( 1, $xp->query( '//div[' . $this->has_class( 'mainwp-actions-bar' ) . ']/following-sibling::div[' . $this->has_class( 'padded' ) . ']//table[@id="mainwp-backups-table"]' )->length, 'The task table sits in the segment after the bar.' );
+		$this->assertSame( 1, $xp->query( '//div[' . $this->has_class( 'padded' ) . '][./div[' . $this->has_class( 'mainwp-actions-bar' ) . ']]//table[@id="mainwp-backups-table"]' )->length, 'The task table shares the padded segment with its bar.' );
 	}
 
 	/**
@@ -207,17 +208,30 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Storage: Add Destination on the bar's left, switching the form to
+	 * Storage: Add Destination on the bar's right, switching the form to
 	 * add mode.
 	 */
 	public function test_storage_add_destination_sits_in_the_actions_bar() {
-		$output = $this->render( array( MainWP_Backup_Storage_View::class, 'render' ) );
-		$xp     = $this->xpath( $output );
-
-		$this->assert_in_bar( $xp, 'mainwp-storage-add-new', 'left' );
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'name'     => 'Toolbar fixture',
+				'provider' => 'local',
+				'settings' => array(),
+			)
+		);
+		$this->assertGreaterThan( 0, $id );
+		try {
+			$output = $this->render( array( MainWP_Backup_Storage_View::class, 'render' ) );
+		} finally {
+			$store->delete_destination( $id );
+		}
+		$xp = $this->xpath( $output );
+		$this->assert_in_bar( $xp, 'mainwp-storage-add-new', 'right' );
 		$this->assertSame( 'ui mini green button', $xp->query( '//*[@id="mainwp-storage-add-new"]' )->item( 0 )->getAttribute( 'class' ) );
-		$this->assertSame( 1, $xp->query( '//div[' . $this->has_class( 'mainwp-actions-bar' ) . ']/following-sibling::div[@id="mainwp-backup-storage"][' . $this->has_class( 'padded' ) . ']//table[@id="mainwp-storage-destinations-table"]' )->length, 'The destinations table sits in the segment after the bar.' );
-		$this->assertMatchesRegularExpression( "/#mainwp-storage-add-new' \\)\\.on\\( 'click'[^}]*resetForm\\(\\)/s", $output );
+		$this->assertSame( 1, $xp->query( '//div[' . $this->has_class( 'mainwp-actions-bar' ) . ']/following-sibling::div[@id="mainwp-backup-storage"][' . $this->has_class( 'padded' ) . ']//table[@id="mainwp-storage-destinations-table"]' )->length );
+		$this->assertStringContainsString( "#mainwp-storage-add-new, .mainwp-storage-add-destination' ).on( 'click'", $output );
+		$this->assertStringContainsString( "storageModal.modal( 'show' )", $output );
 	}
 
 	/**
@@ -251,7 +265,7 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 	public function test_keep_zip_help_sits_under_its_toggle() {
 		$output = $this->render( array( MainWP_Backup_Task_Form::class, 'render_new' ) );
 
-		$this->assertMatchesRegularExpression( '#<div><em>A large site on Zip is switched to Tar GZip#', $output );
+		$this->assertMatchesRegularExpression( '#<div><span class="ui small text">A large site on Zip is switched to Tar GZip#', $output );
 	}
 
 	/**
@@ -260,9 +274,10 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 	 */
 	public function test_test_restore_cell_keeps_label_and_date_unbroken() {
 		$output = $this->render( array( MainWP_Backup_Snapshots_View::class, 'render' ) );
-
-		$this->assertStringContainsString( "' <span style=\"white-space: nowrap;\">' + escAttr( snap.test_restore_label ) + '</span>'", $output );
-		$this->assertStringContainsString( '<span class="ui mini green label" style="white-space: nowrap;"><i class="check icon"></i>', $output );
+		$this->assertStringContainsString( 'var tooltip = state[3];', $output );
+		$this->assertStringContainsString( 'snap.test_restore_label', $output );
+		$this->assertStringContainsString( "pass: [ 'green', 'check circle'", $output );
+		$this->assertStringContainsString( 'ui small basic ', $output );
 		$this->assertStringContainsString( '"scrollX": true,', $output );
 	}
 }

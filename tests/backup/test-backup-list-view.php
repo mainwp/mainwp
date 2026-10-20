@@ -45,8 +45,8 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	public function test_column_type_labels_db_and_full() {
 		$view = new MainWP_Backup_List_View();
 
-		$this->assertStringContainsString( 'Database backup', $view->column_type( $this->make_item( array( 'type' => 'db' ) ) ) );
-		$this->assertStringContainsString( 'Full backup', $view->column_type( $this->make_item( array( 'type' => 'full' ) ) ) );
+		$this->assertStringContainsString( 'Database</span>', $view->column_type( $this->make_item( array( 'type' => 'db' ) ) ) );
+		$this->assertStringContainsString( 'Full</span>', $view->column_type( $this->make_item( array( 'type' => 'full' ) ) ) );
 	}
 
 	/**
@@ -57,7 +57,7 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	public function test_column_type_labels_incremental() {
 		$view = new MainWP_Backup_List_View();
 
-		$this->assertStringContainsString( 'Incremental backup', $view->column_type( $this->make_item( array( 'type' => 'incremental' ) ) ) );
+		$this->assertStringContainsString( 'Incremental</span>', $view->column_type( $this->make_item( array( 'type' => 'incremental' ) ) ) );
 	}
 
 	/**
@@ -68,8 +68,8 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	public function test_column_schedule_renders_sentence_case_label() {
 		$view = new MainWP_Backup_List_View();
 
-		$this->assertSame( 'Weekly', $view->column_schedule( $this->make_item( array( 'schedule' => 'weekly' ) ) ) );
-		$this->assertSame( 'Manual', $view->column_schedule( $this->make_item( array( 'schedule' => 'manual' ) ) ) );
+		$this->assertStringContainsString( '</i>Weekly', $view->column_schedule( $this->make_item( array( 'schedule' => 'weekly' ) ) ) );
+		$this->assertStringContainsString( '</i>Manual', $view->column_schedule( $this->make_item( array( 'schedule' => 'manual' ) ) ) );
 	}
 
 	/**
@@ -80,7 +80,7 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	public function test_column_destination_falls_back_to_server() {
 		$view = new MainWP_Backup_List_View();
 
-		$this->assertSame( 'Server', $view->column_destination( $this->make_item() ) );
+		$this->assertStringContainsString( '<strong>Dashboard</strong>', $view->column_destination( $this->make_item() ) );
 	}
 
 	/**
@@ -111,7 +111,7 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 	public function test_column_task_name_strips_slashes() {
 		$view = new MainWP_Backup_List_View();
 
-		$this->assertSame( 'Bob&#039;s backup', $view->column_task_name( $this->make_item( array( 'name' => "Bob\\'s backup" ) ) ) );
+		$this->assertStringContainsString( '>Bob&#039;s backup</a>', $view->column_task_name( $this->make_item( array( 'name' => "Bob\\'s backup" ) ) ) );
 	}
 
 	/**
@@ -274,29 +274,29 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( '<span class="ui small grey label">Paused</span>', $view->column_schedule( $item ) );
 		$details = $view->column_details( $item );
-		$this->assertStringContainsString( '<strong>Next run:</strong> Paused', $details );
+		$this->assertSame( 'Paused', $view->column_next_run( $item ) );
+		$this->assertStringContainsString( 'data-tooltip="Last run:', $details );
 		$this->assertStringNotContainsString( gmdate( 'Y', time() + YEAR_IN_SECONDS ), $details );
 	}
 
 	/**
-	 * Run Now is a mini button in the actions cell, Resume replaces it on a
-	 * paused row, and the broken loader image is gone.
+	 * All row actions use the shared dropdown, with Resume on paused tasks.
 	 */
-	public function test_row_actions_use_mini_buttons() {
+	public function test_row_actions_use_the_actions_dropdown() {
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
 		$view = new MainWP_Backup_List_View();
 
 		$running = $view->column_actions( $this->make_item() );
-		$this->assertStringContainsString( 'class="ui mini button backup_run_now"', $running );
+		$this->assertStringContainsString( 'class="item backup_run_now"', $running );
 		$this->assertStringNotContainsString( 'loader.gif', $running );
 
 		$paused = $view->column_actions( $this->make_item( array( 'paused' => 1 ) ) );
-		$this->assertStringContainsString( 'class="ui mini basic button" task_id="1" onClick="return managebackups_resume(this)"', $paused );
+		$this->assertStringContainsString( 'class="item" task_id="1" onClick="return managebackups_resume(this);"', $paused );
 		$this->assertStringNotContainsString( 'backup_run_now', $paused );
 	}
 
 	/**
-	 * Run-only staff need no menu until another row action is permitted.
+	 * The dropdown includes only the actions permitted for the current user.
 	 */
 	public function test_row_actions_dropdown_requires_permitted_items(): void {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
@@ -314,15 +314,16 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 			} finally {
 				remove_filter( 'mainwp_currentusercan', $filter, 10 );
 			}
-			$this->assertStringContainsString( 'class="ui mini button backup_run_now"', $output );
+			$this->assertStringContainsString( 'class="item backup_run_now"', $output );
 			$this->assertStringNotContainsString( 'submitdelete', $output );
 			$this->assertStringNotContainsString( 'managebackups_pause', $output );
 			if ( $can_edit ) {
 				$this->assertStringContainsString( 'ui right pointing dropdown', $output );
-				$this->assertStringContainsString( 'Backup Actions', $output );
-				$this->assertStringContainsString( '<i class="edit outline icon"></i> Edit</a>', $output );
+				$this->assertStringNotContainsString( 'Backup Actions', $output );
+				$this->assertStringContainsString( '>Edit</a>', $output );
 			} else {
-				$this->assertStringNotContainsString( 'ui right pointing dropdown', $output );
+				$this->assertStringNotContainsString( '>Edit</a>', $output );
+				$this->assertStringContainsString( 'ui right pointing dropdown', $output );
 				$this->assertStringNotContainsString( 'Backup Actions', $output );
 			}
 		}

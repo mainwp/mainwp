@@ -114,8 +114,8 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'mainwp-native-backup-now-note', $out );
 		$this->assertStringContainsString( 'data-local-only="1"', $out );
-		$this->assertMatchesRegularExpression( '/id="mainwp-native-backup-now-note"[^>]*style="margin-top: \.5em; opacity: \.8;"/', $out );
-		$this->assertStringContainsString( '<span class="mainwp-backup-local-note">No backup destination is configured for this site, so this backup will be kept on the dashboard.</span>', $out );
+		$this->assertMatchesRegularExpression( '/id="mainwp-native-backup-now-note"[^>]*style="margin-top: \.5em;"/', $out );
+		$this->assertStringContainsString( '<div class="ui blue message mainwp-backup-local-note">No backup destination is configured for this site, so this backup will be kept on the dashboard.</div>', $out );
 	}
 
 	/**
@@ -151,9 +151,9 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'mainwp-native-backup-now-note', $out );
 		$this->assertStringContainsString( 'data-local-only="0"', $out );
-		$this->assertMatchesRegularExpression( '/id="mainwp-native-backup-now-note"[^>]*style="margin-top: \.5em; opacity: \.8;"/', $out );
-		$this->assertStringContainsString( '<span class="mainwp-backup-local-note" style="display: none;">', $out );
-		$this->assertStringContainsString( '<span class="mainwp-backup-destinations-note">Backup destinations: Dashboard + Z &amp; archive + A archive. These come from the scheduled backup tasks that include this site.</span>', $out );
+		$this->assertMatchesRegularExpression( '/id="mainwp-native-backup-now-note"[^>]*style="margin-top: \.5em;"/', $out );
+		$this->assertStringContainsString( '<div class="ui blue message mainwp-backup-local-note" style="display: none;">', $out );
+		$this->assertStringContainsString( '<div class="ui blue message mainwp-backup-destinations-note">Backup destinations: Dashboard + Z &amp; archive + A archive. These come from the scheduled backup tasks that include this site.</div>', $out );
 	}
 
 	/**
@@ -188,8 +188,8 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 		$this->assertGreaterThan( 0, $id );
 		$out = $this->render_surface();
 		$this->assertStringContainsString( 'data-local-only="0"', $out );
-		$this->assertStringContainsString( '<span class="mainwp-backup-destinations-note">Backup destinations: Dashboard + Default &amp; archive. No scheduled backup task includes this site, so Back Up Now uses the Default destination.</span>', $out );
-		$this->assertStringContainsString( '<span class="mainwp-backup-local-note" style="display: none;">', $out );
+		$this->assertStringContainsString( '<div class="ui blue message mainwp-backup-destinations-note">Backup destinations: Dashboard + Default &amp; archive. No scheduled backup task includes this site, so Back Up Now uses the Default destination.</div>', $out );
+		$this->assertStringContainsString( '<div class="ui blue message mainwp-backup-local-note" style="display: none;">', $out );
 	}
 
 	/** An empty covering task deliberately keeps its site Dashboard-only. */
@@ -204,8 +204,8 @@ class MainWP_Backup_Snapshots_Local_Note_Test extends \WP_UnitTestCase {
 		$this->insert_scheduled_task( (string) $this->site_id, array() );
 		$out = $this->render_surface();
 		$this->assertStringContainsString( 'data-local-only="1"', $out );
-		$this->assertStringContainsString( '<span class="mainwp-backup-local-note">The scheduled backup tasks that include this site have no backup destination, so this backup will be kept on the dashboard.</span>', $out );
-		$this->assertStringContainsString( '<span class="mainwp-backup-destinations-note" style="display: none;">', $out );
+		$this->assertStringContainsString( '<div class="ui blue message mainwp-backup-local-note">The scheduled backup tasks that include this site have no backup destination, so this backup will be kept on the dashboard.</div>', $out );
+		$this->assertStringContainsString( '<div class="ui blue message mainwp-backup-destinations-note" style="display: none;">', $out );
 	}
 
 	/** Both sources must treat stored destination names as untrusted text. */

@@ -177,7 +177,7 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'id="mainwp-native-backups-off-message"', $output );
 		$this->assertStringContainsString( 'Native backups are turned off.', $output );
-		$this->assertStringContainsString( 'page=Settings#mainwp_options_enableNativeBackups', $output );
+		$this->assertStringContainsString( 'page=BackupSettings#mainwp_options_enableNativeBackups', $output );
 		$this->assertStringNotContainsString( 'mainwp-backups-table', $output );
 	}
 
@@ -209,7 +209,7 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 
 		$this->assertStringContainsString( 'Native backups are turned off.', $output );
 		$this->assertStringContainsString( 'Ask a Dashboard administrator to turn them on in the Backup Settings.', $output );
-		$this->assertStringNotContainsString( 'page=Settings#mainwp_options_enableNativeBackups', $output );
+		$this->assertStringNotContainsString( 'page=BackupSettings#mainwp_options_enableNativeBackups', $output );
 	}
 
 	/**
@@ -281,6 +281,6 @@ class MainWP_Backup_Page_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'page=ManageBackupsAddNew', $output );
 		$this->assertStringContainsString( 'page=ManageBackupsStorage', $output );
 		$this->assertStringNotContainsString( 'Did you know that MainWP has extensions', $output );
-		$this->assertMatchesRegularExpression( '/id="managebackups-task-status-close"[^>]*value="Close" class="ui button"/', $output );
+		$this->assertMatchesRegularExpression( '/<i class="close icon" id="managebackups-task-status-close"/', $output );
 	}
 }

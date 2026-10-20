@@ -933,7 +933,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 			$this->assertStringContainsString( 'page=managesites&#038;dashboard=' . $site_id, $output, $surface );
 			$this->assertMatchesRegularExpression( '/class="ui mini green button disabled" id="mainwp-native-backup-now-btn"\s+disabled/', $output, $surface );
 			$this->assertStringContainsString( 'var siteDisconnected = true;', $output, $surface );
-			$this->assertStringContainsString( "( siteDisconnected ? ' disabled' : '' )", $output, $surface );
+			$this->assertStringContainsString( "( siteDisconnected || backupInProgress ? ' disabled' : '' )", $output, $surface );
 			$this->assertMatchesRegularExpression( '/class="ui mini basic button" id="mainwp-snapshots-cleanup-btn"\s+>/', $output, $surface . ': Clean Up starts enabled.' );
 			$this->assertStringContainsString( "#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled ).toggleClass( 'disabled', ! enabled )", $output, $surface );
 			$this->assertStringContainsString( "#mainwp-native-backup-now-btn' ).prop( 'disabled', ! enabled || siteDisconnected )", $output, $surface );
@@ -1022,6 +1022,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		}
 		$script  = $escape[0] . "\n" . 'const results = ' . wp_json_encode( $responses ) . '.map(function(response) {
 			var siteId = 42, state = {};
+			function setBackupInProgress() {}
 			var note = {
 				attr: function(key, value) { state.local_only = value; return this; },
 				toggle: function() { return this; },

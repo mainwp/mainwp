@@ -88,7 +88,7 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	public function test_b151_encryption_refusal_is_registered() {
 		$code = 'mainwp_backup_encryption_required';
 		$this->assertContains( $code, MainWP_Backup_Error_Codes::get_registered_codes() );
-		$this->assertSame( 'Backup encryption is on, but this backup could not be encrypted, so it was not uploaded. Check the encryption key in the Backups settings, then run the backup again.', MainWP_Backup_Error_Codes::message( $code ) );
+		$this->assertSame( 'Backup encryption is on, but this backup could not be encrypted, so it was not uploaded. Check the encryption configuration in Settings &gt; Backup Settings, then run the backup again.', MainWP_Backup_Error_Codes::message( $code ) );
 		$this->assertSame( 'error', MainWP_Backup_Error_Codes::severity( $code ) );
 	}
 

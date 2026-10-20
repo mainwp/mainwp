@@ -8,6 +8,7 @@
     "next_retry_label": "",
     "artifact_index": 0,
     "artifact_total": 1,
+    "skipped_phases": [],
     "has_rollback": false,
     "cancel_requested": false,
     "cancel_action": "",

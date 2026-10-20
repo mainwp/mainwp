@@ -768,7 +768,8 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 				if ( $exists ) {
 					$this->assertStringContainsString( 'full-backup.zip', $html, $label );
 					$this->assertStringNotContainsString( 'No full backup has been taken yet', $html, $label );
-					$this->assertSame( \MainWP\Dashboard\MainWP_Utility::format_timestamp( \MainWP\Dashboard\MainWP_Utility::get_timestamp( 1700000000 ) ) . '<br />', $column, $label );
+					$this->assertStringContainsString( 'data-tooltip="' . esc_attr( \MainWP\Dashboard\MainWP_Utility::format_timestamp( \MainWP\Dashboard\MainWP_Utility::get_timestamp( 1700000000 ) ) ) . '"', $column, $label );
+					$this->assertStringContainsString( \MainWP\Dashboard\MainWP_Utility::time_elapsed_string( 1700000000 ), $column, $label );
 				} else {
 					$this->assertStringContainsString( 'No full backup has been taken yet', $html, $label );
 					$this->assertStringContainsString( 'Never', $column, $label );
@@ -911,9 +912,11 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		add_filter( 'query', $count );
 		try {
 			foreach ( $table->items as $index => $item ) {
-				$expected = \MainWP\Dashboard\MainWP_Utility::format_timestamp( \MainWP\Dashboard\MainWP_Utility::get_timestamp( $created + $index ) ) . '<br />';
-				$this->assertSame( $expected, $table->column_backup( $item ) );
-				$this->assertSame( $expected, $table->column_backup( $item ) );
+				$expected = 'data-tooltip="' . esc_attr( \MainWP\Dashboard\MainWP_Utility::format_timestamp( \MainWP\Dashboard\MainWP_Utility::get_timestamp( $created + $index ) ) ) . '"';
+				$first    = $table->column_backup( $item );
+				$this->assertStringContainsString( $expected, $first );
+				$this->assertStringContainsString( \MainWP\Dashboard\MainWP_Utility::time_elapsed_string( $created + $index ), $first );
+				$this->assertSame( $first, $table->column_backup( $item ) );
 			}
 			$this->assertSame( 1, $queries, 'All page rows and repeated renders must share one snapshot query.' );
 		} finally {

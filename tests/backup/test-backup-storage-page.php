@@ -1557,7 +1557,7 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 
 		$plain  = $this->insert_task( array() );
 		$column = \MainWP\Dashboard\MainWP_Backup_List_View::instance()->column_destination( MainWP_DB_Backup::instance()->get_backup_task_by_id( $plain ) );
-		$this->assertStringContainsString( 'Server', $column );
+		$this->assertStringContainsString( '<strong>Dashboard</strong>', $column );
 	}
 
 	/**

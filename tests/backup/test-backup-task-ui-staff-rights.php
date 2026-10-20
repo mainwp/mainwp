@@ -789,8 +789,8 @@ class MainWP_Backup_Task_UI_Staff_Rights_Test extends MainWP_Abilities_Test_Case
 			$this->actor( $actor );
 			$full = MainWP_DB_Backup::instance()->get_backup_tasks_for_user();
 			$html = $this->manager();
-			preg_match_all( '/href="admin.php\?page=ManageBackups&amp;task_id=(\d+)"|href="admin.php\?page=ManageBackups&task_id=(\d+)"/', $html, $rows, PREG_SET_ORDER );
-			$actual = array_map( static fn( $row ) => (int) ( $row[1] ?: $row[2] ), $rows );
+			preg_match_all( '/href="[^"]*page=ManageBackups(?:&amp;|&#038;|&)task_id=(\d+)"/', $html, $rows );
+			$actual = array_values( array_unique( array_map( 'intval', $rows[1] ) ) );
 			$want   = 'S-site' === $actor ? array( $this->fixture['ta'] ) : ( 'S+' === $actor ? array( $this->fixture['ta'], $this->fixture['tab'], $this->fixture['tb'] ) : array_map( 'intval', array_column( $full, 'id' ) ) );
 			sort( $actual );
 			sort( $want );

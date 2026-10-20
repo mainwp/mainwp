@@ -171,7 +171,7 @@ class MainWP_Backup_Restore_Nav_Link_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'var currentSite = ' . (int) $site_id . ';', $out, 'The embedded surface must lock to this site.' );
 		$this->assertStringNotContainsString( 'page=SiteRestore', $out, 'The broken legacy restore link must not appear under native backups.' );
 		$this->assertStringNotContainsString( 'mainwp-main-content', $out, 'Without a sidebar the archive block spans the full width.' );
-		$this->assertMatchesRegularExpression( '/id="managesite-backup-status-close"[^>]*value="Close" class="ui button"/', $out );
+		$this->assertMatchesRegularExpression( '/<i class="close icon" id="managesite-backup-status-close"/', $out );
 		$this->assertStringNotContainsString( 'mainwp-kbl-content', $out, 'The known-location lists are resolved on the site, so no empty box is shown.' );
 	}
 

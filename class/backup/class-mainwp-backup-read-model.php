@@ -284,6 +284,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'next_retry_label'      => (int) $job->next_retry_at > 0 ? MainWP_Utility::format_time( MainWP_Utility::get_timestamp( (int) $job->next_retry_at ) ) : '',
                     'artifact_index'        => isset( $transfer['artifact_index'] ) ? (int) $transfer['artifact_index'] : 0,
                     'artifact_total'        => count( $plan ),
+                    'skipped_phases'        => isset( $job->checkpoint['options'] ) && empty( $job->checkpoint['options']['pre_snapshot'] ) ? array( 'pre_snapshot' ) : array(),
                     'has_rollback'          => MainWP_Backup_Restore_Orchestrator::instance()->has_rollback_source( $job ),
                     'cancel_requested'      => ! empty( $job->checkpoint['cancel_intent'] ),
                     'cancel_action'         => 'none' === $action ? '' : $action,

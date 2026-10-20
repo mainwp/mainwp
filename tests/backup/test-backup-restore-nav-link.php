@@ -259,14 +259,14 @@ class MainWP_Backup_Restore_Nav_Link_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'Create a downloadable archive', $out, 'Native on: the section heading reads as creating a downloadable archive.' );
 		$this->assertStringContainsString( 'value="Create downloadable archive"', $out, 'Native on: the action button itself is relabelled, not just the heading.' );
 		$this->assertStringNotContainsString( 'value="Backup Now"', $out, 'Native on: the misleading Backup Now button label must be gone.' );
-		$this->assertStringContainsString( 'id="mainwp-downloadable-archives-accordion"', $out, 'Native on: the legacy archives sit in one collapsed section.' );
+		$this->assertStringContainsString( 'id="mainwp-downloadable-archives-accordion"', $out, 'Native on: archives have their own accordion.' );
 		$this->assertStringContainsString( 'class="ui basic button" value="Create downloadable archive"', $out, 'Native on: the archive button is not a second primary.' );
 	}
 
 	/**
 	 * MWP-1916: under native backups the legacy archive list and form live in
-	 * their own labeled section after Snapshots & Restore, not inside it, and
-	 * stay collapsed. The ids the legacy JS and the in-place list refresh use
+	 * their own collapsed accordion, separate from Snapshots & Restore.
+	 * The ids the legacy JS and the in-place list refresh use
 	 * are kept.
 	 *
 	 * @return void
@@ -298,12 +298,14 @@ class MainWP_Backup_Restore_Nav_Link_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFalse( $this->is_inside( $legacy, $snapshots ), 'The legacy section is a sibling of the snapshots surface, not part of it.' );
 		$this->assertLessThan( strpos( $out, 'id="mainwp-legacy-archives"' ), strpos( $out, 'id="mainwp-backup-snapshots"' ), 'The legacy section comes after Snapshots & Restore.' );
 
-		$header = $xpath->query( './/h3[contains(concat(" ", normalize-space(@class), " "), " header ")]', $legacy )->item( 0 );
+		$header = $xpath->query( './/h2[contains(concat(" ", normalize-space(@class), " "), " title ")]', $legacy )->item( 0 );
 		$this->assertNotNull( $header, 'The legacy section has its own header.' );
-		$this->assertStringContainsString( 'Legacy', $header->textContent, 'The header names the section as the legacy feature.' );
+		$this->assertStringContainsString( 'Downloadable Archives', $header->textContent );
 
 		$accordion = $xpath->query( '//*[@id="mainwp-downloadable-archives-accordion"]' )->item( 0 );
-		$this->assertSame( 0, $xpath->query( './/*[contains(concat(" ", normalize-space(@class), " "), " active ")]', $accordion )->length, 'The list and form stay collapsed by default.' );
+		$this->assertSame( $accordion, $header->parentNode, 'The dividing header is the accordion title.' );
+		$this->assertSame( 0, $xpath->query( './/*[contains(concat(" ", normalize-space(@class), " "), " active ")]', $accordion )->length, 'Archives stay collapsed by default.' );
+		$this->assertStringNotContainsString( 'mainwp-site-backup-tab-menu', $out );
 
 		$this->assertSame( 1, $xpath->query( '//*[@id="managesite-backup-status-box"]' )->length, 'The legacy progress modal stays on the page.' );
 	}

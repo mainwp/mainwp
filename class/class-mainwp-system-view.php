@@ -556,17 +556,21 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * @uses \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
      */
     public static function render_native_backups_default_off_notice() {
-        if ( ! get_option( 'mainwp_native_backups_defaulted_off_on_upgrade' ) || ! MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_native_backups_defaulted_off_on_upgrade' ) ) {
+        if ( MainWP_Backup_Settings::is_native_backups_enabled() || ! get_option( 'mainwp_native_backups_defaulted_off_on_upgrade' ) || ! MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_native_backups_defaulted_off_on_upgrade' ) ) {
             return;
         }
         ?>
-        <div class="ui info message">
-            <div class="header"><?php esc_html_e( 'Native Backups is available', 'mainwp' ); ?></div>
+        <div class="ui blue message">
+            <div class="header"><?php esc_html_e( 'Native Backups Available', 'mainwp' ); ?></div>
             <div>
                 <?php
-                /* translators: 1: Opening anchor tag, 2: Closing anchor tag */
-                printf( esc_html__( 'This update added Native Backups to your MainWP Dashboard. The feature was left turned off because backups were not in use here before the update. Turn it on in %1$sMainWP → Settings%2$s to schedule backups for your child sites.', 'mainwp' ), '<a href="' . esc_url( admin_url( 'admin.php?page=Settings' ) ) . '">', '</a>' );
+                esc_html_e( 'Native backups were left turned off during this update because backups were not previously in use on this Dashboard.', 'mainwp' );
                 ?>
+                <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && ! MainWP_System_Utility::is_team_control_staff() ) : ?>
+                    <?php /* translators: 1: Opening anchor tag, 2: Closing anchor tag. */ printf( esc_html__( 'To schedule backups for your child sites, enable native backups in %1$sSettings > Backup Settings%2$s.', 'mainwp' ), '<a href="' . esc_url( admin_url( 'admin.php?page=BackupSettings#mainwp_options_enableNativeBackups' ) ) . '">', '</a>' ); ?>
+                <?php else : ?>
+                    <?php esc_html_e( 'Ask a Dashboard administrator to enable native backups in Settings > Backup Settings to schedule backups for your child sites.', 'mainwp' ); ?>
+                <?php endif; ?>
             </div>
             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_native_backups_defaulted_off_on_upgrade"></i>
         </div>
@@ -1172,10 +1176,10 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             if ( isset( $_GET['page'] ) && 'ManageClients' === $_GET['page'] && isset( $_GET['client_id'] ) && ! empty( $_GET['client_id'] ) ) {
                 $class_string .= ' mainwp-individual-client-overview ';
             }
-            if ( isset( $_GET['page'] ) && ( 'CostTrackerSettings' === $_GET['page'] || 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) {
+            if ( isset( $_GET['page'] ) && ( 'CostTrackerSettings' === $_GET['page'] || 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsMonitors' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'BackupSettings' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
-            if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {
+            if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) ) {
                 $class_string .= ' mainwp-individual-site-view ';
             }
             // phpcs:enable

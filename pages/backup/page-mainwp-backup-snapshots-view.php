@@ -91,12 +91,18 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         $controls_off   = 0 === $site_id || $disconnected;
         if ( $locked ) :
             ?>
-        <div id="mainwp-backup-snapshots" class="ui alt segment">
-            <h3 class="ui dividing header" style="scroll-margin-top: 6em;"><?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?></h3>
+        <div id="mainwp-backup-snapshots" class="ui padded segment">
+            <div class="ui basic accordion mainwp-blank-accordion" id="mainwp-site-snapshots-accordion">
+                <h2 class="ui dividing header active title" style="scroll-margin-top: 6em;">
+                    <i class="right dropdown icon"></i>
+                    <?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?>
+                    <div class="sub header"><?php esc_html_e( 'Create a backup, manage saved snapshots, or restore this site to a previous backup.', 'mainwp' ); ?></div>
+                </h2>
+                <div class="active content">
             <?php self::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
         <?php else : ?>
-            <?php self::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
         <div id="mainwp-backup-snapshots" class="ui padded segment">
+            <?php self::render_actions_bar( $site_id, $locked, $native_enabled, $controls_off ); ?>
             <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-snapshots-info-message', __( 'Pick a site to see its backups. From here you can back the site up right now or restore it to one of its backups.', 'mainwp' ) ); ?>
         <?php endif; ?>
             <?php
@@ -133,10 +139,36 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     implode( ' + ', $manual_destinations )
                 );
                 ?>
-            <div id="mainwp-native-backup-now-status" class="mainwp-native-backup-now-status" aria-live="polite" style="margin-top: .5em;"></div>
-            <div id="mainwp-native-backup-now-note" class="mainwp-native-backup-now-note" data-local-only="<?php echo $backup_now_local_only ? '1' : '0'; ?>" style="margin-top: .5em; opacity: .8;<?php echo $site_id > 0 ? '' : ' display: none;'; ?>">
-                <i class="info circle icon"></i><span class="mainwp-backup-local-note"<?php echo $backup_now_local_only ? '' : ' style="display: none;"'; ?>><?php echo esc_html( $local_note ); ?></span>
-                <span class="mainwp-backup-destinations-note"<?php echo $backup_now_local_only ? ' style="display: none;"' : ''; ?>><?php echo esc_html( $destinations_note ); ?></span>
+            <div id="mainwp-backup-monitor" class="ui message" style="display:none;">
+                <i class="close icon" id="mainwp-backup-monitor-dismiss" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Dismiss backup status', 'mainwp' ); ?>" style="display:none;"></i>
+                <span id="mainwp-backup-monitor-label"></span>
+                <a href="#" id="mainwp-backup-view-progress"><?php esc_html_e( 'View progress', 'mainwp' ); ?></a>
+            </div>
+            <div class="ui small modal" id="mainwp-native-backup-progress-modal">
+                <i class="close icon" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"></i>
+                <div class="header"><?php esc_html_e( 'Backup Progress', 'mainwp' ); ?></div>
+                <div class="ui green progress mainwp-modal-progress" id="mainwp-backup-phase-progress">
+                    <div class="bar"><div class="progress"></div></div>
+                    <div class="label"><i class="archive icon" id="mainwp-backup-phase-icon"></i><span id="mainwp-backup-phase-label"></span></div>
+                </div>
+                <div class="content">
+                    <div id="mainwp-native-backup-now-status" class="ui message mainwp-native-backup-now-status" aria-live="polite" style="display:none;">
+                        <div class="mainwp-backup-status-content"></div>
+                    </div>
+                    <div class="ui middle aligned divided list" id="mainwp-backup-phase-steps"></div>
+                </div>
+                <div class="actions">
+                    <div class="ui grid">
+                        <div class="twelve wide left aligned column"><span class="ui small text"><?php esc_html_e( 'You can close this window. The backup continues in the background.', 'mainwp' ); ?></span></div>
+                        <div class="four wide right aligned column">
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="mainwp-native-backup-now-note" class="mainwp-native-backup-now-note" data-local-only="<?php echo $backup_now_local_only ? '1' : '0'; ?>" style="margin-top: .5em;<?php echo $site_id > 0 ? '' : ' display: none;'; ?>">
+                <div class="ui blue message mainwp-backup-local-note"<?php echo $backup_now_local_only ? '' : ' style="display: none;"'; ?>><?php echo esc_html( $local_note ); ?></div>
+                <div class="ui blue message mainwp-backup-destinations-note"<?php echo $backup_now_local_only ? ' style="display: none;"' : ''; ?>><?php echo esc_html( $destinations_note ); ?></div>
             </div>
             <?php endif; ?>
 
@@ -162,7 +194,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // cannot leave the placeholder spanning the wrong width.
                 // DataTables computes its own colspan for the rows it draws.
                 $snapshot_columns = array(
-                    'backup'       => esc_html__( 'Backup', 'mainwp' ),
+                    'backup'       => esc_html__( 'Backup ID', 'mainwp' ),
                     'type'         => esc_html__( 'Type', 'mainwp' ),
                     'created'      => esc_html__( 'Created', 'mainwp' ),
                     'size'         => esc_html__( 'Size', 'mainwp' ),
@@ -171,11 +203,23 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     'actions'      => '',
                 );
                 ?>
+                <?php if ( $locked ) : ?>
+                <div id="mainwp-snapshots-empty-state" style="display:none; margin-top: 2.5em;">
+                    <?php MainWP_UI::render_empty_element_placeholder( esc_html__( 'No backups yet', 'mainwp' ), esc_html__( 'Create your first backup to give this site a restore point. Removed backups will appear here too when available.', 'mainwp' ), '<em data-emoji=":floppy_disk:" class="medium"></em>' ); ?>
+                    <div class="ui center aligned basic segment">
+                        <?php if ( $native_enabled ) : ?>
+                        <button type="button" class="ui green button" id="mainwp-snapshots-empty-backup"><?php esc_html_e( 'Back Up Now', 'mainwp' ); ?></button>
+                        <?php else : ?>
+                        <a class="ui button" href="<?php echo esc_url( admin_url( 'admin.php?page=BackupSettings' ) ); ?>"><?php esc_html_e( 'Backup Settings', 'mainwp' ); ?></a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php endif; ?>
                 <table class="ui table" id="mainwp-restore-snapshots-table">
                     <thead>
                         <tr>
                             <?php foreach ( $snapshot_columns as $column_key => $column_label ) : ?>
-                            <th scope="col" class="<?php echo esc_attr( 'actions' === $column_key ? 'collapsing' : '' ); ?>"><?php echo esc_html( $column_label ); ?></th>
+                            <th scope="col" class="<?php echo esc_attr( 'backup' === $column_key ? 'collapsing' : ( 'actions' === $column_key ? 'collapsing right aligned' : '' ) ); ?>"><?php echo esc_html( $column_label ); ?></th>
                             <?php endforeach; ?>
                         </tr>
                     </thead>
@@ -199,9 +243,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     </table>
                 </div>
             </div>
+            <?php if ( $locked ) : ?>
+                </div>
+            </div>
+            <?php endif; ?>
         </div>
 
         <div class="ui small modal" id="mainwp-snapshot-delete-modal">
+            <i class="close icon" id="mainwp-snapshot-delete-close" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"></i>
             <div class="header"><?php esc_html_e( 'Delete Backup', 'mainwp' ); ?></div>
             <div class="content">
                 <div class="ui yellow message"><?php esc_html_e( 'These backups and their files on this Dashboard will be deleted. This cannot be undone.', 'mainwp' ); ?></div>
@@ -218,13 +267,18 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 <div class="ui message" id="mainwp-snapshot-delete-result" style="display:none;" aria-live="polite"></div>
             </div>
             <div class="actions">
-                <button type="button" class="ui button" id="mainwp-snapshot-delete-close"><?php esc_html_e( 'Close', 'mainwp' ); ?></button>
                 <button type="button" class="ui red disabled button" id="mainwp-snapshot-delete-confirm"><?php esc_html_e( 'Delete', 'mainwp' ); ?></button>
             </div>
         </div>
 
         <div class="ui small modal" id="mainwp-restore-modal">
+            <i class="close icon" id="mainwp-restore-close-btn" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"></i>
             <div class="header"><?php esc_html_e( 'Restore Backup', 'mainwp' ); ?></div>
+            <div class="ui green progress mainwp-modal-progress" id="mainwp-restore-progress-bar" style="display:none;">
+                        <div class="bar"><div class="progress"></div></div>
+                        <div class="label"><div class="ui active inline mini loader" id="mainwp-restore-spinner"></div> <span id="mainwp-restore-status-text" aria-live="polite"></span></div>
+                    </div>
+
             <div class="content">
                 <div id="mainwp-restore-confirm-pane">
                     <div class="ui yellow message">
@@ -253,9 +307,6 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     </div>
                 </div>
                 <div id="mainwp-restore-progress-pane" style="display:none;">
-                    <div class="ui active inline loader" id="mainwp-restore-spinner"></div>
-                    <span id="mainwp-restore-status-text" aria-live="polite"></span>
-                    <div class="ui tiny indicating progress" id="mainwp-restore-progress-bar" style="display:none;margin-top:.75em;"><div class="bar"></div></div>
                     <div class="ui small blue message" id="mainwp-restore-safety-note" style="display:none;"><?php esc_html_e( 'A safety backup was taken before this restore. If the result looks wrong, you can roll back to it.', 'mainwp' ); ?></div>
                     <div class="ui small yellow message" id="mainwp-restore-cancel-warning" style="display:none;"><?php esc_html_e( 'Cancelling now stops the restore partway through. Files already copied stay in place and the previous database tables are kept aside.', 'mainwp' ); ?> <span id="mainwp-restore-cancel-rollback-note" style="display:none;"><?php esc_html_e( 'You can roll back to the safety backup afterwards.', 'mainwp' ); ?></span></div>
                     <div class="ui message" id="mainwp-restore-result-message" style="display:none;"></div>
@@ -264,14 +315,20 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     <div class="ui small message" id="mainwp-restore-reconcile-note" style="display:none;"></div>
                     <div class="ui small message" id="mainwp-restore-cache-note" style="display:none;"></div>
                     <div class="ui small red message" id="mainwp-restore-maintenance-note" style="display:none;"><?php esc_html_e( 'The site is in maintenance mode until the database is checked, so it will not serve visitors until then.', 'mainwp' ); ?></div>
-                    <div id="mainwp-restore-visit-site-wrap" style="display:none;margin-top:.5em;"><a id="mainwp-restore-visit-site" href="#" target="_blank" rel="noopener" class="ui tiny basic button"><i class="external alternate icon"></i><?php esc_html_e( 'Visit site', 'mainwp' ); ?></a></div>
+                    <div class="ui middle aligned divided list" id="mainwp-restore-completed-steps" style="display:none;"></div>
                 </div>
             </div>
             <div class="actions">
-                <button type="button" class="ui cancel button" id="mainwp-restore-close-btn"><?php esc_html_e( 'Close', 'mainwp' ); ?></button>
-                <button type="button" class="ui button" id="mainwp-restore-cancel-btn" style="display:none;"><?php esc_html_e( 'Cancel Restore', 'mainwp' ); ?></button>
-                <button type="button" class="ui basic button" id="mainwp-restore-rollback-btn" style="display:none;"><?php esc_html_e( 'Roll Back', 'mainwp' ); ?></button>
-                <button type="button" class="ui red disabled button" id="mainwp-restore-start-btn"><i class="undo icon"></i><?php esc_html_e( 'Start Restore', 'mainwp' ); ?></button>
+                <div class="ui two column grid">
+                    <div class="left aligned column">
+                        <div id="mainwp-restore-visit-site-wrap" style="display:none;"><a id="mainwp-restore-visit-site" href="#" target="_blank" rel="noopener" class="ui basic button"><i class="external alternate icon"></i><?php esc_html_e( 'Visit Site', 'mainwp' ); ?></a></div>
+                    </div>
+                    <div class="right aligned column">
+                        <button type="button" class="ui button" id="mainwp-restore-cancel-btn" style="display:none;"><?php esc_html_e( 'Cancel Restore', 'mainwp' ); ?></button>
+                        <button type="button" class="ui basic button" id="mainwp-restore-rollback-btn" style="display:none;"><?php esc_html_e( 'Roll Back', 'mainwp' ); ?></button>
+                        <button type="button" class="ui green disabled button" id="mainwp-restore-start-btn"><i class="undo icon"></i><?php esc_html_e( 'Start Restore', 'mainwp' ); ?></button>
+                    </div>
+                </div>
             </div>
         </div>
         <?php
@@ -291,12 +348,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
         // Clean Up works on the Dashboard's copies, so a disconnected site
         // keeps it; its Child prune just fails and is logged.
         $cleanup_off = 0 === $site_id;
-        // The per-site tab hosts the bar inside the surface's own segment,
+        // Both surfaces host the bar inside their padded segment,
         // which already insets it; the theme's !important side margins
         // would inset it a second time, past the tables' edges. Inline
         // !important is the only override that outranks them.
         ?>
-        <div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar"<?php echo $locked ? ' style="margin-left: 0 !important; margin-right: 0 !important;"' : ''; ?>>
+        <div class="mainwp-actions-bar" id="mainwp-backup-snapshots-toolbar" style="margin-top: 0 !important; margin-left: 0 !important; margin-right: 0 !important;">
             <div class="ui mini form">
                 <div class="ui stackable grid">
                     <div class="ui two column row">
@@ -325,7 +382,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             <button type="button" class="ui mini green button<?php echo $controls_off ? ' disabled' : ''; ?>" id="mainwp-native-backup-now-btn" <?php disabled( true, $controls_off ); ?>>
                                 <i class="cloud upload alternate icon"></i><?php esc_html_e( 'Back Up Now', 'mainwp' ); ?>
                             </button>
-                            <button type="button" class="ui mini button" id="mainwp-native-backup-cancel-btn" style="display: none;">
+                            <button type="button" class="ui mini red button" id="mainwp-native-backup-cancel-btn" style="display: none;">
                                 <i class="times icon"></i><?php esc_html_e( 'Cancel backup', 'mainwp' ); ?>
                             </button>
                             <button type="button" class="ui mini basic button<?php echo $cleanup_off ? ' disabled' : ''; ?>" id="mainwp-snapshots-cleanup-btn" <?php disabled( true, $cleanup_off ); ?>>
@@ -471,6 +528,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var backupPhaseStartPercent = 0;
             var backupPollRetries = 0;
             var backupSinceTs = 0;
+            var backupInProgress = false;
+            var snapshotsListLoaded = false;
             var currentSiteUrl = '';
             var phaseOrder = [ 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'verifying', 'completed' ];
 
@@ -486,16 +545,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             };
 
             var sourceLabels = {
-                'local': '<?php echo esc_js( esc_html__( 'This dashboard', 'mainwp' ) ); ?>',
-                'remote': '<?php echo esc_js( esc_html__( 'Cloud storage', 'mainwp' ) ); ?>',
-                'remote_chunked': '<?php echo esc_js( esc_html__( 'Cloud storage', 'mainwp' ) ); ?>',
-                'unavailable': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>',
+                'local': '<?php echo esc_js( esc_html__( 'This Dashboard', 'mainwp' ) ); ?>',
+                'remote': '<?php echo esc_js( esc_html__( 'Cloud Storage', 'mainwp' ) ); ?>',
+                'remote_chunked': '<?php echo esc_js( esc_html__( 'Cloud Storage', 'mainwp' ) ); ?>',
+                'unavailable': '<?php echo esc_js( esc_html__( 'Removed by Retention', 'mainwp' ) ); ?>',
                 'removed': '<?php echo esc_js( esc_html__( 'Removed', 'mainwp' ) ); ?>'
             };
             var removalLabels = {
-                'manual': '<?php echo esc_js( esc_html__( 'Deleted manually', 'mainwp' ) ); ?>',
-                'retention': '<?php echo esc_js( esc_html__( 'Removed by retention', 'mainwp' ) ); ?>',
-                'task_deleted': '<?php echo esc_js( esc_html__( 'Deleted with its backup task', 'mainwp' ) ); ?>',
+                'manual': '<?php echo esc_js( esc_html__( 'Deleted Manually', 'mainwp' ) ); ?>',
+                'retention': '<?php echo esc_js( esc_html__( 'Removed by Retention', 'mainwp' ) ); ?>',
+                'task_deleted': '<?php echo esc_js( esc_html__( 'Deleted with Its Backup Task', 'mainwp' ) ); ?>',
                 'cleanup': '<?php echo esc_js( esc_html__( 'Removed by Clean Up', 'mainwp' ) ); ?>'
             };
             var downloadLabels = {
@@ -507,24 +566,24 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var offsiteLabels = {
                 verified: [ 'green', '<?php echo esc_js( esc_html__( 'Offsite Verified', 'mainwp' ) ); ?>' ],
                 pending: [ 'blue', '<?php echo esc_js( esc_html__( 'Uploading', 'mainwp' ) ); ?>' ],
-                partial: [ 'orange', '<?php echo esc_js( esc_html__( 'Partially uploaded', 'mainwp' ) ); ?>' ],
-                failed: [ 'red', '<?php echo esc_js( esc_html__( 'Upload failed', 'mainwp' ) ); ?>' ]
+                partial: [ 'orange', '<?php echo esc_js( esc_html__( 'Partially Uploaded', 'mainwp' ) ); ?>' ],
+                failed: [ 'red', '<?php echo esc_js( esc_html__( 'Upload Failed', 'mainwp' ) ); ?>' ]
             };
             var uploadLabels = {
-                pending: [ 'grey', '<?php echo esc_js( esc_html__( 'Waiting to upload', 'mainwp' ) ); ?>' ],
+                pending: [ 'grey', '<?php echo esc_js( esc_html__( 'Waiting to Upload', 'mainwp' ) ); ?>' ],
                 chunking: [ 'blue', '<?php echo esc_js( esc_html__( 'Uploading', 'mainwp' ) ); ?>' ],
                 uploading: [ 'blue', '<?php echo esc_js( esc_html__( 'Uploading', 'mainwp' ) ); ?>' ],
                 submitting: [ 'blue', '<?php echo esc_js( esc_html__( 'Uploading', 'mainwp' ) ); ?>' ],
                 complete: [ 'green', '<?php echo esc_js( esc_html__( 'Uploaded', 'mainwp' ) ); ?>' ],
-                failed_retryable: [ 'orange', '<?php echo esc_js( esc_html__( 'Upload failed, will retry', 'mainwp' ) ); ?>' ],
-                failed_permanent: [ 'red', '<?php echo esc_js( esc_html__( 'Upload failed', 'mainwp' ) ); ?>' ],
-                credentials_invalid: [ 'red', '<?php echo esc_js( esc_html__( 'Re-enter credentials', 'mainwp' ) ); ?>' ]
+                failed_retryable: [ 'orange', '<?php echo esc_js( esc_html__( 'Upload Failed, Will Retry', 'mainwp' ) ); ?>' ],
+                failed_permanent: [ 'red', '<?php echo esc_js( esc_html__( 'Upload Failed', 'mainwp' ) ); ?>' ],
+                credentials_invalid: [ 'red', '<?php echo esc_js( esc_html__( 'Re-enter Credentials', 'mainwp' ) ); ?>' ]
             };
             var testRestoreLabels = {
-                'pass': '<?php echo esc_js( esc_html__( 'Test-restored', 'mainwp' ) ); ?>',
-                'fail': '<?php echo esc_js( esc_html__( 'Test-restore failed', 'mainwp' ) ); ?>',
-                'unsupported': '<?php echo esc_js( esc_html__( 'Couldn\'t test here', 'mainwp' ) ); ?>',
-                'unavailable': '<?php echo esc_js( esc_html__( 'Artifacts unavailable', 'mainwp' ) ); ?>'
+                'pass': '<?php echo esc_js( esc_html__( 'Test-Restored', 'mainwp' ) ); ?>',
+                'fail': '<?php echo esc_js( esc_html__( 'Test-Restore Failed', 'mainwp' ) ); ?>',
+                'unsupported': '<?php echo esc_js( esc_html__( 'Couldn\'t Test Here', 'mainwp' ) ); ?>',
+                'unavailable': '<?php echo esc_js( esc_html__( 'Artifacts Unavailable', 'mainwp' ) ); ?>'
             };
 
             var restoreWarnings = {
@@ -569,17 +628,15 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     return;
                 }
                 var c = backupProgressCache;
-                var parts = [ c.label ];
-                if ( c.percent !== null && c.percent !== undefined ) {
-                    parts.push( c.percent + '%' );
-                }
-                if ( backupStartTime ) {
-                    parts.push( '(' + fmtClock( Date.now() - backupStartTime ) + ')' );
-                }
-                if ( c.eta ) {
-                    parts.push( c.eta );
-                }
-                $( '#mainwp-native-backup-now-status' ).text( parts.join( ' ' ) ).removeClass( 'ui red text' );
+                setBackupStatus( c.label, false, c.color || '', true );
+                $( '.mainwp-backup-status-content' ).hide();
+                $( '#mainwp-native-backup-now-status' ).hide();
+                $( '#mainwp-backup-phase-label' ).text( c.label );
+                var phaseIcons = { queued: 'clock outline', dumping_db: 'database', archiving_files: 'archive', uploading: 'cloud upload alternate', submitting: 'check circle outline' };
+                $( '#mainwp-backup-phase-icon' ).attr( 'class', ( phaseIcons[ c.phase ] || 'sync alternate' ) + ' icon' );
+                var hasPercent = c.percent !== null && c.percent !== undefined;
+                $( '#mainwp-backup-phase-progress' ).show().progress( { percent: hasPercent ? Math.max( 0, Math.min( 99, Number( c.percent ) || 0 ) ) : 0, autoSuccess: false, showActivity: true } );
+                window.mainwpBackupProgressSteps( $( '#mainwp-backup-phase-steps' ), c.phase || 'queued', c.percent, '', '' );
             }
 
             function stopBackupTimers() {
@@ -613,7 +670,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             var snapshotsPlaceholders = {
                 idle:    '<?php echo esc_js( esc_html__( 'Select a site to list its backups.', 'mainwp' ) ); ?>',
-                loading: '<div class="ui active inline loader mini"></div>',
+                loading: '<div class="ui basic very padded center aligned segment" style="background: transparent !important;"><div class="ui active centered inline medium text loader"><?php echo esc_js( esc_html__( 'Loading backups...', 'mainwp' ) ); ?></div></div>',
                 empty:   '<?php echo esc_js( esc_html__( 'No backups yet for this site. Back Up Now or add it to a schedule.', 'mainwp' ) ); ?>',
                 error:   '<?php echo esc_js( esc_html__( 'The backup list could not be loaded. Check the connection to the dashboard and try again.', 'mainwp' ) ); ?>'
             };
@@ -623,6 +680,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // failed states all speak through it; a hand-built <tr> would be
             // thrown away by the next draw.
             function setSnapshotsPlaceholder( text ) {
+                snapshotsListLoaded = text === snapshotsPlaceholders.empty;
                 snapshotsTable.settings()[0].oLanguage.sEmptyTable = text;
             }
 
@@ -633,7 +691,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // Dashboard's disk even when the Child cannot be reached.
             function enableSnapshotControls( enabled ) {
                 $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled ).toggleClass( 'disabled', ! enabled );
-                $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', ! enabled || siteDisconnected ).toggleClass( 'disabled', ! enabled || siteDisconnected );
+                $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', ! enabled || siteDisconnected || backupInProgress ).toggleClass( 'disabled', ! enabled || siteDisconnected || backupInProgress );
             }
 
             function showDisconnected( disconnected, reconnectUrl ) {
@@ -648,20 +706,18 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // breaks inside: the hyphen in "Test-restored" and the spaces in
             // the Dashboard's long date format would otherwise split them.
             function testRestoreCell( snap ) {
-                if ( 'pass' === snap.test_restore_state ) {
-                    var testedOn = snap.test_restore_label ? ' <span style="white-space: nowrap;">' + escAttr( snap.test_restore_label ) + '</span>' : '';
-                    return '<span class="ui mini green label" style="white-space: nowrap;"><i class="check icon"></i>' + testRestoreLabels.pass + '</span>' + testedOn;
+                var states = {
+                    pass: [ 'green', 'check circle', testRestoreLabels.pass, '<?php echo esc_js( esc_html__( 'This backup passed an automatic restore test in a temporary sandbox on this Dashboard.', 'mainwp' ) ); ?>' ],
+                    fail: [ 'red', 'times circle', testRestoreLabels.fail, '<?php echo esc_js( esc_html__( 'The automatic sandbox restore test failed for this backup.', 'mainwp' ) ); ?>' ],
+                    unsupported: [ 'grey', 'ban', testRestoreLabels.unsupported, '<?php echo esc_js( esc_html__( 'This Dashboard host could not run the sandbox restore test.', 'mainwp' ) ); ?>' ],
+                    unavailable: [ 'grey', 'exclamation circle', testRestoreLabels.unavailable, '<?php echo esc_js( esc_html__( 'The backup files required for a sandbox restore test are unavailable.', 'mainwp' ) ); ?>' ]
+                };
+                var state = states[ snap.test_restore_state ] || [ 'grey', 'clock outline', '<?php echo esc_js( esc_html__( 'Not Tested Yet', 'mainwp' ) ); ?>', '<?php echo esc_js( esc_html__( 'No automatic restore test result has been recorded for this backup. Testing samples the newest completed backups on a weekly cadence.', 'mainwp' ) ); ?>' ];
+                var tooltip = state[3];
+                if ( snap.test_restore_label && states[ snap.test_restore_state ] ) {
+                    tooltip += ' ' + '<?php echo esc_js( esc_html__( 'Test date:', 'mainwp' ) ); ?>' + ' ' + snap.test_restore_label;
                 }
-                if ( 'fail' === snap.test_restore_state ) {
-                    return '<span class="ui mini red label" style="white-space: nowrap;">' + testRestoreLabels.fail + '</span>';
-                }
-                if ( 'unsupported' === snap.test_restore_state ) {
-                    return '<span class="ui mini grey label" style="white-space: nowrap;">' + testRestoreLabels.unsupported + '</span>';
-                }
-                if ( 'unavailable' === snap.test_restore_state ) {
-                    return '<span class="ui mini grey label" style="white-space: nowrap;">' + testRestoreLabels.unavailable + '</span>';
-                }
-                return '&mdash;';
+                return '<span class="ui small basic ' + state[0] + ' label" data-tooltip="' + escAttr( tooltip ) + '" data-position="left center" data-inverted=""><i class="' + state[1] + ' icon"></i>' + state[2] + '</span>';
             }
 
             function deleteButton( snap ) {
@@ -670,7 +726,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
                 var disabled = snapshotDeleteBusy ? ' disabled' : '';
                 var title = snapshotDeleteBusy ? ' aria-disabled="true" title="' + escAttr( deleteLabels.busy ) + '"' : '';
-                return '<a href="#" class="ui mini basic button mainwp-delete-snapshot' + disabled + '" data-snapshot="' + snap.id + '"' + title + '>' + deleteLabels.action + '</a>';
+                return '<a href="#" class="ui mini red button mainwp-delete-snapshot' + disabled + '" data-snapshot="' + snap.id + '"' + title + '><i class="trash alternate outline icon"></i>' + deleteLabels.action + '</a>';
             }
 
             function setSnapshotDeleteBusy( busy ) {
@@ -727,7 +783,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             function deletePreviewItem( id, snap ) {
                 var html = '<div class="item"><strong>#' + ( parseInt( id, 10 ) || 0 ) + '</strong>';
                 if ( snap ) {
-                    html += ' <span class="ui mini basic label">' + ( backupTypeLabels[ snap.type ] || escAttr( snap.type ) ) + '</span> <span style="white-space: nowrap;">' + escAttr( snap.created_label || '' ) + '</span>';
+                    html += ' <span class="ui small basic label">' + ( backupTypeLabels[ snap.type ] || escAttr( snap.type ) ) + '</span> <span style="white-space: nowrap;">' + escAttr( snap.created_label || '' ) + '</span>';
                 }
                 return html + '</div>';
             }
@@ -793,12 +849,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 }
                 var reason = 'incremental' === snap.type ? downloadLabels.incremental : ( 'local' !== snap.source ? downloadLabels.missing : '' );
                 if ( '' === reason ) {
-                    return '<a href="#" class="ui mini basic button mainwp-download-snapshot" data-snapshot="' + snap.id + '">' + downloadLabels.action + '</a>';
+                    return '<a href="#" class="ui mini basic grey button mainwp-download-snapshot" data-snapshot="' + snap.id + '"><i class="download icon"></i>' + downloadLabels.action + '</a>';
                 }
                 // Fomantic gives disabled buttons pointer-events: none, so the wrapper's title shows on hover
                 // and the anchor's own title stays its accessible description.
                 var title = ' title="' + escAttr( reason ) + '"';
-                return '<span' + title + '><a href="#" class="ui mini basic button mainwp-download-snapshot disabled" data-snapshot="' + snap.id + '" aria-disabled="true"' + title + '>' + downloadLabels.action + '</a></span>';
+                return '<span' + title + '><a href="#" class="ui mini basic grey button mainwp-download-snapshot disabled" data-snapshot="' + snap.id + '" aria-disabled="true"' + title + '><i class="download icon"></i>' + downloadLabels.action + '</a></span>';
             }
 
             // The static placeholder row is the no-JS fallback; drop it before
@@ -812,6 +868,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 "columns": [
                     {
                         "data": "id",
+                        "className": "collapsing",
                         "render": function ( data, type ) {
                             return 'display' === type ? '#' + data : ( parseInt( data, 10 ) || 0 );
                         }
@@ -822,6 +879,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             // backup_type_label() already escaped these; an
                             // unrecognised type falls back to the raw value.
                             var label = backupTypeLabels[ data ] || escAttr( data );
+                            if ( 'display' === type ) {
+                                var styles = { full: [ 'blue', 'archive' ], db: [ 'purple', 'database' ], incremental: [ 'teal', 'sync alternate' ], files: [ 'orange', 'folder outline' ] };
+                                var style = styles[ data ] || [ 'grey', 'archive' ];
+                                label = '<span class="ui small basic ' + style[0] + ' label"><i class="' + style[1] + ' icon"></i>' + label + '</span>';
+                            }
                             var n = parseInt( snap.skipped_count, 10 ) || 0;
                             if ( 'display' === type && n > 0 ) {
                                 var skipped = ( 1 === n
@@ -839,17 +901,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             // The Dashboard's long date format would break
                             // the time off onto its own line.
                             if ( 'display' === type ) {
-                                return '<span style="white-space: nowrap;">' + escAttr( snap.created_label || '' ) + '</span>';
+                                return '<span data-tooltip="' + escAttr( snap.created_label || '' ) + '" data-position="left center" data-inverted="" style="white-space: nowrap;">' + escAttr( snap.created_elapsed || snap.created_label || '' ) + '</span>';
                             }
                             return 'filter' === type ? escAttr( snap.created_label || '' ) : ( parseInt( data, 10 ) || 0 );
                         }
                     },
                     {
                         "data": null,
-                        // Not orderable: the payload carries only the formatted
-                        // size, so sorting it would put 900 MB above 1.2 GB.
-                        "orderable": false,
                         "render": function ( data, type, snap ) {
+                            if ( 'sort' === type || 'type' === type ) {
+                                return Number( snap.size_bytes ) || 0;
+                            }
                             return snap.size_label ? escAttr( snap.size_label ) : '&mdash;';
                         }
                     },
@@ -864,9 +926,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                                 sourceCell = sourceLabels.removed;
                             }
                             if ( 'display' === type ) {
+                                var sourceStyle = { local: [ 'blue', 'server' ], remote: [ 'teal', 'cloud' ], remote_chunked: [ 'teal', 'cloud' ], unavailable: [ 'grey', 'trash alternate outline' ] }[ snap.source ] || [ 'grey', 'question circle' ];
+                                sourceCell = '<span class="ui small basic ' + sourceStyle[0] + ' label"><i class="' + sourceStyle[1] + ' icon"></i>' + sourceCell + '</span>';
                                 var offsite = 'pruned' === snap.status ? null : offsiteLabels[ snap.offsite_state ];
                                 if ( offsite ) {
-                                    sourceCell += ' <span class="ui mini ' + offsite[0] + ' label">' + offsite[1] + '</span>';
+                                    sourceCell += ' <span class="ui small basic ' + offsite[0] + ' label">' + offsite[1] + '</span>';
                                 }
                                 if ( snap.uploads && snap.uploads.length ) {
                                     var complete = snap.uploads.filter( function ( upload ) { return 'complete' === upload.status; } ).length;
@@ -886,16 +950,22 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     {
                         "data": null,
                         "orderable": false,
-                        "className": "collapsing",
+                        "className": "collapsing right aligned",
                         "render": function ( data, type, snap ) {
+                            if ( 'unavailable' === snap.source || 'pruned' === snap.status ) {
+                                return '';
+                            }
                             var restore = snap.restorable && canRestore
-                                ? '<a href="#" class="ui mini basic button mainwp-restore-snapshot' + ( siteDisconnected ? ' disabled' : '' ) + '" data-snapshot="' + snap.id + '" data-snapshot-type="' + escAttr( snap.type ) + '" data-snapshot-age="' + ( parseInt( snap.age_days, 10 ) || 0 ) + '"><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
+                                ? '<a href="#" class="ui mini basic green button mainwp-restore-snapshot' + ( siteDisconnected || backupInProgress ? ' disabled' : '' ) + '" aria-disabled="' + ( siteDisconnected || backupInProgress ? 'true' : 'false' ) + '" data-snapshot="' + snap.id + '" data-snapshot-type="' + escAttr( snap.type ) + '" data-snapshot-age="' + ( parseInt( snap.age_days, 10 ) || 0 ) + '"><i class="undo icon"></i><?php echo esc_js( esc_html__( 'Restore', 'mainwp' ) ); ?></a>'
                                 : '';
                             return restore + downloadButton( snap ) + deleteButton( snap );
                         }
                     }
                 ],
                 "createdRow": function ( row, snap ) {
+                    if ( 'unavailable' === snap.source || 'pruned' === snap.status ) {
+                        $( row ).css( 'opacity', '0.55' );
+                    }
                     if ( snap.restorable ) {
                         return;
                     }
@@ -913,6 +983,19 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // the Restore column once rows arrive.
                 "scrollX": true,
                 "autoWidth": false,
+                "drawCallback": function () {
+                    var api = this.api();
+                    var hasBackups = api.rows().data().toArray().some( function ( snapshot ) {
+                        return showRemovedSnapshots || snapshot.source !== 'unavailable';
+                    } );
+                    var showEmpty = snapshotsListLoaded && ! hasBackups && $( '#mainwp-snapshots-empty-state' ).length > 0;
+                    $( api.table().container() ).toggle( ! showEmpty );
+                    $( '#mainwp-snapshots-empty-state' ).toggle( showEmpty );
+                    $( '#mainwp-snapshots-empty-backup' ).prop( 'disabled', siteDisconnected || backupInProgress ).toggleClass( 'disabled', siteDisconnected || backupInProgress );
+                    if ( ! showEmpty ) {
+                        api.columns.adjust();
+                    }
+                },
                 "pageLength": 10,
                 "pagingType": "full_numbers",
                 "stateSave": true,
@@ -994,7 +1077,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 var details = '<div class="ui mini divided list">';
                 ( row.data().uploads || [] ).forEach( function ( upload ) {
                     var label = uploadLabels[ upload.status ] || [ 'grey', escAttr( upload.status ) ];
-                    details += '<div class="item">' + escAttr( upload.name ) + ' (' + escAttr( upload.provider ) + ') <span class="ui mini ' + label[0] + ' label">' + label[1] + '</span>';
+                    details += '<div class="item">' + escAttr( upload.name ) + ' (' + escAttr( upload.provider ) + ') <span class="ui small basic ' + label[0] + ' label">' + label[1] + '</span>';
                     if ( [ 'failed_retryable', 'failed_permanent', 'credentials_invalid' ].indexOf( upload.status ) !== -1 && upload.last_error ) {
                         details += ' ' + escAttr( upload.last_error );
                     }
@@ -1062,6 +1145,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     var destinationsNote = destinationsTemplate.replace( '%s', function () { return escAttr( ( response.manual_destinations || [] ).join( ' + ' ) ); } );
                     backupNote.find( '.mainwp-backup-destinations-note' ).html( destinationsNote ).toggle( ! response.local_only );
 
+                    setBackupInProgress( !! response.manual_backup_running );
                     setSnapshotsPlaceholder( snapshotsPlaceholders.empty );
                     snapshotDeleteBusy = !! response.snapshot_delete_busy;
                     snapshotsTable.clear();
@@ -1096,7 +1180,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             $( '<td class="collapsing"></td>' ).text( '#' + job.job_id ),
                             $( '<td class="collapsing"></td>' ).text( job.date_label || '' ),
                             $( '<td class="collapsing"></td>' ).append(
-                                $( '<span class="ui small label"></span>' ).addClass( historyStatusColors[ job.status ] || 'grey' ).text( jobLabels[ job.status ] || statusLabels[ job.status ] || job.status )
+                                $( '<span class="ui small basic label"></span>' ).addClass( historyStatusColors[ job.status ] || 'grey' ).text( jobLabels[ job.status ] || statusLabels[ job.status ] || job.status )
                             ),
                             $details,
                             $action
@@ -1141,13 +1225,77 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function setPane( confirming ) {
+                if ( confirming || restoreStepJob !== currentJob ) {
+                    $( '#mainwp-restore-visit-site-wrap' ).hide();
+                }
                 if ( confirming ) {
                     $( '#mainwp-restore-reconcile-note' ).hide();
                     $( '#mainwp-restore-cache-note' ).hide();
                 }
                 $( '#mainwp-restore-confirm-pane' ).toggle( confirming );
                 $( '#mainwp-restore-progress-pane' ).toggle( ! confirming );
+                $( '#mainwp-restore-progress-bar' ).toggle( ! confirming );
+                if ( ! confirming && restoreStepJob !== currentJob ) {
+                    updateRestoreSteps( { status: 'pending' } );
+                    $( '#mainwp-restore-progress-bar' ).removeClass( 'success error' ).progress( { percent: 0, autoSuccess: false } );
+                    $( '#mainwp-restore-spinner' ).show();
+                }
                 $( '#mainwp-restore-start-btn' ).toggle( confirming );
+            }
+
+            var restoreStepJob = null;
+            var restoreObservedPhase = null;
+            var restoreCompletedSteps = [];
+            var restoreProgressPercent = 0;
+
+            function updateRestoreSteps( data ) {
+                if ( restoreStepJob !== currentJob ) {
+                    restoreStepJob = currentJob;
+                    restoreObservedPhase = null;
+                    restoreCompletedSteps = [];
+                    restoreProgressPercent = 0;
+                }
+                var index = phaseOrder.indexOf( data.status );
+                var previous = phaseOrder.indexOf( restoreObservedPhase );
+                if ( index > previous && previous > 0 && restoreObservedPhase !== 'completed' && restoreCompletedSteps.indexOf( restoreObservedPhase ) === -1 ) {
+                    restoreCompletedSteps.push( restoreObservedPhase );
+                }
+                if ( index >= 0 ) {
+                    restoreObservedPhase = data.status;
+                }
+                var completedLabels = {
+                    preflight: '<?php echo esc_js( esc_html__( 'Pre-restore checks passed', 'mainwp' ) ); ?>',
+                    pre_snapshot: '<?php echo esc_js( esc_html__( 'Safety backup created', 'mainwp' ) ); ?>',
+                    staging: '<?php echo esc_js( esc_html__( 'Backup files prepared', 'mainwp' ) ); ?>',
+                    transferring: '<?php echo esc_js( esc_html__( 'Backup files sent to the site', 'mainwp' ) ); ?>',
+                    running: '<?php echo esc_js( esc_html__( 'Restore applied on the site', 'mainwp' ) ); ?>',
+                    verifying: '<?php echo esc_js( esc_html__( 'Restored site verified', 'mainwp' ) ); ?>'
+                };
+                var $steps = $( '#mainwp-restore-completed-steps' ).empty();
+                var effectiveIndex = index >= 0 ? index : phaseOrder.indexOf( restoreObservedPhase );
+                var stopped = data.status === 'failed_permanent' || data.status === 'cancelled';
+                phaseOrder.filter( function ( phase ) { return phase !== 'pending' && phase !== 'completed'; } ).forEach( function ( phase ) {
+                    var passed = phaseOrder.indexOf( phase ) < effectiveIndex;
+                    var skipped = passed && ( data.skipped_phases || [] ).indexOf( phase ) !== -1;
+                    var done = ! skipped && ( passed || restoreCompletedSteps.indexOf( phase ) !== -1 );
+                    var current = phase === restoreObservedPhase && data.status !== 'completed';
+                    var $item = $( '<div class="item"></div>' );
+                    var icon = done ? 'green check' : ( current ? ( stopped ? 'red times' : 'green circle notched loading' ) : 'grey clock outline' );
+                    var $icon = $( '<i></i>' ).attr( 'class', icon + ' icon' );
+                    $( '<div class="right floated content"></div>' ).append( $icon ).appendTo( $item );
+                    var text = done ? completedLabels[ phase ] : statusLabels[ phase ];
+                    if ( phase === 'pre_snapshot' && ! done && ! current ) {
+                        text += ' <?php echo esc_js( esc_html__( '(if selected)', 'mainwp' ) ); ?>';
+                    }
+                    if ( skipped ) {
+                        $icon.attr( 'class', 'grey minus icon' );
+                        $item.attr( 'title', '<?php echo esc_js( esc_html__( 'This optional step was not selected for this restore.', 'mainwp' ) ); ?>' );
+                    }
+                    $( '<div class="content"></div>' ).text( text ).appendTo( $item );
+                    $steps.append( $item );
+                } );
+                $steps.show();
+                return index;
             }
 
             function showProgress( data ) {
@@ -1191,13 +1339,16 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // A phase progress bar across the known sequence (L3). The
                 // failed/cancelled states leave it where it stopped.
                 var $bar = $( '#mainwp-restore-progress-bar' );
-                var idx = phaseOrder.indexOf( data.status );
-                if ( 'failed_permanent' === data.status || 'cancelled' === data.status ) {
-                    $bar.hide();
-                } else if ( idx >= 0 ) {
-                    var pct = Math.round( ( idx + 1 ) / phaseOrder.length * 100 );
-                    $bar.show().toggleClass( 'success', 'completed' === data.status ).find( '.bar' ).css( 'width', pct + '%' );
+                var idx = updateRestoreSteps( data );
+                if ( idx >= 0 ) {
+                    restoreProgressPercent = 'completed' === data.status ? 100 : Math.round( idx / ( phaseOrder.length - 1 ) * 100 );
                 }
+                $bar.show().progress( { percent: restoreProgressPercent, autoSuccess: false, showActivity: ! terminal } )
+                    .toggleClass( 'active', ! terminal )
+                    .toggleClass( 'success', 'completed' === data.status )
+                    .toggleClass( 'error', 'failed_permanent' === data.status );
+                // Fomantic can update the label while setting progress.
+                $( '#mainwp-restore-status-text' ).text( label );
 
                 var retryingAbout = '';
                 if ( 'failed_retryable' === data.status && data.next_retry_label ) {
@@ -1479,8 +1630,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         // the old click's state. loadSnapshots resumes the
                         // new site's own run if one is in flight.
                         stopBackupTimers();
+                        setBackupInProgress( false );
                         backupSinceTs = 0;
                         backupProgressCache = null;
+                        $( '#mainwp-native-backup-progress-modal' ).modal( 'hide' );
+                        $( '#mainwp-backup-phase-steps' ).empty().removeData( 'backup-phase' );
                         backupStartTime = null;
                         setBackupStatus( '', false );
                         showCancelBackup( false );
@@ -1494,7 +1648,12 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // former `.modal({...}).modal('show')` chain) re-ran setup against an
             // in-flight open/close transition and threw InvalidStateError; a single
             // init plus a guarded show keeps the transition state consistent (M5).
-            $( '#mainwp-snapshot-delete-modal' ).modal( { closable: false } );
+            $( '#mainwp-snapshot-delete-modal' ).modal( {
+                closable: false,
+                onHide: function () {
+                    return ! $( '#mainwp-snapshot-delete-close' ).prop( 'disabled' );
+                }
+            } );
             $( '#mainwp-snapshot-delete-modal .ui.checkbox' ).checkbox();
             $( '#mainwp-restore-snapshots-table' ).on( 'click', '.mainwp-delete-snapshot', function ( event ) {
                 event.preventDefault();
@@ -1511,6 +1670,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 requestDeletePreview( $( this ).is( ':checked' ) );
             } );
             $( '#mainwp-snapshot-delete-close' ).on( 'click', function () {
+                if ( $( this ).prop( 'disabled' ) ) {
+                    return;
+                }
                 ++snapshotDeleteRequest;
                 snapshotDeletePreview = null;
                 $( '#mainwp-snapshot-delete-modal' ).modal( 'hide' );
@@ -1558,7 +1720,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 currentSnapshot = parseInt( $( this ).data( 'snapshot' ), 10 );
                 var snapType = $( this ).data( 'snapshot-type' );
                 var snapAge = parseInt( $( this ).data( 'snapshot-age' ), 10 ) || 0;
-                if ( $( this ).hasClass( 'disabled' ) ) {
+                if ( backupInProgress || $( this ).hasClass( 'disabled' ) ) {
                     return;
                 }
                 var warningText = restoreWarnings[ snapType ] || restoreWarnings['default'];
@@ -1589,11 +1751,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             } );
 
             $( '#mainwp-restore-consent' ).on( 'change', function () {
-                $( '#mainwp-restore-start-btn' ).toggleClass( 'disabled', ! this.checked );
+                $( '#mainwp-restore-start-btn' ).toggleClass( 'disabled', backupInProgress || ! this.checked );
             } );
 
             $( '#mainwp-restore-start-btn' ).on( 'click', function () {
-                if ( $( this ).hasClass( 'disabled' ) ) {
+                if ( backupInProgress || $( this ).hasClass( 'disabled' ) ) {
                     return;
                 }
                 $( this ).addClass( 'disabled' ); // Block a second submit while this request is in flight.
@@ -1641,13 +1803,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( rollbackRequestPending ) {
                     return;
                 }
+                var visitSiteWasVisible = $( '#mainwp-restore-visit-site-wrap' ).is( ':visible' );
                 rollbackRequestPending = true;
                 currentJob = jobId;
                 setPane( false );
                 $( '#mainwp-restore-rollback-btn' ).prop( 'disabled', true ).hide();
                 $( '.mainwp-restore-failed-job' ).prop( 'disabled', true );
                 $( '#mainwp-restore-result-message' ).hide();
-                var visitSiteWasVisible = $( '#mainwp-restore-visit-site-wrap' ).is( ':visible' );
                 $( '#mainwp-restore-visit-site-wrap' ).hide();
                 function rollbackRefused( message, retryable, unanswered ) {
                     $( '#mainwp-restore-spinner' ).hide();
@@ -1698,18 +1860,105 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 startRollback( jobId );
             } );
 
+            $( '#mainwp-snapshot-delete-close, #mainwp-restore-close-btn, #mainwp-native-backup-progress-modal > .close.icon' ).on( 'keydown', function ( event ) {
+                if ( event.key === 'Enter' || event.key === ' ' ) {
+                    event.preventDefault();
+                    $( this ).trigger( 'click' );
+                }
+            } );
+
             $( '#mainwp-restore-close-btn' ).on( 'click', function () {
                 window.clearTimeout( pollTimer );
             } );
 
             // On-demand "Back Up Now": kick the native backup, then poll the
             // same way the restore flow does and refresh the list on success.
-            function setBackupStatus( text, isError ) {
-                $( '#mainwp-native-backup-now-status' ).text( text ).toggleClass( 'ui red text', !! isError );
+            var backupStatusDismissed = false;
+            var backupMonitorResult = null;
+            var backupMonitorDismissed = false;
+            function updateBackupMonitor() {
+                var hasResult = !! backupMonitorResult;
+                var running = backupInProgress && ! hasResult;
+                var modalOpen = $( '#mainwp-native-backup-progress-modal' ).modal( 'is active' );
+                $( '#mainwp-backup-monitor' ).removeClass( 'green yellow red blue' )
+                    .addClass( hasResult ? backupMonitorResult.color : '' )
+                    .toggle( ! backupMonitorDismissed && ( hasResult || ( running && ! modalOpen ) ) );
+                $( '#mainwp-backup-monitor-label' ).text( hasResult ? backupMonitorResult.text : '<?php echo esc_js( esc_html__( 'Backup in progress.', 'mainwp' ) ); ?>' );
+                $( '#mainwp-backup-view-progress' ).toggle( running );
+                $( '#mainwp-backup-monitor-dismiss' ).toggle( hasResult );
+            }
+            $( '#mainwp-native-backup-progress-modal' ).modal( {
+                closable: false,
+                onVisible: updateBackupMonitor,
+                onHidden: updateBackupMonitor
+            } );
+            $( '#mainwp-backup-view-progress' ).on( 'click', function ( event ) {
+                event.preventDefault();
+                $( '#mainwp-native-backup-progress-modal' ).modal( 'show' );
+            } );
+            $( '#mainwp-backup-monitor-dismiss' ).on( 'click keydown', function ( event ) {
+                if ( event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ' ) {
+                    return;
+                }
+                event.preventDefault();
+                backupMonitorDismissed = true;
+                $( '#mainwp-backup-monitor' ).hide();
+            } );
+
+            function setBackupStatus( text, isError, color, progressTick ) {
+                if ( ! progressTick ) {
+                    backupStatusDismissed = false;
+                }
+                if ( ! progressTick && text && ( color === 'green' || color === 'yellow' || isError ) ) {
+                    backupMonitorResult = { text: text, color: color || 'red' };
+                    backupMonitorDismissed = false;
+                }
+                if ( ! text ) {
+                    backupMonitorResult = null;
+                }
+                updateBackupMonitor();
+                if ( ! progressTick ) {
+                    $( '#mainwp-backup-phase-label' ).text( text );
+                    if ( color === 'green' ) {
+                        $( '#mainwp-backup-phase-progress' ).progress( { percent: 100, autoSuccess: false } ).removeClass( 'active' );
+                        window.mainwpBackupProgressSteps( $( '#mainwp-backup-phase-steps' ), 'completed', 100, 'completed', '' );
+                    }
+                    if ( isError ) {
+                        window.mainwpBackupProgressSteps( $( '#mainwp-backup-phase-steps' ), 'failed', null, 'failed', '' );
+                    }
+                    if ( isError || color === 'yellow' ) {
+                        $( '#mainwp-backup-phase-progress' ).removeClass( 'active' );
+                    }
+                    $( '.mainwp-backup-status-content' ).show();
+                }
+                $( '#mainwp-native-backup-now-status' )
+                    .removeClass( 'green yellow red blue text' )
+                    .addClass( color || ( isError ? 'red' : '' ) )
+                    .toggle( !! text && ! backupStatusDismissed )
+                    .find( '.mainwp-backup-status-content' ).text( text );
+            }
+
+            function setBackupInProgress( busy ) {
+                if ( busy && ! backupInProgress ) {
+                    backupMonitorResult = null;
+                    backupMonitorDismissed = false;
+                }
+                backupInProgress = !! busy;
+                updateBackupMonitor();
+                if ( backupInProgress ) {
+                    backupStatusDismissed = false;
+                }
+                $( '#mainwp-native-backup-now-btn, #mainwp-snapshots-empty-backup' )
+                    .prop( 'disabled', backupInProgress || siteDisconnected )
+                    .toggleClass( 'disabled', backupInProgress || siteDisconnected );
+                $( '#mainwp-restore-snapshots-table .mainwp-restore-snapshot' )
+                    .toggleClass( 'disabled', backupInProgress || siteDisconnected )
+                    .attr( 'aria-disabled', backupInProgress || siteDisconnected ? 'true' : 'false' );
+                $( '#mainwp-restore-start-btn' ).toggleClass( 'disabled', backupInProgress || ! $( '#mainwp-restore-consent' ).is( ':checked' ) );
             }
 
             function reenableBackupBtn() {
-                $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', siteDisconnected ).toggleClass( 'disabled', siteDisconnected );
+                $( '#mainwp-native-backup-now-btn, #mainwp-snapshots-empty-backup' ).prop( 'disabled', siteDisconnected || backupInProgress ).toggleClass( 'disabled', siteDisconnected || backupInProgress );
             }
 
             // Offer "Cancel backup" while a run is in flight, or after the child
@@ -1736,6 +1985,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             }
 
             function setBackupFollowControls() {
+                setBackupInProgress( true );
                 setSnapshotDeleteBusy( true );
                 $( '#mainwp-native-backup-now-btn' ).prop( 'disabled', true ).addClass( 'disabled' );
                 showCancelBackup( true );
@@ -1745,6 +1995,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // reload, or a site switch onto a site mid-backup). A retained
             // kickoff keeps its since; other resumed views use the current run.
             function resumeBackupFollow( sinceTs ) {
+                $( '#mainwp-native-backup-progress-modal' ).modal( 'show' );
+                $( '#mainwp-backup-phase-steps' ).empty().removeData( 'backup-phase' );
+                $( '#mainwp-backup-phase-progress' ).removeClass( 'success error' ).progress( { percent: 0, autoSuccess: false } );
                 setBackupFollowControls();
                 stopBackupTimers();
                 backupSinceTs = sinceTs || 0;
@@ -1792,11 +2045,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         // An advisory note (like the large-site ZIP auto-switch)
                         // rides along with the success status; show it, never
                         // dress it up as a failure.
-                        var completeMsg = '<?php echo esc_js( esc_html__( 'Backup complete.', 'mainwp' ) ); ?>';
+                        var completeMsg = '<?php echo esc_js( esc_html__( 'Backup completed successfully.', 'mainwp' ) ); ?>';
                         if ( data.notice ) {
                             completeMsg += ' ' + data.notice;
                         }
-                        setBackupStatus( completeMsg, false );
+                        setBackupStatus( completeMsg, false, 'green' );
                         reenableBackupBtn();
                         showCancelBackup( false );
                         loadSnapshots( siteId );
@@ -1834,7 +2087,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         }
                     }
 
-                    backupProgressCache = { label: label, percent: pct, eta: eta };
+                    backupProgressCache = { label: label, percent: pct, eta: eta, phase: data.phase || data.status, color: 'queued' === data.status ? 'yellow' : '' };
                     renderBackupStatus();
                     scheduleBackupPoll( siteId, sinceTs, 5000 );
                 }, 'json' ).fail( function () {
@@ -1848,6 +2101,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     // the timer ticking and the button stuck.
                     backupPollRetries++;
                     if ( backupPollRetries <= 3 ) {
+                        backupProgressCache = { label: '<?php echo esc_js( esc_html__( 'Checking backup status… The connection was interrupted; retrying.', 'mainwp' ) ); ?>', percent: null, eta: '', color: 'yellow' };
+                        renderBackupStatus();
                         scheduleBackupPoll( siteId, sinceTs, 3000 );
                         return;
                     }
@@ -1859,14 +2114,30 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 } );
             }
 
-            $( '#mainwp-native-backup-now-btn' ).on( 'click', function () {
-                if ( $( this ).prop( 'disabled' ) || $( this ).hasClass( 'disabled' ) || ! ( currentSite > 0 ) ) {
+            $( '#mainwp-snapshots-empty-backup' ).on( 'click', function () {
+                $( '#mainwp-native-backup-now-btn' ).trigger( 'click' );
+            } );
+
+            $( '#mainwp-native-backup-now-btn' ).on( 'click', function ( event, confirmed ) {
+                if ( backupInProgress || $( this ).prop( 'disabled' ) || $( this ).hasClass( 'disabled' ) || ! ( currentSite > 0 ) ) {
+                    return;
+                }
+                if ( ! confirmed ) {
+                    var confirmedSite = currentSite;
+                    mainwp_confirm( '<?php echo esc_js( __( 'Create a new backup of this site now?', 'mainwp' ) ); ?>', function () {
+                        if ( currentSite === confirmedSite ) {
+                            $( '#mainwp-native-backup-now-btn' ).trigger( 'click', [ true ] );
+                        }
+                    } );
                     return;
                 }
                 // Capture the target site now: every request and timer this
                 // click spawns is keyed to it, so a selection change can
                 // never redirect this run's follow-up at another site.
                 var siteId = currentSite;
+                $( '#mainwp-native-backup-progress-modal' ).modal( 'show' );
+                $( '#mainwp-backup-phase-steps' ).empty().removeData( 'backup-phase' );
+                $( '#mainwp-backup-phase-progress' ).removeClass( 'success error' ).progress( { percent: 0, autoSuccess: false } );
                 // An older cancel cannot end this click, so it no longer
                 // holds the Cancel button for the new follow.
                 delete backupCancelPending[ siteId ];
@@ -1884,7 +2155,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 backupPhaseStartPercent = 0;
                 backupProgressCache = { label: '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', percent: null, eta: '' };
                 backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
-                setBackupStatus( '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', false );
+                renderBackupStatus();
                 $.post( ajaxurl, { action: 'mainwp_native_backup_initiate', security: nonces.nativeBackupInitiate, site_id: siteId }, function ( response ) {
                     if ( backupPendingKickoffs[ siteId ] === clickEpoch ) {
                         delete backupPendingKickoffs[ siteId ];
@@ -1947,8 +2218,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             // Cancel/clear a stuck or unwanted backup. Tells the child to drive
             // its active backup task terminal so a new backup is no longer blocked.
-            $( '#mainwp-native-backup-cancel-btn' ).on( 'click', function () {
+            $( '#mainwp-native-backup-cancel-btn' ).on( 'click', function ( event, confirmed ) {
                 if ( $( this ).prop( 'disabled' ) || ! ( currentSite > 0 ) ) {
+                    return;
+                }
+                if ( ! confirmed ) {
+                    var confirmedSite = currentSite;
+                    mainwp_confirm( '<?php echo esc_js( __( 'Cancel the backup currently running on this site?', 'mainwp' ) ); ?>', function () {
+                        if ( currentSite === confirmedSite ) {
+                            $( '#mainwp-native-backup-cancel-btn' ).trigger( 'click', [ true ] );
+                        }
+                    } );
                     return;
                 }
                 // The cancel targets the site shown at click time; a
@@ -1990,8 +2270,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                         return;
                     }
-                    setBackupStatus( cancelResult.message, false );
+                    setBackupStatus( cancelResult.message, false, cancelResult.keepPolling ? '' : 'yellow' );
                     if ( 'cancelled' === response.result ) {
+                        window.mainwpBackupProgressSteps( $( '#mainwp-backup-phase-steps' ), '', null, 'cancelled', '' );
                         stopBackupTimers();
                         showCancelBackup( false );
                         reenableBackupBtn();
@@ -2043,7 +2324,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         if ( response.errors && response.errors.length ) {
                             summary += ' <?php echo esc_js( esc_html__( 'Some items could not be removed.', 'mainwp' ) ); ?>';
                         }
-                        setBackupStatus( summary, !! ( response.errors && response.errors.length ) );
+                        setBackupStatus( summary, false, response.errors && response.errors.length ? 'yellow' : 'green' );
                         loadSnapshots( currentSite );
                     }, 'json' ).fail( function () {
                         $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );

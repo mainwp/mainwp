@@ -97,7 +97,7 @@ final class MainWP_Backup_Task_Phase {
     public static function label( string $phase ): string {
         switch ( $phase ) {
             case self::QUEUED:
-                return __( 'Waiting to start', 'mainwp' );
+                return __( 'Initiating Backup', 'mainwp' );
             case self::DUMPING_DB:
                 return __( 'Exporting database', 'mainwp' );
             case self::ARCHIVING_FILES:

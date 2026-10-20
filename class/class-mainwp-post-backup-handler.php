@@ -330,6 +330,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'created'            => (int) $entry['snapshot']->created,
                 // Formatted here so the page uses the Dashboard date and time
                 // settings, as the task list does, not the browser locale.
+                'created_elapsed'    => MainWP_Utility::time_elapsed_string( (int) $entry['snapshot']->created ),
                 'created_label'      => MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( (int) $entry['snapshot']->created ) ),
                 'age_days'           => max( 0, (int) floor( ( time() - (int) $entry['snapshot']->created ) / DAY_IN_SECONDS ) ),
                 'status'             => (string) $entry['snapshot']->status,
@@ -341,6 +342,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'removal_reason'     => (string) $entry['removal_reason'],
                 'skipped_count'      => $skipped['count'],
                 'skipped_paths'      => $skipped['paths'],
+                'size_bytes'         => $size_bytes,
                 'size_label'         => $size_bytes > 0 ? MainWP_Utility::human_filesize( $size_bytes ) : '',
                 'test_restore_state' => isset( $entry['snapshot']->test_restore_state ) ? (string) $entry['snapshot']->test_restore_state : '',
                 'test_restore_at'    => $test_restore_at,
@@ -855,7 +857,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         $this->secure_request( 'mainwp_backup_diagnostics_export' );
 
         if ( ! MainWP_Backup_Diagnostics::is_enabled() ) {
-            wp_send_json( array( 'error' => esc_html__( 'Backup diagnostics is turned off. Enable it in the backup settings and run a backup first.', 'mainwp' ) ) );
+            wp_send_json( array( 'error' => esc_html__( 'Backup diagnostics are turned off. Enable diagnostics in Settings > Backup Settings, then run a backup before exporting the report.', 'mainwp' ) ) );
             return;
         }
 

@@ -118,7 +118,7 @@ class MainWP_Backup_Fleet_Health { // phpcs:ignore Generic.Classes.OpeningBraceS
         return add_query_arg(
             array(
                 'page'   => 'managesites',
-                'status' => 'backup_health_' . $bucket_key,
+                'backup_health' => $bucket_key,
             ),
             'admin.php'
         );
@@ -156,26 +156,27 @@ class MainWP_Backup_Fleet_Health { // phpcs:ignore Generic.Classes.OpeningBraceS
                     </h2>
                 </div>
             </div>
-            <div>
-                <?php // Two cards per row keep all four counts inside the widget height; the markup and placement match the Connection Status widget beside it. ?>
-                <div class="ui two small cards" id="mainwp-backup-health-counts">
-                    <?php foreach ( static::buckets() as $bucket ) : ?>
-                        <div class="ui card">
-                            <div class="content">
-                                <div class="header">
-                                    <span class="ui large text"><i class="<?php echo esc_attr( $bucket['icon'] ); ?> <?php echo esc_attr( $bucket['color'] ); ?> icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $counts[ $bucket['key'] ] ) ); ?></span>
-                                </div>
-                                <div class="description"><a href="<?php echo esc_url( static::filter_url( $bucket['key'] ) ); ?>" data-tooltip="<?php echo esc_attr( $bucket['description'] ); ?>" data-inverted="" data-position="bottom left"><strong><?php echo esc_html( $bucket['label'] ); ?></strong><span class="screen-reader-text"> <?php echo esc_html( $bucket['description'] ); ?></span></a></div>
+        </div>
+        <div class="mainwp-scrolly-overflow" id="mainwp-backup-health-details">
+            <div class="ui two small cards" id="mainwp-backup-health-counts">
+                <?php foreach ( static::buckets() as $bucket ) : ?>
+                    <a class="ui card" href="<?php echo esc_url( static::filter_url( $bucket['key'] ) ); ?>" data-tooltip="<?php echo esc_attr( $bucket['description'] ); ?>" data-inverted="" data-position="bottom left">
+                        <div class="content">
+                            <div class="header">
+                                <span class="ui large text"><i class="<?php echo esc_attr( $bucket['icon'] ); ?> <?php echo esc_attr( $bucket['color'] ); ?> icon"></i> <?php echo esc_html( MainWP_Utility::short_number_format( $counts[ $bucket['key'] ] ) ); ?></span>
                             </div>
+                            <div class="description"><strong><?php echo esc_html( $bucket['label'] ); ?></strong><span class="screen-reader-text"> <?php echo esc_html( $bucket['description'] ); ?></span></div>
                         </div>
-                    <?php endforeach; ?>
-                </div>
+                    </a>
+                <?php endforeach; ?>
             </div>
         </div>
         <div class="ui two column grid mainwp-widget-footer">
-            <div class="left aligned middle aligned column"></div>
+            <div class="left aligned middle aligned column">
+                <a href="<?php echo esc_url( 'admin.php?page=ManageBackupsSnapshots' ); ?>" class="ui mini basic button"><?php esc_html_e( 'Snapshots & Restore', 'mainwp' ); ?></a>
+            </div>
             <div class="right aligned middle aligned column">
-                <a href="<?php echo esc_url( 'admin.php?page=managesites' ); ?>" class="ui mini basic button"><?php esc_html_e( 'Manage Sites', 'mainwp' ); ?></a>
+                <a href="<?php echo esc_url( 'admin.php?page=ManageBackups' ); ?>" class="ui mini basic button"><?php esc_html_e( 'Manage Backups', 'mainwp' ); ?></a>
             </div>
         </div>
         <?php

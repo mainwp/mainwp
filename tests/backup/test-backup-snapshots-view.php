@@ -53,7 +53,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	 */
 	public function test_upload_status_labels_and_details_present() {
 		$output = $this->render_page();
-		foreach ( array( 'Offsite Verified', 'Uploading', 'Partially uploaded', 'Upload failed', 'Waiting to upload', 'Uploaded', 'Upload failed, will retry', 'Re-enter credentials', '%1$d of %2$d uploaded' ) as $label ) {
+		foreach ( array( 'Offsite Verified', 'Uploading', 'Partially Uploaded', 'Upload Failed', 'Waiting to Upload', 'Uploaded', 'Upload Failed, Will Retry', 'Re-enter Credentials', '%1$d of %2$d uploaded' ) as $label ) {
 			$this->assertStringContainsString( $label, $output );
 		}
 		$this->assertStringContainsString( 'mainwp-snapshot-uploads-toggle', $output );
@@ -504,15 +504,13 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	 */
 	public function test_test_restore_states_render_distinctly() {
 		$output = $this->render_page();
-
-		$this->assertStringContainsString( 'snap.test_restore_state', $output, 'The list must read the per-snapshot test-restore state.' );
-		$this->assertMatchesRegularExpression( "/'pass' === snap\.test_restore_state/s", $output, 'A pass must be handled.' );
-		$this->assertMatchesRegularExpression( "/'fail' === snap\.test_restore_state/s", $output, 'A fail must be handled.' );
-		$this->assertMatchesRegularExpression( "/'unsupported' === snap\.test_restore_state/s", $output, 'An unsupported host must be handled.' );
-		$this->assertMatchesRegularExpression( "/'unavailable' === snap\.test_restore_state/s", $output, 'An unavailable snapshot must be handled.' );
-		$this->assertMatchesRegularExpression( "/ui mini green label[^']*check icon/s", $output, 'A pass must render a green checked label.' );
-		$this->assertStringContainsString( 'ui mini red label', $output, 'A fail must render a red label.' );
-		$this->assertStringContainsString( 'snap.test_restore_label', $output, 'A pass must show the test-restore date.' );
+		$this->assertStringContainsString( 'states[ snap.test_restore_state ]', $output );
+		foreach ( array( "pass: [ 'green', 'check circle'", "fail: [ 'red', 'times circle'", "unsupported: [ 'grey', 'ban'", "unavailable: [ 'grey', 'exclamation circle'" ) as $state ) {
+			$this->assertStringContainsString( $state, $output );
+		}
+		$this->assertStringContainsString( 'ui small basic ', $output );
+		$this->assertStringContainsString( 'snap.test_restore_label', $output );
+		$this->assertStringContainsString( 'data-position="left center"', $output );
 	}
 
 	/**
@@ -830,13 +828,13 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Restore is styled as a destructive action, not the primary positive one.
+	 * Restore uses the standard outlined row action and a green confirmation button.
 	 */
-	public function test_restore_buttons_use_destructive_styles() {
+	public function test_restore_buttons_use_standard_styles() {
 		$output = $this->render_page();
 
-		$this->assertStringContainsString( 'ui mini basic button mainwp-restore-snapshot', $output );
-		$this->assertStringContainsString( 'class="ui red disabled button" id="mainwp-restore-start-btn"', $output );
+		$this->assertStringContainsString( 'ui mini basic green button mainwp-restore-snapshot', $output );
+		$this->assertStringContainsString( 'class="ui green disabled button" id="mainwp-restore-start-btn"', $output );
 		$this->assertStringNotContainsString( 'ui mini green button mainwp-restore-snapshot', $output );
 	}
 
@@ -866,7 +864,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 		$this->assertGreaterThan( strpos( $output, 'id="mainwp-native-backup-now-btn"' ), strpos( $output, 'id="mainwp-restore-snapshots-table"' ) );
 		$this->assertStringNotContainsString( '#AD0000', $output );
 		$this->assertStringNotContainsString( '--mainwp-text-color', $output );
-		$this->assertStringContainsString( "toggleClass( 'ui red text', !! isError )", $output );
+		$this->assertStringContainsString( ".addClass( color || ( isError ? 'red' : '' ) )", $output );
 	}
 
 	/**

@@ -116,6 +116,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                         seg_is_not: $( '#mainwp-sites-filters-row #mainwp_is_not_site').dropdown('get value'),
                         seg_site_tags: $( '#mainwp-sites-filters-row #mainwp-filter-sites-group').dropdown('get value'),
                         seg_site_tags_logic: $( '#mainwp-sites-filters-row #mainwp-filter-sites-group-logic').dropdown('get value'),
+                        seg_backup_health: $('#mainwp-filter-backup-health').length ? $('#mainwp-filter-backup-health').dropdown('get value') : '',
                         seg_site_status: $( '#mainwp-sites-filters-row #mainwp-filter-sites-status').dropdown('get value'),
                         seg_site_clients: $( '#mainwp-sites-filters-row #mainwp-filter-clients').dropdown('get value'),
                         seg_id:$('#mainwp-manage-sites-filter-save-segment-button').attr('selected-segment-id'),
@@ -153,6 +154,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                         'seg_site_tags',
                         'seg_site_tags_logic',
                         'seg_site_status',
+                        'seg_backup_health',
                         'seg_site_clients',
                     ];
                     if('' != seg_values ) {
@@ -162,6 +164,12 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
                                 jQuery( '#mainwp-manage-sites-filter-save-segment-button' ).attr('selected-segment-id',seg_id);
                                 jQuery( '#mainwp-manage-sites-filter-save-segment-button' ).attr('selected-segment-name',seg_values.name);
 
+                                // Migrate segments saved before backup health had its own filter.
+                                if (typeof seg_values.seg_site_status === 'string' && seg_values.seg_site_status.indexOf('backup_health_') === 0) {
+                                    seg_values.seg_backup_health = seg_values.seg_site_status.substring('backup_health_'.length);
+                                    seg_values.seg_site_status = 'all';
+                                }
+                                jQuery('#mainwp-filter-backup-health').dropdown('clear');
                                 for (const [key, value] of Object.entries(seg_values)) {
                                     try {
                                         if(fieldsAllows.includes(key)){
@@ -285,6 +293,7 @@ class MainWP_Manage_Sites_Filter_Segment { // phpcs:ignore Generic.Classes.Openi
             'seg_site_tags',
             'seg_site_tags_logic',
             'seg_site_status',
+            'seg_backup_health',
             'seg_site_clients',
         );
 

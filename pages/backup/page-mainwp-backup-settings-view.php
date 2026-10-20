@@ -75,7 +75,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             $reason  = self::get_recovery_passphrase_rejection_message( $passphraseRejected );
             $next    = __( 'Check it under Backup Settings below.', 'mainwp' );
         }
-        echo '<div class="ui yellow message"><i class="close icon"></i>' . esc_html( $message . ' ' . $reason . ' ' . $next ) . '</div>';
+        echo '<div class="ui yellow message">' . esc_html( $message . ' ' . $reason . ' ' . $next ) . '<i class="close icon"></i></div>';
         return true;
     }
 
@@ -131,7 +131,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         <?php
         if ( MainWP_System_Utility::is_team_control_staff() ) {
             ?>
-            <div class="ui info visible message"><?php esc_html_e( 'Only WordPress administrators can change backup settings.', 'mainwp' ); ?></div>
+            <div class="ui blue message"><?php esc_html_e( 'Only WordPress administrators can change backup settings.', 'mainwp' ); ?></div>
             <?php
             return;
         }
@@ -141,9 +141,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             <label class="six wide column middle aligned"><?php esc_html_e( 'Select primary backup system', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <select class="ui dropdown" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
-                    <?php if ( $enableNativeBackups || empty( $primaryBackup ) ) { ?>
-                        <option value="" ><?php esc_html_e( 'Native backups', 'mainwp' ); ?></option>
-                    <?php } ?>
+                    <option value=""><?php esc_html_e( 'Native backups', 'mainwp' ); ?></option>
                     <?php
                     foreach ( $primaryBackupMethods as $method ) {
                         echo '<option value="' . esc_attr( $method['value'] ) . '" ' . ( ( $primaryBackup === $method['value'] ) ? 'selected' : '' ) . '>' . esc_html( $method['title'] ) . '</option>';
@@ -166,7 +164,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_enableNativeBackups" id="mainwp_options_enableNativeBackups" <?php echo 0 === (int) $enableNativeBackups ? '' : 'checked="true"'; ?>/>
             </div>
         </div>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backupsOnServer', (int) $backupsOnServer );
@@ -178,7 +176,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backupOnExternalSources', (int) $backupOnExternalSources );
@@ -190,7 +188,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="5">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="5">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_on_demand_retention_count', (int) $onDemandRetentionCount );
@@ -199,12 +197,12 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </label>
             <div class="ten wide column">
                 <span data-tooltip="<?php esc_attr_e( 'How many on-demand (Back up now) snapshots to keep per site before the oldest are pruned. Minimum 1.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_onDemandRetentionCount" value="<?php echo intval( $onDemandRetentionCount ); ?>"/></span>
-                <em><?php esc_html_e( 'Counts the backups made with Back Up Now on the Snapshots & Restore page, per site.', 'mainwp' ); ?></em>
+                <span class="ui small text"><?php esc_html_e( 'Counts the backups made with Back Up Now on the Snapshots & Restore page, per site.', 'mainwp' ); ?></span>
             </div>
         </div>
 
         <?php $diagnosticsEnabled = MainWP_Backup_Diagnostics::is_enabled(); ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="0">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="0">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_diagnostics_enabled', (int) $diagnosticsEnabled );
@@ -215,9 +213,9 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <div class="ui toggle checkbox">
                     <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_backupDiagnosticsEnabled" id="mainwp_options_backupDiagnosticsEnabled" <?php echo $diagnosticsEnabled ? 'checked="true"' : ''; ?>/>
                 </div>
-                <div class="ui small message" style="margin-top: 1em;">
+                <div style="margin-top: .5em;"><span class="ui small text">
                     <?php esc_html_e( 'Records detailed timing and progress data for every backup and restore run, which helps pinpoint slowdowns and failures. The data stays on this dashboard until you export it and is trimmed automatically after two weeks.', 'mainwp' ); ?>
-                </div>
+                </span></div>
                 <?php if ( $diagnosticsEnabled ) : ?>
                     <button type="button" class="ui basic button" id="mainwp-backup-diagnostics-export"><?php esc_html_e( 'Export diagnostics data', 'mainwp' ); ?></button>
                     <span id="mainwp-backup-diagnostics-export-status"></span>
@@ -256,7 +254,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         $encryptionForcedOff = isset( $_GET['backup_encryption_forced_off'] ) && '1' === sanitize_text_field( wp_unslash( $_GET['backup_encryption_forced_off'] ) ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         $passphraseRejected  = isset( $_GET['backup_recovery_passphrase_rejected'] ) ? sanitize_key( wp_unslash( $_GET['backup_recovery_passphrase_rejected'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
         ?>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="0">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="0">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backup_encryption_enabled', (int) $encryptionEnabled );
@@ -267,9 +265,9 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <div class="ui toggle checkbox">
                     <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_enableBackupEncryption" id="mainwp_options_enableBackupEncryption" <?php echo $encryptionEnabled ? 'checked="true"' : ''; ?>/>
                 </div>
-                <div class="ui small message" style="margin-top: 1em;">
+                <div style="margin-top: .5em;"><span class="ui small text">
                     <?php esc_html_e( 'Encrypts each backup archive on the dashboard before it is uploaded to remote storage, so the provider only ever holds ciphertext. Applies to new backups; existing snapshots are unchanged. Set a recovery passphrase below before turning this on.', 'mainwp' ); ?>
-                </div>
+                </span></div>
                 <?php if ( $encryptionForcedOff ) : ?>
                 <div class="ui small red message" style="margin-top: 1em;">
                     <?php esc_html_e( 'Encryption could not be enabled because no recovery passphrase is set. Set a recovery passphrase below, then save again.', 'mainwp' ); ?>
@@ -278,7 +276,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>>
             <label class="six wide column middle aligned"><?php esc_html_e( 'Backup recovery passphrase', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <?php if ( in_array( $passphraseRejected, array( 'short', 'mismatch', 'current', 'current_mismatch', 'key_mismatch', 'account_password' ), true ) ) : ?>
@@ -292,13 +290,13 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <input type="password" autocomplete="current-password" name="mainwp_options_backupEncryptionAccountPassword" id="mainwp_options_backupEncryptionAccountPassword" value="" placeholder="<?php esc_attr_e( 'Your WordPress password', 'mainwp' ); ?>"/>
                 <?php endif; ?>
                 <input type="password" autocomplete="new-password" name="mainwp_options_backupEncryptionPassphrase" id="mainwp_options_backupEncryptionPassphrase" value="" placeholder="<?php echo $hasRecoveryPassphrase ? esc_attr__( 'New recovery passphrase', 'mainwp' ) : esc_attr__( 'Set a recovery passphrase', 'mainwp' ); ?>"/>
-                <div class="ui small message" style="margin-top: 1em;">
+                <div style="margin-top: .5em;"><span class="ui small text">
                     <?php esc_html_e( 'This passphrase recovers your encrypted backups if the dashboard and its key file are lost. Store it somewhere safe and separate from the dashboard. A long, unique passphrase (20 characters or more) is strongly recommended. To change it, enter the current passphrase and a new one. Leave both blank to keep the current one. Setting the first passphrase asks for your WordPress password.', 'mainwp' ); ?>
-                </div>
+                </span></div>
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="tar.gz">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="tar.gz">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_archiveFormat', $archiveFormat );
@@ -331,7 +329,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
         <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
             echo 'style="display: none;"';
@@ -350,7 +348,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
         <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
             echo 'style="display: none;"';
@@ -368,7 +366,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" default-indi-value="1" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" default-indi-value="1" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?>
         <?php
         if ( empty( $hidden_elems ) && 'zip' !== $archiveFormat ) {
             echo 'style="display: none;"';
@@ -386,7 +384,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_notificationOnBackupFail', (int) $notificationOnBackupFail );
@@ -397,7 +395,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_options_notificationOnBackupFail" id="mainwp_options_notificationOnBackupFail" value="1" <?php echo $notificationOnBackupFail ? 'checked="checked"' : ''; ?>/>
             </div>
         </div>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_notificationOnBackupStart', (int) $notificationOnBackupStart );
@@ -409,7 +407,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_chunkedBackupTasks', (int) $chunkedBackupTasks );
@@ -420,6 +418,24 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <input type="checkbox" class="settings-field-value-change-handler" inverted-value="1" name="mainwp_options_chunkedBackupTasks"  id="mainwp_options_chunkedBackupTasks" value="1" <?php echo $chunkedBackupTasks ? 'checked="checked"' : ''; ?>/>
             </div>
         </div>
+        <script type="text/javascript">
+            jQuery( function ( $ ) {
+                function syncBackupSettingsVisibility() {
+                    var nativeEnabled = $( '#mainwp_options_enableNativeBackups' ).is( ':checked' );
+                    var primary = $( '#mainwp_primaryBackup' ).val() || '';
+                    var showNative = nativeEnabled && primary === '';
+                    $( '.mainwp-native-backup-field' ).toggle( showNative );
+                    var zip = showNative && $( '#mainwp_archiveFormat' ).val() === 'zip';
+                    $( '#mainwp_maximumFileDescriptorsAuto, #mainwp_options_maximumFileDescriptors, #mainwp_options_loadFilesBeforeZip' ).closest( '.ui.grid.field' ).toggle( zip );
+                    var encryption = $( '#mainwp_options_enableBackupEncryption' ).is( ':checked' );
+                    var recoveryNotice = <?php echo $encryptionForcedOff || '' !== $passphraseRejected ? 'true' : 'false'; ?>;
+                    $( '#mainwp_options_backupEncryptionPassphrase' ).closest( '.ui.grid.field' ).toggle( showNative && ( encryption || recoveryNotice ) );
+                    $( '#mainwp-backup-diagnostics-export, #mainwp-backup-diagnostics-export-status' ).toggle( showNative && $( '#mainwp_options_backupDiagnosticsEnabled' ).is( ':checked' ) );
+                }
+                $( '#mainwp_options_enableNativeBackups, #mainwp_primaryBackup, #mainwp_archiveFormat, #mainwp_options_enableBackupEncryption, #mainwp_options_backupDiagnosticsEnabled' ).on( 'change', syncBackupSettingsVisibility );
+                syncBackupSettingsVisibility();
+            } );
+        </script>
         <?php
     }
 

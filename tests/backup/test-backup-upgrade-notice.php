@@ -24,6 +24,8 @@ class MainWP_Backup_Upgrade_Notice_Test extends \WP_UnitTestCase {
 	 */
 	public function tear_down() {
 		delete_option( 'mainwp_native_backups_defaulted_off_on_upgrade' );
+		delete_option( 'mainwp_enableNativeBackups' );
+		delete_option( 'mainwp_enableLegacyBackupFeature' );
 		if ( get_current_user_id() ) {
 			delete_user_option( get_current_user_id(), 'mainwp_notice_saved_status' );
 		}
@@ -49,12 +51,17 @@ class MainWP_Backup_Upgrade_Notice_Test extends \WP_UnitTestCase {
 	 */
 	public function test_marker_renders_dismissible_notice() {
 		update_option( 'mainwp_native_backups_defaulted_off_on_upgrade', 1 );
+		update_option( 'mainwp_enableNativeBackups', 0 );
+
+		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $admin );
 
 		$output = $this->render_notice();
 
 		$this->assertStringContainsString( 'mainwp-notice-dismiss', $output );
 		$this->assertStringContainsString( 'mainwp_native_backups_defaulted_off_on_upgrade', $output );
-		$this->assertStringContainsString( 'admin.php?page=Settings', $output );
+		$this->assertStringContainsString( 'admin.php?page=BackupSettings', $output );
+		$this->assertStringContainsString( 'ui blue message', $output );
 	}
 
 	/**
@@ -76,6 +83,7 @@ class MainWP_Backup_Upgrade_Notice_Test extends \WP_UnitTestCase {
 	 */
 	public function test_dismissed_notice_stays_hidden() {
 		update_option( 'mainwp_native_backups_defaulted_off_on_upgrade', 1 );
+		update_option( 'mainwp_enableNativeBackups', 0 );
 
 		$admin = self::factory()->user->create( array( 'role' => 'administrator' ) );
 		wp_set_current_user( $admin );
@@ -83,6 +91,15 @@ class MainWP_Backup_Upgrade_Notice_Test extends \WP_UnitTestCase {
 		$this->assertNotSame( '', $this->render_notice(), 'Undismissed, the notice must render.' );
 
 		update_user_option( $admin, 'mainwp_notice_saved_status', array( 'mainwp_native_backups_defaulted_off_on_upgrade' => 1 ) );
+
+		$this->assertSame( '', $this->render_notice() );
+	}
+	/**
+	 * Enabling native backups makes the upgrade guidance obsolete.
+	 */
+	public function test_enabled_backups_hide_upgrade_notice() {
+		update_option( 'mainwp_native_backups_defaulted_off_on_upgrade', 1 );
+		update_option( 'mainwp_enableNativeBackups', 1 );
 
 		$this->assertSame( '', $this->render_notice() );
 	}

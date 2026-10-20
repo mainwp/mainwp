@@ -1822,7 +1822,7 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
         $subitems = apply_filters( 'mainwp_page_navigation', $subitems, $name_caller );
         ?>
         <div id="mainwp-page-navigation-wrapper">
-            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['knowledgeid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['monitor_wpid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
+            <?php if ( isset( $_GET['dashboard'] ) || isset( $_GET['id'] ) || isset( $_GET['backupid'] ) || isset( $_GET['knowledgeid'] ) || isset( $_GET['updateid'] ) || isset( $_GET['emailsettingsid'] ) || isset( $_GET['scanid'] ) || isset( $_GET['monitor_wpid'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification ?>
                 <?php
                 //phpcs:disable WordPress.Security.NonceVerification
                 $id = 0;
@@ -1830,6 +1830,8 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
                     $id = intval( $_GET['dashboard'] );
                 } elseif ( isset( $_GET['id'] ) ) {
                     $id = intval( $_GET['id'] );
+                } elseif ( isset( $_GET['backupid'] ) ) {
+                    $id = intval( $_GET['backupid'] );
                 } elseif ( isset( $_GET['knowledgeid'] ) ) {
                     $id = intval( $_GET['knowledgeid'] );
                 } elseif ( isset( $_GET['updateid'] ) ) {

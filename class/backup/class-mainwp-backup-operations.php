@@ -509,7 +509,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return \WP_Error|null
      */
     private static function native_task_write_error(): ?\WP_Error {
-        return MainWP_Backup_Settings::is_native_backups_enabled() ? null : new \WP_Error( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, esc_html__( 'Native backups are not enabled.', 'mainwp' ), array( 'status' => 409 ) );
+        return MainWP_Backup_Settings::is_native_backups_enabled() ? null : new \WP_Error( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, wp_specialchars_decode( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ), ENT_QUOTES ), array( 'status' => 409 ) );
     }
 
     /**
@@ -882,7 +882,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return new \WP_Error( 'mainwp_invalid_input', esc_html__( 'The supplied input is invalid.', 'mainwp' ), array( 'status' => 400 ) );
         }
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
-            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, esc_html__( 'Native backups are not enabled.', 'mainwp' ), array( 'status' => 409 ) );
+            return new \WP_Error( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, wp_specialchars_decode( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ), ENT_QUOTES ), array( 'status' => 409 ) );
         }
 
         $website = self::authorize_site( $site_id, 'execute_backups', $context );

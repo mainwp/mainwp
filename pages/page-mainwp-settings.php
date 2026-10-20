@@ -153,6 +153,14 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                 'active_keys' => array( 'Advanced', 'SettingsAdvanced' ),
             ),
             array(
+                'slug'        => 'BackupSettings',
+                'page_title'  => __( 'Backup Settings', 'mainwp' ),
+                'menu_title'  => '<div class="mainwp-hidden">' . esc_html__( 'Backup Settings', 'mainwp' ) . '</div>',
+                'nav_title'   => esc_html__( 'Backup Settings', 'mainwp' ),
+                'callback'    => array( static::get_class_name(), 'render_backups' ),
+                'active_keys' => array( 'BackupSettings' ),
+            ),
+            array(
                 'slug'        => 'MonitoringSettings',
                 'page_title'  => __( 'Monitoring Options', 'mainwp' ),
                 'menu_title'  => ' <div class="mainwp-hidden">' . esc_html__( 'Monitoring Options', 'mainwp' ) . '</div>',
@@ -331,7 +339,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             }
         }
 
-        $base_order = array( 'Settings', 'SettingsAdvanced', 'MonitoringSettings', 'SettingsEmail', 'PremiumUpdates' );
+        $base_order = array( 'Settings', 'SettingsAdvanced', 'MonitoringSettings', 'BackupSettings', 'SettingsEmail', 'PremiumUpdates' );
 
         if ( in_array( $context, array( 'left_menu', 'left_menu_core' ), true ) ) {
             $base_order[] = 'MainWPTools';
@@ -888,7 +896,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         ?>
         <div id="mainwp-general-settings" class="ui padded segment">
 
-            <?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] && ! MainWP_Backup_Settings_View::render_save_notice() ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
+            <?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] ) : // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized ?>
                 <div class="ui green message"><i class="close icon"></i><?php esc_html_e( 'Settings have been saved successfully!', 'mainwp' ); ?></div>
             <?php endif; ?>
             <div class="ui form">
@@ -1181,7 +1189,6 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         </div>
                     </div>
 
-                    <?php MainWP_Backup_Settings_View::render_settings(); ?>
                     <?php
                     /**
                      * Action: mainwp_settings_form_bottom
@@ -2832,7 +2839,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * Creates the MainWP Help Documentation List for the help component in the sidebar.
      */
     public static function mainwp_help_content() {
-        if ( isset( $_GET['page'] ) && ( 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+        if ( isset( $_GET['page'] ) && ( 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'BackupSettings' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             ?>
             <p><?php esc_html_e( 'If you need help with your MainWP Dashboard settings, please review following help documents', 'mainwp' ); ?></p>
             <div class="ui list">
@@ -2853,6 +2860,34 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             do_action( 'mainwp_settings_help_item' );
 
         }
+    }
+
+    /**
+     * Render the dedicated Backup Settings page.
+     */
+    public static function render_backups() {
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage dashboard settings', 'mainwp' ) );
+            return;
+        }
+        static::render_header( 'BackupSettings' );
+        ?>
+        <div id="mainwp-backup-settings" class="ui padded segment">
+            <?php if ( isset( $_GET['message'] ) && 'saved' === $_GET['message'] && ! MainWP_Backup_Settings_View::render_save_notice() ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only feedback. ?>
+                <div class="ui green message"><?php esc_html_e( 'Backup settings have been saved successfully.', 'mainwp' ); ?><i class="close icon"></i></div>
+            <?php endif; ?>
+            <form method="post" action="" class="ui form">
+                <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
+                <input type="hidden" name="wp_nonce" value="<?php echo esc_attr( wp_create_nonce( 'BackupSettings' ) ); ?>" />
+                <?php MainWP_Backup_Settings_View::render_settings(); ?>
+                <?php if ( MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff() ) : ?>
+                <div class="ui divider"></div>
+                <input type="submit" name="submit" class="ui green big button" value="<?php esc_attr_e( 'Save Settings', 'mainwp' ); ?>" />
+                <?php endif; ?>
+            </form>
+        </div>
+        <?php
+        static::render_footer();
     }
 
     /**

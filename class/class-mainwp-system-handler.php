@@ -698,19 +698,25 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) ) {
             $this->include_pluggable();
             $nonce = sanitize_key( $_POST['wp_nonce'] );
+            if ( wp_verify_nonce( $nonce, 'BackupSettings' ) ) {
+                $updated = MainWP_Backup_Settings::handle_settings_post();
+                $args = MainWP_Backup_Settings::get_save_redirect_args();
+                if ( $updated ) {
+                    $args['message'] = 'saved';
+                }
+                wp_safe_redirect( add_query_arg( $args, admin_url( 'admin.php?page=BackupSettings' ) ) );
+                exit();
+            }
             // Check for both 'Settings' or 'MonitoringSettings' nonces.
             $is_valid_nonce = wp_verify_nonce( $nonce, 'Settings' ) || wp_verify_nonce( $nonce, 'MonitoringSettings' );
             if ( $is_valid_nonce ) {
                 $updated  = MainWP_Settings::handle_settings_post();
-                $updated |= MainWP_Backup_Settings::handle_settings_post();
                 $updated |= MainWP_Monitoring_Handler::handle_settings_post();
                 $msg      = '';
                 if ( $updated ) {
                     $msg = '&message=saved';
                 }
-                foreach ( MainWP_Backup_Settings::get_save_redirect_args() as $backup_arg => $backup_value ) {
-                    $msg .= '&' . $backup_arg . '=' . $backup_value;
-                }
+
 
                 // Redirect to the correct page based on the nonce.
                 $url_page = 'admin.php?page=Settings' . $msg;

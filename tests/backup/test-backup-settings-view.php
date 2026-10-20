@@ -76,7 +76,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$enc = MainWP_Backup_Encryption::instance();
 		$this->assertEmpty( $enc->get_recovery_blob() );
 		$_POST['submit']                                    = '1';
-		$_POST['wp_nonce']                                  = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce']                                  = wp_create_nonce( 'BackupSettings' );
 		$_POST['mainwp_options_enableBackupEncryption']     = '1';
 		$_POST['mainwp_options_backupEncryptionPassphrase'] = '12345678901';
 		$_POST['mainwp_options_backupEncryptionAccountPassword'] = 'settings account password';
@@ -108,7 +108,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$enc               = MainWP_Backup_Encryption::instance();
 		$original          = $enc->set_recovery_passphrase( 'original recovery passphrase' );
 		$_POST['submit']   = '1';
-		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce'] = wp_create_nonce( 'BackupSettings' );
 		$_POST['mainwp_options_enableBackupEncryption']            = '1';
 		$_POST['mainwp_options_backupEncryptionPassphrase']        = 'replacement recovery passphrase';
 		$_POST['mainwp_options_backupEncryptionCurrentPassphrase'] = 'wrong current recovery passphrase';
@@ -136,7 +136,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 		$_POST['submit']                                    = '1';
-		$_POST['wp_nonce']                                  = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce']                                  = wp_create_nonce( 'BackupSettings' );
 		$_POST['mainwp_options_enableBackupEncryption']     = '1';
 		$_POST['mainwp_options_backupEncryptionPassphrase'] = '12345678901';
 		$_POST['mainwp_options_backupEncryptionAccountPassword'] = 'settings account password';
@@ -173,56 +173,49 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 			$_GET   = $saved_get;
 		}
 		$this->assertSame( '' !== $message, $rendered );
-		$this->assertSame( '' === $message ? '' : '<div class="ui yellow message"><i class="close icon"></i>' . $message . '</div>', $output );
+		$this->assertSame( '' === $message ? '' : '<div class="ui yellow message">' . $message . '<i class="close icon"></i></div>', $output );
 	}
 
 	/**
-	 * The General Settings page replaces its success banner on a partial save.
+	 * The Backup Settings page replaces its success banner on a partial save.
 	 *
 	 * @dataProvider save_notice_flags
 	 * @param array  $query   Redirect query arguments.
 	 * @param string $message Expected warning text, or empty for a clean save.
 	 */
-	public function test_general_settings_save_notice_suppresses_green_banner( array $query, string $message ) {
-		global $wp_current_filter;
-
+	public function test_backup_settings_save_notice_suppresses_green_banner( array $query, string $message ) {
 		wp_set_current_user( $this->factory->user->create( array( 'role' => 'administrator' ) ) );
-		$page                 = new class() extends MainWP_Settings {
+		$page      = new class() extends MainWP_Settings {
 			/**
-			 * Leave navigation out of the settings notice test.
+			 * Omit navigation from this feedback test.
 			 *
 			 * @param string $shownPage Unused page slug.
 			 */
 			public static function render_header( $shownPage = '' ) {
 			}
+			/**
+			 * Omit navigation from this feedback test.
+			 *
+			 * @param string $shownPage Unused page slug.
+			 */
+			public static function render_footer( $shownPage = '' ) {
+			}
 		};
-		$stop                 = new \RuntimeException( 'Settings form reached.' );
-		$stop_at_form         = static function () use ( $stop ) {
-			throw $stop;
-		};
-		$saved_get            = $_GET;
-		$_GET                 = array_merge( $query, array( 'message' => 'saved' ) );
-		$saved_current_filter = $wp_current_filter;
-		add_action( 'mainwp_settings_form_top', $stop_at_form, -9999 );
+		$saved_get = $_GET;
+		$_GET      = array_merge( $query, array( 'message' => 'saved' ) );
 		ob_start();
 		try {
-			$page::render();
-			$this->fail( 'The settings page must reach the form-top hook.' );
-		} catch ( \RuntimeException $e ) {
-			$this->assertSame( $stop, $e );
+			$page::render_backups();
 		} finally {
-			$output            = ob_get_clean();
-			$wp_current_filter = $saved_current_filter; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Restore the hook stack after stopping at form-top.
-			remove_action( 'mainwp_settings_form_top', $stop_at_form, -9999 );
-			$_GET = $saved_get;
+			$output = ob_get_clean();
+			$_GET   = $saved_get;
 		}
-		$this->assertStringContainsString( 'id="mainwp-general-settings"', $output );
+		$this->assertStringContainsString( 'id="mainwp-backup-settings"', $output );
 		if ( '' !== $message ) {
-			$this->assertStringContainsString( '<div class="ui yellow message"><i class="close icon"></i>' . $message . '</div>', $output );
+			$this->assertStringContainsString( '<div class="ui yellow message">' . $message . '<i class="close icon"></i></div>', $output );
 			$this->assertStringNotContainsString( 'ui green message', $output );
-			$this->assertStringNotContainsString( 'Settings have been saved successfully!', $output );
 		} else {
-			$this->assertStringContainsString( '<div class="ui green message"><i class="close icon"></i>Settings have been saved successfully!</div>', $output );
+			$this->assertStringContainsString( '<div class="ui green message">Backup settings have been saved successfully.<i class="close icon"></i></div>', $output );
 			$this->assertStringNotContainsString( 'ui yellow message', $output );
 		}
 	}
@@ -268,7 +261,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$enc               = MainWP_Backup_Encryption::instance();
 		$original          = $enc->set_recovery_passphrase( 'original recovery passphrase' );
 		$_POST['submit']   = '1';
-		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce'] = wp_create_nonce( 'BackupSettings' );
 		$_POST['mainwp_options_backupEncryptionPassphrase'] = ' 12345678901 ';
 		$_POST['mainwp_options_backupOnServer']             = '3';
 		$_POST['mainwp_options_enableBackupEncryption']     = '1';
@@ -335,7 +328,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$enc->set_recovery_passphrase( 'original recovery passphrase' );
 		MainWP_Keys_Manager::instance()->delete_key_file( $enc->kek_filename() );
 		$_POST['submit']   = '1';
-		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce'] = wp_create_nonce( 'BackupSettings' );
 		try {
 			$_POST['mainwp_options_backupEncryptionPassphrase'] = 'short';
 			MainWP_Backup_Settings::handle_settings_post();
@@ -412,7 +405,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		wp_set_current_user( $admin );
 
 		$_POST['submit']                                    = '1';
-		$_POST['wp_nonce']                                  = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce']                                  = wp_create_nonce( 'BackupSettings' );
 		$_POST['mainwp_options_enableBackupEncryption']     = '1';
 		$_POST['mainwp_options_backupEncryptionPassphrase'] = 'a strong settings passphrase';
 		$_POST['mainwp_options_backupEncryptionAccountPassword'] = 'settings account password';
@@ -519,7 +512,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		wp_set_current_user( $admin );
 
 		$_POST['submit']                                = '1';
-		$_POST['wp_nonce']                              = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce']                              = wp_create_nonce( 'BackupSettings' );
 		$_POST['mainwp_options_enableBackupEncryption'] = '1';
 
 		MainWP_Backup_Settings::handle_settings_post();
@@ -543,7 +536,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		wp_set_current_user( $admin );
 
 		$_POST['submit']                                = '1';
-		$_POST['wp_nonce']                              = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce']                              = wp_create_nonce( 'BackupSettings' );
 		$_POST['mainwp_options_enableBackupEncryption'] = '1';
 		// No recovery passphrase submitted and none set yet, so this is the force-off path.
 
@@ -570,7 +563,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$kek = $enc->load_kek();
 
 		$_POST['submit']   = '1';
-		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce'] = wp_create_nonce( 'BackupSettings' );
 		// The encryption toggle is absent, which means off - a legitimate user choice, not a forced one.
 
 		MainWP_Backup_Settings::handle_settings_post();
@@ -637,7 +630,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		wp_set_current_user( $admin );
 
 		$_POST['submit']                                = '1';
-		$_POST['wp_nonce']                              = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce']                              = wp_create_nonce( 'BackupSettings' );
 		$_POST['mainwp_options_onDemandRetentionCount'] = '3';
 
 		$saved = MainWP_Backup_Settings::handle_settings_post();
@@ -696,14 +689,14 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		wp_set_current_user( $admin );
 
 		$_POST['submit']                                  = '1';
-		$_POST['wp_nonce']                                = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce']                                = wp_create_nonce( 'BackupSettings' );
 		$_POST['mainwp_options_backupDiagnosticsEnabled'] = '1';
 
 		$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
 		$this->assertTrue( MainWP_Backup_Diagnostics::is_enabled() );
 
 		unset( $_POST['mainwp_options_backupDiagnosticsEnabled'] );
-		$_POST['wp_nonce'] = wp_create_nonce( 'Settings' );
+		$_POST['wp_nonce'] = wp_create_nonce( 'BackupSettings' );
 
 		$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
 		$this->assertFalse( MainWP_Backup_Diagnostics::is_enabled(), 'An absent checkbox must turn the recorder off.' );

@@ -17,8 +17,8 @@ vm.runInContext( source.slice( start, end ), context );
 // Input matrix for downloadButton(): every type/source pair the list can send. Fomantic gives disabled
 // buttons pointer-events: none, so a disabled button needs its reason on a wrapper (hover) and on the
 // anchor itself (accessible description).
-const enabled = '<a href="#" class="ui mini basic button mainwp-download-snapshot" data-snapshot="17">Download</a>';
-const disabled = reason => '<span title="' + reason + '"><a href="#" class="ui mini basic button mainwp-download-snapshot disabled" data-snapshot="17" aria-disabled="true" title="' + reason + '">Download</a></span>';
+const enabled = '<a href="#" class="ui mini basic grey button mainwp-download-snapshot" data-snapshot="17"><i class="download icon"></i>Download</a>';
+const disabled = reason => '<span title="' + reason + '"><a href="#" class="ui mini basic grey button mainwp-download-snapshot disabled" data-snapshot="17" aria-disabled="true" title="' + reason + '"><i class="download icon"></i>Download</a></span>';
 // Every type the executor records, crossed with every source snapshot_source() returns.
 const matrix = [
     [ 'full', 'local', '' ],
@@ -72,9 +72,9 @@ assert.ok( removalMapStart >= 0, 'Removed snapshots need cause-specific labels.'
 const removalMapEnd = source.indexOf( '\n            };', removalMapStart ) + '\n            };'.length;
 const removalMap = source.slice( removalMapStart, removalMapEnd );
 const removalCases = [
-    [ 'manual', 'Deleted manually' ],
-    [ 'retention', 'Removed by retention' ],
-    [ 'task_deleted', 'Deleted with its backup task' ],
+    [ 'manual', 'Deleted Manually' ],
+    [ 'retention', 'Removed by Retention' ],
+    [ 'task_deleted', 'Deleted with Its Backup Task' ],
     [ 'cleanup', 'Removed by Clean Up' ]
 ];
 for ( const [ reason, label ] of removalCases ) {
@@ -82,7 +82,7 @@ for ( const [ reason, label ] of removalCases ) {
 }
 vm.runInContext( removalMap.replace( /<\?php echo esc_js\( esc_html__\( '([^']+)', 'mainwp' \) \); \?>/g, '$1' ), context );
 assert.ok( source.includes( "'removed': '<?php echo esc_js( esc_html__( 'Removed', 'mainwp' ) ); ?>'" ), 'Rows pruned before causes were recorded need a translated neutral label.' );
-context.sourceLabels = { unavailable: 'Removed by retention', removed: 'Removed', local: 'This dashboard', remote: 'Cloud storage' };
+context.sourceLabels = { unavailable: 'Removed by Retention', removed: 'Removed', local: 'This dashboard', remote: 'Cloud storage' };
 const sourceCellStart = source.indexOf( 'var sourceCell = ' );
 const sourceCellEnd = source.indexOf( "if ( 'display' === type )", sourceCellStart );
 assert.ok( sourceCellStart >= 0 && sourceCellEnd > sourceCellStart );
@@ -91,7 +91,7 @@ for ( const [ reason, label ] of removalCases.concat( [ [ '', 'Removed' ], [ 'x'
     assert.equal( context.removalSourceCell( { source: 'unavailable', status: 'pruned', removal_reason: reason } ), label, String( reason ) );
 }
 // A complete backup whose files are missing was not pruned; its label is unchanged.
-assert.equal( context.removalSourceCell( { source: 'unavailable', status: 'complete', removal_reason: '' } ), 'Removed by retention' );
+assert.equal( context.removalSourceCell( { source: 'unavailable', status: 'complete', removal_reason: '' } ), 'Removed by Retention' );
 assert.equal( context.removalSourceCell( { source: 'local', status: 'pruned', removal_reason: 'manual' } ), 'This dashboard' );
 assert.equal( context.removalSourceCell( { source: 'remote', status: 'complete', removal_reason: 'cleanup' } ), 'Cloud storage' );
 console.log( 'OK (13 snapshot removal label cases)' );
@@ -102,4 +102,4 @@ assert.ok( badgeStart >= 0 && badgeEnd > badgeStart );
 context.offsiteLabels = { verified: [ 'green', 'Offsite Verified' ] };
 vm.runInContext( 'var offsiteBadge = function (snap) { var sourceCell = "Removed"; ' + source.slice( badgeStart, badgeEnd ) + ' return sourceCell; };', context );
 assert.equal( context.offsiteBadge( { status: 'pruned', offsite_state: 'verified' } ), 'Removed' );
-assert.equal( context.offsiteBadge( { status: 'complete', offsite_state: 'verified' } ), 'Removed <span class="ui mini green label">Offsite Verified</span>' );
+assert.equal( context.offsiteBadge( { status: 'complete', offsite_state: 'verified' } ), 'Removed <span class="ui small basic green label">Offsite Verified</span>' );

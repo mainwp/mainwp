@@ -347,7 +347,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         self::$encryption_forced_off        = false;
         self::$recovery_passphrase_rejected = '';
         if ( MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff() && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
-            if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'Settings' ) ) {
+            if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'BackupSettings' ) ) {
                 $old_primaryBackup       = get_option( 'mainwp_primaryBackup' );
                 $old_enableNativeBackups = static::is_native_backups_enabled();
                 $enableNativeBackups     = ! empty( $_POST['mainwp_options_enableNativeBackups'] );

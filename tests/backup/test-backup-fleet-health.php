@@ -351,7 +351,7 @@ class MainWP_Backup_Fleet_Health_Test extends \WP_UnitTestCase {
 
 	/**
 	 * The widget lays all four counts out as two rows of cards, like the
-	 * Connection Status widget, with no inner scroll hiding half of them.
+	 * other Overview widgets, with clickable cards in the scrollable body.
 	 */
 	public function test_widget_renders_all_four_counts_in_one_grid() {
 		update_option( 'mainwp_enableNativeBackups', 1 );
@@ -362,9 +362,9 @@ class MainWP_Backup_Fleet_Health_Test extends \WP_UnitTestCase {
 		delete_option( 'mainwp_enableNativeBackups' );
 
 		$this->assertStringContainsString( 'class="ui two small cards" id="mainwp-backup-health-counts"', $output );
-		$this->assertSame( 4, substr_count( $output, '<div class="ui card">' ) );
-		$this->assertStringNotContainsString( 'mainwp-scrolly-overflow', $output );
-		$this->assertSame( 4, substr_count( $output, 'status=backup_health_' ) );
+		$this->assertSame( 4, substr_count( $output, '<a class="ui card"' ) );
+		$this->assertStringContainsString( 'mainwp-scrolly-overflow', $output );
+		$this->assertSame( 4, substr_count( $output, 'backup_health=' ) );
 		foreach ( array( 'Protected', 'At Risk', 'Critical', 'No Backup' ) as $label ) {
 			$this->assertStringContainsString( '<strong>' . $label . '</strong>', $output );
 		}

@@ -35,7 +35,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
      *
      * @var string Current plugin version.
      */
-    public static $version = '6.3-beta8'; // NOSONAR.
+    public static $version = '6.4-er.1'; // NOSONAR.
 
     /**
      * Private static variable to hold the single instance of the class.
@@ -651,7 +651,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
     public static function is_mainwp_site_page() {
         $is_page = false;
         //phpcs:disable WordPress.Security.NonceVerification.Recommended
-        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) ) {
+        if ( isset( $_GET['page'] ) && 'CostTrackerAdd' !== $_GET['page'] && ( ( ( isset( $_GET['id'] ) && ! empty( $_GET['id'] ) ) || ( isset( $_GET['dashboard'] ) && ! empty( $_GET['dashboard'] ) ) || ( isset( $_GET['backupid'] ) && ! empty( $_GET['backupid'] ) ) || ( isset( $_GET['knowledgeid'] ) && ! empty( $_GET['knowledgeid'] ) ) || ( isset( $_GET['updateid'] ) && ! empty( $_GET['updateid'] ) ) || ( isset( $_GET['monitor_wpid'] ) && ! empty( $_GET['monitor_wpid'] ) ) || ( isset( $_GET['emailsettingsid'] ) && ! empty( $_GET['emailsettingsid'] ) ) || ( isset( $_GET['scanid'] ) && ! empty( $_GET['scanid'] ) ) ) || ( 'ServerInformation' === $_GET['page'] || 'ServerInformationCron' === $_GET['page'] || 'ErrorLog' === $_GET['page'] || 'ActionLogs' === $_GET['page'] || 'PluginPrivacy' === $_GET['page'] || 'Settings' === $_GET['page'] || 'SettingsAdvanced' === $_GET['page'] || 'SettingsEmail' === $_GET['page'] || 'PremiumUpdates' === $_GET['page'] || 'MainWPTools' === $_GET['page'] || 'SettingsInsights' === $_GET['page'] || 'SettingsApiBackups' === $_GET['page'] || 'BackupSettings' === $_GET['page'] || 'MonitoringSettings' === $_GET['page'] ) ) ) {
             $is_page = true;
         }
         //phpcs:enable

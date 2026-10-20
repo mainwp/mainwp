@@ -142,13 +142,13 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     public static function backup_type_label( $type ): string {
         switch ( $type ) {
             case 'full':
-                return esc_html__( 'Full backup', 'mainwp' );
+                return esc_html__( 'Full Backup', 'mainwp' );
             case 'db':
-                return esc_html__( 'Database backup', 'mainwp' );
+                return esc_html__( 'Database Backup', 'mainwp' );
             case 'incremental':
-                return esc_html__( 'Incremental backup', 'mainwp' );
+                return esc_html__( 'Incremental Backup', 'mainwp' );
             case 'files':
-                return esc_html__( 'Files only backup', 'mainwp' );
+                return esc_html__( 'Files Only Backup', 'mainwp' );
             default:
                 return esc_html( (string) $type );
         }
@@ -160,15 +160,16 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      *
      * @param string $notice_id Per-user dismissal key.
      * @param string $text      Plain message text.
+     * @param string $color     Fomantic message color or type.
      */
-    public static function render_intro_message( string $notice_id, string $text ): void {
+    public static function render_intro_message( string $notice_id, string $text, string $color = 'blue' ): void {
         if ( ! MainWP_Utility::show_mainwp_message( 'notice', $notice_id ) ) {
             return;
         }
         ?>
-        <div class="ui info message">
-            <i class="close icon mainwp-notice-dismiss" notice-id="<?php echo esc_attr( $notice_id ); ?>"></i>
+        <div class="ui <?php echo esc_attr( $color ); ?> message">
             <?php echo esc_html( $text ); ?>
+            <i class="close icon mainwp-notice-dismiss" notice-id="<?php echo esc_attr( $notice_id ); ?>"></i>
         </div>
         <?php
     }
@@ -456,27 +457,35 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             }
 
             static::render_header( '' );
-            if ( ! empty( $backup_items ) ) {
-                self::render_task_list_actions_bar();
-            }
             ?>
             <div class="ui padded segment">
+                <?php
+                if ( ! empty( $backup_items ) ) {
+                    self::render_task_list_actions_bar(); }
+                ?>
                 <?php static::render_intro_message( 'mainwp-backup-tasks-info-message', __( 'Scheduled backup tasks run from this Dashboard on the child sites you pick. To back up one site right away, use Back Up Now on the Snapshots & Restore page.', 'mainwp' ) ); ?>
-                <div id="mainwp_managebackups_add_message" class="ui green message" style="display:
-                <?php
-                if ( isset( $_GET['a'] ) && '1' === $_GET['a'] ) {
-                    echo 'block';
-                } else {
-                    echo 'none';
-                }
-                ?>
-                ">
-                <?php
-                if ( isset( $_GET['a'] ) && '1' === $_GET['a'] ) {
-                    echo '<p>' . esc_html__( 'The backup task was added successfully', 'mainwp' ) . '</p>';
-                }
-                ?>
-                    </div>
+                <?php if ( isset( $_GET['a'] ) && '1' === $_GET['a'] ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only feedback. ?>
+                <div id="mainwp_managebackups_add_message" class="ui green message">
+                    <?php esc_html_e( 'The backup task was added successfully.', 'mainwp' ); ?>
+                    <i class="close icon" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Dismiss message', 'mainwp' ); ?>"></i>
+                </div>
+                <script type="text/javascript">
+                    jQuery( function () {
+                        var url = new URL( window.location.href );
+                        url.searchParams.delete( 'a' );
+                        window.history.replaceState( window.history.state, '', url.toString() );
+                        jQuery( '#mainwp_managebackups_add_message > .close.icon' ).on( 'click keydown', function ( event ) {
+                            if ( event.type === 'keydown' && event.key !== 'Enter' && event.key !== ' ' ) {
+                                return;
+                            }
+                            event.preventDefault();
+                            jQuery( '#mainwp_managebackups_add_message' ).hide();
+                        } );
+                    } );
+                </script>
+                <?php else : ?>
+                <div id="mainwp_managebackups_add_message" class="ui green message" style="display:none;"></div>
+                <?php endif; ?>
 
                 <?php if ( empty( $backup_items ) ) : ?>
                     <?php static::render_task_list_empty_state(); ?>
@@ -492,11 +501,19 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             </div>
 
             <div class="ui modal" id="managebackups-task-status-box" tabindex="0">
+                <i class="close icon" id="managebackups-task-status-close" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"></i>
                 <div class="header"><?php esc_html_e( 'Running Task', 'mainwp' ); ?></div>
-                    <div class="content mainwp-modal-content"></div>
-                    <div class="actions mainwp-modal-actions">
-                        <input id="managebackups-task-status-close" type="button" name="Close" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>" class="ui button" />
+                <div class="ui green progress mainwp-modal-progress" id="mainwp-task-backup-progress">
+                    <div class="bar"><div class="progress"></div></div>
+                    <div class="label" id="mainwp-task-backup-progress-label"></div>
+                </div>
+                <div class="scrolling content mainwp-modal-content"></div>
+                <div class="actions">
+                    <div class="ui grid">
+                        <div class="twelve wide left aligned column"><span class="ui small text"><?php esc_html_e( 'You can close this window. The backup continues in the background.', 'mainwp' ); ?></span></div>
+                        <div class="four wide right aligned column"><button type="button" class="ui mini red button" id="mainwp-task-backup-cancel" style="display:none;"><i class="stop icon"></i><?php esc_html_e( 'Cancel Backup', 'mainwp' ); ?></button></div>
                     </div>
+                </div>
                 </div>
             <?php
             static::render_footer( '' );
@@ -517,7 +534,7 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             <div class="ui yellow message" id="mainwp-native-backups-off-message">
                 <?php esc_html_e( 'Native backups are turned off.', 'mainwp' ); ?>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && ! MainWP_System_Utility::is_team_control_staff() ) : ?>
-                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=Settings#mainwp_options_enableNativeBackups' ) ); ?>"><?php esc_html_e( 'Turn them on in the Backup Settings', 'mainwp' ); ?></a>
+                    <a href="<?php echo esc_url( admin_url( 'admin.php?page=BackupSettings#mainwp_options_enableNativeBackups' ) ); ?>"><?php esc_html_e( 'Turn them on in the Backup Settings', 'mainwp' ); ?></a>
                 <?php else : ?>
                     <?php esc_html_e( 'Ask a Dashboard administrator to turn them on in the Backup Settings.', 'mainwp' ); ?>
                 <?php endif; ?>
@@ -557,14 +574,14 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             return;
         }
         ?>
-        <div class="mainwp-actions-bar">
+        <div class="mainwp-actions-bar" style="margin-top: 0 !important; margin-left: 0 !important; margin-right: 0 !important;">
             <div class="ui mini form">
                 <div class="ui stackable grid">
                     <div class="ui two column row">
-                        <div class="middle aligned column">
+                        <div class="middle aligned column"></div>
+                        <div class="right aligned middle aligned column">
                             <a class="ui mini green button" id="mainwp-backup-add-new-task" href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ); ?>"><?php esc_html_e( 'Add New Task', 'mainwp' ); ?></a>
                         </div>
-                        <div class="right aligned middle aligned column"></div>
                     </div>
                 </div>
             </div>
@@ -578,14 +595,18 @@ class MainWP_Backup_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
     private static function render_task_list_empty_state(): void {
         $actions = '';
         if ( \mainwp_current_user_can( 'dashboard', 'add_backup_tasks' ) ) {
-            $actions .= '<a class="ui mini green button" href="' . esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ) . '">' . esc_html__( 'Create your first backup task', 'mainwp' ) . '</a> ';
+            $actions .= '<a class="ui mini green button" href="' . esc_url( admin_url( 'admin.php?page=ManageBackupsAddNew' ) ) . '">' . esc_html__( 'Create Backup Task', 'mainwp' ) . '</a> ';
         }
         if ( \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
-            $actions .= '<a class="ui mini basic button" href="' . esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ) . '">' . esc_html__( 'Add a storage destination', 'mainwp' ) . '</a>';
+            $actions .= '<a class="ui mini basic button" href="' . esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ) . '">' . esc_html__( 'Add Storage Destination', 'mainwp' ) . '</a>';
         }
         ?>
         <div id="mainwp-backup-tasks-empty">
-            <?php MainWP_UI::render_empty_page_placeholder( esc_html__( 'No backup tasks yet', 'mainwp' ), '' !== $actions ? $actions : esc_html__( 'Ask a Dashboard administrator to create a backup task.', 'mainwp' ), '<i class="massive hdd outline icon"></i>' ); ?>
+            <?php
+            $message  = esc_html__( 'Create a backup task to automatically back up your sites on a schedule and copy backups to your chosen storage destinations.', 'mainwp' );
+            $message .= '<div style="margin-top: 1em;">' . ( '' !== $actions ? $actions : esc_html__( 'Ask a Dashboard administrator to create a backup task.', 'mainwp' ) ) . '</div>';
+            MainWP_UI::render_empty_page_placeholder( esc_html__( 'No Backup Tasks Yet', 'mainwp' ), $message, '<em data-emoji=":calendar:" class="big"></em>' );
+            ?>
         </div>
         <?php
     }

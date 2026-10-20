@@ -84,7 +84,7 @@ test( 'twenty text-only samples retain XSS payloads as text', () => {
 test( 'zero count has neither a note nor a toggle', () => {
     const h = harness();
     assert.equal( h.context.skippedFilesNote( { skipped_count: 0 } ), null );
-    assert.equal( h.context.typeCell( 'full', 'display', { skipped_count: 0 } ), 'Full' );
+    assert.equal( h.context.typeCell( 'full', 'display', { skipped_count: 0 } ), '<span class="ui small basic blue label"><i class="archive icon"></i>Full</span>' );
 } );
 
 test( 'uploads and skipped notes replace each other and repeat clicks hide', () => {

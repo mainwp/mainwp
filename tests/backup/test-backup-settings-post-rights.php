@@ -29,6 +29,30 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 		$this->set_current_user_as_admin();
 	}
 
+	/** General Settings submissions must never reset backup checkboxes. */
+	public function test_general_settings_nonce_cannot_save_backup_settings(): void {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( 'mainwp_notificationOnBackupFail', 1 );
+		$_POST = array(
+			'submit'   => '1',
+			'wp_nonce' => wp_create_nonce( 'Settings' ),
+		);
+		$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		$this->assertSame( 1, (int) get_option( 'mainwp_enableNativeBackups' ) );
+		$this->assertSame( 1, (int) get_option( 'mainwp_notificationOnBackupFail' ) );
+	}
+
+	/** Backup Settings submissions must never enter the general settings writer. */
+	public function test_backup_settings_nonce_cannot_save_general_settings(): void {
+		update_option( 'mainwp_frequencyDailyUpdate', 6 );
+		$_POST = array(
+			'submit'   => '1',
+			'wp_nonce' => wp_create_nonce( 'BackupSettings' ),
+		);
+		$this->assertFalse( MainWP_Settings::handle_settings_post() );
+		$this->assertSame( 6, (int) get_option( 'mainwp_frequencyDailyUpdate' ) );
+	}
+
 	/** Recovery key files are outside WordPress's transaction cleanup. */
 	public function tearDown(): void {
 		$this->clear_settings_staff_fixtures();
@@ -95,7 +119,7 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 		$before = array_map( 'get_option', MainWP_Backup_Settings::SETTINGS_OPTIONS );
 		$_POST  = array(
 			'submit'                                    => '1',
-			'wp_nonce'                                  => wp_create_nonce( 'Settings' ),
+			'wp_nonce'                                  => wp_create_nonce( 'BackupSettings' ),
 			'mainwp_options_enableNativeBackups'        => '1',
 			'mainwp_options_onDemandRetentionCount'     => '9',
 			'mainwp_options_backupOnServer'             => '4',
@@ -300,7 +324,7 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 		update_option( 'mainwp_on_demand_retention_count', 5 );
 		$_POST = array(
 			'submit'                                    => '1',
-			'wp_nonce'                                  => wp_create_nonce( 'Settings' ),
+			'wp_nonce'                                  => wp_create_nonce( 'BackupSettings' ),
 			'mainwp_options_enableNativeBackups'        => '1',
 			'mainwp_options_onDemandRetentionCount'     => '9',
 			'mainwp_options_backupEncryptionPassphrase' => 'replacement settings recovery passphrase',
@@ -358,7 +382,7 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 		$key_bytes = MainWP_Keys_Manager::instance()->get_key_val( $enc->kek_filename() );
 		$_POST     = array(
 			'submit'                                    => '1',
-			'wp_nonce'                                  => wp_create_nonce( 'Settings' ),
+			'wp_nonce'                                  => wp_create_nonce( 'BackupSettings' ),
 			'mainwp_options_backupEncryptionPassphrase' => 'replacement recovery passphrase',
 			'mainwp_options_backupEncryptionCurrentPassphrase' => wp_slash( $current ),
 			'mainwp_options_onDemandRetentionCount'     => '9',
@@ -414,7 +438,7 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 		);
 		$_POST = array(
 			'submit'                                    => '1',
-			'wp_nonce'                                  => wp_create_nonce( 'Settings' ),
+			'wp_nonce'                                  => wp_create_nonce( 'BackupSettings' ),
 			'mainwp_options_backupEncryptionPassphrase' => 'first recovery passphrase',
 			'mainwp_options_backupEncryptionAccountPassword' => wp_slash( $password ),
 			'mainwp_options_onDemandRetentionCount'     => '9',
@@ -702,7 +726,7 @@ class MainWP_Backup_Settings_Post_Rights_Test extends MainWP_Abilities_Test_Case
 		}
 		$_POST = array(
 			'submit'                                => '1',
-			'wp_nonce'                              => wp_create_nonce( 'Settings' ),
+			'wp_nonce'                              => wp_create_nonce( 'BackupSettings' ),
 			'mainwp_options_onDemandRetentionCount' => '2000',
 		);
 		$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );

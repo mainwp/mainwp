@@ -12113,7 +12113,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 
 		$response = $this->post_ajax( 'mainwp_restore_initiate', array( 'site_id' => (string) $this->site_id ) );
 
-		$this->assertStringContainsString( 'Settings > General', $response['error'] );
+		$this->assertStringContainsString( 'Settings > Backup Settings', $response['error'] );
 		$this->assertStringNotContainsString( '&gt;', $response['error'] );
 	}
 

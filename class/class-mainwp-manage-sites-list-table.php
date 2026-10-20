@@ -169,9 +169,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
         $output = '';
         if ( 0 < $lastbackup ) {
-            $output = MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lastbackup ) ) . '<br />';
+            $output = '<span data-tooltip="' . esc_attr( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $lastbackup ) ) ) . '" data-position="left center" data-inverted="">' . esc_html( MainWP_Utility::time_elapsed_string( $lastbackup ) ) . '</span>';
         } else {
-            $output = '<div class="ui red label">Never</div><br/>';
+            $output = '<span class="ui red text">' . esc_html__( 'Never', 'mainwp' ) . '</span>';
         }
 
         return $output;
@@ -220,7 +220,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
         $badge = isset( $badges[ $bucket ] ) ? $badges[ $bucket ] : $badges[ MainWP_Backup_Snapshots::HEALTH_BUCKET_UNKNOWN ];
 
-        return '<span class="ui ' . esc_attr( $badge[0] ) . ' empty circular label" data-tooltip="' . $badge[2] . '" data-inverted=""></span> ' . $badge[1];
+        return '<span class="ui small ' . esc_attr( $badge[0] ) . ' basic label" data-tooltip="' . $badge[2] . '" data-position="left center" data-inverted="">' . $badge[1] . '</span>';
     }
 
     /**
@@ -547,7 +547,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'className' => 'center aligned collapsing',
         );
         $defines[] = array(
-            'targets'   => array( 'manage-login-column', 'manage-wpcore_update-column', 'manage-plugin_update-column', 'manage-theme_update-column', 'manage-backup-column' ),
+            'targets'   => array( 'manage-login-column', 'manage-wpcore_update-column', 'manage-plugin_update-column', 'manage-theme_update-column' ),
             'className' => 'center aligned collapsing',
         );
         $defines[] = array(
@@ -583,7 +583,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'className' => 'collapsing',
         );
         $defines[] = array(
-            'targets'   => array( 'manage-uptime-column' ),
+            'targets'   => array( 'manage-uptime-column', 'manage-backup-column' ),
             'className' => 'right aligned collapsing',
         );
         $defines[] = array(
@@ -664,6 +664,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
         // phpcs:disable WordPress.Security.NonceVerification,Missing,Missing,Missing,Missing,Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $selected_status           = isset( $_REQUEST['status'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['status'] ) ) : '';
+        $selected_backup_health    = isset( $_REQUEST['backup_health'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['backup_health'] ) ) : '';
         $selected_group            = isset( $_REQUEST['g'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['g'] ) ) : '';
         $selected_group_logic      = isset( $_REQUEST['group_logic'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['group_logic'] ) ) : '';
         $selected_client           = isset( $_REQUEST['client'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['client'] ) ) : '';
@@ -676,17 +677,26 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             MainWP_Utility::update_user_option( 'mainwp_managesites_filter_onetime_selected_siteids', $selected_one_time_siteids );
         }
 
-        if ( ! $reset_filter && empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_one_time_siteids ) && '' === $selected_group_logic ) {
+        if ( ! $reset_filter && empty( $selected_status ) && empty( $selected_group ) && empty( $selected_client ) && empty( $selected_one_time_siteids ) && '' === $selected_group_logic && ! isset( $_REQUEST['backup_health'] ) ) {
+            $selected_backup_health = get_user_option( 'mainwp_managesites_filter_backup_health' );
             $selected_status      = get_user_option( 'mainwp_managesites_filter_status' );
             $selected_group       = get_user_option( 'mainwp_managesites_filter_group' );
             $selected_client      = get_user_option( 'mainwp_managesites_filter_client' );
             $is_not               = get_user_option( 'mainwp_managesites_filter_is_not' );
             $selected_group_logic = get_user_option( 'mainwp_managesites_filter_group_logic' );
         }
+        // Keep existing widget links and saved status selections compatible.
+        if ( 0 === strpos( (string) $selected_status, 'backup_health_' ) ) {
+            $selected_backup_health = substr( $selected_status, strlen( 'backup_health_' ) );
+            $selected_status = 'all';
+        }
+        if ( ! static::backup_health_visible() ) {
+            $selected_backup_health = '';
+        }
         $selected_group_logic = ( 'and' === $selected_group_logic ) ? 'and' : 'or';
 
         $default_filter = true;
-        if ( ! empty( $is_not ) || ( ! empty( $selected_status ) && 'all' !== $selected_status ) || ! empty( $selected_group ) || ! empty( $selected_client ) || 'and' === $selected_group_logic ) {
+        if ( ! empty( $is_not ) || ( ! empty( $selected_status ) && 'all' !== $selected_status ) || ! empty( $selected_group ) || ! empty( $selected_client ) || 'and' === $selected_group_logic || ! empty( $selected_backup_health ) ) {
             $filters_row_style = 'display:flex';
             $default_filter    = false;
         }
@@ -765,14 +775,22 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <div class="item" data-value="phpver82"><?php esc_html_e( 'PHP < 8.2', 'mainwp' ); ?></div>
                         <div class="item" data-value="phpver83"><?php esc_html_e( 'PHP < 8.3', 'mainwp' ); ?></div>
                         <div class="item" data-value="phpver84"><?php esc_html_e( 'PHP < 8.4', 'mainwp' ); ?></div>
-                        <?php if ( static::backup_health_visible() ) : ?>
-                        <div class="item" data-value="backup_health_protected"><?php esc_html_e( 'Backup: Protected', 'mainwp' ); ?></div>
-                        <div class="item" data-value="backup_health_at_risk"><?php esc_html_e( 'Backup: At Risk', 'mainwp' ); ?></div>
-                        <div class="item" data-value="backup_health_critical"><?php esc_html_e( 'Backup: Critical', 'mainwp' ); ?></div>
-                        <div class="item" data-value="backup_health_unknown"><?php esc_html_e( 'Backup: None', 'mainwp' ); ?></div>
-                        <?php endif; ?>
                     </div>
                 </div>
+                <?php if ( static::backup_health_visible() ) : ?>
+                <div class="ui selection mini dropdown seg_backup_health" id="mainwp-filter-backup-health">
+                    <input type="hidden" value="<?php echo esc_attr( $selected_backup_health ); ?>">
+                    <div class="default text"><?php esc_html_e( 'All backup health', 'mainwp' ); ?></div>
+                    <i class="dropdown icon"></i>
+                    <div class="menu">
+                        <div class="item" data-value=""><?php esc_html_e( 'All backup health', 'mainwp' ); ?></div>
+                        <div class="item" data-value="protected"><?php esc_html_e( 'Protected', 'mainwp' ); ?></div>
+                        <div class="item" data-value="at_risk"><?php esc_html_e( 'At Risk', 'mainwp' ); ?></div>
+                        <div class="item" data-value="critical"><?php esc_html_e( 'Critical', 'mainwp' ); ?></div>
+                        <div class="item" data-value="unknown"><?php esc_html_e( 'No Backup', 'mainwp' ); ?></div>
+                    </div>
+                </div>
+                <?php endif; ?>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) { ?>
                 <div id="mainwp-filter-clients" class="ui selection mini multiple dropdown seg_site_clients">
                     <input type="hidden" value="<?php echo esc_html( $selected_client ); ?>">
@@ -981,8 +999,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
         $search              = isset( $_REQUEST['search']['value'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['search']['value'] ) ) : '';
         $request_group_logic = isset( $_REQUEST['group_logic'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['group_logic'] ) ) : '';
         $request_group_logic = in_array( $request_group_logic, array( 'and', 'or' ) ) ? $request_group_logic : '';
-        $get_saved_state     = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] ) && 'and' !== $request_group_logic;
-        $get_all             = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) && 'and' !== $request_group_logic ? true : false;
+        $get_saved_state     = empty( $search ) && ! isset( $_REQUEST['g'] ) && ! isset( $_REQUEST['status'] ) && ! isset( $_REQUEST['client'] ) && 'and' !== $request_group_logic && ! isset( $_REQUEST['backup_health'] );
+        $get_all             = ( '' === $search ) && ( isset( $_REQUEST['status'] ) && 'all' === $_REQUEST['status'] ) && empty( $_REQUEST['g'] ) && empty( $_REQUEST['client'] ) && 'and' !== $request_group_logic && empty( $_REQUEST['backup_health'] ) ? true : false;
         $is_not              = ( isset( $_REQUEST['isnot'] ) && 'yes' === $_REQUEST['isnot'] ) ? true : false;
 
         if ( $reset_filter ) {
@@ -1019,11 +1037,21 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             $site_status = sanitize_text_field( wp_unslash( $_REQUEST['status'] ) );
         }
 
-        // Drop a persisted backup-health filter when the feature is gated
-        // off, so a stale selection cannot silently hide sites.
-        if ( 0 === strpos( (string) $site_status, 'backup_health_' ) && ! static::backup_health_visible() ) {
-            $site_status = '';
-            MainWP_Utility::update_user_option( 'mainwp_managesites_filter_status', '' );
+        $backup_health = isset( $_REQUEST['backup_health'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['backup_health'] ) ) : ( $get_saved_state ? get_user_option( 'mainwp_managesites_filter_backup_health' ) : '' );
+        if ( 0 === strpos( (string) $site_status, 'backup_health_' ) ) {
+            $backup_health = substr( $site_status, strlen( 'backup_health_' ) );
+            $site_status = 'all';
+            MainWP_Utility::update_user_option( 'mainwp_managesites_filter_status', 'all' );
+        }
+        if ( ! static::backup_health_visible() || ! in_array( $backup_health, array( 'protected', 'at_risk', 'critical', 'unknown' ), true ) ) {
+            $backup_health = '';
+        }
+        if ( $reset_filter ) {
+            $backup_health = '';
+        }
+        MainWP_Utility::update_user_option( 'mainwp_managesites_filter_backup_health', $backup_health );
+        if ( '' !== $backup_health ) {
+            $get_all = false;
         }
 
         if ( $get_all && ! $selected_one_time_siteids ) {
@@ -1130,21 +1158,14 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 if ( $is_not ) {
                     $where = 'wp.suspended = 0'; // query for not suspended sites.
                 }
-            } elseif ( 0 === strpos( $site_status, 'backup_health_' ) ) {
-                $health_ids = static::get_backup_health_site_ids_for_bucket( substr( $site_status, strlen( 'backup_health_' ) ) );
-                if ( null === $health_ids ) {
-                    $where = null; // unknown bucket or feature off: no filtering.
-                } elseif ( empty( $health_ids ) ) {
-                    $where = 'wp.id = -1'; // so get empty results.
-                    if ( $is_not ) {
-                        $where = 'wp.id != -1'; // so query with all sites.
-                    }
-                } else {
-                    $where = 'wp.id IN (' . implode( ',', $health_ids ) . ') ';
-                    if ( $is_not ) {
-                        $where = 'wp.id NOT IN (' . implode( ',', $health_ids ) . ') ';
-                    }
-                }
+            }
+        }
+
+        if ( '' !== $backup_health ) {
+            $health_ids = static::get_backup_health_site_ids_for_bucket( $backup_health );
+            if ( null !== $health_ids ) {
+                $health_where = empty( $health_ids ) ? ( $is_not ? 'wp.id != -1' : 'wp.id = -1' ) : 'wp.id ' . ( $is_not ? 'NOT IN' : 'IN' ) . ' (' . implode( ',', $health_ids ) . ')';
+                $where = empty( $where ) ? $health_where : '(' . $where . ') AND (' . $health_where . ')';
             }
         }
 
@@ -1436,7 +1457,6 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
          */
         do_action( 'mainwp_before_manage_sites_table' );
 
-        MainWP_Backup_Fleet_Health::render_compact_bar();
         ?>
         <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp-columns-notice' ) ) : ?>
             <div class="ui message">
@@ -1620,6 +1640,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                                 "data":  function ( d ) {
                                         return $.extend( {}, d, mainwp_secure_data( {
                                             action: 'mainwp_manage_sites_display_rows',
+                                            backup_health: jQuery("#mainwp-filter-backup-health").length ? jQuery("#mainwp-filter-backup-health").dropdown("get value") : '',
                                             status: jQuery("#mainwp-filter-sites-status").dropdown("get value"),
                                             g: jQuery("#mainwp-filter-sites-group").dropdown("get value"),
                                             group_logic: jQuery("#mainwp-filter-sites-group-logic").dropdown("get value"),
@@ -1774,6 +1795,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         let isNot = jQuery("#mainwp_is_not_site").dropdown("get value");
                         let client = jQuery("#mainwp-filter-clients").dropdown("get value");
                         let params = '';
+                        params += '&backup_health=' + encodeURIComponent(jQuery("#mainwp-filter-backup-health").length ? jQuery("#mainwp-filter-backup-health").dropdown('get value') : '');
                         params += '&g=' + group;
                         params += '&group_logic=' + groupLogic;
                         params += '&client=' + client;
@@ -1792,6 +1814,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                             && jQuery("#mainwp-filter-clients").dropdown('get value') == ''
                             && jQuery("#mainwp-filter-sites-status").dropdown('get value') == 'all'
                             && jQuery("#mainwp_is_not_site").dropdown('get value') == ''
+                            && (!jQuery("#mainwp-filter-backup-health").length || !jQuery("#mainwp-filter-backup-health").dropdown('get value'))
                             && tagLogic == 'or');
 
                             if(defaultFilter){
@@ -1808,10 +1831,11 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 };
                 mainwp_manage_sites_reset_filters = function(resetObj) {
                     <?php if ( ! $optimize ) { ?>
-                        window.location = 'admin.php?page=managesites&isnot=no';
+                        window.location = 'admin.php?page=managesites&isnot=no&reset=yes';
                         return false;
                     <?php } else { ?>
                         try {
+                            jQuery("#mainwp-filter-backup-health").dropdown('clear');
                             jQuery( "#mainwp-filter-sites-group" ).dropdown('clear');
                             jQuery("#mainwp-filter-sites-group-logic").dropdown('set selected', 'or');
                             jQuery("#mainwp-filter-clients").dropdown('clear');

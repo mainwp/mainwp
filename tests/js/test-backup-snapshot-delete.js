@@ -83,7 +83,7 @@ const preview = ( cloud, proceed, warnings ) => ( {
 context.showDeletePreview( preview( true, true, [ 'Updates will wait.', 'Second warning.' ] ) );
 const items = box( '#mainwp-snapshot-delete-ids' ).items;
 assert.equal( items.length, 3 );
-assert.match( items[0], /<strong>#17<\/strong> <span class="ui mini basic label">Full<\/span>/ );
+assert.match( items[0], /<strong>#17<\/strong> <span class="ui small basic label">Full<\/span>/ );
 assert.match( items[0], /Oct 12, 2026 &lt;3:00 pm&gt;/, 'The date is escaped.' );
 assert.match( items[1], /Incremental/ );
 assert.equal( items[2], '<div class="item"><strong>#24</strong></div>', 'A row missing from the table shows only its id.' );

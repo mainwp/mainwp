@@ -38,34 +38,33 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         $restricted = is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() );
         MainWP_Backup_Page::render_header( 'Storage' );
         ?>
-        <?php if ( ! $restricted ) : ?>
-        <div class="mainwp-actions-bar">
+        <div class="ui padded segment" id="mainwp-backup-storage">
+        <?php if ( ! $restricted && ! empty( MainWP_Backup_Storage_Destinations::instance()->list_destinations() ) ) : ?>
+        <div class="mainwp-actions-bar" style="margin-top: 0 !important; margin-left: 0 !important; margin-right: 0 !important;">
             <div class="ui mini form">
                 <div class="ui stackable grid">
                     <div class="ui two column row">
-                        <div class="middle aligned column">
-                            <button type="button" class="ui mini green button" id="mainwp-storage-add-new"><?php esc_html_e( 'Add Destination', 'mainwp' ); ?></button>
+                        <div class="middle aligned column"></div>
+                        <div class="right aligned middle aligned column">
+                            <button type="button" class="ui mini green button" id="mainwp-storage-add-new"><?php esc_html_e( 'Add Storage Destination', 'mainwp' ); ?></button>
                         </div>
-                        <div class="right aligned middle aligned column"></div>
                     </div>
                 </div>
             </div>
         </div>
         <?php endif; ?>
-        <div class="ui padded segment" id="mainwp-backup-storage">
-            <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-storage-info-message', __( 'Storage destinations are where backup tasks and Back Up Now copy their backups after each run. Choose them on each backup task, or mark one as Default.', 'mainwp' ) ); ?>
+            <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-storage-info-message', __( 'Storage destinations are where backup tasks and Back Up Now copy their backups after each run. Choose them on each backup task, or mark one as Default.', 'mainwp' ), 'blue' ); ?>
             <?php static::render_oauth_notice(); ?>
             <?php if ( ! empty( $_GET['sftp_trust_reset'] ) ) : // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- display-only save notice. ?>
                 <div class="ui yellow message"><?php echo esc_html( MainWP_Backup_Storage_Handler::sftp_trust_reset_notice() ); ?></div>
             <?php endif; ?>
             <?php if ( $restricted ) : ?>
-                <div id="mainwp-storage-message-zone"><div class="ui info visible message"><?php esc_html_e( 'Only WordPress administrators can add or change storage destinations. Destinations are shared by every site on this Dashboard.', 'mainwp' ); ?></div></div>
+                <div id="mainwp-storage-message-zone"><div class="ui blue visible message"><?php esc_html_e( 'Only WordPress administrators can add or change storage destinations. Destinations are shared by every site on this Dashboard.', 'mainwp' ); ?></div></div>
             <?php else : ?>
                 <div class="ui message" id="mainwp-storage-message-zone" style="display:none"></div>
             <?php endif; ?>
             <?php static::render_list_table( $restricted ); ?>
             <?php if ( ! $restricted ) : ?>
-                <div class="ui hidden divider"></div>
                 <?php static::render_form(); ?>
             <?php endif; ?>
         </div>
@@ -113,8 +112,8 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
     }
 
     /**
-     * Render the destinations table. Settings never load here, so no
-     * secret can reach the page.
+     * Render destinations and authorized location details using the edit
+     * projection, which strips secrets before any fields reach the page.
      *
      * @param bool $restricted Whether the caller has limited site access.
      * @return void
@@ -123,43 +122,98 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
         $destinations    = MainWP_Backup_Storage_Destinations::instance()->list_destinations();
         $provider_labels = static::provider_labels();
         ?>
-        <h3 class="ui header"><?php esc_html_e( 'Storage Destinations', 'mainwp' ); ?></h3>
-        <table class="ui single line table" id="mainwp-storage-destinations-table">
+        <?php
+        if ( empty( $destinations ) ) {
+            $message = esc_html__( 'Add a storage destination to keep another copy of your backups. Until then, backups stay on this Dashboard.', 'mainwp' );
+            if ( ! $restricted ) {
+                $message .= '<div style="margin-top: 1em;"><a href="#mainwp-storage-form" class="ui mini green button mainwp-storage-add-destination">' . esc_html__( 'Add Storage Destination', 'mainwp' ) . '</a></div>';
+            } else {
+                $message .= ' ' . esc_html__( 'Ask a Dashboard administrator to add a destination.', 'mainwp' );
+            }
+            MainWP_UI::render_empty_page_placeholder( esc_html__( 'No Storage Destinations Yet', 'mainwp' ), $message, '<em data-emoji=":cloud:" class="big"></em>' );
+            return;
+        }
+        ?>
+        <table class="ui selectable stackable table" id="mainwp-storage-destinations-table">
             <thead>
                 <tr>
                     <th scope="col"><?php esc_html_e( 'Name', 'mainwp' ); ?></th>
                     <th scope="col"><?php esc_html_e( 'Provider', 'mainwp' ); ?></th>
                     <th scope="col"><?php esc_html_e( 'Default', 'mainwp' ); ?></th>
-                    <th scope="col" class="collapsing"><?php esc_html_e( 'Actions', 'mainwp' ); ?></th>
+                    <th scope="col"><?php esc_html_e( 'Last Updated', 'mainwp' ); ?></th>
+                    <th scope="col" class="collapsing right aligned"></th>
                 </tr>
             </thead>
             <tbody>
-            <?php if ( empty( $destinations ) ) : ?>
-                <tr>
-                    <td colspan="4"><?php esc_html_e( 'No storage destinations configured yet. Backups stay on this dashboard until a destination is added and selected on a backup task.', 'mainwp' ); ?></td>
-                </tr>
-            <?php else : ?>
                 <?php foreach ( $destinations as $destination ) : ?>
+                    <?php
+                    $details  = ! $restricted ? MainWP_Backup_Storage_Handler::destination_for_edit( (int) $destination->id ) : array();
+                    $settings = $details['settings'] ?? array();
+                    $location = '';
+                    if ( in_array( $destination->provider, array( 's3', 'gcs' ), true ) ) {
+                        $location = (string) ( $settings['bucket'] ?? '' );
+                    } elseif ( ! empty( $settings['base_path'] ) ) {
+                        $location = (string) $settings['base_path'];
+                    } elseif ( 'dropbox' === $destination->provider && ! $restricted && empty( $details['credentials_invalid'] ) ) {
+                        $location = __( 'App folder root', 'mainwp' );
+                    }
+                    $provider_icons = array(
+                        's3'      => 'cloud',
+                        'gcs'     => 'google',
+                        'dropbox' => 'dropbox',
+                        'sftp'    => 'server',
+                        'local'   => 'hdd outline',
+                    );
+                    $provider_icon  = $provider_icons[ $destination->provider ] ?? 'cloud';
+                    $updated        = (int) ( $destination->updated ?? $destination->created ?? 0 );
+                    ?>
                 <tr data-destination-id="<?php echo intval( $destination->id ); ?>" data-provider="<?php echo esc_attr( $destination->provider ); ?>" data-name="<?php echo esc_attr( $destination->name ); ?>">
-                    <td><?php echo esc_html( $destination->name ); ?></td>
-                    <td><?php echo $provider_labels[ $destination->provider ] ?? esc_html( $destination->provider ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- labels escaped in provider_labels(). ?></td>
                     <td>
-                        <?php if ( ! empty( $destination->is_default ) ) : ?>
-                            <span class="ui small green label"><?php esc_html_e( 'Default', 'mainwp' ); ?></span>
-                        <?php elseif ( ! $restricted ) : ?>
-                            <a href="#" class="mainwp-storage-make-default"><?php esc_html_e( 'Make default', 'mainwp' ); ?></a>
+                        <?php if ( ! $restricted ) : ?>
+                            <a href="#" class="mainwp-storage-edit"><?php echo esc_html( $destination->name ); ?></a>
+                        <?php else : ?>
+                            <?php echo esc_html( $destination->name ); ?>
                         <?php endif; ?>
                     </td>
-                    <td class="collapsing">
+                    <td>
+                        <div class="ui list">
+                            <div class="item">
+                                <i class="large middle aligned <?php echo esc_attr( $provider_icon ); ?> icon" aria-hidden="true"></i>
+                                <div class="content">
+                                    <strong><?php echo $provider_labels[ $destination->provider ] ?? esc_html( $destination->provider ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- labels escaped in provider_labels(). ?></strong>
+                                    <?php if ( '' !== $location ) : ?>
+                                        <div class="description"><span class="ui small text"><?php echo esc_html( $location ); ?></span></div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                        <?php if ( ! empty( $details['credentials_invalid'] ) ) : ?>
+                            <div class="ui small basic yellow label"><i class="exclamation triangle icon"></i><?php esc_html_e( 'Re-enter Credentials', 'mainwp' ); ?></div>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if ( ! empty( $destination->is_default ) ) : ?>
+                            <span class="ui small basic green label"><?php esc_html_e( 'Default', 'mainwp' ); ?></span>
+                        <?php elseif ( ! $restricted ) : ?>
+                            <button type="button" class="ui mini basic button mainwp-storage-make-default"><?php esc_html_e( 'Make Default', 'mainwp' ); ?></button>
+                        <?php endif; ?>
+                    </td>
+                    <td>
+                        <?php if ( $updated > 0 ) : ?>
+                            <span data-tooltip="<?php echo esc_attr( MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $updated ) ) ); ?>" data-position="left center" data-inverted=""><?php echo esc_html( MainWP_Utility::time_elapsed_string( $updated ) ); ?></span>
+                        <?php else : ?>
+                            &mdash;
+                        <?php endif; ?>
+                    </td>
+                    <td class="collapsing right aligned">
                         <?php if ( ! $restricted ) : ?>
-                        <button type="button" class="ui mini button mainwp-storage-edit"><?php esc_html_e( 'Edit', 'mainwp' ); ?></button>
-                        <button type="button" class="ui mini button mainwp-storage-test"><?php esc_html_e( 'Test', 'mainwp' ); ?></button>
-                        <button type="button" class="ui mini icon basic button mainwp-storage-delete" aria-label="<?php esc_attr_e( 'Delete', 'mainwp' ); ?>" data-inverted="" data-position="top right" data-tooltip="<?php esc_attr_e( 'Delete this destination.', 'mainwp' ); ?>"><i class="trash icon"></i></button>
+                        <button type="button" class="ui mini basic green button mainwp-storage-edit"><i class="edit outline icon"></i><?php esc_html_e( 'Edit', 'mainwp' ); ?></button>
+                        <button type="button" class="ui mini basic grey button mainwp-storage-test"><i class="plug icon"></i><?php esc_html_e( 'Test', 'mainwp' ); ?></button>
+                        <button type="button" class="ui mini red button mainwp-storage-delete" aria-label="<?php esc_attr_e( 'Delete', 'mainwp' ); ?>" data-inverted="" data-position="left center" data-tooltip="<?php esc_attr_e( 'Delete this destination.', 'mainwp' ); ?>"><i class="trash alternate outline icon"></i><?php esc_html_e( 'Delete', 'mainwp' ); ?></button>
                         <?php endif; ?>
                     </td>
                 </tr>
                 <?php endforeach; ?>
-            <?php endif; ?>
             </tbody>
         </table>
         <?php
@@ -173,12 +227,19 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
      */
     public static function render_form(): void {
         ?>
-        <div class="ui segment" id="mainwp-storage-form">
-            <h3 class="ui header" id="mainwp-storage-form-title"><?php esc_html_e( 'Add Storage Destination', 'mainwp' ); ?></h3>
+        <div class="ui large modal" id="mainwp-storage-form">
+            <i class="close icon" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"></i>
+            <div class="ui small header">
+                <span id="mainwp-storage-form-title"><?php esc_html_e( 'Add Storage Destination', 'mainwp' ); ?></span>
+                <div class="sub header"><?php esc_html_e( 'Choose a provider and enter its connection details. Test the connection before saving your destination.', 'mainwp' ); ?></div>
+            </div>
+            <div class="scrolling content">
             <div class="ui form">
+                <?php // Inside .ui.form a message stays hidden unless it also has the visible class. ?>
+                <div class="ui visible message" id="mainwp-storage-form-message-zone" style="display:none"></div>
                 <input type="hidden" id="mainwp-storage-id" value="0"/>
                 <div class="ui grid field">
-                    <label class="six wide column middle aligned"><?php esc_html_e( 'Destination name', 'mainwp' ); ?></label>
+                    <label class="six wide column middle aligned"><?php esc_html_e( 'Destination name', 'mainwp' ); ?> <span class="ui small red text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
                     <div class="ten wide column">
                         <input type="text" id="mainwp-storage-name" value=""/>
                     </div>
@@ -198,7 +259,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Endpoint', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" id="mainwp-storage-endpoint" value="" placeholder="s3.amazonaws.com"/>
-                            <em><?php esc_html_e( 'Leave empty for Amazon S3. For S3 compatible services enter the service endpoint, for example https://accountid.r2.cloudflarestorage.com or http://127.0.0.1:9000.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'Leave empty for Amazon S3. For S3 compatible services enter the service endpoint, for example https://accountid.r2.cloudflarestorage.com or http://127.0.0.1:9000.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
@@ -223,14 +284,14 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Secret key', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="password" id="mainwp-storage-secret-key" value="" autocomplete="new-password"/>
-                            <em><?php esc_html_e( 'When editing, leave this empty to keep the saved secret key.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'When editing, leave this empty to keep the saved secret key.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Path style addressing', 'mainwp' ); ?></label>
                         <div class="ten wide column ui toggle checkbox">
                             <input type="checkbox" id="mainwp-storage-path-style"/>
-                            <label for="mainwp-storage-path-style"><?php esc_html_e( 'Required by MinIO and some self-hosted services.', 'mainwp' ); ?></label>
+                            <label for="mainwp-storage-path-style"><span class="ui small text"><?php esc_html_e( 'Required by MinIO and some self-hosted services.', 'mainwp' ); ?></span></label>
                         </div>
                     </div>
                     <div class="ui grid field">
@@ -241,7 +302,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                                 <option value="AES256"><?php esc_html_e( 'SSE-S3 (AES-256)', 'mainwp' ); ?></option>
                                 <option value="aws:kms"><?php esc_html_e( 'SSE-KMS (account default key)', 'mainwp' ); ?></option>
                             </select>
-                            <div><em><?php esc_html_e( 'Ask the S3 service to encrypt objects at rest. Archives are already encrypted before they leave the dashboard, so this adds a second layer at the bucket. Leave it on None for MinIO and other S3 compatible services that reject the header.', 'mainwp' ); ?></em></div>
+                            <div><span class="ui small text"><?php esc_html_e( 'Ask the S3 service to encrypt objects at rest. When backup archive encryption is enabled in Backup Settings, this adds another layer at the bucket. Leave it on None for MinIO and other S3 compatible services that reject the header.', 'mainwp' ); ?></span></div>
                         </div>
                     </div>
                 </div>
@@ -256,14 +317,14 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'HMAC access key', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" id="mainwp-storage-gcs-access-key" value="" autocomplete="off"/>
-                            <em><?php esc_html_e( 'Create an HMAC key for a service account under Cloud Storage > Settings > Interoperability in the Google Cloud console.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'Create an HMAC key for a service account under Cloud Storage > Settings > Interoperability in the Google Cloud console.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'HMAC secret', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="password" id="mainwp-storage-gcs-secret-key" value="" autocomplete="new-password"/>
-                            <em><?php esc_html_e( 'When editing, leave this empty to keep the saved secret.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'When editing, leave this empty to keep the saved secret.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                 </div>
@@ -272,42 +333,42 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'App key', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" id="mainwp-storage-dropbox-app-key" value="" autocomplete="off"/>
-                            <em><?php esc_html_e( 'Create a scoped app with the files.content.write, files.content.read and files.metadata.read permissions in the Dropbox App Console.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'Create a scoped app with the files.content.write, files.content.read and files.metadata.read permissions in the Dropbox App Console.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'App secret', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="password" id="mainwp-storage-dropbox-app-secret" value="" autocomplete="new-password"/>
-                            <em><?php esc_html_e( 'When editing, leave this empty to keep the saved secret.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'When editing, leave this empty to keep the saved secret.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Folder', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" id="mainwp-storage-dropbox-base-path" value="" placeholder="mainwp-backups"/>
-                            <em><?php esc_html_e( 'Backups store under this folder. Leave empty to use the app folder root.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'Backups store under this folder. Leave empty to use the app folder root.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Redirect URI', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" readonly value="<?php echo esc_attr( MainWP_Backup_Storage_Handler::dropbox_redirect_uri() ); ?>" onfocus="this.select();"/>
-                            <em><?php esc_html_e( 'Add this exact address to the Redirect URIs list on your app\'s settings page in the Dropbox App Console before connecting.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'Add this exact address to the Redirect URIs list on your app\'s settings page in the Dropbox App Console before connecting.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"></label>
                         <div class="ten wide column">
                             <button type="button" class="ui basic green button" id="mainwp-storage-dropbox-connect"><?php esc_html_e( 'Connect Dropbox', 'mainwp' ); ?></button>
-                            <em><?php esc_html_e( 'Fill in the destination name, app key, and app secret, then connect. Dropbox asks for approval and the destination saves itself with a connection test.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'Fill in the destination name, app key, and app secret, then connect. Dropbox asks for approval and the destination saves itself with a connection test.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Refresh token', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="password" id="mainwp-storage-dropbox-refresh-token" value="" autocomplete="new-password"/>
-                            <em><?php esc_html_e( 'Advanced: paste a refresh token here to skip the Connect button, for example one issued on another dashboard. The dashboard mints short-lived access tokens from it automatically. When editing, leave this empty to keep the saved token.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'Advanced: paste a refresh token here to skip the Connect button, for example one issued on another dashboard. The dashboard mints short-lived access tokens from it automatically. When editing, leave this empty to keep the saved token.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                 </div>
@@ -334,28 +395,28 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Password', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="password" id="mainwp-storage-sftp-password" value="" autocomplete="new-password"/>
-                            <em><?php esc_html_e( 'With a private key set, this is the key passphrase. When editing, leave this empty to keep the saved password.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'With a private key set, this is the key passphrase. When editing, leave this empty to keep the saved password.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Private key', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <textarea id="mainwp-storage-sftp-private-key" rows="4" autocomplete="off"></textarea>
-                            <em><?php esc_html_e( 'Optional PEM private key for key-based login. When editing, leave this empty to keep the saved key.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'Optional PEM private key for key-based login. When editing, leave this empty to keep the saved key.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Directory path', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" id="mainwp-storage-sftp-base-path" value="" placeholder="/backups"/>
-                            <em><?php esc_html_e( 'An existing absolute path on the SFTP server. Backups store under it.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'An existing absolute path on the SFTP server. Backups store under it.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                     <div class="ui grid field">
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Host key fingerprint', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" id="mainwp-storage-sftp-host-fingerprint" value="" placeholder="SHA256:..."/>
-                            <em><?php esc_html_e( 'Optional. The server\'s SHA256 host key fingerprint (ssh-keygen -lf). When empty, the key seen on the first connection is trusted and pinned automatically.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'Optional. The server\'s SHA256 host key fingerprint (ssh-keygen -lf). When empty, the key seen on the first connection is trusted and pinned automatically.', 'mainwp' ); ?></span>
                         </div>
                     </div>
                 </div>
@@ -364,7 +425,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                         <label class="six wide column middle aligned"><?php esc_html_e( 'Directory path', 'mainwp' ); ?></label>
                         <div class="ten wide column">
                             <input type="text" id="mainwp-storage-base-path" value=""/>
-                            <em><?php esc_html_e( 'An absolute path on this dashboard server, for example a mounted network drive.', 'mainwp' ); ?></em>
+                            <span class="ui small text"><?php esc_html_e( 'WordPress absolute path:', 'mainwp' ); ?> <?php echo esc_html( wp_normalize_path( ABSPATH ) ); ?></span>
                         </div>
                     </div>
                 </div>
@@ -372,15 +433,14 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Use as default destination', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
                         <input type="checkbox" id="mainwp-storage-is-default"/>
-                        <label for="mainwp-storage-is-default"><?php esc_html_e( 'Back Up Now sends backups here for sites that no scheduled backup task includes. New backup tasks also start with this destination selected.', 'mainwp' ); ?></label>
+                        <label for="mainwp-storage-is-default"><span class="ui small text"><?php esc_html_e( 'Back Up Now sends backups here for sites that no scheduled backup task includes. New backup tasks also start with this destination selected.', 'mainwp' ); ?></span></label>
                     </div>
                 </div>
-                <div class="ui divider"></div>
-                <?php // Inside .ui.form a message stays hidden unless it also has the visible class. ?>
-                <div class="ui visible message" id="mainwp-storage-form-message-zone" style="display:none"></div>
-                <button type="button" class="ui green button" id="mainwp-storage-save"><?php esc_html_e( 'Test Connection & Save', 'mainwp' ); ?></button>
-                <button type="button" class="ui button" id="mainwp-storage-test-only"><?php esc_html_e( 'Test Connection', 'mainwp' ); ?></button>
-                <button type="button" class="ui basic button" id="mainwp-storage-reset" style="display:none"><?php esc_html_e( 'Cancel Edit', 'mainwp' ); ?></button>
+            </div>
+            </div>
+            <div class="actions">
+                <button type="button" class="ui basic grey button" id="mainwp-storage-test-only"><i class="plug icon"></i><?php esc_html_e( 'Test Connection', 'mainwp' ); ?></button>
+                <button type="button" class="ui green button" id="mainwp-storage-save"><i class="save outline icon"></i><?php esc_html_e( 'Test Connection & Save', 'mainwp' ); ?></button>
             </div>
         </div>
         <?php
@@ -409,6 +469,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
             // top zone sits a full page above them.
             let formFeedback = function ( message, color ) {
                 showFeedback( 'mainwp-storage-form-message-zone', message, color );
+                jQuery( '#mainwp-storage-form > .scrolling.content' ).scrollTop( 0 );
             };
 
             let busy = function ( button, on ) {
@@ -539,18 +600,34 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 // underlying value would leave the previous choice on screen.
                 jQuery( '#mainwp-storage-sse' ).dropdown( 'restore defaults' );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Add Storage Destination', 'mainwp' ) ); ?>' );
-                jQuery( '#mainwp-storage-reset' ).hide();
             };
 
-            jQuery( '#mainwp-storage-reset' ).on( 'click', resetForm );
+            let storageModal = jQuery( '#mainwp-storage-form' ).modal( {
+                closable: false,
+                onVisible: function () {
+                    document.getElementById( 'mainwp-storage-name' ).focus( { preventScroll: true } );
+                },
+                onHide: function () {
+                    return jQuery( '#mainwp-storage-form .loading' ).length === 0;
+                },
+                onHidden: function () {
+                    resetForm();
+                    jQuery( '#mainwp-storage-form-message-zone' ).hide();
+                }
+            } );
+            jQuery( '#mainwp-storage-form > .close.icon' ).on( 'keydown', function ( event ) {
+                if ( event.key === 'Enter' || event.key === ' ' ) {
+                    event.preventDefault();
+                    jQuery( this ).trigger( 'click' );
+                }
+            } );
 
-            // The add form is always on the page below the list, so the bar
-            // button leaves any edit in progress and takes the user to it.
-            jQuery( '#mainwp-storage-add-new' ).on( 'click', function () {
+            // Both the toolbar and empty-state action open the same add modal.
+            jQuery( '#mainwp-storage-add-new, .mainwp-storage-add-destination' ).on( 'click', function ( event ) {
+                event.preventDefault();
                 resetForm();
                 jQuery( '#mainwp-storage-form-message-zone' ).hide();
-                jQuery( '#mainwp-storage-form' )[0].scrollIntoView( { behavior: 'smooth', block: 'start' } );
-                document.getElementById( 'mainwp-storage-name' ).focus( { preventScroll: true } );
+                storageModal.modal( 'show' );
             } );
 
             let settingsFieldMap = {
@@ -561,14 +638,17 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                 local: { base_path: '#mainwp-storage-base-path' }
             };
 
-            jQuery( '.mainwp-storage-edit' ).on( 'click', function () {
+            jQuery( '.mainwp-storage-edit' ).on( 'click', function ( event ) {
+                event.preventDefault();
+                resetForm();
+                jQuery( '#mainwp-storage-form-message-zone' ).hide();
+                storageModal.modal( 'show' );
                 let row = jQuery( this ).closest( 'tr' );
                 let requestedId = row.data( 'destination-id' );
                 jQuery( '#mainwp-storage-id' ).val( requestedId );
                 jQuery( '#mainwp-storage-name' ).val( row.data( 'name' ) );
                 jQuery( '#mainwp-storage-provider' ).dropdown( 'set selected', String( row.data( 'provider' ) ) );
                 jQuery( '#mainwp-storage-form-title' ).text( '<?php echo esc_js( __( 'Edit Storage Destination', 'mainwp' ) ); ?>' );
-                jQuery( '#mainwp-storage-reset' ).show();
 
                 jQuery.post( ajaxurl, mainwp_secure_data( {
                     action: 'mainwp_storage_get',

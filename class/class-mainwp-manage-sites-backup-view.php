@@ -116,43 +116,32 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
             <?php
         }
 
-        // Native restore lives on its own surface so the per-site Backups tab
-        // reaches the working snapshot restore flow, not the legacy per-file link.
         $native_backups = MainWP_Backup_Settings::is_native_backups_enabled();
-        if ( $native_backups ) {
-            MainWP_Backup_Snapshots_View::render_restore_surface( (int) $website->id, true );
-        }
         ?>
         <?php if ( $native_backups ) : ?>
-            <?php
-            // The legacy archive feature gets its own section after
-            // Snapshots & Restore so it no longer reads as part of it. It stays
-            // on the page because backup-before-update and existing users still
-            // rely on these archives, and stays collapsed so Back Up Now above
-            // remains the page's one backup action.
-            ?>
+        <?php MainWP_Backup_Snapshots_View::render_restore_surface( (int) $website->id, true ); ?>
         <div class="ui hidden divider"></div>
-        <div class="ui alt segment" id="mainwp-legacy-archives">
-            <h3 class="ui dividing header">
-                <?php esc_html_e( 'Legacy downloadable archives', 'mainwp' ); ?>
-                <div class="sub header"><?php esc_html_e( 'Archive files made with the older backup method. They are separate from your snapshots and cannot be restored from this page.', 'mainwp' ); ?></div>
-            </h3>
-            <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
+        <div class="ui padded segment" id="mainwp-legacy-archives">
             <div class="ui basic accordion mainwp-blank-accordion" id="mainwp-downloadable-archives-accordion">
-                <div class="title"><i class="dropdown icon"></i><?php esc_html_e( 'View or create archives', 'mainwp' ); ?></div>
+                <h2 class="ui dividing header title">
+                    <i class="right dropdown icon"></i>
+                    <?php esc_html_e( 'Downloadable Archives', 'mainwp' ); ?>
+                    <div class="sub header"><?php esc_html_e( 'Archive files made with the older backup method. They are separate from your snapshots and cannot be restored from this page.', 'mainwp' ); ?></div>
+                </h2>
                 <div class="content">
+                    <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
                     <?php
                     static::render_backup_details( $website->id );
                     static::render_backup_options( $website->id );
                     ?>
                 </div>
             </div>
-            <script type="text/javascript">
-                jQuery( function () {
-                    jQuery( '#mainwp-downloadable-archives-accordion' ).accordion();
-                } );
-            </script>
         </div>
+        <script type="text/javascript">
+            jQuery( function () {
+                jQuery( '#mainwp-site-snapshots-accordion, #mainwp-downloadable-archives-accordion' ).accordion();
+            } );
+        </script>
         <?php else : ?>
         <div class="ui alt segment">
             <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
@@ -164,13 +153,11 @@ class MainWP_Manage_Sites_Backup_View { // phpcs:ignore Generic.Classes.OpeningB
         <?php endif; ?>
 
         <div class="ui modal" id="managesite-backup-status-box">
+            <i class="close icon" id="managesite-backup-status-close" role="button" tabindex="0" aria-label="<?php esc_attr_e( 'Close', 'mainwp' ); ?>"></i>
             <div class="header">
                 <?php esc_html_e( 'Backup', 'mainwp' ); ?> <?php echo esc_html( stripslashes( $website->name ) ); ?>
             </div>
             <div class="scrolling content mainwp-modal-content">
-            </div>
-            <div class="actions mainwp-modal-actions">
-                <input id="managesite-backup-status-close" type="button" name="Close" value="<?php esc_attr_e( 'Close', 'mainwp' ); ?>" class="ui button" />
             </div>
         </div>
 

@@ -41,7 +41,6 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
         MainWP_Backup_Page::render_header( 'ManageBackupsEdit' );
         ?>
         <div class="ui alt segment">
-            <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
             <form method="POST" action="" class="ui form">
                 <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <input type="hidden" name="mainwp_managebackups_edit_id" id="mainwp_managebackups_edit_id" value="<?php echo esc_attr( $task->id ); ?>"/>
@@ -66,8 +65,6 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
         MainWP_Backup_Page::render_header( 'AddNew' );
         ?>
         <div class="ui alt segment">
-            <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-task-add-info-message', __( 'A backup task backs up the sites you select on a schedule and copies each backup to the storage destinations you pick.', 'mainwp' ) ); ?>
-            <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
             <form method="POST" action="" id="mainwp-backup-task-form" class="ui form">
                 <?php MainWP_UI::generate_wp_nonce( 'mainwp-admin-nonce' ); ?>
                 <?php static::render_new_edit( null ); ?>
@@ -95,12 +92,17 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
         ?>
 
-        <div class="mainwp-main-content">
+        <div class="mainwp-main-content" style="padding: 2em 1em;">
+            <div class="ui message" id="mainwp-message-zone" style="display:none"></div>
+            <?php if ( empty( $task ) ) : ?>
+                <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-task-add-info-message', __( 'A backup task backs up the sites you select on a schedule and copies each backup to the storage destinations you pick.', 'mainwp' ), 'blue' ); ?>
+            <?php endif; ?>
             <?php static::render_schedule_backup(); ?>
         </div>
         <div class="mainwp-side-content mainwp-no-padding">
-            <div class="mainwp-select-sites">
-                <div class="ui header"><?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+            <div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
+                <div class="title active"><i class="dropdown icon"></i> <?php esc_html_e( 'Select Sites', 'mainwp' ); ?></div>
+                <div class="content active">
                 <?php
                 $sel_params = array(
                     'selected_sites'       => $selected_websites,
@@ -109,6 +111,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 );
                 MainWP_UI_Select_Sites::select_sites_box( $sel_params );
                 ?>
+                </div>
             </div>
             <div class="ui divider"></div>
             <div class="mainwp-search-submit">
@@ -150,11 +153,11 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <label class="six wide column middle aligned"><?php esc_html_e( 'Upload to storage', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <?php if ( empty( $destinations ) ) : ?>
-                    <em><?php esc_html_e( 'No storage destinations configured. Backups stay on this dashboard.', 'mainwp' ); ?>
+                    <span class="ui small text"><?php esc_html_e( 'No storage destinations configured. Backups stay on this dashboard.', 'mainwp' ); ?>
                         <?php if ( ! is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) : ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ); ?>"><?php esc_html_e( 'Add a destination', 'mainwp' ); ?></a>
                         <?php endif; ?>
-                    </em>
+                    </span>
                 <?php else : ?>
                     <select name="mainwp-backup-task-destinations" id="mainwp-backup-task-destinations" multiple="" class="ui multiple selection dropdown">
                         <option value=""><?php esc_html_e( 'Keep on dashboard only', 'mainwp' ); ?></option>
@@ -162,7 +165,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             <option value="<?php echo intval( $destination->id ); ?>" <?php echo in_array( (int) $destination->id, $selected, true ) ? 'selected' : ''; ?>><?php echo esc_html( $destination->name ); ?></option>
                         <?php endforeach; ?>
                     </select>
-                    <div><em><?php esc_html_e( 'Completed backups upload to the selected destinations. With nothing selected they stay on this dashboard.', 'mainwp' ); ?></em></div>
+                    <div><span class="ui small text"><?php esc_html_e( 'Completed backups upload to the selected destinations. With nothing selected they stay on this dashboard.', 'mainwp' ); ?></span></div>
                 <?php endif; ?>
             </div>
         </div>
@@ -186,12 +189,15 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $max_chain_length     = isset( $task->max_chain_length ) ? (int) $task->max_chain_length : 0;
         $chain_wrapper_style  = isset( $task->type ) && 'incremental' === $task->type ? '' : 'style="display:none"';
         ?>
-        <h3 class="header"><?php esc_html_e( 'Backup Retention', 'mainwp' ); ?></h3>
+        <h3 class="ui dividing header">
+                <?php esc_html_e( 'Backup Retention', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'Choose how many backups to keep and when older backups should be removed. Leave a limit empty to keep backups without that limit.', 'mainwp' ); ?></div>
+            </h3>
         <div class="ui grid field">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Keep last', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <input type="number" name="mainwp-backup-retention-count" id="mainwp-backup-retention-count" min="0" placeholder="<?php esc_attr_e( 'No limit', 'mainwp' ); ?>" value="<?php echo $retention_count > 0 ? esc_attr( $retention_count ) : ''; ?>"/>
-                <em><?php esc_html_e( 'Number of backups to keep per site. Older backups are removed once newer ones complete, and the most recent backup always stays.', 'mainwp' ); ?></em>
+                <span class="ui small text"><?php esc_html_e( 'Number of backups to keep per site. Older backups are removed once newer ones complete, and the most recent backup always stays.', 'mainwp' ); ?></span>
             </div>
         </div>
         <div class="ui grid field">
@@ -204,21 +210,21 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <label class="six wide column middle aligned"><?php esc_html_e( 'Storage cap (MB)', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <input type="number" name="mainwp-backup-retention-storage-mb" id="mainwp-backup-retention-storage-mb" min="0" placeholder="<?php esc_attr_e( 'No limit', 'mainwp' ); ?>" value="<?php echo $retention_storage_mb > 0 ? esc_attr( $retention_storage_mb ) : ''; ?>"/>
-                <em><?php esc_html_e( 'When this task\'s backups for a site exceed the cap, the oldest are removed until they fit.', 'mainwp' ); ?></em>
+                <span class="ui small text"><?php esc_html_e( 'When this task\'s backups for a site exceed the cap, the oldest are removed until they fit.', 'mainwp' ); ?></span>
             </div>
         </div>
         <div class="ui grid field" id="mainwp-backup-max-chain-length-wrapper" <?php echo $chain_wrapper_style; //phpcs:ignore -- static attribute. ?>>
             <label class="six wide column middle aligned"><?php esc_html_e( 'Start a new chain after (backups)', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <input type="number" name="mainwp-backup-max-chain-length" id="mainwp-backup-max-chain-length" min="0" placeholder="<?php esc_attr_e( 'No limit', 'mainwp' ); ?>" value="<?php echo $max_chain_length > 0 ? esc_attr( $max_chain_length ) : ''; ?>"/>
-                <em><?php esc_html_e( 'Once an incremental chain reaches this many backups, counting the full backup it builds on, the next run creates a fresh full backup and starts a new chain. Retention removes whole chains, so a limit lets older chains age out and keeps restore times steady.', 'mainwp' ); ?></em>
+                <span class="ui small text"><?php esc_html_e( 'Once an incremental chain reaches this many backups, counting the full backup it builds on, the next run creates a fresh full backup and starts a new chain. Retention removes whole chains, so a limit lets older chains age out and keeps restore times steady.', 'mainwp' ); ?></span>
             </div>
         </div>
         <div class="ui grid field">
             <label class="six wide column middle aligned"><?php esc_html_e( 'Remove cloud copies too', 'mainwp' ); ?></label>
             <div class="ten wide column ui toggle checkbox">
                 <input type="checkbox" id="mainwp-backup-delete-cloud-copies" <?php echo $delete_cloud_copies ? 'checked' : ''; ?>>
-                <em><?php esc_html_e( 'Removed backups are also deleted from the storage destinations they uploaded to.', 'mainwp' ); ?></em>
+                <span class="ui small text"><?php esc_html_e( 'Removed backups are also deleted from the storage destinations they uploaded to.', 'mainwp' ); ?></span>
             </div>
         </div>
         <?php
@@ -295,10 +301,12 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
     public static function render_task_details( $task, $globalArchiveFormatText, $archiveFormat, $useGlobal, $useSite ): void { // phpcs:ignore -- NOSONAR - complex.
         ?>
 
-        <div class="ui divider hidden"></div>
-            <h3 class="header"><?php esc_html_e( 'Backup Details', 'mainwp' ); ?></h3>
+            <h3 class="ui dividing header">
+                <?php esc_html_e( 'Backup Details', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'Name your task, choose what to back up, and set its schedule and storage destinations.', 'mainwp' ); ?></div>
+            </h3>
             <div class="ui grid field">
-                <label class="six wide column middle aligned"><?php esc_html_e( 'Backup task name', 'mainwp' ); ?></label>
+                <label class="six wide column middle aligned"><?php esc_html_e( 'Backup task name', 'mainwp' ); ?> <span class="ui small red text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
                 <div class="ten wide column">
                     <input type="text" id="mainwp_managebackups_add_name" name="mainwp_managebackups_add_name" value="<?php echo isset( $task ) ? esc_html( stripslashes( $task->name ) ) : ''; ?>"/>
                 </div>
@@ -307,6 +315,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Backup file name', 'mainwp' ); ?></label>
                 <div class="ten wide column">
                     <input type="text" id="backup_filename" name="backup_filename" value="<?php echo isset( $task ) ? esc_html( stripslashes( $task->filename ) ) : ''; ?>"/>
+                    <span class="ui small text"><?php esc_html_e( 'Allowed tokens: %sitename%, %url%, %date%, %time%, %type%.', 'mainwp' ); ?></span>
                 </div>
             </div>
             <div class="ui grid field">
@@ -321,12 +330,12 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 </div>
             </div>
             <?php $incremental_note_style = isset( $task ) && 'incremental' === $task->type ? '' : 'style="display:none"'; ?>
-            <div class="ui info message" id="mainwp-backup-incremental-note" <?php echo $incremental_note_style; //phpcs:ignore -- static attribute. ?>>
+            <div class="ui blue message" id="mainwp-backup-incremental-note" <?php echo $incremental_note_style; //phpcs:ignore -- static attribute. ?>>
                 <p><?php esc_html_e( 'Incremental backups copy only the files that changed since the previous run in the chain and include a fresh database dump every time, so each run restores to its own point in time. Sites running a MainWP Child version without incremental support receive a full backup on every run, with a note recorded on the task.', 'mainwp' ); ?></p>
                 <p><?php esc_html_e( 'The first run of this task, including Run Now, makes a full backup automatically. Later runs back up only what changed.', 'mainwp' ); ?></p>
             </div>
             <?php $files_note_style = isset( $task ) && 'files' === $task->type ? '' : 'style="display:none"'; ?>
-            <div class="ui info message" id="mainwp-backup-files-note" <?php echo $files_note_style; //phpcs:ignore -- static attribute. ?>>
+            <div class="ui blue message" id="mainwp-backup-files-note" <?php echo $files_note_style; //phpcs:ignore -- static attribute. ?>>
                 <?php esc_html_e( 'Files only backups archive the site\'s files without a database dump. Pair this task with a Database Backup task to cover the whole site. Because the archive carries no database, the dashboard cannot restore a site from it; download the archive to recover individual files.', 'mainwp' ); ?>
             </div>
             <?php
@@ -371,8 +380,22 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <div class="ui grid field" id="mainwp-schedule-time-of-day-wrapper" <?php echo $tod_style; //phpcs:ignore -- static attribute. ?>>
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Time of day (optional)', 'mainwp' ); ?></label>
                 <div class="ten wide column">
-                    <input type="time" name="mainwp-schedule-time-of-day" id="mainwp-schedule-time-of-day" value="<?php echo esc_attr( $time_of_day ); ?>"/>
-                    <em><?php esc_html_e( 'Runs at this time in the WordPress site timezone. Leave empty to run whenever the schedule interval has elapsed.', 'mainwp' ); ?></em>
+                    <div class="time-selector" id="mainwp-backup-time-selector">
+                        <div class="ui input left icon">
+                            <i class="clock icon"></i>
+                            <input type="text" name="mainwp-schedule-time-of-day" id="mainwp-schedule-time-of-day" value="<?php echo esc_attr( $time_of_day ); ?>" autocomplete="off"/>
+                        </div>
+                    </div>
+                    <script type="text/javascript">
+                        jQuery( function () {
+                            jQuery( '#mainwp-backup-time-selector' ).calendar( {
+                                type: 'time',
+                                ampm: false,
+                                formatter: { time: 'HH:mm', cellTime: 'H:mm' }
+                            } );
+                        } );
+                    </script>
+                    <span class="ui small text"><?php esc_html_e( 'Runs at this time in the WordPress site timezone. Leave empty to run whenever the schedule interval has elapsed.', 'mainwp' ); ?></span>
                 </div>
             </div>
             <div class="ui grid field" id="mainwp-schedule-day-of-week-wrapper" <?php echo $dow_style; //phpcs:ignore -- static attribute. ?>>
@@ -389,7 +412,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 <label class="six wide column middle aligned"><?php esc_html_e( 'Day of month', 'mainwp' ); ?></label>
                 <div class="ten wide column">
                     <input type="number" name="mainwp-schedule-day-of-month" id="mainwp-schedule-day-of-month" min="1" max="28" value="<?php echo esc_attr( $day_of_month ); ?>"/>
-                    <em><?php esc_html_e( 'Days 1 through 28, so the schedule lands in every month.', 'mainwp' ); ?></em>
+                    <span class="ui small text"><?php esc_html_e( 'Days 1 through 28, so the schedule lands in every month.', 'mainwp' ); ?></span>
                 </div>
             </div>
             <?php static::render_destinations_field( $task ); ?>
@@ -429,7 +452,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                             ?>
                             selected<?php endif; ?>><?php esc_html_e( 'Tar BZip2', 'mainwp' ); ?></option>
                     </select>
-                    <div><em class="mainwp-archive-format-note"><?php esc_html_e( 'For large sites, Tar GZip is the safer choice. Zip rewrites the whole archive after every slice, so it gets slower as the backup grows and needs as much free disk as the archive itself. Tar GZip appends instead.', 'mainwp' ); ?></em></div>
+                    <div><span class="ui small text mainwp-archive-format-note"><?php esc_html_e( 'For large sites, Tar GZip is the safer choice. Zip rewrites the whole archive after every slice, so it gets slower as the backup grows and needs as much free disk as the archive itself. Tar GZip appends instead.', 'mainwp' ); ?></span></div>
                 </div>
             </div>
             <?php $zip_override_style = 'zip' === $archiveFormat ? '' : 'style="display:none"'; ?>
@@ -440,33 +463,36 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                         <input type="checkbox" name="mainwp_zip_force_override" id="mainwp-backup-zip-force-override" value="1" <?php echo( isset( $task->zip_force_override ) && 1 === (int) $task->zip_force_override ? 'checked' : '' ); ?>>
                         <label><?php esc_html_e( 'Keep Zip even when the site is large', 'mainwp' ); ?></label>
                     </div>
-                    <div><em><?php esc_html_e( 'A large site on Zip is switched to Tar GZip so the backup can finish across timeouts. Enable this to keep Zip anyway.', 'mainwp' ); ?></em></div>
+                    <div><span class="ui small text"><?php esc_html_e( 'A large site on Zip is switched to Tar GZip so the backup can finish across timeouts. Enable this to keep Zip anyway.', 'mainwp' ); ?></span></div>
                 </div>
             </div>
             <?php
             $style = isset( $task ) && 'db' === $task->type ? 'style="display: none;"' : '';
             ?>
             <div class="mainwp-backup-full-exclude" <?php echo $style; //phpcs:ignore -- ok. ?>>
-                <h3 class="header"><?php esc_html_e( 'Backup Excludes', 'mainwp' ); ?></h3>
+                <h3 class="ui dividing header">
+                <?php esc_html_e( 'Backup Excludes', 'mainwp' ); ?>
+                <div class="sub header"><?php esc_html_e( 'Choose which files and folders to leave out of this task to reduce backup size and avoid unnecessary data.', 'mainwp' ); ?></div>
+            </h3>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Known backup locations', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
                         <input type="checkbox" id="mainwp-known-backup-locations" <?php echo( ! isset( $task ) || 1 === (int) $task->excludebackup ? 'checked' : '' ); ?>>
-                        <em><?php esc_html_e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to time out.', 'mainwp' ); ?></em>
+                        <span class="ui small text"><?php esc_html_e( 'This adds known backup locations of popular WordPress backup plugins to the exclude list. Old backups can take up a lot of space and can cause your current MainWP backup to time out.', 'mainwp' ); ?></span>
                     </div>
                 </div>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Known cache locations', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
                         <input type="checkbox" id="mainwp-known-cache-locations" <?php echo( ! isset( $task ) || 1 === (int) $task->excludecache ? 'checked' : '' ); ?>>
-                        <em><?php esc_html_e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to time out. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></em>
+                        <span class="ui small text"><?php esc_html_e( 'This adds known cache locations of popular WordPress cache plugins to the exclude list. A cache can be massive with thousands of files and can cause your current MainWP backup to time out. Your cache will be rebuilt by your caching plugin when the backup is restored.', 'mainwp' ); ?></span>
                     </div>
                 </div>
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Non-WordPress folders', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
                         <input type="checkbox" id="mainwp-non-wordpress-folders" <?php echo( ! isset( $task ) || 1 === (int) $task->excludenonwp ? 'checked' : '' ); ?>>
-                        <em><?php esc_html_e( 'This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp' ); ?></em>
+                        <span class="ui small text"><?php esc_html_e( 'This adds folders that are not part of the WordPress core (wp-admin, wp-content and wp-include) to the exclude list. Non-WordPress folders can contain a large amount of data or may be a sub-domain or add-on domain that should be backed up individually and not with this backup.', 'mainwp' ); ?></span>
                     </div>
                 </div>
                 <div class="ui grid field">
@@ -478,16 +504,12 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Custom excludes', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
-                        <textarea id="excluded_folders_list">
                         <?php
-                            $excluded = ( isset( $task ) ? $task->exclude : '' );
-                        if ( '' !== $excluded ) {
-                            $excluded = explode( ',', $excluded );
-                            $excluded = is_array( $excluded ) ? array_map( 'sanitize_text_field', $excluded ) : array();
-                            echo implode( "/\n", $excluded ) . "/\n"; //phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                        }
+                        $excluded_paths = isset( $task ) ? explode( ',', (string) $task->exclude ) : array();
+                        $excluded_paths = array_filter( array_map( 'trim', $excluded_paths ), 'strlen' );
+                        $excluded_text  = empty( $excluded_paths ) ? '' : implode( "/\n", $excluded_paths ) . "/\n";
                         ?>
-                        </textarea>
+                        <textarea id="excluded_folders_list"><?php echo esc_textarea( $excluded_text ); ?></textarea>
                     </div>
                 </div>
             </div>

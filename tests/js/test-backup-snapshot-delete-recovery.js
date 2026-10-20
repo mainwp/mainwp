@@ -11,14 +11,14 @@ function harness() {
     const requests = [];
     const reloads = [];
     const context = {
-        currentSite: 12, siteDisconnected: false, snapshotDeleteBusy: false,
+        backupInProgress: false, currentSite: 12, siteDisconnected: false, snapshotDeleteBusy: false,
         snapshotDeleteTarget: 17, snapshotDeleteRequest: 0, snapshotsTable: null,
         deleteLabels: { failed: 'The delete request failed. Reload the page and try again.' },
         nonces: {}, ajaxurl: 'ajax', backupPollRetries: 0, backupFollowGen: 0, backupFollowStops: 0, backupClickEpoch: {}, backupCancelledEpoch: {}, backupPendingKickoffs: {}, backupCancelPending: {}, backupCancelSeq: 0, backupPendingStarts: {},
         stopBackupTimers() {}, setBackupStatus() {}, showCancelBackup() {}, renderBackupStatus() {},
-        setSnapshotDeleteBusy() {}, cancelApplies() { return false; },
+        setBackupInProgress() {}, setSnapshotDeleteBusy() {}, cancelApplies() { return false; },
         backupSinceTs: 0, backupProgressCache: null, backupStartTime: null,
-        Date, window: { clearTimeout() {}, setTimeout() { return 1; }, setInterval() { return 1; } },
+        Date, window: { mainwpBackupProgressSteps() {}, clearTimeout() {}, setTimeout() { return 1; }, setInterval() { return 1; } },
         loadSnapshots( siteId ) { reloads.push( siteId ); context.currentSite = siteId; },
         escAttr: String
     };
@@ -29,6 +29,9 @@ function harness() {
         return {
             state,
             on( event, handler ) { handlers.set( selector, handler ); return this; },
+            modal() { return this; },
+            progress() { return this; },
+            removeData() { return this; },
             empty() { state.items = []; return this; },
             text( value ) { state.text = value; return this; },
             appendTo( target ) { target.state.items.push( state.text ); return this; },
@@ -61,7 +64,7 @@ function harness() {
         const start = source.indexOf( "$( '" + selector + "' ).on( " );
         assert.ok( start >= 0, selector );
         evaluate( source.slice( start, source.indexOf( '\n            } );', start ) + '\n            } );'.length ) );
-        return () => handlers.get( selector ).call( selector );
+        return () => handlers.get( selector ).call( selector, {}, true );
     };
     const box = selector => context.$( selector ).state;
     load( 'setBackupFollowControls' );

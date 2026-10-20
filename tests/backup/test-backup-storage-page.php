@@ -1812,7 +1812,7 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 
 	/**
 	 * The destinations table names each provider the way the form does, and
-	 * Delete is an icon button that reads in both themes.
+	 * Edit links and Delete use the standard provider and action styles.
 	 */
 	public function test_destination_table_shows_provider_label_and_icon_delete() {
 		wp_set_current_user( $this->factory()->user->create( array( 'role' => 'administrator' ) ) );
@@ -1829,8 +1829,10 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		MainWP_Backup_Storage_View::render();
 		$output = ob_get_clean();
 
-		$this->assertMatchesRegularExpression( '/data-name="Label test">\s*<td>Label test<\/td>\s*<td>Local Path<\/td>/', $output );
-		$this->assertStringContainsString( 'class="ui mini icon basic button mainwp-storage-delete"', $output );
+		$this->assertMatchesRegularExpression( '/<a href="#" class="mainwp-storage-edit">Label test<\/a>/', $output );
+		$this->assertStringContainsString( '<strong>Local Path</strong>', $output );
+		$this->assertStringContainsString( 'class="ui small text"', $output );
+		$this->assertStringContainsString( 'class="ui mini red button mainwp-storage-delete"', $output );
 		$this->assertStringNotContainsString( 'basic red button', $output );
 	}
 }

@@ -325,7 +325,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
         }
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             $error_code = MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED;
-            return __( 'Native backups are not enabled.', 'mainwp' );
+            return wp_specialchars_decode( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED ), ENT_QUOTES );
         }
         $sites = static::resolve_task_run_sites( $task, $stale_sites );
         if ( empty( $sites ) ) {

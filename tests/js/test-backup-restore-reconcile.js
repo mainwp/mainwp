@@ -20,7 +20,7 @@ function harness() {
     const created = [];
     const context = {
         statusLabels: { pending: 'Queued' }, rollbackStatusLabels: {}, rollbackActionLabels: { retry: 'Retry', rollBack: 'Roll Back' }, restoreOutcomeMessages: {},
-        phaseOrder: [], rollbackRequestPending: false, currentSiteUrl: '', pollTimer: 0, canRestore: true,
+        restoreStepJob: null, updateRestoreSteps: () => { context.restoreStepJob = context.currentJob; return -1; }, restoreProgressPercent: 0, phaseOrder: [], rollbackRequestPending: false, currentSiteUrl: '', pollTimer: 0, canRestore: true,
         setSnapshotDeleteBusy() {}, showPreserveNote() {}, loadSnapshots() {}, window: { clearTimeout() {} }
     };
     context.$ = selector => {
@@ -39,6 +39,8 @@ function harness() {
             addClass( names ) { names.split( ' ' ).forEach( name => state.classes.add( name ) ); return this; },
             hasClass( name ) { return state.classes.has( name ); },
             removeClass( names ) { names.split( ' ' ).forEach( name => state.classes.delete( name ) ); return this; },
+            progress() { return this; },
+            toggleClass() { return this; },
             show() { state.visible = true; return this; },
             hide() { state.visible = false; return this; },
             toggle( value ) { state.visible = value; return this; },

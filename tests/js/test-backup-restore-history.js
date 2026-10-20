@@ -16,7 +16,7 @@ function harness( jobs, canRestore = true ) {
 	const elements = new Map();
 	const tags = new Set( [
 		'<td class="collapsing"></td>', '<td></td>', '<tr></tr>', '<div></div>',
-		'<span class="ui small label"></span>',
+		'<span class="ui small basic label"></span>',
 		'<button type="button" class="ui mini basic button mainwp-restore-failed-job"></button>'
 	] );
 	const context = {
@@ -26,7 +26,7 @@ function harness( jobs, canRestore = true ) {
 		rollbackStatusLabels: { failed_permanent: 'Rollback failed' },
 		rollbackActionLabels: { retry: 'Retry rollback', rollBack: 'Roll Back' },
 		historyStatusColors: { completed: 'green', failed_permanent: 'red', cancelled: 'grey' },
-		enableSnapshotControls() {}, setSnapshotsPlaceholder() {}, showDisconnected() {},
+		setBackupInProgress() {}, enableSnapshotControls() {}, setSnapshotsPlaceholder() {}, showDisconnected() {},
 		startJobFollow() {}, resumeBackupFollow() {}, escAttr: value => String( value ),
 		snapshotsTable: { clear() { return this; }, draw() {}, rows: { add() {} } }
 	};

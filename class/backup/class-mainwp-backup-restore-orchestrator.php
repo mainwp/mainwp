@@ -31,6 +31,9 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     /** The replay spends the first of seven attempts, so six reads span 270 s, past the Child's 180 s lease, before a first slice counts as stuck. */
     private const RECONCILE_INTERVAL_SECONDS = 45;
 
+    /** Keep progress visible without rewriting the full checkpoint for every chunk. */
+    private const TRANSFER_PROGRESS_INTERVAL_SECONDS = 3;
+
     /**
      * Cron slice budget, seconds. Below the upload driver's 240 so both
      * fit one continuation tick with headroom.
@@ -1605,6 +1608,24 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
     }
 
     /**
+     * Progress throttle (test seam).
+     *
+     * @return float Seconds between checkpoint saves.
+     */
+    protected function transfer_progress_interval(): float {
+        return self::TRANSFER_PROGRESS_INTERVAL_SECONDS;
+    }
+
+    /**
+     * Progress clock (test seam).
+     *
+     * @return float Current time in seconds.
+     */
+    protected function transfer_progress_time(): float {
+        return microtime( true );
+    }
+
+    /**
      * Transferring: stream staged artifacts to the child.
      *
      * @param object $job      Job row.
@@ -1635,6 +1656,8 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
 
         $checkpoint = $job->checkpoint;
         $cursor     = isset( $checkpoint['transfer'] ) ? (array) $checkpoint['transfer'] : array();
+        $last_saved = $this->transfer_progress_time();
+        $interval   = $this->transfer_progress_interval();
 
         $outcome = MainWP_Backup_Restore_Transfer_Driver::instance()->transfer_artifacts(
             $this->website( $job ),
@@ -1642,9 +1665,21 @@ class MainWP_Backup_Restore_Orchestrator { // phpcs:ignore Generic.Classes.Openi
             (array) $checkpoint['plan'],
             $cursor,
             $deadline,
-            function () use ( $store, $job, $still_driving ): bool {
+            function () use ( $store, $job, $still_driving, &$cursor, &$last_saved, $interval ): bool {
                 $fresh = $store->get_job( (int) $job->id );
-                return null !== $fresh && empty( $fresh->checkpoint['cancel_intent'] ) && in_array( $fresh->status, $still_driving, true );
+                if ( null === $fresh || ! empty( $fresh->checkpoint['cancel_intent'] ) || ! in_array( $fresh->status, $still_driving, true ) ) {
+                    return false;
+                }
+                $now = $this->transfer_progress_time();
+                if ( $now - $last_saved >= $interval ) {
+                    $checkpoint             = $fresh->checkpoint;
+                    $checkpoint['transfer'] = $cursor;
+                    if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                        return false;
+                    }
+                    $last_saved = $now;
+                }
+                return true;
             },
             (int) $job->id
         );

@@ -149,6 +149,38 @@ class Testable_Restore_Orchestrator extends MainWP_Backup_Restore_Orchestrator {
 	public $continuation_count = 0;
 
 	/**
+	 * Null keeps the production throttle.
+	 *
+	 * @var float|null
+	 */
+	public $transfer_progress_interval = null;
+
+	/**
+	 * Null keeps the wall clock.
+	 *
+	 * @var float|null
+	 */
+	public $transfer_progress_now = null;
+
+	/**
+	 * Avoid waiting for a checkpoint window in transfer tests.
+	 *
+	 * @return float Seconds between progress saves.
+	 */
+	protected function transfer_progress_interval(): float {
+		return $this->transfer_progress_interval ?? parent::transfer_progress_interval();
+	}
+
+	/**
+	 * Keep throttle tests independent of machine speed.
+	 *
+	 * @return float Current time in seconds.
+	 */
+	protected function transfer_progress_time(): float {
+		return $this->transfer_progress_now ?? parent::transfer_progress_time();
+	}
+
+	/**
 	 * Pinned check.
 	 *
 	 * @param object $website Website.
@@ -9370,6 +9402,340 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( 4, $job->checkpoint['transfer']['offset'] );
 		$this->assertSame( array( 'restore_artifact_chunk', 'restore_task_cancel', 'backup_task_cancel' ), $this->calls_without_report_reads() );
 		$this->assertNull( MainWP_DB::instance()->get_website_option( $this->site_id, MainWP_Backup_Executor::ADHOC_TASK_OPTION ) );
+	}
+
+	/**
+	 * Polls must see acknowledged bytes before the slice finishes.
+	 */
+	public function test_transferring_saves_only_acked_bytes_during_slice() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job(
+			array(
+				'plan'     => $this->staged_plan_fixture(),
+				'transfer' => array( 'chunk_bytes' => 4 ),
+			),
+			$store::STATUS_TRANSFERRING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$this->orchestrator->transfer_progress_interval = 0.0;
+
+		$offsets  = array();
+		$observed = array();
+		$child    = function ( $pre, $website, $what, $params ) use ( $store, $job, &$offsets, &$observed ) {
+			if ( 'restore_artifact_chunk' !== $what ) {
+				return $pre;
+			}
+			$fresh      = $store->get_job( (int) $job->id );
+			$offsets[]  = (int) $params['offset'];
+			$observed[] = array( $fresh->checkpoint['transfer']['offset'] ?? 0, $fresh->checkpoint['transfer']['artifact_index'] ?? 0, $fresh->status );
+			return array(
+				'result'         => 'ok',
+				'bytes_received' => 1 === count( $offsets ) ? 2 : (int) $params['offset'] + strlen( base64_decode( $params['chunk_b64'] ) ),
+			);
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 20, 4 );
+		try {
+			$fresh = $this->tick( $job );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 20 );
+		}
+		$this->assertSame( array( 0, 2, 6 ), $offsets );
+		$this->assertSame( $offsets, array_column( $observed, 0 ) );
+		$this->assertSame( array( 0, 0, 0 ), array_column( $observed, 1 ) );
+		$this->assertSame( array_fill( 0, 3, $store::STATUS_TRANSFERRING ), array_column( $observed, 2 ) );
+		$this->assertSame( $store::STATUS_RUNNING, $fresh->status );
+		$this->assertSame( 1, $fresh->checkpoint['transfer']['artifact_index'] );
+		$this->assertSame( 0, $fresh->checkpoint['transfer']['offset'] );
+	}
+
+	/**
+	 * A cancel racing the progress UPDATE must survive its CAS retry.
+	 */
+	public function test_transferring_progress_save_merges_concurrent_cancel() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job(
+			array(
+				'plan'     => $this->staged_plan_fixture(),
+				'transfer' => array( 'chunk_bytes' => 4 ),
+			),
+			$store::STATUS_TRANSFERRING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$this->orchestrator->transfer_progress_interval = 0.0;
+
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$chunks = 0;
+		$armed  = false;
+		$merged = null;
+		$race   = function ( $sql ) use ( $store, $job, $table, &$chunks, &$armed, &$race ) {
+			if ( 1 === $chunks && ! $armed && str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) ) {
+				remove_filter( 'query', $race );
+				$armed = $store->arm_cancel_intent( (int) $job->id );
+				$this->assertTrue( $armed );
+			}
+			return $sql;
+		};
+		$child  = function ( $pre, $website, $what, $params ) use ( $store, $job, &$chunks, &$merged ) {
+			if ( 'restore_artifact_chunk' !== $what ) {
+				return $pre;
+			}
+			++$chunks;
+			if ( 2 === $chunks ) {
+				$merged = $store->get_job( (int) $job->id )->checkpoint;
+			}
+			return array(
+				'result'         => 'ok',
+				'bytes_received' => (int) $params['offset'] + strlen( base64_decode( $params['chunk_b64'] ) ),
+			);
+		};
+		add_filter( 'query', $race );
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 20, 4 );
+		try {
+			$fresh = $this->tick( $job );
+		} finally {
+			remove_filter( 'query', $race );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 20 );
+		}
+		$this->assertTrue( $armed );
+		$this->assertSame( 2, $chunks );
+		$this->assertTrue( $merged['cancel_intent'] ?? false );
+		$this->assertSame( 4, $merged['transfer']['offset'] ?? 0 );
+		$this->assertSame( $store::STATUS_CANCELLED, $fresh->status );
+		$this->assertTrue( $fresh->checkpoint['cancel_intent'] );
+		$this->assertSame( 8, $fresh->checkpoint['transfer']['offset'] );
+	}
+
+	/**
+	 * A refused progress save must stop sends even if the status still permits them.
+	 *
+	 * @dataProvider transferring_progress_save_refusals
+	 * @param bool $steal Whether another token claims the lease during the save.
+	 */
+	public function test_transferring_refused_progress_save_stops_chunks( $steal ) {
+		global $wpdb;
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job(
+			array(
+				'plan'     => $this->staged_plan_fixture(),
+				'transfer' => array( 'chunk_bytes' => 4 ),
+			),
+			$store::STATUS_TRANSFERRING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$job   = $store->acquire_next_job( 'transfer-old', 90, time(), (int) $job->id );
+		$token = new \ReflectionProperty( MainWP_Backup_Restore_Orchestrator::class, 'lock_token' );
+		$token->setValue( $this->orchestrator, 'transfer-old' );
+		$this->orchestrator->transfer_progress_interval = 0.0;
+
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$chunks  = 0;
+		$refused = false;
+		$before  = null;
+		$refuse  = function ( $sql ) use ( $wpdb, $store, $table, $job, $steal, &$chunks, &$refused, &$before ) {
+			if ( $chunks > 0 && str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) ) {
+				if ( ! $refused ) {
+					$before  = $store->get_job( (int) $job->id );
+					$refused = true;
+					if ( $steal ) {
+						$wpdb->update(
+							$table,
+							array(
+								'locked_by'    => 'transfer-new',
+								'locked_until' => time() + 90,
+							),
+							array( 'id' => $job->id )
+						);
+					}
+				}
+				return $steal ? $sql : $sql . ' AND 1 = 0';
+			}
+			return $sql;
+		};
+		$child   = function ( $pre, $website, $what, $params ) use ( &$chunks ) {
+			if ( 'restore_artifact_chunk' !== $what ) {
+				return $pre;
+			}
+			++$chunks;
+			return array(
+				'result'         => 'ok',
+				'bytes_received' => (int) $params['offset'] + strlen( base64_decode( $params['chunk_b64'] ) ),
+			);
+		};
+		add_filter( 'query', $refuse );
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 20, 4 );
+		try {
+			$fresh = $this->tick( $job );
+		} finally {
+			remove_filter( 'query', $refuse );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 20 );
+			$token->setValue( $this->orchestrator, null );
+		}
+		$this->assertTrue( $refused );
+		$this->assertSame( 1, $chunks );
+		$this->assertSame( $steal ? 'transfer-new' : 'transfer-old', $fresh->locked_by );
+		$this->assertSame( $before->checkpoint, $fresh->checkpoint );
+		$this->assertSame( $before->checkpoint_rev, $fresh->checkpoint_rev );
+		$this->assertSame( $store::STATUS_TRANSFERRING, $fresh->status );
+	}
+
+	/**
+	 * A lease fence and a refused CAS both stop the transfer.
+	 *
+	 * @return array Save refusals.
+	 */
+	public static function transferring_progress_save_refusals() {
+		return array(
+			'lease reclaimed' => array( true ),
+			'CAS refused'     => array( false ),
+		);
+	}
+
+	/**
+	 * The Child may have more bytes than the last durable cursor after a crash.
+	 *
+	 * @dataProvider transferring_resume_checksum_results
+	 * @param bool $checksum_ok Whether the Child accepts the final artifact checksum.
+	 */
+	public function test_transferring_resumes_saved_progress_with_realign_and_checksum( $checksum_ok ) {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$plan  = $this->staged_plan_fixture();
+		$job   = $this->make_job(
+			array(
+				'plan'     => $plan,
+				'transfer' => array( 'chunk_bytes' => 4 ),
+			),
+			$store::STATUS_TRANSFERRING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$this->orchestrator->transfer_progress_interval = 0.0;
+
+		$received     = '';
+		$offsets      = array();
+		$final_checks = 0;
+		$child        = function ( $pre, $website, $what, $params ) use ( $plan, $checksum_ok, &$received, &$offsets, &$final_checks ) {
+			if ( 'restore_artifact_chunk' !== $what ) {
+				return $pre;
+			}
+			$offsets[] = (int) $params['offset'];
+			$raw       = base64_decode( $params['chunk_b64'] );
+			$this->assertSame( hash( 'sha256', $raw ), $params['chunk_sha256'] );
+			if ( strlen( $received ) !== (int) $params['offset'] ) {
+				return array(
+					'error_code'     => 'mainwp_restore_chunk_gap',
+					'bytes_received' => strlen( $received ),
+				);
+			}
+			$received .= $raw;
+			if ( ! empty( $params['final'] ) ) {
+				++$final_checks;
+				$this->assertSame( $plan[0]['sha256'], hash( 'sha256', $received ) );
+				if ( ! $checksum_ok ) {
+					return array( 'error' => 'Artifact checksum mismatch.' );
+				}
+			}
+			return array(
+				'result'         => 'ok',
+				'bytes_received' => strlen( $received ),
+			);
+		};
+		$crash        = function ( $task_id, $file, $cursor ) {
+			if ( 4 === $cursor['offset'] ) {
+				throw new \RuntimeException( 'Simulated worker crash.' );
+			}
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 20, 4 );
+		add_action( 'mainwp_backup_diag_restore_transfer', $crash, 20, 3 );
+		try {
+			$crashed = false;
+			try {
+				$this->tick( $job );
+			} catch ( \RuntimeException $e ) {
+				$this->assertSame( 'Simulated worker crash.', $e->getMessage() );
+				$crashed = true;
+			} finally {
+				remove_action( 'mainwp_backup_diag_restore_transfer', $crash, 20 );
+			}
+			$this->assertTrue( $crashed );
+			$fresh = $store->get_job( (int) $job->id );
+			$this->assertSame( $store::STATUS_TRANSFERRING, $fresh->status );
+			$this->assertSame( 4, $fresh->checkpoint['transfer']['offset'] ?? 0 );
+			$this->assertSame( 8, strlen( $received ) );
+			$fresh = $this->tick( $fresh );
+		} finally {
+			remove_action( 'mainwp_backup_diag_restore_transfer', $crash, 20 );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 20 );
+		}
+		$this->assertSame( array( 0, 4, 4, 8 ), $offsets );
+		$this->assertSame( 'dump-bytes', $received );
+		$this->assertSame( 1, $final_checks );
+		$this->assertSame( $plan, $fresh->checkpoint['plan'] );
+		$this->assertSame( $checksum_ok ? $store::STATUS_RUNNING : $store::STATUS_FAILED_RETRYABLE, $fresh->status );
+		if ( ! $checksum_ok ) {
+			$this->assertSame( 'Artifact checksum mismatch.', $fresh->last_error );
+		}
+	}
+
+	/**
+	 * Resume must preserve both successful verification and checksum rejection.
+	 *
+	 * @return array Child checksum results.
+	 */
+	public static function transferring_resume_checksum_results() {
+		return array(
+			'checksum accepted' => array( true ),
+			'checksum rejected' => array( false ),
+		);
+	}
+
+	/**
+	 * Fast chunks share a checkpoint window; the final save is independent.
+	 */
+	public function test_transferring_default_throttle_saves_once_per_window() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job(
+			array(
+				'plan'     => $this->staged_plan_fixture(),
+				'transfer' => array( 'chunk_bytes' => 1 ),
+			),
+			$store::STATUS_TRANSFERRING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+
+		$this->orchestrator->transfer_progress_now = 100.0;
+
+		$times   = array( 101.0, 102.999, 103.0, 103.001, 105.999, 106.0, 106.001, 108.999, 109.0, 109.001 );
+		$chunks  = 0;
+		$writes  = array();
+		$table   = MainWP_DB::instance()->get_table_name( 'wp_backup_restore_job' );
+		$observe = function ( $sql ) use ( $table, &$writes, &$chunks ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table . ' SET checkpoint = ' ) ) {
+				$writes[] = array( $this->orchestrator->transfer_progress_now, $chunks );
+			}
+			return $sql;
+		};
+		$child   = function ( $pre, $website, $what, $params ) use ( $times, &$chunks ) {
+			if ( 'restore_artifact_chunk' !== $what ) {
+				return $pre;
+			}
+			$this->orchestrator->transfer_progress_now = $times[ $chunks ];
+			++$chunks;
+			return array(
+				'result'         => 'ok',
+				'bytes_received' => (int) $params['offset'] + strlen( base64_decode( $params['chunk_b64'] ) ),
+			);
+		};
+		add_filter( 'query', $observe );
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 20, 4 );
+		try {
+			$fresh = $this->tick( $job );
+		} finally {
+			remove_filter( 'query', $observe );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 20 );
+		}
+		$this->assertSame( 10, $chunks );
+		$this->assertSame( array( array( 103.0, 3 ), array( 106.0, 6 ), array( 109.0, 9 ), array( 109.001, 10 ) ), $writes );
+		$this->assertSame( $store::STATUS_RUNNING, $fresh->status );
+		$this->assertSame( 1, $fresh->checkpoint['transfer']['artifact_index'] );
 	}
 
 	/**

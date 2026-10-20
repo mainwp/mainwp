@@ -103,4 +103,22 @@ for ( const action of [ 'updates', 'abandoned' ] ) {
             assert.deepEqual( fixture.visible(), item.visible );
         } );
     }
+
+    test( action + ': second selection restores previously hidden connected and disconnected rows', () => {
+        const fixture = load( [ '1', '4' ] );
+        if ( 'updates' === action ) {
+            const firstIds = fixture.context.selectSites( [ '1' ], fixture.connectedIds );
+            assert.deepEqual( Array.from( firstIds ), [ '1' ] );
+            assert.deepEqual( fixture.visible(), [ '1' ] );
+            const secondIds = fixture.context.selectSites( [ '4', '2' ], fixture.connectedIds );
+            assert.deepEqual( Array.from( secondIds ), [ '4' ] );
+        } else {
+            fixture.context.mainwp_managesites_bulk_check_abandoned( [ '1' ], 'plugin' );
+            assert.deepEqual( fixture.visible(), [ '1' ] );
+            fixture.context.mainwp_managesites_bulk_check_abandoned( [ '4', '2' ], 'plugin' );
+            assert.deepEqual( fixture.requests, [ [ '1' ], [ '4' ] ] );
+            assert.deepEqual( fixture.progress, [ 1, 1 ] );
+        }
+        assert.deepEqual( fixture.visible(), [ '4', '2' ] );
+    } );
 }

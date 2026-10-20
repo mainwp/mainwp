@@ -872,6 +872,8 @@ globalThis.mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
 
     let selectedIds = [], excludeIds = [];
     if (Array.isArray(siteIds)) {
+        // Earlier runs on this page may have hidden rows.
+        dashboard_update_site_show_all();
         jQuery.grep(allWebsiteIds, function (el) {
             if (jQuery.inArray(el, siteIds) === -1) {
                 excludeIds.push(el);
@@ -1181,6 +1183,15 @@ globalThis.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
         if (!rowEl) return;
 
         rowEl.style.display = 'none';
+    };
+
+    globalThis.dashboard_update_site_show_all = function () {
+        const sync = globalThis.dashboardSync;
+        if (!sync?.initialized) return;
+
+        for (const rowEl of sync.rowMap.values()) {
+            rowEl.style.display = '';
+        }
     };
 
     // -----------------------------

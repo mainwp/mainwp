@@ -30,6 +30,8 @@ let managesites_update_all_next_step = function () {
 let mainwp_update_get_selected_sitesids = function (selectedSitesIds, allSitesIds) {
     let selectedIds = [], excludeIds = [];
     if (Array.isArray(selectedSitesIds)) {
+        // Earlier runs on this page may have hidden rows.
+        dashboard_update_site_show_all();
         jQuery.grep(allSitesIds, function (el) {
             if (jQuery.inArray(el, selectedSitesIds) > -1) {
                 selectedIds.push(el);

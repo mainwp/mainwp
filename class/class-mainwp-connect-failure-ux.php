@@ -24,11 +24,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
-     * Maximum readable body characters shown in failure UI.
-     */
-    const BODY_LIMIT = 1200;
-
-    /**
      * Response headers that help identify WAF / proxy / auth blocks.
      *
      * @var array<int,string>
@@ -248,10 +243,10 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
-        $lines   = preg_split( '/\r\n|\n|\r/', $raw_headers );
-        $kept    = array();
-        $wanted  = array_map( 'strtolower', self::NOTICE_HEADERS );
-        $status  = '';
+        $lines  = preg_split( '/\r\n|\n|\r/', $raw_headers );
+        $kept   = array();
+        $wanted = array_map( 'strtolower', self::NOTICE_HEADERS );
+        $status = '';
 
         foreach ( (array) $lines as $line ) {
             $line = trim( (string) $line );
@@ -740,7 +735,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return '';
         }
 
-        $parts = function_exists( 'wp_parse_url' ) ? wp_parse_url( $url ) : parse_url( $url );
+        $parts = function_exists( 'wp_parse_url' ) ? wp_parse_url( $url ) : parse_url( $url ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- fallback for when wp_parse_url() is not loaded yet.
         if ( ! is_array( $parts ) ) {
             return '';
         }
@@ -777,93 +772,6 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         return $url;
-    }
-
-    /**
-     * Redact likely secrets from diagnostic text.
-     *
-     * Quoted values keep their closer so commas, spaces, and similar
-     * characters stay inside the secret. Unquoted values include those
-     * characters and stop at the next name= / name: pair. If any pattern
-     * fails (a PCRE backtrack limit, for example), the whole text is replaced
-     * with a fixed placeholder, because a skipped pass would leave its
-     * secrets in place.
-     *
-     * @param string $text Text.
-     *
-     * @return string
-     */
-    public static function redact_secrets( $text ) {
-        if ( ! is_string( $text ) || '' === $text ) {
-            return '';
-        }
-
-        $text = self::redact_dump_tail( $text );
-
-        $with_urls = self::redact_urls_in_text( $text );
-        if ( ! is_string( $with_urls ) ) {
-            return self::unredactable_text();
-        }
-        $text = $with_urls;
-
-        // The tag split in summarize_body() turns pass<b></b>word= into "pass word=".
-        // Rejoin up to 19 words before = or : (or before a closing quote and
-        // = or :) when their tail forms a sensitive name. Every sensitive name
-        // ends in a sensitive name of at most 19 characters (mainwpsignature_adv),
-        // so even one tag per character is covered. The repeat is bounded and
-        // possessive so large bodies stay linear.
-        $split_failed = false;
-        $rejoined     = preg_replace_callback(
-            '/(?<![A-Za-z0-9_\-])((?:[A-Za-z0-9_\-]++\s++){1,18}[A-Za-z0-9_\-]++)\s*+([\'"]?\s*+[:=])/',
-            static function ( $found ) use ( &$split_failed ) {
-                $parts = preg_split( '/\s+/', $found[1] );
-                if ( ! is_array( $parts ) ) {
-                    $split_failed = true;
-                    return $found[0];
-                }
-                for ( $start = count( $parts ) - 1; $start >= 0; --$start ) {
-                    $candidate = implode( '', array_slice( $parts, $start ) );
-                    if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $candidate ) ) {
-                        $prefix = implode( ' ', array_slice( $parts, 0, $start ) );
-                        return ( '' !== $prefix ? $prefix . ' ' : '' ) . $candidate . $found[2];
-                    }
-                }
-                return $found[0];
-            },
-            $text
-        );
-        if ( ! is_string( $rejoined ) || $split_failed ) {
-            return self::unredactable_text();
-        }
-        $text = $rejoined;
-
-        $quoted = preg_replace_callback(
-            '/([\'"]?)([A-Za-z_][A-Za-z0-9_\-]*)\1\s*[:=]\s*([\'"])((?:\\\\.|(?!\3).)*)\3/',
-            static function ( $match ) {
-                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[2] ) ) {
-                    return $match[1] . $match[2] . $match[1] . '=[redacted]';
-                }
-                return $match[0];
-            },
-            $text
-        );
-        if ( ! is_string( $quoted ) ) {
-            return self::unredactable_text();
-        }
-        $text = $quoted;
-
-        $unquoted = preg_replace_callback(
-            '/(?<![A-Za-z0-9_\-])([A-Za-z_][A-Za-z0-9_\-]*)\s*[:=]\s*(?![\'"])(.+?)(?=(?:\s+|&|;|#)[A-Za-z_][A-Za-z0-9_\-]*\s*[:=]|$)/s',
-            static function ( $match ) {
-                if ( MainWP_Connect_Failure_Ux::is_sensitive_param( $match[1] ) ) {
-                    return $match[1] . '=[redacted]';
-                }
-                return $match[0];
-            },
-            $text
-        );
-
-        return is_string( $unquoted ) ? $unquoted : self::unredactable_text();
     }
 
     /**
@@ -955,75 +863,6 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
         }
 
         return $decoded;
-    }
-
-    /**
-     * Hide everything after the first sensitive print_r() or var_dump() key.
-     *
-     * A dumped value can contain "[x] =>", ")" or a quote, so no delimiter can
-     * be trusted to end it. Cutting to the end of the text over-redacts on
-     * purpose, including any page text that followed the dump. The scan uses
-     * strpos() rather than a pattern so it stays linear and cannot hit a PCRE
-     * limit.
-     *
-     * @param string $text Text.
-     *
-     * @return string
-     */
-    private static function redact_dump_tail( $text ) {
-        $from  = 0;
-        $close = strpos( $text, ']' );
-        while ( false !== $close ) {
-            $open = strrpos( substr( $text, $from, $close - $from ), '[' );
-            if ( false !== $open ) {
-                $key    = substr( $text, $from + $open + 1, $close - $from - $open - 1 );
-                $equals = $close + 1 + strspn( $text, " \t\r\n", $close + 1 );
-                // Tag stripping turns =<b></b>> into "= >", so space is allowed inside the arrow.
-                $arrow = $equals + 1 + strspn( $text, " \t\r\n", $equals + 1 );
-                if ( '=' === substr( $text, $equals, 1 ) && '>' === substr( $text, $arrow, 1 ) && self::is_sensitive_dump_key( $key ) ) {
-                    return substr( $text, 0, $arrow + 1 ) . ' [redacted]';
-                }
-            }
-            $from  = $close + 1;
-            $close = strpos( $text, ']', $from );
-        }
-
-        return $text;
-    }
-
-    /**
-     * Whether a print_r() / var_dump() array key names a secret.
-     *
-     * Tag splitting in summarize_body() leaves spaces inside a key such as
-     * [pass word], so the key is also tried with spaces removed and with
-     * spaces as underscores. Object dumps append the visibility to the
-     * property name ([pwd:protected], ["pwd":"Some\Class":private]), and
-     * only the name before the first colon is classified. Zero-width and
-     * other format characters are invisible on screen but break the name
-     * match, so they are dropped, and Unicode spaces such as U+00A0 count as
-     * spaces. A key that cannot be normalized counts as sensitive.
-     *
-     * @param string $key Text between the brackets.
-     *
-     * @return bool
-     */
-    private static function is_sensitive_dump_key( $key ) {
-        $key = preg_replace( '/\p{Cf}+/u', '', $key );
-        if ( is_string( $key ) ) {
-            $key = preg_replace( '/[\s\p{Zs}]+/u', ' ', $key );
-        }
-        if ( ! is_string( $key ) ) {
-            return true;
-        }
-
-        $key     = trim( $key );
-        $compact = strtolower( str_replace( ' ', '', $key ) );
-        if ( ':protected' === substr( $compact, -10 ) || ':private' === substr( $compact, -8 ) ) {
-            $key = substr( $key, 0, strpos( $key, ':' ) );
-        }
-        $key = trim( trim( $key ), '\'"' );
-
-        return self::is_sensitive_param( str_replace( ' ', '', $key ) ) || self::is_sensitive_param( str_replace( ' ', '_', $key ) );
     }
 
     /**

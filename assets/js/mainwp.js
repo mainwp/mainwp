@@ -2084,7 +2084,7 @@ let mainwp_managesites_add = function () {
             jQuery('#mainwp_managesites_add').prop("disabled", false); //Enable add button
             if (resp_data != '') {
                 errors.push(show_resp);
-            } else {
+            } else if (res_things.failure_ux) {
                 errors.push(MainWP.I18n.t('No child response body was returned. HTTP status, headers, Dashboard outbound IP, and User-Agent are listed above.'));
             }
             feedback('mainwp-message-zone', errors, 'red');

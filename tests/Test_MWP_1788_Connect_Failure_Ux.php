@@ -159,253 +159,49 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A title glued to the next paragraph must not swallow the password name.
+	 * A received body is reported as hidden, so it is not mistaken for an empty response.
 	 */
-	public function test_adjacent_title_and_paragraph_keep_password_name(): void {
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body(
-			'<html><title>Attention Required</title><p>password=supersecret uniqueId=abc123</p></html>'
-		);
+	public function test_received_body_is_reported_as_hidden(): void {
+		$ux = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
 
-		$this->assert_sensitive_body_hidden( $text );
-		$this->assertStringNotContainsString( 'supersecret', $text );
-		$this->assertStringNotContainsString( 'Requiredpassword', $text );
+		$received = $ux::summarize_response( 403, '', '<html>Attention Required! Cloudflare</html>' );
+		$this->assertSame( '', $received['body'] );
+		$this->assertStringContainsString( 'Body: received but not shown, because it may contain sensitive data.', $received['text'] );
+		$this->assertStringNotContainsString( 'no readable child response', $received['text'] );
+		$this->assertStringNotContainsString( 'Attention Required', $received['text'] );
+
+		$empty = $ux::summarize_response( 403, '', '' );
+		$this->assertStringContainsString( 'Body: no readable child response was returned.', $empty['text'] );
+		$this->assertStringNotContainsString( 'received but not shown', $empty['text'] );
 	}
 
 	/**
-	 * Table cells must not glue the label onto password=.
-	 */
-	public function test_table_cells_do_not_glue_password(): void {
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<td>Login</td><td>password=hunter2</td>' );
-
-		$this->assert_sensitive_body_hidden( $text );
-		$this->assertStringNotContainsString( 'hunter2', $text );
-		$this->assertStringNotContainsString( 'Loginpassword', $text );
-	}
-
-	/**
-	 * Div cells must redact a pwd: label instead of gluing it to the previous word.
-	 */
-	public function test_div_cells_redact_pwd_label(): void {
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<div>Error</div><div>pwd: hunter2</div>' );
-
-		$this->assert_sensitive_body_hidden( $text );
-		$this->assertStringNotContainsString( 'hunter2', $text );
-		$this->assertStringNotContainsString( 'Errorpwd', $text );
-	}
-
-	/**
-	 * Opening and inline tags must not glue text onto a name that only matches exactly.
-	 */
-	public function test_opening_and_inline_tags_do_not_glue_exact_names(): void {
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body(
-			'Login<br>signature=sig111 <b>Note</b>nonce=non222 <span>x</span>token=tok333 Error<!-- c -->uniqueId=uid444'
-		);
-
-		$this->assert_sensitive_body_hidden( $text );
-		foreach ( array( 'sig111', 'non222', 'tok333', 'uid444' ) as $secret ) {
-			$this->assertStringNotContainsString( $secret, $text );
-		}
-	}
-
-	/**
-	 * Names that end in password with no underscore are still secrets.
-	 */
-	public function test_unsuffixed_password_names_are_redacted(): void {
-		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'adminpassword' ) );
-		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'dbpassword' ) );
-		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'dbpasswd' ) );
-		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'mypwd' ) );
-
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'adminpassword=hunter2 dbpassword=x' );
-
-		$this->assert_sensitive_body_hidden( $text );
-		$this->assertStringNotContainsString( 'hunter2', $text );
-		$this->assertStringNotContainsString( 'dbpassword=x', $text );
-	}
-
-	/**
-	 * WordPress password field names (user_pass, pass1, http_pass) are secrets too.
-	 */
-	public function test_wordpress_pass_field_names_are_redacted(): void {
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '{"user_pass":"hash111","pass1":"p222","pass2":"q444","pass":"r555","http_pass":"h333"} bypass=visible' );
-
-		foreach ( array( 'hash111', 'p222', 'q444', 'r555', 'h333' ) as $secret ) {
-			$this->assertStringNotContainsString( $secret, $text );
-		}
-		$this->assert_sensitive_body_hidden( $text );
-
-		// A bare underscore suffix used as the whole name is still a secret.
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '_pass=u666 _token=t777' );
-		$this->assert_sensitive_body_hidden( $text );
-		$this->assertStringNotContainsString( 'u666', $text );
-		$this->assertStringNotContainsString( 't777', $text );
-	}
-
-	/**
-	 * Truncation cuts on a character boundary so the escaped response is not blanked.
-	 */
-	public function test_truncation_keeps_valid_utf8(): void {
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( str_repeat( 'a', 1199 ) . "\u{00E9}tail" );
-
-		$this->assertNotSame( '', esc_html( $text ) );
-		$this->assertSame( 1, preg_match( '//u', $text ) );
-		$this->assertSame( str_repeat( 'a', 1199 ) . "\u{00E9}...", $text );
-
-		// The limit counts characters: exactly 1200, or 700 two-byte characters, stays whole.
-		$exact = str_repeat( 'b', 1200 );
-		$this->assertSame( $exact, \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $exact ) );
-		$wide = str_repeat( "\u{00E9}", 700 );
-		$this->assertSame( $wide, \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $wide ) );
-	}
-
-	/**
-	 * A tag inside a parameter name must not hide the name from redaction.
-	 */
-	public function test_tag_inside_name_is_still_redacted(): void {
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>pass<strong>word=s111</strong></p><span>pass</span><span>word</span>=s222 <i>to</i>ken=s333 sig<b>nature</b>: s444 pa<b>ss</b>wo<i>rd</i>=s777' );
-
-		$this->assert_sensitive_body_hidden( $text );
-		foreach ( array( 's111', 's222', 's333', 's444', 's777' ) as $secret ) {
-			$this->assertStringNotContainsString( $secret, $text );
-		}
-
-		// Ordinary bodies that do not name a secret keep their spacing and values.
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<td>Login</td><td>password=s555</td>' );
-		$this->assertStringNotContainsString( 's555', $text );
-		$this->assert_sensitive_body_hidden( $text );
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>Site name: Example Blog</p>' );
-		$this->assertSame( 'Site name: Example Blog', $text );
-	}
-
-	/**
-	 * A tag between every character of a sensitive name, or a quoted split name, is still redacted.
-	 */
-	public function test_name_split_into_many_fragments_is_still_redacted(): void {
-		$bodies = array(
-			's888' => '<p>pa<b>s</b>s<b>w</b>ord=s888</p>',
-			's999' => '{"pa<b>ss</b>word": "s999"}',
-			's000' => "'to<b>k</b>en'='s000'",
-			's123' => '{"pa<b>ss</b>wo<b>rd</b>": "s123"}',
-			's456' => '{"pa<b>ss</b>word" : "s456"}',
-		);
-		foreach ( $bodies as $secret => $body ) {
-			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-			$this->assert_sensitive_body_hidden( $text, $secret );
-			$this->assertStringNotContainsString( $secret, $text );
-		}
-
-		$names = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::SENSITIVE_PARAM_NAMES;
-		foreach ( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::SENSITIVE_PARAM_SUFFIXES as $suffix ) {
-			$names[] = 'x_' . $suffix;
-		}
-		foreach ( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::SENSITIVE_PARAM_BARE_SUFFIXES as $suffix ) {
-			$names[] = 'db' . $suffix;
-		}
-		foreach ( $names as $name ) {
-			$split = implode( '<span></span>', str_split( $name ) );
-			$text  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>Login ' . $split . '=q7q7</p>' );
-			$this->assert_sensitive_body_hidden( $text, $name );
-			$this->assertStringNotContainsString( 'q7q7', $text, $name );
-		}
-	}
-
-	/**
-	 * Ambiguous and encoded field forms suppress the whole body excerpt.
-	 */
-	public function test_ambiguous_sensitive_body_forms_are_hidden_whole(): void {
-		$cases = array(
-			'bracketed name'       => 'request[userpwd]=qa-body-one page=sites',
-			'embedded assignment'  => 'message="userpwd=qa-body-two" page=sites',
-			'unterminated quote'   => 'userpwd="qa-body-three page=sites',
-			'percent encoded name' => '%75serpwd=qa-body-four page=sites',
-			'double encoded name'  => '%2575serpwd=qa-body-five page=sites',
-			'format character'     => "userp\u{200B}wd=qa-body-six page=sites",
-			'tag inside value'     => 'password=abc<i></i>tail=qa-body-seven',
-			'punctuation split'    => 'p-a-s-s-w-o-r-d=qa-body-eight page=sites',
-			'split suffix'         => 'custom_k-ey=qa-body-nine page=sites',
-		);
-
-		foreach ( $cases as $label => $body ) {
-			$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-			$this->assert_sensitive_body_hidden( $text, $label );
-			$this->assertStringNotContainsString( 'qa-body-', $text, $label );
-			$this->assertStringNotContainsString( 'page=sites', $text, $label );
-		}
-
-		$shifted = 'https://example.test/failure?opaque=' . str_repeat( 'a', 1400 ) . ' request[userpwd]=qa-body-shifted';
-		$text    = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $shifted );
-		$this->assert_sensitive_body_hidden( $text, 'URL query stripping shifts later text into the excerpt' );
-		$this->assertStringNotContainsString( 'qa-body-shifted', $text );
-	}
-
-	/**
-	 * Rejoining split names stays linear on large bodies and still redacts at the end.
-	 */
-	public function test_rejoin_is_fast_on_large_bodies(): void {
-		$words = str_repeat( 'Lorem ipsum dolor sit amet ', 8000 );
-
-		$start = microtime( true );
-		\MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( $words );
-		$this->assertLessThan( 2.0, microtime( true ) - $start );
-
-		$start = microtime( true );
-		$body  = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $words );
-		$this->assertLessThan( 5.0, microtime( true ) - $start );
-		$this->assertStringStartsWith( 'Lorem ipsum', $body );
-
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( $words . 'pass word=s666' );
-		$this->assertStringNotContainsString( 's666', $text );
-
-		$start = microtime( true );
-		\MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( str_repeat( 'a b c d e f g h i j k l m n o ": ', 3000 ) );
-		$this->assertLessThan( 2.0, microtime( true ) - $start );
-	}
-
-	/**
-	 * key and code stay underscore-only so ordinary words remain visible.
-	 */
-	public function test_ordinary_words_ending_in_key_or_code_stay_visible(): void {
-		$this->assertFalse( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'monkey' ) );
-		$this->assertFalse( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'keycode' ) );
-
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'monkey=banana keycode=visible page=sites' );
-
-		$this->assertStringContainsString( 'monkey=banana', $text );
-		$this->assertStringContainsString( 'keycode=visible', $text );
-		$this->assertStringContainsString( 'page=sites', $text );
-
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( 'mon-key=banana key-code=visible page=sites' );
-		$this->assertStringContainsString( 'mon-key=banana', $text );
-		$this->assertStringContainsString( 'key-code=visible', $text );
-	}
-
-	/**
-	 * Every failure surface built from a reflected child response body.
+	 * Child bodies never become diagnostics, regardless of their content or size.
 	 *
-	 * @param string $body    Raw response body.
-	 * @param string $headers Raw response headers.
-	 *
-	 * @return array<string,string>
+	 * @dataProvider child_response_bodies
+	 * @param string $body Raw child response.
+	 * @param array  $fragments Body-only text that must not be displayed.
 	 */
-	private function failure_surfaces( $body, $headers = '' ): array {
-		set_transient(
-			'mainwp_public_dashboard_ip_data',
-			array(
-				'value'           => '203.0.113.10',
-				'status'          => 'pass',
-				'community_value' => 'Detected',
-			),
-			HOUR_IN_SECONDS
-		);
-		$_SERVER['SERVER_ADDR'] = '10.0.0.1';
-
-		$ux       = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
-		$context  = array(
-			'http_status'      => 403,
-			'headers'          => $headers,
-			'body'             => $body,
-			'skip_outbound_ip' => true,
-		);
+	public function test_body_is_omitted_from_all_failure_details( $body, $fragments ): array {
+		$ux = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+		set_transient( 'mainwp_public_dashboard_ip_data', array( 'value' => '203.0.113.10', 'status' => 'pass', 'community_value' => 'Detected' ), HOUR_IN_SECONDS );
+		$start = microtime( true );
+		$context = array( 'http_status' => 500, 'headers' => "HTTP/1.1 500 Internal Server Error\r\nserver: nginx\r\n", 'body' => $body, 'skip_outbound_ip' => true );
+		$details = array( $ux::build_details( $context ) );
+		$this->assertLessThan( 1.0, microtime( true ) - $start, 'Initial detail construction must finish in under one second.' );
+		$this->assertSame( '', $details[0]['response']['body'] );
+		foreach ( array( array( 'http_status' => 500, 'body' => $body ), array( 'http_status' => 500, 'text' => $body ), $body ) as $data ) {
+			$exception = new \MainWP\Dashboard\MainWP_Exception( 'Remote failure' );
+			$exception->set_data( $data );
+			$details[] = $ux::from_exception( $exception );
+		}
+		$surfaces = array();
+		foreach ( array( 'response_body', 'fetch_data', 'response_readable' ) as $field ) {
+			$output = array( 'http_status' => 500, $field => $body );
+			$details[] = $ux::from_exception( null, $output );
+			$surfaces[] = $ux::readable_response_from_output( $output );
+			$surfaces[] = \MainWP\Dashboard\MainWP_Error_Helper::get_connect_failure_message( null, $output );
+		}
 		$enriched = $ux::enrich_output( array(), $context );
 		$raw      = array(
 			'http_status'      => 403,
@@ -650,6 +446,41 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * URLs in a kept header value, alone or embedded, lose userinfo, and absolute URLs also lose query and fragment.
+	 *
+	 * @dataProvider header_url_values
+	 *
+	 * @param string $value    Raw x-cache header value.
+	 * @param string $expected Displayed value.
+	 */
+	public function test_header_url_redaction_matrix( $value, $expected ): void {
+		$this->assertSame( 'x-cache: ' . $expected, \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( 'x-cache: ' . $value ) );
+	}
+
+	/**
+	 * Header values and their displayed form.
+	 *
+	 * @return array<string,array{0:string,1:string}>
+	 */
+	public static function header_url_values(): array {
+		return array(
+			'absolute'                          => array( 'https://alice:harbor47@example.test/p?ticket=x#frag', 'https://example.test/p' ),
+			'protocol-relative'                 => array( '//erin:stone55@example.test/cache#tail', '//example.test/cache' ),
+			'absolute embedded after a path'    => array( 'proxy/https://alice:harbor47@example.test/path?ticket=x', 'proxy/https://example.test/path' ),
+			'protocol-relative after a path'    => array( 'proxy/cache(//alice:harbor47@example.test/path?ticket=x)', 'proxy/cache(//example.test/path' ),
+			'protocol-relative inside relative' => array( '/a//bob:river88@example.test?x', '/a//example.test' ),
+			'encoded absolute after a path'     => array( 'proxy/https%3A%2F%2Falice:harbor47@example.test/path?ticket=x', 'proxy/https://example.test/path' ),
+			'encoded slashes after a path'      => array( '/proxy/https:%2F%2Falice:harbor47@example.test/path?ticket=x', '/proxy/https://example.test/path' ),
+			// Relative-URL query strings are not redacted yet; this pins the current output.
+			'encoded delimiter in a query'      => array( '/p?next=//example.test/%3E&ticket=opaquevalue', '/p?next=//example.test/>&ticket=opaquevalue' ),
+			'relative without query'            => array( '/authorize', '/authorize' ),
+			'question without a value'          => array( 'Is /wp-json/ reachable? Check the server.', 'Is /wp-json/ reachable? Check the server.' ),
+			'product version'                   => array( 'nginx/1.24.0', 'nginx/1.24.0' ),
+			'media type'                        => array( 'text/html; charset=UTF-8', 'text/html; charset=UTF-8' ),
+		);
+	}
+
+	/**
 	 * Free-form diagnostics preserve benign text, strip URLs, and hide secret names.
 	 */
 	public function test_free_form_diagnostic_text_is_sanitized(): void {
@@ -694,35 +525,6 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 
 		$this->assertLessThan( 0.5, microtime( true ) - $start );
 		$this->assertStringNotContainsString( 'qa-tail-secret', $text );
-	}
-
-	/**
-	 * A huge benign tail after a dumped secret must not undo the redaction.
-	 */
-	public function test_large_dump_tail_keeps_secret_hidden(): void {
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '[userpwd] => qa-big-secret [page] => ' . str_repeat( 'a', 1048576 ) );
-
-		$this->assertStringNotContainsString( 'qa-big-secret', $text );
-		$this->assert_sensitive_body_hidden( $text );
-	}
-
-	/**
-	 * A PCRE failure hides the whole value instead of returning partly redacted text.
-	 */
-	public function test_redaction_fails_closed_when_pcre_fails(): void {
-		$limit = ini_get( 'pcre.backtrack_limit' );
-		ini_set( 'pcre.backtrack_limit', '1' ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- forces a PCRE failure; restored below.
-		try {
-			$redacted = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::redact_secrets( 'Login failed password=qa-pcre-secret page=sites' );
-			$body     = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( '<p>Login failed password=qa-pcre-secret page=sites</p>' );
-		} finally {
-			ini_set( 'pcre.backtrack_limit', $limit ); // phpcs:ignore WordPress.PHP.IniSet.Risky -- restores the original limit.
-		}
-
-		$this->assertSame( '[response content hidden: it could not be safely redacted]', $redacted );
-		foreach ( array( 'qa-pcre-secret', 'Login', 'page=sites' ) as $fragment ) {
-			$this->assertStringNotContainsString( $fragment, $body, $fragment );
-		}
 	}
 
 	/**
@@ -1049,7 +851,7 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Suffix-named secrets match is_sensitive_param() on body, Location, and stored UX.
+	 * Suffix-named secrets remain hidden in headers and stored UX.
 	 */
 	public function test_suffix_param_names_are_redacted_like_is_sensitive_param(): void {
 		$this->assertTrue( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'csrf_token' ) );
@@ -1058,17 +860,6 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$this->assertFalse( \MainWP\Dashboard\MainWP_Connect_Failure_Ux::is_sensitive_param( 'page' ) );
 
 		$body = 'Welcome csrf_token=qa-csrf-secret site_api_key=qa-api-key plugin_password=qa-plugin-secret page=sites';
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-		$this->assert_sensitive_body_hidden( $text );
-		$this->assertStringNotContainsString( 'qa-csrf-secret', $text );
-		$this->assertStringNotContainsString( 'qa-api-key', $text );
-		$this->assertStringNotContainsString( 'qa-plugin-secret', $text );
-
-		$json = '{"csrf_token":"qa-csrf-secret","plugin_password":"qa-plugin-secret","page":"sites"}';
-		$json_text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $json );
-		$this->assert_sensitive_body_hidden( $json_text );
-		$this->assertStringNotContainsString( 'qa-csrf-secret', $json_text );
-		$this->assertStringNotContainsString( 'qa-plugin-secret', $json_text );
 
 		$headers = "HTTP/1.1 302 Found\r\nLocation: https://sso.example.test/cb?csrf_token=qa-csrf-secret&plugin_password=qa-plugin-secret&page=sites\r\nwww-authenticate: Bearer plugin_password=qa-plugin-secret\r\n";
 		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(
@@ -1103,21 +894,10 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Comma- and space-containing secrets stay fully redacted in body and headers.
+	 * Comma- and space-containing header secrets stay fully redacted.
 	 */
 	public function test_delimiter_containing_secrets_are_fully_redacted(): void {
 		$body = 'Welcome plugin_password=qa,secret csrf_token=qa space-token page=sites';
-		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $body );
-		$this->assert_sensitive_body_hidden( $text );
-		$this->assertStringNotContainsString( 'qa,secret', $text );
-		$this->assertStringNotContainsString( ',secret', $text );
-		$this->assertStringNotContainsString( 'qa space-token', $text );
-
-		$json = '{"plugin_password":"qa, secret","csrf_token":"qa space-token","page":"sites"}';
-		$json_text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( $json );
-		$this->assert_sensitive_body_hidden( $json_text );
-		$this->assertStringNotContainsString( 'qa, secret', $json_text );
-		$this->assertStringNotContainsString( 'qa space-token', $json_text );
 
 		$headers = "HTTP/1.1 401 Unauthorized\r\nwww-authenticate: Bearer plugin_password=\"qa,secret\"\r\nLocation: https://sso.example.test/cb?plugin_password=qa,secret&page=sites\r\n";
 		$details = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::build_details(

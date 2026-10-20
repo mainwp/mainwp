@@ -46,8 +46,12 @@ function harness() {
                     show() { this.visible = true; return this; },
                     hide() { this.visible = false; return this; },
                     attr( key, value ) { this[ key ] = value; return this; },
+                    prop( key ) { return this[ key ]; },
                     val( value ) { this.value = value; return this; }
                 };
+                if ( selector.endsWith( '-backup-ignore' ) ) {
+                    el.value = el.defaultValue = 'Ignore';
+                }
                 elements.set( selector, el );
             }
             return elements.get( selector );
@@ -170,6 +174,44 @@ for ( const entry of [ 'manage', 'plugins', 'updatesoverview' ] ) {
         assert.equal( link.visible, true );
         assert.equal( link.href, '/backup/example' );
         assert.equal( h.elements.get( '#' + prefix + '-backup-ignore' ).value, 'Proceed with Updates' );
+    } );
+
+    test( entry + ': a native offsite hold keeps its reason when another site uses a backup plugin', () => {
+        const h = harness();
+        h.run( entry, { sites: { 1: true, 2: false }, primary_backup: 'example', gate_verdicts: { 2: 'pending_offsite' }, require_offsite: true } );
+        const popup = popupFor( h );
+        assert.equal( popup.title, 'Offsite backup required!' );
+        assert.ok( popup.html.includes( offsiteBody ) && popup.html.includes( offsiteHint ) );
+        assert.ok( ! popup.html.includes( missingBody ) );
+        assert.equal( backupAll( h ), false );
+        assert.equal( h.elements.get( '#' + prefix + '-backup-now' )?.visible === true, false );
+        assert.equal( h.elements.get( '#' + prefix + '-backup-ignore' ).value, 'Ignore' );
+    } );
+
+    test( entry + ': mixed providers offer Backup Now for the plugin site and Backup all for the native one', () => {
+        const h = harness();
+        h.run( entry, { sites: { 1: false, 2: false, 3: false }, primary_backup: 'example', gate_verdicts: { 2: 'pending_offsite', 3: 'missing' }, require_offsite: true } );
+        const popup = popupFor( h );
+        assert.equal( popup.title, 'Offsite backup required!' );
+        assert.ok( popup.html.includes( missingBody ) && popup.html.includes( offsiteBody ) );
+        assert.ok( popup.html.includes( 'class="' + prefix + '-backup-site" siteid="3"' ) );
+        assert.ok( ! popup.html.includes( 'siteid="1"' ) && ! popup.html.includes( 'siteid="2"' ) );
+        assert.ok( popup.html.includes( '<span>Missing site</span>' ) );
+        assert.equal( backupAll( h ), true );
+        const link = h.elements.get( '#' + prefix + '-backup-now' );
+        assert.equal( link.visible, true );
+        assert.equal( link.href, '/backup/example' );
+        assert.equal( h.elements.get( '#' + prefix + '-backup-ignore' ).value, 'Proceed with Updates' );
+    } );
+
+    test( entry + ': a native box after a backup plugin box drops Backup Now and restores Ignore', () => {
+        const h = harness();
+        h.run( entry, { sites: { 1: false }, primary_backup: 'example' } );
+        assert.equal( h.elements.get( '#' + prefix + '-backup-now' ).visible, true );
+        h.run( entry, { sites: { 2: false }, gate_verdicts: { 2: 'pending_offsite' }, require_offsite: true } );
+        assert.equal( h.elements.get( '#' + prefix + '-backup-now' ).visible, false );
+        assert.equal( h.elements.get( '#' + prefix + '-backup-ignore' ).value, 'Ignore' );
+        assert.equal( h.elements.get( '#' + prefix + '-backup-ignore' ).visible, true );
     } );
 
     test( entry + ': passing sites continue updates without a hold', () => {

@@ -667,38 +667,53 @@ globalThis.mainwp_managesites_prepare_backup_popup = function (response, pSiteNa
     if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
         backupPrimary = response['result']['primary_backup'];
 
+    let verdicts = response['result']['gate_verdicts'] || {};
     let missingSites = [];
     let offsiteSites = [];
+    let nativeMissing = false;
+    let pluginMissing = false;
     for (let id of siteFeedback) {
         // Only a site whose recent backup lacks a verified offsite copy is
         // past what Backup all can fix; a site with no recent backup needs
         // one even under the offsite policy.
-        if (backupPrimary == '' && response.result.gate_verdicts?.[id] === 'pending_offsite') {
+        if (verdicts[id] === 'pending_offsite') {
             offsiteSites.push(id);
-        } else {
-            missingSites.push(id);
+            continue;
         }
+        // primary_backup is one value for the whole reply, set by any
+        // selected site that uses a backup plugin. A verdict marks a site on
+        // the Dashboard's own backups, which Backup all can still run.
+        let native = backupPrimary == '' || verdicts[id] !== undefined;
+        missingSites.push({ id: id, native: native });
+        if (native)
+            nativeMissing = true;
+        else
+            pluginMissing = true;
     }
 
+    // The box is reused on the same page, so every button is set for this
+    // reply rather than left as the last box had it.
+    let ignoreButton = jQuery('#' + popupPrefix + '-backup-ignore');
     jQuery('#' + popupPrefix + '-backup-all').hide();
-    if (backupPrimary == '') {
-        if (missingSites.length > 0)
-            jQuery('#' + popupPrefix + '-backup-all').show();
-        jQuery('#' + popupPrefix + '-backup-ignore').show();
-    } else {
+    if (nativeMissing)
+        jQuery('#' + popupPrefix + '-backup-all').show();
+    if (pluginMissing) {
         let backupLink = mainwp_get_primaryBackup_link(backupPrimary);
         jQuery('#' + popupPrefix + '-backup-now').attr('href', backupLink).show();
-        jQuery('#' + popupPrefix + '-backup-ignore').val(MainWP.I18n.t('Proceed with Updates')).show();
+        ignoreButton.val(MainWP.I18n.t('Proceed with Updates')).show();
+    } else {
+        jQuery('#' + popupPrefix + '-backup-now').hide();
+        ignoreButton.val(ignoreButton.prop('defaultValue')).show();
     }
 
     let output = '';
     if (missingSites.length > 0) {
         output += '<span class="mainwp-red">' + MainWP.I18n.t('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
-        for (let id of missingSites) {
-            if (backupPrimary == '') {
-                output += '<span class="' + popupPrefix + '-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
+        for (let site of missingSites) {
+            if (site.native) {
+                output += '<span class="' + popupPrefix + '-backup-site" siteid="' + site.id + '">' + decodeURIComponent(pSiteNames[site.id]) + '</span><br />';
             } else {
-                output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
+                output += '<span>' + decodeURIComponent(pSiteNames[site.id]) + '</span><br />';
             }
         }
     }

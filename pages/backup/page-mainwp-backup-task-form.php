@@ -97,7 +97,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <?php if ( empty( $task ) ) : ?>
                 <?php MainWP_Backup_Page::render_intro_message( 'mainwp-backup-task-add-info-message', __( 'A backup task backs up the sites you select on a schedule and copies each backup to the storage destinations you pick.', 'mainwp' ), 'blue' ); ?>
             <?php endif; ?>
-            <?php static::render_schedule_backup(); ?>
+            <?php static::render_schedule_backup( $task ); ?>
         </div>
         <div class="mainwp-side-content mainwp-no-padding">
             <div class="mainwp-select-sites ui accordion mainwp-sidebar-accordion">
@@ -154,7 +154,7 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
             <div class="ten wide column">
                 <?php if ( empty( $destinations ) ) : ?>
                     <span class="ui small text"><?php esc_html_e( 'No storage destinations configured. Backups stay on this dashboard.', 'mainwp' ); ?>
-                        <?php if ( ! is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) : ?>
+                        <?php if ( ! is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) && \mainwp_current_user_can( 'dashboard', 'download_backups' ) ) : ?>
                             <a href="<?php echo esc_url( admin_url( 'admin.php?page=ManageBackupsStorage' ) ); ?>"><?php esc_html_e( 'Add a destination', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </span>
@@ -233,40 +233,10 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
     /**
      * Render Scheduled Backup.
      *
+     * @param mixed $task Authorized task to edit, or null for a new task.
      * @return void
-     * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::can_edit_backuptask()
-     * @uses \MainWP\Dashboard\MainWP_Manage_Backups_Handler::validate_backup_tasks()
      */
-    public static function render_schedule_backup(): void {  //phpcs:ignore -- NOSONAR - complex.
-        $backupTask = null;
-        // Resolve the same way render_manager() does: `task_id` is the edit
-        // address, `id` only a legacy fallback.
-        if ( isset( $_GET['task_id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $backupTaskId = intval( $_GET['task_id'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        } elseif ( isset( $_GET['id'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-            $backupTaskId = intval( $_GET['id'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-        } else {
-            $backupTaskId = false;
-        }
-
-        if ( ! empty( $backupTaskId ) ) {
-            if ( ! \mainwp_current_user_can( 'dashboard', 'edit_backup_tasks' ) ) {
-                \mainwp_do_not_have_permissions( esc_html__( 'edit backup tasks', 'mainwp' ) );
-                return;
-            }
-
-            $backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
-            if ( ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $backupTask ) ) {
-                $backupTask = null;
-            }
-
-            if ( ! empty( $backupTask ) && ! MainWP_Manage_Backups_Handler::validate_backup_tasks( array( $backupTask ) ) ) {
-                $backupTask = MainWP_DB_Backup::instance()->get_backup_task_by_id( $backupTaskId );
-            }
-        }
-        $task = $backupTask;
-
+    public static function render_schedule_backup( $task = null ): void {
         $globalArchiveFormat = get_option( 'mainwp_archiveFormat' );
         if ( false === $globalArchiveFormat ) {
             $globalArchiveFormat = 'tar.gz';

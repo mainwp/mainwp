@@ -281,66 +281,15 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Extract a short, safe body excerpt.
-     *
-     * @param string $body Raw response body.
-     *
-     * @return string
-     */
-    public static function summarize_body( $body ) {
-        if ( ! is_string( $body ) || '' === $body ) {
-            return '';
-        }
-
-        if ( '[hidden response data]' === $body ) {
-            return '';
-        }
-
-        // wp_strip_all_tags() deletes tags without whitespace, so
-        // </title><p>password= becomes Requiredpassword and misses the name check.
-        $text = str_replace( '<', ' <', $body );
-        $text = wp_strip_all_tags( $text );
-        $text = html_entity_decode( $text, ENT_QUOTES, 'UTF-8' );
-        $text = preg_replace( '/\s+/u', ' ', $text );
-        if ( ! is_string( $text ) ) {
-            return self::unredactable_text();
-        }
-        $text = trim( $text );
-
-        // Arbitrary remote text has too many encodings and boundary forms for
-        // field-by-field redaction to be reliable. Scan the complete excerpt
-        // plus enough lookahead for a name crossing its display boundary.
-        $scan_text = mb_substr( $text, 0, self::BODY_LIMIT + 64, 'UTF-8' );
-        if ( self::mentions_sensitive_name( $scan_text ) ) {
-            return self::sensitive_text();
-        }
-
-        $text = self::redact_secrets( $text );
-        // Removing a long URL query can pull later text into the excerpt.
-        // Recheck the exact prefix that can now become visible.
-        $scan_text = mb_substr( $text, 0, self::BODY_LIMIT + 64, 'UTF-8' );
-        if ( self::mentions_sensitive_name( $scan_text ) ) {
-            return self::sensitive_text();
-        }
-
-        if ( mb_strlen( $text, 'UTF-8' ) > self::BODY_LIMIT ) {
-            // Cut on a character boundary: a split UTF-8 sequence makes esc_html() return ''.
-            $text = mb_substr( $text, 0, self::BODY_LIMIT, 'UTF-8' ) . '...';
-        }
-
-        return $text;
-    }
-
-    /**
-     * Build a readable response block (status and headers snippet; body text is never shown).
+     * Build a readable response block with status and headers.
      *
      * @param int    $http_status HTTP status.
      * @param string $headers     Raw response headers.
-     * @param string $body        Raw response body. Not displayed.
+     * @param string $body        Raw response body. Only its presence is reported.
      *
      * @return array<string,string>
      */
-    public static function summarize_response( $http_status, $headers = '', $body = '' ) { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed -- Retained for existing callers; body text is never displayed.
+    public static function summarize_response( $http_status, $headers = '', $body = '' ) {
         $status      = (int) $http_status;
         $status_text = $status > 0 ? (string) $status : '';
         $code_label  = $status > 0 ? MainWP_Utility::get_http_codes( $status ) : '';
@@ -367,9 +316,14 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             $lines[] = esc_html__( 'Headers: none captured.', 'mainwp' );
         }
 
-        // The body is free-form HTML from the child, and redacting secrets out of
-        // arbitrary markup cannot be made complete, so no body text is shown at all.
-        $lines[] = esc_html__( 'The response body is not shown because it can contain private data from the child site.', 'mainwp' );
+        // The body is never displayed, but saying nothing came back would send
+        // someone debugging a WAF or error page in the wrong direction. The
+        // hidden-data placeholder does not prove a body arrived.
+        if ( is_string( $body ) && '' !== $body && '[hidden response data]' !== $body ) {
+            $lines[] = esc_html__( 'Body: received but not shown, because it may contain sensitive data.', 'mainwp' );
+        } else {
+            $lines[] = esc_html__( 'Body: no readable child response was returned.', 'mainwp' );
+        }
 
         return array(
             'status'      => $status_text,

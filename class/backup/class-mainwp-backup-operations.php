@@ -214,7 +214,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         // Only the run set is checked: no task action touches a deleted site
         // or a group member added after the authorized snapshot.
         $sites = MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task );
-        if ( 'ui' === $context && empty( $sites ) && is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
+        if ( empty( $sites ) && is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
             return self::not_found( MainWP_Backup_Error_Codes::ERR_TASK_NOT_FOUND );
         }
         foreach ( $sites as $site_id ) {

@@ -35,6 +35,19 @@ if ( preg_match( '/bytes=(\d+)-/', $range_header, $m ) ) {
 }
 
 switch ( $path ) {
+    case '/redirect-other-host':
+        header( 'Location: http://localhost:' . (int) $_SERVER['SERVER_PORT'] . '/redirect-target?marker=' . rawurlencode( $_GET['marker'] ?? '' ) );
+        break;
+
+    case '/redirect-target':
+        $marker = $_GET['marker'] ?? '';
+        if ( preg_match( '/^mainwp-redirect-[a-f0-9]+$/D', $marker ) ) {
+            file_put_contents( sys_get_temp_dir() . '/' . $marker, 'contacted' );
+        }
+        header( 'Content-Length: ' . $size );
+        echo $body;
+        break;
+
     case '/200':
         // Plain full response; Range is never sent to this route by tests.
         header( 'Content-Type: application/octet-stream' );

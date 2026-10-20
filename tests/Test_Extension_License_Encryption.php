@@ -17,6 +17,7 @@ namespace MainWP\Dashboard\Tests;
 
 // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 
+/** License encryption and retirement preserve stored credentials. */
 class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 
 	/**
@@ -59,12 +60,14 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 		return $def_val;
 	}
 
+	/** Install reversible encryption fixtures. */
 	public function setUp(): void {
 		parent::setUp();
 		add_filter( 'mainwp_encrypt_key_value', array( $this, 'stub_encrypt' ), 10, 4 );
 		add_filter( 'mainwp_decrypt_key_value', array( $this, 'stub_decrypt' ), 10, 3 );
 	}
 
+	/** Remove the encryption fixtures. */
 	public function tearDown(): void {
 		remove_filter( 'mainwp_encrypt_key_value', array( $this, 'stub_encrypt' ), 10 );
 		remove_filter( 'mainwp_decrypt_key_value', array( $this, 'stub_decrypt' ), 10 );
@@ -75,11 +78,12 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 	// encrypt_activation_info
 	// ---------------------------------------------------------------------
 
+	/** License keys are encrypted without changing activation metadata. */
 	public function test_encrypt_replaces_plaintext_api_key_with_envelope(): void {
 		$info = array(
-			'api_key'         => 'real-license-key-1234567890',
-			'activated_key'   => 'Activated',
-			'product_id'      => 42,
+			'api_key'       => 'real-license-key-1234567890',
+			'activated_key' => 'Activated',
+			'product_id'    => 42,
 		);
 
 		$encrypted = \MainWP\Dashboard\MainWP_Api_Manager::encrypt_activation_info( 'foo-extension', $info );
@@ -93,18 +97,21 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( 42, $encrypted['product_id'] );
 	}
 
+	/** Activation metadata can be stored without a license key. */
 	public function test_encrypt_passes_through_when_api_key_missing(): void {
-		$info = array( 'activated_key' => 'Deactivated' );
+		$info   = array( 'activated_key' => 'Deactivated' );
 		$result = \MainWP\Dashboard\MainWP_Api_Manager::encrypt_activation_info( 'foo', $info );
 		$this->assertSame( $info, $result );
 	}
 
+	/** An empty key remains empty during deactivation. */
 	public function test_encrypt_passes_through_when_api_key_empty(): void {
-		$info = array( 'api_key' => '' );
+		$info   = array( 'api_key' => '' );
 		$result = \MainWP\Dashboard\MainWP_Api_Manager::encrypt_activation_info( 'foo', $info );
 		$this->assertSame( $info, $result );
 	}
 
+	/** Non-array activation values pass through unchanged. */
 	public function test_encrypt_returns_input_unchanged_when_not_array(): void {
 		$this->assertSame( 'not-an-array', \MainWP\Dashboard\MainWP_Api_Manager::encrypt_activation_info( 'foo', 'not-an-array' ) );
 		$this->assertSame( null, \MainWP\Dashboard\MainWP_Api_Manager::encrypt_activation_info( 'foo', null ) );
@@ -114,10 +121,11 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 	// decrypt_activation_info
 	// ---------------------------------------------------------------------
 
+	/** Stored envelopes recover the original license key. */
 	public function test_decrypt_recovers_plaintext_from_envelope(): void {
-		$info = array(
-			'api_key'         => 'real-license-key-9876543210',
-			'activated_key'   => 'Activated',
+		$info      = array(
+			'api_key'       => 'real-license-key-9876543210',
+			'activated_key' => 'Activated',
 		);
 		$encrypted = \MainWP\Dashboard\MainWP_Api_Manager::encrypt_activation_info( 'foo-extension', $info );
 		$decrypted = \MainWP\Dashboard\MainWP_Api_Manager::decrypt_activation_info( $encrypted );
@@ -126,9 +134,10 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( 'Activated', $decrypted['activated_key'] );
 	}
 
+	/** Legacy plaintext keys remain readable. */
 	public function test_decrypt_passes_through_legacy_plaintext_string(): void {
 		// A pre-MWP-1546 row: api_key stored as a plain string.
-		$info = array(
+		$info   = array(
 			'api_key'       => 'legacy-plaintext-key',
 			'activated_key' => 'Activated',
 		);
@@ -136,11 +145,13 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( 'legacy-plaintext-key', $result['api_key'] );
 	}
 
+	/** Activation metadata needs no decryption. */
 	public function test_decrypt_passes_through_when_api_key_missing(): void {
 		$info = array( 'activated_key' => 'Deactivated' );
 		$this->assertSame( $info, \MainWP\Dashboard\MainWP_Api_Manager::decrypt_activation_info( $info ) );
 	}
 
+	/** Failed decryption must not expose an envelope as a usable key. */
 	public function test_decrypt_returns_empty_string_when_filter_fails(): void {
 		// Simulate a missing keyfile: remove the decrypt stub mid-test so
 		// the filter cannot recover the plaintext. The helper should drop
@@ -156,11 +167,12 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 			),
 			'activated_key' => 'Activated',
 		);
-		$result = \MainWP\Dashboard\MainWP_Api_Manager::decrypt_activation_info( $encrypted );
+		$result    = \MainWP\Dashboard\MainWP_Api_Manager::decrypt_activation_info( $encrypted );
 		$this->assertSame( '', $result['api_key'] );
 		$this->assertSame( 'Activated', $result['activated_key'] );
 	}
 
+	/** Non-array activation values need no decryption. */
 	public function test_decrypt_returns_input_unchanged_when_not_array(): void {
 		$this->assertSame( null, \MainWP\Dashboard\MainWP_Api_Manager::decrypt_activation_info( null ) );
 		$this->assertSame( false, \MainWP\Dashboard\MainWP_Api_Manager::decrypt_activation_info( false ) );
@@ -171,7 +183,7 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 	// ---------------------------------------------------------------------
 
 	/**
-	 * Capture mainwp_delete_key_file emissions.
+	 * Observe key retirement through the shared deletion action.
 	 *
 	 * @param array $deleted Collector, by reference.
 	 */
@@ -205,6 +217,7 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 		);
 	}
 
+	/** A replacement license retires the old key after persistence. */
 	public function test_set_activation_info_retires_old_key_file_on_api_key_change(): void {
 		$deleted = array();
 		$this->capture_deletes( $deleted );
@@ -221,6 +234,7 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( array( 'extension_foo_oldkey' ), $deleted );
 	}
 
+	/** A reused key must survive the activation update. */
 	public function test_set_activation_info_keeps_key_file_when_envelope_reuses_it(): void {
 		$deleted = array();
 		$this->capture_deletes( $deleted );
@@ -239,6 +253,7 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( array(), $deleted );
 	}
 
+	/** Clearing a license retires its unused key. */
 	public function test_set_activation_info_retires_key_file_when_api_key_cleared(): void {
 		$deleted = array();
 		$this->capture_deletes( $deleted );
@@ -258,6 +273,7 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( array( 'extension_foo_oldkey' ), $deleted );
 	}
 
+	/** A first activation has no old key to retire. */
 	public function test_set_activation_info_deletes_nothing_without_stored_envelope(): void {
 		$deleted = array();
 		$this->capture_deletes( $deleted );
@@ -273,6 +289,7 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 		$this->assertSame( array(), $deleted );
 	}
 
+	/** Only superseded nonempty keys are retired. */
 	public function test_retire_key_file_if_changed_helper_contract(): void {
 		$deleted = array();
 		$this->capture_deletes( $deleted );
@@ -290,9 +307,13 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 	// End-to-end round-trip
 	// ---------------------------------------------------------------------
 
+	/** License encryption preserves the key and sibling metadata. */
 	public function test_encrypt_then_decrypt_round_trip(): void {
 		$plaintext = 'roundtrip-license-key-xyz';
-		$info      = array( 'api_key' => $plaintext, 'product_id' => 7 );
+		$info      = array(
+			'api_key'    => $plaintext,
+			'product_id' => 7,
+		);
 
 		$encrypted = \MainWP\Dashboard\MainWP_Api_Manager::encrypt_activation_info( 'roundtrip-ext', $info );
 		$this->assertNotSame( $plaintext, $encrypted['api_key'] );
@@ -300,5 +321,56 @@ class Test_Extension_License_Encryption extends \WP_UnitTestCase {
 		$decrypted = \MainWP\Dashboard\MainWP_Api_Manager::decrypt_activation_info( $encrypted );
 		$this->assertSame( $plaintext, $decrypted['api_key'] );
 		$this->assertSame( 7, $decrypted['product_id'] );
+	}
+	/** A stored key name cannot escape the private key directory. */
+	public function test_activation_retirement_preserves_invalid_key_path(): void {
+		$root   = sys_get_temp_dir() . '/license-retirement-' . wp_generate_uuid4();
+		$upload = static function ( $dirs ) use ( $root ) {
+			$dirs['basedir'] = $root;
+			return $dirs;
+		};
+		wp_mkdir_p( $root );
+		add_filter( 'mainwp_get_wp_upload_dir', $upload );
+		$dir  = \MainWP\Dashboard\MainWP_Keys_Manager::get_keys_dir();
+		$name = 'license-retirement-' . wp_generate_uuid4();
+		$file = dirname( $dir ) . '/' . $name;
+		$x    = dirname( $dir ) . '/x';
+		wp_mkdir_p( $dir );
+		file_put_contents( $file, 'fixture' );
+		file_put_contents( $x, 'outside fixture' );
+		$this->seed_stored_activation( 'invalid-retirement', '../' . $name );
+		$delete = array( \MainWP\Dashboard\MainWP_Keys_Manager::instance(), 'delete_key_file' );
+		$added  = false === has_action( 'mainwp_delete_key_file', $delete );
+		if ( $added ) {
+			add_action( 'mainwp_delete_key_file', $delete );
+		}
+		try {
+			$this->assertTrue(
+				\MainWP\Dashboard\MainWP_Api_Manager::instance()->set_activation_info(
+					'invalid-retirement',
+					array( 'api_key' => '' )
+				)
+			);
+			clearstatcache( true, $file );
+			$this->assertFileExists( $file );
+			$this->assertSame( '', get_option( 'invalid-retirement_APIManAdder' )['api_key'] );
+			do_action( 'mainwp_delete_key_file', '../x' );
+			clearstatcache( true, $x );
+			$this->assertFileExists( $x );
+			$this->assertSame( 'outside fixture', file_get_contents( $x ) );
+		} finally {
+			if ( $added ) {
+				remove_action( 'mainwp_delete_key_file', $delete );
+			}
+			remove_filter( 'mainwp_get_wp_upload_dir', $upload );
+			foreach ( array( $file, $x, dirname( $dir ) . '/index.php' ) as $path ) {
+				if ( is_file( $path ) ) {
+					unlink( $path );
+				}
+			}
+			rmdir( $dir );
+			rmdir( dirname( $dir ) );
+			rmdir( $root );
+		}
 	}
 }

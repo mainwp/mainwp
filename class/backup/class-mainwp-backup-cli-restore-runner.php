@@ -135,6 +135,11 @@ class MainWP_Backup_CLI_Restore_Runner {
             return $this->fail( 0, '', $website->get_error_message(), $website->get_error_code() );
         }
 
+        $permission = MainWP_Backup_Operations::authorize_base( 'restore_backups' );
+        if ( is_wp_error( $permission ) ) {
+            return $this->fail( 0, '', $permission->get_error_message(), $permission->get_error_code() );
+        }
+
         try {
             $job_id = $this->orchestrator->initiate_restore(
                 $site_id,

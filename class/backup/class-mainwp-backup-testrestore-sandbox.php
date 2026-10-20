@@ -6,7 +6,7 @@
  * A sandbox is a throwaway target the restore engine can apply staged
  * artifacts into without ever touching the live site: a uniquely named
  * scratch database opened over a dedicated connection (never the live
- * $wpdb), and a temp directory under the uploads folder. A SQL dump is
+ * $wpdb), and a temp directory under the Private Root. A SQL dump is
  * decompressed and replayed into the scratch database; file archives are
  * extracted into the temp directory; cheap assertions read back the result;
  * and tear-down drops the database and removes the directory. Tear-down is

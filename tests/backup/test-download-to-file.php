@@ -405,4 +405,97 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 		MainWP_Connect::download_to_file( static::fixture_url( '/206?size=4096' ), $file, 4096 );
 		$this->assertSame( static::fixture_content( 4096 ), file_get_contents( $file ) );
 	}
+	/**
+	 * Scheme changes and the www alias do not change the Child's host.
+	 *
+	 * @return array Host comparisons.
+	 */
+	public static function download_host_pairs(): array {
+		return array(
+			'same'      => array( 'https://example.org/', 'https://example.org/file', true ),
+			'www'       => array( 'https://www.example.org/', 'https://example.org/file', true ),
+			'www added' => array( 'https://example.org/', 'https://www.example.org/file', true ),
+			'different' => array( 'https://example.org/', 'https://other.example/file', false ),
+			'scheme'    => array( 'http://example.org/', 'https://example.org/file', true ),
+			'private'   => array( 'http://192.168.1.2/', 'http://192.168.1.2/file', true ),
+			'missing'   => array( 'https://example.org/', '/file', false ),
+		);
+	}
+
+	/**
+	 * Download authorization follows the site host rather than the URL path.
+	 *
+	 * @dataProvider download_host_pairs
+	 * @param string $site Site URL.
+	 * @param string $effective Effective URL.
+	 * @param bool   $expected Whether hosts match.
+	 */
+	public function test_download_hosts_match( string $site, string $effective, bool $expected ): void {
+		$this->assertSame( $expected, MainWP_Connect::download_hosts_match( $site, $effective ) );
+	}
+
+	/** Unsafe protocols and redirect loops cannot consume the download lane. */
+	public function test_download_redirect_options_are_bounded(): void {
+		$captured = array();
+		$observe  = static function ( $options ) use ( &$captured ) {
+			$captured = $options;
+			return $options;
+		};
+		add_filter( 'mainwp_download_to_file_curl_options', $observe );
+		$file = $this->temp_download_path();
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/200?size=4096' ), $file, 4096 );
+			$this->assertSame( CURLPROTO_HTTP | CURLPROTO_HTTPS, $captured[ CURLOPT_PROTOCOLS ] ?? null );
+			$this->assertSame( CURLPROTO_HTTP | CURLPROTO_HTTPS, $captured[ CURLOPT_REDIR_PROTOCOLS ] ?? null );
+			$this->assertSame( 3, $captured[ CURLOPT_MAXREDIRS ] ?? null );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_curl_options', $observe );
+			if ( is_file( $file ) ) {
+				unlink( $file );
+			}
+		}
+	}
+
+	/** A successful response from a different host must never become an archive. */
+	public function test_download_refuses_effective_host_outside_site(): void {
+		$file    = $this->temp_download_path();
+		$website = (object) array(
+			'id'  => 42,
+			'url' => 'https://other.example/',
+		);
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/200?size=4096' ), $file, 4096, null, null, $website );
+			$this->fail( 'A different effective host was accepted.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( 'mainwp_backup_http_error', $error->get_message_error_code() );
+			$this->assertFileDoesNotExist( $file );
+		} finally {
+			if ( is_file( $file ) ) {
+				unlink( $file );
+			}
+		}
+	}
+
+	/** Final-host validation must not permit an earlier request to another host. */
+	public function test_cross_host_redirect_is_refused_before_contact(): void {
+		$token  = 'mainwp-redirect-' . bin2hex( random_bytes( 8 ) );
+		$marker = sys_get_temp_dir() . '/' . $token;
+		$file   = $this->temp_download_path();
+		try {
+			try {
+				MainWP_Connect::download_to_file( static::fixture_url( '/redirect-other-host?marker=' . $token ), $file, 4096 );
+				$this->fail( 'The redirect was accepted.' );
+			} catch ( MainWP_Exception $error ) {
+				$this->assertSame( 'mainwp_backup_http_error', $error->get_message_error_code() );
+			}
+			$this->assertFileDoesNotExist( $marker, 'cURL contacted the redirect target.' );
+			$this->assertFileDoesNotExist( $file );
+		} finally {
+			foreach ( array( $file, $marker ) as $path ) {
+				if ( is_file( $path ) ) {
+					unlink( $path );
+				}
+			}
+		}
+	}
 }

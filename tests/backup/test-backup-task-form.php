@@ -786,4 +786,29 @@ class MainWP_Backup_Task_Form_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'id="excluded_folders_list"', $output );
 		$this->assertStringContainsString( '<div><span class="ui small text mainwp-archive-format-note">', $output );
 	}
+	/** Add New cannot borrow a task from query parameters. */
+	public function test_add_new_ignores_out_of_scope_task_id(): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$task = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'Hidden customer backup', 'daily', 'full', '', '998177', '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertIsObject( $task );
+		$previous = $_GET;
+		add_filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );
+		try {
+			foreach ( array( 'task_id', 'id' ) as $key ) {
+				$_GET = array( $key => $task->id );
+				ob_start();
+				try {
+					MainWP_Backup_Task_Form::render_new();
+				} finally {
+					$html = ob_get_clean();
+				}
+				$this->assertStringNotContainsString( 'Hidden customer backup', $html );
+				$this->assertStringContainsString( 'id="mainwp-backup-task-form"', $html );
+			}
+		} finally {
+			$_GET = $previous;
+			remove_filter( 'mainwp_currentuserallowedaccesssites', '__return_empty_array' );
+			MainWP_DB_Backup::instance()->remove_backup_task( $task->id );
+		}
+	}
 }

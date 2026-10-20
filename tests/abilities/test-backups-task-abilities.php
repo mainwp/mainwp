@@ -1348,4 +1348,82 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->assert_output( 'update-backup-task', $preview );
 		$this->assertSame( array( 'retention.count' ), array_column( $preview['would_affect']['changes'], 'field' ) );
 	}
+	/**
+	 * Empty run sets provide no site against which to authorize a restricted caller.
+	 *
+	 * @return array Ability slugs.
+	 */
+	public static function empty_task_actions(): array {
+		return array_map( static fn( $name ) => array( $name ), array( 'get-backup-task', 'update-backup-task', 'delete-backup-task', 'list-backup-tasks' ) );
+	}
+
+	/**
+	 * The ability bridge must preserve site restrictions on orphaned tasks.
+	 *
+	 * @dataProvider empty_task_actions
+	 * @param string $name Ability slug.
+	 */
+	public function test_restricted_ability_hides_empty_task( string $name ): void {
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$this->task_id,
+			array(
+				'sites'  => '',
+				'groups' => '',
+			)
+		);
+		$scope = fn() => array( $this->site_id );
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		try {
+			$input  = 'list-backup-tasks' === $name ? array() : array( 'task_id' => $this->task_id );
+			$input += in_array( $name, array( 'update-backup-task', 'delete-backup-task' ), true ) ? array(
+				'confirm'             => true,
+				'name'                => 'Taken over',
+				'site_ids_or_domains' => array( $this->site_id ),
+			) : array();
+			if ( 'delete-backup-task' === $name ) {
+				unset( $input['name'], $input['site_ids_or_domains'] );
+			}
+			$result = $this->ability( $name )->execute( $input );
+			if ( 'list-backup-tasks' === $name ) {
+				$this->assertSame( array(), $result['items'] );
+			} else {
+				$this->assertWPError( $result );
+				$this->assertSame( 'mainwp_backup_task_not_found', $result->get_error_code() );
+			}
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		}
+		$this->assertSame( 'Test backup action', MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->task_id )->name );
+		$this->assertSame( $this->task_id, $this->ability( 'get-backup-task' )->execute( array( 'task_id' => $this->task_id ) )['task']['id'] );
+		$this->assertContains( $this->task_id, array_column( $this->ability( 'list-backup-tasks' )->execute( array() )['items'], 'id' ) );
+	}
+
+	/** Destination totals must follow the same task visibility rule. */
+	public function test_restricted_destination_count_omits_empty_task(): void {
+		$store = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'name'     => 'Empty task destination',
+				'provider' => 'local',
+				'settings' => array(),
+			)
+		);
+		MainWP_DB_Backup::instance()->update_backup_task_with_values(
+			$this->task_id,
+			array(
+				'sites'        => '',
+				'groups'       => '',
+				'destinations' => wp_json_encode( array( $id ) ),
+			)
+		);
+		$scope = fn() => array( $this->site_id );
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		try {
+			$result = $this->ability( 'get-backup-destination' )->execute( array( 'destination_id' => $id ) );
+			$this->assertSame( 0, $result['task_count'] );
+		} finally {
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+			$store->delete_destination( $id );
+		}
+	}
 }

@@ -647,4 +647,23 @@ class MainWP_Backup_CLI_Restore_Test extends MainWP_Abilities_Test_Case {
 		$other = MainWP_Backup_Restore_Job_Store::instance()->get_job( $job_id_1 );
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_PENDING, $other->status, "A different site's pending job must not advance as a side effect." );
 	}
+	/** An attributed CLI restore must honor the user's restore right. */
+	public function test_run_with_user_requires_restore_right(): void {
+		$snapshot_id = $this->make_snapshot( 'full' );
+		$this->use_cloud_pull_driver();
+		$this->script_completed_child();
+		$deny = static function ( $allowed, $type, $cap ) {
+			return 'dashboard' === $type && 'restore_backups' === $cap ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			$result = $this->runner()->run( $this->site_id, $snapshot_id, array( 'pre_snapshot' => false ), true );
+			$this->assertFalse( $result['ok'] );
+			$this->assertSame( 'mainwp_insufficient_right', $result['error_code'] );
+			$this->assertSame( 0, $this->count_jobs_for_site() );
+			$this->assertSame( array(), $this->calls );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny );
+		}
+	}
 }

@@ -54,6 +54,7 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 	public function setUp(): void {
 		parent::setUp();
 		$this->set_current_user_as_admin();
+		delete_option( 'mainwp_backup_child_prune_last_resend' );
 		$this->pending = get_site_option( MainWP_Install::BACKUP_SNAPSHOT_CHILD_PRUNE_REPAIR_PENDING );
 		delete_site_option( MainWP_Install::BACKUP_SNAPSHOT_CHILD_PRUNE_REPAIR_PENDING );
 		$this->site_id = $this->create_test_site();
@@ -1122,5 +1123,115 @@ class MainWP_Backup_Child_Prune_Resend_Test extends MainWP_Abilities_Test_Case {
 		$this->assertIsArray( $data, $raw );
 		$this->assertCount( 1, $data['snapshots'] );
 		$this->assertStringNotContainsString( 'child_prune_', $raw );
+	}
+	/** Repeated cron requests cannot exhaust an unreachable Child's retry cap. */
+	public function test_cron_resend_backoff_counts_one_attempt(): void {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$id = $this->snapshot( 'unreachable' );
+		$this->with_transport(
+			static fn() => array( 'error' => 'Child unreachable' ),
+			static function () {
+				for ( $run = 0; $run < 10; ++$run ) {
+					MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
+				}
+			}
+		);
+		$this->assert_state( $id, false, 1 );
+		$this->assertCount( 1, $this->requests );
+		$this->assertGreaterThan( 0, (int) get_option( 'mainwp_cron_last_backups_prune' ) );
+	}
+
+	/** An expired resend window allows another attempt even after a fresh heartbeat. */
+	public function test_cron_resend_backoff_retries_after_twenty_hours(): void {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( 'mainwp_cron_last_backups_prune', time() );
+		update_option( 'mainwp_backup_child_prune_last_resend', time() - 20 * HOUR_IN_SECONDS - 1, false );
+		$id  = $this->snapshot( 'retry', array( 'child_prune_attempts' => 1 ) );
+		$now = time();
+		$this->with_transport(
+			static fn() => array( 'error' => 'Child unreachable' ),
+			static function () {
+				MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
+			}
+		);
+		$this->assert_state( $id, false, 2 );
+		$this->assertCount( 1, $this->requests );
+		$this->assertGreaterThanOrEqual( $now, (int) get_option( 'mainwp_backup_child_prune_last_resend' ) );
+	}
+
+	/** A successful resend retires owed cleanup without changing its failure count. */
+	public function test_cron_resend_backoff_preserves_confirmation(): void {
+		global $wpdb;
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$id  = $this->snapshot( 'success', array( 'child_prune_attempts' => 2 ) );
+		$now = time();
+		$this->with_transport(
+			function () use ( $now ) {
+				$this->assertGreaterThanOrEqual( $now, (int) get_option( 'mainwp_backup_child_prune_last_resend' ) );
+				return $this->answer();
+			},
+			static function () {
+				MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
+				MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
+			}
+		);
+		$this->assert_state( $id, true, 2 );
+		$this->assertCount( 1, $this->requests );
+		$this->assertSame( array(), MainWP_Backup_Snapshots::instance()->get_child_prune_candidates( 50, 10 ) );
+		$autoload = $wpdb->get_var( $wpdb->prepare( 'SELECT autoload FROM %i WHERE option_name = %s', $wpdb->options, 'mainwp_backup_child_prune_last_resend' ) );
+		$this->assertContains( $autoload, array( 'no', 'off', 'auto-off' ) );
+	}
+
+	/**
+	 * First use and an expired window both need an atomic claim.
+	 *
+	 * @return array Existing option states.
+	 */
+	public static function resend_window_states(): array {
+		return array(
+			'first use' => array( false ),
+			'expired'   => array( true ),
+		);
+	}
+
+	/**
+	 * A competing worker can finish before this worker's stamp reaches the database.
+	 *
+	 * @dataProvider resend_window_states
+	 * @param bool $existing Whether a previous resend timestamp exists.
+	 */
+	public function test_cron_resend_backoff_claims_overlapping_runs( bool $existing ): void {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		if ( $existing ) {
+			update_option( 'mainwp_backup_child_prune_last_resend', time() - 21 * HOUR_IN_SECONDS, false );
+		}
+		$id      = $this->snapshot( 'overlap' );
+		$entered = false;
+		$race    = static function ( $sql ) use ( $existing, &$entered ) {
+			$operation = $existing ? 'UPDATE ' : 'INSERT IGNORE ';
+			if ( ! $entered && 0 === strpos( $sql, $operation ) && false !== strpos( $sql, 'mainwp_backup_child_prune_last_resend' ) ) {
+				$entered = true;
+				MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
+			}
+			return $sql;
+		};
+		add_filter( 'query', $race );
+		try {
+			$this->with_transport(
+				function () {
+					$this->assertGreaterThan( time() - 60, (int) get_option( 'mainwp_backup_child_prune_last_resend' ) );
+					MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
+					return array( 'error' => 'Child unreachable' );
+				},
+				static function () {
+					MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
+				}
+			);
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$this->assertTrue( $entered, 'The competing cron run did not reach the claim boundary.' );
+		$this->assert_state( $id, false, 1 );
+		$this->assertCount( 1, $this->requests );
 	}
 }

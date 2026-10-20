@@ -35,7 +35,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
             return;
         }
 
-        $restricted = is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() );
+        $restricted = is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) || ! \mainwp_current_user_can( 'dashboard', 'download_backups' );
         MainWP_Backup_Page::render_header( 'Storage' );
         ?>
         <div class="ui padded segment" id="mainwp-backup-storage">

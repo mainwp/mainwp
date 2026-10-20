@@ -18,6 +18,7 @@ function slice( source, startText, endText ) {
 const selectSites = slice( updateSource, 'let mainwp_update_get_selected_sitesids =', '\n\n\n// global variable.' );
 const checkAbandoned = slice( mainSource, 'globalThis.mainwp_managesites_bulk_check_abandoned =', '\nlet mainwp_managesites_check_abandoned_all_int =' );
 const hideSite = slice( mainSource, '    globalThis.dashboard_update_site_hide =', '\n\n    // -----------------------------' );
+const syncSites = slice( mainSource, 'globalThis.mainwp_sync_sites_data =', '\n\nmainwpVars.websitesToUpdate = [];' );
 
 class Collection {
     constructor( values ) {
@@ -53,6 +54,9 @@ function load( connected = [ '1' ] ) {
         if ( '.dashboard_wp_id[error-status=1]' === selector ) {
             return inputs( disconnected );
         }
+        if ( '#mainwp-sync-sites-modal' === selector ) {
+            return { attr: () => '0' };
+        }
         assert.match( selector, /^\.sync-site-status\[siteid="\d+"\]$/ );
         return { attr: () => 'example.test' };
     };
@@ -68,10 +72,11 @@ function load( connected = [ '1' ] ) {
         dashboard_update_site_status: () => {},
         managesites_reset_bulk_actions_params: () => {},
         mainwpPopup: () => ( { init: data => progress.push( data.progressMax ) } ),
-        mainwp_managesites_check_abandoned_all_int: ids => requests.push( Array.from( ids ) )
+        mainwp_managesites_check_abandoned_all_int: ids => requests.push( Array.from( ids ) ),
+        dashboard_update: ids => requests.push( Array.from( ids ) )
     };
     vm.createContext( context );
-    vm.runInContext( hideSite + selectSites + '\nglobalThis.selectSites = mainwp_update_get_selected_sitesids;\n' + checkAbandoned, context );
+    vm.runInContext( hideSite + selectSites + '\nglobalThis.selectSites = mainwp_update_get_selected_sitesids;\n' + checkAbandoned + syncSites, context );
     return {
         context, requests, progress,
         connectedIds: new Collection( connected ),
@@ -122,3 +127,20 @@ for ( const action of [ 'updates', 'abandoned' ] ) {
         assert.deepEqual( fixture.visible(), [ '4', '2' ] );
     } );
 }
+
+test( 'sync after a selected update shows every row again', () => {
+    const fixture = load( [ '1', '4' ] );
+    fixture.context.selectSites( [ '1' ], fixture.connectedIds );
+    assert.deepEqual( fixture.visible(), [ '1' ] );
+    fixture.context.mainwp_sync_sites_data( undefined, 'checknow' );
+    assert.deepEqual( fixture.requests, [ [ '1', '4' ] ] );
+    assert.deepEqual( fixture.visible(), [ '1', '4', '2', '3' ] );
+} );
+
+test( 'showing every row skips a status element without a row', () => {
+    const fixture = load();
+    fixture.context.dashboardSync.rowMap.set( '9', null );
+    assert.doesNotThrow( () => fixture.context.dashboard_update_site_show_all() );
+    fixture.context.dashboardSync.rowMap.delete( '9' );
+    assert.deepEqual( fixture.visible(), [ '1', '2', '3' ] );
+} );

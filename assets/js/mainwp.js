@@ -1021,6 +1021,8 @@ jQuery(function () {
 });
 
 globalThis.mainwp_sync_sites_data = function (syncSiteIds, pAction) {
+    // An update or Check Abandoned run on this page may have hidden rows.
+    dashboard_update_site_show_all();
     let allWebsiteIds = [];
     jQuery('.dashboard_wp_id[error-status=0]').map(function (indx, el) {
         allWebsiteIds.push(jQuery(el).val());
@@ -1190,7 +1192,9 @@ globalThis.dashboard_update = function (websiteIds, isGlobalSync, pAction) {
         if (!sync?.initialized) return;
 
         for (const rowEl of sync.rowMap.values()) {
-            rowEl.style.display = '';
+            if (rowEl) {
+                rowEl.style.display = '';
+            }
         }
     };
 

@@ -456,7 +456,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var restorePollRetries = 0;
             var backupPollTimer = null;
             var backupFollowGen = 0;
-            var backupCancelGen = {};
+            var backupClickEpoch = {};
+            var backupCancelledEpoch = {};
+            var backupPendingKickoffs = {};
             var backupPendingStarts = {};
             var backupElapsedTimer = null;
             var backupStartTime = null;
@@ -1108,8 +1110,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                             resumeBackupFollow( pendingSince );
                         }
                     }
-                    // The list may predate a kickoff that is already being followed.
-                    if ( backupPollTimer ) {
+                    // A list reply can arrive before the kickoff supplies a poll timer.
+                    if ( backupPollTimer || ( backupPendingKickoffs[ siteId ] || 0 ) > ( backupCancelledEpoch[ siteId ] || 0 ) ) {
                         setBackupFollowControls();
                     }
                 }, 'json' ).fail( function () {
@@ -1851,9 +1853,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 var siteId = currentSite;
                 setBackupFollowControls();
                 stopBackupTimers();
-                // Only this site's cancel can discard its kickoff. A switch
-                // or another site's cancel must preserve a queued start.
-                var cancelGen = backupCancelGen[ siteId ] || 0;
+                // Click order keeps a late cancel from discarding a newer kickoff.
+                var clickEpoch = ( backupClickEpoch[ siteId ] || 0 ) + 1;
+                backupClickEpoch[ siteId ] = clickEpoch;
+                backupPendingKickoffs[ siteId ] = clickEpoch;
                 delete backupPendingStarts[ siteId ];
                 backupPollRetries = 0;
                 backupStartTime = Date.now();
@@ -1864,7 +1867,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 backupElapsedTimer = window.setInterval( renderBackupStatus, 1000 );
                 setBackupStatus( '<?php echo esc_js( esc_html__( 'Starting backup...', 'mainwp' ) ); ?>', false );
                 $.post( ajaxurl, { action: 'mainwp_native_backup_initiate', security: nonces.nativeBackupInitiate, site_id: siteId }, function ( response ) {
-                    if ( cancelGen !== ( backupCancelGen[ siteId ] || 0 ) ) {
+                    if ( backupPendingKickoffs[ siteId ] === clickEpoch ) {
+                        delete backupPendingKickoffs[ siteId ];
+                    }
+                    if ( clickEpoch <= ( backupCancelledEpoch[ siteId ] || 0 ) ) {
                         return;
                     }
                     // Keep the intent through switches until a progress reply
@@ -1903,7 +1909,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                     scheduleBackupPoll( siteId, sinceTs, 1500 );
                 }, 'json' ).fail( function () {
-                    if ( siteId !== currentSite || cancelGen !== ( backupCancelGen[ siteId ] || 0 ) ) {
+                    if ( backupPendingKickoffs[ siteId ] === clickEpoch ) {
+                        delete backupPendingKickoffs[ siteId ];
+                    }
+                    if ( siteId !== currentSite || clickEpoch <= ( backupCancelledEpoch[ siteId ] || 0 ) ) {
                         return;
                     }
                     // The kickoff request never reached the handler, so nothing
@@ -1926,17 +1935,20 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // selection change while the request is in flight must not
                 // let its response repaint another site's controls.
                 var siteId = currentSite;
+                var epochAtCancel = backupClickEpoch[ siteId ] || 0;
                 $( this ).prop( 'disabled', true ).addClass( 'disabled' );
                 setBackupStatus( '<?php echo esc_js( esc_html__( 'Cancelling backup...', 'mainwp' ) ); ?>', false );
                 $.post( ajaxurl, { action: 'mainwp_native_backup_cancel', security: nonces.nativeBackupCancel, site_id: siteId }, function ( response ) {
                     var cancelResult = window.MainWPBackupCancelResult.describeCancelResult( response.result );
+                    var newerClick = ( backupClickEpoch[ siteId ] || 0 ) > epochAtCancel;
                     if ( ! response.error && ! cancelResult.keepPolling ) {
-                        // The request still cancels its own site while away;
-                        // only painting and the visible follow depend on selection.
-                        backupCancelGen[ siteId ] = ( backupCancelGen[ siteId ] || 0 ) + 1;
-                        delete backupPendingStarts[ siteId ];
+                        // A cancel still applies while away, but cannot end a newer click.
+                        backupCancelledEpoch[ siteId ] = Math.max( backupCancelledEpoch[ siteId ] || 0, epochAtCancel );
+                        if ( ! newerClick ) {
+                            delete backupPendingStarts[ siteId ];
+                        }
                     }
-                    if ( siteId !== currentSite ) {
+                    if ( siteId !== currentSite || newerClick ) {
                         return;
                     }
                     if ( response.error ) {
@@ -1960,7 +1972,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                     }
                 }, 'json' ).fail( function () {
-                    if ( siteId !== currentSite ) {
+                    if ( siteId !== currentSite || ( backupClickEpoch[ siteId ] || 0 ) > epochAtCancel ) {
                         return;
                     }
                     setBackupStatus( '<?php echo esc_js( esc_html__( 'Could not cancel the backup. Try again.', 'mainwp' ) ); ?>', true );

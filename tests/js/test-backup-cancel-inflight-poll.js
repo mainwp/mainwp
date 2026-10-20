@@ -3,7 +3,7 @@ const assert = require( 'node:assert/strict' );
 const fs = require( 'node:fs' );
 const vm = require( 'node:vm' );
 const test = require( 'node:test' );
-const source = fs.readFileSync( require.resolve( '../../pages/backup/page-mainwp-backup-snapshots-view.php' ), 'utf8' );
+const source = fs.readFileSync( process.env.SRC || require.resolve( '../../pages/backup/page-mainwp-backup-snapshots-view.php' ), 'utf8' );
 const QUEUED = 'Queued behind another backup step. This one starts as soon as that step finishes. Keep this tab open until then.';
 
 function phpToJs( code ) {
@@ -21,15 +21,15 @@ function harness() {
     const elements = new Map();
     let nextTimer = 0;
     const context = {
-        currentSite: 7, ajaxurl: '/ajax', nonces: {},
+        currentSite: 7, ajaxurl: '/ajax', nonces: {}, siteDisconnected: false,
         currentJob: 0, rollbackRequestPending: false, canRestore: true,
         statusLabels: { pending: 'Queued' }, restoreCancelLabels: { cancelRollback: 'Cancel Rollback' },
         setPane() {}, startJobFollow( id ) { context.currentJob = id; },
         setSnapshotDeleteBusy( busy ) { context.snapshotDeleteBusy = busy; }, fmtClock: () => '',
         renderBackupStatus: () => calls.push( [ 'render', context.backupProgressCache.label ] ),
         setBackupStatus: ( text, error ) => calls.push( [ 'status', text, error ] ),
-        reenableBackupBtn: () => calls.push( [ 'enable' ] ),
-        loadSnapshots: () => calls.push( [ 'load' ] ),
+        snapshotsPlaceholders: {}, setSnapshotsPlaceholder() {}, escAttr: String,
+        snapshotsTable: { clear() { return this; }, draw() { return this; }, rows: { add() {} } },
         window: {
             clearTimeout: id => timers.delete( id ), clearInterval() {}, setInterval: () => 99,
             setTimeout: fn => { timers.set( ++nextTimer, fn ); return nextTimer; },
@@ -38,14 +38,18 @@ function harness() {
     context.$ = selector => {
         if ( typeof selector === 'object' ) return selector;
         if ( ! elements.has( selector ) ) elements.set( selector, {
-            disabled: false, visible: false,
+            disabled: false, visible: false, classes: new Set(),
             show() { this.visible = true; return this; }, hide() { this.visible = false; return this; },
             toggle( value ) { this.visible = value; return this; }, is() { return this.visible; },
             css( key, value ) { if ( key === 'display' ) this.visible = value !== 'none'; return this; },
-            toggleClass() { return this; },
+            toggleClass( key, value ) { if ( value ) this.classes.add( key ); else this.classes.delete( key ); return this; },
+            attr() { return this; }, html() { return this; }, empty() { return this; },
+            find( name ) { return context.$( selector + ' ' + name ); }, modal() { return this; },
             text() { return this; },
             prop( key, value ) { if ( value === undefined ) return this.disabled; this.disabled = value; return this; },
-            hasClass() { return false; }, addClass() { return this; }, removeClass() { return this; },
+            hasClass( key ) { return this.classes.has( key ); },
+            addClass( key ) { this.classes.add( key ); return this; },
+            removeClass( key ) { this.classes.delete( key ); return this; },
             on( event, fn ) { handlers.set( selector, fn ); return this; }
         } );
         return elements.get( selector );
@@ -61,32 +65,29 @@ function harness() {
     context.window.MainWPBackupCancelResult = context.MainWPBackupCancelResult;
     const vars = source.indexOf( 'var backupPollTimer = ' );
     vm.runInContext( source.slice( vars, source.indexOf( 'var currentSiteUrl', vars ) ), context );
-    for ( const name of [ 'stopBackupTimers', 'scheduleBackupPoll', 'showCancelBackup', 'enableSnapshotControls', 'setBackupFollowControls', 'resumeBackupFollow', 'pollBackup', 'cancelApplies', 'startRollback' ] ) {
+    for ( const name of [ 'stopBackupTimers', 'scheduleBackupPoll', 'showCancelBackup', 'enableSnapshotControls', 'showDisconnected', 'reenableBackupBtn', 'setBackupFollowControls', 'resumeBackupFollow', 'pollBackup', 'cancelApplies', 'startRollback', 'loadSnapshots' ] ) {
         const start = source.indexOf( 'function ' + name + '(' );
         if ( start < 0 && name === 'scheduleBackupPoll' ) continue; // Baseline has no scheduling helper.
         vm.runInContext( phpToJs( source.slice( start, source.indexOf( '\n            }', start ) + '\n            }'.length ) ), context );
+    }
+    for ( const [ name, call ] of [ [ 'reenableBackupBtn', 'enable' ], [ 'loadSnapshots', 'load' ] ] ) {
+        const real = context[ name ];
+        context[ name ] = ( ...args ) => { calls.push( [ call ] ); return real( ...args ); };
     }
     for ( const selector of [ '#mainwp-native-backup-now-btn', '#mainwp-native-backup-cancel-btn' ] ) {
         const start = source.indexOf( "$( '" + selector + "' ).on( 'click'" );
         vm.runInContext( phpToJs( source.slice( start, source.indexOf( '\n            } );', start ) + '\n            } );'.length ) ), context );
     }
-    return { context, requests, timers, calls,
-        list( response, gen = context.backupFollowGen ) {
-            context.response = response;
-            context.siteId = context.currentSite;
-            context.followGen = gen;
-            // The list callback resets controls before its follow bootstrap.
-            context.siteDisconnected = false;
-            context.enableSnapshotControls( context.siteId > 0 );
-            context.snapshotDeleteBusy = !! response.snapshot_delete_busy;
-            const start = source.indexOf( 'if ( response.manual_backup_running' );
-            const end = source.indexOf( "\n                }, 'json' )", start );
-            vm.runInContext( source.slice( start, end ), context );
-        },
+    function requestList() {
+        context.loadSnapshots( context.currentSite );
+        return requests.at( -1 );
+    }
+    return { context, requests, timers, calls, requestList,
+        list( response ) { requestList().success( response ); },
         switchSite( id ) {
             context.stopBackupTimers(); context.currentSite = id;
             context.backupSinceTs = 0;
-            context.$( '#mainwp-native-backup-now-btn' ).prop( 'disabled', false );
+            context.$( '#mainwp-native-backup-now-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
             context.$( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false );
             context.showCancelBackup( false );
         },
@@ -378,10 +379,10 @@ row( 'SWITCH-queued-repeat', h => {
 } );
 for ( const end of [ 'cancel', 'terminal' ] ) {
     row( 'LIST-stale-after-' + end, h => {
-        const request = running( h ), gen = h.context.backupFollowGen;
+        const request = running( h ), list = h.requestList();
         if ( end === 'cancel' ) { h.click( CANCEL ); h.requests.at( -1 ).success( { result: 'cancelled' } ); }
         else request.success( { status: 'completed' } );
-        const message = lastStatus( h ); h.list( { manual_backup_running: true }, gen ); assertEnded( h, message );
+        const message = lastStatus( h ); list.success( { manual_backup_running: true } ); assertEnded( h, message );
     } );
 }
 for ( const kind of [ 'error', 'settled', 'transport' ] ) {
@@ -394,10 +395,72 @@ for ( const kind of [ 'error', 'settled', 'transport' ] ) {
 for ( const kind of [ 'started', 'queued' ] ) {
     row( 'SWITCH-return-kick-before-list-' + kind, h => {
         h.click( NOW ); h.switchSite( 8 ); h.switchSite( 7 );
-        const listGen = h.context.backupFollowGen;
+        const list = h.requestList();
         replyKick( h.requests[0], kind ); assertFollowing( h );
-        h.list( { manual_backup_running: kind === 'started', snapshot_delete_busy: false }, listGen );
+        list.success( { manual_backup_running: kind === 'started', snapshot_delete_busy: false } );
         assertFollowing( h );
     } );
 }
+row( 'LIST-during-kickoff', h => {
+    const list = h.requestList();
+    h.click( NOW ); const kickoff = h.requests.at( -1 );
+    list.success( { manual_backup_running: false, snapshot_delete_busy: false } );
+    assert.deepEqual( {
+        disabled: h.context.$( NOW ).prop( 'disabled' ), cancelShown: h.context.$( CANCEL ).visible,
+        deleteBusy: h.context.snapshotDeleteBusy, chains: h.timers.size
+    }, { disabled: true, cancelShown: true, deleteBusy: true, chains: 0 }, 'The pending kickoff still owns the controls.' );
+    h.click( CANCEL ); h.requests.at( -1 ).success( { result: 'cancelled' } );
+    assert.equal( h.requests.at( -1 ).data.action, 'mainwp_restore_snapshot_list' );
+    h.requests.at( -1 ).success( { manual_backup_running: false, snapshot_delete_busy: false } );
+    function cancelled() {
+        assertEnded( h, 'Backup cancelled.' );
+        assert.equal( h.context.$( NOW ).prop( 'disabled' ), false );
+        assert.equal( h.context.$( CANCEL ).visible, false );
+        assert.equal( h.context.snapshotDeleteBusy, false );
+    }
+    cancelled();
+    replyKick( kickoff, 'started' ); cancelled();
+} );
+for ( const timing of [ 'before', 'after' ] ) {
+    row( 'CANCEL-' + timing + '-new-kickoff', h => {
+        h.click( NOW ); h.requests.at( -1 ).success( { started: 123 } );
+        h.next(); h.requests.at( -1 ).success( { status: 'running' } );
+        h.click( CANCEL ); const cancel = h.requests.at( -1 );
+        h.switchSite( 8 ); h.switchSite( 7 ); h.list( { manual_backup_running: false } );
+        h.click( NOW ); const kickoff = h.requests.at( -1 );
+        if ( timing === 'after' ) kickoff.success( { started: 789 } );
+        const before = h.calls.slice(), requestsBefore = h.requests.length;
+        const timersBefore = [ ...h.timers.entries() ], genBefore = h.context.backupFollowGen;
+        cancel.success( { result: 'cancelled' } );
+        assert.deepEqual( h.calls, before, 'The older cancel must not repaint, enable, or reload the newer follow.' );
+        assert.equal( h.requests.length, requestsBefore );
+        assert.deepEqual( [ ...h.timers.entries() ], timersBefore, 'The newer chain must not be replaced.' );
+        assert.equal( h.context.backupFollowGen, genBefore );
+        assert.equal( h.context.$( CANCEL ).visible, true );
+        assert.equal( h.context.$( CANCEL ).prop( 'disabled' ), false );
+        assert.equal( h.context.$( CANCEL ).hasClass( 'disabled' ), false );
+        if ( timing === 'before' ) kickoff.success( { started: 789 } );
+        assert.equal( h.context.backupPendingStarts[7], 789 );
+        assertFollowing( h ); h.next();
+        assert.equal( h.requests.at( -1 ).data.since, 789 );
+        h.requests.at( -1 ).success( { status: 'running' } );
+        assert.equal( lastStatus( h ), 'Backing up...' ); assertFollowing( h );
+    } );
+}
+row( 'RETAINED-cleared-by-run', h => {
+    h.click( NOW ); replyKick( h.requests.at( -1 ), 'started' );
+    h.next(); h.requests.at( -1 ).success( { status: 'running' } );
+    h.next(); h.requests.at( -1 ).success( { status: 'completed' } );
+    h.requests.at( -1 ).success( { manual_backup_running: false } );
+    assertEnded( h, 'Backup complete.' );
+    assert.equal( Object.hasOwn( h.context.backupPendingStarts, 7 ), false );
+} );
+row( 'RETAINED-cleared-by-cancel', h => {
+    h.click( NOW ); replyKick( h.requests.at( -1 ), 'queued' );
+    h.next(); h.requests.at( -1 ).success( { status: 'queued' } );
+    h.click( CANCEL ); h.requests.at( -1 ).success( { result: 'cancelled' } );
+    h.requests.at( -1 ).success( { manual_backup_running: false } );
+    assertEnded( h, 'Backup cancelled.' );
+    assert.equal( Object.hasOwn( h.context.backupPendingStarts, 7 ), false );
+} );
 for ( const { id, run } of rows ) test( 'matrix ' + id, () => run( harness() ) );

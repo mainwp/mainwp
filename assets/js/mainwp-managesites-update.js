@@ -40,6 +40,12 @@ let mainwp_update_get_selected_sitesids = function (selectedSitesIds, allSitesId
         for (let id of excludeIds) {
             dashboard_update_site_hide(id);
         }
+        jQuery('.dashboard_wp_id[error-status=1]').each(function () {
+            let id = jQuery(this).val();
+            if (jQuery.inArray(id, selectedSitesIds) === -1) {
+                dashboard_update_site_hide(id);
+            }
+        });
         allSitesIds = selectedIds;
     }
     return allSitesIds;

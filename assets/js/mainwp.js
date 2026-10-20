@@ -882,6 +882,12 @@ globalThis.mainwp_managesites_bulk_check_abandoned = function (siteIds, which) {
         for (let id of excludeIds) {
             dashboard_update_site_hide(id);
         }
+        jQuery('.dashboard_wp_id[error-status=1]').each(function () {
+            let id = jQuery(this).val();
+            if (jQuery.inArray(id, siteIds) === -1) {
+                dashboard_update_site_hide(id);
+            }
+        });
         allWebsiteIds = selectedIds;
     }
 

@@ -9449,6 +9449,54 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * The progress save merges into the row as it is now, so a key written
+	 * outside the lease after the slice started is not rolled back, even one
+	 * the store's merge does not list.
+	 */
+	public function test_transferring_progress_save_keeps_checkpoint_written_after_slice_start() {
+		$store = MainWP_Backup_Restore_Job_Store::instance();
+		$job   = $this->make_job(
+			array(
+				'plan'     => $this->staged_plan_fixture(),
+				'transfer' => array( 'chunk_bytes' => 4 ),
+			),
+			$store::STATUS_TRANSFERRING,
+			array( 'child_task_id' => 'task-9-restore' )
+		);
+		$this->orchestrator->transfer_progress_interval = 0.0;
+
+		$chunks   = 0;
+		$observed = array();
+		$child    = function ( $pre, $website, $what, $params ) use ( $store, $job, &$chunks, &$observed ) {
+			if ( 'restore_artifact_chunk' !== $what ) {
+				return $pre;
+			}
+			++$chunks;
+			$fresh = $store->get_job( (int) $job->id );
+			if ( 1 === $chunks ) {
+				$checkpoint                      = $fresh->checkpoint;
+				$checkpoint['outside_lease_key'] = 'kept';
+				$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+			} else {
+				$observed[] = array( $fresh->checkpoint['outside_lease_key'] ?? null, $fresh->checkpoint['transfer']['offset'] ?? 0 );
+			}
+			return array(
+				'result'         => 'ok',
+				'bytes_received' => (int) $params['offset'] + strlen( base64_decode( $params['chunk_b64'] ) ),
+			);
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $child, 20, 4 );
+		try {
+			$fresh = $this->tick( $job );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $child, 20 );
+		}
+		$this->assertSame( 3, $chunks );
+		$this->assertSame( array( array( 'kept', 4 ), array( 'kept', 8 ) ), $observed );
+		$this->assertSame( 'kept', $fresh->checkpoint['outside_lease_key'] ?? null );
+	}
+
+	/**
 	 * A cancel racing the progress UPDATE must survive its CAS retry.
 	 */
 	public function test_transferring_progress_save_merges_concurrent_cancel() {
@@ -9594,9 +9642,10 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 * The Child may have more bytes than the last durable cursor after a crash.
 	 *
 	 * @dataProvider transferring_resume_checksum_results
-	 * @param bool $checksum_ok Whether the Child accepts the final artifact checksum.
+	 * @param bool $checksum_ok   Whether the Child accepts the final artifact checksum.
+	 * @param bool $duplicate_ack Whether the Child acks a resent chunk instead of reporting a gap.
 	 */
-	public function test_transferring_resumes_saved_progress_with_realign_and_checksum( $checksum_ok ) {
+	public function test_transferring_resumes_saved_progress_with_realign_and_checksum( $checksum_ok, $duplicate_ack ) {
 		$store = MainWP_Backup_Restore_Job_Store::instance();
 		$plan  = $this->staged_plan_fixture();
 		$job   = $this->make_job(
@@ -9612,13 +9661,20 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		$received     = '';
 		$offsets      = array();
 		$final_checks = 0;
-		$child        = function ( $pre, $website, $what, $params ) use ( $plan, $checksum_ok, &$received, &$offsets, &$final_checks ) {
+		$child        = function ( $pre, $website, $what, $params ) use ( $plan, $checksum_ok, $duplicate_ack, &$received, &$offsets, &$final_checks ) {
 			if ( 'restore_artifact_chunk' !== $what ) {
 				return $pre;
 			}
 			$offsets[] = (int) $params['offset'];
 			$raw       = base64_decode( $params['chunk_b64'] );
 			$this->assertSame( hash( 'sha256', $raw ), $params['chunk_sha256'] );
+			// The real Child acks a resend of bytes it already holds and reports a gap only for an offset past its size.
+			if ( $duplicate_ack && (int) $params['offset'] < strlen( $received ) ) {
+				return array(
+					'result'         => 'ok',
+					'bytes_received' => strlen( $received ),
+				);
+			}
 			if ( strlen( $received ) !== (int) $params['offset'] ) {
 				return array(
 					'error_code'     => 'mainwp_restore_chunk_gap',
@@ -9676,14 +9732,17 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Resume must preserve both successful verification and checksum rejection.
+	 * Resume must preserve both successful verification and checksum rejection,
+	 * whichever way the Child answers the resent chunk.
 	 *
-	 * @return array Child checksum results.
+	 * @return array Child checksum results and resend replies.
 	 */
 	public static function transferring_resume_checksum_results() {
 		return array(
-			'checksum accepted' => array( true ),
-			'checksum rejected' => array( false ),
+			'checksum accepted, gap'           => array( true, false ),
+			'checksum rejected, gap'           => array( false, false ),
+			'checksum accepted, duplicate ack' => array( true, true ),
+			'checksum rejected, duplicate ack' => array( false, true ),
 		);
 	}
 

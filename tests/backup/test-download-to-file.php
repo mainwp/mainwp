@@ -476,6 +476,36 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 		}
 	}
 
+	/** A Child that redirects within its own host still delivers the archive. */
+	public function test_same_host_redirect_is_followed(): void {
+		$file = $this->temp_download_path();
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/redirect-same-host?size=4096' ), $file, 4096 );
+			$this->assertSame( static::fixture_content( 4096 ), file_get_contents( $file ) );
+		} finally {
+			if ( is_file( $file ) ) {
+				unlink( $file );
+			}
+		}
+	}
+
+	/** A site stored without url is held to the host the request was built for. */
+	public function test_empty_site_url_uses_request_host(): void {
+		$file    = $this->temp_download_path();
+		$website = (object) array(
+			'id'  => 42,
+			'url' => '',
+		);
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/200?size=4096' ), $file, 4096, null, null, $website );
+			$this->assertSame( static::fixture_content( 4096 ), file_get_contents( $file ) );
+		} finally {
+			if ( is_file( $file ) ) {
+				unlink( $file );
+			}
+		}
+	}
+
 	/** Final-host validation must not permit an earlier request to another host. */
 	public function test_cross_host_redirect_is_refused_before_contact(): void {
 		$token  = 'mainwp-redirect-' . bin2hex( random_bytes( 8 ) );

@@ -3162,7 +3162,8 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @throws MainWP_Exception When the transfer fails.
      */
     private static function perform_download_request( $url, $file, $expected_size, $local_size, $http_user, $http_pass, $website ) { // phpcs:ignore -- NOSONAR - complex.
-        $site_url = null !== $website && isset( $website->url ) ? (string) $website->url : $url;
+        // get_get_data_authed() builds the URL from siteurl when url is empty, so the request URL is the host to hold redirects to.
+        $site_url = null !== $website && ! empty( $website->url ) ? (string) $website->url : $url;
         $agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
         $requested_offset = ( false !== $expected_size && $local_size > 0 && $local_size < $expected_size ) ? $local_size : 0;

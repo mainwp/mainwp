@@ -39,9 +39,14 @@ switch ( $path ) {
         header( 'Location: http://localhost:' . (int) $_SERVER['SERVER_PORT'] . '/redirect-target?marker=' . rawurlencode( $_GET['marker'] ?? '' ) );
         break;
 
+    case '/redirect-same-host':
+        header( 'Location: /200?size=' . $size, true, 302 );
+        break;
+
     case '/redirect-target':
         $marker = $_GET['marker'] ?? '';
         if ( preg_match( '/^mainwp-redirect-[a-f0-9]+$/D', $marker ) ) {
+            // nosemgrep: AIK_php-file-operations -- test fixture; the anchored pattern above allows only a fixed prefix plus hex, no path separators.
             file_put_contents( sys_get_temp_dir() . '/' . $marker, 'contacted' );
         }
         header( 'Content-Length: ' . $size );

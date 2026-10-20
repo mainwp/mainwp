@@ -218,11 +218,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
 
                 $update = apply_filters( 'mainwp_uptime_monitoring_update_monitor_data', $update, $site_id, $bypass_cache_opt );
 
-                MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update, $output );
-
-                // This save does not capture the monitor write result. An undefined
-                // $success was always falsy here, so the repair-attempt option stays.
-                $success = false;
+                $success = MainWP_DB_Uptime_Monitoring::instance()->update_wp_monitor( $update, $output );
+                if ( is_array( $output ) && isset( $output['saved'] ) && false === $output['saved'] ) {
+                    $success = false;
+                }
                 if ( $site_id && empty( $update['issub'] ) ) {
                     $opt_name = 'mainwp_primary_monitor_repair_attempts_for_wp_' . $site_id;
                     if ( $success ) {
@@ -618,7 +617,7 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                         $maxretries_val = ! empty( $mo_settings['maxretries'] ) && 1 <= intval( $mo_settings['maxretries'] ) ? intval( $mo_settings['maxretries'] ) : 1;
                         ?>
                         <option value="<?php echo intval( $maxretries_val ); ?>" <?php echo (int) $mo_settings['maxretries'] === (int) $maxretries_val ? 'selected' : ''; ?>><?php esc_html_e( 'Enable', 'mainwp' ); ?></option>
-                        <option value="0" <?php echo 0 === $maxretries_val ? 'selected' : ''; ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
+                        <option value="0" <?php echo 0 === (int) $mo_settings['maxretries'] ? 'selected' : ''; ?>><?php esc_html_e( 'Disable', 'mainwp' ); ?></option>
                     </select>
                 </div>
             </div>

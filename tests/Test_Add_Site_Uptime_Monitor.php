@@ -52,6 +52,7 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
 
         remove_filter( 'mainwp_fetch_url_not_authed_pre', array( $this, 'mock_fetch_not_authed' ), 10 );
         remove_filter( 'mainwp_add_site_skip_key_generation', array( $this, 'mock_add_site_skip_key_generation' ), 10 );
+        remove_filter( 'mainwp_update_wp_monitor', '__return_empty_array' );
 
 		parent::tearDown();
 	}
@@ -219,7 +220,7 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
      *
      * @return void
      */
-    public function test_missing_primary_monitor_insert_failure() {
+    public function test_missing_primary_monitor_insert_failure(): void {
         $site_id = $this->add_new_test_site(
             array(
                 'name' => 'Test Site Missing Primary Insert Failure',
@@ -240,10 +241,13 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
             '__return_empty_array'
         );
 
-        $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors(
-            $site_id
-        );
+        try {
+            $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors( $site_id );
+        } finally {
+            remove_filter( 'mainwp_update_wp_monitor', '__return_empty_array' );
+        }
 
+        $this->assertFalse( has_filter( 'mainwp_update_wp_monitor', '__return_empty_array' ) );
         $this->assertSame( 1, $result['found'] );
         $this->assertSame( 0, $result['created'] );
     }
@@ -352,7 +356,7 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
      *
      * @return void
      */
-    public function test_missing_primary_monitor_recovery_fails_when_persistence_fails() {
+    public function test_missing_primary_monitor_recovery_fails_when_persistence_fails(): void {
 
         $site_id = $this->add_new_test_site(
             array(
@@ -361,14 +365,29 @@ class Test_Add_Site_Uptime_Monitor extends \WP_UnitTestCase {
             )
         );
 
-        $result = $this->repair_missing_monitor(
-            $site_id
-        );
-
-        $this->assertFalse(
-            $result,
-            'Primary-monitor recovery should report failure when persistence fails.'
-        );
+        global $wpdb;
+        MainWP_DB_Uptime_Monitoring::instance()->delete_site_monitors( $site_id );
+        $this->assertEmpty( $this->get_primary_monitor( $site_id ) );
+        $attempts = 0;
+        $fail_insert = static function ( $query ) use ( $wpdb, &$attempts ) {
+            if ( preg_match( '/^\s*INSERT\s+INTO\s+`?' . preg_quote( $wpdb->prefix . 'mainwp_monitors', '/' ) . '`?\s/i', $query ) ) {
+                ++$attempts;
+                return "INSERT INTO {$wpdb->prefix}mainwp_monitors (d57_missing_column) VALUES (1)";
+            }
+            return $query;
+        };
+        $previous_errors = $wpdb->suppress_errors( true );
+        add_filter( 'query', $fail_insert );
+        try {
+            $result = MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors( $site_id );
+        } finally {
+            remove_filter( 'query', $fail_insert );
+            $wpdb->suppress_errors( $previous_errors );
+        }
+        $this->assertSame( 1, $attempts, 'Recovery must attempt a real monitor INSERT.' );
+        $this->assertSame( 1, $result['found'] );
+        $this->assertSame( 0, $result['created'] );
+        $this->assertEmpty( $this->get_primary_monitor( $site_id ) );
     }
 
     /**

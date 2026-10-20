@@ -1083,6 +1083,10 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             return false;
         }
 
+        if ( ! is_array( $data ) ) {
+            $data = array();
+        }
+
         $success = false;
 
         $websiteid = (int) $websiteid;
@@ -1091,10 +1095,9 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $new_groupids         = array();
 
         // Validate group IDs before updating any website data.
-        if ( isset( $data['groupids'] ) && is_string( $data['groupids'] ) ) {
+        if ( array_key_exists( 'groupids', $data ) ) {
             $group_update_success = true;
-            $groupids_string      = trim( wp_unslash( $data['groupids'] ) );
-            $new_groupids         = $this->validate_site_group_ids( $groupids_string );
+            $new_groupids         = $this->validate_site_group_ids( $data['groupids'] );
             if ( false === $new_groupids ) {
                 $group_update_success = false;
             }
@@ -1179,28 +1182,6 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
                 // child-reported address locks auto-correction for the site.
                 MainWP_Site_Url_Corrector::after_user_set_url( $website, $update_fields['url'] );
             }
-        }
-
-        $groupids = array();
-        if ( isset( $data['groupids'] ) && ! empty( $data['groupids'] ) ) {
-            $groupids = explode( ',', sanitize_text_field( wp_unslash( $data['groupids'] ) ) );
-        }
-
-        if ( ! empty( $groupids ) ) {
-            $table_wp_group = esc_sql( $this->table_name( 'wp_group' ) );
-            $this->wpdb->query( $this->wpdb->prepare( "DELETE FROM `{$table_wp_group}` WHERE wpid=%d", $websiteid ) );
-
-            // update groups.
-            foreach ( $groupids as $groupid ) {
-                $this->wpdb->insert(
-                    $this->table_name( 'wp_group' ),
-                    array(
-                        'wpid'    => $websiteid,
-                        'groupid' => $groupid,
-                    )
-                );
-            }
-            $success = true;
         }
 
         $newValues = array();

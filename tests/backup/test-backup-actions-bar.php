@@ -229,7 +229,7 @@ class MainWP_Backup_Actions_Bar_Test extends \WP_UnitTestCase {
 		$xp = $this->xpath( $output );
 		$this->assert_in_bar( $xp, 'mainwp-storage-add-new', 'right' );
 		$this->assertSame( 'ui mini green button', $xp->query( '//*[@id="mainwp-storage-add-new"]' )->item( 0 )->getAttribute( 'class' ) );
-		$this->assertSame( 1, $xp->query( '//div[' . $this->has_class( 'mainwp-actions-bar' ) . ']/following-sibling::div[@id="mainwp-backup-storage"][' . $this->has_class( 'padded' ) . ']//table[@id="mainwp-storage-destinations-table"]' )->length );
+		$this->assertSame( 1, $xp->query( '//div[@id="mainwp-backup-storage"][' . $this->has_class( 'padded' ) . '][./div[' . $this->has_class( 'mainwp-actions-bar' ) . ']]//table[@id="mainwp-storage-destinations-table"]' )->length );
 		$this->assertStringContainsString( "#mainwp-storage-add-new, .mainwp-storage-add-destination' ).on( 'click'", $output );
 		$this->assertStringContainsString( "storageModal.modal( 'show' )", $output );
 	}

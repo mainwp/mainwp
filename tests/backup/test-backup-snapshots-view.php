@@ -936,7 +936,7 @@ class MainWP_Backup_Snapshots_View_Test extends \WP_UnitTestCase {
 			$this->assertStringContainsString( "( siteDisconnected || backupInProgress ? ' disabled' : '' )", $output, $surface );
 			$this->assertMatchesRegularExpression( '/class="ui mini basic button" id="mainwp-snapshots-cleanup-btn"\s+>/', $output, $surface . ': Clean Up starts enabled.' );
 			$this->assertStringContainsString( "#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', ! enabled ).toggleClass( 'disabled', ! enabled )", $output, $surface );
-			$this->assertStringContainsString( "#mainwp-native-backup-now-btn' ).prop( 'disabled', ! enabled || siteDisconnected )", $output, $surface );
+			$this->assertStringContainsString( "#mainwp-native-backup-now-btn' ).prop( 'disabled', ! enabled || siteDisconnected || backupInProgress )", $output, $surface );
 		}
 	}
 

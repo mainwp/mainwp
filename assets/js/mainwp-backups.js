@@ -1090,35 +1090,9 @@ mainwp_updatesoverview_checkBackups = function (sitesToUpdate, siteNames) {
                 }
 
                 if (siteFeedback != undefined) {
-                    let backupPrimary = '';
-                    if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
-                        backupPrimary = response['result']['primary_backup'];
-
-                    if (backupPrimary == '') {
-                        jQuery('#updatesoverview-backup-all').show();
-                        jQuery('#updatesoverview-backup-ignore').show();
-                    } else {
-                        let backupLink = mainwp_get_primaryBackup_link(backupPrimary);
-                        jQuery('#updatesoverview-backup-now').attr('href', backupLink).show();
-                        jQuery('#updatesoverview-backup-ignore').val(MainWP.I18n.t('Proceed with Updates')).show();
-                    }
-
-                    let output = '<span class="mainwp-red">' + MainWP.I18n.t('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
-
-                    if (backupPrimary == '') { // default backup feature
-                        for (let id of siteFeedback) {
-                            output += '<span class="updatesoverview-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
-                        }
-                    } else {
-                        for (let id of siteFeedback) {
-                            output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
-                        }
-                    }
-
-                    mainwpPopup('#updatesoverview-backup-box').getContentEl().html(output);
-
+                    let title = mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback, 'updatesoverview');
                     mainwpPopup('#updatesoverview-backup-box').init({
-                        title: MainWP.I18n.t("Full backup required!"), callback: function () {
+                        title: title, callback: function () {
                             if (updatesoverviewContinueAfterBackup != undefined) {
                                 updatesoverviewContinueAfterBackup = undefined;
                             }

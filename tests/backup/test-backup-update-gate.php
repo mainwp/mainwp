@@ -300,8 +300,53 @@ class MainWP_Backup_Update_Gate_Test extends MainWP_Abilities_Test_Case {
 		$this->assertIsArray( $output );
 		$this->assertArrayHasKey( $site_id, $output['sites'], 'The site must still get a freshness answer.' );
 		$this->assertFalse( $output['sites'][ $site_id ], 'A legacy-archive-only site does not pass the strict gate.' );
+		$this->assertSame( 'pending_offsite', $output['gate_verdicts'][ $site_id ] );
+		$this->assertTrue( $output['require_offsite'] );
 
 		unlink( $archive );
+	}
+
+	/**
+	 * A fresh native snapshot without verified storage reports the offsite hold.
+	 *
+	 * @return void
+	 */
+	public function test_check_backups_strict_unverified_native_reports_pending_offsite() {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$site_id = $this->create_eligible_site( $user );
+		$this->record_native_snapshot( $site_id );
+
+		update_option( 'mainwp_backup_before_upgrade', 1 );
+		update_option( 'mainwp_backup_before_upgrade_require_offsite', 1 );
+		$_POST['sites'] = array( (string) $site_id );
+
+		$output = MainWP_Updates_Overview::check_backups();
+
+		$this->assertFalse( $output['sites'][ $site_id ] );
+		$this->assertSame( 'pending_offsite', $output['gate_verdicts'][ $site_id ] );
+		$this->assertTrue( $output['require_offsite'] );
+	}
+
+	/**
+	 * A site without fresh evidence reports missing even with offsite required.
+	 *
+	 * @return void
+	 */
+	public function test_check_backups_strict_no_evidence_reports_missing() {
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$site_id = $this->create_eligible_site( $user );
+
+		update_option( 'mainwp_backup_before_upgrade', 1 );
+		update_option( 'mainwp_backup_before_upgrade_require_offsite', 1 );
+		$_POST['sites'] = array( (string) $site_id );
+
+		$output = MainWP_Updates_Overview::check_backups();
+
+		$this->assertFalse( $output['sites'][ $site_id ] );
+		$this->assertSame( 'missing', $output['gate_verdicts'][ $site_id ] );
+		$this->assertTrue( $output['require_offsite'] );
 	}
 
 	/**
@@ -326,6 +371,8 @@ class MainWP_Backup_Update_Gate_Test extends MainWP_Abilities_Test_Case {
 		$this->assertIsArray( $output );
 		$this->assertArrayHasKey( $site_id, $output['sites'], 'The site must still get a freshness answer.' );
 		$this->assertTrue( $output['sites'][ $site_id ], 'A fresh offsite-verified native snapshot passes the strict gate.' );
+		$this->assertArrayNotHasKey( $site_id, $output['gate_verdicts'] ?? array() );
+		$this->assertTrue( $output['require_offsite'] );
 	}
 
 	/**
@@ -348,8 +395,45 @@ class MainWP_Backup_Update_Gate_Test extends MainWP_Abilities_Test_Case {
 		$this->assertIsArray( $output );
 		$this->assertArrayHasKey( $site_id, $output['sites'], 'The site must still get a freshness answer.' );
 		$this->assertTrue( $output['sites'][ $site_id ], 'A fresh legacy archive alone passes the non-strict gate.' );
+		$this->assertArrayNotHasKey( $site_id, $output['gate_verdicts'] ?? array() );
+		$this->assertFalse( $output['require_offsite'] );
 
 		unlink( $archive );
+	}
+
+	/**
+	 * External primary backups keep the exact response without native gate fields.
+	 *
+	 * @return void
+	 */
+	public function test_check_backups_primary_backup_response_is_unchanged() {
+		global $wpdb;
+
+		$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		wp_set_current_user( $user );
+		$fresh_site = $this->create_eligible_site( $user );
+		$stale_site = $this->create_eligible_site( $user );
+		$sites      = array( $fresh_site, $stale_site );
+		foreach ( $sites as $site_id ) {
+			$wpdb->update( $wpdb->prefix . 'mainwp_wp', array( 'primary_backup_method' => 'backupbuddy' ), array( 'id' => $site_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+		}
+		$db = MainWP_DB::instance();
+		$db->update_website_option( $db->get_website_by_id( $fresh_site ), 'primary_lasttime_backup', time() );
+		$db->update_website_option( $db->get_website_by_id( $stale_site ), 'primary_lasttime_backup', time() - 10 * DAY_IN_SECONDS );
+		update_option( 'mainwp_backup_before_upgrade', 1 );
+		update_option( 'mainwp_backup_before_upgrade_require_offsite', 1 );
+		$_POST['sites'] = array_map( 'strval', $sites );
+
+		$this->assertSame(
+			array(
+				'sites'          => array(
+					$fresh_site => true,
+					$stale_site => false,
+				),
+				'primary_backup' => 'backupbuddy',
+			),
+			MainWP_Updates_Overview::check_backups()
+		);
 	}
 
 	/**

@@ -340,9 +340,9 @@ let mainwp_managesites_checkBackups = function (sitesToUpdate, siteNames) {
                 }
 
                 if (siteFeedback != undefined) {
-                    mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
+                    let title = mainwp_managesites_prepare_backup_popup(response, pSiteNames, siteFeedback);
                     mainwpPopup('#managesites-backup-box').init({
-                        title: MainWP.I18n.t("Full backup required!"), callback: function () {
+                        title: title, callback: function () {
                             managesitesContinueAfterBackup = undefined;
                         },
                         allowMultiple: true
@@ -662,29 +662,55 @@ let managesites_wordpress_upgrade_int = function (websiteId) {
     return false;
 };
 
-globalThis.mainwp_managesites_prepare_backup_popup = function (response, pSiteNames, siteFeedback) {
+globalThis.mainwp_managesites_prepare_backup_popup = function (response, pSiteNames, siteFeedback, popupPrefix = 'managesites') {
     let backupPrimary = '';
     if (response['result']['primary_backup'] && response['result']['primary_backup'] != undefined)
         backupPrimary = response['result']['primary_backup'];
 
-    if (backupPrimary == '') {
-        jQuery('#managesites-backup-all').show();
-        jQuery('#managesites-backup-ignore').show();
-    } else {
-        let backupLink = mainwp_get_primaryBackup_link(backupPrimary);
-        jQuery('#managesites-backup-now').attr('href', backupLink).show();
-        jQuery('#managesites-backup-ignore').val(MainWP.I18n.t('Proceed with Updates')).show();
+    let missingSites = [];
+    let offsiteSites = [];
+    for (let id of siteFeedback) {
+        // Only a site whose recent backup lacks a verified offsite copy is
+        // past what Backup all can fix; a site with no recent backup needs
+        // one even under the offsite policy.
+        if (backupPrimary == '' && response.result.gate_verdicts?.[id] === 'pending_offsite') {
+            offsiteSites.push(id);
+        } else {
+            missingSites.push(id);
+        }
     }
 
-    let output = '<span class="mainwp-red">' + MainWP.I18n.t('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
-    if (backupPrimary == '') { // default backup feature
-        for (let id of siteFeedback) {
-            output += '<span class="managesites-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
-        }
+    jQuery('#' + popupPrefix + '-backup-all').hide();
+    if (backupPrimary == '') {
+        if (missingSites.length > 0)
+            jQuery('#' + popupPrefix + '-backup-all').show();
+        jQuery('#' + popupPrefix + '-backup-ignore').show();
     } else {
-        for (let id of siteFeedback) {
-            output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
+        let backupLink = mainwp_get_primaryBackup_link(backupPrimary);
+        jQuery('#' + popupPrefix + '-backup-now').attr('href', backupLink).show();
+        jQuery('#' + popupPrefix + '-backup-ignore').val(MainWP.I18n.t('Proceed with Updates')).show();
+    }
+
+    let output = '';
+    if (missingSites.length > 0) {
+        output += '<span class="mainwp-red">' + MainWP.I18n.t('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
+        for (let id of missingSites) {
+            if (backupPrimary == '') {
+                output += '<span class="' + popupPrefix + '-backup-site" siteid="' + id + '">' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
+            } else {
+                output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
+            }
         }
     }
-    mainwpPopup('#managesites-backup-box').getContentEl().html(output);
+    if (offsiteSites.length > 0) {
+        if (output != '')
+            output += '<br />';
+        output += '<span class="mainwp-red">' + MainWP.I18n.t('No backup from the last days has a verified offsite copy for the following sites:') + '</span><br /><br />';
+        for (let id of offsiteSites) {
+            output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
+        }
+        output += '<br />' + MainWP.I18n.t("Backup all cannot add an offsite copy. Check each site's storage destination on the Snapshots & Restore page.");
+    }
+    mainwpPopup('#' + popupPrefix + '-backup-box').getContentEl().html(output);
+    return offsiteSites.length > 0 ? MainWP.I18n.t('Offsite backup required!') : MainWP.I18n.t('Full backup required!');
 }

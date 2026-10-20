@@ -201,6 +201,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Updated your plan', esc_html__( 'Updated your plan', 'mainwp' ) );
         $mainwp_backup_before_upgrade_days = MainWP_Updates_Overview::get_backup_before_upgrade_days();
         mainwp_add_translation( $mainwpTranslations, 'A full backup has not been taken in the last days for the following sites:', str_replace( '%1', '' . $mainwp_backup_before_upgrade_days, esc_html__( 'A full backup has not been taken in the last %1 days for the following sites:', 'mainwp' ) ) );
+        mainwp_add_translation( $mainwpTranslations, 'No backup from the last days has a verified offsite copy for the following sites:', str_replace( '%1', '' . $mainwp_backup_before_upgrade_days, esc_html__( 'No backup from the last %1 days has a verified offsite copy for the following sites:', 'mainwp' ) ) );
+        mainwp_add_translation( $mainwpTranslations, 'Backup all cannot add an offsite copy. Check each site\'s storage destination on the Snapshots & Restore page.', esc_html__( 'Backup all cannot add an offsite copy. Check each site\'s storage destination on the Snapshots & Restore page.', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Starting required backup(s).', esc_html__( 'Starting required backup(s).', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Required backup(s) complete', esc_html__( 'Required backup(s) complete', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Continue update anyway', esc_html__( 'Continue update anyway', 'mainwp' ) );
@@ -281,6 +283,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         mainwp_add_translation( $mainwpTranslations, 'Checking backup settings...', esc_html__( 'Checking backup settings...', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Proceed with Updates', esc_html__( 'Proceed with Updates', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Full backup required!', esc_html__( 'Full backup required!', 'mainwp' ) );
+        mainwp_add_translation( $mainwpTranslations, 'Offsite backup required!', esc_html__( 'Offsite backup required!', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Full backup', esc_html__( 'Full backup', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Starting required backup(s)...', esc_html__( 'Starting required backup(s)...', 'mainwp' ) );
         mainwp_add_translation( $mainwpTranslations, 'Required backup(s) completed', esc_html__( 'Required backup(s) completed', 'mainwp' ) );

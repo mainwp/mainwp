@@ -1469,8 +1469,14 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                     // provenance-aware evaluator the automatic-update cron
                     // gate uses (native snapshots, the legacy archive scan,
                     // and the offsite requirement), so a policy the cron
-                    // would enforce can no longer be waved through here.
-                    $output['sites'][ $siteId ] = MainWP_Backup_Executor::UPDATE_GATE_PASS === MainWP_Backup_Executor::evaluate_update_backup_gate( (int) $siteId, (int) $mainwp_backup_before_upgrade_days );
+                    // would enforce can no longer be waved through here. The
+                    // verdict also tells the box why a site is held.
+                    $verdict                    = MainWP_Backup_Executor::evaluate_update_backup_gate( (int) $siteId, (int) $mainwp_backup_before_upgrade_days );
+                    $output['sites'][ $siteId ] = MainWP_Backup_Executor::UPDATE_GATE_PASS === $verdict;
+                    $output['require_offsite']  = (bool) get_option( 'mainwp_backup_before_upgrade_require_offsite', 0 );
+                    if ( MainWP_Backup_Executor::UPDATE_GATE_PASS !== $verdict ) {
+                        $output['gate_verdicts'][ $siteId ] = $verdict;
+                    }
                 }
             }
         }

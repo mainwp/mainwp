@@ -54,8 +54,10 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const BUNDLE_TTL_SECONDS = 3600;
 
     /**
-     * Directory size cap in bytes (200MB); the prune deletes oldest-first
-     * past it.
+     * Size cap in bytes (200MB) for everything in the directory except
+     * bundles; the prune deletes oldest-first past it. Bundles stay outside
+     * it because they last at most BUNDLE_TTL_SECONDS and only an
+     * administrator's export writes them.
      */
     const RETENTION_CAP_BYTES = 209715200;
 
@@ -1482,9 +1484,9 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     }
 
     /**
-     * Retention prune: delete diagnostics files past the age limit, then
-     * oldest-first until the directory fits the size cap. Runs on the
-     * daily backups prune cron.
+     * Retention prune: delete bundles past their TTL, then other
+     * diagnostics files past the age limit, then those oldest-first until
+     * they fit the size cap. Runs on the daily backups prune cron.
      *
      * @return void
      */
@@ -1518,7 +1520,7 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 if ( ! is_file( $file ) || in_array( basename( $file ), array( 'index.php', '.htaccess' ), true ) ) {
                     continue;
                 }
-                // Active bundle downloads remain protected even at the event size cap.
+                // Bundles left after prune_bundles() are inside their TTL and may be mid-download.
                 if ( in_array( pathinfo( $file, PATHINFO_EXTENSION ), array( 'zip', 'json' ), true ) ) {
                     continue;
                 }

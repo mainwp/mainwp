@@ -2120,6 +2120,33 @@ class MainWP_Backup_Diagnostics_Test extends MainWP_Abilities_Test_Case {
 		$this->assertFileExists( $big_b, 'The newest file must survive the size-cap prune.' );
 	}
 
+	/** A fresh bundle neither counts toward the size cap nor gets evicted by it. */
+	public function test_size_cap_skips_bundles_inside_ttl() {
+		$this->enable_recorder();
+		$older  = $this->diag_dir . '/older.jsonl';
+		$newer  = $this->diag_dir . '/newer.jsonl';
+		$bundle = $this->diag_dir . '/fresh.zip';
+		file_put_contents( $older, str_repeat( 'x', 100 ) . "\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		file_put_contents( $newer, str_repeat( 'x', 100 ) . "\n" ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		file_put_contents( $bundle, str_repeat( 'x', 1000 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- test fixture.
+		touch( $older, time() - 2 * HOUR_IN_SECONDS );
+		touch( $newer, time() - HOUR_IN_SECONDS );
+		touch( $bundle, time() - 60 );
+
+		add_filter(
+			'mainwp_backup_diagnostics_cap_bytes',
+			function () {
+				return 250;
+			}
+		);
+
+		MainWP_Backup_Diagnostics::instance()->prune();
+
+		$this->assertFileExists( $bundle, 'A bundle inside its TTL must survive the size-cap prune.' );
+		$this->assertFileExists( $older, 'Event files under the cap must not be evicted by a bundle.' );
+		$this->assertFileExists( $newer );
+	}
+
 	/** Bundle links expire long before the event retention window. */
 	public function test_prune_expires_bundles_without_expiring_recent_events() {
 		$this->enable_recorder();

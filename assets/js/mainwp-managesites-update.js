@@ -692,8 +692,12 @@ globalThis.mainwp_managesites_prepare_backup_popup = function (response, pSiteNa
     }
 
     // The box is reused on the same page, so every button is set for this
-    // reply rather than left as the last box had it.
+    // reply rather than left as the last box had it. An <input type="button">
+    // writes .val() through to its value attribute, so the markup label is
+    // kept before the first change; defaultValue would return the last one.
     let ignoreButton = jQuery('#' + popupPrefix + '-backup-ignore');
+    if (ignoreButton.data('mainwp-label') === undefined)
+        ignoreButton.data('mainwp-label', ignoreButton.val());
     jQuery('#' + popupPrefix + '-backup-all').hide();
     if (nativeMissing)
         jQuery('#' + popupPrefix + '-backup-all').show();
@@ -703,7 +707,7 @@ globalThis.mainwp_managesites_prepare_backup_popup = function (response, pSiteNa
         ignoreButton.val(MainWP.I18n.t('Proceed with Updates')).show();
     } else {
         jQuery('#' + popupPrefix + '-backup-now').hide();
-        ignoreButton.val(ignoreButton.prop('defaultValue')).show();
+        ignoreButton.val(ignoreButton.data('mainwp-label')).show();
     }
 
     let output = '';

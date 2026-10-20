@@ -46,11 +46,30 @@ function harness() {
                     show() { this.visible = true; return this; },
                     hide() { this.visible = false; return this; },
                     attr( key, value ) { this[ key ] = value; return this; },
-                    prop( key ) { return this[ key ]; },
-                    val( value ) { this.value = value; return this; }
+                    data( key, ...value ) {
+                        this.stored = this.stored || {};
+                        if ( value.length === 0 ) {
+                            return this.stored[ key ];
+                        }
+                        this.stored[ key ] = value[ 0 ];
+                        return this;
+                    },
+                    val( ...value ) {
+                        if ( value.length === 0 ) {
+                            return this.value;
+                        }
+                        this.value = value[ 0 ];
+                        // An <input type="button"> writes .value through to its
+                        // value attribute, so defaultValue follows it.
+                        if ( this.reflectsValue ) {
+                            this.defaultValue = value[ 0 ];
+                        }
+                        return this;
+                    }
                 };
                 if ( selector.endsWith( '-backup-ignore' ) ) {
                     el.value = el.defaultValue = 'Ignore';
+                    el.reflectsValue = true;
                 }
                 elements.set( selector, el );
             }

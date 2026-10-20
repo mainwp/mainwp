@@ -21,6 +21,8 @@ class MainWP_Backup_Archive_Mtime_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( method_exists( MainWP_Backup_Executor::class, 'latest_backup_archive_mtime' ), 'The pure archive mtime scan must exist.' );
 		$site_id = $this->create_test_site();
 		$dir     = MainWP_Backup_Private_Root::legacy_site_dir( $site_id );
+		// Site ids repeat across runs of the shared test database, so the directory may already hold an earlier run's files.
+		$created = ! is_dir( $dir );
 		wp_mkdir_p( $dir );
 		$archive = $dir . 'mtime-fixture.zip';
 		$sql     = $dir . 'mtime-fixture.sql.gz';
@@ -37,7 +39,9 @@ class MainWP_Backup_Archive_Mtime_Test extends MainWP_Abilities_Test_Case {
 		} finally {
 			unlink( $archive );
 			unlink( $sql );
-			rmdir( $dir );
+			if ( $created ) {
+				rmdir( $dir );
+			}
 		}
 	}
 }

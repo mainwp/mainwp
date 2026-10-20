@@ -506,6 +506,33 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 		}
 	}
 
+	/** The request-host fallback for a site without url still refuses a redirect to another host. */
+	public function test_empty_site_url_refuses_cross_host_redirect(): void {
+		$token   = 'mainwp-redirect-' . bin2hex( random_bytes( 8 ) );
+		$marker  = sys_get_temp_dir() . '/' . $token;
+		$file    = $this->temp_download_path();
+		$website = (object) array(
+			'id'  => 42,
+			'url' => '',
+		);
+		try {
+			try {
+				MainWP_Connect::download_to_file( static::fixture_url( '/redirect-other-host?marker=' . $token ), $file, 4096, null, null, $website );
+				$this->fail( 'The redirect was accepted.' );
+			} catch ( MainWP_Exception $error ) {
+				$this->assertSame( 'mainwp_backup_http_error', $error->get_message_error_code() );
+			}
+			$this->assertFileDoesNotExist( $marker, 'cURL contacted the redirect target.' );
+			$this->assertFileDoesNotExist( $file );
+		} finally {
+			foreach ( array( $file, $marker ) as $path ) {
+				if ( is_file( $path ) ) {
+					unlink( $path );
+				}
+			}
+		}
+	}
+
 	/** Final-host validation must not permit an earlier request to another host. */
 	public function test_cross_host_redirect_is_refused_before_contact(): void {
 		$token  = 'mainwp-redirect-' . bin2hex( random_bytes( 8 ) );

@@ -199,7 +199,7 @@ class Test_Dashboard_Settings_Writers_Rights extends \WP_UnitTestCase {
         update_option( 'mainwp_backupsOnServer', 2 );
         $_POST = array(
             'submit'                        => '1',
-            'wp_nonce'                      => wp_create_nonce( 'Settings' ),
+            'wp_nonce'                      => wp_create_nonce( 'BackupSettings' ),
             'mainwp_options_backupOnServer' => '7',
         );
         $this->settings_right( $allowed );

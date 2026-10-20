@@ -252,7 +252,11 @@ for ( const kind of [ 'running', 'queued', 'completed', 'failed', 'error', 'tran
         finishPoll( request, kind, h );
         if ( [ 'running', 'queued' ].includes( kind ) ) {
             assert.equal( h.timers.size, 1 ); assert.equal( lastStatus( h ), kind === 'queued' ? QUEUED : 'Backing up...' );
-        } else assertEnded( h, kind === 'completed' ? 'Backup complete.' : kind === 'failed' ? 'Backup failed.' : kind === 'error' ? 'Progress refused' : 'Lost the connection while backing up. The backup may still be running; reload to check.' );
+        } else {
+            assertEnded( h, kind === 'completed' ? 'Backup complete.' : kind === 'failed' ? 'Backup failed.' : kind === 'error' ? 'Progress refused' : 'Lost the connection while backing up. The backup may still be running; reload to check.' );
+            // The backup may still be running after a lost connection, so only that end keeps Cancel.
+            assert.equal( h.context.$( CANCEL ).visible, kind === 'transport4', 'Cancel visibility after the follow ended.' );
+        }
     } );
 }
 row( 'POLL-retry-reset', h => {
@@ -462,5 +466,59 @@ row( 'RETAINED-cleared-by-cancel', h => {
     h.requests.at( -1 ).success( { manual_backup_running: false } );
     assertEnded( h, 'Backup cancelled.' );
     assert.equal( Object.hasOwn( h.context.backupPendingStarts, 7 ), false );
+} );
+function assertCancelHeld( h ) {
+    assert.equal( h.context.$( CANCEL ).visible, true );
+    assert.equal( h.context.$( CANCEL ).prop( 'disabled' ), true, 'A cancel in flight keeps the button off.' );
+    const count = h.requests.length;
+    h.click( CANCEL );
+    assert.equal( h.requests.length, count, 'No second cancel while the first is in flight.' );
+}
+row( 'CANCEL-inflight-kickoff-reply', h => {
+    h.click( NOW ); const kickoff = h.requests.at( -1 );
+    h.click( CANCEL ); const cancel = h.requests.at( -1 );
+    replyKick( kickoff, 'started' ); assertCancelHeld( h );
+    cancel.success( { result: 'cancelled' } );
+    h.requests.at( -1 ).success( { manual_backup_running: false } );
+    assertEnded( h, 'Backup cancelled.' );
+    assert.equal( h.context.$( CANCEL ).visible, false );
+} );
+row( 'CANCEL-inflight-list-reply', h => {
+    running( h ).success( { status: 'running' } );
+    h.click( CANCEL ); const cancel = h.requests.at( -1 );
+    h.list( { manual_backup_running: true } ); assertCancelHeld( h );
+    cancel.success( { result: 'cancelled' } );
+    h.requests.at( -1 ).success( { manual_backup_running: false } );
+    assertEnded( h, 'Backup cancelled.' );
+    assert.equal( h.context.$( CANCEL ).visible, false );
+} );
+row( 'CANCEL-inflight-busy-reenables', h => {
+    running( h ).success( { status: 'running' } );
+    h.click( CANCEL ); const cancel = h.requests.at( -1 );
+    h.list( { manual_backup_running: true } ); assertCancelHeld( h );
+    cancel.success( { result: 'busy' } );
+    assert.equal( h.context.$( CANCEL ).prop( 'disabled' ), false, 'A kept follow gets its Cancel back.' );
+    assertFollowing( h );
+} );
+row( 'LIST-request-holds-kickoff', h => {
+    h.click( NOW ); h.switchSite( 8 ); h.switchSite( 7 );
+    const list = h.requestList(), count = h.requests.length;
+    assert.equal( h.context.$( NOW ).prop( 'disabled' ), true, 'The pending kickoff holds Back Up Now before the list answers.' );
+    h.click( NOW ); assert.equal( h.requests.length, count, 'No second kickoff while the first is pending.' );
+    list.success( { manual_backup_running: false } );
+    replyKick( h.requests[0], 'queued' ); assertFollowing( h );
+} );
+row( 'KICK-older-click-dropped', h => {
+    h.click( NOW ); const older = h.requests.at( -1 );
+    // The controls hold while a kickoff is pending; force the button to prove the reply guard on its own.
+    h.context.$( NOW ).prop( 'disabled', false ).removeClass( 'disabled' );
+    h.click( NOW ); const newer = h.requests.at( -1 );
+    newer.success( { status: 'queued', started: 200 } );
+    const timersBefore = [ ...h.timers.entries() ], before = h.calls.slice();
+    older.success( { status: 'started', started: 100 } );
+    assert.deepEqual( h.calls, before, 'The older kickoff reply must not repaint.' );
+    assert.deepEqual( [ ...h.timers.entries() ], timersBefore, 'The newer chain must not be replaced.' );
+    assert.equal( h.context.backupPendingStarts[7], 200 );
+    h.next(); assert.equal( h.requests.at( -1 ).data.since, 200 );
 } );
 for ( const { id, run } of rows ) test( 'matrix ' + id, () => run( harness() ) );

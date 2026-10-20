@@ -459,6 +459,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var backupClickEpoch = {};
             var backupCancelledEpoch = {};
             var backupPendingKickoffs = {};
+            var backupCancelPending = {};
+            var backupCancelSeq = 0;
             var backupPendingStarts = {};
             var backupElapsedTimer = null;
             var backupStartTime = null;
@@ -1026,6 +1028,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 currentSite = siteId;
                 if ( siteId > 0 ) {
                     enableSnapshotControls( true );
+                    // A kickoff still in flight owns the controls, or a second
+                    // click could start a run its older reply then replaces.
+                    if ( ( backupPendingKickoffs[ siteId ] || 0 ) > ( backupCancelledEpoch[ siteId ] || 0 ) ) {
+                        setBackupFollowControls();
+                    }
                 }
                 setSnapshotsPlaceholder( snapshotsPlaceholders.loading );
                 snapshotsTable.clear().draw();
@@ -1704,7 +1711,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // Offer "Cancel backup" while a run is in flight, or after the child
             // refuses a new backup because a prior task is still stuck on it.
             function showCancelBackup( show ) {
-                $( '#mainwp-native-backup-cancel-btn' ).css( 'display', show ? '' : 'none' ).prop( 'disabled', false ).removeClass( 'disabled' );
+                // A cancel already in flight keeps the button off: a second
+                // cancel could land after the first ended the follow and
+                // repaint over "Backup cancelled.".
+                var pending = !! ( show && backupCancelPending[ currentSite ] );
+                $( '#mainwp-native-backup-cancel-btn' ).css( 'display', show ? '' : 'none' ).prop( 'disabled', pending ).toggleClass( 'disabled', pending );
             }
 
             // Cancel only applies when the blocker is an active or stuck backup
@@ -1768,6 +1779,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         stopBackupTimers();
                         setBackupStatus( data.error, true );
                         reenableBackupBtn();
+                        showCancelBackup( false );
                         loadSnapshots( siteId );
                         return;
                     }
@@ -1851,6 +1863,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // click spawns is keyed to it, so a selection change can
                 // never redirect this run's follow-up at another site.
                 var siteId = currentSite;
+                // An older cancel cannot end this click, so it no longer
+                // holds the Cancel button for the new follow.
+                delete backupCancelPending[ siteId ];
                 setBackupFollowControls();
                 stopBackupTimers();
                 // Click order keeps a late cancel from discarding a newer kickoff.
@@ -1870,7 +1885,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( backupPendingKickoffs[ siteId ] === clickEpoch ) {
                         delete backupPendingKickoffs[ siteId ];
                     }
-                    if ( clickEpoch <= ( backupCancelledEpoch[ siteId ] || 0 ) ) {
+                    // A cancel since this click, or a newer click, owns the follow.
+                    if ( clickEpoch <= ( backupCancelledEpoch[ siteId ] || 0 ) || clickEpoch < backupClickEpoch[ siteId ] ) {
                         return;
                     }
                     // Keep the intent through switches until a progress reply
@@ -1912,7 +1928,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     if ( backupPendingKickoffs[ siteId ] === clickEpoch ) {
                         delete backupPendingKickoffs[ siteId ];
                     }
-                    if ( siteId !== currentSite || clickEpoch <= ( backupCancelledEpoch[ siteId ] || 0 ) ) {
+                    if ( siteId !== currentSite || clickEpoch <= ( backupCancelledEpoch[ siteId ] || 0 ) || clickEpoch < backupClickEpoch[ siteId ] ) {
                         return;
                     }
                     // The kickoff request never reached the handler, so nothing
@@ -1936,9 +1952,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // let its response repaint another site's controls.
                 var siteId = currentSite;
                 var epochAtCancel = backupClickEpoch[ siteId ] || 0;
+                var cancelToken = ++backupCancelSeq;
+                backupCancelPending[ siteId ] = cancelToken;
                 $( this ).prop( 'disabled', true ).addClass( 'disabled' );
                 setBackupStatus( '<?php echo esc_js( esc_html__( 'Cancelling backup...', 'mainwp' ) ); ?>', false );
                 $.post( ajaxurl, { action: 'mainwp_native_backup_cancel', security: nonces.nativeBackupCancel, site_id: siteId }, function ( response ) {
+                    if ( backupCancelPending[ siteId ] === cancelToken ) {
+                        delete backupCancelPending[ siteId ];
+                    }
                     var cancelResult = window.MainWPBackupCancelResult.describeCancelResult( response.result );
                     var newerClick = ( backupClickEpoch[ siteId ] || 0 ) > epochAtCancel;
                     if ( ! response.error && ! cancelResult.keepPolling ) {
@@ -1972,6 +1993,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                     }
                 }, 'json' ).fail( function () {
+                    if ( backupCancelPending[ siteId ] === cancelToken ) {
+                        delete backupCancelPending[ siteId ];
+                    }
                     if ( siteId !== currentSite || ( backupClickEpoch[ siteId ] || 0 ) > epochAtCancel ) {
                         return;
                     }

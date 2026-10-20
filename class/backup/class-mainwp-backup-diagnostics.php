@@ -56,8 +56,9 @@ class MainWP_Backup_Diagnostics { // phpcs:ignore Generic.Classes.OpeningBraceSa
     /**
      * Size cap in bytes (200MB) for everything in the directory except
      * bundles; the prune deletes oldest-first past it. Bundles stay outside
-     * it because they last at most BUNDLE_TTL_SECONDS and only an
-     * administrator's export writes them.
+     * it because every export and the daily prune first sweep bundles older
+     * than BUNDLE_TTL_SECONDS, so at most one hour's administrator exports
+     * are on disk after either.
      */
     const RETENTION_CAP_BYTES = 209715200;
 

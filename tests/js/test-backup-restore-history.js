@@ -20,7 +20,7 @@ function harness( jobs, canRestore = true ) {
 		'<button type="button" class="ui mini basic button mainwp-restore-failed-job"></button>'
 	] );
 	const context = {
-		canRestore, currentSite: 1, currentJob: 0, backupPollTimer: null, backupFollowGen: 0, backupPendingKickoffs: {}, backupCancelledEpoch: {}, backupPendingStarts: {}, siteDisconnected: false,
+		canRestore, currentSite: 1, currentJob: 0, backupPollTimer: null, backupFollowGen: 0, backupFollowStops: 0, backupPendingKickoffs: {}, backupCancelledEpoch: {}, backupPendingStarts: {}, siteDisconnected: false,
 		ajaxurl: '/admin-ajax.php', nonces: { list: 'list-nonce' }, snapshotsPlaceholders: {},
 		statusLabels: { failed_permanent: 'Failed', cancelled: 'Cancelled', completed: 'Completed' },
 		rollbackStatusLabels: { failed_permanent: 'Rollback failed' },

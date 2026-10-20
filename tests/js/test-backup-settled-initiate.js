@@ -26,6 +26,7 @@ function callback() {
     vm.createContext( context );
     const schedule = source.indexOf( 'function scheduleBackupPoll(' );
     context.backupFollowGen = 0;
+    context.backupFollowStops = 0;
     context.backupPollTimer = null;
     context.window.clearTimeout = () => {};
     vm.runInContext( source.slice( schedule, source.indexOf( '\n            }', schedule ) + '\n            }'.length ), context );

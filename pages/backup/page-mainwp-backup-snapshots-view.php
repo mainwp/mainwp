@@ -456,6 +456,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var restorePollRetries = 0;
             var backupPollTimer = null;
             var backupFollowGen = 0;
+            var backupFollowStops = 0;
             var backupClickEpoch = {};
             var backupCancelledEpoch = {};
             var backupPendingKickoffs = {};
@@ -583,6 +584,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             function stopBackupTimers() {
                 backupFollowGen++;
+                // Unlike backupFollowGen, rescheduling a poll does not count:
+                // a cancel reply compares this to learn the follow ended.
+                backupFollowStops++;
                 window.clearTimeout( backupPollTimer );
                 // Null the handle too: the reload/switch resume in
                 // loadSnapshots is gated on `! backupPollTimer`, and a stale
@@ -1952,6 +1956,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 // let its response repaint another site's controls.
                 var siteId = currentSite;
                 var epochAtCancel = backupClickEpoch[ siteId ] || 0;
+                var stopsAtCancel = backupFollowStops;
                 var cancelToken = ++backupCancelSeq;
                 backupCancelPending[ siteId ] = cancelToken;
                 $( this ).prop( 'disabled', true ).addClass( 'disabled' );
@@ -1970,6 +1975,14 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         }
                     }
                     if ( siteId !== currentSite || newerClick ) {
+                        return;
+                    }
+                    // The run can finish while the cancel is in flight. Its
+                    // end status then stands over "not running", "busy" and
+                    // "already finished" replies, which would only repaint it.
+                    if ( backupFollowStops !== stopsAtCancel && 'cancelled' !== response.result ) {
+                        // A lost-connection end keeps Cancel shown; leave it usable.
+                        $( '#mainwp-native-backup-cancel-btn' ).prop( 'disabled', false ).removeClass( 'disabled' );
                         return;
                     }
                     if ( response.error ) {

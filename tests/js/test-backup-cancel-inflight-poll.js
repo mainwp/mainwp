@@ -521,4 +521,31 @@ row( 'KICK-older-click-dropped', h => {
     assert.equal( h.context.backupPendingStarts[7], 200 );
     h.next(); assert.equal( h.requests.at( -1 ).data.since, 200 );
 } );
+for ( const [ end, result ] of [ [ 'completed', 'not_running' ], [ 'completed', 'busy' ], [ 'completed', 'already_finished' ], [ 'completed', 'already_failed' ], [ 'failed', 'already_failed' ] ] ) {
+    row( 'CANCEL-after-end-' + end + '-' + result, h => {
+        h.click( NOW ); replyKick( h.requests[0], 'started' );
+        h.next(); h.requests.at( -1 ).success( { status: 'running' } );
+        h.next(); const finalPoll = h.requests.at( -1 );
+        h.click( CANCEL ); const cancel = h.requests.at( -1 );
+        finishPoll( finalPoll, end, h );
+        h.requests.at( -1 ).success( { manual_backup_running: false } );
+        const count = h.requests.length;
+        cancel.success( { result } );
+        assertEnded( h, end === 'completed' ? 'Backup complete.' : 'Backup failed.' );
+        assert.equal( h.requests.length, count, 'A cancel reply after the end must not start a poll.' );
+        assert.equal( h.context.$( CANCEL ).visible, false );
+        assert.equal( h.context.$( NOW ).prop( 'disabled' ), false );
+    } );
+}
+row( 'CANCEL-after-end-transport4-busy', h => {
+    let request = running( h );
+    request.success( { status: 'running' } ); h.next(); request = h.requests.at( -1 );
+    h.click( CANCEL ); const cancel = h.requests.at( -1 );
+    finishPoll( request, 'transport4', h );
+    h.requests.at( -1 ).success( { manual_backup_running: true } );
+    cancel.success( { result: 'busy' } );
+    assert.equal( lastStatus( h ), 'Lost the connection while backing up. The backup may still be running; reload to check.' );
+    assert.equal( h.context.$( CANCEL ).visible, true );
+    assert.equal( h.context.$( CANCEL ).prop( 'disabled' ), false, 'Cancel stays usable after a lost-connection end.' );
+} );
 for ( const { id, run } of rows ) test( 'matrix ' + id, () => run( harness() ) );

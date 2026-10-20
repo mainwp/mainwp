@@ -2382,7 +2382,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             return $error;
         }
         $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
-        $keep = $keep ?? ( ! empty( $task->retention_count ) ? (int) $task->retention_count : MainWP_Backup_Settings::get_on_demand_retention_count() );
+        $keep = $keep ?? ( $task ? MainWP_Backup_Settings::task_retention_count( $task ) : MainWP_Backup_Settings::get_on_demand_retention_count() );
         $plan = MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep );
         return self::backup_preview(
             array(

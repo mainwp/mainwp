@@ -215,7 +215,7 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
         $now = null === $now ? time() : $now;
 
         $units  = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $site_id, (int) $task->id );
-        $policy = new MainWP_Backup_Retention_Policy( (int) $task->retention_count, (int) $task->retention_days, (int) $task->retention_storage_mb );
+        $policy = new MainWP_Backup_Retention_Policy( MainWP_Backup_Settings::task_retention_count( $task ), (int) $task->retention_days, (int) $task->retention_storage_mb );
 
         $candidates = $policy->evaluate( $units, $now );
         if ( empty( $candidates ) ) {

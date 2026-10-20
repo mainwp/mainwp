@@ -70,6 +70,8 @@ class MainWP_Backup_Cleanup_Test extends MainWP_Abilities_Test_Case {
 		}
 		$this->fixture_dirs = array();
 
+		delete_option( 'mainwp_on_demand_retention_count' );
+
 		parent::tear_down();
 	}
 
@@ -263,12 +265,13 @@ class MainWP_Backup_Cleanup_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * A null keep falls back to the task's own retention count.
+	 * A lowered live setting applies before another on-demand backup runs.
 	 *
 	 * @return void
 	 */
-	public function test_cleanup_default_keep_uses_task_retention_count() {
-		$task = $this->make_manual_task( 2 );
+	public function test_cleanup_default_keep_uses_live_retention_count() {
+		update_option( 'mainwp_on_demand_retention_count', 2 );
+		$task = $this->make_manual_task( 25 );
 
 		list( $old_id ) = $this->make_snapshot_with_dir(
 			array(

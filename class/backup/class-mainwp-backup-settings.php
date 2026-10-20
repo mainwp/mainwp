@@ -271,6 +271,16 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Hidden rows must follow setting changes before their next backup.
+     *
+     * @param object $task Task row.
+     * @return int Retention count for this policy evaluation.
+     */
+    public static function task_retention_count( object $task ): int {
+        return ! empty( $task->template ) ? self::get_on_demand_retention_count() : (int) $task->retention_count;
+    }
+
+    /**
      * Method get_manual_run_settle_seconds()
      *
      * How long after a successful close an on-demand run refuses to

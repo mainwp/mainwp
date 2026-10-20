@@ -11358,10 +11358,11 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		MainWP_DB_Backup::instance()->update_backup_task_with_values(
 			(int) $task->id,
 			array(
-				'retention_count'     => 1,
 				'delete_cloud_copies' => 0,
 			)
 		);
+		// The hidden row's keep count follows the live on-demand setting.
+		update_option( 'mainwp_on_demand_retention_count', 1 );
 		$dir = MainWP_Backup_Private_Root::site_dir( $this->site_id );
 		wp_mkdir_p( $dir );
 		$ids = array();
@@ -11402,6 +11403,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 		} finally {
 			remove_filter( 'query', $race );
 			MainWP_DB_Backup::instance()->remove_backup_task( (int) $task->id );
+			delete_option( 'mainwp_on_demand_retention_count' );
 		}
 
 		$this->assertSame( 'Another backup action is working on this site. Try again in a minute.', $admitted );

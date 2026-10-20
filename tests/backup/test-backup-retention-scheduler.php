@@ -149,6 +149,45 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Hidden policies follow settings while scheduled policies retain their count.
+	 *
+	 * @dataProvider task_count_cases
+	 * @param int $template Hidden-row flag.
+	 * @param int $pruned Expected oldest units removed.
+	 */
+	public function test_daily_prune_uses_live_count_only_for_hidden_tasks( $template, $pruned ) {
+		update_option( 'mainwp_on_demand_retention_count', 5 );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$task_id = $this->insert_task(
+			array(
+				'template'        => $template,
+				'retention_count' => 25,
+			)
+		);
+		$ids     = array();
+		for ( $index = 0; $index < 7; ++$index ) {
+			$ids[] = $this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 700 + 100 * $index ) );
+		}
+		MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
+		foreach ( $ids as $index => $id ) {
+			$this->assertSame( $index < $pruned ? 'pruned' : 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+		}
+		delete_option( 'mainwp_on_demand_retention_count' );
+	}
+
+	/**
+	 * Task policy owners.
+	 *
+	 * @return array
+	 */
+	public static function task_count_cases() {
+		return array(
+			'hidden'    => array( 1, 2 ),
+			'scheduled' => array( 0, 0 ),
+		);
+	}
+
+	/**
 	 * A recorded snapshot queues its pair only when the task carries a
 	 * policy, and the queue deduplicates.
 	 *

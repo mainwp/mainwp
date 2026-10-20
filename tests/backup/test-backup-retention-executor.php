@@ -154,6 +154,112 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Cleanup's default and explicit count must select the same units as its preview.
+	 *
+	 * @dataProvider cleanup_count_cases
+	 * @param int|null $keep Explicit override.
+	 * @param int      $count Expected retained count.
+	 */
+	public function test_cleanup_and_preview_use_live_hidden_count_with_override( $keep, $count ) {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( 'mainwp_on_demand_retention_count', 5 );
+		$this->site_id = $this->create_test_site();
+		$db            = \MainWP\Dashboard\MainWP_DB_Backup::instance();
+		$task          = $db->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $this->site_id ) );
+		$db->update_backup_task_with_values( $task->id, array( 'retention_count' => 25 ) );
+		$ids = array();
+		for ( $index = 0; $index < 7; ++$index ) {
+			list( $ids[] ) = $this->make_snapshot_with_dir(
+				array(
+					'task_id' => $task->id,
+					'created' => time() - 700 + 100 * $index,
+				)
+			);
+		}
+		$executor = MainWP_Backup_Retention_Executor::instance();
+		$plan     = $executor->plan_site_cleanup( $this->site_id, $keep );
+		$preview  = \MainWP\Dashboard\MainWP_Backup_Operations::preview_site_cleanup( $this->site_id, $keep );
+		$this->assertIsArray( $preview );
+		$this->assertSame( $count, $preview['would_affect']['keep'] );
+		$this->assertSame( $plan['on_demand_units'], $preview['would_affect']['on_demand_units'] );
+		$selected = array_merge( array(), ...array_column( $plan['on_demand_units'], 'snapshot_ids' ) );
+		sort( $selected );
+		$this->assertSame( array_slice( $ids, 0, 7 - $count ), $selected );
+		$result = $executor->cleanup_site_backups( $this->site_id, $keep );
+		$this->assertSame( 7 - $count, $result['pruned'] );
+		foreach ( $ids as $index => $id ) {
+			$this->assertSame( $index < 7 - $count ? 'pruned' : 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+		}
+		delete_option( 'mainwp_on_demand_retention_count' );
+	}
+
+	/**
+	 * Cleanup count precedence.
+	 *
+	 * @return array
+	 */
+	public static function cleanup_count_cases() {
+		return array(
+			'live default'      => array( null, 5 ),
+			'explicit override' => array( 6, 6 ),
+		);
+	}
+
+	/** An open incremental run keeps its parent units despite a lowered setting. */
+	public function test_live_hidden_count_preserves_units_held_by_open_run() {
+		$db   = \MainWP\Dashboard\MainWP_DB_Backup::instance();
+		$task = $db->add_backup_task( 1, 'Open retention run', 'manual', 'incremental', '', (string) $this->site_id, '', '', '', 1, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0, $this->site_id );
+		$run  = time();
+		$db->update_backup_task_with_values(
+			$task->id,
+			array(
+				'last_run'        => $run,
+				'completed'       => 0,
+				'retention_count' => 25,
+			)
+		);
+		$db->add_backup_task_progress( $task->id, $this->site_id, array() );
+		$db->update_backup_task_progress(
+			$task->id,
+			$this->site_id,
+			array(
+				'dtsFetched'           => $run,
+				'child_backup_task_id' => 'open-retention-run',
+				'child_phase'          => '',
+			)
+		);
+		update_option( 'mainwp_on_demand_retention_count', 1 );
+		list( $old, $dir ) = $this->make_snapshot_with_dir(
+			array(
+				'task_id' => $task->id,
+				'created' => $run - 200,
+			)
+		);
+		list( $new )       = $this->make_snapshot_with_dir(
+			array(
+				'task_id' => $task->id,
+				'created' => $run - 100,
+			)
+		);
+		$task              = $db->get_backup_task_by_id( $task->id );
+		try {
+			$daily   = \MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::instance()->run_retention_for_pair( $task, $this->site_id );
+			$cleanup = MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $this->site_id );
+			$this->assertSame( array(), $daily['deleted_ids'] );
+			$this->assertSame( array( $old ), $daily['remaining_ids'], 'The live count must reach the existing open-run guard.' );
+			$this->assertSame( 0, $cleanup['pruned'] );
+			$this->assertNotEmpty( $cleanup['errors'] );
+			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $old )->status );
+			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $new )->status );
+			$this->assertFileExists( $dir . '/artifact.tar' );
+		} finally {
+			$db->remove_backup_task( $task->id );
+			delete_option( 'mainwp_on_demand_retention_count' );
+		}
+	}
+
+	/**
 	 * Insert a completed upload job row carrying a checkpoint.
 	 *
 	 * @param int $snapshot_id    Snapshot id.

@@ -3,7 +3,7 @@
  * MainWP Backup Cloud Delete Driver.
  *
  * Drains the resumable cloud delete jobs retention enqueues for pruned
- * snapshots. Each cron tick acquires one runnable kind=delete job under
+ * snapshots. Each cron tick acquires runnable kind=delete jobs under
  * a lease lock and works within a time budget: walk the checkpointed
  * key list through the destination provider (deletes are idempotent, a
  * missing key counts as success), then sweep the snapshot's remote
@@ -78,7 +78,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * Acquire and run one pending cloud delete job within a time budget.
+     * Drain pending cloud delete jobs within a shared time budget.
      * Rides the backups-continue cron lane after the upload driver.
      *
      * @param int      $budget_seconds Work budget for this tick.
@@ -87,25 +87,27 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
      * @return void
      */
     public function process_pending_delete_jobs( int $budget_seconds = self::DEFAULT_BUDGET_SECONDS, ?int $now = null ): void {
-        $now   = null === $now ? time() : $now;
-        $store = MainWP_Backup_Upload_Job_Store::instance();
-        $token = uniqid( 'delete_', true );
-
+        $now           = null === $now ? time() : $now;
+        $store         = MainWP_Backup_Upload_Job_Store::instance();
+        $deadline      = microtime( true ) + $budget_seconds;
         $lease_seconds = max( 300, $budget_seconds + 60 );
 
-        $job = $store->acquire_next_job( $token, $lease_seconds, $now, MainWP_Backup_Upload_Job_Store::KIND_DELETE );
-        if ( null === $job ) {
-            return;
-        }
+        do {
+            $token = uniqid( 'delete_', true );
+            $job   = $store->acquire_next_job( $token, $lease_seconds, $now, MainWP_Backup_Upload_Job_Store::KIND_DELETE );
+            if ( null === $job ) {
+                return;
+            }
 
-        $this->lock_token    = $token;
-        $this->lease_seconds = $lease_seconds;
-        try {
-            $this->run_job( $job, microtime( true ) + $budget_seconds, $now );
-        } finally {
-            $this->lock_token = null;
-            $store->release_lock( (int) $job->id, $token );
-        }
+            $this->lock_token    = $token;
+            $this->lease_seconds = $lease_seconds;
+            try {
+                $finished = $this->run_job( $job, $deadline, $now );
+            } finally {
+                $this->lock_token = null;
+                $store->release_lock( (int) $job->id, $token );
+            }
+        } while ( $finished && microtime( true ) < $deadline );
     }
 
     /**
@@ -136,27 +138,27 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
      *
      * @throws \RuntimeException When a provider refuses a delete, handled as a job failure.
      *
-     * @return void
+     * @return bool False when an unfinished walk must yield this tick.
      */
-    private function run_job( object $job, float $deadline, int $now ): void {
+    private function run_job( object $job, float $deadline, int $now ): bool {
         $store = MainWP_Backup_Upload_Job_Store::instance();
 
         $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
         if ( null === $destination ) {
             $store->fail_permanent( (int) $job->id, 'Storage destination was deleted; its objects are unreachable.', $this->lock_token );
-            return;
+            return true;
         }
 
         if ( $destination->credentials_invalid ) {
             $store->invalidate_credentials( (int) $job->id, 'Stored credentials no longer decrypt; re-enter them on the destination.', $this->lock_token );
-            return;
+            return true;
         }
 
         try {
             $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
         } catch ( \RuntimeException $e ) {
             $store->fail_permanent( (int) $job->id, $e->getMessage(), $this->lock_token );
-            return;
+            return true;
         }
 
         try {
@@ -168,12 +170,12 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
             for ( $i = $cursor; $i < $total; $i++ ) {
                 if ( microtime( true ) >= $deadline ) {
                     $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
-                    return;
+                    return false;
                 }
                 // Renew across the blocking provider delete; a reclaimed
                 // lease stops the walk instead of racing the new holder.
                 if ( ! $this->lease_still_held( $job ) ) {
-                    return;
+                    return false;
                 }
 
                 if ( empty( $keys[ $i ]['deleted'] ) && ! empty( $keys[ $i ]['key'] ) ) {
@@ -189,7 +191,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
 
             if ( empty( $checkpoint['swept'] ) ) {
                 if ( ! $this->sweep_prefix( $job, $checkpoint, $provider, $deadline ) ) {
-                    return; // Deadline or lost lease; the sweep restarts next tick - deletes are idempotent.
+                    return false; // Deadline or lost lease; the sweep restarts next tick - deletes are idempotent.
                 }
                 $checkpoint['swept'] = true;
                 $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
@@ -199,6 +201,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
         } catch ( \Throwable $e ) {
             $this->handle_failure( $job, $destination, $e, $now );
         }
+        return true;
     }
 
     /**

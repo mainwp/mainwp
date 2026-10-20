@@ -233,6 +233,192 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 		$this->assertFileDoesNotExist( $base . '/' . $prefix . 'manifest.json' );
 	}
 
+	/** A short local delete must leave time for the remaining jobs. */
+	public function test_one_tick_drains_three_jobs_with_distinct_released_leases() {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$tokens                 = array();
+		$capture                = static function ( $sql ) use ( &$tokens ) {
+			if ( str_contains( $sql, 'SET reclaim_count = CASE' ) && preg_match( "/locked_by = '([^']+)'/", $sql, $matches ) ) {
+				$tokens[] = $matches[1];
+			}
+			return $sql;
+		};
+		foreach ( array( 980020, 980021, 980022 ) as $id ) {
+			$prefix = '5/' . $id . '/';
+			$this->write_remote_objects( $base, $prefix, array( 'manifest.json' ) );
+			$this->enqueue_delete( $id, $dest_id, $prefix, array( $prefix . 'manifest.json' ) );
+		}
+		add_filter( 'query', $capture );
+		try {
+			MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
+		} finally {
+			remove_filter( 'query', $capture );
+		}
+		foreach ( array( 980020, 980021, 980022 ) as $id ) {
+			$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id, 'delete' )[0];
+			$this->assertSame( 'complete', $job->status );
+			$this->assertSame( 0, (int) $job->locked_until );
+			$this->assertSame( '', $job->locked_by );
+			$this->assertFileDoesNotExist( $base . '/5/' . $id . '/manifest.json' );
+		}
+		$this->assertGreaterThanOrEqual( 3, count( $tokens ) );
+		$this->assertCount( count( $tokens ), array_unique( $tokens ), 'Every acquisition needs a fresh fence.' );
+	}
+
+	/**
+	 * An exhausted budget must checkpoint once and yield before another claim.
+	 *
+	 * @dataProvider exhausted_budgets
+	 * @param int $budget Tick budget.
+	 */
+	public function test_exhausted_budget_checkpoints_one_job_without_claiming_another( $budget ) {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		foreach ( array( 980023, 980024 ) as $id ) {
+			$prefix = '5/' . $id . '/';
+			$this->write_remote_objects( $base, $prefix, array( 'manifest.json' ) );
+			$this->enqueue_delete( $id, $dest_id, $prefix, array( $prefix . 'manifest.json' ) );
+		}
+		$claims  = 0;
+		$saves   = 0;
+		$capture = static function ( $sql ) use ( &$claims, &$saves ) {
+			if ( str_contains( $sql, 'SET reclaim_count = CASE' ) ) {
+				++$claims;
+			}
+			if ( str_starts_with( $sql, 'UPDATE' ) && str_contains( $sql, '`checkpoint` =' ) ) {
+				++$saves;
+			}
+			return $sql;
+		};
+		add_filter( 'query', $capture );
+		try {
+			MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( $budget );
+		} finally {
+			remove_filter( 'query', $capture );
+		}
+		$this->assertSame( 1, $claims );
+		$this->assertSame( 1, $saves );
+		foreach ( array( 980023, 980024 ) as $id ) {
+			$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id, 'delete' )[0];
+			$this->assertSame( 'pending', $job->status );
+			$this->assertSame( 0, $job->checkpoint['cursor'] );
+			$this->assertSame( 0, (int) $job->locked_until );
+			$this->assertFileExists( $base . '/5/' . $id . '/manifest.json' );
+		}
+	}
+
+	/**
+	 * Tick budgets with no remaining time.
+	 *
+	 * @return array
+	 */
+	public static function exhausted_budgets() {
+		return array(
+			'zero'    => array( 0 ),
+			'expired' => array( -1 ),
+		);
+	}
+
+	/** A future retry must not block later runnable jobs or spin. */
+	public function test_drain_skips_backoff_and_preserves_job_order() {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$now                    = time();
+		foreach ( array( 980025, 980026, 980027 ) as $id ) {
+			$prefix = '5/' . $id . '/';
+			$this->write_remote_objects( $base, $prefix, array( 'manifest.json' ) );
+			$this->enqueue_delete( $id, $dest_id, $prefix, array( $prefix . 'manifest.json' ) );
+		}
+		$backoff = $store->get_jobs_for_snapshot( 980025, 'delete' )[0];
+		$store->fail_retryable( (int) $backoff->id, 'retry later', $now + 300 );
+		$order   = array();
+		$capture = static function ( $sql ) use ( &$order, $store ) {
+			if ( str_contains( $sql, '`checkpoint` =' ) && str_starts_with( $sql, 'UPDATE' ) ) {
+				foreach ( array( 980026, 980027 ) as $id ) {
+					$job = $store->get_jobs_for_snapshot( $id, 'delete' )[0];
+					if ( '' !== $job->locked_by && ! in_array( $id, $order, true ) ) {
+						$order[] = $id;
+					}
+				}
+			}
+			return $sql;
+		};
+		add_filter( 'query', $capture );
+		try {
+			MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60, $now );
+		} finally {
+			remove_filter( 'query', $capture );
+		}
+		$this->assertSame( array( 980026, 980027 ), $order );
+		$this->assertSame( 'complete', $store->get_jobs_for_snapshot( 980027, 'delete' )[0]->status );
+		$after = $store->get_jobs_for_snapshot( 980025, 'delete' )[0];
+		$this->assertSame( 1, (int) $after->attempt_count );
+		$this->assertSame( $now + 300, (int) $after->next_retry_at );
+		$this->assertSame( 0, $after->checkpoint['cursor'] );
+		$this->assertFileExists( $base . '/5/980025/manifest.json' );
+	}
+
+	/**
+	 * Provider round trips expose both an overlapping tick and an expiring deadline.
+	 *
+	 * @dataProvider interrupted_delete_cases
+	 * @param bool $expire Whether the provider consumes the remaining budget.
+	 */
+	public function test_delete_walk_yields_to_deadline_and_fences_overlapping_ticks( $expire ) {
+		list( $dest_id ) = $this->make_local_destination();
+		$this->enqueue_delete( 980028, $dest_id, '', array( 'first', 'second' ) );
+		if ( $expire ) {
+			$this->enqueue_delete( 980029, $dest_id, '', array( 'later' ) );
+		}
+		$keys     = array();
+		$provider = $this->createMock( \MainWP\Dashboard\MainWP_Backup_Storage_Provider::class );
+		$provider->method( 'delete_object' )->willReturnCallback(
+			function ( $key ) use ( &$keys, $expire ) {
+				$keys[] = $key;
+				if ( $expire ) {
+					usleep( 1100000 );
+				} elseif ( 'first' === $key ) {
+					$other = new MainWP_Backup_Cloud_Delete_Driver();
+					$other->process_pending_delete_jobs( 60 );
+				}
+				return true;
+			}
+		);
+		$destinations = $this->createMock( MainWP_Backup_Storage_Destinations::class );
+		$destinations->method( 'get_destination' )->willReturn( MainWP_Backup_Storage_Destinations::instance()->get_destination( $dest_id ) );
+		$destinations->method( 'make_provider' )->willReturn( $provider );
+		$instance = new \ReflectionProperty( MainWP_Backup_Storage_Destinations::class, 'instance' );
+		$original = $instance->getValue();
+		$instance->setValue( null, $destinations );
+		try {
+			MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( $expire ? 1 : 60 );
+		} finally {
+			$instance->setValue( null, $original );
+		}
+		$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( 980028, 'delete' )[0];
+		$this->assertSame( $expire ? array( 'first' ) : array( 'first', 'second' ), $keys );
+		$this->assertSame( $expire ? 'pending' : 'complete', $job->status );
+		$this->assertSame( $expire ? 1 : 2, $job->checkpoint['cursor'] );
+		$this->assertSame( 0, (int) $job->locked_until );
+		if ( $expire ) {
+			$later = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( 980029, 'delete' )[0];
+			$this->assertSame( 0, $later->checkpoint['cursor'] );
+			$this->assertSame( 'pending', $later->status );
+			$this->assertSame( 0, (int) $later->locked_until );
+		}
+	}
+
+	/**
+	 * Provider interruptions.
+	 *
+	 * @return array
+	 */
+	public static function interrupted_delete_cases() {
+		return array(
+			'deadline' => array( true ),
+			'overlap'  => array( false ),
+		);
+	}
+
 	/**
 	 * Auth rejections park the job for re-entered credentials.
 	 *

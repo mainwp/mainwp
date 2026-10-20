@@ -219,6 +219,224 @@ class MainWP_Backup_Schedule_Cron_Test extends MainWP_Abilities_Test_Case {
 		return (int) $wpdb->insert_id;
 	}
 
+	/** Only continuation is suppressed; task starts still use the real claim and lease. */
+	private function start_only_cron() {
+		return $this->getMockBuilder( MainWP_System_Cron_Jobs::class )->onlyMethods( array( 'run_backup_slice' ) )->getMock();
+	}
+
+	/**
+	 * Both starters must keep the interval's served slot despite dispatch latency.
+	 *
+	 * @dataProvider scheduled_start_lanes
+	 * @param string $lane Cron entry point.
+	 */
+	public function test_due_task_starts_once_and_anchors_on_served_slot( $lane ) {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$slot = time() - 60;
+		$id   = $this->insert_task(
+			array(
+				'userid'         => self::factory()->user->create( array( 'role' => 'administrator' ) ),
+				'schedule'       => 'interval',
+				'interval_hours' => 1,
+				'next_run'       => $slot,
+			)
+		);
+		$cron = $this->start_only_cron();
+		$cron->method( 'run_backup_slice' )->willReturnCallback(
+			function () use ( $id ) {
+				$this->assertGreaterThan( 0, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run, 'Start must precede continuation.' );
+			}
+		);
+		update_option( 'mainwp_cron_last_backups', 123 );
+		$cron->$lane();
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertGreaterThan( $slot, (int) $task->last_run );
+		$this->assertSame( $slot + 3600, (int) $task->next_run );
+		if ( 'cron_backups_slice' === $lane ) {
+			$this->assertSame( 123, (int) get_option( 'mainwp_cron_last_backups' ), 'The slice must not stamp the hourly start hook.' );
+		}
+		$cron->cron_backups_slice();
+		$cron->cron_backups();
+		$after = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertSame( (int) $task->last_run, (int) $after->last_run, 'Another tick in the same due window cannot claim again.' );
+		$this->assertSame( (int) $task->next_run, (int) $after->next_run );
+	}
+
+	/**
+	 * Scheduled start entry points.
+	 *
+	 * @return array
+	 */
+	public static function scheduled_start_lanes() {
+		return array(
+			'slice'  => array( 'cron_backups_slice' ),
+			'hourly' => array( 'cron_backups' ),
+		);
+	}
+
+	/** Future, elapsed, paused and already open tasks must retain their identity. */
+	public function test_slice_does_not_start_future_legacy_paused_or_open_tasks() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$now   = time();
+		$owner = self::factory()->user->create( array( 'role' => 'administrator' ) );
+		$cases = array(
+			'future'  => array(
+				'schedule'       => 'interval',
+				'interval_hours' => 1,
+				'next_run'       => $now + 60,
+			),
+			'elapsed' => array(
+				'schedule' => 'daily',
+				'next_run' => 0,
+			),
+			'paused'  => array(
+				'schedule'       => 'interval',
+				'interval_hours' => 1,
+				'next_run'       => $now - 60,
+				'paused'         => 1,
+			),
+			'open'    => array(
+				'schedule'       => 'interval',
+				'interval_hours' => 1,
+				'next_run'       => $now - 60,
+				'last_run'       => $now - 120,
+				'completed'      => 0,
+			),
+		);
+		$ids   = array();
+		foreach ( $cases as $name => $fields ) {
+			$ids[ $name ] = $this->insert_task( array_merge( array( 'userid' => $owner ), $fields ) );
+		}
+		$this->start_only_cron()->cron_backups_slice();
+		foreach ( $cases as $name => $fields ) {
+			$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $ids[ $name ] );
+			$this->assertSame( $fields['last_run'] ?? 0, (int) $task->last_run, $name );
+			$this->assertSame( $fields['next_run'], (int) $task->next_run, $name );
+		}
+	}
+
+	/** The hourly start stays the recovery path for a run that never closed. */
+	public function test_hourly_start_still_reopens_a_due_task_whose_run_never_closed() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$now = time();
+		$id  = $this->insert_task(
+			array(
+				'userid'         => self::factory()->user->create( array( 'role' => 'administrator' ) ),
+				'schedule'       => 'interval',
+				'interval_hours' => 1,
+				'next_run'       => $now - 60,
+				'last_run'       => $now - 120,
+				'completed'      => 0,
+			)
+		);
+		$this->start_only_cron()->cron_backups();
+		$this->assertGreaterThan( $now - 120, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run );
+	}
+
+	/** Dispatch latency must not shift an interval's phase. */
+	public function test_cron_advance_uses_slot_forty_seconds_before_last_run() {
+		$slot = time() - 40;
+		$id   = $this->insert_task(
+			array(
+				'schedule'       => 'interval',
+				'interval_hours' => 1,
+				'next_run'       => $slot,
+				'last_run'       => $slot + 40,
+			)
+		);
+		MainWP_System_Cron_Jobs::instance()->maybe_advance_backup_next_run( $id, 0, $slot );
+		$this->assertSame( $slot + 3600, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->next_run );
+	}
+
+	/** Run Now keeps its fresh identity as the interval anchor. */
+	public function test_run_now_then_both_ticks_does_not_start_a_second_run() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$id      = $this->insert_task(
+			array(
+				'userid'         => get_current_user_id(),
+				'sites'          => (string) $this->create_test_site(),
+				'schedule'       => 'interval',
+				'interval_hours' => 1,
+				'next_run'       => time() - 60,
+			)
+		);
+		$offline = static function () {
+			return array( 'error' => 'Fixture Child is offline.' );
+		};
+		add_filter( 'mainwp_pre_fetch_authed_data', $offline );
+		try {
+			$result = MainWP_Manage_Backups_Handler::run_backup_task_now( $id, 'ability' );
+		} finally {
+			remove_filter( 'mainwp_pre_fetch_authed_data', $offline );
+		}
+		$this->assertArrayNotHasKey( 'error', $result );
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertGreaterThan( 0, (int) $task->last_run );
+		$this->assertSame( (int) $task->last_run + 3600, (int) $task->next_run );
+		$cron = $this->start_only_cron();
+		$cron->cron_backups_slice();
+		$cron->cron_backups();
+		$this->assertSame( (int) $task->last_run, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run );
+	}
+
+	/** A second process must be refused while the first starter owns the lane. */
+	public function test_slice_and_hourly_overlap_starts_due_task_once() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$slot        = time() - 60;
+		$id          = $this->insert_task(
+			array(
+				'userid'         => self::factory()->user->create( array( 'role' => 'administrator' ) ),
+				'schedule'       => 'interval',
+				'interval_hours' => 1,
+				'next_run'       => $slot,
+			)
+		);
+		$cron        = $this->start_only_cron();
+		$overlapped  = false;
+		$refused     = 0;
+		$closed      = 0;
+		$observe     = function ( $event ) use ( &$overlapped, &$refused, $cron, $id ) {
+			if ( 'refused' === $event ) {
+				++$refused;
+			}
+			if ( 'acquired' !== $event || $overlapped ) {
+				return;
+			}
+			$overlapped = true;
+			$property   = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Backup_Monitor::class, 'lane_lease_token' );
+			$token      = $property->getValue();
+			// Another process sees the live database lease without this process's scope.
+			$property->setValue( null, '' );
+			try {
+				$cron->cron_backups();
+				$this->assertSame( 0, (int) MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->last_run );
+			} finally {
+				$property->setValue( null, $token );
+			}
+		};
+		$count_close = static function ( $task_id ) use ( $id, &$closed ) {
+			if ( $id === $task_id ) {
+				++$closed;
+			}
+		};
+		add_action( 'mainwp_backup_diag_lane', $observe );
+		add_action( 'mainwp_backup_diag_run_close', $count_close );
+		try {
+			$cron->cron_backups_slice();
+			$cron->cron_backups();
+		} finally {
+			remove_action( 'mainwp_backup_diag_lane', $observe );
+			remove_action( 'mainwp_backup_diag_run_close', $count_close );
+		}
+		$this->assertTrue( $overlapped );
+		$this->assertSame( 1, $refused );
+		$this->assertSame( 1, $closed );
+		$task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $id );
+		$this->assertGreaterThan( 0, (int) $task->last_run );
+		$this->assertSame( $slot + 3600, (int) $task->next_run );
+	}
+
 	/**
 	 * The due query returns tasks whose next_run has arrived.
 	 *

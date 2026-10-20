@@ -649,8 +649,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * restore them, which is exactly why they otherwise sit forever.
      *
      * @param int      $site_id Child site id.
-     * @param int|null $keep    Units to keep; null uses the task's retention
-     *                          count (falling back to the on-demand default).
+     * @param int|null $keep    Units to keep; null follows the task's live policy.
      *
      * @return array Selected on-demand units and their reasons.
      */
@@ -661,7 +660,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         }
 
         if ( null === $keep ) {
-            $keep = ! empty( $task->retention_count ) ? (int) $task->retention_count : MainWP_Backup_Settings::get_on_demand_retention_count();
+            $keep = MainWP_Backup_Settings::task_retention_count( $task );
         }
         $keep = max( 1, $keep );
 

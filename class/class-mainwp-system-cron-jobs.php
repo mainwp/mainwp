@@ -1584,10 +1584,8 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
 
         MainWP_Utility::update_option( 'mainwp_cron_last_backups_continue', time() );
 
-        // Completed snapshots upload to their storage destinations on this
-        // same five-minute lane, one resumable job per tick. Retention
-        // follows: one cloud delete job, then one queued task and site pair
-        // from the post-snapshot queue.
+        // Keep maintenance off the minutely lane so provider round trips
+        // do not consume its task-slice budget.
         MainWP_Backup_Upload_Driver::instance()->process_pending_jobs();
         MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs();
         MainWP_Backup_Retention_Scheduler::instance()->process_post_snapshot_queue();
@@ -1618,6 +1616,10 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $previous_lane           = $this->backup_slice_lane;
         $this->backup_slice_lane = 'slice';
         try {
+            $tasks = MainWP_DB_Backup::instance()->get_backup_tasks_due_by_next_run();
+            if ( ! empty( $tasks ) ) {
+                $this->start_due_backup_tasks( $tasks, true );
+            }
             $this->run_backup_slice( microtime( true ) );
         } finally {
             $this->backup_slice_lane = $previous_lane;
@@ -1835,7 +1837,21 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             MainWP_Logger::instance()->debug( 'backups ::    Task: ' . $task->name );
         }
 
-        foreach ( $allTasks as $task ) {
+        $this->start_due_backup_tasks( $allTasks );
+    }
+
+    /**
+     * Share the start gates between hourly and minutely callers.
+     *
+     * @param array $tasks          Due task rows.
+     * @param bool  $skip_open_runs Leave runs that never closed to the hourly
+     *                              start, whose grace-0 claim is the stuck-run
+     *                              recovery; a minutely re-open would cut a
+     *                              long run short within a minute of its slot.
+     * @return void
+     */
+    protected function start_due_backup_tasks( array $tasks, bool $skip_open_runs = false ) {
+        foreach ( $tasks as $task ) {
             $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
             // The due query ran before this re-read; a task deleted in between has no row.
             if ( empty( $task ) ) {
@@ -1843,6 +1859,9 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
             // The due query's paused filter may be stale by the time this row is reached.
             if ( ! empty( $task->paused ) ) {
+                continue;
+            }
+            if ( $skip_open_runs && (int) $task->completed < (int) $task->last_run ) {
                 continue;
             }
 
@@ -1869,10 +1888,11 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
             }
 
             $old_last_run = (int) $task->last_run;
+            $anchor       = (int) $task->next_run > 0 ? (int) $task->next_run : null;
 
             MainWP_Manage_Backups_Handler::execute_backup_task( $task, $this->hourly_site_cap() );
 
-            $this->maybe_advance_backup_next_run( $task->id, $old_last_run );
+            $this->maybe_advance_backup_next_run( $task->id, $old_last_run, $anchor );
         }
     }
 
@@ -1905,15 +1925,16 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      * the task stays due for the next tick. Legacy elapsed-mode tasks
      * (next_run = 0) are never touched.
      *
-     * @param int $task_id      Task id.
-     * @param int $old_last_run The task's last_run before the dispatch.
+     * @param int      $task_id      Task id.
+     * @param int      $old_last_run The task's last_run before the dispatch.
+     * @param int|null $anchor       Served cron slot; null keeps the manual run's phase.
      *
      * @return void
      *
      * @uses \MainWP\Dashboard\MainWP_Backup_Schedule_Calculator::compute_next_run()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::update_backup_task_with_values()
      */
-    public function maybe_advance_backup_next_run( $task_id, $old_last_run ) {
+    public function maybe_advance_backup_next_run( $task_id, $old_last_run, ?int $anchor = null ) {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task_id );
 
         if ( empty( $task ) || (int) $task->next_run <= 0 ) {
@@ -1925,7 +1946,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         }
 
         $calculator = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
-        $next_run   = $calculator->compute_next_run( $task, (int) $task->last_run );
+        $next_run   = $calculator->compute_next_run( $task, $anchor ?? (int) $task->last_run );
 
         MainWP_DB_Backup::instance()->update_backup_task_next_run( $task->id, (int) $task->next_run, $next_run );
     }

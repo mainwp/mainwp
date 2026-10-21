@@ -88,14 +88,15 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * re-entries; staged chunks with the expected size are reused, torn
      * ones are rewritten.
      *
-     * @param string   $path       Artifact file path.
-     * @param string   $staging    Staging directory for chunk files.
-     * @param int|null $chunk_size Chunk size override; defaults to chunk_size().
+     * @param string        $path       Artifact file path.
+     * @param string        $staging    Staging directory for chunk files.
+     * @param int|null      $chunk_size Chunk size override; defaults to chunk_size().
+     * @param callable|null $keepalive  Called between the hash and stage passes; false stops the plan.
      *
      * @return array|false Ordered list of {hash, algo, offset, length}, or false on failure.
      * @throws MainWP_Exception When staging would consume the reserved disk headroom.
      */
-    public static function plan_artifact( $path, $staging, $chunk_size = null ) {
+    public static function plan_artifact( $path, $staging, $chunk_size = null, $keepalive = null ) {
         $chunk_size = empty( $chunk_size ) ? static::chunk_size() : (int) $chunk_size;
 
         if ( ! is_file( $path ) || $chunk_size < 1 ) {
@@ -140,6 +141,11 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 );
 
                 $offset += $length;
+            }
+
+            // The artifact is read twice, so the caller's lease is renewed before the second pass.
+            if ( null !== $keepalive && ! call_user_func( $keepalive ) ) {
+                return false;
             }
 
             // Hash first: a crashed pass may have staged bytes without saving its plan.

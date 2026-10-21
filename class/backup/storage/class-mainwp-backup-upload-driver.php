@@ -505,8 +505,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 return false;
             }
 
-            $chunks = MainWP_Backup_Chunker::plan_artifact( $artifact['path'], $this->staging_dir( $job ), (int) $checkpoint['chunk_size'] );
+            $chunks = MainWP_Backup_Chunker::plan_artifact( $artifact['path'], $this->staging_dir( $job ), (int) $checkpoint['chunk_size'], fn() => $this->lease_still_held( $job ) );
             if ( false === $chunks ) {
+                if ( ! $this->lease_still_held( $job ) ) {
+                    return false; // Reclaimed mid-plan; the new holder resumes from the checkpoint.
+                }
                 if ( ! is_file( $artifact['path'] ) ) {
                     throw new \RuntimeException(
                         sprintf( /* translators: %s: artifact file name. */ __( 'Backup file is missing from this Dashboard: %s', 'mainwp' ), basename( $artifact['file'] ) ), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.

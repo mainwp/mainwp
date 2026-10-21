@@ -319,6 +319,33 @@ class MainWP_Backup_Chunker_Test extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * The artifact is read twice; a lease lost during the hash pass must stop
+	 * the plan before this lane writes into staging another lane now owns.
+	 */
+	public function test_lost_lease_between_passes_stages_nothing() {
+		$dir     = $this->make_temp_dir();
+		$path    = $this->make_fixture_file( $dir, 3000 );
+		$staging = $dir . '/staging';
+		$calls   = 0;
+
+		$result = MainWP_Backup_Chunker::plan_artifact(
+			$path,
+			$staging,
+			1000,
+			static function () use ( &$calls ) {
+				++$calls;
+				return false;
+			}
+		);
+
+		$this->assertFalse( $result );
+		$this->assertSame( 1, $calls, 'The lease is checked once, between the passes.' );
+		$this->assertSame( array(), glob( $staging . '/*.bin' ) );
+
+		$this->assertCount( 3, MainWP_Backup_Chunker::plan_artifact( $path, $staging, 1000, static fn() => true ) );
+	}
+
+	/**
 	 * The two unique chunks require at most 2000 new bytes.
 	 *
 	 * @return array

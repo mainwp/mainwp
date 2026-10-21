@@ -3573,8 +3573,21 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $downloaded = '';
         $rejected   = '';
         if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {
-            $type = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
-            MainWP_Backup_File_Manager::child_artifact_extension( is_string( $status['meta']['file'] ) ? $status['meta']['file'] : '', $type );
+            $type    = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
+            $name_ok = false;
+            try {
+                MainWP_Backup_File_Manager::child_artifact_extension( is_string( $status['meta']['file'] ) ? $status['meta']['file'] : '', $type );
+                $name_ok                = true;
+                $status['meta']['size'] = self::assert_declared_size( $status['meta']['size'] ?? null );
+            } catch ( MainWP_Exception $e ) {
+                // The Child copy is cleaned only when its name was acceptable; a refused name is never sent back.
+                $rejected                     = $name_ok ? (string) $status['meta']['file'] : '';
+                $status['status']             = 'failed';
+                $status['meta']['error']      = $e->getMessage();
+                $status['meta']['error_code'] = $e->get_message_error_code();
+            }
+        }
+        if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {
             $db     = MainWP_DB::instance();
             $raw    = (string) $db->get_website_option( $website, self::ADHOC_TASK_OPTION );
             $handle = json_decode( $raw, true );
@@ -3966,14 +3979,19 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      *
      * @param mixed $size        Child-declared size.
      * @param bool  $allow_empty Whether zero bytes is a valid declaration, as for an empty tombstones list.
-     * @return void
+     * @return int The declared size.
      * @throws MainWP_Exception With ERR_FILE_CORRUPT for a missing, non-integer or negative size.
      */
-    private static function assert_declared_size( $size, bool $allow_empty = false ): void {
+    private static function assert_declared_size( $size, bool $allow_empty = false ): int {
         // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        // Older payload paths carried sizes as digit strings; any other shape has no usable bound.
+        if ( is_string( $size ) && 1 === preg_match( '/^\d{1,18}$/D', $size ) ) {
+            $size = (int) $size;
+        }
         if ( ! is_int( $size ) || $size < 0 || ( 0 === $size && ! $allow_empty ) ) {
             throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'missing or invalid declared artifact size' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
         }
+        return $size;
     }
 
     /**

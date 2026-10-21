@@ -1186,30 +1186,65 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
     }
 
     /** @dataProvider site_ability_routes */
-    public function test_rest_visible_site_ability_rights_denial_returns_403( $method, $suffix, $ability_name ) {
-        $this->skip_if_no_abilities_api();
-        $this->set_current_user_as_admin();
-        $site = $this->create_test_site();
-        $this->restrict_ability_layer_only( array( $site ) );
-        $this->set_current_user_as_subscriber();
-        $this->scope_filters['mainwp_currentusercan'] = static function ( $allowed, $cap_type, $cap ) {
-            return 'dashboard' === $cap_type && 'access_individual_dashboard' === $cap ? false : $allowed;
-        };
-        add_filter( 'mainwp_currentusercan', $this->scope_filters['mainwp_currentusercan'], 10, 3 );
-        $this->assertFalse( MainWP_Abilities_Util::current_user_has_operation_right( 'access_individual_dashboard' ) );
-        $input = '/sync' === $suffix ? array( 'site_ids' => array( $site ) ) : array( 'site_id_or_domain' => $site );
-        $denied = wp_get_ability( $ability_name )->check_permissions( $input );
-        $this->assertWPError( $denied );
-        $this->assertSame( 'mainwp_permission_denied', $denied->get_error_code() );
-        $this->assertSame( 403, $denied->get_error_data()['status'] );
-        $request = new \WP_REST_Request( $method, '/mainwp/v2/sites/' . $site . $suffix );
-        $request->set_param( 'id_domain', $site );
-        $this->assertNotWPError( \MainWP_Rest_Sites_Controller::instance()->get_site_item( $request ) );
-        $this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
-        $response = $this->dispatch_v2_request( $method, $request->get_route(), array() );
-        $this->assertSame( 403, $response->get_status() );
-        $this->assertSame( 'ability_invalid_permissions', $response->get_data()['code'] );
-    }
+	public function test_rest_visible_site_ability_rights_denial_returns_403( $method, $suffix, $ability_name ) {
+		$this->skip_if_no_abilities_api();
+		$this->set_current_user_as_admin();
+		$site = $this->create_test_site();
+		$this->restrict_ability_layer_only( array( $site ) );
+		$this->set_current_user_as_subscriber();
+		$this->assertFalse( current_user_can( 'manage_options' ) );
+		$ability = wp_get_ability( $ability_name );
+		$input   = '/sync' === $suffix ? array( 'site_ids' => array( $site ) ) : array( 'site_id_or_domain' => $site );
+
+		// Direct ability calls retain their normal WordPress capability gate.
+		$denied = $ability->check_permissions( $input );
+		$this->assertWPError( $denied );
+		$this->assertSame( 'mainwp_permission_denied', $denied->get_error_code() );
+		$this->assertSame( 403, $denied->get_error_data()['status'] );
+		$request = new \WP_REST_Request( $method, '/mainwp/v2/sites/' . $site . $suffix );
+		$request->set_param( 'id_domain', $site );
+		$this->assertNotWPError( \MainWP_Rest_Sites_Controller::instance()->get_site_item( $request ) );
+
+		$permission_property = new \ReflectionProperty( $ability, 'permission_callback' );
+		$execute_property    = new \ReflectionProperty( $ability, 'execute_callback' );
+		$permission_property->setAccessible( true );
+		$execute_property->setAccessible( true );
+		$original_permission = $permission_property->getValue( $ability );
+		$original_execute    = $execute_property->getValue( $ability );
+		$execute_calls       = 0;
+		try {
+			// A scoped key may reach the real ability permission callback without
+			// manage_options. Stop before side effects, including a Child sync.
+			$execute_property->setValue(
+				$ability,
+				static function () use ( &$execute_calls ) {
+					++$execute_calls;
+					return new \WP_Error( 'test_authorized_execution', 'Authorized execution reached.', array( 'status' => 409 ) );
+				}
+			);
+			$allowed = $this->dispatch_v2_request( $method, $request->get_route(), array() );
+			$this->assertSame( 409, $allowed->get_status() );
+			$this->assertSame( 'test_authorized_execution', $allowed->get_data()['code'] );
+			$this->assertSame( 1, $execute_calls );
+
+			// Deny the ability itself instead of relying on manage_options: the
+			// controller must still map a real ability denial to HTTP 403.
+			$permission_property->setValue(
+				$ability,
+				static function () {
+					return new \WP_Error( 'mainwp_permission_denied', 'Denied.', array( 'status' => 403 ) );
+				}
+			);
+			$this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
+			$response = $this->dispatch_v2_request( $method, $request->get_route(), array() );
+			$this->assertSame( 403, $response->get_status() );
+			$this->assertSame( 'ability_invalid_permissions', $response->get_data()['code'] );
+			$this->assertSame( 1, $execute_calls, 'Denied ability execution must not reach its callback.' );
+		} finally {
+			$permission_property->setValue( $ability, $original_permission );
+			$execute_property->setValue( $ability, $original_execute );
+		}
+	}
 
     public static function site_collection_ability_routes() {
         return array(
@@ -2361,34 +2396,40 @@ class Test_Abilities_Api_Key_Scoping extends MainWP_Abilities_Test_Case {
         $this->assertSame( 1, $this->dispatch_v2_request( 'DELETE', '/mainwp/v2/costs/' . $cost . '/remove', array() )->get_data()['success'] );
     }
 
-    public function test_rest_scope_userless_rest_settings_and_costs_deny_access() {
-        $this->set_current_user_as_admin();
-        $site = $this->create_test_site();
-        $tag = $this->create_test_tag();
-        $cost = $this->create_scope_cost( array( $site ), array( $tag ) );
-        $db = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance();
-        $before = $db->get_cost_tracker_by( 'id', $cost );
-        $this->set_machine_context_override( 'rest' );
-        wp_set_current_user( 0 );
-        $response = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/monitors/settings', array(), array( 'active' => true ) );
-        $this->assertSame( 403, $response->get_status() );
-        $this->assertSame( 'mainwp_restricted_account', $response->get_data()['code'] );
-        $this->assertSame( 0, $this->dispatch_v2_get( '/mainwp/v2/costs' )->get_data()['total'] );
-        $created = $this->dispatch_v2_request( 'POST', '/mainwp/v2/costs/add', $this->cost_write_params( array( 'sites' => array( $site ) ) ) );
-        $this->assertSame( 404, $created->get_status() );
-        $this->assertSame( 'mainwp_site_not_found', $created->get_data()['code'] );
-        $this->set_current_user_as_admin();
-        $this->set_machine_context_override( null );
-        $this->assertSame( 1, $this->dispatch_v2_get( '/mainwp/v2/costs' )->get_data()['total'] );
-        $this->set_machine_context_override( 'rest' );
-        wp_set_current_user( 0 );
-        foreach ( array( 'update', 'delete' ) as $action ) {
-            $response = $this->dispatch_v2_request( 'update' === $action ? 'PUT' : 'DELETE', '/mainwp/v2/costs/' . $cost . ( 'update' === $action ? '/edit' : '/remove' ), 'update' === $action ? $this->cost_write_params( array( 'sites' => array( $site ), 'groups' => array( $tag ) ) ) : array() );
-            $this->assertSame( 404, $response->get_status(), $action );
-            $this->assertSame( 'mainwp_rest_invalid_costs_id', $response->get_data()['code'], $action );
-            $this->assertEquals( $before, $db->get_cost_tracker_by( 'id', $cost ), $action );
-        }
-    }
+	public function test_rest_scope_userless_rest_settings_and_costs_deny_access() {
+		$this->set_current_user_as_admin();
+		$site   = $this->create_test_site();
+		$tag    = $this->create_test_tag();
+		$cost   = $this->create_scope_cost( array( $site ), array( $tag ) );
+		$db     = \MainWP\Dashboard\Module\CostTracker\Cost_Tracker_DB::get_instance();
+		$before = $db->get_cost_tracker_by( 'id', $cost );
+		$this->set_machine_context_override( 'rest' );
+		wp_set_current_user( 0 );
+		$response = $this->dispatch_v2_request( 'PUT', '/mainwp/v2/monitors/settings', array(), array( 'active' => true ) );
+		$this->assertSame( 403, $response->get_status() );
+		$this->assertSame( 'mainwp_restricted_account', $response->get_data()['code'] );
+		$this->assertSame( 0, $this->dispatch_v2_get( '/mainwp/v2/costs' )->get_data()['total'] );
+		$created = $this->dispatch_v2_request( 'POST', '/mainwp/v2/costs/add', $this->cost_write_params( array( 'sites' => array( $site ) ) ) );
+		$this->assertSame( 403, $created->get_status() );
+		$this->assertSame( 'mainwp_insufficient_right', $created->get_data()['code'] );
+		$this->assertSame( 'add_costs', $created->get_data()['data']['right'] );
+		$this->set_current_user_as_admin();
+		$this->set_machine_context_override( null );
+		$this->assertSame( 1, $this->dispatch_v2_get( '/mainwp/v2/costs' )->get_data()['total'] );
+		$this->set_machine_context_override( 'rest' );
+		wp_set_current_user( 0 );
+		$operations = array(
+			'update' => 'edit_costs',
+			'delete' => 'delete_costs',
+		);
+		foreach ( $operations as $action => $right ) {
+			$response = $this->dispatch_v2_request( 'update' === $action ? 'PUT' : 'DELETE', '/mainwp/v2/costs/' . $cost . ( 'update' === $action ? '/edit' : '/remove' ), 'update' === $action ? $this->cost_write_params( array( 'sites' => array( $site ), 'groups' => array( $tag ) ) ) : array() );
+			$this->assertSame( 403, $response->get_status(), $action );
+			$this->assertSame( 'mainwp_insufficient_right', $response->get_data()['code'], $action );
+			$this->assertSame( $right, $response->get_data()['data']['right'], $action );
+			$this->assertEquals( $before, $db->get_cost_tracker_by( 'id', $cost ), $action );
+		}
+	}
 
     public function test_rest_cost_scope_batch_inherits_write_rules() {
         $this->set_current_user_as_admin();

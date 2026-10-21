@@ -2,7 +2,7 @@
 const assert = require( 'node:assert/strict' );
 const fs = require( 'node:fs' );
 const vm = require( 'node:vm' );
-const { document, loadSiteNameHelper } = require( './fixtures/site-name-dom' );
+const { document, decodeEntities, loadSiteNameHelper } = require( './fixtures/site-name-dom' );
 const test = require( 'node:test' );
 
 const backups = fs.readFileSync( require.resolve( '../../assets/js/mainwp-backups.js' ), 'utf8' );
@@ -14,21 +14,23 @@ const escapedName = '&lt;img src=x onerror=alert(1)&gt;';
 function sliceFunction( source, marker ) {
     const start = source.indexOf( marker );
     assert.ok( start >= 0, marker );
-    const end = source.indexOf( '\n};', start );
+    const end = source.indexOf( '\n}', start );
     assert.ok( end > start, marker + ' ends' );
-    return source.slice( start, end + 3 );
+    return source.slice( start, end + 2 );
 }
 
 function harness( entry, siteName ) {
     const appended = [];
     const requests = [];
-    const content = {};
+    let popup = '';
+    const content = { html( value ) { popup = value; } };
     const context = {
         document,
         ajaxurl: '/admin-ajax.php',
         MainWP: { I18n: { t: text => text } },
         __: text => text,
         mainwp_secure_data: data => data,
+        mainwp_get_primaryBackup_link: () => '/backup/native',
         mainwpPopup: () => ( { getContentEl: () => content } ),
         appendToDiv: ( target, html ) => {
             assert.equal( target, content );
@@ -41,7 +43,10 @@ function harness( entry, siteName ) {
             let cssClass = '';
             const html = () => text.replace( /&/g, '&amp;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' );
             return {
-                text( value ) { text = String( value ); return this; },
+                text( value ) {
+                    if ( arguments.length === 0 ) return decodeEntities( popup.match( /<span[^>]*siteid="7"[^>]*>(.*?)<\/span>/ )[ 1 ] );
+                    text = String( value ); return this;
+                },
                 addClass( value ) { cssClass = value; return this; },
                 html,
                 prop( key ) {
@@ -51,11 +56,13 @@ function harness( entry, siteName ) {
                     }
                     return this;
                 },
-                progress() { return this; }
+                progress() { return this; },
+                data( key, value ) { return arguments.length === 1 ? 'Ignore' : this; },
+                val() { return this; }, hide() { return this; }, show() { return this; }, attr() { return this; }
             };
         }
     };
-    context[ entry + 'BackupSites' ] = [ { id: 7, name: siteName } ];
+    context[ entry + 'BackupSites' ] = [];
     context[ entry + 'BackupError' ] = false;
     context[ entry + 'BackupDownloadRunning' ] = false;
     context.jQuery.post = ( url, data, callback, dataType ) => {
@@ -65,6 +72,9 @@ function harness( entry, siteName ) {
     };
     vm.createContext( context );
     loadSiteNameHelper( vm, mainwp, context );
+    vm.runInContext( sliceFunction( managesites, 'globalThis.mainwp_managesites_prepare_backup_popup = ' ), context );
+    context.mainwp_managesites_prepare_backup_popup( { result: { gate_verdicts: { 7: 'missing' } } }, { 7: encodeURIComponent( siteName ) }, [ 7 ] );
+    context[ entry + 'BackupSites' ] = [ { id: 7, name: context.jQuery( '.backup-site' ).text() } ];
     for ( const name of [ 'getErrorMessage', 'mainwp_backup_error_severity', 'mainwp_backup_error_html' ] ) {
         vm.runInContext( sliceFunction( mainwp, 'globalThis.' + name + ' = ' ), context );
     }
@@ -104,7 +114,7 @@ function complete( h, outcome, error = 'fixture error' ) {
 }
 
 for ( const entry of [ 'updatesoverview', 'managesites' ] ) {
-    for ( const [ siteName, escaped ] of [ [ attackName, escapedName ], [ 'Site & Co', 'Site &amp; Co' ], [ 'A &lt; B', 'A &lt; B' ] ] ) {
+    for ( const [ siteName, escaped ] of [ [ attackName, escapedName ], [ 'Site & Co', 'Site &amp; Co' ], [ 'A &lt; B', 'A &lt; B' ], [ 'ACME%20Ops', 'ACME%20Ops' ], [ '&lt;img src=x onerror=alert(1)&gt;', escapedName ] ] ) {
         for ( const outcome of [ 'success', 'creation error', 'download error' ] ) {
             test( entry + ': ' + outcome + ' escapes every prefix for ' + siteName, () => {
                 const h = harness( entry, siteName );

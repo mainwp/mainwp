@@ -132,6 +132,7 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 		$this->files[] = $ready;
 		$this->files[] = $marker;
 		$process       = proc_open(
+			// nosemgrep: AIK_exec-use -- test harness; the argv array bypasses the shell and every element is a test constant or fixture value.
 			array( PHP_BINARY, __DIR__ . '/fixtures/ftp-reject.php', $ready, $marker ),
 			array(
 				0 => array( 'file', '/dev/null', 'r' ),
@@ -202,7 +203,7 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 	}
 
 	/**
-	 * Documentation ranges follow PHP's filter flags; CGNAT is refused on top of them.
+	 * Other hosts need globally routable IPv4 addresses to exclude internal read targets.
 	 *
 	 * @return array URL and address cases.
 	 */
@@ -221,7 +222,7 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 			'CGNAT'              => array( $site, 'https://cdn.example/icon.png', array( '100.64.0.1' ), false ),
 			'CGNAT metadata'     => array( $site, 'http://100.100.100.200/icon.png', array(), false ),
 			'below CGNAT'        => array( $site, 'https://cdn.example/icon.png', array( '100.63.255.255' ), array( 'cdn.example:443:100.63.255.255' ) ),
-			'documentation'      => array( $site, 'https://cdn.example/icon.png', array( '192.0.2.1' ), array( 'cdn.example:443:192.0.2.1' ) ),
+			'documentation'      => array( $site, 'https://cdn.example/icon.png', array( '192.0.2.1' ), false ),
 			'reserved'           => array( $site, 'https://cdn.example/icon.png', array( '240.0.0.1' ), false ),
 			'public'             => array( $site, 'https://cdn.example/icon.png', array( '8.8.8.8', '1.1.1.1' ), array( 'cdn.example:443:8.8.8.8' ) ),
 			'mixed answers'      => array( $site, 'https://cdn.example/icon.png', array( '8.8.8.8', '10.0.0.5' ), false ),
@@ -230,7 +231,9 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 			'IPv4 metadata'      => array( $site, 'http://169.254.169.254/icon.png', array(), false ),
 			'IPv4 public'        => array( $site, 'http://8.8.8.8/icon.png', array(), array() ),
 			'IPv6 loopback'      => array( $site, 'http://[::1]/icon.png', array(), false ),
-			'IPv6 public'        => array( $site, 'https://[2606:4700:4700::1111]/icon.png', array(), array() ),
+			'IPv6 public'        => array( $site, 'https://[2606:4700:4700::1111]/icon.png', array(), false ),
+			'NAT64'              => array( $site, 'http://[64:ff9b::a00:5]/icon.png', array(), false ),
+			'6to4'               => array( $site, 'http://[2002:7f00:1::1]/icon.png', array(), false ),
 			'local Child'        => array( 'http://127.0.0.1/', 'http://127.0.0.1/icon.png', array(), array() ),
 			'FTP'                => array( $site, 'ftp://child.example/icon.png', array( '8.8.8.8' ), false ),
 			'userinfo'           => array( $site, 'https://user:password@child.example/icon.png', array(), false ),
@@ -238,6 +241,38 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 			'unresolvable'       => array( $site, 'https://cdn.example/icon.png', array(), false ),
 			'no host'            => array( $site, '/icon.png', array(), false ),
 		);
+	}
+
+	/**
+	 * Malformed Child values must not abort the update-check loop.
+	 *
+	 * @dataProvider invalid_icon_values
+	 * @param mixed $icon Child-reported icon value.
+	 */
+	public function test_icon_non_string_is_refused( $icon ) {
+		$this->assertSame( array( 'error' => 'Icon URL is not allowed.' ), MainWP_Sync::download_child_icon( $this->website, $icon ) );
+	}
+
+	/**
+	 * JSON values can bypass the expected URL shape.
+	 *
+	 * @return array Invalid icon values.
+	 */
+	public static function invalid_icon_values() {
+		return array(
+			'array'   => array( array( 1 ) ),
+			'integer' => array( 123 ),
+		);
+	}
+
+	/** The optional visit redirects need the same boundary as sync requests. */
+	public function test_try_visit_redirect_options() {
+		$method = new \ReflectionMethod( MainWP_Connect::class, 'try_visit' );
+		$lines  = file( $method->getFileName() );
+		$source = implode( '', array_slice( $lines, $method->getStartLine() - 1, $method->getEndLine() - $method->getStartLine() + 1 ) );
+		$this->assertStringContainsString( 'curl_setopt( $ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );', $source );
+		$this->assertStringContainsString( 'curl_setopt( $ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );', $source );
+		$this->assertStringContainsString( 'curl_setopt( $ch, CURLOPT_MAXREDIRS, 3 );', $source );
 	}
 
 	/** A refused loopback target must never receive even a blind read. */

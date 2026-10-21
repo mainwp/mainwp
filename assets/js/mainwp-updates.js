@@ -541,8 +541,7 @@ let updatesoverview_translations_upgrade_all = function (slug, translationName) 
         sitesToUpdate.push(siteId);
     }
 
-    translationName = mainwp_decode_slug(translationName);
-    translationName = translationName.replaceAll('+', ' ');
+    const translationNameHtml = mainwp_text_html(mainwp_decode_slug(translationName).replaceAll('+', ' '));
 
     let _callback = function () {
 
@@ -558,7 +557,7 @@ let updatesoverview_translations_upgrade_all = function (slug, translationName) 
                 // init and show popup
 
                 let initData = {
-                    title: MainWP.I18n.t('Updating %1', mainwp_escape_html(translationName)),
+                    title: MainWP.I18n.t('Updating %1', translationNameHtml),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -580,7 +579,7 @@ let updatesoverview_translations_upgrade_all = function (slug, translationName) 
                     sitesList.push(mainwp_site_name_html(value));
                 }
             });
-            let confirmMsg = MainWP.I18n.t('You are about to update the %1 translation on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', mainwp_escape_html(translationName), sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update the %1 translation on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', translationNameHtml, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -979,8 +978,7 @@ let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSel
         sitesToUpdate.push(siteId);
     }
 
-    pluginName = mainwp_decode_slug(pluginName);
-    pluginName = pluginName.replaceAll('+', ' ');
+    const pluginNameHtml = mainwp_text_html(mainwp_decode_slug(pluginName).replaceAll('+', ' '));
 
     let _callback = function () {
 
@@ -994,7 +992,7 @@ let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSel
             return function () {
 
                 let initData = {
-                    title: MainWP.I18n.t('Updating %1', mainwp_escape_html(pluginName)),
+                    title: MainWP.I18n.t('Updating %1', pluginNameHtml),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -1018,7 +1016,7 @@ let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSel
                     sitesList.push(mainwp_site_name_html(value));
                 }
             });
-            let confirmMsg = MainWP.I18n.t('You are about to update the %1 plugin on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', mainwp_escape_html(pluginName), sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update the %1 plugin on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', pluginNameHtml, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -1609,8 +1607,7 @@ let updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelec
         mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', siteId) + ' ' + updatesmanage_link_to_site(siteName, siteId), '<span class="updatesoverview-upgrade-status-wp" siteid="' + siteId + '">' + '<i class="clock outline icon"></i> ' + '</span>');
     }
 
-    themeName = mainwp_decode_slug(themeName);
-    themeName = themeName.replaceAll('+', ' ');
+    const themeNameHtml = mainwp_text_html(mainwp_decode_slug(themeName).replaceAll('+', ' '));
 
     let _callback = function () {
 
@@ -1620,7 +1617,7 @@ let updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelec
                 //Step 2: show form
 
                 let initData = {
-                    title: MainWP.I18n.t('Updating %1', mainwp_escape_html(themeName)),
+                    title: MainWP.I18n.t('Updating %1', themeNameHtml),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -1644,7 +1641,7 @@ let updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelec
                     sitesList.push(mainwp_site_name_html(value));
                 }
             });
-            let confirmMsg = MainWP.I18n.t('You are about to update the %1 theme on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', mainwp_escape_html(themeName), sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update the %1 theme on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', themeNameHtml, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -3353,7 +3350,7 @@ let updatesoverview_plugins_ignore_detail = function (slug, name, id, obj, ignor
     const site_name = jQuery(row).attr("site_name");
     let msg = MainWP.I18n.t(
         "Are you sure you want to ignore %1 plugin updates on %2? The updates will no longer be visible in your MainWP Dashboard.",
-        mainwp_decode_slug(name, true),
+        mainwp_text_html(mainwp_decode_slug(name)),
         mainwp_site_name_html(site_name)
     );
     mainwp_confirm(
@@ -3391,12 +3388,12 @@ let updatesoverview_plugins_ignore_all = function (slug, name, obj, ver) {
     if (site_name === undefined) {
         msg = MainWP.I18n.t(
             "Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.",
-            mainwp_decode_slug(name, true)
+            mainwp_text_html(mainwp_decode_slug(name))
         );
     } else {
         msg = MainWP.I18n.t(
             "Are you sure you want to ignore %1 plugin updates on %2 site? The updates will no longer be visible in your MainWP Dashboard.",
-            mainwp_decode_slug(name, true),
+            mainwp_text_html(mainwp_decode_slug(name)),
             mainwp_site_name_html(site_name)
         );
     }
@@ -4151,7 +4148,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
             type: what,
             slug: item
         });
-        let decoded = mainwp_decode_slug(item, true);
+        let decoded = mainwp_text_html(mainwp_decode_slug(item));
         jQuery.post(ajaxurl, data, function (response) { // NOSONAR - complex.
             let res_error = response.result_error;
             let hasError = false;

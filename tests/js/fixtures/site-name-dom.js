@@ -14,12 +14,20 @@ const escapeHtml = value => escapeText( value ).replace( /"/g, '&quot;' ).replac
 const document = {
     createElement( tag ) {
         let value = '';
-        return {
-            set innerHTML( html ) { value = decodeEntities( html ); },
-            get innerHTML() { return escapeText( value ); },
-            set textContent( text ) { value = String( text ?? '' ); },
-            get value() { return value; }
-        };
+        if ( tag === 'textarea' ) {
+            return {
+                set innerHTML( html ) { value = decodeEntities( html ); },
+                get value() { return value; }
+            };
+        }
+        if ( tag === 'div' || tag === 'span' ) {
+            return {
+                set innerHTML( html ) { throw new Error( 'HTML parsing requires a textarea fixture' ); },
+                get innerHTML() { return escapeText( value ); },
+                set textContent( text ) { value = String( text ?? '' ); }
+            };
+        }
+        throw new Error( 'Unsupported fixture element: ' + tag );
     }
 };
 
@@ -31,8 +39,10 @@ class DOMParser {
 }
 
 function loadSiteNameHelper( vm, source, context ) {
-    const start = source.indexOf( 'globalThis.mainwp_site_name_html = ' );
-    if ( start >= 0 ) vm.runInContext( source.slice( start, source.indexOf( '\n};', start ) + 3 ), context );
+    for ( const name of [ 'mainwp_percent_decode', 'mainwp_text_html', 'mainwp_site_name_html' ] ) {
+        const start = source.indexOf( 'globalThis.' + name + ' = ' );
+        if ( start >= 0 ) vm.runInContext( source.slice( start, source.indexOf( '\n};', start ) + 3 ), context );
+    }
 }
 
 module.exports = { document, DOMParser, decodeEntities, escapeHtml, loadSiteNameHelper };

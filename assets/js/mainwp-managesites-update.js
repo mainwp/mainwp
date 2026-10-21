@@ -446,7 +446,7 @@ let managesites_backup_run_next = function () {
     }
 
     let siteName = managesitesBackupSites[0]['name'];
-    appendToDiv(backupContentEl, '[' + mainwp_site_name_html(siteName) + '] ' + MainWP.I18n.t('Creating backup file...'));
+    appendToDiv(backupContentEl, '[' + jQuery('<span>').text(siteName).html() + '] ' + MainWP.I18n.t('Creating backup file...'));
 
     let siteId = managesitesBackupSites[0]['id'];
     managesitesBackupSites.shift();
@@ -458,11 +458,11 @@ let managesites_backup_run_next = function () {
     jQuery.post(ajaxurl, data, function (pSiteId, pSiteName) {
         return function (response) {
             if (response.error) {
-                appendToDiv(backupContentEl, '[' + mainwp_site_name_html(pSiteName) + '] <span class="mainwp-red">Error: ' + jQuery('<span>').text(getErrorMessage(response.error)).html() + '</span>');
+                appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] <span class="mainwp-red">Error: ' + jQuery('<span>').text(getErrorMessage(response.error)).html() + '</span>');
                 managesitesBackupError = true;
                 managesites_backup_run_next();
             } else {
-                appendToDiv(backupContentEl, '[' + mainwp_site_name_html(pSiteName) + '] ' + MainWP.I18n.t('Backup file created successfully!'));
+                appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] ' + MainWP.I18n.t('Backup file created successfully!'));
 
                 managesites_backupnow_download_file({ 'id': pSiteId, 'name': pSiteName }, response.result.type, response.result.url, response.result.local, response.result.size);
             }
@@ -475,7 +475,7 @@ let managesites_backupnow_download_file = function (siteInfo, type, url, file, s
     let pSiteId = siteInfo['id'];
     let pSiteName = siteInfo['name'];
     let backupContentEl = mainwpPopup('#managesites-backup-box').getContentEl();
-    appendToDiv(backupContentEl, '[' + mainwp_site_name_html(pSiteName) + '] Downloading the file. <div id="managesites-backupnow-status-progress" siteId="' + pSiteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
+    appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] Downloading the file. <div id="managesites-backupnow-status-progress" siteId="' + pSiteId + '" class="ui green progress"><div class="bar"><div class="progress"></div></div></div>');
     jQuery('#managesites-backupnow-status-progress[siteId="' + pSiteId + '"]').progress({ value: 0, total: size });
     let interVal = setInterval(function () {
         let data = mainwp_secure_data({
@@ -512,8 +512,8 @@ let managesites_backupnow_download_file = function (siteInfo, type, url, file, s
             clearInterval(pInterVal);
 
             if (response.error) {
-                appendToDiv(backupContentEl, '[' + mainwp_site_name_html(pSiteName) + '] <span class="error">' + jQuery('<span>').text(getErrorMessage(response.error)).html() + '</span>');
-                appendToDiv(backupContentEl, '[' + mainwp_site_name_html(pSiteName) + '] <span class="error">' + MainWP.I18n.t('Backup failed') + '</span>');
+                appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] <span class="error">' + jQuery('<span>').text(getErrorMessage(response.error)).html() + '</span>');
+                appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] <span class="error">' + MainWP.I18n.t('Backup failed') + '</span>');
 
                 managesitesBackupError = true;
                 managesites_backup_run_next();
@@ -521,8 +521,8 @@ let managesites_backupnow_download_file = function (siteInfo, type, url, file, s
             }
 
             jQuery('#managesites-backupnow-status-progress[siteId="' + pSiteId + '"]').progress('set progress', pSize);
-            appendToDiv(backupContentEl, '[' + mainwp_site_name_html(pSiteName) + '] ' + MainWP.I18n.t('Download from the child site completed.'));
-            appendToDiv(backupContentEl, '[' + mainwp_site_name_html(pSiteName) + '] ' + MainWP.I18n.t('Backup completed.'));
+            appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] ' + MainWP.I18n.t('Download from the child site completed.'));
+            appendToDiv(backupContentEl, '[' + jQuery('<span>').text(pSiteName).html() + '] ' + MainWP.I18n.t('Backup completed.'));
 
             let newData = mainwp_secure_data({
                 action: 'mainwp_backup_delete_file',

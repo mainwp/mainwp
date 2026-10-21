@@ -1,23 +1,32 @@
 /* eslint-disable complexity */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-globalThis.mainwp_site_name_html = function (raw) {
-    let name = String(raw ?? '');
-    if (name.includes('%')) {
-        try {
-            name = decodeURIComponent(name);
-        } catch {
-            // Legacy names can contain a literal percent sign.
-        }
+globalThis.mainwp_percent_decode = function (value) {
+    if (typeof value !== 'string' || !value.includes('%')) {
+        return value;
     }
+    try {
+        return decodeURIComponent(value);
+    } catch {
+        // Legacy names can contain a literal percent sign.
+        return value;
+    }
+};
+
+globalThis.mainwp_text_html = function (value) {
     const textarea = document.createElement('textarea');
-    textarea.innerHTML = name;
+    // nosemgrep: AIK_js_insecure-document-method -- textarea content parses as RCDATA, so entity decoding cannot create elements or run handlers.
+    textarea.innerHTML = String(value ?? '');
     return textarea.value
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+};
+
+globalThis.mainwp_site_name_html = function (raw) {
+    return mainwp_text_html(mainwp_percent_decode(raw));
 };
 
 globalThis.mainwpVars = globalThis.mainwpVars || {};
@@ -3363,14 +3372,14 @@ jQuery(function ($) {
             case 'update-plugin-per-item':
                 parent = $(this).closest('tr');
                 siteId = $(parent).attr('site_id');
-                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                info = mainwp_percent_decode($(parent).attr('site_name')) + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
                 title = $(parent).attr('plugin_name');
                 slug = decodeURIComponent($(parent).attr('plugin_slug'));
                 break;
             case 'update-theme-per-item':
                 parent = $(this).closest('tr');
                 siteId = $(parent).attr('site_id');
-                info = $(parent).attr('site_name') + ' (' + decodeURIComponent($(parent).attr('site_url')) + ') ' + $(parent).attr('tz-info');
+                info = mainwp_percent_decode($(parent).attr('site_name')) + ' (' + decodeURIComponent($(parent).attr('site_url')) + ') ' + $(parent).attr('tz-info');
                 title = $(parent).attr('theme_name');
                 name = $(parent).attr('theme_name');
                 slug = decodeURIComponent($(parent).attr('theme_slug'));
@@ -3484,7 +3493,7 @@ let mainwp_item_changes_load = function (btnObj, load_more_date = '') {
         jQuery(md).find('.history-actions-loading').remove();
         if (response?.error) {
             if (parentContent) {
-                let err_content = '<div class="ui message red">' + response.error + '</div>';
+                let err_content = '<div class="ui message red">' + escapeText(response.error) + '</div>';
                 jQuery(parentContent).html(err_content);
             }
         } else if (response?.list) {
@@ -3570,10 +3579,13 @@ let mainwp_item_changes_load = function (btnObj, load_more_date = '') {
                 }
 
                 if (response?.onward_date) {
-                    jQuery(md).find('.actions .col-left').html('Data available from ' + response.onward_date + ' onward.');
+                    jQuery(md).find('.actions .col-left').text('Data available from ' + response.onward_date + ' onward.');
                 }
                 if (response?.more_date) {
-                    jQuery(md).find('.actions .col-right').html('<a href="javascript:void(0);" onclick="mainwp_item_changes_load(false,\'' + (response.more_date ?? get_local_date_string()) + '\');return false;">' + MainWP.I18n.t('Load More') + '</a>');
+                    jQuery(md).find('.actions .col-right').html('<a href="#">' + MainWP.I18n.t('Load More') + '</a>').find('a').on('click', function (event) {
+                        event.preventDefault();
+                        mainwp_item_changes_load(false, response.more_date);
+                    });
                 }
             }
         } else if (parentContent) {
@@ -3626,6 +3638,7 @@ let get_color_changes_event = function (act) {
 
 let dayHistory_SwitchViewHandler = function (btn) {
 
+    const escapeText = value => jQuery('<span>').text(value ?? '').html().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     const parent = jQuery(btn).closest('.ui.accordion');
     const his_date = jQuery(btn).closest('.title').attr('format-date');
 
@@ -3653,7 +3666,7 @@ let dayHistory_SwitchViewHandler = function (btn) {
         let dayContent = jQuery(parent).find('.content');
 
         if (response.error != undefined) {
-            dayContent.append('<div class="ui message red changes-history-status">' + response.error + '</div>');
+            dayContent.append('<div class="ui message red changes-history-status">' + escapeText(response.error) + '</div>');
         } else if (response?.list) {
             if (response.list.length == 0) {
                 let msg = MainWP.I18n.t('This plugin has no recorded activity in Dashboard Insights.');
@@ -3672,13 +3685,13 @@ let dayHistory_SwitchViewHandler = function (btn) {
                 let count_acts = 0;
                 Object.entries(response.list).forEach(([idxslug, records]) => {
                     const name = records[0].name;
-                    content += `<div class="ui accordion list-all-actions-in-day" data-slug="${records[0].item_slug}" data-name="${records[0].item_name}" data-siteid="${records[0].site_id}">
+                    content += `<div class="ui accordion list-all-actions-in-day" data-slug="${escapeText(records[0].item_slug)}" data-name="${escapeText(records[0].item_name)}" data-siteid="${escapeText(records[0].site_id)}">
                         <div class="title">
                             <div class="ui container">
                                 <div class="ui grid">
                                     <div class="ten wide column middle aligned">
                                             <i class="dropdown icon"></i>
-                                            ${name}
+                                            ${escapeText(name)}
                                     </div>
                                     <div class="six wide column right aligned">
                                         <button type="button" class="ui circular blue mini button mainwp-list-history-switch-view">` + ('plugin' === type ? MainWP.I18n.t('Plugin History') : MainWP.I18n.t('Theme History')) + `</button> <button class="ui basic mini button ">${records.length} ` + MainWP.I18n.t('Actions') + `</button>
@@ -3688,18 +3701,18 @@ let dayHistory_SwitchViewHandler = function (btn) {
                         </div>
                         <div class="content ui list">`;
                     records.forEach(record => {
-                        content += `<div class="item" log-id="${record.details.log_id}">
+                        content += `<div class="item" log-id="${escapeText(record.details.log_id)}">
                             <div class="ui grid">
                                 <div class="eight wide column middle aligned">
                                     <i class="` + get_icon_history_event(record.details.action) + ` icon"></i>
-                                    <span class="ui text ` + get_color_changes_event(record.details.action) + `">${record.details.event}</span> ` + MainWP.I18n.t('by') + ` <strong>${record.details.author_name}</strong> ` + MainWP.I18n.t('from') + `
-                                        <strong>${record.details.source}</strong>
+                                    <span class="ui text ` + get_color_changes_event(record.details.action) + `">${escapeText(record.details.event)}</span> ` + MainWP.I18n.t('by') + ` <strong>${escapeText(record.details.author_name)}</strong> ` + MainWP.I18n.t('from') + `
+                                        <strong>${escapeText(record.details.source)}</strong>
                                 </div>
                                 <div class="six wide column middle aligned">
-                                ` + (record.details?.old_version && record.details?.version ? record.details.old_version + '&rarr;' + record.details.version : '') + `
+                                ` + (record.details?.old_version && record.details?.version ? escapeText(record.details.old_version) + '&rarr;' + escapeText(record.details.version) : '') + `
                                 </div>
                                 <div class="two wide column right aligned">
-                                    ${record.details.at_hour}
+                                    ${escapeText(record.details.at_hour)}
                                 </div>
                             </div>
                         </div>`;

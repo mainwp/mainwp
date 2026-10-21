@@ -13,6 +13,7 @@ const cases = [
     [ 'literal tag', attack, attack ],
     [ 'encoded tag', '%3Cimg src=x onerror=alert(1)%3E', attack ],
     [ 'double encoded tag', '%253Cimg src=x onerror=alert(1)%253E', '%3Cimg src=x onerror=alert(1)%3E' ],
+    [ 'PHP escaped name', 'Migration &amp; Backup', 'Migration & Backup' ],
     [ 'entity display', 'A &lt; B', 'A < B' ],
     [ 'literal percent', '100% uptime', '100% uptime' ],
     [ 'quotes', 'O\'Brien "Q"', 'O\'Brien "Q"' ],
@@ -31,6 +32,8 @@ function harness( raw ) {
     const html = [];
     const confirms = [];
     const titles = [];
+    const texts = [];
+    const clicks = [];
     let post;
     let ajax;
     const attrs = { site_id: '7', site_name: raw, 'history-type': 'plugin', plugin_slug: 'fixture', theme_slug: 'fixture', translation_slug: 'fixture' };
@@ -39,13 +42,16 @@ function harness( raw ) {
         *[ Symbol.iterator ]() { yield this; },
         attr( key, value ) { if ( arguments.length === 2 ) { attrs[ key ] = value; return this; } return attrs[ key ]; },
         parent() { return this; }, closest() { return this; }, find() { return this; },
+        modal( options ) { if ( typeof options === 'object' ) options.onShow(); return this; },
         val() { return 0; }, exists() { return true; }, remove() { return this; },
-        off() { return this; }, on() { return this; }, accordion() { return this; },
+        off() { return this; }, on( event, ...args ) { clicks.push( args.at( -1 ) ); return this; }, accordion() { return this; },
+        hasClass() { return true; }, data( key ) { return attrs[ key ]; },
         html( value ) { if ( arguments.length ) html.push( value ); return this; },
         append( value ) { html.push( value ); return this; },
-        text() { return this; }
+        text( value ) { texts.push( value ); return this; }
     };
     const jq = ( selector, options ) => {
+        if ( typeof selector === 'function' ) { selector( jq ); return; }
         if ( selector === '<span>' ) {
             let text = '';
             return { text( value ) { text = value; return this; }, html() { return escapeHtml( text ); } };
@@ -89,7 +95,7 @@ function harness( raw ) {
     loadSiteNameHelper( vm, mainwp, context );
     for ( const name of [ 'mainwp_escape_html', 'mainwp_decode_slug', 'mainwp_tooltip_text' ] ) load( context, updates, name );
     load( context, updates, 'updatesmanage_link_to_site' );
-    return { context, html, confirms, titles, node, respond: value => post( value ), ajax: () => ajax };
+    return { context, html, confirms, titles, texts, clicks, node, respond: value => post( value ), ajax: () => ajax };
 }
 
 function assertSafe( html ) {
@@ -155,10 +161,10 @@ for ( const [ label, raw, display ] of cases ) {
             load( h.context, updates, name );
             h.context[ name ]( 'fixture', raw );
             const decoded = (() => { try { return decodeURIComponent( raw ); } catch { return raw; } })().replaceAll( '+', ' ' );
-            assert.ok( h.confirms[ 0 ].includes( escapeHtml( decoded ) ), h.confirms[ 0 ] );
+            assert.ok( h.confirms[ 0 ].includes( escapeHtml( decodeEntities( decoded ) ) ), h.confirms[ 0 ] );
             assertSafe( h.confirms[ 0 ] );
             h.context.confirmCallback();
-            assert.equal( h.titles[ 0 ], 'Updating ' + escapeHtml( decoded ) );
+            assert.equal( h.titles[ 0 ], 'Updating ' + escapeHtml( decodeEntities( decoded ) ) );
             assertSafe( h.titles[ 0 ] );
         } );
     }
@@ -169,7 +175,7 @@ for ( const [ label, raw, display ] of cases ) {
             if ( name.endsWith( '_detail' ) ) h.context[ name ]( 'fixture', raw, 7, h.node );
             else h.context[ name ]( 'fixture', raw, h.node );
             const decoded = (() => { try { return decodeURIComponent( raw ); } catch { return raw; } })();
-            assert.ok( h.confirms[ 0 ].includes( escapeHtml( decoded ) ), h.confirms[ 0 ] );
+            assert.ok( h.confirms[ 0 ].includes( escapeHtml( decodeEntities( decoded ) ) ), h.confirms[ 0 ] );
             assert.ok( h.confirms[ 0 ].includes( escapeHtml( display ) ), h.confirms[ 0 ] );
             assertSafe( h.confirms[ 0 ] );
         } );
@@ -232,5 +238,94 @@ for ( const response of [ { notices: { fixture: 'A notice' } }, { error: { messa
         h.ajax().success( response );
         assert.equal( calls, response.error ? 1 : 0 );
         assert.equal( h.html.at( -1 ), response.error ? 'Child error' : '<i class="red times icon"></i>' );
+    } );
+}
+
+for ( const type of [ 'plugin', 'theme' ] ) {
+    for ( const [ label, raw ] of cases ) {
+        for ( const field of [ 'version', 'old_version', 'event', 'author_name', 'source', 'at_hour', 'log_id', 'name', 'item_name', 'item_slug', 'site_id' ] ) {
+            test( 'Day History ' + type + ' ' + field + ': ' + label, () => {
+                const h = harness( raw );
+                h.node.attr( 'history-type', type );
+                load( h.context, mainwp, 'dayHistory_SwitchViewHandler' );
+                h.context.dayHistory_SwitchViewHandler( h.node );
+                const record = { name: 'Fixture', item_name: 'Fixture', item_slug: 'fixture', site_id: 7, details: { log_id: 1, action: 'updated', event: 'Updated', author_name: 'Admin', source: 'Child', old_version: '1', version: '2', at_hour: '12:00' } };
+                ( field in record ? record : record.details )[ field ] = raw;
+                h.respond( { list: { fixture: [ record ] } } );
+                const html = h.html.find( value => typeof value === 'string' && value.includes( 'list-all-actions-in-day' ) );
+                assert.ok( html.includes( escapeHtml( raw ) ), html );
+                assertSafe( html );
+                const attribute = html.match( /data-name="([^"]*)"/ )[ 1 ];
+                assert.equal( decodeEntities( attribute ), record.item_name );
+            } );
+        }
+        for ( const renderer of [ 'mainwp_item_changes_load', 'dayHistory_SwitchViewHandler' ] ) {
+            test( renderer + ' ' + type + ' error: ' + label, () => {
+                const h = harness( raw );
+                h.node.attr( 'history-type', type );
+                load( h.context, mainwp, renderer );
+                h.context[ renderer ]( h.node );
+                h.respond( { error: raw } );
+                assert.ok( h.html.some( value => typeof value === 'string' && value.includes( escapeHtml( raw ) ) ), h.html );
+                h.html.filter( value => typeof value === 'string' ).forEach( assertSafe );
+            } );
+        }
+        test( 'History pagination ' + type + ': ' + label, () => {
+            const h = harness( raw );
+            h.node.attr( 'history-type', type );
+            load( h.context, mainwp, 'mainwp_item_changes_load' );
+            h.context.mainwp_item_changes_load();
+            h.respond( { list: { today: [ { date: 'Today', details: {} } ] }, more_date: raw, onward_date: raw } );
+            assert.ok( h.texts.includes( 'Data available from ' + raw + ' onward.' ) );
+            h.html.filter( value => typeof value === 'string' ).forEach( assertSafe );
+            h.clicks.at( -1 )( { preventDefault() {} } );
+            const data = type === 'plugin' ? h.context.pluginChangesLoadData : h.context.themeChangesLoadData;
+            assert.equal( data.from_date, raw );
+        } );
+    }
+}
+
+for ( const [ label, raw ] of cases ) {
+    for ( const type of [ 'plugin', 'theme' ] ) {
+        test( 'History info ' + type + ': ' + label, () => {
+            const h = harness( raw );
+            h.node.attr( 'history-view', 'update-' + type + '-per-item' );
+            h.node.attr( 'site_url', 'https://child.example/' );
+            h.node.attr( 'tz-info', 'UTC' );
+            h.context.mainwp_item_changes_load = () => {};
+            let info;
+            h.context.mainwp_changes_history_box_init = ( type, title, value ) => { info = value; };
+            const start = mainwp.lastIndexOf( 'jQuery(function ($)', mainwp.indexOf( "'.mainwp-show-history'" ) );
+            const end = mainwp.indexOf( '\nlet mainwp_changes_history_box_init', start );
+            vm.runInContext( mainwp.slice( start, end ), h.context );
+            h.clicks[ 0 ].call( h.node, { preventDefault() {}, stopPropagation() {} } );
+            const decoded = (() => { try { return decodeURIComponent( raw ); } catch { return raw; } })();
+            assert.equal( info, decoded + ' (https://child.example/) UTC' );
+        } );
+        test( 'list History switch ' + type + ': ' + label, () => {
+            const h = harness( raw );
+            h.node.attr( 'history-type', type );
+            h.node.attr( 'slug', raw );
+            h.node.attr( 'name', raw );
+            h.node.attr( 'siteid', 7 );
+            load( h.context, mainwp, 'listHistory_SwitchViewHandler' );
+            let called = false;
+            h.context.mainwp_item_changes_load = btn => { called = true; assert.equal( btn, h.node ); };
+            h.context.listHistory_SwitchViewHandler( h.node );
+            const data = type === 'plugin' ? h.context.pluginChangesLoadData : h.context.themeChangesLoadData;
+            assert.equal( data.slug, raw );
+            assert.equal( data.siteId, 7 );
+            if ( type === 'theme' ) assert.equal( data.name, raw );
+            assert.ok( called );
+            h.html.filter( value => typeof value === 'string' ).forEach( assertSafe );
+        } );
+    }
+}
+
+for ( const value of [ undefined, null, 7, 'Plain', '100% uptime', 'ACME%20Ops', '%253C' ] ) {
+    test( 'percent decode preserves input on absent or invalid encoding: ' + value, () => {
+        const h = harness( value );
+        const expected = value === 'ACME%20Ops' ? 'ACME Ops' : value === '%253C' ? '%3C' : value;
+        assert.equal( h.context.mainwp_percent_decode( value ), expected );
     } );
 }

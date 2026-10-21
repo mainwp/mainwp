@@ -983,7 +983,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     }
 
     /**
-     * Keep intranet Child icons and pin other hosts to a checked public address.
+     * Keep intranet Child icons and pin other hosts to a checked global IPv4 address.
      *
      * @param string $site_url Stored Child URL.
      * @param string $icon_url Child-reported icon URL.
@@ -1007,12 +1007,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return false;
         }
         foreach ( $addresses as $address ) {
-            if ( false === filter_var( $address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
-                return false;
-            }
-            // PHP's reserved ranges omit 100.64.0.0/10, which holds some cloud metadata endpoints (100.100.100.200).
-            $octets = explode( '.', $address );
-            if ( 4 === count( $octets ) && 100 === (int) $octets[0] && 64 <= (int) $octets[1] && 127 >= (int) $octets[1] ) {
+            if ( false === filter_var( $address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_GLOBAL_RANGE ) ) {
                 return false;
             }
         }
@@ -1032,8 +1027,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return array Download or save result.
      */
     public static function download_child_icon( $website, $icon_url ) {
-        $resolve = static::child_icon_resolve( $website->url, $icon_url );
-        if ( false === $resolve ) {
+        $resolve = is_string( $icon_url ) ? static::child_icon_resolve( $website->url, $icon_url ) : false;
+        if ( false === $resolve && is_string( $icon_url ) ) {
             $host      = wp_parse_url( $icon_url, PHP_URL_HOST );
             $addresses = is_string( $host ) ? gethostbynamel( $host ) : false;
             $resolve   = static::child_icon_resolve( $website->url, $icon_url, is_array( $addresses ) ? $addresses : array() );

@@ -705,14 +705,27 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		$long    = function ( $name ) {
 			return $this->raw_tar_member( '././@LongLink', $name, '', 'L' );
 		};
+		// Directories need the execute bit the Child writer records, or extraction cannot descend.
+		$dir   = function ( $name ) {
+			return $this->patch_raw_tar_header( $this->raw_tar_member( $name, '', '', '5' ), 100, "0000755\0" );
+		};
+		$names = self::tar_name_rows();
+		$pairs = array(
+			'file then directory'           => $this->raw_tar_member( 'a', 'file' ) . $dir( 'a/' ),
+			'directory then file'           => $dir( 'a/' ) . $this->raw_tar_member( 'a', 'file' ),
+			'slashless directory then file' => $dir( 'a' ) . $this->raw_tar_member( 'a', 'file' ),
+			'file then child'               => $this->raw_tar_member( 'a', 'file' ) . $this->raw_tar_member( 'a/b', 'child' ),
+			'directory twice'               => $dir( 'a/' ) . $dir( 'a/' ),
+			'file twice'                    => $this->raw_tar_member( 'a', 'first' ) . $this->raw_tar_member( 'a', 'second' ),
+		);
 		if ( isset( $size[ $shape ] ) ) {
 			$bytes = $this->patch_raw_tar_header( $carrier, 124, $size[ $shape ] );
+		} elseif ( isset( $names[ $shape ] ) ) {
+			$bytes = implode( '', array_map( array( $this, 'raw_tar_member' ), $names[ $shape ][0], $names[ $shape ][0] ) );
+		} elseif ( isset( $pairs[ $shape ] ) ) {
+			$bytes = $pairs[ $shape ];
 		} elseif ( 'Child shape' === $shape ) {
-			$deep = str_repeat( 'wp-content/plugins/', 7 ) . 'deep';
-			// Directories need the execute bit the Child writer records, or extraction cannot descend.
-			$dir   = function ( $name ) {
-				return $this->patch_raw_tar_header( $this->raw_tar_member( $name, '', '', '5' ), 100, "0000755\0" );
-			};
+			$deep  = str_repeat( 'wp-content/plugins/', 7 ) . 'deep';
 			$bytes = $dir( 'wp-content' ) . $long( $deep ) . $dir( substr( $deep, 0, 100 ) ) . $long( $deep . '/file.txt' ) . $this->raw_tar_member( substr( $deep . '/file.txt', 0, 100 ), 'deep' );
 		} elseif ( 'two long names' === $shape ) {
 			$bytes = $long( 'a.txt' ) . $long( 'b.txt' ) . $this->raw_tar_member( 'evil.txt', 'hostile', '..' ) . $this->raw_tar_member( 'a.txt', 'a' ) . $this->raw_tar_member( 'b.txt', 'b' );
@@ -733,6 +746,11 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				$caught = $this->tar_refusal( $sandbox, $path, $action );
 				if ( 'accept' === $expected ) {
 					$this->assertNull( $caught, $action . ': ' . ( $caught ? $caught->getMessage() : '' ) );
+					if ( 'extract' === $action && isset( $names[ $shape ] ) ) {
+						foreach ( $names[ $shape ][0] as $name ) {
+							$this->assertSame( $name, file_get_contents( $sandbox->temp_dir() . $name ) );
+						}
+					}
 					continue;
 				}
 				$this->assertInstanceOf( MainWP_Exception::class, $caught, $action );
@@ -767,7 +785,43 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		foreach ( array( '1', '2', '7', 'x', 'g', 'K', 'S' ) as $type ) {
 			$rows[ 'type ' . $type ] = array( 'type ' . $type, 'unreadable' );
 		}
+		foreach ( self::tar_name_rows() as $shape => $row ) {
+			$rows[ $shape ] = array( $shape, $row[1] );
+		}
+		// PharData keeps one entry per name, so a file and a directory sharing one lose a member.
+		foreach ( array(
+			'file then directory'           => 'unreadable',
+			'directory then file'           => 'unreadable',
+			'slashless directory then file' => 'unreadable',
+			'file then child'               => 'unreadable',
+			'directory twice'               => 'accept',
+			'file twice'                    => 'accept',
+		) as $shape => $expected ) {
+			$rows[ $shape ] = array( $shape, $expected );
+		}
 		return $rows;
+	}
+
+	/**
+	 * Member names the Child's validate_extract_path() accepts or refuses: a `..` segment under
+	 * either separator, a leading separator with or without a drive letter, or a stream wrapper is
+	 * unsafe; dots inside a segment and a drive letter with no separator are ordinary names.
+	 *
+	 * @return array<string, array{0: string[], 1: string}> Names per shape and the expected outcome.
+	 */
+	private static function tar_name_rows() {
+		return array(
+			'name dots inside a segment'  => array( array( 'jquery..min.js', 'a..b/c.txt', '...' ), 'accept' ),
+			'name drive letter only'      => array( array( 'C:notes.txt' ), 'accept' ),
+			'name bare dot-dot'           => array( array( '..' ), 'unsafe' ),
+			'name trailing dot-dot'       => array( array( 'sub/..' ), 'unsafe' ),
+			'name backslash dot-dot'      => array( array( 'sub\\..\\evil.txt' ), 'unsafe' ),
+			'name leading backslash'      => array( array( '\\evil.txt' ), 'unsafe' ),
+			'name drive and backslash'    => array( array( 'C:\\evil.txt' ), 'unsafe' ),
+			'name drive and slash'        => array( array( 'C:/evil.txt' ), 'unsafe' ),
+			'name stream wrapper'         => array( array( 'phar://other/a.tar' ), 'unsafe' ),
+			'name dot-dot after a dotted' => array( array( 'a..b/../evil.txt' ), 'unsafe' ),
+		);
 	}
 
 	/**
@@ -2424,24 +2478,75 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		$method  = new \ReflectionMethod( $sandbox, 'has_unsafe_entry_name' );
 		$method->setAccessible( true );
 
-		$unsafe = array(
-			'../evil.txt',
-			'sub/../../evil.txt',
-			'/etc/passwd',
-			'C:/Windows/evil.txt',
-			'phar://some/other/archive.tar',
-		);
-		foreach ( $unsafe as $name ) {
-			$this->assertTrue( $method->invoke( $sandbox, $name ), "Expected '{$name}' to be rejected." );
+		foreach ( self::entry_name_cases() as $label => $row ) {
+			$this->assertSame( $row[1], $method->invoke( $sandbox, $row[0] ), $label );
 		}
+		$this->assertTrue( $method->invoke( $sandbox, "good.txt\0.php" ), 'NUL byte' );
+		$this->assertFalse( $method->invoke( $sandbox, '' ), 'archive root' );
+	}
 
-		$safe = array(
-			'good.txt',
-			'nested/good.txt',
-			'',
-		);
-		foreach ( $safe as $name ) {
-			$this->assertFalse( $method->invoke( $sandbox, $name ), "Expected '{$name}' to be accepted." );
+	/**
+	 * Zip members follow the same name rule as tar members: refused names leave the sandbox
+	 * empty, and accepted names land where they say.
+	 *
+	 * @dataProvider entry_name_cases
+	 * @param string $name   Member name.
+	 * @param bool   $unsafe Whether the name is refused.
+	 */
+	public function test_zip_entry_name_matrix( $name, $unsafe ) {
+		$path = $this->dir . '/' . uniqid( 'names-' ) . '.zip';
+		$zip  = new \ZipArchive();
+		$this->assertTrue( $zip->open( $path, \ZipArchive::CREATE ) );
+		$this->assertTrue( $zip->addFromString( $name, 'named' ) );
+		$this->assertTrue( $zip->addFromString( 'good.txt', 'good-bytes' ) );
+		$this->assertTrue( $zip->close() );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = null;
+			try {
+				$sandbox->extract_files( $path );
+			} catch ( MainWP_Exception $e ) {
+				$caught = $e;
+			}
+			if ( $unsafe ) {
+				$this->assertInstanceOf( MainWP_Exception::class, $caught );
+				$this->assertSame( 'zip traversal entry: ' . $name, $caught->get_message_extra( false ) );
+				$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
+			} else {
+				$this->assertNull( $caught, $caught ? $caught->get_message_extra( false ) : '' );
+				$this->assertSame( 'named', file_get_contents( $sandbox->temp_dir() . $name ) );
+			}
+		} finally {
+			$sandbox->tear_down();
 		}
+	}
+
+	/**
+	 * Names on both sides of the Child's validate_extract_path() rule.
+	 *
+	 * @return array<string, array{0: string, 1: bool}> Name and whether it is unsafe.
+	 */
+	public static function entry_name_cases() {
+		return array(
+			'plain'                    => array( 'plain.txt', false ),
+			'nested'                   => array( 'nested/good-name.txt', false ),
+			'dots inside a name'       => array( 'jquery..min.js', false ),
+			'dots inside a directory'  => array( 'a..b/c.txt', false ),
+			'three dots'               => array( '...', false ),
+			'drive letter only'        => array( 'C:notes.txt', false ),
+			'parent'                   => array( '../evil.txt', true ),
+			'nested parent'            => array( 'sub/../../evil.txt', true ),
+			'trailing parent'          => array( 'sub/..', true ),
+			'bare parent'              => array( '..', true ),
+			'backslash parent'         => array( 'sub\\..\\evil.txt', true ),
+			'leading backslash parent' => array( '..\\evil.txt', true ),
+			'absolute'                 => array( '/etc/passwd', true ),
+			'leading backslash'        => array( '\\evil.txt', true ),
+			'drive and slash'          => array( 'C:/Windows/evil.txt', true ),
+			'drive and backslash'      => array( 'C:\\Windows\\evil.txt', true ),
+			'stream wrapper'           => array( 'phar://some/other/archive.tar', true ),
+			'parent after dotted name' => array( 'a..b/../evil.txt', true ),
+		);
 	}
 }

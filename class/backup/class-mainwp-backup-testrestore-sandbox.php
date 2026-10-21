@@ -1366,6 +1366,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         }
         $members    = array();
         $prefixed   = array();
+        $dirs       = array();
         $long_name  = null;
         $count      = 0;
         $name_bytes = 0;
@@ -1435,8 +1436,13 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     if ( $this->has_unsafe_entry_name( $name ) ) {
                         throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $name, self::ERR_APPLY );
                     }
-                    $key = $this->tar_comparison_name( $name, '5' === $type );
+                    $is_dir = '5' === $type;
+                    $key    = $this->tar_comparison_name( $name, $is_dir );
                     if ( isset( $members[ $key ] ) ) {
+                        // PharData keeps one entry per name, so a file and a directory sharing one would drop a member.
+                        if ( isset( $dirs[ $key ] ) !== $is_dir ) {
+                            throw $unreadable;
+                        }
                         ++$members[ $key ];
                         if ( '' === $prefix ) {
                             unset( $prefixed[ $key ] );
@@ -1447,6 +1453,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                             throw $unreadable;
                         }
                         $members[ $key ] = 1;
+                        if ( $is_dir ) {
+                            $dirs[ $key ] = true;
+                        }
                         if ( '' !== $prefix ) {
                             $prefixed[ $key ] = true;
                         }
@@ -1471,8 +1480,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             $iterator = new \RecursiveIteratorIterator( $phar, \RecursiveIteratorIterator::SELF_FIRST );
             foreach ( $iterator as $file ) {
                 $key = $this->tar_comparison_name( $iterator->getSubPathname(), $file->isDir() );
-                // PharData adds implicit parent directories, but every listed file needs a header.
+                // PharData adds implicit parent directories, but every listed file needs a header, and a listed name keeps the walk's kind.
                 if ( ! $file->isDir() && ! isset( $members[ $key ] ) ) {
+                    throw $unreadable;
+                }
+                if ( isset( $members[ $key ] ) && isset( $dirs[ $key ] ) !== $file->isDir() ) {
                     throw $unreadable;
                 }
                 unset( $members[ $key ] );
@@ -1663,11 +1675,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * Whether an archive entry name is unsafe to extract: a parent-directory
-     * traversal segment, an absolute path, or a stream wrapper. PHP's own
-     * ZipArchive/PharData extractors already neutralise these on 7.4+; this
-     * is a cheap defense-in-depth check at the name level, refusing the
-     * whole archive rather than silently skipping the entry.
+     * Whether an archive entry name is unsafe to extract: a `..` segment under either separator,
+     * a leading separator with or without a drive letter, a NUL byte, or a stream wrapper. PHP's
+     * own ZipArchive/PharData extractors already neutralise these on 7.4+; this is a
+     * defense-in-depth check at the name level, refusing the whole archive rather than silently
+     * skipping the entry. It follows the Child's validate_extract_path(), so a name the Child
+     * restores (`jquery..min.js`, `C:notes.txt`) also passes a test restore.
      *
      * @param string $name Archive entry name.
      *
@@ -1677,21 +1690,13 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( '' === $name ) {
             return false;
         }
-        if ( false !== strpos( $name, '..' ) ) {
+        if ( false !== strpos( $name, '://' ) || false !== strpos( $name, "\0" ) ) {
             return true;
         }
-        if ( false !== strpos( $name, '://' ) ) {
+        if ( 1 === preg_match( '#^([a-z]:)?[\\\\/]#i', $name ) ) {
             return true;
         }
-        $normalized = str_replace( '\\', '/', $name );
-        if ( '/' === $normalized[0] ) {
-            return true;
-        }
-        // Windows drive letter (e.g. C:/...).
-        if ( 1 === preg_match( '#^[a-zA-Z]:#', $normalized ) ) {
-            return true;
-        }
-        return false;
+        return in_array( '..', preg_split( '#[\\\\/]#', $name ), true );
     }
 
     /**

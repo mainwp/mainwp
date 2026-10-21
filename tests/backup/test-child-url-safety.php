@@ -331,6 +331,27 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 		$this->assertSame( $name, MainWP_DB::instance()->get_website_option( $this->website->id, 'favi_icon', '' ) );
 	}
 
+	/** A file a Child named before the role naming must not stay in the public icons dir. */
+	public function test_icon_download_removes_earlier_names_for_the_site() {
+		$dirs    = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
+		$id      = (int) $this->website->id;
+		$planted = array( $dirs[0] . 'favi-' . $id . '-favi.php.png', $dirs[0] . 'favi-' . $id . '-old.ico' );
+		$control = $dirs[0] . 'favi-' . $id . '1-icon.png';
+		foreach ( array_merge( $planted, array( $control ) ) as $path ) {
+			file_put_contents( $path, 'planted' );
+			$this->files[] = $path;
+		}
+		$this->files[] = $dirs[0] . 'favi-' . $id . '-icon.png';
+		MainWP_DB::instance()->update_website_option( $this->website, 'favi_icon', 'favi-' . $id . '-favi.php.png' );
+		$this->assertSame( array( 'result' => 'success' ), MainWP_Sync::download_child_icon( $this->website, static::fixture_url( '/child-icon.png' ) ) );
+		$this->assertSame( static::fixture_content( 64 ), file_get_contents( $dirs[0] . 'favi-' . $id . '-icon.png' ) );
+		foreach ( $planted as $path ) {
+			$this->assertFileDoesNotExist( $path );
+		}
+		$this->assertSame( array( $dirs[0] . 'favi-' . $id . '-icon.png' ), glob( $dirs[0] . 'favi-' . $id . '-*' ) );
+		$this->assertFileExists( $control, 'Another site\'s icon was removed.' );
+	}
+
 	/** The fetch must use its checked address and stop before a redirect target. */
 	public function test_icon_fetch_pins_dns_and_does_not_follow_redirects() {
 		$base    = 'http://icon-pin.invalid:' . static::$server_port;

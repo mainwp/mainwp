@@ -131,6 +131,7 @@ class Test_REST_Operation_Rights extends TestCase {
 			array( 'MainWP_Rest_Clients_Controller', 'delete_item', 'dashboard', 'manage_clients' ),
 			array( 'MainWP_Rest_Clients_Controller', 'suspend_client', 'dashboard', 'manage_clients' ),
 			array( 'MainWP_Rest_Clients_Controller', 'unsuspend_client', 'dashboard', 'manage_clients' ),
+			array( 'MainWP_Rest_Clients_Controller', 'client_fields', 'dashboard', 'manage_clients' ),
 			array( 'MainWP_Rest_Clients_Controller', 'create_client_fields', 'dashboard', 'manage_clients' ),
 			array( 'MainWP_Rest_Clients_Controller', 'edit_client_fields', 'dashboard', 'manage_clients' ),
 			array( 'MainWP_Rest_Clients_Controller', 'delete_client_fields', 'dashboard', 'manage_clients' ),
@@ -265,6 +266,39 @@ class Test_REST_Operation_Rights extends TestCase {
 			);
 			$this->assertNull( $result['error'], $method );
 			$this->assertSame( $boundary, $result['boundary'], $method );
+		}
+	}
+
+	/** Client field reads require both manage_clients and the key's read scope. */
+	public function test_client_field_reads_require_right_and_read_scope(): void {
+		$cases = array(
+			array( 'read', false, 'mainwp_insufficient_right' ),
+			array( 'read', true, null ),
+			array( 'read_write', true, null ),
+			array( 'write', true, 'mainwp_rest_authentication_error' ),
+			array( 'delete', true, 'mainwp_rest_authentication_error' ),
+		);
+		foreach ( $cases as list( $scope, $granted, $error ) ) {
+			$result = $this->probe(
+				array(
+					'controller'  => 'MainWP_Rest_Clients_Controller',
+					'method'      => 'client_fields',
+					'route'       => '/mainwp/v2/clients/fields',
+					'http_method' => 'GET',
+					'route_check' => true,
+					'scope'       => $scope,
+					'rights'      => array( 'dashboard' => array( 'manage_clients' => $granted ) ),
+				)
+			);
+			if ( null === $error ) {
+				$this->assertNull( $result['error'] );
+				$this->assertSame( 'client fields read', $result['boundary'] );
+			} else {
+				$this->assertIsArray( $result['error'] );
+				$this->assertSame( $error, $result['error']['code'] );
+				$this->assertSame( 'mainwp_insufficient_right' === $error ? 403 : 401, $result['error']['data']['status'] );
+				$this->assertNull( $result['boundary'] );
+			}
 		}
 	}
 

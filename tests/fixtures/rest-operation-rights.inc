@@ -42,6 +42,10 @@ namespace MainWP\Dashboard {
 		public static function instance() { return new self(); }
 		public function add_tag( $item ) { throw new \Rest_Rights_Boundary( 'tag write' ); }
 	}
+	class MainWP_DB_Client {
+		public static function instance() { return new self(); }
+		public function get_client_fields_by_params( $params ) { throw new \Rest_Rights_Boundary( 'client fields read' ); }
+	}
 	class MainWP_Uptime_Monitoring_Handle {
 		public static function get_global_monitoring_settings() { return array( 'active' => 1 ); }
 		public static function update_uptime_global_settings( $settings ) { throw new \Rest_Rights_Boundary( 'monitor settings write' ); }

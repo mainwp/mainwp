@@ -830,6 +830,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function client_fields( $request ) {  // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_clients' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // pre_page shipped as the documented page size but was never read; keep it working through per_page.
         if ( null === $request->get_param( 'per_page' ) && null !== $request->get_param( 'pre_page' ) ) {
             $request->set_param( 'per_page', $request->get_param( 'pre_page' ) );

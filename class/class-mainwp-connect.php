@@ -3118,7 +3118,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( false !== $expected_size && 'already_complete' !== $result ) {
             $final_size = $wp_filesystem->exists( $file ) ? (int) $wp_filesystem->size( $file ) : 0;
-            if ( $final_size < $expected_size || $final_size > static::download_size_ceiling( $expected_size ) ) {
+            if ( $final_size < $expected_size || $final_size > self::download_size_ceiling( $expected_size ) ) {
                 $too_small = $final_size < $expected_size;
                 if ( ! $too_small && $wp_filesystem->exists( $file ) ) {
                     $wp_filesystem->delete( $file ); // Oversized files are unusable for resume.
@@ -3378,7 +3378,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
                 // A compromised Child can ignore its declared size and stream until the
                 // transfer timeout, filling the Dashboard disk; stop at the size check's ceiling.
-                if ( false !== $expected_size && $state->bytes + strlen( $data ) > static::download_size_ceiling( $expected_size ) ) {
+                if ( false !== $expected_size && $state->bytes + strlen( $data ) > self::download_size_ceiling( $expected_size ) ) {
                     $state->oversized = true;
                     $state->exception = MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'download exceeds declared size' );
                     return -1;

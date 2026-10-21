@@ -129,7 +129,7 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
 
                 $hash = hash( $algo, $bytes );
-                if ( ! static::staged_chunk_matches( $staging, $hash, $length ) ) {
+                if ( ! self::staged_chunk_matches( $staging, $hash, $length ) ) {
                     $needed[ $hash ] = $length;
                 }
 
@@ -155,14 +155,14 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             }
 
             foreach ( $chunks as $chunk ) {
-                if ( static::staged_chunk_matches( $staging, $chunk['hash'], $chunk['length'] ) ) {
+                if ( self::staged_chunk_matches( $staging, $chunk['hash'], $chunk['length'] ) ) {
                     continue;
                 }
                 if ( 0 !== fseek( $handle, $chunk['offset'] ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fseek -- source slices share the open artifact handle.
                     return false;
                 }
                 $bytes = fread( $handle, $chunk['length'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- bounded source slice for staging.
-                if ( false === $bytes || strlen( $bytes ) !== $chunk['length'] || hash( $algo, $bytes ) !== $chunk['hash'] || ! static::stage_chunk( $staging, $chunk['hash'], $bytes ) ) {
+                if ( false === $bytes || strlen( $bytes ) !== $chunk['length'] || hash( $algo, $bytes ) !== $chunk['hash'] || ! self::stage_chunk( $staging, $chunk['hash'], $bytes ) ) {
                     return false;
                 }
             }
@@ -223,7 +223,7 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     private static function stage_chunk( $staging, $hash, $bytes ) {
         $final = $staging . DIRECTORY_SEPARATOR . $hash . '.bin';
 
-        if ( static::staged_chunk_matches( $staging, $hash, strlen( $bytes ) ) ) {
+        if ( self::staged_chunk_matches( $staging, $hash, strlen( $bytes ) ) ) {
             return true;
         }
 

@@ -332,7 +332,7 @@ class MainWP_Backup_Private_Root {
             return $root;
         }
         if ( 'served' === self::exposure_verdict( $root, ! $existed ) ) {
-            return self::unavailable( $root, __( 'the web server serves this directory', 'mainwp' ) );
+            return self::unavailable( $root, __( 'the web server serves this directory, so backups already stored in it can be downloaded over the web until they are moved or deleted', 'mainwp' ) );
         }
         $parent = self::ensure_private_dir( $root . $kind, $root );
         if ( is_wp_error( $parent ) ) {

@@ -566,6 +566,22 @@ class MainWP_Backup_Cloud_Pull_Manifest_Test extends MainWP_Abilities_Test_Case 
 	}
 
 	/**
+	 * A presignable copy whose upload hash differs from the backup's
+	 * recorded hash holds changed bytes, so the restore stages from the
+	 * copies the catalog kept instead.
+	 */
+	public function test_generate_pull_manifest_null_when_upload_hash_differs_from_backup() {
+		$this->driver->upload_records = $this->upload_record( array( 'sha256' => str_repeat( 'c', 64 ) ) );
+
+		$plan = array( $this->plan_entry( array( 'recorded_sha256' => str_repeat( 'a', 64 ) ) ) );
+		$this->assertNull( $this->driver->generate_pull_manifest( $plan ) );
+		$this->assertSame( '', $plan[0]['sha256'] );
+
+		$plan = array( $this->plan_entry( array( 'recorded_sha256' => str_repeat( 'c', 64 ) ) ) );
+		$this->assertNotNull( $this->driver->generate_pull_manifest( $plan ) );
+	}
+
+	/**
 	 * Presigned URLs that are not https reject the manifest, matching
 	 * the child's own validation.
 	 */

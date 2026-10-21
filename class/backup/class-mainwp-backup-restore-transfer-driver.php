@@ -220,6 +220,11 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
             if ( null === $record || empty( $record['sha256'] ) ) {
                 return null; // Uploaded before hashes were recorded: stage instead.
             }
+            // A copy uploaded after the local file changed is not this backup; staging uses the catalog's matching copies.
+            $recorded = isset( $entry['recorded_sha256'] ) ? (string) $entry['recorded_sha256'] : '';
+            if ( '' !== $recorded && ! hash_equals( $recorded, (string) $record['sha256'] ) ) {
+                return null;
+            }
 
             $prefix        = $this->snapshot_prefix( $snapshot_id );
             $provider      = $uploads[ $snapshot_id ]['provider'];

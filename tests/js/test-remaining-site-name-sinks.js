@@ -303,16 +303,19 @@ const removeResponses = [
     [{ removed_site: false, undefined_error: true }, true, false],
     [{ removed_site: true, undefined_error: true }, false, true],
     [{ removed_site: false, error: '&lt;img src=x onerror=alert(1)&gt;' }, true, false],
-    [{ removed_site: false, error: 'A &amp; B' }, true, false]
+    [{ removed_site: false, error: 'A &amp; B' }, true, false],
+    [{ removed_site: false, error: '<img src=x onerror=alert(1)>' }, true, false]
 ];
 for (const [response, failed, removed] of removeResponses) {
     test('row status remove: ' + JSON.stringify(response), () => {
         const h = harness(); load(h, 'mainwp_managesites_bulk_remove_specific', 'mainwp-managesites-action');
+        h.row.classes.add(failed ? 'positive' : 'error');
         h.context.mainwp_managesites_bulk_remove_specific(h.row); h.respond(response);
         const html = htmlWrites(h).at(-1);
         assert.ok(html.includes(failed ? 'red times icon' : 'green check icon'), html);
         assertSafe(html);
         if (response.error) assert.ok(html.includes(escaped(response.error)), html);
+        assert.equal(h.row.classes.has('error'), failed); assert.equal(h.row.classes.has('positive'), !failed);
         assert.equal(h.timers.length, removed ? 1 : 0);
         h.timers.forEach(fn => fn());
         assert.equal(h.writes.some(w => w.method === 'fadeOut'), removed);

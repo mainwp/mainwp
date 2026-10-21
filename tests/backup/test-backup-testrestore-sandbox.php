@@ -771,6 +771,45 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
+	 * A member size past PharData's 32-bit limit is refused before PharData reads the archive.
+	 * The fixture is a sparse file, so it costs no disk space.
+	 *
+	 * @dataProvider oversized_tar_member_sizes
+	 * @param string $octal Size field digits.
+	 */
+	public function test_tar_headers_refuse_sizes_past_phar_limit( $octal ) {
+		$header = $this->patch_raw_tar_header( $this->raw_tar_member( 'a.txt', '' ), 124, $octal . "\0" );
+		$hidden = $this->raw_tar_member( 'sub//hidden.php', 'hostile' );
+		$path   = $this->dir . '/' . uniqid( 'huge-' ) . '.tar';
+		$handle = fopen( $path, 'wb' );
+		fwrite( $handle, $header . str_repeat( "\0", 512 ) . $hidden );
+		ftruncate( $handle, 512 + octdec( $octal ) + 1536 );
+		fclose( $handle );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $path, 'size' );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertStringContainsString( 'could not be read', $caught->getMessage() );
+		} finally {
+			$sandbox->tear_down();
+			unlink( $path );
+		}
+	}
+
+	/**
+	 * Sizes PharData misreads: one byte past the rounding limit, and 4 GiB.
+	 *
+	 * @return array
+	 */
+	public static function oversized_tar_member_sizes() {
+		return array(
+			'rounding overflow' => array( '37777777001' ),
+			'4 GiB'             => array( '40000000000' ),
+		);
+	}
+
+	/**
 	 * Metadata limits and payload boundaries must be checked before extraction.
 	 *
 	 * @dataProvider malformed_tar_header_cases

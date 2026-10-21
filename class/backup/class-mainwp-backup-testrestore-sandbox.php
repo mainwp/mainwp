@@ -1398,7 +1398,8 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 }
                 $remaining = $length - ftell( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- prevent seeks beyond a truncated payload.
                 $padding   = ( 512 - $size % 512 ) % 512;
-                if ( $size > $remaining || $padding > $remaining - $size ) {
+                // PharData keeps sizes and their 512-byte rounding in 32 bits, so a larger member would be read as a shorter one.
+                if ( $size > 4294966784 || $size > $remaining || $padding > $remaining - $size ) {
                     throw $unreadable;
                 }
                 $type = $header[156];

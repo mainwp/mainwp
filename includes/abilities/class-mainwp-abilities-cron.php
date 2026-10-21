@@ -99,8 +99,9 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
      * Restore the job owner and confirm the account can still manage sites.
      *
      * Cron has no authenticated owner by default. Site scope and rights must
-     * be checked as the user who queued the job. Deleted accounts and accounts
-     * that lost manage_options must not continue driving remote calls.
+     * be checked as the user who queued the job. Scoped Team Control roles may
+     * lack manage_options; they must retain explicit site access, and the worker
+     * rechecks required operation rights and each target before remote calls.
      *
      * @param array $job Job data (reads user_id).
      *
@@ -120,12 +121,16 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
             return false;
         }
 
-        if ( ! user_can( $owner_id, 'manage_options' ) ) {
-            return false;
+        wp_set_current_user( $owner_id );
+        if ( current_user_can( 'manage_options' ) ) {
+            return true;
         }
 
-        wp_set_current_user( $owner_id );
-        return true;
+        // Without an explicit scope grant, a non-admin account cannot resume
+        // a job. In particular, the default 'all' without Team Control is not
+        // evidence that a demoted account retains MainWP access.
+        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        return is_array( $allowed_sites ) && ! empty( $allowed_sites );
     }
 
     /**

@@ -4390,27 +4390,6 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
-     * Check the acting API key owner's right without the legacy REST bypass.
-     *
-     * @param string $right Required Team Control operation right.
-     * @return true|WP_Error
-     */
-    private function check_operation_right( string $right ) {
-        if ( ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
-            return new WP_Error(
-                'mainwp_insufficient_right',
-                __( 'Your role does not permit this operation.', 'mainwp' ),
-                array(
-                    'status' => 403,
-                    'right'  => $right,
-                )
-            );
-        }
-
-        return true;
-    }
-
-    /**
      * Get all websites.
      *
      * @uses MainWP_DB::instance()->get_sites()

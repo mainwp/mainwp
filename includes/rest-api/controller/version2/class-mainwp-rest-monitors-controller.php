@@ -898,6 +898,11 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_global_monitoring_settings( $request ) {
+        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get request body.
         $body = $request->get_json_params();
 
@@ -966,6 +971,11 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_individual_monitor_settings( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $monitor = $this->get_request_item( $request );
 
         if ( empty( $monitor ) ) {
@@ -1045,6 +1055,11 @@ class MainWP_Rest_Monitors_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function check_monitor( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $monitor = $this->get_request_item( $request );
 
         if ( empty( $monitor ) ) {

@@ -195,6 +195,11 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function get_users( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_users' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Prepare query parameters.
         $args = $this->prepare_objects_query( $request, 'users_fields' );
 
@@ -235,6 +240,11 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function create_user( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_users' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Validate request.
         $validation_error = $this->validate_user_request( $request );
         if ( is_wp_error( $validation_error ) ) {
@@ -272,6 +282,11 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function edit_user( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_users' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get website.
         $website = $this->get_request_website_by_id_domain_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -327,6 +342,11 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function delete_user( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_users' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get website.
         $website = $this->get_request_website_by_id_domain_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -361,6 +381,11 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function update_admin_password( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_users' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Validate request.
         $validation_error = $this->validate_user_request( $request );
         if ( is_wp_error( $validation_error ) ) {
@@ -398,6 +423,11 @@ class MainWP_Rest_Users_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function import_users( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_users' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $files = $request->get_file_params();
 
         // Validate request.

@@ -247,6 +247,20 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
             // If REST auth has validated a user, trust that authentication.
             if ( ! empty( $rest_user ) ) {
+                $rest_permission = $auth->get_abilities_rest_permission();
+                if ( is_wp_error( $rest_permission ) ) {
+                    return $rest_permission;
+                }
+                if ( true === $rest_permission ) {
+                    // A scoped Team Control role can use its key without
+                    // broad WordPress capabilities. The default 'all' alone
+                    // must not promote an ordinary non-admin key owner.
+                    $allowed_sites = self::get_allowed_site_ids();
+                    if ( is_array( $allowed_sites ) && ! empty( $allowed_sites ) ) {
+                        return true;
+                    }
+                }
+
                 // REST API key is valid, check capability of the associated user.
                 if ( ! current_user_can( 'manage_options' ) ) {
                     return new \WP_Error(

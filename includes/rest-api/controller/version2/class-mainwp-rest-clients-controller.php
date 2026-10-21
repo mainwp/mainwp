@@ -541,6 +541,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function create_item( $request ) {
+        $permission = $this->check_operation_right( 'manage_clients' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $resp_data            = array();
         $resp_data['success'] = 0;
         try {
@@ -577,6 +582,10 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function update_item( $request ) {
+        $permission = $this->check_operation_right( 'manage_clients' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $item = $this->get_request_item( $request );
 
@@ -626,6 +635,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function delete_item( $request ) {
+        $permission = $this->check_operation_right( 'manage_clients' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $item = $this->get_request_item( $request, true );
         if ( is_wp_error( $item ) ) {
             return $item;
@@ -744,6 +758,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function suspend_client( $request ) {
+        $permission = $this->check_operation_right( 'manage_clients' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $item = $this->get_request_item( $request, true );
         if ( is_wp_error( $item ) ) {
             return $item;
@@ -774,6 +793,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function unsuspend_client( $request ) {
+        $permission = $this->check_operation_right( 'manage_clients' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $item = $this->get_request_item( $request, true );
         if ( is_wp_error( $item ) ) {
             return $item;
@@ -875,6 +899,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function create_client_fields( $request ) {
+        $permission = $this->check_operation_right( 'manage_clients' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get request body.
         $body = $this->get_request_body( $request );
         if ( is_wp_error( $body ) ) {
@@ -974,6 +1003,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function edit_client_fields( $request ) {
+        $permission = $this->check_operation_right( 'manage_clients' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get client field.
         $field = $this->get_request_client_fields_item( $request );
         if ( empty( $field ) ) {
@@ -1067,6 +1101,11 @@ class MainWP_Rest_Clients_Controller extends MainWP_REST_Controller { //phpcs:ig
      * @return WP_Error|WP_REST_Response
      */
     public function delete_client_fields( $request ) {
+        $permission = $this->check_operation_right( 'manage_clients' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get client field.
         $field = $this->get_request_client_fields_item( $request );
         if ( empty( $field ) ) {

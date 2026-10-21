@@ -2423,7 +2423,8 @@ let managesites_remove = function (obj) {
             let removed = true === response.removed_site;
 
             if (response.error != undefined) {
-                error = response.error;
+                // The handler sends the error HTML-escaped and feedback() places it as text.
+                error = mainwp_entities_text(response.error);
             } else if (response.result == 'NOSITE') {
                 error = jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(MainWP.I18n.t('The requested site has not been found.')));
             } else if (!removed) {

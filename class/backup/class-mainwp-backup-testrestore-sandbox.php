@@ -1348,15 +1348,18 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * PharData can extract prefix-split members that its iterator never exposes.
-     * Check their headers before trusting either extraction or SQL member access.
+     * PharData can extract members its iterator never lists, and it reads several header
+     * spellings differently from a tar tool, so the two can disagree on where a member starts.
+     * Accept only the header shapes the Child writer produces (ustar magic, plain octal numbers,
+     * regular files, directories and GNU long names), check every member name, and require the
+     * walk and PharData's listing to agree before extraction or SQL member access.
      *
      * @param string $plain Uncompressed archive path.
-     * @throws MainWP_Exception On unsafe, malformed or unlisted members.
+     * @throws MainWP_Exception On unsafe, malformed, unsupported or unlisted members.
      * @return \PharData Archive with a complete, validated listing.
      */
-    private function validated_tar( string $plain ): \PharData { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- tar variants share one bounded header walk.
-        $unreadable = new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar malformed or truncated header or entry', self::ERR_APPLY );
+    private function validated_tar( string $plain ): \PharData { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- one bounded header walk over the accepted shapes.
+        $unreadable = new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar malformed, truncated or unsupported header or entry', self::ERR_APPLY );
         $stream     = fopen( $plain, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- inspect headers without extracting members.
         if ( false === $stream ) {
             throw $unreadable;
@@ -1364,7 +1367,6 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $members    = array();
         $prefixed   = array();
         $long_name  = null;
-        $pax_path   = null;
         $count      = 0;
         $name_bytes = 0;
         try {
@@ -1391,7 +1393,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 $unsigned = array_sum( unpack( 'C*', $check ) );
                 $signed   = array_sum( unpack( 'c*', $check ) );
                 $size     = $this->tar_header_number( substr( $header, 124, 12 ) );
-                if ( null === $checksum || ( $checksum !== $unsigned && $checksum !== $signed ) || null === $size ) {
+                if ( null === $checksum || ( $checksum !== $unsigned && $checksum !== $signed ) || null === $size || 'ustar' !== substr( $header, 257, 5 ) ) {
                     throw $unreadable;
                 }
                 $remaining = $length - ftell( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- prevent seeks beyond a truncated payload.
@@ -1400,15 +1402,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     throw $unreadable;
                 }
                 $type = $header[156];
-                if ( ! in_array( $type, array( '0', "\0", '1', '2', '5', '7', 'L', 'x', 'g' ), true ) ) {
-                    throw $unreadable;
-                }
-                // PharData reads no payload for links and directories, so a declared one would be parsed as headers this walk never sees.
-                if ( $size > 0 && in_array( $type, array( '1', '2', '5' ), true ) ) {
-                    throw $unreadable;
-                }
-                if ( 'L' === $type || 'x' === $type ) {
-                    if ( $size > 65536 ) {
+                if ( 'L' === $type ) {
+                    // PharData takes a second long-name record as the member the first one names.
+                    if ( null !== $long_name || $size < 1 || $size > 65536 ) {
                         throw $unreadable;
                     }
                     $payload = '';
@@ -1421,78 +1417,49 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                         $payload .= $chunk;
                         $unread  -= strlen( $chunk );
                     }
-                    if ( 'L' === $type ) {
-                        $long_name = explode( "\0", $payload, 2 )[0];
-                    } else {
-                        $offset = 0;
-                        while ( $offset < $size ) {
-                            $space = strpos( $payload, ' ', $offset );
-                            if ( false === $space ) {
-                                throw $unreadable;
-                            }
-                            $digits = substr( $payload, $offset, $space - $offset );
-                            if ( '' === $digits || strlen( $digits ) > 5 || ! ctype_digit( $digits ) ) {
-                                throw $unreadable;
-                            }
-                            $record_length = (int) $digits;
-                            if ( $record_length <= $space - $offset + 1 || $record_length > $size - $offset || "\n" !== $payload[ $offset + $record_length - 1 ] ) {
-                                throw $unreadable;
-                            }
-                            $record = substr( $payload, $space + 1, $record_length - ( $space - $offset ) - 2 );
-                            if ( 0 === strpos( $record, 'path=' ) ) {
-                                $pax_path = substr( $record, 5 );
-                            }
-                            $offset += $record_length;
-                        }
+                    $long_name = explode( "\0", $payload, 2 )[0];
+                    if ( '' === $long_name ) {
+                        throw $unreadable;
                     }
                     $skip = $padding;
-                } else {
-                    $skip = $size + $padding;
-                    // PharData ignores global pax metadata.
-                    if ( 'g' !== $type ) {
-                        $name = explode( "\0", substr( $header, 0, 100 ), 2 )[0];
-                        // PharData joins a non-empty prefix field whatever the header's magic says.
-                        $prefix = explode( "\0", substr( $header, 345, 155 ), 2 )[0];
-                        $name   = '' === $prefix ? $name : $prefix . '/' . $name;
-                        $name   = null !== $long_name ? $long_name : $name;
-                        if ( $this->has_unsafe_entry_name( $name ) ) {
-                            throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $name, self::ERR_APPLY );
-                        }
-                        $key = $this->tar_comparison_name( $name, '5' === $type );
-                        // PharData ignores pax paths, so they cannot replace the header or GNU name.
-                        if ( null !== $pax_path ) {
-                            if ( $this->has_unsafe_entry_name( $pax_path ) ) {
-                                throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $pax_path, self::ERR_APPLY );
-                            }
-                            if ( $key !== $this->tar_comparison_name( $pax_path, '5' === $type ) ) {
-                                throw $unreadable;
-                            }
-                        }
-
-                        if ( isset( $members[ $key ] ) ) {
-                            ++$members[ $key ];
-                            if ( '' === $prefix ) {
-                                unset( $prefixed[ $key ] );
-                            }
-                        } else {
-                            $name_bytes += strlen( $key );
-                            if ( $name_bytes > 64 * MB_IN_BYTES ) {
-                                throw $unreadable;
-                            }
-                            $members[ $key ] = 1;
-                            if ( '' !== $prefix ) {
-                                $prefixed[ $key ] = true;
-                            }
-                        }
-                        $long_name = null;
-                        $pax_path  = null;
+                } elseif ( in_array( $type, array( '0', "\0", '5' ), true ) ) {
+                    // PharData reads no directory payload, so a declared one would be parsed as headers.
+                    if ( '5' === $type && $size > 0 ) {
+                        throw $unreadable;
                     }
+                    $skip   = $size + $padding;
+                    $field  = explode( "\0", substr( $header, 0, 100 ), 2 )[0];
+                    $prefix = null === $long_name ? explode( "\0", substr( $header, 345, 155 ), 2 )[0] : '';
+                    $name   = null !== $long_name ? $long_name : ( '' === $prefix ? $field : $prefix . '/' . $field );
+                    if ( $this->has_unsafe_entry_name( $name ) ) {
+                        throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $name, self::ERR_APPLY );
+                    }
+                    $key = $this->tar_comparison_name( $name, '5' === $type );
+                    if ( isset( $members[ $key ] ) ) {
+                        ++$members[ $key ];
+                        if ( '' === $prefix ) {
+                            unset( $prefixed[ $key ] );
+                        }
+                    } else {
+                        $name_bytes += strlen( $key );
+                        if ( $name_bytes > 64 * MB_IN_BYTES ) {
+                            throw $unreadable;
+                        }
+                        $members[ $key ] = 1;
+                        if ( '' !== $prefix ) {
+                            $prefixed[ $key ] = true;
+                        }
+                    }
+                    $long_name = null;
+                } else {
+                    // Links, pax records and other GNU records: the Child never writes them, and PharData reads several of them differently.
+                    throw $unreadable;
                 }
                 if ( 0 !== fseek( $stream, $skip, SEEK_CUR ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- skip file payloads without reading them.
                     throw $unreadable;
                 }
             }
-            if ( null !== $long_name || null !== $pax_path ) {
+            if ( null !== $long_name ) {
                 throw $unreadable;
             }
         } finally {
@@ -1557,32 +1524,25 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * GNU base-256 numbers must not overflow into a float or a negative seek.
+     * Read a numeric header field only in the spelling PharData reads the same way: optional
+     * leading spaces, octal digits, then NUL or space padding. Base-256 or a leading NUL would be
+     * read as a different number by PharData, so the walk and the extractor would disagree on
+     * where the next header starts.
      *
      * @param string $field Raw numeric header field.
-     * @return int|null Nonnegative value, or null for malformed or overflowing fields.
+     * @return int|null Nonnegative value, or null for any other spelling or an overflowing value.
      */
     private function tar_header_number( string $field ): ?int {
-        $base = 8;
-        if ( ord( $field[0] ) & 128 ) {
-            $base     = 256;
-            $field[0] = chr( ord( $field[0] ) & 127 );
-        } else {
-            $field = trim( $field, " \0" );
-            if ( '' === $field ) {
-                return 0;
-            }
-            if ( ! preg_match( '/^[0-7]+$/D', $field ) ) {
-                return null;
-            }
+        if ( 1 !== preg_match( '/^ *([0-7]+)[ \0]*$/D', $field, $match ) ) {
+            return null;
         }
         $number = 0;
-        for ( $i = 0, $length = strlen( $field ); $i < $length; ++$i ) {
-            $digit = 256 === $base ? ord( $field[ $i ] ) : (int) $field[ $i ];
-            if ( $number > intdiv( PHP_INT_MAX - $digit, $base ) ) {
+        for ( $i = 0, $length = strlen( $match[1] ); $i < $length; ++$i ) {
+            $digit = (int) $match[1][ $i ];
+            if ( $number > intdiv( PHP_INT_MAX - $digit, 8 ) ) {
                 return null;
             }
-            $number = $number * $base + $digit;
+            $number = $number * 8 + $digit;
         }
         return $number;
     }

@@ -1283,9 +1283,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 $zip->close();
                 throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'zip traversal entry: ' . $name, self::ERR_APPLY );
             }
-            // ZipArchive::extractTo() drops every path segment up to a directory name ending in a dot,
-            // so release../index.php would land on index.php and the test restore would check the wrong tree.
-            if ( 1 === preg_match( '#.\.[\\\\/]#s', $name ) ) {
+            // ZipArchive::extractTo() normalizes the name (empty and . segments go), then drops every segment up to a
+            // directory name ending in a dot, so release../index.php would land on index.php and the test restore would
+            // check the wrong tree. Backslash separates segments only on Windows.
+            $dirs = array_diff( preg_split( '\\' === DIRECTORY_SEPARATOR ? '#[\\\\/]#' : '#/#', $name ), array( '', '.' ) );
+            array_pop( $dirs );
+            if ( preg_grep( '#\.$#D', $dirs ) ) {
                 $zip->close();
                 throw new MainWP_Exception( esc_html__( 'A backup archive could not be extracted.', 'mainwp' ), 'zip entry the extractor would move: ' . $name, self::ERR_APPLY );
             }

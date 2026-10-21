@@ -2759,8 +2759,8 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 * @param bool   $unsafe Whether the name is refused.
 	 */
 	public function test_zip_entry_name_matrix( $name, $unsafe ) {
-		if ( ! $unsafe && 'Windows' === PHP_OS_FAMILY && 1 === preg_match( '#:|\.$#', $name ) ) {
-			$this->markTestSkipped( 'Windows cannot create a file named ' . $name . '.' );
+		if ( ! $unsafe && 'Windows' === PHP_OS_FAMILY && 1 === preg_match( '#:|\.$|\\\\#', $name ) ) {
+			$this->markTestSkipped( 'Windows cannot create a file named ' . $name . ' in place.' );
 		}
 		$path = $this->dir . '/' . uniqid( 'names-' ) . '.zip';
 		$zip  = new \ZipArchive();
@@ -2796,9 +2796,12 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 *
 	 * @dataProvider zip_moved_name_cases
 	 * @param string $name     Member name the zip extractor would move.
-	 * @param bool   $tar_kept Whether PharData extracts the same name in place (it refuses control characters).
+	 * @param bool   $tar_kept Whether PharData extracts the same name in place (it refuses control characters and does not list . segments, and the tar walk reads a backslash as a separator, as the Child's does).
 	 */
 	public function test_zip_refuses_names_the_extractor_would_move( $name, $tar_kept = true ) {
+		if ( 'Windows' === PHP_OS_FAMILY && false !== strpos( $name, '\\' ) ) {
+			$this->markTestSkipped( 'A backslash separates segments on Windows, so the name is not moved there.' );
+		}
 		$path = $this->dir . '/' . uniqid( 'moved-' ) . '.zip';
 		$zip  = new \ZipArchive();
 		$this->assertTrue( $zip->open( $path, \ZipArchive::CREATE ) );
@@ -2838,11 +2841,13 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 */
 	public static function zip_moved_name_cases() {
 		return array(
-			'two dots'        => array( 'release../index.php' ),
-			'one dot'         => array( 'release./index.php' ),
-			'nested two dots' => array( 'a/b../c/index.php' ),
-			'three dots'      => array( '.../index.php' ),
-			'newline and dot' => array( "\n./index.php", false ),
+			'two dots'                => array( 'release../index.php' ),
+			'one dot'                 => array( 'release./index.php' ),
+			'nested two dots'         => array( 'a/b../c/index.php' ),
+			'three dots'              => array( '.../index.php' ),
+			'newline and dot'         => array( "\n./index.php", false ),
+			'dot after a dot segment' => array( 'a/./b./index.php', false ),
+			'backslash then dot'      => array( 'a\\./index.php', false ),
 		);
 	}
 
@@ -2859,6 +2864,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			'dots inside a directory'  => array( 'a..b/c.txt', false ),
 			'three dots'               => array( '...', false ),
 			'drive letter only'        => array( 'C:notes.txt', false ),
+			'dot segment'              => array( 'assets/./style.css', false ),
+			'leading dot segments'     => array( '././index.php', false ),
+			'backslash after a dot'    => array( 'a.\\b.txt', false ),
 			'parent'                   => array( '../evil.txt', true ),
 			'nested parent'            => array( 'sub/../../evil.txt', true ),
 			'trailing parent'          => array( 'sub/..', true ),

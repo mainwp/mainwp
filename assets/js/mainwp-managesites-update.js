@@ -723,9 +723,9 @@ globalThis.mainwp_managesites_prepare_backup_popup = function (response, pSiteNa
         output += '<span class="mainwp-red">' + MainWP.I18n.t('A full backup has not been taken in the last days for the following sites:') + '</span><br /><br />';
         for (let site of missingSites) {
             if (site.native) {
-                output += '<span class="' + popupPrefix + '-backup-site" siteid="' + site.id + '">' + decodeURIComponent(pSiteNames[site.id]) + '</span><br />';
+                output += '<span class="' + popupPrefix + '-backup-site" siteid="' + site.id + '">' + jQuery('<span>').text(decodeURIComponent(pSiteNames[site.id])).html() + '</span><br />';
             } else {
-                output += '<span>' + decodeURIComponent(pSiteNames[site.id]) + '</span><br />';
+                output += '<span>' + jQuery('<span>').text(decodeURIComponent(pSiteNames[site.id])).html() + '</span><br />';
             }
         }
     }
@@ -734,7 +734,7 @@ globalThis.mainwp_managesites_prepare_backup_popup = function (response, pSiteNa
             output += '<br />';
         output += '<span class="mainwp-red">' + MainWP.I18n.t('No backup from the last days has a verified offsite copy for the following sites:') + '</span><br /><br />';
         for (let id of offsiteSites) {
-            output += '<span>' + decodeURIComponent(pSiteNames[id]) + '</span><br />';
+            output += '<span>' + jQuery('<span>').text(decodeURIComponent(pSiteNames[id])).html() + '</span><br />';
         }
         output += '<br />' + MainWP.I18n.t("Backup all cannot add an offsite copy. Check each site's storage destination on the Snapshots & Restore page.");
     }

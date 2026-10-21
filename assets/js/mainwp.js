@@ -4064,7 +4064,7 @@ globalThis.getErrorMessageInfo = function (repError, outputType) { // NOSONAR - 
     if (repError.errorCode != undefined && repError.errorCode == 'MAINWP_NOTICE') {
         if (repError.message != undefined) {
             msg = repError.message;
-            msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + msg + '"><i class="pause circular yellow inverted icon"></i></span>';
+            msgUI = jQuery('<span data-inverted="" data-position="left center">').attr('data-tooltip', msg).append('<i class="pause circular yellow inverted icon"></i>').prop('outerHTML');
         }
     }
 
@@ -4080,7 +4080,7 @@ globalThis.getErrorMessageInfo = function (repError, outputType) { // NOSONAR - 
         }
 
         if (msg != '') {
-            msgUI = '<span data-inverted="" data-position="left center" data-tooltip="' + msg + '"><i class="red times icon"></i></span>';
+            msgUI = jQuery('<span data-inverted="" data-position="left center">').attr('data-tooltip', msg).append('<i class="red times icon"></i>').prop('outerHTML');
         }
     }
 

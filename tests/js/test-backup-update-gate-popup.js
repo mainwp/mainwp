@@ -45,6 +45,8 @@ function harness() {
                     visible: false,
                     show() { this.visible = true; return this; },
                     hide() { this.visible = false; return this; },
+                    text( value ) { this.textContent = String( value ); return this; },
+                    html() { return this.textContent.replace( /&/g, '&amp;' ).replace( /</g, '&lt;' ).replace( />/g, '&gt;' ); },
                     attr( key, value ) { this[ key ] = value; return this; },
                     data( key, ...value ) {
                         this.stored = this.stored || {};

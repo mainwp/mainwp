@@ -1158,7 +1158,19 @@ class MainWP_DB_Common extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
 
         foreach ( $map_fields as $field => $name ) {
             if ( isset( $data[ $name ] ) && empty( ! $data[ $name ] ) ) {
-                $update_fields[ $field ] = $data[ $name ];
+                $value = $data[ $name ];
+                // REST v1 edit-site and WP-CLI pass raw input here. Strip tags as MainWP_DB::update_website() does,
+                // because admin screens render the stored name into HTML.
+                if ( 'name' === $field ) {
+                    if ( ! is_scalar( $value ) ) {
+                        continue;
+                    }
+                    $value = wp_strip_all_tags( (string) $value );
+                    if ( '' === $value ) {
+                        continue;
+                    }
+                }
+                $update_fields[ $field ] = $value;
             }
         }
 

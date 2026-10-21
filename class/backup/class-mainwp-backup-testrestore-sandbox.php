@@ -483,7 +483,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      */
     private static function sql_refusal( string $refused ): MainWP_Exception {
         return new MainWP_Exception(
-            sprintf( esc_html__( 'The backup database dump contains a statement the test restore will not run: %s.', 'mainwp' ), esc_html( $refused ) ),
+            sprintf(
+                /* translators: %s: refused SQL statement or comment shape */
+                esc_html__( 'The backup database dump contains a statement the test restore will not run: %s.', 'mainwp' ),
+                esc_html( $refused )
+            ),
             $refused,
             self::ERR_APPLY
         );

@@ -85,6 +85,13 @@ class Test_REST_Operation_Rights extends TestCase {
 		return array(
 			array( 'MainWP_Rest_Settings_Controller', 'update_general_settings', 'dashboard', 'manage_dashboard_settings' ),
 			array( 'MainWP_Rest_Settings_Controller', 'update_api_backup_settings', 'dashboard', 'manage_api_backups' ),
+			array( 'MainWP_Rest_Settings_Controller', 'edit_cost_tracker_settings', 'dashboard', 'manage_costs_settings' ),
+			array( 'MainWP_Rest_Settings_Controller', 'add_cost_tracker_product_type', 'dashboard', 'manage_costs_settings' ),
+			array( 'MainWP_Rest_Settings_Controller', 'update_cost_tracker_product_type', 'dashboard', 'manage_costs_settings' ),
+			array( 'MainWP_Rest_Settings_Controller', 'delete_cost_tracker_product_type', 'dashboard', 'manage_costs_settings' ),
+			array( 'MainWP_Rest_Settings_Controller', 'add_cost_tracker_payment_method', 'dashboard', 'manage_costs_settings' ),
+			array( 'MainWP_Rest_Settings_Controller', 'update_cost_tracker_payment_method', 'dashboard', 'manage_costs_settings' ),
+			array( 'MainWP_Rest_Settings_Controller', 'delete_cost_tracker_payment_method', 'dashboard', 'manage_costs_settings' ),
 			array( 'MainWP_Rest_Users_Controller', 'get_users', 'dashboard', 'manage_users' ),
 			array( 'MainWP_Rest_Users_Controller', 'create_user', 'dashboard', 'manage_users' ),
 			array( 'MainWP_Rest_Users_Controller', 'edit_user', 'dashboard', 'manage_users' ),

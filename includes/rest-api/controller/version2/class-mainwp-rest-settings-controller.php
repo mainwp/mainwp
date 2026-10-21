@@ -1068,7 +1068,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function edit_cost_tracker_settings( $request ) {
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1124,7 +1124,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function add_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - long method.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1191,7 +1191,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - long method.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1270,7 +1270,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function delete_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1330,7 +1330,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function add_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1383,7 +1383,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1436,7 +1436,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function delete_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }

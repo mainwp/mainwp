@@ -53,12 +53,16 @@ namespace MainWP\Dashboard {
 }
 
 namespace {
+	$input = json_decode( $argv[1], true, 512, JSON_THROW_ON_ERROR );
 	define( 'ABSPATH', __DIR__ );
-	define( 'MAINWP_REST_API_DOING', true );
+	if ( empty( $input['cost_browser'] ) ) {
+		define( 'MAINWP_REST_API_DOING', true );
+	}
 
 	class Rest_Rights_Boundary extends \Error {}
 	class WP_REST_Controller {
 		public function get_public_item_schema() { return array( 'properties' => array() ); }
+		public function filter_response_by_context( $data, $context ) { return $data; }
 	}
 	class WP_REST_Server {
 		const CREATABLE = 'POST';
@@ -127,7 +131,6 @@ namespace {
 		return $value;
 	}
 
-	$input = json_decode( $argv[1], true, 512, JSON_THROW_ON_ERROR );
 	$GLOBALS['fixture'] = array_merge(
 		array( 'user' => 42, 'rights' => array(), 'checks' => array(), 'sites' => 'all' ),
 		$input
@@ -166,6 +169,11 @@ namespace {
 	}
 	class Rest_Rights_Batch_Costs extends MainWP_Rest_Costs_Controller {
 		use Rest_Rights_Batch_Schema;
+	}
+
+	if ( isset( $input['cost_settings_mode'] ) ) {
+		require __DIR__ . '/cost-settings-rights.inc';
+		exit;
 	}
 
 	if ( isset( $input['abilities_mode'] ) ) {

@@ -920,7 +920,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             'mainwp_maximumPosts'                         => esc_html__( 'Maximum number of posts to return', 'mainwp' ),
             'mainwp_maximumPages'                         => esc_html__( 'Maximum number of pages to return', 'mainwp' ),
             'mainwp_maximumComments'                      => esc_html__( 'Maximum number of comments', 'mainwp' ),
-            'mainwp_enableNativeBackups'                  => esc_html__( 'MainWP native backups enabled', 'mainwp' ),
+            'mainwp_enableNativeBackups'                  => esc_html__( 'MainWP Built-In Backups enabled', 'mainwp' ),
             'mainwp_primaryBackup'                        => esc_html__( 'Primary backup system', 'mainwp' ),
             'is_enable_automatic_check_uptime_monitoring' => esc_html__( 'Enable Uptime Monitoring', 'mainwp' ),
             'mainwp_disableSitesHealthMonitoring'         => esc_html__( 'Site health monitoring enabled', 'mainwp' ),
@@ -1553,7 +1553,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                     'value' => static::get_primary_backup_method_label(),
                 ),
                 array(
-                    'label' => esc_html__( 'MainWP native backups enabled', 'mainwp' ),
+                    'label' => esc_html__( 'MainWP Built-In Backups enabled', 'mainwp' ),
                     'value' => static::format_boolean_label( (int) MainWP_Backup_Settings::is_native_backups_enabled() ),
                 ),
                 array(
@@ -1616,7 +1616,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
                 'Full backup tolerance before update',
                 'Abandoned plugins/themes tolerance',
                 'Primary backup system',
-                'MainWP native backups enabled',
+                'MainWP Built-In Backups enabled',
                 'Backups kept on server',
                 'Backup to external sources',
                 'Archive format',
@@ -3039,7 +3039,7 @@ class MainWP_Server_Information_Handler { // phpcs:ignore Generic.Classes.Openin
             }
         }
 
-        return esc_html__( 'Native backups', 'mainwp' );
+        return esc_html__( 'Built-In Backups', 'mainwp' );
     }
 
     /**

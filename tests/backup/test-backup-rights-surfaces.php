@@ -521,7 +521,7 @@ class MainWP_Backup_Rights_Surfaces_Test extends MainWP_Abilities_Test_Case {
 			ob_start();
 			MainWP_Backup_Page::render_manager();
 			$output = ob_get_clean();
-			$this->assertStringContainsString( 'Native backups are turned off.', $output );
+			$this->assertStringContainsString( 'Built-In Backups are turned off.', $output );
 			update_option( 'mainwp_enableNativeBackups', 1 );
 			$task            = MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'Editable schedule', 'daily', 'full', '', (string) $this->fixture['site'], '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
 			$_GET['task_id'] = $task->id;

@@ -48,7 +48,7 @@ class MainWP_Backup_Error_Codes_Test extends \WP_UnitTestCase {
 	public static function restore_lifecycle_errors() {
 		return array(
 			'cancelled before start' => array( 'ERR_RESTORE_CANCELLED_BEFORE_START', 'mainwp_restore_cancelled_before_start', 'This restore was cancelled before the site started it.' ),
-			'native disabled'        => array( 'ERR_RESTORE_NATIVE_DISABLED', 'mainwp_restore_native_backups_disabled', 'Native backups were turned off, so this restore stopped before changing the site.' ),
+			'native disabled'        => array( 'ERR_RESTORE_NATIVE_DISABLED', 'mainwp_restore_native_backups_disabled', 'Built-In Backups were turned off, so this restore stopped before changing the site.' ),
 		);
 	}
 

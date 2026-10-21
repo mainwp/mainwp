@@ -2699,7 +2699,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'mainwp_enable_native_backups'          => array(
                 'required'          => false,
-                'description'       => __( 'Enable native backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
+                'description'       => __( 'Enable Built-In Backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
                 'type'              => 'boolean',
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
@@ -2762,7 +2762,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         return array(
             'mainwp_enable_native_backups'         => array(
                 'required'          => false,
-                'description'       => __( 'Enable native backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
+                'description'       => __( 'Enable Built-In Backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
                 'type'              => 'boolean',
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
@@ -4775,7 +4775,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         return $backup_method[0] ?? array(
             'value' => '',
-            'title' => 'Native backups',
+            'title' => 'Built-In Backups',
         );
     }
 
@@ -5345,7 +5345,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
                 'mainwp_enable_native_backups'             => array(
                     'type'        => 'integer',
-                    'description' => __( 'Enable native backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
+                    'description' => __( 'Enable Built-In Backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
                     'context'     => array( 'view', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_backups_on_server'                 => array(

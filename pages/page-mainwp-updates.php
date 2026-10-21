@@ -444,7 +444,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         if ( $has_recent ) {
             $tooltip = sprintf(
                 /* translators: %d: number of days. */
-                esc_attr__( 'A restorable native backup was taken within the last %d days.', 'mainwp' ),
+                esc_attr__( 'A restorable built-in backup was taken within the last %d days.', 'mainwp' ),
                 $max_age_days
             );
             return ' <span class="ui tiny basic green label" data-tooltip="' . $tooltip . '" data-position="top center" data-inverted="">' . esc_html__( 'Backup ready', 'mainwp' ) . '</span>';
@@ -452,7 +452,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $tooltip = sprintf(
             /* translators: %d: number of days. */
-            esc_attr__( 'No restorable native backup in the last %d days.', 'mainwp' ),
+            esc_attr__( 'No restorable built-in backup in the last %d days.', 'mainwp' ),
             $max_age_days
         );
         return ' <span class="ui tiny basic grey label" data-tooltip="' . $tooltip . '" data-position="top center" data-inverted="">' . esc_html__( 'No recent backup', 'mainwp' ) . '</span>';

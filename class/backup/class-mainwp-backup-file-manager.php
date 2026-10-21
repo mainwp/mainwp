@@ -720,6 +720,59 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         return '.' . pathinfo( $path, PATHINFO_EXTENSION );
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory throws MainWP_Exception.
+    /**
+     * Local extension for a Child-supplied artifact name.
+     *
+     * The private root can sit inside a served docroot, so a Child must not
+     * pick a local name or extension the web server would execute.
+     *
+     * @param string $name Child-supplied file name.
+     * @param string $role Artifact role: part, full, db, manifest or tombstones.
+     *
+     * @return string Lowercase compound extension, such as .sql.zip.
+     * @throws MainWP_Exception With ERR_FILE_CORRUPT for an extension outside the role's allowlist.
+     */
+    public static function child_artifact_extension( string $name, string $role ): string {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        $archives = array( '.zip', '.tar', '.tar.gz', '.tar.bz2', '.sql', '.sql.zip', '.sql.tar', '.sql.tar.gz', '.sql.tar.bz2' );
+        $allowed  = match ( $role ) {
+            'part', 'full', 'db' => $archives,
+            'manifest', 'tombstones' => array( '.list' ),
+            default => array(),
+        };
+        $extension = static::get_real_extension( strtolower( basename( $name ) ) );
+        if ( ! in_array( $extension, $allowed, true ) ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'unsupported child artifact extension for role ' . sanitize_key( $role ) ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
+        }
+        return $extension;
+    }
+
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory throws MainWP_Exception.
+    /**
+     * Refuses a Child artifact name that will be kept as the local file name.
+     *
+     * Apache AddHandler runs x.php.zip, so every dot segment counts, not only
+     * the last one. The sanitized form is checked too because it is the name
+     * that lands on disk.
+     *
+     * @param string $name Child-supplied file name.
+     * @param string $role Artifact role.
+     *
+     * @return void
+     * @throws MainWP_Exception With ERR_FILE_CORRUPT for a handler segment or an extension outside the role's allowlist.
+     */
+    public static function assert_child_artifact_name( string $name, string $role ): void {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        $basename = basename( $name );
+        foreach ( array( $basename, MainWP_Utility::sanitize_file_name( $basename ) ) as $candidate ) {
+            static::child_artifact_extension( $candidate, $role );
+            if ( preg_match( '/(?:^|\.)(?:php[3-8]?|phtml|pht|phps|phar|shtml|cgi|pl|py|asp|aspx|jsp)(?:\.|$)/i', $candidate ) ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'child artifact name contains a server handler extension' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
+            }
+        }
+    }
+
     /**
      * Lock tokens this process wrote, by lock path. Release checks the
      * on-disk token against this map so a process whose lock was

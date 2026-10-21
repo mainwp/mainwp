@@ -26,6 +26,96 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 
 	use Backup_Private_Root_Fixture;
 
+	/**
+	 * The legacy completion paths must refuse the same executable extension.
+	 *
+	 * @dataProvider compromised_child_legacy_callers
+	 * @param string $caller Completion entry point.
+	 */
+	public function test_compromised_child_legacy_archive_php_refused( $caller ) {
+		$site_id = $this->create_test_site();
+		$this->mock_child_action(
+			'backup_preflight',
+			array(
+				'task_spine'    => 1,
+				'disk_free'     => 10 * GB_IN_BYTES,
+				'dir_writable'  => true,
+				'db_connected'  => true,
+				'zip_support'   => true,
+				'time_limit_ok' => true,
+			)
+		);
+		$this->mock_child_action(
+			'backup_checkpid',
+			array(
+				'status' => 'done',
+				'file'   => 'a.php',
+				'size'   => 66,
+			)
+		);
+		$this->mock_child_action(
+			'backup',
+			array(
+				'full' => 'a.php',
+				'db'   => false,
+				'size' => 66,
+			)
+		);
+		try {
+			if ( 'monitor' === $caller ) {
+				\MainWP\Dashboard\MainWP_Backup_Monitor::backup_check_pid( $site_id, 'hostile', 'full', '', null );
+			} else {
+				MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 0, 0, 0, 0 );
+			}
+			$this->fail( 'The executable archive extension was accepted.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $error->get_message_error_code() );
+		}
+	}
+
+	/**
+	 * Legacy archive callers.
+	 *
+	 * @return array
+	 */
+	public static function compromised_child_legacy_callers() {
+		return array(
+			'monitor'       => array( 'monitor' ),
+			'legacy backup' => array( 'backup' ),
+		);
+	}
+
+	/** A compromised Child must not choose the local archive's PHP extension. */
+	public function test_compromised_child_single_archive_php_refused() {
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'hostile-archive',
+					'type'    => 'full',
+					'started' => time(),
+				)
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'phase' => 'completed',
+				'type'  => 'full',
+				'file'  => 'a.php',
+				'size'  => 66,
+			)
+		);
+		$this->stub_download_with_valid_gzip();
+		$this->expectException( MainWP_Exception::class );
+		$this->expectExceptionMessage( \MainWP\Dashboard\MainWP_Backup_Error_Codes::message( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ) );
+		MainWP_Backup_Executor::get_backup_task_status( $site_id, 'hostile-archive', 60 );
+	}
+
 	/** A gate download retry must reuse its persisted reservation. */
 	public function test_n1_update_gate_retry_reuses_reserved_path() {
 		$site_id = $this->create_test_site();

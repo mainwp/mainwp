@@ -1409,91 +1409,6 @@ let dashboard_update_next_int = function (websiteId, data, errors, action) {
 };
 
 
-/**
- * Delete site changes actions.
- */
-
-let mainwp_delete_nonmainwp_data_start = function () {
-    mainwp_delete_nonmainwp_data_start_next();
-}
-
-let mainwp_delete_nonmainwp_data_start_next = function () {
-    while ((checkedBox = jQuery('#mainwp-module-log-records-body-table .check-column INPUT:checkbox:checked:first')) && (checkedBox.length > 0) && (bulkManageClientsCurrentThreads < bulkManageClientsMaxThreads)) { // NOSONAR -- modified out side the function.
-        mainwp_delete_nonmainwp_data_next();
-    }
-}
-
-let mainwp_delete_nonmainwp_data_next = function () {
-    mainwpVars.currentThreads++;
-    mainwpVars.websitesLeft--;
-    let websiteId = mainwpVars.websitesToUpdate[mainwpVars.currentWebsite++];
-    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Deleting...') + '"><i class="sync alternate loading icon"></i></span>');
-    let data = mainwp_secure_data({
-        action: 'mainwp_delete_non_mainwp_actions',
-        wp_id: websiteId,
-    });
-    mainwp_delete_nonmainwp_data_next_int(websiteId, data, 0);
-};
-
-let mainwp_delete_nonmainwp_data_next_int = function (websiteId, data, errors) {
-    jQuery.ajax({
-        type: 'POST',
-        url: ajaxurl,
-        data: data,
-        success: function (pWebsiteId) {
-            return function (response) {
-                if (response.error) {
-                    let extErr = response.error;
-                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="bottom right" data-tooltip="' + extErr + '"><i class="exclamation red icon"></i></span>');
-                } else {
-                    dashboard_update_site_status(websiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process completed successfully.') + '"><i class="check green icon"></i></span>', true);
-                }
-                mainwp_delete_nonmainwp_data_done();
-            }
-        }(websiteId),
-        error: function (pWebsiteId, pData, pErrors) {
-            return function () {
-                if (pErrors > 5) {
-                    dashboard_update_site_status(pWebsiteId, '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Process timed out. Please try again.') + '"><i class="exclamation yellow icon"></i></span>');
-                    mainwp_delete_nonmainwp_data_done();
-                } else {
-                    pErrors++;
-                    mainwp_delete_nonmainwp_data_next_int(pWebsiteId, pData, pErrors);
-                }
-            }
-        }(websiteId, data, errors),
-        dataType: 'json'
-    });
-};
-
-
-let mainwp_delete_nonmainwp_data_done = function () {
-    mainwpVars.currentThreads--;
-    if (!mainwpVars.bulkTaskRunning)
-        return;
-    mainwpVars.websitesDone++;
-    if (mainwpVars.websitesDone > mainwpVars.websitesTotal)
-        mainwpVars.websitesDone = mainwpVars.websitesTotal;
-
-    mainwpPopup('#mainwp-sync-sites-modal').setProgressSite(mainwpVars.websitesDone);
-
-    if (mainwpVars.websitesDone == mainwpVars.websitesTotal) {
-        jQuery("#mainwp-non-mainwp-changes-table tbody").fadeOut("slow");
-        let successSites = jQuery('#mainwp-sync-sites-modal .check.green.icon').length;
-        if (mainwpVars.websitesDone == successSites) {
-            mainwpVars.bulkTaskRunning = false;
-            setTimeout(function () {
-                mainwpPopup('#mainwp-sync-sites-modal').close(true);
-            }, 3000);
-        } else {
-            mainwpVars.bulkTaskRunning = false;
-        }
-        return;
-    }
-    mainwp_delete_nonmainwp_data_loop_next();
-};
-
-
 let mainwp_tool_disconnect_sites = function () {
 
     mainwp_confirm('Are you sure that you want to disconnect your sites? This will function will break the connection and leave the MainWP Child plugin active and which makes your sites vulnerable.', function () {
@@ -4466,13 +4381,6 @@ jQuery(document).on('click', '.mainwp-install-check-dismiss', function () {
     };
     data['notice_id'] = notice_id;
     jQuery.post(ajaxurl, mainwp_secure_data(data), function () { });
-    return false;
-});
-
-jQuery(document).on('click', '#mainwp-dismiss-sites-changes-actions-button', function () {
-    mainwp_confirm('You are about to dismiss the selected changes?', function () {
-        mainwp_delete_nonmainwp_data_start();
-    });
     return false;
 });
 

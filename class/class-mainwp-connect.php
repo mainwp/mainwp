@@ -3118,8 +3118,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( false !== $expected_size && 'already_complete' !== $result ) {
             $final_size = $wp_filesystem->exists( $file ) ? (int) $wp_filesystem->size( $file ) : 0;
-            $tolerance  = (int) max( 1, floor( $expected_size * 0.01 ) );
-            if ( $final_size < $expected_size || $final_size - $expected_size > $tolerance ) {
+            if ( $final_size < $expected_size || $final_size > static::download_size_ceiling( $expected_size ) ) {
                 $too_small = $final_size < $expected_size;
                 if ( ! $too_small && $wp_filesystem->exists( $file ) ) {
                     $wp_filesystem->delete( $file ); // Oversized files are unusable for resume.
@@ -3133,6 +3132,19 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
         }
+    }
+
+    /**
+     * Largest accepted download for a declared size.
+     *
+     * Older Children could report an archive's size from a stale stat taken
+     * before the archive closed, so the final file may run slightly larger.
+     *
+     * @param int $expected_size Declared size in bytes.
+     * @return int Accepted maximum in bytes.
+     */
+    private static function download_size_ceiling( int $expected_size ): int {
+        return $expected_size + (int) max( 1, floor( $expected_size * 0.01 ) );
     }
 
     /**
@@ -3199,6 +3211,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $state->exception     = null;
         $state->bytes         = 0;
         $state->last_progress = 0;
+        $state->oversized     = false;
 
         /**
          * Filter the transfer limits for backup file downloads.
@@ -3363,6 +3376,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     }
                 }
 
+                // A compromised Child can ignore its declared size and stream until the
+                // transfer timeout, filling the Dashboard disk; stop at the size check's ceiling.
+                if ( false !== $expected_size && $state->bytes + strlen( $data ) > static::download_size_ceiling( $expected_size ) ) {
+                    $state->oversized = true;
+                    $state->exception = MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'download exceeds declared size' );
+                    return -1;
+                }
+
                 $written = fwrite( $state->fp, $data ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- streaming large downloads.
                 if ( false !== $written ) {
                     $state->bytes += $written;
@@ -3400,6 +3421,10 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
         if ( null !== $state->fp && false !== $state->fp ) {
             fclose( $state->fp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- streaming large downloads.
+        }
+
+        if ( $state->oversized ) {
+            wp_delete_file( $file );
         }
 
         if ( null !== $state->exception ) {

@@ -5870,8 +5870,11 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 			'full'      => 'resumed.zip',
 			'db'        => false,
 			'size'      => strlen( $content ),
+			// Artifact entries carry the file and size every Child sends; entries without them are refused.
 			'artifacts' => array(
 				array(
+					'file'   => 'resumed.zip',
+					'size'   => strlen( $content ),
 					'role'   => 'full',
 					'sha256' => hash( 'sha256', $content ),
 				),

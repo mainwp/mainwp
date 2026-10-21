@@ -1414,7 +1414,6 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		}
 		$cases['allowed trailing semicolons'] = array( 'INSERT INTO wp_posts VALUES (1);;;', array( 'INSERT INTO wp_posts VALUES (1)' ), '' );
 		$cases['dash without whitespace']     = array( 'INSERT INTO wp_posts VALUES (1--2); USE other;', array( 'INSERT INTO wp_posts VALUES (1--2)', 'USE other' ), 'USE' );
-		$cases['unterminated block comment']  = array( 'INSERT INTO wp_posts VALUES (1); /* USE other;', array( 'INSERT INTO wp_posts VALUES (1)' ), '' );
 
 		$split = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'split_sql_dump' );
 		$guard = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'guard_sql_statement' );
@@ -1440,6 +1439,110 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 				$this->assertSame( $refusal, $caught->get_message_extra( false ), $label );
 				$this->assertSame( 'The backup database dump contains a statement the test restore will not run: ' . esc_html( $refusal ) . '.', $caught->getMessage(), $label );
 			}
+		}
+	}
+
+	/**
+	 * One case per row of the executable-comment rule (.mwpdev/reviews/security-166/sql-executable-comment-rule.md).
+	 *
+	 * @return array
+	 */
+	public function sql_comment_shape_cases() {
+		return array(
+			'1 plain comment'                    => array( 'INSERT INTO wp_posts /* otherdb.x */ VALUES (1);', '' ),
+			'2 M without bang is plain'          => array( 'INSERT INTO wp_posts /*M otherdb.x */ VALUES (1);', '' ),
+			'3 mysql bang hides qualifier'       => array( 'INSERT INTO /*! otherdb.*/wp_users VALUES (1);', 'INSERT cross-schema' ),
+			'4 mysql 5-digit hides qualifier'    => array( 'INSERT INTO /*!50001 otherdb.*/wp_users VALUES (1);', 'INSERT cross-schema' ),
+			'4 mysql 5-digit benign'             => array( 'CREATE TABLE wp_posts (id int) /*!50100 ENGINE=InnoDB */;', '' ),
+			'5 mysql 6-digit hides qualifier'    => array( 'INSERT INTO /*!100100 otherdb.*/wp_users VALUES (1);', 'INSERT cross-schema' ),
+			'6 mariadb bang hides qualifier'     => array( 'INSERT INTO /*M! otherdb.*/wp_users VALUES (1);', 'INSERT cross-schema' ),
+			'7 mariadb 6-digit hides qualifier'  => array( 'INSERT INTO /*M!100100 otherdb.*/wp_users VALUES (1);', 'INSERT cross-schema' ),
+			'7 mariadb 5-digit hides qualifier'  => array( 'INSERT INTO /*M!50001 `otherdb`.*/wp_users VALUES (1);', 'INSERT cross-schema' ),
+			'7 mariadb hides statement keyword'  => array( '/*M!100100 DROP DATABASE wordpress */;', 'DROP' ),
+			'7 mariadb benign'                   => array( 'CREATE TABLE wp_posts (id int) /*M!100100 ENGINE=InnoDB */;', '' ),
+			'8 lowercase mariadb marker'         => array( 'INSERT INTO /*m!100100 otherdb.*/wp_users VALUES (1);', 'INSERT cross-schema' ),
+			'9 empty executable'                 => array( 'INSERT INTO wp_posts /*!*/ /*M!*/ VALUES (1);', '' ),
+			'10 version glued to body'           => array( 'INSERT INTO /*!500011otherdb.*/wp_users VALUES (1);', 'executable comment version' ),
+			'11 short version'                   => array( 'INSERT INTO wp_posts /*!4010 */ VALUES (1);', 'executable comment version' ),
+			'11 seven digit version'             => array( 'INSERT INTO wp_posts /*M!1001001 */ VALUES (1);', 'executable comment version' ),
+			'12 quote closes inside body'        => array( "INSERT INTO wp_posts VALUES (1) /*M!100100 , ('a;b') */;", '' ),
+			'13 quote spans the first closer'    => array( "INSERT INTO wp_posts /*!50001 SELECT '*/' FROM otherdb.wp_users WHERE '' */;", 'unterminated quote' ),
+			'14 backtick spans the first closer' => array( 'INSERT INTO /*M!100100 `a*/b` */ wp_posts VALUES (1);', 'unterminated quote' ),
+			'15 nested comment in executable'    => array( 'INSERT INTO wp_posts /*!50001 /* note */ */ VALUES (1);', 'comment inside an executable comment' ),
+			'16 quoted opener in executable'     => array( "INSERT INTO wp_posts VALUES (1) /*!99999 '/*' */;", 'comment inside an executable comment' ),
+			'17 hash comment in executable'      => array( "INSERT INTO /*!50001 # */ '\notherdb.wp_users */ VALUES (1) #'\n;", 'line comment inside an executable comment' ),
+			'17 dash comment in executable'      => array( "INSERT INTO /*M!100100 -- */ '\notherdb.wp_users */ VALUES (1) #'\n;", 'line comment inside an executable comment' ),
+			'18 nested executable'               => array( 'INSERT INTO wp_posts /*!50001 /*M! otherdb.x */ */ VALUES (1);', 'comment inside an executable comment' ),
+			'19 nested plain in plain'           => array( '/* a /* b */ INSERT INTO wp_posts VALUES (1);', '' ),
+			'20 optimizer hint'                  => array( "INSERT /*+ SET_VAR(sort_buffer_size='*/') */ INTO otherdb.wp_users VALUES ('');", 'optimizer hint comment' ),
+			'21 unterminated plain comment'      => array( 'INSERT INTO wp_posts VALUES (1); /* USE other;', 'unterminated comment' ),
+			'22 unterminated executable comment' => array( 'INSERT INTO /*M!100100 otherdb.wp_users VALUES (1);', 'unterminated comment' ),
+			'23 unterminated quote'              => array( "INSERT INTO wp_posts VALUES ('a);", 'unterminated quote' ),
+		);
+	}
+
+	/**
+	 * A Child-written dump cannot hide SQL from the guard in a comment the server executes.
+	 *
+	 * @dataProvider sql_comment_shape_cases
+	 *
+	 * @param string $sql     Dump bytes.
+	 * @param string $refusal Expected refusal label, or '' when the dump is accepted.
+	 *
+	 * @return void
+	 */
+	public function test_sql_executable_comment_shape_matrix( $sql, $refusal ) {
+		$split = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'split_sql_dump' );
+		$guard = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'guard_sql_statement' );
+		$split->setAccessible( true );
+		$guard->setAccessible( true );
+		$statements = array();
+		$caught     = null;
+		try {
+			foreach ( $split->invoke( null, $sql ) as $statement ) {
+				$statements[] = $statement;
+				$guard->invoke( null, $statement, 'mainwp_tr_matrix' );
+			}
+		} catch ( MainWP_Exception $e ) {
+			$caught = $e;
+		}
+		if ( '' === $refusal ) {
+			$this->assertNull( $caught, null === $caught ? '' : $caught->get_message_extra( false ) );
+			$this->assertSame( array( rtrim( $sql, ';' ) ), $statements );
+			return;
+		}
+		$this->assertInstanceOf( MainWP_Exception::class, $caught );
+		$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+		$this->assertSame( $refusal, $caught->get_message_extra( false ) );
+		$this->assertSame( 'The backup database dump contains a statement the test restore will not run: ' . esc_html( $refusal ) . '.', $caught->getMessage() );
+	}
+
+	/**
+	 * A MariaDB-executable comment naming the live database is refused before the server sees it.
+	 *
+	 * @return void
+	 */
+	public function test_import_refuses_mariadb_hidden_cross_schema_write() {
+		$path    = $this->dir . '/hidden-qualifier.sql';
+		$sql     = "CREATE TABLE wp_posts (id int);\nINSERT INTO /*M!100100 `" . DB_NAME . '`.*/wp_posts VALUES (1);';
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$this->assertSame( strlen( $sql ), file_put_contents( $path, $sql ) );
+
+		try {
+			$sandbox->bring_up();
+			$caught = null;
+			try {
+				$sandbox->import_database( $path );
+			} catch ( MainWP_Exception $e ) {
+				$caught = $e;
+			}
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+			$this->assertSame( 'INSERT cross-schema', $caught->get_message_extra( false ), 'The guard, not a server error, must stop the statement.' );
+			$this->assertSame( 1, $sandbox->table_count(), 'Statements before the hostile one still import into the scratch database.' );
+			$this->assertFalse( $sandbox->has_table_rows(), 'The hostile insert must not reach the server.' );
+		} finally {
+			$sandbox->tear_down();
 		}
 	}
 

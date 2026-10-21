@@ -1080,7 +1080,6 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
         wp_localize_script( 'mainwp', 'security_nonces', $security_nonces );
 
         wp_enqueue_script( 'thickbox' );
-        wp_enqueue_script( 'user-profile' );
         wp_enqueue_style( 'thickbox' );
 
         $load_gridstack = false;

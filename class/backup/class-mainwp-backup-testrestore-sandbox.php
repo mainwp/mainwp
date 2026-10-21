@@ -360,6 +360,8 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * @param string $sql             SQL bytes.
      * @param bool   $executable_only Exclude whitespace and expand executable comments.
      *
+     * @throws MainWP_Exception When a comment or quote is left open or a comment shape is refused.
+     *
      * @return \Generator
      */
     private static function sql_dump_tokens( string $sql, bool $executable_only = false ): \Generator {
@@ -384,18 +386,20 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             }
             if ( '/' === $char && $i < $length && '*' === $sql[ $i ] ) {
                 $end = strpos( $sql, '*/', $i + 1 );
-                $end = false === $end ? $length : $end;
-                $i   = min( $length, $end + 2 );
+                if ( false === $end ) {
+                    throw self::sql_refusal( 'unterminated comment' );
+                }
+                $i    = $end + 2;
+                $body = self::executable_comment_body( substr( $sql, $start, $i - $start ) );
                 if ( ! $executable_only ) {
                     yield substr( $sql, $start, $i - $start );
-                } elseif ( isset( $sql[ $start + 2 ] ) && '!' === $sql[ $start + 2 ] ) {
-                    // MySQL executes these bodies, so hiding their keywords would bypass the guard.
-                    $body = preg_replace( '/^\d{5,6}\s*/', '', substr( $sql, $start + 3, $end - $start - 3 ) );
+                } elseif ( null !== $body ) {
                     yield from self::sql_dump_tokens( $body, true );
                 }
                 continue;
             }
             if ( "'" === $char || '"' === $char || '`' === $char ) {
+                $closed = false;
                 while ( $i < $length ) {
                     $next = $sql[ $i++ ];
                     if ( '\\' === $next && '`' !== $char && $i < $length ) {
@@ -404,9 +408,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                         if ( $i < $length && $char === $sql[ $i ] ) {
                             ++$i;
                         } else {
+                            $closed = true;
                             break;
                         }
                     }
+                }
+                if ( ! $closed ) {
+                    // The server rejects an open quote; refusing it keeps the guard from reading SQL as string contents.
+                    throw self::sql_refusal( 'unterminated quote' );
                 }
             } elseif ( ctype_alnum( $char ) || '_' === $char || '$' === $char || ord( $char ) >= 128 ) {
                 while ( $i < $length && ( ctype_alnum( $sql[ $i ] ) || '_' === $sql[ $i ] || '$' === $sql[ $i ] || ord( $sql[ $i ] ) >= 128 ) ) {
@@ -415,6 +424,69 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             }
             yield substr( $sql, $start, $i - $start );
         }
+    }
+
+    /**
+     * The server runs /*! bodies (MySQL and MariaDB) and /*M! bodies (MariaDB), so the guard must read them.
+     *
+     * A comment always ends at its first raw closer here. The server agrees only when the body
+     * lexes cleanly inside that span: an executed body is lexed as SQL, so a quoted closer or a
+     * line comment extends it, while a skipped body (version above the server) ends at the first
+     * closer and nests one level. Every shape where the two readings differ is refused.
+     *
+     * @param string $comment Complete block comment, opener and closer included.
+     *
+     * @throws MainWP_Exception When the comment shape is refused.
+     *
+     * @return string|null Executable body, or null for an inert comment.
+     */
+    private static function executable_comment_body( string $comment ): ?string {
+        $marker = substr( $comment, 2, 2 );
+        if ( '+' === $marker[0] ) {
+            // MySQL lexes hints after a leading keyword with a quote-aware scanner, so a quoted closer moves their end.
+            throw self::sql_refusal( 'optimizer hint comment' );
+        }
+        if ( '!' === $marker[0] ) {
+            $body = substr( $comment, 3, -2 );
+        } elseif ( 'M!' === strtoupper( $marker ) ) {
+            // MariaDB matches only an uppercase M; a lowercase one is guarded too because reading more costs nothing.
+            $body = substr( $comment, 4, -2 );
+        } else {
+            return null;
+        }
+        if ( preg_match( '/^\d+/', $body, $digits ) ) {
+            $count = strlen( $digits[0] );
+            // MySQL before 8.0.34 reads five version digits and MariaDB reads six, so any other run is read differently.
+            if ( ( 5 !== $count && 6 !== $count ) || ( isset( $body[ $count ] ) && ! ctype_space( $body[ $count ] ) ) ) {
+                throw self::sql_refusal( 'executable comment version' );
+            }
+            $body = substr( $body, $count );
+        }
+        if ( false !== strpos( $body, '/*' ) ) {
+            throw self::sql_refusal( 'comment inside an executable comment' );
+        }
+        foreach ( self::sql_dump_tokens( $body ) as $token ) {
+            if ( '#' === $token[0] || 0 === strpos( $token, '--' ) ) {
+                throw self::sql_refusal( 'line comment inside an executable comment' );
+            }
+        }
+        return $body;
+    }
+
+    /**
+     * A refused statement says something about the backup, not about the host, so it fails the
+     * restore rather than reporting that the host cannot test.
+     *
+     * @param string $refused Refusal label naming the statement or shape.
+     *
+     * @return MainWP_Exception
+     */
+    private static function sql_refusal( string $refused ): MainWP_Exception {
+        return new MainWP_Exception(
+            sprintf( esc_html__( 'The backup database dump contains a statement the test restore will not run: %s.', 'mainwp' ), esc_html( $refused ) ),
+            $refused,
+            self::ERR_APPLY
+        );
     }
 
     /**
@@ -507,12 +579,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             $refused = $first;
         }
         if ( '' !== $refused ) {
-            // A refused statement says something about the backup, not about the host, so it fails the restore rather than reporting the host cannot test.
-            throw new MainWP_Exception(
-                sprintf( esc_html__( 'The backup database dump contains a statement the test restore will not run: %s.', 'mainwp' ), esc_html( $refused ) ),
-                $refused,
-                self::ERR_APPLY
-            );
+            throw self::sql_refusal( $refused );
         }
     }
 

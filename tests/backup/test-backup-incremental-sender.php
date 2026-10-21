@@ -49,6 +49,133 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	use Backup_Private_Root_Fixture;
 
 	/**
+	 * A compromised Child must not plant a handler or bypass the transfer bound.
+	 *
+	 * @dataProvider compromised_child_artifact_cases
+	 * @param string $type Run type.
+	 * @param string $file Child filename.
+	 * @param string $role Artifact role.
+	 * @param mixed  $size Declared size, or null for omission.
+	 */
+	public function test_compromised_child_artifact_refused_before_download( $type, $file, $role, $size ) {
+		list( $site_id, $task ) = $this->arrange_manual_task( 'incremental' === $type );
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'type' => $type ) );
+		$task     = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$artifact = array(
+			'file' => $file,
+			'role' => $role,
+		);
+		if ( null !== $size ) {
+			$artifact['size'] = $size;
+		}
+		$payload = array(
+			'phase'     => 'completed',
+			'file'      => 'real.zip',
+			'size'      => 400,
+			'artifacts' => array( $artifact ),
+		);
+		if ( in_array( $role, array( 'full', 'db' ), true ) && 'incremental' !== $type ) {
+			$payload['file'] = $file;
+		}
+		$this->remote_files[ $file ]    = "PK\x03\x04" . str_repeat( 'z', 396 );
+		$this->remote_files['real.zip'] = "PK\x03\x04" . str_repeat( 'z', 396 );
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			static function ( $result, $website, $what ) use ( $payload ) {
+				return 'backup_task_run' === $what ? $payload : $result;
+			},
+			20,
+			3
+		);
+		$this->run_cycle( $site_id, $task );
+		$requests = array();
+		$capture  = static function ( $pre, $url, $local ) use ( &$requests ) {
+			$requests[] = $local;
+			return $pre;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $capture, 1, 3 );
+		try {
+			$cycle = $this->run_cycle( $site_id, $task );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $capture, 1 );
+		}
+		$dir     = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( $site_id );
+		$planted = array();
+		if ( is_dir( $dir ) ) {
+			foreach ( new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $dir, \FilesystemIterator::SKIP_DOTS ) ) as $entry ) {
+				// index.php is the Dashboard's own directory guard.
+				if ( 'index.php' !== $entry->getFilename() && preg_match( '/\.php/i', $entry->getFilename() ) ) {
+					$planted[] = $entry->getPathname();
+				}
+			}
+		}
+		$this->assertSame( array(), $planted, 'A Child-named PHP file was written.' );
+		$this->assertSame( array(), $requests, 'The entire set must be refused before its first request.' );
+		$this->assertInstanceOf( MainWP_Exception::class, $cycle['exception'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $cycle['exception']->get_message_error_code() );
+	}
+
+	/**
+	 * A manifest declared as zero bytes is never fetched, since a zero size
+	 * leaves the transfer unbounded; the run is recorded without it.
+	 *
+	 * @return void
+	 */
+	public function test_compromised_child_zero_size_manifest_not_downloaded() {
+		list( $site_id, $task ) = $this->arrange_manual_task();
+		$artifacts              = $this->arrange_remote_artifacts();
+		$artifacts[0]['size']   = 0;
+		$this->mock_child_actions(
+			array(
+				'backup_task_run' => array(
+					'phase'     => 'completed',
+					'artifacts' => $artifacts,
+				),
+			)
+		);
+		$this->run_cycle( $site_id, $task );
+		$requests = array();
+		$capture  = static function ( $pre, $url, $local ) use ( &$requests ) {
+			$requests[] = basename( $local );
+			return $pre;
+		};
+		add_filter( 'mainwp_download_to_file_pre', $capture, 1, 3 );
+		try {
+			$cycle = $this->run_cycle( $site_id, $task );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_pre', $capture, 1 );
+		}
+		$this->assertNull( $cycle['exception'] );
+		$this->assertNotContains( 'files.list', $requests );
+		$this->assertContains( 'uploads.part001.zip', $requests );
+	}
+
+	/**
+	 * Hostile artifact declarations.
+	 *
+	 * @return array
+	 */
+	public static function compromised_child_artifact_cases() {
+		return array(
+			'PHP part'            => array( 'incremental', 'x.php', 'part', 400 ),
+			'PHP manifest'        => array( 'incremental', 'm.php', 'manifest', 400 ),
+			'Apache handler'      => array( 'incremental', 'x.php.zip', 'part', 400 ),
+			'mixed-case handler'  => array( 'incremental', 'x.PhP.zip', 'part', 400 ),
+			'unknown extension'   => array( 'incremental', 'x.html', 'part', 400 ),
+			'unknown role'        => array( 'incremental', 'x.zip', 'other', 400 ),
+			'single PHP archive'  => array( 'full', 'a.php', 'full', 400 ),
+			'single PHP database' => array( 'db', 'a.php', 'db', 400 ),
+			'full PHP manifest'   => array( 'full', 'm.php', 'manifest', 400 ),
+			'incremental no size' => array( 'incremental', 'uploads.part001.zip', 'part', null ),
+			'full no size'        => array( 'full', 'files.list', 'manifest', null ),
+			'zero-size part'      => array( 'incremental', 'uploads.part001.zip', 'part', 0 ),
+			'negative size'       => array( 'incremental', 'uploads.part001.zip', 'part', -1 ),
+			'fractional size'     => array( 'incremental', 'uploads.part001.zip', 'part', 400.5 ),
+			'boolean size'        => array( 'incremental', 'uploads.part001.zip', 'part', true ),
+		);
+	}
+
+	/**
 	 * Keep initiation timestamps equal even when a test crosses a wall-clock second.
 	 *
 	 * @var int|null
@@ -1550,6 +1677,13 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$base_id = $this->record_base_snapshot( $site_id );
 
 		$artifacts = $this->arrange_remote_artifacts();
+		foreach ( $artifacts as &$artifact ) {
+			if ( 'part' === $artifact['role'] ) {
+				$this->remote_files['uploads.task1700000000abcdefghijkl.part001.zip'] = $this->remote_files[ $artifact['file'] ];
+				$artifact['file'] = 'uploads.task1700000000abcdefghijkl.part001.zip';
+			}
+		}
+		unset( $artifact );
 		$this->mock_artifact_downloads();
 
 		$this->mock_child_actions(
@@ -1606,7 +1740,7 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		// incremental diffs against.
 		$deleted = array_column( $this->all_call_params( 'delete_backup' ), 'del' );
 		$this->assertContains( 'dbBackup-1.zip', $deleted );
-		$this->assertContains( 'uploads.part001.zip', $deleted );
+		$this->assertContains( 'uploads.task1700000000abcdefghijkl.part001.zip', $deleted );
 		$this->assertContains( 'tombstones.list', $deleted );
 		$this->assertNotContains( 'files.list', $deleted );
 		$summary = new \ReflectionMethod( \MainWP\Dashboard\MainWP_Backup_Read_Model::class, 'snapshot_status_summary' );
@@ -2474,8 +2608,9 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 	 * @param int    $partial Existing archive bytes.
 	 * @param bool   $refused Whether the transfer must be refused.
 	 * @param bool   $manifest Whether the full run also downloads a manifest.
+	 * @param string $code Expected refusal code.
 	 */
-	public function test_download_disk_guard( $type, $free, $size, $partial, $refused, $manifest = false ) {
+	public function test_download_disk_guard( $type, $free, $size, $partial, $refused, $manifest = false, $code = MainWP_Backup_Error_Codes::ERR_DISK_FULL ) {
 		list( $site_id, $task ) = $this->arrange_manual_task( 'incremental' === $type );
 		MainWP_DB_Backup::instance()->update_backup_task_with_values( $task->id, array( 'type' => $type ) );
 		$task                           = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
@@ -2536,8 +2671,10 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		}
 		if ( $refused ) {
 			$this->assertInstanceOf( MainWP_Exception::class, $finish['exception'] );
-			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $finish['exception']->get_message_error_code() );
-			$this->assertStringContainsString( 'Dashboard server', $finish['exception']->getMessage() );
+			$this->assertSame( $code, $finish['exception']->get_message_error_code() );
+			if ( MainWP_Backup_Error_Codes::ERR_DISK_FULL === $code ) {
+				$this->assertStringContainsString( 'Dashboard server', $finish['exception']->getMessage() );
+			}
 			$this->assertSame( array(), $downloads, 'Refuse the entire set before its first transfer.' );
 			$this->assertFileDoesNotExist( $local );
 		} else {
@@ -2560,13 +2697,14 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 			'db refused'            => array( 'db', $margin + 399, 400, 0, true ),
 			'full fits exactly'     => array( 'full', $margin + 400, 400, 0, false ),
 			'roles sum refused'     => array( 'incremental', $margin + 300, 372, 0, true ),
-			'roles size missing'    => array( 'incremental', 1, null, 0, true ),
+			// Without a declared size nothing bounds the transfer.
+			'roles size missing'    => array( 'incremental', 1, null, 0, true, false, MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ),
 			'roles resume fits'     => array( 'incremental', $margin + 272, 372, 100, false ),
 			'roles resume cleans'   => array( 'incremental', $margin + 271, 372, 100, true ),
 			'roles sum fits'        => array( 'incremental', $margin + 372, 372, 0, false ),
 			'full plus manifest'    => array( 'full', $margin + 420, 400, 0, true, true ),
 			'free unavailable'      => array( 'full', false, 400, 0, false ),
-			'size missing'          => array( 'full', 1, null, 0, false ),
+			'size missing'          => array( 'full', 1, null, 0, true, false, MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT ),
 			'resume remaining fits' => array( 'full', $margin + 200, 400, 200, false ),
 			'resume refused cleans' => array( 'full', $margin + 199, 400, 200, true ),
 		);
@@ -2973,7 +3111,8 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->run_cycle( $site_id, $task );
 		$cycle = $this->run_cycle( $site_id, $task );
 		$this->assertInstanceOf( MainWP_Exception::class, $cycle['exception'] );
-		$this->assertSame( MainWP_Backup_Error_Codes::ERR_DL_FILE_NOT_FOUND, $cycle['exception']->get_message_error_code() );
+		// A part declared as zero bytes would download with no size bound, so it is refused up front.
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $cycle['exception']->get_message_error_code() );
 		$this->assertSame( $base_id, (int) MainWP_Backup_Snapshots::instance()->get_latest_complete( $site_id, $task->id )->id );
 	}
 

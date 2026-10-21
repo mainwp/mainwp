@@ -1094,6 +1094,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $information['woo'] = $temp['woo'];
                 }
 
+                self::validate_child_completion( $information, true );
+
                 // Concurrent drivers can poll the same completed child task;
                 // the conditional claim makes exactly one of them the
                 // consumer. A losing driver yields without firing a second
@@ -1130,6 +1132,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         if ( false === $information ) {
             $information = $backupTaskProgress->fetchResult;
+            if ( is_array( $information ) && ! isset( $information['error'] ) ) {
+                self::validate_child_completion( $information, false );
+            }
         }
 
         if ( ! isset( $information['error'] ) && empty( $backupTaskProgress->child_backup_task_id ) && ! empty( $pTask->id ) ) {
@@ -1367,7 +1372,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         $filename        = str_replace( '%', '', $filename );
                         $localBackupFile = $dir . $filename;
                     }
-                    $localBackupFile .= MainWP_Backup_File_Manager::get_real_extension( $information['db'] );
+                    $localBackupFile .= MainWP_Backup_File_Manager::child_artifact_extension( $information['db'], 'db' );
 
                     $localBackupFile = MainWP_Backup_File_Manager::normalize_filename( $localBackupFile );
 
@@ -1438,7 +1443,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             }
 
             if ( $information['full'] ) {
-                $realExt         = MainWP_Backup_File_Manager::get_real_extension( $information['full'] );
+                $realExt         = MainWP_Backup_File_Manager::child_artifact_extension( $information['full'], 'full' );
                 $what            = 'full';
                 $name_type       = 'files' === $pTask->type ? 'files' : 'full';
                 $regexBackupFile = $name_type . '-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
@@ -2350,6 +2355,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      */
     // phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing -- registry factory throws are MainWP_Exception, documented above.
     protected static function finish_incremental_backup( $website, $pTask, $artifacts, $progress, &$snapshot_id = 0, &$advanced = null ) { // phpcs:ignore -- NOSONAR - download loop with per-role validation.
+        self::validate_task_artifacts( $artifacts );
         MainWP_System_Utility::get_wp_file_system();
 
         /**
@@ -2430,7 +2436,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     // The downloader skips exact-size files, so discard this one while holding its lock.
                     wp_delete_file( $local );
                 }
-                if ( ! $already_complete ) {
+                if ( ! $already_complete && 'manifest' === $role && 0 === $size ) {
+                    // A zero size disables the transfer bound, so the manifest is not fetched at all.
+                    $manifest_error = MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'manifest declared no size' );
+                } elseif ( ! $already_complete ) {
                     try {
                         MainWP_Backup_File_Manager::download_backup_artifact( $website, $remote, $local, $size, $http_user_plain, $http_pass_plain, $allow_empty, $expected_sha256 );
                     } catch ( MainWP_Exception $e ) {
@@ -2950,10 +2959,10 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
 
                     if ( 'db' === $pType ) {
-                        $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $information['db'] );
+                        $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::child_artifact_extension( $information['db'], 'db' );
                         $localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
                     } else {
-                        $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $information['full'] );
+                        $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::child_artifact_extension( $information['full'], 'full' );
                         $localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
                     }
 
@@ -2980,9 +2989,9 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         $localBackupFile = MainWP_Backup_File_Manager::normalize_filename( $localBackupFile );
 
                         if ( 'db' === $pType ) {
-                            $localBackupFile .= MainWP_Backup_File_Manager::get_real_extension( $information['db'] );
+                            $localBackupFile .= MainWP_Backup_File_Manager::child_artifact_extension( $information['db'], 'db' );
                         } else {
-                            $localBackupFile .= MainWP_Backup_File_Manager::get_real_extension( $information['full'] );
+                            $localBackupFile .= MainWP_Backup_File_Manager::child_artifact_extension( $information['full'], 'full' );
                         }
                     }
 
@@ -3564,7 +3573,8 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $downloaded = '';
         $rejected   = '';
         if ( 'completed' === $status['status'] && ! empty( $status['meta']['file'] ) ) {
-            $type   = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
+            $type = isset( $payload['type'] ) && MainWP_Backup_Type::DATABASE === $payload['type'] ? 'db' : 'full';
+            MainWP_Backup_File_Manager::child_artifact_extension( is_string( $status['meta']['file'] ) ? $status['meta']['file'] : '', $type );
             $db     = MainWP_DB::instance();
             $raw    = (string) $db->get_website_option( $website, self::ADHOC_TASK_OPTION );
             $handle = json_decode( $raw, true );
@@ -3906,6 +3916,66 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         );
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory throws MainWP_Exception.
+    /**
+     * Refuses a completed task's Child-declared artifacts before any download, lock or disk-space step.
+     *
+     * @param array $information  Completion result built from the Child payload.
+     * @param bool  $require_size Whether the single archive must declare its size; stored results were checked when claimed or come from a legacy Child.
+     * @return void
+     * @throws MainWP_Exception With ERR_FILE_CORRUPT when an artifact cannot be safely downloaded.
+     */
+    private static function validate_child_completion( array $information, bool $require_size ): void {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        foreach ( array( 'full', 'db' ) as $role ) {
+            if ( empty( $information[ $role ] ) ) {
+                continue;
+            }
+            MainWP_Backup_File_Manager::child_artifact_extension( is_string( $information[ $role ] ) ? $information[ $role ] : '', $role );
+            if ( $require_size ) {
+                self::assert_declared_size( $information['size'] ?? null );
+            }
+        }
+        self::validate_task_artifacts( is_array( $information['artifacts'] ?? null ) ? $information['artifacts'] : array() );
+    }
+
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory throws MainWP_Exception.
+    /**
+     * Refuses task-spine artifacts whose name or declared size is unusable.
+     *
+     * @param array $artifacts Task-spine artifact declarations.
+     * @return void
+     * @throws MainWP_Exception With ERR_FILE_CORRUPT when an artifact cannot be safely downloaded.
+     */
+    private static function validate_task_artifacts( array $artifacts ): void {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        foreach ( $artifacts as $artifact ) {
+            if ( ! is_array( $artifact ) || ! is_string( $artifact['file'] ?? null ) || ! is_string( $artifact['role'] ?? null ) ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'malformed artifact entry' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
+            }
+            // An empty tombstones list is legitimate; a zero-size manifest is a Child write failure the download paths record without a manifest.
+            self::assert_declared_size( $artifact['size'] ?? null, in_array( $artifact['role'], array( 'tombstones', 'manifest' ), true ) );
+            MainWP_Backup_File_Manager::assert_child_artifact_name( $artifact['file'], $artifact['role'] );
+        }
+    }
+
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- the registry factory throws MainWP_Exception.
+    /**
+     * The declared size is the only bound on a download, so a spine Child
+     * that omits it could stream until the transfer timeout.
+     *
+     * @param mixed $size        Child-declared size.
+     * @param bool  $allow_empty Whether zero bytes is a valid declaration, as for an empty tombstones list.
+     * @return void
+     * @throws MainWP_Exception With ERR_FILE_CORRUPT for a missing, non-integer or negative size.
+     */
+    private static function assert_declared_size( $size, bool $allow_empty = false ): void {
+        // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+        if ( ! is_int( $size ) || $size < 0 || ( 0 === $size && ! $allow_empty ) ) {
+            throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'missing or invalid declared artifact size' ); // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Registry messages are pre-escaped.
+        }
+    }
+
     /**
      * Method build_local_backup_file()
      *
@@ -3919,6 +3989,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * @return string Absolute local file path.
      */
     private static function build_local_backup_file( object $website, string $type, string $remote_file ): string {
+        $extension = MainWP_Backup_File_Manager::child_artifact_extension( $remote_file, MainWP_Backup_Type::DATABASE === $type ? 'db' : 'full' );
         $clean_url = $website->url;
         if ( '/' === substr( $clean_url, - 1 ) ) {
             $clean_url = substr( $clean_url, 0, - 1 );
@@ -3930,7 +4001,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
         $prefix  = MainWP_Backup_Type::DATABASE === $type ? 'db-' : 'full-';
 
-        $proposed = MainWP_Backup_File_Manager::normalize_filename( $dir . $prefix . $clean_url . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $remote_file ) );
+        $proposed = MainWP_Backup_File_Manager::normalize_filename( $dir . $prefix . $clean_url . '-' . $fm_date . '-' . $fm_time . $extension );
         return MainWP_Backup_File_Manager::reserve_local_archive_path( $proposed, (int) $website->id );
     }
 

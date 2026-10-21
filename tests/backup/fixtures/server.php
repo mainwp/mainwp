@@ -109,6 +109,15 @@ switch ( $path ) {
         echo $body;
         break;
 
+    case '/oversized-stream':
+        // Compromised child: ignores Range and streams twice the declared size.
+        header( 'Content-Type: application/octet-stream' );
+        for ( $sent = 0; $sent < 2 * $size; $sent += 4096 ) {
+            echo fixture_content( min( 4096, 2 * $size - $sent ) );
+            flush();
+        }
+        break;
+
     case '/range-ignored':
         // Old child: ignores Range entirely, always 200 + full body.
         header( 'Content-Type: application/octet-stream' );

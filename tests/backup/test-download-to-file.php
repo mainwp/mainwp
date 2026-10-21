@@ -24,6 +24,55 @@ use MainWP\Dashboard\MainWP_Exception;
 class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 
 	/**
+	 * A compromised Child that streams twice its declared size is cut off near
+	 * that size, and nothing is left behind as a completed artifact.
+	 *
+	 * @dataProvider child_stream_prefixes
+	 * @param int $prefix Bytes already on disk, which sends a Range the route ignores.
+	 */
+	public function test_compromised_child_streaming_past_declared_size_aborts( $prefix ) {
+		$declared = 1048576;
+		$file     = $this->temp_download_path();
+		if ( $prefix ) {
+			file_put_contents( $file, static::fixture_content( $prefix ) );
+		}
+		$received = 0;
+		$meter    = static function ( $options ) use ( &$received ) {
+			$options[ CURLOPT_NOPROGRESS ]       = false;
+			$options[ CURLOPT_XFERINFOFUNCTION ] = static function ( $handle, $download_total, $downloaded ) use ( &$received ) {
+				$received = max( $received, (int) $downloaded );
+				return 0;
+			};
+			return $options;
+		};
+		add_filter( 'mainwp_download_to_file_curl_options', $meter );
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/oversized-stream?size=' . $declared ), $file, $declared );
+			$this->fail( 'The oversized stream completed.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $error->get_message_error_code() );
+			$this->assertStringContainsString( 'exceeds declared size', (string) $error->get_message_extra() );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_curl_options', $meter );
+		}
+		$this->assertLessThan( (int) ( $declared * 1.1 ), $received, 'The transfer ran on past the declared size.' );
+		clearstatcache( true, $file );
+		$this->assertFileDoesNotExist( $file );
+	}
+
+	/**
+	 * Fresh and Range-ignored downloads.
+	 *
+	 * @return array
+	 */
+	public static function child_stream_prefixes() {
+		return array(
+			'fresh'         => array( 0 ),
+			'Range ignored' => array( 1024 ),
+		);
+	}
+
+	/**
 	 * Transfer failures describe the bytes actually retained for the retry.
 	 *
 	 * @dataProvider interrupted_data_cases

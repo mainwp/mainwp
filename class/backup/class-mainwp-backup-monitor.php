@@ -93,6 +93,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
         $result = isset( $information['file'] ) ? array( 'file' => $information['file'] ) : array();
         if ( 'done' === $status ) {
+            $extension      = MainWP_Backup_File_Manager::child_artifact_extension( (string) $information['file'], 'db' === $type ? 'db' : 'full' );
             $result['file'] = $information['file'];
             $result['size'] = $information['size'];
 
@@ -130,10 +131,10 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $fm_time = MainWP_Utility::sanitize_file_name( MainWP_Utility::date( get_option( 'time_format' ) ) );
 
             if ( 'db' === $type ) {
-                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $information['file'] );
+                $localBackupFile = $dir . 'db-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $extension;
                 $localRegexFile  = 'db-' . $websiteCleanUrl . '-(.*)-(.*).sql(\.zip|\.tar|\.tar\.gz|\.tar\.bz2)?';
             } else {
-                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . MainWP_Backup_File_Manager::get_real_extension( $information['file'] );
+                $localBackupFile = $dir . 'full-' . $websiteCleanUrl . '-' . $fm_date . '-' . $fm_time . $extension;
                 $localRegexFile  = 'full-' . $websiteCleanUrl . '-(.*)-(.*).(zip|tar|tar.gz|tar.bz2)';
             }
 
@@ -159,7 +160,7 @@ class MainWP_Backup_Monitor { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 $localBackupFile = $dir . $filename;
                 $localBackupFile = MainWP_Backup_File_Manager::normalize_filename( $localBackupFile );
 
-                $localBackupFile .= MainWP_Backup_File_Manager::get_real_extension( $information['file'] );
+                $localBackupFile .= $extension;
             }
 
             $localBackupFile     = MainWP_Backup_File_Manager::reserve_local_archive_path( $localBackupFile, $pSiteId );

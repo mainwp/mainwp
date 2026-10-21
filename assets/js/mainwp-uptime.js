@@ -69,9 +69,9 @@ let uptime_monitoring_prepare_items_rows = function (itemsData) {
     jQuery("#sync-sites-status").append(`
       <div class="item">
           <div class="right floated content">
-              <div class="running-item-status" itemid="` + item.id + `" siteid="` + item.siteid + `" niceurl="` + item.niceurl + `"><span data-position="left center" data-inverted="" data-tooltip="` + MainWP.I18n.t('Pending') + `"><i class="clock outline icon"></i></span></div>
+              <div class="running-item-status" itemid="` + mainwp_text_html(item.id) + `" siteid="` + mainwp_text_html(item.siteid) + `" niceurl="` + mainwp_text_html(item.niceurl) + `"><span data-position="left center" data-inverted="" data-tooltip="` + MainWP.I18n.t('Pending') + `"><i class="clock outline icon"></i></span></div>
           </div>
-          <div class="content">` + item.url + `</div>
+          <div class="content">` + mainwp_text_html(item.url) + `</div>
     </div>`);
   });
 }

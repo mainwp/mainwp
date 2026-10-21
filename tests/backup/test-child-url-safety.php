@@ -352,6 +352,21 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 		$this->assertFileExists( $control, 'Another site\'s icon was removed.' );
 	}
 
+	/** On a case-insensitive filesystem the new icon reuses an uppercase file, which the sweep must not delete. */
+	public function test_icon_cleanup_keeps_the_new_icon_when_an_uppercase_name_exists() {
+		$dirs          = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
+		$id            = (int) $this->website->id;
+		$upper         = $dirs[0] . 'favi-' . $id . '-icon.PNG';
+		$lower         = $dirs[0] . 'favi-' . $id . '-icon.png';
+		$this->files[] = $upper;
+		$this->files[] = $lower;
+		file_put_contents( $upper, 'planted' );
+		MainWP_DB::instance()->update_website_option( $this->website, 'favi_icon', 'favi-' . $id . '-icon.PNG' );
+		$this->assertSame( array( 'result' => 'success' ), MainWP_Sync::download_child_icon( $this->website, static::fixture_url( '/child-icon.png' ) ) );
+		$this->assertSame( static::fixture_content( 64 ), file_get_contents( $lower ) );
+		$this->assertSame( 'favi-' . $id . '-icon.png', MainWP_DB::instance()->get_website_option( $this->website->id, 'favi_icon', '' ) );
+	}
+
 	/** The fetch must use its checked address and stop before a redirect target. */
 	public function test_icon_fetch_pins_dns_and_does_not_follow_redirects() {
 		$base    = 'http://icon-pin.invalid:' . static::$server_port;

@@ -1080,7 +1080,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     MainWP_Logger::instance()->debug( 'Icon size :: ' . $size );
                     // Earlier versions let the Child name this file (favi.php.png); drop every other name stored for this site.
                     foreach ( (array) glob( $iconsDir . 'favi-' . (int) $website->id . '-*' ) as $old_icon ) {
-                        if ( basename( $old_icon ) !== $filename && is_file( $old_icon ) ) {
+                        if ( strtolower( basename( $old_icon ) ) !== $filename && is_file( $old_icon ) ) {
                             wp_delete_file( $old_icon );
                         }
                     }

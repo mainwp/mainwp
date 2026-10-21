@@ -710,6 +710,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			return $this->patch_raw_tar_header( $this->raw_tar_member( $name, '', '', '5' ), 100, "0000755\0" );
 		};
 		$names = self::tar_name_rows();
+		if ( 'Windows' === PHP_OS_FAMILY && in_array( $shape, array( 'name dots inside a segment', 'name drive letter only' ), true ) ) {
+			$this->markTestSkipped( 'Windows cannot create files named ... or C:notes.txt.' );
+		}
 		$pairs = array(
 			'file then directory'           => $this->raw_tar_member( 'a', 'file' ) . $dir( 'a/' ),
 			'directory then file'           => $dir( 'a/' ) . $this->raw_tar_member( 'a', 'file' ),
@@ -2494,6 +2497,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 * @param bool   $unsafe Whether the name is refused.
 	 */
 	public function test_zip_entry_name_matrix( $name, $unsafe ) {
+		if ( ! $unsafe && 'Windows' === PHP_OS_FAMILY && 1 === preg_match( '#:|\.$#', $name ) ) {
+			$this->markTestSkipped( 'Windows cannot create a file named ' . $name . '.' );
+		}
 		$path = $this->dir . '/' . uniqid( 'names-' ) . '.zip';
 		$zip  = new \ZipArchive();
 		$this->assertTrue( $zip->open( $path, \ZipArchive::CREATE ) );
@@ -2520,6 +2526,57 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		} finally {
 			$sandbox->tear_down();
 		}
+	}
+
+	/**
+	 * ZipArchive::extractTo() moves a member whose path has a directory name ending in a dot, so
+	 * the zip is refused before anything is written; the tar extractor keeps the path as it is.
+	 *
+	 * @dataProvider zip_moved_name_cases
+	 * @param string $name Member name the zip extractor would move.
+	 */
+	public function test_zip_refuses_names_the_extractor_would_move( $name ) {
+		$path = $this->dir . '/' . uniqid( 'moved-' ) . '.zip';
+		$zip  = new \ZipArchive();
+		$this->assertTrue( $zip->open( $path, \ZipArchive::CREATE ) );
+		$this->assertTrue( $zip->addFromString( 'index.php', 'outer' ) );
+		$this->assertTrue( $zip->addFromString( $name, 'inner' ) );
+		$this->assertTrue( $zip->close() );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $path, 'extract' );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+			$this->assertSame( 'zip entry the extractor would move: ' . $name, $caught->get_message_extra( false ) );
+			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+
+		$tar = $this->raw_tar( $this->raw_tar_member( 'index.php', 'outer' ) . $this->raw_tar_member( $name, 'inner' ) );
+		$sandbox->bring_up();
+		try {
+			$sandbox->extract_files( $tar );
+			$this->assertSame( 'inner', file_get_contents( $sandbox->temp_dir() . $name ) );
+			$this->assertSame( 'outer', file_get_contents( $sandbox->temp_dir() . 'index.php' ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Directory names ending in one or two dots, at the top and further down.
+	 *
+	 * @return array
+	 */
+	public static function zip_moved_name_cases() {
+		return array(
+			'two dots'        => array( 'release../index.php' ),
+			'one dot'         => array( 'release./index.php' ),
+			'nested two dots' => array( 'a/b../c/index.php' ),
+			'three dots'      => array( '.../index.php' ),
+		);
 	}
 
 	/**

@@ -1009,19 +1009,22 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		}
 		return array(
 			// About a million members at 70 bytes drew the old 64 MiB refusal; at the entry limit they fit.
-			'entry limit at average path length'  => array( $average, 'accept', 8 ),
-			'longest ustar names fill the budget' => array( $names( 256, 8 ), 'accept', 16 ),
-			'one byte over the budget'            => array( $names( 256, 8, 257 ), 'limit', 16 ),
-			'headed parent is not charged again'  => array( array( array( 'dir', 'dd' ), array( 'long', 'dd/' . str_repeat( 'x', 2043 ) ) ), 'accept', 8 ),
-			'implied parent fits exactly'         => array( array( array( 'long', 'dd/' . str_repeat( 'x', 2043 ) ) ), 'accept', 8 ),
-			'implied parent one byte over'        => array( array( array( 'long', 'dd/' . str_repeat( 'x', 2044 ) ) ), 'limit', 8 ),
+			'entry limit at average path length'   => array( $average, 'accept', 8 ),
+			'longest ustar names fill the budget'  => array( $names( 256, 8 ), 'accept', 16 ),
+			'one byte over the budget'             => array( $names( 256, 8, 257 ), 'limit', 16 ),
+			// Plain headers are charged per header, so a repeated name costs PharData each time.
+			'repeated plain name fills the budget' => array( array_fill( 0, 20, array( 'file', str_repeat( 'r', 100 ) ) ), 'accept', 20 ),
+			'repeated plain name one header over'  => array( array_fill( 0, 21, array( 'file', str_repeat( 'r', 100 ) ) ), 'limit', 21 ),
+			'headed parent is not charged again'   => array( array( array( 'dir', 'dd' ), array( 'long', 'dd/' . str_repeat( 'x', 2043 ) ) ), 'accept', 8 ),
+			'implied parent fits exactly'          => array( array( array( 'long', 'dd/' . str_repeat( 'x', 2043 ) ) ), 'accept', 8 ),
+			'implied parent one byte over'         => array( array( array( 'long', 'dd/' . str_repeat( 'x', 2044 ) ) ), 'limit', 8 ),
 			// Fifty implied parents of one 101-byte name total 2500 bytes: depth costs PharData as much as length.
-			'deep implied parents'                => array( array( array( 'long', str_repeat( 'a/', 50 ) . 'x' ) ), 'limit', 8 ),
-			'long name with a trailing NUL'       => array( array( array( 'long-nul', str_repeat( 'g', 200 ) ) ), 'accept', 8 ),
-			'long name with bytes after a NUL'    => array( array( array( 'raw-long', "a\0b" ) ), 'unreadable', 8 ),
-			'more members than the entry limit'   => array( array_fill( 0, 9, array( 'dir', 'd' ) ), 'unreadable', 8 ),
+			'deep implied parents'                 => array( array( array( 'long', str_repeat( 'a/', 50 ) . 'x' ) ), 'limit', 8 ),
+			'long name with a trailing NUL'        => array( array( array( 'long-nul', str_repeat( 'g', 200 ) ) ), 'accept', 8 ),
+			'long name with bytes after a NUL'     => array( array( array( 'raw-long', "a\0b" ) ), 'unreadable', 8 ),
+			'more members than the entry limit'    => array( array_fill( 0, 9, array( 'dir', 'd' ) ), 'unreadable', 8 ),
 			// Production limits: refused at its first record, before the payloads add up.
-			'1025 payloads cut to one name'       => array( array( array( 'cut-payloads', '' ) ), 'unreadable', null ),
+			'1025 payloads cut to one name'        => array( array( array( 'cut-payloads', '' ) ), 'unreadable', null ),
 		);
 	}
 
@@ -2792,9 +2795,10 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 * the zip is refused before anything is written; the tar extractor keeps the path as it is.
 	 *
 	 * @dataProvider zip_moved_name_cases
-	 * @param string $name Member name the zip extractor would move.
+	 * @param string $name     Member name the zip extractor would move.
+	 * @param bool   $tar_kept Whether PharData extracts the same name in place (it refuses control characters).
 	 */
-	public function test_zip_refuses_names_the_extractor_would_move( $name ) {
+	public function test_zip_refuses_names_the_extractor_would_move( $name, $tar_kept = true ) {
 		$path = $this->dir . '/' . uniqid( 'moved-' ) . '.zip';
 		$zip  = new \ZipArchive();
 		$this->assertTrue( $zip->open( $path, \ZipArchive::CREATE ) );
@@ -2811,6 +2815,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
 		} finally {
 			$sandbox->tear_down();
+		}
+		if ( ! $tar_kept ) {
+			return;
 		}
 
 		$tar = $this->raw_tar( $this->raw_tar_member( 'index.php', 'outer' ) . $this->raw_tar_member( $name, 'inner' ) );
@@ -2835,6 +2842,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			'one dot'         => array( 'release./index.php' ),
 			'nested two dots' => array( 'a/b../c/index.php' ),
 			'three dots'      => array( '.../index.php' ),
+			'newline and dot' => array( "\n./index.php", false ),
 		);
 	}
 

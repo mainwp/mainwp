@@ -1582,6 +1582,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_setopt( $ch, CURLOPT_URL, $url );
             curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
             curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+            curl_setopt( $ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+            curl_setopt( $ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+            curl_setopt( $ch, CURLOPT_MAXREDIRS, 3 );
             curl_setopt( $ch, CURLOPT_POST, true );
 
             $postdata = static::get_post_data_authed( $website, $what, $params );
@@ -2400,6 +2403,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         curl_setopt( $ch, CURLOPT_URL, $url );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
         curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+        curl_setopt( $ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+        curl_setopt( $ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+        curl_setopt( $ch, CURLOPT_MAXREDIRS, 3 );
         curl_setopt( $ch, CURLOPT_POST, true );
         curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
         curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT_SECONDS );
@@ -3542,12 +3548,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Get contents of file.
      *
      * @param mixed $url File Location.
+     * @param array $resolve Checked host and address pins for Child icons.
      *
      * @return mixed false|$data
      *
      * @uses \MainWP\Dashboard\MainWP_System::$version
      */
-    public static function get_file_content( $url ) {
+    public static function get_file_content( $url, $resolve = array() ) {
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
         $ch    = curl_init();
 
@@ -3563,6 +3570,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
+        curl_setopt( $ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+        curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, false );
+        if ( ! empty( $resolve ) ) {
+            // A proxy would resolve the hostname independently of the checked address.
+            curl_setopt( $ch, CURLOPT_PROXY, '' );
+            curl_setopt( $ch, CURLOPT_RESOLVE, $resolve );
+        }
         curl_setopt( $ch, CURLOPT_HEADER, 0 );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
         curl_setopt( $ch, CURLOPT_URL, $url );

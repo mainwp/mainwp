@@ -25,6 +25,8 @@ function fixture_content( $size ) {
 }
 
 $path = parse_url( $_SERVER['REQUEST_URI'], PHP_URL_PATH );
+// Sync requests post to the Child's wp-admin/ path.
+$path = preg_replace( '#^/wp-admin/#', '/', $path );
 $size = isset( $_GET['size'] ) ? (int) $_GET['size'] : 4096;
 $body = fixture_content( $size );
 
@@ -35,6 +37,30 @@ if ( preg_match( '/bytes=(\d+)-/', $range_header, $m ) ) {
 }
 
 switch ( $path ) {
+    case '/sync-ftp':
+        header( 'Location: ftp://127.0.0.1:' . (int) $_GET['port'] . '/child-response', true, 302 );
+        break;
+
+    case '/sync-chain':
+        $hops = isset( $_GET['hops'] ) ? (int) $_GET['hops'] : 0;
+        if ( $hops > 0 ) {
+            header( 'Location: /sync-chain?hops=' . ( $hops - 1 ), true, 302 );
+            break;
+        }
+        // Falls through.
+    case '/sync-response':
+        echo '<mainwp>' . base64_encode( json_encode( array( 'child_url_fixture' => 'ok' ) ) ) . '</mainwp>';
+        break;
+
+    case '/sync-301':
+        header( 'Location: /sync-response', true, 301 );
+        break;
+
+    case '/child-icon.png':
+        header( 'Content-Type: image/png' );
+        echo fixture_content( 64 );
+        break;
+
     case '/redirect-other-host':
         header( 'Location: http://localhost:' . (int) $_SERVER['SERVER_PORT'] . '/redirect-target?marker=' . rawurlencode( $_GET['marker'] ?? '' ) );
         break;
@@ -43,6 +69,7 @@ switch ( $path ) {
         header( 'Location: /200?size=' . $size, true, 302 );
         break;
 
+    case '/redirect-target.png':
     case '/redirect-target':
         $marker = $_GET['marker'] ?? '';
         if ( preg_match( '/^mainwp-redirect-[a-f0-9]+$/D', $marker ) ) {

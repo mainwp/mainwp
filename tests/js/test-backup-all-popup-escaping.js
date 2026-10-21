@@ -2,6 +2,7 @@
 const assert = require( 'node:assert/strict' );
 const fs = require( 'node:fs' );
 const vm = require( 'node:vm' );
+const { document, loadSiteNameHelper } = require( './fixtures/site-name-dom' );
 const test = require( 'node:test' );
 
 const backups = fs.readFileSync( require.resolve( '../../assets/js/mainwp-backups.js' ), 'utf8' );
@@ -23,6 +24,7 @@ function harness( entry, siteName ) {
     const requests = [];
     const content = {};
     const context = {
+        document,
         ajaxurl: '/admin-ajax.php',
         MainWP: { I18n: { t: text => text } },
         __: text => text,
@@ -62,6 +64,7 @@ function harness( entry, siteName ) {
         requests.push( { data, callback } );
     };
     vm.createContext( context );
+    loadSiteNameHelper( vm, mainwp, context );
     for ( const name of [ 'getErrorMessage', 'mainwp_backup_error_severity', 'mainwp_backup_error_html' ] ) {
         vm.runInContext( sliceFunction( mainwp, 'globalThis.' + name + ' = ' ), context );
     }
@@ -101,7 +104,7 @@ function complete( h, outcome, error = 'fixture error' ) {
 }
 
 for ( const entry of [ 'updatesoverview', 'managesites' ] ) {
-    for ( const [ siteName, escaped ] of [ [ attackName, escapedName ], [ 'Site & Co', 'Site &amp; Co' ] ] ) {
+    for ( const [ siteName, escaped ] of [ [ attackName, escapedName ], [ 'Site & Co', 'Site &amp; Co' ], [ 'A &lt; B', 'A &lt; B' ] ] ) {
         for ( const outcome of [ 'success', 'creation error', 'download error' ] ) {
             test( entry + ': ' + outcome + ' escapes every prefix for ' + siteName, () => {
                 const h = harness( entry, siteName );

@@ -861,8 +861,8 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     /**
      * Method get_telem_sync_info.
      *
-     * @param  mixed $sync_done
-     * @return void
+     * @param mixed $sync_done Whether synchronization disconnected the Child.
+     * @return array Telemetry context.
      */
     public static function get_telem_sync_info( $sync_done ) {
 
@@ -973,46 +973,111 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 if ( ! empty( $error ) ) {
                     return array( 'error' => $error );
                 } elseif ( isset( $information['faviIconUrl'] ) && ! empty( $information['faviIconUrl'] ) ) {
-                    MainWP_Logger::instance()->debug( 'Downloading icon :: ' . esc_html( $information['faviIconUrl'] ) );
-                    $content = MainWP_Connect::get_file_content( $information['faviIconUrl'] );
-                    if ( ! empty( $content ) ) {
-
-                        MainWP_System_Utility::get_wp_file_system();
-
-                        /**
-                         * WordPress files system object.
-                         *
-                         * @global object
-                         */
-                        global $wp_filesystem;
-
-                        $dirs     = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
-                        $iconsDir = $dirs[0];
-                        $filename = basename( $information['faviIconUrl'] );
-                        $filename = strtok( $filename, '?' );
-                        if ( $filename ) {
-                            $filename = 'favi-' . $siteId . '-' . $filename;
-                            $size     = false;
-                            if ( MainWP_Utility::check_image_file_name( $filename ) ) {
-                                $size     = $wp_filesystem->put_contents( $iconsDir . $filename, $content ); // phpcs:ignore --
-                            }
-                            if ( $size ) {
-                                MainWP_Logger::instance()->debug( 'Icon size :: ' . $size );
-                                MainWP_DB::instance()->update_website_option( $website, 'favi_icon', $filename );
-                                return array( 'result' => 'success' );
-                            } else {
-                                return array( 'error' => 'Save icon file failed.' );
-                            }
-                        }
-                        return array( 'undefined_error' => true );
-                    } else {
-                        return array( 'error' => esc_html__( 'Download icon file failed', 'mainwp' ) );
-                    }
+                    return static::download_child_icon( $website, $information['faviIconUrl'] );
                 } else {
                     return array( 'undefined_error' => true );
                 }
             }
         }
         return array( 'result' => 'NOSITE' );
+    }
+
+    /**
+     * Keep intranet Child icons and pin other hosts to a checked public address.
+     *
+     * @param string $site_url Stored Child URL.
+     * @param string $icon_url Child-reported icon URL.
+     * @param array  $addresses IPv4 answers supplied by the resolver.
+     * @return array|false cURL resolve pins, or false when refused.
+     */
+    public static function child_icon_resolve( string $site_url, string $icon_url, array $addresses = array() ) {
+        $parts = wp_parse_url( $icon_url );
+        if ( ! is_array( $parts ) || empty( $parts['host'] ) || ! isset( $parts['scheme'] ) || ! in_array( strtolower( $parts['scheme'] ), array( 'http', 'https' ), true ) || isset( $parts['user'] ) || isset( $parts['pass'] ) ) {
+            return false;
+        }
+        $site_port = wp_parse_url( $site_url, PHP_URL_PORT );
+        if ( MainWP_Connect::download_hosts_match( $site_url, $icon_url ) && ( ! isset( $parts['port'] ) || $parts['port'] === $site_port ) ) {
+            return array();
+        }
+
+        $host       = trim( $parts['host'], '[]' );
+        $literal_ip = filter_var( $host, FILTER_VALIDATE_IP );
+        $addresses  = false !== $literal_ip ? array( $literal_ip ) : $addresses;
+        if ( empty( $addresses ) ) {
+            return false;
+        }
+        foreach ( $addresses as $address ) {
+            if ( false === filter_var( $address, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE ) ) {
+                return false;
+            }
+            // PHP's reserved ranges omit 100.64.0.0/10, which holds some cloud metadata endpoints (100.100.100.200).
+            $octets = explode( '.', $address );
+            if ( 4 === count( $octets ) && 100 === (int) $octets[0] && 64 <= (int) $octets[1] && 127 >= (int) $octets[1] ) {
+                return false;
+            }
+        }
+        // Literal addresses cannot change between validation and the request.
+        if ( false !== $literal_ip ) {
+            return array();
+        }
+        $port = $parts['port'] ?? ( 'https' === strtolower( $parts['scheme'] ) ? 443 : 80 );
+        return array( $parts['host'] . ':' . $port . ':' . reset( $addresses ) );
+    }
+
+    /**
+     * A compromised Child must not turn public icon storage into an internal read proxy.
+     *
+     * @param object $website Stored Child site.
+     * @param string $icon_url Child-reported icon URL.
+     * @return array Download or save result.
+     */
+    public static function download_child_icon( $website, $icon_url ) {
+        $resolve = static::child_icon_resolve( $website->url, $icon_url );
+        if ( false === $resolve ) {
+            $host      = wp_parse_url( $icon_url, PHP_URL_HOST );
+            $addresses = is_string( $host ) ? gethostbynamel( $host ) : false;
+            $resolve   = static::child_icon_resolve( $website->url, $icon_url, is_array( $addresses ) ? $addresses : array() );
+        }
+        if ( false === $resolve ) {
+            $error = 'Icon URL is not allowed.';
+            MainWP_Logger::instance()->debug( $error );
+            return array( 'error' => $error );
+        }
+
+        MainWP_Logger::instance()->debug( 'Downloading icon :: ' . esc_html( $icon_url ) );
+        $content = MainWP_Connect::get_file_content( $icon_url, $resolve );
+        if ( ! empty( $content ) ) {
+
+            MainWP_System_Utility::get_wp_file_system();
+
+            /**
+             * WordPress files system object.
+             *
+             * @global object
+             */
+            global $wp_filesystem;
+
+            $dirs     = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
+            $iconsDir = $dirs[0];
+            $filename = basename( $icon_url );
+            $filename = strtok( $filename, '?' );
+            if ( $filename ) {
+                $filename = 'favi-' . $website->id . '-' . $filename;
+                $size     = false;
+                if ( MainWP_Utility::check_image_file_name( $filename ) ) {
+                    $size = $wp_filesystem->put_contents( $iconsDir . $filename, $content );
+                }
+                if ( $size ) {
+                    MainWP_Logger::instance()->debug( 'Icon size :: ' . $size );
+                    MainWP_DB::instance()->update_website_option( $website, 'favi_icon', $filename );
+                    return array( 'result' => 'success' );
+                } else {
+                    return array( 'error' => 'Save icon file failed.' );
+                }
+            }
+            return array( 'undefined_error' => true );
+        } else {
+            return array( 'error' => esc_html__( 'Download icon file failed', 'mainwp' ) );
+        }
     }
 }

@@ -263,7 +263,7 @@ class MainWP_Security_Issues { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         <input type="hidden" id="securityIssueSite" value="<?php echo intval( $website->id ); ?>"/>
         <div id="wp_upgrades">
-            <div updated="-1" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( $website->name ); ?>" ></div>
+            <div updated="-1" site_id="<?php echo intval( $website->id ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $website->name ) ) ); ?>" ></div>
         </div>
         <?php
     }

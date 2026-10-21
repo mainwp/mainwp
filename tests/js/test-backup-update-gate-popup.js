@@ -2,8 +2,10 @@
 const assert = require( 'node:assert/strict' );
 const fs = require( 'node:fs' );
 const vm = require( 'node:vm' );
+const { document, loadSiteNameHelper } = require( './fixtures/site-name-dom' );
 const test = require( 'node:test' );
 
+const mainwp = fs.readFileSync( require.resolve( '../../assets/js/mainwp.js' ), 'utf8' );
 const managesites = fs.readFileSync( require.resolve( '../../assets/js/mainwp-managesites-update.js' ), 'utf8' );
 const plugins = fs.readFileSync( require.resolve( '../../assets/js/mainwp-plugins-themes.js' ), 'utf8' );
 const backups = fs.readFileSync( require.resolve( '../../assets/js/mainwp-backups.js' ), 'utf8' );
@@ -25,6 +27,7 @@ function harness() {
     let continued = 0;
     let reloaded = 0;
     const context = {
+        document,
         ajaxurl: '/admin-ajax.php',
         MainWP: { I18n: { t: text => text } },
         mainwpParams: { backup_before_upgrade: true },
@@ -93,6 +96,7 @@ function harness() {
     };
     context.jQuery.ajax = options => { ajax = options; };
     vm.createContext( context );
+    loadSiteNameHelper( vm, mainwp, context );
     vm.runInContext( sliceFunction( managesites, 'globalThis.mainwp_managesites_prepare_backup_popup = ' ), context );
     vm.runInContext( sliceFunction( managesites, 'let mainwp_managesites_checkBackups = ' ) + '\nglobalThis.manage = mainwp_managesites_checkBackups;', context );
     vm.runInContext( sliceFunction( plugins, 'let mainwp_manages_checkBackups = ' ) + '\nglobalThis.plugins = mainwp_manages_checkBackups;', context );

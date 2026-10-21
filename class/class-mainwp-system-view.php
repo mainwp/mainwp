@@ -1237,8 +1237,8 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     if ( is_array( $websites ) ) {
                         $count = count( $websites );
                         for ( $i = 0; $i < $count; $i++ ) {
-                            $site_name   = $website->name;
                             $website     = $websites[ $i ];
+                            $site_name   = $website->name;
                             $is_sync_err = ( '' !== $website->sync_errors ) ? true : false;
                             ?>
                             <div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">

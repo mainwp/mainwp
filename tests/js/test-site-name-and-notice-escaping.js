@@ -2,6 +2,7 @@
 const assert = require( 'node:assert/strict' );
 const fs = require( 'node:fs' );
 const vm = require( 'node:vm' );
+const { document, loadSiteNameHelper } = require( './fixtures/site-name-dom' );
 const test = require( 'node:test' );
 
 const managesites = fs.readFileSync( require.resolve( '../../assets/js/mainwp-managesites-update.js' ), 'utf8' );
@@ -27,6 +28,7 @@ function decodeEntities( value ) {
 function harness() {
     let output = '';
     const context = {
+        document,
         MainWP: { I18n: { t: text => text } },
         mainwp_get_primaryBackup_link: method => '/backup/' + method,
         mainwpPopup: () => ( { getContentEl: () => ( { html: value => { output = value; } } ) } ),
@@ -58,6 +60,7 @@ function harness() {
         }
     };
     vm.createContext( context );
+    loadSiteNameHelper( vm, mainwp, context );
     vm.runInContext( sliceFunction( managesites, 'globalThis.mainwp_managesites_prepare_backup_popup = ' ), context );
     for ( const name of [ 'getErrorMessage', 'getErrorMessageInfo' ] ) {
         vm.runInContext( sliceFunction( mainwp, 'globalThis.' + name + ' = ' ), context );
@@ -72,7 +75,8 @@ for ( const [ branch, result, native ] of [
 ] ) {
     for ( const [ name, escaped ] of [
         [ '<img src=x onerror=alert(1)>', '&lt;img src=x onerror=alert(1)&gt;' ],
-        [ 'Site & Co', 'Site &amp; Co' ]
+        [ 'Site & Co', 'Site &amp; Co' ],
+        [ 'A &lt; B', 'A &lt; B' ]
     ] ) {
         test( branch + ': popup renders the decoded site name as text: ' + name, () => {
             const h = harness();
@@ -83,7 +87,7 @@ for ( const [ branch, result, native ] of [
             const opening = native ? '<span class="managesites-backup-site" siteid="7">' : '<span>';
             assert.ok( html.includes( opening + escaped + '</span>' ), html );
             const content = html.slice( html.indexOf( opening ) + opening.length ).split( '</span>' )[ 0 ];
-            assert.equal( decodeEntities( content ), name );
+            assert.equal( decodeEntities( content ), decodeEntities( name ) );
         } );
     }
 }

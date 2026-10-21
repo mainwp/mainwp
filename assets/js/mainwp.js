@@ -1,6 +1,25 @@
 /* eslint-disable complexity */
 // current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
+globalThis.mainwp_site_name_html = function (raw) {
+    let name = String(raw ?? '');
+    if (name.includes('%')) {
+        try {
+            name = decodeURIComponent(name);
+        } catch {
+            // Legacy names can contain a literal percent sign.
+        }
+    }
+    const textarea = document.createElement('textarea');
+    textarea.innerHTML = name;
+    return textarea.value
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+};
+
 globalThis.mainwpVars = globalThis.mainwpVars || {};
 
 jQuery(function ($) {
@@ -1533,7 +1552,7 @@ let mainwp_tool_disconnect_sites_next_int = function (websiteId, data, errors) {
         success: function (pWebsiteId) {
             return function (response) {
                 if (response?.error) {
-                    dashboard_update_site_status(pWebsiteId, response.error + '<i class="exclamation red icon"></i>');
+                    dashboard_update_site_status(pWebsiteId, jQuery('<span>').text(response.error).html() + '<i class="exclamation red icon"></i>');
                 } else if (response?.result == 'success') {
                     dashboard_update_site_status(websiteId, '<i class="check green icon"></i>', true);
                 } else {
@@ -3433,6 +3452,7 @@ let mainwp_changes_history_box_init = function (type, title, info) {
 
 let mainwp_item_changes_load = function (btnObj, load_more_date = '') {
 
+    const escapeText = value => jQuery('<span>').text(value ?? '').html().replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     let md = jQuery('#mainwp-plugin-theme-history-changes-modal');
     let parentContent = false;
     if (btnObj) {
@@ -3481,13 +3501,13 @@ let mainwp_item_changes_load = function (btnObj, load_more_date = '') {
                 let content = '';
                 Object.entries(response.list).forEach(([indexdt, records]) => {
                     const dt = records[0].date;
-                    content += `<div class="ui accordion" data-date="${indexdt}">
-                        <div class="title" format-date="${dt}">
+                    content += `<div class="ui accordion" data-date="${escapeText(indexdt)}">
+                        <div class="title" format-date="${escapeText(dt)}">
                             <div class="ui container">
                                 <div class="ui grid">
                                     <div class="ten wide column middle aligned">
                                             <i class="dropdown icon"></i>
-                                            ${dt}
+                                            ${escapeText(dt)}
                                     </div>
                                     <div class="six wide column right aligned">
                                         <button type="button" class="ui circular blue mini button mainwp-day-history-switch-view">` + MainWP.I18n.t('Day History') + `</button> <button class="ui basic mini button actions-count1">${records.length} ` + MainWP.I18n.t('Actions') + `</button>
@@ -3497,18 +3517,18 @@ let mainwp_item_changes_load = function (btnObj, load_more_date = '') {
                         </div>
                         <div class="content ui list">`;
                     records.forEach(record => {
-                        content += `<div class="item" log-id="${record.details.log_id}">
+                        content += `<div class="item" log-id="${escapeText(record.details.log_id)}">
                             <div class="ui grid">
                                 <div class="eight wide column middle aligned">
                                     <i class="` + get_icon_history_event(record.details.action) + ` icon"></i>
-                                    <span class="ui text ` + get_color_changes_event(record.details.action) + `">${record.details.event}</span> ` + MainWP.I18n.t('by') + ` <strong>${record.details.author_name}</strong> ` + MainWP.I18n.t('from') + `
-                                        <strong>${record.details.source}</strong>
+                                    <span class="ui text ` + get_color_changes_event(record.details.action) + `">${escapeText(record.details.event)}</span> ` + MainWP.I18n.t('by') + ` <strong>${escapeText(record.details.author_name)}</strong> ` + MainWP.I18n.t('from') + `
+                                        <strong>${escapeText(record.details.source)}</strong>
                                 </div>
                                 <div class="six wide column middle aligned">
-                                ` + (record.details?.old_version && record.details?.version ? record.details.old_version + '&rarr;' + record.details.version : '') + `
+                                ` + (record.details?.old_version && record.details?.version ? escapeText(record.details.old_version) + '&rarr;' + escapeText(record.details.version) : '') + `
                                 </div>
                                 <div class="two wide column right aligned">
-                                    ${record.details.at_hour}
+                                    ${escapeText(record.details.at_hour)}
                                 </div>
                             </div>
                         </div>`;

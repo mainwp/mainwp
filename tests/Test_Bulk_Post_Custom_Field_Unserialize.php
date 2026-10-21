@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Page;
 use MainWP\Dashboard\MainWP_Post_Page_Handler;
+use MainWP\Dashboard\MainWP_System_Utility;
 
 // phpcs:disable WordPress.Files.FileName.InvalidClassFileName
 
@@ -150,6 +151,53 @@ class Test_Bulk_Post_Custom_Field_Unserialize extends \WP_UnitTestCase {
 
 		$this->assertSame( 0, Bulk_Post_Wakeup_Recorder::$wakeups );
 		$this->assertSame( array( 'layout' => 'wide' ), $this->sent_custom['settings'][0] );
+	}
+
+	/**
+	 * Every input shape the selection decoder sees, and what it must return.
+	 */
+	public function test_selection_decoder_matrix(): void {
+		$ids    = array( '3', '5' );
+		$object = serialize( new Bulk_Post_Wakeup_Recorder() );
+		$cases  = array(
+			'empty string'           => array( '', '' ),
+			'array'                  => array( $ids, $ids ),
+			'serialized array'       => array( serialize( $ids ), $ids ),
+			'base64 serialized'      => array( base64_encode( serialize( $ids ) ), $ids ),
+			'serialized scalar'      => array( serialize( 'text' ), 'text' ),
+			'base64 plain text'      => array( base64_encode( 'text' ), 'text' ),
+			'nested array'           => array( serialize( array( 'a' => $ids ) ), array( 'a' => $ids ) ),
+			'serialized object'      => array( $object, null ),
+			'base64 object'          => array( base64_encode( $object ), null ),
+			'object inside an array' => array( serialize( array( new Bulk_Post_Wakeup_Recorder() ) ), null ),
+		);
+
+		foreach ( $cases as $label => $case ) {
+			$decoded = MainWP_System_Utility::maybe_unserialyze( $case[0] );
+			if ( null !== $case[1] ) {
+				$this->assertSame( $case[1], $decoded, $label );
+			} else {
+				$this->assertStringContainsString( '__PHP_Incomplete_Class_Name', wp_json_encode( $decoded ), $label );
+			}
+		}
+		$this->assertSame( 0, Bulk_Post_Wakeup_Recorder::$wakeups );
+	}
+
+	/**
+	 * A Child post imported for editing can set _selected_groups on the local draft; posting it must not wake an object.
+	 */
+	public function test_child_supplied_selected_groups_is_not_instantiated(): void {
+		$object = serialize( new Bulk_Post_Wakeup_Recorder() );
+		foreach ( array( $object, base64_encode( $object ) ) as $stored ) {
+			$post_id = $this->bulk_post_for_one_site();
+			// create_post() stores what the Child sent with update_post_meta(); slashed so the namespace backslashes survive wp_unslash().
+			update_post_meta( $post_id, '_selected_groups', wp_slash( $stored ) );
+
+			$this->post_to_child( $post_id );
+			$this->post_to_child( $post_id, true );
+		}
+
+		$this->assertSame( 0, Bulk_Post_Wakeup_Recorder::$wakeups );
 	}
 
 	/**

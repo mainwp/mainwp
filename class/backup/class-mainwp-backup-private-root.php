@@ -340,26 +340,35 @@ class MainWP_Backup_Private_Root {
      * @return string
      */
     private static function exposure_verdict( string $root, bool $created ): string {
+        // realpath() keeps backslashes on Windows, while every mapping base is normalized.
+        $root     = trailingslashit( wp_normalize_path( $root ) );
         $site_url = site_url();
         $key      = hash( 'sha256', untrailingslashit( $root ) . "\n" . $site_url );
         if ( ! $created && isset( self::$probe_verdicts[ $key ] ) ) {
             return self::$probe_verdicts[ $key ];
         }
         $cached = get_option( 'mainwp_backup_private_root_probe' );
-        if ( ! $created && is_array( $cached ) && ( $cached['key'] ?? '' ) === $key
-            && time() < (int) ( $cached['expires'] ?? 0 )
+        $cached = is_array( $cached ) && ( $cached['key'] ?? '' ) === $key ? $cached : array();
+        if ( ! $created && time() < (int) ( $cached['expires'] ?? 0 )
             && in_array( $cached['verdict'] ?? '', array( 'not_served', 'unknown' ), true ) ) {
             self::$probe_verdicts[ $key ] = $cached['verdict'];
             return $cached['verdict'];
         }
 
-        $url = self::probe_url( $root, $site_url );
-        if ( null === $url && is_array( $cached ) && ( $cached['key'] ?? '' ) === $key && ! empty( $cached['url'] ) && is_string( $cached['url'] ) ) {
-            $url = $cached['url'];
+        $document_root = '';
+        if ( ! empty( $_SERVER['DOCUMENT_ROOT'] ) && is_string( $_SERVER['DOCUMENT_ROOT'] ) ) {
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- This only builds a candidate URL; exposure still requires the random token back.
+            $document_root = wp_unslash( $_SERVER['DOCUMENT_ROOT'] );
+        }
+        $urls = self::probe_urls( $root, $site_url, ABSPATH, $document_root );
+        if ( isset( $cached['urls'] ) && is_array( $cached['urls'] ) ) {
+            // Cron and CLI requests have no document root, so they reuse the URLs a web request mapped.
+            $urls = array_slice( array_values( array_unique( array_merge( $urls, array_filter( $cached['urls'], 'is_string' ) ) ) ), 0, 8 );
         }
         $reason                       = '';
-        $verdict                      = null === $url ? 'unmapped' : self::probe_exposure( $root, $url, $reason );
+        $verdict                      = array() === $urls ? 'unmapped' : self::probe_exposure( $root, $urls, $reason );
         self::$probe_verdicts[ $key ] = $verdict;
+        // Mapping is free to recompute, and a request without a document root must not hide one that has it.
         if ( 'unmapped' !== $verdict ) {
             update_option(
                 'mainwp_backup_private_root_probe',
@@ -367,7 +376,7 @@ class MainWP_Backup_Private_Root {
                     'key'     => $key,
                     'verdict' => $verdict,
                     'expires' => 'served' === $verdict ? 0 : time() + ( 'unknown' === $verdict ? DAY_IN_SECONDS : 7 * DAY_IN_SECONDS ),
-                    'url'     => $url,
+                    'urls'    => $urls,
                 ),
                 false
             );
@@ -388,51 +397,47 @@ class MainWP_Backup_Private_Root {
     }
 
     /**
-     * Map storage through the URL ancestry of WordPress.
+     * Every URL the root could be served at on this host.
      *
-     * @param string $root Canonical root.
-     * @param string $site_url WordPress URL.
-     * @return string|null Null when the root is outside this site's URL space.
+     * Symlinks and aliases separate filesystem ancestry from URL ancestry, so one
+     * base can map the root to a URL nothing serves while another maps it to the
+     * URL that does. Each distinct mapping is probed.
+     *
+     * @param string $root Normalized root with a trailing slash.
+     * @param string $site_url WordPress URL, which serves ABSPATH.
+     * @param string $abspath WordPress directory as configured.
+     * @param string $document_root Web server document root, served at the host root; empty outside web requests.
+     * @return string[] Root URLs with a trailing slash; empty when no base maps the root.
      */
-    private static function probe_url( string $root, string $site_url ): ?string {
+    private static function probe_urls( string $root, string $site_url, string $abspath, string $document_root ): array {
         $parts = wp_parse_url( $site_url );
         if ( ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
-            return null;
+            return array();
         }
-        $segments   = array_values( array_filter( explode( '/', trim( $parts['path'] ?? '', '/' ) ), 'strlen' ) );
-        $canonical  = self::canonical_path( ABSPATH );
-        $configured = untrailingslashit( wp_normalize_path( ABSPATH ) );
-        $bases      = array( array( $canonical, $segments ) );
-        if ( $configured !== $canonical ) {
-            $bases[] = array( $configured, $segments );
-        }
-        if ( ! empty( $_SERVER['DOCUMENT_ROOT'] ) && is_string( $_SERVER['DOCUMENT_ROOT'] ) ) {
-            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- This only builds a candidate URL; exposure still requires the random token back.
-            $document_root = untrailingslashit( wp_normalize_path( wp_unslash( $_SERVER['DOCUMENT_ROOT'] ) ) );
-            if ( path_is_absolute( $document_root ) ) {
-                $canonical = self::canonical_path( $document_root );
-                $bases[]   = array( $canonical, array() );
-                if ( $document_root !== $canonical ) {
-                    $bases[] = array( $document_root, array() );
-                }
-            }
-        }
-        foreach ( $bases as list( $base, $base_segments ) ) {
-            if ( null === $base ) {
+        $origin   = $parts['scheme'] . '://' . $parts['host'] . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' );
+        $segments = array_values( array_filter( explode( '/', trim( $parts['path'] ?? '', '/' ) ), 'strlen' ) );
+        $bases    = array();
+        foreach ( array( array( $abspath, $segments ), array( $document_root, array() ) ) as list( $base, $base_segments ) ) {
+            if ( '' === $base || ! path_is_absolute( $base ) ) {
                 continue;
             }
-            $mapped = self::probe_url_segments( $root, $base, $base_segments );
+            $bases[] = array( self::canonical_path( $base ), $base_segments );
+            $bases[] = array( untrailingslashit( wp_normalize_path( $base ) ), $base_segments );
+        }
+        $urls = array();
+        foreach ( $bases as list( $base, $base_segments ) ) {
+            $mapped = null === $base ? null : self::probe_url_segments( $root, $base, $base_segments );
             if ( null !== $mapped ) {
-                return $parts['scheme'] . '://' . $parts['host'] . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' ) . '/' . implode( '/', $mapped ) . '/';
+                $urls[] = $origin . '/' . ( array() === $mapped ? '' : implode( '/', $mapped ) . '/' );
             }
         }
-        return null;
+        return array_values( array_unique( $urls ) );
     }
 
     /**
-     * Filesystem aliases can retain URL ancestry that the resolved WordPress path loses.
+     * Map the root through one base served at known URL segments.
      *
-     * @param string $root Canonical root.
+     * @param string $root Normalized root.
      * @param string $ancestor Filesystem base served at the URL segments.
      * @param array  $segments URL path segments for the base.
      * @return array|null Null when the root is outside the base's URL ancestry.
@@ -462,12 +467,12 @@ class MainWP_Backup_Private_Root {
     /**
      * Confirm exposure with harmless bytes that follow the archive serving rules.
      *
-     * @param string $root Canonical root.
-     * @param string $url Root URL.
-     * @param string $reason Short diagnostic code for an unknown result.
+     * @param string   $root Normalized root.
+     * @param string[] $urls Candidate root URLs on one origin.
+     * @param string   $reason Short diagnostic code for an unknown result.
      * @return string
      */
-    private static function probe_exposure( string $root, string $url, string &$reason ): string {
+    private static function probe_exposure( string $root, array $urls, string &$reason ): string {
         // phpcs:disable WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors.Discouraged -- Local probes must fail without emitting filesystem warnings.
         $name   = 'mainwp-probe-' . wp_generate_password( 24, false ) . '.zip';
         $path   = $root . $name;
@@ -484,26 +489,34 @@ class MainWP_Backup_Private_Root {
             if ( ! $written ) {
                 return 'unknown';
             }
-            $url     .= $name;
-            $response = wp_remote_get(
-                $url,
-                array(
-                    'timeout'             => 5,
-                    'redirection'         => 3,
-                    'sslverify'           => apply_filters( 'https_local_ssl_verify', false, $url ),
-                    'limit_response_size' => 1024,
-                )
-            );
-            if ( is_wp_error( $response ) ) {
-                $reason = substr( sanitize_key( (string) $response->get_error_code() ), 0, 64 );
-                return 'unknown';
+            $reason  = '';
+            $verdict = 'not_served';
+            foreach ( $urls as $url ) {
+                $url     .= $name;
+                $response = wp_remote_get(
+                    $url,
+                    array(
+                        'timeout'             => 5,
+                        'redirection'         => 3,
+                        'sslverify'           => apply_filters( 'https_local_ssl_verify', false, $url ),
+                        'limit_response_size' => 1024,
+                    )
+                );
+                if ( is_wp_error( $response ) ) {
+                    // Every candidate shares one origin, so a transport failure would repeat for the rest.
+                    $reason = substr( sanitize_key( (string) $response->get_error_code() ), 0, 64 );
+                    return 'unknown';
+                }
+                $status = (int) wp_remote_retrieve_response_code( $response );
+                if ( 200 === $status && wp_remote_retrieve_body( $response ) === $token ) {
+                    return 'served';
+                }
+                if ( $status >= 500 && $status < 600 ) {
+                    $reason  = 'http_' . $status;
+                    $verdict = 'unknown';
+                }
             }
-            $status = (int) wp_remote_retrieve_response_code( $response );
-            if ( $status >= 500 && $status < 600 ) {
-                $reason = 'http_' . $status;
-                return 'unknown';
-            }
-            return 200 === $status && wp_remote_retrieve_body( $response ) === $token ? 'served' : 'not_served';
+            return $verdict;
         } finally {
             if ( false !== $handle ) {
                 @unlink( $path );

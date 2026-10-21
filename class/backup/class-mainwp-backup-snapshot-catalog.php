@@ -107,9 +107,14 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             while ( isset( $by_id[ $parent_id ] ) && ! isset( $seen[ $parent_id ] ) ) {
                 $seen[ $parent_id ] = true;
                 $ancestor           = $by_id[ $parent_id ];
-                if ( $ancestor['damaged'] && 'unavailable' === $ancestor['source'] ) {
-                    $entries[ $index ]['restorable']     = false;
-                    $entries[ $index ]['restore_reason'] = wp_specialchars_decode( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_DAMAGED ), ENT_QUOTES );
+                if ( $ancestor['damaged'] ) {
+                    // A damaged ancestor archive may be superseded or still have a cloud copy,
+                    // so only full admission knows whether this point still restores.
+                    $admission = $this->resolve_restorable_chain( (int) $entry['snapshot']->id, $site_id );
+                    if ( empty( $admission['ok'] ) ) {
+                        $entries[ $index ]['restorable']     = false;
+                        $entries[ $index ]['restore_reason'] = (string) $admission['error'];
+                    }
                     break;
                 }
                 $parent_id = (int) $ancestor['snapshot']->parent_id;

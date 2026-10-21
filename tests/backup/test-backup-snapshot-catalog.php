@@ -412,6 +412,63 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	/** A later dump supersedes a damaged ancestor dump, so the list follows admission. */
+	public function test_superseded_damaged_dump_keeps_descendant_restorable(): void {
+		$base    = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'base.zip',
+					'role' => 'full',
+				),
+			)
+		);
+		$middle  = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'middle-part.zip',
+					'role' => 'part',
+				),
+				array(
+					'file' => 'middle-db.zip',
+					'role' => 'db',
+				),
+			),
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		$leaf    = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'leaf-part.zip',
+					'role' => 'part',
+				),
+				array(
+					'file' => 'leaf-db.zip',
+					'role' => 'db',
+				),
+			),
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $middle,
+			)
+		);
+		$catalog = MainWP_Backup_Snapshot_Catalog::instance();
+		MainWP_Backup_Snapshots::instance()->mark_artifact_damaged( $middle, 'middle-db.zip', 'mainwp_restore_local_archive_hash_mismatch' );
+		$entries = array();
+		foreach ( $catalog->list_snapshots_for_site( 9901 ) as $entry ) {
+			$entries[ (int) $entry['snapshot']->id ] = $entry;
+		}
+		$this->assertTrue( $entries[ $middle ]['damaged'] );
+		$this->assertFalse( $entries[ $middle ]['restorable'] );
+		$resolved = $catalog->resolve_restorable_chain( $leaf );
+		$this->assertTrue( $resolved['ok'] );
+		$this->assertNotContains( 'middle-db.zip', array_column( $resolved['plan'], 'source_file' ) );
+		$this->assertTrue( $entries[ $leaf ]['restorable'] );
+		$this->assertSame( '', $entries[ $leaf ]['restore_reason'] );
+	}
+
 	/** Removal must not retain the damage label while preserving archive metadata. */
 	public function test_pruned_damaged_snapshot_keeps_removal_reason(): void {
 		$id    = $this->make_snapshot(

@@ -1570,7 +1570,9 @@ class MainWP_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 $new_meta_values = array();
                                 foreach ( $meta_values as $key_value => $meta_value ) {
                                     if ( is_serialized( $meta_value ) ) {
-                                        $meta_value = unserialize( $meta_value ); // phpcs:ignore -- internal value safe.
+                                        // Any plugin can write an object to this page's meta; waking it here would run its class code in the admin's request.
+                                        // nosemgrep: AIK_unserialize-use -- allowed_classes false: objects come back incomplete and no class code runs.
+                                        $meta_value = unserialize( $meta_value, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- arrays and scalars only; allowed_classes false blocks object instantiation.
                                     }
                                     $new_meta_values[ $key_value ] = $meta_value;
                                 }

@@ -183,10 +183,45 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 7 ) );
 			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 8 ) );
 			$this->assertSame( 1, $requests, 'A request reuses its served verdict.' );
-			$this->assertFalse( get_option( 'mainwp_backup_private_root_probe' ) );
+			$cache = get_option( 'mainwp_backup_private_root_probe' );
+			$this->assertSame( 'served', $cache['verdict'] );
+			$this->assertSame( 0, $cache['expires'] );
 			MainWP_Backup_Private_Root::reset();
 			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
 			$this->assertSame( 2, $requests );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+		}
+	}
+
+	/**
+	 * Recreating an exposed root must invalidate the previous allow across requests.
+	 */
+	public function test_recreated_served_root_replaces_cached_allow(): void {
+		$this->map_probe_root();
+		mkdir( $this->private_root, 0700 );
+		$requests = 0;
+		$http     = static function ( $pre, $args, $url ) use ( &$requests ) {
+			++$requests;
+			return array(
+				'response' => array( 'code' => 1 === $requests ? 404 : 200 ),
+				'body'     => file_get_contents( rawurldecode( wp_parse_url( $url, PHP_URL_PATH ) ) ),
+			);
+		};
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		try {
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertSame( 'not_served', get_option( 'mainwp_backup_private_root_probe' )['verdict'] );
+			$this->remove_private_fixture( $this->private_root );
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 8 ) );
+			$this->assertSame( 2, $requests );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 9 ) );
+			$this->assertSame( 3, $requests );
+			$cache = get_option( 'mainwp_backup_private_root_probe' );
+			$this->assertSame( 'served', $cache['verdict'] );
+			$this->assertSame( 0, $cache['expires'] );
+			$this->assertSame( 'https://example.org' . $this->private_root . '/', $cache['url'] );
 		} finally {
 			remove_filter( 'pre_http_request', $http );
 		}
@@ -248,6 +283,10 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	 */
 	public function test_read_only_and_unmapped_root_make_no_http_requests(): void {
 		$this->map_probe_root();
+		$document_root = $_SERVER['DOCUMENT_ROOT'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Fixture cleanup must preserve the original server value exactly.
+
+		$_SERVER['DOCUMENT_ROOT'] = '';
+
 		$requests = 0;
 		$http     = static function () use ( &$requests ) {
 			++$requests;
@@ -266,12 +305,100 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 			add_filter( 'site_url', static fn() => 'https://example.org', 20 );
 			MainWP_Backup_Private_Root::reset();
 			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
-			$cache = get_option( 'mainwp_backup_private_root_probe' );
-			$this->assertSame( 'unmapped', $cache['verdict'] );
-			$this->assertEqualsWithDelta( time() + 7 * DAY_IN_SECONDS, $cache['expires'], 5 );
+			$this->assertFalse( get_option( 'mainwp_backup_private_root_probe' ) );
 			$this->assertSame( 0, $requests );
 		} finally {
 			remove_filter( 'pre_http_request', $http );
+			if ( null === $document_root ) {
+				unset( $_SERVER['DOCUMENT_ROOT'] );
+			} else {
+				$_SERVER['DOCUMENT_ROOT'] = $document_root;
+			}
+		}
+	}
+
+	/**
+	 * A web request's docroot must not be shadowed by an earlier unmapped result.
+	 */
+	public function test_document_root_maps_served_storage(): void {
+		$document_root = $_SERVER['DOCUMENT_ROOT'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Fixture cleanup must preserve the original server value exactly.
+
+		$root                     = $this->private_root . '/backups';
+		$_SERVER['DOCUMENT_ROOT'] = $this->private_root;
+		add_filter( 'site_url', static fn() => 'https://example.org' );
+		add_filter( 'mainwp_backup_private_root', static fn() => $root, 20 );
+		mkdir( $root, 0700, true );
+		update_option(
+			'mainwp_backup_private_root_probe',
+			array(
+				'key'     => hash( 'sha256', $root . "\nhttps://example.org" ),
+				'verdict' => 'unmapped',
+				'expires' => time() + 7 * DAY_IN_SECONDS,
+			),
+			false
+		);
+		$requests = array();
+		$http     = function ( $pre, $args, $url ) use ( &$requests ) {
+			$requests[] = $url;
+			return array(
+				'response' => array( 'code' => 200 ),
+				'body'     => file_get_contents( $this->private_root . rawurldecode( wp_parse_url( $url, PHP_URL_PATH ) ) ),
+			);
+		};
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		try {
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertCount( 1, $requests );
+			$this->assertStringStartsWith( 'https://example.org/backups/mainwp-probe-', $requests[0] );
+			$this->assertSame( 'https://example.org/backups/', get_option( 'mainwp_backup_private_root_probe' )['url'] );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+			if ( null === $document_root ) {
+				unset( $_SERVER['DOCUMENT_ROOT'] );
+			} else {
+				$_SERVER['DOCUMENT_ROOT'] = $document_root;
+			}
+		}
+	}
+
+	/**
+	 * Cron still needs the URL established by a web request after its verdict expires.
+	 */
+	public function test_cached_probe_url_is_used_when_request_cannot_map(): void {
+		$document_root = $_SERVER['DOCUMENT_ROOT'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Fixture cleanup must preserve the original server value exactly.
+		unset( $_SERVER['DOCUMENT_ROOT'] );
+		add_filter( 'site_url', static fn() => 'https://example.org' );
+		mkdir( $this->private_root, 0700 );
+		update_option(
+			'mainwp_backup_private_root_probe',
+			array(
+				'key'     => hash( 'sha256', $this->private_root . "\nhttps://example.org" ),
+				'verdict' => 'not_served',
+				'expires' => time() - 1,
+				'url'     => 'https://example.org/backups/',
+			),
+			false
+		);
+		$requests = array();
+		$http     = function ( $pre, $args, $url ) use ( &$requests ) {
+			$requests[] = $url;
+			return array(
+				'response' => array( 'code' => 200 ),
+				'body'     => file_get_contents( $this->private_root . '/' . basename( $url ) ),
+			);
+		};
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		try {
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertCount( 1, $requests );
+			$this->assertStringStartsWith( 'https://example.org/backups/mainwp-probe-', $requests[0] );
+			$this->assertSame( 'served', get_option( 'mainwp_backup_private_root_probe' )['verdict'] );
+			$this->assertSame( 'https://example.org/backups/', get_option( 'mainwp_backup_private_root_probe' )['url'] );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+			if ( null !== $document_root ) {
+				$_SERVER['DOCUMENT_ROOT'] = $document_root;
+			}
 		}
 	}
 
@@ -282,17 +409,43 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		$root = $this->private_root . '/backups';
 		$wp   = $this->private_root . '/wordpress';
 		mkdir( $wp, 0700, true );
-		// Constants need their own process so the fixture cannot change the harness's WordPress root.
+		$this->assert_served_constant_root( $wp, $root, 'https://example.org/wordpress' );
+	}
+
+	/**
+	 * A symlink must not hide storage served beside the configured WordPress directory.
+	 */
+	public function test_served_root_beside_symlinked_wordpress_is_refused(): void {
+		$root = $this->private_root . '/docroot/backups';
+		$wp   = $this->private_root . '/docroot/wp';
+		$real = $this->private_root . '/real/wp';
+		mkdir( dirname( $wp ), 0700, true );
+		mkdir( $real, 0700, true );
+		$this->assertTrue( symlink( $real, $wp ) );
+		$this->assert_served_constant_root( $wp, $root, 'https://example.org/wp' );
+	}
+
+	/**
+	 * Constants need their own process so fixtures cannot change the WordPress root.
+	 *
+	 * @param string $wp Configured WordPress directory.
+	 * @param string $root Configured private root.
+	 * @param string $site_url WordPress URL.
+	 */
+	private function assert_served_constant_root( string $wp, string $root, string $site_url ): void {
 		// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_var_export -- PHP literals preserve fixture paths in the isolated process.
 		$script = 'define("ABSPATH", ' . var_export( $wp . '/', true ) . '); define("WP_CONTENT_DIR", ABSPATH . "wp-content");'
 			. 'define("MAINWP_BACKUP_PRIVATE_DIR", ' . var_export( $root, true ) . ');'
+			. 'define("DAY_IN_SECONDS", 86400);'
 			. 'function wp_normalize_path($p) { return $p; } function untrailingslashit($p) { return rtrim($p, "/"); }'
 			. 'function trailingslashit($p) { return rtrim($p, "/") . "/"; } function path_is_absolute($p) { return $p[0] === "/"; }'
 			. 'function apply_filters($tag, $value) { return $value; } function __($value, $domain) { return $value; }'
 			. 'function wp_mkdir_p($p) { return is_dir($p) || mkdir($p, 0700, true); }'
 			. 'function wp_generate_password($length, $special) { return substr(bin2hex(random_bytes($length)), 0, $length); }'
-			. 'function site_url() { return "https://example.org/wordpress"; } function wp_parse_url($url, $component = -1) { return parse_url($url, $component); }'
+			. 'function site_url() { return ' . var_export( $site_url, true ) . '; } function wp_parse_url($url, $component = -1) { return parse_url($url, $component); }'
 			. 'function get_option($key, $default = false) { return $default; }'
+			. 'function update_option($key, $value, $autoload = null) { return true; }'
+			. '$_SERVER["DOCUMENT_ROOT"] = "";'
 			. 'function is_wp_error($v) { return $v instanceof WP_Error; }'
 			. 'class WP_Error { public $code; public $message; function __construct($c, $m) { $this->code = $c; $this->message = $m; } }'
 			. '$requests = []; function wp_remote_get($url, $args) { global $requests; $requests[] = $url; return ["response" => ["code" => 200], "body" => file_get_contents(MAINWP_BACKUP_PRIVATE_DIR . "/" . basename($url))]; }'

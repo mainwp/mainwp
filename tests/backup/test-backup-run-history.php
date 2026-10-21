@@ -352,6 +352,8 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $this->rows()[0]['error_code'] );
 		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site );
 		$this->assertNotNull( $progress );
+		$this->assertSame( 'failed', $progress->child_phase );
+		$this->assertFalse( MainWP_DB_Backup::instance()->backup_full_task_running( $site ) );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $progress->fetchResult['error_code'] );
 		$this->assertStringContainsString( 'could not create directory', $progress->last_error );
 		$this->assertNotSame( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ), $progress->last_error );
@@ -360,6 +362,18 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $details['sites'][0]['error']['code'] );
 		$this->assertStringContainsString( 'could not create directory', $details['sites'][0]['error']['source_text'] );
 		$this->assertSame( array(), $this->calls, 'Storage refusal precedes all Child requests.' );
+	}
+
+	/** Legacy downloads have no child task id but must still block competing updates. */
+	public function test_legacy_full_progress_is_running_until_failed(): void {
+		$site     = $this->site();
+		$task     = $this->task( array( $site ) );
+		$db       = MainWP_DB_Backup::instance();
+		$progress = $db->add_backup_task_progress( $task->id, $site, array() );
+		$this->assertEmpty( $progress->child_backup_task_id );
+		$this->assertTrue( $db->backup_full_task_running( $site ) );
+		$db->update_backup_task_progress( $task->id, $site, array( 'child_phase' => 'failed' ) );
+		$this->assertFalse( $db->backup_full_task_running( $site ) );
 	}
 
 	/**

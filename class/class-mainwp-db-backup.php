@@ -262,6 +262,9 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
         $progresses = $this->wpdb->get_results( $this->wpdb->prepare( 'SELECT * FROM ' . esc_sql( $this->table_name( 'wp_backup_progress' ) ) . ' WHERE wp_id = %d AND dtsFetched > %d ', $wp_id, time() - ( 30 * 60 ) ) );
         if ( is_array( $progresses ) ) {
             foreach ( $progresses as $progress ) {
+                if ( MainWP_Backup_Task_Phase::FAILED === ( $progress->child_phase ?? '' ) ) {
+                    continue;
+                }
                 if ( empty( $progress->downloadedDBComplete ) && empty( $progress->downloadedFULLComplete ) ) {
                     $task = $this->get_backup_task_by_id( $progress->task_id );
                     if ( $task && ( 'full' === $task->type ) && ! $task->paused ) {

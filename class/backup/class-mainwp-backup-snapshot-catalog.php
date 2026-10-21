@@ -63,7 +63,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         $entries          = array();
         foreach ( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) as $snapshot ) {
             $source         = $this->snapshot_source( $snapshot );
-            $damaged        = MainWP_Backup_Snapshots::snapshot_has_damage( $snapshot );
+            $damaged        = 'complete' === $snapshot->status && MainWP_Backup_Snapshots::snapshot_has_damage( $snapshot );
             $removal_reason = 'pruned' === $snapshot->status && isset( $removal_tooltips[ $snapshot->removal_reason ?? '' ] )
                 ? (string) $snapshot->removal_reason : MainWP_Backup_Snapshots::REMOVAL_REASON_UNKNOWN;
 
@@ -93,6 +93,27 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
                 'restore_reason' => $reason,
                 'removal_reason' => $removal_reason,
             );
+        }
+        $by_id = array();
+        foreach ( $entries as $entry ) {
+            $by_id[ (int) $entry['snapshot']->id ] = $entry;
+        }
+        foreach ( $entries as $index => $entry ) {
+            if ( 'incremental' !== $entry['snapshot']->type || '' !== $entry['restore_reason'] ) {
+                continue;
+            }
+            $parent_id = (int) $entry['snapshot']->parent_id;
+            $seen      = array( (int) $entry['snapshot']->id => true );
+            while ( isset( $by_id[ $parent_id ] ) && ! isset( $seen[ $parent_id ] ) ) {
+                $seen[ $parent_id ] = true;
+                $ancestor           = $by_id[ $parent_id ];
+                if ( $ancestor['damaged'] && 'unavailable' === $ancestor['source'] ) {
+                    $entries[ $index ]['restorable']     = false;
+                    $entries[ $index ]['restore_reason'] = wp_specialchars_decode( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_DAMAGED ), ENT_QUOTES );
+                    break;
+                }
+                $parent_id = (int) $ancestor['snapshot']->parent_id;
+            }
         }
         return $entries;
     }

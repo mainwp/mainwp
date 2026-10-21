@@ -353,7 +353,7 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 
 	/** Every descendant still needs the damaged full base's file archive. */
 	public function test_damaged_base_refuses_child() {
-		$base  = $this->make_snapshot(
+		$base    = $this->make_snapshot(
 			array(
 				array(
 					'file' => 'base.zip',
@@ -361,7 +361,7 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 				),
 			)
 		);
-		$child = $this->make_snapshot(
+		$child   = $this->make_snapshot(
 			array(
 				array(
 					'file' => 'db.zip',
@@ -373,10 +373,67 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 				'parent_id' => $base,
 			)
 		);
+		$leaf    = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'leaf-db.zip',
+					'role' => 'db',
+				),
+			),
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $child,
+			)
+		);
+		$catalog = MainWP_Backup_Snapshot_Catalog::instance();
+		$entries = $catalog->list_snapshots_for_site( 9901 );
+		$this->assertCount( 3, $entries );
+		foreach ( $entries as $entry ) {
+			$this->assertTrue( $entry['restorable'] );
+			$this->assertFalse( $entry['damaged'] );
+			$this->assertSame( '', $entry['restore_reason'] );
+		}
 		MainWP_Backup_Snapshots::instance()->mark_artifact_damaged( $base, 'base.zip', 'mainwp_restore_local_archive_hash_mismatch' );
-		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $child );
-		$this->assertFalse( $resolved['ok'] );
-		$this->assertSame( 'mainwp_backup_snapshot_unrestorable_damaged', $resolved['code'] );
+		$entries = array();
+		foreach ( $catalog->list_snapshots_for_site( 9901 ) as $entry ) {
+			$entries[ (int) $entry['snapshot']->id ] = $entry;
+		}
+		$this->assertTrue( $entries[ $base ]['damaged'] );
+		$this->assertSame( 'unavailable', $entries[ $base ]['source'] );
+		foreach ( array( $child, $leaf ) as $id ) {
+			$this->assertSame( 'local', $entries[ $id ]['source'] );
+			$this->assertFalse( $entries[ $id ]['damaged'] );
+			$this->assertFalse( $entries[ $id ]['restorable'] );
+			$this->assertSame( "This backup's archive on this Dashboard failed its integrity check during a restore, and no cloud copy is available, so it cannot be restored.", $entries[ $id ]['restore_reason'] );
+			$resolved = $catalog->resolve_restorable_chain( $id );
+			$this->assertFalse( $resolved['ok'] );
+			$this->assertSame( 'mainwp_backup_snapshot_unrestorable_damaged', $resolved['code'] );
+			$this->assertSame( $resolved['error'], $entries[ $id ]['restore_reason'] );
+		}
+	}
+
+	/** Removal must not retain the damage label while preserving archive metadata. */
+	public function test_pruned_damaged_snapshot_keeps_removal_reason(): void {
+		$id    = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'removed.zip',
+					'role' => 'full',
+				),
+			)
+		);
+		$store = MainWP_Backup_Snapshots::instance();
+		$store->mark_artifact_damaged( $id, 'removed.zip', 'mainwp_restore_local_archive_hash_mismatch' );
+		$archives = $store->get_snapshot_by_id( $id )->archives;
+		$this->assertTrue( $store->mark_pruned( $id, MainWP_Backup_Snapshots::REMOVAL_REASON_MANUAL ) );
+		$entry = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( 9901 )[0];
+		$this->assertSame( 'pruned', $entry['snapshot']->status );
+		$this->assertFalse( $entry['damaged'] );
+		$this->assertFalse( $entry['restorable'] );
+		$this->assertSame( 'unavailable', $entry['source'] );
+		$this->assertSame( 'manual', $entry['removal_reason'] );
+		$this->assertSame( 'Deleted manually; no copy survives locally or in cloud storage.', $entry['restore_reason'] );
+		$this->assertSame( $archives, $entry['snapshot']->archives );
 	}
 
 	/**

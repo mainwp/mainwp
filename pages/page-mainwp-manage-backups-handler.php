@@ -1572,11 +1572,12 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 $_error_output = ! $_disk_refused && ! in_array( $_error_code, array( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ), true ) && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
                 $errorOutput  .= $_error_output . '<br />';
                 // Progress rows can outlive the task-level error record.
-                $_progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, (int) $siteid );
-                if ( ! $_progress ) {
-                    $_progress = MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, (int) $siteid, array() );
-                }
+                $_progress        = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, (int) $siteid );
                 $_progress_values = array( 'last_error' => $_error_output );
+                if ( ! $_progress ) {
+                    $_progress                       = MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, (int) $siteid, array() );
+                    $_progress_values['child_phase'] = MainWP_Backup_Task_Phase::FAILED;
+                }
                 if ( '' !== $_history_code ) {
                     $_fetch                          = $_progress && is_array( $_progress->fetchResult ) ? $_progress->fetchResult : array();
                     $_fetch['error_code']            = $_history_code;

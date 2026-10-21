@@ -342,30 +342,32 @@ class MainWP_Backup_Private_Root {
     private static function exposure_verdict( string $root, bool $created ): string {
         $site_url = site_url();
         $key      = hash( 'sha256', untrailingslashit( $root ) . "\n" . $site_url );
-        if ( ! $created ) {
-            if ( isset( self::$probe_verdicts[ $key ] ) ) {
-                return self::$probe_verdicts[ $key ];
-            }
-            $cached = get_option( 'mainwp_backup_private_root_probe' );
-            if ( is_array( $cached ) && ( $cached['key'] ?? '' ) === $key
-                && time() < (int) ( $cached['expires'] ?? 0 )
-                && in_array( $cached['verdict'] ?? '', array( 'not_served', 'unmapped', 'unknown' ), true ) ) {
-                self::$probe_verdicts[ $key ] = $cached['verdict'];
-                return $cached['verdict'];
-            }
+        if ( ! $created && isset( self::$probe_verdicts[ $key ] ) ) {
+            return self::$probe_verdicts[ $key ];
+        }
+        $cached = get_option( 'mainwp_backup_private_root_probe' );
+        if ( ! $created && is_array( $cached ) && ( $cached['key'] ?? '' ) === $key
+            && time() < (int) ( $cached['expires'] ?? 0 )
+            && in_array( $cached['verdict'] ?? '', array( 'not_served', 'unknown' ), true ) ) {
+            self::$probe_verdicts[ $key ] = $cached['verdict'];
+            return $cached['verdict'];
         }
 
-        $url                          = self::probe_url( $root, $site_url );
+        $url = self::probe_url( $root, $site_url );
+        if ( null === $url && is_array( $cached ) && ( $cached['key'] ?? '' ) === $key && ! empty( $cached['url'] ) && is_string( $cached['url'] ) ) {
+            $url = $cached['url'];
+        }
         $reason                       = '';
         $verdict                      = null === $url ? 'unmapped' : self::probe_exposure( $root, $url, $reason );
         self::$probe_verdicts[ $key ] = $verdict;
-        if ( 'served' !== $verdict ) {
+        if ( 'unmapped' !== $verdict ) {
             update_option(
                 'mainwp_backup_private_root_probe',
                 array(
                     'key'     => $key,
                     'verdict' => $verdict,
-                    'expires' => time() + ( 'unknown' === $verdict ? DAY_IN_SECONDS : 7 * DAY_IN_SECONDS ),
+                    'expires' => 'served' === $verdict ? 0 : time() + ( 'unknown' === $verdict ? DAY_IN_SECONDS : 7 * DAY_IN_SECONDS ),
+                    'url'     => $url,
                 ),
                 false
             );
@@ -393,14 +395,51 @@ class MainWP_Backup_Private_Root {
      * @return string|null Null when the root is outside this site's URL space.
      */
     private static function probe_url( string $root, string $site_url ): ?string {
-        $ancestor = self::canonical_path( ABSPATH );
-        $parts    = wp_parse_url( $site_url );
-        if ( null === $ancestor || ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+        $parts = wp_parse_url( $site_url );
+        if ( ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
             return null;
         }
-        $segments = array_values( array_filter( explode( '/', trim( $parts['path'] ?? '', '/' ) ), 'strlen' ) );
-        $levels   = 0;
-        $path     = untrailingslashit( $root );
+        $segments   = array_values( array_filter( explode( '/', trim( $parts['path'] ?? '', '/' ) ), 'strlen' ) );
+        $canonical  = self::canonical_path( ABSPATH );
+        $configured = untrailingslashit( wp_normalize_path( ABSPATH ) );
+        $bases      = array( array( $canonical, $segments ) );
+        if ( $configured !== $canonical ) {
+            $bases[] = array( $configured, $segments );
+        }
+        if ( ! empty( $_SERVER['DOCUMENT_ROOT'] ) && is_string( $_SERVER['DOCUMENT_ROOT'] ) ) {
+            // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- This only builds a candidate URL; exposure still requires the random token back.
+            $document_root = untrailingslashit( wp_normalize_path( wp_unslash( $_SERVER['DOCUMENT_ROOT'] ) ) );
+            if ( path_is_absolute( $document_root ) ) {
+                $canonical = self::canonical_path( $document_root );
+                $bases[]   = array( $canonical, array() );
+                if ( $document_root !== $canonical ) {
+                    $bases[] = array( $document_root, array() );
+                }
+            }
+        }
+        foreach ( $bases as list( $base, $base_segments ) ) {
+            if ( null === $base ) {
+                continue;
+            }
+            $mapped = self::probe_url_segments( $root, $base, $base_segments );
+            if ( null !== $mapped ) {
+                return $parts['scheme'] . '://' . $parts['host'] . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' ) . '/' . implode( '/', $mapped ) . '/';
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Filesystem aliases can retain URL ancestry that the resolved WordPress path loses.
+     *
+     * @param string $root Canonical root.
+     * @param string $ancestor Filesystem base served at the URL segments.
+     * @param array  $segments URL path segments for the base.
+     * @return array|null Null when the root is outside the base's URL ancestry.
+     */
+    private static function probe_url_segments( string $root, string $ancestor, array $segments ): ?array {
+        $levels = 0;
+        $path   = untrailingslashit( $root );
         while ( $path !== $ancestor && ! str_starts_with( $path, trailingslashit( $ancestor ) ) ) {
             $parent = dirname( $ancestor );
             if ( $parent === $ancestor ) {
@@ -417,7 +456,7 @@ class MainWP_Backup_Private_Root {
         if ( '' !== $relative ) {
             $segments = array_merge( $segments, array_map( 'rawurlencode', explode( '/', $relative ) ) );
         }
-        return $parts['scheme'] . '://' . $parts['host'] . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' ) . '/' . implode( '/', $segments ) . '/';
+        return $segments;
     }
 
     /**

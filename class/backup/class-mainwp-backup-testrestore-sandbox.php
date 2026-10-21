@@ -1096,7 +1096,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $readable = $this->phar_readable_path( $path );
         $size     = 0;
         try {
-            $phar     = new \PharData( $readable );
+            $phar     = $this->validated_tar( $readable );
             $iterator = new \RecursiveIteratorIterator( $phar );
             foreach ( $iterator as $file ) {
                 if ( $this->is_sql_dump_member( $file->getFilename() ) ) {
@@ -1233,7 +1233,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $readable = $this->phar_readable_path( $path );
         $sql      = '';
         try {
-            $phar     = new \PharData( $readable );
+            $phar     = $this->validated_tar( $readable );
             $iterator = new \RecursiveIteratorIterator( $phar );
             foreach ( $iterator as $file ) {
                 if ( $this->is_sql_dump_member( $file->getFilename() ) ) {
@@ -1244,6 +1244,8 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     }
                 }
             }
+        } catch ( MainWP_Exception $e ) {
+            throw $e;
         } catch ( \Throwable $e ) {
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be opened.', 'mainwp' ), 'tar open: ' . $e->getMessage(), self::ERR_APPLY );
         }
@@ -1321,7 +1323,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
 
         $readable = $this->phar_readable_path( $path );
         try {
-            $phar     = new \PharData( $readable );
+            $phar     = $this->validated_tar( $readable );
             $iterator = new \RecursiveIteratorIterator( $phar );
             $total    = 0;
             $free     = function_exists( 'disk_free_space' ) ? disk_free_space( $this->temp_dir ) : false;
@@ -1343,6 +1345,218 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         } catch ( \Throwable $e ) {
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be extracted.', 'mainwp' ), 'tar extract: ' . $e->getMessage(), self::ERR_APPLY );
         }
+    }
+
+    /**
+     * PharData can extract prefix-split members that its iterator never exposes.
+     * Check their headers before trusting either extraction or SQL member access.
+     *
+     * @param string $plain Uncompressed archive path.
+     * @throws MainWP_Exception On unsafe, malformed or unlisted members.
+     * @return \PharData Archive with a complete, validated listing.
+     */
+    private function validated_tar( string $plain ): \PharData { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- tar variants share one bounded header walk.
+        $unreadable = new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar malformed or truncated header or entry', self::ERR_APPLY );
+        $stream     = fopen( $plain, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- inspect headers without extracting members.
+        if ( false === $stream ) {
+            throw $unreadable;
+        }
+        $members    = array();
+        $long_name  = null;
+        $pax_path   = null;
+        $count      = 0;
+        $name_bytes = 0;
+        try {
+            $stat = fstat( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bound every header and payload by the actual file length.
+            if ( false === $stat ) {
+                throw $unreadable;
+            }
+            $length = $stat['size'];
+            // The Child writer can end at a complete member boundary without zero markers.
+            while ( ftell( $stream ) < $length ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded sequential header scan.
+                $header = fread( $stream, 512 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixed-size tar header.
+                if ( false === $header || 512 !== strlen( $header ) ) {
+                    throw $unreadable;
+                }
+                if ( str_repeat( "\0", 512 ) === $header ) {
+                    break;
+                }
+                if ( ++$count > 2000000 ) {
+                    throw $unreadable;
+                }
+                $checksum = $this->tar_header_number( substr( $header, 148, 8 ) );
+                $check    = substr_replace( $header, '        ', 148, 8 );
+                $unsigned = array_sum( unpack( 'C*', $check ) );
+                $signed   = array_sum( unpack( 'c*', $check ) );
+                $size     = $this->tar_header_number( substr( $header, 124, 12 ) );
+                if ( null === $checksum || ( $checksum !== $unsigned && $checksum !== $signed ) || null === $size ) {
+                    throw $unreadable;
+                }
+                $remaining = $length - ftell( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- prevent seeks beyond a truncated payload.
+                $padding   = ( 512 - $size % 512 ) % 512;
+                if ( $size > $remaining || $padding > $remaining - $size ) {
+                    throw $unreadable;
+                }
+                $type = $header[156];
+                if ( 'L' === $type || 'x' === $type ) {
+                    if ( $size > 65536 ) {
+                        throw $unreadable;
+                    }
+                    $payload = '';
+                    $unread  = $size;
+                    while ( $unread > 0 ) {
+                        $chunk = fread( $stream, min( 8192, $unread ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- only bounded name metadata is read.
+                        if ( false === $chunk || '' === $chunk ) {
+                            throw $unreadable;
+                        }
+                        $payload .= $chunk;
+                        $unread  -= strlen( $chunk );
+                    }
+                    if ( 'L' === $type ) {
+                        $long_name = explode( "\0", $payload, 2 )[0];
+                    } else {
+                        $offset = 0;
+                        while ( $offset < $size ) {
+                            $space = strpos( $payload, ' ', $offset );
+                            if ( false === $space ) {
+                                throw $unreadable;
+                            }
+                            $digits = substr( $payload, $offset, $space - $offset );
+                            if ( '' === $digits || strlen( $digits ) > 5 || ! ctype_digit( $digits ) ) {
+                                throw $unreadable;
+                            }
+                            $record_length = (int) $digits;
+                            if ( $record_length <= $space - $offset + 1 || $record_length > $size - $offset || "\n" !== $payload[ $offset + $record_length - 1 ] ) {
+                                throw $unreadable;
+                            }
+                            $record = substr( $payload, $space + 1, $record_length - ( $space - $offset ) - 2 );
+                            if ( 0 === strpos( $record, 'path=' ) ) {
+                                $pax_path = substr( $record, 5 );
+                            }
+                            $offset += $record_length;
+                        }
+                    }
+                    $skip = $padding;
+                } else {
+                    $skip = $size + $padding;
+                    // Global pax and long-link records do not name extractable members.
+                    if ( 'g' !== $type && 'K' !== $type ) {
+                        $name   = explode( "\0", substr( $header, 0, 100 ), 2 )[0];
+                        $prefix = 'ustar' === substr( $header, 257, 5 ) ? explode( "\0", substr( $header, 345, 155 ), 2 )[0] : '';
+                        $name   = '' === $prefix ? $name : $prefix . '/' . $name;
+                        $name   = null !== $long_name ? $long_name : $name;
+                        $name   = null !== $pax_path && '' !== $pax_path ? $pax_path : $name;
+                        if ( $this->has_unsafe_entry_name( $name ) ) {
+                            throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $name, self::ERR_APPLY );
+                        }
+                        if ( in_array( $type, array( '0', "\0", '5', '7' ), true ) ) {
+                            $key = $this->tar_comparison_name( $name, '5' === $type );
+                            if ( isset( $members[ $key ] ) ) {
+                                ++$members[ $key ][1];
+                            } else {
+                                $name_bytes += strlen( $key ) + strlen( $name );
+                                if ( $name_bytes > 64 * MB_IN_BYTES ) {
+                                    throw $unreadable;
+                                }
+                                $members[ $key ] = array( $name, 1 );
+                            }
+                        }
+                        $long_name = null;
+                        $pax_path  = null;
+                    }
+                }
+                if ( 0 !== fseek( $stream, $skip, SEEK_CUR ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- skip file payloads without reading them.
+                    throw $unreadable;
+                }
+            }
+            if ( null !== $long_name || null !== $pax_path ) {
+                throw $unreadable;
+            }
+        } finally {
+            fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with the header stream.
+        }
+        try {
+            $phar     = new \PharData( $plain );
+            $iterator = new \RecursiveIteratorIterator( $phar, \RecursiveIteratorIterator::SELF_FIRST );
+            foreach ( $iterator as $file ) {
+                unset( $members[ $this->tar_comparison_name( $iterator->getSubPathname(), $file->isDir() ) ] );
+            }
+        } catch ( \Throwable $e ) {
+            throw $unreadable;
+        }
+        if ( ! empty( $members ) ) {
+            $missing = 0;
+            $first   = reset( $members )[0];
+            foreach ( $members as $member ) {
+                $missing += $member[1];
+            }
+            // Keep a readable label even if a filename contains invalid UTF-8.
+            $label = wp_json_encode( $first, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+            $label = is_string( $label ) ? substr( $label, 1, -1 ) : '?';
+            throw new MainWP_Exception(
+                sprintf(
+                    /* translators: 1: number of unreadable paths, 2: first unreadable path. */
+                    esc_html__( 'This backup was made by an earlier beta and stores %1$s that this version cannot read, so it cannot be test-restored. The first one is %2$s. Backups made from now on are not affected.', 'mainwp' ),
+                    1 === $missing ? esc_html__( 'one long path', 'mainwp' ) : esc_html(
+                        sprintf(
+                            /* translators: %s: number of unreadable paths. */
+                            _n( '%s long path', '%s long paths', $missing, 'mainwp' ),
+                            number_format_i18n( $missing )
+                        )
+                    ),
+                    esc_html( $label )
+                ),
+                'tar unlisted members: ' . $missing,
+                self::ERR_APPLY
+            );
+        }
+        return $phar;
+    }
+
+    /**
+     * Phar URLs normalize leading dot components, slashes and directory suffixes.
+     *
+     * @param string $name Archive member name.
+     * @param bool   $dir  Whether the member is a directory.
+     * @return string Comparable name.
+     */
+    private function tar_comparison_name( string $name, bool $dir ): string {
+        $name = str_replace( '\\', '/', $name );
+        while ( 0 === strpos( $name, './' ) ) {
+            $name = substr( $name, 2 );
+        }
+        return $dir ? rtrim( $name, '/' ) : $name;
+    }
+
+    /**
+     * GNU base-256 numbers must not overflow into a float or a negative seek.
+     *
+     * @param string $field Raw numeric header field.
+     * @return int|null Nonnegative value, or null for malformed or overflowing fields.
+     */
+    private function tar_header_number( string $field ): ?int {
+        $base = 8;
+        if ( ord( $field[0] ) & 128 ) {
+            $base     = 256;
+            $field[0] = chr( ord( $field[0] ) & 127 );
+        } else {
+            $field = trim( $field, " \0" );
+            if ( '' === $field ) {
+                return 0;
+            }
+            if ( ! preg_match( '/^[0-7]+$/D', $field ) ) {
+                return null;
+            }
+        }
+        $number = 0;
+        for ( $i = 0, $length = strlen( $field ); $i < $length; ++$i ) {
+            $digit = 256 === $base ? ord( $field[ $i ] ) : (int) $field[ $i ];
+            if ( $number > intdiv( PHP_INT_MAX - $digit, $base ) ) {
+                return null;
+            }
+            $number = $number * $base + $digit;
+        }
+        return $number;
     }
 
     /**

@@ -288,6 +288,399 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
+	 * Raw headers preserve the old writer's trailing prefix slash.
+	 *
+	 * @param string $name   Header name.
+	 * @param string $body   Member bytes.
+	 * @param string $prefix Ustar prefix.
+	 * @param string $type   Tar member type.
+	 * @param string $target Link target.
+	 * @return string Header and padded payload.
+	 */
+	private function raw_tar_member( $name, $body = '', $prefix = '', $type = '0', $target = '' ) {
+		$header = str_repeat( "\0", 512 );
+		foreach ( array(
+			0   => str_pad( $name, 100, "\0" ),
+			100 => "0000644\0",
+			108 => "0000000\0",
+			116 => "0000000\0",
+			124 => sprintf( "%011o\0", strlen( $body ) ),
+			136 => "00000000000\0",
+			148 => '        ',
+			156 => $type,
+			157 => str_pad( $target, 100, "\0" ),
+			257 => "ustar\0",
+			263 => '00',
+			345 => str_pad( $prefix, 155, "\0" ),
+		) as $offset => $value ) {
+			$header = substr_replace( $header, $value, $offset, strlen( $value ) );
+		}
+		$header = substr_replace( $header, sprintf( "%06o\0 ", array_sum( unpack( 'C*', $header ) ) ), 148, 8 );
+		return $header . str_pad( $body, (int) ceil( strlen( $body ) / 512 ) * 512, "\0" );
+	}
+
+	/**
+	 * Recompute the checksum so a numeric fault reaches the size parser.
+	 *
+	 * @param string $bytes  Header and payload.
+	 * @param int    $offset Field offset.
+	 * @param string $value  Replacement bytes.
+	 * @return string Patched tar member.
+	 */
+	private function patch_raw_tar_header( $bytes, $offset, $value ) {
+		$bytes = substr_replace( $bytes, $value, $offset, strlen( $value ) );
+		$bytes = substr_replace( $bytes, '        ', 148, 8 );
+		return substr_replace( $bytes, sprintf( "%06o\0 ", array_sum( unpack( 'C*', substr( $bytes, 0, 512 ) ) ) ), 148, 8 );
+	}
+
+	/**
+	 * Each fixture gets its own path because PharData caches archive manifests.
+	 *
+	 * @param string $bytes Raw tar members.
+	 * @param bool   $gzip  Whether to compress the fixture.
+	 * @return string Archive path.
+	 */
+	private function raw_tar( $bytes, $gzip = false ) {
+		$path   = $this->dir . '/' . uniqid( 'headers-' ) . '.tar' . ( $gzip ? '.gz' : '' );
+		$bytes .= str_repeat( "\0", 1024 );
+		$bytes  = $gzip ? gzencode( $bytes ) : $bytes;
+		$this->assertSame( strlen( $bytes ), file_put_contents( $path, $bytes ) );
+		return $path;
+	}
+
+	/**
+	 * All three tar consumers must reject hidden unsafe names before any member is used.
+	 *
+	 * @dataProvider hidden_unsafe_tar_cases
+	 * @param string $prefix Unsafe prefix.
+	 * @param string $type   Member type.
+	 * @param string $action Tar consumer.
+	 * @return void
+	 */
+	public function test_tar_headers_refuse_hidden_unsafe_names( $prefix, $type, $action ) {
+		if ( '/absolute/' === $prefix ) {
+			$prefix = $this->dir . '/absolute/';
+		}
+		$name    = 'escape-' . uniqid() . '.txt';
+		$path    = $this->raw_tar( $this->raw_tar_member( 'good.sql', 'SELECT 1;' ) . $this->raw_tar_member( $name, '0' === $type ? 'hostile' : '', $prefix, $type, 'good.sql' ) );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		$outside = dirname( untrailingslashit( $sandbox->temp_dir() ) ) . '/' . $name;
+		try {
+			$caught = $this->tar_refusal( $sandbox, $path, $action );
+			$this->assertFileDoesNotExist( $outside );
+			$this->assertFileDoesNotExist( $this->dir . '/absolute/' . $name );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught, 'Iterator validation passed; extracted files: ' . implode( ', ', scandir( $sandbox->temp_dir() ) ) );
+			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+			$this->assertStringContainsString( 'contains an unsafe file path', $caught->getMessage() );
+			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
+		} finally {
+			$sandbox->tear_down();
+			if ( file_exists( $outside ) ) {
+				unlink( $outside );
+			}
+		}
+	}
+
+	/**
+	 * The same omission affects file, directory and link names as well as SQL consumers.
+	 *
+	 * @return array
+	 */
+	public static function hidden_unsafe_tar_cases() {
+		$cases = array();
+		foreach ( array(
+			'parent'   => '../',
+			'segment'  => 'nested/../',
+			'absolute' => '/absolute/',
+			'wrapper'  => 'phar://other/',
+			'drive'    => 'C:/outside/',
+		) as $label => $prefix ) {
+			$cases[ $label ] = array( $prefix, '0', 'extract' );
+		}
+		$cases['directory'] = array( '../', '5', 'extract' );
+		$cases['hard link'] = array( '../', '1', 'extract' );
+		$cases['symlink']   = array( '../', '2', 'extract' );
+		$cases['SQL read']  = array( '../', '0', 'read' );
+		$cases['SQL size']  = array( '../', '0', 'size' );
+		return $cases;
+	}
+
+	/**
+	 * Keep the refusal assertions identical across the extraction and SQL entry points.
+	 *
+	 * @param object $sandbox Sandbox.
+	 * @param string $path    Archive.
+	 * @param string $action  Tar consumer.
+	 * @return MainWP_Exception|null Refusal, if any.
+	 */
+	private function tar_refusal( $sandbox, $path, $action ) {
+		try {
+			if ( 'extract' === $action ) {
+				$sandbox->extract_files( $path );
+			} elseif ( 'size' === $action ) {
+				$sandbox->decompressed_sql_dump_bytes( $path, 1048576 );
+			} else {
+				$read = new \ReflectionMethod( $sandbox, 'read_sql_dump' );
+				$read->setAccessible( true );
+				$read->invoke( $sandbox, $path );
+			}
+		} catch ( MainWP_Exception $e ) {
+			return $e;
+		}
+		return null;
+	}
+
+	/**
+	 * Refusing an incomplete manifest prevents both skipped SQL and unvalidated extraction.
+	 *
+	 * @dataProvider hidden_long_tar_cases
+	 * @param string $action Tar consumer.
+	 * @param bool   $gzip   Compressed fixture.
+	 * @param string $type   Member type.
+	 * @return void
+	 */
+	public function test_tar_headers_refuse_beta_long_paths( $action, $gzip, $type ) {
+		$prefix  = 'nested/' . str_repeat( 'p', 90 ) . '/';
+		$name    = '<dump>.sql';
+		$path    = $this->raw_tar( $this->raw_tar_member( $name, '0' === $type ? 'SELECT 2;' : '', $prefix, $type ) . $this->raw_tar_member( 'good.txt', 'good' ), $gzip );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $path, $action );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught, 'Extraction succeeded; long file exists: ' . (int) file_exists( $sandbox->temp_dir() . $prefix . $name ) );
+			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+			$this->assertStringContainsString( 'earlier beta', $caught->getMessage() );
+			$this->assertStringContainsString( 'one long path', $caught->getMessage() );
+			$this->assertStringContainsString( 'cannot be test-restored', $caught->getMessage() );
+			$this->assertStringContainsString( esc_html( $prefix . '/' . $name ), $caught->getMessage() );
+			$this->assertStringNotContainsString( '<dump>', $caught->getMessage() );
+			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Include decompression and directory-only manifests.
+	 *
+	 * @return array
+	 */
+	public static function hidden_long_tar_cases() {
+		return array(
+			'file'      => array( 'extract', false, '0' ),
+			'directory' => array( 'extract', false, '5' ),
+			'SQL read'  => array( 'read', false, '0' ),
+			'SQL size'  => array( 'size', false, '0' ),
+			'gzip'      => array( 'extract', true, '0' ),
+		);
+	}
+
+	/**
+	 * Current long-name metadata must continue to work through all tar entry points.
+	 *
+	 * @dataProvider supported_tar_name_cases
+	 * @param string $type Long-name metadata format.
+	 * @return void
+	 */
+	public function test_tar_headers_accept_current_long_names( $type ) {
+		$name    = 'L' === $type ? str_repeat( 'current/', 80 ) . 'restored.sql' : 'nested/dump.sql';
+		$payload = $name;
+		if ( 'x' === $type ) {
+			$record  = 'path=./' . $name . "\n";
+			$length  = strlen( $record ) + 3;
+			$length  = strlen( $record ) + strlen( (string) $length ) + 1;
+			$payload = $length . ' ' . $record;
+		}
+		$sql     = 'SELECT 42;';
+		$path    = $this->raw_tar( $this->raw_tar_member( 'nested/', '', '', '5' ) . $this->raw_tar_member( '././@LongLink', $payload, '', $type ) . $this->raw_tar_member( substr( $name, 0, 100 ), $sql ) . $this->raw_tar_member( 'good.txt', 'good' ) );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$sandbox->extract_files( $path );
+			$this->assertSame( $sql, file_get_contents( $sandbox->temp_dir() . $name ) );
+			$this->assertSame( 'good', file_get_contents( $sandbox->temp_dir() . 'good.txt' ) );
+			$this->assertSame( strlen( $sql ), $sandbox->decompressed_sql_dump_bytes( $path, 1048576 ) );
+			$read = new \ReflectionMethod( $sandbox, 'read_sql_dump' );
+			$read->setAccessible( true );
+			$this->assertSame( $sql, $read->invoke( $sandbox, $path ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * GNU and POSIX long-name records use different payload framing.
+	 *
+	 * @return array
+	 */
+	public static function supported_tar_name_cases() {
+		return array(
+			'GNU' => array( 'L' ),
+			'pax' => array( 'x' ),
+		);
+	}
+
+	/**
+	 * Metadata limits and payload boundaries must be checked before extraction.
+	 *
+	 * @dataProvider malformed_tar_header_cases
+	 * @param string $fault Header fault.
+	 * @return void
+	 */
+	public function test_tar_headers_refuse_malformed_members( $fault ) {
+		$bytes = $this->raw_tar_member( 'good.txt', 'good' );
+		if ( 'checksum' === $fault ) {
+			$bytes[0] = 'X';
+		} elseif ( 'truncated' === $fault ) {
+			$bytes = $this->raw_tar_member( 'large.txt', str_repeat( 'x', 2048 ) );
+			$bytes = substr( $bytes, 0, 512 );
+		} elseif ( 'long' === $fault || 'pax' === $fault ) {
+			$bytes = $this->raw_tar_member( '././@LongLink', str_repeat( 'x', 65537 ), '', 'pax' === $fault ? 'x' : 'L' ) . $bytes;
+		} elseif ( 'pax record' === $fault ) {
+			$bytes = $this->raw_tar_member( 'PaxHeader', "999999999999999999999 path=a\n", '', 'x' ) . $bytes;
+		} elseif ( 'orphan' === $fault ) {
+			$bytes = $this->raw_tar_member( '././@LongLink', 'unused.txt', '', 'L' );
+		} else {
+			$size  = 'octal' === $fault ? "00000000009\0" : ( 'overflow' === $fault ? "\x80\x01" . str_repeat( "\0", 10 ) : str_repeat( "\xff", 12 ) );
+			$bytes = $this->patch_raw_tar_header( $bytes, 124, $size );
+		}
+		$path    = $this->raw_tar( $bytes );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $path, 'extract' );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+			$this->assertStringContainsString( 'could not be read', $caught->getMessage() );
+			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Corrupt fixtures must exercise distinct parser failures.
+	 *
+	 * @return array
+	 */
+	public static function malformed_tar_header_cases() {
+		return array(
+			'checksum'         => array( 'checksum' ),
+			'truncated'        => array( 'truncated' ),
+			'oversized L'      => array( 'long' ),
+			'oversized x'      => array( 'pax' ),
+			'pax record'       => array( 'pax record' ),
+			'orphan L'         => array( 'orphan' ),
+			'invalid octal'    => array( 'octal' ),
+			'base256 overflow' => array( 'overflow' ),
+			'base256 negative' => array( 'negative' ),
+		);
+	}
+
+	/**
+	 * The effective metadata name takes precedence over an innocuous short header.
+	 *
+	 * @dataProvider supported_tar_name_cases
+	 * @param string $type Metadata format.
+	 * @return void
+	 */
+	public function test_tar_headers_refuse_unsafe_metadata_names( $type ) {
+		$name    = '../escape.sql';
+		$record  = 'path=' . $name . "\n";
+		$length  = strlen( $record ) + 3;
+		$payload = 'L' === $type ? $name : $length . ' ' . $record;
+		$path    = $this->raw_tar( $this->raw_tar_member( '././@LongLink', $payload, '', $type ) . $this->raw_tar_member( 'safe.sql', 'SELECT 1;' ) );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $path, 'read' );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+			$this->assertStringContainsString( 'contains an unsafe file path', $caught->getMessage() );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * A missing-path count must include all members and retain a usable first label.
+	 *
+	 * @return void
+	 */
+	public function test_tar_headers_report_missing_count_and_invalid_utf8() {
+		$prefix  = str_repeat( 'beta/', 21 );
+		$path    = $this->raw_tar( $this->raw_tar_member( "<first>-\xff.txt", 'lost', $prefix ) . $this->raw_tar_member( 'second.txt', 'lost', $prefix ) );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $path, 'extract' );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertStringContainsString( '2 long paths', $caught->getMessage() );
+			$this->assertStringContainsString( '&lt;first&gt;-', $caught->getMessage() );
+			$this->assertStringContainsString( '.txt', $caught->getMessage() );
+			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * PharData must not create filesystem links or follow their external targets.
+	 *
+	 * @dataProvider tar_link_materialization_cases
+	 * @param string $type  Tar link type.
+	 * @param bool   $child Whether a later member writes beneath the link.
+	 * @return void
+	 */
+	public function test_tar_headers_phar_link_materialization( $type, $child ) {
+		$outside = $this->dir . '/outside';
+		$this->assertTrue( mkdir( $outside ) );
+		$this->assertSame( 4, file_put_contents( $outside . '/keep.txt', 'keep' ) );
+		$path = $this->raw_tar( $this->raw_tar_member( 'link', '', '', $type, $outside ) . ( $child ? $this->raw_tar_member( 'link/written.txt', 'hostile' ) : '' ) );
+		$root = $this->dir . '/extract';
+		$this->assertTrue( mkdir( $root ) );
+		$caught = null;
+		try {
+			$phar = new \PharData( $path );
+			// A regular file at link blocks the later child member on this runtime.
+			@$phar->extractTo( $root );
+		} catch ( \Throwable $e ) {
+			$caught = $e;
+		}
+		$this->assertFalse( is_link( $root . '/link' ) );
+		$this->assertSame( 'keep', file_get_contents( $outside . '/keep.txt' ) );
+		$this->assertFileDoesNotExist( $outside . '/written.txt' );
+		if ( '1' === $type ) {
+			$this->assertInstanceOf( \UnexpectedValueException::class, $caught );
+			$this->assertStringContainsString( 'hard link to non-existent file', $caught->getMessage() );
+			$this->assertFileDoesNotExist( $root . '/link' );
+		} else {
+			$this->assertFileExists( $root . '/link' );
+			$this->assertSame( '', file_get_contents( $root . '/link' ) );
+			if ( $child ) {
+				$this->assertInstanceOf( \PharException::class, $caught );
+			} else {
+				$this->assertNull( $caught );
+			}
+		}
+	}
+
+	/**
+	 * Hard and symbolic links each need a direct and a write-through probe.
+	 *
+	 * @return array
+	 */
+	public static function tar_link_materialization_cases() {
+		return array(
+			'hard'           => array( '1', false ),
+			'hard child'     => array( '1', true ),
+			'symbolic'       => array( '2', false ),
+			'symbolic child' => array( '2', true ),
+		);
+	}
+
+	/**
 	 * A clean tar still extracts normally through extract_tar()'s new
 	 * per-entry precheck loop.
 	 *
@@ -1717,20 +2110,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
-	 * extract_tar()'s per-entry loop cannot be exercised end-to-end with a
-	 * live traversal fixture: PharData::addFromString('../evil.txt', ...)
-	 * does not throw, but the resulting archive's entries never surface
-	 * through RecursiveIteratorIterator (confirmed by manual probe - both a
-	 * plain foreach and a fresh RecursiveIteratorIterator enumerate zero
-	 * entries once a '..' name is present, though PharData::extractTo()
-	 * still processes the archive and silently normalises the entry to the
-	 * container root rather than escaping it). That leaves PharData's own
-	 * extractTo() as the only thing a live fixture could prove, which is the
-	 * exact behaviour this defense-in-depth check does not depend on. So the
-	 * shared name-validator is unit-tested directly instead, via reflection,
-	 * covering the traversal, absolute-path, and stream-wrapper cases the
-	 * zip test above cannot (all three route through the same
-	 * has_unsafe_entry_name() the zip path already proves end-to-end).
+	 * The shared validator also covers archive formats without a raw-header fixture.
 	 *
 	 * @return void
 	 */

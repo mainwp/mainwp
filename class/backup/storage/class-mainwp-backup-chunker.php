@@ -36,6 +36,13 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     const SMALL_FILE_THRESHOLD = 524288;
 
     /**
+     * Matches the download preflight's private margin so staging preserves the same headroom.
+     *
+     * @var int
+     */
+    private const STAGING_DISK_MARGIN = 100 * MB_IN_BYTES;
+
+    /**
      * The default chunk size in bytes.
      *
      * @return int
@@ -74,6 +81,7 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         return in_array( 'xxh128', hash_algos(), true ) ? 'xxh128' : 'sha256';
     }
 
+    // phpcs:disable Squiz.Commenting.FunctionCommentThrowTag.Missing -- The registry factory returns MainWP_Exception.
     /**
      * Plan an artifact: read it in chunks, hash each chunk, and stage the
      * chunk bytes under their hash for upload. Idempotent across
@@ -85,6 +93,7 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
      * @param int|null $chunk_size Chunk size override; defaults to chunk_size().
      *
      * @return array|false Ordered list of {hash, algo, offset, length}, or false on failure.
+     * @throws MainWP_Exception When staging would consume the reserved disk headroom.
      */
     public static function plan_artifact( $path, $staging, $chunk_size = null ) {
         $chunk_size = empty( $chunk_size ) ? static::chunk_size() : (int) $chunk_size;
@@ -105,6 +114,7 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $algo   = static::hash_algo();
         $chunks = array();
         $offset = 0;
+        $needed = array();
 
         try {
             while ( ! feof( $handle ) ) {
@@ -118,8 +128,8 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 }
 
                 $hash = hash( $algo, $bytes );
-                if ( ! static::stage_chunk( $staging, $hash, $bytes ) ) {
-                    return false;
+                if ( ! static::staged_chunk_matches( $staging, $hash, $length ) ) {
+                    $needed[ $hash ] = $length;
                 }
 
                 $chunks[] = array(
@@ -131,11 +141,66 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
                 $offset += $length;
             }
+
+            // Hash first: a crashed pass may have staged bytes without saving its plan.
+            $free = static::free_space_bytes( $staging );
+            if ( null !== $free && array_sum( $needed ) + self::STAGING_DISK_MARGIN > $free ) {
+                throw MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_DISK_FULL );
+            }
+
+            foreach ( $chunks as $chunk ) {
+                if ( static::staged_chunk_matches( $staging, $chunk['hash'], $chunk['length'] ) ) {
+                    continue;
+                }
+                if ( 0 !== fseek( $handle, $chunk['offset'] ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fseek -- source slices share the open artifact handle.
+                    return false;
+                }
+                $bytes = fread( $handle, $chunk['length'] ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fread -- bounded source slice for staging.
+                if ( false === $bytes || strlen( $bytes ) !== $chunk['length'] || hash( $algo, $bytes ) !== $chunk['hash'] || ! static::stage_chunk( $staging, $chunk['hash'], $bytes ) ) {
+                    return false;
+                }
+            }
         } finally {
             fclose( $handle ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- paired with fopen above.
         }
 
         return $chunks;
+    }
+    // phpcs:enable Squiz.Commenting.FunctionCommentThrowTag.Missing
+
+    /**
+     * A torn write still needs a complete temporary copy before replacement.
+     *
+     * @param string $staging Staging directory.
+     * @param string $hash    Chunk hash.
+     * @param int    $length  Expected bytes.
+     *
+     * @return bool
+     */
+    private static function staged_chunk_matches( $staging, $hash, $length ): bool {
+        $final = $staging . DIRECTORY_SEPARATOR . $hash . '.bin';
+        clearstatcache( true, $final );
+        return is_file( $final ) && filesize( $final ) === $length;
+    }
+
+    /**
+     * Hosts that disable disk-space reporting can still stage uploads.
+     *
+     * @param string $staging Directory on the staging filesystem.
+     *
+     * @return int|null Free bytes, or null when unknown.
+     */
+    protected static function free_space_bytes( string $staging ): ?int {
+        $free = function_exists( 'disk_free_space' ) ? @disk_free_space( $staging ) : false; // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- advisory check; some hosts disable disk-space reporting.
+
+        /**
+         * Filters available bytes on the upload staging filesystem.
+         *
+         * @param float|false $free    Free bytes, or false when unknown.
+         * @param string      $staging Staging directory.
+         */
+        $free = apply_filters( 'mainwp_backup_upload_staging_free_space', $free, $staging );
+        return is_numeric( $free ) && is_finite( (float) $free ) && $free >= 0 ? (int) $free : null;
     }
 
     /**
@@ -152,8 +217,7 @@ class MainWP_Backup_Chunker { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     private static function stage_chunk( $staging, $hash, $bytes ) {
         $final = $staging . DIRECTORY_SEPARATOR . $hash . '.bin';
 
-        clearstatcache( true, $final );
-        if ( is_file( $final ) && filesize( $final ) === strlen( $bytes ) ) {
+        if ( static::staged_chunk_matches( $staging, $hash, strlen( $bytes ) ) ) {
             return true;
         }
 

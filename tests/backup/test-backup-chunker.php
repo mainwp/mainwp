@@ -15,6 +15,8 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Chunker;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
+use MainWP\Dashboard\MainWP_Exception;
 
 /**
  * Class MainWP_Backup_Chunker_Test
@@ -272,5 +274,60 @@ class MainWP_Backup_Chunker_Test extends \WP_UnitTestCase {
 		$this->assertSame( $chunks[0]['hash'], $chunks[1]['hash'] );
 		$staged = glob( $staging . DIRECTORY_SEPARATOR . '*.bin' );
 		$this->assertCount( 1, $staged, 'Identical chunks must dedupe to one staged file.' );
+	}
+
+	/**
+	 * Only reusable chunks reduce the reservation, and duplicate hashes count once.
+	 *
+	 * @dataProvider staged_space_cases
+	 * @param string $existing Existing first chunk: absent, intact, or torn.
+	 * @param int    $remaining Bytes that need new staging writes.
+	 */
+	public function test_disk_preflight_counts_missing_chunks_before_staging( $existing, $remaining ) {
+		$dir     = $this->make_temp_dir();
+		$path    = $this->make_fixture_file( $dir, 3000 );
+		$staging = $dir . '/staging';
+		mkdir( $staging );
+		file_put_contents( $path, str_repeat( 'a', 1000 ) . str_repeat( 'b', 1000 ) . str_repeat( 'a', 1000 ) );
+		$first = $staging . '/' . hash( MainWP_Backup_Chunker::hash_algo(), str_repeat( 'a', 1000 ) ) . '.bin';
+		if ( 'absent' !== $existing ) {
+			file_put_contents( $first, str_repeat( 'a', 'intact' === $existing ? 1000 : 123 ) );
+		}
+		file_put_contents( $staging . '/unrelated.bin', str_repeat( 'z', 3000 ) );
+		$free = 100 * MB_IN_BYTES + $remaining - 1;
+		add_filter(
+			'mainwp_backup_upload_staging_free_space',
+			static function () use ( &$free ) {
+				return $free;
+			}
+		);
+		try {
+			MainWP_Backup_Chunker::plan_artifact( $path, $staging, 1000 );
+			$this->fail( 'Insufficient space must throw before staging any missing chunk.' );
+		} catch ( MainWP_Exception $e ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_DISK_FULL, $e->get_message_error_code() );
+		}
+		$this->assertCount( 'absent' === $existing ? 1 : 2, glob( $staging . '/*.bin' ) );
+		if ( 'absent' !== $existing ) {
+			$this->assertSame( 'intact' === $existing ? 1000 : 123, filesize( $first ), 'Even a torn chunk must remain untouched on refusal.' );
+		}
+		++$free;
+		$chunks = MainWP_Backup_Chunker::plan_artifact( $path, $staging, 1000 );
+		$this->assertCount( 3, $chunks, 'Exactly the remaining unique bytes plus the margin must suffice.' );
+		$this->assertSame( str_repeat( 'a', 1000 ), file_get_contents( $first ) );
+		$this->assertSame( $chunks[0]['hash'], $chunks[2]['hash'] );
+	}
+
+	/**
+	 * The two unique chunks require at most 2000 new bytes.
+	 *
+	 * @return array
+	 */
+	public static function staged_space_cases() {
+		return array(
+			'new with duplicate' => array( 'absent', 2000 ),
+			'resumed'            => array( 'intact', 1000 ),
+			'torn'               => array( 'torn', 2000 ),
+		);
 	}
 }

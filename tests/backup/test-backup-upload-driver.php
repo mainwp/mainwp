@@ -19,6 +19,7 @@ require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 use MainWP\Dashboard\MainWP_Backup_Archive_Cipher;
 use MainWP\Dashboard\MainWP_Backup_Chunker;
 use MainWP\Dashboard\MainWP_Backup_Encryption;
+use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Storage_Destinations;
 use MainWP\Dashboard\MainWP_Backup_Upload_Driver;
@@ -878,6 +879,231 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertStringContainsString( 'could not be read or prepared for upload: large.zip', $job->last_error );
 		$this->assertStringNotContainsString( $artifact['path'], $job->last_error );
 		$this->assertStringNotContainsString( 'is missing from this Dashboard', $job->last_error );
+	}
+
+	/**
+	 * Space must be reserved before even the first chunk is written.
+	 *
+	 * @dataProvider staging_space_shortfalls
+	 * @param int $free Available staging bytes.
+	 */
+	public function test_chunking_disk_preflight_refuses_before_any_chunk_is_written( $free ) {
+		list( $dest_id ) = $this->make_local_destination();
+		$id              = $this->make_snapshot(
+			array(
+				'archive.zip' => array(
+					'size' => 2 * MB_IN_BYTES,
+					'role' => 'full',
+				),
+			)
+		);
+		$store           = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$staging = $this->private_root . '/upload-staging/' . $id . '-' . $dest_id;
+		add_filter(
+			'mainwp_backup_upload_chunk_size',
+			static function () {
+				return 64 * KB_IN_BYTES;
+			}
+		);
+		add_filter(
+			'mainwp_backup_upload_staging_free_space',
+			static function () use ( $free ) {
+				return $free;
+			}
+		);
+		$written = array();
+		add_filter(
+			'wp_delete_file',
+			static function ( $path ) use ( &$written, $staging ) {
+				if ( str_starts_with( $path, $staging . '/' ) ) {
+					$written[] = $path;
+				}
+				return $path;
+			}
+		);
+
+		$now = time();
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, $now );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+		$this->assertStringContainsString( '[' . MainWP_Backup_Error_Codes::ERR_DISK_FULL . ']', $job->last_error );
+		$this->assertSame( $now + 300, (int) $job->next_retry_at );
+		$this->assertSame( array(), $written, 'Refusal must precede staging, rather than write chunks and then delete them.' );
+		$this->assertSame( array(), glob( $staging . '/*.bin' ) );
+	}
+
+	/**
+	 * The safety margin is part of the required space.
+	 *
+	 * @return array
+	 */
+	public static function staging_space_shortfalls() {
+		return array(
+			'below artifact size' => array( 2 * MB_IN_BYTES - 1 ),
+			'below margin'        => array( 102 * MB_IN_BYTES - 1 ),
+		);
+	}
+
+	/**
+	 * A failed fifth write must release space while this lane still owns it.
+	 *
+	 * @dataProvider staging_failure_leases
+	 * @param string $lease Lease state at the failed write.
+	 */
+	public function test_chunking_write_failure_cleans_only_owned_destination_staging( $lease ) {
+		global $wpdb;
+		list( $dest_id )  = $this->make_local_destination();
+		list( $other_id ) = $this->make_local_destination();
+		$id               = $this->make_snapshot(
+			array(
+				'archive.zip' => array(
+					'size' => 2 * MB_IN_BYTES,
+					'role' => 'full',
+				),
+			)
+		);
+		$store            = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id, $other_id ) );
+		$jobs    = $store->get_jobs_for_snapshot( $id );
+		$job_id  = (int) $jobs[0]->id;
+		$other   = $this->private_root . '/upload-staging/' . $id . '-' . $other_id;
+		$staging = $this->private_root . '/upload-staging/' . $id . '-' . $dest_id;
+		mkdir( $other, 0755, true );
+		file_put_contents( $other . '/sentinel.bin', 'other destination' );
+		$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Keep the other destination in its own lane.
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array(
+				'locked_by'    => 'other-lane',
+				'locked_until' => time() + 3600,
+			),
+			array( 'id' => (int) $jobs[1]->id )
+		);
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$content  = file_get_contents( $snapshot->archives[0]['path'] );
+		$hash     = hash( MainWP_Backup_Chunker::hash_algo(), substr( $content, 4 * 64 * KB_IN_BYTES, 64 * KB_IN_BYTES ) );
+		$blocked  = $staging . '/' . $hash . '.bin';
+		mkdir( $blocked, 0755, true );
+		add_filter(
+			'mainwp_backup_upload_chunk_size',
+			static function () {
+				return 64 * KB_IN_BYTES;
+			}
+		);
+		$failed_after = null;
+		set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- The real rename failure must reach the driver's failure handler.
+			static function ( $severity, $message ) use ( $blocked, $staging, $lease, $wpdb, $job_id, &$failed_after ) {
+				if ( E_WARNING !== $severity || ! str_contains( $message, 'rename(' ) || ! str_contains( $message, $blocked ) ) {
+					return false;
+				}
+				$failed_after = count( glob( $staging . '/*.bin' ) ) - 1;
+				rmdir( $blocked );
+				if ( 'owned' !== $lease ) {
+					$wpdb->update( // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Simulate lease loss during the filesystem write.
+						MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+						'expired' === $lease ? array( 'locked_until' => 1 ) : array(
+							'locked_by'    => 'new-lane',
+							'locked_until' => time() + 300,
+						),
+						array( 'id' => $job_id )
+					);
+				}
+				return true;
+			}
+		);
+		$clean_before_retry = null;
+		add_filter(
+			'query',
+			static function ( $query ) use ( $staging, &$clean_before_retry ) {
+				if ( str_contains( $query, "SET status = 'failed_retryable'" ) ) {
+					$clean_before_retry = ! is_dir( $staging );
+				}
+				return $query;
+			}
+		);
+		try {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		} finally {
+			restore_error_handler();
+		}
+		$job = $store->get_job( $job_id );
+		$this->assertSame( 4, $failed_after, 'Four chunks must exist before the fifth write fails.' );
+		$this->assertSame( 'other destination', file_get_contents( $other . '/sentinel.bin' ) );
+		if ( 'owned' === $lease ) {
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_RETRYABLE, $job->status );
+			$this->assertDirectoryDoesNotExist( $staging );
+			$this->assertTrue( $clean_before_retry, 'Cleanup must precede the retry transition that releases the lease.' );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240, (int) $job->next_retry_at + 1 );
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $store->get_job( $job_id )->status, 'The retry must re-stage after cleanup.' );
+			$this->assertSame( 'other destination', file_get_contents( $other . '/sentinel.bin' ) );
+		} else {
+			$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING, $job->status );
+			$this->assertCount( 4, glob( $staging . '/*.bin' ) );
+			$this->assertSame( 0, (int) $job->attempt_count );
+		}
+	}
+
+	/**
+	 * A reclaimed or expired lease cannot authorize cleanup.
+	 *
+	 * @return array
+	 */
+	public static function staging_failure_leases() {
+		return array(
+			'owned'   => array( 'owned' ),
+			'expired' => array( 'expired' ),
+			'stolen'  => array( 'stolen' ),
+		);
+	}
+
+	/**
+	 * A crash before checkpointing must not charge already staged bytes again.
+	 */
+	public function test_chunking_resumes_unrecorded_staging_with_only_remaining_space() {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$id                     = $this->make_snapshot(
+			array(
+				'archive.zip' => array(
+					'size' => 2 * MB_IN_BYTES,
+					'role' => 'full',
+				),
+			)
+		);
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$content  = file_get_contents( $snapshot->archives[0]['path'] );
+		$staging  = $this->private_root . '/upload-staging/' . $id . '-' . $dest_id;
+		mkdir( $staging, 0755, true );
+		for ( $index = 0; $index < 30; ++$index ) {
+			$bytes = substr( $content, $index * 64 * KB_IN_BYTES, 64 * KB_IN_BYTES );
+			$hash  = hash( MainWP_Backup_Chunker::hash_algo(), $bytes );
+			file_put_contents( $staging . '/' . $hash . '.bin', $bytes );
+		}
+		$checked       = array();
+		$reported_free = 100 * MB_IN_BYTES + 2 * 64 * KB_IN_BYTES;
+		add_filter(
+			'mainwp_backup_upload_chunk_size',
+			static function () {
+				return 64 * KB_IN_BYTES;
+			}
+		);
+		add_filter(
+			'mainwp_backup_upload_staging_free_space',
+			static function ( $free, $dir ) use ( &$checked, &$reported_free ) {
+				$checked[] = $dir;
+				return $reported_free;
+			},
+			10,
+			2
+		);
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $store->get_jobs_for_snapshot( $id )[0]->status );
+		$this->assertSame( array( $staging ), $checked, 'Check the staging filesystem once before writing the remainder.' );
+		$this->assertCount( 32, glob( $base . '/4/' . $id . '/chunks/*.bin' ) );
+		$reported_free = false;
+		$this->assertCount( 32, MainWP_Backup_Chunker::plan_artifact( $snapshot->archives[0]['path'], $staging, 64 * KB_IN_BYTES ), 'An unavailable free-space report must still permit staging.' );
+		$this->assertSame( array( $staging, $staging ), $checked );
 	}
 
 	/**

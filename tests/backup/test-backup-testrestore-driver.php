@@ -418,6 +418,32 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'], 'The sandbox temp dir must be removed.' );
 	}
 
+	/** The shared staging driver must mark damage before a sandbox imports bytes. */
+	public function test_testrestore_mismatch_marks_damaged() {
+		$dump   = $this->write_db_dump( 'damaged.sql.gz', $this->sentinel_sql() );
+		$id     = $this->record(
+			'db',
+			array(
+				array(
+					'file'   => 'damaged.sql.gz',
+					'size'   => filesize( $dump ),
+					'role'   => 'db',
+					'path'   => $dump,
+					'sha256' => hash( 'sha256', 'different bytes' ),
+				),
+			)
+		);
+		$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $id );
+		$this->assertSame( 'fail', $result['state'] );
+		$this->assertSame( 'mainwp_restore_local_archive_hash_mismatch', $result['error_code'] );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$this->assertSame( $result['error_code'], $snapshot->archives[0]['damaged']['code'] );
+		$this->assertSame( 'complete', $snapshot->status );
+		$this->assertSame( 'fail', $snapshot->test_restore_state );
+		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ) );
+		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'] );
+	}
+
 	/** Test restore must refuse before replaying a changed local dump. */
 	public function test_n1_testrestore_refuses_local_size_mismatch() {
 		$dump   = $this->write_db_dump( 'changed.sql.gz', $this->sentinel_sql() );
@@ -435,6 +461,8 @@ class MainWP_Backup_TestRestore_Driver_Test extends MainWP_Abilities_Test_Case {
 		$result = MainWP_Backup_TestRestore_Driver::instance()->verify_snapshot( $id );
 		$this->assertSame( 'fail', $result['state'] );
 		$this->assertSame( 'mainwp_restore_local_archive_size_mismatch', $result['error_code'] );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$this->assertSame( $result['error_code'], $snapshot->archives[0]['damaged']['code'] );
 		$this->assertFalse( $this->db_exists( $result['sandbox']['db_name'] ) );
 		$this->assertDirectoryDoesNotExist( $result['sandbox']['temp_dir'] );
 	}

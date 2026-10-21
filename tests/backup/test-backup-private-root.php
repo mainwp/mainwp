@@ -8,6 +8,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
+use MainWP\Dashboard\MainWP_Backup_Diagnostics;
 use MainWP\Dashboard\MainWP_Backup_Retention_Executor;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
 use MainWP\Dashboard\MainWP_Backup_TestRestore_Sandbox;
@@ -23,6 +24,291 @@ require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 
 	use Backup_Private_Root_Fixture;
+
+	/**
+	 * Map temporary storage through the same ancestor calculation as a subdirectory install.
+	 */
+	private function map_probe_root(): void {
+		add_filter( 'site_url', static fn() => 'https://example.org' . wp_normalize_path( realpath( ABSPATH ) ) );
+		MainWP_Backup_Private_Root::reset();
+	}
+
+	/**
+	 * A front controller or access denial must not be mistaken for exposed archive bytes.
+	 *
+	 * @dataProvider probe_http_responses
+	 * @param int    $status HTTP status.
+	 * @param string $body Token or unrelated response.
+	 * @param bool   $refused Whether storage must be refused.
+	 */
+	public function test_probe_http_verdict( int $status, string $body, bool $refused ): void {
+		$this->map_probe_root();
+		$requests = 0;
+		$probe    = '';
+		$http     = function ( $pre, $args, $url ) use ( $status, $body, &$requests, &$probe ) {
+			++$requests;
+			$probe = rawurldecode( wp_parse_url( $url, PHP_URL_PATH ) );
+			$this->assertSame( $this->private_root, dirname( $probe ) );
+			$this->assertMatchesRegularExpression( '/^mainwp-probe-[a-zA-Z0-9]{24}\.zip$/', basename( $probe ) );
+			$token = file_get_contents( $probe );
+			$this->assertSame( 32, strlen( $token ) );
+			$this->assertSame( 5, $args['timeout'] );
+			$this->assertSame( 3, $args['redirection'] );
+			$this->assertSame( 1024, $args['limit_response_size'] );
+			$this->assertFalse( $args['sslverify'] );
+			return array(
+				'response' => array( 'code' => $status ),
+				'body'     => 'token' === $body ? $token : $body,
+			);
+		};
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		try {
+			$result = MainWP_Backup_Private_Root::site_dir( 7 );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+		}
+		$this->assertSame( 1, $requests );
+		$this->assertFileDoesNotExist( $probe );
+		$this->assertSame( array(), glob( $this->private_root . '/mainwp-probe-*.zip' ) );
+		if ( $refused ) {
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_backup_private_root_unavailable', $result->get_error_code() );
+			$this->assertStringContainsString( 'the web server serves this directory', $result->get_error_message() );
+			$this->assertStringContainsString( 'MAINWP_BACKUP_PRIVATE_DIR', $result->get_error_message() );
+			$this->assertDirectoryDoesNotExist( $this->private_root . '/sites' );
+		} else {
+			$this->assertSame( $this->private_root . '/sites/7/', $result );
+		}
+	}
+
+	/**
+	 * Only an exact token match proves public access.
+	 *
+	 * @return array
+	 */
+	public static function probe_http_responses(): array {
+		return array(
+			'served filter root' => array( 200, 'token', true ),
+			'not found'          => array( 404, '', false ),
+			'forbidden'          => array( 403, '', false ),
+			'unauthorized'       => array( 401, '', false ),
+			'front controller'   => array( 200, '<html>fallback</html>', false ),
+		);
+	}
+
+	/**
+	 * Loopback outages allow backups and produce opt-in diagnostics without probe secrets.
+	 *
+	 * @dataProvider unknown_probe_responses
+	 * @param bool $enabled Diagnostics setting.
+	 * @param int  $status Zero for a transport error, otherwise an HTTP status.
+	 */
+	public function test_unknown_probe_allows_with_opt_in_diagnostics( bool $enabled, int $status ): void {
+		$this->map_probe_root();
+		$diag     = $this->private_root . '/diagnostics';
+		$requests = 0;
+		$token    = '';
+		mkdir( $diag, 0700, true );
+		update_option( MainWP_Backup_Diagnostics::OPTION_ENABLED, $enabled ? '1' : '0' );
+		add_filter( 'mainwp_backup_diagnostics_dir', static fn() => $diag );
+		$http = static function ( $pre, $args, $url ) use ( $status, &$requests, &$token ) {
+			++$requests;
+			$token = file_get_contents( rawurldecode( wp_parse_url( $url, PHP_URL_PATH ) ) );
+			return $status ? array(
+				'response' => array( 'code' => $status ),
+				'body'     => '',
+			) : new \WP_Error( 'http_request_failed', 'Connection timed out.' );
+		};
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		try {
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$cache = get_option( 'mainwp_backup_private_root_probe' );
+			$this->assertSame( 'unknown', $cache['verdict'] );
+			$this->assertEqualsWithDelta( time() + DAY_IN_SECONDS, $cache['expires'], 5 );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 8 ) );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+		}
+		$this->assertSame( 1, $requests );
+		$files = glob( $diag . '/*.jsonl' );
+		$this->assertCount( $enabled ? 1 : 0, $files );
+		if ( $enabled ) {
+			$lines = file( $files[0], FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
+			$this->assertCount( 1, $lines );
+			$event = json_decode( $lines[0], true );
+			$this->assertSame( 'private_root_probe', $event['kind'] );
+			$this->assertSame(
+				array(
+					'verdict' => 'unknown',
+					'reason'  => $status ? 'http_' . $status : 'http_request_failed',
+				),
+				$event['payload']
+			);
+			$this->assertStringNotContainsString( $token, $lines[0] );
+			$this->assertStringNotContainsString( $this->private_root, $lines[0] );
+		}
+		$this->assertSame( array(), glob( $this->private_root . '/mainwp-probe-*.zip' ) );
+	}
+
+	/**
+	 * Transport errors and server failures share the allow policy.
+	 *
+	 * @return array
+	 */
+	public static function unknown_probe_responses(): array {
+		return array(
+			'timeout enabled'  => array( true, 0 ),
+			'timeout disabled' => array( false, 0 ),
+			'503 enabled'      => array( true, 503 ),
+			'503 disabled'     => array( false, 503 ),
+		);
+	}
+
+	/**
+	 * A repaired server must be usable on the next request.
+	 */
+	public function test_served_then_fixed_is_not_persisted(): void {
+		$this->map_probe_root();
+		$requests = 0;
+		$http     = static function ( $pre, $args, $url ) use ( &$requests ) {
+			++$requests;
+			return array(
+				'response' => array( 'code' => 1 === $requests ? 200 : 404 ),
+				'body'     => file_get_contents( rawurldecode( wp_parse_url( $url, PHP_URL_PATH ) ) ),
+			);
+		};
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		try {
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 8 ) );
+			$this->assertSame( 1, $requests, 'A request reuses its served verdict.' );
+			$this->assertFalse( get_option( 'mainwp_backup_private_root_probe' ) );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertSame( 2, $requests );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+		}
+	}
+
+	/**
+	 * Root, URL, expiry and first creation determine whether an old allow still applies.
+	 */
+	public function test_not_served_cache_and_key_changes(): void {
+		global $wpdb;
+		$this->map_probe_root();
+		$requests = 0;
+		$http     = static function () use ( &$requests ) {
+			++$requests;
+			return array(
+				'response' => array( 'code' => 404 ),
+				'body'     => '',
+			);
+		};
+		add_filter( 'pre_http_request', $http );
+		try {
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$cache = get_option( 'mainwp_backup_private_root_probe' );
+			$this->assertSame( hash( 'sha256', $this->private_root . "\n" . site_url() ), $cache['key'] );
+			$this->assertSame( 'not_served', $cache['verdict'] );
+			$this->assertEqualsWithDelta( time() + 7 * DAY_IN_SECONDS, $cache['expires'], 5 );
+			$this->assertNotContains( $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM {$wpdb->options} WHERE option_name = %s", 'mainwp_backup_private_root_probe' ) ), array( 'yes', 'on', 'auto', 'auto-on' ) );
+			$this->assertIsString( MainWP_Backup_Private_Root::staging_dir( 'restore-staging', 'job' ) );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 8 ) );
+			$this->assertSame( 1, $requests );
+			mkdir( $this->private_root . '-filtered', 0700 );
+			$filter = fn() => $this->private_root . '-filtered';
+			add_filter( 'mainwp_backup_private_root', $filter, 20 );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertSame( 2, $requests );
+			$this->assertNotSame( $cache['key'], get_option( 'mainwp_backup_private_root_probe' )['key'] );
+			add_filter( 'site_url', static fn( $url ) => str_replace( 'example.org', 'changed.example.org', $url ), 20 );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 8 ) );
+			$this->assertSame( 3, $requests );
+			$cache            = get_option( 'mainwp_backup_private_root_probe' );
+			$cache['expires'] = time() - 1;
+			update_option( 'mainwp_backup_private_root_probe', $cache, false );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 9 ) );
+			$this->assertSame( 4, $requests );
+			$this->remove_private_fixture( $this->private_root . '-filtered' );
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 10 ) );
+			$this->assertSame( 5, $requests, 'Recreated roots must probe even with a cached allow.' );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+		}
+	}
+
+	/**
+	 * Lookups and roots outside this host's URL space must never issue HTTP requests.
+	 */
+	public function test_read_only_and_unmapped_root_make_no_http_requests(): void {
+		$this->map_probe_root();
+		$requests = 0;
+		$http     = static function () use ( &$requests ) {
+			++$requests;
+			return new \WP_Error( 'unexpected_http' );
+		};
+		add_filter( 'pre_http_request', $http );
+		try {
+			$this->assertIsString( MainWP_Backup_Private_Root::resolve() );
+			$this->assertIsString( MainWP_Backup_Private_Root::site_path( 7 ) );
+			$this->assertIsString( MainWP_Backup_Private_Root::staging_path( 'restore-staging', 'job' ) );
+			$this->assertSame( '', MainWP_Backup_Private_Root::availability_reason() );
+			MainWP_Backup_Private_Root::is_within_private_site_dir( $this->private_root . '/sites/7/a.zip', 7 );
+			MainWP_Backup_Private_Root::is_within_site_roots( $this->private_root . '/sites/7/a.zip', 7 );
+			$this->assertSame( 0, $requests );
+			$this->assertDirectoryDoesNotExist( $this->private_root );
+			add_filter( 'site_url', static fn() => 'https://example.org', 20 );
+			MainWP_Backup_Private_Root::reset();
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$cache = get_option( 'mainwp_backup_private_root_probe' );
+			$this->assertSame( 'unmapped', $cache['verdict'] );
+			$this->assertEqualsWithDelta( time() + 7 * DAY_IN_SECONDS, $cache['expires'], 5 );
+			$this->assertSame( 0, $requests );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+		}
+	}
+
+	/**
+	 * A constant outside WordPress must still be checked against the parent docroot.
+	 */
+	public function test_served_constant_root_is_refused(): void {
+		$root = $this->private_root . '/backups';
+		$wp   = $this->private_root . '/wordpress';
+		mkdir( $wp, 0700, true );
+		// Constants need their own process so the fixture cannot change the harness's WordPress root.
+		// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_var_export -- PHP literals preserve fixture paths in the isolated process.
+		$script = 'define("ABSPATH", ' . var_export( $wp . '/', true ) . '); define("WP_CONTENT_DIR", ABSPATH . "wp-content");'
+			. 'define("MAINWP_BACKUP_PRIVATE_DIR", ' . var_export( $root, true ) . ');'
+			. 'function wp_normalize_path($p) { return $p; } function untrailingslashit($p) { return rtrim($p, "/"); }'
+			. 'function trailingslashit($p) { return rtrim($p, "/") . "/"; } function path_is_absolute($p) { return $p[0] === "/"; }'
+			. 'function apply_filters($tag, $value) { return $value; } function __($value, $domain) { return $value; }'
+			. 'function wp_mkdir_p($p) { return is_dir($p) || mkdir($p, 0700, true); }'
+			. 'function wp_generate_password($length, $special) { return substr(bin2hex(random_bytes($length)), 0, $length); }'
+			. 'function site_url() { return "https://example.org/wordpress"; } function wp_parse_url($url, $component = -1) { return parse_url($url, $component); }'
+			. 'function get_option($key, $default = false) { return $default; }'
+			. 'function is_wp_error($v) { return $v instanceof WP_Error; }'
+			. 'class WP_Error { public $code; public $message; function __construct($c, $m) { $this->code = $c; $this->message = $m; } }'
+			. '$requests = []; function wp_remote_get($url, $args) { global $requests; $requests[] = $url; return ["response" => ["code" => 200], "body" => file_get_contents(MAINWP_BACKUP_PRIVATE_DIR . "/" . basename($url))]; }'
+			. 'function wp_remote_retrieve_response_code($r) { return $r["response"]["code"]; } function wp_remote_retrieve_body($r) { return $r["body"]; }'
+			. 'require ' . var_export( dirname( __DIR__, 2 ) . '/class/backup/class-mainwp-backup-private-root.php', true ) . ';'
+			. '$result = MainWP\\Dashboard\\MainWP_Backup_Private_Root::site_dir(7); echo json_encode([$result instanceof WP_Error ? $result->code : null, $result instanceof WP_Error ? $result->message : $result, $requests]);';
+		// phpcs:enable WordPress.PHP.DevelopmentFunctions.error_log_var_export
+		$output = shell_exec( escapeshellarg( PHP_BINARY ) . ' -r ' . escapeshellarg( $script ) );
+		$result = json_decode( $output, true );
+		$this->assertIsArray( $result, (string) $output );
+		$this->assertSame( 'mainwp_backup_private_root_unavailable', $result[0] );
+		$this->assertStringContainsString( 'the web server serves this directory', $result[1] );
+		$this->assertCount( 1, $result[2] );
+		$this->assertStringStartsWith( 'https://example.org/backups/mainwp-probe-', $result[2][0] );
+		$this->assertSame( array(), glob( $root . '/mainwp-probe-*.zip' ) );
+	}
 
 	/**
 	 * Deep configured paths must be refused before any directory is created.
@@ -45,6 +331,7 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	public function setUp(): void {
 		parent::setUp();
 		$this->set_up_private_root();
+		delete_option( 'mainwp_backup_private_root_probe' );
 		add_filter(
 			'upload_dir',
 			function ( $dirs ) {

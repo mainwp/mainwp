@@ -22,6 +22,7 @@
             ],
             "source": "local",
             "restorable": true,
+            "damaged": false,
             "restore_reason": "",
             "removal_reason": "",
             "skipped_count": 0,

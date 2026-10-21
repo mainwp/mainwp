@@ -63,12 +63,15 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         $entries          = array();
         foreach ( MainWP_Backup_Snapshots::instance()->get_snapshots_for_site( $site_id ) as $snapshot ) {
             $source         = $this->snapshot_source( $snapshot );
+            $damaged        = MainWP_Backup_Snapshots::snapshot_has_damage( $snapshot );
             $removal_reason = 'pruned' === $snapshot->status && isset( $removal_tooltips[ $snapshot->removal_reason ?? '' ] )
                 ? (string) $snapshot->removal_reason : MainWP_Backup_Snapshots::REMOVAL_REASON_UNKNOWN;
 
             $reason = '';
             if ( 'unavailable' === $source ) {
-                if ( 'complete' === $snapshot->status ) {
+                if ( 'complete' === $snapshot->status && $damaged ) {
+                    $reason = wp_specialchars_decode( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_DAMAGED ), ENT_QUOTES );
+                } elseif ( 'complete' === $snapshot->status ) {
                     $reason = __( 'The backup files are missing from this Dashboard and no cloud copy finished uploading, so it cannot be restored.', 'mainwp' );
                 } elseif ( 'pruned' === $snapshot->status && MainWP_Backup_Snapshots::REMOVAL_REASON_UNKNOWN === $removal_reason ) {
                     // Pruned before the cause was recorded (DB 9.0.2.32), so the retention default would be a guess.
@@ -85,6 +88,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             $entries[] = array(
                 'snapshot'       => $snapshot,
                 'source'         => $source,
+                'damaged'        => $damaged,
                 'restorable'     => '' === $reason,
                 'restore_reason' => $reason,
                 'removal_reason' => $removal_reason,
@@ -184,6 +188,9 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         }
         foreach ( $plan as $entry ) {
             if ( 'unavailable' === $entry['source'] ) {
+                if ( ! empty( $entry['damaged'] ) ) {
+                    return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_DAMAGED, wp_specialchars_decode( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_DAMAGED ), ENT_QUOTES ) );
+                }
                 return $this->refusal(
                     MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_ARTIFACT_UNAVAILABLE,
                     sprintf(
@@ -282,7 +289,8 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         $file       = isset( $archive['file'] ) ? (string) $archive['file'] : '';
         $local_path = isset( $archive['path'] ) ? (string) $archive['path'] : '';
         $flat_name  = basename( $file ) === $file;
-        $has_local  = $flat_name && '' !== $local_path && file_exists( $local_path );
+        $damaged    = ! empty( $archive['damaged'] );
+        $has_local  = ! $damaged && $flat_name && '' !== $local_path && file_exists( $local_path );
 
         $source          = 'unavailable';
         $remote_key      = '';
@@ -308,6 +316,8 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             'size'              => isset( $archive['size'] ) ? (int) $archive['size'] : 0,
             'recorded_size'     => $archive['size'] ?? null,
             'sha256'            => '',
+            'recorded_sha256'   => array_key_exists( 'hash_skipped', $archive ) ? '' : (string) ( $archive['sha256'] ?? '' ),
+            'damaged'           => $damaged,
             // Trusted backup-time hash for a remote artifact, empty when the
             // upload predates artifact hashing. The staging fallback verifies
             // a downloaded object against this when present.
@@ -393,7 +403,7 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
 
         $all_local = ! empty( $snapshot->archives );
         foreach ( (array) $snapshot->archives as $archive ) {
-            if ( empty( $archive['path'] ) || ! file_exists( $archive['path'] ) ) {
+            if ( ! empty( $archive['damaged'] ) || empty( $archive['path'] ) || ! file_exists( $archive['path'] ) ) {
                 $all_local = false;
                 break;
             }
@@ -402,7 +412,13 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
             return 'local';
         }
 
-        $remote      = $this->remote_artifact_index( $snapshot );
+        $remote = $this->remote_artifact_index( $snapshot );
+        foreach ( (array) $snapshot->archives as $archive ) {
+            if ( ! empty( $archive['damaged'] ) && ! isset( $remote[ $archive['file'] ?? '' ] ) ) {
+                return 'unavailable';
+            }
+        }
+
         $has_remote  = ! empty( $remote );
         $has_chunked = false;
         foreach ( $remote as $info ) {

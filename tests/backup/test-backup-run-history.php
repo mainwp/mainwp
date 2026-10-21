@@ -336,6 +336,33 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Storage can fail before the executor creates its first progress row.
+	 */
+	public function test_first_private_root_failure_keeps_code_and_reason(): void {
+		$site = $this->site();
+		$task = $this->task( array( $site ) );
+		$this->assertNull( MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site ) );
+		$this->assertTrue( touch( $this->private_root ) );
+		\MainWP\Dashboard\MainWP_Backup_Private_Root::reset();
+
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+
+		$this->assertCount( 1, $this->rows() );
+		$this->assertSame( 'failed', $this->rows()[0]['outcome'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $this->rows()[0]['error_code'] );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( $task->id, $site );
+		$this->assertNotNull( $progress );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $progress->fetchResult['error_code'] );
+		$this->assertStringContainsString( 'could not create directory', $progress->last_error );
+		$this->assertNotSame( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ), $progress->last_error );
+		$fresh   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
+		$details = \MainWP\Dashboard\MainWP_Backup_Read_Model::task_run_details( $fresh );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $details['sites'][0]['error']['code'] );
+		$this->assertStringContainsString( 'could not create directory', $details['sites'][0]['error']['source_text'] );
+		$this->assertSame( array(), $this->calls, 'Storage refusal precedes all Child requests.' );
+	}
+
+	/**
 	 * Error marks count as finished sites but must remain failed in history.
 	 */
 	public function test_driver_error_finalize_and_safe_message(): void {

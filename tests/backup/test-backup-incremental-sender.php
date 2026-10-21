@@ -1447,6 +1447,44 @@ class MainWP_Backup_Incremental_Sender_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( (string) $tip_id, (string) $params['parent_snapshot_id'] );
 	}
 
+	/** Damage anywhere in the chain must prevent adding another increment. */
+	public function test_executor_restarts_full() {
+		global $wpdb;
+		$site_id = $this->create_test_site();
+		$base_id = $this->record_base_snapshot( $site_id );
+		$this->record_increment( $site_id, $base_id );
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'archives' => wp_json_encode(
+					array(
+						array(
+							'file' => 'base.zip',
+							'role' => 'full',
+						),
+					)
+				),
+			),
+			array( 'id' => $base_id )
+		);
+		MainWP_Backup_Snapshots::instance()->mark_artifact_damaged( $base_id, 'base.zip', 'mainwp_restore_local_archive_hash_mismatch' );
+		$this->mock_child_actions(
+			array(
+				'backup_preflight'   => $this->preflight_response(),
+				'backup_task_create' => array(
+					'task_id' => 'child-task-1',
+					'phase'   => 'queued',
+				),
+			)
+		);
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		$cycle   = $this->run_cycle( $site_id, $this->make_task( $website, 11, array( 'max_chain_length' => 0 ) ) );
+		$this->assertNull( $cycle['exception'] );
+		$params = $this->last_call_params( 'backup_task_create' );
+		$this->assertSame( 'full', $params['type'] );
+		$this->assertSame( '1', (string) $params['emit_manifest'] );
+	}
+
 	/**
 	 * A pruned ancestor breaks the chain even below the length limit:
 	 * its artifacts are gone, so every further increment would be

@@ -2432,6 +2432,12 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		$cases['allowed trailing semicolons'] = array( 'INSERT INTO wp_posts VALUES (1);;;', array( 'INSERT INTO wp_posts VALUES (1)' ), '' );
 		$cases['dash without whitespace']     = array( 'INSERT INTO wp_posts VALUES (1--2); USE other;', array( 'INSERT INTO wp_posts VALUES (1--2)', 'USE other' ), 'USE' );
 
+		$cases['allowed insert, then a mariadb-hidden qualifier'] = array(
+			"INSERT INTO `wp_posts` VALUES (1);\nINSERT INTO /*M!100100 `wordpress`.*/`wp_users` (`ID`, `user_login`) VALUES (2, 'x');",
+			array( 'INSERT INTO `wp_posts` VALUES (1)', "INSERT INTO /*M!100100 `wordpress`.*/`wp_users` (`ID`, `user_login`) VALUES (2, 'x')" ),
+			'INSERT cross-schema',
+		);
+
 		$split = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'split_sql_dump' );
 		$guard = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'guard_sql_statement' );
 		$split->setAccessible( true );

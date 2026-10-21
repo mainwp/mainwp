@@ -338,6 +338,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'uploads'            => $uploads,
                 'source'             => (string) $entry['source'],
                 'restorable'         => (bool) $entry['catalog_restorable'],
+                'damaged'            => (bool) $entry['damaged'],
                 'restore_reason'     => (string) $entry['catalog_restore_reason'],
                 'removal_reason'     => (string) $entry['removal_reason'],
                 'skipped_count'      => $skipped['count'],

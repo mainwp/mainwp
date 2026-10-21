@@ -34,6 +34,13 @@ class MainWP_Backup_Private_Root {
     private static $used_ladder = false;
 
     /**
+     * Request-local exposure verdicts by root and site URL.
+     *
+     * @var array
+     */
+    private static $probe_verdicts = array();
+
+    /**
      * Reset request-local state for tests.
      *
      * @return void
@@ -42,6 +49,7 @@ class MainWP_Backup_Private_Root {
         self::$root                = null;
         self::$availability_reason = '';
         self::$used_ladder         = false;
+        self::$probe_verdicts      = array();
     }
 
     /**
@@ -309,15 +317,160 @@ class MainWP_Backup_Private_Root {
         if ( is_wp_error( $root ) ) {
             return $root;
         }
-        $root = self::ensure_private_dir( $root );
+        $existed = is_dir( $root );
+        $root    = self::ensure_private_dir( $root );
         if ( is_wp_error( $root ) ) {
             return $root;
+        }
+        if ( 'served' === self::exposure_verdict( $root, ! $existed ) ) {
+            return self::unavailable( $root, __( 'the web server serves this directory', 'mainwp' ) );
         }
         $parent = self::ensure_private_dir( $root . $kind, $root );
         if ( is_wp_error( $parent ) ) {
             return $parent;
         }
         return self::ensure_private_dir( $parent . $name, $parent, false );
+    }
+
+    /**
+     * Cache loopback evidence without keeping a repaired host refused across requests.
+     *
+     * @param string $root Canonical root.
+     * @param bool   $created Whether this writer created the root.
+     * @return string
+     */
+    private static function exposure_verdict( string $root, bool $created ): string {
+        $site_url = site_url();
+        $key      = hash( 'sha256', untrailingslashit( $root ) . "\n" . $site_url );
+        if ( ! $created ) {
+            if ( isset( self::$probe_verdicts[ $key ] ) ) {
+                return self::$probe_verdicts[ $key ];
+            }
+            $cached = get_option( 'mainwp_backup_private_root_probe' );
+            if ( is_array( $cached ) && ( $cached['key'] ?? '' ) === $key
+                && time() < (int) ( $cached['expires'] ?? 0 )
+                && in_array( $cached['verdict'] ?? '', array( 'not_served', 'unmapped', 'unknown' ), true ) ) {
+                self::$probe_verdicts[ $key ] = $cached['verdict'];
+                return $cached['verdict'];
+            }
+        }
+
+        $url                          = self::probe_url( $root, $site_url );
+        $reason                       = '';
+        $verdict                      = null === $url ? 'unmapped' : self::probe_exposure( $root, $url, $reason );
+        self::$probe_verdicts[ $key ] = $verdict;
+        if ( 'served' !== $verdict ) {
+            update_option(
+                'mainwp_backup_private_root_probe',
+                array(
+                    'key'     => $key,
+                    'verdict' => $verdict,
+                    'expires' => time() + ( 'unknown' === $verdict ? DAY_IN_SECONDS : 7 * DAY_IN_SECONDS ),
+                ),
+                false
+            );
+        }
+        if ( 'unknown' === $verdict && MainWP_Backup_Diagnostics::is_enabled() ) {
+            MainWP_Backup_Diagnostics::instance()->record(
+                '',
+                'private_root_probe',
+                0,
+                0,
+                array(
+                    'verdict' => 'unknown',
+                    'reason'  => $reason,
+                )
+            );
+        }
+        return $verdict;
+    }
+
+    /**
+     * Map storage through the URL ancestry of WordPress.
+     *
+     * @param string $root Canonical root.
+     * @param string $site_url WordPress URL.
+     * @return string|null Null when the root is outside this site's URL space.
+     */
+    private static function probe_url( string $root, string $site_url ): ?string {
+        $ancestor = self::canonical_path( ABSPATH );
+        $parts    = wp_parse_url( $site_url );
+        if ( null === $ancestor || ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
+            return null;
+        }
+        $segments = array_values( array_filter( explode( '/', trim( $parts['path'] ?? '', '/' ) ), 'strlen' ) );
+        $levels   = 0;
+        $path     = untrailingslashit( $root );
+        while ( $path !== $ancestor && ! str_starts_with( $path, trailingslashit( $ancestor ) ) ) {
+            $parent = dirname( $ancestor );
+            if ( $parent === $ancestor ) {
+                return null;
+            }
+            $ancestor = $parent;
+            ++$levels;
+        }
+        if ( count( $segments ) < $levels ) {
+            return null;
+        }
+        $segments = array_slice( $segments, 0, count( $segments ) - $levels );
+        $relative = trim( substr( $path, strlen( $ancestor ) ), '/' );
+        if ( '' !== $relative ) {
+            $segments = array_merge( $segments, array_map( 'rawurlencode', explode( '/', $relative ) ) );
+        }
+        return $parts['scheme'] . '://' . $parts['host'] . ( isset( $parts['port'] ) ? ':' . $parts['port'] : '' ) . '/' . implode( '/', $segments ) . '/';
+    }
+
+    /**
+     * Confirm exposure with harmless bytes that follow the archive serving rules.
+     *
+     * @param string $root Canonical root.
+     * @param string $url Root URL.
+     * @param string $reason Short diagnostic code for an unknown result.
+     * @return string
+     */
+    private static function probe_exposure( string $root, string $url, string &$reason ): string {
+        // phpcs:disable WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors.Discouraged -- Local probes must fail without emitting filesystem warnings.
+        $name   = 'mainwp-probe-' . wp_generate_password( 24, false ) . '.zip';
+        $path   = $root . $name;
+        $token  = wp_generate_password( 32, false );
+        $handle = false;
+        try {
+            $reason = 'probe_write_failed';
+            $handle = @fopen( $path, 'x' );
+            if ( false === $handle ) {
+                return 'unknown';
+            }
+            $written = strlen( $token ) === @fwrite( $handle, $token );
+            $written = @fclose( $handle ) && $written;
+            if ( ! $written ) {
+                return 'unknown';
+            }
+            $url     .= $name;
+            $response = wp_remote_get(
+                $url,
+                array(
+                    'timeout'             => 5,
+                    'redirection'         => 3,
+                    'sslverify'           => apply_filters( 'https_local_ssl_verify', false, $url ),
+                    'limit_response_size' => 1024,
+                )
+            );
+            if ( is_wp_error( $response ) ) {
+                $reason = substr( sanitize_key( (string) $response->get_error_code() ), 0, 64 );
+                return 'unknown';
+            }
+            $status = (int) wp_remote_retrieve_response_code( $response );
+            if ( $status >= 500 && $status < 600 ) {
+                $reason = 'http_' . $status;
+                return 'unknown';
+            }
+            return 200 === $status && wp_remote_retrieve_body( $response ) === $token ? 'served' : 'not_served';
+        } finally {
+            if ( false !== $handle ) {
+                @unlink( $path );
+            }
+        }
+        // phpcs:enable WordPress.WP.AlternativeFunctions, WordPress.PHP.NoSilencedErrors.Discouraged
     }
 
     /**

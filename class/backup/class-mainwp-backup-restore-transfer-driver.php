@@ -439,11 +439,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
         foreach ( $plan as $index => $entry ) {
             $recorded_size = array_key_exists( 'recorded_size', $entry ) ? $entry['recorded_size'] : ( $entry['size'] ?? null );
             if ( 'local' === $entry['source'] && is_file( $entry['local_path'] ) && ! MainWP_Backup_File_Manager::local_archive_size_matches( $entry['local_path'], $recorded_size, true ) ) {
-                return array(
-                    'done'       => false,
-                    'error'      => __( 'The backup archive on this Dashboard was changed or replaced after this backup finished, so it cannot be restored. Choose another backup to restore.', 'mainwp' ),
-                    'error_code' => 'mainwp_restore_local_archive_size_mismatch',
-                );
+                return $this->local_artifact_mismatch( $entry, MainWP_Backup_Error_Codes::ERR_RESTORE_LOCAL_ARCHIVE_SIZE_MISMATCH );
             }
             if ( ! empty( $entry['staged_path'] ) && file_exists( $entry['staged_path'] ) && ! empty( $entry['sha256'] ) ) {
                 continue;
@@ -491,6 +487,24 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
     }
 
     /**
+     * Only a mismatch against stored local evidence proves archive damage.
+     *
+     * @param array  $entry Plan entry identifying the stored artifact.
+     * @param string $code Local integrity failure code.
+     * @return array Non-retryable staging or transfer error.
+     */
+    private function local_artifact_mismatch( array $entry, string $code ): array {
+        MainWP_Backup_Snapshots::instance()->mark_artifact_damaged( (int) $entry['snapshot_id'], (string) ( $entry['source_file'] ?? '' ), $code );
+        return array(
+            'state'      => 'error',
+            'done'       => false,
+            'error'      => MainWP_Backup_Error_Codes::message( $code ),
+            'error_code' => $code,
+            'retryable'  => false,
+        );
+    }
+
+    /**
      * Stage a single artifact.
      *
      * @param string $staging  Staging dir.
@@ -501,8 +515,16 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
      */
     private function stage_one( string $staging, array &$entry, float $deadline ): array {
         if ( 'local' === $entry['source'] && file_exists( $entry['local_path'] ) ) {
+            $actual = hash_file( 'sha256', $entry['local_path'] );
+            if ( false === $actual ) {
+                return $this->stage_state( 'error', esc_html__( 'The backup archive on this Dashboard could not be read. Try the restore again.', 'mainwp' ), null, true );
+            }
+            $recorded = (string) ( $entry['recorded_sha256'] ?? '' );
+            if ( '' !== $recorded && ! hash_equals( $recorded, $actual ) ) {
+                return $this->local_artifact_mismatch( $entry, MainWP_Backup_Error_Codes::ERR_RESTORE_LOCAL_ARCHIVE_HASH_MISMATCH );
+            }
             $entry['staged_path'] = $entry['local_path'];
-            $entry['sha256']      = (string) hash_file( 'sha256', $entry['local_path'] );
+            $entry['sha256']      = $actual;
             return $this->stage_state( 'staged' );
         }
 
@@ -1342,12 +1364,7 @@ class MainWP_Backup_Restore_Transfer_Driver implements MainWP_Backup_Chunk_Trans
 
             $recorded_size = array_key_exists( 'recorded_size', $entry ) ? $entry['recorded_size'] : ( $entry['size'] ?? null );
             if ( 'local' === ( $entry['source'] ?? '' ) && ! MainWP_Backup_File_Manager::local_archive_size_matches( $entry['staged_path'], $recorded_size, true ) ) {
-                return array(
-                    'done'       => false,
-                    'error'      => __( 'The backup archive on this Dashboard was changed or replaced after this backup finished, so it cannot be restored. Choose another backup to restore.', 'mainwp' ),
-                    'error_code' => 'mainwp_restore_local_archive_size_mismatch',
-                    'retryable'  => false,
-                );
+                return $this->local_artifact_mismatch( $entry, MainWP_Backup_Error_Codes::ERR_RESTORE_LOCAL_ARCHIVE_SIZE_MISMATCH );
             }
             $size = (int) filesize( $entry['staged_path'] );
             $raw  = (string) file_get_contents( $entry['staged_path'], false, null, $cursor['offset'], max( 1, min( $cursor['chunk_bytes'], $size - $cursor['offset'] ) ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded read of the staged artifact.

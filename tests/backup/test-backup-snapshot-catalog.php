@@ -216,6 +216,169 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotSame( '', $entries[0]['restore_reason'], 'Unavailable snapshots must explain themselves.' );
 	}
 
+	/** Damage remains local to one artifact and does not change retention status. */
+	public function test_damage_marker_is_idempotent_and_scoped() {
+		$id       = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'bad.zip',
+					'role' => 'full',
+				),
+				array(
+					'file' => 'good.zip',
+					'role' => 'db',
+				),
+			)
+		);
+		$other_id = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'bad.zip',
+					'role' => 'full',
+				),
+			)
+		);
+		$store    = MainWP_Backup_Snapshots::instance();
+		$before   = $store->get_snapshot_by_id( $id );
+		$code     = 'mainwp_restore_local_archive_size_mismatch';
+		$store->mark_artifact_damaged( $id, 'bad.zip', $code );
+		$marked = $store->get_snapshot_by_id( $id );
+		$store->mark_artifact_damaged( $id, 'bad.zip', 'mainwp_restore_local_archive_hash_mismatch' );
+		$store->mark_artifact_damaged( $id, 'unknown.zip', $code );
+		$this->assertSame( $marked->archives, $store->get_snapshot_by_id( $id )->archives );
+		$this->assertSame( 'complete', $marked->status );
+		$this->assertSame( $code, $marked->archives[0]['damaged']['code'] );
+		$unchanged = $marked->archives[0];
+		unset( $unchanged['damaged'] );
+		$this->assertSame( $before->archives[0], $unchanged );
+		$this->assertSame( $before->archives[1], $marked->archives[1] );
+		$this->assertArrayNotHasKey( 'damaged', $store->get_snapshot_by_id( $other_id )->archives[0] );
+	}
+
+	/** A completed cloud copy remains usable when only local bytes are damaged. */
+	public function test_damaged_local_falls_back_to_remote() {
+		$id = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'full.zip',
+					'role' => 'full',
+				),
+			)
+		);
+		MainWP_Backup_Snapshots::instance()->mark_artifact_damaged( $id, 'full.zip', 'mainwp_restore_local_archive_hash_mismatch' );
+		$this->complete_upload(
+			$id,
+			71,
+			array(
+				array(
+					'file'   => 'full.zip',
+					'mode'   => 'whole',
+					'sha256' => 'cloud-hash',
+				),
+			)
+		);
+		$catalog  = MainWP_Backup_Snapshot_Catalog::instance();
+		$resolved = $catalog->resolve_restorable_chain( $id );
+		$this->assertTrue( $resolved['ok'] );
+		$this->assertSame( 'remote', $resolved['plan'][0]['source'] );
+		$this->assertSame( '', $resolved['plan'][0]['local_path'] );
+		$this->assertSame( 'cloud-hash', $resolved['plan'][0]['expected_sha256'] );
+		$entries = $catalog->list_snapshots_for_site( 9901 );
+		$this->assertSame( 'remote', $entries[0]['source'] );
+		$this->assertTrue( $entries[0]['restorable'] );
+		$this->assertSame( '', $entries[0]['restore_reason'] );
+	}
+
+	/** The cheap AJAX path and full admission must explain unavailable damage alike. */
+	public function test_damaged_snapshot_unavailable() {
+		$id = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'full.zip',
+					'role' => 'full',
+				),
+			)
+		);
+		MainWP_Backup_Snapshots::instance()->mark_artifact_damaged( $id, 'full.zip', 'mainwp_restore_local_archive_hash_mismatch' );
+		$reason  = "This backup's archive on this Dashboard failed its integrity check during a restore, and no cloud copy is available, so it cannot be restored.";
+		$catalog = MainWP_Backup_Snapshot_Catalog::instance();
+		$entry   = $catalog->list_snapshots_for_site( 9901 )[0];
+		$this->assertSame( 'unavailable', $entry['source'] );
+		$this->assertTrue( $entry['damaged'] );
+		$this->assertFalse( $entry['restorable'] );
+		$this->assertSame( $reason, $entry['restore_reason'] );
+		$cheap = \MainWP\Dashboard\MainWP_Backup_Read_Model::list_backup_snapshots( 9901, false )[0];
+		$this->assertFalse( $cheap['catalog_restorable'] );
+		$this->assertSame( $entry['restore_reason'], $cheap['catalog_restore_reason'] );
+		$this->assertTrue( $cheap['damaged'] );
+		$resolved = $catalog->resolve_restorable_chain( $id );
+		$this->assertFalse( $resolved['ok'] );
+		$this->assertSame( 'mainwp_backup_snapshot_unrestorable_damaged', $resolved['code'] );
+		$this->assertSame( $entry['restore_reason'], $resolved['error'] );
+		$details = \MainWP\Dashboard\MainWP_Backup_Read_Model::snapshot_details( $id );
+		$this->assertFalse( $details['snapshot']['restorable'] );
+		$this->assertSame( $resolved['code'], $details['snapshot']['restore_reason']['code'] );
+		$this->assertSame( 'complete', $details['snapshot']['status'] );
+	}
+
+	/** A healthy cloud copy of another file cannot replace a damaged artifact. */
+	public function test_damaged_artifact_requires_its_own_cloud_copy() {
+		$id = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'full.zip',
+					'role' => 'full',
+				),
+				array(
+					'file' => 'db.zip',
+					'role' => 'db',
+				),
+			)
+		);
+		MainWP_Backup_Snapshots::instance()->mark_artifact_damaged( $id, 'full.zip', 'mainwp_restore_local_archive_hash_mismatch' );
+		$this->complete_upload(
+			$id,
+			71,
+			array(
+				array(
+					'file' => 'db.zip',
+					'mode' => 'whole',
+				),
+			)
+		);
+		$entry = MainWP_Backup_Snapshot_Catalog::instance()->list_snapshots_for_site( 9901 )[0];
+		$this->assertFalse( $entry['restorable'] );
+		$this->assertSame( 'unavailable', $entry['source'] );
+	}
+
+	/** Every descendant still needs the damaged full base's file archive. */
+	public function test_damaged_base_refuses_child() {
+		$base  = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'base.zip',
+					'role' => 'full',
+				),
+			)
+		);
+		$child = $this->make_snapshot(
+			array(
+				array(
+					'file' => 'db.zip',
+					'role' => 'db',
+				),
+			),
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		MainWP_Backup_Snapshots::instance()->mark_artifact_damaged( $base, 'base.zip', 'mainwp_restore_local_archive_hash_mismatch' );
+		$resolved = MainWP_Backup_Snapshot_Catalog::instance()->resolve_restorable_chain( $child );
+		$this->assertFalse( $resolved['ok'] );
+		$this->assertSame( 'mainwp_backup_snapshot_unrestorable_damaged', $resolved['code'] );
+	}
+
 	/**
 	 * A pruned snapshot lists as unavailable.
 	 */

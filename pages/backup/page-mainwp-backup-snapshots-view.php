@@ -549,7 +549,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 'remote': '<?php echo esc_js( esc_html__( 'Cloud Storage', 'mainwp' ) ); ?>',
                 'remote_chunked': '<?php echo esc_js( esc_html__( 'Cloud Storage', 'mainwp' ) ); ?>',
                 'unavailable': '<?php echo esc_js( esc_html__( 'Removed by Retention', 'mainwp' ) ); ?>',
-                'removed': '<?php echo esc_js( esc_html__( 'Removed', 'mainwp' ) ); ?>'
+                'removed': '<?php echo esc_js( esc_html__( 'Removed', 'mainwp' ) ); ?>',
+                'damaged': '<?php echo esc_js( esc_html__( 'Damaged Archive', 'mainwp' ) ); ?>'
             };
             var removalLabels = {
                 'manual': '<?php echo esc_js( esc_html__( 'Deleted Manually', 'mainwp' ) ); ?>',
@@ -919,14 +920,17 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         "data": null,
                         "render": function ( data, type, snap ) {
                             var sourceCell = sourceLabels[ snap.source ] || escAttr( snap.source );
-                            if ( 'unavailable' === snap.source && Object.prototype.hasOwnProperty.call( removalLabels, snap.removal_reason ) ) {
+                            var sourceKey = 'unavailable' === snap.source && snap.damaged ? 'damaged' : snap.source;
+                            if ( 'damaged' === sourceKey ) {
+                                sourceCell = sourceLabels.damaged;
+                            } else if ( 'unavailable' === snap.source && Object.prototype.hasOwnProperty.call( removalLabels, snap.removal_reason ) ) {
                                 sourceCell = removalLabels[ snap.removal_reason ];
                             } else if ( 'unavailable' === snap.source && 'pruned' === snap.status ) {
                                 // Pruned before the cause was recorded, so retention may not be why.
                                 sourceCell = sourceLabels.removed;
                             }
                             if ( 'display' === type ) {
-                                var sourceStyle = { local: [ 'blue', 'server' ], remote: [ 'teal', 'cloud' ], remote_chunked: [ 'teal', 'cloud' ], unavailable: [ 'grey', 'trash alternate outline' ] }[ snap.source ] || [ 'grey', 'question circle' ];
+                                var sourceStyle = { local: [ 'blue', 'server' ], remote: [ 'teal', 'cloud' ], remote_chunked: [ 'teal', 'cloud' ], unavailable: [ 'grey', 'trash alternate outline' ], damaged: [ 'red', 'exclamation triangle' ] }[ sourceKey ] || [ 'grey', 'question circle' ];
                                 sourceCell = '<span class="ui small basic ' + sourceStyle[0] + ' label"><i class="' + sourceStyle[1] + ' icon"></i>' + sourceCell + '</span>';
                                 var offsite = 'pruned' === snap.status ? null : offsiteLabels[ snap.offsite_state ];
                                 if ( offsite ) {
@@ -952,6 +956,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                         "orderable": false,
                         "className": "collapsing right aligned",
                         "render": function ( data, type, snap ) {
+                            if ( snap.damaged && ! snap.restorable && snap.restore_reason ) {
+                                // The cell is collapsing (nowrap), so the sentence needs its own wrapping box.
+                                return deleteButton( snap ) + '<div style="max-width: 20em; margin-top: 0.5em; white-space: normal; text-align: left;">' + escAttr( snap.restore_reason ) + '</div>';
+                            }
                             if ( 'unavailable' === snap.source || 'pruned' === snap.status ) {
                                 return '';
                             }
@@ -963,6 +971,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     }
                 ],
                 "createdRow": function ( row, snap ) {
+                    // A damaged backup still holds files the user can delete, and its row explains itself.
+                    if ( snap.damaged && 'unavailable' === snap.source ) {
+                        return;
+                    }
                     if ( 'unavailable' === snap.source || 'pruned' === snap.status ) {
                         $( row ).css( 'opacity', '0.55' );
                     }
@@ -986,7 +998,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 "drawCallback": function () {
                     var api = this.api();
                     var hasBackups = api.rows().data().toArray().some( function ( snapshot ) {
-                        return showRemovedSnapshots || snapshot.source !== 'unavailable';
+                        return showRemovedSnapshots || snapshot.source !== 'unavailable' || !! snapshot.damaged;
                     } );
                     var showEmpty = snapshotsListLoaded && ! hasBackups && $( '#mainwp-snapshots-empty-state' ).length > 0;
                     $( api.table().container() ).toggle( ! showEmpty );
@@ -1094,7 +1106,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( 'mainwp-restore-snapshots-table' !== settings.nTable.id ) {
                     return true;
                 }
-                return showRemovedSnapshots || ! snap || 'unavailable' !== snap.source;
+                return showRemovedSnapshots || ! snap || 'unavailable' !== snap.source || !! snap.damaged;
             } );
 
             $( '#mainwp-snapshots-show-removed' ).on( 'change', function () {

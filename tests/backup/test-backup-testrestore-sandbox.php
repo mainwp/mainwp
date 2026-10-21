@@ -828,6 +828,265 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
+	 * A sandbox whose header walk runs at scaled limits and whose PharData listing carries extra
+	 * directories, standing in for a listing the walk never saw. A given listing replaces PharData's,
+	 * which drops long names of 1024 bytes or more and cannot read one that keeps a trailing NUL.
+	 *
+	 * @param int        $entries    Header count limit.
+	 * @param int        $name_bytes Name budget.
+	 * @param string[]   $extra      Directories appended to PharData's listing.
+	 * @param array|null $listing    Listing pairs (path, is directory) used instead of PharData's.
+	 * @return MainWP_Backup_TestRestore_Sandbox
+	 */
+	private function scaled_sandbox( $entries, $name_bytes, $extra = array(), $listing = null ) {
+		return new class( $entries, $name_bytes, $extra, $listing ) extends MainWP_Backup_TestRestore_Sandbox {
+			/**
+			 * Scaled limits and extra listed directories.
+			 *
+			 * @var array
+			 */
+			private $scaled;
+
+			/**
+			 * Keep the scaled values.
+			 *
+			 * @param int        $entries    Header count limit.
+			 * @param int        $name_bytes Name budget.
+			 * @param string[]   $extra      Extra listed directories.
+			 * @param array|null $listing    Replacement listing.
+			 */
+			public function __construct( $entries, $name_bytes, $extra, $listing ) {
+				parent::__construct();
+				$this->scaled = compact( 'entries', 'name_bytes', 'extra', 'listing' );
+			}
+
+			/**
+			 * Scaled walk limits.
+			 *
+			 * @return array
+			 */
+			protected function tar_walk_limits(): array {
+				return array(
+					'entries'    => $this->scaled['entries'],
+					'name_bytes' => $this->scaled['name_bytes'],
+				);
+			}
+
+			/**
+			 * PharData's listing plus the extra directories.
+			 *
+			 * @param \PharData $phar Archive.
+			 * @return \Generator
+			 */
+			protected function tar_listing( \PharData $phar ): \Generator {
+				if ( null === $this->scaled['listing'] ) {
+					yield from parent::tar_listing( $phar );
+				} else {
+					yield from $this->scaled['listing'];
+				}
+				foreach ( $this->scaled['extra'] as $dir ) {
+					yield array( $dir, true );
+				}
+			}
+		};
+	}
+
+	/**
+	 * Run the header walk and listing check alone; names here can be longer than a file system allows.
+	 *
+	 * @param MainWP_Backup_TestRestore_Sandbox $sandbox Sandbox.
+	 * @param string                            $path    Plain tar.
+	 * @return MainWP_Exception|null Refusal, if any.
+	 */
+	private function validated_tar_refusal( $sandbox, $path ) {
+		$validate = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'validated_tar' );
+		$validate->setAccessible( true );
+		try {
+			$validate->invoke( $sandbox, $path );
+		} catch ( MainWP_Exception $e ) {
+			return $e;
+		}
+		return null;
+	}
+
+	/**
+	 * The name budget covers the entry limit at the longest name a ustar header holds without a
+	 * long-name record (155-byte prefix, slash, 100-byte name), as on the Child.
+	 */
+	public function test_tar_name_budget_covers_the_entry_limit_at_the_longest_ustar_name() {
+		$limits = new \ReflectionMethod( MainWP_Backup_TestRestore_Sandbox::class, 'tar_walk_limits' );
+		$limits->setAccessible( true );
+		$this->assertSame(
+			array(
+				'entries'    => 2000000,
+				'name_bytes' => 2000000 * 256,
+			),
+			$limits->invoke( new MainWP_Backup_TestRestore_Sandbox() )
+		);
+	}
+
+	/**
+	 * The name budget charges every name PharData keeps (a long-name payload as declared, else the
+	 * prefix and name up to NUL) and every parent directory a member implies without a header, before
+	 * duplicates merge. Scaled rows run at 8 x 256 name bytes, the production ratio, with the listing
+	 * PharData would give for the names the walk saw (as the Child's rows do), so the rows test the
+	 * walk rather than PharData's own name limits.
+	 *
+	 * @dataProvider tar_name_budget_matrix
+	 * @param array    $members  Members as array( kind, name ): file, dir, long (L then file), long-nul
+	 *                           (L with a trailing NUL), raw-long (L payload as given), or cut-payloads.
+	 * @param string   $expected accept, unreadable or limit.
+	 * @param int|null $entries  Scaled header limit, or null for the production limits.
+	 */
+	public function test_tar_name_budget_matrix( $members, $expected, $entries ) {
+		$path    = $this->dir . '/' . uniqid( 'budget-' ) . '.tar';
+		$handle  = fopen( $path, 'wb' );
+		$listing = array();
+		foreach ( $members as $member ) {
+			list( $kind, $name ) = $member;
+			if ( 'cut-payloads' === $kind ) {
+				// Distinct payloads that all cut to one name at the NUL still cost PharData their full size.
+				for ( $i = 0; $i < 1025; ++$i ) {
+					fwrite( $handle, $this->raw_tar_member( '././@LongLink', "a\0" . str_pad( (string) $i, 65534, 'z' ), '', 'L' ) . $this->raw_tar_member( 'placeholder', 'x' ) );
+				}
+			} elseif ( 'dir' === $kind ) {
+				fwrite( $handle, $this->raw_tar_member( $name, '', '', '5' ) );
+			} elseif ( 'file' === $kind ) {
+				fwrite( $handle, $this->raw_tar_member( $name, 'x' ) );
+			} else {
+				$payload = 'long-nul' === $kind ? $name . "\0" : $name;
+				fwrite( $handle, $this->raw_tar_member( '././@LongLink', $payload, '', 'L' ) . $this->raw_tar_member( substr( $name, 0, 100 ), 'x' ) );
+				$name = explode( "\0", $name, 2 )[0];
+			}
+			$listing[ $name ] = 'dir' === $kind;
+			// PharData lists the parents of every member itself.
+			for ( $cut = strrpos( $name, '/' ); false !== $cut && $cut > 0; $cut = strrpos( $name, '/' ) ) {
+				$name = substr( $name, 0, $cut );
+				if ( ! isset( $listing[ $name ] ) ) {
+					$listing[ $name ] = true;
+				}
+			}
+		}
+		fwrite( $handle, str_repeat( "\0", 1024 ) );
+		fclose( $handle );
+		$pairs = array();
+		foreach ( $listing as $name => $dir ) {
+			$pairs[] = array( (string) $name, $dir );
+		}
+		$sandbox = null === $entries ? new MainWP_Backup_TestRestore_Sandbox() : $this->scaled_sandbox( $entries, 8 * 256, array(), $pairs );
+		$caught  = $this->validated_tar_refusal( $sandbox, $path );
+		if ( 'accept' === $expected ) {
+			$this->assertNull( $caught, $caught ? $caught->get_message_extra( false ) : '' );
+			return;
+		}
+		$this->assertInstanceOf( MainWP_Exception::class, $caught );
+		$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+		if ( 'limit' === $expected ) {
+			$this->assertSame( 'Test restore name size limit exceeded while checking backup archive headers.', $caught->getMessage() );
+			$this->assertSame( 'tar name size limit exceeded', $caught->get_message_extra( false ) );
+		} else {
+			$this->assertSame( 'A backup archive could not be read.', $caught->getMessage() );
+		}
+	}
+
+	/**
+	 * Name budget rows from the shared rule. The Dashboard counts every header against the entry
+	 * limit, long-name records included, so rows with long names run with room for their headers.
+	 *
+	 * @return array
+	 */
+	public static function tar_name_budget_matrix() {
+		$names   = function ( $length, $count, $last = null ) {
+			$rows = array();
+			for ( $i = 0; $i < $count; ++$i ) {
+				$rows[] = array( 'long', str_repeat( chr( 97 + $i ), $i === $count - 1 && null !== $last ? $last : $length ) );
+			}
+			return $rows;
+		};
+		$average = array( array( 'dir', 'wp-content' ) );
+		for ( $i = 0; $i < 7; ++$i ) {
+			$average[] = array( 'file', str_pad( 'wp-content/' . $i . '-', 70, 'p' ) );
+		}
+		return array(
+			// About a million members at 70 bytes drew the old 64 MiB refusal; at the entry limit they fit.
+			'entry limit at average path length'  => array( $average, 'accept', 8 ),
+			'longest ustar names fill the budget' => array( $names( 256, 8 ), 'accept', 16 ),
+			'one byte over the budget'            => array( $names( 256, 8, 257 ), 'limit', 16 ),
+			'headed parent is not charged again'  => array( array( array( 'dir', 'dd' ), array( 'long', 'dd/' . str_repeat( 'x', 2043 ) ) ), 'accept', 8 ),
+			'implied parent fits exactly'         => array( array( array( 'long', 'dd/' . str_repeat( 'x', 2043 ) ) ), 'accept', 8 ),
+			'implied parent one byte over'        => array( array( array( 'long', 'dd/' . str_repeat( 'x', 2044 ) ) ), 'limit', 8 ),
+			// Fifty implied parents of one 101-byte name total 2500 bytes: depth costs PharData as much as length.
+			'deep implied parents'                => array( array( array( 'long', str_repeat( 'a/', 50 ) . 'x' ) ), 'limit', 8 ),
+			'long name with a trailing NUL'       => array( array( array( 'long-nul', str_repeat( 'g', 200 ) ) ), 'accept', 8 ),
+			'long name with bytes after a NUL'    => array( array( array( 'raw-long', "a\0b" ) ), 'unreadable', 8 ),
+			'more members than the entry limit'   => array( array_fill( 0, 9, array( 'dir', 'd' ) ), 'unreadable', 8 ),
+			// Production limits: refused at its first record, before the payloads add up.
+			'1025 payloads cut to one name'       => array( array( array( 'cut-payloads', '' ) ), 'unreadable', null ),
+		);
+	}
+
+	/**
+	 * The walk accepts a long name with one trailing NUL (GNU tar's shape), but PharData keeps the NUL
+	 * in the entry name and cannot read the entry, so the test restore still refuses the archive.
+	 * The Child writer declares the name without a NUL.
+	 */
+	public function test_tar_long_name_with_trailing_nul_is_unreadable_by_phardata() {
+		$name    = str_repeat( 'g', 200 );
+		$path    = $this->raw_tar( $this->raw_tar_member( '././@LongLink', $name . "\0", '', 'L' ) . $this->raw_tar_member( substr( $name, 0, 100 ), 'x' ) );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $path, 'extract' );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( 'A backup archive could not be read.', $caught->getMessage() );
+			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * A directory PharData lists without a header passes only when a walked member lies under it.
+	 *
+	 * @dataProvider tar_listed_directory_cases
+	 * @param string $directory Directory added to PharData's listing.
+	 * @param bool   $accepted  Whether the archive passes.
+	 */
+	public function test_tar_listed_directory_must_lead_to_a_walked_member( $directory, $accepted ) {
+		$long   = str_repeat( 'long/', 120 ) . 'file.txt';
+		$path   = $this->raw_tar(
+			$this->raw_tar_member( '././@LongLink', $long, '', 'L' ) . $this->raw_tar_member( 'placeholder.txt', 'long' )
+			. $this->raw_tar_member( 'plain.txt', 'x' ) . $this->raw_tar_member( 'folder/', '', '', '5' )
+			. str_repeat( "\0", 1024 ) . $this->raw_tar_member( 'after-end/', '', '', '5' )
+		);
+		$caught = $this->validated_tar_refusal( $this->scaled_sandbox( 2000000, 512000000, array( $directory ) ), $path );
+		if ( $accepted ) {
+			$this->assertNull( $caught, $caught ? $caught->get_message_extra( false ) : '' );
+		} else {
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( 'A backup archive could not be read.', $caught->getMessage() );
+		}
+	}
+
+	/**
+	 * Listed directories without a header.
+	 *
+	 * @return array
+	 */
+	public static function tar_listed_directory_cases() {
+		return array(
+			'implied parent'                     => array( 'long', true ),
+			'implied parent with a slash'        => array( 'long/', true ),
+			'implied grandparent'                => array( 'long/long', true ),
+			'headed directory'                   => array( 'folder', true ),
+			'orphan directory'                   => array( 'orphan', false ),
+			'orphan under a headed directory'    => array( 'folder/orphan', false ),
+			'name prefix that is not a parent'   => array( 'lon', false ),
+			'implied parent past the end marker' => array( 'after-end', false ),
+		);
+	}
+
+	/**
 	 * A member size past PharData's 32-bit limit is refused before PharData reads the archive.
 	 * The fixture is a sparse file, so it costs no disk space.
 	 *

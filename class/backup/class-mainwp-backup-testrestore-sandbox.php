@@ -1361,7 +1361,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * walk and PharData's listing to agree before extraction or SQL member access.
      *
      * @param string $plain Uncompressed archive path.
-     * @throws MainWP_Exception On unsafe, malformed, unsupported or unlisted members.
+     * @throws MainWP_Exception On unsafe, malformed, unsupported or unlisted members, or names over the size limit.
      * @return \PharData Archive with a complete, validated listing.
      */
     private function validated_tar( string $plain ): \PharData { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- one bounded header walk over the accepted shapes.
@@ -1370,9 +1370,13 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( false === $stream ) {
             throw $unreadable;
         }
+        // Over the budget is a size limit, not damage, so it must not suggest a new backup that would fail the same way.
+        $name_limit = new MainWP_Exception( esc_html__( 'Test restore name size limit exceeded while checking backup archive headers.', 'mainwp' ), 'tar name size limit exceeded', self::ERR_APPLY );
+        $limits     = $this->tar_walk_limits();
         $members    = array();
         $prefixed   = array();
         $dirs       = array();
+        $ancestors  = array();
         $long_name  = null;
         $count      = 0;
         $name_bytes = 0;
@@ -1391,8 +1395,8 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 if ( str_repeat( "\0", 512 ) === $header ) {
                     break;
                 }
-                // Match the Child restorer's MAX_EXTRACT_ENTRIES so test restores accept the same entry count.
-                if ( ++$count > 2000000 ) {
+                // The Child restorer's entry limit; here every header counts, long-name records included.
+                if ( ++$count > $limits['entries'] ) {
                     throw $unreadable;
                 }
                 $checksum = $this->tar_header_number( substr( $header, 148, 8 ) );
@@ -1415,6 +1419,11 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     if ( null !== $long_name || $size < 1 || $size > 65536 ) {
                         throw $unreadable;
                     }
+                    // PharData keeps the whole declared payload, so it is charged before it is read.
+                    $name_bytes += $size;
+                    if ( $name_bytes > $limits['name_bytes'] ) {
+                        throw $name_limit;
+                    }
                     $payload = '';
                     $unread  = $size;
                     while ( $unread > 0 ) {
@@ -1425,7 +1434,13 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                         $payload .= $chunk;
                         $unread  -= strlen( $chunk );
                     }
-                    $long_name = explode( "\0", $payload, 2 )[0];
+                    // The Child writer declares the name alone and GNU tar adds one NUL. Bytes after an earlier NUL
+                    // would sit in PharData's memory behind a shorter name the listing shows.
+                    $nul = strpos( $payload, "\0" );
+                    if ( false !== $nul && $nul < $size - 1 ) {
+                        throw $unreadable;
+                    }
+                    $long_name = false === $nul ? $payload : substr( $payload, 0, $nul );
                     if ( '' === $long_name ) {
                         throw $unreadable;
                     }
@@ -1444,6 +1459,29 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     }
                     $is_dir = '5' === $type;
                     $key    = $this->tar_comparison_name( $name, $is_dir );
+                    // Charged per header before duplicates merge, as PharData allocates them.
+                    if ( null === $long_name ) {
+                        $name_bytes += strlen( $name );
+                        if ( $name_bytes > $limits['name_bytes'] ) {
+                            throw $name_limit;
+                        }
+                    }
+                    // PharData creates every parent a member implies. A parent with its own header, or one already
+                    // recorded, has had its parents recorded.
+                    $parent = $key;
+                    $cut    = strrpos( $parent, '/' );
+                    while ( false !== $cut && $cut > 0 ) {
+                        $parent = substr( $parent, 0, $cut );
+                        if ( isset( $ancestors[ $parent ] ) || isset( $dirs[ $parent ] ) ) {
+                            break;
+                        }
+                        $name_bytes += $cut;
+                        if ( $name_bytes > $limits['name_bytes'] ) {
+                            throw $name_limit;
+                        }
+                        $ancestors[ $parent ] = true;
+                        $cut                  = strrpos( $parent, '/' );
+                    }
                     if ( isset( $members[ $key ] ) ) {
                         // PharData keeps one entry per name, so a file and a directory sharing one would drop a member.
                         if ( isset( $dirs[ $key ] ) !== $is_dir ) {
@@ -1454,10 +1492,6 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                             unset( $prefixed[ $key ] );
                         }
                     } else {
-                        $name_bytes += strlen( $key );
-                        if ( $name_bytes > 64 * MB_IN_BYTES ) {
-                            throw $unreadable;
-                        }
                         $members[ $key ] = 1;
                         if ( $is_dir ) {
                             $dirs[ $key ] = true;
@@ -1482,15 +1516,15 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with the header stream.
         }
         try {
-            $phar     = new \PharData( $plain );
-            $iterator = new \RecursiveIteratorIterator( $phar, \RecursiveIteratorIterator::SELF_FIRST );
-            foreach ( $iterator as $file ) {
-                $key = $this->tar_comparison_name( $iterator->getSubPathname(), $file->isDir() );
-                // PharData adds implicit parent directories, but every listed file needs a header, and a listed name keeps the walk's kind.
-                if ( ! $file->isDir() && ! isset( $members[ $key ] ) ) {
+            $phar = new \PharData( $plain );
+            foreach ( $this->tar_listing( $phar ) as list( $listed, $is_dir ) ) {
+                $key = $this->tar_comparison_name( $listed, $is_dir );
+                // PharData adds the parents of a member itself, so a listed directory without a header must lead to a
+                // walked member; every listed file needs a header, and a listed name keeps the walk's kind.
+                if ( $is_dir ? ! isset( $dirs[ $key ] ) && ! isset( $ancestors[ $key ] ) : ! isset( $members[ $key ] ) ) {
                     throw $unreadable;
                 }
-                if ( isset( $members[ $key ] ) && isset( $dirs[ $key ] ) !== $file->isDir() ) {
+                if ( isset( $members[ $key ] ) && isset( $dirs[ $key ] ) !== $is_dir ) {
                     throw $unreadable;
                 }
                 unset( $members[ $key ] );
@@ -1525,6 +1559,33 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             );
         }
         return $phar;
+    }
+
+    /**
+     * PharData's listing, parents included, as it would extract the archive.
+     *
+     * @param \PharData $phar Archive.
+     * @return \Generator<array{0: string, 1: bool}> Listed path and whether it is a directory.
+     */
+    protected function tar_listing( \PharData $phar ): \Generator {
+        $iterator = new \RecursiveIteratorIterator( $phar, \RecursiveIteratorIterator::SELF_FIRST );
+        foreach ( $iterator as $file ) {
+            yield array( $iterator->getSubPathname(), $file->isDir() );
+        }
+    }
+
+    /**
+     * Header walk bounds, shared with the Child restore so both accept the same archives: the Child
+     * restorer's entry limit, and 256 name bytes per entry (the longest ustar name without a GNU
+     * long-name record) for the memory that grows with name length.
+     *
+     * @return array{entries: int, name_bytes: int}
+     */
+    protected function tar_walk_limits(): array {
+        return array(
+            'entries'    => 2000000,
+            'name_bytes' => 512000000,
+        );
     }
 
     /**

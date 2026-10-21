@@ -1243,7 +1243,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                             ?>
                             <div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">
                                 <div class="right floated content">
-                                    <div class="sync-site-status" niceurl="<?php echo esc_html( $site_name ); ?>" siteid="<?php echo intval( $website->id ); ?>"><span data-position="left center" data-inverted="" data-tooltip="<?php echo $is_sync_err ? esc_html__( 'Site disconnected', 'mainwp' ) : esc_html__( 'Pending', 'mainwp' ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></span></div>
+                                    <div class="sync-site-status" niceurl="<?php echo esc_attr( rawurlencode( stripslashes( $site_name ) ) ); ?>" siteid="<?php echo intval( $website->id ); ?>"><span data-position="left center" data-inverted="" data-tooltip="<?php echo $is_sync_err ? esc_html__( 'Site disconnected', 'mainwp' ) : esc_html__( 'Pending', 'mainwp' ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></span></div>
                                 </div>
                                 <div class="content">
                                 <?php echo esc_html( $site_name ); ?>
@@ -1260,7 +1260,7 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                             ?>
                             <div class="item <?php echo $is_sync_err ? 'disconnected-site' : ''; ?>">
                                 <div class="right floated content">
-                                    <div class="sync-site-status" niceurl="<?php echo esc_html( $site_name ); ?>" siteid="<?php echo intval( $website->id ); ?>"><span data-position="left center" data-inverted="" data-tooltip="<?php echo $is_sync_err ? esc_html__( 'Site disconnected', 'mainwp' ) : esc_html__( 'Pending', 'mainwp' ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></span></div>
+                                    <div class="sync-site-status" niceurl="<?php echo esc_attr( rawurlencode( stripslashes( $site_name ) ) ); ?>" siteid="<?php echo intval( $website->id ); ?>"><span data-position="left center" data-inverted="" data-tooltip="<?php echo $is_sync_err ? esc_html__( 'Site disconnected', 'mainwp' ) : esc_html__( 'Pending', 'mainwp' ); ?>"><i class="<?php echo $is_sync_err ? 'exclamation red icon' : 'clock outline icon'; ?>"></i></span></div>
                                 </div>
                                 <div class="content">
                                 <?php echo esc_html( $site_name ); ?>

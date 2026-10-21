@@ -985,12 +985,16 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     /**
      * Keep intranet Child icons and pin other hosts to a checked global IPv4 address.
      *
-     * @param string $site_url Stored Child URL.
-     * @param string $icon_url Child-reported icon URL.
-     * @param array  $addresses IPv4 answers supplied by the resolver.
+     * @param string     $site_url Stored Child URL.
+     * @param string     $icon_url Child-reported icon URL.
+     * @param array|null $addresses IPv4 answers for the icon host; null looks them up.
      * @return array|false cURL resolve pins, or false when refused.
      */
-    public static function child_icon_resolve( string $site_url, string $icon_url, array $addresses = array() ) {
+    public static function child_icon_resolve( string $site_url, string $icon_url, ?array $addresses = null ) {
+        // Control bytes and spaces never belong in a fetchable URL, and a NUL makes curl_setopt() throw.
+        if ( '' === $icon_url || preg_match( '/[\x00-\x20\x7f]/', $icon_url ) ) {
+            return false;
+        }
         $parts = wp_parse_url( $icon_url );
         if ( ! is_array( $parts ) || empty( $parts['host'] ) || ! isset( $parts['scheme'] ) || ! in_array( strtolower( $parts['scheme'] ), array( 'http', 'https' ), true ) || isset( $parts['user'] ) || isset( $parts['pass'] ) ) {
             return false;
@@ -1000,39 +1004,49 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return array();
         }
 
-        $host       = trim( $parts['host'], '[]' );
-        $literal_ip = filter_var( $host, FILTER_VALIDATE_IP );
-        $addresses  = false !== $literal_ip ? array( $literal_ip ) : $addresses;
-        if ( empty( $addresses ) ) {
+        $host = $parts['host'];
+        if ( false !== filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+            // A literal address cannot change between this check and the request.
+            return static::is_global_ipv4( $host ) ? array() : false;
+        }
+        // curl looks up IDN hosts as punycode and reads a leading '-' in a pin as a removal, so a pin binds only an LDH ASCII name.
+        if ( ! preg_match( '/^(?!-)[a-z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-z0-9-]{1,63}(?<!-))*\.?$/i', $host ) ) {
+            return false;
+        }
+        if ( null === $addresses ) {
+            $addresses = gethostbynamel( $host );
+        }
+        if ( ! is_array( $addresses ) || empty( $addresses ) ) {
             return false;
         }
         foreach ( $addresses as $address ) {
-            if ( false === filter_var( $address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_GLOBAL_RANGE ) ) {
+            if ( ! is_string( $address ) || ! static::is_global_ipv4( $address ) ) {
                 return false;
             }
         }
-        // Literal addresses cannot change between validation and the request.
-        if ( false !== $literal_ip ) {
-            return array();
-        }
         $port = $parts['port'] ?? ( 'https' === strtolower( $parts['scheme'] ) ? 443 : 80 );
-        return array( $parts['host'] . ':' . $port . ':' . reset( $addresses ) );
+        return array( $host . ':' . $port . ':' . reset( $addresses ) );
+    }
+
+    /**
+     * GLOBAL_RANGE adds CGNAT (some cloud metadata) and the other special-use blocks to the private and reserved ranges.
+     *
+     * @param string $address Candidate address.
+     * @return bool Whether the address is a globally routable IPv4 address.
+     */
+    private static function is_global_ipv4( string $address ): bool {
+        return false !== filter_var( $address, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE | FILTER_FLAG_GLOBAL_RANGE );
     }
 
     /**
      * A compromised Child must not turn public icon storage into an internal read proxy.
      *
      * @param object $website Stored Child site.
-     * @param string $icon_url Child-reported icon URL.
+     * @param mixed  $icon_url Child-reported icon URL.
      * @return array Download or save result.
      */
     public static function download_child_icon( $website, $icon_url ) {
-        $resolve = is_string( $icon_url ) ? static::child_icon_resolve( $website->url, $icon_url ) : false;
-        if ( false === $resolve && is_string( $icon_url ) ) {
-            $host      = wp_parse_url( $icon_url, PHP_URL_HOST );
-            $addresses = is_string( $host ) ? gethostbynamel( $host ) : false;
-            $resolve   = static::child_icon_resolve( $website->url, $icon_url, is_array( $addresses ) ? $addresses : array() );
-        }
+        $resolve = is_string( $icon_url ) ? static::child_icon_resolve( (string) $website->url, $icon_url ) : false;
         if ( false === $resolve ) {
             $error = 'Icon URL is not allowed.';
             MainWP_Logger::instance()->debug( $error );

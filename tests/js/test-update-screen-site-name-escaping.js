@@ -286,10 +286,10 @@ for ( const type of [ 'plugin', 'theme' ] ) {
 }
 
 for ( const [ label, raw ] of cases ) {
-    for ( const type of [ 'plugin', 'theme' ] ) {
-        test( 'History info ' + type + ': ' + label, () => {
+    for ( const view of [ 'update-plugins-individual', 'update-themes-individual', 'update-plugin-per-item', 'update-theme-per-item', 'update-plugin-per-site', 'update-theme-per-site', 'update-plugin-per-tag', 'update-theme-per-tag' ] ) {
+        test( 'History info ' + view + ': ' + label, () => {
             const h = harness( raw );
-            h.node.attr( 'history-view', 'update-' + type + '-per-item' );
+            h.node.attr( 'history-view', view );
             h.node.attr( 'site_url', 'https://child.example/' );
             h.node.attr( 'tz-info', 'UTC' );
             h.context.mainwp_item_changes_load = () => {};
@@ -300,8 +300,10 @@ for ( const [ label, raw ] of cases ) {
             vm.runInContext( mainwp.slice( start, end ), h.context );
             h.clicks[ 0 ].call( h.node, { preventDefault() {}, stopPropagation() {} } );
             const decoded = (() => { try { return decodeURIComponent( raw ); } catch { return raw; } })();
-            assert.equal( info, decoded + ' (https://child.example/) UTC' );
+            assert.equal( info, decodeEntities( decoded ) + ' (https://child.example/) UTC' );
         } );
+    }
+    for ( const type of [ 'plugin', 'theme' ] ) {
         test( 'list History switch ' + type + ': ' + label, () => {
             const h = harness( raw );
             h.node.attr( 'history-type', type );

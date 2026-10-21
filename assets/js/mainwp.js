@@ -13,11 +13,15 @@ globalThis.mainwp_percent_decode = function (value) {
     }
 };
 
-globalThis.mainwp_text_html = function (value) {
+globalThis.mainwp_entities_text = function (value) {
     const textarea = document.createElement('textarea');
     // nosemgrep: AIK_js_insecure-document-method -- textarea content parses as RCDATA, so entity decoding cannot create elements or run handlers.
     textarea.innerHTML = String(value ?? '');
-    return textarea.value
+    return textarea.value;
+};
+
+globalThis.mainwp_text_html = function (value) {
+    return mainwp_entities_text(value)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -27,6 +31,11 @@ globalThis.mainwp_text_html = function (value) {
 
 globalThis.mainwp_site_name_html = function (raw) {
     return mainwp_text_html(mainwp_percent_decode(raw));
+};
+
+// For .text() sinks: the name as the admin typed it, unescaped.
+globalThis.mainwp_site_name_text = function (raw) {
+    return mainwp_entities_text(mainwp_percent_decode(raw));
 };
 
 globalThis.mainwpVars = globalThis.mainwpVars || {};
@@ -3321,7 +3330,7 @@ jQuery(function ($) {
             case 'update-plugins-individual':
                 parent = $(this).closest('.plugins-bulk-updates');
                 siteId = $(parent).attr('site_id');
-                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                info = mainwp_site_name_text($(parent).attr('site_name')) + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
                 title = $(this).closest('tr').attr('plugin_name');
                 slug = decodeURIComponent($(this).closest('tr').attr('plugin_slug'));
                 name = $(this).closest('tr').attr('plugin_name');
@@ -3329,7 +3338,7 @@ jQuery(function ($) {
             case 'update-themes-individual':
                 parent = $(this).closest('.themes-bulk-updates');
                 siteId = $(parent).attr('site_id');
-                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                info = mainwp_site_name_text($(parent).attr('site_name')) + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
                 title = $(this).closest('tr').attr('theme_name');
                 slug = $(this).closest('tr').attr('theme_slug');
                 name = $(this).closest('tr').attr('theme_name');
@@ -3372,14 +3381,14 @@ jQuery(function ($) {
             case 'update-plugin-per-item':
                 parent = $(this).closest('tr');
                 siteId = $(parent).attr('site_id');
-                info = mainwp_percent_decode($(parent).attr('site_name')) + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                info = mainwp_site_name_text($(parent).attr('site_name')) + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
                 title = $(parent).attr('plugin_name');
                 slug = decodeURIComponent($(parent).attr('plugin_slug'));
                 break;
             case 'update-theme-per-item':
                 parent = $(this).closest('tr');
                 siteId = $(parent).attr('site_id');
-                info = mainwp_percent_decode($(parent).attr('site_name')) + ' (' + decodeURIComponent($(parent).attr('site_url')) + ') ' + $(parent).attr('tz-info');
+                info = mainwp_site_name_text($(parent).attr('site_name')) + ' (' + decodeURIComponent($(parent).attr('site_url')) + ') ' + $(parent).attr('tz-info');
                 title = $(parent).attr('theme_name');
                 name = $(parent).attr('theme_name');
                 slug = decodeURIComponent($(parent).attr('theme_slug'));
@@ -3388,7 +3397,7 @@ jQuery(function ($) {
             case 'update-plugin-per-site': // NOSONAR - same as above.
                 parent = $(this).closest('.plugins-bulk-updates');
                 siteId = $(parent).attr('site_id');
-                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                info = mainwp_site_name_text($(parent).attr('site_name')) + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
                 title = $(this).closest('tr').attr('plugin_name');
                 slug = decodeURIComponent($(this).closest('tr').attr('plugin_slug'));
                 name = $(this).closest('tr').attr('plugin_name');
@@ -3396,7 +3405,7 @@ jQuery(function ($) {
             case 'update-theme-per-site': // NOSONAR - same above.
                 parent = $(this).closest('.themes-bulk-updates');
                 siteId = $(parent).attr('site_id');
-                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                info = mainwp_site_name_text($(parent).attr('site_name')) + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
                 title = $(this).closest('tr').attr('theme_name');
                 slug = $(this).closest('tr').attr('theme_slug');
                 name = $(this).closest('tr').attr('theme_name');
@@ -3405,14 +3414,14 @@ jQuery(function ($) {
             case 'update-plugin-per-tag':
                 parent = $(this).closest('.plugins-bulk-updates');
                 siteId = $(parent).attr('site_id');
-                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                info = mainwp_site_name_text($(parent).attr('site_name')) + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
                 title = $(this).closest('tr').attr('plugin_name');
                 slug = decodeURIComponent($(this).closest('tr').attr('plugin_slug'));
                 break;
             case 'update-theme-per-tag':
                 parent = $(this).closest('.themes-bulk-updates');
                 siteId = $(parent).attr('site_id');
-                info = $(parent).attr('site_name') + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
+                info = mainwp_site_name_text($(parent).attr('site_name')) + ' (' + $(parent).attr('site_url') + ') ' + $(parent).attr('tz-info');
                 title = $(this).closest('tr').attr('theme_name');
                 name = $(this).closest('tr').attr('theme_name');
                 slug = $(this).closest('tr').attr('theme_slug');

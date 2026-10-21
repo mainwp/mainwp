@@ -9,6 +9,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Security_Issues;
+use MainWP\Dashboard\MainWP_System_View;
 use MainWP\Dashboard\MainWP_Updates_Overview;
 use MainWP\Dashboard\MainWP_Updates_Per_Group;
 use MainWP\Dashboard\MainWP_Updates_Per_Item;
@@ -133,6 +134,26 @@ class Test_Update_Screen_Site_Name_Escaping extends \WP_UnitTestCase {
 				}
 			}
 			MainWP_DB::free_result( $websites );
+		}
+	}
+
+	/** The sync modal hands the backup popup the same encoding as the update screens, so names decode once. */
+	public function test_sync_modal_niceurl_encodes_the_stored_name_once(): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		foreach ( array( '&lt;img src=x onerror=alert(1)&gt;', 'A &amp;lt; B', 'ACME%20Ops', 'O\'Brien "Q"' ) as $name ) {
+			$website = MainWP_DB::instance()->get_website_by_id( $this->create_test_site( array( 'name' => $name ) ) );
+			ob_start();
+			try {
+				MainWP_System_View::render_footer_content( array( $website ) );
+				$html = ob_get_contents();
+			} finally {
+				ob_end_clean();
+			}
+			preg_match_all( '/niceurl="([^"]*)"/', $html, $matches );
+			$this->assertNotEmpty( $matches[1], $name );
+			foreach ( $matches[1] as $attribute ) {
+				$this->assertSame( rawurlencode( stripslashes( $website->name ) ), html_entity_decode( $attribute, ENT_QUOTES, 'UTF-8' ), $name );
+			}
 		}
 	}
 }

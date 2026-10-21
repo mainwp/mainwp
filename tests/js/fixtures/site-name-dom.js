@@ -39,7 +39,7 @@ class DOMParser {
 }
 
 function loadSiteNameHelper( vm, source, context ) {
-    for ( const name of [ 'mainwp_percent_decode', 'mainwp_text_html', 'mainwp_site_name_html' ] ) {
+    for ( const name of [ 'mainwp_percent_decode', 'mainwp_entities_text', 'mainwp_text_html', 'mainwp_site_name_html', 'mainwp_site_name_text' ] ) {
         const start = source.indexOf( 'globalThis.' + name + ' = ' );
         if ( start >= 0 ) vm.runInContext( source.slice( start, source.indexOf( '\n};', start ) + 3 ), context );
     }

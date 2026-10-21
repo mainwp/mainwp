@@ -149,7 +149,8 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 				clearstatcache( true, $ready );
 			}
 			$this->assertFileExists( $ready, 'The FTP fixture did not start.' );
-			$port   = substr( strrchr( file_get_contents( $ready ), ':' ), 1 );
+			$port = (string) substr( (string) strrchr( (string) file_get_contents( $ready ), ':' ), 1 );
+			$this->assertMatchesRegularExpression( '/^\d+$/', $port, 'The FTP fixture did not publish its port.' );
 			$result = $this->sync_request( $transport, '/sync-ftp?port=' . $port );
 			$this->assertFileDoesNotExist( $marker, 'A non-HTTP redirect reached the FTP listener.' );
 			$this->assertFalse( $result );
@@ -240,6 +241,20 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 			'empty userinfo'     => array( $site, 'https://@child.example/icon.png', array(), false ),
 			'unresolvable'       => array( $site, 'https://cdn.example/icon.png', array(), false ),
 			'no host'            => array( $site, '/icon.png', array(), false ),
+			'unicode host'       => array( $site, 'http://bücher.example/icon.png', array( '8.8.8.8' ), false ),
+			'punycode host'      => array( $site, 'http://xn--bcher-kva.example/icon.png', array( '8.8.8.8' ), array( 'xn--bcher-kva.example:80:8.8.8.8' ) ),
+			'leading hyphen'     => array( $site, 'http://-rb.example/icon.png', array( '8.8.8.8' ), false ),
+			'trailing hyphen'    => array( $site, 'http://rb-.example/icon.png', array( '8.8.8.8' ), false ),
+			'underscore host'    => array( $site, 'http://a_b.example/icon.png', array( '8.8.8.8' ), false ),
+			'trailing dot'       => array( $site, 'http://cdn.example./icon.png', array( '8.8.8.8' ), array( 'cdn.example.:80:8.8.8.8' ) ),
+			'decimal literal'    => array( $site, 'http://2130706433/icon.png', array( '127.0.0.1' ), false ),
+			'NUL same host'      => array( $site, "https://child.example/icon.png\0", array(), false ),
+			'NUL other host'     => array( $site, "https://cdn.example\0/icon.png", array( '8.8.8.8' ), false ),
+			'space'              => array( $site, 'https://child.example/my icon.png', array(), false ),
+			'tab'                => array( $site, "https://child.example/\ticon.png", array(), false ),
+			'DEL'                => array( $site, "https://child.example/\x7ficon.png", array(), false ),
+			'empty'              => array( $site, '', array(), false ),
+			'non-string answer'  => array( $site, 'https://cdn.example/icon.png', array( 8 ), false ),
 		);
 	}
 
@@ -260,8 +275,10 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 	 */
 	public static function invalid_icon_values() {
 		return array(
-			'array'   => array( array( 1 ) ),
-			'integer' => array( 123 ),
+			'array'            => array( array( 1 ) ),
+			'integer'          => array( 123 ),
+			'NUL in same host' => array( "https://child.example/icon.png\0" ),
+			'NUL in host'      => array( "https://cdn.example\0/icon.png" ),
 		);
 	}
 

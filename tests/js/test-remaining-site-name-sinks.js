@@ -10,6 +10,7 @@ function test(name, run) {
     scenarios.get(group).push({ name, run });
 }
 const { document, decodeEntities, escapeHtml, loadSiteNameHelper } = require('./fixtures/site-name-dom');
+// nosemgrep: AIK_ts_generic_path_traversal -- fixed asset file names under the repository, not input
 const sources = Object.fromEntries(['mainwp', 'mainwp-managesites-action', 'mainwp-uptime'].map(name => [name, fs.readFileSync(require.resolve('../../assets/js/' + name + '.js'), 'utf8')]));
 const cases = ['<img src=x onerror=alert(1)>', '&lt;img src=x onerror=alert(1)&gt;', 'A & B', 'A &amp; B', '\"><img src=x onerror=alert(1)>', '100% uptime', '&amp;lt;img src=x onerror=alert(1)&amp;gt;'];
 const escaped = value => escapeHtml(decodeEntities(value));
@@ -30,7 +31,7 @@ function harness(raw = 'Site') {
     function node(selector) {
         if (nodes.has(selector)) return nodes.get(selector);
         let text = '', html = '';
-        const classes = new Set(['child-site', 'error']);
+        const classes = new Set(['child-site']);
         const n = {
             length: selector === '.siteBulkInstall[status="queue"]:first' ? 0 : 1,
             attr(key, value) { if (typeof key === 'object') { Object.assign(attrs, key); writes.push({ selector, method: 'attr', value: key }); return this; } if (arguments.length === 2) { attrs[key] = value; return this; } return attrs[key]; },
@@ -60,7 +61,11 @@ function harness(raw = 'Site') {
     };
     jq.post = (url, data, callback) => { respond = callback; };
     const context = {
-        document: { ...document, createTextNode: value => ({ textContent: value }) }, jQuery: jq, ajaxurl: '/ajax',
+        document: { ...document, createElement: tag => {
+            if (tag !== 'textarea') return document.createElement(tag);
+            let text = '';
+            return { set innerHTML(value) { text = decodeEntities(String(value).replace(/&not(?==)/g, '¬')); }, get value() { return text; } };
+        }, createTextNode: value => ({ textContent: value }) }, jQuery: jq, ajaxurl: '/ajax',
         MainWP: { I18n: { t: (text, ...args) => text.replace(/%(\d)/g, (_, i) => args[i - 1]) } },
         mainwpVars: {}, bulkInstallDone: 0, bulkInstallCurrentThreads: 0, bulkInstallMaxThreads: 3,
         bulkManageSitesCurrentThreads: 0, bulkManageSitesFinished: 0,
@@ -111,7 +116,7 @@ for (const raw of cases) {
                 h.respond({ sites: { 7: { name: raw, url } } });
                 const html = htmlWrites(h).find(value => value.includes('siteBulkInstall'));
                 assert.ok(html.includes('>' + escaped(raw) + '</a>'), html);
-                assert.ok(html.includes('href="' + escaped(url) + '"'), html);
+                assert.ok(html.includes('href="' + escapeHtml(url) + '"'), html);
                 assertSafe(html);
             });
         }
@@ -133,8 +138,8 @@ for (const raw of cases) {
             load(h, 'mainwp_upload_bulk_start_next'); h.context.mainwp_upload_bulk_start_next('plugin', [], false, false);
             const html = htmlWrites(h).find(value => value.includes('multi-add-to='));
             const attr = field === 'cost_id' ? 'cost-id' : field === 'sites_ids' ? 'installed-sites' : field === 'edit_name' ? 'item-name' : 'item-' + field;
-            assert.ok(html.includes(attr + '="' + escaped(raw) + '"'), html);
-            if (field === 'name' || field === 'edit_name') assert.ok(html.includes('(' + escaped(raw) + ')'), html);
+            assert.ok(html.includes(attr + '="' + escapeHtml(raw) + '"'), html);
+            if (field === 'name' || field === 'edit_name') assert.ok(html.includes('(' + escapeHtml(raw) + ')'), html);
             assertSafe(html);
         });
     }
@@ -180,29 +185,31 @@ for (const raw of cases) {
     });
     test('reconnect rendering successful site-url: ' + raw, () => {
         const h = harness(raw); load(h, 'mainwp_managesites_bulk_reconnect_specific', 'mainwp-managesites-action');
-        h.context.mainwp_managesites_bulk_reconnect_specific(h.row); h.respond('Site reconnected!');
+        h.row.addClass('error'); h.context.mainwp_managesites_bulk_reconnect_specific(h.row); h.row.removeClass('error'); h.respond('Site reconnected!');
         const html = htmlWrites(h).at(-1);
-        assert.ok(html.includes(escaped(raw)), html); assertSafe(html);
+        assert.ok(html.includes(escapeHtml(raw)), html); assertSafe(html);
     });
     for (const field of ['niceurl', 'url', 'id', 'siteid']) {
         test('uptime rows ' + field + ': ' + raw, () => {
             const h = harness(raw); load(h, 'uptime_monitoring_prepare_items_rows', 'mainwp-uptime');
             h.context.uptime_monitoring_prepare_items_rows([{ id: '7', siteid: '7', niceurl: 'Site', url: 'https://child.example/', [field]: raw }]);
             const html = htmlWrites(h).at(-1);
-            assert.ok(html.includes(escaped(raw)), html); assertSafe(html);
+            assert.ok(html.includes(escapeHtml(raw)), html); assertSafe(html);
         });
     }
     test('reconnect rendering bulk site-url: ' + raw, () => {
         const h = harness(raw); load(h, 'mainwp_managesites_bulk_reconnect_specific', 'mainwp-managesites-action');
-        h.context.mainwp_managesites_bulk_reconnect_specific(h.row); h.respond('ERROR');
+        h.row.addClass('error'); h.context.mainwp_managesites_bulk_reconnect_specific(h.row); h.row.removeClass('error'); h.respond('ERROR');
         const html = htmlWrites(h).at(-1);
-        assert.ok(h.writes.some(w => w.method === 'text' && w.value.includes(decodeEntities(raw))), JSON.stringify(h.writes)); assertSafe(html);
+        assert.ok(h.writes.some(w => w.method === 'text' && w.value.includes(raw)), JSON.stringify(h.writes)); assertSafe(html);
     });
     for (const name of ['mainwp_site_overview_reconnect', 'mainwp_reconnect_with_pw', 'mainwp_managesites_reconnect', 'mainwp_managesites_cards_reconnect', 'mainwp_managesites_bulk_reconnect_specific']) {
         for (const json of [false, true]) {
             test('reconnect rendering ' + name + (json ? ' JSON' : ' plain') + ': ' + raw, () => {
                 const h = harness('Site'); load(h, name, name.includes('bulk') ? 'mainwp-managesites-action' : 'mainwp');
+                if (name.includes('bulk')) h.row.addClass('error');
                 h.context[name](h.row);
+                h.row.removeClass('error');
                 const body = json ? JSON.stringify({ el_before: 'Before ', el_text: raw, el_link: 'https://docs.mainwp.com/', el_after: ' after' }) : raw;
                 h.respond('ERROR ' + body);
                 const expected = decodeEntities(raw);
@@ -213,6 +220,44 @@ for (const raw of cases) {
                 assert.ok(!JSON.stringify(h.writes).includes('el_before'), 'JSON should be readable');
             });
         }
+    }
+}
+
+for (const raw of ['?a=1&amp;b=2', '?a=1&not=2']) {
+    for (const name of ['mainwp_install_bulk', 'mainwp_upload_bulk']) {
+        test('data queue href ' + name + ' ' + raw, () => {
+            const h = harness(); load(h, name); h.context[name]('plugins', 'fixture', 'Fixture');
+            h.respond({ sites: { 7: { name: 'A &amp; B', url: 'https://child.example/' + raw } } });
+            const html = htmlWrites(h).find(value => value.includes('siteBulkInstall'));
+            assert.ok(html.includes('href="https://child.example/' + escapeHtml(raw) + '"'), html);
+            assert.ok(html.includes('>A &amp; B</a>'), html);
+        });
+    }
+    for (const field of ['type', 'slug', 'cost-id', 'name', 'sites']) {
+        test('data Cost Tracker ' + field + ' ' + raw, () => {
+            const h = harness('Fixture');
+            h.row.attr(field === 'cost-id' ? field : field === 'sites' ? 'item-siteid' : 'item-' + field, raw);
+            load(h, 'mainwp_upload_bulk_start_next'); h.context.mainwp_upload_bulk_start_next('plugin', [], false, false);
+            const html = htmlWrites(h).find(value => value.includes('multi-add-to='));
+            const attr = field === 'cost-id' ? field : field === 'sites' ? 'installed-sites' : 'item-' + field;
+            assert.ok(html.includes(attr + '="' + escapeHtml(raw) + '"'), html);
+            if (field === 'name') assert.ok(html.includes('(' + escapeHtml(raw) + ')'), html);
+        });
+    }
+    for (const field of ['id', 'siteid', 'niceurl', 'url']) {
+        test('data uptime ' + field + ' ' + raw, () => {
+            const h = harness(); load(h, 'uptime_monitoring_prepare_items_rows', 'mainwp-uptime');
+            h.context.uptime_monitoring_prepare_items_rows([{ id: '7', siteid: '7', niceurl: 'Site', url: 'https://child.example/', [field]: raw }]);
+            assert.ok(htmlWrites(h).at(-1).includes(escapeHtml(raw)), htmlWrites(h).at(-1));
+        });
+    }
+    for (const response of ['ERROR', 'Connected &amp; ready']) {
+        test('data reconnect ' + response + ' ' + raw, () => {
+            const h = harness(raw); load(h, 'mainwp_managesites_bulk_reconnect_specific', 'mainwp-managesites-action');
+            h.row.addClass('error'); h.context.mainwp_managesites_bulk_reconnect_specific(h.row); h.row.removeClass('error'); h.respond(response);
+            if (response === 'ERROR') assert.ok(h.writes.some(w => w.method === 'text' && w.value.startsWith(raw + ' - ')), JSON.stringify(h.writes));
+            else assert.ok(htmlWrites(h).at(-1).includes(escapeHtml(raw + ' - Connected & ready')), htmlWrites(h).at(-1));
+        });
     }
 }
 
@@ -230,7 +275,7 @@ for (const name of ['mainwp_install_bulk', 'mainwp_upload_bulk']) {
 for (const response of ['reconnect_failed', 'ERROR transport failed', 'Site has been reconnected successfully!']) {
     test('row status reconnect: ' + response, () => {
         const h = harness(); load(h, 'mainwp_managesites_bulk_reconnect_specific', 'mainwp-managesites-action');
-        h.context.mainwp_managesites_bulk_reconnect_specific(h.row); h.respond(response);
+        h.row.addClass('error'); h.context.mainwp_managesites_bulk_reconnect_specific(h.row); h.row.removeClass('error'); h.respond(response);
         const failed = response !== 'Site has been reconnected successfully!';
         const html = htmlWrites(h).at(-1);
         assert.ok(html.includes(failed ? 'red times icon' : 'green check icon'), html);
@@ -256,7 +301,9 @@ for (const name of ['mainwp_site_overview_reconnect', 'mainwp_reconnect_with_pw'
     for (const [link, kept] of [['https://docs.mainwp.com/', true], ['http://child.example/help', true], ['javascript:alert(1)', false], [' javascript:alert(1)', false], ['data:text/html,x', false], ['&#106;avascript:alert(1)', false]]) {
         test('reconnect error link ' + name + ': ' + link, () => {
             const h = harness('Site'); load(h, name, name.includes('bulk') ? 'mainwp-managesites-action' : 'mainwp');
+            if (name.includes('bulk')) h.row.addClass('error');
             h.context[name](h.row);
+            h.row.removeClass('error');
             h.respond('ERROR ' + JSON.stringify({ el_before: 'Before ', el_text: 'Community', el_link: link, el_after: ' after' }));
             const hrefs = h.writes.filter(w => w.method === 'attr' && w.selector === '<a>').map(w => w.value.href);
             assert.deepEqual(hrefs, kept ? [decodeEntities(link)] : []);

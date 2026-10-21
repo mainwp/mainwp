@@ -1362,6 +1362,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             throw $unreadable;
         }
         $members    = array();
+        $prefixed   = array();
         $long_name  = null;
         $pax_path   = null;
         $count      = 0;
@@ -1381,6 +1382,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 if ( str_repeat( "\0", 512 ) === $header ) {
                     break;
                 }
+                // Match the Child restorer's MAX_EXTRACT_ENTRIES so test restores accept the same entry count.
                 if ( ++$count > 2000000 ) {
                     throw $unreadable;
                 }
@@ -1398,6 +1400,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     throw $unreadable;
                 }
                 $type = $header[156];
+                if ( ! in_array( $type, array( '0', "\0", '1', '2', '5', '7', 'L', 'x', 'g' ), true ) ) {
+                    throw $unreadable;
+                }
                 if ( 'L' === $type || 'x' === $type ) {
                     if ( $size > 65536 ) {
                         throw $unreadable;
@@ -1439,26 +1444,39 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     $skip = $padding;
                 } else {
                     $skip = $size + $padding;
-                    // Global pax and long-link records do not name extractable members.
-                    if ( 'g' !== $type && 'K' !== $type ) {
+                    // PharData ignores global pax metadata.
+                    if ( 'g' !== $type ) {
                         $name   = explode( "\0", substr( $header, 0, 100 ), 2 )[0];
                         $prefix = 'ustar' === substr( $header, 257, 5 ) ? explode( "\0", substr( $header, 345, 155 ), 2 )[0] : '';
                         $name   = '' === $prefix ? $name : $prefix . '/' . $name;
                         $name   = null !== $long_name ? $long_name : $name;
-                        $name   = null !== $pax_path && '' !== $pax_path ? $pax_path : $name;
                         if ( $this->has_unsafe_entry_name( $name ) ) {
                             throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $name, self::ERR_APPLY );
                         }
-                        if ( in_array( $type, array( '0', "\0", '5', '7' ), true ) ) {
-                            $key = $this->tar_comparison_name( $name, '5' === $type );
-                            if ( isset( $members[ $key ] ) ) {
-                                ++$members[ $key ][1];
-                            } else {
-                                $name_bytes += strlen( $key ) + strlen( $name );
-                                if ( $name_bytes > 64 * MB_IN_BYTES ) {
-                                    throw $unreadable;
-                                }
-                                $members[ $key ] = array( $name, 1 );
+                        $key = $this->tar_comparison_name( $name, '5' === $type );
+                        // PharData ignores pax paths, so they cannot replace the header or GNU name.
+                        if ( null !== $pax_path ) {
+                            if ( $this->has_unsafe_entry_name( $pax_path ) ) {
+                                throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $pax_path, self::ERR_APPLY );
+                            }
+                            if ( $key !== $this->tar_comparison_name( $pax_path, '5' === $type ) ) {
+                                throw $unreadable;
+                            }
+                        }
+
+                        if ( isset( $members[ $key ] ) ) {
+                            ++$members[ $key ];
+                            if ( '' === $prefix ) {
+                                unset( $prefixed[ $key ] );
+                            }
+                        } else {
+                            $name_bytes += strlen( $key );
+                            if ( $name_bytes > 64 * MB_IN_BYTES ) {
+                                throw $unreadable;
+                            }
+                            $members[ $key ] = 1;
+                            if ( '' !== $prefix ) {
+                                $prefixed[ $key ] = true;
                             }
                         }
                         $long_name = null;
@@ -1479,17 +1497,22 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             $phar     = new \PharData( $plain );
             $iterator = new \RecursiveIteratorIterator( $phar, \RecursiveIteratorIterator::SELF_FIRST );
             foreach ( $iterator as $file ) {
-                unset( $members[ $this->tar_comparison_name( $iterator->getSubPathname(), $file->isDir() ) ] );
+                $key = $this->tar_comparison_name( $iterator->getSubPathname(), $file->isDir() );
+                // PharData adds implicit parent directories, but every listed file needs a header.
+                if ( ! $file->isDir() && ! isset( $members[ $key ] ) ) {
+                    throw $unreadable;
+                }
+                unset( $members[ $key ] );
             }
         } catch ( \Throwable $e ) {
             throw $unreadable;
         }
         if ( ! empty( $members ) ) {
-            $missing = 0;
-            $first   = reset( $members )[0];
-            foreach ( $members as $member ) {
-                $missing += $member[1];
+            if ( array_diff_key( $members, $prefixed ) ) {
+                throw $unreadable;
             }
+            $missing = array_sum( $members );
+            $first   = (string) array_key_first( $members );
             // Keep a readable label even if a filename contains invalid UTF-8.
             $label = wp_json_encode( $first, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
             $label = is_string( $label ) ? substr( $label, 1, -1 ) : '?';

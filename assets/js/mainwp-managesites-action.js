@@ -240,20 +240,20 @@ let mainwp_managesites_bulk_reconnect_specific = function (pCheckedBox) {
     let msg = '', error = null;
     if (response.substring(0, 5) == 'ERROR') {
       if (response.length == 5) {
-        error = jQuery('<span>').text(mainwp_entities_text(siteUrl) + ' - ' + MainWP.I18n.t('Undefined error occurred. Please try again.'));
+        error = jQuery('<span>').text(siteUrl + ' - ' + MainWP.I18n.t('Undefined error occurred. Please try again.'));
       } else {
         error = mainwp_reconnect_error_nodes(response.substring(6));
       }
     } else if (response === 'reconnect_failed') {
       error = mainwp_get_reconnect_error(response, siteId);
     } else {
-      msg = siteUrl + ' - ' + response;
+      msg = siteUrl + ' - ' + mainwp_entities_text(response);
     }
 
     if (msg != '') {
       rowObj.removeClass('error');
       rowObj.addClass('positive');
-      rowObj.html('<td colspan="999"><i class="green check icon"></i>' + mainwp_text_html(msg) + '</td>');
+      rowObj.html('<td colspan="999"><i class="green check icon"></i>' + mainwp_html_escape(msg) + '</td>');
     } else if (error) {
       rowObj.removeClass('positive');
       rowObj.addClass('error');

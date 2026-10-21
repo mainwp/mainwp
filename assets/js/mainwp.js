@@ -20,13 +20,19 @@ globalThis.mainwp_entities_text = function (value) {
     return textarea.value;
 };
 
-globalThis.mainwp_text_html = function (value) {
-    return mainwp_entities_text(value)
+// For data values (URLs, slugs, ids, attributes read back with .attr()): escapes without decoding entities.
+globalThis.mainwp_html_escape = function (value) {
+    return String(value ?? '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+};
+
+// For display text: decodes entities once, as the admin typed them, then escapes.
+globalThis.mainwp_text_html = function (value) {
+    return mainwp_html_escape(mainwp_entities_text(value));
 };
 
 globalThis.mainwp_site_name_html = function (raw) {
@@ -2780,7 +2786,7 @@ let mainwp_install_bulk = function (type, slug, name) {
             for (let siteId in response.sites) {
                 let site = response.sites[siteId];
                 let siteName = mainwp_text_html(site.name.replace(/\\(.)/g, '$1')); // NOSONAR - no safe replaceAll alternative.
-                let siteLink = /^https?:\/\//i.test(site.url) ? '<a href="' + mainwp_text_html(site.url) + '">' + siteName + '</a>' : siteName;
+                let siteLink = /^https?:\/\//i.test(site.url) ? '<a href="' + mainwp_html_escape(site.url) + '">' + siteName + '</a>' : siteName;
                 installQueueContent +=
                     '<div class="siteBulkInstall item" siteid="' + siteId + '" status="queue">' +
                     '<div class="right floated content">' +
@@ -3028,7 +3034,7 @@ let mainwp_upload_bulk = function (type) {
             for (let siteId in response.sites) {
                 let site = response.sites[siteId];
                 let siteName = mainwp_text_html(site.name.replace(/\\(.)/g, '$1')); // NOSONAR - no safe replaceAll alternative.
-                let siteLink = /^https?:\/\//i.test(site.url) ? '<a href="' + mainwp_text_html(site.url) + '">' + siteName + '</a>' : siteName;
+                let siteLink = /^https?:\/\//i.test(site.url) ? '<a href="' + mainwp_html_escape(site.url) + '">' + siteName + '</a>' : siteName;
 
                 installQueue +=
                     '<div class="siteBulkInstall item" siteid="' + siteId + '" status="queue">' +
@@ -3116,7 +3122,7 @@ let mainwp_upload_bulk_start_next = function (type, urls, activatePlugin, overwr
                 jQuery('.mainwp-cost-tracker-assistant-add-buttons-wrapper').html('');
                 let multiAddTo = cost_tracker_items.length > 1 ? 1 : 0;
                 cost_tracker_items.forEach(item => {
-                    jQuery('.mainwp-cost-tracker-assistant-add-buttons-wrapper').append('<a href="javascript:void(0)" item-type="' + mainwp_text_html(item.type) + '" item-slug="' + mainwp_text_html(item.slug) + '" cost-id="' + mainwp_text_html(item.cost_id) + '" item-name="' + mainwp_text_html(item.name) + '" installed-sites="' + mainwp_text_html(item.sites_ids.join(',')) + '" multi-add-to="' + multiAddTo + '" class="ui mini button mainwp-cost-tracker-assistant-add-to-cost-tracker-button">' + ((item.cost_id != undefined && item.cost_id > 0) ? MainWP.I18n.t('Edit Cost Tracker') + ' (' + mainwp_text_html(item.name) + ')' : MainWP.I18n.t('Add to Cost Tracker') + ' (' + mainwp_text_html(item.name) + ')') + '</a>');
+                    jQuery('.mainwp-cost-tracker-assistant-add-buttons-wrapper').append('<a href="javascript:void(0)" item-type="' + mainwp_html_escape(item.type) + '" item-slug="' + mainwp_html_escape(item.slug) + '" cost-id="' + mainwp_html_escape(item.cost_id) + '" item-name="' + mainwp_html_escape(item.name) + '" installed-sites="' + mainwp_html_escape(item.sites_ids.join(',')) + '" multi-add-to="' + multiAddTo + '" class="ui mini button mainwp-cost-tracker-assistant-add-to-cost-tracker-button">' + ((item.cost_id != undefined && item.cost_id > 0) ? MainWP.I18n.t('Edit Cost Tracker') + ' (' + mainwp_html_escape(item.name) + ')' : MainWP.I18n.t('Add to Cost Tracker') + ' (' + mainwp_html_escape(item.name) + ')') + '</a>');
                 });
             }
         }

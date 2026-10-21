@@ -68,6 +68,33 @@ class Test_Remaining_Site_Text_Escaping extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Add-site diagnostics use the same transport interception as reconnect.
+	 *
+	 * @dataProvider diagnostic_text
+	 * @param string $extra Transport diagnostic.
+	 */
+	public function test_add_site_http_error_escapes_transport_text( $extra ): void {
+		$fetch = static function () use ( $extra ) {
+			throw new MainWP_Exception( 'HTTPERROR', $extra );
+		};
+		add_filter( 'mainwp_fetch_url_not_authed_pre', $fetch );
+		add_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
+		try {
+			$params = array(
+				'name'    => 'Fixture',
+				'url'     => 'https://child.example/',
+				'wpadmin' => 'admin',
+			);
+			$result = MainWP_Manage_Sites_View::add_wp_site( false, $params );
+			$this->assertSame( 'HTTP error - ' . esc_html( $extra ), $result[1] );
+			$this->assertStringNotContainsString( '<img', $result[1] );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_not_authed_pre', $fetch );
+			remove_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
+		}
+	}
+
+	/**
 	 * Unsafe schemes and ordinary Child URLs.
 	 *
 	 * @return array
@@ -133,6 +160,8 @@ class Test_Remaining_Site_Text_Escaping extends \WP_UnitTestCase {
 			$ajax_result    = '';
 			ob_start();
 			try {
+				// phpcs:ignore Squiz.Commenting.InlineComment.InvalidEndChar
+				// nosemgrep: AIK_eval-use -- evaluates href expressions read from this repository's own source, never input
 				eval( $line ); // phpcs:ignore Squiz.PHP.Eval.Discouraged -- Execute the real href expressions without sending a post to a Child or terminating on the AJAX exit.
 			} finally {
 				$html = ob_get_clean();

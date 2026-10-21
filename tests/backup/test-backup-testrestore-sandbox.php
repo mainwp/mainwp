@@ -477,6 +477,120 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
+	 * PharData must not extract headers hidden inside unsupported member payloads.
+	 *
+	 * @dataProvider unsupported_tar_types
+	 * @param string $type Member type.
+	 * @param bool   $payload Whether to embed another header.
+	 */
+	public function test_tar_headers_refuse_unsupported_types( $type, $payload ) {
+		$body = $payload ? $this->raw_tar_member( '../smuggled.txt', 'hostile' ) : '';
+		$name = $payload ? 'k3' : ( 'K' === $type ? '../k0.txt' : 'device.txt' );
+		$path = $this->raw_tar( $this->raw_tar_member( $name, $body, '', $type ) . $this->raw_tar_member( 'safe.txt', 'safe' ) );
+		$this->assert_tar_name_refusal( $path, 'could not be read' );
+	}
+
+	/**
+	 * Unsupported tar encodings.
+	 *
+	 * @return array
+	 */
+	public static function unsupported_tar_types() {
+		return array(
+			'K payload' => array( 'K', true ),
+			'empty K'   => array( 'K', false ),
+			'device'    => array( '3', false ),
+		);
+	}
+
+	/**
+	 * Pax metadata cannot hide the name PharData actually extracts.
+	 *
+	 * @dataProvider conflicting_tar_names
+	 * @param string $shape Metadata and member combination.
+	 * @param string $message Expected refusal.
+	 */
+	public function test_tar_headers_refuse_conflicting_pax_names( $shape, $message ) {
+		$pax  = 'path=' . ( 'different' === $shape ? 'sub/safe.txt' : 'safe.txt' ) . "\n";
+		$size = strlen( $pax ) + 3;
+		$size = strlen( $pax ) + strlen( (string) $size ) + 1;
+		$meta = $this->raw_tar_member( 'PaxHeader', $size . ' ' . $pax, '', 'x' );
+		if ( 'long' === $shape ) {
+			$bytes = $this->raw_tar_member( '././@LongLink', '../lx-escape.txt', '', 'L' ) . $meta . $this->raw_tar_member( 'safe.txt', 'hostile' );
+		} elseif ( 'prefix' === $shape ) {
+			$pax   = "17 path=good.txt\n";
+			$bytes = $this->raw_tar_member( 'good.txt', 'good' ) . $this->raw_tar_member( 'PaxHeader', $pax, '', 'x' ) . $this->raw_tar_member( 'escape.txt', 'hostile', '..' );
+		} else {
+			$name  = 'different' === $shape ? 'wp-config.php' : '../evil-pax.txt';
+			$bytes = $meta . $this->raw_tar_member( $name, 'hostile' ) . $this->raw_tar_member( 'different' === $shape ? 'sub/safe.txt' : 'safe.txt', 'safe' );
+		}
+		$this->assert_tar_name_refusal( $this->raw_tar( $bytes ), $message );
+	}
+
+	/**
+	 * Header and metadata disagreements.
+	 *
+	 * @return array
+	 */
+	public static function conflicting_tar_names() {
+		return array(
+			'unsafe header' => array( 'unsafe', 'contains an unsafe file path' ),
+			'different'     => array( 'different', 'could not be read' ),
+			'GNU then pax'  => array( 'long', 'contains an unsafe file path' ),
+			'prefix'        => array( 'prefix', 'contains an unsafe file path' ),
+		);
+	}
+
+	/**
+	 * PharData can interpret a prefix even when that header lacks ustar magic.
+	 */
+	public function test_tar_headers_refuse_phar_only_files() {
+		$first = $this->patch_raw_tar_header( $this->raw_tar_member( 'first.txt', 'first' ), 257, str_repeat( "\0", 6 ) );
+		$later = $this->patch_raw_tar_header( $this->raw_tar_member( 'file.txt', 'prefixed', 'sub' ), 257, str_repeat( "\0", 6 ) );
+		$bytes = $first . $later . $this->raw_tar_member( 'file.txt', 'plain' );
+		$this->assert_tar_name_refusal( $this->raw_tar( $bytes ), 'could not be read' );
+	}
+
+	/**
+	 * Root headers are listing disagreements, not evidence of a beta writer.
+	 *
+	 * @dataProvider tar_root_names
+	 * @param string $name Root header name.
+	 */
+	public function test_tar_headers_refuse_unlisted_roots_as_unreadable( $name ) {
+		$this->assert_tar_name_refusal( $this->raw_tar( $this->raw_tar_member( $name, '', '', '5' ) . $this->raw_tar_member( 'safe.txt', 'safe' ) ), 'could not be read' );
+	}
+
+	/**
+	 * Root spellings PharData omits.
+	 *
+	 * @return array
+	 */
+	public static function tar_root_names() {
+		return array( array( './' ), array( '.' ), array( '' ) );
+	}
+
+	/**
+	 * Refusal must precede any write into the sandbox.
+	 *
+	 * @param string $path Archive.
+	 * @param string $message Expected refusal.
+	 */
+	private function assert_tar_name_refusal( $path, $message ) {
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $path, 'extract' );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+			$this->assertStringContainsString( $message, $caught->getMessage() );
+			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
 	 * Current long-name metadata must continue to work through all tar entry points.
 	 *
 	 * @dataProvider supported_tar_name_cases
@@ -486,12 +600,13 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	public function test_tar_headers_accept_current_long_names( $type ) {
 		$name    = 'L' === $type ? str_repeat( 'current/', 80 ) . 'restored.sql' : 'nested/dump.sql';
 		$payload = $name;
-		if ( 'x' === $type ) {
-			$record  = 'path=./' . $name . "\n";
+		if ( 'L' !== $type ) {
+			$record  = 'path=' . ( 'x' === $type ? './' : '' ) . $name . "\n";
 			$length  = strlen( $record ) + 3;
 			$length  = strlen( $record ) + strlen( (string) $length ) + 1;
 			$payload = $length . ' ' . $record;
 		}
+		$type    = 'pax plain' === $type ? 'x' : $type;
 		$sql     = 'SELECT 42;';
 		$path    = $this->raw_tar( $this->raw_tar_member( 'nested/', '', '', '5' ) . $this->raw_tar_member( '././@LongLink', $payload, '', $type ) . $this->raw_tar_member( substr( $name, 0, 100 ), $sql ) . $this->raw_tar_member( 'good.txt', 'good' ) );
 		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
@@ -504,6 +619,15 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			$read = new \ReflectionMethod( $sandbox, 'read_sql_dump' );
 			$read->setAccessible( true );
 			$this->assertSame( $sql, $read->invoke( $sandbox, $path ) );
+			if ( 'x' === $type ) {
+				// Changing only the metadata path must turn the same fixture into a refusal.
+				$mismatch = str_replace( 'dump.sql', 'evil.sql', $payload );
+				$other    = $this->dir . '/pax-mismatch.tar';
+				file_put_contents( $other, $this->raw_tar_member( 'PaxHeader', $mismatch, '', 'x' ) . $this->raw_tar_member( $name, $sql ) . str_repeat( "\0", 1024 ) );
+				$caught = $this->tar_refusal( $sandbox, $other, 'read' );
+				$this->assertInstanceOf( MainWP_Exception::class, $caught );
+				$this->assertStringContainsString( 'could not be read', $caught->getMessage() );
+			}
 		} finally {
 			$sandbox->tear_down();
 		}
@@ -516,8 +640,9 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 */
 	public static function supported_tar_name_cases() {
 		return array(
-			'GNU' => array( 'L' ),
-			'pax' => array( 'x' ),
+			'GNU'       => array( 'L' ),
+			'pax'       => array( 'x' ),
+			'pax plain' => array( 'pax plain' ),
 		);
 	}
 
@@ -579,9 +704,18 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
+	 * Metadata formats with unsafe names.
+	 *
+	 * @return array
+	 */
+	public static function unsafe_tar_name_cases() {
+		return array( array( 'L' ), array( 'x' ) );
+	}
+
+	/**
 	 * The effective metadata name takes precedence over an innocuous short header.
 	 *
-	 * @dataProvider supported_tar_name_cases
+	 * @dataProvider unsafe_tar_name_cases
 	 * @param string $type Metadata format.
 	 * @return void
 	 */
@@ -626,6 +760,24 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
+	 * Duplicate missing headers retain their count but use the normalized key as label.
+	 */
+	public function test_tar_headers_count_duplicate_prefixed_keys() {
+		$member  = $this->raw_tar_member( 'lost.txt', 'lost', './beta' );
+		$path    = $this->raw_tar( $member . $member );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $path, 'extract' );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertStringContainsString( '2 long paths', $caught->getMessage() );
+			$this->assertStringContainsString( 'first one is beta/lost.txt.', $caught->getMessage() );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
 	 * PharData must not create filesystem links or follow their external targets.
 	 *
 	 * @dataProvider tar_link_materialization_cases
@@ -663,6 +815,40 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 			} else {
 				$this->assertNull( $caught );
 			}
+		}
+	}
+
+	/**
+	 * The sandbox must preserve link confinement through its own extraction path.
+	 *
+	 * @dataProvider tar_link_materialization_cases
+	 * @param string $type Tar link type.
+	 * @param bool   $child Whether a member writes beneath the link.
+	 */
+	public function test_tar_headers_sandbox_link_materialization( $type, $child ) {
+		$outside = $this->dir . '/outside';
+		$this->assertTrue( mkdir( $outside ) );
+		$this->assertSame( 4, file_put_contents( $outside . '/keep.txt', 'keep' ) );
+		$path    = $this->raw_tar( $this->raw_tar_member( 'link', '', '', $type, $outside ) . ( $child ? $this->raw_tar_member( 'link/written.txt', 'hostile' ) : '' ) );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = @$this->tar_refusal( $sandbox, $path, 'extract' );
+			if ( '1' === $type || $child ) {
+				$this->assertInstanceOf( MainWP_Exception::class, $caught );
+				$this->assertSame( MainWP_Backup_TestRestore_Sandbox::ERR_APPLY, $caught->get_message_error_code() );
+			} else {
+				$this->assertNull( $caught );
+				$this->assertSame( '', file_get_contents( $sandbox->temp_dir() . 'link' ) );
+			}
+			$tree = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $sandbox->temp_dir(), \FilesystemIterator::SKIP_DOTS ), \RecursiveIteratorIterator::SELF_FIRST );
+			foreach ( $tree as $file ) {
+				$this->assertFalse( $file->isLink(), $file->getPathname() );
+			}
+			$this->assertSame( array( '.', '..', 'keep.txt' ), scandir( $outside ) );
+			$this->assertSame( 'keep', file_get_contents( $outside . '/keep.txt' ) );
+		} finally {
+			$sandbox->tear_down();
 		}
 	}
 

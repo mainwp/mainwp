@@ -359,6 +359,7 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 		$this->assertNotSame( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ), $progress->last_error );
 		$fresh   = MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id );
 		$details = \MainWP\Dashboard\MainWP_Backup_Read_Model::task_run_details( $fresh );
+		$this->assertFalse( MainWP_DB_Backup::instance()->is_backup_site_resumable_for_run( $fresh, $site ), 'A cancel must not wait on a site that never reached the Child.' );
 		$this->assertSame( MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE, $details['sites'][0]['error']['code'] );
 		$this->assertStringContainsString( 'could not create directory', $details['sites'][0]['error']['source_text'] );
 		$this->assertSame( array(), $this->calls, 'Storage refusal precedes all Child requests.' );

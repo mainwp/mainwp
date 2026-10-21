@@ -1069,6 +1069,11 @@ class MainWP_DB_Backup extends MainWP_DB { // phpcs:ignore Generic.Classes.Openi
             return $this->classify_record_pending( $task, $progress, $set_paths );
         }
 
+        // A failure marked before any Child task existed has nothing left to download.
+        if ( MainWP_Backup_Task_Phase::FAILED === (string) $progress->child_phase && '' === (string) $progress->child_backup_task_id ) {
+            return false;
+        }
+
         $claimed = is_array( $progress->fetchResult ) && ! empty( $progress->fetchResult );
         if ( $claimed && empty( $progress->fetchResult['error'] ) && (int) $progress->attempts < 5 ) {
             return 'mid_download';

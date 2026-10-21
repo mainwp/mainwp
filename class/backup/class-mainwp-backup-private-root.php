@@ -41,6 +41,13 @@ class MainWP_Backup_Private_Root {
     private static $probe_verdicts = array();
 
     /**
+     * The accepted root before symlinks are resolved, for URL mapping.
+     *
+     * @var string
+     */
+    private static $configured_root = '';
+
+    /**
      * Reset request-local state for tests.
      *
      * @return void
@@ -50,6 +57,7 @@ class MainWP_Backup_Private_Root {
         self::$availability_reason = '';
         self::$used_ladder         = false;
         self::$probe_verdicts      = array();
+        self::$configured_root     = '';
     }
 
     /**
@@ -103,6 +111,7 @@ class MainWP_Backup_Private_Root {
         }
         $reason                    = self::refusal_reason( $candidate );
         self::$availability_reason = '' === $reason ? self::path_availability_reason( $candidate ) : $reason;
+        self::$configured_root     = '' === $reason ? untrailingslashit( wp_normalize_path( $candidate ) ) : '';
         self::$root                = '' === $reason ? trailingslashit( self::canonical_path( wp_normalize_path( $candidate ) ) ) : self::unavailable( is_string( $candidate ) ? str_replace( "\0", '[NUL]', $candidate ) : '(' . gettype( $candidate ) . ')', $reason );
         return self::$root;
     }
@@ -347,28 +356,31 @@ class MainWP_Backup_Private_Root {
         if ( ! $created && isset( self::$probe_verdicts[ $key ] ) ) {
             return self::$probe_verdicts[ $key ];
         }
-        $cached = get_option( 'mainwp_backup_private_root_probe' );
-        $cached = is_array( $cached ) && ( $cached['key'] ?? '' ) === $key ? $cached : array();
-        if ( ! $created && time() < (int) ( $cached['expires'] ?? 0 )
-            && in_array( $cached['verdict'] ?? '', array( 'not_served', 'unknown' ), true ) ) {
-            self::$probe_verdicts[ $key ] = $cached['verdict'];
-            return $cached['verdict'];
-        }
 
         $document_root = '';
         if ( ! empty( $_SERVER['DOCUMENT_ROOT'] ) && is_string( $_SERVER['DOCUMENT_ROOT'] ) ) {
             // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- This only builds a candidate URL; exposure still requires the random token back.
             $document_root = wp_unslash( $_SERVER['DOCUMENT_ROOT'] );
         }
-        $urls = self::probe_urls( $root, $site_url, ABSPATH, $document_root );
-        if ( isset( $cached['urls'] ) && is_array( $cached['urls'] ) ) {
-            // Cron and CLI requests have no document root, so they reuse the URLs a web request mapped.
-            $urls = array_slice( array_values( array_unique( array_merge( $urls, array_filter( $cached['urls'], 'is_string' ) ) ) ), 0, 8 );
+        $urls = self::probe_urls( array( $root, self::$configured_root ), $site_url, ABSPATH, $document_root );
+
+        $cached = get_option( 'mainwp_backup_private_root_probe' );
+        $cached = is_array( $cached ) && ( $cached['key'] ?? '' ) === $key ? $cached : array();
+        $probed = isset( $cached['urls'] ) && is_array( $cached['urls'] ) ? array_values( array_filter( $cached['urls'], 'is_string' ) ) : array();
+        // A web request can see a document-root URL that the cron request behind the cached allow could not.
+        if ( ! $created && time() < (int) ( $cached['expires'] ?? 0 )
+            && in_array( $cached['verdict'] ?? '', array( 'not_served', 'unknown' ), true )
+            && array() === array_diff( $urls, $probed ) ) {
+            self::$probe_verdicts[ $key ] = $cached['verdict'];
+            return $cached['verdict'];
         }
+
+        // Cron and CLI requests have no document root, so they also probe what a web request mapped.
+        $urls                         = array_slice( array_values( array_unique( array_merge( $urls, $probed ) ) ), 0, 8 );
         $reason                       = '';
         $verdict                      = array() === $urls ? 'unmapped' : self::probe_exposure( $root, $urls, $reason );
         self::$probe_verdicts[ $key ] = $verdict;
-        // Mapping is free to recompute, and a request without a document root must not hide one that has it.
+        // Mapping costs no request, and a request without a document root must not hide one that has it.
         if ( 'unmapped' !== $verdict ) {
             update_option(
                 'mainwp_backup_private_root_probe',
@@ -403,13 +415,13 @@ class MainWP_Backup_Private_Root {
      * base can map the root to a URL nothing serves while another maps it to the
      * URL that does. Each distinct mapping is probed.
      *
-     * @param string $root Normalized root with a trailing slash.
-     * @param string $site_url WordPress URL, which serves ABSPATH.
-     * @param string $abspath WordPress directory as configured.
-     * @param string $document_root Web server document root, served at the host root; empty outside web requests.
+     * @param string[] $roots Root as resolved and as configured; empty entries are skipped.
+     * @param string   $site_url WordPress URL, which serves ABSPATH.
+     * @param string   $abspath WordPress directory as configured.
+     * @param string   $document_root Web server document root, served at the host root; empty outside web requests.
      * @return string[] Root URLs with a trailing slash; empty when no base maps the root.
      */
-    private static function probe_urls( string $root, string $site_url, string $abspath, string $document_root ): array {
+    private static function probe_urls( array $roots, string $site_url, string $abspath, string $document_root ): array {
         $parts = wp_parse_url( $site_url );
         if ( ! is_array( $parts ) || empty( $parts['scheme'] ) || empty( $parts['host'] ) ) {
             return array();
@@ -425,13 +437,19 @@ class MainWP_Backup_Private_Root {
             $bases[] = array( untrailingslashit( wp_normalize_path( $base ) ), $base_segments );
         }
         $urls = array();
-        foreach ( $bases as list( $base, $base_segments ) ) {
-            $mapped = null === $base ? null : self::probe_url_segments( $root, $base, $base_segments );
-            if ( null !== $mapped ) {
-                $urls[] = $origin . '/' . ( array() === $mapped ? '' : implode( '/', $mapped ) . '/' );
+        foreach ( $roots as $root ) {
+            $root = untrailingslashit( wp_normalize_path( (string) $root ) );
+            if ( '' === $root ) {
+                continue;
+            }
+            foreach ( $bases as list( $base, $base_segments ) ) {
+                $mapped = null === $base ? null : self::probe_url_segments( $root, $base, $base_segments );
+                if ( null !== $mapped ) {
+                    $urls[] = $origin . '/' . ( array() === $mapped ? '' : implode( '/', $mapped ) . '/' );
+                }
             }
         }
-        return array_values( array_unique( $urls ) );
+        return array_slice( array_values( array_unique( $urls ) ), 0, 8 );
     }
 
     /**
@@ -445,7 +463,9 @@ class MainWP_Backup_Private_Root {
     private static function probe_url_segments( string $root, string $ancestor, array $segments ): ?array {
         $levels = 0;
         $path   = untrailingslashit( $root );
-        while ( $path !== $ancestor && ! str_starts_with( $path, trailingslashit( $ancestor ) ) ) {
+        // These platforms can resolve case variants to the same served directory, as refusal_reason() assumes.
+        $fold = 'Darwin' === PHP_OS_FAMILY || 'Windows' === PHP_OS_FAMILY ? 'strtolower' : static fn( string $value ): string => $value;
+        while ( $fold( $path ) !== $fold( $ancestor ) && ! str_starts_with( $fold( $path ), $fold( trailingslashit( $ancestor ) ) ) ) {
             $parent = dirname( $ancestor );
             if ( $parent === $ancestor ) {
                 return null;
@@ -489,23 +509,31 @@ class MainWP_Backup_Private_Root {
             if ( ! $written ) {
                 return 'unknown';
             }
-            $reason  = '';
-            $verdict = 'not_served';
+            $reason   = '';
+            $verdict  = 'not_served';
+            $deadline = microtime( true ) + 10;
             foreach ( $urls as $url ) {
+                $remaining = $deadline - microtime( true );
+                if ( $remaining < 1 ) {
+                    // A host that drops loopback packets would otherwise cost 5 seconds per candidate.
+                    $reason = 'probe_budget';
+                    return 'unknown';
+                }
                 $url     .= $name;
                 $response = wp_remote_get(
                     $url,
                     array(
-                        'timeout'             => 5,
+                        'timeout'             => min( 5, $remaining ),
                         'redirection'         => 3,
                         'sslverify'           => apply_filters( 'https_local_ssl_verify', false, $url ),
                         'limit_response_size' => 1024,
                     )
                 );
                 if ( is_wp_error( $response ) ) {
-                    // Every candidate shares one origin, so a transport failure would repeat for the rest.
-                    $reason = substr( sanitize_key( (string) $response->get_error_code() ), 0, 64 );
-                    return 'unknown';
+                    // Redirect loops and timeouts are path-specific, so a later candidate can still prove exposure.
+                    $reason  = substr( sanitize_key( (string) $response->get_error_code() ), 0, 64 );
+                    $verdict = 'unknown';
+                    continue;
                 }
                 $status = (int) wp_remote_retrieve_response_code( $response );
                 if ( 200 === $status && wp_remote_retrieve_body( $response ) === $token ) {

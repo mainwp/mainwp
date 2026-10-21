@@ -453,6 +453,86 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * A cached allow from a request that saw fewer candidates must not hide a new one.
+	 */
+	public function test_new_candidate_reprobes_despite_cached_allow(): void {
+		$document_root = $_SERVER['DOCUMENT_ROOT'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Fixture cleanup must preserve the original server value exactly.
+		$this->map_probe_root();
+		$_SERVER['DOCUMENT_ROOT'] = '';
+		$requests                 = array();
+		$http                     = function ( $pre, $args, $url ) use ( &$requests ) {
+			$requests[] = $url;
+			$path       = rawurldecode( wp_parse_url( $url, PHP_URL_PATH ) );
+			if ( str_starts_with( $path, $this->private_root . '/' ) ) {
+				return array(
+					'response' => array( 'code' => 404 ),
+					'body'     => '',
+				);
+			}
+			return array(
+				'response' => array( 'code' => 200 ),
+				'body'     => file_get_contents( dirname( $this->private_root ) . $path ),
+			);
+		};
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		try {
+			$this->assertIsString( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertSame( 'not_served', get_option( 'mainwp_backup_private_root_probe' )['verdict'] );
+			$cron_requests = count( $requests );
+			MainWP_Backup_Private_Root::reset();
+			$_SERVER['DOCUMENT_ROOT'] = dirname( $this->private_root );
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 8 ) );
+			$this->assertStringStartsWith( 'https://example.org/' . basename( $this->private_root ) . '/mainwp-probe-', end( $requests ) );
+			$this->assertGreaterThan( $cron_requests, count( $requests ) );
+			MainWP_Backup_Private_Root::reset();
+			$_SERVER['DOCUMENT_ROOT'] = '';
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 9 ) );
+			$this->assertStringStartsWith( 'https://example.org/' . basename( $this->private_root ) . '/mainwp-probe-', end( $requests ) );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+			if ( null === $document_root ) {
+				unset( $_SERVER['DOCUMENT_ROOT'] );
+			} else {
+				$_SERVER['DOCUMENT_ROOT'] = $document_root;
+			}
+		}
+	}
+
+	/**
+	 * A transport error on one candidate must not stop the probe before a served one.
+	 */
+	public function test_candidate_error_does_not_hide_a_served_candidate(): void {
+		$document_root = $_SERVER['DOCUMENT_ROOT'] ?? null; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- Fixture cleanup must preserve the original server value exactly.
+		$this->map_probe_root();
+		$_SERVER['DOCUMENT_ROOT'] = dirname( $this->private_root );
+		$requests                 = 0;
+		$http                     = function ( $pre, $args, $url ) use ( &$requests ) {
+			++$requests;
+			$path = rawurldecode( wp_parse_url( $url, PHP_URL_PATH ) );
+			if ( str_starts_with( $path, $this->private_root . '/' ) ) {
+				return new \WP_Error( 'http_request_failed', 'Too many redirects.' );
+			}
+			return array(
+				'response' => array( 'code' => 200 ),
+				'body'     => file_get_contents( dirname( $this->private_root ) . $path ),
+			);
+		};
+		add_filter( 'pre_http_request', $http, 10, 3 );
+		try {
+			$this->assertWPError( MainWP_Backup_Private_Root::site_dir( 7 ) );
+			$this->assertSame( 2, $requests );
+			$this->assertSame( 'served', get_option( 'mainwp_backup_private_root_probe' )['verdict'] );
+		} finally {
+			remove_filter( 'pre_http_request', $http );
+			if ( null === $document_root ) {
+				unset( $_SERVER['DOCUMENT_ROOT'] );
+			} else {
+				$_SERVER['DOCUMENT_ROOT'] = $document_root;
+			}
+		}
+	}
+
+	/**
 	 * Every base that maps the root yields a candidate, so a wrong mapping cannot hide the served one.
 	 */
 	public function test_probe_url_mapping_matrix(): void {
@@ -463,18 +543,24 @@ class MainWP_Backup_Private_Root_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( symlink( $t . '/real/deep/wp', $t . '/doc2/wp' ) );
 		$this->assertTrue( symlink( $t . '/wordpress', $t . '/www/wp' ) );
 		$this->assertTrue( symlink( $t . '/releases/1', $t . '/www2/wp' ) );
-		$rows   = array(
-			'WordPress in a docroot subdirectory' => array( "$t/doc/wp/", '', 'https://e.org/wp', "$t/doc/mainwp-private/backups/", array( 'https://e.org/mainwp-private/backups/' ) ),
-			'root above the URL space'            => array( "$t/doc/", '', 'https://e.org', "$t/private/backups/", array() ),
-			'symlinked WordPress, deep target'    => array( "$t/doc2/wp/", '', 'https://e.org/wp', "$t/doc2/backups/", array( 'https://e.org/backups/' ) ),
-			'symlinked WordPress, shallow target' => array( "$t/www/wp/", "$t/www", 'https://e.org/wp', "$t/www/backups/", array( 'https://e.org/www/backups/', 'https://e.org/backups/' ) ),
-			'alias outside the docroot'           => array( "$t/srv/wp/", "$t/docroot", 'https://e.org/x/y/wp', "$t/docroot/backups/", array( 'https://e.org/x/docroot/backups/', 'https://e.org/backups/' ) ),
-			'release deploy, web request'         => array( "$t/releases/1/", "$t/www2", 'https://e.org/wp', "$t/www2/backups/", array( 'https://e.org/backups/' ) ),
-			'release deploy, cron'                => array( "$t/releases/1/", '', 'https://e.org/wp', "$t/www2/backups/", array() ),
-			'root is the docroot'                 => array( "$t/doc3/wp/", "$t/doc3", 'https://e.org/wp', "$t/doc3/", array( 'https://e.org/' ) ),
-			'port and a name that needs encoding' => array( "$t/doc/wp/", '', 'https://e.org:8443/wp', "$t/doc/my backups/", array( 'https://e.org:8443/my%20backups/' ) ),
-			'relative document root is ignored'   => array( "$t/doc/wp/", 'relative/doc', 'https://e.org/wp', "$t/doc/backups/", array( 'https://e.org/backups/' ) ),
+		mkdir( $t . '/data/store', 0700, true );
+		$this->assertTrue( symlink( $t . '/data/store', $t . '/doc/store' ) );
+		$rows = array(
+			'WordPress in a docroot subdirectory' => array( "$t/doc/wp/", '', 'https://e.org/wp', array( "$t/doc/mainwp-private/backups/" ), array( 'https://e.org/mainwp-private/backups/' ) ),
+			'root above the URL space'            => array( "$t/doc/", '', 'https://e.org', array( "$t/private/backups/" ), array() ),
+			'symlinked WordPress, deep target'    => array( "$t/doc2/wp/", '', 'https://e.org/wp', array( "$t/doc2/backups/" ), array( 'https://e.org/backups/' ) ),
+			'symlinked WordPress, shallow target' => array( "$t/www/wp/", "$t/www", 'https://e.org/wp', array( "$t/www/backups/" ), array( 'https://e.org/www/backups/', 'https://e.org/backups/' ) ),
+			'alias outside the docroot'           => array( "$t/srv/wp/", "$t/docroot", 'https://e.org/x/y/wp', array( "$t/docroot/backups/" ), array( 'https://e.org/x/docroot/backups/', 'https://e.org/backups/' ) ),
+			'release deploy, web request'         => array( "$t/releases/1/", "$t/www2", 'https://e.org/wp', array( "$t/www2/backups/" ), array( 'https://e.org/backups/' ) ),
+			'release deploy, cron'                => array( "$t/releases/1/", '', 'https://e.org/wp', array( "$t/www2/backups/" ), array() ),
+			'root is the docroot'                 => array( "$t/doc3/wp/", "$t/doc3", 'https://e.org/wp', array( "$t/doc3/" ), array( 'https://e.org/' ) ),
+			'port and a name that needs encoding' => array( "$t/doc/wp/", '', 'https://e.org:8443/wp', array( "$t/doc/my backups/" ), array( 'https://e.org:8443/my%20backups/' ) ),
+			'relative document root is ignored'   => array( "$t/doc/wp/", 'relative/doc', 'https://e.org/wp', array( "$t/doc/backups/" ), array( 'https://e.org/backups/' ) ),
 		);
+		$rows['root under a symlinked docroot directory'] = array( "$t/doc/wp/", "$t/doc", 'https://e.org/wp', array( "$t/data/store/backups/", "$t/doc/store/backups" ), array( 'https://e.org/store/backups/' ) );
+		if ( 'Darwin' === PHP_OS_FAMILY || 'Windows' === PHP_OS_FAMILY ) {
+			$rows['ABSPATH configured with other case'] = array( strtoupper( $t ) . '/DOC/WP/', '', 'https://e.org/wp', array( "$t/doc/backups/" ), array( 'https://e.org/backups/' ) );
+		}
 		$method = new \ReflectionMethod( MainWP_Backup_Private_Root::class, 'probe_urls' );
 		foreach ( $rows as $label => list( $abspath, $document_root, $site_url, $root, $expected ) ) {
 			$this->assertSame( $expected, $method->invoke( null, $root, $site_url, $abspath, $document_root ), $label );

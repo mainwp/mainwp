@@ -148,6 +148,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE               = 'mainwp_backup_snapshot_unrestorable_wrong_site';
     const ERR_SNAPSHOT_UNRESTORABLE_PRUNED                   = 'mainwp_backup_snapshot_unrestorable_pruned';
     const ERR_SNAPSHOT_UNRESTORABLE_DAMAGED                  = 'mainwp_backup_snapshot_unrestorable_damaged';
+    const ERR_SNAPSHOT_UNRESTORABLE_CHAIN_DAMAGED            = 'mainwp_backup_snapshot_unrestorable_chain_damaged';
     const ERR_SNAPSHOT_UNRESTORABLE_FILES_CHILD_OUTDATED     = 'mainwp_backup_snapshot_unrestorable_files_child_outdated';
     const ERR_SNAPSHOT_UNRESTORABLE_MULTISITE_CHILD_OUTDATED = 'mainwp_backup_snapshot_unrestorable_multisite_child_outdated';
     const ERR_SNAPSHOT_UNRESTORABLE_EMPTY                    = 'mainwp_backup_snapshot_unrestorable_empty';
@@ -378,6 +379,7 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_RESTORE_LOCAL_ARCHIVE_SIZE_MISMATCH => esc_html__( 'The backup archive on this Dashboard was changed or replaced after this backup finished, so it cannot be restored. Choose another backup to restore.', 'mainwp' ),
             self::ERR_RESTORE_LOCAL_ARCHIVE_HASH_MISMATCH => esc_html__( 'The backup archive on this Dashboard no longer matches what was recorded when this backup finished, so it cannot be restored. The site was not changed. Choose another backup to restore.', 'mainwp' ),
             self::ERR_SNAPSHOT_UNRESTORABLE_DAMAGED       => esc_html__( "This backup's archive on this Dashboard failed its integrity check during a restore, and no cloud copy is available, so it cannot be restored.", 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_CHAIN_DAMAGED => esc_html__( 'An earlier backup that this one builds on failed its integrity check during a restore, and no cloud copy is available, so this backup cannot be restored.', 'mainwp' ),
         ) + array(
             self::ERR_TASK_PAUSED                        => esc_html__( 'This backup task is paused. Resume it from the backup tasks list, then run it again.', 'mainwp' ),
             self::ERR_NO_SITES                           => esc_html__( 'This backup task has no available sites to run. Edit the task, select sites you can access, and save it before trying again.', 'mainwp' ),

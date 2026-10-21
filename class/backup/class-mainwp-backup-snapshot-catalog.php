@@ -215,7 +215,8 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
         foreach ( $plan as $entry ) {
             if ( 'unavailable' === $entry['source'] ) {
                 if ( ! empty( $entry['damaged'] ) ) {
-                    return $this->refusal( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_DAMAGED, wp_specialchars_decode( MainWP_Backup_Error_Codes::message( MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_DAMAGED ), ENT_QUOTES ) );
+                    $code = (int) $entry['snapshot_id'] === $snapshot_id ? MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_DAMAGED : MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_CHAIN_DAMAGED;
+                    return $this->refusal( $code, wp_specialchars_decode( MainWP_Backup_Error_Codes::message( $code ), ENT_QUOTES ) );
                 }
                 return $this->refusal(
                     MainWP_Backup_Error_Codes::ERR_SNAPSHOT_UNRESTORABLE_ARTIFACT_UNAVAILABLE,
@@ -374,8 +375,14 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
      * @return array<string,array{key:string,chunked:bool,destination_id:int,sha256:string,candidates:array[]}> By basename.
      */
     private function remote_artifact_index( object $snapshot ): array {
-        $index = array();
-        $jobs  = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $snapshot->id );
+        $index    = array();
+        $jobs     = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $snapshot->id );
+        $recorded = array();
+        foreach ( (array) $snapshot->archives as $archive ) {
+            if ( ! empty( $archive['file'] ) && ! empty( $archive['sha256'] ) && ! array_key_exists( 'hash_skipped', $archive ) ) {
+                $recorded[ (string) $archive['file'] ] = (string) $archive['sha256'];
+            }
+        }
 
         foreach ( $jobs as $job ) {
             if ( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE !== $job->status || ! is_array( $job->checkpoint ) ) {
@@ -396,6 +403,10 @@ class MainWP_Backup_Snapshot_Catalog { // phpcs:ignore Generic.Classes.OpeningBr
                     // cloud object instead of trusting whatever bytes arrive.
                     'sha256'         => isset( $artifact['sha256'] ) ? (string) $artifact['sha256'] : '',
                 );
+                // The upload hashes the local file when it runs, which can be after that file changed.
+                if ( '' !== $candidate['sha256'] && isset( $recorded[ $artifact['file'] ] ) && ! hash_equals( $recorded[ $artifact['file'] ], $candidate['sha256'] ) ) {
+                    continue;
+                }
 
                 // Every completed destination is retained as a failover
                 // candidate, in job order; the first stays the primary the

@@ -404,12 +404,59 @@ class MainWP_Backup_Snapshot_Catalog_Test extends MainWP_Abilities_Test_Case {
 			$this->assertSame( 'local', $entries[ $id ]['source'] );
 			$this->assertFalse( $entries[ $id ]['damaged'] );
 			$this->assertFalse( $entries[ $id ]['restorable'] );
-			$this->assertSame( "This backup's archive on this Dashboard failed its integrity check during a restore, and no cloud copy is available, so it cannot be restored.", $entries[ $id ]['restore_reason'] );
+			$this->assertSame( 'An earlier backup that this one builds on failed its integrity check during a restore, and no cloud copy is available, so this backup cannot be restored.', $entries[ $id ]['restore_reason'] );
 			$resolved = $catalog->resolve_restorable_chain( $id );
 			$this->assertFalse( $resolved['ok'] );
-			$this->assertSame( 'mainwp_backup_snapshot_unrestorable_damaged', $resolved['code'] );
+			$this->assertSame( 'mainwp_backup_snapshot_unrestorable_chain_damaged', $resolved['code'] );
 			$this->assertSame( $resolved['error'], $entries[ $id ]['restore_reason'] );
 		}
+	}
+
+	/** A cloud copy uploaded after the local file changed is not a copy of this backup. */
+	public function test_cloud_copy_must_match_the_recorded_hash(): void {
+		$id = $this->make_snapshot(
+			array(
+				array(
+					'file'   => 'full.zip',
+					'role'   => 'full',
+					'sha256' => 'backup-hash',
+				),
+			)
+		);
+		MainWP_Backup_Snapshots::instance()->mark_artifact_damaged( $id, 'full.zip', 'mainwp_restore_local_archive_hash_mismatch' );
+		$this->complete_upload(
+			$id,
+			71,
+			array(
+				array(
+					'file'   => 'full.zip',
+					'mode'   => 'whole',
+					'sha256' => 'changed-hash',
+				),
+			)
+		);
+		$catalog  = MainWP_Backup_Snapshot_Catalog::instance();
+		$resolved = $catalog->resolve_restorable_chain( $id );
+		$this->assertFalse( $resolved['ok'] );
+		$this->assertSame( 'mainwp_backup_snapshot_unrestorable_damaged', $resolved['code'] );
+		$this->assertSame( 'unavailable', $catalog->list_snapshots_for_site( 9901 )[0]['source'] );
+		$this->complete_upload(
+			$id,
+			72,
+			array(
+				array(
+					'file'   => 'full.zip',
+					'mode'   => 'whole',
+					'sha256' => 'backup-hash',
+				),
+			)
+		);
+		$resolved = $catalog->resolve_restorable_chain( $id );
+		$this->assertTrue( $resolved['ok'] );
+		$this->assertSame( 'remote', $resolved['plan'][0]['source'] );
+		$this->assertSame( 'backup-hash', $resolved['plan'][0]['expected_sha256'] );
+		$this->assertCount( 1, $resolved['plan'][0]['remote_candidates'] );
+		$this->assertSame( 72, $resolved['plan'][0]['remote_candidates'][0]['destination_id'] );
 	}
 
 	/** A later dump supersedes a damaged ancestor dump, so the list follows admission. */

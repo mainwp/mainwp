@@ -24,8 +24,9 @@ class MainWP_Backup_Archive_Mtime_Test extends MainWP_Abilities_Test_Case {
 		// Site ids repeat across runs of the shared test database, so the directory may already hold an earlier run's files.
 		$created = ! is_dir( $dir );
 		wp_mkdir_p( $dir );
+		// is_archive() accepts .sql.zip, so only the is_sql_archive() exclusion keeps the newer SQL file out of the scan.
 		$archive = $dir . 'mtime-fixture.zip';
-		$sql     = $dir . 'mtime-fixture.sql.gz';
+		$sql     = $dir . 'mtime-fixture.sql.zip';
 		try {
 			$this->assertSame( -1, MainWP_Backup_Executor::latest_backup_archive_mtime( $site_id ) );
 			file_put_contents( $archive, 'archive' );
@@ -37,8 +38,13 @@ class MainWP_Backup_Archive_Mtime_Test extends MainWP_Abilities_Test_Case {
 			$this->assertTrue( MainWP_Backup_Executor::has_recent_backup( $site_id, 3 ) );
 			$this->assertFalse( MainWP_Backup_Executor::has_recent_backup( $site_id, 1 ) );
 		} finally {
-			unlink( $archive );
-			unlink( $sql );
+			// Guarded so a failure before the fixtures are written keeps its own assertion message.
+			if ( is_file( $archive ) ) {
+				unlink( $archive );
+			}
+			if ( is_file( $sql ) ) {
+				unlink( $sql );
+			}
 			if ( $created ) {
 				rmdir( $dir );
 			}

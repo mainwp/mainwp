@@ -70,7 +70,7 @@ function harness(raw = 'Site') {
         mainwpVars: {}, bulkInstallDone: 0, bulkInstallCurrentThreads: 0, bulkInstallMaxThreads: 3,
         bulkManageSitesCurrentThreads: 0, bulkManageSitesFinished: 0,
         mainwp_secure_data: data => data, managesites_init() {},
-        mainwp_confirm: message => confirms.push(message),
+        mainwp_confirm: (message, callback) => { confirms.push(message); confirms.callback = callback; },
         mainwp_install_bulk_start_next() {}, mainwp_upload_bulk_start_next() {}, mainwp_managesites_bulk_reconnect_next() {}, mainwp_managesites_bulk_remove_next() {},
         mainwp_links_visit_site_and_admin: () => '', mainwp_install_bulk_you_know_msg: () => '',
         mainwp_js_get_error_not_detected_connect: () => false,
@@ -161,6 +161,14 @@ for (const raw of cases) {
             assert.ok(html.includes(escaped(raw)), html); assertSafe(html);
         });
     }
+    // The Recent Posts handler forwards a Child response whole when it carries an empty error.
+    test('widget responses postAction result: ' + raw, () => {
+        const h = harness(raw); load(h, 'postAction');
+        h.context.postAction(h.row, 'delete');
+        h.respond({ error: '', result: raw });
+        const html = htmlWrites(h).at(-1);
+        assert.ok(html.includes('check green icon') && html.includes(escaped(raw)), html); assertSafe(html);
+    });
     for (const field of ['host', 'CNAME', 'error', 'httpCodeString', 'ip', 'resolved_ip', 'httpCode']) {
         test('test-connection result ' + field + ': ' + raw, () => {
             const h = harness(raw); load(h, 'mainwp_render_test_connection_result');
@@ -284,16 +292,37 @@ for (const response of ['reconnect_failed', 'ERROR transport failed', 'Site has 
         if (response === 'reconnect_failed') assert.ok(h.writes.some(w => w.method === 'append' && typeof w.value === 'object' && w.value.text().includes('Reconnect failed.')), 'append the readable reconnect nodes');
     });
 }
-for (const response of [{ error: 'Removal failed' }, { result: 'NOSITE' }, { result: 'SUCCESS' }, { result: 'NOMAINWP' }]) {
+// Shapes the remove handler emits: removed_site is set whenever a site id was posted.
+const removeResponses = [
+    [{ removed_site: false, error: 'Removal failed' }, true, false],
+    [{ removed_site: true, error: 'Be sure to deactivate the child plugin' }, true, true],
+    [{ result: 'NOSITE' }, true, false],
+    [{ removed_site: true, result: 'SUCCESS' }, false, true],
+    [{ removed_site: true, result: 'REMOVED' }, false, true],
+    [{ removed_site: false, result: 'SUCCESS' }, true, false],
+    [{ removed_site: false, undefined_error: true }, true, false],
+    [{ removed_site: true, undefined_error: true }, false, true]
+];
+for (const [response, failed, removed] of removeResponses) {
     test('row status remove: ' + JSON.stringify(response), () => {
         const h = harness(); load(h, 'mainwp_managesites_bulk_remove_specific', 'mainwp-managesites-action');
         h.context.mainwp_managesites_bulk_remove_specific(h.row); h.respond(response);
-        const failed = Boolean(response.error) || response.result === 'NOSITE';
         const html = htmlWrites(h).at(-1);
         assert.ok(html.includes(failed ? 'red times icon' : 'green check icon'), html);
-        assert.equal(h.timers.length, failed ? 0 : 1);
+        assert.equal(h.timers.length, removed ? 1 : 0);
         h.timers.forEach(fn => fn());
-        assert.equal(h.writes.some(w => w.method === 'fadeOut'), !failed);
+        assert.equal(h.writes.some(w => w.method === 'fadeOut'), removed);
+    });
+    test('row status single remove: ' + JSON.stringify(response), () => {
+        const h = harness(); load(h, 'managesites_remove');
+        const removes = [];
+        h.node('tr#child-site-7').remove = function () { removes.push(true); return this; };
+        h.context.managesites_remove(h.row);
+        h.confirms.callback(); h.respond(response);
+        const colors = h.writes.filter(w => w.selector === '#mainwp-message-zone').map(w => w.method);
+        assert.equal(removes.length, removed ? 1 : 0, 'row removed only when the Dashboard removed the site');
+        if (!removed) assert.ok(htmlWrites(h).at(-1).includes('red times icon'), htmlWrites(h).at(-1));
+        assert.ok(colors.length > 0, 'a message is shown');
     });
 }
 

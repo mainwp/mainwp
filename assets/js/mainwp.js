@@ -344,7 +344,7 @@ let postAction = function (elem, what) {
         } else if (response.result) {
             rowElement.show();
             rowElement.next('.mainwp-row-actions-working').hide();
-            rowElement.html('<div class="sixteen wide column"><i class="check green icon"></i>' + response.result + '</div>');
+            rowElement.html('<div class="sixteen wide column"><i class="check green icon"></i>' + mainwp_text_html(response.result) + '</div>');
         } else {
             rowElement.show();
             rowElement.next('.mainwp-row-actions-working').hide();
@@ -2419,13 +2419,17 @@ let managesites_remove = function (obj) {
 
             let result = '';
             let error = '';
+            // An error can come with removed_site true (Child unreachable after the Dashboard removal), so the row follows removed_site.
+            let removed = true === response.removed_site;
 
             if (response.error != undefined) {
                 error = response.error;
-            } else if (response.result == 'SUCCESS') {
-                result = jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled.')));
             } else if (response.result == 'NOSITE') {
                 error = jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(MainWP.I18n.t('The requested site has not been found.')));
+            } else if (!removed) {
+                error = MainWP.I18n.t('Undefined error. Please try again.');
+            } else if (response.result == 'SUCCESS') {
+                result = jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled.')));
             } else {
                 result = jQuery('<i>', { class: 'close icon' }).add(document.createTextNode(MainWP.I18n.t('The site has been removed. Please make sure that the MainWP Child plugin has been deactivated properly.')));
             }
@@ -2438,7 +2442,11 @@ let managesites_remove = function (obj) {
                 feedback('mainwp-message-zone', result, 'green');
             }
 
-            jQuery('tr#child-site-' + id).remove();
+            if (removed) {
+                jQuery('tr#child-site-' + id).remove();
+            } else {
+                jQuery('tr#child-site-' + id).html('<td colspan="999"><i class="red times icon"></i></td>');
+            }
 
         }, 'json');
     }, false, false, false, 'REMOVE');

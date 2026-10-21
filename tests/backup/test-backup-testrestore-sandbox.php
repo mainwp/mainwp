@@ -542,13 +542,88 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	}
 
 	/**
-	 * PharData can interpret a prefix even when that header lacks ustar magic.
+	 * A safe prefix on headers without ustar magic names the member the same way PharData does.
 	 */
-	public function test_tar_headers_refuse_phar_only_files() {
-		$first = $this->patch_raw_tar_header( $this->raw_tar_member( 'first.txt', 'first' ), 257, str_repeat( "\0", 6 ) );
-		$later = $this->patch_raw_tar_header( $this->raw_tar_member( 'file.txt', 'prefixed', 'sub' ), 257, str_repeat( "\0", 6 ) );
-		$bytes = $first . $later . $this->raw_tar_member( 'file.txt', 'plain' );
-		$this->assert_tar_name_refusal( $this->raw_tar( $bytes ), 'could not be read' );
+	public function test_tar_headers_accept_magicless_safe_prefix() {
+		$first   = $this->patch_raw_tar_header( $this->raw_tar_member( 'first.txt', 'first' ), 257, str_repeat( "\0", 6 ) );
+		$later   = $this->patch_raw_tar_header( $this->raw_tar_member( 'file.txt', 'prefixed', 'sub' ), 257, str_repeat( "\0", 6 ) );
+		$bytes   = $first . $later . $this->raw_tar_member( 'file.txt', 'plain' );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$this->assertNull( $this->tar_refusal( $sandbox, $this->raw_tar( $bytes ), 'extract' ) );
+			$this->assertSame( 'prefixed', file_get_contents( $sandbox->temp_dir() . 'sub/file.txt' ) );
+			$this->assertSame( 'plain', file_get_contents( $sandbox->temp_dir() . 'file.txt' ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * PharData joins the prefix field even without ustar magic, so the name check must see the joined name.
+	 *
+	 * @dataProvider magicless_prefix_cases
+	 * @param string $prefix Unsafe prefix.
+	 * @param bool   $first  Whether the magic-less header comes first.
+	 */
+	public function test_tar_headers_refuse_unsafe_prefix_without_magic( $prefix, $first ) {
+		if ( '/absolute' === $prefix ) {
+			$prefix = $this->dir . '/absolute';
+		}
+		$hidden = $this->patch_raw_tar_header( $this->raw_tar_member( 'evil.txt', 'hostile', $prefix ), 257, str_repeat( "\0", 6 ) );
+		$bytes  = ( $first ? $hidden : $this->raw_tar_member( 'first.txt', 'first' ) . $hidden ) . $this->raw_tar_member( 'evil.txt', 'plain' );
+		$this->assert_tar_name_refusal( $this->raw_tar( $bytes ), 'contains an unsafe file path' );
+		$this->assertFileDoesNotExist( $this->dir . '/absolute/evil.txt' );
+	}
+
+	/**
+	 * Magic-less prefix shapes.
+	 *
+	 * @return array
+	 */
+	public static function magicless_prefix_cases() {
+		return array(
+			'parent, later header'   => array( '..', false ),
+			'parent, first header'   => array( '..', true ),
+			'absolute, later header' => array( '/absolute', false ),
+		);
+	}
+
+	/**
+	 * Links and directories carry no payload for PharData, so a declared one must not hide headers.
+	 *
+	 * @dataProvider payload_bearing_entry_types
+	 * @param string $type   Member type.
+	 * @param string $action Tar consumer.
+	 */
+	public function test_tar_headers_refuse_link_and_directory_payloads( $type, $action ) {
+		$body    = $this->raw_tar_member( '../outside.txt', 'hostile' );
+		$bytes   = $this->raw_tar_member( 'first.sql', 'SELECT 1;' ) . $this->raw_tar_member( 'a.txt', $body, '', $type, 'first.sql' ) . $this->raw_tar_member( 'after.txt', 'after' );
+		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
+		$sandbox->bring_up();
+		try {
+			$caught = $this->tar_refusal( $sandbox, $this->raw_tar( $bytes ), $action );
+			$this->assertInstanceOf( MainWP_Exception::class, $caught );
+			$this->assertStringContainsString( 'could not be read', $caught->getMessage() );
+			$this->assertSame( array( '.', '..' ), scandir( $sandbox->temp_dir() ) );
+		} finally {
+			$sandbox->tear_down();
+		}
+	}
+
+	/**
+	 * Payload-bearing link and directory headers across the tar consumers.
+	 *
+	 * @return array
+	 */
+	public static function payload_bearing_entry_types() {
+		return array(
+			'symlink extract'   => array( '2', 'extract' ),
+			'symlink SQL read'  => array( '2', 'read' ),
+			'symlink SQL size'  => array( '2', 'size' ),
+			'hard link extract' => array( '1', 'extract' ),
+			'directory extract' => array( '5', 'extract' ),
+		);
 	}
 
 	/**

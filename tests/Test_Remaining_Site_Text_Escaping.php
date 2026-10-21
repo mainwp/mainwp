@@ -11,6 +11,7 @@ use MainWP\Dashboard\MainWP_Bulk_Add;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Sites_View;
+use MainWP\Dashboard\MainWP_Recent_Posts;
 
 /** Regression coverage for diagnostics and href emitters. */
 class Test_Remaining_Site_Text_Escaping extends \WP_UnitTestCase {
@@ -91,6 +92,36 @@ class Test_Remaining_Site_Text_Escaping extends \WP_UnitTestCase {
 		} finally {
 			remove_filter( 'mainwp_fetch_url_not_authed_pre', $fetch );
 			remove_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
+		}
+	}
+
+	/**
+	 * The Recent Posts error is shown as text, so a connect failure must arrive as plain text, not anchor markup.
+	 */
+	public function test_recent_posts_error_is_plain_text(): void {
+		$site_id = $this->create_test_site();
+		$fetch   = static function () {
+			throw new MainWP_Exception( 'NOMAINWP' );
+		};
+		$capture = static function ( $information ) {
+			throw new \RuntimeException( wp_json_encode( $information ) );
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $fetch );
+		add_action( 'mainwp_after_post_action', $capture );
+		$_POST['postId']    = 5;
+		$_POST['websiteId'] = $site_id;
+		try {
+			MainWP_Recent_Posts::action( 'delete' );
+			$this->fail( 'The post action must reach the after-action hook.' );
+		} catch ( \RuntimeException $captured ) {
+			$information = json_decode( $captured->getMessage(), true );
+			$this->assertNotEmpty( $information['error'] );
+			$this->assertStringNotContainsString( '<a', $information['error'] );
+			$this->assertStringContainsString( 'MainWP Community', $information['error'] );
+		} finally {
+			unset( $_POST['postId'], $_POST['websiteId'] );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fetch );
+			remove_action( 'mainwp_after_post_action', $capture );
 		}
 	}
 

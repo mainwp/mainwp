@@ -1403,6 +1403,10 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                 if ( ! in_array( $type, array( '0', "\0", '1', '2', '5', '7', 'L', 'x', 'g' ), true ) ) {
                     throw $unreadable;
                 }
+                // PharData reads no payload for links and directories, so a declared one would be parsed as headers this walk never sees.
+                if ( $size > 0 && in_array( $type, array( '1', '2', '5' ), true ) ) {
+                    throw $unreadable;
+                }
                 if ( 'L' === $type || 'x' === $type ) {
                     if ( $size > 65536 ) {
                         throw $unreadable;
@@ -1446,8 +1450,9 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     $skip = $size + $padding;
                     // PharData ignores global pax metadata.
                     if ( 'g' !== $type ) {
-                        $name   = explode( "\0", substr( $header, 0, 100 ), 2 )[0];
-                        $prefix = 'ustar' === substr( $header, 257, 5 ) ? explode( "\0", substr( $header, 345, 155 ), 2 )[0] : '';
+                        $name = explode( "\0", substr( $header, 0, 100 ), 2 )[0];
+                        // PharData joins a non-empty prefix field whatever the header's magic says.
+                        $prefix = explode( "\0", substr( $header, 345, 155 ), 2 )[0];
                         $name   = '' === $prefix ? $name : $prefix . '/' . $name;
                         $name   = null !== $long_name ? $long_name : $name;
                         if ( $this->has_unsafe_entry_name( $name ) ) {

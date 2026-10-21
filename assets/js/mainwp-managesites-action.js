@@ -296,12 +296,16 @@ let mainwp_managesites_bulk_remove_specific = function (pCheckedBox) {
     rowObj.html('<td colspan="999"></td>');
     let result = '';
     let error = '';
+    // An error can come with removed_site true (Child unreachable after the Dashboard removal), so the fade follows removed_site.
+    let removed = true === response.removed_site;
     if (response.error != undefined) {
       error = response.error;
-    } else if (response.result == 'SUCCESS') {
-      result = MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled.');
     } else if (response.result == 'NOSITE') {
       error = MainWP.I18n.t('Site not found. Please try again.');
+    } else if (!removed) {
+      error = MainWP.I18n.t('Undefined error. Please try again.');
+    } else if (response.result == 'SUCCESS') {
+      result = MainWP.I18n.t('The site has been removed and the MainWP Child plugin has been disabled.');
     } else {
       result = MainWP.I18n.t('The site has been removed but the MainWP Child plugin could not be disabled.');
     }
@@ -314,6 +318,8 @@ let mainwp_managesites_bulk_remove_specific = function (pCheckedBox) {
       rowObj.removeClass('error');
       rowObj.addClass('positive');
       rowObj.html('<td colspan="999"><i class="green check icon"></i>' + result + '</td>');
+    }
+    if (removed) {
       setTimeout(function () {
         jQuery('tr[siteid=' + id + ']').fadeOut(1000);
       }, 3000);

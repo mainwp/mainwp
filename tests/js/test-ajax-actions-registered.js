@@ -30,9 +30,11 @@ function files( dir, ext ) {
 test( 'every literal AJAX action posted from assets/js has a PHP registration', () => {
     // nosemgrep: AIK_ts_generic_path_traversal -- paths come from readdir under the repository root, not from input.
     const php = [ 'class', 'pages', 'modules', 'widgets', 'includes' ]
+        // nosemgrep: AIK_ts_generic_path_traversal -- paths come from readdir under the repository root, not from input.
         .flatMap( ( dir ) => files( path.join( root, dir ), '.php' ) )
         // nosemgrep: AIK_ts_generic_path_traversal -- paths come from readdir under the repository root, not from input.
         .concat( path.join( root, 'mainwp.php' ) )
+        // nosemgrep: AIK_ts_generic_path_traversal -- paths come from readdir under the repository root, not from input.
         .map( ( file ) => fs.readFileSync( file, 'utf8' ) )
         .join( '\n' );
 

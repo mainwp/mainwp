@@ -503,7 +503,7 @@ class Log_Changes_Logs_Helper {
                     }
 
                     $list_item = array(
-                        'name'      => $tbl_list->get_object_title( $record ),
+                        'name'      => $tbl_list->get_object_title( $record, false ),
                         'site_id'   => $record->site_id,
                         'item_name' => $name_meta,
                         'item_slug' => $slug,

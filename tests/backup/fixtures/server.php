@@ -57,6 +57,7 @@ switch ( $path ) {
         break;
 
     case '/child-icon.png':
+    case '/favi.php.png':
         header( 'Content-Type: image/png' );
         echo fixture_content( 64 );
         break;

@@ -1007,7 +1007,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         $host = $parts['host'];
         if ( false !== filter_var( $host, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
             // A literal address cannot change between this check and the request.
-            return static::is_global_ipv4( $host ) ? array() : false;
+            return self::is_global_ipv4( $host ) ? array() : false;
         }
         // curl looks up IDN hosts as punycode and reads a leading '-' in a pin as a removal, so a pin binds only an LDH ASCII name.
         if ( ! preg_match( '/^(?!-)[a-z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-z0-9-]{1,63}(?<!-))*\.?$/i', $host ) ) {
@@ -1020,7 +1020,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             return false;
         }
         foreach ( $addresses as $address ) {
-            if ( ! is_string( $address ) || ! static::is_global_ipv4( $address ) ) {
+            if ( ! is_string( $address ) || ! self::is_global_ipv4( $address ) ) {
                 return false;
             }
         }
@@ -1068,10 +1068,10 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             $dirs     = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
             $iconsDir = $dirs[0];
-            $filename = basename( $icon_url );
-            $filename = strtok( $filename, '?' );
-            if ( $filename ) {
-                $filename = 'favi-' . $website->id . '-' . $filename;
+            // Name the file from its role: a Child-chosen name such as favi.php.png runs as PHP on Apache setups that map every extension.
+            $extension = strtolower( pathinfo( (string) wp_parse_url( $icon_url, PHP_URL_PATH ), PATHINFO_EXTENSION ) );
+            if ( '' !== $extension ) {
+                $filename = 'favi-' . (int) $website->id . '-icon.' . $extension;
                 $size     = false;
                 if ( MainWP_Utility::check_image_file_name( $filename ) ) {
                     $size = $wp_filesystem->put_contents( $iconsDir . $filename, $content );

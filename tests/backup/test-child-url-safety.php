@@ -311,10 +311,23 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 	/** Intranet Children retain the existing icon and option behavior. */
 	public function test_icon_same_host_is_written_and_option_saved() {
 		$dirs          = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
-		$name          = 'favi-' . $this->website->id . '-child-icon.png';
+		$name          = 'favi-' . $this->website->id . '-icon.png';
 		$this->files[] = $dirs[0] . $name;
 		$this->assertSame( array( 'result' => 'success' ), MainWP_Sync::download_child_icon( $this->website, static::fixture_url( '/child-icon.png' ) ) );
 		$this->assertSame( static::fixture_content( 64 ), file_get_contents( $dirs[0] . $name ) );
+		$this->assertSame( $name, MainWP_DB::instance()->get_website_option( $this->website->id, 'favi_icon', '' ) );
+	}
+
+	/** A Child-chosen file name must not reach the public icons dir, where favi.php.png could run as PHP. */
+	public function test_icon_file_name_comes_from_the_role_not_the_child() {
+		$dirs          = MainWP_System_Utility::get_mainwp_dir( 'icons', true );
+		$name          = 'favi-' . $this->website->id . '-icon.png';
+		$this->files[] = $dirs[0] . $name;
+		$this->files[] = $dirs[0] . 'favi-' . $this->website->id . '-favi.php.png';
+		$this->assertSame( array( 'result' => 'success' ), MainWP_Sync::download_child_icon( $this->website, static::fixture_url( '/favi.php.png?v=1#x.php' ) ) );
+		$this->assertFileExists( $dirs[0] . $name );
+		$this->assertFileDoesNotExist( $dirs[0] . 'favi-' . $this->website->id . '-favi.php.png' );
+		$this->assertSame( array(), glob( $dirs[0] . 'favi-' . $this->website->id . '-*.php*' ) );
 		$this->assertSame( $name, MainWP_DB::instance()->get_website_option( $this->website->id, 'favi_icon', '' ) );
 	}
 

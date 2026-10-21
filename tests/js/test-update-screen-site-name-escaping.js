@@ -200,14 +200,15 @@ for ( const [ label, raw, display ] of cases ) {
             assertSafe( html );
         } );
     }
-    for ( const field of [ 'date', 'event', 'author_name', 'source', 'old_version', 'version', 'at_hour' ] ) {
+    for ( const field of [ 'date', 'date_key', 'log_id', 'event', 'author_name', 'source', 'old_version', 'version', 'at_hour' ] ) {
         test( 'history ' + field + ': ' + label, () => {
             const h = harness( raw );
             load( h.context, mainwp, 'mainwp_item_changes_load' );
             h.context.mainwp_item_changes_load();
             const record = { date: 'Today', details: { log_id: 1, event: 'Updated', author_name: 'Admin', source: 'Child', old_version: '1', version: '2', at_hour: '12:00' } };
-            ( field === 'date' ? record : record.details )[ field ] = raw;
-            h.respond( { list: { today: [ record ] } } );
+            if ( field === 'date' ) record.date = raw;
+            else if ( field !== 'date_key' ) record.details[ field ] = raw;
+            h.respond( { list: { [ field === 'date_key' ? raw : 'today' ]: [ record ] } } );
             const html = h.html.find( value => typeof value === 'string' && value.includes( 'ui accordion' ) );
             assert.ok( html.includes( escapeHtml( raw ) ), html );
             assertSafe( html );

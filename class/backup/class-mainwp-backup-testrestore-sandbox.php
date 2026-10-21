@@ -1285,9 +1285,13 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             }
             // ZipArchive::extractTo() normalizes the name (empty and . segments go), then drops every segment up to a
             // directory name ending in a dot, so release../index.php would land on index.php and the test restore would
-            // check the wrong tree. Backslash separates segments only on Windows.
-            $dirs = array_diff( preg_split( '\\' === DIRECTORY_SEPARATOR ? '#[\\\\/]#' : '#/#', $name ), array( '', '.' ) );
-            array_pop( $dirs );
+            // check the wrong tree. Backslash separates segments only on Windows. A directory entry keeps its
+            // trailing separator, so its last segment counts too (a./ would become an empty name and fail mid-extraction).
+            $segments = preg_split( '\\' === DIRECTORY_SEPARATOR ? '#[\\\\/]#' : '#/#', $name );
+            $dirs     = array_diff( $segments, array( '', '.' ) );
+            if ( '' !== end( $segments ) ) {
+                array_pop( $dirs );
+            }
             if ( preg_grep( '#\.$#D', $dirs ) ) {
                 $zip->close();
                 throw new MainWP_Exception( esc_html__( 'A backup archive could not be extracted.', 'mainwp' ), 'zip entry the extractor would move: ' . $name, self::ERR_APPLY );

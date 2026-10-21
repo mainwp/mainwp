@@ -2806,7 +2806,7 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 		$zip  = new \ZipArchive();
 		$this->assertTrue( $zip->open( $path, \ZipArchive::CREATE ) );
 		$this->assertTrue( $zip->addFromString( 'index.php', 'outer' ) );
-		$this->assertTrue( $zip->addFromString( $name, 'inner' ) );
+		$this->assertTrue( '/' === substr( $name, -1 ) ? $zip->addEmptyDir( substr( $name, 0, -1 ) ) : $zip->addFromString( $name, 'inner' ) );
 		$this->assertTrue( $zip->close() );
 		$sandbox = new MainWP_Backup_TestRestore_Sandbox();
 		$sandbox->bring_up();
@@ -2841,13 +2841,16 @@ class MainWP_Backup_TestRestore_Sandbox_Test extends \WP_UnitTestCase { // phpcs
 	 */
 	public static function zip_moved_name_cases() {
 		return array(
-			'two dots'                => array( 'release../index.php' ),
-			'one dot'                 => array( 'release./index.php' ),
-			'nested two dots'         => array( 'a/b../c/index.php' ),
-			'three dots'              => array( '.../index.php' ),
-			'newline and dot'         => array( "\n./index.php", false ),
-			'dot after a dot segment' => array( 'a/./b./index.php', false ),
-			'backslash then dot'      => array( 'a\\./index.php', false ),
+			'two dots'                           => array( 'release../index.php' ),
+			'one dot'                            => array( 'release./index.php' ),
+			'nested two dots'                    => array( 'a/b../c/index.php' ),
+			'three dots'                         => array( '.../index.php' ),
+			'newline and dot'                    => array( "\n./index.php", false ),
+			'dot after a dot segment'            => array( 'a/./b./index.php', false ),
+			'backslash then dot'                 => array( 'a\\./index.php', false ),
+			'directory entry'                    => array( 'a./', false ),
+			'nested directory entry'             => array( 'a/b./', false ),
+			'directory entry with a dot segment' => array( 'a././', false ),
 		);
 	}
 

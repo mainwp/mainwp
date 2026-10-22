@@ -429,4 +429,42 @@ class MainWP_Child_URL_Safety_Test extends MainWP_Backup_Test_Case {
 			'cross host' => array( 'http://169.254.169.254/secrets', 'https://child.example/wp-cron.php' ),
 		);
 	}
+
+	/**
+	 * Sync telemetry reports the connection state the sync left behind.
+	 *
+	 * @dataProvider sync_telemetry_results
+	 * @param array  $information Child sync response.
+	 * @param string $expected Reported new connection status.
+	 */
+	public function test_sync_telemetry_connection_status_follows_sync_result( $information, $expected ) {
+		$telemetry = array();
+		$capture   = static function ( $site, $info, $error, $sync_errors, $other, $telem_info ) use ( &$telemetry ) {
+			unset( $site, $info, $error, $sync_errors, $other );
+			$telemetry[] = $telem_info;
+		};
+		add_action( 'mainwp_after_site_synced', $capture, 10, 6 );
+		try {
+			$website = $this->website;
+			MainWP_Sync::sync_information_array( $website, $information, '', false, false, false );
+		} finally {
+			remove_action( 'mainwp_after_site_synced', $capture, 10 );
+		}
+		$this->assertCount( 1, $telemetry );
+		$this->assertSame( 'connected', $telemetry[0]['previous_connection_status'] );
+		$this->assertSame( $expected, $telemetry[0]['new_connection_status'] );
+		$this->assertSame( 'connected' !== $expected, $telemetry[0]['connection_status_changed'] );
+	}
+
+	/**
+	 * A versioned response completes a sync; an empty one does not.
+	 *
+	 * @return array Sync results.
+	 */
+	public static function sync_telemetry_results() {
+		return array(
+			'completed sync' => array( array( 'version' => '6.0' ), 'connected' ),
+			'failed sync'    => array( array(), 'disconnected' ),
+		);
+	}
 }

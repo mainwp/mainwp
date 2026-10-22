@@ -211,6 +211,7 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 
 		$this->assertSame( 'completed', $status['status'] );
 		$this->assertSame( 66, $status['meta']['size'] );
+		$this->assertSame( array( 66 ), $sizes, 'The digit-string size must reach the transfer as its bound.' );
 	}
 
 	/** A gate download retry must reuse its persisted reservation. */

@@ -861,10 +861,10 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
     /**
      * Method get_telem_sync_info.
      *
-     * @param mixed $sync_done Whether synchronization disconnected the Child.
+     * @param bool $sync_success Whether the synchronization completed.
      * @return array Telemetry context.
      */
-    public static function get_telem_sync_info( $sync_done ) {
+    public static function get_telem_sync_info( $sync_success ) {
 
         $is_bulk_sync = ! empty( $_POST['bulkSync'] ) ? true : false; // phpcs:ignore -- NOSONAR - superglobal usage is acceptable.
 
@@ -887,7 +887,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
         $curr_stack       = static::get_current_stack_action();
         $prev_conn_status = in_array( $curr_stack, array( 'sync_before_reconnect', 'sync_reconnect' ) ) ? 'disconnected' : 'connected';
-        $new_conn_status  = $sync_done ? 'disconnected' : 'connected';
+        $new_conn_status  = $sync_success ? 'connected' : 'disconnected';
 
         return array(
             'sync_type'                  => $tp,

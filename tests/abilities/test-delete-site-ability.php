@@ -740,8 +740,9 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
     /**
      * Test that a delete matching no row still fires both hooks.
      *
-     * Zero rows is not a database error. The ability path treats only false
-     * as failure, and removed_site stays unset because that flag is truthy-only.
+     * Zero rows is not a database error: the row is already gone. The ability
+     * path treats only false as failure, and removed_site is set so the Sites
+     * table drops the row instead of reporting an undefined error.
      *
      * @return void
      */
@@ -773,7 +774,7 @@ class Test_DeleteSite_Ability extends MainWP_Abilities_Test_Case {
 
         $this->assertSame( 1, $this->site_row_deletes_rewritten, 'The zero-row filter rewrites exactly one site-row DELETE.' );
         $this->assertIsArray( $information );
-        $this->assertArrayNotHasKey( 'removed_site', $information, 'Zero rows does not set removed_site.' );
+        $this->assertTrue( $information['removed_site'] ?? false, 'Zero rows sets removed_site.' );
         $this->assertSame( 1, $this->count_site_rows( $site_id ), 'A zero-row delete must leave the site row in place.' );
         $this->assert_demo_deletion_hooks_fired( $site_id, $site_url );
         $this->assert_deletion_hook_argument_is( $site );

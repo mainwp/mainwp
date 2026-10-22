@@ -78,7 +78,7 @@ Backup abilities require authentication, `manage_options`, the applicable Dashbo
 
 | Ability | Method | Behavior |
 |---------|--------|----------|
-| `mainwp/get-backup-status-v1` | GET | Reports each site's last known backup, staleness, native health, and update gate verdict. |
+| `mainwp/get-backup-status-v1` | GET | Reports each site's last known backup, staleness, built-in backup health, and update gate verdict. |
 | `mainwp/list-backup-history-v1` | GET | Lists durable per-site run outcomes and gate overrides, with the overridden verdict, provenance and timestamps. |
 | `mainwp/list-backup-tasks-v1` | GET | Lists visible tasks with pagination and filters. |
 | `mainwp/get-backup-task-v1` | GET | Returns one task's configuration and current or last run summary. |
@@ -111,9 +111,9 @@ Backup abilities require authentication, `manage_options`, the applicable Dashbo
 | `mainwp/delete-backup-destination-v1` | POST | Previews or deletes a destination's configuration. |
 | `mainwp/update-backup-settings-v1` | POST | Previews or changes supported backup policy settings. |
 
-Backup and restore starts continue through cron. Follow the returned `poll.ability` and `poll.input` to read progress. A stored `running` row may await reconciliation; it does not prove that work is executing. Evidence fields describe what the Dashboard observed, including the limits of offsite verification and test restores. Reads remain available when native backups are disabled; starts return `mainwp_backup_legacy_disabled`.
+Backup and restore starts continue through cron. Follow the returned `poll.ability` and `poll.input` to read progress. A stored `running` row may await reconciliation; it does not prove that work is executing. Evidence fields describe what the Dashboard observed, including the limits of offsite verification and test restores. Reads remain available when Built-In Backups are disabled; starts return `mainwp_backup_legacy_disabled`.
 
-The six update abilities (`run-updates-v1`, `update-all-v1`, and `update-site-{core,plugins,themes,translations}-v1`) check backups when native backups and the global pre-update backup setting are enabled and the site's `backup_before_upgrade` flag is nonzero. A preview includes `would_affect.sites[].backup_gate` with `applies`, `verdict`, and `overridden`. Its summary counts `backup_gate_blocked_sites` and `backup_gate_overridden_sites`.
+The six update abilities (`run-updates-v1`, `update-all-v1`, and `update-site-{core,plugins,themes,translations}-v1`) check backups when Built-In Backups and the global pre-update backup setting are enabled and the site's `backup_before_upgrade` flag is nonzero. A preview includes `would_affect.sites[].backup_gate` with `applies`, `verdict`, and `overridden`. Its summary counts `backup_gate_blocked_sites` and `backup_gate_overridden_sites`.
 
 A non-pass verdict skips eligible items with `backup_missing` or `backup_pending_offsite`. Existing hold reasons take precedence. Multi-site confirmation reports skips; single-site confirmation returns 409 `mainwp_backup_gate_blocked` with `site_id` and `verdict` when the gate would hold at least one requested item. Pass `ignore_backup_gate: true` to proceed under the same authorization and hold checks. Immediate results include `backup_gate` as a per-site array for multi-site abilities or an object for single-site abilities. Queued jobs retain the flag, recheck evidence at dispatch time, and expose per-site gate decisions and skip reasons through `get-batch-job-status-v1`.
 
@@ -313,7 +313,7 @@ All MainWP-specific error codes use the `mainwp_*` prefix:
 | `mainwp_backup_snapshot_not_found` | 404 | Snapshot missing or outside the caller's scope |
 | `mainwp_backup_restore_job_not_found` | 404 | Restore job missing or outside the caller's scope |
 | `mainwp_backup_destination_not_found` | 404 | Destination missing |
-| `mainwp_backup_legacy_disabled` | 409 | Native backups are disabled for a start action |
+| `mainwp_backup_legacy_disabled` | 409 | Built-In Backups are disabled for a start action |
 | `mainwp_backup_already_running` | 409 | A conflicting backup or restore is open |
 | `mainwp_backup_concurrency_limit` | 409 | No backup slot is available |
 | `mainwp_backup_site_disconnected` | 409 | The site has sync errors |

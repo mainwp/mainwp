@@ -255,6 +255,11 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function list_posts( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_posts' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $post_data = array();
         $utility   = MainWP_Utility::instance();
         // Get params.
@@ -336,6 +341,11 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function get_post( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_posts' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -394,6 +404,11 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function update_status_post( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_posts' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -467,6 +482,11 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function edit_post( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_posts' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -576,6 +596,11 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function create_post( $request ) { // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_posts' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -663,6 +688,11 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
      * @return WP_Error|WP_REST_Response
      */
     public function delete_post( $request ) {  // phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'manage_posts' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         // Get website exist.
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {

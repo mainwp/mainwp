@@ -1068,7 +1068,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function edit_cost_tracker_settings( $request ) {
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1124,7 +1124,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function add_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - long method.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1191,7 +1191,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - long method.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1270,7 +1270,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function delete_cost_tracker_product_type( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1330,7 +1330,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function add_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1383,7 +1383,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function update_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -1436,7 +1436,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function delete_cost_tracker_payment_method( $request ) { // phpcs:ignore -- NOSONAR - complex.
-        $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        $permission = $this->check_operation_right( 'manage_costs_settings' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -2703,7 +2703,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'mainwp_enable_native_backups'          => array(
                 'required'          => false,
-                'description'       => __( 'Enable native backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
+                'description'       => __( 'Enable Built-In Backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
                 'type'              => 'boolean',
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
@@ -2766,7 +2766,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         return array(
             'mainwp_enable_native_backups'         => array(
                 'required'          => false,
-                'description'       => __( 'Enable native backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
+                'description'       => __( 'Enable Built-In Backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
                 'type'              => 'boolean',
                 'sanitize_callback' => $this->make_enum_sanitizer( $val_bool ),
                 'validate_callback' => $this->make_enum_validator( $val_bool ),
@@ -4394,27 +4394,6 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     }
 
     /**
-     * Check the acting API key owner's right without the legacy REST bypass.
-     *
-     * @param string $right Required Team Control operation right.
-     * @return true|WP_Error
-     */
-    private function check_operation_right( string $right ) {
-        if ( ! MainWP_Abilities_Util::current_user_has_operation_right( $right ) ) {
-            return new WP_Error(
-                'mainwp_insufficient_right',
-                __( 'Your role does not permit this operation.', 'mainwp' ),
-                array(
-                    'status' => 403,
-                    'right'  => $right,
-                )
-            );
-        }
-
-        return true;
-    }
-
-    /**
      * Get all websites.
      *
      * @uses MainWP_DB::instance()->get_sites()
@@ -4800,7 +4779,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
 
         return $backup_method[0] ?? array(
             'value' => '',
-            'title' => 'Native backups',
+            'title' => 'Built-In Backups',
         );
     }
 
@@ -5370,7 +5349,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
                 'mainwp_enable_native_backups'             => array(
                     'type'        => 'integer',
-                    'description' => __( 'Enable native backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
+                    'description' => __( 'Enable Built-In Backups (canonical name for mainwp_enable_legacy_backup_feature).', 'mainwp' ),
                     'context'     => array( 'view', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_backups_on_server'                 => array(

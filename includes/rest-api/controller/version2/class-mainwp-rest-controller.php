@@ -1492,6 +1492,35 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     }
 
     /**
+     * Check an operation right without the legacy REST capability bypass.
+     *
+     * Handlers also run directly from batch requests, so they must check their
+     * own rights before reading privileged data or performing an operation.
+     *
+     * @param string $right    Required Team Control right.
+     * @param string $cap_type Team Control capability group.
+     * @return true|WP_Error
+     */
+    protected function check_operation_right( string $right, string $cap_type = 'dashboard' ) {
+        $allowed = 'dashboard' === $cap_type
+            ? \MainWP\Dashboard\MainWP_Abilities_Util::current_user_has_operation_right( $right )
+            : get_current_user_id() > 0 && apply_filters( 'mainwp_currentusercan', true, $cap_type, $right );
+
+        if ( ! $allowed ) {
+            return new WP_Error(
+                'mainwp_insufficient_right',
+                __( 'Your role does not permit this operation.', 'mainwp' ),
+                array(
+                    'status' => 403,
+                    'right'  => $right,
+                )
+            );
+        }
+
+        return true;
+    }
+
+    /**
      * Shared settings cannot be limited to a caller's allowed sites or tags.
      *
      * @param WP_REST_Request $request Full details about the request.

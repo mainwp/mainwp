@@ -1158,7 +1158,7 @@ class MainWP_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                         esc_html_e( 'Require an offsite-verified backup', 'mainwp' );
                         ?>
                         </label>
-                        <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'When enabled, a native backup only counts if a copy was uploaded and verified on offsite storage. Leave off to count a recent native backup stored on the Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
+                        <div class="ten wide column ui toggle checkbox" data-tooltip="<?php esc_attr_e( 'When enabled, a built-in backup only counts if a copy was uploaded and verified on offsite storage. Leave off to count a recent built-in backup stored on the Dashboard.', 'mainwp' ); ?>" data-inverted="" data-position="top left">
                             <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_backup_before_upgrade_require_offsite" id="mainwp_backup_before_upgrade_require_offsite" <?php echo 1 === (int) $backup_before_upgrade_require_offsite ? 'checked="true"' : ''; ?>/>
                         </div>
                     </div>

@@ -152,7 +152,7 @@ class MainWP_Backup_Fleet_Health { // phpcs:ignore Generic.Classes.OpeningBraceS
                 <div class="twelve wide column">
                     <h2 class="ui header handle-drag">
                         <?php esc_html_e( 'Backup Health', 'mainwp' ); ?>
-                        <div class="sub header"><?php esc_html_e( 'Fleet-wide native backup protection.', 'mainwp' ); ?></div>
+                        <div class="sub header"><?php esc_html_e( 'Fleet-wide built-in backup protection.', 'mainwp' ); ?></div>
                     </h2>
                 </div>
             </div>

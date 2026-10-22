@@ -126,7 +126,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         <h3 class="ui dividing header">
             <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-backups' ); ?>
             <?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
-            <div class="sub header"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Native backups back up your Child Sites directly from this dashboard. %1$sBackup Extensions%2$s for third-party plugins are also available.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+            <div class="sub header"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Built-In Backups back up your Child Sites directly from this dashboard. %1$sBackup Extensions%2$s for third-party plugins are also available.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
         </h3>
         <?php
         if ( MainWP_System_Utility::is_team_control_staff() ) {
@@ -141,7 +141,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             <label class="six wide column middle aligned"><?php esc_html_e( 'Select primary backup system', 'mainwp' ); ?></label>
             <div class="ten wide column">
                 <select class="ui dropdown" name="mainwp_primaryBackup" id="mainwp_primaryBackup">
-                    <option value=""><?php esc_html_e( 'Native backups', 'mainwp' ); ?></option>
+                    <option value=""><?php esc_html_e( 'Built-In Backups', 'mainwp' ); ?></option>
                     <?php
                     foreach ( $primaryBackupMethods as $method ) {
                         echo '<option value="' . esc_attr( $method['value'] ) . '" ' . ( ( $primaryBackup === $method['value'] ) ? 'selected' : '' ) . '>' . esc_html( $method['title'] ) . '</option>';
@@ -157,7 +157,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_enableNativeBackups', (int) $enableNativeBackups );
-            esc_html_e( 'Enable native backups', 'mainwp' );
+            esc_html_e( 'Enable Built-In Backups', 'mainwp' );
             ?>
             </label>
             <div class="ten wide column ui toggle checkbox">
@@ -463,7 +463,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <i class="right dropdown icon"></i>
                 <?php MainWP_Settings_Indicator::render_indicator( 'header', 'settings-field-indicator-backups' ); ?>
                 <?php esc_html_e( 'Backup Settings', 'mainwp' ); ?>
-                <div class="sub header"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Native backups back up your Child Sites directly from this dashboard. %1$sBackup Extensions%2$s for third-party plugins are also available.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
+                <div class="sub header"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag */ printf( esc_html__( 'Built-In Backups back up your Child Sites directly from this dashboard. %1$sBackup Extensions%2$s for third-party plugins are also available.', 'mainwp' ), '<a href="https://mainwp.com/extensions/extension-category/backups/" target="_blank">', '</a>' ); // NOSONAR - noopener - open safe. ?></div>
             </h2>
             <div class="content">
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups">

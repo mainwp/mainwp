@@ -124,7 +124,7 @@ class MainWP_Backup_Run_Now_Concurrency_Test extends MainWP_Abilities_Test_Case 
 
 		$this->assertInstanceOf( MainWP_Exception::class, $thrown, 'A full concurrency slot must refuse the run with a coded exception instead of running the executor.' );
 		$this->assertStringContainsString( 'concurrent', strtolower( $thrown->getMessage() ), 'The concurrency-limit gate specifically, not some other refusal, must be what stops this call.' );
-		$this->assertStringNotContainsString( 'Native backups are turned off on this Dashboard', $thrown->getMessage(), 'The refusal must come from the slot guard before the executor, not from falling through into it.' );
+		$this->assertStringNotContainsString( 'Built-In Backups are turned off on this Dashboard', $thrown->getMessage(), 'The refusal must come from the slot guard before the executor, not from falling through into it.' );
 
 		MainWP_Backup_Monitor::release_backup_slot( $held_token );
 	}
@@ -153,7 +153,7 @@ class MainWP_Backup_Run_Now_Concurrency_Test extends MainWP_Abilities_Test_Case 
 		}
 
 		$this->assertInstanceOf( MainWP_Exception::class, $thrown, 'Precondition: native backups are left disabled so the executor throws quickly without touching the network.' );
-		$this->assertStringContainsString( 'Native backups are turned off on this Dashboard', $thrown->getMessage(), 'The call must reach the executor once a slot is available.' );
+		$this->assertStringContainsString( 'Built-In Backups are turned off on this Dashboard', $thrown->getMessage(), 'The call must reach the executor once a slot is available.' );
 
 		$this->assertSame( array(), $this->slot_rows(), 'The slot must be released even though the executor threw.' );
 	}

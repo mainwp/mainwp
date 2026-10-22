@@ -561,15 +561,15 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         }
         ?>
         <div class="ui blue message">
-            <div class="header"><?php esc_html_e( 'Native Backups Available', 'mainwp' ); ?></div>
+            <div class="header"><?php esc_html_e( 'Built-In Backups Available', 'mainwp' ); ?></div>
             <div>
                 <?php
-                esc_html_e( 'Native backups were left turned off during this update because backups were not previously in use on this Dashboard.', 'mainwp' );
+                esc_html_e( 'Built-In Backups were left turned off during this update because backups were not previously in use on this Dashboard.', 'mainwp' );
                 ?>
                 <?php if ( \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) && ! MainWP_System_Utility::is_team_control_staff() ) : ?>
-                    <?php /* translators: 1: Opening anchor tag, 2: Closing anchor tag. */ printf( esc_html__( 'To schedule backups for your child sites, enable native backups in %1$sSettings > Backup Settings%2$s.', 'mainwp' ), '<a href="' . esc_url( admin_url( 'admin.php?page=BackupSettings#mainwp_options_enableNativeBackups' ) ) . '">', '</a>' ); ?>
+                    <?php /* translators: 1: Opening anchor tag, 2: Closing anchor tag. */ printf( esc_html__( 'To schedule backups for your child sites, enable Built-In Backups in %1$sSettings > Backup Settings%2$s.', 'mainwp' ), '<a href="' . esc_url( admin_url( 'admin.php?page=BackupSettings#mainwp_options_enableNativeBackups' ) ) . '">', '</a>' ); ?>
                 <?php else : ?>
-                    <?php esc_html_e( 'Ask a Dashboard administrator to enable native backups in Settings > Backup Settings to schedule backups for your child sites.', 'mainwp' ); ?>
+                    <?php esc_html_e( 'Ask a Dashboard administrator to enable Built-In Backups in Settings > Backup Settings to schedule backups for your child sites.', 'mainwp' ); ?>
                 <?php endif; ?>
             </div>
             <i class="close icon mainwp-notice-dismiss" notice-id="mainwp_native_backups_defaulted_off_on_upgrade"></i>

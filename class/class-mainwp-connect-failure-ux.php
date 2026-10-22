@@ -24,6 +24,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Maximum characters returned by the legacy body-summary helper.
+     */
+    const BODY_LIMIT = 1200;
+
+    /**
      * Response headers that help identify WAF / proxy / auth blocks.
      *
      * @var array<int,string>

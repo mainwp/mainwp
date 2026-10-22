@@ -721,6 +721,11 @@ class Cost_Tracker_Admin { // phpcs:ignore -- NOSONAR - multi methods.
             return;
         }
 
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_costs_settings' ) ) {
+            \mainwp_do_not_have_permissions( esc_html__( 'manage cost tracker settings', 'mainwp' ) );
+            return;
+        }
+
         $old_settings = MainWP_Settings::get_all_settings_values();
 
         $all_opts        = Cost_Tracker_Utility::get_instance()->get_all_options();

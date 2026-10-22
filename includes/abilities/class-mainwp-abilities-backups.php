@@ -1626,7 +1626,7 @@ class MainWP_Abilities_Backups {
             'mainwp/get-backup-status-v1',
             array(
                 'label'               => __( 'Get Backup Status', 'mainwp' ),
-                'description'         => __( 'Last known backup per site across the fleet: the latest native snapshot, a backup time the site reported, or a legacy task run that left a backup archive, with a staleness threshold, the backup health bucket and the pre-update backup check verdict. Use it to answer which sites need a backup. Does not list snapshots; use list-backup-snapshots-v1 for one site\'s history. Possible errors: none beyond authentication and rights.', 'mainwp' ),
+                'description'         => __( 'Last known backup per site across the fleet: the latest built-in snapshot, a backup time the site reported, or a legacy task run that left a backup archive, with a staleness threshold, the backup health bucket and the pre-update backup check verdict. Use it to answer which sites need a backup. Does not list snapshots; use list-backup-snapshots-v1 for one site\'s history. Possible errors: none beyond authentication and rights.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::get_backup_status_input_schema(),
@@ -1639,7 +1639,7 @@ class MainWP_Abilities_Backups {
                         'readonly'     => true,
                         'destructive'  => false,
                         'idempotent'   => true,
-                        'instructions' => 'Sites with no known backup from any covered source report source none and count as stale. health comes from native snapshots only; update_gate uses the same evidence as the pre-update backup check. The evidence fields say what each status proves. Backups made by plugins the Dashboard cannot see are not covered.',
+                        'instructions' => 'Sites with no known backup from any covered source report source none and count as stale. health comes from built-in snapshots only; update_gate uses the same evidence as the pre-update backup check. The evidence fields say what each status proves. Backups made by plugins the Dashboard cannot see are not covered.',
                     ),
                 ),
             )
@@ -2150,7 +2150,7 @@ class MainWP_Abilities_Backups {
             'mainwp/get-backup-settings-v1',
             array(
                 'label'               => __( 'Get Backup Settings', 'mainwp' ),
-                'description'         => __( 'Native backups on or off, primary backup method, on-demand retention count, concurrency limit, diagnostics flag, the pre-update backup check policy, and whether encryption is on and a recovery passphrase is set. Never returns key material. Possible errors: none beyond authentication and rights.', 'mainwp' ),
+                'description'         => __( 'Built-In Backups on or off, primary backup method, on-demand retention count, concurrency limit, diagnostics flag, the pre-update backup check policy, and whether encryption is on and a recovery passphrase is set. Never returns key material. Possible errors: none beyond authentication and rights.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::get_backup_settings_input_schema(),
@@ -2199,7 +2199,7 @@ class MainWP_Abilities_Backups {
                 ),
                 'primary_backup_method'     => array(
                     'type'        => 'string',
-                    'description' => 'Empty when native backups (or none) are the primary method; otherwise the backup extension slug.',
+                    'description' => 'Empty when Built-In Backups (or none) are the primary method; otherwise the backup extension slug.',
                 ),
                 'on_demand_retention_count' => array(
                     'type'        => 'integer',
@@ -5730,7 +5730,7 @@ class MainWP_Abilities_Backups {
             'mainwp/update-backup-settings-v1',
             array(
                 'label'               => __( 'Update Backup Settings', 'mainwp' ),
-                'description'         => __( 'Change native backups on or off, the on-demand retention count, the concurrency limit, diagnostics, and the pre-update backup check policy. Encryption and the recovery passphrase cannot be changed here. Turning native backups off stops scheduled backups; turning them on clears a third-party primary method; dry_run reports both. Possible errors: mainwp_invalid_input, mainwp_restricted_account.', 'mainwp' ),
+                'description'         => __( 'Change Built-In Backups on or off, the on-demand retention count, the concurrency limit, diagnostics, and the pre-update backup check policy. Encryption and the recovery passphrase cannot be changed here. Turning Built-In Backups off stops scheduled backups; turning them on clears a third-party primary method; dry_run reports both. Possible errors: mainwp_invalid_input, mainwp_restricted_account.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::update_backup_settings_input_schema(),

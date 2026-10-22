@@ -686,7 +686,7 @@ class MainWP_Install extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Op
             dbDelta( $this->native_backup_table_sql( $table_key, $current_version, $charset_collate ) );
             if ( $this->is_table_missing( $table_key ) ) {
                 // Install runs before the mainwp_log_warning listeners are registered; use the logger directly.
-                MainWP_Logger::instance()->warning( sprintf( 'Native backup table %s could not be created: %s', $this->table_name( $table_key ), $this->wpdb->last_error ) );
+                MainWP_Logger::instance()->warning( sprintf( 'Built-in backup table %s could not be created: %s', $this->table_name( $table_key ), $this->wpdb->last_error ) );
             }
         }
         $this->wpdb->suppress_errors( $suppress );

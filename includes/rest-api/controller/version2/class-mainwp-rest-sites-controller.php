@@ -1375,6 +1375,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function activate_plugins_of_site( $request ) {
+        $permission = $this->check_operation_right( 'activate_deactivate_plugins' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -1407,6 +1412,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function deactivate_plugins_of_site( $request ) {
+        $permission = $this->check_operation_right( 'activate_deactivate_plugins' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -1438,6 +1448,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function delete_plugins_of_site( $request ) {
+        $permission = $this->check_operation_right( 'delete_plugins' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -1707,6 +1722,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function activate_themes_of_site( $request ) {
+        $permission = $this->check_operation_right( 'activate_themes' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -1740,6 +1760,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function delete_themes_of_site( $request ) {
+        $permission = $this->check_operation_right( 'delete_themes' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -2003,6 +2027,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function reconnect_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -2029,6 +2058,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function reconnect_items( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $args   = $this->prepare_objects_query( $request );
         $params = array(
@@ -2074,6 +2107,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array|mixed Response data, ready for insertion into collection data.
      */
     public function disconnect_site( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -2111,6 +2148,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array|mixed Response data, ready for insertion into collection data.
      */
     public function suspend_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -2151,6 +2193,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array|mixed Response data, ready for insertion into collection data.
      */
     public function unsuspend_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;
@@ -2188,6 +2235,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function disconnect_sites( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $args   = $this->prepare_objects_query( $request );
         $params = array(
@@ -2236,6 +2287,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function check_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
@@ -2281,6 +2336,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function check_items( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $args   = $this->prepare_objects_query( $request );
         $params = array(
             'exclude' => isset( $args['exclude'] ) && ! empty( $args['exclude'] ) ? $args['exclude'] : array(),
@@ -2323,6 +2383,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function delete_item( $request ) {
+        $permission = $this->check_operation_right( 'delete_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $website = $this->get_request_item( $request );
 
@@ -3383,6 +3447,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function create_item( $request ) {  //phpcs:ignore -- NOSONAR - complex.
+        $permission = $this->check_operation_right( 'add_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $resp_data            = array();
         $resp_data['success'] = 0;
         $site_id              = 0;
@@ -3543,6 +3612,11 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return WP_Error|WP_REST_Response
      */
     public function update_item( $request ) {
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $website = $this->get_request_item( $request );
         if ( is_wp_error( $website ) ) {
             return $website;

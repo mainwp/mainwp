@@ -3592,7 +3592,22 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      */
     public function update_website_sync_values( $websiteid, $fields ) {
         if ( ! empty( $fields ) ) {
-            return $this->wpdb->update( $this->table_name( 'wp_sync' ), $fields, array( 'wpid' => $websiteid ) );
+            $previous_sync_errors = null;
+            if ( is_array( $fields ) && array_key_exists( 'sync_errors', $fields ) ) {
+                // get_var() also returns null for an empty string, so retain the row to distinguish missing sites.
+                $previous_sync_values = $this->wpdb->get_row(
+                    $this->wpdb->prepare( 'SELECT sync_errors FROM %i WHERE wpid = %d', $this->table_name( 'wp_sync' ), $websiteid )
+                );
+                $previous_sync_errors = null !== $previous_sync_values ? $previous_sync_values->sync_errors : null;
+            }
+
+            $result = $this->wpdb->update( $this->table_name( 'wp_sync' ), $fields, array( 'wpid' => $websiteid ) );
+
+            if ( false !== $result && null !== $previous_sync_errors && ( ( '' === $previous_sync_errors ) !== ( '' === (string) $fields['sync_errors'] ) ) ) {
+                MainWP_Manage_Sites_List_Table::invalidate_manage_sites_cache();
+            }
+
+            return $result;
         }
 
         return false;

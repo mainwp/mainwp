@@ -24,6 +24,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAfterBrace -- NOSONAR.
 
     /**
+     * Maximum characters returned by the legacy body-summary helper.
+     */
+    const BODY_LIMIT = 1200;
+
+    /**
      * Response headers that help identify WAF / proxy / auth blocks.
      *
      * @var array<int,string>
@@ -315,7 +320,7 @@ class MainWP_Connect_Failure_Ux { // phpcs:ignore Generic.Classes.OpeningBraceSa
             return self::sensitive_text();
         }
 
-        $text = self::redact_secrets( $text );
+        $text = self::sanitize_diagnostic_text( $text );
         // Removing a long URL query can pull later text into the excerpt.
         // Recheck the exact prefix that can now become visible.
         $scan_text = mb_substr( $text, 0, self::BODY_LIMIT + 64, 'UTF-8' );

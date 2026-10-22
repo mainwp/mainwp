@@ -314,6 +314,11 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
      * @return WP_Error|WP_REST_Response
      */
     public function create_item( $request ) {
+        $permission = $this->check_operation_right( 'manage_groups' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         if ( ! empty( $request['id'] ) ) {
             // add_tag() treats an ID as an update, even on the creation route.
             $existing = $this->get_request_item( $request );
@@ -359,6 +364,11 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
      * @return WP_Error|WP_REST_Response
      */
     public function update_item( $request ) {
+        $permission = $this->check_operation_right( 'manage_groups' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $item = $this->get_request_item( $request );
 
         if ( is_wp_error( $item ) ) {
@@ -391,6 +401,10 @@ class MainWP_Rest_Tags_Controller extends MainWP_REST_Controller{ //phpcs:ignore
      * @return WP_Error|WP_REST_Response
      */
     public function delete_item( $request ) {
+        $permission = $this->check_operation_right( 'manage_groups' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
 
         $tag_id = ! empty( $request['id'] ) ? intval( $request['id'] ) : 0;
 

@@ -1248,7 +1248,7 @@ class MainWP_Backup_Restore_Orchestrator_Test extends MainWP_Abilities_Test_Case
 	 */
 	private function assert_native_disabled_failure( $job ) {
 		$this->assertSame( MainWP_Backup_Restore_Job_Store::STATUS_FAILED_PERMANENT, $job->status );
-		$this->assertSame( 'Native backups were turned off, so this restore stopped before changing the site.', $job->last_error );
+		$this->assertSame( 'Built-In Backups were turned off, so this restore stopped before changing the site.', $job->last_error );
 		$this->assertSame( 'mainwp_restore_native_backups_disabled', $job->checkpoint['last_error_code'] );
 		$this->assertSame( 0, (int) $job->attempt_count );
 		$this->assertNull( $job->active_site_id );

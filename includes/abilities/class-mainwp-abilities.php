@@ -320,7 +320,7 @@ class MainWP_Abilities {
             'mainwp-backups',
             array(
                 'label'       => __( 'MainWP Backups', 'mainwp' ),
-                'description' => __( 'Abilities for native backups: status, tasks, snapshots, restores, storage destinations and backup settings.', 'mainwp' ),
+                'description' => __( 'Abilities for Built-In Backups: status, tasks, snapshots, restores, storage destinations and backup settings.', 'mainwp' ),
             )
         );
 

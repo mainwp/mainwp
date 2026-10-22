@@ -44,7 +44,7 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		}
 		$this->assertStringContainsString( '<h3 class="ui dividing header">', $output );
 		$this->assertStringContainsString( 'Backup Settings', $output );
-		$this->assertStringContainsString( '<div class="sub header">Native backups back up your Child Sites directly from this dashboard.', $output );
+		$this->assertStringContainsString( '<div class="sub header">Built-In Backups back up your Child Sites directly from this dashboard.', $output );
 		// Fomantic hides state messages inside .ui.form unless they carry visible.
 		$message = '<div class="ui blue message">Only WordPress administrators can change backup settings.</div>';
 		if ( $allowed ) {

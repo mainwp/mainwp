@@ -159,19 +159,44 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * A received body is reported as hidden, so it is not mistaken for an empty response.
+	 * Legacy summaries keep benign text and strip unknown secrets from URLs.
+	 */
+	public function test_legacy_body_summary_preserves_text_and_redacts_urls(): void {
+		$ux = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+
+		$this->assertSame( 'Origin unavailable', $ux::summarize_body( '<p>Origin unavailable</p>' ) );
+		$this->assertSame(
+			'See https://example.test/path',
+			$ux::summarize_body( 'See https://alice:harbor47@example.test/path?ticket=opaque42#trace' )
+		);
+	}
+
+	/**
+	 * Long legacy summaries remain bounded without cutting a UTF-8 character.
+	 */
+	public function test_legacy_body_summary_bounds_multibyte_text(): void {
+		$text = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_body( str_repeat( 'é', 1500 ) );
+
+		$this->assertTrue( mb_check_encoding( $text, 'UTF-8' ) );
+		$this->assertSame( 1203, mb_strlen( $text, 'UTF-8' ) );
+		$this->assertStringEndsWith( '...', $text );
+	}
+
+	/**
+	 * Received and empty response bodies both retain the non-disclosure notice.
 	 */
 	public function test_received_body_is_reported_as_hidden(): void {
 		$ux = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
 
 		$received = $ux::summarize_response( 403, '', '<html>Attention Required! Cloudflare</html>' );
 		$this->assertSame( '', $received['body'] );
-		$this->assertStringContainsString( 'Body: received but not shown, because it may contain sensitive data.', $received['text'] );
+		$this->assertStringContainsString( self::BODY_NOT_SHOWN, $received['text'] );
 		$this->assertStringNotContainsString( 'no readable child response', $received['text'] );
 		$this->assertStringNotContainsString( 'Attention Required', $received['text'] );
 
 		$empty = $ux::summarize_response( 403, '', '' );
-		$this->assertStringContainsString( 'Body: no readable child response was returned.', $empty['text'] );
+		$this->assertSame( '', $empty['body'] );
+		$this->assertStringContainsString( self::BODY_NOT_SHOWN, $empty['text'] );
 		$this->assertStringNotContainsString( 'received but not shown', $empty['text'] );
 	}
 
@@ -182,26 +207,118 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	 * @param string $body Raw child response.
 	 * @param array  $fragments Body-only text that must not be displayed.
 	 */
-	public function test_body_is_omitted_from_all_failure_details( $body, $fragments ): array {
+	public function test_body_is_omitted_from_all_failure_details( $body, $fragments ): void {
 		$ux = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
-		set_transient( 'mainwp_public_dashboard_ip_data', array( 'value' => '203.0.113.10', 'status' => 'pass', 'community_value' => 'Detected' ), HOUR_IN_SECONDS );
-		$start = microtime( true );
-		$context = array( 'http_status' => 500, 'headers' => "HTTP/1.1 500 Internal Server Error\r\nserver: nginx\r\n", 'body' => $body, 'skip_outbound_ip' => true );
+		set_transient(
+			'mainwp_public_dashboard_ip_data',
+			array(
+				'value'           => '203.0.113.10',
+				'status'          => 'pass',
+				'community_value' => 'Detected',
+			),
+			HOUR_IN_SECONDS
+		);
+		$start   = microtime( true );
+		$context = array(
+			'http_status'      => 500,
+			'headers'          => "HTTP/1.1 500 Internal Server Error\r\nserver: nginx\r\n",
+			'body'             => $body,
+			'skip_outbound_ip' => true,
+		);
 		$details = array( $ux::build_details( $context ) );
 		$this->assertLessThan( 1.0, microtime( true ) - $start, 'Initial detail construction must finish in under one second.' );
 		$this->assertSame( '', $details[0]['response']['body'] );
-		foreach ( array( array( 'http_status' => 500, 'body' => $body ), array( 'http_status' => 500, 'text' => $body ), $body ) as $data ) {
+		$exception_data = array(
+			array(
+				'http_status' => 500,
+				'body'        => $body,
+			),
+			array(
+				'http_status' => 500,
+				'text'        => $body,
+			),
+			$body,
+		);
+		foreach ( $exception_data as $data ) {
 			$exception = new \MainWP\Dashboard\MainWP_Exception( 'Remote failure' );
 			$exception->set_data( $data );
 			$details[] = $ux::from_exception( $exception );
 		}
 		$surfaces = array();
 		foreach ( array( 'response_body', 'fetch_data', 'response_readable' ) as $field ) {
-			$output = array( 'http_status' => 500, $field => $body );
+			$output     = array(
+				'http_status' => 500,
+				$field        => $body,
+			);
 			$details[] = $ux::from_exception( null, $output );
 			$surfaces[] = $ux::readable_response_from_output( $output );
 			$surfaces[] = \MainWP\Dashboard\MainWP_Error_Helper::get_connect_failure_message( null, $output );
 		}
+		$enriched = $ux::enrich_output( array(), $context );
+		foreach ( array( 'response_body', 'response_readable', 'failure_ux', 'failure_ux_text' ) as $field ) {
+			$surfaces[] = $enriched[ $field ];
+		}
+		foreach ( $details as $detail ) {
+			$this->assertSame( '', $detail['response']['body'] );
+			$this->assertArrayHasKey( 'waf_likely', $detail );
+			$this->assertArrayHasKey( 'error', $detail );
+			$surfaces[] = wp_json_encode( $detail );
+			$surfaces[] = $ux::render_html( $detail );
+			$surfaces[] = $ux::format_text( $detail );
+		}
+		$this->assertLessThan( 1.0, microtime( true ) - $start, 'All failure surfaces must finish in under one second.' );
+		foreach ( $surfaces as $surface ) {
+			foreach ( $fragments as $fragment ) {
+				$this->assertStringNotContainsString( $fragment, html_entity_decode( $surface, ENT_QUOTES ), $fragment );
+			}
+		}
+		$this->assertStringContainsString( 'Status: 500', $details[0]['response']['text'] );
+		$this->assertStringContainsString( 'server: nginx', $details[0]['response']['text'] );
+		$this->assertStringContainsString( self::BODY_NOT_SHOWN, $details[0]['response']['text'] );
+		$this->assertStringContainsString( 'User-Agent MainWP sends', $ux::render_html( $details[0] ) );
+	}
+
+	/**
+	 * Child responses that must stay hidden without slowing down diagnostics.
+	 *
+	 * @return array
+	 */
+	public static function child_response_bodies(): array {
+		return array(
+			'unquoted name then code' => array( 'Warning : something happened {"error":"code=1"}', array( 'Warning', 'something happened', 'code=1' ) ),
+			'200 KB password'         => array( 'password=' . str_repeat( 'x', 200 * 1024 ), array( 'password=', str_repeat( 'x', 16 ) ) ),
+			'100 KB unbroken token'   => array( 'foo=' . str_repeat( 'x', 100 * 1024 ), array( 'foo=', str_repeat( 'x', 16 ) ) ),
+			'XML secret'              => array( '<password>secret</password>', array( 'password', 'secret' ) ),
+			'HTML error page'         => array( '<html><title>Origin unavailable</title><body><p>Body-only diagnostic marker</p></body></html>', array( 'Origin unavailable', 'Body-only diagnostic marker' ) ),
+		);
+	}
+
+	/**
+	 * Every failure surface built from a reflected child response body.
+	 *
+	 * @param string $body    Raw response body.
+	 * @param string $headers Raw response headers.
+	 * @return array<string,string>
+	 */
+	private function failure_surfaces( $body, $headers = '' ): array {
+		set_transient(
+			'mainwp_public_dashboard_ip_data',
+			array(
+				'value'           => '203.0.113.10',
+				'status'          => 'pass',
+				'community_value' => 'Detected',
+			),
+			HOUR_IN_SECONDS
+		);
+		$_SERVER['SERVER_ADDR'] = '10.0.0.1';
+
+		$ux       = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+		$context  = array(
+			'http_status'      => 403,
+			'headers'          => $headers,
+			'body'             => $body,
+			'skip_outbound_ip' => true,
+		);
 		$enriched = $ux::enrich_output( array(), $context );
 		$raw      = array(
 			'http_status'      => 403,

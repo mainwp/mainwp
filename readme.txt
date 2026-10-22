@@ -156,8 +156,8 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 = 6.4-rc.1 - 10-20-2026 =
 
-* Important: MainWP Dashboard now requires PHP 8.3 or newer. Native Backups requires the matching MainWP Child release. File backups and restores are currently unavailable on hosting configurations where `wp-content` is outside the WordPress core folder; database-only backups and restores remain supported.
-* Added: Native Backups (beta) - back up and restore your WordPress sites directly from MainWP, without an additional backup plugin. Schedule full, database-only, files-only, or incremental backups; store copies locally or offsite using S3-compatible storage, Google Cloud Storage, Dropbox, or SFTP; and restore snapshots with optional safety backups and rollback. Includes encryption, automatic retention, backup health monitoring, and management through the Abilities API.
+* Important: MainWP Dashboard now requires PHP 8.3 or newer. Built-In Backups requires the matching MainWP Child release. File backups and restores are currently unavailable on hosting configurations where `wp-content` is outside the WordPress core folder; database-only backups and restores remain supported.
+* Added: Built-In Backups (beta) - back up and restore your WordPress sites directly from MainWP, without an additional backup plugin. Schedule full, database-only, files-only, or incremental backups; store copies locally or offsite using S3-compatible storage, Google Cloud Storage, Dropbox, or SFTP; and restore snapshots with optional safety backups and rollback. Includes encryption, automatic retention, backup health monitoring, and management through the Abilities API.
 * Fixed: Invalid site tag updates through the REST API could remove existing tag assignments.
 * Fixed: Invalid client-note values could overwrite existing notes instead of being rejected.
 * Fixed: Uptime monitor settings now preserve disabled down confirmations and correctly clear repair attempts after a successful save.

@@ -154,6 +154,20 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 == Changelog ==
 
+= Unreleased =
+
+* Fixed: Native Backups refuses a private backup directory that the web server makes publicly reachable, and the message explains how to set `MAINWP_BACKUP_PRIVATE_DIR`.
+* Fixed: When the first backup fails because the private backup directory cannot be used, the backup history now shows the reason instead of an unclassified error.
+* Fixed: Restores and test restores check each backup archive stored on the Dashboard against the size and checksum recorded when the backup finished. A backup that fails the check is marked damaged and is no longer offered for restore unless a matching cloud copy exists, and the backup list explains why.
+* Fixed: Removing a site whose record was already deleted no longer leaves it in the Sites table with an "Undefined error" message.
+* Fixed: Sync telemetry reported the wrong connection status after a sync.
+* Fixed: WP-CLI can pause or delete a backup task whose sites have all been removed.
+* Updated: Test restores validate backup archives and database dumps more strictly before using them.
+* Updated: Native Backups validates the names and sizes of backup files received from child sites and checks free disk space before staging uploads.
+* Updated: Site names and messages from child sites are escaped consistently on the backup, update, and site management screens.
+* Updated: Site sync redirects, child site icon downloads, and cron pings are limited to safe destinations.
+* Updated: Bulk post and page custom fields are decoded without creating PHP objects.
+
 = 6.4-rc.1 - 10-20-2026 =
 
 * Important: MainWP Dashboard now requires PHP 8.3 or newer. Native Backups requires the matching MainWP Child release. File backups and restores are currently unavailable on hosting configurations where `wp-content` is outside the WordPress core folder; database-only backups and restores remain supported.

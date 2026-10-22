@@ -831,7 +831,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         $new_meta_values = array();
                         foreach ( $meta_values as $key_value => $meta_value ) {
                             if ( is_serialized( $meta_value ) ) {
-                                $meta_value = unserialize( $meta_value ); // phpcs:ignore -- internal value safe.
+                                // Any plugin can write an object to this post's meta; waking it here would run its class code in the admin's request.
+                                // nosemgrep: AIK_unserialize-use -- allowed_classes false: objects come back incomplete and no class code runs.
+                                $meta_value = unserialize( $meta_value, array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- arrays and scalars only; allowed_classes false blocks object instantiation.
                             }
                             $new_meta_values[ $key_value ] = $meta_value;
                         }
@@ -924,7 +926,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                             :
                             <?php
                             if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) {
-                                echo esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
+                                echo esc_html( $succes_message ) . ' <a href="' . esc_url( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
                                 $posting_succeed = true;
                             } else {
                                 echo $output->errors[ $website->id ]; // phpcs:ignore WordPress.Security.EscapeOutput
@@ -942,7 +944,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $ajax_result = '';
                 if ( 'ajax_posting' === $what ) {
                     if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) {
-                        $ajax_result     = esc_html( $succes_message ) . ' <a href="' . esc_html( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
+                        $ajax_result     = esc_html( $succes_message ) . ' <a href="' . esc_url( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
                         $posting_succeed = true;
                     } else {
                         $ajax_result = $output->errors[ $website->id ];

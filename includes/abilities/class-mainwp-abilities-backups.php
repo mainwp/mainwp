@@ -2399,6 +2399,18 @@ class MainWP_Abilities_Backups {
                 return self::safe_wp_error( $scope );
             }
         }
+        if ( in_array( $ability, array( 'mainwp/test-backup-destination-v1', 'mainwp/set-default-backup-destination-v1', 'mainwp/update-backup-destination-v1', 'mainwp/delete-backup-destination-v1' ), true ) && ! \mainwp_current_user_can( 'dashboard', 'download_backups' ) ) {
+            return self::safe_wp_error(
+                new \WP_Error(
+                    'mainwp_insufficient_right',
+                    '',
+                    array(
+                        'status' => 403,
+                        'right'  => 'download_backups',
+                    )
+                )
+            );
+        }
         $valid = self::validate_id_input( $input, in_array( $ability, self::WRITE_ABILITIES, true ) );
         if ( is_wp_error( $valid ) ) {
             return $valid;

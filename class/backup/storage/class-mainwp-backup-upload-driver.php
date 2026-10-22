@@ -317,6 +317,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             return;
         }
 
+        $chunking = false;
         try {
             // Check persisted encryption intent before any upload phase can
             // write archive bytes or a manifest to the provider.
@@ -363,10 +364,12 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             }
 
             if ( MainWP_Backup_Upload_Job_Store::STATUS_CHUNKING === $status ) {
+                $chunking = true;
                 if ( ! $this->phase_chunking( $job, $checkpoint, $deadline ) ) {
                     return; // Deadline or lost lease; the next tick (or the new holder) resumes from the checkpoint.
                 }
-                $status = MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING;
+                $chunking = false;
+                $status   = MainWP_Backup_Upload_Job_Store::STATUS_UPLOADING;
                 $store->set_status( (int) $job->id, $status, $this->lock_token );
             }
 
@@ -421,7 +424,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 )
             );
         } catch ( \Throwable $e ) {
-            $this->handle_failure( $job, $destination, $e, $now );
+            $this->handle_failure( $job, $destination, $e, $now, $chunking );
         }
     }
 
@@ -502,8 +505,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 return false;
             }
 
-            $chunks = MainWP_Backup_Chunker::plan_artifact( $artifact['path'], $this->staging_dir( $job ), (int) $checkpoint['chunk_size'] );
+            $chunks = MainWP_Backup_Chunker::plan_artifact( $artifact['path'], $this->staging_dir( $job ), (int) $checkpoint['chunk_size'], fn() => $this->lease_still_held( $job ) );
             if ( false === $chunks ) {
+                if ( ! $this->lease_still_held( $job ) ) {
+                    return false; // Reclaimed mid-plan; the new holder resumes from the checkpoint.
+                }
                 if ( ! is_file( $artifact['path'] ) ) {
                     throw new \RuntimeException(
                         sprintf( /* translators: %s: artifact file name. */ __( 'Backup file is missing from this Dashboard: %s', 'mainwp' ), basename( $artifact['file'] ) ), // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Upload errors are escaped by their output consumers.
@@ -985,10 +991,11 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @param object     $destination Destination row.
      * @param \Throwable $e           The failure.
      * @param int        $now         Wall-clock for retry scheduling.
+     * @param bool       $chunking    Whether staging failed before upload.
      *
      * @return void
      */
-    private function handle_failure( object $job, object $destination, \Throwable $e, int $now ): void {
+    private function handle_failure( object $job, object $destination, \Throwable $e, int $now, bool $chunking = false ): void {
         $store = MainWP_Backup_Upload_Job_Store::instance();
         $code  = (int) $e->getCode();
 
@@ -996,6 +1003,9 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $encryption_refused = $e instanceof MainWP_Exception && MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED === $e->get_message_error_code();
         if ( $encryption_refused || self::KEK_UNAVAILABLE === $code ) {
             $label = MainWP_Backup_Error_Codes::ERR_ENCRYPTION_REQUIRED;
+        }
+        if ( $e instanceof MainWP_Exception && MainWP_Backup_Error_Codes::ERR_DISK_FULL === $e->get_message_error_code() ) {
+            $label = MainWP_Backup_Error_Codes::ERR_DISK_FULL;
         }
         $error = '[' . $label . '] ' . $e->getMessage();
 
@@ -1019,6 +1029,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             return;
         }
 
+        if ( $chunking ) {
+            // Retry releases the lease, so clean while a renewed lease still excludes other lanes.
+            if ( ! $this->lease_still_held( $job ) ) {
+                return;
+            }
+            $this->cleanup_staging( $job );
+        }
         $store->fail_retryable( (int) $job->id, $error, $now + MainWP_Backup_Backoff::delay_for_attempt( $attempts ), $this->lock_token );
     }
 

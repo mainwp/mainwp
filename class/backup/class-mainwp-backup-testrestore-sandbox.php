@@ -6,7 +6,7 @@
  * A sandbox is a throwaway target the restore engine can apply staged
  * artifacts into without ever touching the live site: a uniquely named
  * scratch database opened over a dedicated connection (never the live
- * $wpdb), and a temp directory under the uploads folder. A SQL dump is
+ * $wpdb), and a temp directory under the Private Root. A SQL dump is
  * decompressed and replayed into the scratch database; file archives are
  * extracted into the temp directory; cheap assertions read back the result;
  * and tear-down drops the database and removes the directory. Tear-down is
@@ -360,6 +360,8 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
      * @param string $sql             SQL bytes.
      * @param bool   $executable_only Exclude whitespace and expand executable comments.
      *
+     * @throws MainWP_Exception When a comment or quote is left open or a comment shape is refused.
+     *
      * @return \Generator
      */
     private static function sql_dump_tokens( string $sql, bool $executable_only = false ): \Generator {
@@ -384,18 +386,20 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             }
             if ( '/' === $char && $i < $length && '*' === $sql[ $i ] ) {
                 $end = strpos( $sql, '*/', $i + 1 );
-                $end = false === $end ? $length : $end;
-                $i   = min( $length, $end + 2 );
+                if ( false === $end ) {
+                    throw self::sql_refusal( 'unterminated comment' );
+                }
+                $i    = $end + 2;
+                $body = self::executable_comment_body( substr( $sql, $start, $i - $start ) );
                 if ( ! $executable_only ) {
                     yield substr( $sql, $start, $i - $start );
-                } elseif ( isset( $sql[ $start + 2 ] ) && '!' === $sql[ $start + 2 ] ) {
-                    // MySQL executes these bodies, so hiding their keywords would bypass the guard.
-                    $body = preg_replace( '/^\d{5,6}\s*/', '', substr( $sql, $start + 3, $end - $start - 3 ) );
+                } elseif ( null !== $body ) {
                     yield from self::sql_dump_tokens( $body, true );
                 }
                 continue;
             }
             if ( "'" === $char || '"' === $char || '`' === $char ) {
+                $closed = false;
                 while ( $i < $length ) {
                     $next = $sql[ $i++ ];
                     if ( '\\' === $next && '`' !== $char && $i < $length ) {
@@ -404,9 +408,14 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                         if ( $i < $length && $char === $sql[ $i ] ) {
                             ++$i;
                         } else {
+                            $closed = true;
                             break;
                         }
                     }
+                }
+                if ( ! $closed ) {
+                    // The server rejects an open quote; refusing it keeps the guard from reading SQL as string contents.
+                    throw self::sql_refusal( 'unterminated quote' );
                 }
             } elseif ( ctype_alnum( $char ) || '_' === $char || '$' === $char || ord( $char ) >= 128 ) {
                 while ( $i < $length && ( ctype_alnum( $sql[ $i ] ) || '_' === $sql[ $i ] || '$' === $sql[ $i ] || ord( $sql[ $i ] ) >= 128 ) ) {
@@ -415,6 +424,73 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             }
             yield substr( $sql, $start, $i - $start );
         }
+    }
+
+    /**
+     * The server runs /*! bodies (MySQL and MariaDB) and /*M! bodies (MariaDB), so the guard must read them.
+     *
+     * A comment always ends at its first raw closer here. The server agrees only when the body
+     * lexes cleanly inside that span: an executed body is lexed as SQL, so a quoted closer or a
+     * line comment extends it, while a skipped body (version above the server) ends at the first
+     * closer and nests one level. Every shape where the two readings differ is refused.
+     *
+     * @param string $comment Complete block comment, opener and closer included.
+     *
+     * @throws MainWP_Exception When the comment shape is refused.
+     *
+     * @return string|null Executable body, or null for an inert comment.
+     */
+    private static function executable_comment_body( string $comment ): ?string {
+        $marker = substr( $comment, 2, 2 );
+        if ( '+' === $marker[0] ) {
+            // MySQL lexes hints after a leading keyword with a quote-aware scanner, so a quoted closer moves their end.
+            throw self::sql_refusal( 'optimizer hint comment' );
+        }
+        if ( '!' === $marker[0] ) {
+            $body = substr( $comment, 3, -2 );
+        } elseif ( 'M!' === strtoupper( $marker ) ) {
+            // MariaDB matches only an uppercase M; a lowercase one is guarded too because reading more costs nothing.
+            $body = substr( $comment, 4, -2 );
+        } else {
+            return null;
+        }
+        if ( preg_match( '/^\d+/', $body, $digits ) ) {
+            $count = strlen( $digits[0] );
+            // MySQL before 8.0.34 reads five version digits and MariaDB reads six, so any other run is read differently.
+            if ( ( 5 !== $count && 6 !== $count ) || ( isset( $body[ $count ] ) && ! ctype_space( $body[ $count ] ) ) ) {
+                throw self::sql_refusal( 'executable comment version' );
+            }
+            $body = substr( $body, $count );
+        }
+        if ( false !== strpos( $body, '/*' ) ) {
+            throw self::sql_refusal( 'comment inside an executable comment' );
+        }
+        foreach ( self::sql_dump_tokens( $body ) as $token ) {
+            if ( '#' === $token[0] || 0 === strpos( $token, '--' ) ) {
+                throw self::sql_refusal( 'line comment inside an executable comment' );
+            }
+        }
+        return $body;
+    }
+
+    /**
+     * A refused statement says something about the backup, not about the host, so it fails the
+     * restore rather than reporting that the host cannot test.
+     *
+     * @param string $refused Refusal label naming the statement or shape.
+     *
+     * @return MainWP_Exception
+     */
+    private static function sql_refusal( string $refused ): MainWP_Exception {
+        return new MainWP_Exception(
+            sprintf(
+                /* translators: %s: refused SQL statement or comment shape */
+                esc_html__( 'The backup database dump contains a statement the test restore will not run: %s.', 'mainwp' ),
+                esc_html( $refused )
+            ),
+            $refused,
+            self::ERR_APPLY
+        );
     }
 
     /**
@@ -507,12 +583,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             $refused = $first;
         }
         if ( '' !== $refused ) {
-            // A refused statement says something about the backup, not about the host, so it fails the restore rather than reporting the host cannot test.
-            throw new MainWP_Exception(
-                sprintf( esc_html__( 'The backup database dump contains a statement the test restore will not run: %s.', 'mainwp' ), esc_html( $refused ) ),
-                $refused,
-                self::ERR_APPLY
-            );
+            throw self::sql_refusal( $refused );
         }
     }
 
@@ -1025,7 +1096,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $readable = $this->phar_readable_path( $path );
         $size     = 0;
         try {
-            $phar     = new \PharData( $readable );
+            $phar     = $this->validated_tar( $readable );
             $iterator = new \RecursiveIteratorIterator( $phar );
             foreach ( $iterator as $file ) {
                 if ( $this->is_sql_dump_member( $file->getFilename() ) ) {
@@ -1162,7 +1233,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         $readable = $this->phar_readable_path( $path );
         $sql      = '';
         try {
-            $phar     = new \PharData( $readable );
+            $phar     = $this->validated_tar( $readable );
             $iterator = new \RecursiveIteratorIterator( $phar );
             foreach ( $iterator as $file ) {
                 if ( $this->is_sql_dump_member( $file->getFilename() ) ) {
@@ -1173,6 +1244,8 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
                     }
                 }
             }
+        } catch ( MainWP_Exception $e ) {
+            throw $e;
         } catch ( \Throwable $e ) {
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be opened.', 'mainwp' ), 'tar open: ' . $e->getMessage(), self::ERR_APPLY );
         }
@@ -1209,6 +1282,19 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
             if ( $this->has_unsafe_entry_name( $name ) ) {
                 $zip->close();
                 throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'zip traversal entry: ' . $name, self::ERR_APPLY );
+            }
+            // ZipArchive::extractTo() normalizes the name (empty and . segments go), then drops every segment up to a
+            // directory name ending in a dot, so release../index.php would land on index.php and the test restore would
+            // check the wrong tree. Backslash separates segments only on Windows. A directory entry keeps its
+            // trailing separator, so its last segment counts too (a./ would become an empty name and fail mid-extraction).
+            $segments = preg_split( '\\' === DIRECTORY_SEPARATOR ? '#[\\\\/]#' : '#/#', $name );
+            $dirs     = array_diff( $segments, array( '', '.' ) );
+            if ( '' !== end( $segments ) ) {
+                array_pop( $dirs );
+            }
+            if ( preg_grep( '#\.$#D', $dirs ) ) {
+                $zip->close();
+                throw new MainWP_Exception( esc_html__( 'A backup archive could not be extracted.', 'mainwp' ), 'zip entry the extractor would move: ' . $name, self::ERR_APPLY );
             }
             // statIndex() answers false on an entry whose header will not read.
             // Counting that as zero would understate the archive and let the
@@ -1250,7 +1336,7 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
 
         $readable = $this->phar_readable_path( $path );
         try {
-            $phar     = new \PharData( $readable );
+            $phar     = $this->validated_tar( $readable );
             $iterator = new \RecursiveIteratorIterator( $phar );
             $total    = 0;
             $free     = function_exists( 'disk_free_space' ) ? disk_free_space( $this->temp_dir ) : false;
@@ -1272,6 +1358,280 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         } catch ( \Throwable $e ) {
             throw new MainWP_Exception( esc_html__( 'A backup archive could not be extracted.', 'mainwp' ), 'tar extract: ' . $e->getMessage(), self::ERR_APPLY );
         }
+    }
+
+    /**
+     * PharData can extract members its iterator never lists, and it reads several header
+     * spellings differently from a tar tool, so the two can disagree on where a member starts.
+     * Accept only the header shapes the Child writer produces (ustar magic, plain octal numbers,
+     * regular files, directories and GNU long names), check every member name, and require the
+     * walk and PharData's listing to agree before extraction or SQL member access.
+     *
+     * @param string $plain Uncompressed archive path.
+     * @throws MainWP_Exception On unsafe, malformed, unsupported or unlisted members, or names over the size limit.
+     * @return \PharData Archive with a complete, validated listing.
+     */
+    private function validated_tar( string $plain ): \PharData { // phpcs:ignore Generic.Metrics.CyclomaticComplexity -- one bounded header walk over the accepted shapes.
+        $unreadable = new MainWP_Exception( esc_html__( 'A backup archive could not be read.', 'mainwp' ), 'tar malformed, truncated or unsupported header or entry', self::ERR_APPLY );
+        $stream     = fopen( $plain, 'rb' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- inspect headers without extracting members.
+        if ( false === $stream ) {
+            throw $unreadable;
+        }
+        // Over the budget is a size limit, not damage, so it must not suggest a new backup that would fail the same way.
+        $name_limit = new MainWP_Exception( esc_html__( 'Test restore name size limit exceeded while checking backup archive headers.', 'mainwp' ), 'tar name size limit exceeded', self::ERR_APPLY );
+        $limits     = $this->tar_walk_limits();
+        $members    = array();
+        $prefixed   = array();
+        $dirs       = array();
+        $ancestors  = array();
+        $long_name  = null;
+        $count      = 0;
+        $name_bytes = 0;
+        try {
+            $stat = fstat( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- bound every header and payload by the actual file length.
+            if ( false === $stat ) {
+                throw $unreadable;
+            }
+            $length = $stat['size'];
+            // The Child writer can end at a complete member boundary without zero markers.
+            while ( ftell( $stream ) < $length ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- bounded sequential header scan.
+                $header = fread( $stream, 512 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- fixed-size tar header.
+                if ( false === $header || 512 !== strlen( $header ) ) {
+                    throw $unreadable;
+                }
+                if ( str_repeat( "\0", 512 ) === $header ) {
+                    break;
+                }
+                // The Child restorer's entry limit; here every header counts, long-name records included.
+                if ( ++$count > $limits['entries'] ) {
+                    throw $unreadable;
+                }
+                $checksum = $this->tar_header_number( substr( $header, 148, 8 ) );
+                $check    = substr_replace( $header, '        ', 148, 8 );
+                $unsigned = array_sum( unpack( 'C*', $check ) );
+                $signed   = array_sum( unpack( 'c*', $check ) );
+                $size     = $this->tar_header_number( substr( $header, 124, 12 ) );
+                if ( null === $checksum || ( $checksum !== $unsigned && $checksum !== $signed ) || null === $size || 'ustar' !== substr( $header, 257, 5 ) ) {
+                    throw $unreadable;
+                }
+                $remaining = $length - ftell( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- prevent seeks beyond a truncated payload.
+                $padding   = ( 512 - $size % 512 ) % 512;
+                // PharData keeps sizes and their 512-byte rounding in 32 bits, so a larger member would be read as a shorter one.
+                if ( $size > 4294966784 || $size > $remaining || $padding > $remaining - $size ) {
+                    throw $unreadable;
+                }
+                $type = $header[156];
+                if ( 'L' === $type ) {
+                    // PharData takes a second long-name record as the member the first one names.
+                    if ( null !== $long_name || $size < 1 || $size > 65536 ) {
+                        throw $unreadable;
+                    }
+                    // PharData keeps the whole declared payload, so it is charged before it is read.
+                    $name_bytes += $size;
+                    if ( $name_bytes > $limits['name_bytes'] ) {
+                        throw $name_limit;
+                    }
+                    $payload = '';
+                    $unread  = $size;
+                    while ( $unread > 0 ) {
+                        $chunk = fread( $stream, min( 8192, $unread ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- only bounded name metadata is read.
+                        if ( false === $chunk || '' === $chunk ) {
+                            throw $unreadable;
+                        }
+                        $payload .= $chunk;
+                        $unread  -= strlen( $chunk );
+                    }
+                    // The Child writer declares the name alone and GNU tar adds one NUL. Bytes after an earlier NUL
+                    // would sit in PharData's memory behind a shorter name the listing shows.
+                    $nul = strpos( $payload, "\0" );
+                    if ( false !== $nul && $nul < $size - 1 ) {
+                        throw $unreadable;
+                    }
+                    $long_name = false === $nul ? $payload : substr( $payload, 0, $nul );
+                    if ( '' === $long_name ) {
+                        throw $unreadable;
+                    }
+                    $skip = $padding;
+                } elseif ( in_array( $type, array( '0', "\0", '5' ), true ) ) {
+                    // PharData reads no directory payload, so a declared one would be parsed as headers.
+                    if ( '5' === $type && $size > 0 ) {
+                        throw $unreadable;
+                    }
+                    $skip   = $size + $padding;
+                    $field  = explode( "\0", substr( $header, 0, 100 ), 2 )[0];
+                    $prefix = null === $long_name ? explode( "\0", substr( $header, 345, 155 ), 2 )[0] : '';
+                    $name   = null !== $long_name ? $long_name : ( '' === $prefix ? $field : $prefix . '/' . $field );
+                    if ( $this->has_unsafe_entry_name( $name ) ) {
+                        throw new MainWP_Exception( esc_html__( 'A backup archive contains an unsafe file path and cannot be extracted.', 'mainwp' ), 'tar traversal entry: ' . $name, self::ERR_APPLY );
+                    }
+                    $is_dir = '5' === $type;
+                    $key    = $this->tar_comparison_name( $name, $is_dir );
+                    // Charged per header before duplicates merge, as PharData allocates them.
+                    if ( null === $long_name ) {
+                        $name_bytes += strlen( $name );
+                        if ( $name_bytes > $limits['name_bytes'] ) {
+                            throw $name_limit;
+                        }
+                    }
+                    // PharData creates every parent a member implies. A parent with its own header, or one already
+                    // recorded, has had its parents recorded.
+                    $parent = $key;
+                    $cut    = strrpos( $parent, '/' );
+                    while ( false !== $cut && $cut > 0 ) {
+                        $parent = substr( $parent, 0, $cut );
+                        if ( isset( $ancestors[ $parent ] ) || isset( $dirs[ $parent ] ) ) {
+                            break;
+                        }
+                        $name_bytes += $cut;
+                        if ( $name_bytes > $limits['name_bytes'] ) {
+                            throw $name_limit;
+                        }
+                        $ancestors[ $parent ] = true;
+                        $cut                  = strrpos( $parent, '/' );
+                    }
+                    if ( isset( $members[ $key ] ) ) {
+                        // PharData keeps one entry per name, so a file and a directory sharing one would drop a member.
+                        if ( isset( $dirs[ $key ] ) !== $is_dir ) {
+                            throw $unreadable;
+                        }
+                        ++$members[ $key ];
+                        if ( '' === $prefix ) {
+                            unset( $prefixed[ $key ] );
+                        }
+                    } else {
+                        $members[ $key ] = 1;
+                        if ( $is_dir ) {
+                            $dirs[ $key ] = true;
+                        }
+                        if ( '' !== $prefix ) {
+                            $prefixed[ $key ] = true;
+                        }
+                    }
+                    $long_name = null;
+                } else {
+                    // Links, pax records and other GNU records: the Child never writes them, and PharData reads several of them differently.
+                    throw $unreadable;
+                }
+                if ( 0 !== fseek( $stream, $skip, SEEK_CUR ) ) { // phpcs:ignore WordPress.WP.AlternativeFunctions -- skip file payloads without reading them.
+                    throw $unreadable;
+                }
+            }
+            if ( null !== $long_name ) {
+                throw $unreadable;
+            }
+        } finally {
+            fclose( $stream ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- paired with the header stream.
+        }
+        try {
+            $phar = new \PharData( $plain );
+            foreach ( $this->tar_listing( $phar ) as list( $listed, $is_dir ) ) {
+                $key = $this->tar_comparison_name( $listed, $is_dir );
+                // PharData adds the parents of a member itself, so a listed directory without a header must lead to a
+                // walked member; every listed file needs a header, and a listed name keeps the walk's kind.
+                if ( $is_dir ? ! isset( $dirs[ $key ] ) && ! isset( $ancestors[ $key ] ) : ! isset( $members[ $key ] ) ) {
+                    throw $unreadable;
+                }
+                if ( isset( $members[ $key ] ) && isset( $dirs[ $key ] ) !== $is_dir ) {
+                    throw $unreadable;
+                }
+                unset( $members[ $key ] );
+            }
+        } catch ( \Throwable $e ) {
+            throw $unreadable;
+        }
+        if ( ! empty( $members ) ) {
+            if ( array_diff_key( $members, $prefixed ) ) {
+                throw $unreadable;
+            }
+            $missing = array_sum( $members );
+            $first   = (string) array_key_first( $members );
+            // Keep a readable label even if a filename contains invalid UTF-8.
+            $label = wp_json_encode( $first, JSON_INVALID_UTF8_SUBSTITUTE | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
+            $label = is_string( $label ) ? substr( $label, 1, -1 ) : '?';
+            throw new MainWP_Exception(
+                sprintf(
+                    /* translators: 1: number of unreadable paths, 2: first unreadable path. */
+                    esc_html__( 'This backup was made by an earlier beta and stores %1$s that this version cannot read, so it cannot be test-restored. The first one is %2$s. Backups made from now on are not affected.', 'mainwp' ),
+                    1 === $missing ? esc_html__( 'one long path', 'mainwp' ) : esc_html(
+                        sprintf(
+                            /* translators: %s: number of unreadable paths. */
+                            _n( '%s long path', '%s long paths', $missing, 'mainwp' ),
+                            number_format_i18n( $missing )
+                        )
+                    ),
+                    esc_html( $label )
+                ),
+                'tar unlisted members: ' . $missing,
+                self::ERR_APPLY
+            );
+        }
+        return $phar;
+    }
+
+    /**
+     * PharData's listing, parents included, as it would extract the archive.
+     *
+     * @param \PharData $phar Archive.
+     * @return \Generator<array{0: string, 1: bool}> Listed path and whether it is a directory.
+     */
+    protected function tar_listing( \PharData $phar ): \Generator {
+        $iterator = new \RecursiveIteratorIterator( $phar, \RecursiveIteratorIterator::SELF_FIRST );
+        foreach ( $iterator as $file ) {
+            yield array( $iterator->getSubPathname(), $file->isDir() );
+        }
+    }
+
+    /**
+     * Header walk bounds, shared with the Child restore so both accept the same archives: the Child
+     * restorer's entry limit, and 256 name bytes per entry (the longest ustar name without a GNU
+     * long-name record) for the memory that grows with name length.
+     *
+     * @return array{entries: int, name_bytes: int}
+     */
+    protected function tar_walk_limits(): array {
+        return array(
+            'entries'    => 2000000,
+            'name_bytes' => 512000000,
+        );
+    }
+
+    /**
+     * Phar URLs normalize leading dot components, slashes and directory suffixes.
+     *
+     * @param string $name Archive member name.
+     * @param bool   $dir  Whether the member is a directory.
+     * @return string Comparable name.
+     */
+    private function tar_comparison_name( string $name, bool $dir ): string {
+        $name = str_replace( '\\', '/', $name );
+        while ( 0 === strpos( $name, './' ) ) {
+            $name = substr( $name, 2 );
+        }
+        return $dir ? rtrim( $name, '/' ) : $name;
+    }
+
+    /**
+     * Read a numeric header field only in the spelling PharData reads the same way: optional
+     * leading spaces, octal digits, then NUL or space padding. Base-256 or a leading NUL would be
+     * read as a different number by PharData, so the walk and the extractor would disagree on
+     * where the next header starts.
+     *
+     * @param string $field Raw numeric header field.
+     * @return int|null Nonnegative value, or null for any other spelling or an overflowing value.
+     */
+    private function tar_header_number( string $field ): ?int {
+        if ( 1 !== preg_match( '/^ *([0-7]+)[ \0]*$/D', $field, $match ) ) {
+            return null;
+        }
+        $number = 0;
+        for ( $i = 0, $length = strlen( $match[1] ); $i < $length; ++$i ) {
+            $digit = (int) $match[1][ $i ];
+            if ( $number > intdiv( PHP_INT_MAX - $digit, 8 ) ) {
+                return null;
+            }
+            $number = $number * 8 + $digit;
+        }
+        return $number;
     }
 
     /**
@@ -1389,11 +1749,12 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
     }
 
     /**
-     * Whether an archive entry name is unsafe to extract: a parent-directory
-     * traversal segment, an absolute path, or a stream wrapper. PHP's own
-     * ZipArchive/PharData extractors already neutralise these on 7.4+; this
-     * is a cheap defense-in-depth check at the name level, refusing the
-     * whole archive rather than silently skipping the entry.
+     * Whether an archive entry name is unsafe to extract: a `..` segment under either separator,
+     * a leading separator with or without a drive letter, a NUL byte, or a stream wrapper. PHP's
+     * own ZipArchive/PharData extractors already neutralise these on 7.4+; this is a
+     * defense-in-depth check at the name level, refusing the whole archive rather than silently
+     * skipping the entry. It follows the Child's validate_extract_path(), so a name the Child
+     * restores (`jquery..min.js`, `C:notes.txt`) also passes a test restore.
      *
      * @param string $name Archive entry name.
      *
@@ -1403,21 +1764,13 @@ class MainWP_Backup_TestRestore_Sandbox { // phpcs:ignore Generic.Classes.Openin
         if ( '' === $name ) {
             return false;
         }
-        if ( false !== strpos( $name, '..' ) ) {
+        if ( false !== strpos( $name, '://' ) || false !== strpos( $name, "\0" ) ) {
             return true;
         }
-        if ( false !== strpos( $name, '://' ) ) {
+        if ( 1 === preg_match( '#^([a-z]:)?[\\\\/]#i', $name ) ) {
             return true;
         }
-        $normalized = str_replace( '\\', '/', $name );
-        if ( '/' === $normalized[0] ) {
-            return true;
-        }
-        // Windows drive letter (e.g. C:/...).
-        if ( 1 === preg_match( '#^[a-zA-Z]:#', $normalized ) ) {
-            return true;
-        }
-        return false;
+        return in_array( '..', preg_split( '#[\\\\/]#', $name ), true );
     }
 
     /**

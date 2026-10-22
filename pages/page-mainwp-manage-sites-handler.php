@@ -481,14 +481,13 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
             // Remove from DB.
             $removed = MainWP_DB::instance()->remove_website( $website->id );
 
-            if ( $removed ) {
-                $information['removed_site'] = true;
-            }
-
             // Same success test as execute_delete_site(): false is a database
             // error and fires nothing. Zero rows (the site was already gone)
-            // still fires the hooks, so this path and the ability path agree.
+            // still counts as removed and fires the hooks, so this path and
+            // the ability path agree and the Sites table drops the row.
             if ( false !== $removed ) {
+                $information['removed_site'] = true;
+
                 /**
                  * Delete Child Sites
                  *

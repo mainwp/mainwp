@@ -1277,7 +1277,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( $process['core'] && $user_can_update_wordpress && $total_wp_upgrades > 0 ) {
                     foreach ( $all_wp_updates as $item ) {
                         ?>
-                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
+                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $item['name'] ) ) ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
                         <?php
                     }
                 }
@@ -1289,7 +1289,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( $process['plugin'] && $user_can_update_plugins && $total_plugin_upgrades > 0 ) {
                     foreach ( $all_plugins_updates as $item ) {
                         ?>
-                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" plugin_slug="<?php echo esc_attr( $item['plugin_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
+                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $item['name'] ) ) ); ?>" plugin_slug="<?php echo esc_attr( $item['plugin_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
                             <?php
                     }
                 }
@@ -1301,7 +1301,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( $process['theme'] && $user_can_update_themes && $total_theme_upgrades > 0 ) {
                     foreach ( $all_themes_updates as $item ) {
                         ?>
-                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" theme_slug="<?php echo esc_attr( $item['theme_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
+                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $item['name'] ) ) ); ?>" theme_slug="<?php echo esc_attr( $item['theme_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
                             <?php
                     }
                 }
@@ -1315,7 +1315,7 @@ class MainWP_Updates_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 if ( $process['trans'] && $user_can_update_translation && $total_translation_upgrades > 0 ) {
                     foreach ( $all_translations_updates as $item ) {
                         ?>
-                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( $item['name'] ); ?>" translation_slug="<?php echo esc_attr( $item['translation_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
+                        <div updated="0" site_id="<?php echo intval( $item['id'] ); ?>" site_name="<?php echo esc_attr( rawurlencode( stripslashes( $item['name'] ) ) ); ?>" translation_slug="<?php echo esc_attr( $item['translation_slug'] ); ?>" is-suspended="<?php echo ! empty( $item['is_suspended'] ) ? esc_attr( $item['is_suspended'] ) : ''; ?>"></div>
                         <?php
                     }
                 }

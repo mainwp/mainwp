@@ -26,6 +26,194 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 
 	use Backup_Private_Root_Fixture;
 
+	/**
+	 * The legacy completion paths must refuse the same executable extension.
+	 *
+	 * @dataProvider compromised_child_legacy_callers
+	 * @param string $caller Completion entry point.
+	 */
+	public function test_compromised_child_legacy_archive_php_refused( $caller ) {
+		$site_id = $this->create_test_site();
+		$this->mock_child_action(
+			'backup_preflight',
+			array(
+				'task_spine'    => 1,
+				'disk_free'     => 10 * GB_IN_BYTES,
+				'dir_writable'  => true,
+				'db_connected'  => true,
+				'zip_support'   => true,
+				'time_limit_ok' => true,
+			)
+		);
+		$this->mock_child_action(
+			'backup_checkpid',
+			array(
+				'status' => 'done',
+				'file'   => 'a.php',
+				'size'   => 66,
+			)
+		);
+		$this->mock_child_action(
+			'backup',
+			array(
+				'full' => 'a.php',
+				'db'   => false,
+				'size' => 66,
+			)
+		);
+		try {
+			if ( 'monitor' === $caller ) {
+				\MainWP\Dashboard\MainWP_Backup_Monitor::backup_check_pid( $site_id, 'hostile', 'full', '', null );
+			} else {
+				MainWP_Backup_Executor::backup( $site_id, 'full', '', '', 0, 0, 0, 0 );
+			}
+			$this->fail( 'The executable archive extension was accepted.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $error->get_message_error_code() );
+		}
+	}
+
+	/**
+	 * Legacy archive callers.
+	 *
+	 * @return array
+	 */
+	public static function compromised_child_legacy_callers() {
+		return array(
+			'monitor'       => array( 'monitor' ),
+			'legacy backup' => array( 'backup' ),
+		);
+	}
+
+	/**
+	 * Update-gate completions a compromised Child can send: a script name, or no usable size to bound the download.
+	 *
+	 * @return array
+	 */
+	public function hostile_gate_completion_cases() {
+		return array(
+			'php archive name'  => array( 'a.php', 66, false ),
+			'size missing'      => array( 'gate.zip', null, true ),
+			'size zero'         => array( 'gate.zip', 0, true ),
+			'size not a number' => array( 'gate.zip', '66abc', true ),
+			'size negative'     => array( 'gate.zip', -1, true ),
+		);
+	}
+
+	/**
+	 * The update gate refuses before any download and still finalizes as failed.
+	 *
+	 * @dataProvider hostile_gate_completion_cases
+	 *
+	 * @param string $file         Child-declared file name.
+	 * @param mixed  $size         Child-declared size, null when omitted.
+	 * @param bool   $child_delete Whether the Child copy may be cleaned (only for an acceptable name).
+	 */
+	public function test_compromised_child_gate_completion_refused_before_download( $file, $size, $child_delete ) {
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'hostile-gate',
+					'type'    => 'full',
+					'started' => time(),
+				)
+			)
+		);
+		$payload = array(
+			'phase' => 'completed',
+			'type'  => 'full',
+			'file'  => $file,
+		);
+		if ( null !== $size ) {
+			$payload['size'] = $size;
+		}
+		$this->mock_child_action( 'backup_task_run', $payload );
+		$deleted = array();
+		add_filter(
+			'mainwp_fetch_url_authed_pre',
+			function ( $result, $website, $what, $params = array() ) use ( &$deleted ) {
+				unset( $website );
+				if ( 'delete_backup' === $what ) {
+					$deleted[] = $params['del'] ?? '';
+					return array( 'result' => 'ok' );
+				}
+				return $result;
+			},
+			20,
+			4
+		);
+		$downloads = 0;
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre ) use ( &$downloads ) {
+				unset( $pre );
+				++$downloads;
+				return true;
+			}
+		);
+		$events = array();
+		$this->record_completion_hook( $events );
+
+		$status = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'hostile-gate', 60 );
+
+		$this->assertSame( 'failed', $status['status'] );
+		$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $status['meta']['error_code'] );
+		$this->assertSame( 0, $downloads, 'No byte may be requested from a refused completion.' );
+		$this->assertCount( 1, $events, 'The gate still reports the terminal state.' );
+		$this->assertSame( $child_delete ? array( $file ) : array(), $deleted, 'A refused name is never sent back to the Child.' );
+	}
+
+	/** A digit-string size still bounds the gate download. */
+	public function test_gate_completion_accepts_digit_string_size() {
+		$site_id = $this->create_test_site();
+		$this->give_site_real_privkey( $site_id );
+		$website = MainWP_DB::instance()->get_website_by_id( $site_id );
+		MainWP_DB::instance()->update_website_option(
+			$website,
+			'adhoc_backup_task',
+			wp_json_encode(
+				array(
+					'task_id' => 'digit-gate',
+					'type'    => 'full',
+					'started' => time(),
+				)
+			)
+		);
+		$this->mock_child_action(
+			'backup_task_run',
+			array(
+				'phase' => 'completed',
+				'type'  => 'full',
+				'file'  => 'gate.tar.gz',
+				'size'  => '66',
+			)
+		);
+		$this->mock_child_action( 'delete_backup', array( 'result' => 'ok' ) );
+		$sizes = array();
+		add_filter(
+			'mainwp_download_to_file_pre',
+			function ( $pre, $url, $file, $size = null ) use ( &$sizes ) {
+				unset( $pre, $url );
+				$sizes[] = $size;
+				file_put_contents( $file, "\x1f\x8b" . str_repeat( 'x', 64 ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- test fixture.
+				return true;
+			},
+			10,
+			4
+		);
+
+		$status = MainWP_Backup_Executor::get_backup_task_status( $site_id, 'digit-gate', 60 );
+
+		$this->assertSame( 'completed', $status['status'] );
+		$this->assertSame( 66, $status['meta']['size'] );
+		$this->assertSame( array( 66 ), $sizes, 'The digit-string size must reach the transfer as its bound.' );
+	}
+
 	/** A gate download retry must reuse its persisted reservation. */
 	public function test_n1_update_gate_retry_reuses_reserved_path() {
 		$site_id = $this->create_test_site();
@@ -696,7 +884,6 @@ class MainWP_Backup_Executor_Contract_Test extends MainWP_Abilities_Test_Case {
 			'refused'                 => array( $margin + 65, 66, 0, true ),
 			'fits exactly'            => array( $margin + 66, 66, 0, false ),
 			'free unknown'            => array( false, 66, 0, false ),
-			'size missing'            => array( 1, null, 0, false ),
 			'resume fits'             => array( $margin + 33, 66, 33, false ),
 			'resume rejected'         => array( $margin + 32, 66, 33, true ),
 			'retention fits exactly'  => array( $margin, 66, 0, false, $margin + 66 ),

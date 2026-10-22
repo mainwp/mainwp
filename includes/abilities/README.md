@@ -344,6 +344,8 @@ All MainWP-specific error codes use the `mainwp_*` prefix:
 | `mainwp_backup_snapshot_unrestorable_chain_pruned` | 409 or output | Part of the incremental chain was pruned |
 | `mainwp_backup_snapshot_unrestorable_no_artifacts` | 409 or output | Snapshot has no local or cloud artifacts |
 | `mainwp_backup_snapshot_unrestorable_artifact_unavailable` | 409 or output | A required artifact is unavailable locally and in cloud storage |
+| `mainwp_backup_snapshot_unrestorable_damaged` | 409 or output | The snapshot's local archive failed an integrity check and no cloud copy exists |
+| `mainwp_backup_snapshot_unrestorable_chain_damaged` | 409 or output | An earlier snapshot in the incremental chain has a damaged archive and no cloud copy |
 
 Backup progress and history also use the existing codes in `MainWP_Backup_Error_Codes`, including transport, archive, database, and provider failures. An output code describes recorded evidence and does not change the successful read's HTTP status. Backup action failures from the Child use `mainwp_operation_failed` with 502; unexpected Dashboard failures use `mainwp_internal_error` with 500. Skip reasons `backup_missing` and `backup_pending_offsite` are item outcomes, not error codes.
 

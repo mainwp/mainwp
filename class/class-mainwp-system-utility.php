@@ -1218,13 +1218,16 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
     public static function maybe_unserialyze( $data ) {
         if ( empty( $data ) || is_array( $data ) ) {
             return $data;
-        } elseif ( is_serialized( $data ) ) {
-            // phpcs:ignore -- for compatability.
-            return maybe_unserialize( $data );
-        } else {
-            // phpcs:ignore -- for compatability.
-            return maybe_unserialize( base64_decode( $data ) );
         }
+        if ( ! is_serialized( $data ) ) {
+            $data = base64_decode( $data ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- legacy base64 storage of selections.
+        }
+        if ( ! is_serialized( $data ) ) {
+            return $data;
+        }
+        // Callers read site and group selections, which a Child can supply when a post is imported for editing; an object here would run its class code.
+        // nosemgrep: AIK_unserialize-use -- allowed_classes false: objects come back incomplete and no class code runs.
+        return @unserialize( trim( $data ), array( 'allowed_classes' => false ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- matches maybe_unserialize(), which also silences malformed input.
     }
 
     /**

@@ -319,7 +319,8 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 	 *
 	 * Keys: sites and groups (column members), snapshot (authorized_sites; null = legacy
 	 * row), deleted and denied (roles removed from the site table or from the caller's
-	 * scope), template, missing.
+	 * scope), template, missing, unrestricted (caller scope stays 'all'; otherwise the
+	 * caller is restricted to an explicit site list).
 	 *
 	 * @return array
 	 */
@@ -410,6 +411,15 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 					'snapshot' => array( 'a', 'b' ),
 					'deleted'  => array( 'a', 'b' ),
 				),
+				false,
+			),
+			'A10 every site deleted, all sites'  => array(
+				array(
+					'sites'        => array( 'a', 'b' ),
+					'snapshot'     => array( 'a', 'b' ),
+					'deleted'      => array( 'a', 'b' ),
+					'unrestricted' => true,
+				),
 				true,
 			),
 		);
@@ -471,7 +481,9 @@ class MainWP_Backup_Task_Reset_Handler_Test extends MainWP_Abilities_Test_Case {
 		$scope  = static function () use ( $ids, $denied ) {
 			return array_values( array_diff( array_values( $ids ), $denied ) );
 		};
-		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		if ( empty( $spec['unrestricted'] ) ) {
+			add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		}
 		try {
 			$result = \MainWP\Dashboard\MainWP_Backup_Operations::authorize_task( empty( $spec['missing'] ) ? (int) $task->id : 999999999, 'pause_resume_backup_tasks' );
 		} finally {

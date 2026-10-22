@@ -24,6 +24,55 @@ use MainWP\Dashboard\MainWP_Exception;
 class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 
 	/**
+	 * A compromised Child that streams twice its declared size is cut off near
+	 * that size, and nothing is left behind as a completed artifact.
+	 *
+	 * @dataProvider child_stream_prefixes
+	 * @param int $prefix Bytes already on disk, which sends a Range the route ignores.
+	 */
+	public function test_compromised_child_streaming_past_declared_size_aborts( $prefix ) {
+		$declared = 1048576;
+		$file     = $this->temp_download_path();
+		if ( $prefix ) {
+			file_put_contents( $file, static::fixture_content( $prefix ) );
+		}
+		$received = 0;
+		$meter    = static function ( $options ) use ( &$received ) {
+			$options[ CURLOPT_NOPROGRESS ]       = false;
+			$options[ CURLOPT_XFERINFOFUNCTION ] = static function ( $handle, $download_total, $downloaded ) use ( &$received ) {
+				$received = max( $received, (int) $downloaded );
+				return 0;
+			};
+			return $options;
+		};
+		add_filter( 'mainwp_download_to_file_curl_options', $meter );
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/oversized-stream?size=' . $declared ), $file, $declared );
+			$this->fail( 'The oversized stream completed.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, $error->get_message_error_code() );
+			$this->assertStringContainsString( 'exceeds declared size', (string) $error->get_message_extra() );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_curl_options', $meter );
+		}
+		$this->assertLessThan( (int) ( $declared * 1.1 ), $received, 'The transfer ran on past the declared size.' );
+		clearstatcache( true, $file );
+		$this->assertFileDoesNotExist( $file );
+	}
+
+	/**
+	 * Fresh and Range-ignored downloads.
+	 *
+	 * @return array
+	 */
+	public static function child_stream_prefixes() {
+		return array(
+			'fresh'         => array( 0 ),
+			'Range ignored' => array( 1024 ),
+		);
+	}
+
+	/**
 	 * Transfer failures describe the bytes actually retained for the retry.
 	 *
 	 * @dataProvider interrupted_data_cases
@@ -404,5 +453,155 @@ class MainWP_Download_To_File_Test extends MainWP_Backup_Test_Case {
 		// The next attempt resumes from the preserved offset and completes.
 		MainWP_Connect::download_to_file( static::fixture_url( '/206?size=4096' ), $file, 4096 );
 		$this->assertSame( static::fixture_content( 4096 ), file_get_contents( $file ) );
+	}
+	/**
+	 * Scheme changes and the www alias do not change the Child's host.
+	 *
+	 * @return array Host comparisons.
+	 */
+	public static function download_host_pairs(): array {
+		return array(
+			'same'      => array( 'https://example.org/', 'https://example.org/file', true ),
+			'www'       => array( 'https://www.example.org/', 'https://example.org/file', true ),
+			'www added' => array( 'https://example.org/', 'https://www.example.org/file', true ),
+			'different' => array( 'https://example.org/', 'https://other.example/file', false ),
+			'scheme'    => array( 'http://example.org/', 'https://example.org/file', true ),
+			'private'   => array( 'http://192.168.1.2/', 'http://192.168.1.2/file', true ),
+			'missing'   => array( 'https://example.org/', '/file', false ),
+		);
+	}
+
+	/**
+	 * Download authorization follows the site host rather than the URL path.
+	 *
+	 * @dataProvider download_host_pairs
+	 * @param string $site Site URL.
+	 * @param string $effective Effective URL.
+	 * @param bool   $expected Whether hosts match.
+	 */
+	public function test_download_hosts_match( string $site, string $effective, bool $expected ): void {
+		$this->assertSame( $expected, MainWP_Connect::download_hosts_match( $site, $effective ) );
+	}
+
+	/** Unsafe protocols and redirect loops cannot consume the download lane. */
+	public function test_download_redirect_options_are_bounded(): void {
+		$captured = array();
+		$observe  = static function ( $options ) use ( &$captured ) {
+			$captured = $options;
+			return $options;
+		};
+		add_filter( 'mainwp_download_to_file_curl_options', $observe );
+		$file = $this->temp_download_path();
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/200?size=4096' ), $file, 4096 );
+			$this->assertSame( CURLPROTO_HTTP | CURLPROTO_HTTPS, $captured[ CURLOPT_PROTOCOLS ] ?? null );
+			$this->assertSame( CURLPROTO_HTTP | CURLPROTO_HTTPS, $captured[ CURLOPT_REDIR_PROTOCOLS ] ?? null );
+			$this->assertSame( 3, $captured[ CURLOPT_MAXREDIRS ] ?? null );
+		} finally {
+			remove_filter( 'mainwp_download_to_file_curl_options', $observe );
+			if ( is_file( $file ) ) {
+				unlink( $file );
+			}
+		}
+	}
+
+	/** A successful response from a different host must never become an archive. */
+	public function test_download_refuses_effective_host_outside_site(): void {
+		$file    = $this->temp_download_path();
+		$website = (object) array(
+			'id'  => 42,
+			'url' => 'https://other.example/',
+		);
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/200?size=4096' ), $file, 4096, null, null, $website );
+			$this->fail( 'A different effective host was accepted.' );
+		} catch ( MainWP_Exception $error ) {
+			$this->assertSame( 'mainwp_backup_http_error', $error->get_message_error_code() );
+			$this->assertFileDoesNotExist( $file );
+		} finally {
+			if ( is_file( $file ) ) {
+				unlink( $file );
+			}
+		}
+	}
+
+	/** A Child that redirects within its own host still delivers the archive. */
+	public function test_same_host_redirect_is_followed(): void {
+		$file = $this->temp_download_path();
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/redirect-same-host?size=4096' ), $file, 4096 );
+			$this->assertSame( static::fixture_content( 4096 ), file_get_contents( $file ) );
+		} finally {
+			if ( is_file( $file ) ) {
+				unlink( $file );
+			}
+		}
+	}
+
+	/** A site stored without url is held to the host the request was built for. */
+	public function test_empty_site_url_uses_request_host(): void {
+		$file    = $this->temp_download_path();
+		$website = (object) array(
+			'id'  => 42,
+			'url' => '',
+		);
+		try {
+			MainWP_Connect::download_to_file( static::fixture_url( '/200?size=4096' ), $file, 4096, null, null, $website );
+			$this->assertSame( static::fixture_content( 4096 ), file_get_contents( $file ) );
+		} finally {
+			if ( is_file( $file ) ) {
+				unlink( $file );
+			}
+		}
+	}
+
+	/** The request-host fallback for a site without url still refuses a redirect to another host. */
+	public function test_empty_site_url_refuses_cross_host_redirect(): void {
+		$token   = 'mainwp-redirect-' . bin2hex( random_bytes( 8 ) );
+		$marker  = sys_get_temp_dir() . '/' . $token;
+		$file    = $this->temp_download_path();
+		$website = (object) array(
+			'id'  => 42,
+			'url' => '',
+		);
+		try {
+			try {
+				MainWP_Connect::download_to_file( static::fixture_url( '/redirect-other-host?marker=' . $token ), $file, 4096, null, null, $website );
+				$this->fail( 'The redirect was accepted.' );
+			} catch ( MainWP_Exception $error ) {
+				$this->assertSame( 'mainwp_backup_http_error', $error->get_message_error_code() );
+			}
+			$this->assertFileDoesNotExist( $marker, 'cURL contacted the redirect target.' );
+			$this->assertFileDoesNotExist( $file );
+		} finally {
+			foreach ( array( $file, $marker ) as $path ) {
+				if ( is_file( $path ) ) {
+					unlink( $path );
+				}
+			}
+		}
+	}
+
+	/** Final-host validation must not permit an earlier request to another host. */
+	public function test_cross_host_redirect_is_refused_before_contact(): void {
+		$token  = 'mainwp-redirect-' . bin2hex( random_bytes( 8 ) );
+		$marker = sys_get_temp_dir() . '/' . $token;
+		$file   = $this->temp_download_path();
+		try {
+			try {
+				MainWP_Connect::download_to_file( static::fixture_url( '/redirect-other-host?marker=' . $token ), $file, 4096 );
+				$this->fail( 'The redirect was accepted.' );
+			} catch ( MainWP_Exception $error ) {
+				$this->assertSame( 'mainwp_backup_http_error', $error->get_message_error_code() );
+			}
+			$this->assertFileDoesNotExist( $marker, 'cURL contacted the redirect target.' );
+			$this->assertFileDoesNotExist( $file );
+		} finally {
+			foreach ( array( $file, $marker ) as $path ) {
+				if ( is_file( $path ) ) {
+					unlink( $path );
+				}
+			}
+		}
 	}
 }

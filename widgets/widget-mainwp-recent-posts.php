@@ -802,7 +802,7 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             );
 
         } catch ( MainWP_Exception $e ) {
-            $information = array( 'error' => MainWP_Error_Helper::get_error_message( $e ) );
+            $information = array( 'error' => MainWP_Error_Helper::get_error_message( $e, true ) );
 
         }
 

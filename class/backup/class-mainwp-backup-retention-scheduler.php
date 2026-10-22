@@ -36,6 +36,13 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
     const QUEUE_OPTION = 'mainwp_backup_retention_queue';
 
     /**
+     * Last claimed Child prune resend window, separate from the cron heartbeat.
+     *
+     * @var string
+     */
+    const CHILD_PRUNE_RESEND_OPTION = 'mainwp_backup_child_prune_last_resend';
+
+    /**
      * Overall budget for the daily sweep in seconds.
      *
      * @var int
@@ -183,7 +190,9 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
 
         // Cleanup owed by earlier runs must not be starved by the retention deadline.
         try {
-            MainWP_Backup_Retention_Executor::instance()->resend_child_prunes();
+            if ( $this->claim_child_prune_resend() ) {
+                MainWP_Backup_Retention_Executor::instance()->resend_child_prunes();
+            }
         } catch ( \Throwable $e ) {
             MainWP_Logger::instance()->warning( 'Backup child prune retry failed: ' . $e->getMessage() );
         }
@@ -198,6 +207,41 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
                 $this->run_retention_for_pair( $task, $site_id, static::PAIR_BUDGET_SECONDS );
             }
         }
+    }
+
+    /**
+     * Concurrent cron requests must claim the retry window before contacting a Child.
+     *
+     * @return bool Whether this worker claimed the next resend pass.
+     */
+    private function claim_child_prune_resend(): bool {
+        global $wpdb;
+
+        $now = time();
+        // INSERT IGNORE cannot overwrite a timestamp claimed by another worker.
+        $inserted = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- atomic window claims cannot use the options API.
+            $wpdb->prepare(
+                "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, '0', 'off')", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted WordPress table identifier.
+                self::CHILD_PRUNE_RESEND_OPTION
+            )
+        );
+        if ( false === $inserted ) {
+            return false;
+        }
+        $claimed = $wpdb->query( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- the timestamp comparison and stamp must be atomic.
+            $wpdb->prepare(
+                "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND CAST(option_value AS UNSIGNED) <= %d", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted WordPress table identifier.
+                (string) $now,
+                self::CHILD_PRUNE_RESEND_OPTION,
+                $now - 20 * HOUR_IN_SECONDS
+            )
+        );
+        if ( 1 !== $claimed ) {
+            return false;
+        }
+        wp_cache_delete( self::CHILD_PRUNE_RESEND_OPTION, 'options' );
+        wp_cache_delete( 'notoptions', 'options' );
+        return true;
     }
 
     /**

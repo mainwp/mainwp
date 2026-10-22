@@ -224,6 +224,54 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
+     * Preserve local integrity failures without changing the retention lifecycle.
+     *
+     * @param int    $snapshot_id Snapshot owning the archive.
+     * @param string $source_file Original archive filename.
+     * @param string $code Integrity failure code.
+     * @return void
+     */
+    public function mark_artifact_damaged( int $snapshot_id, string $source_file, string $code ): void {
+        $snapshot = $this->get_snapshot_by_id( $snapshot_id );
+        if ( null === $snapshot ) {
+            return;
+        }
+        $archives = $snapshot->archives;
+        foreach ( $archives as &$archive ) {
+            if ( ( $archive['file'] ?? '' ) !== $source_file || ! empty( $archive['damaged'] ) ) {
+                continue;
+            }
+            $archive['damaged'] = array(
+                'code' => $code,
+                'at'   => current_time( 'mysql', true ),
+            );
+            $this->wpdb->update(
+                $this->table_name( 'wp_backup_snapshot' ),
+                array( 'archives' => wp_json_encode( $archives ) ),
+                array( 'id' => $snapshot_id ),
+                array( '%s' ),
+                array( '%d' )
+            );
+            return;
+        }
+    }
+
+    /**
+     * Any damaged link requires a new full base for future increments.
+     *
+     * @param object $snapshot Decoded snapshot row.
+     * @return bool Whether any local archive is damaged.
+     */
+    public static function snapshot_has_damage( object $snapshot ): bool {
+        foreach ( (array) $snapshot->archives as $archive ) {
+            if ( ! empty( $archive['damaged'] ) ) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Get the newest complete snapshot for a site and task - the base the
      * next incremental run diffs against. Null means no usable base exists
      * and the caller runs a full backup.

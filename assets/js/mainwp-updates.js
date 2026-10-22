@@ -72,6 +72,13 @@ globalThis.mainwp_escape_html = function (value) { // NOSONAR
         .replace(/'/g, '&#39;');
 };
 
+// Error extras are HTML (Dashboard icons, esc_html'd Child text) but a tooltip attribute shows plain text.
+// DOMParser builds an inert document, so markup in the value never loads or runs.
+globalThis.mainwp_tooltip_text = function (value) { // NOSONAR
+    const text = new DOMParser().parseFromString(String(value ?? ''), 'text/html').body.textContent;
+    return mainwp_escape_html(text);
+};
+
 
 // Normalize slug list to array.
 globalThis.mainwp_slug_list_to_array = function (value) { // NOSONAR.
@@ -144,7 +151,7 @@ let updatesoverview_upgrade = function (id, obj) {
                 if (response.error) {
                     let err_msg = '';
                     if (response.error.extra) {
-                        err_msg = response.error.extra + ' ';
+                        err_msg = mainwp_tooltip_text(response.error.extra) + ' ';
                     }
                     let errIcon = '<i class="pause yellow icon"></i>';
                     if (response?.error?.errorCode == 'SUSPENDED_SITE') {
@@ -195,7 +202,7 @@ let updatesoverview_update_popup_init = function (data) {
 }
 
 let updatesmanage_link_to_site = function (name, siteid) {
-    return '<a href="admin.php?page=managesites&dashboard=' + siteid + '">' + name + '</a>';
+    return '<a href="admin.php?page=managesites&dashboard=' + (parseInt(siteid, 10) || 0) + '">' + mainwp_site_name_html(name) + '</a>';
 }
 
 // Update Group
@@ -234,7 +241,7 @@ let updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSel
 
     let _callback = function () {
         for (let id of sitesToUpdate) {
-            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(decodeURIComponent(siteNames[id]), id) + ' (WordPress update)', '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<i class="clock outline icon"></i> ' + '</span>');
+            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(siteNames[id], id) + ' (WordPress update)', '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<i class="clock outline icon"></i> ' + '</span>');
         }
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSitesToUpdate) {
             return function () {
@@ -260,7 +267,7 @@ let updatesoverview_wordpress_global_upgrade_all = function (groupId, updatesSel
             let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
-                    sitesList.push(decodeURIComponent(value));
+                    sitesList.push(mainwp_site_name_html(value));
                 }
             });
             let confirmMsg = MainWP.I18n.t('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', MainWP.I18n.t('WordPress Core'), sitesList.join('<br />'));
@@ -368,7 +375,7 @@ let updatesoverview_wordpress_upgrade_int = function (websiteId, bulkMode) {
             if (response.error) {
                 let err_msg = '';
                 if (response.error.extra) {
-                    err_msg = response.error.extra + ' ';
+                    err_msg = mainwp_tooltip_text(response.error.extra) + ' ';
                 }
                 let errIcon = '<i class="red times icon"></i>';
                 if (response?.error?.errorCode == 'SUSPENDED_SITE') {
@@ -447,7 +454,7 @@ let updatesoverview_translations_global_upgrade_all = function (groupId, updates
             else
                 updateCount = updateCount.length + 1;
 
-            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(decodeURIComponent(siteNames[id]), id) + ' (' + updateCount + ' translations)', '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<i class="clock outline icon"></i> ' + '</span>');
+            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(siteNames[id], id) + ' (' + updateCount + ' translations)', '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<i class="clock outline icon"></i> ' + '</span>');
         }
 
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSitesToUpdate, pSitesTranslationSlugs) {
@@ -477,7 +484,7 @@ let updatesoverview_translations_global_upgrade_all = function (groupId, updates
             let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
-                    sitesList.push(decodeURIComponent(value));
+                    sitesList.push(mainwp_site_name_html(value));
                 }
             });
             let confirmMsg = MainWP.I18n.t('You are about to update %1 on the following site(s):\n%2?', 'translations', sitesList.join(', '));
@@ -534,13 +541,12 @@ let updatesoverview_translations_upgrade_all = function (slug, translationName) 
         sitesToUpdate.push(siteId);
     }
 
-    translationName = decodeURIComponent(translationName);
-    translationName = translationName.replaceAll('+', ' ');
+    const translationNameHtml = mainwp_text_html(mainwp_decode_slug(translationName).replaceAll('+', ' '));
 
     let _callback = function () {
 
         for (let id of sitesToUpdate) {
-            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(decodeURIComponent(siteNames[id]), id), '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<i class="clock outline icon"></i> ' + '</span>');
+            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(siteNames[id], id), '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<i class="clock outline icon"></i> ' + '</span>');
         }
 
         let sitesCount = sitesToUpdate.length;
@@ -551,7 +557,7 @@ let updatesoverview_translations_upgrade_all = function (slug, translationName) 
                 // init and show popup
 
                 let initData = {
-                    title: MainWP.I18n.t('Updating %1', decodeURIComponent(translationName)),
+                    title: MainWP.I18n.t('Updating %1', translationNameHtml),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -570,10 +576,10 @@ let updatesoverview_translations_upgrade_all = function (slug, translationName) 
             let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
-                    sitesList.push(decodeURIComponent(value));
+                    sitesList.push(mainwp_site_name_html(value));
                 }
             });
-            let confirmMsg = MainWP.I18n.t('You are about to update the %1 translation on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', translationName, sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update the %1 translation on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', translationNameHtml, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -886,7 +892,7 @@ let updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelec
                 updateCount = 1;
             else
                 updateCount = updateCount.length + 1;
-            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(decodeURIComponent(siteNames[id]), id) + ' (' + updateCount + ' plugins)', '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<i class="clock outline icon"></i> ' + '</span>');
+            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(siteNames[id], id) + ' (' + updateCount + ' plugins)', '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<i class="clock outline icon"></i> ' + '</span>');
         }
 
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSitesToUpdate, pSitesPluginSlugs) {
@@ -915,7 +921,7 @@ let updatesoverview_plugins_global_upgrade_all = function (groupId, updatesSelec
             let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
-                    sitesList.push(decodeURIComponent(value));
+                    sitesList.push(mainwp_site_name_html(value));
                 }
             });
             let confirmMsg = MainWP.I18n.t('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', MainWP.I18n.t('plugins'), sitesList.join('<br />'));
@@ -972,13 +978,12 @@ let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSel
         sitesToUpdate.push(siteId);
     }
 
-    pluginName = decodeURIComponent(pluginName);
-    pluginName = pluginName.replaceAll('+', ' ');
+    const pluginNameHtml = mainwp_text_html(mainwp_decode_slug(pluginName).replaceAll('+', ' '));
 
     let _callback = function () {
 
         for (let id of sitesToUpdate) {
-            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(decodeURIComponent(siteNames[id]), id), '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span> ' + '</span>');
+            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(siteNames[id], id), '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<span data-inverted="" data-position="left center" data-tooltip="' + MainWP.I18n.t('Pending', 'mainwp') + '"><i class="clock outline icon"></i></span> ' + '</span>');
         }
 
         let sitesCount = sitesToUpdate.length;
@@ -987,7 +992,7 @@ let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSel
             return function () {
 
                 let initData = {
-                    title: MainWP.I18n.t('Updating %1', decodeURIComponent(pluginName)),
+                    title: MainWP.I18n.t('Updating %1', pluginNameHtml),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -1008,10 +1013,10 @@ let updatesoverview_plugins_upgrade_all = function (slug, pluginName, updatesSel
             let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
-                    sitesList.push(decodeURIComponent(value));
+                    sitesList.push(mainwp_site_name_html(value));
                 }
             });
-            let confirmMsg = MainWP.I18n.t('You are about to update the %1 plugin on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', pluginName, sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update the %1 plugin on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', pluginNameHtml, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -1277,7 +1282,7 @@ let updatesoverview_plugins_upgrade_int_after_backup = function (pSlug, pWebsite
                         }
 
                         if (response.error || response.notices) {
-                            let extErr = getErrorMessageInfo(response.error, 'ui');
+                            let extErr = response.error ? getErrorMessageInfo(response.error, 'ui') : _icon;
                             if (!done && pBulkMode)
                                 updatesoverview_plugins_upgrade_all_update_site_status(pWebsiteId, extErr);
                             websiteHolder.find('td:last-child').html(extErr);
@@ -1500,7 +1505,7 @@ let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelect
                 updateCount = 1;
             else
                 updateCount = updateCount.length + 1;
-            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(decodeURIComponent(siteNames[id]), id) + ' (' + updateCount + ' themes)', '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<i class="clock outline icon"></i> ' + '</span>');
+            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', id) + ' ' + updatesmanage_link_to_site(siteNames[id], id) + ' (' + updateCount + ' themes)', '<span class="updatesoverview-upgrade-status-wp" siteid="' + id + '">' + '<i class="clock outline icon"></i> ' + '</span>');
         }
 
         updatesoverviewContinueAfterBackup = function (pSitesCount, pSitesToUpdate, pSitesPluginSlugs) {
@@ -1528,7 +1533,7 @@ let updatesoverview_themes_global_upgrade_all = function (groupId, updatesSelect
             let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
-                    sitesList.push(decodeURIComponent(value));
+                    sitesList.push(mainwp_site_name_html(value));
                 }
             });
             let confirmMsg = MainWP.I18n.t('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', MainWP.I18n.t('themes'), sitesList.join('<br />'));
@@ -1599,11 +1604,10 @@ let updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelec
         let siteName = jQuery(child).attr('site_name');
         siteNames[siteId] = siteName;
         sitesToUpdate.push(siteId);
-        mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', siteId) + ' ' + updatesmanage_link_to_site(decodeURIComponent(siteName), siteId), '<span class="updatesoverview-upgrade-status-wp" siteid="' + siteId + '">' + '<i class="clock outline icon"></i> ' + '</span>');
+        mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', siteId) + ' ' + updatesmanage_link_to_site(siteName, siteId), '<span class="updatesoverview-upgrade-status-wp" siteid="' + siteId + '">' + '<i class="clock outline icon"></i> ' + '</span>');
     }
 
-    themeName = decodeURIComponent(themeName);
-    themeName = themeName.replaceAll('+', ' ');
+    const themeNameHtml = mainwp_text_html(mainwp_decode_slug(themeName).replaceAll('+', ' '));
 
     let _callback = function () {
 
@@ -1613,7 +1617,7 @@ let updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelec
                 //Step 2: show form
 
                 let initData = {
-                    title: MainWP.I18n.t('Updating %1', decodeURIComponent(themeName)),
+                    title: MainWP.I18n.t('Updating %1', themeNameHtml),
                     progressMax: pSitesCount
                 };
                 updatesoverview_update_popup_init(initData);
@@ -1634,10 +1638,10 @@ let updatesoverview_themes_upgrade_all = function (slug, themeName, updatesSelec
             let sitesList = [];
             jQuery.each(siteNames, function (index, value) {
                 if (value) { // to fix
-                    sitesList.push(decodeURIComponent(value));
+                    sitesList.push(mainwp_site_name_html(value));
                 }
             });
-            let confirmMsg = MainWP.I18n.t('You are about to update the %1 theme on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', themeName, sitesList.join('<br />'));
+            let confirmMsg = MainWP.I18n.t('You are about to update the %1 theme on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', themeNameHtml, sitesList.join('<br />'));
             mainwp_confirm(confirmMsg, _callback, false, 2);
         }
         return;
@@ -2134,7 +2138,7 @@ const updatesoverview_global_run_upgrade_all = function (which) { // NOSONAR - C
 
                 whatToUpgrade += '<span class="translation">' + updateCount + ' translation' + (updateCount > 1 ? 's' : '') + '</span>';
             }
-            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', siteId) + ' ' + updatesmanage_link_to_site(decodeURIComponent(siteNames[siteId]), siteId) + ' (' + whatToUpgrade + ')', '<span class="updatesoverview-upgrade-status-wp" siteid="' + siteId + '">' + '<i class="clock outline icon"></i> ' + '</span>');
+            mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', siteId) + ' ' + updatesmanage_link_to_site(siteNames[siteId], siteId) + ' (' + whatToUpgrade + ')', '<span class="updatesoverview-upgrade-status-wp" siteid="' + siteId + '">' + '<i class="clock outline icon"></i> ' + '</span>');
         }
 
         updatesoverviewContinueAfterBackup = updatesoverview_global_upgrade_all_after_backup(sitesCount, sitesToUpdate, sitesToUpgrade, sitesPluginSlugs, sitesThemeSlugs, sitesTranslationSlugs, suspendedWebsites);
@@ -2154,7 +2158,7 @@ let updatesoverview_global_upgrade_all_start = function (which, siteNames, _call
         let sitesList = [];
         jQuery.each(siteNames, function (index, value) {
             if (value) { // to fix
-                sitesList.push(decodeURIComponent(value));
+                sitesList.push(mainwp_site_name_html(value));
             }
         });
 
@@ -3346,8 +3350,8 @@ let updatesoverview_plugins_ignore_detail = function (slug, name, id, obj, ignor
     const site_name = jQuery(row).attr("site_name");
     let msg = MainWP.I18n.t(
         "Are you sure you want to ignore %1 plugin updates on %2? The updates will no longer be visible in your MainWP Dashboard.",
-        decodeURIComponent(name),
-        site_name ?? ''
+        mainwp_text_html(mainwp_decode_slug(name)),
+        mainwp_site_name_html(site_name)
     );
     mainwp_confirm(
         msg,
@@ -3384,13 +3388,13 @@ let updatesoverview_plugins_ignore_all = function (slug, name, obj, ver) {
     if (site_name === undefined) {
         msg = MainWP.I18n.t(
             "Are you sure you want to ignore the %1 plugin updates? The updates will no longer be visible in your MainWP Dashboard.",
-            decodeURIComponent(name)
+            mainwp_text_html(mainwp_decode_slug(name))
         );
     } else {
         msg = MainWP.I18n.t(
             "Are you sure you want to ignore %1 plugin updates on %2 site? The updates will no longer be visible in your MainWP Dashboard.",
-            decodeURIComponent(name),
-            site_name
+            mainwp_text_html(mainwp_decode_slug(name)),
+            mainwp_site_name_html(site_name)
         );
     }
     mainwp_confirm(msg, function () {
@@ -4045,7 +4049,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
     updateWhat = (what == 'plugin') ? MainWP.I18n.t('plugins') : updateWhat;
 
     mainwpPopup('#mainwp-sync-sites-modal').clearList();
-    mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', pId) + ' ' + updatesmanage_link_to_site(decodeURIComponent(pSiteName), pId) + ' (' + updateCount + ' ' + updateWhat + ')', '<span class="updatesoverview-upgrade-status-wp" siteid="' + pId + '">' + '<i class="clock outline icon"></i> ' + '</span>');
+    mainwpPopup('#mainwp-sync-sites-modal').appendItemsList(mainwp_links_visit_site_and_admin('', pId) + ' ' + updatesmanage_link_to_site(pSiteName, pId) + ' (' + updateCount + ' ' + updateWhat + ')', '<span class="updatesoverview-upgrade-status-wp" siteid="' + pId + '">' + '<i class="clock outline icon"></i> ' + '</span>');
 
     let initData = {
         title: MainWP.I18n.t('Updating all'),
@@ -4144,7 +4148,7 @@ let updatesoverview_upgrade_plugintheme_list_popup = function (what, pId, pSiteN
             type: what,
             slug: item
         });
-        let decoded = mainwp_decode_slug(item, true);
+        let decoded = mainwp_text_html(mainwp_decode_slug(item));
         jQuery.post(ajaxurl, data, function (response) { // NOSONAR - complex.
             let res_error = response.result_error;
             let hasError = false;

@@ -305,7 +305,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                 )
             );
         } catch ( MainWP_Exception $e ) {
-            die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e ) ) ) );
+            die( wp_json_encode( array( 'error' => MainWP_Error_Helper::get_error_message( $e, true ) ) ) );
         }
 
         /**

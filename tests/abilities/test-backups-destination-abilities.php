@@ -983,4 +983,25 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 	public static function sftp_results() {
 		return array( array( true, true ), array( false, false ), array( false, true ) );
 	}
+	/**
+	 * Storage redirection requires the same right as archive downloads.
+	 *
+	 * @dataProvider actions
+	 * @param string $name Action slug.
+	 */
+	public function test_destination_action_requires_download_right( $name ) {
+		$deny = static function ( $allowed, $type, $cap ) {
+			return 'dashboard' === $type && 'download_backups' === $cap ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			$result = $this->execute( $name, $this->input( $name ) + array( 'confirm' => true ), true );
+			$this->assertWPError( $result );
+			$this->assertSame( 'mainwp_insufficient_right', $result->get_error_code() );
+			$this->assertSame( 403, $result->get_error_data()['status'] );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny );
+		}
+		$this->assertSame( 'Stored destination', MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id )->name );
+	}
 }

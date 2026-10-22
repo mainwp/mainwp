@@ -191,7 +191,8 @@ class MainWP_Backup_Task_UI_Staff_Rights_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
-	 * Staff hold only read and level_10 at WordPress level.
+	 * Staff hold only read and level_10 at WordPress level. S-all is staff with
+	 * every site and the backup rights; S-all-dl adds download_backups.
 	 *
 	 * @param string $actor Actor code.
 	 * @param string $missing Withheld Dashboard right.
@@ -218,9 +219,12 @@ class MainWP_Backup_Task_UI_Staff_Rights_Test extends MainWP_Abilities_Test_Case
 				if ( 'site' === $type ) {
 					return in_array( (int) $cap, $sites, true );
 				}
+				if ( 'S-all-dl' === $actor && 'dashboard' === $type && 'download_backups' === $cap ) {
+					return true;
+				}
 				return 'dashboard' === $type && in_array( $cap, array( 'execute_backups', 'add_backup_tasks', 'edit_backup_tasks', 'delete_backup_tasks', 'pause_resume_backup_tasks', 'run_backup_tasks' ), true ) && ( 'S-right' !== $actor || $cap !== $missing );
 			};
-			$scope                = static fn() => 'A' === $actor ? 'all' : $sites;
+			$scope                = static fn() => in_array( $actor, array( 'A', 'S-all', 'S-all-dl' ), true ) ? 'all' : $sites;
 			$this->access_filters = array(
 				'mainwp_currentusercan'                => $rights,
 				'mainwp_currentuserallowedaccesssites' => $scope,
@@ -836,9 +840,13 @@ class MainWP_Backup_Task_UI_Staff_Rights_Test extends MainWP_Abilities_Test_Case
 		$this->assertStringContainsString( 'site_id=' . $this->fixture['b'], $this->manager( $this->fixture['template'] ) );
 	}
 
-	/** Staff can select shared destinations but cannot create them from a task. */
+	/**
+	 * Destination writes need every site and download_backups. Staff without
+	 * both get the read-only list and no task link to create a destination.
+	 */
 	public function test_staff_destination_page_and_task_link(): void {
-		foreach ( array( 'S+', 'A', 'N' ) as $actor ) {
+		foreach ( array( 'S+', 'S-all', 'S-all-dl', 'A', 'N' ) as $actor ) {
+			$read_only = in_array( $actor, array( 'S+', 'S-all' ), true );
 			$this->actor( $actor );
 			$store = MainWP_Backup_Storage_Destinations::instance();
 			$id    = $store->add_destination(
@@ -863,8 +871,8 @@ class MainWP_Backup_Task_UI_Staff_Rights_Test extends MainWP_Abilities_Test_Case
 			}
 			$this->assertStringContainsString( 'Staff visible destination', $html );
 			$notice = 'Only WordPress administrators can add or change storage destinations. Destinations are shared by every site on this Dashboard.';
-			if ( 'S+' === $actor ) {
-				$this->assertStringContainsString( $notice, $html );
+			if ( $read_only ) {
+				$this->assertStringContainsString( $notice, $html, $actor );
 				$this->assertStringNotContainsString( 'id="mainwp-storage-add-new"', $html );
 				$this->assertStringNotContainsString( 'id="mainwp-storage-form"', $html );
 				$dom = new \DOMDocument();
@@ -874,8 +882,9 @@ class MainWP_Backup_Task_UI_Staff_Rights_Test extends MainWP_Abilities_Test_Case
 					$this->assertSame( 0, $xpath->query( '//*[self::button or self::a][contains(concat(" ", @class, " "), " mainwp-storage-' . $control . ' ")]' )->length, $control );
 				}
 			} else {
-				$this->assertStringNotContainsString( $notice, $html );
-				$this->assertStringContainsString( 'id="mainwp-storage-add-new"', $html );
+				$this->assertStringNotContainsString( $notice, $html, $actor );
+				$this->assertStringContainsString( 'id="mainwp-storage-add-new"', $html, $actor );
+				$this->assertStringContainsString( 'id="mainwp-storage-form"', $html, $actor );
 			}
 			foreach ( array( null, MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->fixture['ta'] ) ) as $task ) {
 				$form = $this->observe(
@@ -885,10 +894,10 @@ class MainWP_Backup_Task_UI_Staff_Rights_Test extends MainWP_Abilities_Test_Case
 						return ob_get_clean();
 					}
 				);
-				if ( 'S+' === $actor ) {
-					$this->assertStringNotContainsString( 'Add a destination', $form );
+				if ( $read_only ) {
+					$this->assertStringNotContainsString( 'Add a destination', $form, $actor );
 				} else {
-					$this->assertStringContainsString( 'Add a destination', $form );
+					$this->assertStringContainsString( 'Add a destination', $form, $actor );
 				}
 			}
 		}

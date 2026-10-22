@@ -470,6 +470,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
         curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, $follow_loc ? true : false );
+        curl_setopt( $ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+        curl_setopt( $ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+        curl_setopt( $ch, CURLOPT_MAXREDIRS, 3 );
         curl_setopt( $ch, CURLOPT_POST, true );
         curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
         curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT_SECONDS );
@@ -1582,6 +1585,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             curl_setopt( $ch, CURLOPT_URL, $url );
             curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
             curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+            curl_setopt( $ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+            curl_setopt( $ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+            curl_setopt( $ch, CURLOPT_MAXREDIRS, 3 );
             curl_setopt( $ch, CURLOPT_POST, true );
 
             $postdata = static::get_post_data_authed( $website, $what, $params );
@@ -2400,6 +2406,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         curl_setopt( $ch, CURLOPT_URL, $url );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, true );
         curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, true );
+        curl_setopt( $ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+        curl_setopt( $ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+        curl_setopt( $ch, CURLOPT_MAXREDIRS, 3 );
         curl_setopt( $ch, CURLOPT_POST, true );
         curl_setopt( $ch, CURLOPT_POSTFIELDS, $postdata );
         curl_setopt( $ch, CURLOPT_CONNECTTIMEOUT, self::CONNECT_TIMEOUT_SECONDS );
@@ -3109,8 +3118,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( false !== $expected_size && 'already_complete' !== $result ) {
             $final_size = $wp_filesystem->exists( $file ) ? (int) $wp_filesystem->size( $file ) : 0;
-            $tolerance  = (int) max( 1, floor( $expected_size * 0.01 ) );
-            if ( $final_size < $expected_size || $final_size - $expected_size > $tolerance ) {
+            if ( $final_size < $expected_size || $final_size > self::download_size_ceiling( $expected_size ) ) {
                 $too_small = $final_size < $expected_size;
                 if ( ! $too_small && $wp_filesystem->exists( $file ) ) {
                     $wp_filesystem->delete( $file ); // Oversized files are unusable for resume.
@@ -3124,6 +3132,35 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
             }
         }
+    }
+
+    /**
+     * Largest accepted download for a declared size.
+     *
+     * Older Children could report an archive's size from a stale stat taken
+     * before the archive closed, so the final file may run slightly larger.
+     *
+     * @param int $expected_size Declared size in bytes.
+     * @return int Accepted maximum in bytes.
+     */
+    private static function download_size_ceiling( int $expected_size ): int {
+        return $expected_size + (int) max( 1, floor( $expected_size * 0.01 ) );
+    }
+
+    /**
+     * The www alias and scheme changes keep downloads on the same Child host.
+     *
+     * @param string $site_url Site URL.
+     * @param string $effective_url Download URL.
+     * @return bool Whether both URLs name the same host.
+     */
+    public static function download_hosts_match( string $site_url, string $effective_url ): bool {
+        $site_host      = wp_parse_url( $site_url, PHP_URL_HOST );
+        $effective_host = wp_parse_url( $effective_url, PHP_URL_HOST );
+        if ( ! is_string( $site_host ) || '' === $site_host || ! is_string( $effective_host ) || '' === $effective_host ) {
+            return false;
+        }
+        return preg_replace( '/^www\./i', '', strtolower( $site_host ) ) === preg_replace( '/^www\./i', '', strtolower( $effective_host ) );
     }
 
     /**
@@ -3146,7 +3183,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @throws MainWP_Exception When the transfer fails.
      */
     private static function perform_download_request( $url, $file, $expected_size, $local_size, $http_user, $http_pass, $website ) { // phpcs:ignore -- NOSONAR - complex.
-        $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
+        // get_get_data_authed() builds the URL from siteurl when url is empty, so the request URL is the host to hold redirects to.
+        $site_url = null !== $website && ! empty( $website->url ) ? (string) $website->url : $url;
+        $agent    = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
 
         $requested_offset = ( false !== $expected_size && $local_size > 0 && $local_size < $expected_size ) ? $local_size : 0;
 
@@ -3172,6 +3211,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         $state->exception     = null;
         $state->bytes         = 0;
         $state->last_progress = 0;
+        $state->oversized     = false;
 
         /**
          * Filter the transfer limits for backup file downloads.
@@ -3204,6 +3244,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             CURLOPT_USERAGENT       => $agent,
             CURLOPT_ENCODING        => 'none',
             CURLOPT_FOLLOWLOCATION  => true,
+            CURLOPT_PROTOCOLS       => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_REDIR_PROTOCOLS => CURLPROTO_HTTP | CURLPROTO_HTTPS,
+            CURLOPT_MAXREDIRS       => 3,
             CURLOPT_CONNECTTIMEOUT  => (int) $timeouts['connect_timeout'],
             CURLOPT_TIMEOUT         => (int) $timeouts['timeout'],
             CURLOPT_LOW_SPEED_LIMIT => (int) $timeouts['low_speed_limit'],
@@ -3258,11 +3301,18 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         curl_setopt(
             $ch,
             CURLOPT_HEADERFUNCTION,
-            function ( $handle, $header ) use ( &$response_headers ) {
-                unset( $handle );
+            function ( $handle, $header ) use ( &$response_headers, $site_url, $state ) {
                 $trimmed = trim( $header );
                 if ( 0 === stripos( $trimmed, 'HTTP/' ) ) {
                     $response_headers = array(); // New status line (redirect) - discard previous headers.
+                }
+                if ( 0 === stripos( $trimmed, 'Location:' ) && (int) curl_getinfo( $handle, CURLINFO_RESPONSE_CODE ) >= 300 && (int) curl_getinfo( $handle, CURLINFO_RESPONSE_CODE ) < 400 ) {
+                    $redirect = \WP_Http::make_absolute_url( trim( substr( $trimmed, 9 ) ), (string) curl_getinfo( $handle, CURLINFO_EFFECTIVE_URL ) );
+                    // Refusing after the transfer would still let the Child contact another host.
+                    if ( ! static::download_hosts_match( $site_url, $redirect ) ) {
+                        $state->exception = new MainWP_Exception( esc_html__( 'The backup download redirected to a different host.', 'mainwp' ), '', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR );
+                        return -1;
+                    }
                 }
                 if ( '' !== $trimmed ) {
                     $response_headers[] = $trimmed;
@@ -3274,7 +3324,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         curl_setopt(
             $ch,
             CURLOPT_WRITEFUNCTION,
-            function ( $handle, $data ) use ( $state, &$response_headers, $file, $requested_offset, $local_size, $expected_size ) {
+            function ( $handle, $data ) use ( $state, &$response_headers, $file, $requested_offset, $local_size, $expected_size, $site_url ) {
                 if ( $state->discard ) {
                     return strlen( $data );
                 }
@@ -3286,6 +3336,11 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                         // Error or unsatisfiable-range body - never write it to the backup file.
                         $state->discard = true;
                         return strlen( $data );
+                    }
+
+                    if ( ! static::download_hosts_match( $site_url, (string) curl_getinfo( $handle, CURLINFO_EFFECTIVE_URL ) ) ) {
+                        $state->exception = new MainWP_Exception( esc_html__( 'The backup download redirected to a different host.', 'mainwp' ), '', MainWP_Backup_Error_Codes::ERR_HTTP_ERROR );
+                        return -1;
                     }
 
                     $content_range = false;
@@ -3321,6 +3376,14 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                     }
                 }
 
+                // A compromised Child can ignore its declared size and stream until the
+                // transfer timeout, filling the Dashboard disk; stop at the size check's ceiling.
+                if ( false !== $expected_size && $state->bytes + strlen( $data ) > self::download_size_ceiling( $expected_size ) ) {
+                    $state->oversized = true;
+                    $state->exception = MainWP_Backup_Error_Codes::exception( MainWP_Backup_Error_Codes::ERR_FILE_CORRUPT, 'download exceeds declared size' );
+                    return -1;
+                }
+
                 $written = fwrite( $state->fp, $data ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fwrite -- streaming large downloads.
                 if ( false !== $written ) {
                     $state->bytes += $written;
@@ -3349,14 +3412,19 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         curl_exec( $ch );
-        $curl_errno = curl_errno( $ch );
-        $curl_error = curl_error( $ch );
-        $status     = (int) curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
+        $curl_errno    = curl_errno( $ch );
+        $curl_error    = curl_error( $ch );
+        $status        = (int) curl_getinfo( $ch, CURLINFO_RESPONSE_CODE );
+        $effective_url = (string) curl_getinfo( $ch, CURLINFO_EFFECTIVE_URL );
         if ( static::is_valid_curl_handle( $ch ) ) {
             curl_close( $ch );
         }
         if ( null !== $state->fp && false !== $state->fp ) {
             fclose( $state->fp ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- streaming large downloads.
+        }
+
+        if ( $state->oversized ) {
+            wp_delete_file( $file );
         }
 
         if ( null !== $state->exception ) {
@@ -3378,6 +3446,16 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $message,
                 'cURL error ' . $curl_errno . ': ' . $curl_error,
                 static::map_curl_errno_to_backup_error( $curl_errno, $curl_error )
+            );
+            // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
+        }
+
+        if ( ! static::download_hosts_match( $site_url, $effective_url ) ) {
+            // phpcs:disable WordPress.Security.EscapeOutput.ExceptionNotEscaped -- fixed internal error code.
+            throw new MainWP_Exception(
+                esc_html__( 'The backup download redirected to a different host.', 'mainwp' ),
+                '',
+                MainWP_Backup_Error_Codes::ERR_HTTP_ERROR
             );
             // phpcs:enable WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
@@ -3498,12 +3576,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * Get contents of file.
      *
      * @param mixed $url File Location.
+     * @param array $resolve Checked host and address pins for Child icons.
      *
      * @return mixed false|$data
      *
      * @uses \MainWP\Dashboard\MainWP_System::$version
      */
-    public static function get_file_content( $url ) {
+    public static function get_file_content( $url, $resolve = array() ) {
         $agent = 'Mozilla/5.0 (compatible; MainWP/' . MainWP_System::$version . '; +http://mainwp.com)';
         $ch    = curl_init();
 
@@ -3519,6 +3598,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             }
         }
 
+        curl_setopt( $ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS );
+        curl_setopt( $ch, CURLOPT_FOLLOWLOCATION, false );
+        if ( ! empty( $resolve ) ) {
+            // A proxy would resolve the hostname independently of the checked address.
+            curl_setopt( $ch, CURLOPT_PROXY, '' );
+            curl_setopt( $ch, CURLOPT_RESOLVE, $resolve );
+        }
         curl_setopt( $ch, CURLOPT_HEADER, 0 );
         curl_setopt( $ch, CURLOPT_RETURNTRANSFER, 1 );
         curl_setopt( $ch, CURLOPT_URL, $url );

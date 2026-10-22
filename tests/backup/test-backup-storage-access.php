@@ -203,4 +203,33 @@ class MainWP_Backup_Storage_Access_Test extends \WP_UnitTestCase {
 			$this->assertStringContainsString( 'Visible destination', $html );
 		}
 	}
+	/** Storage redirection grants access to archive bytes. */
+	public function test_storage_requires_download_right(): void {
+		foreach ( array( 'mainwp_storage_save', 'mainwp_storage_default', 'mainwp_storage_test', 'mainwp_storage_delete', 'mainwp_storage_get', 'mainwp_dropbox_oauth_start', 'oauth_callback' ) as $action ) {
+			$data = $this->call_handler( $action, 'all', 'S+' );
+			$this->assertSame( array( 'error' => 'Only WordPress administrators can change storage destinations.' ), $data['response'], $action );
+			$this->assertSame( $data['before'], $data['after'], $action );
+			$this->assertSame( 0, $data['lookups'], $action );
+			$this->assertSame( 0, $data['http_calls'], $action );
+		}
+	}
+
+	/** The list remains useful when archive access is withheld. */
+	public function test_storage_page_without_download_right_is_read_only(): void {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		$deny = static function ( $allowed, $type, $cap ) {
+			return 'dashboard' === $type && 'download_backups' === $cap ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		ob_start();
+		try {
+			MainWP_Backup_Storage_View::render();
+		} finally {
+			$html = ob_get_clean();
+			remove_filter( 'mainwp_currentusercan', $deny );
+		}
+		$this->assertStringContainsString( 'Only WordPress administrators can add or change storage destinations.', $html );
+		$this->assertStringNotContainsString( 'id="mainwp-storage-form"', $html );
+		$this->assertStringNotContainsString( 'let storageModal', $html );
+	}
 }

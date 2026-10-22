@@ -85,7 +85,7 @@ class MainWP_Bulk_Add { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             if ( isset( $information['added'] ) ) {
                 $output->ok[ $website->id ] = '1';
                 if ( isset( $information['link'] ) ) {
-                    $output->link[ $website->id ] = esc_html( $information['link'] );
+                    $output->link[ $website->id ] = esc_url( $information['link'] );
                 }
                 if ( isset( $information['added_id'] ) ) {
                     $output->added_id[ $website->id ] = esc_html( $information['added_id'] );

@@ -469,7 +469,7 @@ class Log_Changes_Logs_Helper {
                     );
 
                     if ( $get_name && empty( $name_title ) ) {
-                        $name_title = $tbl_list->get_object_title( $record, false, false );
+                        $name_title = self::plain_text_title( $tbl_list->get_object_title( $record, false, false ) );
                     }
 
                     if ( 'updated' === $record->action || 'update' === $record->action ) {
@@ -503,7 +503,7 @@ class Log_Changes_Logs_Helper {
                     }
 
                     $list_item = array(
-                        'name'      => $tbl_list->get_object_title( $record ),
+                        'name'      => self::plain_text_title( $tbl_list->get_object_title( $record, false ) ),
                         'site_id'   => $record->site_id,
                         'item_name' => $name_meta,
                         'item_slug' => $slug,
@@ -549,5 +549,17 @@ class Log_Changes_Logs_Helper {
         }
 
         return $resp;
+    }
+
+    /**
+     * The history modal shows titles as text, so drop the list table's markup (rollback icon, escaped names).
+     *
+     * Tags are stripped before entities are decoded, so a stored "&lt;b&gt;" stays literal text for the JS to escape.
+     *
+     * @param string $title Title built for the HTML list table.
+     * @return string Plain text title.
+     */
+    private static function plain_text_title( $title ) {
+        return html_entity_decode( wp_strip_all_tags( (string) $title ), ENT_QUOTES | ENT_HTML5, 'UTF-8' );
     }
 }

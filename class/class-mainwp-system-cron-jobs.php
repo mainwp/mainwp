@@ -1488,7 +1488,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites() );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
             try {
-                $url = $website->siteurl;
+                $url = MainWP_Connect::download_hosts_match( $website->url, $website->siteurl ) ? $website->siteurl : $website->url;
                 if ( ! MainWP_Utility::ends_with( $url, '/' ) ) {
                     $url .= '/';
                 }

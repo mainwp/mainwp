@@ -820,4 +820,18 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 		$this->assertSame( $native, (int) get_option( 'mainwp_enableLegacyBackupFeature' ) );
 		$this->assertSame( $primary, get_option( 'mainwp_primaryBackup' ) );
 	}
+	/** REST keys cannot read backup settings without the Dashboard right. */
+	public function test_backups_get_requires_settings_right(): void {
+		$deny = static function ( $allowed, $type, $cap ) {
+			return 'dashboard' === $type && 'manage_dashboard_settings' === $cap ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 10, 3 );
+		try {
+			$response = $this->do_authenticated_request( 'GET', '/mainwp/v2/settings/backups' );
+			$this->assertSame( 403, $response->get_status() );
+			$this->assertSame( 'mainwp_insufficient_right', $response->get_data()['code'] );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny );
+		}
+	}
 }

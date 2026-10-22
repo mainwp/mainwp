@@ -141,9 +141,13 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      *
      * @param string $file_key Name of key file.
      *
-     * @return string Deleted.
+     * @return bool False when the name is not a key file name.
      */
     public function delete_key_file( $file_key ) {
+        // The name arrives through the mainwp_delete_key_file action, so it must not reach outside the keys directory.
+        if ( ! is_string( $file_key ) || 1 !== preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$/D', $file_key ) ) {
+            return false;
+        }
         $key_dir   = static::get_keys_dir();
         $file_path = $key_dir . $file_key;
         MainWP_Utility::delete_file( $file_path ); // delete file content key.

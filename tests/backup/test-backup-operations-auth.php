@@ -216,6 +216,13 @@ class MainWP_Backup_Operations_Auth_Test extends MainWP_Abilities_Test_Case {
 			$this->assertNotWPError( MainWP_Backup_Operations::save_backup_settings( array( 'on_demand_retention_count' => 7 ), 'ui' ) );
 			$this->assertSame( 7, (int) get_option( 'mainwp_on_demand_retention_count' ) );
 			$this->assertFalse( is_wp_error( MainWP_Backup_Operations::authorize_task( 987671, 'run_backup_tasks' ) ) );
+			$no_run_sites = array(
+				'sites'  => '',
+				'groups' => '',
+			);
+			$this->assertNotFalse( \MainWP\Dashboard\MainWP_DB_Backup::instance()->update_backup_task_with_values( 987671, $no_run_sites ) );
+			$this->assertSame( array(), \MainWP\Dashboard\MainWP_Manage_Backups_Handler::resolve_task_run_sites( \MainWP\Dashboard\MainWP_DB_Backup::instance()->get_backup_task_by_id( 987671 ) ), 'The task has no run sites.' );
+			$this->assertFalse( is_wp_error( MainWP_Backup_Operations::authorize_task( 987671, 'pause_resume_backup_tasks' ) ), 'A task with no run sites stays manageable from userless CLI.' );
 			$this->assertContains( $this->site_id, MainWP_Backup_Operations::authorized_site_ids( '' ) );
 			$this->assertContains( $this->site_id, MainWP_Backup_Operations::authorized_site_ids( 'execute_backups' ) );
 			global $wpdb;

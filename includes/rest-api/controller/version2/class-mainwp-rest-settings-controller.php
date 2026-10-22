@@ -1687,6 +1687,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      * @return WP_Error|WP_REST_Response
      */
     public function get_backup_settings( $request ) {
+        $permission = MainWP_Backup_Operations::authorize_base( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
         $settings = $this->get_backup_settings_data();
 
         return rest_ensure_response(

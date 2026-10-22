@@ -143,8 +143,12 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
     const ERR_DESTINATION_CREDENTIALS_REQUIRED               = 'mainwp_backup_destination_credentials_required';
     const ERR_GATE_BLOCKED                                   = 'mainwp_backup_gate_blocked';
     const ERR_UNCLASSIFIED_ERROR                             = 'mainwp_backup_unclassified_error';
+    const ERR_RESTORE_LOCAL_ARCHIVE_SIZE_MISMATCH            = 'mainwp_restore_local_archive_size_mismatch';
+    const ERR_RESTORE_LOCAL_ARCHIVE_HASH_MISMATCH            = 'mainwp_restore_local_archive_hash_mismatch';
     const ERR_SNAPSHOT_UNRESTORABLE_WRONG_SITE               = 'mainwp_backup_snapshot_unrestorable_wrong_site';
     const ERR_SNAPSHOT_UNRESTORABLE_PRUNED                   = 'mainwp_backup_snapshot_unrestorable_pruned';
+    const ERR_SNAPSHOT_UNRESTORABLE_DAMAGED                  = 'mainwp_backup_snapshot_unrestorable_damaged';
+    const ERR_SNAPSHOT_UNRESTORABLE_CHAIN_DAMAGED            = 'mainwp_backup_snapshot_unrestorable_chain_damaged';
     const ERR_SNAPSHOT_UNRESTORABLE_FILES_CHILD_OUTDATED     = 'mainwp_backup_snapshot_unrestorable_files_child_outdated';
     const ERR_SNAPSHOT_UNRESTORABLE_MULTISITE_CHILD_OUTDATED = 'mainwp_backup_snapshot_unrestorable_multisite_child_outdated';
     const ERR_SNAPSHOT_UNRESTORABLE_EMPTY                    = 'mainwp_backup_snapshot_unrestorable_empty';
@@ -371,6 +375,11 @@ class MainWP_Backup_Error_Codes { // phpcs:ignore Generic.Classes.OpeningBraceSa
             self::ERR_MANIFEST_CHUNK_WRONG_PHASE    => esc_html__( 'The file-list piece arrived outside of an active staging session on the child site. The transfer restarts from the beginning on the next attempt.', 'mainwp' ),
             self::ERR_MANIFEST_CHUNK_CORRUPT        => esc_html__( 'The transferred file list does not match its expected checksum on the child site and was discarded. The transfer runs again or the run falls back to a full backup.', 'mainwp' ),
             self::ERR_MANIFEST_CHUNK_SEND_FAILED    => esc_html__( 'The file list from the previous backup could not be delivered to the child site in pieces, so a full backup was run instead. The site may enforce a small request size limit.', 'mainwp' ),
+        ) + array(
+            self::ERR_RESTORE_LOCAL_ARCHIVE_SIZE_MISMATCH => esc_html__( 'The backup archive on this Dashboard was changed or replaced after this backup finished, so it cannot be restored. Choose another backup to restore.', 'mainwp' ),
+            self::ERR_RESTORE_LOCAL_ARCHIVE_HASH_MISMATCH => esc_html__( 'The backup archive on this Dashboard no longer matches what was recorded when this backup finished, so it cannot be restored. The site was not changed. Choose another backup to restore.', 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_DAMAGED       => esc_html__( "This backup's archive on this Dashboard failed its integrity check during a restore, and no cloud copy is available, so it cannot be restored.", 'mainwp' ),
+            self::ERR_SNAPSHOT_UNRESTORABLE_CHAIN_DAMAGED => esc_html__( 'An earlier backup that this one builds on failed its integrity check during a restore, and no cloud copy is available, so this backup cannot be restored.', 'mainwp' ),
         ) + array(
             self::ERR_TASK_PAUSED                        => esc_html__( 'This backup task is paused. Resume it from the backup tasks list, then run it again.', 'mainwp' ),
             self::ERR_NO_SITES                           => esc_html__( 'This backup task has no available sites to run. Edit the task, select sites you can access, and save it before trying again.', 'mainwp' ),

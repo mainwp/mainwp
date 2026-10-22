@@ -318,7 +318,8 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
      * @return array|null Refusal for the OAuth notice, or null when allowed.
      */
     private function check_unrestricted_permission( bool $ajax = true ): ?array {
-        if ( ! is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) ) {
+        // Pointing backups at a destination you control is a download, so it needs that right too.
+        if ( ! is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() ) && \mainwp_current_user_can( 'dashboard', 'download_backups' ) ) {
             return null;
         }
         $refusal = array( 'error' => esc_html__( 'Only WordPress administrators can change storage destinations.', 'mainwp' ) );

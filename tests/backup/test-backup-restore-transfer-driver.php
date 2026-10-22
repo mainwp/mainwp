@@ -13,9 +13,50 @@ require_once __DIR__ . '/trait-backup-private-root-fixture.php';
 use MainWP\Dashboard\MainWP_Backup_Error_Codes;
 use MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver;
 use MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog;
+use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_Backup_Storage_Local;
 use MainWP\Dashboard\MainWP_Backup_Upload_Job_Store;
 use MainWP\Dashboard\MainWP_DB;
+
+/** A file that can be statted but cannot be opened for hashing. */
+class Restore_Unreadable_Archive_Stream {
+
+	/**
+	 * Stream context supplied by PHP.
+	 *
+	 * @var resource
+	 */
+	public $context;
+
+	/**
+	 * Keep the size guard satisfied so the read failure reaches hashing.
+	 *
+	 * @param string $path Stream URL.
+	 * @param int    $flags Stat flags.
+	 * @return array Stat data.
+	 */
+	public function url_stat( $path, $flags ) {
+		unset( $path, $flags );
+		return array(
+			'mode' => 0100000 | 0444,
+			'size' => 8,
+		);
+	}
+
+	/**
+	 * Simulate an I/O failure after a successful stat.
+	 *
+	 * @param string $path Stream URL.
+	 * @param string $mode Open mode.
+	 * @param int    $options Open flags.
+	 * @param string $opened_path Resolved path.
+	 * @return bool Always false.
+	 */
+	public function stream_open( $path, $mode, $options, &$opened_path ) {
+		unset( $path, $mode, $options, $opened_path );
+		return false;
+	}
+}
 
 /**
  * Model cloud transport failures after a partial download.
@@ -326,6 +367,170 @@ class MainWP_Backup_Restore_Transfer_Driver_Test extends MainWP_Abilities_Test_C
 		$this->assertTrue( $outcome['done'] );
 		$this->assertSame( $path, $plan[0]['staged_path'] );
 		$this->assertSame( hash( 'sha256', 'local-artifact' ), $plan[0]['sha256'] );
+	}
+
+	/**
+	 * Use real catalog entries so staging checks the backup-time hash.
+	 *
+	 * @param string $path Archive path.
+	 * @param int    $size Recorded size.
+	 * @param array  $extra Additional archive evidence.
+	 * @return array Restore plan.
+	 */
+	private function local_damage_plan( $path, $size, $extra = array() ) {
+		global $wpdb;
+		$archive = array_merge(
+			array(
+				'file' => 'damage.zip',
+				'role' => 'full',
+				'path' => $path,
+				'size' => $size,
+			),
+			$extra
+		);
+		$wpdb->insert(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'task_id'  => 991,
+				'site_id'  => 9901,
+				'type'     => 'full',
+				'created'  => time(),
+				'archives' => wp_json_encode( array( $archive ) ),
+				'status'   => 'complete',
+			)
+		);
+		$id                   = (int) $wpdb->insert_id;
+		$this->snapshot_ids[] = $id;
+		return MainWP_Backup_Snapshot_Catalog::instance()->assemble_plan( array( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id ) ) );
+	}
+
+	/** Same-size damage must fail before bytes can be transferred. */
+	public function test_local_hash_mismatch_marks_damaged_and_fails_staging() {
+		$path = $this->dir . '/damage.zip';
+		file_put_contents( $path, 'changed!' );
+		$plan = $this->local_damage_plan( $path, 8, array( 'sha256' => hash( 'sha256', 'original' ) ) );
+		$this->assertSame( hash( 'sha256', 'original' ), $plan[0]['recorded_sha256'] );
+		$this->assertSame( '', $plan[0]['expected_sha256'] );
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertFalse( $outcome['retryable'] );
+		$this->assertSame( MainWP_Backup_Error_Codes::ERR_RESTORE_LOCAL_ARCHIVE_HASH_MISMATCH, $outcome['error_code'] );
+		$this->assertEmpty( $plan[0]['staged_path'] ?? '' );
+		$this->assertEmpty( $this->driver->sent );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $plan[0]['snapshot_id'] );
+		$this->assertSame( 'complete', $snapshot->status );
+		$this->assertSame( $outcome['error_code'], $snapshot->archives[0]['damaged']['code'] );
+		$this->assertMatchesRegularExpression( '/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $snapshot->archives[0]['damaged']['at'] );
+		$this->assertContains( $outcome['error_code'], MainWP_Backup_Error_Codes::get_registered_codes() );
+	}
+
+	/** A readable stat with an unreadable file is retryable, not damage. */
+	public function test_read_failure_does_not_mark() {
+		$this->assertTrue( stream_wrapper_register( 'mainwpdamageread', Restore_Unreadable_Archive_Stream::class ) );
+		$warnings = array();
+		try {
+			$plan = $this->local_damage_plan( 'mainwpdamageread://damage.zip', 8, array( 'sha256' => hash( 'sha256', 'original' ) ) );
+			set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- capture the expected I/O warning.
+				static function ( $severity, $message ) use ( &$warnings ) {
+					if ( str_contains( $message, 'hash_file' ) ) {
+						$warnings[] = $message;
+						return true;
+					}
+					return false;
+				}
+			);
+			try {
+				$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+			} finally {
+				restore_error_handler();
+			}
+			$this->assertNotEmpty( $warnings );
+			$this->assertFalse( $outcome['done'] );
+			$this->assertTrue( $outcome['retryable'] );
+			$this->assertNotEmpty( $outcome['error'] );
+			$this->assertEmpty( $plan[0]['staged_path'] ?? '' );
+			$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $plan[0]['snapshot_id'] );
+			$this->assertArrayNotHasKey( 'damaged', $snapshot->archives[0] );
+		} finally {
+			stream_wrapper_unregister( 'mainwpdamageread' );
+		}
+	}
+
+	/**
+	 * Legacy and intentionally skipped hashes retain size-only admission.
+	 *
+	 * @dataProvider unrecorded_hashes
+	 * @param array $extra Recorded archive evidence.
+	 */
+	public function test_no_recorded_hash_skips_compare( $extra ) {
+		$path = $this->dir . '/damage.zip';
+		file_put_contents( $path, 'changed!' );
+		$plan = $this->local_damage_plan( $path, 8, $extra );
+		$this->assertSame( '', $plan[0]['recorded_sha256'] );
+		$outcome = $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertTrue( $outcome['done'] );
+		$this->assertSame( hash( 'sha256', 'changed!' ), $plan[0]['sha256'] );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $plan[0]['snapshot_id'] );
+		$this->assertArrayNotHasKey( 'damaged', $snapshot->archives[0] );
+	}
+
+	/**
+	 * Legacy archive evidence.
+	 *
+	 * @return array
+	 */
+	public static function unrecorded_hashes() {
+		return array(
+			'missing' => array( array() ),
+			'empty'   => array( array( 'sha256' => '' ) ),
+			'skipped' => array(
+				array(
+					'sha256'       => hash( 'sha256', 'original' ),
+					'hash_skipped' => true,
+				),
+			),
+		);
+	}
+
+	/**
+	 * Both size guards must persist damage, including a resumed staging slice.
+	 *
+	 * @dataProvider local_size_damage_phases
+	 * @param string $phase Driver entry point.
+	 */
+	public function test_size_mismatch_marks_damaged( $phase ) {
+		$path = $this->dir . '/damage.zip';
+		file_put_contents( $path, 'replacement' );
+		$plan = $this->local_damage_plan( $path, 8 );
+		if ( 'fresh' !== $phase ) {
+			$plan[0]['staged_path'] = $path;
+			$plan[0]['sha256']      = hash( 'sha256', 'original' );
+		}
+		$cursor  = array();
+		$outcome = 'transfer' === $phase
+			? $this->driver->transfer_artifacts( (object) array( 'id' => 4 ), 'task', $plan, $cursor, microtime( true ) + 60 )
+			: $this->driver->stage_artifacts( 777001, $plan, microtime( true ) + 60 );
+		$this->assertFalse( $outcome['done'] );
+		$this->assertFalse( $outcome['retryable'] );
+		$this->assertSame( 'mainwp_restore_local_archive_size_mismatch', $outcome['error_code'] );
+		$this->assertContains( $outcome['error_code'], MainWP_Backup_Error_Codes::get_registered_codes() );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $plan[0]['snapshot_id'] );
+		$this->assertSame( 'complete', $snapshot->status );
+		$this->assertSame( $outcome['error_code'], $snapshot->archives[0]['damaged']['code'] );
+		$this->assertEmpty( $this->driver->sent );
+	}
+
+	/**
+	 * Size guard entry points.
+	 *
+	 * @return array
+	 */
+	public static function local_size_damage_phases() {
+		return array(
+			'fresh'    => array( 'fresh' ),
+			'resumed'  => array( 'resumed' ),
+			'transfer' => array( 'transfer' ),
+		);
 	}
 
 	/**

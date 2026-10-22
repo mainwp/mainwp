@@ -651,10 +651,11 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
      */
     public static function list_tasks( string $status = 'any', ?int $site_id = null, int $page = 1, int $per_page = 50 ): array {
         $authorized = MainWP_Backup_Operations::authorized_site_ids( '' );
+        $restricted = is_wp_error( MainWP_Abilities_Util::check_unrestricted_access() );
         $items      = array();
         foreach ( MainWP_DB_Backup::instance()->get_backup_tasks_for_user() as $task ) {
             $sites = MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task );
-            if ( ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) || array_diff( $sites, $authorized ) || ( null !== $site_id && ! in_array( $site_id, $sites, true ) ) ) {
+            if ( ( $restricted && empty( $sites ) ) || ! MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) || array_diff( $sites, $authorized ) || ( null !== $site_id && ! in_array( $site_id, $sites, true ) ) ) {
                 continue;
             }
             $summary = self::task_summary( $task );
@@ -1400,7 +1401,7 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $visible    = array();
         foreach ( MainWP_DB_Backup::instance()->get_backup_tasks_for_user() as $task ) {
             $sites = MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task );
-            if ( MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) && ! array_diff( $sites, $authorized ) ) {
+            if ( ! empty( $sites ) && MainWP_Manage_Backups_Handler::can_edit_backuptask( $task ) && ! array_diff( $sites, $authorized ) ) {
                 $visible[ (int) $task->id ] = (string) $task->destinations;
             }
         }

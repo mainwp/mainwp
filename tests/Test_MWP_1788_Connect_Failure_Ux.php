@@ -736,6 +736,30 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Authed requests send mainwpsignature_adv next to mainwpsignature; both are secrets.
+	 */
+	public function test_mainwpsignature_adv_is_redacted_from_headers(): void {
+		$ux = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+		$this->assertTrue( $ux::is_sensitive_param( 'mainwpsignature' ) );
+		$this->assertTrue( $ux::is_sensitive_param( 'mainwpsignature_adv' ) );
+
+		$headers  = "HTTP/1.1 302 Found\r\nLocation: https://child.example.test/?mainwpsignature=qa-legacy-sig&mainwpsignature_adv=qa-adv-sig&page=sites\r\n";
+		$context  = array(
+			'http_status' => 302,
+			'headers'     => $headers,
+			'body'        => '',
+		);
+		$details  = $ux::build_details( $context );
+		$enriched = $ux::enrich_output( array(), $context );
+
+		foreach ( array( $details['response']['text'], $ux::render_html( $details ), $ux::format_text( $details ), $ux::summarize_headers( $headers ), $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'] ) as $surface ) {
+			$plain = html_entity_decode( $surface, ENT_QUOTES );
+			$this->assertStringNotContainsString( 'qa-legacy-sig', $plain );
+			$this->assertStringNotContainsString( 'qa-adv-sig', $plain );
+		}
+	}
+
+	/**
 	 * Comma- and space-containing header secrets stay fully redacted.
 	 */
 	public function test_delimiter_containing_secrets_are_fully_redacted(): void {

@@ -1956,7 +1956,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
             $updating_website = true;
             if ( 'upgradepluginexact' === $what ) {
                 $type         = 'plugin';
-                $list         = $params['slug'];
+                $list         = is_string( $params['slug'] ?? null ) ? $params['slug'] : '';
                 $pRetryFailed = false; // A lost exact-update response must not resend the mutation.
             } elseif ( $premium_update ) {
                 $type = $params['premium_type'];

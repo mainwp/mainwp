@@ -160,7 +160,7 @@ class MainWP_Extensions_Groups { // phpcs:ignore Generic.Classes.OpeningBraceSam
         );
 
         $extensions_and_leftmenus[] = array(
-            'title'         => esc_html__( 'Backups', 'mainwp' ),
+            'title'         => esc_html__( 'Backup Integrations', 'mainwp' ),
             'parent_key'    => 'managesites',
             'slug'          => 'Extensions-Mainwp-Backups',
             'href'          => 'admin.php?page=Extensions-Mainwp-Backups',

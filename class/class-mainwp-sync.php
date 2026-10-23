@@ -472,6 +472,7 @@ class MainWP_Sync { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $total_securityIssues = 0;
             $securityStats        = $information['securityStats'];
             if ( is_array( $securityStats ) ) {
+                $securityStats = MainWP_PHP_Security::apply_to_stats( $securityStats, '' !== $phpversion ? $phpversion : MainWP_DB::instance()->get_website_option( $pWebsite, 'phpversion' ) );
                 /** This filter is documented in ../pages/page-mainwp-security-issues.php */
                 $filterStats = apply_filters( 'mainwp_security_issues_stats', false, $securityStats, $pWebsite );
                 if ( false !== $filterStats && is_array( $filterStats ) ) {

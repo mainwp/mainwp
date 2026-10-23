@@ -861,6 +861,9 @@ let securityIssues_handle = function (response) { // NOSONAR - complex.
     } else {
         try {
             let res = response.result;
+            if (typeof response.phpversion_message === 'string') {
+                jQuery('#phpversion_matched-status-ok, #phpversion_matched-status-nok').text(response.phpversion_message);
+            }
             for (let issue in res) {
                 if (jQuery('#' + issue + '_loading')) {
                     jQuery('#' + issue + '_loading').hide();

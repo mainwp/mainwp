@@ -2120,6 +2120,7 @@ class MainWP_System_Cron_Jobs { // phpcs:ignore Generic.Classes.OpeningBraceSame
      */
     public function cron_perform_general_process() {
         MainWP_Backup_Run_Cancel::process_pending( 'general' );
+        MainWP_PHP_Security::refresh_cache();
         $this->perform_sequence_process();
     }
 

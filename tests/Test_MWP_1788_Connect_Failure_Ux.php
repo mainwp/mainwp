@@ -214,71 +214,6 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 			$surfaces[] = $ux::render_html( $detail );
 			$surfaces[] = $ux::format_text( $detail );
 		}
-		$this->assertLessThan( 1.0, microtime( true ) - $start, 'All failure surfaces must finish in under one second.' );
-		foreach ( $surfaces as $surface ) {
-			foreach ( $fragments as $fragment ) {
-				$this->assertStringNotContainsString( $fragment, html_entity_decode( $surface, ENT_QUOTES ), $fragment );
-			}
-		}
-		$this->assertStringContainsString( 'Status: 500', $details[0]['response']['text'] );
-		$this->assertStringContainsString( 'server: nginx', $details[0]['response']['text'] );
-		$this->assertStringContainsString( self::BODY_NOT_SHOWN, $details[0]['response']['text'] );
-		$this->assertStringContainsString( 'User-Agent MainWP sends', $ux::render_html( $details[0] ) );
-	}
-
-	/**
-	 * Child responses that must stay hidden without slowing down diagnostics.
-	 *
-	 * @return array
-	 */
-	public static function child_response_bodies(): array {
-		return array(
-			'unquoted name then code' => array( 'Warning : something happened {"error":"code=1"}', array( 'Warning', 'something happened', 'code=1' ) ),
-			'200 KB password'         => array( 'password=' . str_repeat( 'x', 200 * 1024 ), array( 'password=', str_repeat( 'x', 16 ) ) ),
-			'100 KB unbroken token'   => array( 'foo=' . str_repeat( 'x', 100 * 1024 ), array( 'foo=', str_repeat( 'x', 16 ) ) ),
-			'XML secret'              => array( '<password>secret</password>', array( 'password', 'secret' ) ),
-			'HTML error page'         => array( '<html><title>Origin unavailable</title><body><p>Body-only diagnostic marker</p></body></html>', array( 'Origin unavailable', 'Body-only diagnostic marker' ) ),
-		);
-	}
-
-	/**
-	 * Every failure surface built from a reflected child response body.
-	 *
-	 * @param string $body    Raw response body.
-	 * @param string $headers Raw response headers.
-	 * @return array<string,string>
-	 */
-	private function failure_surfaces( $body, $headers = '' ): array {
-		set_transient(
-			'mainwp_public_dashboard_ip_data',
-			array(
-				'value'           => '203.0.113.10',
-				'status'          => 'pass',
-				'community_value' => 'Detected',
-			),
-			HOUR_IN_SECONDS
-		);
-		$_SERVER['SERVER_ADDR'] = '10.0.0.1';
-
-		$ux       = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
-		$context  = array(
-			'http_status'      => 403,
-			'headers'          => $headers,
-			'body'             => $body,
-			'skip_outbound_ip' => true,
-		);
-		$enriched = $ux::enrich_output( array(), $context );
-		foreach ( array( 'response_body', 'response_readable', 'failure_ux', 'failure_ux_text' ) as $field ) {
-			$surfaces[] = $enriched[ $field ];
-		}
-		foreach ( $details as $detail ) {
-			$this->assertSame( '', $detail['response']['body'] );
-			$this->assertArrayHasKey( 'waf_likely', $detail );
-			$this->assertArrayHasKey( 'error', $detail );
-			$surfaces[] = wp_json_encode( $detail );
-			$surfaces[] = $ux::render_html( $detail );
-			$surfaces[] = $ux::format_text( $detail );
-		}
 		$elapsed = microtime( true ) - $start;
 		$this->assertLessThan( 1.0, $elapsed, 'All failure surfaces must finish in under one second.' );
 		foreach ( $surfaces as $surface ) {
@@ -798,6 +733,30 @@ class Test_MWP_1788_Connect_Failure_Ux extends \WP_UnitTestCase {
 		$header_snip = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::summarize_headers( $headers );
 		$this->assertStringContainsString( 'www-authenticate: Bearer [redacted]', $header_snip );
 		$this->assertStringNotContainsString( 'qa-plugin-secret', $header_snip );
+	}
+
+	/**
+	 * Authed requests send mainwpsignature_adv next to mainwpsignature; both are secrets.
+	 */
+	public function test_mainwpsignature_adv_is_redacted_from_headers(): void {
+		$ux = \MainWP\Dashboard\MainWP_Connect_Failure_Ux::class;
+		$this->assertTrue( $ux::is_sensitive_param( 'mainwpsignature' ) );
+		$this->assertTrue( $ux::is_sensitive_param( 'mainwpsignature_adv' ) );
+
+		$headers  = "HTTP/1.1 302 Found\r\nLocation: https://child.example.test/?mainwpsignature=qa-legacy-sig&mainwpsignature_adv=qa-adv-sig&page=sites\r\n";
+		$context  = array(
+			'http_status' => 302,
+			'headers'     => $headers,
+			'body'        => '',
+		);
+		$details  = $ux::build_details( $context );
+		$enriched = $ux::enrich_output( array(), $context );
+
+		foreach ( array( $details['response']['text'], $ux::render_html( $details ), $ux::format_text( $details ), $ux::summarize_headers( $headers ), $enriched['response_readable'], $enriched['failure_ux'], $enriched['failure_ux_text'] ) as $surface ) {
+			$plain = html_entity_decode( $surface, ENT_QUOTES );
+			$this->assertStringNotContainsString( 'qa-legacy-sig', $plain );
+			$this->assertStringNotContainsString( 'qa-adv-sig', $plain );
+		}
 	}
 
 	/**

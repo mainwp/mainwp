@@ -872,7 +872,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->secure_request( 'mainwp_security_issues_request' );
 
         try {
-            wp_send_json( array( 'result' => MainWP_Security_Issues::fetch_security_issues() ) );
+            $result = MainWP_Security_Issues::fetch_security_issues();
+            wp_send_json(
+                array(
+                    'result'             => $result,
+                    'phpversion_message' => MainWP_PHP_Security::get_message(),
+                )
+            );
         } catch ( MainWP_Exception $e ) {
             die(
                 wp_json_encode(

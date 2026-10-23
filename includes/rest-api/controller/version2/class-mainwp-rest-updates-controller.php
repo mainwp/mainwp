@@ -1272,8 +1272,9 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
             return $website;
         }
         // Preserve site scope even on Dashboards whose DB lookup bypasses it for REST.
-        $allowed = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
-        if ( 'all' !== $allowed && ( ! is_array( $allowed ) || ! in_array( (int) $website->id, array_map( 'intval', $allowed ), true ) ) ) {
+        $allowed         = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
+        $site_is_allowed = is_array( $allowed ) && in_array( (int) $website->id, array_map( 'intval', $allowed ), true );
+        if ( 'all' !== $allowed && ! $site_is_allowed ) {
             return new WP_Error( 'mainwp_exact_site_unavailable', 'Site is outside the caller scope.', array( 'status' => 403 ) );
         }
         $selection = $request->get_json_params();
@@ -1314,6 +1315,16 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
             if ( ( $result[ $key ] ?? null ) !== $value ) {
                 return new WP_Error( 'mainwp_exact_update_unconfirmed', 'Child returned a different update selection.', array( 'status' => 502 ) );
             }
+        }
+        // A confirmed command may omit sync data. Refresh through the normal
+        // Dashboard path rather than leaving the completed update pending.
+        if ( ! \MainWP\Dashboard\MainWP_Sync::sync_website( $website, false ) ) {
+            return new WP_Error( 'mainwp_exact_sync_failed', 'Update acknowledged, but site refresh failed.', array( 'status' => 502 ) );
+        }
+        $fresh   = MainWP_DB::instance()->get_website_by_id( $website->id );
+        $pending = $fresh ? json_decode( $fresh->plugin_upgrades, true ) : null;
+        if ( ! is_array( $pending ) || ( $pending[ $slug ]['update']['new_version'] ?? null ) === $selection['target_version'] ) {
+            return new WP_Error( 'mainwp_exact_sync_failed', 'Update acknowledged, but plugin inventory is still unconfirmed.', array( 'status' => 502 ) );
         }
         return rest_ensure_response( $result );
     }

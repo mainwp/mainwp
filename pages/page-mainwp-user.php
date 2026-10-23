@@ -2199,27 +2199,32 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             continue;
                         }
 
-                        $items = str_getcsv( $line, ',' );
+                        // Match import_csv_line(): quotes are doubled and backslashes are literal.
+                        $items = str_getcsv( $line, ',', '"', '' );
 
                         if ( 10 > count( $items ) ) {
                             continue;
                         }
 
+                        // CSV cells come from raw file contents, not slashed request data.
                         $import_data = array(
-                            'user_login'    => sanitize_text_field( wp_unslash( $items[0] ) ),
-                            'email'         => sanitize_text_field( wp_unslash( $items[1] ) ),
-                            'first_name'    => sanitize_text_field( wp_unslash( $items[2] ) ),
-                            'last_name'     => sanitize_text_field( wp_unslash( $items[3] ) ),
-                            'url'           => sanitize_text_field( wp_unslash( $items[4] ) ),
-                            'pass1'         => sanitize_text_field( wp_unslash( $items[5] ) ),
+                            'user_login'    => sanitize_text_field( $items[0] ),
+                            'email'         => sanitize_text_field( $items[1] ),
+                            'first_name'    => sanitize_text_field( $items[2] ),
+                            'last_name'     => sanitize_text_field( $items[3] ),
+                            'url'           => sanitize_text_field( $items[4] ),
+                            'pass1'         => sanitize_text_field( $items[5] ),
                             'send_password' => intval( $items[6] ),
-                            'role'          => sanitize_text_field( wp_unslash( strtolower( $items[7] ) ) ),
-                            'select_sites'  => sanitize_text_field( wp_unslash( $items[8] ) ),
-                            'select_groups' => sanitize_text_field( wp_unslash( $items[9] ) ),
+                            'role'          => sanitize_text_field( strtolower( $items[7] ) ),
+                            'select_sites'  => sanitize_text_field( $items[8] ),
+                            'select_groups' => sanitize_text_field( $items[9] ),
                         );
                         $encoded     = wp_json_encode( $import_data );
+
+                        $safe_items    = array_slice( $items, 0, 10 );
+                        $safe_items[5] = '';
                         ?>
-                        <input type="hidden" id="user_import_csv_line_<?php echo intval( $i + 1 ); ?>" original-line="<?php echo esc_attr( sanitize_text_field( $line ) ); ?>" encoded-data="<?php echo esc_html( $encoded ); ?>" />
+                        <input type="hidden" id="user_import_csv_line_<?php echo intval( $i + 1 ); ?>" original-line="<?php echo esc_attr( str_replace( '&', '&amp;', static::import_csv_line( $safe_items ) ) ); ?>" encoded-data="<?php echo esc_html( str_replace( '&', '&amp;', $encoded ) ); ?>" />
                             <?php
                             ++$i;
                             ++$valid_rows_count;
@@ -2264,6 +2269,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                                 ?>
                             </div>
                             <div class="actions">
+                                <p id="import_user_failed_password_note" style="display:none;"><?php esc_html_e( 'Fill in the password for each failed row before re-importing.', 'mainwp' ); ?></p>
                                 <input type="button" name="import_user_btn_import" id="import_user_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
                                 <input type="button" name="import_user_btn_save_csv" id="import_user_btn_save_csv" style="display:none;" class="ui basic green button" value="<?php esc_attr_e( 'Save failed', 'mainwp' ); ?>"/>
                             </div>
@@ -2465,15 +2471,33 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             $first_name    = isset( $_POST['first_name'] ) ? sanitize_text_field( wp_unslash( $_POST['first_name'] ) ) : '';
             $last_name     = isset( $_POST['last_name'] ) ? sanitize_text_field( wp_unslash( $_POST['last_name'] ) ) : '';
             $url           = isset( $_POST['url'] ) ? sanitize_text_field( wp_unslash( $_POST['url'] ) ) : '';
-            $pass1         = isset( $_POST['pass1'] ) ? wp_unslash( $_POST['pass1'] ) : '';
             $send_password = isset( $_POST['send_password'] ) ? intval( $_POST['send_password'] ) : 0;
             $role          = isset( $_POST['role'] ) ? sanitize_text_field( wp_unslash( $_POST['role'] ) ) : '';
 
-            $ret['failed_logging'] = esc_html( $user_login . ',' . $email . ',' . $first_name . ',' . $last_name . ',' . $url . ',' . $pass1 . ',' . $send_password . ',' . $role . ',' . $error_sites . ',' );
+            $ret['failed_logging'] = esc_html( str_replace( '&', '&amp;', static::import_csv_line( array( $user_login, $email, $first_name, $last_name, $url, '', $send_password, $role, $error_sites, '' ) ) ) );
         }
         $ret['line_number'] = isset( $_POST['line_number'] ) ? intval( $_POST['line_number'] ) : 0;
         // phpcs:enable
         die( wp_json_encode( $ret ) );
+    }
+
+    /**
+     * Serialize an import row with CSV quoting.
+     *
+     * @param array $fields Import fields in column order.
+     * @return string
+     */
+    private static function import_csv_line( $fields ) {
+        return implode(
+            ',',
+            array_map(
+                static function ( $field ) {
+                    $field = (string) $field;
+                    return strpbrk( $field, ",\"\r\n" ) !== false ? '"' . str_replace( '"', '""', $field ) . '"' : $field;
+                },
+                $fields
+            )
+        );
     }
 
     /**

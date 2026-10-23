@@ -848,7 +848,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
      * @return void
      */
     public static function render_php_check_tbody() {
-        static::render_row( 'PHP Version', '>=', '7.4', 'get_php_version', '', '', null, null, static::ERROR );
+        static::render_row( 'PHP Version', '>=', '8.3', 'get_php_version', '', '', null, null, static::ERROR );
         static::render_row( 'PHP Max Execution Time', '>=', '30', 'get_max_execution_time', 'seconds', '=', '0' );
         static::render_row( 'PHP Max Input Time', '>=', '30', 'get_max_input_time', 'seconds', '=', '0' );
         static::render_row( 'PHP Memory Limit', '>=', '256M', 'get_php_memory_limit', '', '', null, 'filesize' );
@@ -1174,7 +1174,7 @@ class MainWP_Server_Information { // phpcs:ignore Generic.Classes.OpeningBraceSa
             </thead>
             <tbody>
                 <?php
-                static::render_row_with_description( esc_html__( 'PHP Version', 'mainwp' ), '>=', '7.4', 'get_php_version', '', '', null );
+                static::render_row_with_description( esc_html__( 'PHP Version', 'mainwp' ), '>=', '8.3', 'get_php_version', '', '', null );
                 static::render_row_with_description( esc_html__( 'SSL Extension Enabled', 'mainwp' ), '=', true, 'get_ssl_support', '', '', null );
                 static::render_row_with_description( esc_html__( 'cURL Extension Enabled', 'mainwp' ), '=', true, 'get_curl_support', '', '', null );
 

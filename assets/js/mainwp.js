@@ -4364,7 +4364,7 @@ jQuery(document).on('click', '.mainwp-notice-hide', function () {
     return false;
 });
 
-// Hide after installtion notices (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning)
+// Hide dismissible Dashboard notices.
 jQuery(document).on('click', '.mainwp-notice-dismiss', function () {
     let notice_id = jQuery(this).attr('notice-id');
     let shortterm = jQuery(this).attr('shortterm-notice');

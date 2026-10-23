@@ -378,6 +378,7 @@ jQuery(function () {
             jQuery('#MainWPBulkUploadUserLoading').show();
             if (import_user_count_create_fails > 0) {
                 jQuery('#import_user_btn_save_csv').attr("style", 'display:inline-block;'); //Enable
+                jQuery('#import_user_failed_password_note').show();
             }
             mainwp_import_users_next();
         } else {
@@ -387,6 +388,7 @@ jQuery(function () {
             jQuery('#MainWPBulkUploadUserLoading').hide();
             if (import_user_count_create_fails > 0) {
                 jQuery('#import_user_btn_save_csv').attr("style", 'display:inline-block;'); //Enable
+                jQuery('#import_user_failed_password_note').show();
             }
         }
     });
@@ -395,7 +397,7 @@ jQuery(function () {
     jQuery('#import_user_btn_save_csv').on('click', function () {
         let fail_data = '';
         jQuery('#import_user_import_failed_rows span').each(function () {
-            fail_data += jQuery(this).html() + "\r\n";
+            fail_data += jQuery(this).text() + "\r\n";
         });
         let blob = new Blob([fail_data], { type: "text/plain;charset=utf-8" });
         saveAs(blob, "import_users_fails.csv");
@@ -448,14 +450,14 @@ let mainwp_import_users_next = function () {
     }
 
     if (decoded_data) {
-        jQuery('#import_user_import_logging .log').append('[' + import_user_current_line_number + '] ' + original_line + '\n');
+        jQuery('#import_user_import_logging .log').append(jQuery('<span>').text('[' + import_user_current_line_number + '] ' + original_line + '\n'));
         let valid = mainwp_import_users_valid_data(decoded_data);
         pos_data = valid.data;
         errors = valid.errors;
     }
 
     if (errors.length > 0) {
-        jQuery('#import_user_import_failed_rows').append('<span>' + original_line + '</span>');
+        jQuery('#import_user_import_failed_rows').append(jQuery('<span>').text(original_line));
         jQuery('#import_user_import_logging .log').append('[' + import_user_current_line_number + ']>> Error - ' + errors.join(" ") + '\n');
         import_user_count_create_fails++;
         mainwp_import_users_next();
@@ -473,11 +475,22 @@ let mainwp_import_users_next = function () {
 
     //Add user via ajax!!
     jQuery.post(ajaxurl, data, function (response_data) {
-        if (response_data.error != undefined)
+        if (!response_data || response_data.error != undefined) {
+            mainwp_import_users_failed(original_line);
             return;
+        }
         mainwp_import_users_response(response_data);
         mainwp_import_users_next();
-    }, 'json');
+    }, 'json').fail(function () {
+        mainwp_import_users_failed(original_line);
+    });
+};
+
+let mainwp_import_users_failed = function (original_line) {
+    jQuery('#import_user_import_failed_rows').append(jQuery('<span>').text(original_line));
+    jQuery('#import_user_import_logging .log').append('[' + import_user_current_line_number + ']>> ' + MainWP.I18n.t('Undefined error!') + '\n');
+    import_user_count_create_fails++;
+    mainwp_import_users_next();
 };
 
 /* eslint-disable complexity */
@@ -548,17 +561,17 @@ let mainwp_import_users_response = function (response_data) {
     if (okList != undefined)
         for (let iok of okList) {
             import_user_count_created_users++;
-            jQuery('#import_user_import_logging .log').append('[' + line_num + ']>> ' + iok + '\n');
+            jQuery('#import_user_import_logging .log').append(jQuery('<span>').text('[' + line_num + ']>> ' + jQuery('<textarea>').html(iok).text() + '\n'));
         }
 
     if (errorList != undefined)
         for (let ie of errorList) {
             import_user_count_create_fails++;
-            jQuery('#import_user_import_logging .log').append('[' + line_num + ']>> ' + ie + '\n');
+            jQuery('#import_user_import_logging .log').append(jQuery('<span>').text('[' + line_num + ']>> ' + jQuery('<textarea>').html(ie).text() + '\n'));
         }
 
     if (response_data.failed_logging != '' && response_data.failed_logging != undefined) {
-        jQuery('#import_user_import_failed_rows').append('<span>' + response_data.failed_logging + '</span>');
+        jQuery('#import_user_import_failed_rows').append(jQuery('<span>').text(jQuery('<textarea>').html(response_data.failed_logging).text()));
     }
     jQuery('#import_user_import_logging').scrollTop(jQuery('#import_user_import_logging .log').height());
 };
@@ -569,6 +582,7 @@ let mainwp_import_users_finished = function () {
     jQuery('#import_user_import_logging .log').append('\n' + MainWP.I18n.t('Number of users to import: %1 Created users: %2 Failed: %3', import_user_total_import, import_user_count_created_users, import_user_count_create_fails) + '\n');
     if (import_user_count_create_fails > 0) {
         jQuery('#import_user_btn_save_csv').attr("style", 'display:inline-block;'); //Enable
+        jQuery('#import_user_failed_password_note').show();
     }
     jQuery('#import_user_import_logging').scrollTop(jQuery('#import_user_import_logging .log').height());
 }

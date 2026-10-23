@@ -430,6 +430,13 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     </div>
                 </div>
                 <div class="ui grid field">
+                    <label class="six wide column middle aligned" for="mainwp-storage-minimum-remote-retention-days"><?php esc_html_e( 'Minimum retention (days)', 'mainwp' ); ?></label>
+                    <div class="ten wide column">
+                        <input type="number" id="mainwp-storage-minimum-remote-retention-days" min="0" max="36500" step="1" value="0">
+                        <span class="ui small text"><?php esc_html_e( 'Automatic cleanup keeps copies at this destination for at least this many days after a verified upload. Older backups without a recorded upload time use backup creation instead. Count and storage limits do not override the minimum. 0 disables it. Manual deletion can override it.', 'mainwp' ); ?></span>
+                    </div>
+                </div>
+                <div class="ui grid field">
                     <label class="six wide column middle aligned"><?php esc_html_e( 'Use as default destination', 'mainwp' ); ?></label>
                     <div class="ten wide column ui toggle checkbox">
                         <input type="checkbox" id="mainwp-storage-is-default"/>
@@ -526,6 +533,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     is_default: jQuery( '#mainwp-storage-is-default' ).is( ':checked' ) ? 1 : 0
                 };
                 let settings = collectSettings();
+                settings.minimum_remote_retention_days = jQuery( '#mainwp-storage-minimum-remote-retention-days' ).val();
                 for ( let key in settings ) {
                     data[ 'settings[' + key + ']' ] = settings[ key ];
                 }
@@ -593,6 +601,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
 
             let resetForm = function () {
                 jQuery( '#mainwp-storage-id' ).val( 0 );
+                jQuery( '#mainwp-storage-minimum-remote-retention-days' ).val( 0 );
                 jQuery( '#mainwp-storage-provider' ).dropdown( 'set selected', String( 's3' ) );
                 jQuery( '#mainwp-storage-name, #mainwp-storage-endpoint, #mainwp-storage-bucket, #mainwp-storage-region, #mainwp-storage-access-key, #mainwp-storage-secret-key, #mainwp-storage-base-path, #mainwp-storage-gcs-bucket, #mainwp-storage-gcs-access-key, #mainwp-storage-gcs-secret-key, #mainwp-storage-dropbox-app-key, #mainwp-storage-dropbox-app-secret, #mainwp-storage-dropbox-refresh-token, #mainwp-storage-dropbox-base-path, #mainwp-storage-sftp-host, #mainwp-storage-sftp-port, #mainwp-storage-sftp-username, #mainwp-storage-sftp-password, #mainwp-storage-sftp-private-key, #mainwp-storage-sftp-base-path, #mainwp-storage-sftp-host-fingerprint' ).val( '' );
                 jQuery( '#mainwp-storage-path-style, #mainwp-storage-is-default' ).prop( 'checked', false );
@@ -660,6 +669,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     if ( ! response || response.error ) {
                         return; // The form still works; settings just are not pre-filled.
                     }
+                    jQuery( '#mainwp-storage-minimum-remote-retention-days' ).val( ( response.settings || {} ).minimum_remote_retention_days || 0 );
                     let map = settingsFieldMap[ response.provider ] || {};
                     let settings = {};
                     if ( response.settings && 'object' === typeof response.settings ) {

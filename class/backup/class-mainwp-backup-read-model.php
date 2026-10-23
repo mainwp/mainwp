@@ -734,11 +734,12 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             ),
             'destinations'     => $destinations,
             'retention'        => array(
-                'count'               => (int) $task->retention_count,
-                'days'                => (int) $task->retention_days,
-                'storage_mb'          => (int) $task->retention_storage_mb,
-                'delete_cloud_copies' => ! empty( $task->delete_cloud_copies ),
-                'max_chain_length'    => (int) $task->max_chain_length,
+                'count'                     => (int) $task->retention_count,
+                'days'                      => (int) $task->retention_days,
+                'storage_mb'                => (int) $task->retention_storage_mb,
+                'remove_local_after_upload' => MainWP_Backup_Retention_Protection::task_removes_local_archives( (int) $task->id ),
+                'delete_cloud_copies'       => ! empty( $task->delete_cloud_copies ),
+                'max_chain_length'          => (int) $task->max_chain_length,
             ),
             'archive_format'   => in_array( $task->archiveFormat, array( 'site', 'global', 'zip', 'tar', 'tar.gz', 'tar.bz2' ), true ) ? $task->archiveFormat : 'legacy',
             // The task writer stores a comma-joined list; splitting on line breaks too drops the stray CR an older CRLF form post left.
@@ -1444,15 +1445,16 @@ class MainWP_Backup_Read_Model { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $count += (int) in_array( $id, self::stored_ids( (string) $ids, true ), true );
         }
         return array(
-            'id'                  => (int) $row->id,
-            'name'                => (string) $row->name,
-            'provider'            => (string) $row->provider,
-            'is_default'          => ! empty( $row->is_default ),
-            'location'            => $location,
-            'credentials_invalid' => ! empty( $row->credentials_invalid ),
-            'task_count'          => $count,
-            'created_at'          => (int) $row->created,
-            'updated_at'          => (int) $row->updated,
+            'id'                            => (int) $row->id,
+            'name'                          => (string) $row->name,
+            'provider'                      => (string) $row->provider,
+            'is_default'                    => ! empty( $row->is_default ),
+            'minimum_remote_retention_days' => (int) ( $row->settings['minimum_remote_retention_days'] ?? 0 ),
+            'location'                      => $location,
+            'credentials_invalid'           => ! empty( $row->credentials_invalid ),
+            'task_count'                    => $count,
+            'created_at'                    => (int) $row->created,
+            'updated_at'                    => (int) $row->updated,
         );
     }
 

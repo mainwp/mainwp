@@ -1904,9 +1904,12 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 	 * The scheduled-task download sweep must skip archives recorded by
 	 * complete backup snapshots: snapshot retention owns their lifecycle.
 	 *
+	 * @dataProvider legacy_server_retention_limits
+	 * @param int  $limit Configured count.
+	 * @param bool $unlimited Whether old unrecorded files survive.
 	 * @return void
 	 */
-	public function test_executor_sweep_skips_snapshot_recorded_file() {
+	public function test_executor_sweep_skips_snapshot_recorded_file( $limit, $unlimited ) {
 		global $wpdb;
 
 		list( $site_id, $task ) = $this->site_and_task();
@@ -1982,16 +1985,21 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 			)
 		);
 
-		update_option( 'mainwp_backupsOnServer', 1 );
+		update_option( 'mainwp_backupsOnServer', $limit );
 
 		try {
 			$result = MainWP_Backup_Executor::backup_site( $site_id, $task, 'backups' );
 			$this->assertNotFalse( $result );
 
 			$this->assertFileExists( $protected, 'A snapshot-recorded archive must survive the scheduled-task sweep.' );
-			$this->assertFileDoesNotExist( $unprotected, 'An unrecorded archive past the retention count must be deleted.' );
+			if ( $unlimited ) {
+				$this->assertFileExists( $unprotected );
+				$this->assertFileExists( $legacy_unprotected );
+			} else {
+				$this->assertFileDoesNotExist( $unprotected );
+				$this->assertFileDoesNotExist( $legacy_unprotected );
+			}
 			$this->assertFileExists( $legacy_protected );
-			$this->assertFileDoesNotExist( $legacy_unprotected );
 		} finally {
 			wp_delete_file( $legacy_protected );
 			wp_delete_file( $legacy_unprotected );
@@ -5930,6 +5938,13 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 		return array(
 			'new claim'   => array( true ),
 			'older claim' => array( false ),
+		);
+	}
+	/** Positive limits still prune; zero retains all eligible legacy files. */
+	public static function legacy_server_retention_limits() {
+		return array(
+			'positive'  => array( 1, false ),
+			'unlimited' => array( 0, true ),
 		);
 	}
 }

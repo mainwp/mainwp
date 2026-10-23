@@ -268,4 +268,16 @@ class MainWP_Backup_Archive_Reservation_Test extends MainWP_Abilities_Test_Case 
 		$this->assertFileDoesNotExist( $path );
 		$this->assertSame( 'keep', file_get_contents( $dir . 'full.tar.gz' ) );
 	}
+	/** Zero means unlimited while the incoming download directory is still prepared. */
+	public function test_zero_server_retention_keeps_all_download_archives() {
+		$site = $this->create_test_site();
+		$dir  = MainWP_Backup_Private_Root::site_dir( $site );
+		file_put_contents( $dir . 'old.zip', 'old archive' );
+		file_put_contents( $dir . 'older.zip', 'older archive' );
+		update_option( 'mainwp_backupsOnServer', 0 );
+		MainWP_Backup_File_Manager::sweep_backup_download_files( $site, 'full', $dir . 'incoming.zip', false );
+		$this->assertFileExists( $dir . 'old.zip' );
+		$this->assertFileExists( $dir . 'older.zip' );
+		$this->assertFileExists( $dir . 'index.php' );
+	}
 }

@@ -172,7 +172,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             ?>
             </label>
             <div class="ten wide column">
-                <input type="text" class="settings-field-value-change-handler" name="mainwp_options_backupOnServer" value="<?php echo false === $backupsOnServer ? 1 : intval( $backupsOnServer ); ?>"/>
+                <span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_backupOnServer" value="<?php echo false === $backupsOnServer ? 1 : intval( $backupsOnServer ); ?>"/></span>
             </div>
         </div>
 

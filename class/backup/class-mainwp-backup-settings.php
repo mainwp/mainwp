@@ -361,16 +361,26 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( is_wp_error( MainWP_Backup_Operations::save_backup_settings( $values, 'ui' ) ) ) {
                     return false;
                 }
-                if ( isset( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
-                    MainWP_Utility::update_option( 'mainwp_backupsOnServer', ( isset( $_POST['mainwp_options_backupOnServer'] ) ? intval( $_POST['mainwp_options_backupOnServer'] ) : 1 ) );
+                foreach ( array(
+                    'mainwp_options_backupOnServer' => 'mainwp_backupsOnServer',
+                    'mainwp_options_backupOnExternalSources' => 'mainwp_backupOnExternalSources',
+                ) as $field => $option ) {
+                    if ( ! isset( $_POST[ $field ] ) ) {
+                        continue;
+                    }
+                    $count = filter_var( wp_unslash( $_POST[ $field ] ), FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 0 ) ) );
+                    if ( false === $count ) {
+                        return false;
+                    }
+                    MainWP_Utility::update_option( $option, $count );
+                    if ( (string) get_option( $option, null ) !== (string) $count ) {
+                        return false;
+                    }
                 }
                 if ( isset( $_POST['mainwp_options_maximumFileDescriptors'] ) && - 1 < $_POST['mainwp_options_maximumFileDescriptors'] ) {
                     MainWP_Utility::update_option( 'mainwp_maximumFileDescriptors', ( isset( $_POST['mainwp_options_maximumFileDescriptors'] ) ? intval( $_POST['mainwp_options_maximumFileDescriptors'] ) : 1 ) );
                 }
                 MainWP_Utility::update_option( 'mainwp_maximumFileDescriptorsAuto', ( ! isset( $_POST['mainwp_maximumFileDescriptorsAuto'] ) ? 0 : 1 ) );
-                if ( ! empty( $_POST['mainwp_options_backupOnExternalSources'] ) && 0 <= $_POST['mainwp_options_backupOnExternalSources'] ) {
-                    MainWP_Utility::update_option( 'mainwp_backupOnExternalSources', ( isset( $_POST['mainwp_options_backupOnExternalSources'] ) ? intval( $_POST['mainwp_options_backupOnExternalSources'] ) : 1 ) );
-                }
                 MainWP_Utility::update_option( 'mainwp_archiveFormat', ( isset( $_POST['mainwp_archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_archiveFormat'] ) ) : '' ) );
 
                 if ( isset( $_POST['mainwp_primaryBackup'] ) ) {

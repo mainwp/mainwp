@@ -641,6 +641,54 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		unset( $_POST['submit'], $_POST['wp_nonce'], $_POST['mainwp_options_onDemandRetentionCount'] );
 	}
 
+	/** Global archive counts accept zero without changing on-demand retention. */
+	public function test_global_retention_zero_roundtrip(): void {
+		$this->set_current_user_as_admin();
+		$_POST = array(
+			'submit'   => '1',
+			'wp_nonce' => wp_create_nonce( 'BackupSettings' ),
+		);
+		try {
+			foreach ( array( 3, 0, 7 ) as $count ) {
+				$_POST['mainwp_options_backupOnServer']          = (string) $count;
+				$_POST['mainwp_options_backupOnExternalSources'] = (string) $count;
+				$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+				$this->assertSame( $count, (int) get_option( 'mainwp_backupsOnServer' ) );
+				$this->assertSame( $count, (int) get_option( 'mainwp_backupOnExternalSources' ) );
+			}
+		} finally {
+			$_POST = array();
+		}
+	}
+
+	/** Invalid global counts reject the save and retain the stored limit. */
+	public function test_global_retention_invalid_counts_and_failed_write(): void {
+		$this->set_current_user_as_admin();
+		update_option( 'mainwp_backupsOnServer', 3 );
+		$_POST = array(
+			'submit'   => '1',
+			'wp_nonce' => wp_create_nonce( 'BackupSettings' ),
+		);
+		try {
+			foreach ( array( '-1', '1.5', 'invalid', array( 1 ) ) as $value ) {
+				$_POST['mainwp_options_backupOnServer'] = $value;
+				$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+				$this->assertSame( 3, (int) get_option( 'mainwp_backupsOnServer' ) );
+			}
+			$block                                  = static fn( $candidate, $old ) => $old;
+			add_filter( 'pre_update_option_mainwp_backupsOnServer', $block, 10, 2 );
+			$_POST['mainwp_options_backupOnServer'] = '0';
+			try {
+				$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+				$this->assertSame( 3, (int) get_option( 'mainwp_backupsOnServer' ) );
+			} finally {
+				remove_filter( 'pre_update_option_mainwp_backupsOnServer', $block );
+			}
+		} finally {
+			$_POST = array();
+		}
+	}
+
 	/**
 	 * The global settings section renders the diagnostics toggle.
 	 *

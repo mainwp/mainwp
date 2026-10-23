@@ -221,7 +221,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 continue;
             }
             ++$cnt;
-            if ( $cnt >= $maxBackups ) {
+            if ( (int) $maxBackups > 0 && $cnt >= $maxBackups ) {
                 $wp_filesystem->delete( $dbBackup );
             }
         }
@@ -232,7 +232,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 continue;
             }
             ++$cnt;
-            if ( $cnt >= $maxBackups ) {
+            if ( (int) $maxBackups > 0 && $cnt >= $maxBackups ) {
                 $wp_filesystem->delete( $fullBackup );
             }
         }

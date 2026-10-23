@@ -135,6 +135,12 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             return;
         }
 
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot_id );
+        if ( null !== $snapshot && MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot )
+            && ! MainWP_Backup_Retention_Protection::capture_required_destinations( (int) $snapshot_id, $destination_ids ) ) {
+            return;
+        }
+
         MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( (int) $snapshot_id, array_map( 'intval', $destination_ids ) );
         $this->resolve_snapshot_offsite_state( (int) $snapshot_id );
     }
@@ -324,8 +330,13 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
             $enc = $this->encryption_context_for( $snapshot );
 
             $checkpoint = $job->checkpoint;
+            $binding    = MainWP_Backup_Retention_Protection::destination_binding( $destination );
+            if ( ! empty( $checkpoint['destination_binding'] ) && ! hash_equals( (string) $checkpoint['destination_binding'], $binding ) ) {
+                throw new \RuntimeException( 'The storage destination settings changed before this upload finished.', 410 );
+            }
             if ( empty( $checkpoint['artifacts'] ) ) {
-                $checkpoint = $this->new_checkpoint( $snapshot );
+                $checkpoint                        = $this->new_checkpoint( $snapshot );
+                $checkpoint['destination_binding'] = $binding;
                 if ( empty( $checkpoint['artifacts'] ) ) {
                     $error = 'The snapshot has no eligible artifacts to upload.';
                     if ( $store->fail_permanent( (int) $job->id, $error, $this->lock_token ) ) {
@@ -708,6 +719,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         }
 
         $checkpoint['manifest_submitted'] = true;
+        $checkpoint['uploaded_at']        = time();
         return MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token );
     }
 

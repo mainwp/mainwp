@@ -2717,13 +2717,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'mainwp_backups_on_server'              => array(
                 'required'          => false,
-                'description'       => __( 'Backups on server.', 'mainwp' ),
+                'description'       => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
             'mainwp_backup_on_external_sources'     => array(
                 'required'          => false,
-                'description'       => __( 'Backup on external sources.', 'mainwp' ),
+                'description'       => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
@@ -2794,13 +2794,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             ),
             'mainwp_backups_on_server'             => array(
                 'required'          => false,
-                'description'       => __( 'Backups on server.', 'mainwp' ),
+                'description'       => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
             'mainwp_backup_on_external_sources'    => array(
                 'required'          => false,
-                'description'       => __( 'Backup on external sources.', 'mainwp' ),
+                'description'       => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
             ),
@@ -5361,12 +5361,12 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 ),
                 'mainwp_backups_on_server'                 => array(
                     'type'        => 'string',
-                    'description' => __( 'Backups on server.', 'mainwp' ),
+                    'description' => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
                     'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_backup_on_external_sources'        => array(
                     'type'        => 'string',
-                    'description' => __( 'Backups on external sources.', 'mainwp' ),
+                    'description' => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
                     'context'     => array( 'view', 'edit', 'backups_view', 'backups_edit' ),
                 ),
                 'mainwp_archive_format'                    => array(

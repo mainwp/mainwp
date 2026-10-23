@@ -402,6 +402,39 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 		$this->assertSame( 'This task is paused. Resume it before running it.', $error->get_error_message() );
 	}
 
+	/** The existing form saves, preserves and disables local archive removal. */
+	public function test_ajax_task_remove_local_after_upload_roundtrip(): void {
+		$store                               = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$destination                         = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Form retention fixture',
+				'settings' => array(),
+			)
+		);
+		$posted                              = $this->posted( $this->fields( $this->create_test_site() ) );
+		$posted['destinations']              = array( (string) $destination );
+		$posted['remove_local_after_upload'] = '1';
+		try {
+			$response = $this->ajax( 'mainwp_addbackup', $posted );
+			$this->assertSame( array( 'result' => 'Task created successfully.' ), $response );
+			$tasks      = MainWP_DB_Backup::instance()->get_backup_tasks();
+			$task       = end( $tasks );
+			$protection = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
+			$this->assertTrue( $protection::task_removes_local_archives( (int) $task->id ) );
+			$posted['id'] = $task->id;
+			unset( $posted['remove_local_after_upload'] );
+			$this->assertSame( array( 'result' => 'Task updated successfully.' ), $this->ajax( 'mainwp_updatebackup', $posted ) );
+			$this->assertTrue( $protection::task_removes_local_archives( (int) $task->id ) );
+			$posted['remove_local_after_upload'] = '0';
+			$posted['destinations']              = array();
+			$this->assertSame( array( 'result' => 'Task updated successfully.' ), $this->ajax( 'mainwp_updatebackup', $posted ) );
+			$this->assertFalse( $protection::task_removes_local_archives( (int) $task->id ) );
+		} finally {
+			$store->delete_destination( $destination );
+		}
+	}
+
 	/** The form's existing limits must survive the shared validator. */
 	public function test_ajax_create_accepts_older_form_limits(): void {
 		$db     = MainWP_DB_Backup::instance();

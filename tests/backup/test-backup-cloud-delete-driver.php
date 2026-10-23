@@ -645,4 +645,128 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 		$this->assertCount( 1, $store->get_jobs_for_snapshot( 980009, 'upload' ) );
 		$this->assertCount( 1, $store->get_jobs_for_snapshot( 980009, 'delete' ) );
 	}
+	/** A queued automatic delete rechecks a minimum raised after enqueue. */
+	public function test_delayed_automatic_delete_waits_for_current_minimum_then_expires() {
+		list( $destination, $base ) = $this->make_local_destination();
+		$prefix                     = '5/980099/';
+		$this->write_remote_objects( $base, $prefix, array( 'files/a.tar', 'chunks/partial.bin' ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$now   = time();
+		$store->enqueue_delete_job(
+			980099,
+			$destination,
+			array(
+				'prefix'          => $prefix,
+				'keys'            => array(
+					array(
+						'key'     => $prefix . 'files/a.tar',
+						'deleted' => false,
+					),
+				),
+				'storage_age'     => array(
+					'uploaded_at' => $now,
+					'unknown_age' => false,
+				),
+				'manual_override' => false,
+			)
+		);
+		MainWP_Backup_Storage_Destinations::instance()->update_destination(
+			$destination,
+			array(
+				'settings' => array(
+					'base_path'                     => $base,
+					'minimum_remote_retention_days' => 30,
+				),
+			)
+		);
+		$driver = MainWP_Backup_Cloud_Delete_Driver::instance();
+		$driver->process_pending_delete_jobs( 60, $now + 30 * DAY_IN_SECONDS - 1 );
+		$this->assertFileExists( $base . '/' . $prefix . 'files/a.tar' );
+		$this->assertFileExists( $base . '/' . $prefix . 'chunks/partial.bin' );
+		$driver->process_pending_delete_jobs( 60, $now + 30 * DAY_IN_SECONDS );
+		$this->assertFileDoesNotExist( $base . '/' . $prefix . 'files/a.tar' );
+		$this->assertFileDoesNotExist( $base . '/' . $prefix . 'chunks/partial.bin' );
+	}
+
+	/** Unknown-age partial objects need an explicit manual bypass at positive minimum. */
+	public function test_unknown_age_delete_holds_keys_and_prefix_until_manual_override() {
+		list( $destination, $base ) = $this->make_local_destination();
+		MainWP_Backup_Storage_Destinations::instance()->update_destination(
+			$destination,
+			array(
+				'settings' => array(
+					'base_path'                     => $base,
+					'minimum_remote_retention_days' => 30,
+				),
+			)
+		);
+		$prefix = '5/980098/';
+		$this->write_remote_objects( $base, $prefix, array( 'chunks/partial.bin' ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_delete_job(
+			980098,
+			$destination,
+			array(
+				'prefix'          => $prefix,
+				'storage_age'     => array(
+					'uploaded_at' => 0,
+					'unknown_age' => true,
+				),
+				'manual_override' => false,
+			)
+		);
+		MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
+		$this->assertFileExists( $base . '/' . $prefix . 'chunks/partial.bin' );
+		$job = $store->get_jobs_for_snapshot( 980098, 'delete' )[0];
+		$this->assertSame( 'pending', $job->status );
+		$checkpoint                    = $job->checkpoint;
+		$checkpoint['manual_override'] = true;
+		$store->save_checkpoint( $job->id, $checkpoint );
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'next_retry_at' => 0 ), array( 'id' => $job->id ) );
+		MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
+		$this->assertFileDoesNotExist( $base . '/' . $prefix . 'chunks/partial.bin' );
+	}
+	/** A protected first job does not block a later expired copy or consume failures. */
+	public function test_protected_delete_defers_without_starving_eligible_job() {
+		list( $destination, $base ) = $this->make_local_destination();
+		MainWP_Backup_Storage_Destinations::instance()->update_destination(
+			$destination,
+			array(
+				'settings' => array(
+					'base_path'                     => $base,
+					'minimum_remote_retention_days' => 30,
+				),
+			)
+		);
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$now   = time();
+		foreach ( array(
+			980096 => $now,
+			980097 => $now - 30 * DAY_IN_SECONDS,
+		) as $id => $uploaded_at ) {
+			$prefix = '5/' . $id . '/';
+			$this->write_remote_objects( $base, $prefix, array( 'chunks/data.bin' ) );
+			$store->enqueue_delete_job(
+				$id,
+				$destination,
+				array(
+					'prefix'          => $prefix,
+					'storage_age'     => array(
+						'uploaded_at' => $uploaded_at,
+						'unknown_age' => false,
+					),
+					'manual_override' => false,
+				)
+			);
+		}
+		MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60, $now );
+		$this->assertFileExists( $base . '/5/980096/chunks/data.bin' );
+		$this->assertFileDoesNotExist( $base . '/5/980097/chunks/data.bin' );
+		$held = $store->get_jobs_for_snapshot( 980096, 'delete' )[0];
+		$this->assertSame( 'pending', $held->status );
+		$this->assertSame( 0, (int) $held->attempt_count );
+		$this->assertSame( 0, (int) $held->reclaim_count );
+		$this->assertGreaterThan( $now, (int) $held->next_retry_at );
+	}
 }

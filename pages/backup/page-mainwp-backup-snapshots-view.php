@@ -546,8 +546,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             var sourceLabels = {
                 'local': '<?php echo esc_js( esc_html__( 'This Dashboard', 'mainwp' ) ); ?>',
-                'remote': '<?php echo esc_js( esc_html__( 'Cloud Storage', 'mainwp' ) ); ?>',
-                'remote_chunked': '<?php echo esc_js( esc_html__( 'Cloud Storage', 'mainwp' ) ); ?>',
+                'remote': '<?php echo esc_js( esc_html__( 'Remote only', 'mainwp' ) ); ?>',
+                'remote_chunked': '<?php echo esc_js( esc_html__( 'Remote only', 'mainwp' ) ); ?>',
                 'unavailable': '<?php echo esc_js( esc_html__( 'Removed by Retention', 'mainwp' ) ); ?>',
                 'removed': '<?php echo esc_js( esc_html__( 'Removed', 'mainwp' ) ); ?>',
                 'damaged': '<?php echo esc_js( esc_html__( 'Damaged Archive', 'mainwp' ) ); ?>'
@@ -1124,6 +1124,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     snapshotDeletePreview = null;
                     $( '#mainwp-snapshot-delete-modal' ).modal( 'hide' );
                 }
+                $( '#mainwp-snapshots-cleanup-btn' ).removeData( 'retention-warnings' );
                 currentSite = siteId;
                 if ( siteId > 0 ) {
                     enableSnapshotControls( true );
@@ -1143,6 +1144,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     // Before the rows draw: the Restore buttons read this flag.
                     showDisconnected( response.site_disconnected, response.reconnect_url );
                     enableSnapshotControls( siteId > 0 );
+                    $( '#mainwp-snapshots-cleanup-btn' ).data( 'retention-warnings', response.cleanup_warnings || [] );
                     siteIsMultisite = !! response.multisite;
                     siteHasWooCommerce = !! response.site_has_woocommerce;
                     currentSiteUrl = response.site_url || '';
@@ -2344,6 +2346,10 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     } );
                 };
                 var confirmMsg = '<?php echo esc_js( esc_html__( 'Clean up this site\'s backups? Leftover files from interrupted backups are removed, and old on-demand backups beyond the retention count are pruned. Clean Up also deletes snapshots whose backup task was deleted, including their cloud copies. Pruned and deleted backups can no longer be restored.', 'mainwp' ) ); ?>';
+                var cleanupWarnings = $( '#mainwp-snapshots-cleanup-btn' ).data( 'retention-warnings' ) || [];
+                cleanupWarnings.forEach( function ( warning ) {
+                    confirmMsg += '<div class="ui yellow message">' + escAttr( warning ) + '</div>';
+                } );
                 mainwp_confirm( confirmMsg, runCleanup );
             } );
 

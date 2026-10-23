@@ -194,7 +194,9 @@ class MainWP_Backup_List_View { // phpcs:ignore Generic.Classes.OpeningBraceSame
             $actions[] = '<a href="#" class="item" task_id="' . $task_id . '" onClick="return ' . $handler . '(this);">' . esc_html( $label ) . '</a>';
         }
         if ( \mainwp_current_user_can( 'dashboard', 'delete_backup_tasks' ) ) {
-            $actions[] = '<a class="submitdelete item" href="#" task_id="' . $task_id . '" onClick="return managebackups_remove(this);">' . esc_html__( 'Delete', 'mainwp' ) . '</a>';
+            $preview   = MainWP_Backup_Operations::preview_task_delete( $task_id, true, 'ui' );
+            $warnings  = is_wp_error( $preview ) ? '' : implode( ' ', $preview['warnings'] );
+            $actions[] = '<a class="submitdelete item" href="#" task_id="' . $task_id . '" data-retention-warning="' . esc_attr( $warnings ) . '" onClick="return managebackups_remove(this);">' . esc_html__( 'Delete', 'mainwp' ) . '</a>';
         }
         if ( empty( $actions ) ) {
             return '';

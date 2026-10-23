@@ -94,6 +94,67 @@ class MainWP_Backups_Snapshot_Delete_Abilities_Test extends MainWP_Abilities_Tes
 		$this->assertTrue( rest_validate_value_from_schema( $result, $ability->get_output_schema() ) );
 	}
 
+	/** Existing confirmations warn only for copies whose minimum still applies. */
+	public function test_minimum_retention_warnings_cover_snapshot_task_and_cleanup(): void {
+		global $wpdb;
+		$this->use_scheduled_task();
+		$id    = $this->snapshot();
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$dest  = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Protected warning fixture',
+				'settings' => array( 'minimum_remote_retention_days' => 90 ),
+			)
+		);
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$wpdb->insert(
+			$table,
+			array(
+				'snapshot_id'    => $id,
+				'destination_id' => $dest,
+				'provider'       => 's3',
+				'status'         => 'complete',
+				'kind'           => 'upload',
+				'checkpoint'     => wp_json_encode( array( 'uploaded_at' => time() ) ),
+			)
+		);
+		$job = (int) $wpdb->insert_id;
+		try {
+			$preview = $this->preview( $id, true );
+			$this->assertStringContainsString( 'minimum retention period', implode( ' ', $preview['warnings'] ) );
+			$local_only = $this->preview( $id, false );
+			$this->assertStringNotContainsString( 'minimum retention period', implode( ' ', $local_only['warnings'] ) );
+			$task_preview = MainWP_Backup_Operations::preview_task_delete( (int) $this->task->id );
+			$this->assertStringContainsString( 'minimum retention period', implode( ' ', $task_preview['warnings'] ) );
+			$kept = MainWP_Backup_Operations::preview_task_delete( (int) $this->task->id, false );
+			$this->assertSame( array(), $kept['warnings'] );
+			$run = MainWP_Backup_Operations::preview_task_update( (int) $this->task->id, array( 'retention' => array( 'count' => 1 ) ) );
+			$this->assertStringContainsString( 'Count or storage limits may be exceeded', implode( ' ', $run['warnings'] ) );
+			$wpdb->update( $table, array( 'checkpoint' => wp_json_encode( array( 'uploaded_at' => time() - 91 * DAY_IN_SECONDS ) ) ), array( 'id' => $job ) );
+			$this->assertSame( array(), $this->preview( $id, true )['warnings'] );
+			$wpdb->update(
+				$table,
+				array(
+					'status'     => 'pending',
+					'checkpoint' => '{}',
+				),
+				array( 'id' => $job )
+			);
+			$this->assertStringContainsString( 'MainWP cannot confirm that it has expired', implode( ' ', $this->preview( $id, true )['warnings'] ) );
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'id' => $this->task->id ) );
+			$cleanup = MainWP_Backup_Operations::preview_site_cleanup( $this->site_id, null );
+			$this->assertContains( $id, $cleanup['would_affect']['orphaned_task_snapshot_ids'] );
+			$this->assertStringContainsString( 'minimum retention period', implode( ' ', $cleanup['warnings'] ) );
+			$list = $this->ajax( 'mainwp_restore_snapshot_list', array( 'site_id' => $this->site_id ) );
+			$this->assertSame( $cleanup['warnings'], $list['cleanup_warnings'] );
+			$store->update_destination( $dest, array( 'settings' => array( 'minimum_remote_retention_days' => 0 ) ) );
+			$this->assertSame( array(), MainWP_Backup_Operations::preview_site_cleanup( $this->site_id, null )['warnings'] );
+		} finally {
+			$store->delete_destination( $dest );
+		}
+	}
+
 	/** Only the deleted snapshot's destinations may be named in either transport. */
 	public function test_cloud_destination_names_match_ui_and_schema() {
 		global $wpdb;

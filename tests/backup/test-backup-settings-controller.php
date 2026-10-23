@@ -451,6 +451,23 @@ class MainWP_Backup_Settings_Controller_Test extends \WP_Test_REST_TestCase {
 		$this->assertSame( 5, (int) $data['mainwp_on_demand_retention_count'] );
 	}
 
+	/** Existing REST count fields retain string zero as unlimited across reads. */
+	public function test_backups_edit_zero_retention_string_parity(): void {
+		$response = $this->do_authenticated_request(
+			'PUT',
+			'/mainwp/v2/settings/backups/edit',
+			array(
+				'mainwp_backups_on_server'          => '0',
+				'mainwp_backup_on_external_sources' => '0',
+			)
+		);
+		$this->assertSame( 200, $response->get_status() );
+		$read = $this->do_authenticated_request( 'GET', '/mainwp/v2/settings/backups' );
+		$this->assertSame( 200, $read->get_status() );
+		$this->assertSame( '0', $read->get_data()['data']['mainwp_backups_on_server'] );
+		$this->assertSame( '0', $read->get_data()['data']['mainwp_backup_on_external_sources'] );
+	}
+
 	/**
 	 * PUT settings/backups/edit persists the on-demand retention count.
 	 *

@@ -773,6 +773,7 @@ mainwp_managebackups_update = function () {
             retention_days: jQuery('#mainwp-backup-retention-days').val(),
             retention_storage_mb: jQuery('#mainwp-backup-retention-storage-mb').val(),
             max_chain_length: jQuery('#mainwp-backup-max-chain-length').val(),
+            remove_local_after_upload: (jQuery('#mainwp-backup-remove-local-after-upload').is(':checked') ? 1 : 0),
             delete_cloud_copies: (jQuery('#mainwp-backup-delete-cloud-copies').is(':checked') ? 1 : 0),
             //loadFilesBeforeZip: loadFilesBeforeZip
         });
@@ -856,6 +857,7 @@ mainwp_managebackups_add = function () {
             retention_days: jQuery('#mainwp-backup-retention-days').val(),
             retention_storage_mb: jQuery('#mainwp-backup-retention-storage-mb').val(),
             max_chain_length: jQuery('#mainwp-backup-max-chain-length').val(),
+            remove_local_after_upload: (jQuery('#mainwp-backup-remove-local-after-upload').is(':checked') ? 1 : 0),
             delete_cloud_copies: (jQuery('#mainwp-backup-delete-cloud-copies').is(':checked') ? 1 : 0),
             loadFilesBeforeZip: loadFilesBeforeZip
         });
@@ -885,6 +887,10 @@ managebackups_remove = function (element) {
         '<label for="mainwp-backup-task-delete-snapshots">' + MainWP.I18n.t("Also delete this task's snapshots") + '</label></div>' +
         '<div><em>' + MainWP.I18n.t('Leave this unticked to keep the snapshots. They stay in Snapshots & Restore until you delete them with Clean Up.') + '</em></div>' +
         '</div></div>';
+    let retentionWarning = jQuery(element).attr('data-retention-warning');
+    if (retentionWarning) {
+        msg += '<div class="ui yellow message">' + jQuery('<div>').text(retentionWarning).html() + '</div>';
+    }
     mainwp_confirm(msg, function () {
         // Read before the modal is reused: the checkbox lives in its content.
         let deleteSnapshots = jQuery('#mainwp-backup-task-delete-snapshots').is(':checked') ? 1 : 0;

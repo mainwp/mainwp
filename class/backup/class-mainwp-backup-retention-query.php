@@ -58,7 +58,7 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
      * @param int $task_id Scheduled task id.
      *
      * @return array Units, each carrying snapshots (rows, base first),
-     *               is_complete, size_bytes, newest_created and
+     *               is_complete, is_restorable, size_bytes, newest_created and
      *               oldest_created.
      */
     public function get_units_for_site_task( int $site_id, int $task_id ): array {
@@ -129,12 +129,41 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
                 $oldest = min( $oldest, (int) $row->created );
             }
 
+            // Only a recorded integrity failure removes coverage. A missing or empty
+            // local list keeps the old behaviour: Child-held copies and archives
+            // outside the private root are tracked that way and must still count.
+            // Restore's plan decides which archives are actually required, so a
+            // superseded damaged dump or a damaged archive with a usable cloud copy
+            // does not cost the unit its coverage.
+            $is_restorable = $is_complete;
+            if ( $is_complete && array_filter( $group['rows'], array( MainWP_Backup_Snapshots::class, 'snapshot_has_damage' ) ) ) {
+                foreach ( MainWP_Backup_Snapshot_Catalog::instance()->assemble_plan( $group['rows'] ) as $entry ) {
+                    if ( ! empty( $entry['damaged'] ) && 'unavailable' === $entry['source'] ) {
+                        $is_restorable = false;
+                        break;
+                    }
+                }
+            }
+
+            $ids                      = array_map( 'intval', array_column( $group['rows'], 'id' ) );
+            $protection               = MainWP_Backup_Retention_Protection::remote_protection( $ids );
+            $required_uploads_pending = (bool) array_filter(
+                $group['rows'],
+                static fn( $snapshot ) => MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot ) && ! MainWP_Backup_Retention_Protection::required_uploads_verified( (int) $snapshot->id )
+            );
+            $required_upload_hold     = MainWP_Backup_Retention_Protection::task_removes_local_archives( $task_id ) && $required_uploads_pending;
+
             $units[] = array(
-                'snapshots'      => $group['rows'],
-                'is_complete'    => $is_complete,
-                'size_bytes'     => $size_bytes,
-                'newest_created' => $newest,
-                'oldest_created' => PHP_INT_MAX === $oldest ? 0 : $oldest,
+                'protected_until'          => $protection['protected_until'],
+                'unknown_age'              => $protection['unknown_age'],
+                'required_upload_hold'     => $required_upload_hold,
+                'required_uploads_pending' => $required_uploads_pending,
+                'snapshots'                => $group['rows'],
+                'is_complete'              => $is_complete,
+                'is_restorable'            => $is_restorable,
+                'size_bytes'               => $size_bytes,
+                'newest_created'           => $newest,
+                'oldest_created'           => PHP_INT_MAX === $oldest ? 0 : $oldest,
             );
         }
 
@@ -248,9 +277,15 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
      * @return object[] Task rows.
      */
     public function list_tasks_with_policy(): array {
-        return $this->wpdb->get_results(
-            'SELECT * FROM ' . $this->table_name( 'wp_backup' ) . ' WHERE retention_count > 0 OR retention_days > 0 OR retention_storage_mb > 0',
-            OBJECT
+        $tasks = $this->wpdb->get_results( 'SELECT * FROM ' . $this->table_name( 'wp_backup' ), OBJECT );
+        return array_values(
+            array_filter(
+                (array) $tasks,
+                static function ( $task ) {
+                    return (int) $task->retention_count > 0 || (int) $task->retention_days > 0 || (int) $task->retention_storage_mb > 0
+                    || MainWP_Backup_Retention_Protection::task_removes_local_archives( (int) $task->id );
+                }
+            )
         );
     }
 

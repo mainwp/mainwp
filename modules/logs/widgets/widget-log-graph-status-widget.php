@@ -73,7 +73,7 @@ class Log_Graph_Status_Widget {
             <h2 class="ui header handle-drag">
                 <?php esc_html_e( 'Site Connectivity Status', 'mainwp' ); ?>
                 <div class="sub header">
-                <?php esc_html_e( 'Number of total, connected, disconnected, and suspended sites across the network for easy status monitoring.', 'mainwp' ); ?>
+                <?php esc_html_e( 'Number of connected, disconnected, and suspended sites across the network for easy status monitoring.', 'mainwp' ); ?>
                 </div>
             </h2>
         </div>
@@ -162,7 +162,6 @@ class Log_Graph_Status_Widget {
                     series: [ {
                         name: 'Sites',
                         data: [
-                            { x: 'Total Sites',  y: <?php echo esc_js( $total ); ?>, fillColor: '#18a4e0' },
                             { x: 'Connected',    y: <?php echo esc_js( $connected ); ?>, fillColor: '#7fb100' },
                             { x: 'Disconnected', y: <?php echo esc_js( $disconnected ); ?>, fillColor: '#a61718' },
                             { x: 'Suspended',    y: <?php echo esc_js( $suspended ); ?>, fillColor: '#ffd300' },

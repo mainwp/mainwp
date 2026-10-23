@@ -939,7 +939,12 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $select_stats = ' ( SELECT COUNT(wp.id) as count_all ';
         if ( ! empty( $params['count_disconnected'] ) ) {
             $select_stats .= ',( SELECT COUNT(wp_disconnected.id) FROM ' . $this->table_name( 'wp' ) . ' wp_disconnected LEFT JOIN ' . $this->table_name( 'wp_sync' ) . ' as wp_sync ';
-            $select_stats .= ' ON wp_disconnected.id = wp_sync.wpid WHERE wp_sync.sync_errors <> "" ) as count_disconnected  ';
+            $select_stats .= ' ON wp_disconnected.id = wp_sync.wpid WHERE wp_sync.sync_errors <> "" ';
+            if ( ! empty( $params['count_suspended'] ) ) {
+                // Keep the three connectivity categories mutually exclusive.
+                $select_stats .= ' AND wp_disconnected.suspended = 0 ';
+            }
+            $select_stats .= ' ) as count_disconnected  ';
         }
         if ( ! empty( $params['count_suspended'] ) ) {
             $select_stats .= ',( SELECT COUNT(wp_suspended.id) FROM ' . $this->table_name( 'wp' ) . ' wp_suspended WHERE wp_suspended.suspended = 1 ) as count_suspended ';

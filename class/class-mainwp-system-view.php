@@ -534,8 +534,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
 
         static::render_secure_priv_key_connection();
 
-        static::render_notice_php_version8();
-
         static::render_notice_trust_update();
 
         static::render_mainwp_themes_deprecation_notice();
@@ -778,31 +776,6 @@ class MainWP_System_View { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         </div>
         <?php
     }
-
-    /**
-     * Renders PHP 8.0 Version Notice.
-     *
-     * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
-     */
-    public static function render_notice_php_version8() {
-        $phpver = phpversion();
-        if ( version_compare( $phpver, '8.0', '<' ) ) {
-            $last_hidden = (int) get_user_option( 'lasttime_hidden_phpver_8_0' );
-            if ( time() > $last_hidden + 30 * DAY_IN_SECONDS || MainWP_Utility::show_mainwp_message( 'notice', 'phpver_8_0' ) ) {
-                ?>
-                <div class="ui attention message">
-                    <div class="header"><?php esc_html_e( 'Upcoming PHP requirement (Dashboard)', 'mainwp' ); ?></div>
-                    <?php esc_html_e( 'In the coming months, MainWP Dashboard will require PHP 8.1+. To avoid issues and stay secure, please update your Dashboard site to a supported version (for example PHP 8.3).', 'mainwp' ); ?>
-                    <?php /* translators: 1: Opening link tag, 2: Closing link tag */ printf( esc_html__( 'You can check the list of actively maintained PHP versions %1$shere%2$s.', 'mainwp' ), '<a href="https://www.php.net/supported-versions.php" target="_blank">', '</a>' ); ?>
-                    <br/><br/>
-                    <strong><?php esc_html_e( 'This change affects only your MainWP Dashboard site, not your connected child sites.', 'mainwp' ); ?></strong>
-                    <i class="close icon mainwp-notice-dismiss" notice-id="phpver_8_0"></i>
-                </div>
-                <?php
-            }
-        }
-    }
-
 
     /**
      * Renders Guided Tours Notice.

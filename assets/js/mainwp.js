@@ -861,6 +861,9 @@ let securityIssues_handle = function (response) { // NOSONAR - complex.
     } else {
         try {
             let res = response.result;
+            if (typeof response.phpversion_message === 'string') {
+                jQuery('#phpversion_matched-status-ok, #phpversion_matched-status-nok').text(response.phpversion_message);
+            }
             for (let issue in res) {
                 if (jQuery('#' + issue + '_loading')) {
                     jQuery('#' + issue + '_loading').hide();
@@ -4361,7 +4364,7 @@ jQuery(document).on('click', '.mainwp-notice-hide', function () {
     return false;
 });
 
-// Hide after installtion notices (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning)
+// Hide dismissible Dashboard notices.
 jQuery(document).on('click', '.mainwp-notice-dismiss', function () {
     let notice_id = jQuery(this).attr('notice-id');
     let shortterm = jQuery(this).attr('shortterm-notice');

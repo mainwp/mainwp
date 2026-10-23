@@ -529,8 +529,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     /**
      * Method mainwp_notice_status_update()
      *
-     * Hide after installation notices,
-     * (PHP version, Trust MainWP Child, Multisite Warning and OpenSSL warning).
+     * Hide dismissible Dashboard notices.
      *
      * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
      */
@@ -555,10 +554,6 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         if ( 'mail_failed' === $no_id ) {
             MainWP_Utility::update_option( 'mainwp_notice_wp_mail_failed', 'hide' );
             die( 'ok' );
-        }
-
-        if ( 'phpver_8_0' === $no_id ) {
-            MainWP_Utility::update_user_option( 'lasttime_hidden_phpver_8_0', time() );
         }
 
         $time_set = isset( $_POST['time_set'] ) && 1 === intval( $_POST['time_set'] ) ? true : false;
@@ -872,7 +867,13 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
         $this->secure_request( 'mainwp_security_issues_request' );
 
         try {
-            wp_send_json( array( 'result' => MainWP_Security_Issues::fetch_security_issues() ) );
+            $result = MainWP_Security_Issues::fetch_security_issues();
+            wp_send_json(
+                array(
+                    'result'             => $result,
+                    'phpversion_message' => MainWP_PHP_Security::get_message(),
+                )
+            );
         } catch ( MainWP_Exception $e ) {
             die(
                 wp_json_encode(

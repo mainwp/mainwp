@@ -1937,7 +1937,7 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $others = array(
             'force_use_ipv4' => $website->force_use_ipv4,
-            'upgrade'        => ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ),
+            'upgrade'        => ( 'upgradepluginexact' === $what || 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what ),
         );
 
         if ( isset( $rawResponse ) && $rawResponse ) {
@@ -1952,9 +1952,13 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         $premium_update = 'process_premium_updates' === $what && ! empty( $params['premium_perform'] ) && 'premium_update' === $params['premium_perform'] ? true : false;
 
-        if ( 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what || $premium_update ) {
+        if ( 'upgradepluginexact' === $what || 'upgradeplugintheme' === $what || 'upgrade' === $what || 'upgradetranslation' === $what || $premium_update ) {
             $updating_website = true;
-            if ( $premium_update ) {
+            if ( 'upgradepluginexact' === $what ) {
+                $type         = 'plugin';
+                $list         = is_string( $params['slug'] ?? null ) ? $params['slug'] : '';
+                $pRetryFailed = false; // A lost exact-update response must not resend the mutation.
+            } elseif ( $premium_update ) {
                 $type = $params['premium_type'];
                 $list = $params['list'];
             } elseif ( 'upgradeplugintheme' === $what || 'upgradetranslation' === $what ) {

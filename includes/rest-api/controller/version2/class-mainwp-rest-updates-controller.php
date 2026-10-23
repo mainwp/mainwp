@@ -204,6 +204,19 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
             )
         );
 
+        // A separate route prevents older Dashboards from ignoring version bindings.
+        register_rest_route(
+            $this->namespace,
+            '/' . $this->rest_base . '/(?P<id_domain>[A-Za-z0-9-\.]+)/update/plugins/exact',
+            array(
+                array(
+                    'methods'             => WP_REST_Server::CREATABLE,
+                    'callback'            => array( $this, 'update_plugin_site_exact' ),
+                    'permission_callback' => array( $this, 'get_rest_permissions_check' ),
+                ),
+            )
+        );
+
         register_rest_route(
             $this->namespace,
             '/' . $this->rest_base . '/(?P<id_domain>[A-Za-z0-9-\.]+)/update/themes',
@@ -1242,6 +1255,78 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         );
 
         return rest_ensure_response( $resp_data );
+    }
+
+    /**
+     * Update one plugin with current and target versions enforced by the Child.
+     *
+     * This requires the Child's upgradepluginexact command. Never fall back to
+     * upgradeplugintheme: older children cannot enforce these version bindings.
+     *
+     * @param WP_REST_Request $request Request containing a JSON selection.
+     * @return WP_Error|WP_REST_Response
+     */
+    public function update_plugin_site_exact( $request ) {
+        $website = $this->get_request_item( $request );
+        if ( is_wp_error( $website ) ) {
+            return $website;
+        }
+        // Preserve site scope even on Dashboards whose DB lookup bypasses it for REST.
+        $allowed         = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
+        $site_is_allowed = is_array( $allowed ) && in_array( (int) $website->id, array_map( 'intval', $allowed ), true );
+        if ( 'all' !== $allowed && ! $site_is_allowed ) {
+            return new WP_Error( 'mainwp_exact_site_unavailable', 'Site is outside the caller scope.', array( 'status' => 403 ) );
+        }
+        $selection = $request->get_json_params();
+        foreach ( array( 'slug', 'current_version', 'target_version' ) as $key ) {
+            if ( ! isset( $selection[ $key ] ) || ! is_string( $selection[ $key ] ) ) {
+                return new WP_Error( 'mainwp_exact_invalid_request', 'One plugin and both exact versions are required.', array( 'status' => 400 ) );
+            }
+        }
+        $slug = $selection['slug'];
+        if ( ! preg_match( '~^[a-zA-Z0-9_-][a-zA-Z0-9._-]*/[a-zA-Z0-9_-][a-zA-Z0-9._-]*\.php$~D', $slug ) ||
+            ! preg_match( '/^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,99}$/D', $selection['current_version'] ) ||
+            ! preg_match( '/^[a-zA-Z0-9][a-zA-Z0-9.+_-]{0,99}$/D', $selection['target_version'] ) ||
+            ! version_compare( $selection['target_version'], $selection['current_version'], '>' ) ) {
+            return new WP_Error( 'mainwp_exact_invalid_request', 'One plugin and a strictly newer exact target version are required.', array( 'status' => 400 ) );
+        }
+        if ( \MainWP\Dashboard\MainWP_System_Utility::is_suspended_site( $website ) || ! empty( $website->sync_errors ) || $website->is_ignorePluginUpdates ) {
+            return new WP_Error( 'mainwp_exact_site_unavailable', 'Site is suspended, disconnected or ignores plugin updates.', array( 'status' => 409 ) );
+        }
+        $updates = json_decode( $website->plugin_upgrades, true );
+        $user    = MainWP_DB_Common::instance()->get_user_extension();
+        foreach ( array( $website->ignored_plugins, is_object( $user ) ? ( $user->ignored_plugins ?? '' ) : '' ) as $ignored ) {
+            $ignored = ! empty( $ignored ) ? json_decode( $ignored, true ) : array();
+            $updates = MainWP_Common_Functions::instance()->get_not_ignored_updates_themesplugins( $updates, $ignored );
+        }
+        if ( ! is_array( $updates ) || ! isset( $updates[ $slug ] ) ) {
+            return new WP_Error( 'mainwp_exact_update_unavailable', 'Plugin update is absent or ignored.', array( 'status' => 409 ) );
+        }
+        $params = array_intersect_key( $selection, array_flip( array( 'slug', 'current_version', 'target_version' ) ) );
+        try {
+            $result = MainWP_Connect::fetch_url_authed( $website, 'upgradepluginexact', $params );
+        } catch ( \Exception $e ) {
+            return new WP_Error( 'mainwp_exact_update_failed', $e->getMessage(), array( 'status' => 502 ) );
+        }
+        if ( ! is_array( $result ) || ( $result['success'] ?? null ) !== 1 || ( $result['contract'] ?? null ) !== 'mainwp.plugin-update-exact.v1' ) {
+            return new WP_Error( 'mainwp_exact_update_unconfirmed', 'Child did not confirm an exact plugin update.', array( 'status' => 502 ) );
+        }
+        foreach ( $params as $key => $value ) {
+            if ( ( $result[ $key ] ?? null ) !== $value ) {
+                return new WP_Error( 'mainwp_exact_update_unconfirmed', 'Child returned a different update selection.', array( 'status' => 502 ) );
+            }
+        }
+        // A confirmed command may omit sync data. Refresh through the normal
+        // Dashboard path rather than leaving the completed update pending.
+        if ( ! \MainWP\Dashboard\MainWP_Sync::sync_website( $website, false ) ) {
+            return new WP_Error( 'mainwp_exact_sync_failed', 'Update acknowledged, but site refresh failed.', array( 'status' => 502 ) );
+        }
+        $fresh   = MainWP_DB::instance()->get_website_by_id( $website->id );
+        $pending = $fresh ? json_decode( $fresh->plugin_upgrades, true ) : null;
+        if ( ! is_array( $pending ) || ( $pending[ $slug ]['update']['new_version'] ?? null ) === $selection['target_version'] ) {
+            return new WP_Error( 'mainwp_exact_sync_failed', 'Update acknowledged, but plugin inventory is still unconfirmed.', array( 'status' => 502 ) );
+        }
+        return rest_ensure_response( $result );
     }
 
     /**

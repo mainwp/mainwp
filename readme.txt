@@ -7,7 +7,7 @@ Plugin URI: https://mainwp.com
 Requires at least: 6.2
 Tested up to: 7.1.3
 Requires PHP: 8.3
-Stable tag: 6.4-rc.2
+Stable tag: 6.4-rc.3
 License: GPLv3 or later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -153,6 +153,17 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 11. Dashboard Insights
 
 == Changelog ==
+
+= 6.4-rc.3 - 10-24-2026 =
+
+* Fixed: Improved handling of quotes, commas, backslashes, and failed-row retries in Users CSV imports.
+* Fixed: Server Information and Quick Setup consistently show the Dashboard’s PHP 8.3 requirement; removed an obsolete PHP upgrade notice.
+* Fixed: Connectivity charts display only Connected, Disconnected, and Suspended sites, with accurate proportions.
+* Fixed: Resolved PHP compatibility warnings in REST settings handling.
+* Updated: Imported user passwords are excluded from import logs and failed-row CSV downloads.
+* Updated: Site Hardening now checks PHP versions against supported branches and security releases using cached PHP.net data.
+* Updated: Renamed the backup extensions navigation group to Backup Integrations.
+* Updated: Clarified Knowledge help text and standardized knowledge modal title capitalization.
 
 = 6.4-rc.2 - 10-23-2026 =
 

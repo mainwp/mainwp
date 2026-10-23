@@ -19,12 +19,34 @@ namespace MainWP\Dashboard {
 		}
 		public function update_website_option( $site, $key, $value ) {
 			$GLOBALS['site_options'][ $site->id ][ $key ] = $value;
+			$GLOBALS['site_writes'][] = array( $site->id, $key, $value );
 		}
 		public function update_website_values( $id, $values ) {
 			$GLOBALS['site_values'][ $id ] = $values;
+			$GLOBALS['site_writes'][] = array( $id, $values );
 		}
 		public function get_website_by_id( $id ) {
 			return (object) array( 'id' => $id, 'name' => 'QA site' );
+		}
+		public function get_sql_websites_for_current_user_by_params( $params ) {
+			$GLOBALS['site_queries'][] = $params;
+			return 'saved-sites';
+		}
+		public function query( $sql ) {
+			$sites = array();
+			foreach ( $GLOBALS['site_options'] as $id => $options ) {
+				$sites[] = (object) array_merge(
+					array( 'id' => $id, 'name' => 'QA site', 'phpversion' => null, 'security_stats' => null, 'securityIssues' => '' ),
+					$options,
+					$GLOBALS['site_values'][ $id ] ?? array()
+				);
+			}
+			return new \ArrayIterator( $sites );
+		}
+		public static function fetch_object( $sites ) {
+			$site = $sites->current();
+			$sites->next();
+			return $site;
 		}
 	}
 	class MainWP_Connect {
@@ -76,8 +98,12 @@ namespace {
 		return $GLOBALS['options'][ $key ] ?? $default;
 	}
 	function update_option( $key, $value, $autoload = null ) {
+		if ( ! empty( $GLOBALS['fail_cache_write'] ) || ( $GLOBALS['options'][ $key ] ?? null ) === $value ) {
+			return false;
+		}
 		$GLOBALS['options'][ $key ] = $value;
 		$GLOBALS['autoload'][ $key ] = $autoload;
+		return true;
 	}
 	function get_transient( $key ) {
 		$value = $GLOBALS['transients'][ $key ] ?? null;
@@ -126,7 +152,10 @@ namespace {
 	$GLOBALS['filter_stats']  = $input['filter_stats'] ?? false;
 	$GLOBALS['transients']    = array();
 	$GLOBALS['requests']      = array();
-	$GLOBALS['site_values']   = array();
+	$GLOBALS['site_values']   = $input['site_values'] ?? array();
+	$GLOBALS['site_writes']   = array();
+	$GLOBALS['site_queries']  = array();
+	$GLOBALS['fail_cache_write'] = $input['fail_cache_write'] ?? false;
 	$GLOBALS['autoload']      = array();
 	$GLOBALS['child_request'] = null;
 	$GLOBALS['secured_action'] = null;
@@ -149,7 +178,9 @@ namespace {
 				break;
 			case 'general_cron':
 				$cron = new class() extends \MainWP\Dashboard\MainWP_System_Cron_Jobs {
-					public function perform_sequence_process() {}
+					public function perform_sequence_process() {
+						$GLOBALS['sequence_site_values'] = $GLOBALS['site_values'];
+					}
 				};
 				$cron->cron_perform_general_process();
 				break;
@@ -185,6 +216,9 @@ namespace {
 			'options'        => $GLOBALS['options'],
 			'site_options'   => $GLOBALS['site_options'],
 			'site_values'    => $GLOBALS['site_values'],
+			'site_writes'    => $GLOBALS['site_writes'],
+			'site_queries'   => $GLOBALS['site_queries'],
+			'sequence_site_values' => $GLOBALS['sequence_site_values'] ?? null,
 			'requests'       => $GLOBALS['requests'],
 			'autoload'       => $GLOBALS['autoload'],
 			'child_request'  => $GLOBALS['child_request'],

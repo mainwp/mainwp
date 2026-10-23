@@ -154,6 +154,123 @@ test( 'a rollback cannot lower a known security baseline', () => {
     assert.equal( result.options[ cacheKey ].checked_at, now - 21600 );
 } );
 
+test( 'a successful background refresh persists changed site results before the next scheduled process', () => {
+    const options = fresh();
+    options[ cacheKey ].checked_at -= 21600;
+    options[ cacheKey ].branches[ '8.3' ].security = '8.3.35';
+    const result = run( {
+        options, responses: replies(), actions: [ { method: 'general_cron' } ],
+        site_options: {
+            1: { phpversion: '8.3.35', security_stats: JSON.stringify( stats ) },
+            2: { phpversion: '8.3.36', security_stats: JSON.stringify( { ...stats, phpversion_matched: 'N' } ) },
+            3: { phpversion: '8.3.36', security_stats: JSON.stringify( stats ) }
+        },
+        site_values: { 1: { securityIssues: '1' }, 2: { securityIssues: '2' }, 3: { securityIssues: '1' } }
+    } );
+    assert.deepEqual( JSON.parse( result.site_options[ 1 ].security_stats ), { ...stats, phpversion_matched: 'N' } );
+    assert.deepEqual( JSON.parse( result.site_options[ 2 ].security_stats ), stats );
+    assert.equal( result.site_values[ 1 ].securityIssues, 2 );
+    assert.equal( result.site_values[ 2 ].securityIssues, 1 );
+    assert.deepEqual( result.sequence_site_values, result.site_values, 'Persist before the cron dispatcher moves on' );
+    assert.deepEqual( result.site_writes.map( write => write[ 0 ] ), [ 1, 1, 2, 2 ], 'Unchanged sites need no writes' );
+    assert.deepEqual( result.site_queries, [ {
+        for_manager: true, view: 'custom_view', others_fields: [ 'phpversion', 'security_stats' ]
+    } ], 'Use the shared background query across all sites' );
+    assert.equal( result.child_request, null );
+    assert.equal( result.requests.length, 2, 'Only the shared PHP.net requests run' );
+} );
+
+test( 'removing a supported branch immediately updates saved site status and recommendation count', () => {
+    const options = fresh();
+    options[ cacheKey ].checked_at -= 21600;
+    const result = run( {
+        options, responses: replies(), actions: [ refresh ],
+        site_options: { 1: { phpversion: '8.2.35', security_stats: JSON.stringify( stats ) } },
+        site_values: { 1: { securityIssues: 1 } }
+    } );
+    assert.deepEqual( JSON.parse( result.site_options[ 1 ].security_stats ), { ...stats, phpversion_matched: 'N' } );
+    assert.equal( result.site_values[ 1 ].securityIssues, 2 );
+} );
+
+test( 'a new bugfix release alone does not change saved Good status or cause unnecessary writes', () => {
+    const options = fresh();
+    options[ cacheKey ].checked_at -= 21600;
+    options[ cacheKey ].branches[ '8.3' ].latest = '8.3.36';
+    const result = run( {
+        options, responses: replies(), actions: [ refresh ],
+        site_options: { 1: { phpversion: '8.3.36', security_stats: JSON.stringify( stats ) } },
+        site_values: { 1: { securityIssues: '1' } }
+    } );
+    assert.deepEqual( result.site_writes, [] );
+    assert.equal( result.options[ cacheKey ].branches[ '8.3' ].latest, '8.3.38' );
+} );
+
+test( 'background recalculation honors existing extension overrides and counts custom issues', () => {
+    const result = run( {
+        responses: replies(), actions: [ refresh ], filter_stats: { phpversion_matched: 'Y', custom: 'N' },
+        site_options: { 1: { phpversion: '8.3.35', security_stats: JSON.stringify( stats ) } },
+        site_values: { 1: { securityIssues: 1 } }
+    } );
+    assert.deepEqual( JSON.parse( result.site_options[ 1 ].security_stats ), { ...stats, custom: 'N' } );
+    assert.equal( result.site_values[ 1 ].securityIssues, 2 );
+    assert.equal( result.child_request, null );
+} );
+
+test( 'background refresh skips missing, malformed and legacy results without inventing other checks', () => {
+    const site_options = Object.fromEntries( [ null, '', '{invalid', '[]', 'null', JSON.stringify( { db_reporting: 'N' } ) ]
+        .map( ( security_stats, i ) => [ i + 1, { phpversion: '8.3.35', security_stats } ] ) );
+    const result = run( { responses: replies(), actions: [ refresh ], site_options } );
+    assert.deepEqual( result.site_options, site_options );
+    assert.deepEqual( result.site_writes, [] );
+} );
+
+test( 'a saved Good result without a detected PHP version becomes unverifiable after refresh', () => {
+    const result = run( {
+        responses: replies(), actions: [ refresh ],
+        site_options: { 1: { security_stats: JSON.stringify( stats ) } },
+        site_values: { 1: { securityIssues: 1 } }
+    } );
+    assert.deepEqual( JSON.parse( result.site_options[ 1 ].security_stats ), { ...stats, phpversion_matched: 'N' } );
+    assert.equal( result.site_values[ 1 ].securityIssues, 2 );
+} );
+
+test( 'background recalculation repairs an outdated count even if all stored statuses already match', () => {
+    const result = run( {
+        responses: replies(), actions: [ refresh ],
+        site_options: { 1: { phpversion: '8.3.36', security_stats: JSON.stringify( stats ) } },
+        site_values: { 1: { securityIssues: 0 } }
+    } );
+    assert.deepEqual( result.site_writes, [ [ 1, { securityIssues: 1 } ] ] );
+} );
+
+for ( const [ name, responses, fail_cache_write ] of [
+    [ 'failed request', [ { error: true } ], false ],
+    [ 'incomplete response', [ { data: catalog }, { data: {} } ], false ],
+    [ 'baseline rollback', [ { data: catalog }, { data: { '8.3.35': { tags: [ 'security' ] } } } ], false ],
+    [ 'failed cache write', replies(), true ]
+] ) {
+    test( `${name} leaves saved results untouched and does not start site recalculation`, () => {
+        const options = fresh();
+        options[ cacheKey ].checked_at -= 21600;
+        const site_options = { 1: { phpversion: '8.3.35', security_stats: JSON.stringify( stats ) } };
+        const result = run( { options, site_options, responses, fail_cache_write, actions: [ refresh ] } );
+        assert.deepEqual( result.options, options );
+        assert.deepEqual( result.site_options, site_options );
+        assert.deepEqual( result.site_queries, [] );
+        assert.deepEqual( result.site_writes, [] );
+    } );
+}
+
+test( 'a fresh cache skips both upstream requests and site recalculation', () => {
+    const result = run( {
+        options: fresh(), actions: [ refresh ],
+        site_options: { 1: { phpversion: '8.3.35', security_stats: JSON.stringify( stats ) } }
+    } );
+    assert.deepEqual( result.requests, [] );
+    assert.deepEqual( result.site_queries, [] );
+    assert.deepEqual( result.site_writes, [] );
+} );
+
 for ( const [ version, status, issues ] of [ [ '8.3.35', 'N', 2 ], [ '8.3.36', 'Y', 1 ], [ false, 'N', 2 ] ] ) {
     test( `scan reuses detected PHP ${version} and preserves other statuses and counts`, () => {
         const result = run( { options: fresh(), site_options: { 1: { phpversion: version } }, child_reply: stats, actions: [ { method: 'post' } ] } );

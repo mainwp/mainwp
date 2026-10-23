@@ -191,7 +191,7 @@ class MainWP_PHP_Security {
                 'security' => $security,
             );
         }
-        update_option(
+        $updated = update_option(
             static::CACHE_KEY,
             array(
                 'branches'   => $branches,
@@ -199,6 +199,54 @@ class MainWP_PHP_Security {
             ),
             false
         );
+        if ( $updated ) {
+            static::refresh_site_results();
+        }
+    }
+
+    /**
+     * Recheck saved site results without fetching anything from Child sites.
+     *
+     * @return void
+     */
+    private static function refresh_site_results() {
+        $db       = MainWP_DB::instance();
+        $websites = $db->query(
+            $db->get_sql_websites_for_current_user_by_params(
+                array(
+                    // This background refresh covers all sites, including staging.
+                    'for_manager'   => true,
+                    'view'          => 'custom_view',
+                    'others_fields' => array( 'phpversion', 'security_stats' ),
+                )
+            )
+        );
+        while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+            $stats = json_decode( (string) $website->security_stats, true );
+            if ( ! is_array( $stats ) || ! isset( $stats['phpversion_matched'] ) ) {
+                continue;
+            }
+            $updated = static::apply_to_stats( $stats, $website->phpversion );
+            /** This filter is documented in ../pages/page-mainwp-security-issues.php */
+            $filtered = apply_filters( 'mainwp_security_issues_stats', false, $updated, $website );
+            if ( false !== $filtered && is_array( $filtered ) ) {
+                $updated = array_merge( $updated, $filtered );
+            }
+            $issues = count(
+                array_filter(
+                    $updated,
+                    static function ( $value ) {
+                        return 'N' === $value;
+                    }
+                )
+            );
+            if ( $updated !== $stats ) {
+                $db->update_website_option( $website, 'security_stats', wp_json_encode( $updated ) );
+            }
+            if ( (string) $website->securityIssues !== (string) $issues ) {
+                $db->update_website_values( $website->id, array( 'securityIssues' => $issues ) );
+            }
+        }
     }
 
     /**

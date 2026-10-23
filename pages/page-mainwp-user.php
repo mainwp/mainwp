@@ -2199,23 +2199,25 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                             continue;
                         }
 
-                        $items = str_getcsv( $line, ',' );
+                        // Match import_csv_line(): quotes are doubled and backslashes are literal.
+                        $items = str_getcsv( $line, ',', '"', '' );
 
                         if ( 10 > count( $items ) ) {
                             continue;
                         }
 
+                        // CSV cells come from raw file contents, not slashed request data.
                         $import_data = array(
-                            'user_login'    => sanitize_text_field( wp_unslash( $items[0] ) ),
-                            'email'         => sanitize_text_field( wp_unslash( $items[1] ) ),
-                            'first_name'    => sanitize_text_field( wp_unslash( $items[2] ) ),
-                            'last_name'     => sanitize_text_field( wp_unslash( $items[3] ) ),
-                            'url'           => sanitize_text_field( wp_unslash( $items[4] ) ),
-                            'pass1'         => sanitize_text_field( wp_unslash( $items[5] ) ),
+                            'user_login'    => sanitize_text_field( $items[0] ),
+                            'email'         => sanitize_text_field( $items[1] ),
+                            'first_name'    => sanitize_text_field( $items[2] ),
+                            'last_name'     => sanitize_text_field( $items[3] ),
+                            'url'           => sanitize_text_field( $items[4] ),
+                            'pass1'         => sanitize_text_field( $items[5] ),
                             'send_password' => intval( $items[6] ),
-                            'role'          => sanitize_text_field( wp_unslash( strtolower( $items[7] ) ) ),
-                            'select_sites'  => sanitize_text_field( wp_unslash( $items[8] ) ),
-                            'select_groups' => sanitize_text_field( wp_unslash( $items[9] ) ),
+                            'role'          => sanitize_text_field( strtolower( $items[7] ) ),
+                            'select_sites'  => sanitize_text_field( $items[8] ),
+                            'select_groups' => sanitize_text_field( $items[9] ),
                         );
                         $encoded     = wp_json_encode( $import_data );
 

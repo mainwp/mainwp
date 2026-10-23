@@ -70,6 +70,13 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
     private static $batch_size = 5;
 
     /**
+     * Database instance.
+     *
+     * @var MainWP_DB
+     */
+    private $db = null;
+
+    /**
      * Constructor.
      */
     public function __construct() {

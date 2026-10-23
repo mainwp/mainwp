@@ -154,7 +154,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 
 == Changelog ==
 
-= 6.4-rc.3 - 10-24-2026 =
+= 6.4-rc.3 - 10-23-2026 =
 
 * Fixed: Improved handling of quotes, commas, backslashes, and failed-row retries in Users CSV imports.
 * Fixed: Server Information and Quick Setup consistently show the Dashboard’s PHP 8.3 requirement; removed an obsolete PHP upgrade notice.
@@ -165,7 +165,7 @@ The Dashboard drives Child backups from WP-Cron in one-minute slices. WP-Cron on
 * Updated: Renamed the backup extensions navigation group to Backup Integrations.
 * Updated: Clarified Knowledge help text and standardized knowledge modal title capitalization.
 
-= 6.4-rc.2 - 10-23-2026 =
+= 6.4-rc.2 - 10-22-2026 =
 
 * Fixed: Cost Tracker settings now follow the dedicated settings permission.
 * Fixed: Sites filters and totals refresh correctly when connection status changes after syncing or reconnecting.

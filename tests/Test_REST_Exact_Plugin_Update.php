@@ -253,7 +253,8 @@ class Test_REST_Exact_Plugin_Update extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array( 'upgradepluginexact', 'stats' ), array_column( $this->calls, 'command' ) );
 	}
 
-	public function test_exact_command_uses_standard_update_transport_lifecycle() {
+	/** @dataProvider transport_selections */
+	public function test_exact_command_uses_standard_update_transport_lifecycle( $selection, $expected_slug ) {
 		remove_filter( 'mainwp_fetch_url_authed_pre', array( $this, 'child' ), 10 );
 		$events = array();
 		$before = static function ( $site, $type, $list ) use ( &$events ) {
@@ -269,20 +270,31 @@ class Test_REST_Exact_Plugin_Update extends MainWP_Abilities_Test_Case {
 			$result                                = Test_MainWP_Exact_Transport::fetch_url_authed(
 				$this->site,
 				'upgradepluginexact',
-				array(
-					'slug'            => 'fixture/fixture.php',
-					'current_version' => '1.0',
-					'target_version'  => '1.1',
-				)
+				$selection
 			);
 			$this->assertSame( $this->response, $result );
 			$this->assertTrue( Test_MainWP_Exact_Transport::$others['upgrade'] );
 			$this->assertFalse( Test_MainWP_Exact_Transport::$retry );
-			$this->assertSame( array( array( 'before', 'plugin', 'fixture/fixture.php' ), array( 'after', 'plugin', 'fixture/fixture.php' ) ), $events );
+			$this->assertSame( array( array( 'before', 'plugin', $expected_slug ), array( 'after', 'plugin', $expected_slug ) ), $events );
 		} finally {
 			remove_action( 'mainwp_website_before_updated', $before, 10 );
 			remove_action( 'mainwp_website_updated', $after, 10 );
 		}
+	}
+
+	public function transport_selections() {
+		return array(
+			array(
+				array(
+					'slug'            => 'fixture/fixture.php',
+					'current_version' => '1.0',
+					'target_version'  => '1.1',
+				),
+				'fixture/fixture.php',
+			),
+			array( array(), '' ),
+			array( array( 'slug' => array( 'fixture/fixture.php' ) ), '' ),
+		);
 	}
 
 	public function test_real_site_lookup_refuses_foreign_site_scope() {

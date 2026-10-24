@@ -5680,7 +5680,7 @@ class MainWP_Abilities_Backups {
             'mainwp/update-backup-destination-v1',
             array(
                 'label'               => __( 'Update Backup Destination', 'mainwp' ),
-                'description'         => __( 'Rename a destination or change its default flag. Nothing else can be changed here: credentials, hosts, buckets and paths are edited on the Backup Storage page. The stored connection is tested before saving, and an SFTP destination without a pinned host key pins the key on first contact. Requires an account with access to all sites. Possible errors: mainwp_invalid_input, mainwp_backup_destination_not_found, mainwp_backup_destination_credentials_required, mainwp_backup_legacy_disabled, mainwp_restricted_account, and the provider\'s failure code when the connection test fails.', 'mainwp' ),
+                'description'         => __( 'Rename a destination, change its default flag, or set its minimum remote retention from 0 to 36500 days. Credentials, hosts, buckets and paths are edited on the Backup Storage page. The stored connection is tested before saving, and an SFTP destination without a pinned host key pins the key on first contact. Requires an account with access to all sites. Possible errors: mainwp_invalid_input, mainwp_backup_destination_not_found, mainwp_backup_destination_credentials_required, mainwp_backup_legacy_disabled, mainwp_restricted_account, and the provider\'s failure code when the connection test fails.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::update_backup_destination_input_schema(),

@@ -268,6 +268,36 @@ class MainWP_Backup_Archive_Reservation_Test extends MainWP_Abilities_Test_Case 
 		$this->assertFileDoesNotExist( $path );
 		$this->assertSame( 'keep', file_get_contents( $dir . 'full.tar.gz' ) );
 	}
+	/** Malformed stored counts cannot authorize deleting existing archives. */
+	public function test_malformed_server_count_keeps_download_archives(): void {
+		$site = $this->create_test_site();
+		$dir  = MainWP_Backup_Private_Root::site_dir( $site );
+		foreach ( array( 'invalid', '1.5', '-1' ) as $value ) {
+			file_put_contents( $dir . 'old.zip', 'old archive' );
+			file_put_contents( $dir . 'older.zip', 'older archive' );
+			update_option( 'mainwp_backupsOnServer', $value );
+			$this->assertNull( \MainWP\Dashboard\MainWP_Backup_Settings::get_server_retention_count() );
+			MainWP_Backup_File_Manager::sweep_backup_download_files( $site, 'full', $dir . 'incoming.zip', false );
+			$this->assertFileExists( $dir . 'old.zip' );
+			$this->assertFileExists( $dir . 'older.zip' );
+			$this->assertSame( $value, get_option( 'mainwp_backupsOnServer' ) );
+		}
+	}
+
+	/** An absent option retains the established one-backup limit without storing it. */
+	public function test_missing_server_count_uses_default_without_backfill(): void {
+		$site = $this->create_test_site();
+		$dir  = MainWP_Backup_Private_Root::site_dir( $site );
+		file_put_contents( $dir . 'old.zip', 'old archive' );
+		file_put_contents( $dir . 'older.zip', 'older archive' );
+		delete_option( 'mainwp_backupsOnServer' );
+		$this->assertSame( 1, \MainWP\Dashboard\MainWP_Backup_Settings::get_server_retention_count() );
+		MainWP_Backup_File_Manager::sweep_backup_download_files( $site, 'full', $dir . 'incoming.zip', false );
+		$this->assertFileDoesNotExist( $dir . 'old.zip' );
+		$this->assertFileDoesNotExist( $dir . 'older.zip' );
+		$this->assertFalse( get_option( 'mainwp_backupsOnServer' ) );
+	}
+
 	/** Zero means unlimited while the incoming download directory is still prepared. */
 	public function test_zero_server_retention_keeps_all_download_archives() {
 		$site = $this->create_test_site();
@@ -275,6 +305,7 @@ class MainWP_Backup_Archive_Reservation_Test extends MainWP_Abilities_Test_Case 
 		file_put_contents( $dir . 'old.zip', 'old archive' );
 		file_put_contents( $dir . 'older.zip', 'older archive' );
 		update_option( 'mainwp_backupsOnServer', 0 );
+		$this->assertSame( 0, \MainWP\Dashboard\MainWP_Backup_Settings::get_server_retention_count() );
 		MainWP_Backup_File_Manager::sweep_backup_download_files( $site, 'full', $dir . 'incoming.zip', false );
 		$this->assertFileExists( $dir . 'old.zip' );
 		$this->assertFileExists( $dir . 'older.zip' );

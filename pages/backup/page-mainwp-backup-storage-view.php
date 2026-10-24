@@ -533,7 +533,10 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
                     is_default: jQuery( '#mainwp-storage-is-default' ).is( ':checked' ) ? 1 : 0
                 };
                 let settings = collectSettings();
-                settings.minimum_remote_retention_days = jQuery( '#mainwp-storage-minimum-remote-retention-days' ).val();
+                let minimum = jQuery( '#mainwp-storage-minimum-remote-retention-days' ).val();
+                if ( '' !== minimum ) {
+                    settings.minimum_remote_retention_days = minimum;
+                }
                 for ( let key in settings ) {
                     data[ 'settings[' + key + ']' ] = settings[ key ];
                 }
@@ -650,6 +653,7 @@ class MainWP_Backup_Storage_View { // phpcs:ignore Generic.Classes.OpeningBraceS
             jQuery( '.mainwp-storage-edit' ).on( 'click', function ( event ) {
                 event.preventDefault();
                 resetForm();
+                jQuery( '#mainwp-storage-minimum-remote-retention-days' ).val( '' );
                 jQuery( '#mainwp-storage-form-message-zone' ).hide();
                 storageModal.modal( 'show' );
                 let row = jQuery( this ).closest( 'tr' );

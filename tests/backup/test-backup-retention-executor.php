@@ -2881,6 +2881,9 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	}
 	/** A failed second unlink resumes without deleting the Child manifest or upload records. */
 	public function test_remote_only_interrupted_eviction_resumes_after_backup_hold() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root bypasses directory write permissions.' );
+		}
 		$destination = $this->make_retention_destination();
 		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
 		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
@@ -3289,5 +3292,70 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array( $base ), $second['deleted_ids'] );
 		$this->assertSame( array(), $second['remaining_ids'] );
 		$this->assertSame( array(), $second['errors'] );
+	}
+	/** Retained manifests and already-offloaded payloads do not consume eviction work. */
+	public function test_remote_only_skips_offloaded_history_and_reaches_new_local_payload() {
+		list( $old, $old_dir )     = $this->make_verified_retention_snapshot();
+		list( $alias, $alias_dir ) = $this->make_verified_retention_snapshot();
+		list( $fresh, $fresh_dir ) = $this->make_verified_retention_snapshot();
+		file_put_contents( $old_dir . '/files.list', 'retained manifest' );
+		file_put_contents( $old_dir . '/tombstones.list', 'retained tombstones' );
+		$old_snapshot   = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $old );
+		$old_archives   = $old_snapshot->archives;
+		$old_archives[] = array(
+			'file' => 'files.list',
+			'role' => 'manifest',
+			'path' => $old_dir . '/files.list',
+			'size' => 17,
+		);
+		$old_archives[] = array(
+			'file' => 'tombstones.list',
+			'role' => 'tombstones',
+			'path' => $old_dir . '/tombstones.list',
+			'size' => 19,
+		);
+		global $wpdb;
+		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->update( $snapshot_table, array( 'archives' => wp_json_encode( $old_archives ) ), array( 'id' => $old ) );
+		$old_job                 = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $old )[0];
+		$checkpoint              = $old_job->checkpoint;
+		$checkpoint['artifacts'] = $this->verified_artifacts( $old );
+		MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( $old_job->id, $checkpoint );
+		unlink( $old_dir . '/artifact.tar' );
+		// An archive descriptor can point at manifest_path even without a manifest role.
+		$wpdb->update( $snapshot_table, array( 'manifest_path' => $alias_dir . '/artifact.tar' ), array( 'id' => $alias ) );
+		$job_table       = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$claims          = array();
+		$protected_reads = array();
+		$watch           = static function ( $sql ) use ( &$claims, &$protected_reads, $job_table, $snapshot_table, $old, $alias ) {
+			if ( 0 === strpos( $sql, 'UPDATE ' . $job_table . ' SET locked_by' ) && preg_match( '/snapshot_id IN \(([0-9, ]+)\)/', $sql, $matches ) ) {
+				foreach ( array_map( 'intval', explode( ',', $matches[1] ) ) as $id ) {
+					$claims[] = $id;
+					if ( in_array( $id, array( $old, $alias ), true ) ) {
+						// Model slow historical verification without a wall-clock sleep.
+						MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 120;
+					}
+				}
+			}
+			if ( 0 === strpos( $sql, 'SELECT archives, manifest_path FROM ' . $snapshot_table ) && preg_match( '/id <> ([0-9]+)/', $sql, $matches ) ) {
+				$protected_reads[] = (int) $matches[1];
+			}
+			return $sql;
+		};
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = microtime( true );
+		add_filter( 'query', $watch );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $this->site_id, $this->task_id, 60 );
+		} finally {
+			remove_filter( 'query', $watch );
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+		}
+		$this->assertSame( array( $fresh ), $result['evicted_ids'] );
+		$this->assertSame( array( $fresh ), $claims, 'Only snapshots with an evictable payload need upload claims.' );
+		$this->assertSame( array( $fresh ), $protected_reads, 'Already-offloaded history needs no site-wide protected-path scan.' );
+		$this->assertFileDoesNotExist( $fresh_dir . '/artifact.tar' );
+		$this->assertFileExists( $old_dir . '/files.list' );
+		$this->assertFileExists( $old_dir . '/tombstones.list' );
+		$this->assertFileExists( $alias_dir . '/artifact.tar' );
 	}
 }

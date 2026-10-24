@@ -1905,8 +1905,8 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 	 * complete backup snapshots: snapshot retention owns their lifecycle.
 	 *
 	 * @dataProvider legacy_server_retention_limits
-	 * @param int  $limit Configured count.
-	 * @param bool $unlimited Whether old unrecorded files survive.
+	 * @param mixed $limit Configured count.
+	 * @param bool  $unlimited Whether old unrecorded files survive.
 	 * @return void
 	 */
 	public function test_executor_sweep_skips_snapshot_recorded_file( $limit, $unlimited ) {
@@ -5940,11 +5940,13 @@ class MainWP_Backup_Executor_Test extends MainWP_Abilities_Test_Case { // phpcs:
 			'older claim' => array( false ),
 		);
 	}
-	/** Positive limits still prune; zero retains all eligible legacy files. */
+	/** Positive limits prune; zero and malformed stored values retain eligible files. */
 	public static function legacy_server_retention_limits() {
 		return array(
-			'positive'  => array( 1, false ),
-			'unlimited' => array( 0, true ),
+			'positive'   => array( 1, false ),
+			'unlimited'  => array( 0, true ),
+			'malformed'  => array( 'invalid', true ),
+			'fractional' => array( '1.5', true ),
 		);
 	}
 }

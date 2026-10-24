@@ -325,6 +325,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
         $chunking = false;
         try {
+            if ( 'dropbox' === $destination->provider && MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot ) ) {
+                $destination = MainWP_Backup_Storage_Destinations::instance()->prepare_retention_identity( $destination );
+                $provider    = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
+            }
             // Check persisted encryption intent before any upload phase can
             // write archive bytes or a manifest to the provider.
             $enc = $this->encryption_context_for( $snapshot );
@@ -335,8 +339,10 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
                 throw new \RuntimeException( 'The storage destination settings changed before this upload finished.', 410 );
             }
             if ( empty( $checkpoint['artifacts'] ) ) {
-                $checkpoint                        = $this->new_checkpoint( $snapshot );
-                $checkpoint['destination_binding'] = $binding;
+                $checkpoint = $this->new_checkpoint( $snapshot );
+                if ( MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot ) ) {
+                    $checkpoint['destination_binding'] = $binding;
+                }
                 if ( empty( $checkpoint['artifacts'] ) ) {
                     $error = 'The snapshot has no eligible artifacts to upload.';
                     if ( $store->fail_permanent( (int) $job->id, $error, $this->lock_token ) ) {

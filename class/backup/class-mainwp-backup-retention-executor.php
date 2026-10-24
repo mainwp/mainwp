@@ -281,6 +281,21 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             }
             foreach ( $query->get_units_for_site_task( $site_id, $task_id ) as $unit ) {
                 foreach ( $unit['snapshots'] as $snapshot ) {
+                    $has_local_payload = false;
+                    foreach ( (array) $snapshot->archives as $archive ) {
+                        $path = (string) ( $archive['path'] ?? '' );
+                        if ( '' === $path || in_array( $archive['role'] ?? '', array( 'manifest', 'tombstones' ), true )
+                            || MainWP_Backup_Snapshots::normalise_path( $path ) === MainWP_Backup_Snapshots::normalise_path( (string) $snapshot->manifest_path ) ) {
+                            continue;
+                        }
+                        if ( is_file( $path ) ) {
+                            $has_local_payload = true;
+                            break;
+                        }
+                    }
+                    if ( ! $has_local_payload ) {
+                        continue;
+                    }
                     if ( microtime( true ) >= $deadline ) {
                         ++$result['held'];
                         return $result;

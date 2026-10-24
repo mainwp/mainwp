@@ -271,6 +271,33 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Parse a global archive count without treating malformed input as unlimited.
+     *
+     * @param mixed $value Submitted or stored count.
+     * @return int|null Nonnegative count, or null for malformed values.
+     */
+    public static function normalize_global_retention_count( $value ): ?int {
+        if ( ! is_string( $value ) && ! is_int( $value ) && ! is_float( $value ) ) {
+            return null;
+        }
+        if ( is_string( $value ) && MainWP_Utility::ctype_digit( $value ) ) {
+            $value = ltrim( $value, '0' );
+            $value = '' === $value ? '0' : $value;
+        }
+        $count = filter_var( $value, FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 0 ) ) );
+        return false === $count ? null : $count;
+    }
+
+    /**
+     * A malformed stored limit cannot authorize deleting existing archives.
+     *
+     * @return int|null Missing options use one; null holds archives until a valid count is saved.
+     */
+    public static function get_server_retention_count(): ?int {
+        return self::normalize_global_retention_count( get_option( 'mainwp_backupsOnServer', 1 ) );
+    }
+
+    /**
      * Hidden rows must follow setting changes before their next backup.
      *
      * @param object $task Task row.
@@ -348,6 +375,20 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         self::$recovery_passphrase_rejected = '';
         if ( MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff() && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'BackupSettings' ) ) {
+                $counts = array();
+                foreach ( array(
+                    'mainwp_options_backupOnServer' => 'mainwp_backupsOnServer',
+                    'mainwp_options_backupOnExternalSources' => 'mainwp_backupOnExternalSources',
+                ) as $field => $option ) {
+                    if ( ! array_key_exists( $field, $_POST ) ) {
+                        continue;
+                    }
+                    $count = self::normalize_global_retention_count( wp_unslash( $_POST[ $field ] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the count parser rejects malformed values before any write.
+                    if ( null === $count ) {
+                        return false;
+                    }
+                    $counts[ $option ] = $count;
+                }
                 $old_primaryBackup       = get_option( 'mainwp_primaryBackup' );
                 $old_enableNativeBackups = static::is_native_backups_enabled();
                 $enableNativeBackups     = ! empty( $_POST['mainwp_options_enableNativeBackups'] );
@@ -361,17 +402,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( is_wp_error( MainWP_Backup_Operations::save_backup_settings( $values, 'ui' ) ) ) {
                     return false;
                 }
-                foreach ( array(
-                    'mainwp_options_backupOnServer' => 'mainwp_backupsOnServer',
-                    'mainwp_options_backupOnExternalSources' => 'mainwp_backupOnExternalSources',
-                ) as $field => $option ) {
-                    if ( ! isset( $_POST[ $field ] ) ) {
-                        continue;
-                    }
-                    $count = filter_var( wp_unslash( $_POST[ $field ] ), FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 0 ) ) );
-                    if ( false === $count ) {
-                        return false;
-                    }
+                foreach ( $counts as $option => $count ) {
                     MainWP_Utility::update_option( $option, $count );
                     if ( (string) get_option( $option, null ) !== (string) $count ) {
                         return false;

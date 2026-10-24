@@ -555,6 +555,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( is_wp_error( $body ) ) {
             return $body;
         }
+        $count_error = $this->validate_backup_retention_fields( $body );
+        if ( $count_error ) {
+            return $count_error;
+        }
         $body          = $this->fold_native_backups_alias( $body );
         $backup_fields = array(
             'mainwp_primary_backup'               => 'string',
@@ -1736,6 +1740,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( is_wp_error( $body ) ) {
             return $body;
         }
+        $count_error = $this->validate_backup_retention_fields( $body );
+        if ( $count_error ) {
+            return $count_error;
+        }
         $body = $this->fold_native_backups_alias( $body );
 
         $native_was_enabled = MainWP_Backup_Settings::is_native_backups_enabled();
@@ -2720,12 +2728,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'description'       => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => array( $this, 'validate_backup_retention_count' ),
             ),
             'mainwp_backup_on_external_sources'     => array(
                 'required'          => false,
                 'description'       => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => array( $this, 'validate_backup_retention_count' ),
             ),
             'mainwp_archive_format'                 => array(
                 'required'          => false,
@@ -2797,12 +2807,14 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'description'       => __( 'Backups on server. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => array( $this, 'validate_backup_retention_count' ),
             ),
             'mainwp_backup_on_external_sources'    => array(
                 'required'          => false,
                 'description'       => __( 'Backups on external sources. 0 means unlimited.', 'mainwp' ),
                 'type'              => 'string',
                 'sanitize_callback' => 'sanitize_text_field',
+                'validate_callback' => array( $this, 'validate_backup_retention_count' ),
             ),
             'mainwp_archive_format'                => array(
                 'required'          => false,
@@ -4326,6 +4338,31 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         return true;
+    }
+
+    /**
+     * Validate legacy string count fields before their sanitizers run.
+     *
+     * @param mixed $value Count submitted by a REST client.
+     * @return bool
+     */
+    public function validate_backup_retention_count( $value ): bool {
+        return null !== MainWP_Backup_Settings::normalize_global_retention_count( $value );
+    }
+
+    /**
+     * Direct callbacks must reject the same count values as route validation.
+     *
+     * @param array $body Actual request body used by the writer.
+     * @return WP_Error|null
+     */
+    private function validate_backup_retention_fields( array $body ): ?WP_Error {
+        foreach ( array( 'mainwp_backups_on_server', 'mainwp_backup_on_external_sources' ) as $field ) {
+            if ( array_key_exists( $field, $body ) && ! $this->validate_backup_retention_count( $body[ $field ] ) ) {
+                return new WP_Error( 'invalid_backup_retention', __( 'Backup counts must be whole numbers of zero or greater.', 'mainwp' ), array( 'status' => 400 ) );
+            }
+        }
+        return null;
     }
 
     /**

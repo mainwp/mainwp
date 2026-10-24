@@ -1192,10 +1192,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
             MainWP_Backup_File_Manager::cleanup_stale_download_locks( $dir );
 
             // Clean old backups from our system.
-            $maxBackups = get_option( 'mainwp_backupsOnServer' );
-            if ( false === $maxBackups ) {
-                $maxBackups = 1;
-            }
+            $maxBackups = MainWP_Backup_Settings::get_server_retention_count();
 
             if ( 1 !== (int) $backupTaskProgress->removedFiles && MainWP_DB_Backup::instance()->claim_backup_file_sweep( $taskId, $website->id ) ) {
                 $dbBackups   = array();
@@ -1280,7 +1277,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         continue;
                     }
                     ++$cnt;
-                    if ( (int) $maxBackups > 0 && $cnt >= $maxBackups ) {
+                    if ( null !== $maxBackups && $maxBackups > 0 && $cnt >= $maxBackups ) {
                         $wp_filesystem->delete( $dbBackup );
                     }
                 }
@@ -1293,7 +1290,7 @@ class MainWP_Backup_Executor { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                         continue;
                     }
                     ++$cnt;
-                    if ( (int) $maxBackups > 0 && $cnt >= $maxBackups ) {
+                    if ( null !== $maxBackups && $maxBackups > 0 && $cnt >= $maxBackups ) {
                         $wp_filesystem->delete( $fullBackup );
                     }
                 }

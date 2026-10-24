@@ -20,6 +20,9 @@ class MainWP_Backup_Retention_Protection {
     /** Insert-only snapshot destination requirements. */
     const REQUIRED_OPTION_PREFIX = 'mainwp_backup_required_uploads_';
 
+    /** Private Dropbox namespace proof, never accepted from a client. */
+    const DROPBOX_IDENTITY_FIELD = '_mainwp_retention_identity';
+
     /**
      * Read the absent-by-default task opt-in.
      *
@@ -107,6 +110,9 @@ class MainWP_Backup_Retention_Protection {
                 return false;
             }
             $binding = self::destination_binding( $destination );
+            if ( 'dropbox' === $destination->provider && ! self::dropbox_identity_valid( $destination->settings ) ) {
+                return false;
+            }
             if ( '' === $binding || empty( $job->checkpoint['destination_binding'] ) || ! hash_equals( $binding, (string) $job->checkpoint['destination_binding'] ) ) {
                 return false;
             }
@@ -118,7 +124,7 @@ class MainWP_Backup_Retention_Protection {
     }
 
     /**
-     * Bind upload evidence to its original destination without storing settings.
+     * Describe the original upload location for captured or already-bound jobs.
      *
      * @param object $destination Decrypted destination row.
      * @return string Keyed binding, or empty when settings are unavailable.
@@ -128,24 +134,114 @@ class MainWP_Backup_Retention_Protection {
             return '';
         }
         $settings = $destination->settings;
-        unset( $settings['minimum_remote_retention_days'] );
-        $sort    = static function ( array $values ) use ( &$sort ): array {
-            ksort( $values );
-            foreach ( $values as &$value ) {
-                if ( is_array( $value ) ) {
-                    $value = $sort( $value );
+        switch ( $destination->provider ) {
+            case 'local':
+                $location = array( 'base_path' => rtrim( (string) ( $settings['base_path'] ?? '' ), '/\\' ) );
+                break;
+            case 's3':
+                $endpoint = (string) ( $settings['endpoint'] ?? '' );
+                $endpoint = '' === $endpoint ? 's3.amazonaws.com' : $endpoint;
+                $endpoint = false === strpos( $endpoint, '://' ) ? 'https://' . $endpoint : $endpoint;
+                $location = array(
+                    'endpoint'   => rtrim( $endpoint, '/' ),
+                    'bucket'     => (string) ( $settings['bucket'] ?? '' ),
+                    'path_style' => ! empty( $settings['path_style'] ),
+                    'region'     => (string) ( $settings['region'] ?? 'us-east-1' ),
+                );
+                break;
+            case 'gcs':
+                $location = array( 'bucket' => (string) ( $settings['bucket'] ?? '' ) );
+                break;
+            case 'sftp':
+                $location = array(
+                    'host'      => rtrim( strtolower( trim( (string) ( $settings['host'] ?? '' ) ) ), '.' ),
+                    'port'      => empty( $settings['port'] ) ? 22 : (int) $settings['port'],
+                    'username'  => (string) ( $settings['username'] ?? '' ),
+                    'base_path' => rtrim( (string) ( $settings['base_path'] ?? '' ), '/' ),
+                );
+                break;
+            case 'dropbox':
+                $location = array( 'base_path' => trim( (string) ( $settings['base_path'] ?? '' ), '/' ) );
+                if ( self::dropbox_identity_valid( $settings ) ) {
+                    $location['file_id'] = $settings[ self::DROPBOX_IDENTITY_FIELD ]['id'];
+                } else {
+                    // A missing namespace proof must never reuse a verified location binding.
+                    $location['credentials'] = self::dropbox_connection_settings( $settings );
                 }
-            }
-            unset( $value );
-            return $values;
-        };
-        $encoded = wp_json_encode(
+                break;
+            default:
+                return '';
+        }
+        return self::identity_hmac(
             array(
+                'version'  => 2,
                 'provider' => (string) $destination->provider,
-                'settings' => $sort( $settings ),
+                'location' => $location,
             )
         );
-        return false === $encoded ? '' : hash_hmac( 'sha256', $encoded, wp_salt( 'auth' ) );
+    }
+
+    /**
+     * Authenticate a server-issued file ID for these exact Dropbox credentials.
+     *
+     * @param array  $settings Provider settings including the server-owned marker key.
+     * @param string $file_id Server-issued marker file ID.
+     * @return array Settings with an authenticated receipt.
+     */
+    public static function with_dropbox_identity( array $settings, string $file_id ): array {
+        $identity                                 = $settings[ self::DROPBOX_IDENTITY_FIELD ];
+        $identity['id']                           = $file_id;
+        $identity['receipt']                      = self::identity_hmac(
+            array(
+                'dropbox_marker' => $identity['key'],
+                'id'             => $file_id,
+                'connection'     => self::dropbox_connection_settings( $settings ),
+            )
+        );
+        $settings[ self::DROPBOX_IDENTITY_FIELD ] = $identity;
+        return $settings;
+    }
+
+    /**
+     * Validate cached provider evidence without contacting Dropbox during retention.
+     *
+     * @param array $settings Decrypted provider settings.
+     * @return bool
+     */
+    public static function dropbox_identity_valid( array $settings ): bool {
+        $identity = $settings[ self::DROPBOX_IDENTITY_FIELD ] ?? null;
+        if ( ! is_array( $identity ) || ! is_string( $identity['key'] ?? null ) || ! preg_match( '/^\.mainwp-retention-[a-f0-9]{32}$/D', $identity['key'] )
+            || ! is_string( $identity['id'] ?? null ) || '' === $identity['id'] || ! is_string( $identity['receipt'] ?? null ) ) {
+            return false;
+        }
+        $verified = self::with_dropbox_identity( $settings, $identity['id'] );
+        return hash_equals( $verified[ self::DROPBOX_IDENTITY_FIELD ]['receipt'], $identity['receipt'] );
+    }
+
+    /**
+     * Credential inputs whose replacement requires fresh server proof.
+     *
+     * @param array $settings Provider settings.
+     * @return array
+     */
+    private static function dropbox_connection_settings( array $settings ): array {
+        return array(
+            'app_key'       => (string) ( $settings['app_key'] ?? '' ),
+            'app_secret'    => (string) ( $settings['app_secret'] ?? '' ),
+            'refresh_token' => (string) ( $settings['refresh_token'] ?? '' ),
+            'base_path'     => trim( (string) ( $settings['base_path'] ?? '' ), '/' ),
+        );
+    }
+
+    /**
+     * Keep credential-derived values private and separate from public hashes.
+     *
+     * @param array $values Ordered binding input.
+     * @return string
+     */
+    private static function identity_hmac( array $values ): string {
+        $encoded = wp_json_encode( $values );
+        return false === $encoded ? '' : hash_hmac( 'sha256', 'mainwp-backup-retention:' . $encoded, wp_salt( 'auth' ) );
     }
 
     /**

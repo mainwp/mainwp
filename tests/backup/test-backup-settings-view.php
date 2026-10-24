@@ -661,6 +661,36 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	/** Rejected counts must not partially change other backup settings. */
+	public function test_invalid_global_count_preflight_preserves_all_settings(): void {
+		$this->set_current_user_as_admin();
+		foreach ( array( array( '0', 'invalid' ), array( 'invalid', '0' ) ) as $counts ) {
+			update_option( 'mainwp_backupsOnServer', 3 );
+			update_option( 'mainwp_backupOnExternalSources', 4 );
+			update_option( 'mainwp_enableNativeBackups', 0 );
+			update_option( 'mainwp_on_demand_retention_count', 5 );
+			update_option( \MainWP\Dashboard\MainWP_Backup_Diagnostics::OPTION_ENABLED, 0 );
+			$_POST = array(
+				'submit'                                  => '1',
+				'wp_nonce'                                => wp_create_nonce( 'BackupSettings' ),
+				'mainwp_options_backupOnServer'           => $counts[0],
+				'mainwp_options_backupOnExternalSources'  => $counts[1],
+				'mainwp_options_enableNativeBackups'      => '1',
+				'mainwp_options_onDemandRetentionCount'   => '7',
+				'mainwp_options_backupDiagnosticsEnabled' => '1',
+			);
+			try {
+				$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+				$this->assertSame( 3, (int) get_option( 'mainwp_backupsOnServer' ) );
+				$this->assertSame( 4, (int) get_option( 'mainwp_backupOnExternalSources' ) );
+				$this->assertFalse( MainWP_Backup_Settings::is_native_backups_enabled() );
+				$this->assertSame( 5, MainWP_Backup_Settings::get_on_demand_retention_count() );
+				$this->assertSame( 0, (int) get_option( \MainWP\Dashboard\MainWP_Backup_Diagnostics::OPTION_ENABLED ) );
+			} finally {
+				$_POST = array(); }
+		}
+	}
+
 	/** Invalid global counts reject the save and retain the stored limit. */
 	public function test_global_retention_invalid_counts_and_failed_write(): void {
 		$this->set_current_user_as_admin();

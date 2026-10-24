@@ -705,4 +705,144 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 			$this->assertFalse( MainWP_Backup_Storage_Destinations::is_private_network_host( $host ), $host . ' is not eligible for HTTP.' );
 		}
 	}
+	/** Credential replacement preserves a location; account/path changes do not. */
+	public function test_retention_binding_survives_credentials_but_not_location_changes() {
+		$protection = '\\MainWP\\Dashboard\\MainWP_Backup_Retention_Protection';
+		$cases      = array(
+			's3'   => array(
+				array(
+					'bucket'     => 'archive',
+					'access_key' => 'old-key',
+					'secret_key' => 'old-secret',
+				),
+				array(
+					'access_key' => 'new-key',
+					'secret_key' => 'new-secret',
+					'sse'        => 'AES256',
+				),
+				'bucket',
+			),
+			'gcs'  => array(
+				array(
+					'bucket'     => 'archive',
+					'access_key' => 'old-key',
+					'secret_key' => 'old-secret',
+				),
+				array(
+					'access_key' => 'new-key',
+					'secret_key' => 'new-secret',
+					'region'     => 'us-east1',
+				),
+				'bucket',
+			),
+			'sftp' => array(
+				array(
+					'host'      => 'server.example',
+					'username'  => 'alice',
+					'base_path' => '/archive',
+					'password'  => 'old',
+				),
+				array(
+					'password'         => 'new',
+					'private_key'      => 'new-key',
+					'host_fingerprint' => 'SHA256:known',
+				),
+				'username',
+			),
+		);
+		foreach ( $cases as $provider => list( $settings, $rotation, $location ) ) {
+			$row           = (object) array(
+				'provider' => $provider,
+				'settings' => $settings,
+			);
+			$binding       = $protection::destination_binding( $row );
+			$row->settings = array_merge( $settings, $rotation );
+			$this->assertSame( $binding, $protection::destination_binding( $row ), $provider . ' credential rotation must preserve archive eligibility.' );
+			$row->settings[ $location ] = 'another-target';
+			$this->assertNotSame( $binding, $protection::destination_binding( $row ), $provider . ' target change must invalidate old evidence.' );
+		}
+	}
+
+	/** A stale background identity save cannot replace an intervening settings edit. */
+	public function test_retention_identity_compare_and_swap_preserves_concurrent_edit() {
+		$store  = MainWP_Backup_Storage_Destinations::instance();
+		$id     = $store->add_destination(
+			array(
+				'provider' => 'dropbox',
+				'name'     => 'Before',
+				'settings' => array( 'refresh_token' => 'old-token' ),
+			)
+		);
+		$before = $store->get_destination( $id );
+		$this->assertTrue(
+			$store->update_destination(
+				$id,
+				array(
+					'name'     => 'Concurrent edit',
+					'settings' => array( 'refresh_token' => 'new-token' ),
+				)
+			)
+		);
+		$this->assertFalse( $store->update_destination( $id, array( 'settings' => $before->settings ), $before ) );
+		$after = $store->get_destination( $id );
+		$this->assertSame( 'Concurrent edit', $after->name );
+		$this->assertSame( 'new-token', $after->settings['refresh_token'] );
+	}
+
+	/** A zero-row CAS rolls back staged encryption while preserving the live key. */
+	public function test_retention_identity_cas_refusal_rolls_back_encryption() {
+		$store    = MainWP_Backup_Storage_Destinations::instance();
+		$id       = $store->add_destination(
+			array(
+				'provider' => 'dropbox',
+				'name'     => 'Dropbox',
+				'settings' => array( 'refresh_token' => 'live-token' ),
+			)
+		);
+		$source   = $store->get_destination( $id );
+		$before   = $this->keys_dir_listing();
+		$envelope = $this->raw_settings( $id );
+		$refuse   = static function ( $sql ) {
+			return str_starts_with( $sql, 'UPDATE' ) && str_contains( $sql, 'wp_backup_storage' ) ? 'SELECT 1 WHERE 0=1' : $sql;
+		};
+		add_filter( 'query', $refuse );
+		try {
+			$this->assertFalse( $store->update_destination( $id, array( 'settings' => array( 'refresh_token' => 'never-landed' ) ), $source ) );
+		} finally {
+			remove_filter( 'query', $refuse );
+		}
+		$this->assertSame( $before, $this->keys_dir_listing() );
+		$this->assertSame( $envelope, $this->raw_settings( $id ) );
+		$this->assertSame( 'live-token', $store->get_destination( $id )->settings['refresh_token'] );
+	}
+	/** The SQL predicate fences an edit landing after the initial source read. */
+	public function test_retention_identity_cas_fences_a_write_between_read_and_update() {
+		$store     = MainWP_Backup_Storage_Destinations::instance();
+		$id        = $store->add_destination(
+			array(
+				'provider' => 'dropbox',
+				'name'     => 'Dropbox',
+				'settings' => array( 'refresh_token' => 'old-token' ),
+			)
+		);
+		$source    = $store->get_destination( $id );
+		$key_count = count( $this->keys_dir_listing() );
+		$raced     = false;
+		$race      = static function ( $sql ) use ( $store, $id, &$raced ) {
+			if ( ! $raced && str_starts_with( $sql, 'UPDATE' ) && str_contains( $sql, 'wp_backup_storage' ) ) {
+				$raced = true;
+				$store->update_destination( $id, array( 'settings' => array( 'refresh_token' => 'concurrent-token' ) ) );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $race );
+		try {
+			$this->assertFalse( $store->update_destination( $id, array( 'settings' => array( 'refresh_token' => 'stale-worker-token' ) ), $source ) );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$this->assertTrue( $raced );
+		$this->assertSame( 'concurrent-token', $store->get_destination( $id )->settings['refresh_token'] );
+		$this->assertCount( $key_count, $this->keys_dir_listing(), 'The refused worker must retire only its unpersisted key.' );
+	}
 }

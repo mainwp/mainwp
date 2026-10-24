@@ -137,6 +137,40 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 		}
 	}
 
+	/** Failed decodes retry on fresh reads and preview reads in the same request. */
+	public function test_failed_decode_retries_without_losing_successful_reuse() {
+		foreach ( array( true, false ) as $refresh ) {
+			$store     = MainWP_Backup_Storage_Destinations::instance();
+			$id        = $store->add_destination(
+				array(
+					'provider'   => 's3',
+					'name'       => 'Retry decode',
+					'settings'   => $this->s3_settings(),
+					'is_default' => 1,
+				)
+			);
+			$calls     = 0;
+			$fail_once = static function ( $value ) use ( &$calls ) {
+				++$calls;
+				return 1 === $calls ? false : $value;
+			};
+			add_filter( 'mainwp_decrypt_key_value', $fail_once, PHP_INT_MAX );
+			try {
+				$failed = $store->get_destination( $id, $refresh );
+				$this->assertTrue( $failed->credentials_invalid );
+				$this->assertNull( $failed->settings );
+				$recovered = $store->get_destination( $id, $refresh );
+				$this->assertFalse( $recovered->credentials_invalid );
+				$this->assertSame( $this->s3_settings(), $recovered->settings );
+				$this->assertSame( $this->s3_settings(), $store->get_default()->settings );
+				$this->assertSame( $this->s3_settings(), $store->get_destination( $id, $refresh )->settings );
+				$this->assertSame( 2, $calls, 'Retry once, then reuse the successful decode.' );
+			} finally {
+				remove_filter( 'mainwp_decrypt_key_value', $fail_once, PHP_INT_MAX );
+			}
+		}
+	}
+
 	/** Every mutation makes subsequent reads observe the stored row. */
 	public function test_request_memo_invalidates_writes_defaults_and_delete() {
 		$store = MainWP_Backup_Storage_Destinations::instance();

@@ -51,7 +51,7 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     /**
      * Decoded settings for identical ciphertext in this request.
      *
-     * @var array<string, array|null>
+     * @var array<string, array>
      */
     private $decoded_settings = array();
 
@@ -321,12 +321,12 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * load as null with credentials_invalid set.
      *
      * @param int  $id Destination id.
-     * @param bool $refresh Read the current row; false allows row reuse for list previews.
+     * @param bool $refresh Read the current row; false reuses readable rows for list previews.
      *
      * @return object|null
      */
     public function get_destination( int $id, bool $refresh = true ): ?object {
-        if ( $refresh || ! array_key_exists( $id, $this->destination_rows ) ) {
+        if ( $refresh || ! array_key_exists( $id, $this->destination_rows ) || ! empty( $this->destination_rows[ $id ]->credentials_invalid ) ) {
             $row                           = $this->wpdb->get_row(
                 $this->wpdb->prepare(
                     'SELECT * FROM ' . $this->table_name( 'wp_backup_storage' ) . ' WHERE id = %d',
@@ -469,10 +469,12 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
                 $decrypted = MainWP_Credential_Storage::decrypt_credential( $stored );
                 $plaintext = '' === $decrypted ? false : $decrypted;
             }
-            $decoded                           = false === $plaintext ? null : json_decode( $plaintext, true );
-            $this->decoded_settings[ $stored ] = is_array( $decoded ) ? $decoded : null;
+            $decoded = false === $plaintext ? null : json_decode( $plaintext, true );
+            if ( is_array( $decoded ) ) {
+                $this->decoded_settings[ $stored ] = $decoded;
+            }
         }
-        $row->settings            = $this->decoded_settings[ $stored ];
+        $row->settings            = $this->decoded_settings[ $stored ] ?? null;
         $row->credentials_invalid = null === $row->settings;
 
         return $row;

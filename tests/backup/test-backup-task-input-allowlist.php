@@ -602,4 +602,30 @@ class MainWP_Backup_Task_Input_Allowlist_Test extends MainWP_Abilities_Test_Case
 		$tasks = MainWP_DB_Backup::instance()->get_backup_tasks();
 		$this->assertSame( $name, html_entity_decode( end( $tasks )->name, ENT_QUOTES, 'UTF-8' ) );
 	}
+	/** Unrelated edits preserve an upload hold after its destination is removed. */
+	public function test_partial_edit_after_remote_destination_deletion(): void {
+		$store                     = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$destination               = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Partial edit fixture',
+				'settings' => array(),
+			)
+		);
+		$fields                    = $this->fields( $this->create_test_site() );
+		$fields['destination_ids'] = array( $destination );
+		$fields['retention']       = array( 'remove_local_after_upload' => true );
+		$created                   = MainWP_Backup_Operations::create_task( $fields, 'ability' );
+		$this->assertIsArray( $created );
+		$id = $created['task_id'];
+		$this->assertTrue( MainWP_Backup_Operations::delete_destination( $destination )['deleted'] );
+		$this->assertIsArray( MainWP_Backup_Operations::update_task( $id, array( 'name' => 'Renamed after destination deletion' ), 'ability' ) );
+		$this->assertSame( 'Renamed after destination deletion', MainWP_DB_Backup::instance()->get_backup_task_by_id( $id )->name );
+		$this->assertTrue( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::task_removes_local_archives( $id ) );
+		foreach ( array( array( 'destination_ids' => array() ), array( 'retention' => array( 'remove_local_after_upload' => true ) ) ) as $edit ) {
+			$this->assertWPError( MainWP_Backup_Operations::update_task( $id, $edit, 'ability' ) );
+		}
+		$this->assertIsArray( MainWP_Backup_Operations::update_task( $id, array( 'retention' => array( 'remove_local_after_upload' => false ) ), 'ability' ) );
+		$this->assertFalse( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::task_removes_local_archives( $id ) );
+	}
 }

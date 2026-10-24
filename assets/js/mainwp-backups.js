@@ -938,7 +938,13 @@ managebackups_remove = function (element) {
                         jQuery(pElement).closest('tr').remove();
                     }
                 }
-            }(element), 'json');
+            }(element), 'json').fail(function () {
+                jQuery('#task-status-' + id).html('');
+                managebackups_show_message(
+                    MainWP.I18n.t('The deletion result could not be confirmed. Reload the page before trying again.'),
+                    'red'
+                );
+            });
         });
     }, 'json').fail(function () {
         jQuery('#task-status-' + id).html('');

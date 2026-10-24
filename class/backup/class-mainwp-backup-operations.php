@@ -491,7 +491,8 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             }
         }
-        if ( $values['retention']['remove_local_after_upload'] ) {
+        $flag_submitted = array_key_exists( 'remove_local_after_upload', $fields['retention'] ?? array() );
+        if ( $values['retention']['remove_local_after_upload'] && ( $flag_submitted || array_key_exists( 'destination_ids', $fields ) || null === $task ) ) {
             $remote = false;
             foreach ( $values['destination_ids'] as $destination_id ) {
                 $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination_id );

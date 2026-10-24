@@ -98,4 +98,18 @@ failedDelete.posts[1].cb({ error: 'Deletion refused.' });
 assert.equal(failedDelete.removed(), 0);
 assert.equal(failedDelete.messages[0].text, 'Deletion refused.');
 assert.equal(failedDelete.modals.length, 1);
-console.log('OK (15 task delete preview/confirmation scenarios)');
+for (const failure of ['network', 'parsererror']) {
+    const f = fixture();
+    begin(f);
+    f.posts[0].cb({ warnings: [] });
+    f.modals[0].cb();
+    assert.equal(typeof f.posts[1].fail, 'function', 'Confirmed deletion must handle ' + failure);
+    f.posts[1].fail({}, failure);
+    assert.equal(f.status.at(-1), '');
+    assert.equal(f.removed(), 0);
+    assert.equal(f.posts.length, 2, 'An uncertain result must not retry the mutation.');
+    assert.equal(f.modals.length, 1);
+    assert.equal(f.messages.at(-1).color, 'red');
+    assert.match(f.messages.at(-1).text, /Reload the page before trying again/);
+}
+console.log('OK (17 task delete preview/confirmation scenarios)');

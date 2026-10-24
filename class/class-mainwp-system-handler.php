@@ -701,7 +701,7 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             if ( wp_verify_nonce( $nonce, 'BackupSettings' ) ) {
                 $updated = MainWP_Backup_Settings::handle_settings_post();
                 if ( ! empty( MainWP_Backup_Settings::get_count_errors() ) ) {
-                    unset( $_GET['message'] );
+                    unset( $_GET['message'], $_GET['backup_encryption_forced_off'], $_GET['backup_recovery_passphrase_rejected'] );
                     return;
                 }
                 $args = MainWP_Backup_Settings::get_save_redirect_args();

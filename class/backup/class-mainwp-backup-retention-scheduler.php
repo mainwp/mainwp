@@ -220,11 +220,14 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
                 return;
             }
             if ( ! empty( $task->manual_site_id ) ) {
-                $site = MainWP_DB::instance()->get_website_by_id_unscoped( (int) $task->manual_site_id );
+                $site_table = MainWP_DB::instance()->get_table_name( 'wp' );
+                $site_id    = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- deletion requires the site row itself to be absent, regardless of joined sync metadata.
+                    $wpdb->prepare( "SELECT id FROM {$site_table} WHERE id = %d", (int) $task->manual_site_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted MainWP site table identifier.
+                );
                 if ( '' !== $wpdb->last_error ) {
                     continue;
                 }
-                if ( null === $site ) {
+                if ( null === $site_id ) {
                     if ( ! apply_filters( 'mainwp_backup_retention_dry_run', false, (int) $task->id ) ) {
                         MainWP_Post_Backup_Handler::instance()->hook_delete_manual_backup_task(
                             (object) array(

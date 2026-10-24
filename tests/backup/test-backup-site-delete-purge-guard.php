@@ -199,6 +199,7 @@ class MainWP_Backup_Site_Delete_Purge_Guard_Test extends MainWP_Abilities_Test_C
 		$live_site = $this->create_test_site( array( 'userid' => $user ) );
 		$live_task = MainWP_DB_Backup::instance()->ensure_manual_backup_task( MainWP_DB::instance()->get_website_by_id( $live_site ) );
 		$wpdb->update( $backup_table, array( 'retention_count' => 0 ), array( 'id' => $live_task->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- test fixture.
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_sync' ), array( 'wpid' => $live_site ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- a live site can lack its sync row after an interrupted write.
 
 		$dir = trailingslashit( wp_upload_dir()['basedir'] ) . 'mainwp/0/' . $site_id . '/snapshot-site-delete-retry-' . uniqid();
 		wp_mkdir_p( $dir );

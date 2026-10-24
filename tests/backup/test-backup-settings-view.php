@@ -56,8 +56,10 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		$saved_post    = $_POST;
 		$saved_get     = $_GET;
 		$_GET          = array(
-			'page'    => 'BackupSettings',
-			'message' => 'saved',
+			'page'                                => 'BackupSettings',
+			'message'                             => 'saved',
+			'backup_encryption_forced_off'        => '1',
+			'backup_recovery_passphrase_rejected' => 'short',
 		);
 		$_POST         = array(
 			'submit'                                    => '1',
@@ -109,6 +111,9 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 			}
 			$this->assertStringNotContainsString( 'private recovery input', $output );
 			$this->assertStringNotContainsString( 'ui green message', $output );
+			$this->assertStringNotContainsString( 'Settings saved', $output );
+			$this->assertStringNotContainsString( 'Encryption could not be enabled because no recovery passphrase is set.', $output );
+			$this->assertStringNotContainsString( 'The recovery passphrase must be at least 12 characters.', $output );
 			$dom = new \DOMDocument();
 			@$dom->loadHTML( $output, LIBXML_NONET );
 			$xpath = new \DOMXPath( $dom );

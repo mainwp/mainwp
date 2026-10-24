@@ -33,11 +33,12 @@ class MainWP_Backups_Snapshot_Delete_Abilities_Test extends MainWP_Abilities_Tes
 	/**
 	 * Capture the UI transport without ending PHPUnit.
 	 *
-	 * @param string $action AJAX action.
-	 * @param array  $input Posted fields.
+	 * @param string      $action AJAX action.
+	 * @param array       $input Posted fields.
+	 * @param string|null $raw_json Captured response body.
 	 * @return array
 	 */
-	private function ajax( $action, $input ) {
+	private function ajax( $action, $input, &$raw_json = null ) {
 		$this->assertTrue( is_callable( array( MainWP_Post_Backup_Handler::instance(), $action ) ) );
 		$_POST    = $input + array( 'security' => wp_create_nonce( $action ) );
 		$_REQUEST = $_POST;
@@ -58,6 +59,7 @@ class MainWP_Backups_Snapshot_Delete_Abilities_Test extends MainWP_Abilities_Tes
 			remove_filter( 'wp_die_ajax_handler', $die );
 			remove_filter( 'wp_doing_ajax', '__return_true' );
 		}
+		$raw_json = $raw;
 		return json_decode( $raw, true );
 	}
 
@@ -153,6 +155,154 @@ class MainWP_Backups_Snapshot_Delete_Abilities_Test extends MainWP_Abilities_Tes
 		} finally {
 			$store->delete_destination( $dest );
 		}
+	}
+
+
+	/** Preview refusal stays unavailable while successful warning arrays survive.
+	 *
+	 * @dataProvider cleanup_warning_states
+	 * @param string $state Preview state.
+	 */
+	public function test_snapshot_list_cleanup_warning_contract( string $state ): void {
+		global $wpdb;
+		$this->use_scheduled_task();
+		$id          = $this->snapshot();
+		$store       = MainWP_Backup_Storage_Destinations::instance();
+		$destination = 0;
+		if ( 'empty' !== $state ) {
+			$destination = $store->add_destination(
+				array(
+					'provider' => 's3',
+					'name'     => 'Producer warning fixture',
+					'settings' => array( 'minimum_remote_retention_days' => 90 ),
+				)
+			);
+			$this->assertGreaterThan( 0, $destination );
+			$this->assertNotFalse(
+				$wpdb->insert(
+					MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+					array(
+						'snapshot_id'    => $id,
+						'destination_id' => $destination,
+						'provider'       => 's3',
+						'status'         => 'complete',
+						'kind'           => 'upload',
+						'checkpoint'     => wp_json_encode( array( 'uploaded_at' => time() ) ),
+					)
+				)
+			);
+		}
+		$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'id' => $this->task->id ) );
+		$outbound       = array(
+			'http'   => 0,
+			'mainwp' => 0,
+		);
+		$deny_http      = static function () use ( &$outbound ) {
+			++$outbound['http'];
+			return new \WP_Error( 'producer_test_http_refused', 'HTTP is disabled for this read-only test.' );
+		};
+		$observe_mainwp = static function ( $reply ) use ( &$outbound ) {
+			++$outbound['mainwp'];
+			return $reply;
+		};
+		add_filter( 'pre_http_request', $deny_http, PHP_INT_MAX );
+		add_filter( 'mainwp_fetch_url_authed_pre', $observe_mainwp, 0 );
+		try {
+			if ( 'disabled' === $state ) {
+				$enabled = MainWP_Backup_Operations::preview_site_cleanup( $this->site_id, null, 'ui' );
+				$this->assertIsArray( $enabled );
+				$this->assertNotEmpty( $enabled['warnings'], 'The disabled-state fixture must have a protected copy to warn about.' );
+				update_option( 'mainwp_enableNativeBackups', 0 );
+			}
+			$before = $this->cleanup_producer_fixture_state( $id );
+			$this->assertFalse( $before['required_proof_present'], 'This ordinary fixture has no captured upload requirements.' );
+			$preview = MainWP_Backup_Operations::preview_site_cleanup( $this->site_id, null, 'ui' );
+			if ( 'disabled' === $state ) {
+				$this->assertWPError( $preview );
+				$this->assertSame( \MainWP\Dashboard\MainWP_Backup_Error_Codes::ERR_LEGACY_DISABLED, $preview->get_error_code() );
+			} else {
+				$this->assertIsArray( $preview );
+				$this->assertContains( $id, $preview['would_affect']['orphaned_task_snapshot_ids'] );
+				if ( 'empty' === $state ) {
+					$this->assertSame( array(), $preview['warnings'] );
+				} else {
+					$this->assertNotEmpty( $preview['warnings'] );
+					$this->assertStringContainsString( 'minimum retention period', implode( ' ', $preview['warnings'] ) );
+				}
+			}
+			$raw      = null;
+			$response = $this->ajax( 'mainwp_restore_snapshot_list', array( 'site_id' => $this->site_id ), $raw );
+			$evidence = getenv( 'MWP_PRODUCER_CONTRACT_EVIDENCE' );
+			if ( is_string( $evidence ) && '' !== $evidence ) {
+				$this->assertNotFalse( file_put_contents( $evidence . '/response-' . $state . '.json', $raw ) );
+			}
+			$this->assertSame( $before, $this->cleanup_producer_fixture_state( $id ), 'Preview and list reads must preserve fixture rows, options, files and directories.' );
+			$this->assertSame(
+				array(
+					'http'   => 0,
+					'mainwp' => 0,
+				),
+				$outbound,
+				'Preview and list reads must not request a provider or Child.'
+			);
+			$this->assertIsArray( $response );
+			$this->assertArrayNotHasKey( 'error', $response, 'This is an authorized list response, not an AJAX refusal.' );
+			$this->assertContains( $id, array_column( $response['snapshots'], 'id' ) );
+			$this->assertArrayHasKey( 'cleanup_warnings', $response );
+			$this->assertSame( 'disabled' === $state ? null : $preview['warnings'], $response['cleanup_warnings'] );
+		} finally {
+			remove_filter( 'pre_http_request', $deny_http, PHP_INT_MAX );
+			remove_filter( 'mainwp_fetch_url_authed_pre', $observe_mainwp, 0 );
+			if ( $destination > 0 ) {
+				$store->delete_destination( $destination );
+			}
+		}
+	}
+
+	/**
+	 * Actual producer states.
+	 *
+	 * @return array Cases.
+	 */
+	public static function cleanup_warning_states(): array {
+		return array(
+			'disabled'  => array( 'disabled' ),
+			'empty'     => array( 'empty' ),
+			'protected' => array( 'protected' ),
+		);
+	}
+
+	/**
+	 * Hash raw fixture data and list every owned file and directory.
+	 *
+	 * @param int $snapshot_id Fixture snapshot identity.
+	 * @return array Read-only comparison state.
+	 */
+	private function cleanup_producer_fixture_state( int $snapshot_id ): array {
+		global $wpdb;
+		$state = array();
+		foreach ( array( 'wp_backup', 'wp_backup_snapshot', 'wp_backup_upload_job', 'wp_backup_restore_job', 'wp_backup_storage' ) as $table ) {
+			$rows            = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i ORDER BY id', MainWP_DB::instance()->get_table_name( $table ) ), ARRAY_A );
+			$state[ $table ] = hash( 'sha256', serialize( $rows ) );
+		}
+		foreach ( array(
+			'wp'      => 'id',
+			'wp_sync' => 'wpid',
+		) as $table => $key ) {
+			$row             = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE %i = %d', MainWP_DB::instance()->get_table_name( $table ), $key, $this->site_id ), ARRAY_A );
+			$state[ $table ] = hash( 'sha256', serialize( $row ) );
+		}
+		$proof                           = $wpdb->get_row( $wpdb->prepare( 'SELECT option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, \MainWP\Dashboard\MainWP_Backup_Retention_Protection::REQUIRED_OPTION_PREFIX . $snapshot_id ), ARRAY_A );
+		$state['required_proof_present'] = null !== $proof;
+		$state['required_proof']         = hash( 'sha256', serialize( $proof ) );
+		$options                         = $wpdb->get_results( $wpdb->prepare( 'SELECT option_name, option_value, autoload FROM %i WHERE option_name IN (%s, %s) ORDER BY option_name', $wpdb->options, 'mainwp_enableNativeBackups', 'mainwp_enableLegacyBackupFeature' ), ARRAY_A );
+		$state['native_options']         = hash( 'sha256', serialize( $options ) );
+		$files                           = new \RecursiveIteratorIterator( new \RecursiveDirectoryIterator( $this->private_root, \FilesystemIterator::SKIP_DOTS ), \RecursiveIteratorIterator::SELF_FIRST );
+		foreach ( $files as $file ) {
+			$state['files'][ $file->getPathname() ] = $file->isDir() ? 'directory' : hash_file( 'sha256', $file->getPathname() );
+		}
+		ksort( $state['files'] );
+		return $state;
 	}
 
 	/** Only the deleted snapshot's destinations may be named in either transport. */

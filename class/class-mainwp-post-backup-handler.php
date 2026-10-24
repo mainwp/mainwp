@@ -377,7 +377,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         wp_send_json(
             array(
                 'snapshots'             => $rows,
-                'cleanup_warnings'      => is_wp_error( $cleanup_preview ) ? array() : $cleanup_preview['warnings'],
+                'cleanup_warnings'      => is_wp_error( $cleanup_preview ) ? null : $cleanup_preview['warnings'],
                 'multisite'             => $multisite,
                 'site_has_woocommerce'  => MainWP_Utility::site_has_woocommerce( (int) $website->id ),
                 'site_url'              => (string) $website->url,

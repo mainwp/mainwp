@@ -2828,7 +2828,8 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			$task        = $this->insert_task( array( $destination ) );
 			$protection  = '\\MainWP\\Dashboard\\MainWP_Backup_Retention_Protection';
 			$protection::save_task_remove_local_archives( $task, true );
-			$id   = $this->make_snapshot( $this->standard_files(), $task );
+			$id = $this->make_snapshot( $this->standard_files(), $task );
+			$this->assertTrue( $protection::capture_required_destinations( $id, array( $destination ) ) );
 			$jobs = MainWP_Backup_Upload_Job_Store::instance();
 			$jobs->enqueue_for_snapshot( $id, array( $destination ) );
 			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );

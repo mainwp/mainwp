@@ -14,6 +14,7 @@
 namespace MainWP\Dashboard\Tests;
 
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+require_once __DIR__ . '/test-backup-now-continuation.php';
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Backup_Private_Root;

@@ -319,8 +319,8 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
         $policy = new MainWP_Backup_Retention_Policy( MainWP_Backup_Settings::task_retention_count( $task ), (int) $task->retention_days, (int) $task->retention_storage_mb );
 
         $candidates = $policy->evaluate( $units, $now );
-        $remaining  = (int) floor( $budget_seconds - ( microtime( true ) - $started ) );
-        if ( empty( $candidates ) || $remaining <= 0 ) {
+        $remaining  = max( 0, (int) floor( $budget_seconds - ( microtime( true ) - $started ) ) );
+        if ( empty( $candidates ) ) {
             $report = array(
                 'eviction'             => $eviction,
                 'pruned'               => 0,
@@ -333,10 +333,8 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
                 'dry_run'              => $dry_run,
                 'candidates'           => array(),
             );
-            foreach ( $candidates as $candidate ) {
-                $report['remaining_ids'] = array_values( array_unique( array_merge( $report['remaining_ids'], array_map( 'intval', $candidate['snapshot_ids'] ) ) ) );
-            }
         } else {
+            // With no time left, the executor attempts one candidate and defers the rest.
             $report = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, $dry_run, $remaining );
         }
         $report['eviction'] = $eviction;

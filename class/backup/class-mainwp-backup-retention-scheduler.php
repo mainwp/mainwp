@@ -215,10 +215,9 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
 
         $deadline = microtime( true ) + static::DAILY_BUDGET_SECONDS;
 
+        $deleted_tasks = array();
+        $live_tasks    = array();
         foreach ( MainWP_Backup_Retention_Query::instance()->list_tasks_with_policy() as $task ) {
-            if ( microtime( true ) >= $deadline ) {
-                return;
-            }
             if ( ! empty( $task->manual_site_id ) ) {
                 $site_table = MainWP_DB::instance()->get_table_name( 'wp' );
                 $site_id    = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- deletion requires the site row itself to be absent, regardless of joined sync metadata.
@@ -228,23 +227,54 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
                     continue;
                 }
                 if ( null === $site_id ) {
-                    if ( ! apply_filters( 'mainwp_backup_retention_dry_run', false, (int) $task->id ) ) {
-                        MainWP_Post_Backup_Handler::instance()->hook_delete_manual_backup_task(
-                            (object) array(
-                                'id'   => (int) $task->manual_site_id,
-                                'name' => '',
-                                'url'  => '',
-                            )
-                        );
-                    }
+                    $deleted_tasks[ (int) $task->id ] = $task;
                     continue;
                 }
             }
+            $live_tasks[] = $task;
+        }
+
+        // Live retention runs before deleted-site history spends the shared budget.
+        foreach ( $live_tasks as $task ) {
+            if ( microtime( true ) >= $deadline ) {
+                break;
+            }
             foreach ( MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( (int) $task->id ) as $site_id ) {
-                if ( microtime( true ) >= $deadline ) {
-                    return; // Tomorrow's sweep picks up where this one stopped.
+                $remaining = max( 0, (int) floor( $deadline - microtime( true ) ) );
+                if ( 0 === $remaining ) {
+                    break 2;
                 }
-                $this->run_retention_for_pair( $task, $site_id, static::PAIR_BUDGET_SECONDS );
+                $this->run_retention_for_pair( $task, $site_id, min( static::PAIR_BUDGET_SECONDS, $remaining ) );
+            }
+        }
+
+        $progress  = get_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION, array() );
+        $last_task = (int) ( $progress['last_task'] ?? 0 );
+        ksort( $deleted_tasks, SORT_NUMERIC );
+        $later         = array_filter( $deleted_tasks, static fn( $id ) => $id > $last_task, ARRAY_FILTER_USE_KEY );
+        $deleted_tasks = $later + array_diff_key( $deleted_tasks, $later );
+        foreach ( $deleted_tasks as $task ) {
+            $site_id = (int) $task->manual_site_id;
+            if ( apply_filters( 'mainwp_backup_retention_dry_run', false, (int) $task->id ) ) {
+                $report     = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ), false, true, $deadline, true );
+                $candidates = count( $report['candidates'] );
+                do_action( 'mainwp_log_info', 'Backup retention dry run for deleted site: ' . $candidates . ( 1 === $candidates ? ' candidate, ' : ' candidates, ' ) . $report['local'] . ' local backups, ' . $report['remote'] . ' remote cleanup targets, ' . $report['held'] . ' held by protection, ' . $report['skipped'] . ' deferred until another pass.', $site_id, (int) $task->id );
+                if ( microtime( true ) >= $deadline ) {
+                    break;
+                }
+                continue;
+            }
+            // One attempt after expiry keeps held history moving without a new budget.
+            MainWP_Post_Backup_Handler::instance()->hook_delete_manual_backup_task(
+                (object) array(
+                    'id'   => $site_id,
+                    'name' => '',
+                    'url'  => '',
+                ),
+                $deadline
+            );
+            if ( microtime( true ) >= $deadline ) {
+                break;
             }
         }
     }

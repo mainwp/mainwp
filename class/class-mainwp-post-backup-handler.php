@@ -136,14 +136,15 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
      * snapshots, cloud copies and upload metadata are purged first so the
      * task row and its backups leave together rather than orphaning them.
      *
-     * @param object $site Deleted site object.
+     * @param object     $site Deleted site object.
+     * @param float|null $deadline Shared retention deadline, when called by the daily sweep.
      *
      * @return bool True when the cleanup ran (no task existed, or the purge
      *              succeeded and the task was removed); false on an empty
      *              site, or when the purge failed and the task was kept for
      *              retention to retry.
      */
-    public function hook_delete_manual_backup_task( $site ) {
+    public function hook_delete_manual_backup_task( $site, ?float $deadline = null ) {
         global $wpdb;
 
         if ( empty( $site ) || empty( $site->id ) ) {
@@ -155,7 +156,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return true;
         }
 
-        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ), false, true );
+        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ), false, true, $deadline );
 
         // The purge deliberately keeps a snapshot when its artifact cannot be
         // reached (recorded outside the uploads root, or an unlink refused).
@@ -165,7 +166,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
         // its diagnostics; log the failure so a site-deletion orphan is at
         // least recorded.
         $remaining_sites = MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( (int) $task->id );
-        if ( '' !== $wpdb->last_error || ! empty( $remaining_sites ) || ! empty( $purge_result['remaining_ids'] ) || ! empty( $purge_result['errors'] ) ) {
+        if ( '' !== $wpdb->last_error || ! empty( $remaining_sites ) || ! empty( $purge_result['remaining_ids'] ) || ! empty( $purge_result['skipped'] ) || ! empty( $purge_result['errors'] ) ) {
             MainWP_Logger::instance()->debug_for_website(
                 $site,
                 'backup',
@@ -183,6 +184,12 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
                 'Site deleted but its hidden backup task (id ' . (int) $task->id . ') could not be removed; keeping its diagnostics for the next purge retry.'
             );
             return false;
+        }
+
+        $progress = get_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION, array() );
+        if ( isset( $progress['tasks'][ (int) $task->id ] ) ) {
+            unset( $progress['tasks'][ (int) $task->id ] );
+            update_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION, $progress, false );
         }
 
         /**

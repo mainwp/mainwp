@@ -25,6 +25,330 @@ require_once __DIR__ . '/test-backup-now-continuation.php';
  */
 class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 
+	/** Live retention precedes orphan work, which rotates past minimum-held history. */
+	public function test_deleted_task_deadline_rotates_held_history_after_live_retention() {
+		global $wpdb;
+
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( MainWP_Backup_Retention_Scheduler::CHILD_PRUNE_RESEND_OPTION, time(), false );
+		$orphan      = $this->insert_task(
+			array(
+				'manual_site_id'      => $this->site_id,
+				'template'            => 1,
+				'schedule'            => 'manual',
+				'delete_cloud_copies' => 1,
+			)
+		);
+		$live        = $this->insert_task( array( 'retention_count' => 1 ) );
+		$old         = $this->insert_snapshot_with_dir( $live, array( 'created' => time() - 200 ) );
+		$new         = $this->insert_snapshot_with_dir( $live, array( 'created' => time() - 100 ) );
+		$destination = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Deleted task minimum',
+				'settings' => array( 'minimum_remote_retention_days' => 30 ),
+			)
+		);
+		$store       = \MainWP\Dashboard\MainWP_Backup_Upload_Job_Store::instance();
+		$held        = array();
+		for ( $i = 0; $i < 12; ++$i ) {
+			$id     = $this->insert_snapshot_with_dir( $orphan );
+			$held[] = $id;
+			$store->enqueue_for_snapshot( $id, array( $destination ) );
+			$job = $store->get_jobs_for_snapshot( $id )[0];
+			$store->save_checkpoint(
+				$job->id,
+				array(
+					'uploaded_at'        => time(),
+					'manifest_submitted' => true,
+				)
+			);
+			$store->complete_job( $job->id );
+		}
+		$eligible = $this->insert_snapshot_with_dir( $orphan );
+		$store->enqueue_for_snapshot( $eligible, array( $destination ) );
+		$job = $store->get_jobs_for_snapshot( $eligible )[0];
+		$store->save_checkpoint(
+			$job->id,
+			array(
+				'uploaded_at'        => time() - 31 * DAY_IN_SECONDS,
+				'manifest_submitted' => true,
+			)
+		);
+		$store->complete_job( $job->id );
+		$attempts   = array();
+		$slow_claim = static function ( $sql ) use ( &$attempts ) {
+			if ( preg_match( '/SET locked_by = \'prune:.*WHERE snapshot_id IN \((\d+)\)/', $sql, $matches ) ) {
+				$attempts[] = (int) $matches[1];
+				MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 121.0;
+			}
+			return $sql;
+		};
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = 1000.0;
+		add_filter( 'query', $slow_claim );
+		try {
+			$scheduler = MainWP_Backup_Retention_Scheduler::instance();
+			$scheduler->cron_backups_prune();
+			$this->assertSame( array( $old, $held[0] ), $attempts, 'Live work must run first, followed by exactly one orphan attempt after expiry.' );
+			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $old )->status );
+			$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $new )->status );
+			for ( $i = 1; $i <= 12; ++$i ) {
+				$before = count( $attempts );
+				$scheduler->cron_backups_prune();
+				$this->assertSame( $before + 1, count( $attempts ), 'Each expired pass attempts one further orphan unit.' );
+			}
+			$this->assertSame( array_merge( array( $old ), $held, array( $eligible ) ), $attempts );
+			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $eligible )->status );
+			$this->assertCount( 1, $store->get_jobs_for_snapshot( $eligible, 'delete' ) );
+			$scheduler->cron_backups_prune();
+			$this->assertSame( $held[0], end( $attempts ), 'Traversal wraps once and retries held units.' );
+			$this->assertCount( 1, $store->get_jobs_for_snapshot( $eligible, 'delete' ), 'Settled history must not enqueue remote deletion again.' );
+			$this->assertNotNull( \MainWP\Dashboard\MainWP_DB_Backup::instance()->get_backup_task_by_id( $orphan ) );
+			foreach ( $held as $id ) {
+				$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+			}
+		} finally {
+			remove_filter( 'query', $slow_claim );
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'destination_id' => $destination ) );
+			\MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->delete_destination( $destination );
+			delete_option( 'mainwp_backup_deleted_task_cursor' );
+		}
+	}
+
+	/** Dry-run lists orphan candidates and leaves backup data and files unchanged. */
+	public function test_deleted_task_dry_run_lists_candidates_without_mutation() {
+		global $wpdb;
+
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( MainWP_Backup_Retention_Scheduler::CHILD_PRUNE_RESEND_OPTION, time(), false );
+		$task = $this->insert_task(
+			array(
+				'manual_site_id'      => $this->site_id,
+				'template'            => 1,
+				'schedule'            => 'manual',
+				'delete_cloud_copies' => 1,
+			)
+		);
+		$id   = $this->insert_snapshot_with_dir( $task );
+		$this->insert_snapshot_with_dir( $task, array( 'status' => 'pruned' ) );
+		update_option(
+			'mainwp_backup_deleted_task_cursor',
+			array(
+				'tasks'     => array( $task => $id ),
+				'last_task' => $task,
+			),
+			false
+		);
+		$before = array();
+		foreach ( array( 'wp_backup', 'wp_backup_snapshot', 'wp_backup_upload_job', 'wp_backup_storage' ) as $table ) {
+			$name             = MainWP_DB::instance()->get_table_name( $table );
+			$before[ $table ] = $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $name ), ARRAY_A );
+		}
+		$options  = $wpdb->get_results( "SELECT * FROM {$wpdb->options} WHERE option_name LIKE 'mainwp_backup%' OR option_name = 'mainwp_enableNativeBackups'", ARRAY_A );
+		$messages = array();
+		$requests = 0;
+		$log      = static function ( $message, $site_id, $task_id ) use ( &$messages ) {
+			$messages[] = array( $message, $site_id, $task_id );
+		};
+		$http     = static function ( $pre ) use ( &$requests ) {
+			++$requests;
+			return $pre;
+		};
+		add_filter( 'mainwp_backup_retention_dry_run', '__return_true' );
+		add_action( 'mainwp_log_info', $log, 10, 3 );
+		add_filter( 'pre_http_request', $http );
+		try {
+			MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
+			$this->assertCount( 1, $messages, 'Cron must expose the deleted-site preview.' );
+			$this->assertStringContainsString( '2 candidates', $messages[0][0] );
+			$this->assertStringContainsString( '2 local', $messages[0][0] );
+			$this->assertStringContainsString( '0 remote', $messages[0][0] );
+			$this->assertSame( array( $this->site_id, $task ), array_slice( $messages[0], 1 ) );
+			foreach ( $before as $table => $rows ) {
+				$name = MainWP_DB::instance()->get_table_name( $table );
+				$this->assertEquals( $rows, $wpdb->get_results( $wpdb->prepare( 'SELECT * FROM %i', $name ), ARRAY_A ), $table );
+			}
+			$this->assertEquals( $options, $wpdb->get_results( "SELECT * FROM {$wpdb->options} WHERE option_name LIKE 'mainwp_backup%' OR option_name = 'mainwp_enableNativeBackups'", ARRAY_A ) );
+			foreach ( $this->fixture_dirs as $dir ) {
+				$this->assertSame( str_repeat( 'x', 100 ), file_get_contents( $dir . '/artifact.tar' ) );
+			}
+			$this->assertSame( 0, $requests );
+		} finally {
+			remove_filter( 'mainwp_backup_retention_dry_run', '__return_true' );
+			remove_action( 'mainwp_log_info', $log );
+			remove_filter( 'pre_http_request', $http );
+			delete_option( 'mainwp_backup_deleted_task_cursor' );
+		}
+	}
+
+	/** An expired preview reports one unit and yields without writing progress. */
+	public function test_deleted_task_dry_run_expired_deadline_bounds_candidates_and_tasks() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( MainWP_Backup_Retention_Scheduler::CHILD_PRUNE_RESEND_OPTION, time(), false );
+		for ( $i = 0; $i < 2; ++$i ) {
+			$task = $this->insert_task(
+				array(
+					'manual_site_id' => $this->site_id + $i,
+					'template'       => 1,
+					'schedule'       => 'manual',
+				)
+			);
+			$this->insert_snapshot_with_dir( $task );
+			$this->insert_snapshot_with_dir( $task );
+		}
+		$table    = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$expire   = static function ( $sql ) use ( $table ) {
+			if ( str_contains( $sql, 'SELECT * FROM ' . $table ) && ! str_contains( $sql, ' WHERE ' ) ) {
+				MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 121.0;
+			}
+			return $sql;
+		};
+		$messages = array();
+		$log      = static function ( $message ) use ( &$messages ) {
+			$messages[] = $message;
+		};
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = 1000.0;
+		add_filter( 'query', $expire );
+		add_filter( 'mainwp_backup_retention_dry_run', '__return_true' );
+		add_action( 'mainwp_log_info', $log );
+		try {
+			MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
+			$this->assertCount( 1, $messages, 'Preview must yield before another deleted task once the daily deadline expires.' );
+			$this->assertStringContainsString( '1 candidate', $messages[0], 'The expired executor must report one candidate, then yield.' );
+			$this->assertFalse( get_option( 'mainwp_backup_deleted_task_cursor' ) );
+			foreach ( $this->fixture_dirs as $dir ) {
+				$this->assertFileExists( $dir . '/artifact.tar' );
+			}
+		} finally {
+			remove_filter( 'query', $expire );
+			remove_filter( 'mainwp_backup_retention_dry_run', '__return_true' );
+			remove_action( 'mainwp_log_info', $log );
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+		}
+	}
+
+	/** Expired sweeps rotate tasks and retain owners for skipped tombstone cleanup. */
+	public function test_deleted_task_expired_sweeps_rotate_owners_with_pending_tombstones() {
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		update_option( MainWP_Backup_Retention_Scheduler::CHILD_PRUNE_RESEND_OPTION, time(), false );
+		$first  = $this->insert_task(
+			array(
+				'manual_site_id' => $this->site_id,
+				'template'       => 1,
+				'schedule'       => 'manual',
+			)
+		);
+		$second = $this->insert_task(
+			array(
+				'manual_site_id' => $this->site_id + 1,
+				'template'       => 1,
+				'schedule'       => 'manual',
+			)
+		);
+		$this->insert_snapshot_with_dir( $first, array( 'status' => 'pruned' ) );
+		$this->insert_snapshot_with_dir( $first, array( 'status' => 'pruned' ) );
+		$other      = $this->insert_snapshot_with_dir( $second );
+		$task_table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$queries    = 0;
+		$expire     = static function ( $sql ) use ( $task_table, &$queries ) {
+			if ( ++$queries > 500 ) {
+				throw new \RuntimeException( 'Deleted-site sweep exceeded 500 queries without yielding.' );
+			}
+			if ( str_contains( $sql, 'SELECT * FROM ' . $task_table ) && ! str_contains( $sql, ' WHERE ' ) ) {
+				MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 121.0;
+			}
+			return $sql;
+		};
+		$purged     = array();
+		$listener   = static function ( $task ) use ( &$purged ) {
+			$purged[] = $task;
+		};
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = 1000.0;
+		add_filter( 'query', $expire );
+		add_action( 'mainwp_backup_task_snapshots_purged', $listener );
+		try {
+			$scheduler = MainWP_Backup_Retention_Scheduler::instance();
+			$scheduler->cron_backups_prune();
+			$this->assertFileDoesNotExist( $this->fixture_dirs[0] . '/artifact.tar' );
+			$this->assertFileExists( $this->fixture_dirs[1] . '/artifact.tar' );
+			$this->assertFileExists( $this->fixture_dirs[2] . '/artifact.tar' );
+			$this->assertNotNull( \MainWP\Dashboard\MainWP_DB_Backup::instance()->get_backup_task_by_id( $first ) );
+			$this->assertSame( array(), $purged );
+			$queries = 0;
+			$scheduler->cron_backups_prune();
+			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $other )->status );
+			$this->assertNull( \MainWP\Dashboard\MainWP_DB_Backup::instance()->get_backup_task_by_id( $second ) );
+			$this->assertFileExists( $this->fixture_dirs[1] . '/artifact.tar' );
+			$queries = 0;
+			$scheduler->cron_backups_prune();
+			$this->assertNull( \MainWP\Dashboard\MainWP_DB_Backup::instance()->get_backup_task_by_id( $first ) );
+			$this->assertFileDoesNotExist( $this->fixture_dirs[1] . '/artifact.tar' );
+			$this->assertSame( array( $second, $first ), $purged );
+			$this->assertSame( array(), get_option( 'mainwp_backup_deleted_task_cursor' )['tasks'] );
+		} finally {
+			remove_filter( 'query', $expire );
+			remove_action( 'mainwp_backup_task_snapshots_purged', $listener );
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+			delete_option( 'mainwp_backup_deleted_task_cursor' );
+		}
+	}
+
+	/** A failed traversal save keeps the task and diagnostics retryable. */
+	public function test_deleted_task_cursor_save_failure_retains_owner() {
+		$task   = $this->insert_task(
+			array(
+				'manual_site_id' => $this->site_id,
+				'template'       => 1,
+				'schedule'       => 'manual',
+			)
+		);
+		$id     = $this->insert_snapshot_with_dir( $task );
+		$refuse = static function ( $value, $old ) {
+			return $old;
+		};
+		update_option(
+			'mainwp_backup_deleted_task_cursor',
+			array(
+				'tasks'     => array(),
+				'last_task' => 0,
+			),
+			false
+		);
+		add_filter( 'pre_update_option_mainwp_backup_deleted_task_cursor', $refuse, 10, 2 );
+		try {
+			$handler = \MainWP\Dashboard\MainWP_Post_Backup_Handler::instance();
+			$this->assertFalse(
+				$handler->hook_delete_manual_backup_task(
+					(object) array(
+						'id'   => $this->site_id,
+						'name' => '',
+						'url'  => '',
+					),
+					0.0
+				)
+			);
+			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+			$this->assertNotNull( \MainWP\Dashboard\MainWP_DB_Backup::instance()->get_backup_task_by_id( $task ) );
+			$this->assertSame( 0, get_option( 'mainwp_backup_deleted_task_cursor' )['last_task'] );
+			remove_filter( 'pre_update_option_mainwp_backup_deleted_task_cursor', $refuse );
+			$this->assertTrue(
+				$handler->hook_delete_manual_backup_task(
+					(object) array(
+						'id'   => $this->site_id,
+						'name' => '',
+						'url'  => '',
+					),
+					0.0
+				)
+			);
+			$this->assertNull( \MainWP\Dashboard\MainWP_DB_Backup::instance()->get_backup_task_by_id( $task ) );
+		} finally {
+			remove_filter( 'pre_update_option_mainwp_backup_deleted_task_cursor', $refuse );
+			delete_option( 'mainwp_backup_deleted_task_cursor' );
+		}
+	}
+
 	/**
 	 * Eviction and query time both reduce the prune budget.
 	 *

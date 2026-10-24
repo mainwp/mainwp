@@ -65,6 +65,141 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 	 */
 	private $fixture_dirs = array();
 
+	/** Settled tombstones spend no attempt; pending cleanup shares the ordered traversal. */
+	public function test_deleted_task_purge_rotates_complete_and_unfinished_pruned_work() {
+		global $wpdb;
+
+		$protection                    = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
+		list( $settled, $settled_dir ) = $this->make_snapshot_with_dir( array( 'status' => 'pruned' ) );
+		unlink( $settled_dir . '/artifact.tar' );
+		rmdir( $settled_dir );
+		$archives = array(
+			array(
+				'path'                       => $settled_dir . '/artifact.tar',
+				'retention_requires_uploads' => true,
+			),
+		);
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'archives' => wp_json_encode( $archives ) ), array( 'id' => $settled ) );
+		list( $complete, $complete_dir ) = $this->make_snapshot_with_dir();
+		list( $pending, $pending_dir )   = $this->make_snapshot_with_dir( array( 'status' => 'pruned' ) );
+		update_option( $protection::REQUIRED_OPTION_PREFIX . $pending, array( 123 ), false );
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = 1000.0;
+		try {
+			$executor = MainWP_Backup_Retention_Executor::instance();
+			$first    = $executor->purge_snapshots_for_task( $this->task_id, false, false, true, 999.0 );
+			$this->assertSame( array( $complete ), $first['deleted_ids'], 'The settled descriptor flag must not consume the guaranteed attempt.' );
+			$this->assertSame( array( $pending ), $first['remaining_ids'], 'An unfinished tombstone remains pending even with no complete site IDs.' );
+			$this->assertSame( 1, $first['skipped'] );
+			$this->assertFileDoesNotExist( $complete_dir . '/artifact.tar' );
+			$this->assertFileExists( $pending_dir . '/artifact.tar' );
+			$this->assertSame( array( 123 ), get_option( $protection::REQUIRED_OPTION_PREFIX . $pending ) );
+			$second = $executor->purge_snapshots_for_task( $this->task_id, false, false, true, 999.0 );
+			$this->assertSame( array( $pending ), $second['candidates'][0]['snapshot_ids'] );
+			$this->assertSame( array(), $second['remaining_ids'] );
+			$this->assertFileDoesNotExist( $pending_dir . '/artifact.tar' );
+			$this->assertFalse( get_option( $protection::REQUIRED_OPTION_PREFIX . $pending ) );
+			$progress = get_option( 'mainwp_backup_deleted_task_cursor' );
+			$this->assertSame( $pending, $progress['tasks'][ $this->task_id ] );
+			$this->assertSame( $this->task_id, $progress['last_task'] );
+			$this->assertSame( 'off', $wpdb->get_var( $wpdb->prepare( "SELECT autoload FROM {$wpdb->options} WHERE option_name = %s", 'mainwp_backup_deleted_task_cursor' ) ) );
+		} finally {
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+			delete_option( 'mainwp_backup_deleted_task_cursor' );
+			delete_option( $protection::REQUIRED_OPTION_PREFIX . $pending );
+		}
+	}
+
+	/** A purge preview includes complete chains and tombstones without cleaning either. */
+	public function test_deleted_task_purge_dry_run_returns_candidates_without_cleanup() {
+		list( $base, $base_dir )       = $this->make_snapshot_with_dir();
+		list( $leaf, $leaf_dir )       = $this->make_snapshot_with_dir(
+			array(
+				'parent_id' => $base,
+				'type'      => 'incremental',
+			)
+		);
+		list( $pending, $pending_dir ) = $this->make_snapshot_with_dir( array( 'status' => 'pruned' ) );
+		$result                        = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, true, false, true, null, true );
+		$this->assertTrue( $result['dry_run'] );
+		$this->assertSame(
+			array(
+				array(
+					'snapshot_ids' => array( $base, $leaf ),
+					'reason'       => 'task_deleted',
+				),
+				array(
+					'snapshot_ids' => array( $pending ),
+					'reason'       => 'task_deleted',
+				),
+			),
+			$result['candidates']
+		);
+		$this->assertSame( array(), $result['deleted_ids'] );
+		$this->assertSame( array(), $result['cloud_deletes_queued'] );
+		$this->assertFalse( get_option( 'mainwp_backup_deleted_task_cursor' ) );
+		foreach ( array( $base_dir, $leaf_dir, $pending_dir ) as $dir ) {
+			$this->assertFileExists( $dir . '/artifact.tar' );
+		}
+	}
+
+	/** Remote preview counts cleanup targets only when cloud deletion is enabled. */
+	public function test_deleted_task_dry_run_remote_targets_exclude_local_jobs() {
+		global $wpdb;
+
+		list( $id ) = $this->make_snapshot_with_dir();
+		$table      = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		foreach ( array(
+			77 => 'local',
+			78 => 's3',
+			79 => 's3',
+		) as $destination => $provider ) {
+			$this->insert_upload_job( $id, $destination );
+			$wpdb->update(
+				$table,
+				array( 'provider' => $provider ),
+				array(
+					'snapshot_id'    => $id,
+					'destination_id' => $destination,
+				)
+			);
+		}
+		$executor = MainWP_Backup_Retention_Executor::instance();
+		$this->assertSame( 2, $executor->purge_snapshots_for_task( $this->task_id, true, false, true, null, true )['remote'] );
+		$this->assertSame( 0, $executor->purge_snapshots_for_task( $this->task_id, false, false, true, null, true )['remote'] );
+		$this->assertCount( 3, MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id ) );
+		$this->assertSame( array(), MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id, 'delete' ) );
+	}
+
+	/**
+	 * Protected shared artifacts are settled for a deleted task's pruned row.
+	 *
+	 * @dataProvider b03_shared_artifacts
+	 * @param bool $snapshot_dir Whether another artifact protects the snapshot directory.
+	 */
+	public function test_deleted_task_purge_shared_pruned_artifacts_are_settled( $snapshot_dir ) {
+		list( $pruned, $dir ) = $this->make_snapshot_with_dir( array( 'status' => 'pruned' ) );
+		$row                  = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $pruned );
+		$kept_path            = $snapshot_dir ? $dir . '/live.tar' : $dir . '//artifact.tar';
+		if ( $snapshot_dir ) {
+			file_put_contents( $kept_path, 'retained bytes' );
+		}
+		$row->archives[0]['path'] = $kept_path;
+		list( $live )             = $this->make_snapshot_with_dir(
+			array(
+				'task_id'       => $this->task_id + 1,
+				'archives'      => wp_json_encode( $row->archives ),
+				'manifest_path' => '',
+			)
+		);
+		$result                   = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, false, false, true, 0.0 );
+		$this->assertSame( array(), $result['errors'] );
+		$this->assertSame( array(), $result['remaining_ids'] );
+		$this->assertSame( 0, $result['attempted'], 'Another snapshot owns this file, so it spends no cleanup attempt.' );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $live )->status );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertFileExists( $kept_path );
+	}
+
 	/**
 	 * Clean fixture rows and dirs.
 	 *

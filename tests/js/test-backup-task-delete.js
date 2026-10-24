@@ -27,6 +27,7 @@ function fixture() {
             on(event, handler) { handlers.set(String(value) + ':' + event, handler); return node; },
             text(text) { nodeWarnings.text = text; return node; },
             toggle(visible) { nodeWarnings.visible = visible; return node; },
+            modal(setting, name, handler) { assert.equal(setting, 'setting'); assert.equal(name, 'onApprove'); modals.at(-1).cb = handler; return node; },
             attr: name => value[name],
             is: () => checked,
             html: text => status.push(text),
@@ -151,11 +152,19 @@ for (const result of ['pending', 'network', 'invalid']) {
     f.change(false);
     if (result === 'network') f.posts[1].fail();
     if (result === 'invalid') f.posts[1].cb({ warnings: 'invalid' });
-    f.modals[0].cb();
+    assert.equal(f.modals[0].cb(), false, 'An unavailable changed preview keeps the modal open.');
     assert.equal(f.posts.length, 2, 'No mutation with an unavailable changed preview: ' + result);
     assert.equal(f.removed(), 0);
-    assert.equal(f.messages.at(-1).color, 'red');
 }
+const refusedRefresh = fixture();
+begin(refusedRefresh);
+refusedRefresh.posts[0].cb({ warnings: [] });
+refusedRefresh.change(false);
+refusedRefresh.posts[1].cb({ error: 'Task <busy> & retry', warnings: [] });
+assert.equal(refusedRefresh.warnings.text, 'Task <busy> & retry', 'Changed previews retain the specific refusal as text.');
+assert.equal(refusedRefresh.modals[0].cb(), false, 'An unavailable preview keeps the existing modal open.');
+assert.equal(refusedRefresh.posts.length, 2);
+
 const reopened = fixture();
 begin(reopened);
 reopened.posts[0].cb({ warnings: ['Task A minimum'] });

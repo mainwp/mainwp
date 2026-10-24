@@ -85,10 +85,11 @@ class MainWP_Backup_Retention_Protection {
     /**
      * Every captured destination must have persisted terminal verification.
      *
-     * @param int $snapshot_id Snapshot identity.
+     * @param int  $snapshot_id Snapshot identity.
+     * @param bool $refresh_destinations Read current rows; false allows list-preview reuse.
      * @return bool
      */
-    public static function required_uploads_verified( int $snapshot_id ): bool {
+    public static function required_uploads_verified( int $snapshot_id, bool $refresh_destinations = true ): bool {
         $required = get_option( self::REQUIRED_OPTION_PREFIX . $snapshot_id, null );
         $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
         if ( null === $snapshot || 'complete' !== $snapshot->status || ! is_array( $required ) || empty( $required ) ) {
@@ -104,7 +105,7 @@ class MainWP_Backup_Retention_Protection {
             if ( null === $job || MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE !== $job->status || empty( $job->checkpoint['manifest_submitted'] ) || empty( $job->checkpoint['uploaded_at'] ) || ! self::checkpoint_covers_snapshot( $snapshot, $job->checkpoint ) ) {
                 return false;
             }
-            $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $destination_id );
+            $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $destination_id, $refresh_destinations );
             if ( null === $destination || ! empty( $destination->credentials_invalid ) || ! is_array( $destination->settings )
                 || empty( $job->provider ) || $destination->provider !== $job->provider ) {
                 return false;
@@ -340,9 +341,10 @@ class MainWP_Backup_Retention_Protection {
      *
      * @param int[]    $snapshot_ids Snapshot identities, including dependencies.
      * @param int|null $now Evaluation instant.
+     * @param bool     $refresh_destinations Read current rows; false allows list-preview reuse.
      * @return array Deadline and unknown-age evidence.
      */
-    public static function remote_protection( array $snapshot_ids, ?int $now = null ): array {
+    public static function remote_protection( array $snapshot_ids, ?int $now = null, bool $refresh_destinations = true ): array {
         unset( $now );
         $protection = array(
             'protected_until' => 0,
@@ -351,7 +353,7 @@ class MainWP_Backup_Retention_Protection {
         foreach ( $snapshot_ids as $snapshot_id ) {
             $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot_id );
             foreach ( MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( (int) $snapshot_id ) as $job ) {
-                $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+                $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id, $refresh_destinations );
                 if ( null === $destination ) {
                     continue;
                 }

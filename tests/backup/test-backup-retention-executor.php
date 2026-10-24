@@ -3141,9 +3141,6 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertTrue( $protection::required_uploads_verified( $id ) );
 		global $wpdb;
 		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), $mutation, array( 'id' => $destination ) );
-		// A later request observes these out-of-band database changes.
-		$destinations = new \ReflectionProperty( \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::class, 'instance' );
-		$destinations->setValue( null, null );
 		$this->assertFalse( $protection::required_uploads_verified( $id ) );
 		MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $this->site_id, $this->task_id );
 		$this->assertFileExists( $dir . '/artifact.tar' );

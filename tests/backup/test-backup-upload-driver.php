@@ -1597,10 +1597,6 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			array( 'id' => $dest_id )
 		);
 
-		// The queued job runs in a later request after the stored row changes.
-		$destinations = new \ReflectionProperty( MainWP_Backup_Storage_Destinations::class, 'instance' );
-		$destinations->setValue( null, null );
-
 		$events = array();
 		add_action(
 			'mainwp_backup_upload_failed',
@@ -1637,10 +1633,6 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			array( 'provider' => 'bogus' ),
 			array( 'id' => $dest_id )
 		);
-
-		// The queued job runs in a later request after the stored row changes.
-		$destinations = new \ReflectionProperty( MainWP_Backup_Storage_Destinations::class, 'instance' );
-		$destinations->setValue( null, null );
 
 		$events = array();
 		add_action(

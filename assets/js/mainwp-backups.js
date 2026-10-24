@@ -904,11 +904,12 @@ managebackups_remove = function (element) {
         let retentionWarning = response.warnings.join(' ');
         let previewRequest = 0;
         let previewReady = true;
+        let currentPreviewError = previewError;
         msg += '<div id="mainwp-backup-task-delete-warnings" class="ui yellow message"' + (retentionWarning ? '' : ' style="display:none"') + '>' + jQuery('<div>').text(retentionWarning).html() + '</div>';
-        mainwp_confirm(msg, function () {
+        let confirmRemoval = function () {
             if (!previewReady) {
-                managebackups_show_message(previewError, 'red');
-                return;
+                managebackups_show_message(jQuery('<div>').text(currentPreviewError).html(), 'red');
+                return false;
             }
             // Read before the modal is reused: the checkbox lives in its content.
             let deleteSnapshots = jQuery('#mainwp-backup-task-delete-snapshots').is(':checked') ? 1 : 0;
@@ -949,12 +950,20 @@ managebackups_remove = function (element) {
                     'red'
                 );
             });
+        };
+        mainwp_confirm(msg, confirmRemoval);
+        jQuery('#mainwp-modal-confirm').modal('setting', 'onApprove', function () {
+            if (!previewReady) {
+                return false;
+            }
+            confirmRemoval();
         });
         let previewCheckbox = jQuery('#mainwp-backup-task-delete-snapshots');
         let previewWarnings = jQuery('#mainwp-backup-task-delete-warnings');
         previewCheckbox.on('change', function () {
             let request = ++previewRequest;
             previewReady = false;
+            currentPreviewError = previewError;
             previewWarnings.text(MainWP.I18n.t('Loading deletion preview...')).toggle(true);
             let data = mainwp_secure_data({
                 action: 'mainwp_removebackup',
@@ -967,7 +976,8 @@ managebackups_remove = function (element) {
                     return;
                 }
                 if (!response || response.error != undefined || response.notask || !Array.isArray(response.warnings) || !response.warnings.every(warning => typeof warning === 'string')) {
-                    previewWarnings.text(previewError).toggle(true);
+                    currentPreviewError = response && typeof response.error === 'string' && response.error ? response.error : previewError;
+                    previewWarnings.text(currentPreviewError).toggle(true);
                     return;
                 }
                 previewReady = true;

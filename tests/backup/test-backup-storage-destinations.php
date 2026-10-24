@@ -123,10 +123,10 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 		add_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
 		$queries = $wpdb->num_queries;
 		try {
-			$first                     = $store->get_destination( $id );
+			$first                     = $store->get_destination( $id, false );
 			$first->name               = 'Changed by caller';
 			$first->settings['bucket'] = 'changed';
-			$second                    = $store->get_destination( $id );
+			$second                    = $store->get_destination( $id, false );
 			$this->assertSame( 'Memo', $second->name );
 			$this->assertSame( $this->s3_settings(), $second->settings );
 			$this->assertNotSame( $first, $second );
@@ -148,7 +148,7 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 				'is_default' => 1,
 			)
 		);
-		$this->assertSame( 1, (int) $store->get_destination( $first )->is_default );
+		$this->assertSame( 1, (int) $store->get_destination( $first, false )->is_default );
 		$second = $store->add_destination(
 			array(
 				'provider'   => 's3',
@@ -157,21 +157,42 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 				'is_default' => 1,
 			)
 		);
-		$this->assertSame( 0, (int) $store->get_destination( $first )->is_default );
-		$this->assertSame( 1, (int) $store->get_destination( $second )->is_default );
-		$this->assertTrue( $store->update_destination( $first, array( 'is_default' => 1 ), $store->get_destination( $first ) ) );
-		$this->assertSame( 0, (int) $store->get_destination( $second )->is_default );
+		$this->assertSame( 0, (int) $store->get_destination( $first, false )->is_default );
+		$this->assertSame( 1, (int) $store->get_destination( $second, false )->is_default );
+		$this->assertTrue( $store->update_destination( $first, array( 'is_default' => 1 ), $store->get_destination( $first, false ) ) );
+		$this->assertSame( 0, (int) $store->get_destination( $second, false )->is_default );
 		$this->assertTrue( $store->update_destination( $second, array( 'is_default' => 1 ) ) );
-		$this->assertSame( 0, (int) $store->get_destination( $first )->is_default );
+		$this->assertSame( 0, (int) $store->get_destination( $first, false )->is_default );
 		$this->assertTrue( $store->update_destination( $second, array( 'name' => 'Renamed' ) ) );
-		$this->assertSame( 'Renamed', $store->get_destination( $second )->name );
+		$this->assertSame( 'Renamed', $store->get_destination( $second, false )->name );
 		$settings           = $this->s3_settings();
 		$settings['bucket'] = 'new-bucket';
 		$this->assertTrue( $store->update_destination( $second, array( 'settings' => $settings ) ) );
-		$this->assertSame( $settings, $store->get_destination( $second )->settings );
+		$this->assertSame( $settings, $store->get_destination( $second, false )->settings );
 		$this->assertTrue( $store->delete_destination( $second ) );
-		$this->assertNull( $store->get_destination( $second ) );
+		$this->assertNull( $store->get_destination( $second, false ) );
 		$this->assertNull( $store->get_default() );
+	}
+
+	/** Ordinary reads observe another request's metadata and deletion. */
+	public function test_default_reads_observe_external_destination_changes() {
+		global $wpdb;
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'Before',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$this->assertSame( 'Before', $store->get_destination( $id )->name );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$wpdb->update( $table, array( 'name' => 'After' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- simulate another request.
+		$this->assertSame( 'After', $store->get_default()->name );
+		$this->assertSame( 'After', $store->get_destination( $id )->name );
+		$wpdb->delete( $table, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- simulate another request.
+		$this->assertNull( $store->get_destination( $id ) );
 	}
 
 	/** Default and explicit reads reuse the decrypted settings. */

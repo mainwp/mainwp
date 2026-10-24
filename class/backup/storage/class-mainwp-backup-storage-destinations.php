@@ -321,11 +321,11 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * load as null with credentials_invalid set.
      *
      * @param int  $id Destination id.
-     * @param bool $refresh Read the current row while reusing unchanged decrypted settings.
+     * @param bool $refresh Read the current row; false allows row reuse for list previews.
      *
      * @return object|null
      */
-    public function get_destination( int $id, bool $refresh = false ): ?object {
+    public function get_destination( int $id, bool $refresh = true ): ?object {
         if ( $refresh || ! array_key_exists( $id, $this->destination_rows ) ) {
             $row                           = $this->wpdb->get_row(
                 $this->wpdb->prepare(
@@ -350,10 +350,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         if ( null === $row ) {
             return null;
         }
-        $id = (int) $row->id;
-        if ( ! isset( $this->destination_rows[ $id ] ) ) {
-            $this->destination_rows[ $id ] = $this->decode_row( $row );
-        }
+        $id                            = (int) $row->id;
+        $this->destination_rows[ $id ] = $this->decode_row( $row );
         return clone $this->destination_rows[ $id ];
     }
 

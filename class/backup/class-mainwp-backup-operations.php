@@ -2040,7 +2040,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array Warning strings.
      */
     private static function remote_minimum_warnings( array $snapshot_ids ): array {
-        $protection = MainWP_Backup_Retention_Protection::remote_protection( $snapshot_ids );
+        $protection = MainWP_Backup_Retention_Protection::remote_protection( $snapshot_ids, null, false );
         return ! empty( $protection['unknown_age'] ) || $protection['protected_until'] > time()
             ? array( __( 'Some copies are still inside their minimum retention period, or MainWP cannot confirm that it has expired. Deleting them overrides that protection.', 'mainwp' ) )
             : array();

@@ -146,10 +146,10 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
             }
 
             $ids                      = array_map( 'intval', array_column( $group['rows'], 'id' ) );
-            $protection               = MainWP_Backup_Retention_Protection::remote_protection( $ids );
+            $protection               = MainWP_Backup_Retention_Protection::remote_protection( $ids, null, false );
             $required_uploads_pending = (bool) array_filter(
                 $group['rows'],
-                static fn( $snapshot ) => MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot ) && ! MainWP_Backup_Retention_Protection::required_uploads_verified( (int) $snapshot->id )
+                static fn( $snapshot ) => MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot ) && ! MainWP_Backup_Retention_Protection::required_uploads_verified( (int) $snapshot->id, false )
             );
             $required_upload_hold     = MainWP_Backup_Retention_Protection::task_removes_local_archives( $task_id ) && $required_uploads_pending;
 

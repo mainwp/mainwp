@@ -369,7 +369,7 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 			);
 			$this->assertArrayNotHasKey( 'error', $result );
 			$this->assertSame( $id, $result['id'] );
-			$row = $destinations->get_destination( $id );
+			$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
 			$this->assertSame( 'Renamed SFTP', $row->name );
 			$this->assertSame( $settings, $row->settings );
 			$this->assertFalse( $row->credentials_invalid );
@@ -457,7 +457,7 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 			);
 			$this->assertArrayNotHasKey( 'error', $result );
 			$this->assertSame( $id, $result['id'] );
-			$row = $destinations->get_destination( $id );
+			$row = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
 			$this->assertSame( 'Renamed SFTP', $row->name );
 			$this->assertSame( $settings, $row->settings );
 			$this->assertFalse( $row->credentials_invalid );

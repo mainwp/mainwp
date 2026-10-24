@@ -18,10 +18,108 @@ use MainWP\Dashboard\MainWP_Backup_Retention_Scheduler;
 use MainWP\Dashboard\MainWP_Backup_Snapshots;
 use MainWP\Dashboard\MainWP_System_Cron_Jobs;
 
+require_once __DIR__ . '/test-backup-now-continuation.php';
+
 /**
  * Class MainWP_Backup_Retention_Scheduler_Test
  */
 class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
+
+	/**
+	 * Eviction and query time both reduce the prune budget.
+	 *
+	 * @dataProvider shared_budget_cases
+	 * @param float    $eviction_seconds Eviction elapsed time.
+	 * @param float    $query_seconds Query elapsed time.
+	 * @param int|null $remaining Expected executor budget, null when exhausted.
+	 */
+	public function test_pair_shares_budget_without_rounding_up( $eviction_seconds, $query_seconds, $remaining ) {
+		$executor_class    = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::class;
+		$query_class       = \MainWP\Dashboard\MainWP_Backup_Retention_Query::class;
+		$executor_slot     = new \ReflectionProperty( $executor_class, 'instance' );
+		$query_slot        = new \ReflectionProperty( $query_class, 'instance' );
+		$original_executor = $executor_slot->getValue();
+		$original_query    = $query_slot->getValue();
+		$executor          = $this->getMockBuilder( $executor_class )->disableOriginalConstructor()->onlyMethods( array( 'evict_local_archives_for_pair', 'run_prune' ) )->getMock();
+		$query             = $this->getMockBuilder( $query_class )->disableOriginalConstructor()->onlyMethods( array( 'get_units_for_site_task' ) )->getMock();
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = 1000.0;
+		$executor->expects( $this->once() )->method( 'evict_local_archives_for_pair' )->with( 12, 34, 10 )->willReturnCallback(
+			static function () use ( $eviction_seconds ) {
+				MainWP_Backup_Now_Continuation_Test::$fixed_microtime += $eviction_seconds;
+				return array(
+					'evicted_ids' => array(),
+					'held'        => 0,
+					'errors'      => array(),
+				);
+			}
+		);
+		$query->expects( $this->once() )->method( 'get_units_for_site_task' )->willReturnCallback(
+			static function () use ( $query_seconds ) {
+				MainWP_Backup_Now_Continuation_Test::$fixed_microtime += $query_seconds;
+				return array(
+					array(
+						'snapshots'      => array( (object) array( 'id' => 1 ) ),
+						'is_complete'    => true,
+						'is_restorable'  => true,
+						'newest_created' => 100,
+						'size_bytes'     => 1,
+					),
+					array(
+						'snapshots'      => array( (object) array( 'id' => 2 ) ),
+						'is_complete'    => true,
+						'is_restorable'  => true,
+						'newest_created' => 200,
+						'size_bytes'     => 1,
+					),
+				);
+			}
+		);
+		if ( null === $remaining ) {
+			$executor->expects( $this->never() )->method( 'run_prune' );
+		} else {
+			$executor->expects( $this->once() )->method( 'run_prune' )->with( $this->anything(), $this->anything(), false, $remaining )->willReturn(
+				array(
+					'errors'  => array(),
+					'skipped' => 0,
+				)
+			);
+		}
+		$executor_slot->setValue( null, $executor );
+		$query_slot->setValue( null, $query );
+		try {
+			$task   = (object) array(
+				'id'                   => 34,
+				'retention_count'      => 1,
+				'retention_days'       => 0,
+				'retention_storage_mb' => 0,
+				'template'             => 0,
+			);
+			$report = MainWP_Backup_Retention_Scheduler::instance()->run_retention_for_pair( $task, 12, 10 );
+			if ( null === $remaining ) {
+				$this->assertSame( 1, $report['skipped'] );
+				$this->assertSame( array( 1 ), $report['remaining_ids'] );
+				$this->assertSame( 0, $report['pruned'] );
+			}
+		} finally {
+			$executor_slot->setValue( null, $original_executor );
+			$query_slot->setValue( null, $original_query );
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+		}
+	}
+
+	/**
+	 * Elapsed times and the remaining whole seconds.
+	 *
+	 * @return array
+	 */
+	public static function shared_budget_cases() {
+		return array(
+			'eviction and query'       => array( 2.25, 1.5, 6 ),
+			'fractional remainder'     => array( 2.25, 7.25, null ),
+			'query exhausts budget'    => array( 2.0, 8.5, null ),
+			'eviction exhausts budget' => array( 10.5, 0.25, null ),
+		);
+	}
 
 	/**
 	 * Fixture site id.
@@ -239,15 +337,16 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 	 */
 	public function test_budget_skip_requeues_pair() {
 		$task_id = $this->insert_task( array( 'retention_count' => 1 ) );
-		$this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 300 ) );
+		$old     = $this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 300 ) );
 		$this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 200 ) );
 		$new = $this->insert_snapshot_with_dir( $task_id, array( 'created' => time() - 100 ) );
 
 		$scheduler = MainWP_Backup_Retention_Scheduler::instance();
 		$scheduler->on_snapshot_recorded( $new, $task_id, $this->site_id );
 
-		// A zero budget prunes the first candidate and skips the rest.
+		// A zero budget defers every candidate until the next tick.
 		$scheduler->process_post_snapshot_queue( 0 );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $old )->status );
 
 		$queue = get_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION, array() );
 		$this->assertCount( 1, $queue, 'The partially processed pair must return to the queue.' );

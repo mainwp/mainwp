@@ -902,10 +902,14 @@ managebackups_remove = function (element) {
             '<div><em>' + MainWP.I18n.t('Leave this unticked to keep the snapshots. They stay in Snapshots & Restore until you delete them with Clean Up.') + '</em></div>' +
             '</div></div>';
         let retentionWarning = response.warnings.join(' ');
-        if (retentionWarning) {
-            msg += '<div class="ui yellow message">' + jQuery('<div>').text(retentionWarning).html() + '</div>';
-        }
+        let previewRequest = 0;
+        let previewReady = true;
+        msg += '<div id="mainwp-backup-task-delete-warnings" class="ui yellow message"' + (retentionWarning ? '' : ' style="display:none"') + '>' + jQuery('<div>').text(retentionWarning).html() + '</div>';
         mainwp_confirm(msg, function () {
+            if (!previewReady) {
+                managebackups_show_message(previewError, 'red');
+                return;
+            }
             // Read before the modal is reused: the checkbox lives in its content.
             let deleteSnapshots = jQuery('#mainwp-backup-task-delete-snapshots').is(':checked') ? 1 : 0;
             jQuery('#task-status-' + id).html(MainWP.I18n.t('Removing the task...'));
@@ -944,6 +948,33 @@ managebackups_remove = function (element) {
                     MainWP.I18n.t('The deletion result could not be confirmed. Reload the page before trying again.'),
                     'red'
                 );
+            });
+        });
+        jQuery('#mainwp-backup-task-delete-snapshots').on('change', function () {
+            let request = ++previewRequest;
+            previewReady = false;
+            jQuery('#mainwp-backup-task-delete-warnings').text(MainWP.I18n.t('Loading deletion preview...')).toggle(true);
+            let data = mainwp_secure_data({
+                action: 'mainwp_removebackup',
+                id: id,
+                dry_run: 1,
+                delete_snapshots: jQuery('#mainwp-backup-task-delete-snapshots').is(':checked') ? 1 : 0
+            });
+            jQuery.post(ajaxurl, data, function (response) {
+                if (request !== previewRequest) {
+                    return;
+                }
+                if (!response || response.error != undefined || response.notask || !Array.isArray(response.warnings) || !response.warnings.every(warning => typeof warning === 'string')) {
+                    jQuery('#mainwp-backup-task-delete-warnings').text(previewError).toggle(true);
+                    return;
+                }
+                previewReady = true;
+                let warning = response.warnings.join(' ');
+                jQuery('#mainwp-backup-task-delete-warnings').text(warning).toggle(!!warning);
+            }, 'json').fail(function () {
+                if (request === previewRequest) {
+                    jQuery('#mainwp-backup-task-delete-warnings').text(previewError).toggle(true);
+                }
             });
         });
     }, 'json').fail(function () {

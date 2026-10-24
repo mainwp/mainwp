@@ -104,6 +104,103 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 		return MainWP_Keys_Manager::get_keys_dir() . $file_key;
 	}
 
+	/** Repeated reads share one query and decrypt, while callers own their rows. */
+	public function test_request_memo_returns_independent_rows() {
+		global $wpdb;
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Memo',
+				'settings' => $this->s3_settings(),
+			)
+		);
+		$calls = 0;
+		$count = static function ( $value ) use ( &$calls ) {
+			++$calls;
+			return $value;
+		};
+		add_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		$queries = $wpdb->num_queries;
+		try {
+			$first                     = $store->get_destination( $id );
+			$first->name               = 'Changed by caller';
+			$first->settings['bucket'] = 'changed';
+			$second                    = $store->get_destination( $id );
+			$this->assertSame( 'Memo', $second->name );
+			$this->assertSame( $this->s3_settings(), $second->settings );
+			$this->assertNotSame( $first, $second );
+			$this->assertSame( 1, $wpdb->num_queries - $queries );
+			$this->assertSame( 1, $calls );
+		} finally {
+			remove_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		}
+	}
+
+	/** Every mutation makes subsequent reads observe the stored row. */
+	public function test_request_memo_invalidates_writes_defaults_and_delete() {
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$first = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'First',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$this->assertSame( 1, (int) $store->get_destination( $first )->is_default );
+		$second = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'Second',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$this->assertSame( 0, (int) $store->get_destination( $first )->is_default );
+		$this->assertSame( 1, (int) $store->get_destination( $second )->is_default );
+		$this->assertTrue( $store->update_destination( $first, array( 'is_default' => 1 ), $store->get_destination( $first ) ) );
+		$this->assertSame( 0, (int) $store->get_destination( $second )->is_default );
+		$this->assertTrue( $store->update_destination( $second, array( 'is_default' => 1 ) ) );
+		$this->assertSame( 0, (int) $store->get_destination( $first )->is_default );
+		$this->assertTrue( $store->update_destination( $second, array( 'name' => 'Renamed' ) ) );
+		$this->assertSame( 'Renamed', $store->get_destination( $second )->name );
+		$settings           = $this->s3_settings();
+		$settings['bucket'] = 'new-bucket';
+		$this->assertTrue( $store->update_destination( $second, array( 'settings' => $settings ) ) );
+		$this->assertSame( $settings, $store->get_destination( $second )->settings );
+		$this->assertTrue( $store->delete_destination( $second ) );
+		$this->assertNull( $store->get_destination( $second ) );
+		$this->assertNull( $store->get_default() );
+	}
+
+	/** Default and explicit reads reuse the decrypted settings. */
+	public function test_default_and_id_reads_share_decryption() {
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'Default',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$calls = 0;
+		$count = static function ( $value ) use ( &$calls ) {
+			++$calls;
+			return $value;
+		};
+		add_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		try {
+			$default                     = $store->get_default();
+			$default->settings['bucket'] = 'caller-change';
+			$this->assertSame( $this->s3_settings(), $store->get_destination( $id )->settings );
+			$this->assertSame( 1, $calls );
+		} finally {
+			remove_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		}
+	}
+
 	/**
 	 * Add a destination and read it back with settings decrypted.
 	 *

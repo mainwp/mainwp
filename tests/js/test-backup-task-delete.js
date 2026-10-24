@@ -2,7 +2,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = fs.readFileSync(require.resolve('../../assets/js/mainwp-backups.js'), 'utf8');
+const source = fs.readFileSync(process.env.MAINWP_BACKUPS_JS || require.resolve('../../assets/js/mainwp-backups.js'), 'utf8');
 const start = source.indexOf('managebackups_remove = function');
 const end = source.indexOf('\n};', start) + '\n};'.length;
 assert.ok(start >= 0 && end > start);
@@ -12,6 +12,8 @@ function fixture() {
     const modals = [];
     const messages = [];
     const status = [];
+    const handlers = new Map();
+    const warnings = { text: '', visible: false };
     let checked = true;
     let removed = 0;
     const element = { task_id: '12' };
@@ -20,12 +22,16 @@ function fixture() {
             let text = '';
             return { text(value) { text = value; return this; }, html() { return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); } };
         }
-        return {
+        const node = {
+            on(event, handler) { handlers.set(String(value) + ':' + event, handler); return node; },
+            text(text) { warnings.text = text; return node; },
+            toggle(visible) { warnings.visible = visible; return node; },
             attr: name => value[name],
             is: () => checked,
             html: text => status.push(text),
             closest: () => ({ remove: () => removed++ })
         };
+        return node;
     };
     jquery.post = (url, data, cb, type) => {
         const request = { url, data, cb, type };
@@ -40,7 +46,7 @@ function fixture() {
     };
     vm.createContext(context);
     vm.runInContext(source.slice(start, end), context);
-    return { context, posts, modals, messages, status, element, checked(value) { checked = value; }, removed: () => removed };
+    return { context, posts, modals, messages, status, element, warnings, change(value) { checked = value; const handler = handlers.get('#mainwp-backup-task-delete-snapshots:change'); assert.equal(typeof handler, 'function', 'The checkbox change must refresh the production preview.'); handler(); }, checked(value) { checked = value; }, removed: () => removed };
 }
 const begin = f => {
     assert.equal(f.context.managebackups_remove(f.element), false);
@@ -70,7 +76,7 @@ const noWarning = fixture();
 begin(noWarning);
 noWarning.posts[0].cb({ warnings: [] });
 assert.equal(noWarning.modals.length, 1);
-assert.doesNotMatch(noWarning.modals[0].msg, /ui yellow message/);
+assert.doesNotMatch(noWarning.modals[0].msg, /class="ui yellow message">[^<]+/);
 
 const failures = [null, false, '0', '-1', {}, { notask: true }, { error: 'Denied.' }, { error: 'Denied.', warnings: [] }, { warnings: 'invalid' }, { warnings: [null] }];
 for (const response of failures) {
@@ -112,4 +118,41 @@ for (const failure of ['network', 'parsererror']) {
     assert.equal(f.messages.at(-1).color, 'red');
     assert.match(f.messages.at(-1).text, /Reload the page before trying again/);
 }
-console.log('OK (17 task delete preview/confirmation scenarios)');
+for (const checked of [false, true]) {
+    const f = fixture();
+    begin(f);
+    f.posts[0].cb({ warnings: ['Initial minimum'] });
+    f.change(checked);
+    assert.equal(f.posts.length, 2);
+    assert.deepEqual({ ...f.posts[1].data }, { action: 'mainwp_removebackup', id: '12', dry_run: 1, delete_snapshots: checked ? 1 : 0, security: 'nonce' });
+    f.posts[1].cb({ warnings: checked ? ['Current <minimum>'] : [] });
+    assert.equal(f.warnings.visible, checked);
+    assert.equal(f.warnings.text, checked ? 'Current <minimum>' : '');
+    f.modals[0].cb();
+    assert.equal(f.posts[2].data.delete_snapshots, checked ? 1 : 0);
+    assert.equal(f.posts[2].data.dry_run, undefined);
+}
+const stale = fixture();
+begin(stale);
+stale.posts[0].cb({ warnings: ['Initial'] });
+stale.change(false);
+stale.change(true);
+stale.posts[2].cb({ warnings: ['Newest'] });
+stale.posts[1].cb({ warnings: [] });
+assert.equal(stale.warnings.text, 'Newest');
+assert.equal(stale.warnings.visible, true);
+stale.posts[1].fail();
+assert.equal(stale.warnings.text, 'Newest', 'A stale failure cannot replace the current warnings.');
+for (const result of ['pending', 'network', 'invalid']) {
+    const f = fixture();
+    begin(f);
+    f.posts[0].cb({ warnings: [] });
+    f.change(false);
+    if (result === 'network') f.posts[1].fail();
+    if (result === 'invalid') f.posts[1].cb({ warnings: 'invalid' });
+    f.modals[0].cb();
+    assert.equal(f.posts.length, 2, 'No mutation with an unavailable changed preview: ' + result);
+    assert.equal(f.removed(), 0);
+    assert.equal(f.messages.at(-1).color, 'red');
+}
+console.log('OK (task delete previews, checkbox refresh, stale replies and failure scenarios)');

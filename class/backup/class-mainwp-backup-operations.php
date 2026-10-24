@@ -2325,7 +2325,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         // A preview must not fall through to the existing destructive pass.
         if ( $dry_run ) {
-            return MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep, 6 * HOUR_IN_SECONDS, true );
+            return MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep, 6 * HOUR_IN_SECONDS );
         }
         return MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $site_id, $keep, 6 * HOUR_IN_SECONDS, true );
     }
@@ -2576,7 +2576,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         $task         = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
         $keep         = $keep ?? ( $task ? MainWP_Backup_Settings::task_retention_count( $task ) : MainWP_Backup_Settings::get_on_demand_retention_count() );
-        $plan         = MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep, 6 * HOUR_IN_SECONDS, true );
+        $plan         = MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep, 6 * HOUR_IN_SECONDS );
         $snapshot_ids = $plan['orphaned_task_snapshot_ids'];
         foreach ( $plan['on_demand_units'] as $unit ) {
             $snapshot_ids = array_merge( $snapshot_ids, $unit['snapshot_ids'] );

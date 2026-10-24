@@ -42,6 +42,13 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     private static $instance = null;
 
     /**
+     * Decrypted rows for this request only. Callers receive clones.
+     *
+     * @var array<int, object|null>
+     */
+    private $destination_rows = array();
+
+    /**
      * Method instance()
      *
      * Create public static instance.
@@ -71,6 +78,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @return int Destination id, 0 on failure.
      */
     public function add_destination( array $data ): int {
+        $this->destination_rows = array();
+
         $intent = $this->stage_settings_encryption( isset( $data['settings'] ) && is_array( $data['settings'] ) ? $data['settings'] : array() );
         if ( false === $intent ) {
             return 0;
@@ -93,6 +102,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             ),
             array( '%s', '%s', '%s', '%d', '%d', '%d' )
         );
+
+        $this->destination_rows = array();
 
         if ( ! $inserted ) {
             // The row never landed: delete the key file the staging
@@ -119,6 +130,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @return bool
      */
     public function update_destination( int $id, array $data, ?object $expected = null ): bool {
+        $this->destination_rows = array();
+
         $row          = array();
         $format       = array();
         $where        = array( 'id' => $id );
@@ -194,6 +207,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             $where_format
         );
 
+        $this->destination_rows = array();
+
         if ( null !== $expected && 0 === $updated ) {
             $updated = false;
         }
@@ -217,6 +232,7 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         }
         if ( false !== $updated && null !== $expected && ! empty( $row['is_default'] ) ) {
             $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp_backup_storage' ) . ' SET is_default = 0 WHERE is_default = 1 AND id <> %d', $id ) );
+            $this->destination_rows = array();
         }
 
         return false !== $updated;
@@ -268,9 +284,13 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @return bool
      */
     public function delete_destination( int $id ): bool {
+        $this->destination_rows = array();
+
         $file_key = $this->stored_file_key( $id );
 
         $deleted = (bool) $this->wpdb->delete( $this->table_name( 'wp_backup_storage' ), array( 'id' => $id ), array( '%d' ) );
+
+        $this->destination_rows = array();
 
         if ( $deleted && '' !== $file_key ) {
             MainWP_Keys_Manager::instance()->delete_key_file( $file_key );
@@ -291,13 +311,16 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @return object|null
      */
     public function get_destination( int $id ): ?object {
-        $row = $this->wpdb->get_row(
-            $this->wpdb->prepare(
-                'SELECT * FROM ' . $this->table_name( 'wp_backup_storage' ) . ' WHERE id = %d',
-                $id
-            )
-        );
-        return $this->decode_row( $row );
+        if ( ! array_key_exists( $id, $this->destination_rows ) ) {
+            $row                           = $this->wpdb->get_row(
+                $this->wpdb->prepare(
+                    'SELECT * FROM ' . $this->table_name( 'wp_backup_storage' ) . ' WHERE id = %d',
+                    $id
+                )
+            );
+            $this->destination_rows[ $id ] = $this->decode_row( $row );
+        }
+        return null === $this->destination_rows[ $id ] ? null : clone $this->destination_rows[ $id ];
     }
 
     /**
@@ -309,7 +332,14 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         $row = $this->wpdb->get_row(
             'SELECT * FROM ' . $this->table_name( 'wp_backup_storage' ) . ' WHERE is_default = 1 ORDER BY id DESC LIMIT 1'
         );
-        return $this->decode_row( $row );
+        if ( null === $row ) {
+            return null;
+        }
+        $id = (int) $row->id;
+        if ( ! isset( $this->destination_rows[ $id ] ) ) {
+            $this->destination_rows[ $id ] = $this->decode_row( $row );
+        }
+        return clone $this->destination_rows[ $id ];
     }
 
     /**
@@ -399,6 +429,7 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      */
     private function clear_default(): void {
         $this->wpdb->query( 'UPDATE ' . $this->table_name( 'wp_backup_storage' ) . ' SET is_default = 0 WHERE is_default = 1' );
+        $this->destination_rows = array();
     }
 
     /**

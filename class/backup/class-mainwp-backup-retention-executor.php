@@ -439,10 +439,11 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      *                                  deletion too.
      *
      * @param bool $manual_override Explicit confirmed removal bypasses minimum protection.
+     * @param bool $retry_pruned Revisit pruned leftovers when deleting a site.
      * @return array Pruned unit and snapshot counts, deleted_ids, remaining_ids,
      *               cloud_deletes_queued (snapshot/destination pairs) and errors.
      */
-    public function purge_snapshots_for_task( int $task_id, bool $delete_cloud_copies, bool $manual_override = false ): array {
+    public function purge_snapshots_for_task( int $task_id, bool $delete_cloud_copies, bool $manual_override = false, bool $retry_pruned = false ): array {
         global $wpdb;
 
         $task = (object) array(
@@ -460,16 +461,19 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         );
 
         $query      = MainWP_Backup_Retention_Query::instance();
-        $table      = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
-        $pruned_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- full-task purges must also retry cleanup belonging to already-pruned snapshots.
-            $wpdb->prepare(
-                "SELECT id FROM {$table} WHERE task_id = %d AND status = 'pruned'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted MainWP snapshot table identifier.
-                $task_id
-            )
-        );
-        if ( '' !== $wpdb->last_error ) {
-            $result['errors'][] = __( 'Removed backups could not be read. The task was kept for another cleanup attempt.', 'mainwp' );
-            return $result;
+        $pruned_ids = array();
+        if ( $retry_pruned ) {
+            $table      = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+            $pruned_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- deleted-site purges must retry cleanup belonging to already-pruned snapshots.
+                $wpdb->prepare(
+                    "SELECT id FROM {$table} WHERE task_id = %d AND status = 'pruned'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted MainWP snapshot table identifier.
+                    $task_id
+                )
+            );
+            if ( '' !== $wpdb->last_error ) {
+                $result['errors'][] = __( 'Removed backups could not be read. The task was kept for another cleanup attempt.', 'mainwp' );
+                return $result;
+            }
         }
         $store = MainWP_Backup_Upload_Job_Store::instance();
         foreach ( $pruned_ids as $snapshot_id ) {

@@ -155,7 +155,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             return true;
         }
 
-        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
+        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ), false, true );
 
         // The purge deliberately keeps a snapshot when its artifact cannot be
         // reached (recorded outside the uploads root, or an unlink refused).
@@ -169,7 +169,7 @@ class MainWP_Post_Backup_Handler extends MainWP_Post_Base_Handler { // phpcs:ign
             MainWP_Logger::instance()->debug_for_website(
                 $site,
                 'backup',
-                'Site deleted but its hidden backup task (id ' . (int) $task->id . ') could not be fully purged; keeping the task and its diagnostics.'
+                'Site deleted; hidden backup task (id ' . (int) $task->id . ') is held by a destination minimum, unverified uploads or unfinished cleanup; will retry.'
             );
             return false;
         }

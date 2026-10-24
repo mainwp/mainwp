@@ -455,7 +455,6 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                     var primary = $( '#mainwp_primaryBackup' ).val() || '';
                     var showNative = nativeEnabled && primary === '';
                     $( '.mainwp-native-backup-field' ).toggle( showNative );
-                    $( '.mainwp-native-backup-field.error' ).show();
                     var zip = showNative && $( '#mainwp_archiveFormat' ).val() === 'zip';
                     $( '#mainwp_maximumFileDescriptorsAuto, #mainwp_options_maximumFileDescriptors, #mainwp_options_loadFilesBeforeZip' ).closest( '.ui.grid.field' ).toggle( zip );
                     var encryption = $( '#mainwp_options_enableBackupEncryption' ).is( ':checked' );

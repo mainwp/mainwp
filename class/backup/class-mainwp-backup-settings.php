@@ -361,6 +361,157 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Read a count row without option-cache coercion.
+     *
+     * @param string $option Count option name.
+     * @return array|null|false Raw row, absence, or read failure.
+     */
+    private static function read_count_row( string $option ) {
+        global $wpdb;
+        $row = $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $option ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Recovery needs the exact persisted row.
+        return '' === $wpdb->last_error ? $row : false;
+    }
+
+    /**
+     * Recover count rows only while they still match this save's writes.
+     *
+     * @param array $changes Original and written count rows.
+     */
+    private static function recover_count_changes( array $changes ): void {
+        global $wpdb;
+        foreach ( array_reverse( $changes, true ) as $option => $change ) {
+            $written = $change['written'];
+            if ( null === $change['before'] ) {
+                $sql = $wpdb->prepare(
+                    'DELETE FROM %i WHERE option_name = %s AND option_id = %d AND BINARY option_value = BINARY %s AND BINARY autoload = BINARY %s',
+                    $wpdb->options,
+                    $option,
+                    $written['option_id'],
+                    $written['option_value'],
+                    $written['autoload']
+                );
+            } else {
+                $sql = $wpdb->prepare(
+                    'UPDATE %i SET option_value = %s, autoload = %s WHERE option_name = %s AND option_id = %d AND BINARY option_value = BINARY %s AND BINARY autoload = BINARY %s',
+                    $wpdb->options,
+                    $change['before']['option_value'],
+                    $change['before']['autoload'],
+                    $option,
+                    $written['option_id'],
+                    $written['option_value'],
+                    $written['autoload']
+                );
+            }
+            if ( false === $wpdb->query( $sql ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared -- Conditional recovery SQL is prepared above.
+                MainWP_Logger::instance()->warning( 'Backup count settings could not be restored after a failed save.' );
+            }
+            wp_cache_delete( $option, 'options' );
+            wp_cache_delete( 'alloptions', 'options' );
+            wp_cache_delete( 'notoptions', 'options' );
+        }
+    }
+
+    /**
+     * Persist counts before other settings, with the server count last.
+     *
+     * @param array $counts Submitted count values.
+     * @return array|false Recovery journal, or refusal.
+     */
+    private static function save_count_changes( array $counts ) {
+        $changes = array();
+        $before  = array();
+        foreach ( $counts as $option => $count ) {
+            $before[ $option ] = self::read_count_row( $option );
+            if ( false === $before[ $option ] ) {
+                return false;
+            }
+        }
+        foreach ( array( 'mainwp_backupOnExternalSources', 'mainwp_backupsOnServer' ) as $option ) {
+            if ( ! array_key_exists( $option, $counts ) ) {
+                continue;
+            }
+            $written        = null;
+            $capture_failed = false;
+            $original       = $before[ $option ];
+            $autoload       = null === $original ? 'no' : $original['autoload'];
+            $add_autoload   = function_exists( 'wp_determine_option_autoload_value' ) ? ( null === $original ? 'off' : 'auto' ) : ( null === $original ? 'no' : 'yes' );
+            $track_autoload = static function ( $value, $name ) use ( $option, &$autoload, &$add_autoload ) {
+                if ( $option === $name ) {
+                    $autoload     = is_bool( $value ) ? ( $value ? 'auto-on' : 'auto-off' ) : 'auto';
+                    $add_autoload = $autoload;
+                }
+                return $value;
+            };
+            $capture        = static function ( $unused, $value ) use ( $option, $original, &$autoload, &$add_autoload, &$written, &$capture_failed ) {
+                global $wpdb;
+                if ( null !== $written ) {
+                    return;
+                }
+                $inserted = 0 === strpos( current_filter(), 'add_option_' );
+                $fallback = array(
+                    'option_id'    => $inserted ? $wpdb->insert_id : ( $original['option_id'] ?? 0 ),
+                    'option_value' => (string) maybe_serialize( $value ),
+                    'autoload'     => $inserted ? $add_autoload : $autoload,
+                );
+                for ( $attempt = 0; $attempt < 3; ++$attempt ) {
+                    $written = self::read_count_row( $option );
+                    if ( false !== $written ) {
+                        break;
+                    }
+                }
+                if ( ! is_array( $written ) || (string) $fallback['option_id'] !== $written['option_id'] || $fallback['option_value'] !== $written['option_value'] || $fallback['autoload'] !== $written['autoload'] ) {
+                    // Recover before later hooks can make another write with the same value.
+                    self::recover_count_changes(
+                        array(
+                            $option => array(
+                                'before'  => $original,
+                                'written' => $fallback,
+                            ),
+                        )
+                    );
+                    $capture_failed = true;
+                } else {
+                    // A false-valued upsert can leave an older autoloaded value cached.
+                    wp_cache_delete( $option, 'options' );
+                    wp_cache_delete( 'alloptions', 'options' );
+                    wp_cache_delete( 'notoptions', 'options' );
+                }
+            };
+            // Capture before later hooks can edit the row or replace its identity.
+            add_filter( 'wp_default_autoload_value', $track_autoload, PHP_INT_MAX, 2 );
+            add_action( 'add_option_' . $option, $capture, PHP_INT_MIN, 2 );
+            add_action( 'update_option_' . $option, $capture, PHP_INT_MIN, 2 );
+            try {
+                $updated = null === $original ? add_option( $option, $counts[ $option ], '', 'no' ) : update_option( $option, $counts[ $option ] );
+            } finally {
+                remove_filter( 'wp_default_autoload_value', $track_autoload, PHP_INT_MAX );
+                remove_action( 'add_option_' . $option, $capture, PHP_INT_MIN );
+                remove_action( 'update_option_' . $option, $capture, PHP_INT_MIN );
+            }
+            if ( $capture_failed || ( $updated && ! is_array( $written ) ) ) {
+                MainWP_Logger::instance()->warning( 'Backup count settings could not be checked after a write.' );
+                self::recover_count_changes( $changes );
+                return false;
+            }
+            if ( is_array( $written ) && $written !== $before[ $option ] ) {
+                $changes[ $option ] = array(
+                    'before'  => $before[ $option ],
+                    'written' => $written,
+                );
+            }
+            $current = self::read_count_row( $option );
+            if ( ! is_array( $current ) || (string) $counts[ $option ] !== $current['option_value'] ) {
+                self::recover_count_changes( $changes );
+                return false;
+            }
+            wp_cache_delete( $option, 'options' );
+            wp_cache_delete( 'alloptions', 'options' );
+            wp_cache_delete( 'notoptions', 'options' );
+        }
+        return $changes;
+    }
+
+    /**
      * Method handle_settings_post()
      *
      * Update Child Site Settings.
@@ -399,14 +550,13 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( isset( $_POST['mainwp_options_onDemandRetentionCount'] ) ) {
                     $values['on_demand_retention_count'] = max( 1, intval( $_POST['mainwp_options_onDemandRetentionCount'] ) );
                 }
-                if ( is_wp_error( MainWP_Backup_Operations::save_backup_settings( $values, 'ui' ) ) ) {
+                $count_changes = self::save_count_changes( $counts );
+                if ( false === $count_changes ) {
                     return false;
                 }
-                foreach ( $counts as $option => $count ) {
-                    MainWP_Utility::update_option( $option, $count );
-                    if ( (string) get_option( $option, null ) !== (string) $count ) {
-                        return false;
-                    }
+                if ( is_wp_error( MainWP_Backup_Operations::save_backup_settings( $values, 'ui' ) ) ) {
+                    self::recover_count_changes( $count_changes );
+                    return false;
                 }
                 if ( isset( $_POST['mainwp_options_maximumFileDescriptors'] ) && - 1 < $_POST['mainwp_options_maximumFileDescriptors'] ) {
                     MainWP_Utility::update_option( 'mainwp_maximumFileDescriptors', ( isset( $_POST['mainwp_options_maximumFileDescriptors'] ) ? intval( $_POST['mainwp_options_maximumFileDescriptors'] ) : 1 ) );

@@ -719,6 +719,596 @@ class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+
+	/** Count persistence failure leaves the complete mixed form unchanged.
+	 *
+	 * @dataProvider failed_count_writes
+	 * @param string $failed Failed option.
+	 * @param bool   $absent Whether counts were absent.
+	 * @param int    $old Old server count.
+	 * @param int    $next Submitted server count.
+	 */
+	public function test_checked_count_sql_failure( string $failed, bool $absent, int $old, int $next ): void {
+		global $wpdb;
+		$this->prepare_checked_count_form( $next );
+		foreach ( array(
+			'mainwp_backupsOnServer'         => $old,
+			'mainwp_backupOnExternalSources' => 4,
+		) as $option => $value ) {
+			delete_option( $option );
+			if ( ! $absent ) {
+				add_option( $option, $value, '', 'yes' );
+			}
+		}
+		$before = $this->checked_count_rows();
+		$fail   = static function ( $sql ) use ( $wpdb, $failed ) {
+			if ( preg_match( '/^(UPDATE|INSERT) /i', $sql ) && str_contains( $sql, $wpdb->options ) && str_contains( $sql, "'" . $failed . "'" ) ) {
+				return 'INVALID SQL FOR CHECKED COUNT TEST';
+			}
+			return $sql;
+		};
+		$errors = $wpdb->suppress_errors( true );
+		add_filter( 'query', $fail );
+		try {
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $errors );
+			$_POST = array();
+		}
+		$this->assertSame( $before, $this->checked_count_rows(), 'Failed save must restore raw rows, identity and autoload.' );
+		foreach ( array( 'mainwp_backupsOnServer', 'mainwp_backupOnExternalSources' ) as $option ) {
+			$this->assertSame( isset( $before[ $option ] ) ? $before[ $option ]['option_value'] : false, false === get_option( $option ) ? false : (string) get_option( $option ), 'Option caches must agree after recovery.' );
+		}
+	}
+
+	/**
+	 * Count SQL failure cases.
+	 *
+	 * @return array Cases.
+	 */
+	public static function failed_count_writes(): array {
+		$cases = array();
+		foreach ( array( 'mainwp_backupsOnServer', 'mainwp_backupOnExternalSources' ) as $failed ) {
+			foreach ( array( false, true ) as $absent ) {
+				foreach ( array( array( 0, 1 ), array( 3, 0 ) ) as $transition ) {
+					$cases[ $failed . '-' . (int) $absent . '-' . $transition[0] ] = array( $failed, $absent, $transition[0], $transition[1] );
+				}
+			}
+		}
+		return $cases;
+	}
+
+	/** Later edits to a successfully written count survive recovery.
+	 *
+	 * @dataProvider concurrent_count_changes
+	 * @param string $change Later edit kind.
+	 */
+	public function test_checked_count_preserves_later_edit( string $change ): void {
+		global $wpdb;
+		$this->prepare_checked_count_form( 1 );
+		update_option( 'mainwp_backupsOnServer', 0 );
+		update_option( 'mainwp_backupOnExternalSources', 4 );
+		$later = null;
+		$edit  = function () use ( $wpdb, $change, &$later ) {
+			if ( 'value' === $change ) {
+				update_option( 'mainwp_backupOnExternalSources', 9 );
+			} elseif ( 'autoload' === $change ) {
+				$wpdb->update( $wpdb->options, array( 'autoload' => 'yes' ), array( 'option_name' => 'mainwp_backupOnExternalSources' ) );
+			} else {
+				delete_option( 'mainwp_backupOnExternalSources' );
+				add_option( 'mainwp_backupOnExternalSources', 2, '', 'no' );
+			}
+			$later = $this->checked_count_rows()['mainwp_backupOnExternalSources'];
+		};
+		$fail  = static fn( $sql ) => str_starts_with( $sql, 'UPDATE ' ) && str_contains( $sql, "'mainwp_backupsOnServer'" ) ? 'INVALID SQL FOR CHECKED COUNT TEST' : $sql;
+		add_action( 'update_option_mainwp_backupOnExternalSources', $edit );
+		add_filter( 'query', $fail );
+		$errors = $wpdb->suppress_errors( true );
+		try {
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		} finally {
+			remove_action( 'update_option_mainwp_backupOnExternalSources', $edit );
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $errors );
+			$_POST = array();
+		}
+		$this->assertNotNull( $later );
+		$this->assertSame( $later, $this->checked_count_rows()['mainwp_backupOnExternalSources'] );
+		$this->assertSame( $later['option_value'], (string) get_option( 'mainwp_backupOnExternalSources' ) );
+		$this->assertSame( '0', get_option( 'mainwp_backupsOnServer' ) );
+	}
+
+	/**
+	 * Later writer cases.
+	 *
+	 * @return array Cases.
+	 */
+	public static function concurrent_count_changes(): array {
+		return array( array( 'value' ), array( 'autoload' ), array( 'recreated' ) );
+	}
+
+	/** Operations can refuse after successful count writes. */
+	public function test_checked_count_operations_refusal(): void {
+		$this->prepare_checked_count_form( 1 );
+		update_option( 'mainwp_backupsOnServer', 0 );
+		delete_option( 'mainwp_backupOnExternalSources' );
+		$before = $this->checked_count_rows();
+		$deny   = static function () {
+			add_filter( 'mainwp_currentusercan', '__return_false', PHP_INT_MAX );
+		};
+		add_action( 'update_option_mainwp_backupsOnServer', $deny );
+		try {
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		} finally {
+			remove_action( 'update_option_mainwp_backupsOnServer', $deny );
+			remove_filter( 'mainwp_currentusercan', '__return_false', PHP_INT_MAX );
+			$_POST = array();
+		}
+		$this->assertSame( $before, $this->checked_count_rows() );
+		$this->assertFalse( get_option( 'mainwp_backupOnExternalSources' ) );
+		$this->assertSame( '0', get_option( 'mainwp_backupsOnServer' ) );
+	}
+
+
+	/** A failed snapshot read refuses the complete form without writes. */
+	public function test_checked_count_snapshot_read_failure(): void {
+		global $wpdb;
+		$this->prepare_checked_count_form( 1 );
+		$before = $this->checked_count_rows();
+		$fail   = static fn( $sql ) => str_starts_with( $sql, 'SELECT option_id, option_value, autoload' ) && str_contains( $sql, "'mainwp_backupsOnServer'" ) ? 'INVALID SQL FOR CHECKED COUNT TEST' : $sql;
+		add_filter( 'query', $fail );
+		$errors = $wpdb->suppress_errors( true );
+		try {
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $errors );
+			$_POST = array();
+		}
+		$this->assertSame( $before, $this->checked_count_rows() );
+	}
+
+	/** Recovery preserves an existing malformed raw value and its autoload. */
+	public function test_checked_count_raw_value_recovery(): void {
+		global $wpdb;
+		$this->prepare_checked_count_form( 1 );
+		update_option( 'mainwp_backupsOnServer', 0 );
+		delete_option( 'mainwp_backupOnExternalSources' );
+		add_option( 'mainwp_backupOnExternalSources', array( 'legacy' => 'invalid' ), '', 'yes' );
+		$before = $this->checked_count_rows();
+		$fail   = static fn( $sql ) => str_starts_with( $sql, 'UPDATE ' ) && str_contains( $sql, "'mainwp_backupsOnServer'" ) ? 'INVALID SQL FOR CHECKED COUNT TEST' : $sql;
+		add_filter( 'query', $fail );
+		$errors = $wpdb->suppress_errors( true );
+		try {
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $errors );
+			$_POST = array();
+		}
+		$this->assertSame( $before, $this->checked_count_rows() );
+		$this->assertSame( array( 'legacy' => 'invalid' ), get_option( 'mainwp_backupOnExternalSources' ) );
+	}
+
+
+	/** A transient journal read failure still permits exact recovery. */
+	public function test_checked_count_transient_capture_read_failure(): void {
+		global $wpdb;
+		$this->prepare_checked_count_form( 1 );
+		update_option( 'mainwp_backupsOnServer', 0 );
+		update_option( 'mainwp_backupOnExternalSources', 4 );
+		$before = $this->checked_count_rows();
+		$reads  = 0;
+		$fail   = static function ( $sql ) use ( &$reads ) {
+			if ( str_starts_with( $sql, 'SELECT option_id, option_value, autoload' ) && str_contains( $sql, "'mainwp_backupOnExternalSources'" ) && 2 === ++$reads ) {
+				return 'INVALID SQL FOR CHECKED COUNT TEST';
+			}
+			return $sql;
+		};
+		$deny   = static function () {
+			add_filter( 'mainwp_currentusercan', '__return_false', PHP_INT_MAX );
+		};
+		add_action( 'update_option_mainwp_backupsOnServer', $deny );
+		add_filter( 'query', $fail );
+		$errors = $wpdb->suppress_errors( true );
+		try {
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		} finally {
+			remove_action( 'update_option_mainwp_backupsOnServer', $deny );
+			remove_filter( 'mainwp_currentusercan', '__return_false', PHP_INT_MAX );
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $errors );
+			$_POST = array();
+		}
+		$this->assertSame( $before, $this->checked_count_rows() );
+	}
+
+	/** Failed compensation remains a failed save and leaves other settings untouched. */
+	public function test_checked_count_recovery_write_failure(): void {
+		global $wpdb;
+		$this->prepare_checked_count_form( 1 );
+		update_option( 'mainwp_backupsOnServer', 0 );
+		update_option( 'mainwp_backupOnExternalSources', 4 );
+		$before        = $this->checked_count_rows();
+		$remote_writes = 0;
+		$fail          = static function ( $sql ) use ( &$remote_writes ) {
+			if ( str_starts_with( $sql, 'UPDATE ' ) && ( str_contains( $sql, "'mainwp_backupsOnServer'" ) || ( str_contains( $sql, "'mainwp_backupOnExternalSources'" ) && 2 === ++$remote_writes ) ) ) {
+				return 'INVALID SQL FOR CHECKED COUNT TEST';
+			}
+			return $sql;
+		};
+		add_filter( 'query', $fail );
+		$errors = $wpdb->suppress_errors( true );
+		try {
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $errors );
+			$_POST = array();
+		}
+		$after = $this->checked_count_rows();
+		$this->assertSame( '2', $after['mainwp_backupOnExternalSources']['option_value'] );
+		$this->assertSame( '2', get_option( 'mainwp_backupOnExternalSources' ) );
+		unset( $before['mainwp_backupOnExternalSources'], $after['mainwp_backupOnExternalSources'] );
+		$this->assertSame( $before, $after );
+	}
+
+
+	/** Exhausted journal reads compensate the current write before other settings.
+	 *
+	 * @dataProvider exhausted_count_reads
+	 * @param string $option Count whose capture reads fail.
+	 * @param string $state Original row state.
+	 * @param bool   $later Whether a later hook changes the count.
+	 */
+	public function test_checked_count_exhausted_capture_reads( string $option, string $state, bool $later ): void {
+		global $wpdb;
+		$this->prepare_checked_count_form( 1 );
+		update_option( 'mainwp_backupsOnServer', 0 );
+		update_option( 'mainwp_backupOnExternalSources', 0 );
+		delete_option( $option );
+		if ( 'absent' !== $state ) {
+			add_option( $option, 0, '', 'yes' );
+			$wpdb->update( $wpdb->options, array( 'autoload' => in_array( $state, array( 'yes', 'auto' ), true ) ? $state : 'yes' ), array( 'option_name' => $option ) );
+			if ( 'false' === $state ) {
+				$wpdb->update( $wpdb->options, array( 'option_value' => 'b:0;' ), array( 'option_name' => $option ) );
+				wp_cache_delete( $option, 'options' );
+			}
+			wp_cache_delete( 'alloptions', 'options' );
+		}
+		$before      = $this->checked_count_rows();
+		$reads       = 0;
+		$fail        = static function ( $sql ) use ( $option, &$reads ) {
+			if ( str_starts_with( $sql, 'SELECT option_id, option_value, autoload' ) && str_contains( $sql, "'" . $option . "'" ) ) {
+				++$reads;
+				if ( $reads >= 2 && $reads <= 4 ) {
+					return 'INVALID SQL FOR CHECKED COUNT TEST';
+				}
+			}
+			return $sql;
+		};
+		$autoload    = static fn( $value, $name ) => $option === $name ? true : $value;
+		$later_value = in_array( $state, array( 'same', 'recreated' ), true ) ? ( 'mainwp_backupsOnServer' === $option ? 1 : 2 ) : 9;
+		$edit        = static function () use ( $option, $state, $later_value, $wpdb ) {
+			if ( 'recreated' === $state ) {
+				delete_option( $option );
+				add_option( $option, $later_value, '', 'no' );
+			} elseif ( 'autoload' === $state ) {
+				$wpdb->update( $wpdb->options, array( 'autoload' => 'no' ), array( 'option_name' => $option ) );
+			} else {
+				update_option( $option, $later_value );
+			}
+		};
+		$forward     = static fn() => 7;
+		if ( 'filtered' === $state ) {
+			add_filter( 'pre_update_option_' . $option, $forward );
+		}
+		add_filter( 'wp_default_autoload_value', $autoload, 20, 2 );
+		add_filter( 'query', $fail );
+		if ( $later ) {
+			add_action( 'update_option_' . $option, $edit );
+		}
+		$errors = $wpdb->suppress_errors( true );
+		try {
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		} finally {
+			remove_filter( 'query', $fail );
+			remove_filter( 'wp_default_autoload_value', $autoload, 20 );
+			remove_filter( 'pre_update_option_' . $option, $forward );
+			remove_action( 'update_option_' . $option, $edit );
+			$wpdb->suppress_errors( $errors );
+			$_POST = array();
+		}
+		$after = $this->checked_count_rows();
+		if ( $later ) {
+			if ( 'autoload' === $state ) {
+				$this->assertSame( 'no', $after[ $option ]['autoload'] );
+				$this->assertSame( '0', $after[ $option ]['option_value'] );
+			} else {
+				$this->assertSame( (string) $later_value, $after[ $option ]['option_value'] );
+				$this->assertSame( $later_value, (int) get_option( $option ) );
+			}
+			if ( 'recreated' === $state ) {
+				$this->assertNotSame( $before[ $option ]['option_id'], $after[ $option ]['option_id'] );
+			}
+			unset( $before[ $option ], $after[ $option ] );
+		} else {
+			$this->assertSame( isset( $before[ $option ] ) && 'false' !== $state ? 0 : false, false === get_option( $option ) ? false : (int) get_option( $option ) );
+		}
+		$this->assertSame( $before, $after );
+	}
+
+	/**
+	 * Exhausted capture read cases.
+	 *
+	 * @return array Cases.
+	 */
+	public static function exhausted_count_reads(): array {
+		$cases = array();
+		foreach ( array( 'mainwp_backupsOnServer', 'mainwp_backupOnExternalSources' ) as $option ) {
+			foreach ( array( 'yes', 'auto', 'absent', 'filtered', 'false' ) as $state ) {
+				$cases[ $option . '-' . $state ] = array( $option, $state, false );
+			}
+			foreach ( array( 'yes', 'same', 'recreated', 'autoload' ) as $state ) {
+				$cases[ $option . '-later-' . $state ] = array( $option, $state, true );
+			}
+		}
+		return $cases;
+	}
+
+
+	/** A row changed before capture must never enter this save's journal.
+	 *
+	 * @dataProvider interleaved_count_rows
+	 * @param string $option Changed count option.
+	 * @param string $change Concurrent row change.
+	 */
+	public function test_checked_count_capture_preserves_interleaved_row( string $option, string $change ): void {
+		global $wpdb;
+		$this->prepare_checked_count_form( 1 );
+		foreach ( array( 'mainwp_backupsOnServer', 'mainwp_backupOnExternalSources' ) as $name ) {
+			delete_option( $name );
+			add_option( $name, 0, '', 'yes' );
+		}
+		$before     = $this->checked_count_rows();
+		$later      = null;
+		$reads      = 0;
+		$interleave = function ( $sql ) use ( $wpdb, $option, $change, &$reads, &$later ) {
+			if ( str_starts_with( $sql, 'SELECT option_id, option_value, autoload' ) && str_contains( $sql, "'" . $option . "'" ) && 2 === ++$reads ) {
+				if ( 'identity' === $change ) {
+					$wpdb->delete( $wpdb->options, array( 'option_name' => $option ) );
+					$wpdb->insert(
+						$wpdb->options,
+						array(
+							'option_name'  => $option,
+							'option_value' => 'mainwp_backupsOnServer' === $option ? '1' : '2',
+							'autoload'     => 'yes',
+						)
+					);
+				} else {
+					$wpdb->update( $wpdb->options, array( 'value' === $change ? 'option_value' : 'autoload' => 'value' === $change ? '9' : 'no' ), array( 'option_name' => $option ) );
+				}
+				$later = $this->checked_count_rows()[ $option ];
+				add_filter( 'mainwp_currentusercan', '__return_false', PHP_INT_MAX );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $interleave );
+		try {
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		} finally {
+			remove_filter( 'query', $interleave );
+			remove_filter( 'mainwp_currentusercan', '__return_false', PHP_INT_MAX );
+			$_POST = array();
+		}
+		$after = $this->checked_count_rows();
+		$this->assertNotNull( $later );
+		$this->assertSame( $later, $after[ $option ] );
+		$this->assertSame( $later['option_value'], (string) get_option( $option ) );
+		unset( $before[ $option ], $after[ $option ] );
+		$this->assertSame( $before, $after );
+	}
+
+	/**
+	 * Row changes between a successful write and its first capture read.
+	 *
+	 * @return array Cases.
+	 */
+	public static function interleaved_count_rows(): array {
+		$cases = array();
+		foreach ( array( 'mainwp_backupsOnServer', 'mainwp_backupOnExternalSources' ) as $option ) {
+			foreach ( array( 'identity', 'value', 'autoload' ) as $change ) {
+				$cases[ $option . '-' . $change ] = array( $option, $change );
+			}
+		}
+		return $cases;
+	}
+
+
+	/** A single failed INSERT refuses the form without an implicit retry.
+	 *
+	 * @dataProvider one_shot_count_inserts
+	 * @param string $option Absent count option.
+	 * @param int    $next Submitted count.
+	 */
+	public function test_checked_count_one_shot_insert_failure( string $option, int $next ): void {
+		global $wpdb;
+		$this->prepare_checked_count_form( $next );
+		$_POST['mainwp_options_backupOnExternalSources'] = (string) $next;
+		foreach ( array( 'mainwp_backupsOnServer', 'mainwp_backupOnExternalSources' ) as $name ) {
+			delete_option( $name );
+			add_option( $name, 0 === $next ? 3 : 0, '', 'yes' );
+		}
+		delete_option( $option );
+		$before   = $this->checked_count_rows();
+		$attempts = 0;
+		$fail     = static function ( $sql ) use ( $wpdb, $option, &$attempts ) {
+			if ( str_starts_with( $sql, 'INSERT ' ) && str_contains( $sql, $wpdb->options ) && str_contains( $sql, "'" . $option . "'" ) ) {
+				++$attempts;
+				if ( 1 === $attempts ) {
+					return 'INVALID SQL FOR ONE SHOT COUNT TEST';
+				}
+			}
+			return $sql;
+		};
+		add_filter( 'query', $fail );
+		$errors = $wpdb->suppress_errors( true );
+		try {
+			$this->assertFalse( MainWP_Backup_Settings::handle_settings_post() );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $errors );
+			$_POST = array();
+		}
+		$this->assertSame( $before, $this->checked_count_rows(), 'One failed INSERT must preserve all raw rows and absence.' );
+		$this->assertSame( 1, $attempts, 'Count persistence must not silently retry a failed INSERT.' );
+		$this->assertFalse( get_option( $option ) );
+		$other = 'mainwp_backupsOnServer' === $option ? 'mainwp_backupOnExternalSources' : 'mainwp_backupsOnServer';
+		$this->assertSame( $before[ $other ]['option_value'], (string) get_option( $other ) );
+	}
+
+	/**
+	 * One-shot failures for each count, with zero and positive submissions.
+	 *
+	 * @return array Cases.
+	 */
+	public static function one_shot_count_inserts(): array {
+		$cases = array();
+		foreach ( array( 'mainwp_backupsOnServer', 'mainwp_backupOnExternalSources' ) as $option ) {
+			foreach ( array( 0, 3 ) as $next ) {
+				$cases[ $option . '-' . $next ] = array( $option, $next );
+			}
+		}
+		return $cases;
+	}
+
+
+	/** Existing false-valued rows can be normalized, then saved unchanged.
+	 *
+	 * @dataProvider existing_false_count_upserts
+	 * @param string    $option Existing false-valued option.
+	 * @param int       $next Submitted count.
+	 * @param bool|null $decision Default autoload decision.
+	 */
+	public function test_checked_count_existing_false_upsert_and_unchanged( string $option, int $next, ?bool $decision ): void {
+		global $wpdb;
+		$this->prepare_checked_count_form( $next );
+		$_POST['mainwp_options_backupOnExternalSources'] = (string) $next;
+		delete_option( $option );
+		add_option( $option, 0, '', 'yes' );
+		$wpdb->update( $wpdb->options, array( 'option_value' => 'b:0;' ), array( 'option_name' => $option ) );
+		wp_cache_delete( $option, 'options' );
+		wp_cache_delete( 'alloptions', 'options' );
+		$before   = $this->checked_count_rows()[ $option ];
+		$autoload = static fn( $value, $name ) => $option === $name ? $decision : $value;
+		add_filter( 'wp_default_autoload_value', $autoload, 20, 2 );
+		$observed = array();
+		$observe  = static function ( $unused, $value ) use ( $option, &$observed ) {
+			$observed[] = array( (string) $value, (string) get_option( $option ) );
+		};
+		add_action( 'add_option_' . $option, $observe, 10, 2 );
+		try {
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertSame( array( array( (string) $next, (string) $next ) ), $observed, 'Later option hooks must read the saved count.' );
+			$row = $this->checked_count_rows()[ $option ];
+			$this->assertSame( $before['option_id'], $row['option_id'] );
+			$this->assertSame( (string) $next, $row['option_value'] );
+			$this->assertSame( $next, (int) get_option( $option ) );
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertSame( $row, $this->checked_count_rows()[ $option ] );
+		} finally {
+			remove_filter( 'wp_default_autoload_value', $autoload, 20 );
+			remove_action( 'add_option_' . $option, $observe );
+			$_POST = array();
+		}
+	}
+
+	/**
+	 * Existing false rows with each modern default-autoload decision.
+	 *
+	 * @return array Cases.
+	 */
+	public static function existing_false_count_upserts(): array {
+		$cases = array();
+		foreach ( self::one_shot_count_inserts() as $name => $case ) {
+			foreach ( array(
+				'default'  => null,
+				'enabled'  => true,
+				'disabled' => false,
+			) as $label => $decision ) {
+				$cases[ $name . '-' . $label ] = array( $case[0], $case[1], $decision );
+			}
+		}
+		return $cases;
+	}
+
+	/** Unchanged and omitted counts preserve the existing UI domain. */
+	public function test_checked_count_unchanged_and_omitted(): void {
+		$this->prepare_checked_count_form( 1 );
+		update_option( 'mainwp_backupsOnServer', 1 );
+		update_option( 'mainwp_backupOnExternalSources', 2 );
+		$before = $this->checked_count_rows();
+		$_POST['mainwp_options_onDemandRetentionCount'] = '101';
+		try {
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			foreach ( array( 'mainwp_backupsOnServer', 'mainwp_backupOnExternalSources' ) as $option ) {
+				$this->assertSame( $before[ $option ], $this->checked_count_rows()[ $option ] );
+			}
+			unset( $_POST['mainwp_options_backupOnServer'], $_POST['mainwp_options_backupOnExternalSources'] );
+			$this->assertTrue( MainWP_Backup_Settings::handle_settings_post() );
+			$this->assertSame( 101, MainWP_Backup_Settings::get_on_demand_retention_count() );
+		} finally {
+			$_POST = array();
+		}
+	}
+
+	/**
+	 * Prepare a mixed settings submission.
+	 *
+	 * @param int $server Submitted server count.
+	 */
+	private function prepare_checked_count_form( int $server ): void {
+		$this->set_current_user_as_admin();
+		foreach ( array(
+			'mainwp_enableNativeBackups'              => 0,
+			'mainwp_enableLegacyBackupFeature'        => 0,
+			'mainwp_primaryBackup'                    => 'existing-provider',
+			'mainwp_on_demand_retention_count'        => 5,
+			MainWP_Backup_Diagnostics::OPTION_ENABLED => 0,
+			MainWP_Backup_Encryption::ENABLED_OPTION  => 1,
+		) as $option => $value ) {
+			update_option( $option, $value );
+		}
+		$_POST = array(
+			'submit'                                  => '1',
+			'wp_nonce'                                => wp_create_nonce( 'BackupSettings' ),
+			'mainwp_options_backupOnServer'           => (string) $server,
+			'mainwp_options_backupOnExternalSources'  => '2',
+			'mainwp_options_enableNativeBackups'      => '1',
+			'mainwp_options_onDemandRetentionCount'   => '7',
+			'mainwp_options_backupDiagnosticsEnabled' => '1',
+			'mainwp_primaryBackup'                    => 'new-provider',
+		);
+	}
+
+	/**
+	 * Read persisted settings independently of option caches.
+	 *
+	 * @return array Raw rows.
+	 */
+	private function checked_count_rows(): array {
+		global $wpdb;
+		$rows = array();
+		foreach ( array_unique( MainWP_Backup_Settings::SETTINGS_OPTIONS ) as $option ) {
+			$row = $wpdb->get_row( $wpdb->prepare( "SELECT option_id, option_value, autoload FROM $wpdb->options WHERE option_name = %s", $option ), ARRAY_A );
+			if ( null !== $row ) {
+				$rows[ $option ] = $row;
+			}
+		}
+		return $rows;
+	}
+
 	/**
 	 * The global settings section renders the diagnostics toggle.
 	 *

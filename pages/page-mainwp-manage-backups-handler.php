@@ -2214,11 +2214,19 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public static function remove_backup() {
         //phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified by the AJAX router.
-        $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+        $id      = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+        $dry_run = array_key_exists( 'dry_run', $_POST );
+        if ( $dry_run && ( ! is_scalar( $_POST['dry_run'] ) || '1' !== sanitize_text_field( wp_unslash( (string) $_POST['dry_run'] ) ) ) ) {
+            wp_send_json( array( 'error' => __( 'The deletion preview could not be loaded. Reload the page and try again.', 'mainwp' ) ) );
+        }
         // Only an explicit 0 keeps the snapshots; older clients send nothing and purge as before.
         $delete_snapshots = ! isset( $_POST['delete_snapshots'] ) || '0' !== sanitize_text_field( wp_unslash( $_POST['delete_snapshots'] ) );
         //phpcs:enable WordPress.Security.NonceVerification.Missing
-        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::delete_task( $id, $delete_snapshots, 'ui' ), 'remove', $id ) );
+        $result = $dry_run ? MainWP_Backup_Operations::preview_task_delete( $id, $delete_snapshots, 'ui' ) : MainWP_Backup_Operations::delete_task( $id, $delete_snapshots, 'ui' );
+        if ( $dry_run && ! is_wp_error( $result ) ) {
+            $result = $result['can_proceed'] ? array( 'warnings' => $result['warnings'] ) : array( 'error' => implode( ' ', array_column( $result['refusals'], 'message' ) ) );
+        }
+        wp_send_json( static::task_ajax_result( $result, 'remove', $id ) );
     }
 
     /**

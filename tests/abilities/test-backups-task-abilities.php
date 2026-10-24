@@ -160,6 +160,276 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
+	/** A failed option INSERT must leave unlimited retention outside the prune list. */
+	public function test_final_task_save_existing_option_insert_failure_restores_unlimited(): void {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$wpdb->update(
+			$table,
+			array(
+				'retention_count'      => 0,
+				'retention_days'       => 0,
+				'retention_storage_mb' => 0,
+			),
+			array( 'id' => $this->task_id )
+		);
+		$key = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $this->task_id;
+		delete_option( $key );
+		$before = $this->final_task_save_raw_task();
+		$this->assertNotContains( $this->task_id, $this->final_task_save_policy_ids() );
+		$result = $this->final_task_save_fault(
+			fn() => $this->execute(
+				'update-backup-task',
+				array(
+					'task_id'   => $this->task_id,
+					'name'      => 'Refused retention save',
+					'retention' => array( 'count' => 1 ),
+					'confirm'   => true,
+				)
+			),
+			$wpdb->options,
+			'INSERT',
+			$key
+		);
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_internal_error', $result->get_error_code() );
+		$this->assertSame( 500, $result->get_error_data()['status'] );
+		$this->assertSame( $before, $this->final_task_save_raw_task() );
+		$this->assertNull( $this->final_task_save_raw_option( $key ) );
+		$this->assertFalse( get_option( $key, false ) );
+		$this->assertNotContains( $this->task_id, $this->final_task_save_policy_ids() );
+	}
+
+	/** A refused new task must leave neither a row nor a creation notification. */
+	public function test_final_task_save_new_option_failure_removes_row_without_hook(): void {
+		global $wpdb;
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$before = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i ORDER BY id', $table ) );
+		$hooks  = array();
+		$added  = static function ( $id ) use ( &$hooks ) {
+			$hooks[] = $id;
+		};
+		add_action( 'mainwp_add_backuptask', $added );
+		try {
+			$result = $this->final_task_save_fault( fn() => $this->execute( 'create-backup-task', $this->input( 'create-backup-task' ) + array( 'confirm' => true ) ), $wpdb->options, 'INSERT', \MainWP\Dashboard\MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX );
+		} finally {
+			remove_action( 'mainwp_add_backuptask', $added );
+			$after             = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i ORDER BY id', $table ) );
+			$this->created_ids = array_merge( $this->created_ids, array_map( 'intval', array_diff( $after, $before ) ) );
+		}
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_internal_error', $result->get_error_code() );
+		$this->assertSame( $before, $after );
+		$this->assertSame( array(), $hooks );
+	}
+
+	/** Recovery restores this save's fields and preserves a later writer. */
+	public function test_final_task_save_concurrent_writer_is_preserved_and_reported(): void {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$wpdb->update(
+			$table,
+			array(
+				'retention_count'      => 0,
+				'retention_days'       => 0,
+				'retention_storage_mb' => 0,
+			),
+			array( 'id' => $this->task_id )
+		);
+		$key = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $this->task_id;
+		delete_option( $key );
+		$before = $this->final_task_save_raw_task();
+		$later  = function () use ( $wpdb, $table ) {
+			$wpdb->update(
+				$table,
+				array(
+					'name'            => 'Later writer',
+					'retention_count' => 7,
+				),
+				array( 'id' => $this->task_id )
+			);
+		};
+		$result = $this->final_task_save_fault(
+			fn() => $this->execute(
+				'update-backup-task',
+				array(
+					'task_id'   => $this->task_id,
+					'name'      => 'Refused edit',
+					'retention' => array(
+						'count' => 1,
+						'days'  => 3,
+					),
+					'confirm'   => true,
+				)
+			),
+			$wpdb->options,
+			'INSERT',
+			$key,
+			$later
+		);
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_internal_error', $result->get_error_code() );
+		$this->assertStringContainsString( 'concurrent', $result->get_error_message() );
+		$this->assertStringContainsString( 'may still hold new retention values', $result->get_error_message() );
+		$this->assertSame( array( 'status' => 500 ), $result->get_error_data() );
+		$before['name']            = 'Later writer';
+		$before['retention_count'] = '7';
+		$this->assertSame( $before, $this->final_task_save_raw_task() );
+		$this->assertNull( $this->final_task_save_raw_option( $key ) );
+	}
+
+	/**
+	 * Flag transitions and checked-write refusals.
+	 *
+	 * @return array Cases.
+	 */
+	public static function final_task_save_flag_cases(): array {
+		return array(
+			'enable'           => array( 0, true, '' ),
+			'disable'          => array( 1, false, '' ),
+			'unchanged'        => array( 1, true, '' ),
+			'enable-refused'   => array( 0, true, 'option' ),
+			'disable-refused'  => array( 1, false, 'option' ),
+			'task-refused'     => array( 0, true, 'task' ),
+			'readback-refused' => array( 0, true, 'readback' ),
+		);
+	}
+
+	/**
+	 * Flag transitions preserve raw prior state when either checked write fails.
+	 *
+	 * @dataProvider final_task_save_flag_cases
+	 * @param int    $old Stored flag.
+	 * @param bool   $enabled Requested flag.
+	 * @param string $failure Failure phase.
+	 */
+	public function test_final_task_save_flag_enable_disable_unchanged( int $old, bool $enabled, string $failure ): void {
+		global $wpdb;
+		$store  = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$remote = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Checked flag save',
+				'settings' => array(),
+			)
+		);
+		$key    = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $this->task_id;
+		delete_option( $key );
+		$this->assertTrue( add_option( $key, $old, '', true ) );
+		$before        = $this->final_task_save_raw_task();
+		$before_option = $this->final_task_save_raw_option( $key );
+		get_option( $key );
+		$call = fn() => $this->execute(
+			'update-backup-task',
+			array(
+				'task_id'         => $this->task_id,
+				'name'            => 'Checked flag edit',
+				'destination_ids' => array( $remote ),
+				'retention'       => array(
+					'count'                     => 1,
+					'remove_local_after_upload' => $enabled,
+				),
+				'confirm'         => true,
+			)
+		);
+		try {
+			$result = '' === $failure ? $call() : $this->final_task_save_fault( $call, 'task' === $failure ? MainWP_DB::instance()->get_table_name( 'wp_backup' ) : $wpdb->options, 'readback' === $failure ? 'READBACK' : 'UPDATE', 'task' === $failure ? '' : $key );
+			if ( '' === $failure ) {
+				$this->assertNotWPError( $result );
+				$this->assertSame( $enabled, $result['retention']['remove_local_after_upload'] );
+				$this->assertSame( $enabled, \MainWP\Dashboard\MainWP_Backup_Retention_Protection::task_removes_local_archives( $this->task_id ) );
+				$this->assertSame( $enabled ? '1' : '0', $this->final_task_save_raw_option( $key )['option_value'] );
+			} else {
+				$this->assertWPError( $result );
+				$this->assertSame( 'mainwp_internal_error', $result->get_error_code() );
+				$this->assertSame( $before, $this->final_task_save_raw_task() );
+				$this->assertSame( $before_option, $this->final_task_save_raw_option( $key ) );
+				$this->assertSame( (bool) $old, (bool) get_option( $key ) );
+			}
+		} finally {
+			delete_option( $key );
+			$store->delete_destination( $remote );
+		}
+	}
+
+	/**
+	 * Read raw task fields, including those outside this save.
+	 *
+	 * @return array Task row.
+	 */
+	private function final_task_save_raw_task(): array {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', MainWP_DB::instance()->get_table_name( 'wp_backup' ), $this->task_id ), ARRAY_A );
+	}
+
+	/**
+	 * Read the raw option without its cache.
+	 *
+	 * @param string $key Option name.
+	 * @return array|null Raw option evidence.
+	 */
+	private function final_task_save_raw_option( string $key ): ?array {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $key ), ARRAY_A );
+	}
+
+	/**
+	 * Read the scheduler's policy task identities.
+	 *
+	 * @return int[] Task IDs.
+	 */
+	private function final_task_save_policy_ids(): array {
+		return array_map( static fn( $task ) => (int) $task->id, \MainWP\Dashboard\MainWP_Backup_Retention_Query::instance()->list_tasks_with_policy() );
+	}
+
+	/**
+	 * Redirect one matched real SQL write to a missing table.
+	 *
+	 * @param callable      $call Product operation.
+	 * @param string        $table Target table.
+	 * @param string        $verb SQL verb.
+	 * @param string        $needle Optional identifying value.
+	 * @param callable|null $later Simulated later writer.
+	 * @return mixed Product result.
+	 */
+	private function final_task_save_fault( callable $call, string $table, string $verb, string $needle = '', ?callable $later = null ) {
+		global $wpdb;
+		$count      = 0;
+		$write_seen = false;
+		$fault      = static function ( $sql ) use ( $table, $verb, $needle, $later, &$count, &$write_seen ) {
+			if ( 'READBACK' === $verb ) {
+				$target = '`?' . preg_quote( $table, '/' ) . '`?';
+				if ( preg_match( '/^\s*UPDATE\s+' . $target . '\s/i', $sql ) && str_contains( $sql, $needle ) ) {
+					$write_seen = true;
+				}
+				$pattern = '/^(\s*SELECT\b.*?)\bFROM\s+' . $target . '\s/is';
+				if ( $write_seen && 0 === $count && preg_match( $pattern, $sql ) && str_contains( $sql, $needle ) ) {
+					++$count;
+					return preg_replace( $pattern, '$1FROM `' . $table . '_task_save_missing` ', $sql, 1 );
+				}
+				return $sql;
+			}
+			$pattern = '/^\s*' . $verb . ( 'INSERT' === $verb ? '\s+(?:IGNORE\s+)?INTO' : '' ) . '\s+`?' . preg_quote( $table, '/' ) . '`?\s/i';
+			if ( 0 === $count && preg_match( $pattern, $sql ) && ( '' === $needle || str_contains( $sql, $needle ) ) ) {
+				++$count;
+				if ( $later ) {
+					$later(); }
+				return preg_replace( $pattern, $verb . ( 'INSERT' === $verb ? ' INTO' : '' ) . ' `' . $table . '_task_save_missing` ', $sql, 1 );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $fault, PHP_INT_MAX );
+		$suppressed = $wpdb->suppress_errors( true );
+		try {
+			$result = $call();
+		} finally {
+			remove_filter( 'query', $fault, PHP_INT_MAX );
+			$wpdb->suppress_errors( $suppressed );
+		}
+		$this->assertSame( 1, $count, 'The intended SQL fault must execute.' );
+		return $result;
+	}
+
 	/** Prospective task flags hold marked pending units and leave legacy history ordinary. */
 	public function test_remove_local_preview_toggle_uses_captured_history(): void {
 		global $wpdb;

@@ -2605,6 +2605,9 @@ class MainWP_Abilities_Backups {
         $safe   = MainWP_Backup_Operations::safe_error( $error->get_error_code() );
         $source = $error->get_error_data();
         $data   = array( 'status' => is_array( $source ) && isset( $source['status'] ) ? (int) $source['status'] : 500 );
+        if ( 'mainwp_internal_error' === $safe['code'] && is_array( $source ) && true === ( $source['task_save_recovery_failed'] ?? false ) ) {
+            $safe['message'] = __( 'The backup task could not be restored after a failed save or concurrent change. It may still hold new retention values. Reload the task and check its settings.', 'mainwp' );
+        }
         if ( 'mainwp_insufficient_right' === $safe['code'] && is_array( $source ) && isset( $source['right'] ) && in_array( $source['right'], array_merge( self::READ_RIGHTS, MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS, array( 'restore_backups' ) ), true ) ) {
             $data['right'] = $source['right'];
         }

@@ -194,6 +194,8 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
      * @return void
      */
     public function cron_backups_prune(): void {
+        global $wpdb;
+
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             return;
         }
@@ -214,6 +216,27 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
         $deadline = microtime( true ) + static::DAILY_BUDGET_SECONDS;
 
         foreach ( MainWP_Backup_Retention_Query::instance()->list_tasks_with_policy() as $task ) {
+            if ( microtime( true ) >= $deadline ) {
+                return;
+            }
+            if ( ! empty( $task->manual_site_id ) ) {
+                $site = MainWP_DB::instance()->get_website_by_id_unscoped( (int) $task->manual_site_id );
+                if ( '' !== $wpdb->last_error ) {
+                    continue;
+                }
+                if ( null === $site ) {
+                    if ( ! apply_filters( 'mainwp_backup_retention_dry_run', false, (int) $task->id ) ) {
+                        MainWP_Post_Backup_Handler::instance()->hook_delete_manual_backup_task(
+                            (object) array(
+                                'id'   => (int) $task->manual_site_id,
+                                'name' => '',
+                                'url'  => '',
+                            )
+                        );
+                    }
+                    continue;
+                }
+            }
             foreach ( MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( (int) $task->id ) as $site_id ) {
                 if ( microtime( true ) >= $deadline ) {
                     return; // Tomorrow's sweep picks up where this one stopped.

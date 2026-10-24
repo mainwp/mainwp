@@ -70,6 +70,13 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     private static string $recovery_passphrase_rejected = '';
 
     /**
+     * Count errors from the authenticated settings POST, kept in this request.
+     *
+     * @var array
+     */
+    private static array $count_errors = array();
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -361,6 +368,15 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Return field errors for the current settings form.
+     *
+     * @return array Field names and messages.
+     */
+    public static function get_count_errors(): array {
+        return self::$count_errors;
+    }
+
+    /**
      * Read a count row without option-cache coercion.
      *
      * @param string $option Count option name.
@@ -524,6 +540,7 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public static function handle_settings_post(): bool {
         self::$encryption_forced_off        = false;
         self::$recovery_passphrase_rejected = '';
+        self::$count_errors                 = array();
         if ( MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff() && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'BackupSettings' ) ) {
                 $counts = array();
@@ -536,9 +553,13 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                     }
                     $count = self::normalize_global_retention_count( wp_unslash( $_POST[ $field ] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the count parser rejects malformed values before any write.
                     if ( null === $count ) {
-                        return false;
+                        self::$count_errors[ $field ] = __( 'Enter a whole number of 0 or more.', 'mainwp' );
+                        continue;
                     }
                     $counts[ $option ] = $count;
+                }
+                if ( ! empty( self::$count_errors ) ) {
+                    return false;
                 }
                 $old_primaryBackup       = get_option( 'mainwp_primaryBackup' );
                 $old_enableNativeBackups = static::is_native_backups_enabled();

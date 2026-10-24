@@ -2598,12 +2598,19 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( base64_encode( $manifest ), $push->invoke( null, $before ) );
 	}
 
-	/** A failed insert-only capture never queues uploads or permits archive eviction. */
-	public function test_remote_only_capture_write_failure_keeps_source_and_no_jobs() {
+	/** Failed retention evidence still queues uploads and preserves the local source. */
+	public function test_mwp_1963_capture_failure_uploads_with_warning_and_keeps_source() {
 		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
 		$protection          = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
 		list( $destination ) = $this->make_local_destination();
-		$task                = $this->insert_task( array( $destination ) );
+		$this->configure_mwp_1964_s3_destination( $destination, false );
+		$this->install_mwp_1964_s3_transport();
+		$warnings = array();
+		$capture  = static function ( $message, $site_id, $task_id ) use ( &$warnings ) {
+			$warnings[] = array( $message, $site_id, $task_id );
+		};
+		add_action( 'mainwp_log_warning', $capture, 10, 3 );
+		$task = $this->insert_task( array( $destination ) );
 		$protection::save_task_remove_local_archives( $task, true );
 		MainWP_Backup_Upload_Driver::instance()->init();
 		$refuse = static function ( $sql ) {
@@ -2614,15 +2621,239 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 			$id = $this->make_snapshot( $this->standard_files(), $task );
 		} finally {
 			remove_filter( 'query', $refuse );
+			remove_action( 'mainwp_log_warning', $capture );
 		}
 		$this->assertFalse( get_option( $protection::REQUIRED_OPTION_PREFIX . $id, false ) );
-		$this->assertSame( array(), MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $id ), 'Capture failure must not suppress the configured offsite upload.' );
+		$this->assertSame( 'pending', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->offsite_state );
+		$this->assertCount( 1, $warnings );
+		$this->assertSame( array( 'Could not save the required backup destinations. Uploads will continue, and local archives will be kept.', 4, $task ), $warnings[0] );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status );
+		$this->assertSame( 'verified', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->offsite_state );
+		\MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( 4, $task );
 		$this->assertFalse( $protection::required_uploads_verified( $id ) );
 		$this->assertTrue( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives[0]['retention_requires_uploads'] ?? false );
 		$this->assertTrue( $protection::holds_automatic_removal( array( $id ) ) );
 		foreach ( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives as $archive ) {
 			$this->assertFileExists( $archive['path'] );
 		}
+	}
+	/**
+	 * Stored bindings survive S3 address-style changes during and after upload.
+	 *
+	 * @dataProvider mwp_1964_binding_cases
+	 * @param bool $legacy Whether to use the stored pre-fix binding format.
+	 * @param bool $path_style Original S3 addressing style.
+	 * @param bool $complete Whether upload completed before the edit.
+	 */
+	public function test_mwp_1964_path_style_keeps_inflight_upload_and_eviction( bool $legacy, bool $path_style, bool $complete ) {
+		list( $destination ) = $this->make_local_destination();
+		$this->configure_mwp_1964_s3_destination( $destination, $path_style );
+		$this->install_mwp_1964_s3_transport();
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$task       = $this->insert_task( array( $destination ) );
+		$protection::save_task_remove_local_archives( $task, true );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$id       = $this->make_snapshot( $this->standard_files(), $task );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$dir      = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( 4 ) . 'snapshot-style-' . $id . '/';
+		wp_mkdir_p( $dir );
+		$this->temp_dirs[] = $dir;
+		$archives          = $snapshot->archives;
+		foreach ( $archives as &$archive ) {
+			rename( $archive['path'], $dir . $archive['file'] );
+			$archive['path'] = $dir . $archive['file'];
+		}
+		unset( $archive );
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'archives'      => wp_json_encode( $archives ),
+				'manifest_path' => $dir . 'files.list',
+			),
+			array( 'id' => $id )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- private archive fixture.
+		$snapshot                          = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$build                             = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'new_checkpoint' );
+		$checkpoint                        = $build->invoke( MainWP_Backup_Upload_Driver::instance(), $snapshot );
+		$destination_row                   = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination );
+		$canonical                         = $protection::destination_binding( $destination_row );
+		$checkpoint['destination_binding'] = $legacy ? $this->mwp_1964_legacy_binding( $destination_row ) : $canonical;
+		$store                             = MainWP_Backup_Upload_Job_Store::instance();
+		$job                               = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+		if ( $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status );
+		}
+		$this->configure_mwp_1964_s3_destination( $destination, ! $path_style );
+		if ( ! $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		}
+		$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status, 'Changing the request addressing style must not invalidate an in-flight target.' );
+		$this->assertSame( $canonical, $protection::destination_binding( MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) ) );
+		$this->assertTrue( $protection::required_uploads_verified( $id ) );
+		$this->assertFalse( $protection::holds_automatic_removal( array( $id ) ) );
+		\MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( 4, $task );
+		$this->assertFileDoesNotExist( $dir . 'big.bin' );
+		$this->assertFileDoesNotExist( $dir . 'small.txt' );
+		$this->assertFileExists( $dir . 'files.list' );
+	}
+
+	/**
+	 * Stored and newly generated bindings at both upload stages.
+	 *
+	 * @return array
+	 */
+	public static function mwp_1964_binding_cases(): array {
+		return array(
+			'legacy virtual in flight' => array( true, false, false ),
+			'legacy path in flight'    => array( true, true, false ),
+			'legacy virtual complete'  => array( true, false, true ),
+			'legacy path complete'     => array( true, true, true ),
+			'canonical in flight'      => array( false, false, false ),
+			'canonical complete'       => array( false, true, true ),
+		);
+	}
+
+	/**
+	 * Legacy compatibility must still reject a changed storage location.
+	 *
+	 * @dataProvider mwp_1964_changed_targets
+	 * @param array $changes Changed S3 location fields.
+	 * @param bool  $complete Whether the original upload completed.
+	 */
+	public function test_mwp_1964_changed_target_still_refuses_upload_and_eviction( array $changes, bool $complete ) {
+		list( $destination ) = $this->make_local_destination();
+		$this->configure_mwp_1964_s3_destination( $destination, false );
+		$this->install_mwp_1964_s3_transport();
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$task       = $this->insert_task( array( $destination ) );
+		$protection::save_task_remove_local_archives( $task, true );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$id                                = $this->make_snapshot( $this->standard_files(), $task );
+		$build                             = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'new_checkpoint' );
+		$checkpoint                        = $build->invoke( MainWP_Backup_Upload_Driver::instance(), MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id ) );
+		$checkpoint['destination_binding'] = $this->mwp_1964_legacy_binding( MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) );
+		$store                             = MainWP_Backup_Upload_Job_Store::instance();
+		$job                               = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+		if ( $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status );
+		}
+		$requests = 0;
+		add_filter(
+			'pre_http_request',
+			static function () use ( &$requests ) {
+				++$requests;
+				return new \WP_Error( 'unexpected_request' );
+			},
+			11
+		);
+		$this->configure_mwp_1964_s3_destination( $destination, true, $changes );
+		if ( ! $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		}
+		$this->assertSame( $complete ? 'complete' : 'failed_permanent', $store->get_jobs_for_snapshot( $id )[0]->status );
+		$this->assertSame( 0, $requests );
+		$this->assertFalse( $protection::required_uploads_verified( $id ) );
+		$this->assertTrue( $protection::holds_automatic_removal( array( $id ) ) );
+	}
+
+	/**
+	 * Location fields that must remain in the binding.
+	 *
+	 * @return array
+	 */
+	public static function mwp_1964_changed_targets(): array {
+		return array(
+			'bucket in flight'   => array( array( 'bucket' => 'different-backups' ), false ),
+			'endpoint in flight' => array( array( 'endpoint' => 'https://other.example.test' ), false ),
+			'region in flight'   => array( array( 'region' => 'eu-west-1' ), false ),
+			'bucket complete'    => array( array( 'bucket' => 'different-backups' ), true ),
+			'endpoint complete'  => array( array( 'endpoint' => 'https://other.example.test' ), true ),
+			'region complete'    => array( array( 'region' => 'eu-west-1' ), true ),
+		);
+	}
+
+	/**
+	 * Configure the real S3 adapter without provider traffic.
+	 *
+	 * @param int   $destination Destination id.
+	 * @param bool  $path_style Addressing style.
+	 * @param array $changes Extra location changes.
+	 */
+	private function configure_mwp_1964_s3_destination( int $destination, bool $path_style, array $changes = array() ): void {
+		$this->assertTrue(
+			MainWP_Backup_Storage_Destinations::instance()->update_destination(
+				$destination,
+				array(
+					'provider' => 's3',
+					'settings' => array_merge(
+						array(
+							'bucket'     => 'retention-backups',
+							'endpoint'   => 'https://storage.example.test',
+							'region'     => 'us-east-1',
+							'path_style' => $path_style,
+							'access_key' => 'k',
+							'secret_key' => 's',
+						),
+						$changes
+					),
+				)
+			)
+		);
+	}
+
+	/**
+	 * Preserve the old ordered binding input as a compatibility fixture.
+	 *
+	 * @param object $destination Original decrypted destination.
+	 * @return string
+	 */
+	private function mwp_1964_legacy_binding( object $destination ): string {
+		$settings = $destination->settings;
+		$values   = array(
+			'version'  => 2,
+			'provider' => 's3',
+			'location' => array(
+				'endpoint'   => $settings['endpoint'],
+				'bucket'     => $settings['bucket'],
+				'path_style' => ! empty( $settings['path_style'] ),
+				'region'     => $settings['region'],
+			),
+		);
+		return hash_hmac( 'sha256', 'mainwp-backup-retention:' . wp_json_encode( $values ), wp_salt( 'auth' ) );
+	}
+
+	/** Keep fixture objects addressable through either S3 request style. */
+	private function install_mwp_1964_s3_transport(): void {
+		$objects = array();
+		add_filter(
+			'pre_http_request',
+			static function ( $pre, $args, $url ) use ( &$objects ) {
+				unset( $pre );
+				$key = preg_replace( '#^/retention-backups/#', '/', wp_parse_url( $url, PHP_URL_PATH ) );
+				if ( 'PUT' === $args['method'] ) {
+					$objects[ $key ] = (string) $args['body'];
+				}
+				$exists = isset( $objects[ $key ] );
+				return array(
+					'headers'  => array( 'content-length' => $exists ? (string) strlen( $objects[ $key ] ) : '0' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => $exists ? 200 : 404,
+						'message' => $exists ? 'OK' : 'Not Found',
+					),
+				);
+			},
+			10,
+			3
+		);
 	}
 	/** A resumed upload keeps its original target proof and refuses a changed base path. */
 	public function test_changed_destination_target_cannot_rebind_completed_artifacts() {

@@ -102,7 +102,28 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
         $loadFilesBeforeZip = get_option( 'mainwp_options_loadFilesBeforeZip' );
         $loadFilesBeforeZip = ( 1 === $loadFilesBeforeZip || false === $loadFilesBeforeZip );
 
-        $primaryBackup        = get_option( 'mainwp_primaryBackup' );
+        $primaryBackup           = get_option( 'mainwp_primaryBackup' );
+        $countErrors             = MainWP_Backup_Settings::get_count_errors();
+        $submitted               = array();
+        $backupsOnServer         = false === $backupsOnServer ? 1 : intval( $backupsOnServer );
+        $backupOnExternalSources = false === $backupOnExternalSources ? 1 : intval( $backupOnExternalSources );
+        $maximumFileDescriptors  = false === $maximumFileDescriptors ? 150 : intval( $maximumFileDescriptors );
+        if ( ! empty( $countErrors ) ) {
+            // Errors exist only after the authorized, nonce-checked POST was refused.
+            $submitted                  = array_filter( wp_unslash( $_POST ), 'is_scalar' ); // phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Re-render scalar form values; each output is escaped.
+            $backupsOnServer            = $submitted['mainwp_options_backupOnServer'] ?? $backupsOnServer;
+            $backupOnExternalSources    = $submitted['mainwp_options_backupOnExternalSources'] ?? $backupOnExternalSources;
+            $onDemandRetentionCount     = $submitted['mainwp_options_onDemandRetentionCount'] ?? $onDemandRetentionCount;
+            $archiveFormat              = $submitted['mainwp_archiveFormat'] ?? $archiveFormat;
+            $maximumFileDescriptors     = $submitted['mainwp_options_maximumFileDescriptors'] ?? $maximumFileDescriptors;
+            $primaryBackup              = $submitted['mainwp_primaryBackup'] ?? $primaryBackup;
+            $enableNativeBackups        = ! empty( $submitted['mainwp_options_enableNativeBackups'] );
+            $maximumFileDescriptorsAuto = ! empty( $submitted['mainwp_maximumFileDescriptorsAuto'] );
+            $loadFilesBeforeZip         = ! empty( $submitted['mainwp_options_loadFilesBeforeZip'] );
+            $notificationOnBackupFail   = ! empty( $submitted['mainwp_options_notificationOnBackupFail'] );
+            $notificationOnBackupStart  = ! empty( $submitted['mainwp_options_notificationOnBackupStart'] );
+            $chunkedBackupTasks         = ! empty( $submitted['mainwp_options_chunkedBackupTasks'] );
+        }
         $primary_methods      = array();
         $primary_methods      = apply_filters_deprecated( 'mainwp-getprimarybackup-methods', array( $primary_methods ), '4.0.7.2', 'mainwp_getprimarybackup_methods' );  // @deprecated Use 'mainwp_getprimarybackup_methods' instead. NOSONAR - not IP.
         $primaryBackupMethods = apply_filters( 'mainwp_getprimarybackup_methods', $primary_methods );
@@ -164,7 +185,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                 <input type="checkbox" class="settings-field-value-change-handler" name="mainwp_options_enableNativeBackups" id="mainwp_options_enableNativeBackups" <?php echo 0 === (int) $enableNativeBackups ? '' : 'checked="true"'; ?>/>
             </div>
         </div>
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field <?php echo isset( $countErrors['mainwp_options_backupOnServer'] ) ? 'error' : ''; ?>" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backupsOnServer', (int) $backupsOnServer );
@@ -172,11 +193,14 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             ?>
             </label>
             <div class="ten wide column">
-                <span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_backupOnServer" value="<?php echo false === $backupsOnServer ? 1 : intval( $backupsOnServer ); ?>"/></span>
+                <span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_backupOnServer" value="<?php echo esc_attr( $backupsOnServer ); ?>" <?php echo isset( $countErrors['mainwp_options_backupOnServer'] ) ? 'aria-invalid="true" aria-describedby="mainwp-backup-server-count-error"' : ''; ?>/></span>
+                <?php if ( isset( $countErrors['mainwp_options_backupOnServer'] ) ) : ?>
+                    <div class="ui pointing red basic label" id="mainwp-backup-server-count-error" role="alert"><?php echo esc_html( $countErrors['mainwp_options_backupOnServer'] ); ?></div>
+                <?php endif; ?>
             </div>
         </div>
 
-        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
+        <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field <?php echo isset( $countErrors['mainwp_options_backupOnExternalSources'] ) ? 'error' : ''; ?>" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="1">
             <label class="six wide column middle aligned">
             <?php
             MainWP_Settings_Indicator::render_not_default_indicator( 'mainwp_backupOnExternalSources', (int) $backupOnExternalSources );
@@ -184,7 +208,10 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             ?>
             </label>
             <div class="ten wide column">
-                <span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on your external sources. This does not affect backups on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_backupOnExternalSources" value="<?php echo false === $backupOnExternalSources ? 1 : intval( $backupOnExternalSources ); ?>"/></span>
+                <span data-tooltip="<?php esc_attr_e( 'The number of backups to keep on your external sources. This does not affect backups on the server. 0 sets unlimited.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_backupOnExternalSources" value="<?php echo esc_attr( $backupOnExternalSources ); ?>" <?php echo isset( $countErrors['mainwp_options_backupOnExternalSources'] ) ? 'aria-invalid="true" aria-describedby="mainwp-backup-remote-count-error"' : ''; ?>/></span>
+                <?php if ( isset( $countErrors['mainwp_options_backupOnExternalSources'] ) ) : ?>
+                    <div class="ui pointing red basic label" id="mainwp-backup-remote-count-error" role="alert"><?php echo esc_html( $countErrors['mainwp_options_backupOnExternalSources'] ); ?></div>
+                <?php endif; ?>
             </div>
         </div>
 
@@ -196,12 +223,12 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             ?>
             </label>
             <div class="ten wide column">
-                <span data-tooltip="<?php esc_attr_e( 'How many on-demand (Back up now) snapshots to keep per site before the oldest are pruned. Minimum 1.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_onDemandRetentionCount" value="<?php echo intval( $onDemandRetentionCount ); ?>"/></span>
+                <span data-tooltip="<?php esc_attr_e( 'How many on-demand (Back up now) snapshots to keep per site before the oldest are pruned. Minimum 1.', 'mainwp' ); ?>" data-inverted=""><input type="text" class="settings-field-value-change-handler" name="mainwp_options_onDemandRetentionCount" value="<?php echo esc_attr( $onDemandRetentionCount ); ?>"/></span>
                 <span class="ui small text"><?php esc_html_e( 'Counts the backups made with Back Up Now on the Snapshots & Restore page, per site.', 'mainwp' ); ?></span>
             </div>
         </div>
 
-        <?php $diagnosticsEnabled = MainWP_Backup_Diagnostics::is_enabled(); ?>
+        <?php $diagnosticsEnabled = ! empty( $countErrors ) ? ! empty( $submitted['mainwp_options_backupDiagnosticsEnabled'] ) : MainWP_Backup_Diagnostics::is_enabled(); ?>
         <div class="ui grid field settings-field-indicator-wrapper settings-field-indicator-backups mainwp-native-backup-field" <?php echo $hidden_elems ? 'style="display:none"' : ''; ?> default-indi-value="0">
             <label class="six wide column middle aligned">
             <?php
@@ -246,7 +273,10 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
 
         <?php
         $encryptionEnabled = MainWP_Backup_Encryption::instance()->is_enabled_setting();
-        $recoveryBlob      = MainWP_Backup_Encryption::instance()->get_recovery_blob();
+        if ( ! empty( $countErrors ) ) {
+            $encryptionEnabled = ! empty( $submitted['mainwp_options_enableBackupEncryption'] );
+        }
+        $recoveryBlob = MainWP_Backup_Encryption::instance()->get_recovery_blob();
         // Same test as the save handler, so the form asks for the proof the save will check.
         $hasRecoveryPassphrase = ! empty( $recoveryBlob['wrapped_kek'] );
         // Read-only render flag carried through the settings-save redirect, same mechanism as the
@@ -362,7 +392,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
             ?>
             </label>
             <div class="ten wide column">
-                <input type="text" class="settings-field-value-change-handler" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors" value="<?php echo false === $maximumFileDescriptors ? 150 : intval( $maximumFileDescriptors ); ?>"/>
+                <input type="text" class="settings-field-value-change-handler" name="mainwp_options_maximumFileDescriptors" id="mainwp_options_maximumFileDescriptors" value="<?php echo esc_attr( $maximumFileDescriptors ); ?>"/>
             </div>
         </div>
 
@@ -425,6 +455,7 @@ class MainWP_Backup_Settings_View { // phpcs:ignore Generic.Classes.OpeningBrace
                     var primary = $( '#mainwp_primaryBackup' ).val() || '';
                     var showNative = nativeEnabled && primary === '';
                     $( '.mainwp-native-backup-field' ).toggle( showNative );
+                    $( '.mainwp-native-backup-field.error' ).show();
                     var zip = showNative && $( '#mainwp_archiveFormat' ).val() === 'zip';
                     $( '#mainwp_maximumFileDescriptorsAuto, #mainwp_options_maximumFileDescriptors, #mainwp_options_loadFilesBeforeZip' ).closest( '.ui.grid.field' ).toggle( zip );
                     var encryption = $( '#mainwp_options_enableBackupEncryption' ).is( ':checked' );

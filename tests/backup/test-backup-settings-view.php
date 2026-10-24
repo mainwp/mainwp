@@ -15,6 +15,7 @@ use MainWP\Dashboard\MainWP_Backup_Settings;
 use MainWP\Dashboard\MainWP_Backup_Encryption;
 use MainWP\Dashboard\MainWP_Keys_Manager;
 use MainWP\Dashboard\MainWP_Settings;
+use MainWP\Dashboard\MainWP_System_Handler;
 
 require_once __DIR__ . '/class-mainwp-backup-settings-staff-fixtures.php';
 
@@ -24,6 +25,145 @@ require_once __DIR__ . '/class-mainwp-backup-settings-staff-fixtures.php';
 class MainWP_Backup_Settings_View_Test extends MainWP_Abilities_Test_Case {
 
 	use Backup_Settings_Staff_Fixtures;
+
+	/**
+	 * Invalid counts stay beside their field without losing other form edits.
+	 *
+	 * @dataProvider mwp_1965_invalid_count_forms
+	 * @param string $server Submitted server count.
+	 * @param string $remote Submitted remote count.
+	 * @param array  $invalid Fields requiring an error.
+	 */
+	public function test_mwp_1965_invalid_count_keeps_form( string $server, string $remote, array $invalid ): void {
+		$this->set_current_user_as_admin();
+		$stored = array(
+			'mainwp_backupsOnServer'                  => 3,
+			'mainwp_backupOnExternalSources'          => 4,
+			'mainwp_enableNativeBackups'              => 0,
+			'mainwp_on_demand_retention_count'        => 5,
+			'mainwp_archiveFormat'                    => 'tar.gz',
+			'mainwp_maximumFileDescriptors'           => 150,
+			'mainwp_maximumFileDescriptorsAuto'       => 1,
+			'mainwp_notificationOnBackupFail'         => 1,
+			'mainwp_notificationOnBackupStart'        => 0,
+			'mainwp_chunkedBackupTasks'               => 1,
+			'mainwp_options_loadFilesBeforeZip'       => 1,
+			MainWP_Backup_Diagnostics::OPTION_ENABLED => 0,
+		);
+		foreach ( $stored as $option => $value ) {
+			update_option( $option, $value );
+		}
+		$saved_post    = $_POST;
+		$saved_get     = $_GET;
+		$_GET          = array(
+			'page'    => 'BackupSettings',
+			'message' => 'saved',
+		);
+		$_POST         = array(
+			'submit'                                    => '1',
+			'wp_nonce'                                  => wp_create_nonce( 'BackupSettings' ),
+			'mainwp_options_backupOnServer'             => $server,
+			'mainwp_options_backupOnExternalSources'    => $remote,
+			'mainwp_options_enableNativeBackups'        => '1',
+			'mainwp_options_onDemandRetentionCount'     => '11',
+			'mainwp_archiveFormat'                      => 'zip',
+			'mainwp_options_maximumFileDescriptors'     => '37',
+			'mainwp_options_notificationOnBackupStart'  => '1',
+			'mainwp_options_backupDiagnosticsEnabled'   => '1',
+			'mainwp_options_backupEncryptionPassphrase' => 'private recovery input',
+		);
+		$redirect      = '';
+		$stop_redirect = static function ( $location ) use ( &$redirect ) {
+			$redirect = $location;
+			throw new \RuntimeException( 'Captured settings redirect.' );
+		};
+		add_filter( 'wp_redirect', $stop_redirect );
+		$page = new class() extends MainWP_Settings {
+			/**
+			 * Omit navigation from the settings feedback test.
+			 *
+			 * @param string $shownPage Unused page slug.
+			 */
+			public static function render_header( $shownPage = '' ) {
+			}
+			/**
+			 * Omit navigation from the settings feedback test.
+			 *
+			 * @param string $shownPage Unused page slug.
+			 */
+			public static function render_footer( $shownPage = '' ) {
+			}
+		};
+		try {
+			try {
+				MainWP_System_Handler::instance()->handle_settings_post();
+			} catch ( \RuntimeException $error ) {
+				$this->assertSame( 'Captured settings redirect.', $error->getMessage() );
+			}
+			$this->assertSame( '', $redirect, 'Validation must render the submitted form instead of redirecting away.' );
+			ob_start();
+			try {
+				$page::render_backups();
+			} finally {
+				$output = ob_get_clean();
+			}
+			$this->assertStringNotContainsString( 'private recovery input', $output );
+			$this->assertStringNotContainsString( 'ui green message', $output );
+			$dom = new \DOMDocument();
+			@$dom->loadHTML( $output, LIBXML_NONET );
+			$xpath = new \DOMXPath( $dom );
+			foreach ( array(
+				'mainwp_options_backupOnServer'          => $server,
+				'mainwp_options_backupOnExternalSources' => $remote,
+				'mainwp_options_onDemandRetentionCount'  => '11',
+				'mainwp_options_maximumFileDescriptors'  => '37',
+			) as $field => $value ) {
+				$this->assertSame( $value, $xpath->evaluate( 'string(//input[@name="' . $field . '"]/@value)' ), $field );
+			}
+			$this->assertSame( 'zip', $xpath->evaluate( 'string(//select[@name="mainwp_archiveFormat"]/option[@selected]/@value)' ) );
+			foreach ( array( 'mainwp_options_enableNativeBackups', 'mainwp_options_notificationOnBackupStart', 'mainwp_options_backupDiagnosticsEnabled' ) as $field ) {
+				$this->assertSame( 1, $xpath->query( '//input[@name="' . $field . '"][@checked]' )->length, $field );
+			}
+			foreach ( array( 'mainwp_maximumFileDescriptorsAuto', 'mainwp_options_notificationOnBackupFail', 'mainwp_options_chunkedBackupTasks', 'mainwp_options_loadFilesBeforeZip' ) as $field ) {
+				$this->assertSame( 0, $xpath->query( '//input[@name="' . $field . '"][@checked]' )->length, $field );
+			}
+			foreach ( array( 'mainwp_options_backupOnServer', 'mainwp_options_backupOnExternalSources' ) as $field ) {
+				$input = $xpath->query( '//input[@name="' . $field . '"]' )->item( 0 );
+				$this->assertSame( in_array( $field, $invalid, true ) ? 'true' : '', $input->getAttribute( 'aria-invalid' ), $field );
+				if ( in_array( $field, $invalid, true ) ) {
+					$error_id = $input->getAttribute( 'aria-describedby' );
+					$this->assertNotEmpty( $error_id );
+					$this->assertSame( 'Enter a whole number of 0 or more.', $xpath->evaluate( 'string(//*[@id="' . $error_id . '"])' ) );
+				}
+			}
+			foreach ( $stored as $option => $value ) {
+				$this->assertEquals( $value, get_option( $option ), $option . ' must remain unchanged.' );
+			}
+		} finally {
+			remove_filter( 'wp_redirect', $stop_redirect );
+			$_POST = $saved_post;
+			$_GET  = $saved_get;
+			MainWP_Backup_Settings::handle_settings_post();
+		}
+	}
+
+	/**
+	 * Supply invalid values for both global count fields.
+	 *
+	 * @return array Invalid counts for each field and a simultaneous refusal.
+	 */
+	public static function mwp_1965_invalid_count_forms(): array {
+		$server = 'mainwp_options_backupOnServer';
+		$remote = 'mainwp_options_backupOnExternalSources';
+		return array(
+			'server text'     => array( 'abc', '12', array( $server ) ),
+			'server negative' => array( '-1', '12', array( $server ) ),
+			'remote text'     => array( '12', 'abc', array( $remote ) ),
+			'remote negative' => array( '12', '-1', array( $remote ) ),
+			'both invalid'    => array( 'abc', '-1', array( $server, $remote ) ),
+			'escaped text'    => array( '"><script>alert(1)</script>', '12', array( $server ) ),
+		);
+	}
 
 	/**
 	 * Staff must not see editable fields whose save is refused.

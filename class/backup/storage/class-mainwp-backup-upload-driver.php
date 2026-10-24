@@ -119,8 +119,6 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
      * @return void
      */
     public function on_snapshot_recorded( $snapshot_id, $task_id, $site_id ): void {
-        unset( $site_id );
-
         if ( empty( $task_id ) ) {
             return;
         }
@@ -138,7 +136,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
         $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot_id );
         if ( null !== $snapshot && MainWP_Backup_Retention_Protection::snapshot_requires_uploads( $snapshot )
             && ! MainWP_Backup_Retention_Protection::capture_required_destinations( (int) $snapshot_id, $destination_ids ) ) {
-            return;
+            do_action( 'mainwp_log_warning', 'Could not save the required backup destinations. Uploads will continue, and local archives will be kept.', (int) $site_id, (int) $task_id );
         }
 
         MainWP_Backup_Upload_Job_Store::instance()->enqueue_for_snapshot( (int) $snapshot_id, array_map( 'intval', $destination_ids ) );
@@ -335,7 +333,7 @@ class MainWP_Backup_Upload_Driver { // phpcs:ignore Generic.Classes.OpeningBrace
 
             $checkpoint = $job->checkpoint;
             $binding    = MainWP_Backup_Retention_Protection::destination_binding( $destination );
-            if ( ! empty( $checkpoint['destination_binding'] ) && ! hash_equals( (string) $checkpoint['destination_binding'], $binding ) ) {
+            if ( ! empty( $checkpoint['destination_binding'] ) && ! MainWP_Backup_Retention_Protection::destination_binding_matches( $destination, (string) $checkpoint['destination_binding'] ) ) {
                 throw new \RuntimeException( 'The storage destination settings changed before this upload finished.', 410 );
             }
             if ( empty( $checkpoint['artifacts'] ) ) {

@@ -700,6 +700,10 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
             $nonce = sanitize_key( $_POST['wp_nonce'] );
             if ( wp_verify_nonce( $nonce, 'BackupSettings' ) ) {
                 $updated = MainWP_Backup_Settings::handle_settings_post();
+                if ( ! empty( MainWP_Backup_Settings::get_count_errors() ) ) {
+                    unset( $_GET['message'] );
+                    return;
+                }
                 $args = MainWP_Backup_Settings::get_save_redirect_args();
                 if ( $updated ) {
                     $args['message'] = 'saved';
@@ -716,7 +720,6 @@ class MainWP_System_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
                 if ( $updated ) {
                     $msg = '&message=saved';
                 }
-
 
                 // Redirect to the correct page based on the nonce.
                 $url_page = 'admin.php?page=Settings' . $msg;

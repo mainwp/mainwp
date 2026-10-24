@@ -443,6 +443,8 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      *               cloud_deletes_queued (snapshot/destination pairs) and errors.
      */
     public function purge_snapshots_for_task( int $task_id, bool $delete_cloud_copies, bool $manual_override = false ): array {
+        global $wpdb;
+
         $task = (object) array(
             'id'                  => $task_id,
             'delete_cloud_copies' => $delete_cloud_copies,
@@ -457,7 +459,36 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             'errors'               => array(),
         );
 
-        $query = MainWP_Backup_Retention_Query::instance();
+        $query      = MainWP_Backup_Retention_Query::instance();
+        $table      = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+        $pruned_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- full-task purges must also retry cleanup belonging to already-pruned snapshots.
+            $wpdb->prepare(
+                "SELECT id FROM {$table} WHERE task_id = %d AND status = 'pruned'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted MainWP snapshot table identifier.
+                $task_id
+            )
+        );
+        if ( '' !== $wpdb->last_error ) {
+            $result['errors'][] = __( 'Removed backups could not be read. The task was kept for another cleanup attempt.', 'mainwp' );
+            return $result;
+        }
+        $store = MainWP_Backup_Upload_Job_Store::instance();
+        foreach ( $pruned_ids as $snapshot_id ) {
+            $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot_id );
+            if ( '' !== $wpdb->last_error || null === $snapshot ) {
+                $result['errors'][] = sprintf( 'Snapshot %d: its removed backup could not be read for cleanup.', (int) $snapshot_id );
+                continue;
+            }
+            // A previous purge may have marked the row before its final file or upload cleanup finished.
+            $errors_before = count( $result['errors'] );
+            if ( ! $this->remove_local_dir( $snapshot, $result['errors'] ) || count( $result['errors'] ) !== $errors_before ) {
+                continue;
+            }
+            $this->cleanup_pruned_uploads( (int) $snapshot_id, $store );
+            $remaining_uploads = $store->get_jobs_for_snapshot( (int) $snapshot_id );
+            if ( '' !== $wpdb->last_error || ! empty( $remaining_uploads ) ) {
+                $result['errors'][] = sprintf( 'Snapshot %d: its upload cleanup could not finish. The task was kept for another attempt.', (int) $snapshot_id );
+            }
+        }
 
         foreach ( $query->list_site_ids_for_task( $task_id ) as $site_id ) {
             foreach ( $query->get_units_for_site_task( $site_id, $task_id ) as $unit ) {

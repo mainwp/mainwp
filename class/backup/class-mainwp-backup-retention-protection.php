@@ -109,11 +109,10 @@ class MainWP_Backup_Retention_Protection {
                 || empty( $job->provider ) || $destination->provider !== $job->provider ) {
                 return false;
             }
-            $binding = self::destination_binding( $destination );
             if ( 'dropbox' === $destination->provider && ! self::dropbox_identity_valid( $destination->settings ) ) {
                 return false;
             }
-            if ( '' === $binding || empty( $job->checkpoint['destination_binding'] ) || ! hash_equals( $binding, (string) $job->checkpoint['destination_binding'] ) ) {
+            if ( empty( $job->checkpoint['destination_binding'] ) || ! self::destination_binding_matches( $destination, (string) $job->checkpoint['destination_binding'] ) ) {
                 return false;
             }
             if ( 'local' !== $destination->provider ) {
@@ -143,10 +142,9 @@ class MainWP_Backup_Retention_Protection {
                 $endpoint = '' === $endpoint ? 's3.amazonaws.com' : $endpoint;
                 $endpoint = false === strpos( $endpoint, '://' ) ? 'https://' . $endpoint : $endpoint;
                 $location = array(
-                    'endpoint'   => rtrim( $endpoint, '/' ),
-                    'bucket'     => (string) ( $settings['bucket'] ?? '' ),
-                    'path_style' => ! empty( $settings['path_style'] ),
-                    'region'     => (string) ( $settings['region'] ?? 'us-east-1' ),
+                    'endpoint' => rtrim( $endpoint, '/' ),
+                    'bucket'   => (string) ( $settings['bucket'] ?? '' ),
+                    'region'   => (string) ( $settings['region'] ?? 'us-east-1' ),
                 );
                 break;
             case 'gcs':
@@ -179,6 +177,49 @@ class MainWP_Backup_Retention_Protection {
                 'location' => $location,
             )
         );
+    }
+
+    /**
+     * Accept stored S3 bindings from either addressing style for the same location.
+     *
+     * @param object $destination Current decrypted destination.
+     * @param string $binding Persisted upload binding.
+     * @return bool
+     */
+    public static function destination_binding_matches( object $destination, string $binding ): bool {
+        $current = self::destination_binding( $destination );
+        if ( '' === $current || '' === $binding ) {
+            return false;
+        }
+        if ( hash_equals( $current, $binding ) ) {
+            return true;
+        }
+        if ( 's3' !== $destination->provider ) {
+            return false;
+        }
+        // Earlier S3 bindings included request style, which does not change the stored objects.
+        $settings = $destination->settings;
+        $endpoint = (string) ( $settings['endpoint'] ?? '' );
+        $endpoint = '' === $endpoint ? 's3.amazonaws.com' : $endpoint;
+        $endpoint = false === strpos( $endpoint, '://' ) ? 'https://' . $endpoint : $endpoint;
+        foreach ( array( false, true ) as $path_style ) {
+            $legacy = self::identity_hmac(
+                array(
+                    'version'  => 2,
+                    'provider' => 's3',
+                    'location' => array(
+                        'endpoint'   => rtrim( $endpoint, '/' ),
+                        'bucket'     => (string) ( $settings['bucket'] ?? '' ),
+                        'path_style' => $path_style,
+                        'region'     => (string) ( $settings['region'] ?? 'us-east-1' ),
+                    ),
+                )
+            );
+            if ( hash_equals( $legacy, $binding ) ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

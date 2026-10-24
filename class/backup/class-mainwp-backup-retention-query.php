@@ -272,7 +272,7 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
     }
 
     /**
-     * Tasks carrying any retention constraint, for the daily prune cron.
+     * Tasks carrying a retention policy or a hidden site-deletion retry owner.
      *
      * @return object[] Task rows.
      */
@@ -283,7 +283,7 @@ class MainWP_Backup_Retention_Query extends MainWP_DB_Base { // phpcs:ignore Gen
                 (array) $tasks,
                 static function ( $task ) {
                     return (int) $task->retention_count > 0 || (int) $task->retention_days > 0 || (int) $task->retention_storage_mb > 0
-                    || MainWP_Backup_Retention_Protection::task_removes_local_archives( (int) $task->id );
+                    || (int) $task->manual_site_id > 0 || MainWP_Backup_Retention_Protection::task_removes_local_archives( (int) $task->id );
                 }
             )
         );

@@ -295,10 +295,102 @@ class MainWP_Backup_Destination_Memo_Paths_Test extends \WP_UnitTestCase {
 		$this->assertSame( 3, $metrics['destination_reads'] );
 	}
 
-	/** Key walks and prefix sweeps reuse each destination. */
+	/** Remote deletes reload rows while reusing unchanged decrypted settings. */
 	public function test_delete_sweep_reuses_destinations() {
 		$metrics = $this->measure_sweep( 6 );
 		$this->assertSame( 3, $metrics['decrypts'] );
-		$this->assertSame( 3, $metrics['destination_reads'] );
+		$this->assertSame( 24, $metrics['destination_reads'] );
+	}
+
+	/**
+	 * A concurrent minimum increase stops the next remote object.
+	 *
+	 * @dataProvider concurrent_minimum_cases
+	 * @param bool $sweep Whether objects come from the prefix listing.
+	 */
+	public function test_concurrent_minimum_stops_next_delete( $sweep ) {
+		global $wpdb;
+		list( $site, $task, $ids, $destinations )  = $this->seed_history( 6 );
+		$destination                               = $destinations[0];
+		$table                                     = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$original                                  = $wpdb->get_var( $wpdb->prepare( 'SELECT settings FROM ' . $table . ' WHERE id = %d', $destination ) );
+		$settings                                  = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination )->settings;
+		$settings['minimum_remote_retention_days'] = 30;
+		$intent                                    = \MainWP\Dashboard\MainWP_Credential_Storage::stage_credential_encryption( wp_json_encode( $settings ), 'storage_destination' );
+		$this->assertIsArray( $intent );
+		$prefix = $site . '/' . $ids[0] . '/';
+		$store  = MainWP_Backup_Upload_Job_Store::instance();
+		$this->assertTrue(
+			$store->enqueue_delete_job(
+				$ids[0],
+				$destination,
+				array(
+					'prefix'      => $prefix,
+					'keys'        => $sweep ? array() : array( array( 'key' => $prefix . 'first.tar' ), array( 'key' => $prefix . 'second.tar' ) ),
+					'storage_age' => array( 'uploaded_at' => time() - DAY_IN_SECONDS ),
+				)
+			)
+		);
+		$deletes = 0;
+		$changed = false;
+		$http    = static function ( $pre, $args ) use ( &$deletes, &$changed, $wpdb, $table, $destination, $intent, $prefix ) {
+			if ( 'DELETE' === $args['method'] ) {
+				++$deletes;
+				if ( 1 === $deletes ) {
+					$changed = 1 === $wpdb->update( $table, array( 'settings' => $intent['value'] ), array( 'id' => $destination ) );
+				}
+				return array(
+					'headers'  => array(),
+					'body'     => '',
+					'response' => array(
+						'code'    => 204,
+						'message' => 'No Content',
+					),
+				);
+			}
+			return array(
+				'headers'  => array(),
+				'body'     => '<ListBucketResult><IsTruncated>false</IsTruncated><Contents><Key>' . $prefix . 'first.tar</Key><Size>100</Size></Contents><Contents><Key>' . $prefix . 'second.tar</Key><Size>100</Size></Contents></ListBucketResult>',
+				'response' => array(
+					'code'    => 200,
+					'message' => 'OK',
+				),
+			);
+		};
+		add_filter( 'pre_http_request', $http, PHP_INT_MAX, 2 );
+		try {
+			$metrics = $this->measure_request(
+				static function () {
+					MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
+				}
+			);
+			$this->assertTrue( $changed );
+			$this->assertSame( 1, $deletes );
+			$this->assertSame( 2, $metrics['decrypts'] );
+			$this->assertSame( 3, $metrics['destination_reads'] );
+			$job = $store->get_jobs_for_snapshot( $ids[0], 'delete' )[0];
+			$this->assertSame( 'pending', $job->status );
+			$this->assertGreaterThan( time(), (int) $job->next_retry_at );
+			$this->assertEmpty( $job->checkpoint['swept'] ?? false );
+			if ( ! $sweep ) {
+				$this->assertSame( 1, $job->checkpoint['cursor'] );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $http, PHP_INT_MAX );
+			$wpdb->update( $table, array( 'settings' => $original ), array( 'id' => $destination ) );
+			\MainWP\Dashboard\MainWP_Credential_Storage::rollback_credential_intent( $intent );
+		}
+	}
+
+	/**
+	 * Both checkpoint keys and listed objects must observe a concurrent edit.
+	 *
+	 * @return array
+	 */
+	public static function concurrent_minimum_cases() {
+		return array(
+			'checkpoint keys' => array( false ),
+			'prefix sweep'    => array( true ),
+		);
 	}
 }

@@ -950,30 +950,32 @@ managebackups_remove = function (element) {
                 );
             });
         });
-        jQuery('#mainwp-backup-task-delete-snapshots').on('change', function () {
+        let previewCheckbox = jQuery('#mainwp-backup-task-delete-snapshots');
+        let previewWarnings = jQuery('#mainwp-backup-task-delete-warnings');
+        previewCheckbox.on('change', function () {
             let request = ++previewRequest;
             previewReady = false;
-            jQuery('#mainwp-backup-task-delete-warnings').text(MainWP.I18n.t('Loading deletion preview...')).toggle(true);
+            previewWarnings.text(MainWP.I18n.t('Loading deletion preview...')).toggle(true);
             let data = mainwp_secure_data({
                 action: 'mainwp_removebackup',
                 id: id,
                 dry_run: 1,
-                delete_snapshots: jQuery('#mainwp-backup-task-delete-snapshots').is(':checked') ? 1 : 0
+                delete_snapshots: previewCheckbox.is(':checked') ? 1 : 0
             });
             jQuery.post(ajaxurl, data, function (response) {
                 if (request !== previewRequest) {
                     return;
                 }
                 if (!response || response.error != undefined || response.notask || !Array.isArray(response.warnings) || !response.warnings.every(warning => typeof warning === 'string')) {
-                    jQuery('#mainwp-backup-task-delete-warnings').text(previewError).toggle(true);
+                    previewWarnings.text(previewError).toggle(true);
                     return;
                 }
                 previewReady = true;
                 let warning = response.warnings.join(' ');
-                jQuery('#mainwp-backup-task-delete-warnings').text(warning).toggle(!!warning);
+                previewWarnings.text(warning).toggle(!!warning);
             }, 'json').fail(function () {
                 if (request === previewRequest) {
-                    jQuery('#mainwp-backup-task-delete-warnings').text(previewError).toggle(true);
+                    previewWarnings.text(previewError).toggle(true);
                 }
             });
         });

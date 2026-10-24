@@ -13,7 +13,7 @@ function fixture() {
     const messages = [];
     const status = [];
     const handlers = new Map();
-    const warnings = { text: '', visible: false };
+    let warnings = { text: '', visible: false };
     let checked = true;
     let removed = 0;
     const element = { task_id: '12' };
@@ -22,10 +22,11 @@ function fixture() {
             let text = '';
             return { text(value) { text = value; return this; }, html() { return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); } };
         }
+        const nodeWarnings = warnings;
         const node = {
             on(event, handler) { handlers.set(String(value) + ':' + event, handler); return node; },
-            text(text) { warnings.text = text; return node; },
-            toggle(visible) { warnings.visible = visible; return node; },
+            text(text) { nodeWarnings.text = text; return node; },
+            toggle(visible) { nodeWarnings.visible = visible; return node; },
             attr: name => value[name],
             is: () => checked,
             html: text => status.push(text),
@@ -40,13 +41,13 @@ function fixture() {
     };
     const context = {
         MainWP: { I18n: { t: text => text } }, ajaxurl: '/wp-admin/admin-ajax.php', jQuery: jquery,
-        managebackups_init() {}, mainwp_confirm: (msg, cb) => modals.push({ msg, cb }),
+        managebackups_init() {}, mainwp_confirm: (msg, cb) => { warnings = { text: '', visible: false }; modals.push({ msg, cb }); },
         mainwp_secure_data: data => ({ ...data, security: 'nonce' }),
         managebackups_show_message: (text, color) => messages.push({ text, color }), setHtml() {}
     };
     vm.createContext(context);
     vm.runInContext(source.slice(start, end), context);
-    return { context, posts, modals, messages, status, element, warnings, change(value) { checked = value; const handler = handlers.get('#mainwp-backup-task-delete-snapshots:change'); assert.equal(typeof handler, 'function', 'The checkbox change must refresh the production preview.'); handler(); }, checked(value) { checked = value; }, removed: () => removed };
+    return { context, posts, modals, messages, status, element, get warnings() { return warnings; }, change(value) { checked = value; const handler = handlers.get('#mainwp-backup-task-delete-snapshots:change'); assert.equal(typeof handler, 'function', 'The checkbox change must refresh the production preview.'); handler(); }, checked(value) { checked = value; }, removed: () => removed };
 }
 const begin = f => {
     assert.equal(f.context.managebackups_remove(f.element), false);
@@ -155,4 +156,20 @@ for (const result of ['pending', 'network', 'invalid']) {
     assert.equal(f.removed(), 0);
     assert.equal(f.messages.at(-1).color, 'red');
 }
+const reopened = fixture();
+begin(reopened);
+reopened.posts[0].cb({ warnings: ['Task A minimum'] });
+reopened.change(false);
+reopened.context.managebackups_remove({ task_id: '34' });
+reopened.posts[2].cb({ warnings: ['Task B minimum'] });
+reopened.change(true);
+reopened.posts[3].cb({ warnings: ['Task B current minimum'] });
+reopened.posts[1].cb({ warnings: [] });
+assert.equal(reopened.warnings.text, 'Task B current minimum', 'A closed modal reply cannot replace the next modal warning.');
+assert.equal(reopened.warnings.visible, true);
+reopened.posts[1].fail();
+assert.equal(reopened.warnings.text, 'Task B current minimum', 'A closed modal failure cannot replace the next modal warning.');
+reopened.modals[1].cb();
+assert.equal(reopened.posts[4].data.id, '34');
+assert.equal(reopened.posts[4].data.delete_snapshots, 1);
 console.log('OK (task delete previews, checkbox refresh, stale replies and failure scenarios)');

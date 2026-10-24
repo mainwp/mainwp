@@ -143,7 +143,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
     private function run_job( object $job, float $deadline, int $now ): bool {
         $store = MainWP_Backup_Upload_Job_Store::instance();
 
-        $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+        $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id, true );
         if ( null === $destination ) {
             $store->fail_permanent( (int) $job->id, 'Storage destination was deleted; its objects are unreachable.', $this->lock_token );
             return true;
@@ -194,7 +194,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
                     return false;
                 }
 
-                $current_destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+                $current_destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id, true );
                 if ( null === $current_destination ) {
                     return false;
                 }
@@ -265,7 +265,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
                 if ( microtime( true ) >= $deadline ) {
                     return false;
                 }
-                $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+                $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id, true );
                 if ( null === $destination ) {
                     return false;
                 }

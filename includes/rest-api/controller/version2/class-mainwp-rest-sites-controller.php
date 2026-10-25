@@ -2080,7 +2080,10 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         }
         $data     = array();
         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'favi_icon' ), 'no', $params ) );
-        while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) && '' !== $website->sync_errors ) {
+        while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
+            if ( '' === $website->sync_errors ) {
+                continue;
+            }
             $ret = false;
             try {
                 $ret = MainWP_Manage_Sites_View::m_reconnect_site( $website );
@@ -2309,14 +2312,14 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $new_code  = is_array( $ret ) && isset( $ret['httpCode'] ) ? $ret['httpCode'] : false;
 
         if ( ! empty( $error ) ) {
-            $resp_data ['error'] = esc_html( $result );
+            $resp_data ['error'] = esc_html( $error );
         }
 
         $data = $this->filter_response_data_by_allowed_fields( $website, 'simple_view' );
 
         if ( false !== $new_code ) {
-            if ( is_array( $result ) && isset( $result['new_uptime_status'] ) ) {
-                $data['status'] = $result['new_uptime_status'];
+            if ( is_array( $ret ) && isset( $ret['new_uptime_status'] ) ) {
+                $data['status'] = $ret['new_uptime_status'];
             } else {
                 $data['status'] = MainWP_Monitoring_Handler::get_site_checking_status( $new_code );
             }

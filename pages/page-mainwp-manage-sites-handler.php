@@ -64,7 +64,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
 
                 MainWP_Logger::instance()->log_execution_sync( 'init', '', $website );
 
-                $verify_cert    = MainWP_Manage_Sites_View::normalize_ssl_verify( wp_unslash( $_POST['verify_certificate'] ?? null ), ! isset( $_POST['check_me'] ) );
+                $verify_cert    = MainWP_Manage_Sites_View::normalize_ssl_verify( wp_unslash( $_POST['verify_certificate'] ?? null ), ! isset( $_POST['check_me'] ), wp_unslash( $_POST['ssl_verify_explicit'] ?? null ) );
                 $ssl_version    = empty( $_POST['ssl_version'] ) ? 0 : intval( $_POST['ssl_version'] );
                 $force_use_ipv4 = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $url );
                 $http_user      = ( isset( $_POST['http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['http_user'] ) ) : '' );

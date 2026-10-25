@@ -2162,18 +2162,19 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Convert a request choice to the stored TLS policy.
      *
-     * The checked Add Site checkbox inherits the global setting.
+     * An untouched Add Site checkbox inherits the global setting.
      *
-     * @param mixed $value      Request value; omitted or blank inherits global.
-     * @param bool  $ui_default Whether 1 is the default Add Site checkbox.
+     * @param mixed $value       Request value; omitted or blank inherits global.
+     * @param bool  $ui_default  Whether 1 is the default Add Site checkbox.
+     * @param mixed $ui_explicit Whether the user changed the Add Site checkbox.
      * @return int 0 disables verification, 1 enables it, 2 inherits global.
      */
-    public static function normalize_ssl_verify( $value = null, $ui_default = false ) {
+    public static function normalize_ssl_verify( $value = null, $ui_default = false, $ui_explicit = false ) {
         if ( in_array( $value, array( 0, '0', false ), true ) ) {
             return 0;
         }
         if ( in_array( $value, array( 1, '1', true ), true ) ) {
-            return $ui_default ? 2 : 1;
+            return $ui_default && ! in_array( $ui_explicit, array( 1, '1', true ), true ) ? 2 : 1;
         }
         return 2;
     }
@@ -2195,7 +2196,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $params['wpadmin']            = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
         $params['adminpwd']           = isset( $_POST['managesites_add_adminpwd'] ) ?   wp_unslash( $_POST['managesites_add_adminpwd'] ) : ''; //phpcs:ignore -- NOSONAR - requires urlencoded passwd, do not sanitize for specical chars.
         $params['unique_id']          = isset( $_POST['managesites_add_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_uniqueId'] ) ) : '';
-        $params['ssl_verify']         = static::normalize_ssl_verify( wp_unslash( $_POST['ssl_verify'] ?? $_POST['verify_certificate'] ?? null ), empty( $_POST['bulk'] ) );
+        $params['ssl_verify']         = static::normalize_ssl_verify( wp_unslash( $_POST['ssl_verify'] ?? $_POST['verify_certificate'] ?? null ), empty( $_POST['bulk'] ), wp_unslash( $_POST['ssl_verify_explicit'] ?? null ) );
         $params['ssl_version']        = empty( $_POST['ssl_version'] ) ? false : intval( $_POST['ssl_version'] );
         $params['force_use_ipv4']     = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $params['url'] );
         $params['http_user']          = isset( $_POST['managesites_add_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_http_user'] ) ) : '';

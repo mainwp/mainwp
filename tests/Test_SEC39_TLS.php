@@ -386,6 +386,58 @@ class Test_SEC39_TLS extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Distinguish a user choice from the checked default, including cached requests.
+	 *
+	 * @return array
+	 */
+	public static function explicit_ui_choices() {
+		return array(
+			'cached default' => array( 1, null, 2 ),
+			'untouched default' => array( 1, 0, 2 ),
+			'unchecked' => array( 0, 1, 0 ),
+			'rechecked' => array( 1, 1, 1 ),
+			'string flag' => array( '1', '1', 1 ),
+			'boolean flag' => array( true, true, 1 ),
+			'invalid string flag' => array( 1, 'true', 2 ),
+			'invalid array flag' => array( 1, array( 1 ), 2 ),
+		);
+	}
+
+	/**
+	 * Preflight, registration, storage and first sync honor the same UI choice.
+	 *
+	 * @dataProvider explicit_ui_choices
+	 * @param mixed $choice Checkbox value.
+	 * @param mixed $explicit Optional user-choice flag.
+	 * @param int   $expected Saved policy.
+	 */
+	public function test_explicit_ui_choice_matches_preflight_and_registration( $choice, $explicit, $expected ) {
+		$this->global_policy( 0 );
+		$fields = array( 'verify_certificate' => $choice );
+		if ( null !== $explicit ) {
+			$fields['ssl_verify_explicit'] = $explicit;
+		}
+		$_POST = array_merge( array( 'url' => 'https://explicit-ui.example.com/', 'admin' => 'admin' ), $fields );
+		$stop = function () {
+			throw new \RuntimeException( 'preflight-complete' );
+		};
+		add_action( 'mainwp_check_site_result', $stop );
+		try {
+			Handler::check_site();
+		} catch ( \RuntimeException $e ) {
+			$this->assertSame( 'preflight-complete', $e->getMessage() );
+		} finally {
+			remove_action( 'mainwp_check_site_result', $stop );
+		}
+		$this->assertSame( $expected, $this->captured, 'Preflight must use the selected policy.' );
+		$transport = $this->transport( $this->captured, 0 );
+		$this->assertSame( 1 === $expected, $transport['peer'] );
+		unset( $fields['verify_certificate'] );
+		$fields['ssl_verify'] = $choice;
+		$this->assert_registration_policy( 'ui', $fields, 0, $expected );
+	}
+
+	/**
 	 * Preserve explicit import verification while UI defaults inherit.
 	 */
 	public function test_preflight_distinguishes_import_explicit_one() {

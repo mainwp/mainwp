@@ -1116,6 +1116,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         $foundMatches = preg_match_all( '/(<a[^>]+href=\"(.*?)\"[^>]*>)?(<img[^>\/]*src=\"((.*?)(png|gif|jpg|jpeg))\")/ix', $new_post['post_content'], $matches, PREG_SET_ORDER );
         if ( 0 < $foundMatches ) {
+            $downloaded_images  = array();
+            $image_replacements = array();
             foreach ( $matches as $match ) {
                 $hrefLink = $match[2];
                 $imgUrl   = $match[4];
@@ -1133,7 +1135,10 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 try {
-                    $downloadfile = static::upload_image( $originalImgUrl );
+                    if ( ! isset( $downloaded_images[ $originalImgUrl ] ) ) {
+                        $downloaded_images[ $originalImgUrl ] = static::upload_image( $originalImgUrl );
+                    }
+                    $downloadfile = $downloaded_images[ $originalImgUrl ];
                     $localUrl     = $downloadfile['url'];
 
                     $linkToReplaceWith = dirname( $localUrl );
@@ -1148,13 +1153,15 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                     $lnkToReplace = dirname( $imgUrl );
                     if ( 'http:' !== $lnkToReplace && 'https:' !== $lnkToReplace ) {
-                        $new_post['post_content'] = str_replace( $imgUrl, $localUrl, $new_post['post_content'] ); // replace src image.
-                        $new_post['post_content'] = str_replace( $lnkToReplace, $linkToReplaceWith, $new_post['post_content'] );
+                        $image_replacements[ $imgUrl ]         = $localUrl;
+                        $image_replacements[ $originalImgUrl ] = $localUrl;
+                        $image_replacements[ $lnkToReplace ]   = $linkToReplaceWith;
                     }
                 } catch ( \Exception $e ) {
                     // ok.
                 }
             }
+            $new_post['post_content'] = strtr( $new_post['post_content'], $image_replacements );
         }
 
         if ( has_shortcode( $new_post['post_content'], 'gallery' ) && preg_match_all( '/\[gallery[^\]]+ids=\"(.*?)\"[^\]]*\]/ix', $new_post['post_content'], $matches, PREG_SET_ORDER ) ) {
@@ -1307,6 +1314,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $matches_checked[] = $match;
                 }
             }
+            $downloaded_images  = array();
+            $image_replacements = array();
             foreach ( $matches_checked as $match ) {
 
                 $imgUrl = $match[0];
@@ -1323,18 +1332,22 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 try {
-                    $downloadfile      = static::upload_image( wp_unslash( $originalImgUrl ) );
+                    if ( ! isset( $downloaded_images[ $originalImgUrl ] ) ) {
+                        $downloaded_images[ $originalImgUrl ] = static::upload_image( wp_unslash( $originalImgUrl ) );
+                    }
+                    $downloadfile      = $downloaded_images[ $originalImgUrl ];
                     $localUrl          = $downloadfile['url'];
                     $linkToReplaceWith = dirname( $localUrl );
                     $lnkToReplace      = dirname( $imgUrl );
                     if ( 'http:' !== $lnkToReplace && 'https:' !== $lnkToReplace ) {
-                        $content = str_replace( $imgUrl, $localUrl, $content ); // replace src image.
-                        $content = str_replace( $lnkToReplace, $linkToReplaceWith, $content );
+                        $image_replacements[ $imgUrl ]       = $localUrl;
+                        $image_replacements[ $lnkToReplace ] = $linkToReplaceWith;
                     }
                 } catch ( \Exception $e ) {
                     // ok.
                 }
             }
+            $content = strtr( $content, $image_replacements );
             if ( false === strripos( $site_url_source, $dashboard_url ) ) {
                 // replace other images src outside upload folder.
                 $content = str_replace( $site_url_source, $dashboard_url, $content );

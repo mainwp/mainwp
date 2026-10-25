@@ -143,11 +143,59 @@ class Test_Post_Image_Import extends \WP_UnitTestCase {
         $this->assert_content_caller( 'advanced' );
     }
 
-    private function assert_content_caller( string $caller ): void {
+    /**
+     * @dataProvider content_callers
+     */
+    public function test_multiple_images_keep_unique_urls_and_download_each_source_once( string $caller ): void {
+        $path = $this->upload_dir['path'] . '/shared.png';
+        file_put_contents( $path, 'existing shared image' );
+        $content = '';
+        foreach ( array( 'first.png', 'shared-150x150.png', 'shared.png', 'shared-150x150.png' ) as $filename ) {
+            $content .= '<img src="' . $this->source_url . $filename . '" />';
+        }
+        $website = (object) array( 'url' => 'https://child.example.org/' );
+        $uploads = array( 'baseurl' => $this->source_url );
+        if ( 'embedded' === $caller ) {
+            $result = MainWP_Post_Page_Handler::create_post(
+                array( 'edit_id' => 123, 'post_title' => 'Imported images', 'post_name' => 'imported-images', 'post_type' => 'post', 'post_status' => 'draft', 'post_content' => $content ),
+                array(), '', '', $uploads, '', array(), false, $website
+            );
+            $this->assertTrue( $result['success'] );
+            $content = get_post( $result['id'] )->post_content;
+        } else {
+            $content = MainWP_Post_Page_Handler::replace_advanced_image( $content, $uploads, $website );
+        }
+        $this->attachments = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'fields' => 'ids', 'posts_per_page' => -1 ) );
+        $this->assertSame( 'existing shared image', file_get_contents( $path ) );
+        $this->assertSame( 1, substr_count( $content, 'src="' . $this->upload_dir['url'] . '/first.png"' ), $caller );
+        $this->assertSame( 3, substr_count( $content, 'src="' . $this->upload_dir['url'] . '/shared-1.png"' ), $caller );
+        $this->assertStringNotContainsString( $this->source_url, $content );
+        $this->assertCount( 2, $this->temporary_files, 'Each original source should be downloaded once.' );
+        $this->assertCount( 2, $this->attachments, 'Repeated references should share one attachment.' );
+        $this->assertFileDoesNotExist( $this->upload_dir['path'] . '/shared-2.png' );
+    }
+
+    public static function content_callers(): array {
+        return array( 'embedded' => array( 'embedded' ), 'advanced' => array( 'advanced' ) );
+    }
+
+    public function test_embedded_linked_thumbnail_retains_the_allocated_full_image_url(): void {
+        $this->assert_content_caller( 'embedded', true );
+    }
+
+    public function test_advanced_linked_thumbnail_retains_the_allocated_full_image_url(): void {
+        $this->assert_content_caller( 'advanced', true );
+    }
+
+    private function assert_content_caller( string $caller, bool $linked_thumbnail = false ): void {
         $filename = $caller . '.png';
         $path     = $this->upload_dir['path'] . '/' . $filename;
         file_put_contents( $path, 'existing ' . $caller );
-        $content = '<img src="' . $this->source_url . $filename . '" />';
+        $source_filename = $linked_thumbnail ? $caller . '-150x150.png' : $filename;
+        $content = '<img src="' . $this->source_url . $source_filename . '" />';
+        if ( $linked_thumbnail ) {
+            $content = '<a href="' . $this->source_url . $filename . '">' . $content . '</a>';
+        }
         $website = (object) array( 'url' => 'https://child.example.org/' );
         $uploads = array( 'baseurl' => $this->source_url );
         if ( 'embedded' === $caller ) {
@@ -165,5 +213,8 @@ class Test_Post_Image_Import extends \WP_UnitTestCase {
         $this->assertStringContainsString( 'src="' . $this->upload_dir['url'] . '/' . $caller . '-1.png"', $content, $caller );
         $this->assertStringNotContainsString( $this->source_url, $content, $caller );
         $this->assertSame( 'existing ' . $caller, file_get_contents( $path ) );
+        if ( $linked_thumbnail ) {
+            $this->assertStringContainsString( 'href="' . $this->upload_dir['url'] . '/' . $caller . '-1.png"', $content, $caller );
+        }
     }
 }

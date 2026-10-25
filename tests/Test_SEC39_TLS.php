@@ -306,52 +306,52 @@ class Test_SEC39_TLS extends \WP_UnitTestCase {
 		$this->assert_registration_policy( 'rest', $fields, $global_setting, $expected );
 	}
 
-    /**
-     * SSL version choices accepted by the REST string schema.
-     *
-     * @return array
-     */
-    public static function rest_ssl_versions() {
-        return array(
-            'tls-1.2' => array( array( 'ssl_version' => '6' ), 6 ),
-            'omitted' => array( array(), 0 ),
-            'empty'   => array( array( 'ssl_version' => '' ), 0 ),
-            'zero'    => array( array( 'ssl_version' => '0' ), 0 ),
-        );
-    }
+	/**
+	 * SSL version choices accepted by the REST string schema.
+	 *
+	 * @return array
+	 */
+	public static function rest_ssl_versions() {
+		return array(
+			'tls-1.2' => array( array( 'ssl_version' => '6' ), 6 ),
+			'omitted' => array( array(), 0 ),
+			'empty'   => array( array( 'ssl_version' => '' ), 0 ),
+			'zero'    => array( array( 'ssl_version' => '0' ), 0 ),
+		);
+	}
 
-    /**
-     * Preserve the requested SSL version through registration and storage.
-     *
-     * @dataProvider rest_ssl_versions
-     * @runInSeparateProcess
-     * @preserveGlobalState disabled
-     * @param array $fields Request fields.
-     * @param int   $expected Registration and stored SSL version.
-     */
-    public function test_rest_registration_transport_and_saved_ssl_version( $fields, $expected ) {
-        $ssl_version = null;
-        add_filter(
-            'mainwp_fetch_url_not_authed_pre',
-            function ( $pre, $url, $admin, $what, $params, $force, $policy, $http_user, $http_pass, $version ) use ( &$ssl_version ) {
-                $ssl_version = $version;
-                return $pre;
-            },
-            20,
-            10
-        );
-        $site = $this->register( 'rest', $fields );
-        $this->assertSame(
-            array(
-                'registration' => $expected,
-                'stored'       => $expected,
-            ),
-            array(
-                'registration' => $ssl_version,
-                'stored'       => (int) $site->ssl_version,
-            )
-        );
-    }
+	/**
+	 * Preserve the requested SSL version through registration and storage.
+	 *
+	 * @dataProvider rest_ssl_versions
+	 * @runInSeparateProcess
+	 * @preserveGlobalState disabled
+	 * @param array $fields Request fields.
+	 * @param int   $expected Registration and stored SSL version.
+	 */
+	public function test_rest_registration_transport_and_saved_ssl_version( $fields, $expected ) {
+		$ssl_version = null;
+		add_filter(
+			'mainwp_fetch_url_not_authed_pre',
+			function ( $pre, $url, $admin, $what, $params, $force, $policy, $http_user, $http_pass, $version ) use ( &$ssl_version ) {
+				$ssl_version = $version;
+				return $pre;
+			},
+			20,
+			10
+		);
+		$site = $this->register( 'rest', $fields );
+		$this->assertSame(
+			array(
+				'registration' => $expected,
+				'stored'       => $expected,
+			),
+			array(
+				'registration' => $ssl_version,
+				'stored'       => (int) $site->ssl_version,
+			)
+		);
+	}
 
 	/**
 	 * Native abilities requests and direct adapters keep explicit choices.

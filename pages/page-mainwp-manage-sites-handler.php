@@ -272,6 +272,7 @@ class MainWP_Manage_Sites_Handler { // phpcs:ignore Generic.Classes.OpeningBrace
         $params['adminpwd']                = isset( $data['adminpassword'] ) ? wp_unslash( $data['adminpassword'] ) : '';
         $params['unique_id']               = isset( $data['uniqueid'] ) ? sanitize_text_field( wp_unslash( $data['uniqueid'] ) ) : '';
         $params['ssl_verify']              = MainWP_Manage_Sites_View::normalize_ssl_verify( $data['ssl_verify'] ?? null );
+        $params['ssl_version']             = empty( $data['ssl_version'] ) ? false : intval( $data['ssl_version'] );
         $params['force_use_ipv4']          = ( ! isset( $data['force_use_ipv4'] ) || ( empty( $data['force_use_ipv4'] ) && ( '0' !== $data['force_use_ipv4'] ) ) ? null : intval( $data['force_use_ipv4'] ) );
         $params['http_user']               = isset( $data['http_user'] ) ? sanitize_text_field( wp_unslash( $data['http_user'] ) ) : '';
         $params['http_pass']               = isset( $data['http_pass'] ) ? wp_unslash( $data['http_pass'] ) : '';

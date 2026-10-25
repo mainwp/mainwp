@@ -12,10 +12,8 @@ use MainWP\Dashboard\MainWP_DB_Uptime_Monitoring;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Connect;
 
 /**
- * API key authentication defines a process-wide REST constant.
- *
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
+ * API key requests run in the REST Key Authentication suite to keep the
+ * process-wide REST constant out of the other suites.
  */
 class Test_REST_V2_Site_Operations extends \WP_Test_REST_TestCase {
 

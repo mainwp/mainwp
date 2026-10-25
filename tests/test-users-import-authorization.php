@@ -246,15 +246,17 @@ class Test_Users_Import_Authorization extends \WP_UnitTestCase {
 		);
 		if ( 'group' === $select_by ) {
 			global $wpdb;
-			$wpdb->insert(
-				$wpdb->prefix . 'mainwp_group',
-				array(
-					'userid' => get_current_user_id(),
-					'name'   => 'Import scope',
-				)
-			);
-			$group = $wpdb->insert_id;
+			$allowed_group = null;
 			foreach ( array( $allowed, $restricted ) as $site ) {
+				$wpdb->insert(
+					$wpdb->prefix . 'mainwp_group',
+					array(
+						'userid' => get_current_user_id(),
+						'name'   => 'Import scope',
+					)
+				);
+				$group         = $wpdb->insert_id;
+				$allowed_group = $allowed_group ?? $group;
 				$wpdb->insert(
 					$wpdb->prefix . 'mainwp_wp_group',
 					array(
@@ -263,9 +265,10 @@ class Test_Users_Import_Authorization extends \WP_UnitTestCase {
 					)
 				);
 			}
+			$this->filter( 'mainwp_currentuserallowedaccessgroups', static fn() => array( $allowed_group ) );
 			$post['select_groups'] = array( 'Import scope' );
 		}
-		$this->assert_result( $this->dispatch( $post ), $allowed, $restricted );
+		$this->assert_result( $this->dispatch( $post ), $allowed, $restricted, 'group' === $select_by ? 'Import scope' : null );
 	}
 
 	/** Create a connected fixture site with a usable signing key.
@@ -339,16 +342,23 @@ class Test_Users_Import_Authorization extends \WP_UnitTestCase {
 
 	/** The allowed target succeeds and the rejected target is never dispatched.
 	 *
-	 * @param array  $response Import response.
-	 * @param object $allowed Permitted fixture site.
-	 * @param object $rejected Denied fixture site.
+	 * @param array       $response Import response.
+	 * @param object      $allowed Permitted fixture site.
+	 * @param object      $rejected Denied fixture site.
+	 * @param string|null $group Submitted group name, or null for URL selection.
 	 */
-	private function assert_result( $response, $allowed, $rejected ): void {
+	private function assert_result( $response, $allowed, $rejected, $group = null ): void {
 		$this->assertSame( array( 'New user(s) created: ' . $allowed->name ), $response['ok_list'] );
 		$this->assertCount( 1, $response['error_list'] );
 		$this->assertStringContainsString( 'insufficient permissions', $response['error_list'][0] );
-		$this->assertStringContainsString( $rejected->url, $response['error_list'][0] );
-		$this->assertStringContainsString( $rejected->url, $response['failed_logging'] );
+		if ( null === $group ) {
+			$this->assertStringContainsString( $rejected->url, $response['error_list'][0] );
+			$this->assertStringContainsString( $rejected->url, $response['failed_logging'] );
+		} else {
+			$this->assertStringContainsString( $group, $response['error_list'][0] );
+			$this->assertStringNotContainsString( $rejected->url, $response['error_list'][0] );
+			$this->assertSame( '', $response['failed_logging'] );
+		}
 		$this->assertStringNotContainsString( 'fixture-password', $response['failed_logging'] );
 		$this->assertSame( '/child/' . $allowed->name . '/wp-admin/admin-ajax.php' . "\n", file_get_contents( self::$log ) );
 	}

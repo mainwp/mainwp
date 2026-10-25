@@ -2387,8 +2387,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     if ( $websites ) {
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
                             if ( ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $website->id ) ) {
-                                $not_valid[]  = esc_html__( 'Error - insufficient permissions!', 'mainwp' ) . ' ' . esc_html( $website->url );
-                                $error_sites .= $website->url . ';';
+                                $not_valid[] = esc_html__( 'Error - insufficient permissions!', 'mainwp' ) . ' ' . esc_html( $group );
                                 continue;
                             }
                             if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {

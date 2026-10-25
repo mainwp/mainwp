@@ -72,7 +72,7 @@ class Test_REST_OAuth_Nonce_History extends MainWP_Abilities_Test_Case {
         return new \WP_Error( 'unexpected_http', 'Outbound HTTP blocked.' );
     }
 
-    private function authenticate( string $nonce, int $timestamp, bool $https = true, bool $basic = false ) {
+    private function authenticate( $nonce, int $timestamp, bool $https = true, bool $basic = false ) {
         foreach ( array( 'user' => null, 'error' => null, 'auth_method' => '' ) as $name => $value ) {
             $property = new \ReflectionProperty( $this->auth, $name );
             $property->setAccessible( true );
@@ -192,5 +192,22 @@ class Test_REST_OAuth_Nonce_History extends MainWP_Abilities_Test_Case {
         $this->assertSame( $this->owner_id, $this->authenticate( 'basic', $timestamp, true, true ) );
         $this->assertSame( $this->owner_id, $this->authenticate( 'basic', $timestamp, true, true ) );
         $this->assertSame( $this->owner_id, $this->authenticate( 'basic', $timestamp ) );
+    }
+
+    public function test_array_nonce_returns_the_existing_authentication_error(): void {
+        $result = $this->authenticate( array( 'array-nonce' ), time() );
+        $this->assertWPError( $result );
+        $this->assertSame( 'mainwp_rest_authentication_disabled_key', $result->get_error_code() );
+        $this->assertSame( 'The REST API Key are disabled.', $result->get_error_message() );
+        $this->assertSame( array( 'status' => 401 ), $result->get_error_data() );
+        $this->assertSame( $this->owner_id, $this->authenticate( 'after-array', time() ) );
+    }
+
+    public function test_legacy_array_nonce_does_not_break_a_fresh_string_nonce(): void {
+        $timestamp = time();
+        $this->seed_history( array( $timestamp => array( 'legacy-array-nonce' ), $timestamp - 1 => 'valid-legacy', 'valid-new' => $timestamp ) );
+        $this->assertSame( $this->owner_id, $this->authenticate( 'fresh-string', $timestamp ) );
+        $this->assert_nonce_error( $this->authenticate( 'valid-legacy', $timestamp ) );
+        $this->assert_nonce_error( $this->authenticate( 'valid-new', $timestamp ) );
     }
 }

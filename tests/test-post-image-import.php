@@ -187,6 +187,23 @@ class Test_Post_Image_Import extends \WP_UnitTestCase {
         $this->assert_content_caller( 'advanced', true );
     }
 
+    public function test_advanced_import_reuses_an_image_in_an_escaped_reference(): void {
+        $source = $this->source_url . 'shared.png';
+        $content = '<img src="' . $source . '" /><!-- wp:image {"url":"' . str_replace( '/', '\/', $source ) . '"} -->';
+        $result = MainWP_Post_Page_Handler::create_post(
+            array( 'edit_id' => 123, 'post_title' => 'Mixed image references', 'post_name' => 'mixed-images', 'post_type' => 'post', 'post_status' => 'draft', 'post_content' => $content ),
+            array(), '', '', array( 'baseurl' => $this->source_url ), '', array(), true, (object) array( 'url' => 'https://child.example.org/' )
+        );
+        $this->attachments = get_posts( array( 'post_type' => 'attachment', 'post_status' => 'inherit', 'fields' => 'ids', 'posts_per_page' => -1 ) );
+        $this->assertTrue( $result['success'] );
+        $this->assertCount( 1, $this->temporary_files, 'Raw and escaped references should share one download.' );
+        $this->assertCount( 1, $this->attachments );
+        $this->assertFileDoesNotExist( $this->upload_dir['path'] . '/shared-1.png' );
+        $saved = str_replace( '\/', '/', get_post( $result['id'] )->post_content );
+        $this->assertStringNotContainsString( $this->source_url, $saved );
+        $this->assertSame( 2, substr_count( $saved, $this->upload_dir['url'] . '/shared.png' ) );
+    }
+
     private function assert_content_caller( string $caller, bool $linked_thumbnail = false ): void {
         $filename = $caller . '.png';
         $path     = $this->upload_dir['path'] . '/' . $filename;

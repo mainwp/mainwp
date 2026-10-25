@@ -950,6 +950,10 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid timestamp.', 'mainwp' ), array( 'status' => 401 ) );
         }
 
+        if ( ! is_string( $nonce ) ) {
+            return $this->refused_key_error();
+        }
+
         $used_nonces = maybe_unserialize( $user->nonces );
 
         if ( empty( $used_nonces ) ) {
@@ -961,6 +965,9 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             // Legacy entries use timestamp keys and string nonce values.
             $nonce_timestamp = is_int( $stored_value ) ? $stored_value : (int) $stored_key;
             $stored_nonce    = is_int( $stored_value ) ? $stored_key : $stored_value;
+            if ( ! is_string( $stored_nonce ) && ! is_int( $stored_nonce ) ) {
+                continue;
+            }
             if ( $nonce_timestamp >= ( time() - $valid_window ) ) {
                 $nonce_history[ $stored_nonce ] = $nonce_timestamp;
             }

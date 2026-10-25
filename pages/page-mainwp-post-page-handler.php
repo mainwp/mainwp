@@ -1161,6 +1161,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     // ok.
                 }
             }
+            foreach ( $image_replacements as $image_url => $replacement_url ) {
+                $image_replacements[ str_replace( '/', '\/', $image_url ) ] = str_replace( '/', '\/', (string) $replacement_url );
+            }
             $new_post['post_content'] = strtr( $new_post['post_content'], $image_replacements );
         }
 
@@ -1346,6 +1349,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 } catch ( \Exception $e ) {
                     // ok.
                 }
+            }
+            foreach ( $image_replacements as $image_url => $replacement_url ) {
+                $image_replacements[ str_replace( '/', '\/', $image_url ) ] = str_replace( '/', '\/', (string) $replacement_url );
             }
             $content = strtr( $content, $image_replacements );
             if ( false === strripos( $site_url_source, $dashboard_url ) ) {

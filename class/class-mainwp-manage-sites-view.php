@@ -454,7 +454,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'uniqueId'           => '',
                     'http_user'          => '',
                     'http_pass'          => '',
-                    'verify_certificate' => 1,
+                    'verify_certificate' => 2,
                     'ssl_version'        => 'auto',
                 );
 
@@ -543,7 +543,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                         'uniqueId'           => ! empty( $site['security_id'] ) ? sanitize_text_field( wp_unslash( $site['security_id'] ) ) : '',
                         'http_user'          => ! empty( $site['http_username'] ) ? sanitize_text_field( wp_unslash( $site['http_username'] ) ) : '',
                         'http_pass'          => ! empty( $site['http_password'] ) ? wp_unslash( $site['http_password'] ) : '',
-                        'verify_certificate' => isset( $site['verify_certificate'] ) ? intval( $site['verify_certificate'] ) : 1,
+                        'verify_certificate' => static::normalize_ssl_verify( $site['verify_certificate'] ?? null ),
                         'ssl_version'        => ! empty( $site['ssl_version'] ) ? sanitize_text_field( wp_unslash( $site['ssl_version'] ) ) : 'auto',
                     );
 
@@ -2160,6 +2160,25 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
+     * Convert a request choice to the stored TLS policy.
+     *
+     * The checked Add Site checkbox inherits the global setting.
+     *
+     * @param mixed $value      Request value; omitted or blank inherits global.
+     * @param bool  $ui_default Whether 1 is the default Add Site checkbox.
+     * @return int 0 disables verification, 1 enables it, 2 inherits global.
+     */
+    public static function normalize_ssl_verify( $value = null, $ui_default = false ) {
+        if ( in_array( $value, array( 0, '0', false ), true ) ) {
+            return 0;
+        }
+        if ( in_array( $value, array( 1, '1', true ), true ) ) {
+            return $ui_default ? 2 : 1;
+        }
+        return 2;
+    }
+
+    /**
      * Method add_site()
      *
      * Add Child Site.
@@ -2176,7 +2195,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $params['wpadmin']            = isset( $_POST['managesites_add_wpadmin'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_wpadmin'] ) ) : '';
         $params['adminpwd']           = isset( $_POST['managesites_add_adminpwd'] ) ?   wp_unslash( $_POST['managesites_add_adminpwd'] ) : ''; //phpcs:ignore -- NOSONAR - requires urlencoded passwd, do not sanitize for specical chars.
         $params['unique_id']          = isset( $_POST['managesites_add_uniqueId'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_uniqueId'] ) ) : '';
-        $params['ssl_verify']         = empty( $_POST['verify_certificate'] ) ? false : intval( $_POST['verify_certificate'] );
+        $params['ssl_verify']         = static::normalize_ssl_verify( wp_unslash( $_POST['ssl_verify'] ?? $_POST['verify_certificate'] ?? null ), empty( $_POST['bulk'] ) );
         $params['ssl_version']        = empty( $_POST['ssl_version'] ) ? false : intval( $_POST['ssl_version'] );
         $params['force_use_ipv4']     = apply_filters( 'mainwp_manage_sites_force_use_ipv4', null, $params['url'] );
         $params['http_user']          = isset( $_POST['managesites_add_http_user'] ) ? sanitize_text_field( wp_unslash( $_POST['managesites_add_http_user'] ) ) : '';
@@ -2410,7 +2429,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                 $url = $params['url'];
 
-                $verifyCertificate = ( ! isset( $params['ssl_verify'] ) || empty( $params['ssl_verify'] ) ) ? false : true;
+                $verifyCertificate = static::normalize_ssl_verify( $params['ssl_verify'] ?? null );
                 $sslVersion        = ! isset( $params['ssl_version'] ) || empty( $params['ssl_version'] ) ? 0 : $params['ssl_version'];
                 $addUniqueId       = isset( $params['unique_id'] ) ? $params['unique_id'] : '';
                 $http_user         = isset( $params['http_user'] ) ? $params['http_user'] : '';
@@ -2481,7 +2500,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $others = array(
                         'groupids'          => $groupids,
                         'groupnames'        => $groupnames,
-                        'verifyCertificate' => $verifyCertificate || false === $verifyCertificate ? 2 : 0, // 2 use global.
+                        'verifyCertificate' => $verifyCertificate,
                         'addUniqueId'       => $addUniqueId,
                         'http_user'         => $http_user,
                         'http_pass'         => $http_pass,

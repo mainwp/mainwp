@@ -634,7 +634,7 @@ const mainwp_managesites_import_sites_page_setup_add_row = function (row_index) 
         "verify_certificate",
         "verify-certificate",
         "number",
-        1
+        ""
     )}
         </div>
         <div class="two wide column mainwp-managesites-import-column-more-${row_index}" style="display:none">
@@ -729,7 +729,7 @@ const mainwp_managesites_import_sites_add_row = function (row_index) {
         "mainwp-managesites-import-verify-certificate-" + row_index,
         "mainwp-managesites-import-verify-certificate",
         "number",
-        1
+        ""
     )}
             </div>
             <div class="one wide column">

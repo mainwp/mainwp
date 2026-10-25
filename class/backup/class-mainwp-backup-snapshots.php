@@ -235,7 +235,9 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
-     * Preserve local integrity failures without changing the retention lifecycle.
+     * Record local integrity failures without changing completion or removal state.
+     *
+     * Retention reads this flag when the catalog resolves the unit's required archive copies.
      *
      * @param int    $snapshot_id Snapshot owning the archive.
      * @param string $source_file Original archive filename.

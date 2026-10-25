@@ -78,7 +78,7 @@ class MainWP_Backup_Retention_Policy { // phpcs:ignore Generic.Classes.OpeningBr
      * is_complete, is_restorable, size_bytes, newest_created and oldest_created.
      * Incomplete units are never candidates and never count as a
      * protected backup. Complete units without restorable artifacts
-     * remain candidates but supply no keep-count coverage unless none are restorable.
+     * remain candidates but supply no keep-count coverage.
      *
      * @param array $units Restorable units for one (site, task) pair.
      * @param int   $now   Evaluation instant, UTC timestamp.
@@ -117,14 +117,11 @@ class MainWP_Backup_Retention_Policy { // phpcs:ignore Generic.Classes.OpeningBr
         // (a cloud copy finishes uploading), and two overlapping passes that each
         // protected only their own newest restorable unit could delete each other's.
         // The newest complete unit only changes when a newer backup lands, so every
-        // pass agrees on it. With nothing restorable, every complete unit counts
-        // toward the keep-count, so damaged backups cannot pile up without bound.
-        $protected      = array( 0 => true );
-        $has_restorable = false;
+        // pass agrees on it.
+        $protected = array( 0 => true );
         foreach ( $complete as $index => $unit ) {
             if ( $unit['is_restorable'] ?? true ) {
                 $protected[ $index ] = true;
-                $has_restorable      = true;
                 break;
             }
         }
@@ -154,7 +151,7 @@ class MainWP_Backup_Retention_Policy { // phpcs:ignore Generic.Classes.OpeningBr
                 }
                 if ( $kept >= $this->retention_count && ! isset( $protected[ $index ] ) ) {
                     $reasons[ $index ] = 'count';
-                } elseif ( ! $has_restorable || ( $unit['is_restorable'] ?? true ) ) {
+                } elseif ( $unit['is_restorable'] ?? true ) {
                     ++$kept;
                 }
             }

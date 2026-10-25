@@ -424,6 +424,25 @@ class Test_Credential_Key_Files extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * Let the isolated WordPress harness define its own test constants.
+	 *
+	 * @param \PHPUnit\Framework\TestResult|null $result Current result collector.
+	 * @return \PHPUnit\Framework\TestResult
+	 */
+	public function run( ?\PHPUnit\Framework\TestResult $result = null ): \PHPUnit\Framework\TestResult {
+		if ( 'test_rest_v2_edit_encrypts_client_envelopes_as_plaintext' !== $this->getName( false ) ) {
+			return parent::run( $result );
+		}
+		$configuration                           = $GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] ?? null;
+		$GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] = '';
+		try {
+			return parent::run( $result );
+		} finally {
+			$GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] = $configuration;
+		}
+	}
+
+	/**
 	 * A dispatched REST v2 edit cannot plant a filesystem reference for a later read.
 	 *
 	 * REST authentication defines a process-wide compatibility constant, so isolate it.

@@ -129,7 +129,7 @@ class MainWP_Abilities_Cron { //phpcs:ignore -- NOSONAR - multi methods.
         // Without an explicit scope grant, a non-admin account cannot resume
         // a job. In particular, the default 'all' without Team Control is not
         // evidence that a demoted account retains MainWP access.
-        $allowed_sites = MainWP_Abilities_Util::get_allowed_site_ids();
+        $allowed_sites = MainWP_Abilities_Util::get_configured_site_ids();
         return is_array( $allowed_sites ) && ! empty( $allowed_sites );
     }
 

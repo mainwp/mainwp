@@ -1308,7 +1308,7 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 		$this->consumer_secret = $key['consumer_secret'];
 		$site_id               = $this->create_test_site( [ 'name' => 'Allowed credential fixture' ] );
 		$hidden_id             = $this->create_test_site( [ 'name' => 'Hidden credential fixture' ] );
-		$secret_options        = [ 'register_verify_key', 'cpanel_account_username', 'mainwp_3rd_party_kinsta_downloadable_backups' ];
+		$secret_options        = [ 'register_verify_key', 'cpanel_account_username', 'mainwp_3rd_party_kinsta_downloadable_backups', 'mainwp_cloudflair_key', 'mainwp_cloudflare_bearer_token', 'mainwp_cloudflair_email' ];
 		foreach ( [ 'vultr', 'gridpane', 'linode', 'digitalocean', 'cloudways', 'cpanel', 'plesk', 'kinsta' ] as $provider ) {
 			$secret_options[] = 'mainwp_api_backups_' . $provider . '_api_key';
 		}

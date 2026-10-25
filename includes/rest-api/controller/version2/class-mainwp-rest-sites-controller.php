@@ -3092,13 +3092,14 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
      * @return array
      */
     protected function prepare_object_for_database( $request ) {
-        $item_fields               = array();
-        $item_fields['url']        = isset( $request['url'] ) ? sanitize_text_field( $request['url'] ) : '';
-        $item_fields['name']       = isset( $request['name'] ) ? sanitize_text_field( $request['name'] ) : '';
-        $item_fields['wpadmin']    = isset( $request['admin'] ) ? sanitize_text_field( $request['admin'] ) : '';
-        $item_fields['adminpwd']   = isset( $request['adminpassword'] ) ? (string) $request['adminpassword'] : ''; // Cast only; sanitize_text_field() strips characters a password may legitimately hold.
-        $item_fields['unique_id']  = sanitize_text_field( $request['uniqueid'] ?? $request['uniqueId'] ?? '' ); // uniqueid is the documented input spelling, uniqueId is what the item schema registers on this route.
-        $item_fields['ssl_verify'] = MainWP_Manage_Sites_View::normalize_ssl_verify( $request['ssl_verify'] );
+        $item_fields                = array();
+        $item_fields['url']         = isset( $request['url'] ) ? sanitize_text_field( $request['url'] ) : '';
+        $item_fields['name']        = isset( $request['name'] ) ? sanitize_text_field( $request['name'] ) : '';
+        $item_fields['wpadmin']     = isset( $request['admin'] ) ? sanitize_text_field( $request['admin'] ) : '';
+        $item_fields['adminpwd']    = isset( $request['adminpassword'] ) ? (string) $request['adminpassword'] : ''; // Cast only; sanitize_text_field() strips characters a password may legitimately hold.
+        $item_fields['unique_id']   = sanitize_text_field( $request['uniqueid'] ?? $request['uniqueId'] ?? '' ); // uniqueid is the documented input spelling, uniqueId is what the item schema registers on this route.
+        $item_fields['ssl_verify']  = MainWP_Manage_Sites_View::normalize_ssl_verify( $request['ssl_verify'] );
+        $item_fields['ssl_version'] = empty( $request['ssl_version'] ) ? false : intval( $request['ssl_version'] );
         // Omitted stays null: fetch_url() then reads the global mainwp_forceUseIPv4 option
         // for the handshake, the same as the UI and the v1 add handler send, and
         // add_website() leaves the column at its default.

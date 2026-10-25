@@ -220,7 +220,11 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return string|false Confined path, or false for an unsafe name or target.
      */
     private function key_file_path( $file_key, $delete_entry = false ) {
-        if ( ! is_string( $file_key ) || 1 !== preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$/D', $file_key ) ) {
+        if ( ! is_string( $file_key ) || '' === $file_key || strlen( $file_key ) > 255 || false !== strpbrk( $file_key, "/\\\0" ) ) {
+            return false;
+        }
+        // Historical generators appended a SHA-1 suffix to an unrestricted caller prefix.
+        if ( 1 !== preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]*$/D', $file_key ) && 1 !== preg_match( '/^.*_[a-f0-9]{40}$/sD', $file_key ) ) {
             return false;
         }
         $configured_dir = static::get_keys_dir();

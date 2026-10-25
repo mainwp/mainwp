@@ -104,7 +104,7 @@ class Test_Credential_Key_Files extends MainWP_Abilities_Test_Case {
 	public function tearDown(): void {
 		remove_filter( 'mainwp_encrypt_key_value', array( $this, 'record_key' ), 99 );
 		foreach ( $this->keys as $key ) {
-			if ( is_string( $key ) && preg_match( '/^[A-Za-z0-9][A-Za-z0-9_-]{0,254}$/D', $key ) ) {
+			if ( is_string( $key ) && '' !== $key && '.' !== $key && '..' !== $key && basename( $key ) === $key && false === strpos( $key, '\\' ) && false === strpos( $key, "\0" ) ) {
 				$this->paths[] = MainWP_Keys_Manager::get_keys_dir() . $key;
 			}
 		}
@@ -242,6 +242,83 @@ class Test_Credential_Key_Files extends MainWP_Abilities_Test_Case {
 			$this->keys[] = $name;
 			$this->assertTrue( $this->manager->save_key_file( $name, $rsa ) );
 			$this->assertSame( $rsa, $this->manager->get_key_val( $name ) );
+		}
+	}
+
+	/**
+	 * Public prefixes have always been concatenated with a SHA-1 filename suffix.
+	 *
+	 * @return array Historical raw prefixes.
+	 */
+	public static function legacy_key_prefixes() {
+		return array(
+			'dotted'             => array( 'my.ext_' ),
+			'leading underscore' => array( '_legacy_' ),
+			'spaces'             => array( ' spaced prefix _' ),
+			'punctuation'        => array( 'extension:label_' ),
+			'non-ASCII'          => array( 'κλειδί_' ),
+			'empty'              => array( '' ),
+		);
+	}
+
+	/**
+	 * Existing generated filenames remain readable, reusable and deletable.
+	 *
+	 * @dataProvider legacy_key_prefixes
+	 * @param string $prefix Historical public prefix.
+	 */
+	public function test_legacy_generated_names_remain_readable_and_deletable( $prefix ) {
+		$normalized    = str_ends_with( $prefix, '_' ) ? $prefix : $prefix . '_';
+		$key           = $normalized . sha1( wp_generate_uuid4() );
+		$path          = MainWP_Keys_Manager::get_keys_dir() . $key;
+		$this->paths[] = $path;
+		file_put_contents( $path, 'fixture-historical-key' );
+		$this->assertSame( 'fixture-historical-key', $this->manager->get_key_val( $key ) );
+		$result = apply_filters( 'mainwp_encrypt_key_value', false, 'fixture-replacement-password', $prefix, $key );
+		$this->assertIsArray( $result );
+		$this->assertSame( $key, $result['file_key'] );
+		$this->assertSame( 'fixture-replacement-password', apply_filters( 'mainwp_decrypt_key_value', false, $result, '' ) );
+		$this->assertTrue( $this->manager->delete_key_file( $key ) );
+		$this->assertFileDoesNotExist( $path );
+		file_put_contents( $path, 'fixture-historical-key' );
+		$this->assertTrue( $this->manager->delete_key_file_with_result( $key ) );
+		$this->assertFileDoesNotExist( $path );
+	}
+
+	/**
+	 * New hook and option encryption preserve supported raw prefixes.
+	 *
+	 * @dataProvider legacy_key_prefixes
+	 * @param string $prefix Public prefix.
+	 */
+	public function test_public_encryption_preserves_safe_legacy_prefixes( $prefix ) {
+		$normalized = str_ends_with( $prefix, '_' ) ? $prefix : $prefix . '_';
+		$result     = apply_filters( 'mainwp_encrypt_key_value', false, 'fixture-hook-password', $prefix, false );
+		$this->assertIsArray( $result );
+		$this->assertStringStartsWith( $normalized, $result['file_key'] );
+		$this->assertSame( 'fixture-hook-password', apply_filters( 'mainwp_decrypt_key_value', false, $result, '' ) );
+		$option = 'credential_fixture_option_' . wp_generate_uuid4();
+		$this->assertTrue( $this->manager->update_key_value( $option, 'fixture-option-password', $prefix ) );
+		$stored       = get_option( $option );
+		$this->keys[] = $stored['file_key'];
+		$this->assertStringStartsWith( $normalized, $stored['file_key'] );
+		$this->assertSame( 'fixture-option-password', $this->manager->get_keys_value( $option ) );
+		$this->assertTrue( $this->manager->update_key_value( $option, 'fixture-option-replacement', $prefix ) );
+		$this->assertSame( $stored['file_key'], get_option( $option )['file_key'] );
+		$this->assertSame( 'fixture-option-replacement', $this->manager->get_keys_value( $option ) );
+		$this->assertTrue( $this->manager->update_key_value( $option, '' ) );
+		$this->assertFileDoesNotExist( MainWP_Keys_Manager::get_keys_dir() . $stored['file_key'] );
+	}
+
+	/** Filename compatibility never admits separators or arbitrary dotted files. */
+	public function test_legacy_compatibility_rejects_unsafe_and_unhashed_names() {
+		$hash  = str_repeat( 'a', 40 );
+		$names = array( '../outside_' . $hash, 'a/b_' . $hash, 'a\\b_' . $hash, "a\0b_" . $hash, '', false, array(), str_repeat( 'a', 215 ) . '_' . $hash, 'index.php' );
+		foreach ( $names as $name ) {
+			$this->assertSame( '', $this->manager->get_key_val( $name ) );
+			$this->assertFalse( $this->manager->save_key_file( $name, 'fixture' ) );
+			$this->assertFalse( $this->manager->delete_key_file( $name ) );
+			$this->assertFalse( $this->manager->delete_key_file_with_result( $name ) );
 		}
 	}
 

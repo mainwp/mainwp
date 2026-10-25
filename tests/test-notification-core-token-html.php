@@ -8,6 +8,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Notification;
 use MainWP\Dashboard\MainWP_Notification_Settings;
 use MainWP\Dashboard\MainWP_Notification_Template;
 use MainWP\Dashboard\MainWP_System_Utility;
@@ -75,6 +76,42 @@ class Test_Notification_Core_Token_HTML extends \WP_UnitTestCase {
         $this->assertStringContainsString( 'Plugin Twenty Twenty-Five &amp; Friends &amp; Co', $html );
         $this->assertStringContainsString( 'Updates for R&amp;D &amp; Partners &lt;Ops&gt;', $html );
         $this->assertStringNotContainsString( '&amp;amp;', $html );
+    }
+
+    public function test_plain_text_digest_keeps_normal_token_text(): void {
+        $mail = $this->sent_digest( $this->site( 'R&D Theme', 'Normal site' ), true );
+        $this->assertStringContainsString( 'Content-Type: text/plain', implode( '\n', $mail['headers'] ) );
+        $this->assertStringContainsString( 'Plugin R&D Theme', $mail['message'] );
+        $this->assertStringNotContainsString( 'Plugin R&amp;D Theme', $mail['message'] );
+    }
+
+    public function test_html_digest_renders_child_markup_as_text(): void {
+        $theme = '<a data-injected="theme" href="https://invalid.example/">Theme & Co</a>';
+        $mail = $this->sent_digest( $this->site( $theme, 'Normal site' ), false );
+        $this->assertStringContainsString( 'Content-Type: text/html', implode( '\n', $mail['headers'] ) );
+        $this->assertStringContainsString( 'Plugin ' . esc_html( $theme ), $mail['message'] );
+        $this->assertStringNotContainsString( '<a data-injected=', $mail['message'] );
+    }
+
+    private function sent_digest( $site, bool $plain_text ): array {
+        $mail = null;
+        $capture = static function ( $sent, $args ) use ( &$mail ) {
+            $mail = $args;
+            return true;
+        };
+        add_filter( 'pre_wp_mail', $capture, 20, 2 );
+        try {
+            MainWP_Notification::send_daily_digest_notification(
+                array( 'disable' => false, 'recipients' => 'fixture@example.org', 'heading' => 'Updates', 'subject' => 'Digest' ),
+                true, array(),
+                array( array( 'id' => $site->id, 'name' => $site->name, 'plugin' => 'Plugin [client.site.theme]', 'new' => false, 'current' => '1.0', 'new_version' => '1.1', 'trusted' => false, 'change_log' => '' ) ),
+                array(), array(), array( 'plain_text' => $plain_text, 'email_site' => $site )
+            );
+            $this->assertIsArray( $mail );
+            return $mail;
+        } finally {
+            remove_filter( 'pre_wp_mail', $capture, 20 );
+        }
     }
 
     public function test_all_core_values_are_escaped_only_in_the_html_body_path(): void {

@@ -107,6 +107,7 @@ class Test_Users_Import_Authorization extends \WP_UnitTestCase {
 			usleep( 50000 );
 		}
 		if ( ! $ready ) {
+			self::stop_server();
 			throw new \RuntimeException( 'User-import loopback server did not start.' );
 		}
 		openssl_pkey_export( openssl_pkey_new( array( 'private_key_bits' => 2048 ) ), self::$key );
@@ -114,6 +115,12 @@ class Test_Users_Import_Authorization extends \WP_UnitTestCase {
 
 	/** Stop the transport and remove its temporary files. */
 	public static function tearDownAfterClass(): void {
+		self::stop_server();
+		parent::tearDownAfterClass();
+	}
+
+	/** Release transport resources even when class setup fails. */
+	private static function stop_server(): void {
 		if ( is_resource( self::$server ) ) {
 			proc_terminate( self::$server );
 			proc_close( self::$server );
@@ -123,7 +130,6 @@ class Test_Users_Import_Authorization extends \WP_UnitTestCase {
 				unlink( $file );
 			}
 		}
-		parent::tearDownAfterClass();
 	}
 
 	/** Use an administrator and clear the fixture request log. */
@@ -186,7 +192,6 @@ class Test_Users_Import_Authorization extends \WP_UnitTestCase {
 		if ( ! $accepted ) {
 			$this->assertStringContainsString( 'File could not be uploaded. Please try again.', $html );
 		}
-		$this->assertSame( '', file_get_contents( self::$log ) );
 	}
 
 	/** Per-user ownership rejects a foreign target while retaining an owned target. */

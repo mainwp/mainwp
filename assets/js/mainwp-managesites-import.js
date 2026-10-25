@@ -206,7 +206,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
             if (response.length == 5) {
                 errors.push(check_result + MainWP.I18n.t('Undefined error!'));
             } else {
-                errors.push(check_result + 'ERROR: ' + mainwp_entities_text(response.substring(6)));
+                errors.push(jQuery('<span>').text(check_result + 'ERROR: ').append(res_things.failure_ux ? mainwp_failure_ux_nodes(res_things.failure_ux) : document.createTextNode(mainwp_entities_text(response.substring(6)))));
             }
         } else if (response == 'OK') {
             let groupids = [];
@@ -238,7 +238,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
 
                 if (response.substring(0, 5) == 'ERROR') {
                     jQuery('#mainwp_managesites_import_fail_logging').append(jQuery('<span>').text(import_line_orig));
-                    jQuery('#mainwp_managesites_import_logging .log').append(document.createTextNode(add_result + mainwp_entities_text(response.substring(6))), '<br/>');
+                    jQuery('#mainwp_managesites_import_logging .log').append(document.createTextNode(add_result), res_things.failure_ux ? mainwp_failure_ux_nodes(res_things.failure_ux) : document.createTextNode(mainwp_entities_text(response.substring(6))), '<br/>');
                     import_count_fails++;
                 } else {
                     //Message the WP was added.

@@ -18,17 +18,17 @@ function harness(reply, addReply, invalid = false, line = payload) {
     function make(tag = '') {
         return { tag, content: '', children: [], attributes: {}, length: 1,
             append(...values) { for (const value of values) {
-                if (typeof value === 'string') { htmlInputs.push(value); this.content += value; }
+                if (typeof value === 'string') { htmlInputs.push(value); this.content += decodeEntities(value.replace(/<[^>]*>/g, '')); }
                 else { this.children.push(value); this.content += value.content; }
             } return this; },
             text(value) { if (value === undefined) return this.content; this.content = String(value); return this; },
-            html(value) { if (value === undefined) return escape(this.content); htmlInputs.push(value); this.content = value; return this; },
-            attr(name, value) { if (value === undefined) return this.attributes[name]; this.attributes[name] = value; return this; },
+            html(value) { if (value === undefined) return escape(this.content); htmlInputs.push(value); this.content = decodeEntities(value.replace(/<[^>]*>/g, '')); this.anchors = [...value.matchAll(/<a\b/g)].map(() => make('a')); return this; },
+            attr(name, value) { if (value === undefined) return this.attributes[name]; this.attributes[name] = value; for (const element of this.members || []) element.attr(name, value); return this; },
             val(value) { if (value === undefined) return this.value; this.value = value; return this; },
             on(event, selector, callback) { handlers.set(selector, callback); return this; },
             ready() { return this; },
             each(callback) { for (const child of jq('#mainwp_managesites_import_fail_logging').children) callback.call(child); return this; },
-            find() { return make('a'); },
+            find() { const collection = make(); collection.members = this.anchors || []; return collection; },
             show() { return this; }, hide() { return this; }, prop() { return this; }, height() { return 0; }, scrollTop() { return this; }
         };
     }
@@ -52,7 +52,7 @@ function harness(reply, addReply, invalid = false, line = payload) {
         return { fail(handler) { if (current === 'transport') handler({}, 'error', payload); return this; } };
     };
     context = vm.createContext({ jQuery: jq, document: { createTextNode: value => ({content: String(value)}) },
-        MainWP: { I18n: { t: text => text } }, mainwp_entities_text: decodeEntities, mainwp_secure_data: data => data, ajaxurl: '/ajax',
+        MainWP: { I18n: { t: text => text } }, mainwp_entities_text: decodeEntities, mainwp_failure_ux_nodes: html => jq('<div>').html(html), mainwp_secure_data: data => data, ajaxurl: '/ajax',
         Blob, saveAs: blob => { saved = blob; }, setTimeout() {}, console });
     vm.runInContext(source, context);
     vm.runInContext('mainwp_managesites_import_sites()', context);
@@ -61,8 +61,8 @@ function harness(reply, addReply, invalid = false, line = payload) {
 
 for (const [label, reply, addReply, invalid] of [
     ['validation', {}, {}, true],
-    ['check failure', {response: 'ERROR: ' + payload, check_me: 1}],
-    ['add failure', {response: 'OK', check_me: 1}, {error: payload, add_me: 1}],
+    ['check failure', {response: 'ERROR: ' + escape(payload), check_me: 1}],
+    ['add failure', {response: 'OK', check_me: 1}, {error: escape(payload), add_me: 1}],
     ['transport failure', {response: 'OK', check_me: 1}, 'transport']
 ]) {
     test('import renders CSV and child text safely on ' + label, () => {
@@ -83,7 +83,7 @@ test('failed CSV download preserves normal punctuation and literal entity spelli
     assert.equal(h.jq('#mainwp_managesites_import_logging .log').children[0].content, '[1] << ' + line);
 });
 
-test('returned error entities are decoded once before text insertion', () => {
+test('returned error entities display decoded once', () => {
     for (const reply of [
         {response: 'ERROR: O&#039;Brien &amp; More &amp;lt;literal&amp;gt;', check_me: 1},
         {error: 'O&#039;Brien &amp; More &amp;lt;literal&amp;gt;', add_me: 1}
@@ -91,6 +91,34 @@ test('returned error entities are decoded once before text insertion', () => {
         const h = reply.error ? harness({response: 'OK', check_me: 1}, reply) : harness(reply);
         assert.ok(h.jq('#mainwp_managesites_import_logging .log').content.includes("O'Brien & More &lt;literal&gt;"));
     }
+});
+
+for (const add of [false, true]) test('formatted server error guidance stays safe on ' + (add ? 'add' : 'check'), () => {
+    const guidance = '<div class="mainwp-connect-failure-ux"><p><strong>Cloudflare / WAF</strong></p><pre>' + escape(payload) + '</pre><a href="https://community.mainwp.com/">Community</a></div>';
+        const reply = add ? {error: guidance, add_me: 1, failure_ux: guidance} : {response: 'ERROR: ' + guidance, check_me: 1, failure_ux: guidance};
+        const h = add ? harness({response: 'OK', check_me: 1}, reply) : harness(reply);
+        assert.ok(h.htmlInputs.some(value => value.includes(guidance)), 'trusted server markup must reach the HTML renderer');
+        assert.equal(h.htmlInputs.filter(value => value.includes('<img')).length, 0);
+        assert.ok(h.jq('#mainwp_managesites_import_logging .log').content.includes('Cloudflare / WAF' + payload + 'Community'));
+});
+
+for (const add of [false, true]) for (const hasGuidance of [false, true]) {
+    test('legacy reconstructed error stays inert on ' + (add ? 'add' : 'check') + ', guidance=' + hasGuidance, () => {
+        const error = '<img src=x onerror=alert(1)>https://example.test';
+        const failure_ux = hasGuidance ? '<div class="mainwp-connect-failure-ux"><pre>' + escape(error) + '</pre></div>' : '';
+        const reply = add ? {error, add_me: 1, failure_ux} : {response: 'ERROR: ' + error, check_me: 1, failure_ux};
+        const h = add ? harness({response: 'OK', check_me: 1}, reply) : harness(reply);
+        assert.equal(h.htmlInputs.filter(value => value.includes('<img')).length, 0, 'legacy error must not be parsed as markup');
+        assert.ok(h.jq('#mainwp_managesites_import_logging .log').content.includes(error));
+    });
+}
+
+test('both missing-Child install anchors keep their URL', () => {
+    const h = harness({response: 'NOMAINWP', check_me: 1});
+    const wrapper = h.jq('#mainwp_managesites_import_logging .log').children.find(node => node.tag === '<span>');
+    const message = wrapper.children[0];
+    assert.equal(message.anchors.length, 2);
+    for (const link of message.anchors) assert.equal(link.attributes.href, 'https://example.test/wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins');
 });
 
 test('server-built success link and line breaks remain markup', () => {

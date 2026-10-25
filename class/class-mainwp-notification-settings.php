@@ -822,6 +822,7 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
     public static function replace_tokens_for_content( $content, $website ) {
 
         $tokens_values = MainWP_System_Utility::get_tokens_site_values( $website, true );
+        $tokens_values = array_map( 'esc_html', $tokens_values );
 
         $content = MainWP_System_Utility::replace_tokens_values( $content, $tokens_values );
 

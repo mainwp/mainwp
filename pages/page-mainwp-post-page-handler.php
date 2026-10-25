@@ -1367,21 +1367,25 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $temporary_file ) ) {
             throw new MainWP_Exception( 'Error: ' . $temporary_file->get_error_message() );  //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         } else {
-            $upload_dir     = wp_upload_dir();
-            $local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url );
-            $local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
+            $upload_dir = wp_upload_dir();
+            $filename   = basename( $img_url );
+            if ( file_exists( $upload_dir['path'] . DIRECTORY_SEPARATOR . $filename ) ) {
+                $filename = wp_unique_filename( $upload_dir['path'], $filename );
+            }
+            $local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . $filename;
+            $local_img_url  = $upload_dir['url'] . '/' . $filename;
             $moved          = false;
             if ( MainWP_Utility::check_image_file_name( $local_img_path ) ) {
                 global $wp_filesystem;
                 if ( $wp_filesystem ) {
-                    $moved = $wp_filesystem->move( $temporary_file, $local_img_path, true );
+                    $moved = $wp_filesystem->move( $temporary_file, $local_img_path, false );
                 }
             }
             if ( $moved ) {
-                $wp_filetype = wp_check_filetype( basename( $img_url ), null );
+                $wp_filetype = wp_check_filetype( $filename, null );
                 $attachment  = array(
                     'post_mime_type' => $wp_filetype['type'],
-                    'post_title'     => isset( $img_data['title'] ) && ! empty( $img_data['title'] ) ? $img_data['title'] : preg_replace( '/\.[^.]+$/', '', basename( $img_url ) ),
+                    'post_title'     => isset( $img_data['title'] ) && ! empty( $img_data['title'] ) ? $img_data['title'] : preg_replace( '/\.[^.]+$/', '', $filename ),
                     'post_content'   => isset( $img_data['description'] ) && ! empty( $img_data['description'] ) ? $img_data['description'] : '',
                     'post_excerpt'   => isset( $img_data['caption'] ) && ! empty( $img_data['caption'] ) ? MainWP_Utility::esc_content( $img_data['caption'] ) : '',
                     'post_status'    => 'inherit',

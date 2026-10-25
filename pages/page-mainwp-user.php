@@ -2150,7 +2150,7 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
         static::render_header( 'Import' );
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $errors = array();
-        if ( isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['import_user_file_bulkupload']['error'] ) {
+        if ( isset( $_POST['_wpnonce'] ) && is_string( $_POST['_wpnonce'] ) && wp_verify_nonce( sanitize_key( wp_unslash( $_POST['_wpnonce'] ) ), 'mainwp-admin-nonce' ) && isset( $_FILES['import_user_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['import_user_file_bulkupload']['error'] ) {
             $upld_success = false;
             if ( isset( $_FILES['import_user_file_bulkupload']['tmp_name'] ) ) {
                 $tmp_path = $_FILES['import_user_file_bulkupload']['tmp_name'];
@@ -2355,6 +2355,11 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         $website = current( $website );
                     }
                     if ( $website ) {
+                        if ( ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $website->id ) ) {
+                            $not_valid[]  = esc_html__( 'Error - insufficient permissions!', 'mainwp' ) . ' ' . esc_html( $url );
+                            $error_sites .= $url . ';';
+                            continue;
+                        }
                         if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                             if ( '' !== $website->sync_errors ) {
                                 $err_imp = esc_html__( 'Site disconnected:', 'mainwp' );
@@ -2381,6 +2386,11 @@ class MainWP_User { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                     $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_name( $group ) );
                     if ( $websites ) {
                         while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
+                            if ( ! MainWP_System_Utility::can_edit_website( $website ) || ! \mainwp_current_user_can( 'site', $website->id ) ) {
+                                $not_valid[]  = esc_html__( 'Error - insufficient permissions!', 'mainwp' ) . ' ' . esc_html( $website->url );
+                                $error_sites .= $website->url . ';';
+                                continue;
+                            }
                             if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 if ( '' !== $website->sync_errors ) {
                                     $err_imp = esc_html__( 'Site disconnected:', 'mainwp' );

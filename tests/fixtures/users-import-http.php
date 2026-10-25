@@ -27,6 +27,7 @@ if ( str_starts_with( $_SERVER['REQUEST_URI'], '/child/' ) ) {
 
 require getenv( 'WP_TESTS_CONFIG_FILE_PATH' );
 define( 'WP_USE_THEMES', false );
+define( 'DISABLE_WP_CRON', true );
 require ABSPATH . 'wp-settings.php';
 require_once dirname( __DIR__, 2 ) . '/mainwp.php';
 wp_set_current_user( 1 );

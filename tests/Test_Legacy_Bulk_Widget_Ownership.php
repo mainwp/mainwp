@@ -92,13 +92,14 @@ class Test_Legacy_Bulk_Widget_Ownership extends \WP_UnitTestCase {
             'MainWP_Post_Page_Handler'           => 'Legacy_Ownership_Post_Handler',
             'MainWP_Bulk_Update_Admin_Passwords' => 'Legacy_Ownership_Admin_Passwords',
             'MainWP_Connect'                     => 'Legacy_Bulk_Transport',
+            'MainWP_Hooks'                       => 'Legacy_Ownership_Hooks',
         );
-        foreach ( array( 'pages/page-mainwp-post-page-handler.php', 'pages/page-mainwp-bulk-update-admin-passwords.php' ) as $file ) {
+        foreach ( array( 'pages/page-mainwp-post-page-handler.php', 'pages/page-mainwp-bulk-update-admin-passwords.php', 'class/class-mainwp-hooks.php' ) as $file ) {
             $code = '';
             // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents -- Read the local production source for exit capture.
             foreach ( token_get_all( file_get_contents( dirname( __DIR__ ) . '/' . $file ) ) as $token ) {
                 if ( is_array( $token ) ) {
-                    $code .= T_EXIT === $token[0] ? '\\wp_die' : ( T_STRING === $token[0] ? strtr( $token[1], $names ) : $token[1] );
+                    $code .= T_EXIT === $token[0] ? '\\wp_die' : ( T_STRING === $token[0] && isset( $names[ $token[1] ] ) ? $names[ $token[1] ] : $token[1] );
                 } else {
                     $code .= $token;
                 }
@@ -330,31 +331,81 @@ class Test_Legacy_Bulk_Widget_Ownership extends \WP_UnitTestCase {
         $this->assertEqualsCanonicalizing( array( $this->own_site, $this->foreign_site ), Legacy_Bulk_Transport::$requests[0]['ids'] );
     }
 
-    /** The real public posting action retains its userless dispatch. */
+    /** The source-registered public action retains its userless dispatch. */
     public function test_userless_public_posting_action(): void {
-        new MainWP_Hooks();
+        remove_all_actions( 'mainwp_manage_posts_bulk_posting' );
+        new \MainWP\Dashboard\Legacy_Ownership_Hooks();
         $id    = $this->bulk_post( 'site' );
         $_POST = array(
             'post_id' => $id,
             'site_id' => $this->foreign_site,
         );
         wp_set_current_user( 0 );
-        $sent    = array();
-        $capture = static function ( $params, $site ) use ( &$sent ) {
-            $sent[] = (int) $site->id;
-            throw new Legacy_Bulk_Response_Stop( 'transport captured' );
+        $this->response(
+            static function () {
+                do_action( 'mainwp_manage_posts_bulk_posting' );
+            }
+        );
+        $this->assertSame(
+            array(
+                array(
+                    'command' => 'newpost',
+                    'ids'     => array( $this->foreign_site ),
+                ),
+            ),
+            Legacy_Bulk_Transport::$requests
+        );
+    }
+
+    /** The public action's empty-target exit is captured without aborting PHPUnit. */
+    public function test_userless_public_action_empty_targets(): void {
+        remove_all_actions( 'mainwp_manage_posts_bulk_posting' );
+        new \MainWP\Dashboard\Legacy_Ownership_Hooks();
+        $id    = $this->bulk_post( 'site' );
+        $_POST = array( 'post_id' => $id );
+        wp_set_current_user( 0 );
+        $body = $this->response(
+            static function () {
+                do_action( 'mainwp_manage_posts_bulk_posting' );
+            }
+        );
+        $this->assertSame(
+            array(
+                'result'    => '',
+                'edit_link' => '',
+            ),
+            json_decode( $body, true )
+        );
+        $this->assertSame( array(), Legacy_Bulk_Transport::$requests );
+    }
+
+    /** Team Control and ownership remain an intersection on all bulk/widget paths. */
+    public function test_bulk_and_widget_team_control_denial(): void {
+        $foreign = $this->foreign_site;
+        $allowed = static function () use ( $foreign ) {
+            return array( $foreign );
         };
-        add_filter( 'mainwp_pre_posting_posts', $capture, 10, 2 );
+        add_filter( 'mainwp_currentuserallowedaccesssites', $allowed, 999 );
         try {
-            $this->response(
-                static function () {
-                    do_action( 'mainwp_manage_posts_bulk_posting' );
-                }
+            $id = $this->bulk_post( 'site' );
+            $this->request(
+                'mainwp_post_postingbulk',
+                array(
+                    'post_id' => $id,
+                    'site_id' => $this->own_site,
+                )
             );
+            $this->response( array( '\\MainWP\\Dashboard\\Legacy_Ownership_Post_Handler', 'ajax_posting_posts' ) );
+            $this->assertSame( array(), Legacy_Bulk_Transport::$requests, 'Posting bypassed Team Control.' );
+            $this->password_form( 'site', array( $this->own_site ) );
+            $this->assertSame( array(), Legacy_Bulk_Transport::$requests, 'Password form bypassed Team Control.' );
+            $this->request( 'mainwp_widgets_connections_status_details_display_rows', array( 'current_tab' => 'all-sites' ) );
+            $body = json_decode( $this->response( array( MainWP_Connection_Status::instance(), 'ajax_display_rows' ) ), true );
+            $this->assertSame( array(), $body['rowsInfo'] );
+            $this->assertSame( 0, $body['recordsTotal'] );
         } finally {
-            remove_filter( 'mainwp_pre_posting_posts', $capture, 10 );
+            remove_filter( 'mainwp_currentuserallowedaccesssites', $allowed, 999 );
         }
-        $this->assertSame( array( $this->foreign_site ), $sent );
     }
 
     /**

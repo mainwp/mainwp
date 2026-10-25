@@ -22,6 +22,23 @@ class Test_Translation_Hold_REST_V1 extends MainWP_Abilities_Test_Case {
     private $previous_server;
     private $site_id;
     private $calls = array();
+
+    /**
+     * Let the WordPress bootstrap define constants in the isolated process.
+     *
+     * @param \PHPUnit\Framework\TestResult|null $result Current result collector.
+     * @return \PHPUnit\Framework\TestResult
+     */
+    public function run( ?\PHPUnit\Framework\TestResult $result = null ): \PHPUnit\Framework\TestResult {
+        $configuration                           = $GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] ?? null;
+        $GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] = '';
+        try {
+            return parent::run( $result );
+        } finally {
+            $GLOBALS['__PHPUNIT_CONFIGURATION_FILE'] = $configuration;
+        }
+    }
+
     public function setUp(): void {
         parent::setUp();
         $this->set_current_user_as_admin();

@@ -8,6 +8,7 @@
 namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_Monitoring_Handler;
 use MainWP\Dashboard\MainWP_Notification;
 use MainWP\Dashboard\MainWP_Notification_Settings;
 use MainWP\Dashboard\MainWP_Notification_Template;
@@ -109,6 +110,48 @@ class Test_Notification_Core_Token_HTML extends \WP_UnitTestCase {
             );
             $this->assertIsArray( $mail );
             return $mail;
+        } finally {
+            remove_filter( 'pre_wp_mail', $capture, 20 );
+        }
+    }
+
+    public static function monitoring_modes(): array {
+        return array(
+            'uptime plain' => array( 'uptime', true ),
+            'health plain' => array( 'health', true ),
+            'uptime HTML'  => array( 'uptime', false ),
+            'health HTML'  => array( 'health', false ),
+        );
+    }
+
+    /** @dataProvider monitoring_modes */
+    public function test_monitoring_mail_keeps_tokens_in_the_selected_format( string $kind, bool $plain_text ): void {
+        $theme = $plain_text ? 'R&D Theme' : '<a data-injected="theme">Theme & Co</a>';
+        $site = $this->site( $theme, 'Monitor [client.site.theme]' );
+        $site->monitoring_notification_emails = '';
+        $site->hb_http_code = 200;
+        $site->hb_time_check = time();
+        $site->status = 1;
+        $site->issub = 0;
+        $site->health_value = 90;
+        $site->monitor_id = 0;
+        $mail = null;
+        $capture = static function ( $sent, $args ) use ( &$mail ) {
+            $mail = $args;
+            return true;
+        };
+        add_filter( 'pre_wp_mail', $capture, 20, 2 );
+        try {
+            $settings = array( 'heading' => 'Updates', 'subject' => 'Monitoring', 'recipients' => 'fixture@example.org' );
+            if ( 'uptime' === $kind ) {
+                MainWP_Monitoring_Handler::notice_sites_uptime_monitoring( array( $site ), '', $settings, $plain_text );
+            } else {
+                MainWP_Monitoring_Handler::notice_site_health_threshold( $settings, array( $site ), 'fixture@example.org', $plain_text, false );
+            }
+            $this->assertIsArray( $mail );
+            $this->assertStringContainsString( 'Content-Type: text/' . ( $plain_text ? 'plain' : 'html' ), implode( '\n', $mail['headers'] ) );
+            $this->assertStringContainsString( 'Monitor ' . ( $plain_text ? $theme : esc_html( $theme ) ), $mail['message'] );
+            $this->assertStringNotContainsString( $plain_text ? 'Monitor R&amp;D Theme' : '<a data-injected=', $mail['message'] );
         } finally {
             remove_filter( 'pre_wp_mail', $capture, 20 );
         }

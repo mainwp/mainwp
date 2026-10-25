@@ -83,7 +83,14 @@ class Test_Users_Import_Authorization extends \WP_UnitTestCase {
 		$env['MAINWP_IMPORT_HTTP_TEST']   = '1';
 		$env['MAINWP_IMPORT_REQUEST_LOG'] = self::$log;
 		$env['WP_TESTS_CONFIG_FILE_PATH'] = defined( 'WP_TESTS_CONFIG_FILE_PATH' ) ? WP_TESTS_CONFIG_FILE_PATH : getenv( 'WP_TESTS_CONFIG_FILE_PATH' );
-		self::$server                     = proc_open(
+		if ( ! $env['WP_TESTS_CONFIG_FILE_PATH'] ) {
+			$tests_dir = getenv( 'WP_TESTS_DIR' ) ?: rtrim( sys_get_temp_dir(), '/\\' ) . '/wordpress-tests-lib';
+			if ( ! file_exists( $tests_dir . '/wp-tests-config.php' ) && 'phpunit' === basename( $tests_dir ) && 'tests' === basename( dirname( $tests_dir ) ) ) {
+				$tests_dir = dirname( $tests_dir, 2 );
+			}
+			$env['WP_TESTS_CONFIG_FILE_PATH'] = $tests_dir . '/wp-tests-config.php';
+		}
+		self::$server = proc_open(
 			array( PHP_BINARY, '-S', $address, __DIR__ . '/fixtures/users-import-http.php' ),
 			array(
 				0 => array( 'pipe', 'r' ),

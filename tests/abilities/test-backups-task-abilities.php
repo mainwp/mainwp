@@ -1186,8 +1186,14 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 					'dry_run'          => true,
 				)
 			);
+			$this->assert_output( 'delete-backup-task', $preview );
 			$this->assertSame( array(), $preview['would_affect']['snapshots'] );
 			$this->assertSame( array(), $preview['would_affect']['cloud_copies'] );
+			$this->assertArrayHasKey( 'snapshot_count', $preview['would_affect'] );
+			$this->assertSame( 0, $preview['would_affect']['snapshot_count'] );
+			$this->assertSame( 0, $preview['would_affect']['cloud_copy_count'] );
+			$this->assertFalse( $preview['would_affect']['snapshots_truncated'] );
+			$this->assertFalse( $preview['would_affect']['cloud_copies_truncated'] );
 			$output = $this->execute(
 				'delete-backup-task',
 				array(
@@ -1197,6 +1203,15 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 				)
 			);
 			$this->assert_output( 'delete-backup-task', $output );
+			$this->assertSame(
+				array(
+					'task_id'           => $this->task_id,
+					'deleted'           => true,
+					'snapshots_deleted' => false,
+					'dry_run'           => false,
+				),
+				$output
+			);
 			$this->assertFalse( $output['snapshots_deleted'] );
 			$this->assertSame( 3, (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ) . ' WHERE task_id = %d', $this->task_id ) ) );
 		} finally {
@@ -1276,6 +1291,11 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 			);
 			$this->assert_output( 'delete-backup-task', $preview );
 			$this->assertSame( $expected, $preview['would_affect']['cloud_copies'] );
+			$this->assertArrayHasKey( 'snapshot_count', $preview['would_affect'] );
+			$this->assertSame( 1, $preview['would_affect']['snapshot_count'] );
+			$this->assertSame( count( $expected ), $preview['would_affect']['cloud_copy_count'] );
+			$this->assertFalse( $preview['would_affect']['snapshots_truncated'] );
+			$this->assertFalse( $preview['would_affect']['cloud_copies_truncated'] );
 			$purge_result = null;
 			$capture      = static function ( $task_id, $result ) use ( &$purge_result ) {
 				$purge_result = $result;
@@ -1293,6 +1313,15 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 				remove_action( 'mainwp_backup_task_snapshots_purged', $capture );
 			}
 			$this->assert_output( 'delete-backup-task', $output );
+			$this->assertSame(
+				array(
+					'task_id'           => $this->task_id,
+					'deleted'           => true,
+					'snapshots_deleted' => true,
+					'dry_run'           => false,
+				),
+				$output
+			);
 			$this->assertTrue( $output['snapshots_deleted'] );
 			$this->assertIsArray( $purge_result );
 			foreach ( $preview['would_affect']['snapshots'] as $snapshot ) {
@@ -1323,6 +1352,117 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 			'failed permanent' => array( 's3', 'failed_permanent', 1 ),
 			'copies retained'  => array( 'local', 'complete', 0 ),
 		);
+	}
+
+	/**
+	 * Totals describe the full selection even when either preview list is capped.
+	 *
+	 * @dataProvider delete_preview_count_cases
+	 * @param int $snapshot_count      Selected snapshots.
+	 * @param int $copies_per_snapshot Upload records per snapshot.
+	 */
+	public function test_delete_preview_reports_full_totals( $snapshot_count, $copies_per_snapshot ) {
+		global $wpdb;
+		$db           = MainWP_DB::instance();
+		$snapshot_ids = array();
+		$destinations = array();
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $this->task_id, array( 'delete_cloud_copies' => 1 ) );
+		try {
+			for ( $copy = 0; $copy < $copies_per_snapshot; ++$copy ) {
+				$this->assertNotFalse(
+					$wpdb->insert(
+						$db->get_table_name( 'wp_backup_storage' ),
+						array(
+							'name'     => 'Preview copy fixture',
+							'provider' => 'local',
+							'settings' => '',
+						)
+					)
+				);
+				$destinations[] = (int) $wpdb->insert_id;
+			}
+			for ( $i = 0; $i < $snapshot_count; ++$i ) {
+				$snapshot_id    = $this->create_task_history_snapshot( $this->site_id );
+				$snapshot_ids[] = $snapshot_id;
+				foreach ( $destinations as $destination ) {
+					$this->assertNotFalse(
+						$wpdb->insert(
+							$db->get_table_name( 'wp_backup_upload_job' ),
+							array(
+								'snapshot_id'    => $snapshot_id,
+								'destination_id' => $destination,
+								'provider'       => 'local',
+								'status'         => 'complete',
+								'checkpoint'     => '',
+								'last_error'     => '',
+							)
+						)
+					);
+				}
+			}
+			$preview = $this->execute( 'delete-backup-task', $this->input( 'delete-backup-task' ) + array( 'dry_run' => true ) );
+			$this->assert_output( 'delete-backup-task', $preview );
+			$affected    = $preview['would_affect'];
+			$cloud_count = $snapshot_count * $copies_per_snapshot;
+			$this->assertArrayHasKey( 'snapshot_count', $affected );
+			$this->assertArrayHasKey( 'cloud_copy_count', $affected );
+			$this->assertArrayHasKey( 'cloud_copies_truncated', $affected );
+			$this->assertSame( $snapshot_count, $affected['snapshot_count'] );
+			$this->assertSame( $cloud_count, $affected['cloud_copy_count'] );
+			$this->assertCount( min( 500, $snapshot_count ), $affected['snapshots'] );
+			$this->assertCount( min( 500, $cloud_count ), $affected['cloud_copies'] );
+			$this->assertSame( array_slice( $snapshot_ids, 0, 500 ), array_column( $affected['snapshots'], 'id' ) );
+			$this->assertSame( $snapshot_count > 500, $affected['snapshots_truncated'] );
+			$this->assertSame( $cloud_count > 500, $affected['cloud_copies_truncated'] );
+			$warning = 'The preview lists up to 500 snapshots and 500 cloud copies. Confirmation deletes the full selection.';
+			if ( $snapshot_count > 500 || $cloud_count > 500 ) {
+				$this->assertContains( $warning, $preview['warnings'] );
+			} else {
+				$this->assertNotContains( $warning, $preview['warnings'] );
+			}
+		} finally {
+			foreach ( $snapshot_ids as $snapshot_id ) {
+				$wpdb->delete( $db->get_table_name( 'wp_backup_upload_job' ), array( 'snapshot_id' => $snapshot_id ) );
+			}
+			foreach ( $destinations as $destination ) {
+				$wpdb->delete( $db->get_table_name( 'wp_backup_storage' ), array( 'id' => $destination ) );
+			}
+		}
+	}
+
+	/**
+	 * Snapshot and cloud limits are independent at the 500-item boundary.
+	 *
+	 * @return array Cases.
+	 */
+	public static function delete_preview_count_cases() {
+		return array(
+			'empty'                 => array( 0, 0 ),
+			'below both caps'       => array( 1, 2 ),
+			'exactly 500 copies'    => array( 250, 2 ),
+			'over 500 copies'       => array( 251, 2 ),
+			'exactly 500 snapshots' => array( 500, 0 ),
+			'over 500 snapshots'    => array( 501, 0 ),
+		);
+	}
+
+	/** Preview metadata must be required and retain its declared types and bounds. */
+	public function test_delete_preview_schema_requires_truncation_metadata() {
+		$preview = $this->execute( 'delete-backup-task', $this->input( 'delete-backup-task' ) + array( 'dry_run' => true ) );
+		$this->assert_output( 'delete-backup-task', $preview );
+		$schema = $this->ability( 'delete-backup-task' )->get_output_schema();
+		foreach ( array( 'snapshot_count', 'cloud_copy_count', 'cloud_copies_truncated' ) as $field ) {
+			$invalid = $preview;
+			unset( $invalid['would_affect'][ $field ] );
+			$this->assertWPError( rest_validate_value_from_schema( $invalid, $schema ), 'Missing ' . $field );
+			$invalid['would_affect'][ $field ] = array();
+			$this->assertWPError( rest_validate_value_from_schema( $invalid, $schema ), 'Wrong type for ' . $field );
+		}
+		foreach ( array( 'snapshot_count', 'cloud_copy_count' ) as $field ) {
+			$invalid                           = $preview;
+			$invalid['would_affect'][ $field ] = -1;
+			$this->assertWPError( rest_validate_value_from_schema( $invalid, $schema ), 'Negative ' . $field );
+		}
 	}
 
 	/** Older form tasks can have names beyond the machine-input ceiling. */

@@ -2581,13 +2581,16 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $refusals = (int) $task->completed < (int) $task->last_run ? array( self::safe_error( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ) ) : array();
         return self::backup_preview(
             array(
-                'task_id'             => $task_id,
-                'task_name'           => html_entity_decode( $task->name, ENT_QUOTES ),
-                'delete_snapshots'    => $delete_snapshots,
-                'delete_cloud_copies' => $delete_snapshots && ! empty( $task->delete_cloud_copies ),
-                'snapshots'           => array_slice( $snapshots, 0, 500 ),
-                'snapshots_truncated' => count( $snapshots ) > 500,
-                'cloud_copies'        => array_slice( $cloud, 0, 500 ),
+                'task_id'                => $task_id,
+                'task_name'              => html_entity_decode( $task->name, ENT_QUOTES ),
+                'delete_snapshots'       => $delete_snapshots,
+                'delete_cloud_copies'    => $delete_snapshots && ! empty( $task->delete_cloud_copies ),
+                'snapshot_count'         => count( $snapshots ),
+                'cloud_copy_count'       => count( $cloud ),
+                'snapshots'              => array_slice( $snapshots, 0, 500 ),
+                'snapshots_truncated'    => count( $snapshots ) > 500,
+                'cloud_copies'           => array_slice( $cloud, 0, 500 ),
+                'cloud_copies_truncated' => count( $cloud ) > 500,
             ),
             $refusals,
             $warnings

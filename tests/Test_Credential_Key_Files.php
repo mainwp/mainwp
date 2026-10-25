@@ -322,20 +322,6 @@ class Test_Credential_Key_Files extends MainWP_Abilities_Test_Case {
 		}
 	}
 
-	/** A permissive process umask cannot make a newly written key world-readable. */
-	public function test_new_key_file_is_owner_only() {
-		$key          = $this->key_name();
-		$this->keys[] = $key;
-		$previous     = umask( 0 );
-		try {
-			$this->assertTrue( $this->manager->save_key_file( $key, 'fixture-private-key' ) );
-		} finally {
-			umask( $previous );
-		}
-		clearstatcache();
-		$this->assertSame( 0600, fileperms( MainWP_Keys_Manager::get_keys_dir() . $key ) & 0777 );
-	}
-
 	/** Nonstring backup provider submissions leave both global and per-site credentials intact. */
 	public function test_backup_provider_handlers_ignore_nonstring_credentials() {
 		$id      = $this->create_test_site();

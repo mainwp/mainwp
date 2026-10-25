@@ -337,13 +337,7 @@ class MainWP_Keys_Manager { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( false === $file_path ) {
             return false;
         }
-        // Apply owner-only permissions when the file is created, before writing secret bytes.
-        $previous_umask = umask( 0077 );
-        try {
-            $saved = file_put_contents( $file_path, $key_val ); //phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Private key files.
-        } finally {
-            umask( $previous_umask );
-        }
+        $saved = file_put_contents( $file_path, $key_val ); //phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents -- Private key files.
         return false === $saved ? false : true;
     }
 

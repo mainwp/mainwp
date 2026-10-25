@@ -474,11 +474,13 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         $store  = MainWP_Backup_Upload_Job_Store::instance();
         $work   = array();
         if ( $retry_pruned ) {
+            // Terminal failed/partial rows must record their archive/manifest paths;
+            // cleanup cannot remove files whose paths were never recorded.
             $table      = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
             $site_table = MainWP_DB::instance()->get_table_name( 'wp' );
             $rows       = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- deleted-site purges also own terminal rows and unfinished pruned cleanup.
                 $wpdb->prepare(
-                    "SELECT snapshot.* FROM %i snapshot LEFT JOIN %i site ON site.id = snapshot.site_id WHERE snapshot.task_id = %d AND (snapshot.status = 'pruned' OR (site.id IS NULL AND snapshot.status IN ('failed', 'partial', 'queued', 'running'))) ORDER BY snapshot.id ASC",
+                    "SELECT snapshot.* FROM %i snapshot LEFT JOIN %i site ON site.id = snapshot.site_id WHERE snapshot.task_id = %d AND (snapshot.status = 'pruned' OR (snapshot.site_id > 0 AND site.id IS NULL AND snapshot.status IN ('failed', 'partial'))) ORDER BY snapshot.id ASC",
                     $table,
                     $site_table,
                     $task_id
@@ -489,10 +491,6 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 return $result;
             }
             foreach ( $rows as $snapshot ) {
-                if ( in_array( $snapshot->status, array( 'queued', 'running' ), true ) ) {
-                    $result['remaining_ids'][] = (int) $snapshot->id;
-                    continue;
-                }
                 $snapshot->archives = json_decode( (string) $snapshot->archives, true );
                 if ( 'pruned' === $snapshot->status && ! $this->pruned_cleanup_pending( $snapshot, $store ) ) {
                     continue;
@@ -598,16 +596,6 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     }
                     break;
                 }
-            }
-        }
-        if ( $bounded && ! $dry_run && empty( $work ) && ! empty( $result['remaining_ids'] ) ) {
-            // In-progress rows retain their owner without blocking later owners.
-            $progress              = get_option( self::PURGE_CURSOR_OPTION, array() );
-            $progress              = is_array( $progress ) ? $progress : array();
-            $progress['last_task'] = $task_id;
-            $saved                 = update_option( self::PURGE_CURSOR_OPTION, $progress, false );
-            if ( ! $saved && get_option( self::PURGE_CURSOR_OPTION ) !== $progress ) {
-                $result['errors'][] = 'Deleted backup cleanup progress could not be saved. The task was kept for another attempt.';
             }
         }
         return $result;

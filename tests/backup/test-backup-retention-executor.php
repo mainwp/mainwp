@@ -173,47 +173,64 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
-	/** In-progress rows keep the retry owner until their terminal transition. */
-	public function test_deleted_site_terminal_purge_keeps_inprogress_owner(): void {
+	/**
+	 * An invalid site ID is not a deleted-site cleanup candidate.
+	 *
+	 * @dataProvider deleted_site_terminal_statuses
+	 * @param string $status Snapshot lifecycle status.
+	 */
+	public function test_deleted_site_terminal_purge_excludes_zero_site_id( string $status ): void {
 		global $wpdb;
 
-		$task                          = \MainWP\Dashboard\MainWP_DB_Backup::instance()->ensure_manual_backup_task( (object) array( 'id' => $this->site_id ) );
-		$this->task_id                 = (int) $task->id;
+		list( $id, $dir ) = $this->make_snapshot_with_dir( array( 'status' => $status ) );
+		$this->assertSame( 1, $wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'site_id' => 0 ), array( 'id' => $id ) ) );
+		$this->insert_upload_job( $id, 77 );
+		$store    = MainWP_Backup_Upload_Job_Store::instance();
+		$before   = $store->get_jobs_for_snapshot( $id );
+		$progress = array( 'last_task' => 123 );
+		update_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION, $progress, false );
+		try {
+			foreach ( array( true, false ) as $dry_run ) {
+				$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, true, false, true, 0.0, $dry_run );
+				$this->assertSame( array(), $result['candidates'], 'A site ID of zero must stay outside the deleted-site inventory.' );
+				$this->assertSame( array(), $result['remaining_ids'] );
+				$this->assertSame( 0, $result['attempted'] );
+				$this->assertSame( array(), $result['deleted_ids'] );
+				$this->assertSame( $progress, get_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION ) );
+				$this->assertSame( $status, MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+				$this->assertFileExists( $dir . '/artifact.tar' );
+				$this->assertEquals( $before, $store->get_jobs_for_snapshot( $id ) );
+			}
+		} finally {
+			delete_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION );
+		}
+	}
+
+	/** In-progress rows remain unselected, as on the parent deleted-site purge. */
+	public function test_deleted_site_terminal_purge_keeps_inprogress_snapshots(): void {
 		list( $queued, $queued_dir )   = $this->make_snapshot_with_dir( array( 'status' => 'queued' ) );
 		list( $running, $running_dir ) = $this->make_snapshot_with_dir( array( 'status' => 'running' ) );
-		$executor                      = MainWP_Backup_Retention_Executor::instance();
-		$result                        = $executor->purge_snapshots_for_task( $this->task_id, false, false, true );
-		$this->assertSame( array(), $result['candidates'] );
-		$this->assertSame( array( $queued, $running ), $result['remaining_ids'] );
-		$this->assertFalse(
-			\MainWP\Dashboard\MainWP_Post_Backup_Handler::instance()->hook_delete_manual_backup_task(
-				(object) array(
-					'id'   => $this->site_id,
-					'name' => '',
-					'url'  => '',
-				)
-			)
-		);
-		update_option( 'mainwp_enableNativeBackups', 1 );
-		update_option( \MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::CHILD_PRUNE_RESEND_OPTION, time(), false );
+		$this->insert_upload_job( $queued, 77 );
+		$this->insert_upload_job( $running, 77 );
+		$store    = MainWP_Backup_Upload_Job_Store::instance();
+		$uploads  = array( $store->get_jobs_for_snapshot( $queued ), $store->get_jobs_for_snapshot( $running ) );
+		$progress = array( 'last_task' => 123 );
+		update_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION, $progress, false );
 		try {
-			\MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
-			$this->assertNotNull( \MainWP\Dashboard\MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->task_id ) );
-			$this->assertSame( 'queued', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $queued )->status );
-			$this->assertSame( 'running', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $running )->status );
-			$this->assertFileExists( $queued_dir . '/artifact.tar' );
-			$this->assertFileExists( $running_dir . '/artifact.tar' );
-			MainWP_Backup_Snapshots::instance()->set_status( $queued, 'failed' );
-			MainWP_Backup_Snapshots::instance()->set_status( $running, 'partial' );
-			\MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::instance()->cron_backups_prune();
-			$this->assertNull( \MainWP\Dashboard\MainWP_DB_Backup::instance()->get_backup_task_by_id( $this->task_id ) );
-			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $queued )->status );
-			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $running )->status );
-			$this->assertDirectoryDoesNotExist( $queued_dir );
-			$this->assertDirectoryDoesNotExist( $running_dir );
+			foreach ( array( true, false ) as $dry_run ) {
+				$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, true, false, true, 0.0, $dry_run );
+				$this->assertSame( array(), $result['candidates'] );
+				$this->assertSame( array(), $result['remaining_ids'] );
+				$this->assertSame( 0, $result['attempted'] );
+				$this->assertSame( array(), $result['deleted_ids'] );
+				$this->assertSame( $progress, get_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION ) );
+				$this->assertSame( 'queued', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $queued )->status );
+				$this->assertSame( 'running', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $running )->status );
+				$this->assertFileExists( $queued_dir . '/artifact.tar' );
+				$this->assertFileExists( $running_dir . '/artifact.tar' );
+				$this->assertEquals( $uploads, array( $store->get_jobs_for_snapshot( $queued ), $store->get_jobs_for_snapshot( $running ) ) );
+			}
 		} finally {
-			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'id' => $this->task_id ) );
-			delete_option( 'mainwp_enableNativeBackups' );
 			delete_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION );
 		}
 	}
@@ -384,66 +401,6 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		}
 	}
 
-	/** An in-progress owner must yield to terminal owners across expired daily passes. */
-	public function test_deleted_site_terminal_purge_rotates_inprogress_owner_after_deadline(): void {
-		global $wpdb;
-
-		$db                            = \MainWP\Dashboard\MainWP_DB_Backup::instance();
-		$first                         = $db->ensure_manual_backup_task( (object) array( 'id' => $this->site_id ) );
-		$second_site                   = $this->site_id + 1;
-		$second                        = $db->ensure_manual_backup_task( (object) array( 'id' => $second_site ) );
-		$this->task_id                 = (int) $first->id;
-		list( $running, $running_dir ) = $this->make_snapshot_with_dir( array( 'status' => 'running' ) );
-		list( $failed, $failed_dir )   = $this->make_snapshot_with_dir(
-			array(
-				'status'  => 'failed',
-				'site_id' => $second_site,
-				'task_id' => (int) $second->id,
-			)
-		);
-		$progress                      = array(
-			'last_task' => 0,
-			'tasks'     => array( (int) $first->id => 123 ),
-		);
-		update_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION, $progress, false );
-		update_option( 'mainwp_enableNativeBackups', 1 );
-		update_option( \MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::CHILD_PRUNE_RESEND_OPTION, time(), false );
-		$site_table = MainWP_DB::instance()->get_table_name( 'wp' );
-		$expire     = static function ( $sql ) use ( $site_table ) {
-			if ( 0 === strpos( $sql, 'SELECT id FROM ' . $site_table . ' WHERE id = ' ) ) {
-				MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 121.0;
-			}
-			return $sql;
-		};
-		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = 1000.0;
-		try {
-			$preview = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $first->id, false, false, true, 999.0, true );
-			$this->assertSame( array(), $preview['candidates'] );
-			$this->assertSame( array( $running ), $preview['remaining_ids'] );
-			$this->assertSame( $progress, get_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION ) );
-			add_filter( 'query', $expire );
-			$scheduler = \MainWP\Dashboard\MainWP_Backup_Retention_Scheduler::instance();
-			$scheduler->cron_backups_prune();
-			$this->assertSame( 'failed', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $failed )->status );
-			$scheduler->cron_backups_prune();
-			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $failed )->status, 'An expired pass must rotate beyond an owner with no destructive candidates.' );
-			$this->assertNull( $db->get_backup_task_by_id( (int) $second->id ) );
-			$this->assertNotNull( $db->get_backup_task_by_id( (int) $first->id ) );
-			$this->assertSame( 'running', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $running )->status );
-			$this->assertFileExists( $running_dir . '/artifact.tar' );
-			$this->assertDirectoryDoesNotExist( $failed_dir );
-			$after = get_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION );
-			$this->assertSame( 123, $after['tasks'][ (int) $first->id ], 'Owner rotation does not advance the in-progress snapshot cursor.' );
-		} finally {
-			remove_filter( 'query', $expire );
-			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
-			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'id' => (int) $first->id ) );
-			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'id' => (int) $second->id ) );
-			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'id' => $failed ) );
-			delete_option( 'mainwp_enableNativeBackups' );
-			delete_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION );
-		}
-	}
 
 	/** Settled tombstones spend no attempt; pending cleanup shares the ordered traversal. */
 	public function test_deleted_task_purge_rotates_complete_and_unfinished_pruned_work() {

@@ -170,6 +170,32 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 		$this->assertSame( array(), MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id, 'delete' ) );
 	}
 
+	/** Pruned upload records add no remote work to the purge preview. */
+	public function test_deleted_task_dry_run_excludes_pruned_remote_targets() {
+		global $wpdb;
+
+		list( $id, $dir ) = $this->make_snapshot_with_dir( array( 'status' => 'pruned' ) );
+		$this->insert_upload_job( $id, 78 );
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array( 'provider' => 's3' ),
+			array( 'snapshot_id' => $id )
+		);
+		$store    = MainWP_Backup_Upload_Job_Store::instance();
+		$executor = MainWP_Backup_Retention_Executor::instance();
+		$preview  = $executor->purge_snapshots_for_task( $this->task_id, true, false, true, null, true );
+		$this->assertSame( 0, $preview['remote'] );
+		$this->assertSame( 1, $preview['local'] );
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $id ) );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$actual = $executor->purge_snapshots_for_task( $this->task_id, true, false, true );
+		$this->assertSame( array(), $actual['errors'] );
+		$this->assertSame( array(), $actual['cloud_deletes_queued'] );
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $id, MainWP_Backup_Upload_Job_Store::KIND_DELETE ) );
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $id ) );
+		$this->assertFileDoesNotExist( $dir . '/artifact.tar' );
+	}
+
 	/**
 	 * Protected shared artifacts are settled for a deleted task's pruned row.
 	 *

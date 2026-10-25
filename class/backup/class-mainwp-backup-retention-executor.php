@@ -546,7 +546,7 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                     if ( null !== $snapshot && $this->snapshot_has_local_cleanup( $snapshot ) ) {
                         ++$result['local'];
                     }
-                    if ( $delete_cloud_copies ) {
+                    if ( $delete_cloud_copies && ! isset( $candidate['pruned_row'] ) ) {
                         foreach ( $store->get_jobs_for_snapshot( $id, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD ) as $job ) {
                             if ( ! empty( $job->provider ) && 'local' !== $job->provider ) {
                                 ++$result['remote'];

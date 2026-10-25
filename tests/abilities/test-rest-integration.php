@@ -1290,4 +1290,134 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 			'Batch sync should handle mixed identifiers.'
 		);
 	}
+
+	/**
+	 * Caller-selected site options never expose credentials.
+	 *
+	 * @dataProvider secret_option_request_cases
+	 * @param bool   $legacy     Whether to use the legacy controller branch.
+	 * @param bool   $collection Whether to request the collection.
+	 * @param bool   $projection Whether to request selected response fields.
+	 * @param string $context    Response context.
+	 * @param string $case       Requested option name casing.
+	 */
+	public function test_custom_fields_omit_secret_site_options( bool $legacy, bool $collection, bool $projection, string $context, string $case ): void {
+		$this->authenticate_as_admin();
+		$key                   = $this->create_rest_api_key( $this->admin_user_id, 'read' );
+		$this->consumer_key    = $key['consumer_key'];
+		$this->consumer_secret = $key['consumer_secret'];
+		$site_id               = $this->create_test_site( [ 'name' => 'Allowed credential fixture' ] );
+		$hidden_id             = $this->create_test_site( [ 'name' => 'Hidden credential fixture' ] );
+		$secret_options        = [ 'register_verify_key', 'cpanel_account_username', 'mainwp_3rd_party_kinsta_downloadable_backups' ];
+		foreach ( [ 'vultr', 'gridpane', 'linode', 'digitalocean', 'cloudways', 'cpanel', 'plesk', 'kinsta' ] as $provider ) {
+			$secret_options[] = 'mainwp_api_backups_' . $provider . '_api_key';
+		}
+		foreach ( $secret_options as $option ) {
+			$value = 'mainwp_api_backups_plesk_api_key' === $option
+				? wp_json_encode( [ 'encrypted_val' => 'synthetic-ciphertext', 'file_key' => 'synthetic-key-file' ] )
+				: 'synthetic-secret-' . $option;
+			$this->set_site_option( $site_id, $option, $value );
+		}
+		$requested_secret_options = array_map( 'upper' === $case ? 'strtoupper' : ( 'mixed' === $case ? 'ucfirst' : 'strval' ), $secret_options );
+		$this->set_site_option( $site_id, 'integration_status', 'healthy' );
+
+		$scope = static function () use ( $site_id ) {
+			return [ $site_id ];
+		};
+		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+		$registry = \WP_Abilities_Registry::get_instance();
+		$property = new \ReflectionProperty( $registry, 'registered_abilities' );
+		$property->setAccessible( true );
+		$registered = $property->getValue( $registry );
+		$ability_calls = 0;
+		$on_execute = static function ( $name ) use ( &$ability_calls ) {
+			if ( in_array( $name, [ 'mainwp/get-site-v1', 'mainwp/list-sites-v1' ], true ) ) {
+				++$ability_calls;
+			}
+		};
+		add_action( 'wp_before_execute_ability', $on_execute );
+		try {
+			if ( $legacy ) {
+				wp_unregister_ability( 'mainwp/get-site-v1' );
+				wp_unregister_ability( 'mainwp/list-sites-v1' );
+			}
+			$params = [
+				'custom_fields' => implode( ',', array_merge( $requested_secret_options, [ 'integration_status' ] ) ),
+				'context'       => $context,
+			];
+			if ( $projection ) {
+				$params['_fields'] = 'id,name,' . $params['custom_fields'];
+			}
+			$route    = '/mainwp/v2/sites' . ( $collection ? '' : '/' . $site_id );
+			$response = $this->do_authenticated_request( 'GET', $route, $params );
+			$this->assertSame( 200, $response->get_status() );
+			$payload = $response->get_data();
+			$items   = $collection ? array_values( $payload['data'] ) : [ $payload['data'] ];
+			$this->assertCount( 1, $items );
+			$this->assertSame( $site_id, (int) $items[0]['id'] );
+			$this->assertSame( 'Allowed credential fixture', $items[0]['name'] );
+			if ( $legacy && $collection ) {
+				// Legacy collections already omit options outside the schema.
+				$this->assertEmpty( $items[0]['integration_status'] ?? null );
+			} else {
+				$this->assertSame( 'healthy', $items[0]['integration_status'] );
+			}
+			$this->assertSame( $legacy ? 0 : 1, $ability_calls, 'The requested controller branch must execute.' );
+			$this->assertSame( [], array_values( array_intersect( array_unique( array_merge( $secret_options, $requested_secret_options ) ), array_keys( $items[0] ) ) ), 'Secret option names must be absent from the response.' );
+			$hidden = $this->do_authenticated_request( 'GET', '/mainwp/v2/sites/' . $hidden_id, $params );
+			$this->assertContains( $hidden->get_status(), [ 403, 404 ], 'The same read key must not access the hidden site.' );
+		} finally {
+			$caught = (string) ( $this->caught_doing_it_wrong['WP_Abilities_Registry::get_registered'] ?? '' );
+			if ( $legacy && ( false !== strpos( $caught, 'mainwp/get-site-v1' ) || false !== strpos( $caught, 'mainwp/list-sites-v1' ) ) ) {
+				$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
+			}
+			$property->setValue( $registry, $registered );
+			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
+			remove_action( 'wp_before_execute_ability', $on_execute );
+		}
+	}
+
+	/**
+	 * Site reads cover both controller branches and response projections.
+	 *
+	 * @return array Request variants.
+	 */
+	public static function secret_option_request_cases(): array {
+		$cases = [];
+		foreach ( [ false, true ] as $legacy ) {
+			foreach ( [ false, true ] as $collection ) {
+				foreach ( [ false, true ] as $projection ) {
+					foreach ( [ 'view', 'edit' ] as $context ) {
+						$name = ( $legacy ? 'legacy' : 'ability' ) . ( $collection ? '-list' : '-single' ) . ( $projection ? '-fields' : '-all' ) . '-' . $context;
+						$cases[ $name ] = [ $legacy, $collection, $projection, $context, 'lower' ];
+					}
+				}
+			}
+		}
+		foreach ( [ false, true ] as $legacy ) {
+			foreach ( [ 'upper', 'mixed' ] as $case ) {
+				$cases[ ( $legacy ? 'legacy' : 'ability' ) . '-' . $case ] = [ $legacy, false, true, 'view', $case ];
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * Direct site abilities reject arbitrary option selection.
+	 */
+	public function test_site_abilities_do_not_accept_custom_option_projection(): void {
+		$this->authenticate_as_admin();
+		$site_id = $this->create_test_site();
+		$this->set_site_option( $site_id, 'register_verify_key', 'synthetic-reconnect-secret' );
+		foreach ( [ 'mainwp/get-site-v1', 'mainwp/list-sites-v1' ] as $name ) {
+			$ability = wp_get_ability( $name );
+			$this->assertNotNull( $ability );
+			$input = 'mainwp/get-site-v1' === $name ? [ 'site_id_or_domain' => $site_id ] : [];
+			$result = $ability->execute( $input );
+			$this->assertNotWPError( $result );
+			$this->assertStringNotContainsString( 'synthetic-reconnect-secret', wp_json_encode( $result ) );
+			$input['custom_fields'] = 'register_verify_key';
+			$this->assertWPError( $ability->execute( $input ), 'The ability schema must reject arbitrary option selection.' );
+		}
+	}
 }

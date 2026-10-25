@@ -780,7 +780,13 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return true;
         }
 
-        $encrypted = wp_json_encode( $this->encrypt_api_keys( $value, $website_id, $key_file, $name ) );
+        $encrypted = $this->encrypt_api_keys( $value, $website_id, $key_file, $name );
+
+        if ( ! is_array( $encrypted ) || empty( $encrypted['encrypted_val'] ) || ! is_string( $encrypted['encrypted_val'] ) || empty( $encrypted['file_key'] ) || ! is_string( $encrypted['file_key'] ) ) {
+            return false;
+        }
+
+        $encrypted = wp_json_encode( $encrypted );
 
         if ( ! empty( $encrypted ) ) {
             return Api_Backups_Helper::update_website_option( $website_id, $opt_name, $encrypted );

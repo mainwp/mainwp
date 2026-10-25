@@ -271,6 +271,74 @@ class Test_Users_Import_Authorization extends \WP_UnitTestCase {
 		$this->assert_result( $this->dispatch( $post ), $allowed, $restricted, 'group' === $select_by ? 'Import scope' : null );
 	}
 
+	/** A missing Team Control group cache must deny access without throwing. */
+	public function test_tc51_missing_group_cache_denies_the_site_capability(): void {
+		$allowed = $this->tc51_staff();
+		$denied  = $this->site( 'denied' );
+		$this->assertTrue( \mainwp_current_user_can( 'site', $allowed->id ) );
+		$this->assertFalse( \mainwp_current_user_can( 'site', $denied->id ) );
+	}
+
+	/** A failing site check leaves the normal per-site import result intact. */
+	public function test_tc51_missing_group_cache_denies_import_and_keeps_allowed_site(): void {
+		$allowed = $this->tc51_staff();
+		$denied  = $this->site( 'denied' );
+		$this->assert_result(
+			$this->dispatch(
+				array(
+					'select_by'    => 'site',
+					'select_sites' => array( $denied->url, $allowed->url ),
+				)
+			),
+			$allowed,
+			$denied
+		);
+	}
+
+	/** Ordinary permission results retain their exact values and arguments. */
+	public function test_permission_filter_boolean_results_are_unchanged(): void {
+		foreach ( array( true, false ) as $result ) {
+			$received = array();
+			$this->filter(
+				'mainwp_currentusercan',
+				static function ( $can, $type, $cap ) use ( $result, &$received ) {
+					$received = array( $can, $type, $cap );
+					return $result;
+				}
+			);
+			$this->assertSame( $result, \mainwp_current_user_can( 'site', 123 ) );
+			$this->assertSame( array( true, 'site', 123 ), $received );
+			remove_filter( 'mainwp_currentusercan', $this->filters['mainwp_currentusercan'], 999 );
+		}
+	}
+
+	/**
+	 * Model Team Control 5.1's site grant and absent group cache.
+	 *
+	 * @return object Granted site.
+	 */
+	private function tc51_staff() {
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		wp_get_current_user()->add_cap( 'level_10' );
+		$this->assertFalse( current_user_can( 'manage_options' ) );
+		$allowed      = $this->site( 'allowed' );
+		$capabilities = array( 'site' => array( $allowed->id => true ) );
+		$this->filter(
+			'mainwp_currentusercan',
+			static function ( $can, $type, $cap ) use ( $capabilities ) {
+				if ( 'site' !== $type ) {
+					return $can;
+				}
+				if ( empty( $capabilities[ $type ][ $cap ] ) ) {
+					// Preserve the add-on's null haystack without the preceding undefined-key warning.
+					return in_array( $cap, $capabilities['siteids_in_allowed_groups'] ?? null );
+				}
+				return true;
+			}
+		);
+		return $allowed;
+	}
+
 	/** Create a connected fixture site with a usable signing key.
 	 *
 	 * @param string   $name Fixture site name.

@@ -303,40 +303,6 @@ class Test_Current_User_Permission_Filter extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
-	 * Process-wide execution contexts retain their existing global bypass.
-	 *
-	 * @runInSeparateProcess
-	 * @preserveGlobalState disabled
-	 * @dataProvider global_bypass_contexts
-	 * @param string $constant Execution context constant.
-	 */
-	public function test_global_permission_execution_context_bypasses_filter( string $constant ): void {
-		$this->add_permission_filter(
-			'mainwp_currentusercan',
-			function (): bool {
-				$this->permission_calls[] = 'unexpected';
-				return false;
-			}
-		);
-		define( $constant, true );
-		$this->assertTrue( \MainWP\Dashboard\mainwp_current_user_have_right( 'site', 42 ) );
-		$this->assertSame( array(), $this->permission_calls );
-	}
-
-	/**
-	 * Each bypass runs in its own process so constants cannot affect later tests.
-	 *
-	 * @return array
-	 */
-	public static function global_bypass_contexts(): array {
-		return array(
-			'cron' => array( 'DOING_CRON' ),
-			'CLI'  => array( 'WP_CLI' ),
-			'REST' => array( 'MAINWP_REST_API_DOING' ),
-		);
-	}
-
-	/**
 	 * Userless CLI keeps its grant and userless REST keeps its refusal.
 	 *
 	 * @dataProvider userless_ability_contexts

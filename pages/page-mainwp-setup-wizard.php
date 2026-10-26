@@ -1159,6 +1159,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $core    = MainWP_Utility::get_decoded_array( MainWP_DB::instance()->get_website_option( $site, 'wp_upgrades' ) );
         $health  = MainWP_Utility::get_site_health( MainWP_Utility::get_decoded_array( MainWP_DB::instance()->get_website_option( $site, 'health_site_status' ) ) );
         $updates = MainWP_Updates_Overview::prepare_update_data( 'all', $site->id );
+        if ( 1 !== (int) get_option( 'mainwp_show_language_updates', 1 ) ) {
+            // The update chain skips translations while they are hidden, so the summary must not count them.
+            $updates['total_translation_upgrades'] = 0;
+        }
         return array(
             'version' => isset( $info['wpversion'] ) ? $info['wpversion'] : '',
             'new'     => ! empty( $updates['total_wp_upgrades'] ) && isset( $core['new'] ) ? $core['new'] : '',
@@ -1198,8 +1202,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $email    = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
         $site_id  = $site ? $site->id : 0;
         $monitor  = $site ? MainWP_DB_Uptime_Monitoring::instance()->get_primary_monitor( $site->id ) : false;
-        // A primary monitor with active = -1 follows the global setting.
-        $uptime_active = $monitor && -1 !== (int) $monitor->active ? 1 === (int) $monitor->active : ! empty( $settings['active'] );
+        // The scheduler checks only existing monitors; active = -1 follows the global setting.
+        $uptime_active = $monitor && ( 1 === (int) $monitor->active || ( -1 === (int) $monitor->active && ! empty( $settings['active'] ) ) );
         ?>
         <div class="ui vertical basic padded segments">
             <div class="ui padded segment">

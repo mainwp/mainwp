@@ -9,6 +9,10 @@ jQuery(function () {
     }
   });
 
+  jQuery(document).on('input', '#mainwp_managesites_add_wpname', function () {
+    jQuery(this).attr('data-autofilled', '');
+  });
+
   jQuery('#mainwp-onboarding-advanced-toggle').on('click', function () {
     const expanded = jQuery(this).attr('aria-expanded') === 'true';
     jQuery(this).attr('aria-expanded', String(!expanded));
@@ -94,8 +98,10 @@ jQuery(function () {
       url = url.substring(8);
     }
 
-    if (jQuery('#mainwp_managesites_add_wpname').val() == '') {
-      jQuery('#mainwp_managesites_add_wpname').val(url);
+    const title = jQuery('#mainwp_managesites_add_wpname');
+    // A title filled from the URL follows URL corrections until the user types one.
+    if (title.val() == '' || title.attr('data-autofilled')) {
+      title.val(url).attr('data-autofilled', '1');
     }
 
     jQuery('#mainwp_managesites_add_wpurl').val(url);
@@ -121,8 +127,9 @@ let mainwp_setup_managesites_add = function () {
   mainwp_set_message_zone('#mainwp-message-zone');
   let errors = [];
 
-  if (jQuery('#mainwp_managesites_add_wpname').val().trim() == '') {
-    jQuery('#mainwp_managesites_add_wpname').val(jQuery('#mainwp_managesites_add_wpurl').val().trim());
+  const title = jQuery('#mainwp_managesites_add_wpname');
+  if (title.val().trim() == '' || title.attr('data-autofilled')) {
+    title.val(jQuery('#mainwp_managesites_add_wpurl').val().trim()).attr('data-autofilled', '1');
   }
 
   if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '') {

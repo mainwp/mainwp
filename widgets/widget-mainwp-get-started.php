@@ -159,7 +159,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             ),
             array(
                 'title'    => __( 'Confirm uptime alerts', 'mainwp' ),
-                'url'      => 'admin.php?page=Settings&tab=monitoring',
+                'url'      => 'admin.php?page=MonitoringSettings',
                 'icon'     => 'heartbeat',
                 'complete' => ! empty( $settings['active'] ),
             ),

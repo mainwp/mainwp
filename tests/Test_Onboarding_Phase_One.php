@@ -374,18 +374,20 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * Explicit settings override global uptime; inherited and missing monitors follow it.
+	 * Explicit settings override global uptime, inherited monitors follow it, and a site without a monitor is not checked.
 	 *
 	 * @return array
 	 */
 	public static function uptime_states() {
 		return array(
-			'site off'       => array( 1, 0, false ),
-			'site on'        => array( 0, 1, true ),
-			'inherited on'   => array( 1, -1, true ),
-			'inherited off'  => array( 0, -1, false ),
-			'no monitor on'  => array( 1, null, true ),
-			'no monitor off' => array( 0, null, false ),
+			'site off, global on'    => array( 1, 0, false ),
+			'site off, global off'   => array( 0, 0, false ),
+			'site on, global on'     => array( 1, 1, true ),
+			'site on, global off'    => array( 0, 1, true ),
+			'inherited, global on'   => array( 1, -1, true ),
+			'inherited, global off'  => array( 0, -1, false ),
+			'no monitor, global on'  => array( 1, null, false ),
+			'no monitor, global off' => array( 0, null, false ),
 		);
 	}
 
@@ -586,6 +588,12 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 0, $data['updates']['total_wp_upgrades'] );
 		$this->assertSame( 0, $data['updates']['total_translation_upgrades'] );
 		$this->assertFalse( $data['good'], 'A high score cannot conceal a critical issue.' );
+		$db->update_website_option( $site, 'ignored_trans_updates', 0 );
+		$site = MainWP_DB::instance()->get_website_by_id( $site->id );
+		$this->assertSame( 1, $this->invoke( 'summary_data', array( $site ) )['updates']['total_translation_upgrades'] );
+		update_option( 'mainwp_show_language_updates', 0 );
+		$data = $this->invoke( 'summary_data', array( $site ) );
+		$this->assertSame( 0, $data['updates']['total_translation_upgrades'], 'Hidden translation updates are skipped by the update chain.' );
 	}
 
 	/** Explicit zero and inaccessible IDs must never fall back to an unrelated site. */
@@ -667,6 +675,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$items = MainWP_Get_Started::get_items();
 		$this->assertNotContains( false, array_column( $items, 'complete' ) );
 		$this->assertSame( 'Create a client and report', end( $items )['title'] );
+		$this->assertSame( 'admin.php?page=MonitoringSettings', $items[3]['url'] );
 		$this->assertTrue( MainWP_Get_Started::is_visible() );
 		update_user_option( get_current_user_id(), 'mainwp_notice_saved_status', array( 'get-started' => 1 ) );
 		$this->assertFalse( MainWP_Get_Started::is_visible() );

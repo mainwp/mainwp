@@ -43,6 +43,7 @@ function harness() {
                     return el;
                 },
                 change() { return el; },
+                trigger() { return el; },
                 each() { return el; },
                 checkbox(option) {
                     if (typeof option === 'object') checkboxOptions = option;
@@ -119,6 +120,25 @@ test('invalid wizard URL does not send a connection request', () => {
     assert.equal(h.reloads.length, 0);
     assert.match(h.messages.at(-1)[1], /valid URL/);
     assert.equal(h.logs[0].code, 'ERR_INVALID_URL');
+});
+
+test('a title filled from an invalid URL follows the corrected URL until the user types one', () => {
+    const h = harness();
+    h.$('#mainwp_managesites_add_wpurl').val('exampel org');
+    h.$('#mainwp_managesites_add_wpurl_protocol').val('https');
+    h.$('#mainwp_managesites_add_wpadmin').val('admin');
+    vm.runInContext(setup, h.context);
+    h.handlers.get('#mainwp_managesites_add')();
+    assert.equal(h.requests.length, 0);
+    h.$('#mainwp_managesites_add_wpurl').val('example.org');
+    h.handlers.get('#mainwp_managesites_add_wpurl')();
+    assert.equal(h.$('#mainwp_managesites_add_wpname').val(), 'example.org');
+    h.$('#mainwp_managesites_add_wpname').val('Client Site');
+    h.handlers.get('#mainwp_managesites_add_wpname').call(h.$('#mainwp_managesites_add_wpname'));
+    h.$('#mainwp_managesites_add_wpurl').val('client.example.org');
+    h.handlers.get('#mainwp_managesites_add_wpurl')();
+    h.handlers.get('#mainwp_managesites_add')();
+    assert.equal(h.requests[1].managesites_add_wpname, 'Client Site');
 });
 
 test('Advanced options toggles visibility and its accessibility state', () => {

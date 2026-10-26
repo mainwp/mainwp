@@ -4364,6 +4364,35 @@ jQuery(document).on('click', '.mainwp-notice-hide', function () {
     return false;
 });
 
+jQuery(document).on('click', '#mainwp-onboarding-enable-monitoring', function () {
+    const button = jQuery(this);
+    const notice = jQuery('#mainwp-onboarding-monitoring-notice');
+    if (button.prop('disabled')) {
+        return;
+    }
+    const showError = function (message) {
+        notice.find('.mainwp-onboarding-monitoring-error').text(message).prop('hidden', false);
+    };
+    button.prop('disabled', true).addClass('loading');
+    notice.find('.mainwp-onboarding-monitoring-error').prop('hidden', true);
+    jQuery.post(ajaxurl, {
+        action: 'mainwp_onboarding_enable_monitoring',
+        security: button.attr('data-nonce')
+    }, null, 'json').done(function (response) {
+        if (response && response.success && response.data && response.data.message) {
+            notice.addClass('green').text(response.data.message);
+            const step = jQuery('#mainwp-get-started-list a[href$="page=MonitoringSettings"]');
+            step.attr('data-complete', 'true').find('i.icon').attr('class', 'green check circle icon');
+        } else {
+            showError(response && response.data && response.data.message ? response.data.message : button.attr('data-error'));
+        }
+    }).fail(function () {
+        showError(button.attr('data-error'));
+    }).always(function () {
+        button.prop('disabled', false).removeClass('loading');
+    });
+});
+
 // Hide dismissible Dashboard notices.
 jQuery(document).on('click', '.mainwp-notice-dismiss', function () {
     let notice_id = jQuery(this).attr('notice-id');

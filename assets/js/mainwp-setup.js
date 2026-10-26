@@ -4,7 +4,6 @@ jQuery(function () {
     if (tab_active !== '') {
       jQuery('#mainwp-qsw-connect-site-form').fadeIn(500);
       jQuery('#mainwp_managesites_add').show();
-      jQuery('#mainwp_addsite_continue_button').hide();
       jQuery('.menu-connect-first-site .item').tab('change tab', tab_active);
     }
   });

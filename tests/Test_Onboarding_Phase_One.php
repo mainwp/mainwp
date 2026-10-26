@@ -13,6 +13,8 @@ use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_DB_Uptime_Monitoring;
 use MainWP\Dashboard\MainWP_Get_Started;
 use MainWP\Dashboard\MainWP_Manage_Sites;
+use MainWP\Dashboard\MainWP_Overview;
+use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Setup_Wizard;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit;
@@ -145,6 +147,213 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			'old MySQL'    => array( array( 'mysql' => '4.9' ), false ),
 			'OpenSSL path' => array( array( 'openssl_warning' => true ), false ),
 		);
+	}
+
+	/**
+	 * Each prerequisite independently hides a notice that would otherwise be actionable.
+	 *
+	 * @dataProvider monitoring_notice_conditions
+	 * @param bool $fresh Fresh-install marker.
+	 * @param bool $applied Defaults already applied.
+	 * @param bool $active Global monitoring enabled.
+	 * @param int  $sites Connected sites.
+	 * @param bool $allowed Settings right.
+	 * @param bool $dismissed Notice dismissed by this user.
+	 */
+	public function test_monitoring_notice_condition_matrix( $fresh, $applied, $active, $sites, $allowed, $dismissed ): void {
+		if ( $fresh ) {
+			update_option( 'mainwp_onboarding_fresh_install', time() );
+		} else {
+			delete_option( 'mainwp_onboarding_fresh_install' );
+		}
+		if ( $applied ) {
+			update_option( 'mainwp_onboarding_defaults_applied', time() );
+		} else {
+			delete_option( 'mainwp_onboarding_defaults_applied' );
+		}
+		$settings           = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings( false );
+		$settings['active'] = (int) $active;
+		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+		update_option( 'mainwp_settings_notification_emails', array( 'uptime' => array( 'recipients' => 'alerts@example.org<script>bad()</script>' ) ) );
+		update_user_option( get_current_user_id(), 'mainwp_notice_saved_status', $dismissed ? array( 'onboarding-monitoring' => 1 ) : array() );
+		$property = new \ReflectionProperty( MainWP_Manage_Sites::class, 'total_sites' );
+		$property->setAccessible( true );
+		$property->setValue( null, $sites );
+		$right = static function ( $can, $type, $name ) use ( $allowed ) {
+			return 'dashboard' === $type && 'manage_dashboard_settings' === $name ? $allowed : $can;
+		};
+		add_filter( 'mainwp_currentusercan', $right, 999, 3 );
+		$method = new \ReflectionMethod( MainWP_Overview::class, 'render_onboarding_monitoring_notice' );
+		$method->setAccessible( true );
+		ob_start();
+		try {
+			$method->invoke( null );
+		} finally {
+			$html = ob_get_clean();
+			remove_filter( 'mainwp_currentusercan', $right, 999 );
+		}
+		$visible = $fresh && ! $applied && ! $active && $sites && $allowed && ! $dismissed;
+		if ( ! $visible ) {
+			$this->assertSame( '', $html );
+			return;
+		}
+		$this->assertStringContainsString( 'id="mainwp-onboarding-monitoring-notice"', $html );
+		$xpath = $this->html_xpath( $html );
+		$this->assertSame( 1, $xpath->query( '//i[@notice-id="onboarding-monitoring"][contains(@class,"mainwp-notice-dismiss")]' )->length );
+		$this->assertSame( 1, $xpath->query( '//button[@class="ui mini green button"][normalize-space(.)="Turn on uptime monitoring"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//a[@class="ui mini basic button"][normalize-space(.)="Monitoring settings"]' )->length );
+		$this->assertSame( admin_url( 'admin.php?page=MonitoringSettings' ), $xpath->query( '//a/@href' )->item( 0 )->value );
+		$this->assertNotFalse( wp_verify_nonce( $xpath->query( '//button/@data-nonce' )->item( 0 )->value, 'mainwp_onboarding_enable_monitoring' ) );
+		$this->assertStringContainsString( 'Uptime monitoring is off. Turn it on and MainWP emails alerts@example.org&lt;script&gt;bad()&lt;/script&gt; when a site goes down.', $html );
+		$this->assertSame( 0, $xpath->query( '//script' )->length );
+	}
+
+	/**
+	 * Cover all combinations, including overlapping reasons to hide the notice.
+	 *
+	 * @return array
+	 */
+	public static function monitoring_notice_conditions() {
+		$cases = array();
+		for ( $mask = 0; 64 > $mask; ++$mask ) {
+			$cases[ 'conditions-' . $mask ] = array( (bool) ( $mask & 1 ), (bool) ( $mask & 2 ), (bool) ( $mask & 4 ), (int) (bool) ( $mask & 8 ), (bool) ( $mask & 16 ), (bool) ( $mask & 32 ) );
+		}
+		return $cases;
+	}
+
+	/**
+	 * Capture JSON termination without bypassing the production nonce or rights checks.
+	 *
+	 * @param string $nonce Action nonce.
+	 * @return array JSON response.
+	 */
+	private function monitoring_ajax( $nonce ) {
+		$_REQUEST = array( 'security' => $nonce );
+		$die      = static function () {
+			return static function () {
+				throw new \RuntimeException( 'onboarding-json-stop' );
+			};
+		};
+		add_filter( 'wp_doing_ajax', '__return_true' );
+		add_filter( 'wp_die_ajax_handler', $die );
+		ob_start();
+		try {
+			MainWP_Post_Handler::instance()->ajax_onboarding_enable_monitoring();
+			$this->fail( 'The handler must terminate with JSON.' );
+		} catch ( \RuntimeException $exception ) {
+			$this->assertSame( 'onboarding-json-stop', $exception->getMessage() );
+		} finally {
+			$json = ob_get_clean();
+			remove_filter( 'wp_die_ajax_handler', $die );
+			remove_filter( 'wp_doing_ajax', '__return_true' );
+		}
+		$response = json_decode( $json, true );
+		$this->assertIsArray( $response, $json );
+		return $response;
+	}
+
+	/** Notice activation must preserve settings until both authorization checks pass. */
+	public function test_monitoring_notice_handler_rejects_invalid_nonce_and_missing_right(): void {
+		update_option( 'mainwp_onboarding_fresh_install', time() );
+		$before = get_option( 'mainwp_global_uptime_monitoring_settings' );
+		foreach ( array( '', 'invalid', wp_create_nonce( 'another-action' ) ) as $nonce ) {
+			$this->assertFalse( $this->monitoring_ajax( $nonce )['success'] );
+		}
+		$deny = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'manage_dashboard_settings' === $right ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 999, 3 );
+		try {
+			$this->assertFalse( $this->monitoring_ajax( wp_create_nonce( 'mainwp_onboarding_enable_monitoring' ) )['success'] );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 999 );
+		}
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		$this->assertFalse( $this->monitoring_ajax( wp_create_nonce( 'mainwp_onboarding_enable_monitoring' ) )['success'] );
+		$this->assertSame( $before, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+		$this->assertFalse( get_option( 'mainwp_onboarding_defaults_applied' ) );
+		$this->assertFalse( get_option( 'mainwp_onboarding_uptime_confirmed' ) );
+	}
+
+	/** Existing installs cannot acquire onboarding defaults through a stale notice request. */
+	public function test_monitoring_notice_handler_rejects_existing_install(): void {
+		$before = get_option( 'mainwp_global_uptime_monitoring_settings' );
+		$this->assertFalse( $this->monitoring_ajax( wp_create_nonce( 'mainwp_onboarding_enable_monitoring' ) )['success'] );
+		$this->assertSame( $before, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+		$this->assertFalse( get_option( 'mainwp_onboarding_defaults_applied' ) );
+		$this->assertFalse( get_option( 'mainwp_onboarding_uptime_confirmed' ) );
+	}
+
+	/** A repeated click must neither reapply defaults nor undo later monitoring choices. */
+	public function test_monitoring_notice_handler_applies_once_and_confirms(): void {
+		update_option( 'mainwp_onboarding_fresh_install', time() );
+		$nonce    = wp_create_nonce( 'mainwp_onboarding_enable_monitoring' );
+		$response = $this->monitoring_ajax( $nonce );
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( 'Uptime monitoring is on.', $response['data']['message'] );
+		$settings = get_option( 'mainwp_global_uptime_monitoring_settings' );
+		$this->assertSame( 1, (int) $settings['active'] );
+		$this->assertSame( 60, (int) $settings['interval'] );
+		$this->assertGreaterThan( 0, (int) get_option( 'mainwp_onboarding_defaults_applied' ) );
+		$this->assertSame( 1, (int) get_option( 'mainwp_onboarding_uptime_confirmed' ) );
+		$this->assertTrue( MainWP_Get_Started::get_items()[3]['complete'] );
+		$settings['interval'] = 15;
+		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+		update_option( 'mainwp_sitehealthThreshold', 100 );
+		$this->assertTrue( $this->monitoring_ajax( $nonce )['success'] );
+		$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+		$this->assertSame( 100, (int) get_option( 'mainwp_sitehealthThreshold' ) );
+		$settings['active'] = 0;
+		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+		delete_option( 'mainwp_onboarding_uptime_confirmed' );
+		$this->assertFalse( $this->monitoring_ajax( $nonce )['success'] );
+		$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+		$this->assertFalse( get_option( 'mainwp_onboarding_uptime_confirmed' ) );
+	}
+
+	/** Absent tour settings default off; saved values survive summary rendering. */
+	public function test_summary_guided_tours_default_and_saved_values(): void {
+		$_GET = array( 'siteid' => 0 );
+		foreach ( array( null, 0, 1 ) as $saved ) {
+			if ( null === $saved ) {
+				delete_option( 'mainwp_enable_guided_tours' );
+			} else {
+				update_option( 'mainwp_enable_guided_tours', $saved );
+			}
+			ob_start();
+			$this->wizard->mwp_setup_ready();
+			$xpath = $this->html_xpath( ob_get_clean() );
+			$this->assertSame( 1 === $saved ? 1 : 0, $xpath->query( '//input[@id="mainwp-guided-tours-option"][@checked]' )->length );
+			$this->assertSame( null === $saved ? false : $saved, null === $saved ? get_option( 'mainwp_enable_guided_tours' ) : (int) get_option( 'mainwp_enable_guided_tours' ) );
+		}
+	}
+
+	/** Phase 1 footers share the same grid and keep exit destinations inside its left column. */
+	public function test_phase_one_footer_and_card_markup(): void {
+		update_user_option( get_current_user_id(), 'mainwp_selected_theme', 'default' );
+		$_GET = array(
+			'page'   => 'mainwp-setup',
+			'siteid' => 0,
+		);
+		foreach ( array( 'mwp_setup_welcome', 'mwp_setup_connect_first_site', 'mwp_setup_ready' ) as $view ) {
+			ob_start();
+			$this->wizard->$view();
+			$html  = ob_get_clean();
+			$xpath = $this->html_xpath( $html );
+			$this->assertSame( 1, $xpath->query( '//div[@class="ui padded segment"]' )->length, $view );
+			$footer = '//div[@class="ui divider"]/following-sibling::div[1][@class="ui stackable grid"]';
+			$this->assertSame( 1, $xpath->query( $footer . '/div[@class="ten wide column"]/*[@id="mainwp-qsw-exit-links"]' )->length, $view );
+			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-qsw-exit-links"]' )->length, $view );
+			$this->assertSame( 0, $xpath->query( $footer . '//*[contains(@class,"mini") or contains(@class,"floated")]' )->length, $view );
+			$this->assertSame( 'mwp_setup_connect_first_site' === $view ? 2 : 1, $xpath->query( $footer . '/div[@class="six wide right aligned column"]/*[@class="ui green button"]' )->length, $view );
+			if ( 'mwp_setup_connect_first_site' === $view ) {
+				$this->assertSame( 1, $xpath->query( $footer . '/div[@class="ten wide column"]/a[@id="mainwp_addsite_continue_button"][@class="ui basic button"]' )->length );
+			}
+		}
+		$this->assertSame( 2, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"][@class="ui two stackable cards"]/div[@class="card"]' )->length );
+		$this->assertStringContainsString( 'Connect more WordPress sites to manage them together.', $html );
+		$this->assertStringContainsString( 'Group sites by client for reports and billing.', $html );
+		$this->assertStringContainsString( 'https://www.usetiful.com/privacy-policy', $html );
 	}
 
 	/** Existing installs receive neither monitoring defaults nor a widget. */
@@ -512,7 +721,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$this->assertSame( $count ? 0 : 1, $xpath->query( '//a[normalize-space(.)="Add your first site"]' )->length );
 			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="Add another site"]' )->length );
 			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
-			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="Assign sites to a client"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Assign sites to a client"]' )->length );
 			$this->assertStringNotContainsString( 'Assign this site to a client', $html );
 			$this->assertStringNotContainsString( 'Review updates first', $html );
 		}
@@ -673,8 +882,10 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 1, $xpath->query( '//form//button[@type="submit"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[@class="ui toggle checkbox"]/input[@id="mainwp_setup_enableUptimeMonitoring"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[@class="ui checkbox"]/input[@id="mainwp-guided-tours-option"]' )->length );
-		$this->assertSame( 'ui basic green button', $xpath->query( '//button[@id="mainwp-onboarding-update-all"]/@class' )->item( 0 )->value );
-		$this->assertSame( 'ui basic green button', $xpath->query( '//form/button[@type="submit"]/@class' )->item( 0 )->value );
+		$this->assertSame( 'ui green button', $xpath->query( '//button[@id="mainwp-onboarding-update-all"]/@class' )->item( 0 )->value );
+		$this->assertSame( 'ui basic button', $xpath->query( '//a[normalize-space(.)="Review updates first"]/@class' )->item( 0 )->value );
+		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]/parent::div/preceding-sibling::*[1][@class="ui hidden divider"]' )->length );
+		$this->assertSame( 'ui green button', $xpath->query( '//form//button[@type="submit"]/@class' )->item( 0 )->value );
 	}
 
 	/** Default connection fields exclude optional settings and keep help independently focusable. */
@@ -691,6 +902,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		}
 		$xpath = $this->html_xpath( $html );
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-advanced"][@hidden]//input[@id="mainwp_managesites_add_wpname"][not(@required)]' )->length );
+		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-advanced"]//div[@class="ui blue message"][contains(.,"WordPress admin login two-factor authentication")]' )->length );
 		foreach ( array( 'mainwp_managesites_add_wpurl', 'mainwp_managesites_add_wpadmin', 'mainwp_managesites_add_admin_pwd' ) as $id ) {
 			$this->assertSame( 1, $xpath->query( '//input[@id="' . $id . '"][not(ancestor::*[@id="mainwp-onboarding-advanced"])]' )->length, $id );
 		}
@@ -873,6 +1085,14 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$this->assertFalse( $items[1]['complete'] );
 			$this->assertFalse( $items[3]['complete'] );
 		}
+		ob_start();
+		MainWP_Get_Started::render_content();
+		$xpath = $this->html_xpath( ob_get_clean() );
+		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-get-started-list"][@class="ui middle aligned divided list"]' )->length );
+		$this->assertSame( count( $items ), $xpath->query( '//div[@id="mainwp-get-started-list"]/a[@class="item"]/div[@class="content"]/div[@class="header"]' )->length );
+		$this->assertSame( 0, $xpath->query( '//div[contains(concat(" ",normalize-space(@class)," ")," steps ")]' )->length );
+		$this->assertSame( 2, $xpath->query( '//a[@data-complete="true"]/i[@class="green check circle icon"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//a[@data-complete="false"]/i[@class="heartbeat icon"]' )->length );
 		update_option( 'mainwp_onboarding_first_update', 1 );
 		update_option( 'mainwp_onboarding_mcp_visited', 1 );
 		$settings           = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings( false );
@@ -895,8 +1115,9 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		MainWP_Get_Started::render_content();
 		$html  = ob_get_clean();
 		$xpath = $this->html_xpath( $html );
-		$this->assertSame( count( $items ), $xpath->query( '//a[contains(@class,"completed")]/div[@class="content"]/div[@class="description"][normalize-space(.)!=""]' )->length );
-		$this->assertSame( 0, $xpath->query( '//a[contains(@class,"completed")]//div[@class="title"]' )->length );
+		$this->assertSame( count( $items ), $xpath->query( '//a[@data-complete="true"]/div[@class="content"]/div[@class="header"][normalize-space(.)!=""]' )->length );
+		$this->assertSame( count( $items ), $xpath->query( '//a[@data-complete="true"]/i[@class="green check circle icon"]' )->length );
+		$this->assertSame( 0, $xpath->query( '//a[contains(@class,"completed")]' )->length );
 		$this->assertTrue( MainWP_Get_Started::is_visible() );
 		update_user_option( get_current_user_id(), 'mainwp_notice_saved_status', array( 'get-started' => 1 ) );
 		$this->assertFalse( MainWP_Get_Started::is_visible() );

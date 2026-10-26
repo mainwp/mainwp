@@ -73,6 +73,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
             $this->add_action( 'mainwp_security_issues_unfix', array( &$this, 'mainwp_security_issues_unfix' ) );
         }
 
+        $this->add_action( 'mainwp_onboarding_enable_monitoring', array( &$this, 'ajax_onboarding_enable_monitoring' ) );
         $this->add_action( 'mainwp_notice_status_update', array( &$this, 'mainwp_notice_status_update' ) );
         $this->add_action( 'mainwp_dismiss_activate_notice', array( &$this, 'dismiss_activate_notice' ) );
         $this->add_action( 'mainwp_status_saving', array( &$this, 'mainwp_status_saving' ) );
@@ -524,6 +525,32 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
     public function mainwp_page_restore() {
         $this->secure_request( 'mainwp_page_restore' );
         MainWP_Page::restore();
+    }
+
+    /**
+     * The notice is an explicit confirmation; applying defaults alone is not.
+     */
+    public function ajax_onboarding_enable_monitoring() {
+        if ( ! $this->check_security( 'mainwp_onboarding_enable_monitoring', 'security', false ) ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid request. Please reload the page and try again.', 'mainwp' ) ) );
+            return;
+        }
+        if ( ! MainWP_System_Utility::is_admin() || ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Error - insufficient permissions!', 'mainwp' ) ) );
+            return;
+        }
+        if ( ! get_option( 'mainwp_onboarding_fresh_install' ) ) {
+            wp_send_json_error( array( 'message' => __( 'Monitoring settings are no longer available from this notice.', 'mainwp' ) ) );
+            return;
+        }
+        MainWP_Setup_Wizard::apply_monitoring_defaults();
+        $settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        if ( empty( $settings['active'] ) ) {
+            wp_send_json_error( array( 'message' => __( 'Unable to turn on uptime monitoring. Please use Monitoring settings.', 'mainwp' ) ) );
+            return;
+        }
+        update_option( 'mainwp_onboarding_uptime_confirmed', 1 );
+        wp_send_json_success( array( 'message' => __( 'Uptime monitoring is on.', 'mainwp' ) ) );
     }
 
     /**

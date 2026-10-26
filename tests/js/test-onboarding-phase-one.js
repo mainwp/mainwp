@@ -42,7 +42,8 @@ function harness() {
                     handlers.set(selector + ':' + event, callback || target);
                     return el;
                 },
-                change() { return el; },
+                change(callback) { handlers.set(selector + ':change', callback); return el; },
+                tab() { return el; },
                 trigger() { return el; },
                 each() { return el; },
                 checkbox(option) {
@@ -284,4 +285,14 @@ test('password explanation opens on hover and keyboard focus and closes on blur'
     h.handlers.get('#mainwp-onboarding-password-help:click').call(help, { preventDefault() { prevented = true; } });
     assert.equal(prevented, true);
     assert.equal(popup.visible, true);
+});
+
+test('choosing a connection mode keeps Continue Without Adding Sites available', () => {
+    const h = harness();
+    h.$('#mainwp_addsite_continue_button').show();
+    vm.runInContext(setup, h.context);
+    for (const value of ['single-site', 'multiple-site']) {
+        h.handlers.get('.mainwp-field-tab-connect input[name=tab_connect]:change').call({ value });
+        assert.equal(h.$('#mainwp_addsite_continue_button').prop('visible'), true);
+    }
 });

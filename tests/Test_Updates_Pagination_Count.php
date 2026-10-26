@@ -13,9 +13,6 @@ use MainWP\Dashboard\MainWP_System_Utility;
 
 /**
  * Exercise the pager and listing against real WordPress tables.
- *
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
  */
 class Test_Updates_Pagination_Count extends \WP_UnitTestCase {
 	use Site_Fixture;

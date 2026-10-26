@@ -1348,8 +1348,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <div class="content">
                                 <div class="header"><?php esc_html_e( 'Connect your AI assistant', 'mainwp' ); ?></div>
                                 <div class="description">
-                                    <?php esc_html_e( 'Use MainWP from Claude, Cursor or another MCP client.', 'mainwp' ); ?><br>
-                                    <code><?php esc_html_e( 'Which of my sites have plugin updates waiting?', 'mainwp' ); ?></code>
+                                    <p><?php esc_html_e( 'Use MainWP from Claude, Cursor or another MCP client.', 'mainwp' ); ?></p>
+                                    <p><code><?php esc_html_e( 'Which of my sites have plugin updates waiting?', 'mainwp' ); ?></code></p>
                                 </div>
                             </div>
                             <div class="extra content"><a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-mcp' ) ); ?>"><?php esc_html_e( 'Set up MCP', 'mainwp' ); ?></a></div>

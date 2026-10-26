@@ -183,9 +183,14 @@ install_test_suite() {
 		# set up testing suite
 		check_directory "$WP_TESTS_DIR" destination yes
 	fi
+	for payload in includes data; do
+		check_directory "$WP_TESTS_DIR/$payload" destination no
+	done
 	if [ ! -d "$WP_TESTS_DIR/includes" ] || [ ! -d "$WP_TESTS_DIR/data" ]; then
-		svn export --quiet --ignore-externals "https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/includes/" "$STAGING_DIR/includes"
-		svn export --quiet --ignore-externals "https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/data/" "$STAGING_DIR/data"
+		( umask 077
+			svn export --quiet --ignore-externals "https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/includes/" "$STAGING_DIR/includes"
+			svn export --quiet --ignore-externals "https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/data/" "$STAGING_DIR/data"
+		)
 		for payload in includes data; do
 			if [ ! -d "$WP_TESTS_DIR/$payload" ]; then
 				mv "$STAGING_DIR/$payload" "$WP_TESTS_DIR/$payload"

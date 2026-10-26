@@ -23,7 +23,7 @@ WP_TESTS_DIR=/tmp/wordpress-tests-lib ./vendor/bin/phpunit tests/abilities/test-
 
 ## Prerequisites
 
-- WordPress test harness installed to `/tmp/wordpress-tests-lib/`
+- WordPress test harness installed (default: `$HOME/.mainwp-wp-tests/wordpress-tests-lib`); set `WP_TESTS_DIR=/tmp/wordpress-tests-lib` when running `bin/install-wp-tests.sh` to use the `/tmp` examples below.
 - WordPress version with Abilities API support (or mock functions available)
 - Environment file with database credentials and socket path
 

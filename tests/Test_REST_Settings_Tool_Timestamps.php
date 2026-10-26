@@ -7,12 +7,7 @@
 
 namespace MainWP\Dashboard\Tests;
 
-/**
- * Verifies queued and completed jobs through the registered REST routes.
- *
- * @runTestsInSeparateProcesses
- * @preserveGlobalState disabled
- */
+/** Verifies queued and completed jobs through the registered REST routes. */
 class Test_REST_Settings_Tool_Timestamps extends MainWP_Abilities_Test_Case {
 
 	/**
@@ -40,9 +35,16 @@ class Test_REST_Settings_Tool_Timestamps extends MainWP_Abilities_Test_Case {
 	public function setUp(): void {
 		parent::setUp();
 		$this->set_current_user_as_admin();
-		$this->original['server'] = $GLOBALS['wp_rest_server'] ?? null;
-		$auth                     = \MainWP_REST_Authentication::get_instance();
-		$user                     = new \ReflectionProperty( $auth, 'user' );
+		$this->original['server']               = $GLOBALS['wp_rest_server'] ?? null;
+		$auth                                   = \MainWP_REST_Authentication::get_instance();
+		$this->original['auth']                 = $auth;
+		$this->original['rest_flag_defined']    = defined( 'MAINWP_REST_API_DOING' );
+		$this->original['permissions_priority'] = has_filter( 'rest_pre_dispatch', array( $auth, 'check_user_permissions' ) );
+		// Route permission callbacks still run; this hook would define an irreversible process-wide bypass.
+		if ( false !== $this->original['permissions_priority'] ) {
+			$this->assertTrue( remove_filter( 'rest_pre_dispatch', array( $auth, 'check_user_permissions' ), $this->original['permissions_priority'] ) );
+		}
+		$user = new \ReflectionProperty( $auth, 'user' );
 		$user->setAccessible( true );
 		$this->original['user'] = $user->getValue( $auth );
 		$user->setValue(
@@ -57,14 +59,12 @@ class Test_REST_Settings_Tool_Timestamps extends MainWP_Abilities_Test_Case {
 		do_action( 'rest_api_init' );
 		( new \MainWP_Rest_Settings_Controller() )->register_routes();
 		add_filter( 'pre_http_request', array( $this, 'block_http' ) );
-		add_filter( 'mainwp_disable_rest_api_access_log', '__return_true' );
 		add_filter( 'mainwp_fetch_url_authed_pre', array( $this, 'child_response' ), 10, 3 );
 	}
 
 	/** Restore request state and remove scheduled fixture jobs. */
 	public function tearDown(): void {
 		remove_filter( 'pre_http_request', array( $this, 'block_http' ) );
-		remove_filter( 'mainwp_disable_rest_api_access_log', '__return_true' );
 		remove_filter( 'mainwp_fetch_url_authed_pre', array( $this, 'child_response' ), 10 );
 		foreach ( $this->jobs as $job ) {
 			delete_transient( 'mainwp_tool_' . $job[0] . '_job_' . $job[1] );
@@ -72,7 +72,11 @@ class Test_REST_Settings_Tool_Timestamps extends MainWP_Abilities_Test_Case {
 		}
 		$user = new \ReflectionProperty( \MainWP_REST_Authentication::class, 'user' );
 		$user->setAccessible( true );
-		$user->setValue( \MainWP_REST_Authentication::get_instance(), $this->original['user'] );
+		$user->setValue( $this->original['auth'], $this->original['user'] );
+		if ( false !== $this->original['permissions_priority'] ) {
+			add_filter( 'rest_pre_dispatch', array( $this->original['auth'], 'check_user_permissions' ), $this->original['permissions_priority'], 3 );
+		}
+		$this->assertSame( $this->original['permissions_priority'], has_filter( 'rest_pre_dispatch', array( $this->original['auth'], 'check_user_permissions' ) ) );
 		$GLOBALS['wp_rest_server'] = $this->original['server'];
 		parent::tearDown();
 	}
@@ -125,6 +129,7 @@ class Test_REST_Settings_Tool_Timestamps extends MainWP_Abilities_Test_Case {
 	 */
 	private function queue_job( $route, $prefix, $hook ) {
 		$response = rest_do_request( new \WP_REST_Request( 'POST', '/mainwp/v2/settings/tools/' . $route ) );
+		$this->assertSame( $this->original['rest_flag_defined'], defined( 'MAINWP_REST_API_DOING' ), 'The fixture must not define a REST capability bypass for later tests.' );
 		$this->assertSame( 200, $response->get_status(), wp_json_encode( $response->get_data() ) );
 		$id           = $response->get_data()[ $prefix . '_id' ];
 		$this->jobs[] = array( $prefix, $id, $hook );

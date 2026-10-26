@@ -108,31 +108,46 @@ function mainwp_onboarding_detection_controller(options) {
   }
   function restart(carry) {
     cancel();
+    const next = mainwp_onboarding_initial_state(options.now());
+    // A failed connect to the same target keeps the Child's reported deadline.
+    if (carry && carry.detected) Object.assign(next, { detected: true, deadline: carry.deadline, minutes: carry.minutes });
+    state = next;
     paused = options.hidden();
-    state = mainwp_onboarding_initial_state(options.now());
-    // Same target after a failed connect: keep the reported deadline so a later NOMAINWP can still be read as expiry.
-    if (carry && carry.detected) Object.assign(state, { detected: true, deadline: carry.deadline, minutes: carry.minutes });
     if (!options.ready()) { publish(); return; }
     armLimit();
-    poll();
+    if (paused) publish();
+    else poll();
+  }
+  function checkExpiry() {
+    // A live chain evaluates its own replies against the carried deadline.
+    if (['connecting', 'checking', 'waiting'].includes(state.status) || request || options.hidden()
+      || !mainwp_onboarding_deadline_passed(state, options.now())) return;
+    cancel();
+    const current = generation;
+    request = options.request(function (result) {
+      if (current !== generation) return;
+      request = null;
+      state = mainwp_onboarding_detection_result(state, result, options.now());
+      publish();
+    });
   }
   return {
     restart,
     stop,
     state: () => state,
     refresh: publish,
-    checkExpiry() {
-      // A connect attempt in flight runs its own check when it fails.
-      if (state.status === 'connecting' || !mainwp_onboarding_deadline_passed(state, options.now()) || options.hidden()) return;
-      cancel();
-      const current = generation;
-      request = options.request(function (result) {
-        if (current !== generation) return;
-        request = null;
-        const next = mainwp_onboarding_detection_result(state, result, options.now());
-        // A Child that still answers reports a fresh window, so the countdown restarts from it.
-        if (['expired', 'detected'].includes(next.status)) { state = next; publish(); }
-      });
+    checkExpiry,
+    connectFailed(previous, transportError) {
+      if (state !== previous) {
+        restart();
+      } else if (transportError) {
+        stop('stopped');
+      } else if (mainwp_onboarding_deadline_passed(state, options.now())) {
+        stop('stopped');
+        checkExpiry();
+      } else {
+        restart(previous);
+      }
     },
     pause() {
       if (!['checking', 'waiting', 'idle'].includes(state.status)) {
@@ -218,7 +233,16 @@ function mainwp_onboarding_bind_detection() {
       updateButton();
     }
   });
+  function target() {
+    const fields = mainwp_onboarding_fields();
+    return JSON.stringify([fields.url || jQuery('#mainwp_managesites_add_wpurl').val().trim(),
+      jQuery('#mainwp_managesites_add_wpurl_protocol').val(), fields.admin]);
+  }
+  let appliedTarget = target();
   jQuery('#mainwp_managesites_add_wpurl, #mainwp_managesites_add_wpurl_protocol, #mainwp_managesites_add_wpadmin').on('input change', function () {
+    const nextTarget = target();
+    if (nextTarget === appliedTarget) return;
+    appliedTarget = nextTarget;
     clearTimeout(debounce);
     // A different target must never inherit the previous Child's deadline.
     mainwp_onboarding_detection.stop('idle');
@@ -279,8 +303,9 @@ function mainwp_onboarding_render_detection(state) {
   jQuery('#mainwp-onboarding-install-fallback').text(mainwp_onboarding_copy('fallback').replace('%s', site));
   jQuery('#mainwp-onboarding-timer').prop('hidden', state.status !== 'detected' || state.minutes === 0);
   mainwp_onboarding_render_time(state);
+  const wasExpired = jQuery('#mainwp-onboarding-expiry').prop('hidden') === false;
   jQuery('#mainwp-onboarding-expiry').prop('hidden', state.status !== 'expired');
-  if (state.status === 'expired') mainwp_set_message_zone('#mainwp-message-zone');
+  if (state.status === 'expired' && !wasExpired) mainwp_set_message_zone('#mainwp-message-zone');
   jQuery('#mainwp-onboarding-expiry-message').text(mainwp_onboarding_copy('expired').replace('%s', site));
   jQuery('#mainwp-onboarding-plugins-link').attr('href', fields.url ? fields.url + 'wp-admin/plugins.php' : '');
   jQuery('#mainwp-onboarding-retry').prop('hidden', !['expired', 'error', 'unreachable', 'timed_out', 'stopped'].includes(state.status));
@@ -485,17 +510,7 @@ let mainwp_setup_managesites_add = function () {
       if (res_things.error || response.substring(0, 5) == 'ERROR' || !res_things.siteid) {
         mainwp_onboarding_connecting = false;
         mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
-        if (mainwp_onboarding_detection) {
-          // Only a passed reported deadline can explain the failure as expiry; otherwise re-check so the rows and timer stay current.
-          if (mainwp_onboarding_detection.state() !== detectionState) {
-            mainwp_onboarding_detection.restart();
-          } else if (mainwp_onboarding_deadline_passed(detectionState, Date.now())) {
-            mainwp_onboarding_detection.stop('stopped');
-            mainwp_onboarding_detection.checkExpiry();
-          } else {
-            mainwp_onboarding_detection.restart(detectionState);
-          }
-        }
+        if (mainwp_onboarding_detection) mainwp_onboarding_detection.connectFailed(detectionState, false);
       } else {
         mainwp_set_message_zone('#mainwp-message-zone', response, 'green');
 
@@ -522,10 +537,7 @@ let mainwp_setup_managesites_add = function () {
       if (!mainwp_onboarding_detection && !mainwp_onboarding_connecting) jQuery('#mainwp_managesites_add').prop('disabled', false);
     }, error: function () {
       mainwp_onboarding_connecting = false;
-      if (mainwp_onboarding_detection) {
-        if (mainwp_onboarding_detection.state() === detectionState) mainwp_onboarding_detection.stop('stopped');
-        else mainwp_onboarding_detection.restart();
-      }
+      if (mainwp_onboarding_detection) mainwp_onboarding_detection.connectFailed(detectionState, true);
       mainwp_set_message_zone('#mainwp-message-zone', mainwp_onboarding_escape(mainwp_onboarding_copy('error')), 'red');
       if (!mainwp_onboarding_detection) jQuery('#mainwp_managesites_add').prop('disabled', false);
     }});

@@ -209,32 +209,6 @@ test('hidden tabs abort requests and pause polls, resume once, and retain the wa
     assert.equal(h.requests.length, 2);
 });
 
-test('connection failure recheck suggests expiry only after a reported deadline and NOMAINWP, and remains cancellable', () => {
-    const h = machine();
-    h.controller.restart();
-    h.reply({ response: 'OK', connection_window_remaining: 10 });
-    h.controller.stop('connecting');
-    h.controller.checkExpiry();
-    assert.equal(h.requests.length, 1);
-    h.advance(10000);
-    h.controller.stop('stopped');
-    h.controller.checkExpiry();
-    h.reply({ response: 'TIMEOUT' });
-    assert.equal(h.controller.state().status, 'stopped');
-    h.controller.checkExpiry();
-    h.reply({ response: 'NOMAINWP' });
-    assert.equal(h.controller.state().status, 'expired');
-    h.controller.restart();
-    assert.equal(h.controller.state().deadline, null);
-    h.reply({ response: 'OK', connection_window_remaining: 0 });
-    h.controller.checkExpiry();
-    const pending = h.requests.at(-1);
-    h.controller.stop('stopped');
-    assert.equal(pending.aborted, true);
-    pending.callback({ response: 'NOMAINWP' });
-    assert.equal(h.controller.state().status, 'stopped');
-});
-
 test('celebration keyframes load on Overview and wizard and respect reduced motion', () => {
     const css = fs.readFileSync(require.resolve('../../assets/css/mainwp-onboarding.css'), 'utf8');
     assert.match(css, /@keyframes tadaaaa/);
@@ -310,7 +284,15 @@ function uiHarness(mode = 'single-site') {
         return elements.get(key);
     }
     $.ajax = options => {
-        const request = { options, aborted: false, abort() { request.aborted = true; options.error?.({}, 'abort'); } };
+        const request = {
+            options: {
+                ...options,
+                success(...args) { request.settled = true; return options.success?.(...args); },
+                error(...args) { request.settled = true; return options.error?.(...args); }
+            },
+            settled: false, aborted: false,
+            abort() { request.aborted = true; request.options.error({}, 'abort'); }
+        };
         requests.push(request);
         return request;
     };
@@ -348,7 +330,7 @@ function uiHarness(mode = 'single-site') {
         }
         now = end;
     }
-    return { $, context, requests, messages, textWrites, timers, advance, document,
+    return { $, context, requests, messages, textWrites, timers, advance, document, now: () => now,
         trigger: (selector, event) => trigger(selector, event),
         reply: result => requests.at(-1).options.success(result),
         fill() {
@@ -359,6 +341,254 @@ function uiHarness(mode = 'single-site') {
         visible(hidden) { document.hidden = hidden; trigger('document', 'visibilitychange'); }
     };
 }
+
+// Each expanded row records all observable columns. Replies need a live check request;
+// settled states with a passed deadline first ask checkExpiry() for one. Other late replies are ignored.
+// Deadlines are seeded independently of status, including combinations that normal entry paths avoid.
+const matrixStatuses = {
+    idle:        ['Checking...', 'Checking...', false, false, false, false],
+    checking:    ['Checking...', 'Checking...', false, false, false, false],
+    waiting:     ['Yes', 'Not yet', true, false, false, false],
+    detected:    ['Yes', 'Yes', false, true, false, false],
+    expired:     ['Yes', 'No', false, false, true, true],
+    unreachable: ['No', 'Not checked', false, false, false, true],
+    error:       ['Not checked', 'Not checked', false, false, false, true],
+    timed_out:   ['Not checked', 'Not checked', false, false, false, true],
+    stopped:     ['Not checked', 'Not checked', false, false, false, true],
+    connecting:  ['Yes', 'Yes', false, false, false, false]
+};
+const matrixReplies = {
+    'reply OK': { response: 'OK', connection_window_remaining: 120 },
+    'reply OK remaining 0': { response: 'OK', connection_window_remaining: 0 },
+    'reply NOMAINWP': { response: 'NOMAINWP' },
+    'reply HTTPERROR': { response: 'HTTPERROR' },
+    'reply TIMEOUT': { response: 'TIMEOUT' },
+    'reply ERROR': { response: 'ERROR blocked', failure_ux: '<p>Blocked</p>' }
+};
+const matrixEvents = [...Object.keys(matrixReplies), 'changed field', 'unchanged change', 'tab hidden',
+    'tab shown', 'countdown deadline', 'Retry', 'connect success', 'connect ERROR', 'connect transport error'];
+const matrixZone = ['#mainwp-message-zone', 'validation', 'yellow'];
+const matrixClosed = 'The connection window may have ended. If connecting fails, check that MainWP Child is still active.';
+const matrixDefault = 'By default this is 20 minutes after activation.';
+const matrixSite = 'https://example.org/wordpress/';
+
+function matrixView(status, deadline, timers = [], request = null, zone = matrixZone, rows = matrixStatuses[status]) {
+    return {
+        status, timers: [...timers].sort(), request,
+        rows: rows.slice(0, 2),
+        rowClasses: rows.slice(0, 2).map(label => [label === 'Yes', label === 'No']),
+        install: rows[2], installHref: rows[2] ? matrixSite + 'wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term' : '',
+        timer: rows[3], expiry: rows[4], retry: rows[5],
+        timerLine: deadline === 'none' ? matrixDefault : deadline === 'future' ? 'Less than a minute left to connect.' : matrixClosed,
+        detectionMessage: status === 'unreachable' ? `We can't reach ${matrixSite}. Check the URL and that the site is online.`
+            : status === 'error' ? '<p>Blocked</p>' : '',
+        zone
+    };
+}
+
+function matrixExpected(status, event, deadline) {
+    const active = status === 'checking' ? ['cap'] : status === 'waiting' ? ['cap', 'poll']
+        : status === 'detected' && deadline === 'future' ? ['countdown'] : [];
+    const request = status === 'checking' ? 'mainwp_checkwp' : status === 'connecting' ? 'mainwp_addwp' : null;
+    const base = matrixView(status, deadline, active, request);
+    if (event in matrixReplies) {
+        const canRecheck = deadline === 'passed' && !['checking', 'waiting', 'connecting'].includes(status);
+        if (status !== 'checking' && !canRecheck) return base;
+        if (event === 'reply OK') {
+            const next = matrixView('detected', 'future', ['countdown']);
+            next.timerLine = 'About 2 minutes left to connect.';
+            return next;
+        }
+        if (event === 'reply OK remaining 0') return matrixView('detected', 'passed');
+        if (event === 'reply NOMAINWP') return deadline === 'passed'
+            ? matrixView('expired', deadline, [], null, status === 'expired' ? matrixZone : ['#mainwp-message-zone'])
+            : matrixView('waiting', deadline, ['cap', 'poll']);
+        return matrixView(event === 'reply ERROR' ? 'error' : 'unreachable', deadline);
+    }
+    if (event === 'changed field') return matrixView('idle', 'none', ['debounce'], status === 'connecting' ? request : null);
+    if (event === 'unchanged change') return base;
+    if (event === 'Retry') return status === 'connecting' ? matrixView('idle', 'none', [], request)
+        : matrixView('checking', 'none', ['cap'], 'mainwp_checkwp');
+    if (event === 'tab hidden') {
+        base.timers = ['idle', 'checking', 'waiting'].includes(status) ? ['cap'] : [];
+        if (status === 'checking') base.request = null;
+        return base;
+    }
+    if (event === 'tab shown') {
+        if (deadline === 'passed' && !['checking', 'waiting', 'connecting'].includes(status)) base.request = 'mainwp_checkwp';
+        return base;
+    }
+    if (event === 'countdown deadline') {
+        if (status === 'detected' && deadline === 'future') {
+            base.timers = [];
+            base.request = 'mainwp_checkwp';
+            base.timerLine = matrixClosed;
+        }
+        return base;
+    }
+    // Connect is independent of detection. Both failure callbacks select the same target first.
+    if (event === 'connect success') return matrixView('connecting', deadline, ['reload'], null,
+        ['#mainwp-message-zone', 'Connected', 'green'], [...matrixStatuses[status].slice(0, 2).map(label => label === 'Not checked' ? 'Checking...' : label), false, false, false, false]);
+    const zone = ['#mainwp-message-zone', event === 'connect ERROR' ? '<p>Wrong password</p>' : 'Undefined error occurred. Please try again.', 'red'];
+    if (event === 'connect transport error' || deadline === 'passed') {
+        const rows = matrixStatuses[status].slice(0, 2).map(label => label === 'Checking...' ? 'Not checked' : label);
+        return matrixView('stopped', deadline, [], event === 'connect ERROR' ? 'mainwp_checkwp' : null,
+            zone, [...rows, false, false, false, true]);
+    }
+    return matrixView('checking', deadline, ['cap'], 'mainwp_checkwp', zone);
+}
+
+const detectionMatrix = Object.keys(matrixStatuses).flatMap(status => matrixEvents.flatMap(event =>
+    ['none', 'future', 'passed'].map(deadline => ({
+        name: `${status} | ${event} | ${deadline}`, status, event, deadline,
+        expected: matrixExpected(status, event, deadline)
+    }))));
+
+function matrixSeed(h, status, deadline) {
+    h.fill(); h.advance(400);
+    const controller = vm.runInContext('mainwp_onboarding_detection', h.context);
+    if (status === 'waiting') h.reply({ response: 'NOMAINWP' });
+    else if (status !== 'checking') controller.stop(status === 'connecting' ? 'detected' : status);
+    const state = controller.state();
+    const labels = matrixStatuses[status];
+    Object.assign(state, {
+        reachable: labels[0] === 'Yes' ? 'ok' : labels[0] === 'No' ? 'failed' : 'pending',
+        child: labels[1] === 'Yes' ? 'ok' : labels[1] === 'No' ? 'failed' : 'pending',
+        detected: deadline !== 'none' || ['detected', 'expired', 'connecting'].includes(status),
+        deadline: deadline === 'none' ? null : h.now() + (deadline === 'future' ? 2000 : -1),
+        minutes: null, result: status === 'error' ? { response: 'ERROR blocked', failure_ux: '<p>Blocked</p>' } : {}
+    });
+    if (status === 'connecting') {
+        h.$('#mainwp_managesites_add_admin_pwd').val('wrong');
+        h.trigger('#mainwp_managesites_add', 'click');
+    } else controller.refresh();
+    h.context.mainwp_set_message_zone(...matrixZone);
+    return controller;
+}
+
+function matrixApply(h, controller, event, deadline) {
+    if (event in matrixReplies) {
+        if (deadline === 'passed') controller.checkExpiry();
+        const pending = h.requests.findLast(r => !r.aborted && !r.settled && r.options.data.action === 'mainwp_checkwp');
+        if (pending) pending.options.success(matrixReplies[event]);
+    } else if (event === 'changed field') {
+        h.$('#mainwp_managesites_add_wpurl').val('other.example');
+        h.trigger('#mainwp_managesites_add_wpurl', 'input');
+    } else if (event === 'unchanged change') h.trigger('#mainwp_managesites_add_wpurl', 'change');
+    else if (event === 'tab hidden') h.visible(true);
+    else if (event === 'tab shown') h.visible(false);
+    else if (event === 'countdown deadline') {
+        if (controller.state().status === 'detected' && deadline === 'future') h.advance(2000);
+    } else if (event === 'Retry') h.trigger('#mainwp-onboarding-retry', 'click');
+    else {
+        if (controller.state().status !== 'connecting') {
+            h.$('#mainwp_managesites_add_admin_pwd').val('wrong');
+            h.trigger('#mainwp_managesites_add', 'click');
+        }
+        if (event === 'connect success') h.reply({ response: 'Connected', siteid: 42 });
+        else if (event === 'connect ERROR') h.reply({ response: 'ERROR Wrong password', failure_ux: '<p>Wrong password</p>' });
+        else h.requests.at(-1).options.error({}, 'error');
+    }
+}
+
+function matrixSnapshot(h, controller) {
+    const visible = id => h.$('#mainwp-onboarding-' + id).prop('hidden') === false;
+    const row = id => h.$('#mainwp-onboarding-' + id);
+    return {
+        status: controller.state().status,
+        timers: [...h.timers.values()].map(t => t.interval ? 'countdown' : t.at - h.now() === 400 ? 'debounce'
+            : t.at - h.now() === 3000 ? 'reload' : t.at - h.now() === 5000 ? 'poll' : 'cap').sort(),
+        request: h.requests.filter(r => !r.aborted && !r.settled).map(r => r.options.data.action).join(',') || null,
+        rows: ['reachable', 'child'].map(id => row(id).text()),
+        rowClasses: ['reachable', 'child'].map(id => [row(id).prop('is-ok'), row(id).prop('is-failed')]),
+        install: visible('install'), installHref: row('install-link').attr('href'),
+        timer: visible('timer'), timerLine: row('time-left').text(),
+        expiry: visible('expiry'), retry: visible('retry'), detectionMessage: row('detection-message').html(),
+        zone: h.messages.at(-1)
+    };
+}
+
+const matrixSequences = [
+    ...['checking', 'waiting'].flatMap(status => ['NOMAINWP', 'HTTPERROR', 'TIMEOUT', 'ERROR', 'OK'].map(response => ({
+        name: `E1 ${status} | hidden then shown then ${response} | passed`, status, deadline: 'passed',
+        run(h) {
+            h.visible(true); h.visible(false);
+            h.reply({ response: response === 'ERROR' ? 'ERROR blocked' : response,
+                failure_ux: response === 'ERROR' ? '<p>Blocked</p>' : undefined, connection_window_remaining: 120 });
+        },
+        expected: response === 'OK' ? { ...matrixView('detected', 'future', ['countdown']), timerLine: 'About 2 minutes left to connect.' }
+            : matrixView(response === 'NOMAINWP' ? 'expired' : response === 'ERROR' ? 'error' : 'unreachable', 'passed', [], null,
+                response === 'NOMAINWP' ? ['#mainwp-message-zone'] : matrixZone)
+    }))),
+    ...Object.entries(matrixReplies).map(([event, result]) => ({
+        name: `E2 detected | countdown then ${event} | future`, status: 'detected', deadline: 'future',
+        run(h) { h.advance(2000); h.reply(result); },
+        expected: matrixExpected('detected', event, 'passed')
+    })),
+    ...['URL', 'protocol', 'username'].map(field => ({
+        name: `E4 waiting | normalized ${field} unchanged on blur | none`, status: 'waiting', deadline: 'none',
+        run(h) {
+            const id = field === 'username' ? 'wpadmin' : field === 'protocol' ? 'wpurl_protocol' : 'wpurl';
+            if (field === 'URL') h.$('#mainwp_managesites_add_wpurl').val(' https://EXAMPLE.org/wordpress/?ignored=1#anchor ');
+            if (field === 'username') h.$('#mainwp_managesites_add_wpadmin').val(' admin ');
+            h.trigger('#mainwp_managesites_add_' + id, 'change');
+        },
+        expected: matrixView('waiting', 'none', ['cap', 'poll'])
+    })),
+    ...['none', 'future', 'passed'].map(deadline => ({
+        name: `E3 expired | password validation then refresh | ${deadline}`, status: 'expired', deadline,
+        run(h, controller) { h.trigger('#mainwp_managesites_add', 'click'); controller.refresh(); },
+        expected: matrixView('expired', deadline, [], null, ['#mainwp-message-zone', 'Please enter the administrator password.', 'yellow'])
+    })),
+    ...['future', 'passed'].map(deadline => ({
+        name: `E4 detected | blur then connect ERROR then late NOMAINWP | ${deadline}`, status: 'detected', deadline,
+        run(h, controller) {
+            h.trigger('#mainwp_managesites_add_wpurl', 'change');
+            matrixApply(h, controller, 'connect ERROR', deadline);
+            if (deadline === 'future') h.advance(2000);
+            h.reply({ response: 'NOMAINWP' });
+        },
+        expected: matrixView('expired', 'passed', [], null, ['#mainwp-message-zone'])
+    })),
+    ...['connect ERROR', 'connect transport error'].map(event => ({
+        name: `connecting | changed target then ${event} then NOMAINWP | passed`, status: 'connecting', deadline: 'passed',
+        run(h, controller) {
+            matrixApply(h, controller, 'changed field', 'passed'); h.advance(400);
+            matrixApply(h, controller, event, 'passed'); h.reply({ response: 'NOMAINWP' });
+        },
+        expected: { ...matrixView('waiting', 'none', ['cap', 'poll'], null,
+            ['#mainwp-message-zone', event === 'connect ERROR' ? '<p>Wrong password</p>' : 'Undefined error occurred. Please try again.', 'red']),
+            installHref: 'https://other.example/wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term' }
+    })),
+    {
+        name: 'detected | expiry request then edit and stale NOMAINWP | passed', status: 'detected', deadline: 'passed',
+        run(h, controller) {
+            controller.checkExpiry(); const old = h.requests.at(-1);
+            matrixApply(h, controller, 'changed field', 'passed'); old.options.success({ response: 'NOMAINWP' });
+        },
+        expected: matrixView('idle', 'none', ['debounce'])
+    },
+    {
+        name: 'expired | Retry then reactivated Child | passed', status: 'expired', deadline: 'passed',
+        run(h) {
+            h.trigger('#mainwp-onboarding-retry', 'click');
+            h.reply({ response: 'OK', connection_window_remaining: 120 });
+        },
+        expected: { ...matrixView('detected', 'future', ['countdown']), timerLine: 'About 2 minutes left to connect.' }
+    }
+];
+
+test('detection state/input matrix (478 rows)', async t => {
+    const rows = [...detectionMatrix, ...matrixSequences];
+    assert.equal(rows.length, 478);
+    for (const row of rows) await t.test(row.name, () => {
+        const h = uiHarness();
+        const controller = matrixSeed(h, row.status, row.deadline);
+        if (row.run) row.run(h, controller);
+        else matrixApply(h, controller, row.event, row.deadline);
+        assert.deepEqual(matrixSnapshot(h, controller), row.expected);
+    });
+});
 
 test('wizard fields debounce detection, render install guidance, and enable Connect independently of pre-check', () => {
     const h = uiHarness();
@@ -425,27 +655,6 @@ test('detected countdown pauses rendering in hidden tabs, catches up on return, 
     assert.equal(h.timers.size, 0);
 });
 
-test('visible countdown checks once at the deadline and NOMAINWP shows expiry recovery', () => {
-    const h = uiHarness();
-    h.fill(); h.advance(400);
-    h.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 1 });
-    h.advance(999);
-    assert.equal(h.requests.length, 1);
-    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
-    h.advance(1);
-    assert.equal(h.requests.length, 2);
-    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
-    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'The connection window may have ended. If connecting fails, check that MainWP Child is still active.');
-    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
-    h.reply({ response: 'NOMAINWP' });
-    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), false);
-    assert.equal(h.$('#mainwp-onboarding-retry').prop('hidden'), false);
-    assert.equal(h.$('#mainwp-onboarding-plugins-link').attr('href'), 'https://example.org/wordpress/wp-admin/plugins.php');
-    h.advance(7200000);
-    assert.equal(h.requests.length, 2);
-    assert.equal(h.timers.size, 0);
-});
-
 test('countdown writes its live region only when the displayed text changes', () => {
     const h = uiHarness();
     h.fill(); h.advance(400);
@@ -492,29 +701,6 @@ test('older Child default explanation and disabled timer are distinct from repor
     }
 });
 
-test('connection error after the deadline rechecks Child, offers expiry recovery and Retry detects reactivation', () => {
-    const h = uiHarness();
-    h.fill(); h.advance(400);
-    h.reply({ response: 'OK', connection_window_remaining: 1 });
-    h.advance(1000);
-    h.$('#mainwp_managesites_add_admin_pwd').val('password');
-    h.trigger('#mainwp_managesites_add_admin_pwd', 'input');
-    h.trigger('#mainwp_managesites_add', 'click');
-    h.reply({ response: 'ERROR MainWP Child not detected', failure_ux: '<p>Child not detected</p>' });
-    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
-    h.reply({ response: 'NOMAINWP' });
-    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), false);
-    assert.deepEqual(h.messages.at(-1), ['#mainwp-message-zone']);
-    assert.match(h.$('#mainwp-onboarding-expiry-message').text(), /may have switched itself off/);
-    assert.equal(h.$('#mainwp-onboarding-plugins-link').attr('href'), 'https://example.org/wordpress/wp-admin/plugins.php');
-    assert.equal(h.$('#mainwp-onboarding-retry').prop('hidden'), false);
-    h.trigger('#mainwp-onboarding-retry', 'click');
-    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
-    h.reply({ response: 'OK', connection_window_remaining: 1200 });
-    assert.equal(h.$('#mainwp-onboarding-child').text(), 'Yes');
-    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 20 minutes left to connect.');
-});
-
 test('field edits abort live detection immediately, debounce once and page exit cancels pending work', () => {
     const h = uiHarness();
     h.fill(); h.advance(400);
@@ -525,6 +711,7 @@ test('field edits abort live detection immediately, debounce once and page exit 
     old.options.success({ response: 'OK', connection_window_remaining: 1200 });
     assert.equal(h.$('#mainwp-onboarding-child').text(), 'Checking...');
     h.advance(200);
+    h.$('#mainwp_managesites_add_wpadmin').val('other-admin');
     h.trigger('#mainwp_managesites_add_wpadmin', 'input');
     h.advance(399);
     assert.equal(h.requests.length, 1);
@@ -585,115 +772,4 @@ test('password controls enable Connect, while the advanced password-off mode rem
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
     h.trigger('#mainwp_managesites_add', 'click');
     assert.equal(h.requests.at(-1).options.data.action, 'mainwp_addwp');
-});
-
-test('editing during a connection attempt cannot apply the old target deadline to a different site', () => {
-    const h = uiHarness();
-    h.fill(); h.advance(400); h.reply({ response: 'OK', connection_window_remaining: 0 });
-    h.$('#mainwp_managesites_add_admin_pwd').val('password');
-    h.trigger('#mainwp_managesites_add', 'click');
-    const connection = h.requests.at(-1);
-    h.$('#mainwp_managesites_add_wpurl').val('new.example');
-    h.trigger('#mainwp_managesites_add_wpurl', 'input');
-    h.advance(400);
-    connection.options.success({ response: 'ERROR Could not connect' });
-    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
-    assert.equal(h.requests.at(-1).options.data.url, 'https://new.example/');
-    h.reply({ response: 'NOMAINWP' });
-    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
-    assert.equal(h.$('#mainwp-onboarding-install').prop('hidden'), false);
-});
-
-test('a failed connect before the deadline re-checks the Child and keeps the countdown', () => {
-    const h = uiHarness();
-    h.fill(); h.advance(400);
-    h.reply({ response: 'OK', connection_window_remaining: 1200 });
-    h.$('#mainwp_managesites_add_admin_pwd').val('wrong');
-    h.trigger('#mainwp_managesites_add_admin_pwd', 'input');
-    h.trigger('#mainwp_managesites_add', 'click');
-    h.reply({ response: 'ERROR Wrong password', failure_ux: '<p>Check the administrator password.</p>' });
-    assert.equal(h.messages.at(-1)[1], '<p>Check the administrator password.</p>');
-    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
-    h.reply({ response: 'OK', connection_window_remaining: 1100 });
-    assert.equal(h.$('#mainwp-onboarding-timer').prop('hidden'), false);
-    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 19 minutes left to connect.');
-    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
-    assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
-    h.trigger('window', 'pagehide');
-    assert.equal(h.timers.size, 0);
-});
-
-test('an expiry check answered by a still-active Child restarts the countdown from its fresh window', () => {
-    const h = uiHarness();
-    h.fill(); h.advance(400);
-    h.reply({ response: 'OK', connection_window_remaining: 1 });
-    h.advance(1000);
-    assert.equal(h.requests.length, 2);
-    h.reply({ response: 'OK', connection_window_remaining: 600 });
-    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 10 minutes left to connect.');
-    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
-    h.advance(60000);
-    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 9 minutes left to connect.');
-    h.trigger('window', 'pagehide');
-    assert.equal(h.timers.size, 0);
-});
-
-test('returning to the tab during a connect attempt sends no expiry check', () => {
-    const h = uiHarness();
-    h.fill(); h.advance(400);
-    h.reply({ response: 'OK', connection_window_remaining: 1 });
-    h.advance(1000);
-    h.reply({ response: 'OK', connection_window_remaining: 0 });
-    h.$('#mainwp_managesites_add_admin_pwd').val('password');
-    h.trigger('#mainwp_managesites_add_admin_pwd', 'input');
-    h.trigger('#mainwp_managesites_add', 'click');
-    const connection = h.requests.at(-1);
-    assert.equal(connection.options.data.action, 'mainwp_addwp');
-    h.visible(true);
-    h.visible(false);
-    assert.equal(h.requests.at(-1), connection);
-    connection.options.success({ response: 'ERROR MainWP Child not detected' });
-    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
-    h.reply({ response: 'NOMAINWP' });
-    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), false);
-});
-
-test('rows that a stopped check never reached read Not checked instead of Checking', () => {
-    for (const [result, reachable, child] of [
-        [{ response: 'HTTPERROR' }, 'No', 'Not checked'],
-        [{ response: 'ERROR Site is already connected to your MainWP Dashboard.' }, 'Not checked', 'Not checked']
-    ]) {
-        const h = uiHarness();
-        h.fill(); h.advance(400);
-        h.reply(result);
-        assert.equal(h.$('#mainwp-onboarding-reachable').text(), reachable);
-        assert.equal(h.$('#mainwp-onboarding-child').text(), child);
-    }
-    const h = uiHarness();
-    h.fill(); h.advance(400);
-    assert.equal(h.$('#mainwp-onboarding-reachable').text(), 'Checking...');
-    h.reply({ response: 'NOMAINWP' });
-    assert.equal(h.$('#mainwp-onboarding-child').text(), 'Not yet');
-});
-
-test('the re-check after a failed connect keeps the reported deadline, so NOMAINWP past it offers expiry recovery', () => {
-    const h = uiHarness();
-    h.fill(); h.advance(400);
-    h.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 2 });
-    h.$('#mainwp_managesites_add_admin_pwd').val('wrong');
-    h.trigger('#mainwp_managesites_add_admin_pwd', 'input');
-    h.trigger('#mainwp_managesites_add', 'click');
-    h.reply({ response: 'ERROR Wrong password' });
-    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
-    h.advance(2000);
-    h.reply({ response: 'NOMAINWP' });
-    assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', h.context), 'expired');
-    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), false);
-    assert.equal(h.$('#mainwp-onboarding-retry').prop('hidden'), false);
-    assert.equal(h.$('#mainwp-onboarding-install').prop('hidden'), true);
-    h.trigger('#mainwp-onboarding-retry', 'click');
-    h.reply({ response: 'NOMAINWP' });
-    assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', h.context), 'waiting');
-    h.trigger('window', 'pagehide');
-    assert.equal(h.timers.size, 0);
 });

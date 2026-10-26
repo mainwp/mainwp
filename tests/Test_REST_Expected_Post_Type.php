@@ -29,7 +29,7 @@ class Test_REST_Expected_Post_Type extends \WP_UnitTestCase {
 	/**
 	 * Child get_edit response.
 	 *
-	 * @var array
+	 * @var array|string
 	 */
 	private $lookup;
 

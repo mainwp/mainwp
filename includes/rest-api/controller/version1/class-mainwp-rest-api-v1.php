@@ -737,6 +737,14 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
             throw new MainWP_Exception( sprintf( esc_html__( 'Sorry, you are not allowed to do the %s method.', 'mainwp' ), ( isset( $methods_map[ $method ] ) ? $methods_map[ $method ] : '' ) ) ); //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         }
 
+        // Legacy management routes also delete through POST, so method rights alone are insufficient.
+        if ( isset( $request['action'] ) && 'delete' === $request['action'] && ! in_array( 'd', $item_pers, true ) ) {
+            $route = strtolower( trim( $request->get_route(), '/' ) );
+            if ( in_array( $route, array( 'mainwp/v1/site/site-manage-plugin', 'mainwp/v1/site/site-manage-theme' ), true ) ) {
+                throw new MainWP_Exception( esc_html__( 'Sorry, you are not allowed to delete plugins or themes.', 'mainwp' ) );
+            }
+        }
+
         return true;
     }
 

@@ -135,6 +135,8 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      *
      * [--adminpassword=<password>]
      *  : Child administrator password for --add-site, when required by the Child plugin.
+     *    Defaults to HTTPS with certificate verification. HTTP requires --ssl_verify=0.
+     *    Use --ssl_verify=0 to opt out of certificate verification only if you accept the risk.
      *
      *
      * ## EXAMPLES

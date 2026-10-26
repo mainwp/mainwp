@@ -9,6 +9,7 @@ namespace MainWP\Dashboard\Tests;
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Common;
+use MainWP\Dashboard\MainWP_Exception;
 use MainWP\Dashboard\MainWP_Manage_Sites_Handler;
 use MainWP\Dashboard\MainWP_System;
 use MainWP\Dashboard\MainWP_Utility;
@@ -64,6 +65,24 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 	 * @var array
 	 */
 	private $reply = array( 'register' => 'OK' );
+	/**
+	 * Certificate verification flags received by transport.
+	 *
+	 * @var array
+	 */
+	private $certificate_checks = array();
+	/**
+	 * Simulate an untrusted certificate at the transport boundary.
+	 *
+	 * @var bool
+	 */
+	private $untrusted_certificate = false;
+	/**
+	 * Native cURL failure diagnostic.
+	 *
+	 * @var string
+	 */
+	private $transport_error = 'SSL certificate problem: self-signed certificate';
 
 	/**
 	 * Load the CLI handler with output doubles.
@@ -94,7 +113,8 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
 		Add_Site_CLI_Output_Double::$messages = array();
 		add_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
-		add_filter( 'mainwp_dev_return_data_before_connect_site', array( $this, 'capture_request' ), 10, 4 );
+		add_filter( 'mainwp_dev_return_data_before_connect_site', array( $this, 'capture_request' ), 10, 6 );
+		add_filter( 'mainwp_fetch_url_not_authed_pre', array( $this, 'set_transport_failure_context' ), 10, 12 );
 		add_filter( 'mainwp_fetch_url_authed_pre', '__return_empty_array' );
 		add_filter( 'pre_http_request', array( $this, 'block_http' ) );
 	}
@@ -105,6 +125,7 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 	public function tear_down() {
 		remove_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
 		remove_filter( 'mainwp_dev_return_data_before_connect_site', array( $this, 'capture_request' ), 10 );
+		remove_filter( 'mainwp_fetch_url_not_authed_pre', array( $this, 'set_transport_failure_context' ), 10 );
 		remove_filter( 'mainwp_fetch_url_authed_pre', '__return_empty_array' );
 		remove_filter( 'pre_http_request', array( $this, 'block_http' ) );
 		Add_Site_CLI_Output_Double::$messages = array();
@@ -127,11 +148,42 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 	 * @param object $website Site being registered.
 	 * @param string $url     Registration endpoint.
 	 * @param string $postdata Serialized request.
+	 * @param bool   $check_constraints Whether transport checks site constraints.
+	 * @param bool   $verify_certificate Whether transport verifies the certificate.
 	 * @return array Child response fixture.
+	 * @throws MainWP_Exception Native transport failure fixture.
 	 */
-	public function capture_request( $pre, $website, $url, $postdata ) {
-		$this->requests[] = $postdata;
+	public function capture_request( $pre, $website, $url, $postdata, $check_constraints, $verify_certificate ) {
+		$this->requests[]           = $postdata;
+		$this->certificate_checks[] = $verify_certificate;
+		if ( $this->untrusted_certificate && $verify_certificate ) {
+			throw new MainWP_Exception( 'HTTPERROR', $this->transport_error );
+		}
 		return $this->reply;
+	}
+
+	/**
+	 * Supply the same failure category as cURL before the capture hook throws.
+	 *
+	 * @param mixed  $pre Existing response.
+	 * @param string $url Endpoint.
+	 * @param string $admin Administrator.
+	 * @param string $what Operation.
+	 * @param array  $params Request fields.
+	 * @param bool   $force Force request.
+	 * @param bool   $verify_certificate Certificate verification.
+	 * @param string $http_user HTTP username.
+	 * @param string $http_pass HTTP password.
+	 * @param int    $ssl_version TLS version.
+	 * @param array  $others Transport options.
+	 * @param array  $output Failure context passed by reference.
+	 * @return mixed Existing response.
+	 */
+	public function set_transport_failure_context( $pre, $url, $admin, $what, $params, $force, $verify_certificate, $http_user, $http_pass, $ssl_version, $others, &$output ) {
+		if ( $this->untrusted_certificate && $verify_certificate ) {
+			$output['error_category'] = 'http_error';
+		}
+		return $pre;
 	}
 
 	/**
@@ -162,6 +214,233 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 		}
 		$this->assertCount( 1, Add_Site_CLI_Output_Double::$messages );
 		return Add_Site_CLI_Output_Double::$messages[0];
+	}
+
+	/**
+	 * Password registration verifies HTTPS certificates by default.
+	 */
+	public function test_password_defaults_to_certificate_verification() {
+		$args                  = $this->arguments();
+		$args['adminpassword'] = 'CliFixture42';
+		update_option( 'mainwp_sslVerifyCertificate', 0 );
+		list( $status ) = $this->run_command( $args );
+		$this->assertSame( array( true ), $this->certificate_checks );
+		$this->assertSame( 'success', $status );
+	}
+
+	/**
+	 * HTTP passwords require the explicit zero opt-out before shared handling.
+	 *
+	 * @dataProvider http_password_arguments
+	 * @param array $extra Additional CLI arguments.
+	 */
+	public function test_http_password_requires_explicit_opt_out( $extra ) {
+		$args             = array_merge( $this->arguments(), array( 'adminpassword' => 'CliFixture42' ), $extra );
+		$args['site-url'] = 'http://cli-add-site.example.org/';
+		$shared_calls     = 0;
+		$observe_shared   = static function ( $query ) use ( &$shared_calls ) {
+			if ( false !== strpos( $query, 'mainwp_wp' ) ) {
+				++$shared_calls;
+			}
+			return $query;
+		};
+		add_filter( 'query', $observe_shared );
+		try {
+			list( $status, $message ) = $this->run_command( $args );
+		} finally {
+			remove_filter( 'query', $observe_shared );
+		}
+		$this->assertSame( 'error', $status );
+		$this->assertStringContainsString( 'HTTPS', $message );
+		$this->assertStringContainsString( '--ssl_verify=0', $message );
+		$this->assertStringNotContainsString( 'CliFixture42', $message );
+		$this->assertSame( array(), $this->requests );
+		$this->assertSame( 0, $shared_calls, 'HTTP refusal must precede the shared handler site lookup.' );
+	}
+
+	/**
+	 * Supply HTTP inputs that do not explicitly opt out.
+	 *
+	 * @return array CLI argument fixtures.
+	 */
+	public function http_password_arguments() {
+		return array(
+			'omitted'        => array( array() ),
+			'verify'         => array( array( 'ssl_verify' => '1' ) ),
+			'global'         => array( array( 'ssl_verify' => '2' ) ),
+			'empty-option'   => array( array( 'ssl_verify' => '' ) ),
+			'empty-password' => array( array( 'adminpassword' => '' ) ),
+			'zero-password'  => array( array( 'adminpassword' => '0' ) ),
+		);
+	}
+
+	/**
+	 * Only documented TLS choices may accompany the new password argument.
+	 *
+	 * @dataProvider invalid_tls_choices
+	 * @param string $choice Unsupported verification choice.
+	 */
+	public function test_password_rejects_invalid_tls_choice( $choice ) {
+		$args                     = $this->arguments();
+		$args['adminpassword']    = 'CliFixture42';
+		$args['ssl_verify']       = $choice;
+		list( $status, $message ) = $this->run_command( $args );
+		$this->assertSame( 'error', $status );
+		$this->assertStringContainsString( '--ssl_verify=0', $message );
+		$this->assertStringContainsString( 'TLS', $message );
+		$this->assertStringNotContainsString( $args['adminpassword'], $message );
+		$this->assertSame( array(), $this->requests );
+	}
+
+	/**
+	 * Supply values that disable verification without the documented opt-out.
+	 *
+	 * @return array Invalid verification fixtures.
+	 */
+	public function invalid_tls_choices() {
+		return array( array( '' ), array( 'invalid' ), array( 'false' ), array( '00' ), array( '0suffix' ) );
+	}
+
+	/**
+	 * An untrusted HTTPS certificate fails when verification is omitted.
+	 *
+	 * @dataProvider certificate_errors
+	 * @param string $diagnostic Native cURL diagnostic.
+	 */
+	public function test_untrusted_https_password_fails_with_secure_default( $diagnostic ) {
+		$args                        = $this->arguments();
+		$args['adminpassword']       = 'CliFixture42';
+		$this->untrusted_certificate = true;
+		$this->transport_error       = $diagnostic;
+		list( $status, $message )    = $this->run_command( $args );
+		$this->assertSame( 'error', $status );
+		$this->assertSame( array( true, true ), $this->certificate_checks );
+		$this->assertStringContainsString( $diagnostic, $message );
+		$this->assertStringContainsString( 'TLS certificate verification failed', $message );
+		$this->assertStringContainsString( '--ssl_verify=0', $message );
+		$this->assertStringNotContainsString( $args['adminpassword'], $message );
+		$this->assertCount( 2, $this->requests );
+		$this->assertCount( 0, MainWP_DB::instance()->get_websites_by_url( $args['site-url'] ) );
+	}
+
+	/**
+	 * Supply certificate chain and hostname verification failures.
+	 *
+	 * @return array Certificate diagnostics.
+	 */
+	public function certificate_errors() {
+		return array(
+			array( 'SSL certificate problem: self-signed certificate' ),
+			array( 'SSL: no alternative certificate subject name matches target hostname' ),
+		);
+	}
+
+	/**
+	 * Credential rejection must not suggest disabling TLS verification.
+	 */
+	public function test_credential_failure_has_no_tls_opt_out_hint() {
+		$args                     = $this->arguments();
+		$args['adminpassword']    = 'CliFixture42';
+		$this->reply              = array(
+			'error'      => 'Administrator credentials rejected',
+			'error_code' => 'REG_ERROR7',
+		);
+		list( $status, $message ) = $this->run_command( $args );
+		$this->assertSame( 'error', $status );
+		$this->assertStringNotContainsString( '--ssl_verify=0', $message );
+	}
+
+	/**
+	 * Other transport failures must not suggest disabling certificate checks.
+	 *
+	 * @dataProvider other_transport_errors
+	 * @param string $diagnostic Native transport diagnostic.
+	 */
+	public function test_other_transport_failure_has_no_tls_opt_out_hint( $diagnostic ) {
+		$args                        = $this->arguments();
+		$args['adminpassword']       = 'CliFixture42';
+		$args['ssl_verify']          = '1';
+		$this->untrusted_certificate = true;
+		$this->transport_error       = $diagnostic;
+		list( $status, $message )    = $this->run_command( $args );
+		$this->assertSame( 'error', $status );
+		$this->assertStringContainsString( $diagnostic, $message );
+		$this->assertStringNotContainsString( '--ssl_verify=0', $message );
+	}
+
+	/**
+	 * Supply failures unrelated to certificate verification.
+	 *
+	 * @return array Transport diagnostics.
+	 */
+	public function other_transport_errors() {
+		return array( array( 'Connection refused' ), array( 'SSL connect error' ) );
+	}
+
+	/**
+	 * Explicit TLS choices and no-password calls retain their transport behavior.
+	 *
+	 * @dataProvider tls_compatibility_arguments
+	 * @param string $scheme   URL scheme.
+	 * @param array  $extra    Additional CLI arguments.
+	 * @param bool   $expected Expected certificate verification flag.
+	 */
+	public function test_tls_choices_preserve_existing_behavior( $scheme, $extra, $expected ) {
+		$args                        = array_merge( $this->arguments(), $extra );
+		$args['site-url']            = $scheme . '://cli-add-site.example.org/';
+		$this->untrusted_certificate = ! $expected;
+		list( $status )              = $this->run_command( $args );
+		$this->assertSame( array( $expected ), $this->certificate_checks );
+		$this->assertSame( 'success', $status );
+		$this->assertCount( 1, $this->requests );
+	}
+
+	/**
+	 * Supply explicit verification choices and legacy no-password calls.
+	 *
+	 * @return array Transport fixtures.
+	 */
+	public function tls_compatibility_arguments() {
+		return array(
+			'http-opt-out'      => array(
+				'http',
+				array(
+					'adminpassword' => 'CliFixture42',
+					'ssl_verify'    => '0',
+				),
+				false,
+			),
+			'https-opt-out'     => array(
+				'https',
+				array(
+					'adminpassword' => 'CliFixture42',
+					'ssl_verify'    => '0',
+				),
+				false,
+			),
+			'https-verify'      => array(
+				'https',
+				array(
+					'adminpassword' => 'CliFixture42',
+					'ssl_verify'    => '1',
+				),
+				true,
+			),
+			'https-global'      => array(
+				'https',
+				array(
+					'adminpassword' => 'CliFixture42',
+					'ssl_verify'    => '2',
+				),
+				true,
+			),
+			'http-no-password'  => array( 'http', array(), false ),
+			'https-no-password' => array( 'https', array(), false ),
+			'legacy-verify'     => array( 'https', array( 'ssl_verify' => '1' ), true ),
+			'legacy-opt-out'    => array( 'http', array( 'ssl_verify' => '0' ), false ),
+			'legacy-empty'      => array( 'https', array( 'ssl_verify' => '' ), false ),
+			'legacy-invalid'    => array( 'https', array( 'ssl_verify' => 'invalid' ), false ),
+		);
 	}
 
 	/**

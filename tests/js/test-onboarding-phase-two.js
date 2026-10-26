@@ -255,6 +255,7 @@ function uiHarness(mode = 'single-site') {
     const events = new Map();
     const requests = [];
     const messages = [];
+    const textWrites = [];
     const readyCallbacks = [];
     const document = { hidden: false };
     const window = {};
@@ -264,6 +265,7 @@ function uiHarness(mode = 'single-site') {
         install: 'Install MainWP Child on %s →',
         fallback: "If the link doesn't open the plugin installer, install MainWP Child from Plugins > Add New on %s.",
         remaining: 'About %d minutes left to connect.', remainingOne: 'About 1 minute left to connect.', remainingLess: 'Less than a minute left to connect.', defaultTime: 'By default this is 20 minutes after activation.',
+        windowClosed: 'The connection window may have ended. If connecting fails, check that MainWP Child is still active.',
         expired: 'MainWP Child may have switched itself off because the connection window expired. Check that it is active on %s, reactivate it if needed, and click Retry.',
         error: 'Undefined error occurred. Please try again.', password: 'Please enter the administrator password.'
     };
@@ -294,7 +296,7 @@ function uiHarness(mode = 'single-site') {
                 },
                 change(callback) { return el.on('change', callback); },
                 trigger(event) { trigger(key, event); return el; },
-                text(value) { if (value === undefined) return text; text = String(value); attributes.html = undefined; return el; },
+                text(value) { if (value === undefined) return text; textWrites.push({ selector: key, value }); text = String(value); attributes.html = undefined; return el; },
                 html(value) { if (value === undefined) return attributes.html ?? text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); attributes.html = value; return el; },
                 empty() { text = ''; delete attributes.html; return el; },
                 toggleClass(name, enabled) { attributes[name] = enabled; return el; },
@@ -346,7 +348,7 @@ function uiHarness(mode = 'single-site') {
         }
         now = end;
     }
-    return { $, context, requests, messages, timers, advance, document,
+    return { $, context, requests, messages, textWrites, timers, advance, document,
         trigger: (selector, event) => trigger(selector, event),
         reply: result => requests.at(-1).options.success(result),
         fill() {
@@ -361,12 +363,15 @@ function uiHarness(mode = 'single-site') {
 test('wizard fields debounce detection, render install guidance, and enable Connect independently of pre-check', () => {
     const h = uiHarness();
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), true);
+    assert.equal(h.$('#mainwp-onboarding-detection').prop('hidden'), true);
     h.fill();
+    assert.equal(h.$('#mainwp-onboarding-detection').prop('hidden'), false);
     h.advance(399);
     assert.equal(h.requests.length, 0);
     h.advance(1);
     assert.equal(h.requests.length, 1);
     assert.equal(h.requests[0].options.data.action, 'mainwp_checkwp');
+    assert.equal(h.requests[0].options.timeout, 20000);
     assert.equal(h.requests[0].options.data.security, 'test-nonce');
     assert.equal(h.requests[0].options.data.url, 'https://example.org/wordpress/');
     assert.equal(h.requests[0].options.data.admin, 'admin');
@@ -380,19 +385,23 @@ test('wizard fields debounce detection, render install guidance, and enable Conn
     h.trigger('#mainwp_managesites_add_admin_pwd', 'input');
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
     h.advance(5000);
+    assert.equal(h.requests.length, 2);
+    assert.equal(h.$('#mainwp-onboarding-install').prop('hidden'), false);
+    assert.equal(h.$('#mainwp-onboarding-install-link').attr('href'), 'https://example.org/wordpress/wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term');
     h.reply({ response: 'HTTPERROR', failure_ux: '<p>Existing transport advice</p>' });
     assert.equal(h.$('#mainwp-onboarding-reachable').text(), 'No');
     assert.equal(h.$('#mainwp-onboarding-detection-message').text(), "We can't reach https://example.org/wordpress/. Check the URL and that the site is online.");
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
     h.trigger('#mainwp_managesites_add', 'click');
     assert.equal(h.requests.at(-1).options.data.action, 'mainwp_addwp');
+    assert.equal(Object.hasOwn(h.requests.at(-1).options, 'timeout'), false);
     assert.equal(h.requests.at(-1).options.data.managesites_add_adminpwd, 'password');
     h.reply({ response: 'ERROR Bad password', failure_ux: '<p>Specific authentication error</p>' });
     assert.equal(h.messages.at(-1)[1], '<p>Specific authentication error</p>');
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
 });
 
-test('detected countdown pauses rendering in hidden tabs, catches up on return, and zero alone never shows expiry', () => {
+test('detected countdown pauses rendering in hidden tabs, catches up on return, and checks expiry without assuming it', () => {
     const h = uiHarness();
     h.fill(); h.advance(400);
     h.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 61 });
@@ -404,8 +413,70 @@ test('detected countdown pauses rendering in hidden tabs, catches up on return, 
     h.advance(60000);
     assert.equal(h.requests.length, 1);
     h.visible(false);
-    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'Less than a minute left to connect.');
+    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'The connection window may have ended. If connecting fails, check that MainWP Child is still active.');
+    assert.equal(h.requests.length, 2);
+    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
     assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
+    h.reply({ response: 'OK' });
+    assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', h.context), 'detected');
+    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
+    h.advance(7200000);
+    assert.equal(h.requests.length, 2);
+    assert.equal(h.timers.size, 0);
+});
+
+test('visible countdown checks once at the deadline and NOMAINWP shows expiry recovery', () => {
+    const h = uiHarness();
+    h.fill(); h.advance(400);
+    h.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 1 });
+    h.advance(999);
+    assert.equal(h.requests.length, 1);
+    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
+    h.advance(1);
+    assert.equal(h.requests.length, 2);
+    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
+    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'The connection window may have ended. If connecting fails, check that MainWP Child is still active.');
+    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
+    h.reply({ response: 'NOMAINWP' });
+    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), false);
+    assert.equal(h.$('#mainwp-onboarding-retry').prop('hidden'), false);
+    assert.equal(h.$('#mainwp-onboarding-plugins-link').attr('href'), 'https://example.org/wordpress/wp-admin/plugins.php');
+    h.advance(7200000);
+    assert.equal(h.requests.length, 2);
+    assert.equal(h.timers.size, 0);
+});
+
+test('countdown writes its live region only when the displayed text changes', () => {
+    const h = uiHarness();
+    h.fill(); h.advance(400);
+    h.reply({ response: 'OK', connection_window_remaining: 120 });
+    const writes = () => h.textWrites.filter(write => write.selector === '#mainwp-onboarding-time-left').length;
+    const initial = writes();
+    h.advance(59000);
+    assert.equal(writes(), initial);
+    h.advance(1000);
+    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 1 minute left to connect.');
+    assert.equal(writes(), initial + 1);
+    h.trigger('window', 'pagehide');
+    assert.equal(h.timers.size, 0);
+});
+
+test('empty fields remain idle after a hidden tab exceeds the polling cap and filling them starts detection', () => {
+    const h = uiHarness();
+    h.visible(true);
+    h.advance(1200001);
+    h.visible(false);
+    assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', h.context), 'idle');
+    assert.equal(h.$('#mainwp-onboarding-detection').prop('hidden'), true);
+    assert.equal(h.$('#mainwp-onboarding-retry').prop('hidden'), true);
+    assert.equal(h.requests.length, 0);
+    assert.equal(h.timers.size, 0);
+    h.fill();
+    assert.equal(h.$('#mainwp-onboarding-detection').prop('hidden'), false);
+    h.advance(400);
+    assert.equal(h.requests.length, 1);
+    assert.equal(h.requests[0].options.data.action, 'mainwp_checkwp');
+    h.trigger('window', 'pagehide');
     assert.equal(h.timers.size, 0);
 });
 
@@ -415,6 +486,7 @@ test('older Child default explanation and disabled timer are distinct from repor
         h.fill(); h.advance(400);
         h.reply({ response: 'OK', ...fields });
         assert.equal(h.$('#mainwp-onboarding-time-left').text(), expected);
+        assert.equal(h.$('#mainwp-onboarding-timer').prop('hidden'), fields.connection_window_minutes === 0);
         assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
         assert.equal(h.timers.size, 0);
     }
@@ -432,6 +504,7 @@ test('connection error after the deadline rechecks Child, offers expiry recovery
     assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
     h.reply({ response: 'NOMAINWP' });
     assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), false);
+    assert.deepEqual(h.messages.at(-1), ['#mainwp-message-zone']);
     assert.match(h.$('#mainwp-onboarding-expiry-message').text(), /may have switched itself off/);
     assert.equal(h.$('#mainwp-onboarding-plugins-link').attr('href'), 'https://example.org/wordpress/wp-admin/plugins.php');
     assert.equal(h.$('#mainwp-onboarding-retry').prop('hidden'), false);

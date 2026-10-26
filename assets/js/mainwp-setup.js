@@ -140,6 +140,7 @@ function mainwp_onboarding_detection_controller(options) {
       if (options.ready()) armLimit();
     },
     resume() {
+      if (!options.ready()) { paused = false; return; }
       if (!paused || exhausted()) return;
       paused = false;
       if (options.ready()) poll();
@@ -203,7 +204,11 @@ function mainwp_onboarding_bind_detection() {
       if (state.status === 'detected' && state.deadline !== null && state.deadline > Date.now() && !document.hidden) {
         countdown = setInterval(() => {
           mainwp_onboarding_render_time(state);
-          if (Date.now() >= state.deadline) { clearInterval(countdown); countdown = null; }
+          if (Date.now() >= state.deadline) {
+            clearInterval(countdown);
+            countdown = null;
+            mainwp_onboarding_detection.checkExpiry();
+          }
         }, 1000);
       }
       updateButton();
@@ -224,6 +229,7 @@ function mainwp_onboarding_bind_detection() {
     } else {
       mainwp_onboarding_detection.refresh();
       mainwp_onboarding_detection.resume();
+      mainwp_onboarding_detection.checkExpiry();
     }
   });
   jQuery(window).on('pagehide', function () {
@@ -247,25 +253,29 @@ function mainwp_onboarding_render_time(state) {
   let text = '';
   if (state.minutes !== 0) {
     text = state.deadline === null ? (state.minutes === null ? mainwp_onboarding_copy('defaultTime') : '')
+      : Date.now() >= state.deadline ? mainwp_onboarding_copy('windowClosed')
       : mainwp_onboarding_remaining_text(Math.max(0, Math.ceil((state.deadline - Date.now()) / 1000)));
   }
-  jQuery('#mainwp-onboarding-time-left').text(text);
+  const timeLeft = jQuery('#mainwp-onboarding-time-left');
+  if (timeLeft.text() !== text) timeLeft.text(text);
 }
 
 function mainwp_onboarding_render_detection(state) {
   const fields = mainwp_onboarding_fields();
   const site = fields.url || jQuery('#mainwp_managesites_add_wpurl').val().trim();
+  jQuery('#mainwp-onboarding-detection').prop('hidden', state.status === 'idle' && (!fields.url || !fields.admin));
   for (const [id, status] of [['reachable', state.reachable], ['child', state.child]]) {
     const label = status === 'ok' ? 'yes' : status === 'failed' ? 'no' : id === 'child' && state.reachable === 'ok' ? 'notYet' : 'checking';
     jQuery('#mainwp-onboarding-' + id).text(mainwp_onboarding_copy(label)).toggleClass('is-ok', status === 'ok').toggleClass('is-failed', status === 'failed');
   }
-  const install = ['waiting', 'timed_out'].includes(state.status) && state.reachable === 'ok' && !!fields.url;
+  const install = ['waiting', 'timed_out', 'checking'].includes(state.status) && state.reachable === 'ok' && !!fields.url;
   jQuery('#mainwp-onboarding-install').prop('hidden', !install);
   jQuery('#mainwp-onboarding-install-link').attr('href', install ? mainwp_onboarding_install_url(fields.url) : '').text(mainwp_onboarding_copy('install').replace('%s', site));
   jQuery('#mainwp-onboarding-install-fallback').text(mainwp_onboarding_copy('fallback').replace('%s', site));
-  jQuery('#mainwp-onboarding-timer').prop('hidden', state.status !== 'detected');
+  jQuery('#mainwp-onboarding-timer').prop('hidden', state.status !== 'detected' || state.minutes === 0);
   mainwp_onboarding_render_time(state);
   jQuery('#mainwp-onboarding-expiry').prop('hidden', state.status !== 'expired');
+  if (state.status === 'expired') mainwp_set_message_zone('#mainwp-message-zone');
   jQuery('#mainwp-onboarding-expiry-message').text(mainwp_onboarding_copy('expired').replace('%s', site));
   jQuery('#mainwp-onboarding-plugins-link').attr('href', fields.url ? fields.url + 'wp-admin/plugins.php' : '');
   jQuery('#mainwp-onboarding-retry').prop('hidden', !['expired', 'error', 'unreachable', 'timed_out', 'stopped'].includes(state.status));
@@ -460,7 +470,7 @@ let mainwp_setup_managesites_add = function () {
       data[tname] = tvalue;
     });
 
-    jQuery.ajax({ url: ajaxurl, type: 'POST', data: data, dataType: 'json', timeout: 60000, success: function (res_things) {
+    jQuery.ajax({ url: ajaxurl, type: 'POST', data: data, dataType: 'json', success: function (res_things) {
 
       let response = String(res_things.error || res_things.response || '').trim();
 

@@ -153,6 +153,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'remaining'     => __( 'About %d minutes left to connect.', 'mainwp' ),
                 'remainingOne'  => __( 'About 1 minute left to connect.', 'mainwp' ),
                 'remainingLess' => __( 'Less than a minute left to connect.', 'mainwp' ),
+                'windowClosed'  => __( 'The connection window may have ended. If connecting fails, check that MainWP Child is still active.', 'mainwp' ),
                 'defaultTime'   => __( 'By default this is 20 minutes after activation.', 'mainwp' ),
                 /* translators: %s: validated site URL. */
                 'expired'       => __( 'MainWP Child may have switched itself off because the connection window expired. Check that it is active on %s, reactivate it if needed, and click Retry.', 'mainwp' ),
@@ -639,7 +640,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                         <input type="text" id="mainwp_managesites_add_wpadmin" name="mainwp_managesites_add_wpadmin" value="" />
                                     </div>
                                     <div class="ui hidden divider"></div>
-                                    <div id="mainwp-onboarding-detection" class="ui segment" aria-live="polite">
+                                    <div id="mainwp-onboarding-detection" class="ui segment" aria-live="polite" hidden>
                                         <div class="ui list">
                                             <div class="item"><?php esc_html_e( 'Site reachable', 'mainwp' ); ?>: <strong id="mainwp-onboarding-reachable"><?php esc_html_e( 'Checking...', 'mainwp' ); ?></strong></div>
                                             <div class="item"><?php esc_html_e( 'MainWP Child detected', 'mainwp' ); ?>: <strong id="mainwp-onboarding-child"><?php esc_html_e( 'Checking...', 'mainwp' ); ?></strong></div>
@@ -656,7 +657,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                         </div>
                                         <div id="mainwp-onboarding-expiry" hidden>
                                             <p id="mainwp-onboarding-expiry-message"></p>
-                                            <a id="mainwp-onboarding-plugins-link" target="_blank" rel="noopener"><?php esc_html_e( 'Plugins', 'mainwp' ); ?></a>
+                                            <a id="mainwp-onboarding-plugins-link" target="_blank" rel="noopener"><?php esc_html_e( 'Open the Plugins page on that site →', 'mainwp' ); ?></a>
                                         </div>
                                         <button type="button" class="ui basic button" id="mainwp-onboarding-retry" hidden><?php esc_html_e( 'Retry', 'mainwp' ); ?></button>
                                     </div>
@@ -1287,7 +1288,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <p><?php esc_html_e( 'Use MainWP from Claude, Cursor or another MCP client.', 'mainwp' ); ?></p>
                             <p><code><?php esc_html_e( 'Which of my sites have plugin updates waiting?', 'mainwp' ); ?></code></p>
                         </div>
-                        <div class="extra content"><a href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-mcp' ) ); ?>"><?php esc_html_e( 'Set up MCP', 'mainwp' ); ?></a></div>
+                        <div class="extra content"><a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-mcp' ) ); ?>"><?php esc_html_e( 'Set up MCP', 'mainwp' ); ?></a></div>
                     </div>
                 <?php endif; ?>
                 <div class="ui relaxed list">

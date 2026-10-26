@@ -1918,6 +1918,16 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_current_wpid()
      */
     public static function get_sites_for_current_user() {
+        return MainWP_DB::instance()->query( self::get_sites_query() );
+    }
+
+    /**
+     * Build the Updates listing query with its current visibility scope.
+     *
+     * @param bool $apply_limit Whether to apply per-page site loading.
+     * @return string Listing query.
+     */
+    private static function get_sites_query( $apply_limit = true ) {
         /**
          * Current user global.
          *
@@ -1942,13 +1952,29 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 'maybe_cache' => true,
             );
 
-            $limit_sites = get_option( 'mainwp_manage_updates_limit_sites' );
-            if ( ! empty( $limit_sites ) ) {
-                $params['limit_sites'] = $limit_sites;
+            if ( $apply_limit ) {
+                $limit_sites = get_option( 'mainwp_manage_updates_limit_sites' );
+                if ( ! empty( $limit_sites ) ) {
+                    $params['limit_sites'] = $limit_sites;
+                }
             }
             $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'rollback_updates_data', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon', 'site_info' ), $is_staging, $params );
         }
-        return MainWP_DB::instance()->query( $sql );
+        return $sql;
+    }
+
+    /**
+     * Count the Updates listing rows before pagination.
+     *
+     * @return int Visible site count.
+     */
+    private static function get_sites_count() {
+        $websites = MainWP_DB::instance()->query( self::get_sites_query( false ) );
+        $count    = (int) MainWP_DB::num_rows( $websites );
+        if ( $websites ) {
+            MainWP_DB::free_result( $websites );
+        }
+        return $count;
     }
 
     /**
@@ -2431,7 +2457,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
 
         if ( ! empty( $limit_number ) ) {
 
-            $count = MainWP_DB::instance()->get_websites_count( null, true );
+            $count = self::get_sites_count();
 
             $current_page = 1;
             if ( isset( $_GET['current_page'] ) && isset( $_GET['_opennonce'] ) && wp_verify_nonce( sanitize_key( $_GET['_opennonce'] ), 'mainwp-admin-nonce' ) ) {
@@ -2442,7 +2468,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 $current_page = 1;
             }
 
-            $total_page = ceil( $count / $limit_number );
+            $total_page = max( 1, ceil( $count / $limit_number ) );
 
             if ( $current_page > $total_page ) {
                 $current_page = $total_page;
@@ -2458,7 +2484,7 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
          */
     public static function render_limit_load_sites(  $limit_number) { // phpcs:ignore -- NOSONAR - complex function. Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
-            $count      = MainWP_DB::instance()->get_websites_count( null, true );
+            $count      = self::get_sites_count();
             $total_page = ceil( $count / $limit_number );
 
             $current_page = (int) get_option( 'mainwp_manage_updates_limit_current_page' );

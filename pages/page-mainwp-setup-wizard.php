@@ -1287,7 +1287,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             <div class="ui padded segment">
                 <h2 class="ui header"><?php esc_html_e( "What's next", 'mainwp' ); ?></h2>
                 <div class="ui relaxed list">
-                    <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add another site', 'mainwp' ); ?></a>
+                    <a class="item" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php echo esc_html( $site || $count ? __( 'Add another site', 'mainwp' ) : __( 'Add your first site', 'mainwp' ) ); ?></a>
                     <?php if ( $site || $count ) : ?>
                         <a class="item" href="<?php echo esc_url( add_query_arg( 'siteid', $site_id, $this->get_next_step_link( 'add_client' ) ) ); ?>"><?php echo esc_html( $site ? __( 'Assign this site to a client', 'mainwp' ) : __( 'Assign sites to a client', 'mainwp' ) ); ?></a>
                     <?php endif; ?>

@@ -2053,12 +2053,14 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		$this->with_real_tables(
 			function () use ( $installer ) {
 				update_site_option( 'mainwp_db_version', '9.0.2.3' );
+				delete_option( 'mainwp_onboarding_fresh_install' );
 				$installer->install();
 			}
 		);
 
 		$this->assertSame( array( 'repair_backup_progress_index', 'repair_backup_progress_index' ), $installer->calls );
 		$this->assertSame( '9.0.2.34', get_site_option( 'mainwp_db_version' ) );
+		$this->assertFalse( get_option( 'mainwp_onboarding_fresh_install' ) );
 	}
 
 	/**

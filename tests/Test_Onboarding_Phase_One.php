@@ -156,7 +156,6 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertFalse( get_option( 'mainwp_sitehealthThreshold' ) );
 		$this->assertFalse( get_option( 'mainwp_onboarding_defaults_applied' ) );
 		$this->assertFalse( MainWP_Get_Started::is_visible() );
-		$this->assertFalse( get_option( 'mainwp_onboarding_fresh_install' ) );
 	}
 
 	/** A fresh summary enables monitoring once and leaves later edits alone. */
@@ -510,6 +509,8 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			}
 			$xpath = $this->html_xpath( $html );
 			$this->assertSame( $heading, trim( $xpath->query( '//h1' )->item( 0 )->textContent ) );
+			$this->assertSame( $count ? 0 : 1, $xpath->query( '//a[normalize-space(.)="Add your first site"]' )->length );
+			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="Add another site"]' )->length );
 			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
 			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="Assign sites to a client"]' )->length );
 			$this->assertStringNotContainsString( 'Assign this site to a client', $html );

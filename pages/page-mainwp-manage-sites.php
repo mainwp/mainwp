@@ -2683,7 +2683,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="left aligned middle aligned column">
                         <input type="button" name="mainwp_managesites_btn_import" id="mainwp_managesites_btn_import" class="ui basic button" value="<?php esc_attr_e( 'Pause', 'mainwp' ); ?>"/>
                     <?php if ( $is_wizard ) : ?>
-                            <a class="ui green button" id="mainwp-import-sites-modal-try-again" href="admin.php?page=mainwp-setup&step=connect_first_site" style="display:none"><?php esc_html_e( 'Try Again', 'mainwp' ); ?></a>
+                            <a class="ui basic green button" id="mainwp-import-sites-modal-try-again" href="admin.php?page=mainwp-setup&step=connect_first_site" style="display:none"><?php esc_html_e( 'Try Again', 'mainwp' ); ?></a>
                         <?php endif; ?>
                     </div>
                     <div class="right aligned middle aligned column">

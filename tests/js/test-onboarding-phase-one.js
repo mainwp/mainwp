@@ -142,6 +142,18 @@ test('a title filled from an invalid URL follows the corrected URL until the use
     assert.equal(h.requests[1].managesites_add_wpname, 'Client Site');
 });
 
+test('a title the shared Add Site script filled still follows a corrected URL', () => {
+    const h = harness();
+    h.$('#mainwp_managesites_add_wpurl_protocol').val('http');
+    h.$('#mainwp_managesites_add_wpadmin').val('admin');
+    vm.runInContext(setup, h.context);
+    // The shared script fills the title on URL change without marking it.
+    h.$('#mainwp_managesites_add_wpname').val('first.example.org');
+    h.$('#mainwp_managesites_add_wpurl').val('second.example.org');
+    h.handlers.get('#mainwp_managesites_add_wpurl')();
+    assert.equal(h.$('#mainwp_managesites_add_wpname').val(), 'second.example.org');
+});
+
 test('a title filled from the URL keeps no trailing slash when a failed attempt is retried', () => {
     const h = harness();
     h.$('#mainwp_managesites_add_wpurl').val('example.org');

@@ -447,13 +447,19 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
                 $website,
                 'post_action',
                 array(
-                    'action' => $status,
-                    'id'     => $post_id,
+                    'action'             => $status,
+                    'id'                 => $post_id,
+                    'expected_post_type' => 'post',
                 )
             );
 
         } catch ( MainWP_Exception $e ) {
             return new WP_Error( 'update_post_status_error', MainWP_Error_Helper::get_error_message( $e ) );
+        }
+
+        $type_error = self::get_child_type_error( $information );
+        if ( is_wp_error( $type_error ) ) {
+            return $type_error;
         }
 
         if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) || empty( $information['my_post'] ) ) {
@@ -560,6 +566,8 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
 
         $post_data = $this->prepare_post_page_data( $new_post, $post_custom, $post_featured_image, $featured_image_data, $post_gallery_images, $post_category );
 
+        $post_data['expected_post_type'] = 'post';
+
         // Send edit request to child site.
         try {
             $information = MainWP_Connect::fetch_url_authed(
@@ -570,6 +578,11 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
 
         } catch ( MainWP_Exception $e ) {
             return new WP_Error( 'edit_post_error', MainWP_Error_Helper::get_error_message( $e ) );
+        }
+
+        $type_error = self::get_child_type_error( $information );
+        if ( is_wp_error( $type_error ) ) {
+            return $type_error;
         }
 
         if ( empty( $information['added'] ) ) {
@@ -720,13 +733,19 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
                 $website,
                 'post_action',
                 array(
-                    'action' => 'delete',
-                    'id'     => $post_id,
+                    'action'             => 'delete',
+                    'id'                 => $post_id,
+                    'expected_post_type' => 'post',
                 )
             );
 
         } catch ( MainWP_Exception $e ) {
             return new WP_Error( 'delete_post_error', MainWP_Error_Helper::get_error_message( $e ) );
+        }
+
+        $type_error = self::get_child_type_error( $information );
+        if ( is_wp_error( $type_error ) ) {
+            return $type_error;
         }
 
         if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
@@ -1411,14 +1430,20 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
             return new WP_Error( 'post_id_not_found', __( 'Post id not found.', 'mainwp' ) );
         }
 
+        $type_error = $this->get_preflight_type_error( $website, $post_id );
+        if ( is_wp_error( $type_error ) ) {
+            return $type_error;
+        }
+
         try {
             $information = MainWP_Connect::fetch_url_authed(
                 $website,
                 'post_action',
                 array(
-                    'action'    => 'get_edit',
-                    'id'        => $post_id,
-                    'post_type' => 'post',
+                    'action'             => 'get_edit',
+                    'id'                 => $post_id,
+                    'post_type'          => 'post',
+                    'expected_post_type' => 'post',
                 )
             );
 
@@ -1426,17 +1451,98 @@ class MainWP_Rest_Posts_Controller extends MainWP_REST_Controller { //phpcs:igno
             return new WP_Error( 'get_post_error', MainWP_Error_Helper::get_error_message( $e ) );
         }
 
-        if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) || empty( $information['my_post'] ) ) {
+        $type_error = self::get_child_type_error( $information );
+        if ( is_wp_error( $type_error ) ) {
+            return $type_error;
+        }
+
+        if ( ! is_array( $information ) || ! isset( $information['status'] ) || 'SUCCESS' !== $information['status'] || empty( $information['my_post'] ) ) {
             return new WP_Error(
                 'post_not_exist',
                 __( 'Post not exist.', 'mainwp' )
             );
         }
 
+        $encoded_post = is_array( $information['my_post'] ) ? ( $information['my_post']['new_post'] ?? null ) : null;
+        if ( is_string( $encoded_post ) ) {
+            $post_data = $this->decode_post_page_data( array( 'new_post' => $encoded_post ) );
+            $new_post  = $post_data['new_post'];
+            if ( is_array( $new_post ) && array_key_exists( 'post_type', $new_post ) && 'post' !== $new_post['post_type'] ) {
+                $message = 'page' === $new_post['post_type'] ? __( 'This item is a page, not a post.', 'mainwp' ) : __( 'This item is not a post.', 'mainwp' );
+                return new WP_Error( 'post_not_exist', $message, array( 'status' => 404 ) );
+            }
+        }
+
         return array(
             'data'    => $information,
             'post_id' => $post_id,
         );
+    }
+
+    /**
+     * Check the actual type before an edit lookup can write a Child edit lock.
+     *
+     * @param object     $website Website.
+     * @param int|string $post_id Existing item ID.
+     * @return WP_Error|null
+     */
+    private function get_preflight_type_error( $website, $post_id ) {
+        try {
+            $posts = MainWP_Connect::fetch_url_authed(
+                $website,
+                'get_all_posts',
+                array(
+                    'post_type'  => 'any',
+                    'status'     => 'any,trash,auto-draft,inherit',
+                    'maxRecords' => 1,
+                    'postId'     => $post_id,
+                )
+            );
+        } catch ( MainWP_Exception $e ) {
+            // An unavailable listing retains the legacy edit lookup.
+            return null;
+        }
+
+        if ( ! is_array( $posts ) ) {
+            return null;
+        }
+
+        foreach ( $posts as $post ) {
+            if ( ! is_array( $post ) || ! isset( $post['id'], $post['post_type'] ) || ( ! is_int( $post['id'] ) && ! is_string( $post['id'] ) ) || (string) $post_id !== (string) $post['id'] || ! is_string( $post['post_type'] ) || '' === trim( $post['post_type'] ) ) {
+                continue;
+            }
+
+            if ( 'post' !== $post['post_type'] ) {
+                $message = 'page' === $post['post_type'] ? __( 'This item is a page, not a post.', 'mainwp' ) : __( 'This item is not a post.', 'mainwp' );
+                return new WP_Error( 'post_not_exist', $message, array( 'status' => 404 ) );
+            }
+            return null;
+        }
+        return null;
+    }
+
+    /**
+     * Preserve MWP-2020 refusals for both content controllers.
+     *
+     * @param mixed $information Child response.
+     * @return WP_Error|null
+     */
+    public static function get_child_type_error( $information ) {
+        if ( ! is_array( $information ) || ! isset( $information['status'] ) || 'FAIL' !== $information['status'] ) {
+            return null;
+        }
+
+        foreach ( array( 'error', 'message' ) as $field ) {
+            if ( isset( $information[ $field ] ) && is_string( $information[ $field ] ) ) {
+                $message = sanitize_text_field( $information[ $field ] );
+                // Keep these English strings in sync with mainwp-child-6 MWP-2020.
+                $fixed_messages = array( 'This item no longer exists.', 'Expected post type must be post or page.' );
+                if ( in_array( $message, $fixed_messages, true ) || preg_match( '/^This item is a [a-z0-9_-]+, not a (post|page)\.$/', $message ) ) {
+                    return new WP_Error( 'post_not_exist', $message, array( 'status' => 404 ) );
+                }
+            }
+        }
+        return null;
     }
 
     /**

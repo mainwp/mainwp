@@ -312,6 +312,27 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Everything is up to date', $html );
 	}
 
+	/** The multi-site summary heading follows the connected-site count. */
+	public function test_summary_without_site_pluralizes_connected_count(): void {
+		$property = new \ReflectionProperty( MainWP_Manage_Sites::class, 'total_sites' );
+		$property->setAccessible( true );
+		$_GET = array( 'siteid' => 0 );
+		foreach ( array(
+			1 => '1 site connected',
+			3 => '3 sites connected',
+		) as $count => $heading ) {
+			$property->setValue( null, $count );
+			ob_start();
+			try {
+				$this->wizard->mwp_setup_ready();
+			} finally {
+				$html = ob_get_clean();
+			}
+			$this->assertSame( $heading, trim( $this->html_xpath( $html )->query( '//h1' )->item( 0 )->textContent ) );
+		}
+		$property->setValue( null, null );
+	}
+
 	/** The multi-client form must assign the site chosen from the summary. */
 	public function test_add_client_limits_multi_client_rows_to_selected_site(): void {
 		$this->site();

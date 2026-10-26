@@ -141,6 +141,19 @@ test('a title filled from an invalid URL follows the corrected URL until the use
     assert.equal(h.requests[1].managesites_add_wpname, 'Client Site');
 });
 
+test('a title filled from the URL keeps no trailing slash when a failed attempt is retried', () => {
+    const h = harness();
+    h.$('#mainwp_managesites_add_wpurl').val('example.org');
+    h.$('#mainwp_managesites_add_wpurl_protocol').val('https');
+    vm.runInContext(setup, h.context);
+    h.handlers.get('#mainwp_managesites_add')();
+    assert.equal(h.requests.length, 0);
+    assert.equal(h.$('#mainwp_managesites_add_wpurl').val(), 'example.org/');
+    h.$('#mainwp_managesites_add_wpadmin').val('admin');
+    h.handlers.get('#mainwp_managesites_add')();
+    assert.equal(h.requests[1].managesites_add_wpname, 'example.org');
+});
+
 test('Advanced options toggles visibility and its accessibility state', () => {
     const h = harness();
     vm.runInContext(setup, h.context);

@@ -129,7 +129,8 @@ let mainwp_setup_managesites_add = function () {
 
   const title = jQuery('#mainwp_managesites_add_wpname');
   if (title.val().trim() == '' || title.attr('data-autofilled')) {
-    title.val(jQuery('#mainwp_managesites_add_wpurl').val().trim()).attr('data-autofilled', '1');
+    // A failed attempt already added the trailing slash to the URL field.
+    title.val(jQuery('#mainwp_managesites_add_wpurl').val().trim().replace(/\/+$/, '')).attr('data-autofilled', '1');
   }
 
   if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '') {

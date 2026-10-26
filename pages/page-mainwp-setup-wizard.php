@@ -1213,8 +1213,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     /* translators: %s: site name. */
                     printf( esc_html__( '%s is connected', 'mainwp' ), esc_html( $site->name ) );
                 } else {
+                    $count = intval( MainWP_Manage_Sites::get_total_sites() );
                     /* translators: %d: connected site count. */
-                    printf( esc_html__( '%d sites connected', 'mainwp' ), intval( MainWP_Manage_Sites::get_total_sites() ) );
+                    printf( esc_html( _n( '%d site connected', '%d sites connected', $count, 'mainwp' ) ), intval( $count ) );
                 }
                 ?>
                 </h1>

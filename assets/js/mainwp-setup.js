@@ -543,6 +543,10 @@ let mainwp_setup_managesites_add = function () {
         mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
         if (mainwp_onboarding_detection) mainwp_onboarding_detection.connectFailed(detectionState, false);
       } else {
+        if (jQuery('#mainwp_connect_first_site_form').length) {
+          mainwp_forceReload('admin.php?page=mainwp-setup&step=next_steps&siteid=' + Number(res_things.siteid));
+          return;
+        }
         mainwp_set_message_zone('#mainwp-message-zone', response, 'green');
 
         jQuery('#mainwp_managesites_add_wpname').val('');

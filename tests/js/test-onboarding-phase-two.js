@@ -276,6 +276,7 @@ function uiHarness(mode = 'single-site', tabs = true) {
     const requests = [];
     const messages = [];
     const textWrites = [];
+    const reloads = [];
     const readyCallbacks = [];
     const document = { hidden: false };
     const window = {};
@@ -287,7 +288,7 @@ function uiHarness(mode = 'single-site', tabs = true) {
         remaining: 'About %d minutes left to connect.', remainingOne: 'About 1 minute left to connect.', remainingLess: 'Less than a minute left to connect.', defaultTime: 'By default this is 20 minutes after activation.',
         windowClosed: 'The connection window may have ended. If connecting fails, check that MainWP Child is still active.',
         expired: 'MainWP Child may have switched itself off because the connection window expired. Check that it is active on %s, reactivate it if needed, and click Retry.',
-        error: 'Undefined error occurred. Please try again.', password: 'Please enter the administrator password.'
+        error: 'Could not connect. Try again.', password: 'Enter the administrator password.'
     };
     function trigger(selector, event) {
         for (const callback of events.get(selector + ':' + event) || []) callback.call($(selector));
@@ -300,7 +301,7 @@ function uiHarness(mode = 'single-site', tabs = true) {
             const attributes = {};
             let text = '';
             const el = {
-                length: selector === '#mainwp-onboarding-detection' ? 1 : 0,
+                length: ['#mainwp-onboarding-detection', '#mainwp_connect_first_site_form'].includes(selector) ? 1 : 0,
                 attr(name, value) { if (value === undefined) return attributes[name]; attributes[name] = value; return el; },
                 prop(name, value) { return el.attr(name, value); },
                 val(value) { if (value === undefined) return attributes.value || (String(key).includes('qsw_nonce') ? 'test-nonce' : ''); attributes.value = value; return el; },
@@ -360,7 +361,7 @@ function uiHarness(mode = 'single-site', tabs = true) {
         jQuery: $, document, window, mainwpSetupLocalize: copy, Date: { now: () => now }, ajaxurl: '/admin-ajax.php',
         setTimeout: browserTimer((callback, delay) => schedule(callback, delay)), clearTimeout: browserTimer(id => timers.delete(id)),
         setInterval: browserTimer((callback, delay) => schedule(callback, delay, true)), clearInterval: browserTimer(id => timers.delete(id)),
-        mainwp_set_message_zone: (...args) => messages.push(args), mainwp_forceReload() {}
+        mainwp_set_message_zone: (...args) => messages.push(args), mainwp_forceReload: url => reloads.push(url)
     });
     readyCallbacks.forEach(callback => callback());
     function advance(ms) {
@@ -376,7 +377,7 @@ function uiHarness(mode = 'single-site', tabs = true) {
         }
         now = end;
     }
-    return { $, context, requests, messages, textWrites, timers, advance, document, now: () => now,
+    return { $, context, requests, messages, textWrites, reloads, timers, advance, document, now: () => now,
         trigger: (selector, event) => trigger(selector, event),
         reply: result => requests.at(-1).options.success(result),
         fill() {
@@ -386,6 +387,45 @@ function uiHarness(mode = 'single-site', tabs = true) {
         },
         visible(hidden) { document.hidden = hidden; trigger('document', 'visibilitychange'); }
     };
+}
+
+for (const onboarding of [true, false]) {
+    test(onboarding
+        ? 'onboarding connect success redirects immediately without clearing fields or showing success'
+        : 'non-onboarding setup success keeps field clearing, success message and delayed redirect', () => {
+        const h = uiHarness();
+        h.$('#mainwp_connect_first_site_form').length = onboarding ? 1 : 0;
+        h.fill();
+        const values = {
+            wpname: 'My site', wpurl: 'example.org/wordpress', wpurl_protocol: 'http',
+            wpadmin: 'admin', admin_pwd: 'fixture-password', uniqueId: 'fixture-id'
+        };
+        for (const [field, value] of Object.entries(values)) h.$('#mainwp_managesites_add_' + field).val(value);
+        h.$('#mainwp_managesites_add_wpname').attr('data-user-typed', '1');
+        const extras = ["input[name^='creport_token_']", '.mainwp_addition_fields_addsite input'];
+        extras.forEach((selector, index) => {
+            const field = h.$('extension-field-' + index).attr('name', 'extension_' + index).val('fixture-' + index);
+            h.$(selector).each = callback => callback.call(field);
+        });
+        h.trigger('#mainwp_managesites_add', 'click');
+        assert.equal(h.requests.at(-1).options.data.action, 'mainwp_addwp');
+        h.reply({ response: 'Connected', siteid: '42' });
+        const destination = 'admin.php?page=mainwp-setup&step=next_steps&siteid=42';
+        assert.deepEqual(h.reloads, onboarding ? [destination] : []);
+        assert.equal([...h.timers.values()].filter(timer => timer.at - h.now() === 3000).length, onboarding ? 0 : 1);
+        assert.equal(h.messages.some(message => message[2] === 'green'), !onboarding);
+        for (const [field, value] of Object.entries(values)) {
+            assert.equal(h.$('#mainwp_managesites_add_' + field).val(), onboarding ? value : field === 'wpurl_protocol' ? 'https' : '', field);
+        }
+        extras.forEach((_, index) => assert.equal(h.$('extension-field-' + index).val(), onboarding ? 'fixture-' + index : ''));
+        assert.equal(h.requests.some(request => request.options.data.action === 'mainwp_get_site_icon'), false);
+        if (!onboarding) {
+            h.advance(2999);
+            assert.deepEqual(h.reloads, []);
+            h.advance(1);
+            assert.deepEqual(h.reloads, [destination]);
+        }
+    });
 }
 
 // Each expanded row records all observable columns. Replies need a live check request;
@@ -477,9 +517,9 @@ function matrixExpected(status, event, deadline) {
         return base;
     }
     // Connect is independent of detection. Both failure callbacks select the same target first.
-    if (event === 'connect success') return matrixView('connecting', deadline, ['reload'], null,
-        ['#mainwp-message-zone', 'Connected', 'green'], [...matrixStatuses[status].slice(0, 2).map(label => label === 'Not checked' ? 'Checking...' : label), false, false, false, false]);
-    const zone = ['#mainwp-message-zone', event === 'connect ERROR' ? '<p>Wrong password</p>' : 'Undefined error occurred. Please try again.', 'red'];
+    if (event === 'connect success') return matrixView('connecting', deadline, [], null,
+        ['#mainwp-message-zone'], [...matrixStatuses[status].slice(0, 2).map(label => label === 'Not checked' ? 'Checking...' : label), false, false, false, false]);
+    const zone = ['#mainwp-message-zone', event === 'connect ERROR' ? '<p>Wrong password</p>' : 'Could not connect. Try again.', 'red'];
     if (event === 'connect transport error' || deadline === 'passed') {
         const rows = matrixStatuses[status].slice(0, 2).map(label => label === 'Checking...' ? 'Not checked' : label);
         return matrixView('stopped', deadline, [], event === 'connect ERROR' ? 'mainwp_checkwp' : null,
@@ -615,7 +655,7 @@ const matrixSequences = [
     ...['none', 'future', 'passed'].map(deadline => ({
         name: `E3 expired | password validation then refresh | ${deadline}`, status: 'expired', deadline,
         run(h, controller) { h.trigger('#mainwp_managesites_add', 'click'); controller.refresh(); },
-        expected: matrixView('expired', deadline, [], null, ['#mainwp-message-zone', 'Please enter the administrator password.', 'yellow'])
+        expected: matrixView('expired', deadline, [], null, ['#mainwp-message-zone', 'Enter the administrator password.', 'yellow'])
     })),
     ...['future', 'passed'].map(deadline => ({
         name: `E4 detected | blur then connect ERROR then late NOMAINWP | ${deadline}`, status: 'detected', deadline,
@@ -634,7 +674,7 @@ const matrixSequences = [
             matrixApply(h, controller, event, 'passed'); h.reply({ response: 'NOMAINWP' });
         },
         expected: { ...matrixView('waiting', 'none', ['cap', 'poll'], null,
-            ['#mainwp-message-zone', event === 'connect ERROR' ? '<p>Wrong password</p>' : 'Undefined error occurred. Please try again.', 'red']),
+            ['#mainwp-message-zone', event === 'connect ERROR' ? '<p>Wrong password</p>' : 'Could not connect. Try again.', 'red']),
             installHref: 'https://other.example/wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term' }
     })),
     {
@@ -863,7 +903,7 @@ test('password controls enable Connect, while the advanced password-off mode rem
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), true);
     h.trigger('#mainwp_managesites_add', 'click');
     assert.equal(h.requests.length, 1);
-    assert.match(h.messages.at(-1)[1], /Please enter the administrator password/);
+    assert.match(h.messages.at(-1)[1], /Enter the administrator password/);
     h.$('#mainwp-administrator-password-checkbox-field').prop('checked', false);
     h.trigger('#mainwp-administrator-password-checkbox-field', 'change');
     assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);

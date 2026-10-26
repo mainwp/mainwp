@@ -158,8 +158,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'defaultTime'   => __( 'By default this is 20 minutes after activation.', 'mainwp' ),
                 /* translators: %s: validated site URL. */
                 'expired'       => __( 'MainWP Child may have switched itself off because the connection window expired. Check that it is active on %s, reactivate it if needed, and click Retry.', 'mainwp' ),
-                'error'         => __( 'Undefined error occurred. Please try again.', 'mainwp' ),
-                'password'      => __( 'Please enter the administrator password.', 'mainwp' ),
+                'error'         => __( 'Could not connect. Try again.', 'mainwp' ),
+                'password'      => __( 'Enter the administrator password.', 'mainwp' ),
             )
         );
         wp_enqueue_script( 'mainwp-import', MAINWP_PLUGIN_URL . 'assets/js/mainwp-managesites-import.js', array( 'jquery' ), MAINWP_VERSION, true );
@@ -1398,9 +1398,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 <div class="description">
                                     <p><?php esc_html_e( 'Use MainWP from Claude, Cursor or another MCP client.', 'mainwp' ); ?></p>
                                     <p><code><?php esc_html_e( 'Which of my sites have plugin updates waiting?', 'mainwp' ); ?></code></p>
+                                    <p><?php esc_html_e( 'Changes wait for your approval.', 'mainwp' ); ?></p>
                                 </div>
                             </div>
-                            <div class="extra content"><a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-mcp' ) ); ?>"><?php esc_html_e( 'Set up MCP', 'mainwp' ); ?></a></div>
+                            <div class="extra content"><a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-mcp' ) ); ?>"><?php esc_html_e( 'Connect Claude or Cursor', 'mainwp' ); ?></a></div>
                         </div>
                     <?php endif; ?>
                 </div>

@@ -987,7 +987,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$xpath = $this->html_xpath( $html );
 		$this->assertSame( 1, $xpath->query( '//h1[normalize-space(.)="Connect your first site"]' )->length );
 		$this->assertStringContainsString( "You'll need the site's address and an administrator login.", html_entity_decode( $html, ENT_QUOTES, 'UTF-8' ) );
-		$this->assertSame( 1, $xpath->query( '//a[@id="mainwp_managesites_add"][normalize-space(.)="Connect site"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp_managesites_add"][normalize-space(.)="Connect site"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//a[@id="mainwp_addsite_continue_button"][normalize-space(.)="Skip for now"]' )->length );
 		$this->assertSame( '(Required)', $xpath->query( '//label[@for="mainwp_managesites_add_admin_pwd"]/span' )->item( 0 )->textContent );
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-advanced"][@hidden]//input[@id="mainwp_managesites_add_wpname"][not(@required)]' )->length );

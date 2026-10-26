@@ -231,6 +231,8 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 			$this->assertStringContainsString( 'qsw_nonce[mainwp_checkwp]', $html );
 			$this->assertStringNotContainsString( 'onmouseover="alert', $html );
 			$xpath = $this->html_xpath( $html );
+			$this->assertSame( 1, $xpath->query( '//h1[normalize-space(.)="Connect your first site"]' )->length );
+			$this->assertStringContainsString( 'Unconnected MainWP Child installations switch off for security after a set time.', $html );
 			$this->assertSame( 0, $xpath->query( '//div[contains(@class,"menu-connect-first-site")]' )->length );
 			$switch = 'single-site' === $expected ? 'Import a CSV instead' : 'Connect one site instead';
 			$other  = 'single-site' === $expected ? 'multiple-site' : 'single-site';
@@ -274,6 +276,9 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 			$html = $this->view( 'mwp_setup_ready' );
 			$this->assertStringContainsString( 'Connect your AI assistant', $html );
 			$this->assertStringContainsString( '<code>Which of my sites have plugin updates waiting?</code>', $html );
+			$this->assertStringContainsString( 'Changes wait for your approval.', $html );
+			$this->assertStringContainsString( 'Connect Claude or Cursor', $html );
+			$this->assertStringNotContainsString( 'Set up MCP', $html );
 			$this->assertStringContainsString( 'admin.php?page=mainwp-mcp', $html );
 			$errors   = libxml_use_internal_errors( true );
 			$document = new \DOMDocument();
@@ -289,7 +294,7 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 			$this->assertSame( 3, $xpath->query( $group . '/div[@class="card"]' )->length );
 			$this->assertSame( 3, $xpath->query( $group . '/div[@class="card"][div[@class="content"]/div[@class="header"]][div[@class="content"]/div[@class="description"]]' )->length );
 			$this->assertSame( 0, $xpath->query( $group . '//h3' )->length );
-			$this->assertSame( 1, $xpath->query( $group . '/div[@class="card"]//a[normalize-space(.)="Set up MCP"][contains(@href,"admin.php?page=mainwp-mcp")]' )->length );
+			$this->assertSame( 1, $xpath->query( $group . '/div[@class="card"]//a[normalize-space(.)="Connect Claude or Cursor"][contains(@href,"admin.php?page=mainwp-mcp")]' )->length );
 			add_filter( 'mainwp_is_disable_menu_item', $hide, 10, 3 );
 			$html  = $this->view( 'mwp_setup_ready' );
 			$xpath = $this->html_xpath( $html );

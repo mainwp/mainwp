@@ -44,6 +44,13 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
     private static $general_options = null;
 
     /**
+     * Site counts by ownership and access query for this request.
+     *
+     * @var array
+     */
+    private static $websites_count = array();
+
+    /**
      * Possible options.
      *
      * @var array $possible_options
@@ -887,30 +894,21 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
      *      The two methods serve different use cases and should not be consolidated.
      */
     public function get_websites_count( $userId = null, $all_access = false ) {
-        static $total_sites;
-        if ( null !== $total_sites ) { // NOSONAR -- static value.
-            return $total_sites;
-        }
         if ( ( null === $userId ) && MainWP_System::instance()->is_multi_user() ) {
-
-            /**
-             * Current user global.
-             *
-             * @global string
-             */
-            global $current_user;
-
-            $userId = $current_user->ID;
+            $userId = get_current_user_id();
         }
-        $where = ( null === $userId ? '' : ' wp.userid = ' . intval( $userId ) );
+        $where = ( null === $userId ? '' : ' AND wp.userid = ' . intval( $userId ) );
         if ( ! $all_access ) {
             $where .= $this->get_sql_where_allow_access_sites( 'wp' );
         }
         $table_name = esc_sql( $this->table_name( 'wp' ) );
         $qry        = "SELECT COUNT(wp.id) FROM {$table_name} wp WHERE 1 {$where}";
+        if ( isset( self::$websites_count[ $qry ] ) ) {
+            return self::$websites_count[ $qry ];
+        }
 
-        $total       = $this->wpdb->get_var( $qry ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query is fully escaped: table names via esc_sql(), WHERE fragment from validated get_sql_where_allow_access_sites()
-        $total_sites = $total;// NOSONAR -- static value.
+        $total                        = $this->wpdb->get_var( $qry ); // phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- Query is fully escaped: table names via esc_sql(), WHERE fragment from validated get_sql_where_allow_access_sites()
+        self::$websites_count[ $qry ] = $total;
         return $total;
     }
 

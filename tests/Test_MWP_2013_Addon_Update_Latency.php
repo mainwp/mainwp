@@ -40,6 +40,7 @@ class Test_MWP_2013_Addon_Update_Latency extends \WP_UnitTestCase {
 		$this->saved_plugins       = wp_cache_get( 'plugins', 'plugins' );
 		$this->batches             = array();
 		$GLOBALS['mwp2013_pauses'] = array();
+		$GLOBALS['mwp2013_events'] = array();
 		add_filter( 'pre_http_request', array( $this, 'http' ), 10, 3 );
 	}
 
@@ -53,6 +54,7 @@ class Test_MWP_2013_Addon_Update_Latency extends \WP_UnitTestCase {
 			wp_cache_set( 'plugins', $this->saved_plugins, 'plugins' );
 		}
 		unset( $GLOBALS['mwp2013_pauses'] );
+		unset( $GLOBALS['mwp2013_events'] );
 		parent::tear_down();
 	}
 
@@ -69,9 +71,10 @@ class Test_MWP_2013_Addon_Update_Latency extends \WP_UnitTestCase {
 		if ( ! isset( $query['request'] ) || 'bulkupdatecheck' !== $query['request'] ) {
 			return new \WP_Error( 'fixture_network_blocked', 'Unexpected fixture transport' );
 		}
-		$batch           = json_decode( base64_decode( $query['extensions'] ), true );
-		$this->batches[] = $batch;
-		$result          = array();
+		$batch                       = json_decode( base64_decode( $query['extensions'] ), true );
+		$this->batches[]             = $batch;
+		$GLOBALS['mwp2013_events'][] = 'http';
+		$result                      = array();
 		foreach ( $batch as $slug => $extension ) {
 			$result[ $slug ] = array(
 				'new_version' => '2.0.0',
@@ -132,22 +135,23 @@ class Test_MWP_2013_Addon_Update_Latency extends \WP_UnitTestCase {
 	 */
 	public static function batch_sizes() {
 		return array(
-			'one'      => array( 1, 0 ),
-			'six'      => array( 6, 0 ),
-			'seven'    => array( 7, 1 ),
-			'twelve'   => array( 12, 1 ),
-			'thirteen' => array( 13, 2 ),
+			'one'      => array( 1, 0, array( 'http' ) ),
+			'six'      => array( 6, 0, array( 'http' ) ),
+			'seven'    => array( 7, 1, array( 'http', 'sleep', 'http' ) ),
+			'twelve'   => array( 12, 1, array( 'http', 'sleep', 'http' ) ),
+			'thirteen' => array( 13, 2, array( 'http', 'sleep', 'http', 'sleep', 'http' ) ),
 		);
 	}
 
 	/**
 	 * Check batch boundaries and request contents.
 	 *
-	 * @param int $count Add-on count.
-	 * @param int $pauses Expected pauses.
+	 * @param int   $count Add-on count.
+	 * @param int   $pauses Expected pauses.
+	 * @param array $events Expected transport and pause order.
 	 * @dataProvider batch_sizes
 	 */
-	public function test_batches_preserve_payload_order_and_only_pause_between( $count, $pauses ) {
+	public function test_batches_preserve_payload_order_and_only_pause_between( $count, $pauses, $events ) {
 		$extensions = $this->activate( $count );
 		$expected   = array();
 		foreach ( $extensions as $extension ) {
@@ -164,5 +168,6 @@ class Test_MWP_2013_Addon_Update_Latency extends \WP_UnitTestCase {
 		$this->assertSame( array_chunk( $expected, 6, true ), $this->batches );
 		$this->assertSame( array_keys( $expected ), array_keys( $result ) );
 		$this->assertSame( array_fill( 0, $pauses, 3 ), $GLOBALS['mwp2013_pauses'] );
+		$this->assertSame( $events, $GLOBALS['mwp2013_events'] );
 	}
 }

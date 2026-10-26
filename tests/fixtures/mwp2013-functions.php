@@ -16,6 +16,7 @@ namespace MainWP\Dashboard;
 function sleep( $seconds ) {
 	if ( isset( $GLOBALS['mwp2013_pauses'] ) ) {
 		$GLOBALS['mwp2013_pauses'][] = $seconds;
+		$GLOBALS['mwp2013_events'][] = 'sleep';
 		return 0;
 	}
 	return \sleep( $seconds );

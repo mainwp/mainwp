@@ -339,9 +339,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     private function render_exit_links() {
         ?>
-        <div id="mainwp-qsw-exit-links" class="ui small basic segment">
+        <p id="mainwp-qsw-exit-links" class="ui small text">
             <?php esc_html_e( 'Go to', 'mainwp' ); ?> <a href="<?php echo esc_url( admin_url( 'index.php' ) ); ?>"><?php esc_html_e( 'WP Admin', 'mainwp' ); ?></a> <?php esc_html_e( 'or', 'mainwp' ); ?> <a href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp_tab' ) ); ?>"><?php esc_html_e( 'MainWP', 'mainwp' ); ?></a>
-        </div>
+        </p>
         <?php
     }
 
@@ -1139,6 +1139,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $settings['active']   = 1;
             $settings['interval'] = 60;
             MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $settings );
+            // Same repair the Monitoring Settings save queues: a site whose primary monitor insert failed at add time stays unmonitored otherwise.
+            MainWP_System::instance()->handle_admin_perform_update( 'attempted_repair_primary_monitors' );
         }
         add_option( 'mainwp_disableSitesHealthMonitoring', 0 );
         add_option( 'mainwp_sitehealthThreshold', 80 );
@@ -1311,7 +1313,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     </div>
                     <div class="card">
                         <div class="content">
-                            <div class="header"><?php echo esc_html( $site ? __( 'Assign this site to a client', 'mainwp' ) : ( $count ? __( 'Assign sites to a client', 'mainwp' ) : __( 'Create a client', 'mainwp' ) ) ); ?></div>
+                            <div class="header"><?php echo esc_html( $site ? __( 'Assign this site to a client', 'mainwp' ) : ( $count ? __( 'Assign sites to a client', 'mainwp' ) : __( 'Add your first client', 'mainwp' ) ) ); ?></div>
                             <div class="description"><?php esc_html_e( 'Group sites by client for reports and billing.', 'mainwp' ); ?></div>
                         </div>
                         <div class="extra content">

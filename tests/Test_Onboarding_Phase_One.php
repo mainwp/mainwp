@@ -217,13 +217,19 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$property->setValue( null, 1 );
 		$method = new \ReflectionMethod( MainWP_Overview::class, 'render_onboarding_monitoring_notice' );
 		$method->setAccessible( true );
-		foreach ( array( 0, 1 ) as $disabled ) {
+		$cases = array(
+			array( 0, 'alerts@example.org' ),
+			array( 1, 'alerts@example.org' ),
+			array( 0, '' ),
+		);
+		foreach ( $cases as list( $disable, $recipients ) ) {
+			$disabled = $disable || '' === $recipients;
 			update_option(
 				'mainwp_settings_notification_emails',
 				array(
 					'uptime' => array(
-						'disable'    => $disabled,
-						'recipients' => 'alerts@example.org',
+						'disable'    => $disable,
+						'recipients' => $recipients,
 					),
 				)
 			);
@@ -408,7 +414,18 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 	/** A fresh summary enables monitoring once and leaves later edits alone. */
 	public function test_fresh_defaults_apply_once(): void {
 		update_option( 'mainwp_onboarding_fresh_install', time() );
-		$this->invoke( 'apply_monitoring_defaults' );
+		$actions = array();
+		$record  = static function ( $update_actions, $action ) use ( &$actions ) {
+			$actions[] = $action;
+			return $update_actions;
+		};
+		add_filter( 'mainwp_admin_init_update_data', $record, 10, 2 );
+		try {
+			$this->invoke( 'apply_monitoring_defaults' );
+		} finally {
+			remove_filter( 'mainwp_admin_init_update_data', $record, 10 );
+		}
+		$this->assertSame( array( 'attempted_repair_primary_monitors' ), $actions );
 		$settings = get_option( 'mainwp_global_uptime_monitoring_settings' );
 		$this->assertSame( 1, (int) $settings['active'] );
 		$this->assertSame( 60, (int) $settings['interval'] );
@@ -760,7 +777,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$this->assertSame( $count ? 1 : 0, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="Add another site"]' )->length );
 			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Add a site"]' )->length );
 			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
-			$client_header = $count ? 'Assign sites to a client' : 'Create a client';
+			$client_header = $count ? 'Assign sites to a client' : 'Add your first client';
 			$client_button = $count ? 'Assign to a client' : 'Add a client';
 			$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="' . $client_header . '"]' )->length );
 			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="' . $client_button . '"]' )->length );

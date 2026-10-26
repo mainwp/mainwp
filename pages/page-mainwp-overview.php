@@ -369,7 +369,8 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             <i class="close icon mainwp-notice-dismiss" notice-id="onboarding-monitoring"></i>
             <p>
             <?php
-            if ( ! empty( $email['disable'] ) ) {
+            // An empty recipient list sends nothing, so it gets the same copy as disabled alerts.
+            if ( ! empty( $email['disable'] ) || '' === trim( (string) $email['recipients'] ) ) {
                 esc_html_e( 'Uptime monitoring is off. Turn it on to check your sites for downtime.', 'mainwp' );
             } else {
                 /* translators: %s: notification recipients. */

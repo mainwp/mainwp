@@ -1504,7 +1504,7 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
     protected function check_operation_right( string $right, string $cap_type = 'dashboard' ) {
         $allowed = 'dashboard' === $cap_type
             ? \MainWP\Dashboard\MainWP_Abilities_Util::current_user_has_operation_right( $right )
-            : get_current_user_id() > 0 && apply_filters( 'mainwp_currentusercan', true, $cap_type, $right );
+            : get_current_user_id() > 0 && \MainWP\Dashboard\MainWP_System::filter_current_user_permission( true, $cap_type, $right );
 
         if ( ! $allowed ) {
             return new WP_Error(

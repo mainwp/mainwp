@@ -122,7 +122,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( ! apply_filters( 'mainwp_check_site_access', true, (int) $site->id, null ) ) {
             return false;
         }
-        return self::userless_cli() || ( MainWP_System_Utility::can_edit_website( $site ) && apply_filters( 'mainwp_currentusercan', true, 'site', (int) $site->id ) );
+        return self::userless_cli() || ( MainWP_System_Utility::can_edit_website( $site ) && MainWP_System::filter_current_user_permission( true, 'site', (int) $site->id ) );
     }
 
     /**

@@ -74,6 +74,10 @@ function harness() {
         requests.push(data);
         callback(data.action === 'mainwp_checkwp' ? { response: 'OK' } : { response: 'Connected', siteid: 42 });
     };
+    $.ajax = options => {
+        requests.push(options.data);
+        options.success({ response: 'Connected', siteid: 42 });
+    };
     $.each = (items, callback) => Object.entries(items).forEach(([key, value]) => callback(key, value));
     const context = vm.createContext({
         jQuery: $, document: {}, URL, console: { log: error => logs.push(error) }, ajaxurl: '/admin-ajax.php',
@@ -100,11 +104,10 @@ test('wizard connects with an optional title, keeps nonces, and navigates with r
     h.$('#mainwp_managesites_add_admin_pwd').val('fixture-password');
     vm.runInContext(setup, h.context);
     h.handlers.get('#mainwp_managesites_add')();
-    assert.equal(h.requests.length, 2);
-    assert.equal(h.requests[0].action, 'mainwp_checkwp');
-    assert.equal(h.requests[1].action, 'mainwp_addwp');
-    assert.equal(h.requests[1].managesites_add_wpname, 'example.org');
-    assert.equal(h.requests[1].qsw_page, true);
+    assert.equal(h.requests.length, 1);
+    assert.equal(h.requests[0].action, 'mainwp_addwp');
+    assert.equal(h.requests[0].managesites_add_wpname, 'example.org');
+    assert.equal(h.requests[0].qsw_page, true);
     assert.ok(h.requests.every(request => request.security === 'fixture-nonce'));
     assert.deepEqual(h.reloads, ['admin.php?page=mainwp-setup&step=next_steps&siteid=42']);
 });
@@ -119,7 +122,7 @@ test('invalid wizard URL does not send a connection request', () => {
     assert.equal(h.requests.length, 0);
     assert.equal(h.reloads.length, 0);
     assert.match(h.messages.at(-1)[1], /valid URL/);
-    assert.equal(h.logs[0].code, 'ERR_INVALID_URL');
+    assert.equal(h.logs.length, 0);
 });
 
 test('a title filled from an invalid URL follows the corrected URL until the user types one', () => {

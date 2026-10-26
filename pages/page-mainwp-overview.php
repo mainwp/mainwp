@@ -187,6 +187,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * Run on page load.
      */
     public function on_load_page() {
+        wp_enqueue_style( 'mainwp-onboarding', MAINWP_PLUGIN_URL . 'assets/css/mainwp-onboarding.css', array(), MAINWP_VERSION );
         wp_enqueue_script( 'common' );
         wp_enqueue_script( 'wp-lists' );
         wp_enqueue_script( 'postbox' );

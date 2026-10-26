@@ -76,6 +76,9 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         <div class="mainwp-scrolly-overflow">
             <?php
             $items        = static::get_items();
+            $seen         = get_user_meta( get_current_user_id(), 'mainwp_onboarding_seen_milestones', true );
+            $seen         = is_array( $seen ) ? $seen : array();
+            $newly_seen   = array();
             $started_done = ! in_array( false, array_column( $items, 'complete' ), true );
 
             if ( $started_done && MainWP_Utility::show_mainwp_message( 'notice', 'get-started' ) ) {
@@ -99,11 +102,22 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             ?>
             <div class="ui mini fluid vertical steps">
                 <?php foreach ( $items as $item ) : ?>
+                    <?php
+                    $celebrate = $item['complete'] && ! in_array( $item['id'], $seen, true );
+                    if ( $celebrate ) {
+                        $newly_seen[] = $item['id'];
+                    }
+                    ?>
                     <a class="<?php echo $item['complete'] ? 'completed' : ''; ?> step" href="<?php echo esc_url( admin_url( $item['url'] ) ); ?>">
-                        <i class="<?php echo esc_attr( $item['icon'] ); ?> icon"></i>
+                        <i class="<?php echo esc_attr( $item['icon'] ); ?> icon <?php echo $celebrate ? 'tadaaaa' : ''; ?>"></i>
                         <div class="content"><div class="<?php echo $item['complete'] ? 'description' : 'title'; ?>"><?php echo esc_html( $item['title'] ); ?></div></div>
                     </a>
                 <?php endforeach; ?>
+                <?php
+                if ( $newly_seen ) {
+                    update_user_meta( get_current_user_id(), 'mainwp_onboarding_seen_milestones', array_values( array_unique( array_merge( $seen, $newly_seen ) ) ) );
+                }
+                ?>
             </div>
         </div>
         <?php
@@ -140,24 +154,28 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         $settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
         $items    = array(
             array(
+                'id'       => 'connect_site',
                 'title'    => __( 'Connect a site', 'mainwp' ),
                 'url'      => 'admin.php?page=managesites&do=new',
                 'icon'     => 'globe',
                 'complete' => 1 <= $sites,
             ),
             array(
+                'id'       => 'first_update',
                 'title'    => __( 'Run your first update', 'mainwp' ),
                 'url'      => 'admin.php?page=UpdatesManage',
                 'icon'     => 'sync',
                 'complete' => (bool) get_option( 'mainwp_onboarding_first_update' ),
             ),
             array(
+                'id'       => 'second_site',
                 'title'    => __( 'Connect a second site', 'mainwp' ),
                 'url'      => 'admin.php?page=managesites&do=new',
                 'icon'     => 'globe',
                 'complete' => 2 <= $sites,
             ),
             array(
+                'id'       => 'uptime_alerts',
                 'title'    => __( 'Confirm uptime alerts', 'mainwp' ),
                 'url'      => 'admin.php?page=MonitoringSettings',
                 'icon'     => 'heartbeat',
@@ -166,6 +184,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         );
         if ( MainWP_System_Utility::is_admin() && true === MainWP_Abilities_Util::check_rest_api_permission() && ! MainWP_Menu::is_disable_menu_item( 2, 'ai' ) ) {
             $items[] = array(
+                'id'       => 'mcp',
                 'title'    => __( 'Try MainWP from Claude or Cursor (MCP)', 'mainwp' ),
                 'url'      => 'admin.php?page=mainwp-mcp',
                 'icon'     => 'terminal',
@@ -173,6 +192,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             );
         }
         $items[] = array(
+            'id'       => 'client_report',
             'title'    => __( 'Create a client and report', 'mainwp' ),
             'url'      => 'admin.php?page=ClientAddNew',
             'icon'     => 'users',

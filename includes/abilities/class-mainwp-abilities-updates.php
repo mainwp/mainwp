@@ -2884,10 +2884,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_set_ignored_updates( array $input ) {
-        if ( 'unignore' === ( $input['action'] ?? '' ) ) {
-            return self::get_unignore_moved_error();
-        }
-
         $action            = $input['action'];
         $site_id_or_domain = $input['site_id_or_domain'];
         $type              = $input['type'];
@@ -2923,6 +2919,10 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
+        }
+
+        if ( 'unignore' === ( $input['action'] ?? '' ) ) {
+            return self::get_unignore_moved_error();
         }
 
         $site_id = (int) $site->id;
@@ -3783,10 +3783,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_ignore_site_core( array $input ) {
-        if ( 'remove' === ( $input['action'] ?? 'add' ) ) {
-            return self::get_unignore_moved_error();
-        }
-
         $site_id_or_domain = $input['site_id_or_domain'];
 
         $site = MainWP_Abilities_Util::resolve_site( $site_id_or_domain );
@@ -3797,6 +3793,10 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
+        }
+
+        if ( 'remove' === ( $input['action'] ?? 'add' ) ) {
+            return self::get_unignore_moved_error();
         }
 
         $result  = self::add_to_ignored_list( $site, 'core', 'wordpress' );
@@ -3820,10 +3820,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_ignore_site_plugins( array $input ) {
-        if ( 'remove' === ( $input['action'] ?? 'add' ) ) {
-            return self::get_unignore_moved_error();
-        }
-
         $site_id_or_domain = $input['site_id_or_domain'];
         $slugs             = $input['slugs'];
 
@@ -3835,6 +3831,10 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
+        }
+
+        if ( 'remove' === ( $input['action'] ?? 'add' ) ) {
+            return self::get_unignore_moved_error();
         }
 
         $count = 0;
@@ -3870,10 +3870,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
      * @return array|\WP_Error
      */
     public static function execute_ignore_site_themes( array $input ) {
-        if ( 'remove' === ( $input['action'] ?? 'add' ) ) {
-            return self::get_unignore_moved_error();
-        }
-
         $site_id_or_domain = $input['site_id_or_domain'];
         $slugs             = $input['slugs'];
 
@@ -3885,6 +3881,10 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $access_check = MainWP_Abilities_Util::check_site_access( $site, $input );
         if ( is_wp_error( $access_check ) ) {
             return $access_check;
+        }
+
+        if ( 'remove' === ( $input['action'] ?? 'add' ) ) {
+            return self::get_unignore_moved_error();
         }
 
         $count = 0;

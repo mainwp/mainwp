@@ -1228,6 +1228,8 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * The Abilities API passes $input to the permission_callback, but our
      * check_site_access() method expects a resolved site object. This wrapper
      * resolves the site from input first, then performs the access check.
+     * Site-not-found errors are deferred to execution to preserve their 404.
+     * Execute callbacks must resolve the site and check access before using it.
      *
      * IMPORTANT: Use this for any ability that operates on a single site
      * identified by 'site_id_or_domain' in the input schema.
@@ -1255,11 +1257,15 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
 
             $site = self::resolve_site( $identifier );
             if ( is_wp_error( $site ) ) {
-                return $site;
+                return 'mainwp_site_not_found' === $site->get_error_code() ? true : $site;
             }
 
             // Check per-site access.
-            return self::check_site_access( $site, $input );
+            $access_check = self::check_site_access( $site, $input );
+            if ( is_wp_error( $access_check ) && 'mainwp_site_not_found' === $access_check->get_error_code() ) {
+                return true;
+            }
+            return $access_check;
         };
     }
 

@@ -10,6 +10,7 @@ namespace MainWP\Dashboard\Tests;
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_DB_Client;
+use MainWP\Dashboard\MainWP_DB_Uptime_Monitoring;
 use MainWP\Dashboard\MainWP_Get_Started;
 use MainWP\Dashboard\MainWP_Install;
 use MainWP\Dashboard\MainWP_Manage_Sites;
@@ -133,7 +134,13 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			'all pass'     => array( array(), true ),
 			'old PHP'      => array( array( 'php' => '8.2.99' ), false ),
 			'no SSL'       => array( array( 'ssl' => false ), false ),
-			'no curl'      => array( array( 'curl' => false ), false ),
+			'no curl'      => array(
+				array(
+					'curl'     => false,
+					'curl_ssl' => false,
+				),
+				false,
+			),
 			'old curl SSL' => array( array( 'curl_ssl' => false ), false ),
 			'old MySQL'    => array( array( 'mysql' => '4.9' ), false ),
 			'OpenSSL path' => array( array( 'openssl_warning' => true ), false ),
@@ -231,6 +238,42 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 0, (int) get_option( 'mainwp_global_uptime_monitoring_settings' )['active'] );
 	}
 
+	/** Leaving the summary needs no settings right, while both buttons must preserve settings. */
+	public function test_summary_save_without_settings_right_redirects_without_writing(): void {
+		update_option( 'mainwp_enable_guided_tours', 0 );
+		$settings = get_option( 'mainwp_global_uptime_monitoring_settings' );
+		$deny     = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'manage_dashboard_settings' === $right ? false : $allowed;
+		};
+		$redirect = static function ( $location ) {
+			throw new \RuntimeException( $location );
+		};
+		$_POST    = array(
+			'save_monitoring'                     => '1',
+			'mainwp-guided-tours-option'          => '1',
+			'mainwp_setup_enableUptimeMonitoring' => '1',
+		);
+		add_filter( 'mainwp_currentusercan', $deny, 999, 3 );
+		add_filter( 'wp_redirect', $redirect );
+		try {
+			$this->wizard->mwp_setup_ready_save();
+			$this->assertSame( 0, (int) get_option( 'mainwp_enable_guided_tours' ) );
+			$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+			unset( $_POST['save_monitoring'] );
+			try {
+				$this->wizard->mwp_setup_ready_save();
+				$this->fail( 'Go to Dashboard must redirect.' );
+			} catch ( \RuntimeException $error ) {
+				$this->assertSame( admin_url( 'admin.php?page=mainwp_tab' ), $error->getMessage() );
+			}
+		} finally {
+			remove_filter( 'wp_redirect', $redirect );
+			remove_filter( 'mainwp_currentusercan', $deny, 999 );
+		}
+		$this->assertSame( 0, (int) get_option( 'mainwp_enable_guided_tours' ) );
+		$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+	}
+
 	/**
 	 * Create a site without connecting to a Child or generating connection keys.
 	 *
@@ -251,6 +294,120 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		);
 		$this->assertGreaterThan( 0, $id );
 		return MainWP_DB::instance()->get_website_by_id( $id );
+	}
+
+	/** A missing synced version must not leave an empty WordPress row. */
+	public function test_summary_without_wordpress_version_omits_version_row(): void {
+		$site = $this->site();
+		MainWP_DB::instance()->update_website_option( $site, 'site_info', wp_json_encode( array() ) );
+		$_GET = array( 'siteid' => $site->id );
+		ob_start();
+		try {
+			$this->wizard->mwp_setup_ready();
+		} finally {
+			$html = ob_get_clean();
+		}
+		$xpath = $this->html_xpath( $html );
+		$this->assertSame( 0, $xpath->query( '//div[@class="ui relaxed list"]/div[@class="item"][starts-with(normalize-space(.),"WordPress ")]' )->length );
+		$this->assertStringContainsString( 'Everything is up to date', $html );
+	}
+
+	/** The multi-client form must assign the site chosen from the summary. */
+	public function test_add_client_limits_multi_client_rows_to_selected_site(): void {
+		$this->site();
+		$selected = $this->site();
+		MainWP_DB::instance()->update_website_values( $selected->id, array( 'url' => 'https://z-selected.example.org/' ) );
+		$sites = MainWP_DB::instance()->get_sites();
+		$this->assertNotSame( (int) $selected->id, (int) $sites[0]['id'] );
+		$_GET = array( 'siteid' => $selected->id );
+		ob_start();
+		try {
+			$this->wizard->mwp_setup_add_client();
+		} finally {
+			$html = ob_get_clean();
+		}
+		$xpath = $this->html_xpath( $html );
+		$ids   = $xpath->query( '//input[starts-with(@id,"mainwp-qsw-add-client-website-id-")]/@value' );
+		$this->assertSame( 1, $ids->length );
+		$this->assertSame( (string) $selected->id, $ids->item( 0 )->value );
+		$this->assertSame( 'https://z-selected.example.org/', $xpath->query( '//input[@id="mainwp-qsw-add-client-site-url-0"]/@value' )->item( 0 )->value );
+	}
+
+	/**
+	 * Site overrides affect the uptime row while the checkbox retains the global value.
+	 *
+	 * @dataProvider uptime_states
+	 * @param int      $global_active Global setting.
+	 * @param int|null $site_active Primary monitor setting, or null for no monitor.
+	 * @param bool     $expected Effective state.
+	 */
+	public function test_summary_uptime_uses_effective_monitor_state( $global_active, $site_active, $expected ): void {
+		$site = $this->site();
+		$db   = MainWP_DB_Uptime_Monitoring::instance();
+		$db->delete_site_monitors( $site->id );
+		if ( null !== $site_active ) {
+			$this->assertGreaterThan(
+				0,
+				$db->update_wp_monitor(
+					array(
+						'wpid'   => $site->id,
+						'active' => $site_active,
+					)
+				)
+			);
+		}
+		$settings           = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings( false );
+		$settings['active'] = $global_active;
+		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+		update_option( 'mainwp_settings_notification_emails', array( 'uptime' => array( 'disable' => 1 ) ) );
+		$_GET = array( 'siteid' => $site->id );
+		ob_start();
+		try {
+			$this->wizard->mwp_setup_ready();
+		} finally {
+			$html = ob_get_clean();
+		}
+		$this->assertStringContainsString( $expected ? 'Uptime monitoring is on. Email alerts are disabled.' : 'Uptime monitoring is off.', $html );
+		$this->assertStringNotContainsString( $expected ? 'Uptime monitoring is off.' : 'Uptime monitoring is on.', $html );
+		$xpath = $this->html_xpath( $html );
+		$this->assertSame( $global_active, $xpath->query( '//input[@id="mainwp_setup_enableUptimeMonitoring"][@checked]' )->length );
+	}
+
+	/**
+	 * Explicit settings override global uptime; inherited and missing monitors follow it.
+	 *
+	 * @return array
+	 */
+	public static function uptime_states() {
+		return array(
+			'site off'       => array( 1, 0, false ),
+			'site on'        => array( 0, 1, true ),
+			'inherited on'   => array( 1, -1, true ),
+			'inherited off'  => array( 0, -1, false ),
+			'no monitor on'  => array( 1, null, true ),
+			'no monitor off' => array( 0, null, false ),
+		);
+	}
+
+	/** Import titles are translated, so only the request identifies wizard navigation. */
+	public function test_import_modal_uses_request_page_for_wizard_mode(): void {
+		$url = 'admin.php?page=managesites&do=import';
+		foreach ( array( 'managesites', 'mainwp-setup' ) as $page ) {
+			$_GET = array( 'page' => $page );
+			ob_start();
+			try {
+				MainWP_Manage_Sites::render_import_sites_modal( $url, 'Import Sites' );
+			} finally {
+				$html = ob_get_clean();
+			}
+			$xpath     = $this->html_xpath( $html );
+			$is_wizard = 'mainwp-setup' === $page ? 1 : 0;
+			$this->assertSame( $url, $xpath->query( '//*[@id="mainwp-import-sites-modal"]/@data-page-url' )->item( 0 )->value );
+			$this->assertSame( $is_wizard, $xpath->query( '//a[@id="mainwp-import-sites-modal-try-again"]' )->length );
+			$this->assertSame( $is_wizard, $xpath->query( '//a[@id="mainwp-import-sites-modal-continue"]' )->length );
+			$this->assertSame( $is_wizard, $xpath->query( '//*[@id="mainwp-import-sites-modal"]/i[contains(@style,"display:none")]' )->length );
+			$this->assertStringContainsString( "location.href = '" . $url . "'", $html );
+		}
 	}
 
 	/** The uptime row must not abort rendering the summary's remaining actions. */

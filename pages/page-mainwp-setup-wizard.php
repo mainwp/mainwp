@@ -846,9 +846,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mwp_setup_add_client() {
         $count_clients     = MainWP_DB_Client::instance()->count_total_clients();
-        $sites             = MainWP_DB::instance()->get_sites(); // Get site data.
         $selected_site     = $this->summary_site();
-        $total_sites       = $selected_site ? 1 : ( ! empty( $sites ) ? count( $sites ) : 0 );
+        $sites             = MainWP_DB::instance()->get_sites( $selected_site ? $selected_site->id : null ); // Get site data.
+        $total_sites       = ! empty( $sites ) ? count( $sites ) : 0;
         $item_class_active = 1 >= $total_sites ? 'active' : '';
         $tab_class_active  = 1 < $total_sites ? 'active' : '';
         $first_site_id     = $selected_site ? $selected_site->id : 0;
@@ -1098,13 +1098,18 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @return array
      */
     protected function system_check_values() {
-        $handler = MainWP_Server_Information_Handler::get_class_name();
-        $ssl     = $handler::get_curl_ssl_version();
+        $handler  = MainWP_Server_Information_Handler::get_class_name();
+        $curl     = $handler::get_curl_support();
+        $curl_ssl = false;
+        if ( $curl ) {
+            $ssl      = $handler::get_curl_ssl_version();
+            $curl_ssl = $handler::curlssl_compare( false !== strpos( $ssl, 'LibreSSL' ) ? 'LibreSSL/2.5.0' : 'OpenSSL/1.1.0', '>=' );
+        }
         return array(
             'php'             => $handler::get_php_version(),
             'ssl'             => $handler::get_ssl_support(),
-            'curl'            => $handler::get_curl_support(),
-            'curl_ssl'        => $handler::curlssl_compare( false !== strpos( $ssl, 'LibreSSL' ) ? 'LibreSSL/2.5.0' : 'OpenSSL/1.1.0', '>=' ),
+            'curl'            => $curl,
+            'curl_ssl'        => $curl_ssl,
             'mysql'           => $handler::get_mysql_version(),
             'openssl_warning' => $handler::is_openssl_config_warning(),
         );
@@ -1167,6 +1172,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      */
     public function mwp_setup_ready_save() {
         if ( ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Navigation only; no settings are written.
+            if ( ! isset( $_POST['save_monitoring'] ) ) {
+                wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
+                exit;
+            }
             return;
         }
         check_admin_referer( 'mwp-setup' );
@@ -1187,6 +1197,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
         $email    = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
         $site_id  = $site ? $site->id : 0;
+        $monitor  = $site ? MainWP_DB_Uptime_Monitoring::instance()->get_primary_monitor( $site->id ) : false;
+        // A primary monitor with active = -1 follows the global setting.
+        $uptime_active = $monitor && -1 !== (int) $monitor->active ? 1 === (int) $monitor->active : ! empty( $settings['active'] );
         ?>
         <div class="ui vertical basic padded segments">
             <div class="ui padded segment">
@@ -1204,7 +1217,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <?php if ( $site ) : ?>
                     <?php $data = $this->summary_data( $site ); ?>
                     <div class="ui relaxed list">
-                        <div class="item"><?php /* translators: %s: WordPress version. */ printf( esc_html__( 'WordPress %s', 'mainwp' ), esc_html( $data['version'] ) ); ?></div>
+                        <?php if ( ! empty( $data['version'] ) ) : ?>
+                            <div class="item"><?php /* translators: %s: WordPress version. */ printf( esc_html__( 'WordPress %s', 'mainwp' ), esc_html( $data['version'] ) ); ?></div>
+                        <?php endif; ?>
                         <div class="item">
                         <?php
                         $updates = $data['updates'];
@@ -1222,11 +1237,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="item"><?php echo esc_html( $data['good'] ? __( 'Site health: Good', 'mainwp' ) : __( 'Site health: Should be improved', 'mainwp' ) ); ?></div>
                         <div class="item">
                         <?php
-                        if ( ! empty( $settings['active'] ) && empty( $email['disable'] ) ) {
+                        if ( $uptime_active && empty( $email['disable'] ) ) {
                             /* translators: 1: notification recipients, 2: site name. */
                             printf( esc_html__( 'Uptime monitoring is on. We\'ll email %1$s if %2$s goes down.', 'mainwp' ), esc_html( $email['recipients'] ), esc_html( $site->name ) );
                         } else {
-                            echo esc_html( empty( $settings['active'] ) ? __( 'Uptime monitoring is off.', 'mainwp' ) : __( 'Uptime monitoring is on. Email alerts are disabled.', 'mainwp' ) );
+                            echo esc_html( ! $uptime_active ? __( 'Uptime monitoring is off.', 'mainwp' ) : __( 'Uptime monitoring is on. Email alerts are disabled.', 'mainwp' ) );
                         }
                         ?>
                         </div>

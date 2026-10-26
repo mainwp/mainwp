@@ -374,8 +374,24 @@ class MainWP_System_Utility { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         $mwpDir      = static::get_mainwp_dir();
         $mwpDir      = $mwpDir[0];
         $fullFile    = $specificDir . $filename;
+        $query       = '?sig=' . static::get_download_sig( $fullFile ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullFile ) );
 
-        return admin_url( '?sig=' . static::get_download_sig( $fullFile ) . '&mwpdl=' . rawurlencode( str_replace( $mwpDir, '', $fullFile ) ) );
+        /**
+         * Filters the signed URL that child sites use to download a file from the Dashboard.
+         *
+         * The Dashboard serves the file on `init` (see MainWP_System::parse_init()), so the
+         * signed query works on any front-end URL as well, e.g. home_url( '/' . $query ).
+         * Useful when /wp-admin/ sits behind an access layer that child sites cannot pass,
+         * such as an identity-aware proxy or an IP allowlist.
+         *
+         * @since 6.4.1
+         *
+         * @param string $url      Download URL. Default admin_url( $query ).
+         * @param string $query    Signed query string, starting with '?sig='.
+         * @param string $what     Download type, e.g. 'bulk'.
+         * @param string $filename File name.
+         */
+        return apply_filters( 'mainwp_download_url', admin_url( $query ), $query, $what, $filename );
     }
 
 

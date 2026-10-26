@@ -4364,6 +4364,11 @@ jQuery(document).on('click', '.mainwp-notice-hide', function () {
     return false;
 });
 
+jQuery(function () {
+    // The grid's earlier ready callback must finish before the icons start animating.
+    jQuery('#mainwp-get-started-list [data-celebrate="true"]').removeAttr('data-celebrate').addClass('tadaaaa');
+});
+
 jQuery(document).on('click', '#mainwp-onboarding-enable-monitoring', function () {
     const button = jQuery(this);
     const notice = jQuery('#mainwp-onboarding-monitoring-notice');

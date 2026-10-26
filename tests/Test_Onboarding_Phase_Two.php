@@ -172,14 +172,44 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		}
 	}
 
-	/** The screenshot and both cards retain their mode through the silent check. */
-	public function test_welcome_renders_preview_callouts_and_both_start_choices(): void {
+	/** Choices precede the preview so the screenshot cannot bury the actions. */
+	public function test_welcome_renders_choices_before_a_modest_preview(): void {
 		$html = $this->view( 'mwp_setup_welcome' );
-		foreach ( array( 'How do you want to start?', 'dashboard-preview.jpg', 'Updates waiting across your sites', 'Update everything in one click', 'Connection status for every site', 'Connect my first site', 'Import many sites (CSV)', 'Recommended', 'mode=single-site', 'mode=multiple-site', 'step=connect_first_site' ) as $copy ) {
+		foreach ( array( 'How do you want to start?', 'dashboard-preview.jpg', 'Updates waiting across your sites', 'Update everything in one click', 'Connection status for every site', 'Connect my first site', 'Import a CSV', 'Recommended', 'mode=single-site', 'mode=multiple-site', 'step=connect_first_site' ) as $copy ) {
 			$this->assertStringContainsString( $copy, $html );
 		}
 		$this->assertStringContainsString( 'alt="MainWP Dashboard overview with connected sites and pending updates"', $html );
 		$this->assertStringNotContainsString( 'name="tab_connect"', $html );
+		$xpath = $this->html_xpath( $html );
+		$cards = '//div[@class="ui two stackable link cards"]';
+		$this->assertSame( 1, $xpath->query( '//h1[normalize-space(.)="How do you want to start?"]/following-sibling::*[1][self::p]/following-sibling::*[1][@class="ui two stackable link cards"]' )->length );
+		$this->assertSame( 2, $xpath->query( $cards . '/a[@class="ui card"]' )->length );
+		$this->assertSame( 1, $xpath->query( $cards . '/a[1]/div[@class="extra content"]/span[@class="ui green button"][normalize-space(.)="Connect my first site"]' )->length );
+		$this->assertSame( 1, $xpath->query( $cards . '/a[2]/div[@class="extra content"]/span[@class="ui basic button"][normalize-space(.)="Import a CSV"]' )->length );
+		$this->assertSame( 1, $xpath->query( $cards . '/a[1]//span[@class="ui small green label"][normalize-space(.)="Recommended"]' )->length );
+		$this->assertSame( 0, $xpath->query( $cards . '/a//a | ' . $cards . '/a//button' )->length );
+		$preview = $cards . '/following-sibling::*[1][@class="ui two column stackable middle aligned grid"]';
+		$this->assertSame( 1, $xpath->query( $preview . '//figure/img[@class="ui medium rounded bordered image"]' )->length );
+		$this->assertSame( 3, $xpath->query( $preview . '//div[@class="ui list"]/div[@class="item"]' )->length );
+		$this->assertSame( 0, $xpath->query( '//figure//span | //figure/img[@width="1200"]' )->length );
+	}
+
+	/**
+	 * Inspect rendered markup without depending on whitespace.
+	 *
+	 * @param string $html Rendered view.
+	 * @return \DOMXPath
+	 */
+	private function html_xpath( $html ) {
+		$errors   = libxml_use_internal_errors( true );
+		$document = new \DOMDocument();
+		try {
+			$document->loadHTML( $html );
+		} finally {
+			libxml_clear_errors();
+			libxml_use_internal_errors( $errors );
+		}
+		return new \DOMXPath( $document );
 	}
 
 	/** CSV entry selects the existing import panel; unknown modes select the single form. */
@@ -193,6 +223,34 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 			$this->assertStringContainsString( 'id="mainwp-onboarding-detection"', $html );
 			$this->assertStringContainsString( 'qsw_nonce[mainwp_checkwp]', $html );
 			$this->assertStringNotContainsString( 'onmouseover="alert', $html );
+			$xpath = $this->html_xpath( $html );
+			$this->assertSame( 0, $xpath->query( '//div[contains(@class,"menu-connect-first-site")]' )->length );
+			$switch = 'single-site' === $expected ? 'Import a CSV instead' : 'Connect one site instead';
+			$other  = 'single-site' === $expected ? 'multiple-site' : 'single-site';
+			$this->assertSame( 1, $xpath->query( '//p[@class="ui small text"]/a[normalize-space(.)="' . $switch . '"][contains(@href,"mode=' . $other . '")][contains(@href,"step=connect_first_site")]' )->length );
+			$this->assertSame( 1, $xpath->query( '//div[@data-tab="' . $expected . '"][contains(@class,"active")]' )->length );
+			$this->assertSame( 0, $xpath->query( '//div[@data-tab][contains(@class,"attached")]' )->length );
+		}
+	}
+
+	/** Direct entry still offers both tabs and the original single-site default. */
+	public function test_connect_direct_entry_keeps_tabs_and_status_list(): void {
+		unset( $_GET['mode'] );
+		$html  = $this->view( 'mwp_setup_connect_first_site' );
+		$xpath = $this->html_xpath( $html );
+		$menu  = '//div[contains(@class,"menu-connect-first-site")]';
+		$this->assertSame( 2, $xpath->query( $menu . '/a[@data-tab]' )->length );
+		$this->assertSame( 1, $xpath->query( $menu . '/a[@data-tab="single-site"][contains(@class,"active")]' )->length );
+		$this->assertStringNotContainsString( 'Import a CSV instead', $html );
+		$this->assertStringNotContainsString( 'Connect one site instead', $html );
+		$labels = array(
+			'reachable' => 'Site reachable',
+			'child'     => 'MainWP Child detected',
+		);
+		foreach ( $labels as $id => $label ) {
+			$row = '//div[@id="mainwp-onboarding-detection"]/div[@class="ui list"]/div[@class="item"]';
+			$this->assertSame( 1, $xpath->query( $row . '/i[@id="mainwp-onboarding-' . $id . '-icon"][@class="notched circle loading icon"][@aria-hidden="true"]' )->length );
+			$this->assertSame( 1, $xpath->query( $row . '/div[@class="content"][starts-with(normalize-space(.),"' . $label . '")]/strong[@id="mainwp-onboarding-' . $id . '"][normalize-space(.)="Checking..."]' )->length );
 		}
 	}
 
@@ -250,17 +308,19 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		$this->widget();
 		$this->assertNotContains( 'first_update', (array) get_user_meta( $first, 'mainwp_onboarding_seen_milestones', true ) );
 		update_option( 'mainwp_onboarding_first_update', 1 );
-		$this->assertMatchesRegularExpression( '/<i class="green check circle icon tadaaaa"><\/i>\s*<div class="content"><div class="header">Run your first update<\/div>/', $this->widget() );
+		$html = $this->widget();
+		$this->assertMatchesRegularExpression( '/<i class="green check circle icon" data-celebrate="true"><\/i>\s*<div class="content"><div class="header">Run your first update<\/div>/', $html );
+		$this->assertStringNotContainsString( 'tadaaaa', $html );
 		$this->assertContains( 'first_update', get_user_meta( $first, 'mainwp_onboarding_seen_milestones', true ) );
-		$this->assertStringNotContainsString( 'tadaaaa', $this->widget() );
+		$this->assertStringNotContainsString( 'data-celebrate=', $this->widget() );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		$this->assertMatchesRegularExpression( '/<i class="green check circle icon tadaaaa"><\/i>\s*<div class="content"><div class="header">Run your first update<\/div>/', $this->widget() );
-		$this->assertStringNotContainsString( 'tadaaaa', $this->widget() );
+		$this->assertMatchesRegularExpression( '/<i class="green check circle icon" data-celebrate="true"><\/i>\s*<div class="content"><div class="header">Run your first update<\/div>/', $this->widget() );
+		$this->assertStringNotContainsString( 'data-celebrate=', $this->widget() );
 		wp_set_current_user( $first );
 		delete_option( 'mainwp_onboarding_first_update' );
 		$this->widget();
 		update_option( 'mainwp_onboarding_first_update', 1 );
-		$this->assertStringNotContainsString( 'tadaaaa', $this->widget() );
+		$this->assertStringNotContainsString( 'data-celebrate=', $this->widget() );
 	}
 
 	/** Hidden widgets cannot consume unseen completions. */

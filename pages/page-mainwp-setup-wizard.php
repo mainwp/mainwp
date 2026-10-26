@@ -431,27 +431,38 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <div class="ui padded segment">
             <h1 class="ui massive header"><?php esc_html_e( 'How do you want to start?', 'mainwp' ); ?></h1>
-            <figure class="mainwp-onboarding-preview">
-                <img src="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/images/onboarding/dashboard-preview.jpg' ); ?>" width="1200" alt="<?php esc_attr_e( 'MainWP Dashboard overview with connected sites and pending updates', 'mainwp' ); ?>">
-                <span class="ui label mainwp-preview-updates"><?php esc_html_e( 'Updates waiting across your sites', 'mainwp' ); ?></span>
-                <span class="ui label mainwp-preview-update-all"><?php esc_html_e( 'Update everything in one click', 'mainwp' ); ?></span>
-                <span class="ui label mainwp-preview-connections"><?php esc_html_e( 'Connection status for every site', 'mainwp' ); ?></span>
-                <figcaption><?php esc_html_e( "This is what you'll see in about 3 minutes.", 'mainwp' ); ?></figcaption>
-            </figure>
-            <div class="ui two stackable cards">
+            <p><?php esc_html_e( 'Connect one WordPress site or import your sites from a CSV file.', 'mainwp' ); ?></p>
+            <div class="ui two stackable link cards">
                 <a class="ui card" href="<?php echo esc_url( add_query_arg( 'mode', 'single-site', $start_url ) ); ?>">
                     <div class="content">
-                        <span class="ui green label"><?php esc_html_e( 'Recommended', 'mainwp' ); ?></span>
+                        <span class="ui small green label"><?php esc_html_e( 'Recommended', 'mainwp' ); ?></span>
                         <h2 class="header"><?php esc_html_e( 'Connect my first site', 'mainwp' ); ?></h2>
                         <p><?php esc_html_e( "Add one WordPress site. We'll check it and guide you through installing MainWP Child.", 'mainwp' ); ?></p>
                     </div>
+                    <div class="extra content"><span class="ui green button"><?php esc_html_e( 'Connect my first site', 'mainwp' ); ?></span></div>
                 </a>
                 <a class="ui card" href="<?php echo esc_url( add_query_arg( 'mode', 'multiple-site', $start_url ) ); ?>">
                     <div class="content">
-                        <h2 class="header"><?php esc_html_e( 'Import many sites (CSV)', 'mainwp' ); ?></h2>
+                        <h2 class="header"><?php esc_html_e( 'Import a CSV', 'mainwp' ); ?></h2>
                         <p><?php esc_html_e( "Upload a CSV file with your sites' URLs and administrator usernames.", 'mainwp' ); ?></p>
                     </div>
+                    <div class="extra content"><span class="ui basic button"><?php esc_html_e( 'Import a CSV', 'mainwp' ); ?></span></div>
                 </a>
+            </div>
+            <div class="ui two column stackable middle aligned grid">
+                <div class="column">
+                    <figure class="mainwp-onboarding-preview">
+                        <img class="ui medium rounded bordered image" src="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/images/onboarding/dashboard-preview.jpg' ); ?>" alt="<?php esc_attr_e( 'MainWP Dashboard overview with connected sites and pending updates', 'mainwp' ); ?>">
+                        <figcaption><?php esc_html_e( "This is what you'll see in about 3 minutes.", 'mainwp' ); ?></figcaption>
+                    </figure>
+                </div>
+                <div class="column">
+                    <div class="ui list">
+                        <div class="item"><?php esc_html_e( 'Updates waiting across your sites', 'mainwp' ); ?></div>
+                        <div class="item"><?php esc_html_e( 'Update everything in one click', 'mainwp' ); ?></div>
+                        <div class="item"><?php esc_html_e( 'Connection status for every site', 'mainwp' ); ?></div>
+                    </div>
+                </div>
             </div>
             <div class="ui divider"></div>
             <div class="ui stackable grid">
@@ -606,6 +617,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $has_file_upload = isset( $_FILES['mainwp_managesites_file_bulkupload'] ) && isset( $_FILES['mainwp_managesites_file_bulkupload']['error'] ) && UPLOAD_ERR_OK === $_FILES['mainwp_managesites_file_bulkupload']['error'];
         $has_import_data = ! empty( $_POST['mainwp_managesites_import'] );
         $mode            = isset( $_GET['mode'] ) && 'multiple-site' === $_GET['mode'] ? 'multiple-site' : 'single-site'; // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Chooses a view without saving data.
+        $mode_chosen     = isset( $_GET['mode'] ); // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Controls navigation without saving data.
         ?>
         <div class="ui padded segment">
             <div>
@@ -633,12 +645,16 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <div class="ui green message" id="mainwp-success-zone" style="display:none"></div>
                             <div class="ui info message" id="mainwp-info-zone" style="display:none"></div>
 
-                            <div class="ui top attached equal width tabular massive menu menu-connect-first-site">
+                            <?php if ( $mode_chosen ) : ?>
+                                <p class="ui small text"><a href="<?php echo esc_url( add_query_arg( 'mode', 'single-site' === $mode ? 'multiple-site' : 'single-site', $this->get_next_step_link( 'connect_first_site' ) ) ); ?>"><?php echo esc_html( 'single-site' === $mode ? __( 'Import a CSV instead', 'mainwp' ) : __( 'Connect one site instead', 'mainwp' ) ); ?></a></p>
+                            <?php else : ?>
+                            <div class="ui top attached equal width tabular menu menu-connect-first-site">
                                 <a class="item <?php echo 'single-site' === $mode ? 'active' : ''; ?>" data-tab="single-site"><i class="plus grey icon"></i> <?php esc_html_e( 'Connect a Single Site', 'mainwp' ); ?></a>
                                 <a class="item <?php echo 'multiple-site' === $mode ? 'active' : ''; ?>" data-tab="multiple-site"><i class="file upload grey icon"></i> <?php esc_html_e( 'Connect Multiple Sites', 'mainwp' ); ?></a>
                             </div>
+                            <?php endif; ?>
 
-                            <div class="ui bottom attached tab segment <?php echo 'single-site' === $mode ? 'active' : ''; ?>" data-tab="single-site">
+                            <div class="ui <?php echo $mode_chosen ? '' : 'bottom attached '; ?>tab segment <?php echo 'single-site' === $mode ? 'active' : ''; ?>" data-tab="single-site">
                                 <div>
                                     <div class="ui hidden divider"></div>
                                     <div class="field">
@@ -659,8 +675,14 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     <div class="ui hidden divider"></div>
                                     <div id="mainwp-onboarding-detection" class="ui segment" aria-live="polite" hidden>
                                         <div class="ui list">
-                                            <div class="item"><?php esc_html_e( 'Site reachable', 'mainwp' ); ?>: <strong id="mainwp-onboarding-reachable"><?php esc_html_e( 'Checking...', 'mainwp' ); ?></strong></div>
-                                            <div class="item"><?php esc_html_e( 'MainWP Child detected', 'mainwp' ); ?>: <strong id="mainwp-onboarding-child"><?php esc_html_e( 'Checking...', 'mainwp' ); ?></strong></div>
+                                            <div class="item">
+                                                <i id="mainwp-onboarding-reachable-icon" class="notched circle loading icon" aria-hidden="true"></i>
+                                                <div class="content"><?php esc_html_e( 'Site reachable', 'mainwp' ); ?>: <strong id="mainwp-onboarding-reachable"><?php esc_html_e( 'Checking...', 'mainwp' ); ?></strong></div>
+                                            </div>
+                                            <div class="item">
+                                                <i id="mainwp-onboarding-child-icon" class="notched circle loading icon" aria-hidden="true"></i>
+                                                <div class="content"><?php esc_html_e( 'MainWP Child detected', 'mainwp' ); ?>: <strong id="mainwp-onboarding-child"><?php esc_html_e( 'Checking...', 'mainwp' ); ?></strong></div>
+                                            </div>
                                         </div>
                                         <div id="mainwp-onboarding-detection-message"></div>
                                         <div id="mainwp-onboarding-install" hidden>
@@ -736,7 +758,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 </div>
                             </div>
 
-                            <div class="ui bottom attached tab segment <?php echo 'multiple-site' === $mode ? 'active' : ''; ?>" data-tab="multiple-site">
+                            <div class="ui <?php echo $mode_chosen ? '' : 'bottom attached '; ?>tab segment <?php echo 'multiple-site' === $mode ? 'active' : ''; ?>" data-tab="multiple-site">
                                 <div class="mainwp-wish-to-csv mainwp-wish-to-migrate">
                                     <div class="ui fluid segment accordion" id="mainwp-add-sites-info-accordion">
                                         <div class="title">

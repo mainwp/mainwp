@@ -38,35 +38,11 @@
 }
 
 .mainwp-onboarding-preview {
-    position: relative;
     margin: 1.5em 0;
 }
-.mainwp-onboarding-preview img {
-    display: block;
-    width: 100%;
-    height: auto;
-    border-radius: var(--area-radius);
-}
-.mainwp-onboarding-preview .ui.label {
-    position: absolute;
-    max-width: 30%;
-    background: var(--mainwp-element-background);
-    color: var(--mainwp-text);
-    border: 1px solid var(--mainwp-border-strong);
-}
-.mainwp-preview-updates { top: 8%; left: 10%; }
-.mainwp-preview-update-all { top: 34%; left: 10%; }
-.mainwp-preview-connections { top: 40%; right: 4%; }
 .mainwp-onboarding-preview figcaption { margin-top: 0.75em; }
 #mainwp-onboarding-detection .is-ok { color: var(--mainwp-green); }
 #mainwp-onboarding-detection .is-failed { color: var(--mainwp-red); }
-
-@media (max-width: 600px) {
-    .mainwp-onboarding-preview .ui.label {
-        font-size: 0.65em;
-        padding: 0.4em;
-    }
-}
 
 #mainwp-onboarding-detection[hidden],
 #mainwp-onboarding-detection [hidden] { display: none !important; }

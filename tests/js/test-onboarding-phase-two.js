@@ -221,7 +221,53 @@ test('celebration keyframes load on Overview and wizard and respect reduced moti
     }
 });
 
-function uiHarness(mode = 'single-site') {
+test('milestones wait for widget initialization and consume each animation marker once', () => {
+    const widget = fs.readFileSync(require.resolve('../../widgets/widget-mainwp-get-started.php'), 'utf8');
+    assert.match(widget, /\$celebrate \? ' data-celebrate="true"' : ''/);
+    assert.doesNotMatch(widget, /tadaaaa/);
+    const mainwp = fs.readFileSync(require.resolve('../../assets/js/mainwp.js'), 'utf8');
+    const selector = '#mainwp-get-started-list [data-celebrate="true"]';
+    const marker = mainwp.indexOf(selector);
+    const start = mainwp.lastIndexOf('jQuery(function () {', marker);
+    const end = mainwp.indexOf('\n});', marker) + 4;
+    assert.ok(marker >= 0 && start >= 0 && end > marker, 'The milestone ready callback must exist.');
+    const pending = { attributes: { 'data-celebrate': 'true' }, classes: new Set() };
+    const seen = { attributes: {}, classes: new Set() };
+    const incomplete = { attributes: {}, classes: new Set() };
+    const icons = [pending, seen, incomplete];
+    const ready = [];
+    const starts = [];
+    const context = vm.createContext({
+        jQuery(input) {
+            if (typeof input === 'function') { ready.push(input); return; }
+            assert.equal(input, selector);
+            const selected = icons.filter(icon => icon.attributes['data-celebrate'] === 'true');
+            const result = {
+                removeAttr(name) {
+                    selected.forEach(icon => delete icon.attributes[name]);
+                    return result;
+                },
+                addClass(name) {
+                    selected.forEach(icon => { icon.classes.add(name); starts.push(icon); });
+                    return result;
+                }
+            };
+            return result;
+        }
+    });
+    vm.runInContext(mainwp.slice(start, end), context);
+    assert.equal(ready.length, 1);
+    assert.equal(pending.classes.has('tadaaaa'), false, 'Parsing the widget must not start its animation.');
+    ready[0]();
+    assert.equal(pending.classes.has('tadaaaa'), true);
+    assert.equal(pending.attributes['data-celebrate'], undefined);
+    assert.equal(seen.classes.size, 0);
+    assert.equal(incomplete.classes.size, 0);
+    ready[0]();
+    assert.deepEqual(starts, [pending], 'Repeated initialization must not replay a milestone.');
+});
+
+function uiHarness(mode = 'single-site', tabs = true) {
     let now = 1000;
     let nextId = 1;
     const timers = new Map();
@@ -309,7 +355,7 @@ function uiHarness(mode = 'single-site') {
     $('#mainwp_managesites_add_wpurl_protocol').val('https');
     $('#mainwp-administrator-password-checkbox-field').prop('checked', true);
     $('#mainwp-qsw-connect-site-form').attr('data-mode', mode);
-    $('.menu-connect-first-site .active.item').attr('data-tab', mode);
+    if (tabs) $('.menu-connect-first-site .active.item').attr('data-tab', mode);
     const context = load({
         jQuery: $, document, window, mainwpSetupLocalize: copy, Date: { now: () => now }, ajaxurl: '/admin-ajax.php',
         setTimeout: browserTimer((callback, delay) => schedule(callback, delay)), clearTimeout: browserTimer(id => timers.delete(id)),
@@ -377,6 +423,10 @@ function matrixView(status, deadline, timers = [], request = null, zone = matrix
         status, timers: [...timers].sort(), request,
         rows: rows.slice(0, 2),
         rowClasses: rows.slice(0, 2).map(label => [label === 'Yes', label === 'No']),
+        rowIcons: rows.slice(0, 2).map(label => ({
+            Yes: 'green check icon', No: 'red times icon', 'Checking...': 'notched circle loading icon',
+            'Not yet': 'orange circle icon', 'Not checked': 'grey circle icon'
+        })[label]),
         install: rows[2], installHref: rows[2] ? matrixSite + 'wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term' : '',
         timer: rows[3], expiry: rows[4], retry: rows[5],
         timerLine: deadline === 'none' ? matrixDefault : deadline === 'future' ? 'Less than a minute left to connect.' : matrixClosed,
@@ -501,6 +551,7 @@ function matrixSnapshot(h, controller) {
         request: h.requests.filter(r => !r.aborted && !r.settled).map(r => r.options.data.action).join(',') || null,
         rows: ['reachable', 'child'].map(id => row(id).text()),
         rowClasses: ['reachable', 'child'].map(id => [row(id).prop('is-ok'), row(id).prop('is-failed')]),
+        rowIcons: ['reachable', 'child'].map(id => row(id + '-icon').attr('class')),
         install: visible('install'), installHref: row('install-link').attr('href'),
         timer: visible('timer'), timerLine: row('time-left').text(),
         expiry: visible('expiry'), retry: visible('retry'), detectionMessage: row('detection-message').html(),
@@ -615,6 +666,26 @@ test('detection state/input matrix (480 rows)', async t => {
         assert.deepEqual(matrixSnapshot(h, controller), row.expected);
     });
 });
+
+for (const mode of ['single-site', 'multiple-site']) {
+    test('chosen ' + mode + ' mode works without the tab menu', () => {
+        const h = uiHarness(mode, false);
+        h.fill(); h.advance(400);
+        assert.equal(h.requests.length, mode === 'single-site' ? 1 : 0);
+        assert.equal(h.$('#mainwp_managesites_add').prop('visible'), mode === 'single-site');
+        assert.equal(h.$('#mainwp_managesites_add_import').prop('visible'), mode === 'multiple-site');
+        if (mode === 'single-site') {
+            h.reply({ response: 'NOMAINWP' });
+            assert.equal(h.$('#mainwp-onboarding-reachable').text(), 'Yes');
+            assert.equal(h.$('#mainwp-onboarding-child').text(), 'Not yet');
+            assert.equal(h.$('#mainwp-onboarding-install').prop('hidden'), false);
+            h.advance(5000);
+            h.reply({ response: 'OK', connection_window_remaining: 120 });
+            assert.equal(h.$('#mainwp-onboarding-child').text(), 'Yes');
+            assert.equal(h.$('#mainwp-onboarding-timer').prop('hidden'), false);
+        }
+    });
+}
 
 test('wizard fields debounce detection, render install guidance, and enable Connect independently of pre-check', () => {
     const h = uiHarness();

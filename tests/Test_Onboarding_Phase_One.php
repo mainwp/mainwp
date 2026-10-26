@@ -348,7 +348,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$primary_count = 'mwp_setup_welcome' === $view ? 0 : ( 'mwp_setup_connect_first_site' === $view ? 2 : 1 );
 			$this->assertSame( $primary_count, $xpath->query( $footer . '/div[@class="six wide right aligned column"]/*[@class="ui green button"]' )->length, $view );
 			if ( 'mwp_setup_welcome' === $view ) {
-				$this->assertSame( 2, $xpath->query( '//div[@class="ui two stackable cards"]/a[@class="ui card"]' )->length );
+				$this->assertSame( 2, $xpath->query( '//div[@class="ui two stackable link cards"]/a[@class="ui card"]' )->length );
 				$this->assertSame( 0, $xpath->query( '//a[normalize-space(.)="Get started"]' )->length );
 			}
 			if ( 'mwp_setup_connect_first_site' === $view ) {

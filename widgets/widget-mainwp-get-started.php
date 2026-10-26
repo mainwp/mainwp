@@ -101,7 +101,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 <?php foreach ( $items as $item ) : ?>
                     <a class="<?php echo $item['complete'] ? 'completed' : ''; ?> step" href="<?php echo esc_url( admin_url( $item['url'] ) ); ?>">
                         <i class="<?php echo esc_attr( $item['icon'] ); ?> icon"></i>
-                        <div class="content"><div class="title"><?php echo esc_html( $item['title'] ); ?></div></div>
+                        <div class="content"><div class="<?php echo $item['complete'] ? 'description' : 'title'; ?>"><?php echo esc_html( $item['title'] ); ?></div></div>
                     </a>
                 <?php endforeach; ?>
             </div>
@@ -161,7 +161,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                 'title'    => __( 'Confirm uptime alerts', 'mainwp' ),
                 'url'      => 'admin.php?page=MonitoringSettings',
                 'icon'     => 'heartbeat',
-                'complete' => ! empty( $settings['active'] ),
+                'complete' => ! empty( $settings['active'] ) && (bool) get_option( 'mainwp_onboarding_uptime_confirmed' ),
             ),
         );
         if ( MainWP_System_Utility::is_admin() && true === MainWP_Abilities_Util::check_rest_api_permission() && ! MainWP_Menu::is_disable_menu_item( 2, 'ai' ) ) {

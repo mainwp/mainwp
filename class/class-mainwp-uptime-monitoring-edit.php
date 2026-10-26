@@ -259,6 +259,10 @@ class MainWP_Uptime_Monitoring_Edit { // phpcs:ignore Generic.Classes.OpeningBra
                 $update['retention_limits'] = isset( $_POST['mainwp_edit_monitor_retention_days'] ) ? intval( $_POST['mainwp_edit_monitor_retention_days'] ) : 180;
                 $update['bypass_cache']     = ( isset( $_POST['mainwp_edit_monitor_bypass_cache'] ) ? 1 : 0 );
                 MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $update );
+                $saved = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+                if ( get_option( 'mainwp_onboarding_fresh_install' ) && 1 === (int) $update['active'] && 1 === (int) $saved['active'] ) {
+                    update_option( 'mainwp_onboarding_uptime_confirmed', 1 );
+                }
                 MainWP_Utility::update_option( 'mainwp_uptime_monitor_cleanup_heartbeat_at', 0 ); // reset cleanup heartbeat to process on next run.
                 MainWP_Utility::update_option( 'mainwp_check_http_response', $check_http_response );
                 MainWP_Utility::update_option( 'mainwp_check_http_response_method', $chk_http_method );

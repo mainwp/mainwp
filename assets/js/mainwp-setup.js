@@ -28,6 +28,9 @@ jQuery(function () {
     jQuery(this).popup('show');
   }).on('blur', function () {
     jQuery(this).popup('hide');
+  }).on('click', function (event) {
+    event.preventDefault();
+    jQuery(this).popup('show');
   });
 
   jQuery('#mainwp-onboarding-update-all').on('click', function () {

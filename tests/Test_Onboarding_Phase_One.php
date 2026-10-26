@@ -12,10 +12,10 @@ use MainWP\Dashboard\MainWP_DB_Common;
 use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_DB_Uptime_Monitoring;
 use MainWP\Dashboard\MainWP_Get_Started;
-use MainWP\Dashboard\MainWP_Install;
 use MainWP\Dashboard\MainWP_Manage_Sites;
 use MainWP\Dashboard\MainWP_Setup_Wizard;
 use MainWP\Dashboard\MainWP_Uptime_Monitoring_Handle;
+use MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit;
 
 /**
  * Exercises production helpers without booting the wizard's exit-driven page.
@@ -64,7 +64,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$property->setAccessible( true );
 		$this->site_count = $property->getValue();
 		$property->setValue( null, 0 );
-		foreach ( array( 'fresh_install', 'defaults_applied', 'first_update', 'mcp_visited' ) as $flag ) {
+		foreach ( array( 'fresh_install', 'defaults_applied', 'first_update', 'mcp_visited', 'uptime_confirmed' ) as $flag ) {
 			delete_option( 'mainwp_onboarding_' . $flag );
 		}
 		delete_option( 'mainwp_disableSitesHealthMonitoring' );
@@ -156,10 +156,6 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertFalse( get_option( 'mainwp_sitehealthThreshold' ) );
 		$this->assertFalse( get_option( 'mainwp_onboarding_defaults_applied' ) );
 		$this->assertFalse( MainWP_Get_Started::is_visible() );
-		$version = new \ReflectionProperty( MainWP_Install::class, 'mainwp_db_version' );
-		$version->setAccessible( true );
-		update_site_option( 'mainwp_db_version', $version->getValue( MainWP_Install::instance() ) );
-		MainWP_Install::instance()->install();
 		$this->assertFalse( get_option( 'mainwp_onboarding_fresh_install' ) );
 	}
 
@@ -173,6 +169,8 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 0, (int) get_option( 'mainwp_disableSitesHealthMonitoring' ) );
 		$this->assertSame( 80, (int) get_option( 'mainwp_sitehealthThreshold' ) );
 		$this->assertGreaterThan( 0, (int) get_option( 'mainwp_onboarding_defaults_applied' ) );
+		$this->assertFalse( get_option( 'mainwp_onboarding_uptime_confirmed' ) );
+		$this->assertFalse( MainWP_Get_Started::get_items()[3]['complete'] );
 		$settings['active'] = 0;
 		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
 		update_option( 'mainwp_sitehealthThreshold', 100 );
@@ -214,6 +212,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 
 	/** An invalid nonce cannot turn uptime off or change tours. */
 	public function test_summary_save_rejects_invalid_nonce(): void {
+		update_option( 'mainwp_onboarding_fresh_install', time() );
 		update_option( 'mainwp_enable_guided_tours', 0 );
 		$_REQUEST = array( '_wpnonce' => 'invalid' );
 		$_POST    = array(
@@ -236,10 +235,12 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		}
 		$this->assertSame( 0, (int) get_option( 'mainwp_enable_guided_tours' ) );
 		$this->assertSame( 0, (int) get_option( 'mainwp_global_uptime_monitoring_settings' )['active'] );
+		$this->assertFalse( get_option( 'mainwp_onboarding_uptime_confirmed' ) );
 	}
 
-	/** Leaving the summary needs no settings right, while both buttons must preserve settings. */
+	/** Leaving the summary needs no settings right and must preserve settings. */
 	public function test_summary_save_without_settings_right_redirects_without_writing(): void {
+		update_option( 'mainwp_onboarding_fresh_install', time() );
 		update_option( 'mainwp_enable_guided_tours', 0 );
 		$settings = get_option( 'mainwp_global_uptime_monitoring_settings' );
 		$deny     = static function ( $allowed, $type, $right ) {
@@ -249,17 +250,12 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			throw new \RuntimeException( $location );
 		};
 		$_POST    = array(
-			'save_monitoring'                     => '1',
 			'mainwp-guided-tours-option'          => '1',
 			'mainwp_setup_enableUptimeMonitoring' => '1',
 		);
 		add_filter( 'mainwp_currentusercan', $deny, 999, 3 );
 		add_filter( 'wp_redirect', $redirect );
 		try {
-			$this->wizard->mwp_setup_ready_save();
-			$this->assertSame( 0, (int) get_option( 'mainwp_enable_guided_tours' ) );
-			$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
-			unset( $_POST['save_monitoring'] );
 			try {
 				$this->wizard->mwp_setup_ready_save();
 				$this->fail( 'Go to Dashboard must redirect.' );
@@ -272,6 +268,96 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		}
 		$this->assertSame( 0, (int) get_option( 'mainwp_enable_guided_tours' ) );
 		$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+		$this->assertFalse( get_option( 'mainwp_onboarding_uptime_confirmed' ) );
+	}
+
+	/**
+	 * An authorized summary save confirms only active monitoring.
+	 *
+	 * @dataProvider monitoring_choices
+	 * @param bool $active Submitted monitoring choice.
+	 */
+	public function test_summary_save_records_explicit_uptime_confirmation( $active ): void {
+		update_option( 'mainwp_onboarding_fresh_install', time() );
+		$_REQUEST = array( '_wpnonce' => wp_create_nonce( 'mwp-setup' ) );
+		$_POST    = array( 'mainwp-guided-tours-option' => '1' );
+		if ( $active ) {
+			$_POST['mainwp_setup_enableUptimeMonitoring'] = '1';
+		}
+		$redirect = static function ( $location ) {
+			throw new \RuntimeException( $location );
+		};
+		add_filter( 'wp_redirect', $redirect );
+		try {
+			$this->wizard->mwp_setup_ready_save();
+			$this->fail( 'The summary must redirect after saving.' );
+		} catch ( \RuntimeException $error ) {
+			$this->assertSame( admin_url( 'admin.php?page=mainwp_tab' ), $error->getMessage() );
+		} finally {
+			remove_filter( 'wp_redirect', $redirect );
+		}
+		$this->assertSame( (int) $active, (int) get_option( 'mainwp_global_uptime_monitoring_settings' )['active'] );
+		$this->assertSame( 1, (int) get_option( 'mainwp_enable_guided_tours' ) );
+		$this->assertSame( $active, (bool) get_option( 'mainwp_onboarding_uptime_confirmed' ) );
+		$this->assertSame( $active, MainWP_Get_Started::get_items()[3]['complete'] );
+	}
+
+	/**
+	 * Monitoring toggle boundaries.
+	 *
+	 * @return array
+	 */
+	public static function monitoring_choices() {
+		return array(
+			'on'  => array( true ),
+			'off' => array( false ),
+		);
+	}
+
+	/**
+	 * Only a fresh install's authorized, nonce-checked active settings save confirms alerts.
+	 *
+	 * @dataProvider monitoring_saves
+	 * @param int  $active Submitted monitoring state.
+	 * @param bool $fresh Fresh-install cohort.
+	 * @param bool $nonce Valid nonce.
+	 * @param bool $right Settings right.
+	 * @param bool $expected Expected confirmation.
+	 */
+	public function test_monitoring_settings_save_records_confirmation( $active, $fresh, $nonce, $right, $expected ): void {
+		if ( $fresh ) {
+			update_option( 'mainwp_onboarding_fresh_install', time() );
+		}
+		$_POST      = array(
+			'wp_nonce_uptime_settings'   => $nonce ? wp_create_nonce( 'UpdateMonitorSettings' ) : 'invalid',
+			'mainwp_edit_monitor_active' => $active,
+		);
+		$permission = static function ( $allowed, $type, $name ) use ( $right ) {
+			return 'dashboard' === $type && 'manage_dashboard_settings' === $name ? $right : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $permission, 999, 3 );
+		try {
+			MainWP_Uptime_Monitoring_Edit::instance()->handle_save_settings();
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $permission, 999 );
+		}
+		$this->assertSame( $expected, (bool) get_option( 'mainwp_onboarding_uptime_confirmed' ) );
+		$this->assertSame( $expected, MainWP_Get_Started::get_items()[3]['complete'] );
+	}
+
+	/**
+	 * Global settings confirmation requires an explicit authorized choice.
+	 *
+	 * @return array
+	 */
+	public static function monitoring_saves() {
+		return array(
+			'confirmed on'  => array( 1, true, true, true, true ),
+			'saved off'     => array( 0, true, true, true, false ),
+			'invalid nonce' => array( 1, true, false, true, false ),
+			'no right'      => array( 1, true, true, false, false ),
+			'old install'   => array( 1, false, true, true, false ),
+		);
 	}
 
 	/**
@@ -309,7 +395,100 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		}
 		$xpath = $this->html_xpath( $html );
 		$this->assertSame( 0, $xpath->query( '//div[@class="ui relaxed list"]/div[@class="item"][starts-with(normalize-space(.),"WordPress ")]' )->length );
-		$this->assertStringContainsString( 'Everything is up to date', $html );
+		$this->assertStringContainsString( 'Updates and health will show here after the first successful sync.', $html );
+		$this->assertStringNotContainsString( 'Everything is up to date', $html );
+		$this->assertStringNotContainsString( 'Site health:', $html );
+		$this->assertStringContainsString( 'Uptime monitoring is off.', $html );
+		$this->assertSame( 0, $xpath->query( '//button[@id="mainwp-onboarding-update-all"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
+	}
+
+	/** Stale updates never appear as actionable results before a successful sync. */
+	public function test_summary_without_sync_hides_stale_updates_and_health(): void {
+		$site = $this->site();
+		MainWP_DB::instance()->update_website_values(
+			$site->id,
+			array( 'plugin_upgrades' => wp_json_encode( array( 'example/plugin.php' => array( 'Name' => 'Example' ) ) ) )
+		);
+		$_GET = array( 'siteid' => $site->id );
+		foreach ( array( false, true ) as $sync_error ) {
+			MainWP_DB::instance()->update_website_option( $site, 'site_info', wp_json_encode( $sync_error ? array( 'wpversion' => '6.7' ) : array() ) );
+			MainWP_DB::instance()->update_website_sync_values( $site->id, array( 'sync_errors' => $sync_error ? 'Connection failed' : '' ) );
+			ob_start();
+			try {
+				$this->wizard->mwp_setup_ready();
+			} finally {
+				$html = ob_get_clean();
+			}
+			$this->assertStringContainsString( 'Updates and health will show here after the first successful sync.', $html );
+			$xpath = $this->html_xpath( $html );
+			$this->assertSame( 0, $xpath->query( '//button[@id="mainwp-onboarding-update-all"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
+			$this->assertStringNotContainsString( 'Everything is up to date', $html );
+			$this->assertStringNotContainsString( 'Site health:', $html );
+			$this->assertStringContainsString( 'Uptime monitoring is off.', $html );
+		}
+	}
+
+	/**
+	 * Counts and the update confirmation use the same singular or plural segments.
+	 *
+	 * @dataProvider update_counts
+	 * @param int    $count Updates of each type.
+	 * @param string $expected Expected count text.
+	 */
+	public function test_summary_pluralizes_update_counts_and_confirmation( $count, $expected ): void {
+		$site = $this->site();
+		MainWP_DB::instance()->update_website_option( $site, 'site_info', wp_json_encode( array( 'wpversion' => '6.7' ) ) );
+		$plugins = array();
+		$themes  = array();
+		$trans   = array();
+		for ( $index = 0; $index < $count; ++$index ) {
+			$plugins[ 'example' . $index . '/plugin.php' ] = array( 'Name' => 'Example' );
+			$themes[ 'example' . $index ]                  = array( 'Name' => 'Example' );
+			$trans[]                                       = array( 'slug' => 'example' . $index );
+		}
+		MainWP_DB::instance()->update_website_values(
+			$site->id,
+			array(
+				'plugin_upgrades'      => wp_json_encode( $plugins ),
+				'theme_upgrades'       => wp_json_encode( $themes ),
+				'translation_upgrades' => wp_json_encode( $trans ),
+			)
+		);
+		update_option( 'mainwp_show_language_updates', 1 );
+		$_GET = array( 'siteid' => $site->id );
+		foreach ( array( 0, 1 ) as $hide ) {
+			update_option( 'mainwp_hide_update_everything', $hide );
+			ob_start();
+			try {
+				$this->wizard->mwp_setup_ready();
+			} finally {
+				$html = ob_get_clean();
+			}
+			$xpath = $this->html_xpath( $html );
+			$this->assertStringContainsString( $expected, $html );
+			$button = $xpath->query( '//button[@id="mainwp-onboarding-update-all"]' );
+			$this->assertSame( $count && ! $hide ? 1 : 0, $button->length );
+			if ( $button->length ) {
+				$this->assertStringContainsString( 'This installs ' . $expected . '.', $button->item( 0 )->getAttribute( 'data-confirm' ) );
+			}
+			$label = $count && ! $hide ? 'Review updates first' : 'View updates';
+			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="' . $label . '"]' )->length );
+		}
+	}
+
+	/**
+	 * Zero, singular and plural update text.
+	 *
+	 * @return array
+	 */
+	public static function update_counts() {
+		return array(
+			'zero'     => array( 0, 'Everything is up to date' ),
+			'singular' => array( 1, '1 plugin update, 1 theme update, 1 translation update' ),
+			'plural'   => array( 2, '2 plugin updates, 2 theme updates, 2 translation updates' ),
+		);
 	}
 
 	/** The multi-site summary heading follows the connected-site count. */
@@ -318,6 +497,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$property->setAccessible( true );
 		$_GET = array( 'siteid' => 0 );
 		foreach ( array(
+			0 => 'No sites connected yet',
 			1 => '1 site connected',
 			3 => '3 sites connected',
 		) as $count => $heading ) {
@@ -328,7 +508,12 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			} finally {
 				$html = ob_get_clean();
 			}
-			$this->assertSame( $heading, trim( $this->html_xpath( $html )->query( '//h1' )->item( 0 )->textContent ) );
+			$xpath = $this->html_xpath( $html );
+			$this->assertSame( $heading, trim( $xpath->query( '//h1' )->item( 0 )->textContent ) );
+			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
+			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="Assign sites to a client"]' )->length );
+			$this->assertStringNotContainsString( 'Assign this site to a client', $html );
+			$this->assertStringNotContainsString( 'Review updates first', $html );
 		}
 		$property->setValue( null, null );
 	}
@@ -436,6 +621,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 	/** The uptime row must not abort rendering the summary's remaining actions. */
 	public function test_active_uptime_summary_renders_all_actions(): void {
 		$site = $this->site();
+		MainWP_DB::instance()->update_website_option( $site, 'site_info', wp_json_encode( array( 'wpversion' => '6.7' ) ) );
 		MainWP_DB::instance()->update_website_values(
 			$site->id,
 			array(
@@ -483,6 +669,11 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( admin_url( 'admin.php?page=managesites&updateid=' . $site->id ), $xpath->query( '//a[normalize-space(.)="Review updates first"]/@href' )->item( 0 )->value );
 		$this->assertSame( 1, $xpath->query( '//input[@id="mainwp_setup_enableUptimeMonitoring"][@type="checkbox"][@checked]' )->length );
 		$this->assertSame( 1, $xpath->query( '//form//button[@type="submit"][normalize-space(.)="Go to Dashboard"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//form//button[@type="submit"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[@class="ui toggle checkbox"]/input[@id="mainwp_setup_enableUptimeMonitoring"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[@class="ui checkbox"]/input[@id="mainwp-guided-tours-option"]' )->length );
+		$this->assertSame( 'ui basic green button', $xpath->query( '//button[@id="mainwp-onboarding-update-all"]/@class' )->item( 0 )->value );
+		$this->assertSame( 'ui basic green button', $xpath->query( '//form/button[@type="submit"]/@class' )->item( 0 )->value );
 	}
 
 	/** Default connection fields exclude optional settings and keep help independently focusable. */
@@ -502,7 +693,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		foreach ( array( 'mainwp_managesites_add_wpurl', 'mainwp_managesites_add_wpadmin', 'mainwp_managesites_add_admin_pwd' ) as $id ) {
 			$this->assertSame( 1, $xpath->query( '//input[@id="' . $id . '"][not(ancestor::*[@id="mainwp-onboarding-advanced"])]' )->length, $id );
 		}
-		$this->assertSame( 1, $xpath->query( '//button[@id="mainwp-onboarding-password-help"][@type="button"][@aria-describedby="mainwp-onboarding-password-explanation"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//a[@id="mainwp-onboarding-password-help"][@href="#mainwp-onboarding-password-explanation"][@aria-describedby="mainwp-onboarding-password-explanation"]' )->length );
 		$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-password-help"]/ancestor::*[@id="mainwp-administrator-password-field"]' )->length );
 		$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-password-help"]/ancestor::*[contains(concat(" ", normalize-space(@class), " "), " label ")]' )->length );
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"][@role="tooltip"]' )->length );
@@ -686,6 +877,8 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$settings           = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings( false );
 		$settings['active'] = 1;
 		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+		$this->assertFalse( MainWP_Get_Started::get_items()[3]['complete'], 'Defaults alone are not confirmation.' );
+		update_option( 'mainwp_onboarding_uptime_confirmed', 1 );
 		$client = MainWP_DB_Client::instance()->update_client(
 			array(
 				'name'         => 'Onboarding Client',
@@ -697,11 +890,20 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertNotContains( false, array_column( $items, 'complete' ) );
 		$this->assertSame( 'Create a client and report', end( $items )['title'] );
 		$this->assertSame( 'admin.php?page=MonitoringSettings', $items[3]['url'] );
+		ob_start();
+		MainWP_Get_Started::render_content();
+		$html  = ob_get_clean();
+		$xpath = $this->html_xpath( $html );
+		$this->assertSame( count( $items ), $xpath->query( '//a[contains(@class,"completed")]/div[@class="content"]/div[@class="description"][normalize-space(.)!=""]' )->length );
+		$this->assertSame( 0, $xpath->query( '//a[contains(@class,"completed")]//div[@class="title"]' )->length );
 		$this->assertTrue( MainWP_Get_Started::is_visible() );
 		update_user_option( get_current_user_id(), 'mainwp_notice_saved_status', array( 'get-started' => 1 ) );
 		$this->assertFalse( MainWP_Get_Started::is_visible() );
 		delete_option( 'mainwp_onboarding_first_update' );
 		$this->assertTrue( MainWP_Get_Started::is_visible(), 'A dismissal before completion cannot remove unfinished items.' );
+		$settings['active'] = 0;
+		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+		$this->assertFalse( MainWP_Get_Started::get_items()[3]['complete'], 'A prior confirmation cannot complete disabled monitoring.' );
 	}
 
 	/** The MCP shortcut is absent when the AI menu is disabled. */

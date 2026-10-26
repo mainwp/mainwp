@@ -280,4 +280,8 @@ test('password explanation opens on hover and keyboard focus and closes on blur'
     assert.equal(popup.visible, true);
     h.handlers.get('#mainwp-onboarding-password-help:blur').call(help);
     assert.equal(popup.visible, false);
+    let prevented = false;
+    h.handlers.get('#mainwp-onboarding-password-help:click').call(help, { preventDefault() { prevented = true; } });
+    assert.equal(prevented, true);
+    assert.equal(popup.visible, true);
 });

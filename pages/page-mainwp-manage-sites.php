@@ -407,6 +407,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             'wpcore_update'            => esc_html__( 'WP updates', 'mainwp' ),
             'plugin_update'            => esc_html__( 'Plugin updates', 'mainwp' ),
             'theme_update'             => esc_html__( 'Theme updates', 'mainwp' ),
+            'abandoned'                => esc_html__( 'Abandoned plugins/themes', 'mainwp' ),
             'site-cost-tracker'        => esc_html__( 'Cost Tracker', 'mainwp' ),
             'note'                     => esc_html__( 'Notes', 'mainwp' ),
             'site_preview'             => esc_html__( 'Site preview', 'mainwp' ),
@@ -499,7 +500,7 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                             <?php
                                             $show_col = ! isset( $show_cols[ $name ] ) || ( 1 === (int) $show_cols[ $name ] );
 
-                                            if ( 'added_datetime' === $name && ! isset( $show_cols[ $name ] ) ) {
+                                            if ( in_array( $name, array( 'added_datetime', 'abandoned' ), true ) && ! isset( $show_cols[ $name ] ) ) {
                                                 $show_col = false; // default is hidden.
                                             }
 

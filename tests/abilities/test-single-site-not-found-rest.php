@@ -174,6 +174,9 @@ class Test_Single_Site_Not_Found_REST extends MainWP_Abilities_Test_Case {
 	 * @return \WP_REST_Response
 	 */
 	private function request( $name, $method, array $input ) {
+		if ( 'get-site-costs' === $name && ! class_exists( 'MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Manager' ) ) {
+			$this->markTestSkipped( 'Cost Tracker module is not available.' );
+		}
 		if ( 'get-site-knowledge' === $name ) {
 			$input['site_id'] = $input['site_id_or_domain'];
 			unset( $input['site_id_or_domain'] );
@@ -333,7 +336,10 @@ class Test_Single_Site_Not_Found_REST extends MainWP_Abilities_Test_Case {
 			}
 		);
 		$response = $this->request( $name, $method, array( 'site_id_or_domain' => $this->site_id ) + $extra );
-		if ( isset( $extra['action'] ) && in_array( $extra['action'], array( 'unignore', 'remove' ), true ) ) {
+		if ( 'get-site-changes' === $name && ! class_exists( 'MainWP\Dashboard\Module\Log\Log_Manager' ) ) {
+			$this->assertSame( 501, $response->get_status() );
+			$this->assertSame( 'mainwp_module_not_available', $response->get_data()['code'] );
+		} elseif ( isset( $extra['action'] ) && in_array( $extra['action'], array( 'unignore', 'remove' ), true ) ) {
 			$this->assertSame( 400, $response->get_status() );
 			$this->assertSame( 'mainwp_unignore_moved', $response->get_data()['code'] );
 			$this->assertSame( 'mainwp/unignore-site-updates-v1', $response->get_data()['data']['replacement'] );
@@ -456,8 +462,13 @@ class Test_Single_Site_Not_Found_REST extends MainWP_Abilities_Test_Case {
 	 * @param array  $extra Valid operation fields.
 	 */
 	public function test_direct_php_missing_site_is_404( $name, $method, $extra ) {
-		$key    = 'get-site-knowledge' === $name ? 'site_id' : 'site_id_or_domain';
-		$result = wp_get_ability( 'mainwp/' . $name . '-v1' )->execute( array( $key => 999999999 ) + $extra );
+		if ( 'get-site-costs' === $name && ! class_exists( 'MainWP\Dashboard\Module\CostTracker\Cost_Tracker_Manager' ) ) {
+			$this->markTestSkipped( 'Cost Tracker module is not available.' );
+		}
+		$key     = 'get-site-knowledge' === $name ? 'site_id' : 'site_id_or_domain';
+		$ability = wp_get_ability( 'mainwp/' . $name . '-v1' );
+		$this->assertNotNull( $ability );
+		$result = $ability->execute( array( $key => 999999999 ) + $extra );
 		$this->assertWPError( $result );
 		$this->assertSame( 'mainwp_site_not_found', $result->get_error_code() );
 		$this->assertSame( 404, $result->get_error_data()['status'] );

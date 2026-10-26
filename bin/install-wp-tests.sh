@@ -168,6 +168,7 @@ install_wp() {
 }
 
 install_test_suite() {
+	local payload
 	# portable in-place argument for both GNU sed and Mac OSX sed
 	if [[ $(uname -s) == 'Darwin' ]]; then
 		local ioption='-i.bak'
@@ -181,9 +182,15 @@ install_test_suite() {
 	else
 		# set up testing suite
 		check_directory "$WP_TESTS_DIR" destination yes
+	fi
+	if [ ! -d "$WP_TESTS_DIR/includes" ] || [ ! -d "$WP_TESTS_DIR/data" ]; then
 		svn export --quiet --ignore-externals "https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/includes/" "$STAGING_DIR/includes"
 		svn export --quiet --ignore-externals "https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/data/" "$STAGING_DIR/data"
-		mv "$STAGING_DIR/includes" "$STAGING_DIR/data" "$WP_TESTS_DIR/"
+		for payload in includes data; do
+			if [ ! -d "$WP_TESTS_DIR/$payload" ]; then
+				mv "$STAGING_DIR/$payload" "$WP_TESTS_DIR/$payload"
+			fi
+		done
 	fi
 
 	if [ ! -f "$WP_TESTS_DIR/wp-tests-config.php" ]; then

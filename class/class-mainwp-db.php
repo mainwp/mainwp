@@ -1621,7 +1621,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         // wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
         if ( $selectgroups ) {
-            $select = $count_only ? 'wp.id,wp_sync.sync_id' : 'wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors,
+            $select = $count_only ? 'COUNT(*) FROM (SELECT wp.id,wp_sync.sync_id' : 'wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors,
             wpclient.name as client_name';
             $qry    = 'SELECT ' . $select . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
@@ -1634,7 +1634,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
         } else {
-            $select = $count_only ? 'wp.id,wp_sync.sync_id' : 'wp.*,wp_sync.*' . $view_selects . ', wpclient.name as client_name';
+            $select = $count_only ? 'COUNT(*) FROM (SELECT wp.id,wp_sync.sync_id' : 'wp.*,wp_sync.*' . $view_selects . ', wpclient.name as client_name';
             $qry    = 'SELECT ' . $select . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
@@ -1663,7 +1663,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         }
 
         if ( $count_only ) {
-            $qry = 'SELECT COUNT(*) FROM (' . $qry . ') AS mainwp_sites_count';
+            $qry .= ') AS mainwp_sites_count';
         }
 
         if ( ! empty( $_included_cache_ids ) ) {

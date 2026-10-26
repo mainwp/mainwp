@@ -97,6 +97,21 @@ class Test_Abilities_Knowledge_Page extends MainWP_Abilities_Test_Case {
 		return $html;
 	}
 
+	/** Only an authorized visit on a fresh Dashboard completes the MCP item. */
+	public function test_mcp_visit_marks_only_fresh_authorized_install(): void {
+		delete_option( 'mainwp_onboarding_fresh_install' );
+		delete_option( 'mainwp_onboarding_mcp_visited' );
+		$this->render_mcp();
+		$this->assertFalse( get_option( 'mainwp_onboarding_mcp_visited' ) );
+		update_option( 'mainwp_onboarding_fresh_install', time() );
+		$this->render_mcp();
+		$this->assertSame( 1, (int) get_option( 'mainwp_onboarding_mcp_visited' ) );
+		delete_option( 'mainwp_onboarding_mcp_visited' );
+		wp_set_current_user( 0 );
+		$this->render_mcp();
+		$this->assertFalse( get_option( 'mainwp_onboarding_mcp_visited' ) );
+	}
+
 	private function render_mcp(): string {
 		ob_start();
 		try {

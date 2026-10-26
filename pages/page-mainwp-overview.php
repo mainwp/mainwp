@@ -251,6 +251,10 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             MainWP_UI::add_widget_box( 'overview', array( MainWP_Updates_Overview::get_class_name(), 'render' ), $page, array( 0, 0, 12, 20 ) );
         }
 
+        if ( ! MainWP_System_Utility::get_current_wpid() && static::$enable_widgets['get-started'] && MainWP_Get_Started::is_visible() ) {
+            MainWP_UI::add_widget_box( 'get-started', array( MainWP_Get_Started::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );
+        }
+
         // Load the Clients widget.
         if ( static::$enable_widgets['clients'] && \mainwp_current_user_can( 'dashboard', 'manage_clients' ) ) {
             MainWP_UI::add_widget_box( 'clients', array( MainWP_Clients::get_class_name(), 'render' ), $page, array( -1, -1, 4, 30 ) );

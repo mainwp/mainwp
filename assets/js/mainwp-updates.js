@@ -2175,6 +2175,11 @@ let updatesoverview_global_upgrade_all_start = function (which, siteNames, _call
 
         let confirmMsg = MainWP.I18n.t('You are about to update %1 on the following site(s): <br/><div class="ui message">%2</div> <strong>Do you want to proceed?</strong>', whichUpdates, sitesList.join('<br />'));
 
+        const onboardingConfirm = jQuery('#mainwp-onboarding-update-all').attr('data-confirm');
+        if (onboardingConfirm) {
+            confirmMsg = jQuery('<div>').text(onboardingConfirm).html();
+        }
+
         mainwp_confirm(confirmMsg, _callback, false, 2);
     }
 }

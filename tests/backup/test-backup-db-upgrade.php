@@ -1918,6 +1918,8 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 	public function test_fresh_install_creates_complete_schema() {
 		global $wpdb;
 
+		delete_option( 'mainwp_onboarding_fresh_install' );
+
 		$like = $wpdb->esc_like( $wpdb->prefix . 'mainwp_' ) . '%';
 
 		// Scope the drop-and-recreate to the tables MainWP_Install::install()
@@ -2018,6 +2020,7 @@ class MainWP_Backup_DB_Upgrade_Test extends \WP_UnitTestCase {
 		);
 
 		$this->assertSame( 'yes', get_option( 'mainwp_run_quick_setup' ), 'Fresh install must queue the quick-setup wizard.' );
+		$this->assertGreaterThan( 0, (int) get_option( 'mainwp_onboarding_fresh_install' ), 'Fresh installs must retain their onboarding cohort after the wizard starts.' );
 		$this->assertNotFalse( get_option( 'mainwp_enableNativeBackups' ), 'Fresh install must write the native-backups flag explicitly.' );
 		$this->assertSame( 0, (int) get_option( 'mainwp_enableNativeBackups' ), 'Fresh install must default native backups to disabled.' );
 	}

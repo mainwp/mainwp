@@ -4,20 +4,30 @@ jQuery(function () {
     if (tab_active !== '') {
       jQuery('#mainwp-qsw-connect-site-form').fadeIn(500);
       jQuery('#mainwp_managesites_add').show();
-      jQuery('#mainwp-qsw-toggle-verify-mainwp-child-active').show();
       jQuery('#mainwp_addsite_continue_button').hide();
       jQuery('.menu-connect-first-site .item').tab('change tab', tab_active);
     }
   });
 
-  jQuery('#mainwp-qsw-verify-mainwp-child-active').on('change', function () {
-    if (jQuery(this).is(':checked')) {
-      jQuery('#mainwp_managesites_add').removeClass('disabled');
-      jQuery('#mainwp_managesites_add_import').removeClass('disabled');
-    } else {
-      jQuery('#mainwp_managesites_add').addClass('disabled');
-      jQuery('#mainwp_managesites_add_import').addClass('disabled');
-    }
+  jQuery('#mainwp-onboarding-advanced-toggle').on('click', function () {
+    const expanded = jQuery(this).attr('aria-expanded') === 'true';
+    jQuery(this).attr('aria-expanded', String(!expanded));
+    jQuery('#mainwp-onboarding-advanced').prop('hidden', expanded);
+  });
+
+  const passwordHelp = jQuery('#mainwp-onboarding-password-help');
+  passwordHelp.popup({
+    popup: '#mainwp-onboarding-password-explanation',
+    on: 'hover',
+    position: 'top center'
+  }).on('focus', function () {
+    jQuery(this).popup('show');
+  }).on('blur', function () {
+    jQuery(this).popup('hide');
+  });
+
+  jQuery('#mainwp-onboarding-update-all').on('click', function () {
+    updatesoverview_global_upgrade_all('all', Number(jQuery(this).attr('data-siteid')));
   });
 
   // Handle submit import file CVS.
@@ -112,7 +122,7 @@ let mainwp_setup_managesites_add = function () {
   let errors = [];
 
   if (jQuery('#mainwp_managesites_add_wpname').val().trim() == '') {
-    errors.push('Please enter a title for the website.');
+    jQuery('#mainwp_managesites_add_wpname').val(jQuery('#mainwp_managesites_add_wpurl').val().trim());
   }
 
   if (jQuery('#mainwp_managesites_add_wpurl').val().trim() == '') {
@@ -256,7 +266,7 @@ let mainwp_setup_managesites_add = function () {
             });
 
             setTimeout(function () {
-              mainwp_forceReload('admin.php?page=mainwp-setup&step=add_client');
+              mainwp_forceReload('admin.php?page=mainwp-setup&step=next_steps&siteid=' + Number(res_things.siteid));
             }, 3000);
           }
 

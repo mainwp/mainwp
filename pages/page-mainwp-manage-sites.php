@@ -1214,6 +1214,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 });
 
                 mainwp_ui_state_init('addsite-adminpwd', function(state){
+                    if (jQuery('#mainwp_connect_first_site_form').length) {
+                        chkbx1.checkbox('set checked');
+                        jQuery('#mainwp-administrator-password-field').show();
+                        return;
+                    }
                     if( '1' === state || '0' === state ){
                         chkbx1.checkbox('set unchecked');
                         jQuery('#mainwp-administrator-password-field').fadeOut(500);
@@ -1225,6 +1230,11 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
 
 
                 mainwp_ui_state_init('addsite-uniqueid', function(state){
+                    if (jQuery('#mainwp_connect_first_site_form').length) {
+                        chkbx2.checkbox('set unchecked');
+                        jQuery('#mainwp-unique-security-id-field').hide();
+                        return;
+                    }
                     if( '1' === state || '0' === state ){
                         chkbx2.checkbox('set unchecked');
                         jQuery('#mainwp-unique-security-id-field').fadeOut(500);
@@ -2659,6 +2669,9 @@ class MainWP_Manage_Sites { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
      * @param string|null $title_page modal title.
      */
     public static function render_import_sites_modal( $url, $title_page = null ) {
+        if ( 'Import Sites' === $title_page ) {
+            $url = 'admin.php?page=mainwp-setup&step=next_steps&siteid=0';
+        }
         ?>
         <div class="ui large modal <?php echo ( 'Import Sites' === $title_page ) ? 'mainwp-qsw-import-modal' : ''; ?>" id="mainwp-import-sites-modal" data-page-url="<?php echo esc_url( $url ); ?>" >
             <i class="close icon" <?php echo 'Import Sites' === $title_page ? 'style="display:none"' : ''; ?> ></i>

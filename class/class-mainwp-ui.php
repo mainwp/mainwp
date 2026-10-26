@@ -2503,11 +2503,14 @@ class MainWP_UI { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.ContentAf
             </div>
         </div>
         <script type="text/javascript">
-        jQuery( '#mainwp-no-sites-modal' ).modal( {
-            blurring: true,
-            inverted: true,
-            closable: false
-        } ).modal( 'show' );
+        // Fomantic UI loads in the footer, after this markup.
+        jQuery( function() {
+            jQuery( '#mainwp-no-sites-modal' ).modal( {
+                blurring: true,
+                inverted: true,
+                closable: false
+            } ).modal( 'show' );
+        } );
         </script>
             <?php
     endif;

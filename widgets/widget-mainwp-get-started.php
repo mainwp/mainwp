@@ -54,6 +54,9 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
      * Grab available Child Sites updates a build Widget.
      */
     public static function render_content() {
+        if ( ! static::is_visible() ) {
+            return;
+        }
         ?>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">
@@ -67,30 +70,20 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                  */
                 echo esc_html( apply_filters( 'mainwp_get_started_widget_title', esc_html__( 'Get Started with MainWP', 'mainwp' ) ) );
                 ?>
-                <div class="sub header"><?php esc_html_e( 'Kickstart your MainWP experience with our simple checklist.', 'mainwp' ); ?></div>
+                <div class="sub header"><?php esc_html_e( 'Connect sites, run updates, and set up your workflow.', 'mainwp' ); ?></div>
             </h2>
         </div>
         <div class="mainwp-scrolly-overflow">
             <?php
-            $extensions = MainWP_Extensions_Handler::get_extensions();
-
-            $count_sites      = MainWP_Manage_Sites::get_total_sites();
-            $count_clients    = MainWP_DB_Client::instance()->count_total_clients();
-            $count_costs      = apply_filters( 'mainwp_module_cost_tracker_get_total_cost', 0 );
-            $count_extensions = is_array( $extensions ) ? count( $extensions ) : 0;
-
-            $started_done = true;
-
-            if ( empty( $count_sites ) || empty( $count_clients ) || empty( $count_costs ) || empty( $count_extensions ) ) {
-                $started_done = false;
-            }
+            $items        = static::get_items();
+            $started_done = ! in_array( false, array_column( $items, 'complete' ), true );
 
             if ( $started_done && MainWP_Utility::show_mainwp_message( 'notice', 'get-started' ) ) {
                 ?>
                 <div class="ui green message">
                     <i class="close icon mainwp-notice-dismiss" notice-id="get-started"></i>
                     <div class="header"><?php esc_html_e( 'Congratulations!', 'mainwp' ); ?></div>
-                    <?php esc_html_e( 'You can now use this widget as a handy list of shortcuts. If you prefer, you can also hide this widget by accessing the Page Settings.', 'mainwp' ); ?>
+                    <?php esc_html_e( 'Your checklist is complete. Dismiss this message to hide the widget.', 'mainwp' ); ?>
                 </div>
                 <?php
             }
@@ -105,34 +98,12 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             do_action( 'mainwp_get_started_widget_top' );
             ?>
             <div class="ui mini fluid vertical steps">
-                <a class="<?php echo empty( $count_sites ) ? '' : 'completed'; ?> step" href="admin.php?page=managesites&do=new">
-                    <i class="globe icon"></i>
-                    <div class="content">
-                        <div class="title"><?php esc_html_e( 'Add First Site', 'mainwp' ); ?></div>
-                        <div class="description"><?php esc_html_e( 'Click here to start connecting your sites.', 'mainwp' ); ?></div>
-                    </div>
-                </a>
-                <a class="<?php echo empty( $count_clients ) ? '' : 'completed'; ?> step" href="admin.php?page=ClientAddNew">
-                    <i class="users icon"></i>
-                    <div class="content">
-                        <div class="title"><?php esc_html_e( 'Add First Client', 'mainwp' ); ?></div>
-                        <div class="description"><?php esc_html_e( 'Click here to start adding your clients.', 'mainwp' ); ?></div>
-                    </div>
-                </a>
-                <a class="<?php echo empty( $count_costs ) ? '' : 'completed'; ?> step" href="admin.php?page=CostTrackerAdd">
-                    <i class="dollar sign icon"></i>
-                    <div class="content">
-                        <div class="title"><?php esc_html_e( 'Add First Cost', 'mainwp' ); ?></div>
-                        <div class="description"><?php esc_html_e( 'Start tracking your expenses.', 'mainwp' ); ?></div>
-                    </div>
-                </a>
-                <a class="<?php echo empty( $count_extensions ) ? '' : 'completed'; ?> step" href="admin.php?page=Extensions">
-                    <i class="puzzle icon"></i>
-                    <div class="content">
-                        <div class="title"><?php esc_html_e( 'Install Extensions', 'mainwp' ); ?></div>
-                        <div class="description"><?php esc_html_e( 'Extend your MainWP Dashboard functionality.', 'mainwp' ); ?></div>
-                    </div>
-                </a>
+                <?php foreach ( $items as $item ) : ?>
+                    <a class="<?php echo $item['complete'] ? 'completed' : ''; ?> step" href="<?php echo esc_url( admin_url( $item['url'] ) ); ?>">
+                        <i class="<?php echo esc_attr( $item['icon'] ); ?> icon"></i>
+                        <div class="content"><div class="title"><?php echo esc_html( $item['title'] ); ?></div></div>
+                    </a>
+                <?php endforeach; ?>
             </div>
         </div>
         <?php
@@ -145,5 +116,89 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
          * @since 5.0
          */
         do_action( 'mainwp_get_started_widget_bottom' );
+    }
+
+    /**
+     * Only new Dashboards receive the checklist; dismissal takes effect after completion.
+     *
+     * @return bool
+     */
+    public static function is_visible() {
+        if ( ! get_option( 'mainwp_onboarding_fresh_install' ) ) {
+            return false;
+        }
+        return in_array( false, array_column( static::get_items(), 'complete' ), true ) || MainWP_Utility::show_mainwp_message( 'notice', 'get-started' );
+    }
+
+    /**
+     * Checklist state comes from saved outcomes, rather than clicks on its shortcuts.
+     *
+     * @return array
+     */
+    public static function get_items() {
+        $sites    = MainWP_Manage_Sites::get_total_sites();
+        $settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        $items    = array(
+            array(
+                'title'    => __( 'Connect a site', 'mainwp' ),
+                'url'      => 'admin.php?page=managesites&do=new',
+                'icon'     => 'globe',
+                'complete' => 1 <= $sites,
+            ),
+            array(
+                'title'    => __( 'Run your first update', 'mainwp' ),
+                'url'      => 'admin.php?page=UpdatesManage',
+                'icon'     => 'sync',
+                'complete' => (bool) get_option( 'mainwp_onboarding_first_update' ),
+            ),
+            array(
+                'title'    => __( 'Connect a second site', 'mainwp' ),
+                'url'      => 'admin.php?page=managesites&do=new',
+                'icon'     => 'globe',
+                'complete' => 2 <= $sites,
+            ),
+            array(
+                'title'    => __( 'Confirm uptime alerts', 'mainwp' ),
+                'url'      => 'admin.php?page=Settings&tab=monitoring',
+                'icon'     => 'heartbeat',
+                'complete' => ! empty( $settings['active'] ),
+            ),
+        );
+        if ( MainWP_System_Utility::is_admin() && true === MainWP_Abilities_Util::check_rest_api_permission() && ! MainWP_Menu::is_disable_menu_item( 2, 'ai' ) ) {
+            $items[] = array(
+                'title'    => __( 'Try MainWP from Claude or Cursor (MCP)', 'mainwp' ),
+                'url'      => 'admin.php?page=mainwp-mcp',
+                'icon'     => 'terminal',
+                'complete' => (bool) get_option( 'mainwp_onboarding_mcp_visited' ),
+            );
+        }
+        $items[] = array(
+            'title'    => __( 'Create a client and report', 'mainwp' ),
+            'url'      => 'admin.php?page=ClientAddNew',
+            'icon'     => 'users',
+            'complete' => 1 <= MainWP_DB_Client::instance()->count_total_clients(),
+        );
+        return $items;
+    }
+
+    /**
+     * Failed updates and installs do not count as a first successful update.
+     *
+     * @param object $website Updated site.
+     * @param string $action  Install or update action.
+     * @param array  $data    Update result.
+     * @param string $type    Component type.
+     */
+    public static function record_first_update( $website, $action, $data, $type ) {
+        if ( ! get_option( 'mainwp_onboarding_fresh_install' ) || 'updated' !== $action || ! is_array( $data ) || empty( $website->id ) ) {
+            return;
+        }
+        $results = 'core' === $type ? array( $data ) : ( isset( $data['updated_data'] ) && is_array( $data['updated_data'] ) ? $data['updated_data'] : array() );
+        foreach ( $results as $result ) {
+            if ( is_array( $result ) && ! empty( $result['success'] ) && empty( $result['rollback'] ) ) {
+                update_option( 'mainwp_onboarding_first_update', 1 );
+                return;
+            }
+        }
     }
 }

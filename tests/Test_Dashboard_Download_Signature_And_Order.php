@@ -329,6 +329,26 @@ class Test_Dashboard_Download_Signature_And_Order extends \WP_UnitTestCase {
         $this->assertSame( array( $file ), Download_Order_Transport::$served );
     }
 
+    /** The URL filter can move the signed link to the front end, where parse_init still serves it. */
+    public function test_download_url_filter_moves_link_to_front_end() {
+        $this->assertStringStartsWith( admin_url( '?sig=' ), MainWP_System_Utility::get_download_url( 'bulk', basename( $this->files[0] ) ) );
+        $front = static function ( $url, $query ) {
+            unset( $url );
+            return home_url( '/' . $query );
+        };
+        add_filter( 'mainwp_download_url', $front, 10, 2 );
+        $url = MainWP_System_Utility::get_download_url( 'bulk', basename( $this->files[0] ) );
+        remove_filter( 'mainwp_download_url', $front, 10 );
+        $this->assertStringStartsWith( home_url( '/?sig=' ), $url );
+        parse_str( wp_parse_url( $url, PHP_URL_QUERY ), $params );
+        $dirs = MainWP_System_Utility::get_mainwp_dir();
+        $file = trailingslashit( $dirs[0] ) . rawurldecode( $params['mwpdl'] );
+        wp_set_current_user( 0 );
+        $result = $this->parse_download( $params );
+        $this->assertTrue( $result['exited'] );
+        $this->assertSame( array( $file ), Download_Order_Transport::$served );
+    }
+
     /** Wrong request types return before any validation or transport. */
     public function test_parse_init_array_parameters_and_no_download() {
         foreach ( array(

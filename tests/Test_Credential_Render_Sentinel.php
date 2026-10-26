@@ -190,6 +190,119 @@ class Test_Credential_Render_Sentinel extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Rejected replacements retain the original ciphertext and its real key.
+	 *
+	 * @dataProvider child_credential_replacement_failures
+	 * @param string $failure Failure to inject after encryption.
+	 */
+	public function test_child_api_key_replacement_failure_preserves_decryption( string $failure ): void {
+		global $wpdb;
+		$site_id        = $this->create_test_site();
+		$option         = 'mainwp_api_backups_cloudways_api_key';
+		$utility        = \MainWP\Dashboard\Module\ApiBackups\Api_Backups_Utility::get_instance();
+		$key_dir        = \MainWP\Dashboard\MainWP_Keys_Manager::get_keys_dir();
+		$before         = glob( $key_dir . '*' );
+		$key_files      = array();
+		$capture        = static function ( $envelope ) use ( &$key_files ) {
+			if ( is_array( $envelope ) && ! empty( $envelope['file_key'] ) ) {
+				$key_files[] = $envelope['file_key'];
+			}
+			return $envelope;
+		};
+		$invalid        = static function () {
+			return false;
+		};
+		$failed_updates = 0;
+		$fail_update    = static function ( $query ) use ( $wpdb, $option, &$failed_updates ) {
+			if ( 0 === strpos( $query, 'UPDATE `' . $wpdb->prefix . 'mainwp_wp_options`' ) && false !== strpos( $query, $option ) ) {
+				++$failed_updates;
+				return 'UPDATE mainwp_missing_sec37_fixture_table SET value = 1';
+			}
+			return $query;
+		};
+		$suppressed     = $wpdb->suppress_errors();
+		add_filter( 'mainwp_encrypt_key_value', $capture, 11 );
+		try {
+			$this->assertNotFalse( $utility->update_child_api_key( $site_id, 'cloudways', 'synthetic-original-secret' ) );
+			$previous = \MainWP\Dashboard\MainWP_DB::instance()->get_website_option( $site_id, $option );
+			$original = json_decode( $previous, true );
+			$this->assertSame( 'synthetic-original-secret', $utility->decrypt_api_keys( $original ) );
+			$this->assertCount( count( $before ) + 1, glob( $key_dir . '*' ) );
+			if ( 'invalid-envelope' === $failure ) {
+				add_filter( 'mainwp_encrypt_key_value', $invalid, 11 );
+			} else {
+				add_filter( 'query', $fail_update );
+			}
+			$result = $utility->update_child_api_key( $site_id, 'cloudways', 'synthetic-replacement-secret' );
+			$this->assertSame( $previous, \MainWP\Dashboard\MainWP_DB::instance()->get_website_option( $site_id, $option ) );
+			$this->assertSame( 'synthetic-original-secret', $utility->decrypt_api_keys( $original ), 'The saved envelope must still decrypt after a rejected replacement.' );
+			$this->assertFalse( $result );
+			$this->assertFileExists( $key_dir . $original['file_key'] );
+			$this->assertCount( 2, $key_files );
+			$this->assertNotSame( $key_files[0], $key_files[1] );
+			$this->assertFileDoesNotExist( $key_dir . $key_files[1] );
+			$this->assertCount( count( $before ) + 1, glob( $key_dir . '*' ) );
+			$this->assertSame( 'failed-update' === $failure ? 1 : 0, $failed_updates );
+		} finally {
+			remove_filter( 'mainwp_encrypt_key_value', $capture, 11 );
+			remove_filter( 'mainwp_encrypt_key_value', $invalid, 11 );
+			remove_filter( 'query', $fail_update );
+			$wpdb->suppress_errors( $suppressed );
+			foreach ( array_unique( $key_files ) as $file_key ) {
+				do_action( 'mainwp_delete_key_file', $file_key );
+			}
+		}
+		$this->assertSame( $before, glob( $key_dir . '*' ) );
+	}
+
+	/**
+	 * Replacement failure paths.
+	 *
+	 * @return array Failure cases.
+	 */
+	public static function child_credential_replacement_failures(): array {
+		return array(
+			'invalid-envelope' => array( 'invalid-envelope' ),
+			'failed-update'    => array( 'failed-update' ),
+		);
+	}
+
+	/** Successful replacement retires only the previous credential key. */
+	public function test_child_api_key_replacement_retires_previous_key(): void {
+		$site_id   = $this->create_test_site();
+		$option    = 'mainwp_api_backups_cloudways_api_key';
+		$utility   = \MainWP\Dashboard\Module\ApiBackups\Api_Backups_Utility::get_instance();
+		$key_dir   = \MainWP\Dashboard\MainWP_Keys_Manager::get_keys_dir();
+		$before    = glob( $key_dir . '*' );
+		$key_files = array();
+		$capture   = static function ( $envelope ) use ( &$key_files ) {
+			if ( is_array( $envelope ) && ! empty( $envelope['file_key'] ) ) {
+				$key_files[] = $envelope['file_key'];
+			}
+			return $envelope;
+		};
+		add_filter( 'mainwp_encrypt_key_value', $capture, 11 );
+		try {
+			foreach ( array( 'synthetic-original-secret', 'synthetic-replacement-secret' ) as $value ) {
+				$this->assertNotFalse( $utility->update_child_api_key( $site_id, 'cloudways', $value ) );
+				$stored = json_decode( \MainWP\Dashboard\MainWP_DB::instance()->get_website_option( $site_id, $option ), true );
+				$this->assertSame( $value, $utility->decrypt_api_keys( $stored ) );
+				$this->assertFileExists( $key_dir . $stored['file_key'] );
+				$this->assertCount( count( $before ) + 1, glob( $key_dir . '*' ) );
+			}
+			$this->assertCount( 2, $key_files );
+			$this->assertNotSame( $key_files[0], $key_files[1] );
+			$this->assertFileDoesNotExist( $key_dir . $key_files[0] );
+		} finally {
+			remove_filter( 'mainwp_encrypt_key_value', $capture, 11 );
+			foreach ( array_unique( $key_files ) as $file_key ) {
+				do_action( 'mainwp_delete_key_file', $file_key );
+			}
+		}
+		$this->assertSame( $before, glob( $key_dir . '*' ) );
+	}
+
+	/**
 	 * A successful per-site save stores a decryptable encryption envelope.
 	 */
 	public function test_child_api_key_success_stores_encrypted_value(): void {

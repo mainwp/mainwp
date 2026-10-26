@@ -1302,6 +1302,9 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 	 * @param string $case       Requested option name casing.
 	 */
 	public function test_custom_fields_omit_secret_site_options( bool $legacy, bool $collection, bool $projection, string $context, string $case ): void {
+		if ( ! $legacy && ! function_exists( 'wp_get_ability' ) ) {
+			$this->markTestSkipped( 'Abilities API not available' );
+		}
 		$this->authenticate_as_admin();
 		$key                   = $this->create_rest_api_key( $this->admin_user_id, 'read' );
 		$this->consumer_key    = $key['consumer_key'];
@@ -1325,10 +1328,12 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 			return [ $site_id ];
 		};
 		add_filter( 'mainwp_currentuserallowedaccesssites', $scope );
-		$registry = \WP_Abilities_Registry::get_instance();
-		$property = new \ReflectionProperty( $registry, 'registered_abilities' );
-		$property->setAccessible( true );
-		$registered = $property->getValue( $registry );
+		if ( function_exists( 'wp_get_ability' ) ) {
+			$registry = \WP_Abilities_Registry::get_instance();
+			$property = new \ReflectionProperty( $registry, 'registered_abilities' );
+			$property->setAccessible( true );
+			$registered = $property->getValue( $registry );
+		}
 		$ability_calls = 0;
 		$on_execute = static function ( $name ) use ( &$ability_calls ) {
 			if ( in_array( $name, [ 'mainwp/get-site-v1', 'mainwp/list-sites-v1' ], true ) ) {
@@ -1337,7 +1342,7 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 		};
 		add_action( 'wp_before_execute_ability', $on_execute );
 		try {
-			if ( $legacy ) {
+			if ( $legacy && function_exists( 'wp_get_ability' ) ) {
 				wp_unregister_ability( 'mainwp/get-site-v1' );
 				wp_unregister_ability( 'mainwp/list-sites-v1' );
 			}
@@ -1371,7 +1376,9 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 			if ( $legacy && ( false !== strpos( $caught, 'mainwp/get-site-v1' ) || false !== strpos( $caught, 'mainwp/list-sites-v1' ) ) ) {
 				$this->setExpectedIncorrectUsage( 'WP_Abilities_Registry::get_registered' );
 			}
-			$property->setValue( $registry, $registered );
+			if ( function_exists( 'wp_get_ability' ) ) {
+				$property->setValue( $registry, $registered );
+			}
 			remove_filter( 'mainwp_currentuserallowedaccesssites', $scope );
 			remove_action( 'wp_before_execute_ability', $on_execute );
 		}
@@ -1406,6 +1413,9 @@ class MainWP_REST_Integration_Test extends \WP_Test_REST_TestCase {
 	 * Direct site abilities reject arbitrary option selection.
 	 */
 	public function test_site_abilities_do_not_accept_custom_option_projection(): void {
+		if ( ! function_exists( 'wp_get_ability' ) ) {
+			$this->markTestSkipped( 'Abilities API not available' );
+		}
 		$this->authenticate_as_admin();
 		$site_id = $this->create_test_site();
 		$this->set_site_option( $site_id, 'register_verify_key', 'synthetic-reconnect-secret' );

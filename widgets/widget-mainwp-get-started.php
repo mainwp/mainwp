@@ -57,6 +57,9 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
         if ( ! static::is_visible() ) {
             return;
         }
+        $items        = static::get_items();
+        $completed    = count( array_filter( array_column( $items, 'complete' ) ) );
+        $started_done = count( $items ) === $completed;
         ?>
         <div class="mainwp-widget-header">
             <h2 class="ui header handle-drag">
@@ -70,14 +73,11 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                  */
                 echo esc_html( apply_filters( 'mainwp_get_started_widget_title', esc_html__( 'Get Started with MainWP', 'mainwp' ) ) );
                 ?>
-                <div class="sub header"><?php esc_html_e( 'Connect sites, run updates, and set up your workflow.', 'mainwp' ); ?></div>
+                <div class="sub header"><?php /* translators: 1: completed milestones, 2: total milestones. */ echo esc_html( sprintf( _n( '%1$d of %2$d done', '%1$d of %2$d done', $completed, 'mainwp' ), $completed, count( $items ) ) ); ?></div>
             </h2>
         </div>
         <div class="mainwp-scrolly-overflow">
             <?php
-            $items        = static::get_items();
-            $started_done = ! in_array( false, array_column( $items, 'complete' ), true );
-
             if ( $started_done && MainWP_Utility::show_mainwp_message( 'notice', 'get-started' ) ) {
                 ?>
                 <div class="ui green message">

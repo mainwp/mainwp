@@ -231,27 +231,26 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
      */
 	public static function writers(): array {
 		$writers = array(
-			'C1 active'         => 'plugin_active',
-			'C1 disable'        => 'plugin_disable',
-			'C1 remove'         => 'plugin_remove',
-			'H1 updates'        => 'updates',
-			'H2 delete'         => 'template_delete',
-			'H2 copy'           => 'template_copy',
-			'H2 save route'     => 'template_save',
-			'H2 save direct'    => 'template_direct',
-			'H5 summary tours'  => 'wizard_ready',
-			'H5 system'         => 'wizard_system',
-			'H5 summary uptime' => 'wizard_ready_uptime',
-			'M6 archive'        => 'archive',
-			'M6 cancel'         => 'cancel',
-			'M8 health on'      => 'monitoring_checked',
-			'M8 health off'     => 'monitoring_cleared',
-			'M9 manage sites'   => 'manage_sites',
-			'D1 email'          => 'email',
-			'D2 tools'          => 'tools',
-			'D3 activation'     => 'activation',
-			'D4 truncate'       => 'truncate',
-			'D5 logs settings'  => 'logs_settings',
+			'C1 active'        => 'plugin_active',
+			'C1 disable'       => 'plugin_disable',
+			'C1 remove'        => 'plugin_remove',
+			'H1 updates'       => 'updates',
+			'H2 delete'        => 'template_delete',
+			'H2 copy'          => 'template_copy',
+			'H2 save route'    => 'template_save',
+			'H2 save direct'   => 'template_direct',
+			'H5 summary tours' => 'wizard_ready',
+			'H5 system'        => 'wizard_system',
+			'M6 archive'       => 'archive',
+			'M6 cancel'        => 'cancel',
+			'M8 health on'     => 'monitoring_checked',
+			'M8 health off'    => 'monitoring_cleared',
+			'M9 manage sites'  => 'manage_sites',
+			'D1 email'         => 'email',
+			'D2 tools'         => 'tools',
+			'D3 activation'    => 'activation',
+			'D4 truncate'      => 'truncate',
+			'D5 logs settings' => 'logs_settings',
 		);
 		$rows    = array();
 		foreach ( $writers as $label => $writer ) {
@@ -498,22 +497,22 @@ class Test_Dashboard_Settings_Writer_Class extends \WP_UnitTestCase {
 			$before = array( 'mainwp_opensslLibLocation' => '/original/openssl' );
 			$after  = array( 'mainwp_opensslLibLocation' => '/fixture/openssl' );
 		} else {
-			$_POST = array( 'mainwp-guided-tours-option' => '1' );
-			if ( 'ready_uptime' === $step ) {
-				$_POST['mainwp_setup_enableUptimeMonitoring'] = '1';
-			}
-			$settings           = array(
-				'active'           => 'ready_uptime' === $step ? 0 : 1,
+			$_POST = array(
+				'mainwp-guided-tours-option'          => '1',
+				'mainwp_setup_enableUptimeMonitoring' => '1',
+			);
+			// The summary saves only the tour choice; a stale monitoring field must not reach the setting.
+			$settings = array(
+				'active'           => 0,
 				'interval'         => 120,
 				'retention_limits' => 180,
 				'bypass_cache'     => 0,
 			);
-			$before             = array(
+			$before   = array(
 				'mainwp_enable_guided_tours'               => 0,
 				'mainwp_global_uptime_monitoring_settings' => $settings,
 			);
-			$settings['active'] = 'ready_uptime' === $step ? 1 : 0;
-			$after              = array(
+			$after    = array(
 				'mainwp_enable_guided_tours'               => 1,
 				'mainwp_global_uptime_monitoring_settings' => $settings,
 			);

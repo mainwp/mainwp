@@ -1969,6 +1969,7 @@ let mainwp_managesites_add = function () {
                 selected_icon: jQuery('#mainwp_managesites_add_site_select_icon_hidden').val(),
                 cust_color: jQuery('#mainwp_managesites_add_site_color').val(),
                 uploaded_icon: jQuery('#mainwp_managesites_add_site_uploaded_icon_hidden').val(),
+                defer_site_icon: true,
                 managesites_add_http_user: jQuery('#mainwp_managesites_add_http_user').val(),
                 managesites_add_http_pass: jQuery('#mainwp_managesites_add_http_pass').val(),
             });
@@ -2018,6 +2019,13 @@ let mainwp_managesites_add = function () {
                     // The response is HTML for the CSV import log; feedback() needs the link as a node.
                     let added = mainwp_feedback_linked_message(MainWP.I18n.t('Site successfully added - Visit the Site\'s %1Dashboard%2 now.'), [{ href: 'admin.php?page=managesites&dashboard=' + encodeURIComponent(site_id), style: 'text-decoration: none;' }]);
                     feedback('mainwp-message-zone', added, 'green');
+
+                    if (site_id > 0 && !data.uploaded_icon && !data.selected_icon) {
+                        jQuery.post(ajaxurl, mainwp_secure_data({
+                            action: 'mainwp_get_site_icon',
+                            siteId: site_id
+                        }));
+                    }
 
                     if (site_id > 0) {
                         jQuery('.sync-ext-row').attr('status', 'queue');

@@ -73,7 +73,8 @@ function harness() {
     }
     $.post = (url, data, callback) => {
         requests.push(data);
-        callback(data.action === 'mainwp_checkwp' ? { response: 'OK' } : { response: 'Connected', siteid: 42 });
+        if (callback) callback(data.action === 'mainwp_checkwp' ? { response: 'OK' } : { response: 'Connected', siteid: 42 });
+        return { fail() { return this; } };
     };
     $.each = (items, callback) => Object.entries(items).forEach(([key, value]) => callback(key, value));
     const context = vm.createContext({
@@ -106,6 +107,8 @@ test('wizard connects with an optional title, keeps nonces, and navigates with r
     assert.equal(h.requests[1].action, 'mainwp_addwp');
     assert.equal(h.requests[1].managesites_add_wpname, 'example.org');
     assert.equal(h.requests[1].qsw_page, true);
+    assert.equal(h.requests[1].defer_site_icon, true);
+    assert.equal(h.requests.some(request => request.action === 'mainwp_get_site_icon'), false);
     assert.ok(h.requests.every(request => request.security === 'fixture-nonce'));
     assert.deepEqual(h.reloads, ['admin.php?page=mainwp-setup&step=next_steps&siteid=42']);
 });
@@ -299,12 +302,113 @@ test('password explanation opens on hover and keyboard focus and closes on blur'
     assert.equal(popup.visible, true);
 });
 
-test('choosing a connection mode keeps Continue Without Adding Sites available', () => {
+test('choosing a connection mode keeps Skip for now available', () => {
     const h = harness();
     h.$('#mainwp_addsite_continue_button').show();
     vm.runInContext(setup, h.context);
     for (const value of ['single-site', 'multiple-site']) {
         h.handlers.get('.mainwp-field-tab-connect input[name=tab_connect]:change').call({ value });
         assert.equal(h.$('#mainwp_addsite_continue_button').prop('visible'), true);
+    }
+});
+
+
+test('loaded summary starts the icon request with its site ID and action nonce', () => {
+    const h = harness();
+    h.$('#mainwp-onboarding-site-icon').length = 1;
+    h.$('#mainwp-onboarding-site-icon').attr('data-siteid', '42').attr('data-security', 'icon-nonce');
+    vm.runInContext(setup, h.context);
+    assert.equal(h.requests.length, 1);
+    assert.equal(h.requests[0].action, 'mainwp_get_site_icon');
+    assert.equal(h.requests[0].siteId, 42);
+    assert.equal(h.requests[0].security, 'icon-nonce');
+    assert.deepEqual(h.reloads, []);
+});
+
+test('Add New defers icons and fetches after success without waiting or replacing custom icons', () => {
+    const source = fs.readFileSync(require.resolve('../../assets/js/mainwp.js'), 'utf8');
+    const start = source.indexOf('let mainwp_managesites_add = function');
+    const end = source.indexOf('let mainwp_managesites_add_valid', start);
+    for (const custom of ['', 'uploaded', 'selected']) {
+        const h = harness();
+        const values = ['wpurl', 'wpadmin', 'admin_pwd', 'http_user', 'http_pass', 'wpname'];
+        for (const field of values) h.$('#mainwp_managesites_add_' + field).val('fixture');
+        h.$('#mainwp_managesites_add_site_uploaded_icon_hidden').val(custom === 'uploaded' ? 'custom.png' : '');
+        h.$('#mainwp_managesites_add_site_select_icon_hidden').val(custom === 'selected' ? 'star' : '');
+        let extensionSync;
+        Object.assign(h.context, {
+            managesites_init() {}, mainwp_managesites_add_valid: () => true,
+            feedback() {}, mainwp_feedback_linked_message: () => '',
+            mainwp_managesites_sync_extension_start_next: site => { extensionSync = site; }
+        });
+        vm.runInContext(source.slice(start, end), h.context);
+        vm.runInContext('mainwp_managesites_add()', h.context);
+        assert.equal(h.requests[0].action, 'mainwp_checkwp');
+        assert.equal(h.requests[1].action, 'mainwp_addwp');
+        assert.equal(h.requests[1].defer_site_icon, true);
+        assert.equal(h.requests.length, custom ? 2 : 3);
+        if (!custom) {
+            assert.equal(h.requests[2].action, 'mainwp_get_site_icon');
+            assert.equal(h.requests[2].siteId, 42);
+        }
+        // The icon request receives no callback; normal success work still finishes.
+        assert.equal(extensionSync, 42);
+        assert.equal(h.$('#mainwp_managesites_add_wpurl').val(), '');
+        assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
+    }
+});
+
+test('summary Turn off reloads only on success and reports rejected or failed requests', () => {
+    for (const result of ['success', 'rejected', 'network']) {
+        const h = harness();
+        const link = h.$('#mainwp-onboarding-disable-monitoring').attr('data-security', 'off-nonce').attr('data-error', 'Try again.');
+        h.$.post = (url, data, callback) => {
+            h.requests.push(data);
+            if (result !== 'network') callback({ success: result === 'success', data: { message: '<denied>' } });
+            return { fail(handler) { if (result === 'network') handler(); } };
+        };
+        vm.runInContext(setup, h.context);
+        let prevented = false;
+        h.handlers.get('#mainwp-onboarding-disable-monitoring').call(link, { preventDefault() { prevented = true; } });
+        assert.equal(prevented, true);
+        assert.equal(h.requests[0].action, 'mainwp_onboarding_disable_monitoring');
+        assert.equal(h.requests[0].security, 'off-nonce');
+        assert.equal(h.requests[0]['mainwp-guided-tours-option'], undefined);
+        assert.equal(h.reloads.length, result === 'success' ? 1 : 0);
+        if (result !== 'success') assert.equal(h.messages.at(-1)[1], result === 'network' ? 'Try again.' : '&lt;denied&gt;');
+    }
+});
+
+test('completed update modal reloads the summary once after success or closing partial results', () => {
+    const initStart = updates.indexOf('let updatesoverview_update_popup_init =');
+    const initEnd = updates.indexOf('let updatesmanage_link_to_site', initStart);
+    const doneStart = updates.indexOf('let updatesoverview_upgrade_all_update_done =');
+    const doneEnd = updates.indexOf('/* eslint-disable complexity */', doneStart);
+    const popupSource = fs.readFileSync(require.resolve('../../assets/js/mainwp-popup.js'), 'utf8');
+    const hideBody = popupSource.match(/onHideModal: function \(\) \{([\s\S]*?)\n                \},/)[1];
+    const closeBody = popupSource.match(/close: function \(execCallback\) \{([\s\S]*?)\n                \},/)[1];
+    for (const errors of [0, 1]) {
+        const h = harness();
+        let modal;
+        const popup = {
+            init(settings) { this.actionsCloseCallback = settings.callback; },
+            setProgressSite() {}, updateStatusLabel() {},
+            closePopup() { modal.onHide(); }
+        };
+        vm.runInContext('globalThis.hidePopup = function () {' + hideBody + '}; globalThis.closePopup = function (execCallback) {' + closeBody + '};', h.context);
+        popup.close = h.context.closePopup;
+        popup.onHideModal = h.context.hidePopup;
+        modal = { onHide: () => popup.onHideModal() };
+        h.context.mainwpPopup = () => popup;
+        h.$.extend = Object.assign;
+        Object.assign(h.context.mainwpVars, { bulkTaskRunning: true, currentThreads: 1, websitesDone: 0, websitesTotal: 1, errorCount: errors });
+        vm.runInContext(updates.slice(initStart, initEnd) + updates.slice(doneStart, doneEnd), h.context);
+        vm.runInContext('updatesoverview_update_popup_init();', h.context);
+        assert.equal(h.reloads.length, 0);
+        vm.runInContext('updatesoverview_upgrade_all_update_done();', h.context);
+        assert.equal(h.context.mainwpVars.bulkTaskRunning, false);
+        assert.equal(h.reloads.length, errors ? 0 : 1);
+        if (errors) popup.close(true);
+        assert.deepEqual(h.reloads, [undefined], 'Reload the current summary URL, retaining siteid.');
     }
 });

@@ -37,6 +37,32 @@ jQuery(function () {
     updatesoverview_global_upgrade_all('all', Number(jQuery(this).attr('data-siteid')));
   });
 
+  const siteIcon = jQuery('#mainwp-onboarding-site-icon');
+  if (siteIcon.length) {
+    jQuery.post(ajaxurl, {
+      action: 'mainwp_get_site_icon',
+      siteId: Number(siteIcon.attr('data-siteid')),
+      security: siteIcon.attr('data-security')
+    });
+  }
+
+  jQuery('#mainwp-onboarding-disable-monitoring').on('click', function (event) {
+    event.preventDefault();
+    const link = jQuery(this);
+    jQuery.post(ajaxurl, {
+      action: 'mainwp_onboarding_disable_monitoring',
+      security: link.attr('data-security')
+    }, function (response) {
+      if (response.success) {
+        mainwp_forceReload();
+      } else {
+        mainwp_set_message_zone('#mainwp-message-zone', jQuery('<div>').text(response.data.message).html(), 'red');
+      }
+    }, 'json').fail(function () {
+      mainwp_set_message_zone('#mainwp-message-zone', link.attr('data-error'), 'red');
+    });
+  });
+
   // Handle submit import file CVS.
   jQuery(document).on('click', '#mainwp_managesites_add_import', function () {
     let error_messages = mainwp_managesites_import_handle_form_before_submit();
@@ -224,6 +250,7 @@ let mainwp_setup_managesites_add = function () {
           managesites_add_uniqueId: jQuery('#mainwp_managesites_add_uniqueId').val(),
           groupids: group_ids,
           qsw_page: true,
+          defer_site_icon: true,
         });
 
         // to support add client reports tokens values

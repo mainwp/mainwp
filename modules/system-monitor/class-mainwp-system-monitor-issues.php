@@ -66,6 +66,14 @@ class MainWP_System_Monitor_Issues {
                         $human
                     );
                 }
+                // New installs with uptime monitoring on learn what the stall breaks.
+                if ( get_option( 'mainwp_onboarding_fresh_install' ) && \MainWP\Dashboard\MainWP_Uptime_Monitoring_Edit::is_enable_global_monitoring() ) {
+                    return sprintf(
+                        /* translators: %s: time since scheduled tasks last ran. */
+                        __( "Scheduled tasks haven't run for %s. Uptime and update checks depend on them.", 'mainwp' ),
+                        $human
+                    );
+                }
                 return sprintf(
                     __( 'Scheduled tasks has not run for %s. Verify that WP-Cron is functioning correctly.', 'mainwp' ),
                     $human

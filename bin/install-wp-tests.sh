@@ -130,6 +130,7 @@ set -ex
 install_wp() {
 
 	if [ -d "$WP_CORE_DIR" ]; then
+		check_directory "$WP_CORE_DIR" destination no
 		return;
 	fi
 
@@ -175,7 +176,9 @@ install_test_suite() {
 	fi
 
 	# set up testing suite if it doesn't yet exist
-	if [ ! -d "$WP_TESTS_DIR" ]; then
+	if [ -d "$WP_TESTS_DIR" ]; then
+		check_directory "$WP_TESTS_DIR" destination no
+	else
 		# set up testing suite
 		check_directory "$WP_TESTS_DIR" destination yes
 		svn export --quiet --ignore-externals "https://develop.svn.wordpress.org/${WP_TESTS_TAG}/tests/phpunit/includes/" "$STAGING_DIR/includes"

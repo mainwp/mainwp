@@ -133,6 +133,8 @@ test('a title filled from an invalid URL follows the corrected URL until the use
     vm.runInContext(setup, h.context);
     h.handlers.get('#mainwp_managesites_add')();
     assert.equal(h.requests.length, 0);
+    assert.equal(h.$('#mainwp_managesites_add_wpname').val(), 'exampel org');
+    assert.equal(h.$('#mainwp_managesites_add_wpname').attr('data-autofilled'), '1');
     h.$('#mainwp_managesites_add_wpurl').val('example.org');
     h.handlers.get('#mainwp_managesites_add_wpurl')();
     assert.equal(h.$('#mainwp_managesites_add_wpname').val(), 'example.org');
@@ -141,20 +143,39 @@ test('a title filled from an invalid URL follows the corrected URL until the use
     h.$('#mainwp_managesites_add_wpurl').val('client.example.org');
     h.handlers.get('#mainwp_managesites_add_wpurl')();
     h.handlers.get('#mainwp_managesites_add')();
-    assert.equal(h.requests[1].managesites_add_wpname, 'Client Site');
+    assert.equal(h.requests.length, 1);
+    assert.equal(h.requests[0].action, 'mainwp_addwp');
+    assert.equal(h.requests[0].managesites_add_wpname, 'Client Site');
 });
 
 test('a title filled from the URL keeps no trailing slash when a failed attempt is retried', () => {
-    const h = harness();
-    h.$('#mainwp_managesites_add_wpurl').val('example.org');
-    h.$('#mainwp_managesites_add_wpurl_protocol').val('https');
-    vm.runInContext(setup, h.context);
-    h.handlers.get('#mainwp_managesites_add')();
-    assert.equal(h.requests.length, 0);
-    assert.equal(h.$('#mainwp_managesites_add_wpurl').val(), 'example.org/');
-    h.$('#mainwp_managesites_add_wpadmin').val('admin');
-    h.handlers.get('#mainwp_managesites_add')();
-    assert.equal(h.requests[1].managesites_add_wpname, 'example.org');
+    for (const url of ['example.org', 'example.org/']) {
+        const h = harness();
+        h.$('#mainwp_managesites_add_wpurl').val(url);
+        h.$('#mainwp_managesites_add_wpurl_protocol').val('https');
+        h.$('#mainwp_managesites_add_wpadmin').val('admin');
+        h.$.ajax = options => {
+            h.requests.push(options.data);
+            options.success(h.requests.length === 1
+                ? { response: 'ERROR Connection failed' }
+                : { response: 'Connected', siteid: 42 });
+        };
+        vm.runInContext(setup, h.context);
+        h.handlers.get('#mainwp_managesites_add')();
+        assert.equal(h.requests.length, 1);
+        assert.equal(h.requests[0].action, 'mainwp_addwp');
+        assert.equal(h.requests[0].managesites_add_wpname, 'example.org');
+        assert.equal(h.$('#mainwp_managesites_add_wpname').val(), 'example.org');
+        assert.equal(h.$('#mainwp_managesites_add_wpname').attr('data-autofilled'), '1');
+        assert.equal(h.$('#mainwp_managesites_add_wpurl').val(), url);
+        assert.equal(h.reloads.length, 0);
+        h.handlers.get('#mainwp_managesites_add')();
+        assert.equal(h.requests.length, 2);
+        assert.equal(h.requests[1].action, 'mainwp_addwp');
+        assert.equal(h.requests[1].managesites_add_wpname, 'example.org');
+        assert.ok(h.requests.every(request => request.managesites_add_wpurl === 'https://example.org/'));
+        assert.deepEqual(h.reloads, ['admin.php?page=mainwp-setup&step=next_steps&siteid=42']);
+    }
 });
 
 test('Advanced options toggles visibility and its accessibility state', () => {

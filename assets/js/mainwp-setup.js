@@ -321,8 +321,9 @@ function mainwp_onboarding_render_detection(state) {
 }
 
 jQuery(function () {
+  // Only a title the user typed stops following the URL; the shared Add Site script also fills it.
   jQuery(document).on('input', '#mainwp_managesites_add_wpname', function () {
-    jQuery(this).attr('data-autofilled', '');
+    jQuery(this).attr('data-autofilled', '').attr('data-user-typed', jQuery(this).val().trim() === '' ? '' : '1');
   });
 
   jQuery('#mainwp-onboarding-advanced-toggle').on('click', function () {
@@ -415,7 +416,7 @@ jQuery(function () {
 
     const title = jQuery('#mainwp_managesites_add_wpname');
     // A title filled from the URL follows URL corrections until the user types one.
-    if (title.val() == '' || title.attr('data-autofilled')) {
+    if (title.val() == '' || !title.attr('data-user-typed')) {
       title.val(url).attr('data-autofilled', '1');
     }
 
@@ -449,7 +450,7 @@ let mainwp_setup_managesites_add = function () {
   let errors = [];
 
   const title = jQuery('#mainwp_managesites_add_wpname');
-  if (title.val().trim() == '' || title.attr('data-autofilled')) {
+  if (title.val().trim() == '' || !title.attr('data-user-typed')) {
     // Drop a typed trailing slash so the autofilled title is the bare site address.
     title.val(jQuery('#mainwp_managesites_add_wpurl').val().trim().replace(/\/+$/, '')).attr('data-autofilled', '1');
   }

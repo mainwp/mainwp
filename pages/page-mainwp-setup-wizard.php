@@ -143,6 +143,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'yes'           => __( 'Yes', 'mainwp' ),
                 'notYet'        => __( 'Not yet', 'mainwp' ),
                 'no'            => __( 'No', 'mainwp' ),
+                'notChecked'    => __( 'Not checked', 'mainwp' ),
                 /* translators: %s: validated site URL. */
                 'unreachable'   => __( "We can't reach %s. Check the URL and that the site is online.", 'mainwp' ),
                 /* translators: %s: validated site URL. */

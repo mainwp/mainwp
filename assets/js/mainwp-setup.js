@@ -52,7 +52,7 @@ function mainwp_onboarding_detection_result(state, result, now) {
   } else {
     next.status = 'error';
     next.reachable = 'pending';
-    next.child = 'failed';
+    next.child = 'pending';
   }
   return next;
 }
@@ -120,14 +120,16 @@ function mainwp_onboarding_detection_controller(options) {
     state: () => state,
     refresh: publish,
     checkExpiry() {
-      if (!mainwp_onboarding_deadline_passed(state, options.now()) || options.hidden()) return;
+      // A connect attempt in flight runs its own check when it fails.
+      if (state.status === 'connecting' || !mainwp_onboarding_deadline_passed(state, options.now()) || options.hidden()) return;
       cancel();
       const current = generation;
       request = options.request(function (result) {
         if (current !== generation) return;
         request = null;
         const next = mainwp_onboarding_detection_result(state, result, options.now());
-        if (next.status === 'expired') { state = next; publish(); }
+        // A Child that still answers reports a fresh window, so the countdown restarts from it.
+        if (['expired', 'detected'].includes(next.status)) { state = next; publish(); }
       });
     },
     pause() {
@@ -264,8 +266,9 @@ function mainwp_onboarding_render_detection(state) {
   const fields = mainwp_onboarding_fields();
   const site = fields.url || jQuery('#mainwp_managesites_add_wpurl').val().trim();
   jQuery('#mainwp-onboarding-detection').prop('hidden', state.status === 'idle' && (!fields.url || !fields.admin));
+  const settled = ['error', 'unreachable', 'timed_out', 'stopped', 'expired'].includes(state.status);
   for (const [id, status] of [['reachable', state.reachable], ['child', state.child]]) {
-    const label = status === 'ok' ? 'yes' : status === 'failed' ? 'no' : id === 'child' && state.reachable === 'ok' ? 'notYet' : 'checking';
+    const label = status === 'ok' ? 'yes' : status === 'failed' ? 'no' : id === 'child' && state.reachable === 'ok' ? 'notYet' : settled ? 'notChecked' : 'checking';
     jQuery('#mainwp-onboarding-' + id).text(mainwp_onboarding_copy(label)).toggleClass('is-ok', status === 'ok').toggleClass('is-failed', status === 'failed');
   }
   const install = ['waiting', 'timed_out', 'checking'].includes(state.status) && state.reachable === 'ok' && !!fields.url;
@@ -481,7 +484,8 @@ let mainwp_setup_managesites_add = function () {
         mainwp_onboarding_connecting = false;
         mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
         if (mainwp_onboarding_detection) {
-          if (mainwp_onboarding_detection.state() === detectionState) {
+          // Only a passed reported deadline can explain the failure as expiry; otherwise re-check so the rows and timer stay current.
+          if (mainwp_onboarding_detection.state() === detectionState && mainwp_onboarding_deadline_passed(detectionState, Date.now())) {
             mainwp_onboarding_detection.stop('stopped');
             mainwp_onboarding_detection.checkExpiry();
           } else {

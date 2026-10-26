@@ -58,9 +58,9 @@ test('detection maps reachable, missing Child, success and non-retryable failure
         [{ response: 'TIMEOUT' }, ['unreachable', 'failed', 'pending']],
         [{ response: 'INVALID_URL' }, ['unreachable', 'failed', 'pending']],
         [{ error: 'Invalid URL! Please enter valid URL to the Site URL field.' }, ['unreachable', 'failed', 'pending']],
-        [{ response: 'ERROR Site is already connected to your MainWP Dashboard.' }, ['error', 'pending', 'failed']],
-        [{ response: 'ERROR blocked', failure_ux: '<p>Specific error</p>' }, ['error', 'pending', 'failed']],
-        [null, ['error', 'pending', 'failed']]
+        [{ response: 'ERROR Site is already connected to your MainWP Dashboard.' }, ['error', 'pending', 'pending']],
+        [{ response: 'ERROR blocked', failure_ux: '<p>Specific error</p>' }, ['error', 'pending', 'pending']],
+        [null, ['error', 'pending', 'pending']]
     ]) {
         const state = c.mainwp_onboarding_detection_result(initial, result, 1000);
         assert.deepEqual([state.status, state.reachable, state.child], expected);
@@ -260,7 +260,7 @@ function uiHarness(mode = 'single-site') {
     const document = { hidden: false };
     const window = {};
     const copy = {
-        checking: 'Checking...', yes: 'Yes', notYet: 'Not yet', no: 'No',
+        checking: 'Checking...', yes: 'Yes', notYet: 'Not yet', no: 'No', notChecked: 'Not checked',
         unreachable: "We can't reach %s. Check the URL and that the site is online.",
         install: 'Install MainWP Child on %s →',
         fallback: "If the link doesn't open the plugin installer, install MainWP Child from Plugins > Add New on %s.",
@@ -602,4 +602,76 @@ test('editing during a connection attempt cannot apply the old target deadline t
     h.reply({ response: 'NOMAINWP' });
     assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
     assert.equal(h.$('#mainwp-onboarding-install').prop('hidden'), false);
+});
+
+test('a failed connect before the deadline re-checks the Child and keeps the countdown', () => {
+    const h = uiHarness();
+    h.fill(); h.advance(400);
+    h.reply({ response: 'OK', connection_window_remaining: 1200 });
+    h.$('#mainwp_managesites_add_admin_pwd').val('wrong');
+    h.trigger('#mainwp_managesites_add_admin_pwd', 'input');
+    h.trigger('#mainwp_managesites_add', 'click');
+    h.reply({ response: 'ERROR Wrong password', failure_ux: '<p>Check the administrator password.</p>' });
+    assert.equal(h.messages.at(-1)[1], '<p>Check the administrator password.</p>');
+    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
+    h.reply({ response: 'OK', connection_window_remaining: 1100 });
+    assert.equal(h.$('#mainwp-onboarding-timer').prop('hidden'), false);
+    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 19 minutes left to connect.');
+    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
+    assert.equal(h.$('#mainwp_managesites_add').prop('disabled'), false);
+    h.trigger('window', 'pagehide');
+    assert.equal(h.timers.size, 0);
+});
+
+test('an expiry check answered by a still-active Child restarts the countdown from its fresh window', () => {
+    const h = uiHarness();
+    h.fill(); h.advance(400);
+    h.reply({ response: 'OK', connection_window_remaining: 1 });
+    h.advance(1000);
+    assert.equal(h.requests.length, 2);
+    h.reply({ response: 'OK', connection_window_remaining: 600 });
+    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 10 minutes left to connect.');
+    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), true);
+    h.advance(60000);
+    assert.equal(h.$('#mainwp-onboarding-time-left').text(), 'About 9 minutes left to connect.');
+    h.trigger('window', 'pagehide');
+    assert.equal(h.timers.size, 0);
+});
+
+test('returning to the tab during a connect attempt sends no expiry check', () => {
+    const h = uiHarness();
+    h.fill(); h.advance(400);
+    h.reply({ response: 'OK', connection_window_remaining: 1 });
+    h.advance(1000);
+    h.reply({ response: 'OK', connection_window_remaining: 0 });
+    h.$('#mainwp_managesites_add_admin_pwd').val('password');
+    h.trigger('#mainwp_managesites_add_admin_pwd', 'input');
+    h.trigger('#mainwp_managesites_add', 'click');
+    const connection = h.requests.at(-1);
+    assert.equal(connection.options.data.action, 'mainwp_addwp');
+    h.visible(true);
+    h.visible(false);
+    assert.equal(h.requests.at(-1), connection);
+    connection.options.success({ response: 'ERROR MainWP Child not detected' });
+    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
+    h.reply({ response: 'NOMAINWP' });
+    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), false);
+});
+
+test('rows that a stopped check never reached read Not checked instead of Checking', () => {
+    for (const [result, reachable, child] of [
+        [{ response: 'HTTPERROR' }, 'No', 'Not checked'],
+        [{ response: 'ERROR Site is already connected to your MainWP Dashboard.' }, 'Not checked', 'Not checked']
+    ]) {
+        const h = uiHarness();
+        h.fill(); h.advance(400);
+        h.reply(result);
+        assert.equal(h.$('#mainwp-onboarding-reachable').text(), reachable);
+        assert.equal(h.$('#mainwp-onboarding-child').text(), child);
+    }
+    const h = uiHarness();
+    h.fill(); h.advance(400);
+    assert.equal(h.$('#mainwp-onboarding-reachable').text(), 'Checking...');
+    h.reply({ response: 'NOMAINWP' });
+    assert.equal(h.$('#mainwp-onboarding-child').text(), 'Not yet');
 });

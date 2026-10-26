@@ -218,6 +218,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             case 'wpcore_update':
             case 'plugin_update':
             case 'theme_update':
+            case 'abandoned':
             case 'backup':
             case 'wpcore_version':
             case 'security':
@@ -295,6 +296,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'wpcore_update'  => '<i class="icon wordpress"></i>', // phpcs:ignore -- Prevent modify WP icon.
             'plugin_update'  => '<i class="plug icon"></i>',
             'theme_update'   => '<i class="tint icon"></i>',
+            'abandoned'      => esc_html__( 'Abandoned', 'mainwp' ),
             'wpcore_version' => esc_html__( 'Core', 'mainwp' ),
             'security'       => esc_html__( 'Security', 'mainwp' ),
             'language'       => esc_html__( 'Language', 'mainwp' ),
@@ -437,7 +439,7 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             'className' => 'center aligned collapsing',
         );
         $defines[] = array(
-            'targets'   => array( 'manage-login-column', 'manage-wpcore_update-column', 'manage-plugin_update-column', 'manage-theme_update-column', 'manage-backup-column' ),
+            'targets'   => array( 'manage-login-column', 'manage-wpcore_update-column', 'manage-plugin_update-column', 'manage-theme_update-column', 'manage-abandoned-column', 'manage-backup-column' ),
             'className' => 'center aligned collapsing',
         );
         $defines[] = array(
@@ -1834,6 +1836,9 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             $decodedIgnoredCores = array();
         }
 
+        $decodedDismissedPlugins = ! empty( $userExtension->dismissed_plugins ) ? json_decode( $userExtension->dismissed_plugins, true ) : array();
+        $decodedDismissedThemes  = ! empty( $userExtension->dismissed_themes ) ? json_decode( $userExtension->dismissed_themes, true ) : array();
+
         $last24_time = MainWP_Uptime_Monitoring_Handle::get_hourly_key_by_timestamp( time() - DAY_IN_SECONDS );
 
         if ( $this->items ) {
@@ -1858,9 +1863,12 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
 
                 $total_ignored_updates = 0;
 
-                $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
+                $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup', 'plugins_outdate_info', 'themes_outdate_info', 'plugins_outdate_dismissed', 'themes_outdate_dismissed' ) );
                 $wp_upgrades           = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
                 $ignored_core_upgrades = isset( $site_options['ignored_wp_upgrades'] ) ? json_decode( $site_options['ignored_wp_upgrades'], true ) : array();
+
+                $abandoned       = $this->get_abandoned_counts( $site_options, $decodedDismissedPlugins, $decodedDismissedThemes );
+                $total_abandoned = $abandoned['plugins'] + $abandoned['themes'];
 
                 if ( $website['is_ignoreCoreUpdates'] || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core', $total_ignored_updates ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core', $total_ignored_updates ) ) {
                     $wp_upgrades = array();
@@ -2061,6 +2069,10 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                         <a class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_theme_upgrades ) ); ?> button" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates">
                             <i class="sync alternate icon"></i> <?php echo intval( $total_theme_upgrades ); ?>
                         </a>
+                    <?php } elseif ( 'abandoned' === $column_name ) { ?>
+                        <span data-tooltip="<?php echo esc_attr( $this->get_abandoned_tooltip( $abandoned ) ); ?>" data-position="left center" data-inverted="" class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_abandoned ) ); ?> button">
+                            <i class="clock outline icon"></i> <?php echo intval( $total_abandoned ); ?>
+                        </span>
                     <?php } elseif ( 'wpcore_version' === $column_name ) { ?>
                         <?php if ( ! empty( $website_info['wpversion'] ) ) : ?>
                             <?php if ( $total_wp_upgrades > 0 && is_array( $wp_upgrades ) && ! empty( $wp_upgrades['new'] ) ) : ?>
@@ -2219,6 +2231,59 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
     }
 
     /**
+     * Get abandoned plugins and themes counts, excluding per-site and global dismissed items.
+     *
+     * @param array $site_options      Site options with outdate info and dismissed lists.
+     * @param array $dismissed_plugins Globally dismissed abandoned plugins.
+     * @param array $dismissed_themes  Globally dismissed abandoned themes.
+     *
+     * @return array Array with 'plugins' and 'themes' counts.
+     */
+    private function get_abandoned_counts( $site_options, $dismissed_plugins, $dismissed_themes ) {
+        $counts = array(
+            'plugins' => 0,
+            'themes'  => 0,
+        );
+
+        $types = array(
+            'plugins' => $dismissed_plugins,
+            'themes'  => $dismissed_themes,
+        );
+
+        foreach ( $types as $type => $global_dismissed ) {
+            $outdate = ! empty( $site_options[ $type . '_outdate_info' ] ) ? json_decode( $site_options[ $type . '_outdate_info' ], true ) : array();
+            if ( ! is_array( $outdate ) || empty( $outdate ) ) {
+                continue;
+            }
+
+            $site_dismissed = ! empty( $site_options[ $type . '_outdate_dismissed' ] ) ? json_decode( $site_options[ $type . '_outdate_dismissed' ], true ) : array();
+            if ( is_array( $site_dismissed ) ) {
+                $outdate = array_diff_key( $outdate, $site_dismissed );
+            }
+
+            if ( is_array( $global_dismissed ) ) {
+                $outdate = array_diff_key( $outdate, $global_dismissed );
+            }
+
+            $counts[ $type ] = count( $outdate );
+        }
+
+        return $counts;
+    }
+
+    /**
+     * Get abandoned plugins/themes column tooltip.
+     *
+     * @param array $abandoned Array with 'plugins' and 'themes' counts.
+     *
+     * @return string Tooltip text.
+     */
+    private function get_abandoned_tooltip( $abandoned ) {
+        /* translators: 1: abandoned plugins count, 2: abandoned themes count. */
+        return sprintf( esc_html__( '%1$d plugins, %2$d themes', 'mainwp' ), intval( $abandoned['plugins'] ), intval( $abandoned['themes'] ) );
+    }
+
+    /**
      * Fetch single row item.
      *
      * @return mixed Single Row Item.
@@ -2284,9 +2349,14 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
             $decodedIgnoredCores = array();
         }
 
-        $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup' ) );
+        $site_options          = MainWP_DB::instance()->get_website_options_array( $website, array( 'wp_upgrades', 'ignored_wp_upgrades', 'premium_upgrades', 'primary_lasttime_backup', 'plugins_outdate_info', 'themes_outdate_info', 'plugins_outdate_dismissed', 'themes_outdate_dismissed' ) );
         $wp_upgrades           = isset( $site_options['wp_upgrades'] ) ? json_decode( $site_options['wp_upgrades'], true ) : array();
         $ignored_core_upgrades = isset( $site_options['ignored_wp_upgrades'] ) ? json_decode( $site_options['ignored_wp_upgrades'], true ) : array();
+
+        $decodedDismissedPlugins = ! empty( $userExtension->dismissed_plugins ) ? json_decode( $userExtension->dismissed_plugins, true ) : array();
+        $decodedDismissedThemes  = ! empty( $userExtension->dismissed_themes ) ? json_decode( $userExtension->dismissed_themes, true ) : array();
+        $abandoned               = $this->get_abandoned_counts( $site_options, $decodedDismissedPlugins, $decodedDismissedThemes );
+        $total_abandoned         = $abandoned['plugins'] + $abandoned['themes'];
 
         if ( $website['is_ignoreCoreUpdates'] || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $ignored_core_upgrades, 'core', $total_ignored_updates ) || MainWP_Common_Functions::instance()->is_ignored_updates( $wp_upgrades, $decodedIgnoredCores, 'core', $total_ignored_updates ) ) {
             $wp_upgrades = array();
@@ -2520,6 +2590,8 @@ class MainWP_Manage_Sites_List_Table { // phpcs:ignore Generic.Classes.OpeningBr
                 <td class="collapsing mainwp-plugin-update-cell center aligned"><a class="ui basic mini compact button <?php echo esc_attr( $p_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>"><?php echo intval( $total_plugin_upgrades ); ?></a></td>
             <?php } elseif ( 'theme_update' === $column_name ) { ?>
                 <td class="collapsing mainwp-theme-update-cell center aligned"><a class="ui basic mini compact button <?php echo esc_attr( $t_color ); ?>" href="admin.php?page=managesites&updateid=<?php echo intval( $website['id'] ); ?>&tab=themes-updates"><?php echo intval( $total_theme_upgrades ); ?></a></td>
+            <?php } elseif ( 'abandoned' === $column_name ) { ?>
+                <td class="collapsing center aligned mainwp-abandoned-cell"><span data-tooltip="<?php echo esc_attr( $this->get_abandoned_tooltip( $abandoned ) ); ?>" data-position="left center" data-inverted="" class="ui mini <?php echo esc_attr( MainWP_Utility::mainwp_get_update_count_class( $total_abandoned ) ); ?> button"><i class="clock outline icon"></i> <?php echo intval( $total_abandoned ); ?></span></td>
             <?php } elseif ( 'last_sync' === $column_name ) { ?>
                 <td class="collapsing mainwp-last-sync-cell"><?php echo ! empty( $website['dtsSync'] ) ? MainWP_Utility::format_timestamp( MainWP_Utility::get_timestamp( $website['dtsSync'] ) ) : ''; // phpcs:ignore WordPress.Security.EscapeOutput ?></td>
             <?php } elseif ( 'last_post' === $column_name ) { ?>

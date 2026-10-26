@@ -1152,6 +1152,13 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertStringContainsString( '7 updates waiting', $html );
 		$this->assertStringContainsString( 'and 2 more', $html );
 		$this->assertSame( 'Example 5 1.0 to 2.0', $xpath->query( '//ul[@id="mainwp-onboarding-update-list"]/li[5]' )->item( 0 )->textContent );
+		// Three translations share the hidden last row, so the overflow counts updates, not rows.
+		update_option( 'mainwp_show_language_updates', 1 );
+		MainWP_DB::instance()->update_website_values( $site->id, array( 'translation_upgrades' => wp_json_encode( array( array( 'slug' => 'de_DE' ), array( 'slug' => 'fr_FR' ), array( 'slug' => 'es_ES' ) ) ) ) );
+		$html = $this->render_summary( $site->id );
+		$this->assertStringContainsString( '10 updates waiting', $html );
+		$this->assertStringContainsString( 'and 5 more', $html );
+		MainWP_DB::instance()->update_website_values( $site->id, array( 'translation_upgrades' => '[]' ) );
 		MainWP_DB::instance()->update_website_values( $site->id, array( 'plugin_upgrades' => wp_json_encode( array_slice( $plugins, -1, 1, true ) ) ) );
 		$html = $this->render_summary( $site->id );
 		$this->assertStringContainsString( '1 update waiting', $html );
@@ -1228,9 +1235,38 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		}
 	}
 
+	/** The uptime sentence promises email only when alerts are enabled and have a recipient. */
+	public function test_summary_uptime_email_promise_requires_recipient(): void {
+		$site               = $this->site();
+		$settings           = MainWP_Uptime_Monitoring_Handle::get_default_monitoring_settings( false );
+		$settings['active'] = 1;
+		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+		$db = MainWP_DB_Uptime_Monitoring::instance();
+		$db->delete_site_monitors( $site->id );
+		$db->update_wp_monitor(
+			array(
+				'wpid'   => $site->id,
+				'active' => -1,
+			)
+		);
+		foreach ( array( 'alerts@example.org', '', '  ' ) as $recipients ) {
+			update_option(
+				'mainwp_settings_notification_emails',
+				array(
+					'uptime' => array(
+						'disable'    => 0,
+						'recipients' => $recipients,
+					),
+				)
+			);
+			$line = trim( $this->html_xpath( $this->render_summary( $site->id ) )->query( '//p[@id="mainwp-onboarding-uptime"]' )->item( 0 )->textContent );
+			$this->assertStringStartsWith( '' === trim( $recipients ) ? 'Uptime monitoring is on. Email alerts are disabled.' : "Uptime monitoring is on. We'll email alerts@example.org if", $line );
+		}
+	}
+
 	/** A digest promise requires both enabled delivery and recipients. */
 	public function test_digest_line_requires_enabled_digest_and_recipient(): void {
-		foreach ( array( array( 1, 'digest@example.org' ), array( 0, '' ), array( 0, 'digest@example.org' ) ) as list( $disabled, $recipient ) ) {
+		foreach ( array( array( 1, 'digest@example.org' ), array( 0, '' ), array( 0, '  ' ), array( 0, 'digest@example.org' ) ) as list( $disabled, $recipient ) ) {
 			update_option(
 				'mainwp_settings_notification_emails',
 				array(
@@ -1242,7 +1278,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			);
 			$xpath = $this->html_xpath( $this->render_summary( 0 ) );
 			$line  = $xpath->query( '//p[@id="mainwp-onboarding-digest"]' );
-			$this->assertSame( ! $disabled && '' !== $recipient ? 1 : 0, $line->length );
+			$this->assertSame( ! $disabled && '' !== trim( $recipient ) ? 1 : 0, $line->length );
 			if ( $line->length ) {
 				$this->assertSame( "We'll email digest@example.org a daily digest when updates are waiting or a site is disconnected.", $line->item( 0 )->textContent );
 			}

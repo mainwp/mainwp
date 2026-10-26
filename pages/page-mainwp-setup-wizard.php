@@ -1307,8 +1307,15 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                         <li><?php echo esc_html( $row ); ?></li>
                                     <?php endforeach; ?>
                                 </ul>
-                                <?php if ( 5 < count( $data['rows'] ) ) : ?>
-                                    <div><?php /* translators: %d: additional update row count. */ printf( esc_html__( 'and %d more', 'mainwp' ), count( $data['rows'] ) - 5 ); ?></div>
+                                <?php
+                                $more = count( $data['rows'] ) - 5;
+                                // Translations share one row, always the last, so a hidden row can stand for several updates.
+                                if ( 0 < $more && 1 < $updates['total_translation_upgrades'] ) {
+                                    $more += $updates['total_translation_upgrades'] - 1;
+                                }
+                                ?>
+                                <?php if ( 0 < $more ) : ?>
+                                    <div><?php /* translators: %d: count of updates not listed above. */ printf( esc_html__( 'and %d more', 'mainwp' ), intval( $more ) ); ?></div>
                                 <?php endif; ?>
                             <?php endif; ?>
                             </div>
@@ -1332,7 +1339,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <?php endif; ?>
                 <p id="mainwp-onboarding-uptime">
                 <?php
-                if ( $site && $uptime_active && empty( $email['disable'] ) ) {
+                if ( $site && $uptime_active && empty( $email['disable'] ) && '' !== trim( (string) $email['recipients'] ) ) {
                     /* translators: 1: notification recipients, 2: site name. */
                     printf( esc_html__( 'Uptime monitoring is on. We\'ll email %1$s if %2$s goes down.', 'mainwp' ), esc_html( $email['recipients'] ), esc_html( $site->name ) );
                 } else {
@@ -1343,7 +1350,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <a href="#" id="mainwp-onboarding-disable-monitoring" data-security="<?php echo esc_attr( wp_create_nonce( 'mainwp_onboarding_disable_monitoring' ) ); ?>" data-error="<?php echo esc_attr__( 'Unable to turn off monitoring. Please try again.', 'mainwp' ); ?>"><?php esc_html_e( 'Turn off', 'mainwp' ); ?></a>
                 <?php endif; ?>
                 </p>
-                <?php if ( empty( $digest['disable'] ) && ! empty( $digest['recipients'] ) ) : ?>
+                <?php if ( empty( $digest['disable'] ) && '' !== trim( (string) $digest['recipients'] ) ) : ?>
                     <p id="mainwp-onboarding-digest"><?php /* translators: %s: daily digest recipients. */ printf( esc_html__( "We'll email %s a daily digest when updates are waiting or a site is disconnected.", 'mainwp' ), esc_html( $digest['recipients'] ) ); ?></p>
                 <?php endif; ?>
             </div>

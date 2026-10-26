@@ -863,7 +863,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $total_sites       = ! empty( $sites ) ? count( $sites ) : 0;
         $item_class_active = 1 >= $total_sites ? 'active' : '';
         $tab_class_active  = 1 < $total_sites ? 'active' : '';
-        $first_site_id     = $selected_site ? $selected_site->id : 0;
+        $first_site_id     = $selected_site ? $selected_site->id : ( 1 === $total_sites ? (int) $sites[0]['id'] : 0 );
         ?>
         <div class="ui vertical basic padded segments">
             <div class="ui padded segment">
@@ -1139,8 +1139,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             $settings['active']   = 1;
             $settings['interval'] = 60;
             MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $settings );
-            // Same repair the Monitoring Settings save queues: a site whose primary monitor insert failed at add time stays unmonitored otherwise.
-            MainWP_System::instance()->handle_admin_perform_update( 'attempted_repair_primary_monitors' );
+            // A site whose primary monitor insert failed at add time stays unmonitored otherwise. Called directly because
+            // handle_admin_perform_update() passes its retry counter as the site ID, which repairs nothing.
+            MainWP_DB_Uptime_Monitoring::instance()->repair_missing_primary_monitors();
         }
         add_option( 'mainwp_disableSitesHealthMonitoring', 0 );
         add_option( 'mainwp_sitehealthThreshold', 80 );

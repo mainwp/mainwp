@@ -366,7 +366,6 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
         $email = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
         ?>
         <div class="ui message" id="mainwp-onboarding-monitoring-notice" aria-live="polite" style="margin: 1em;">
-            <i class="close icon mainwp-notice-dismiss" notice-id="onboarding-monitoring"></i>
             <p>
             <?php
             // An empty recipient list sends nothing, so it gets the same copy as disabled alerts.
@@ -378,6 +377,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
             }
             ?>
             </p>
+            <i class="close icon mainwp-notice-dismiss" notice-id="onboarding-monitoring"></i>
             <button type="button" class="ui mini green button" id="mainwp-onboarding-enable-monitoring" data-nonce="<?php echo esc_attr( wp_create_nonce( 'mainwp_onboarding_enable_monitoring' ) ); ?>" data-error="<?php esc_attr_e( 'Unable to turn on uptime monitoring. Please try again.', 'mainwp' ); ?>"><?php esc_html_e( 'Turn on uptime monitoring', 'mainwp' ); ?></button>
             <a class="ui mini basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSettings' ) ); ?>"><?php esc_html_e( 'Monitoring settings', 'mainwp' ); ?></a>
             <p class="mainwp-onboarding-monitoring-error" role="alert" hidden></p>

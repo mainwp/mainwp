@@ -414,18 +414,12 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 	/** A fresh summary enables monitoring once and leaves later edits alone. */
 	public function test_fresh_defaults_apply_once(): void {
 		update_option( 'mainwp_onboarding_fresh_install', time() );
-		$actions = array();
-		$record  = static function ( $update_actions, $action ) use ( &$actions ) {
-			$actions[] = $action;
-			return $update_actions;
-		};
-		add_filter( 'mainwp_admin_init_update_data', $record, 10, 2 );
-		try {
-			$this->invoke( 'apply_monitoring_defaults' );
-		} finally {
-			remove_filter( 'mainwp_admin_init_update_data', $record, 10 );
-		}
-		$this->assertSame( array( 'attempted_repair_primary_monitors' ), $actions );
+		$site = $this->site();
+		$db   = MainWP_DB_Uptime_Monitoring::instance();
+		$db->delete_site_monitors( $site->id );
+		$this->assertEmpty( $db->get_monitor_by( $site->id, 'issub', 0 ) );
+		$this->invoke( 'apply_monitoring_defaults' );
+		$this->assertNotEmpty( $db->get_monitor_by( $site->id, 'issub', 0 ) );
 		$settings = get_option( 'mainwp_global_uptime_monitoring_settings' );
 		$this->assertSame( 1, (int) $settings['active'] );
 		$this->assertSame( 60, (int) $settings['interval'] );
@@ -787,6 +781,23 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$this->assertStringNotContainsString( 'Review updates first', $html );
 		}
 		$property->setValue( null, null );
+	}
+
+	/** Without a selected site, the single-client form assigns the only site; with more it assigns none. */
+	public function test_add_client_without_selection_assigns_only_site(): void {
+		$only = $this->site();
+		foreach ( array( (string) $only->id, '0' ) as $expected ) {
+			$_GET = array( 'siteid' => 0 );
+			ob_start();
+			try {
+				$this->wizard->mwp_setup_add_client();
+			} finally {
+				$html = ob_get_clean();
+			}
+			$xpath = $this->html_xpath( $html );
+			$this->assertSame( $expected, $xpath->query( '//input[@name="selected_first_site"]/@value' )->item( 0 )->value );
+			$this->site();
+		}
 	}
 
 	/** The multi-client form must assign the site chosen from the summary. */

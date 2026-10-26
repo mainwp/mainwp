@@ -389,6 +389,8 @@ function uiHarness(mode = 'single-site', tabs = true) {
     };
 }
 
+const matrixAdding = '<i class="notched circle loading icon"></i> Adding the site to your MainWP Dashboard. Please wait...';
+
 for (const onboarding of [true, false]) {
     test(onboarding
         ? 'onboarding connect success redirects immediately without clearing fields or showing success'
@@ -414,6 +416,7 @@ for (const onboarding of [true, false]) {
         assert.deepEqual(h.reloads, onboarding ? [destination] : []);
         assert.equal([...h.timers.values()].filter(timer => timer.at - h.now() === 3000).length, onboarding ? 0 : 1);
         assert.equal(h.messages.some(message => message[2] === 'green'), !onboarding);
+        if (onboarding) assert.deepEqual(h.messages.at(-1), ['#mainwp-message-zone', matrixAdding, '']);
         for (const [field, value] of Object.entries(values)) {
             assert.equal(h.$('#mainwp_managesites_add_' + field).val(), onboarding ? value : field === 'wpurl_protocol' ? 'https' : '', field);
         }
@@ -518,7 +521,7 @@ function matrixExpected(status, event, deadline) {
     }
     // Connect is independent of detection. Both failure callbacks select the same target first.
     if (event === 'connect success') return matrixView('connecting', deadline, [], null,
-        ['#mainwp-message-zone'], [...matrixStatuses[status].slice(0, 2).map(label => label === 'Not checked' ? 'Checking...' : label), false, false, false, false]);
+        status === 'connecting' ? matrixZone : ['#mainwp-message-zone', matrixAdding, ''], [...matrixStatuses[status].slice(0, 2).map(label => label === 'Not checked' ? 'Checking...' : label), false, false, false, false]);
     const zone = ['#mainwp-message-zone', event === 'connect ERROR' ? '<p>Wrong password</p>' : 'Could not connect. Try again.', 'red'];
     if (event === 'connect transport error' || deadline === 'passed') {
         const rows = matrixStatuses[status].slice(0, 2).map(label => label === 'Checking...' ? 'Not checked' : label);

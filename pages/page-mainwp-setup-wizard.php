@@ -432,35 +432,35 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui padded segment">
             <h1 class="ui massive header"><?php esc_html_e( 'How do you want to start?', 'mainwp' ); ?></h1>
             <p><?php esc_html_e( 'Connect one WordPress site or import your sites from a CSV file.', 'mainwp' ); ?></p>
-            <div class="ui two stackable link cards">
+            <div class="ui two stackable link cards" id="mainwp-onboarding-start-cards">
                 <a class="ui card" href="<?php echo esc_url( add_query_arg( 'mode', 'single-site', $start_url ) ); ?>">
                     <div class="content">
                         <span class="ui small green label"><?php esc_html_e( 'Recommended', 'mainwp' ); ?></span>
                         <h2 class="header"><?php esc_html_e( 'Connect my first site', 'mainwp' ); ?></h2>
-                        <p><?php esc_html_e( "Add one WordPress site. We'll check it and guide you through installing MainWP Child.", 'mainwp' ); ?></p>
+                        <div class="description"><?php esc_html_e( "Add one WordPress site. We'll check it and guide you through installing MainWP Child.", 'mainwp' ); ?></div>
                     </div>
-                    <div class="extra content"><span class="ui green button"><?php esc_html_e( 'Connect my first site', 'mainwp' ); ?></span></div>
+                    <div class="extra content"><span class="ui green button" aria-hidden="true"><?php esc_html_e( 'Connect my first site', 'mainwp' ); ?></span></div>
                 </a>
                 <a class="ui card" href="<?php echo esc_url( add_query_arg( 'mode', 'multiple-site', $start_url ) ); ?>">
                     <div class="content">
                         <h2 class="header"><?php esc_html_e( 'Import a CSV', 'mainwp' ); ?></h2>
-                        <p><?php esc_html_e( "Upload a CSV file with your sites' URLs and administrator usernames.", 'mainwp' ); ?></p>
+                        <div class="description"><?php esc_html_e( "Upload a CSV file with your sites' URLs and administrator usernames.", 'mainwp' ); ?></div>
                     </div>
-                    <div class="extra content"><span class="ui basic button"><?php esc_html_e( 'Import a CSV', 'mainwp' ); ?></span></div>
+                    <div class="extra content"><span class="ui basic button" aria-hidden="true"><?php esc_html_e( 'Import a CSV', 'mainwp' ); ?></span></div>
                 </a>
             </div>
-            <div class="ui two column stackable middle aligned grid">
-                <div class="column">
-                    <figure class="mainwp-onboarding-preview">
+            <div class="mainwp-onboarding-preview">
+                <div class="ui stackable grid">
+                    <div class="six wide column">
                         <img class="ui medium rounded bordered image" src="<?php echo esc_url( MAINWP_PLUGIN_URL . 'assets/images/onboarding/dashboard-preview.jpg' ); ?>" alt="<?php esc_attr_e( 'MainWP Dashboard overview with connected sites and pending updates', 'mainwp' ); ?>">
-                        <figcaption><?php esc_html_e( "This is what you'll see in about 3 minutes.", 'mainwp' ); ?></figcaption>
-                    </figure>
-                </div>
-                <div class="column">
-                    <div class="ui list">
-                        <div class="item"><?php esc_html_e( 'Updates waiting across your sites', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'Update everything in one click', 'mainwp' ); ?></div>
-                        <div class="item"><?php esc_html_e( 'Connection status for every site', 'mainwp' ); ?></div>
+                    </div>
+                    <div class="ten wide middle aligned column">
+                        <p><?php esc_html_e( "This is what you'll see in about 3 minutes.", 'mainwp' ); ?></p>
+                        <div class="ui list">
+                            <div class="item"><i class="green check icon"></i><div class="content"><?php esc_html_e( 'Updates waiting across your sites', 'mainwp' ); ?></div></div>
+                            <div class="item"><i class="green check icon"></i><div class="content"><?php esc_html_e( 'Update everything in one click', 'mainwp' ); ?></div></div>
+                            <div class="item"><i class="green check icon"></i><div class="content"><?php esc_html_e( 'Connection status for every site', 'mainwp' ); ?></div></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1321,9 +1321,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <?php endif; ?>
             </div>
             <div class="ui hidden divider"></div>
+            <?php $show_ai = MainWP_System_Utility::is_admin() && true === MainWP_Abilities_Util::check_rest_api_permission() && ! MainWP_Menu::is_disable_menu_item( 2, 'ai' ); ?>
             <div>
                 <h2 class="ui dividing header"><?php esc_html_e( "What's next", 'mainwp' ); ?></h2>
-                <div class="ui two stackable cards" id="mainwp-onboarding-next-steps">
+                <div class="<?php echo $show_ai ? 'ui three doubling stackable cards' : 'ui two stackable cards'; ?>" id="mainwp-onboarding-next-steps">
                     <div class="card">
                         <div class="content">
                             <div class="header"><?php echo esc_html( $site || $count ? __( 'Add another site', 'mainwp' ) : __( 'Add your first site', 'mainwp' ) ); ?></div>
@@ -1342,12 +1343,14 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             <a class="ui basic button" href="<?php echo esc_url( $site || $count ? add_query_arg( 'siteid', $site_id, $this->get_next_step_link( 'add_client' ) ) : admin_url( 'admin.php?page=ClientAddNew' ) ); ?>"><?php echo esc_html( $site ? __( 'Assign this site to a client', 'mainwp' ) : __( 'Assign sites to a client', 'mainwp' ) ); ?></a>
                         </div>
                     </div>
-                    <?php if ( MainWP_System_Utility::is_admin() && true === MainWP_Abilities_Util::check_rest_api_permission() && ! MainWP_Menu::is_disable_menu_item( 2, 'ai' ) ) : ?>
+                    <?php if ( $show_ai ) : ?>
                         <div class="card">
                             <div class="content">
-                                <h3 class="header"><?php esc_html_e( 'Connect your AI assistant', 'mainwp' ); ?></h3>
-                                <p><?php esc_html_e( 'Use MainWP from Claude, Cursor or another MCP client.', 'mainwp' ); ?></p>
-                                <p><code><?php esc_html_e( 'Which of my sites have plugin updates waiting?', 'mainwp' ); ?></code></p>
+                                <div class="header"><?php esc_html_e( 'Connect your AI assistant', 'mainwp' ); ?></div>
+                                <div class="description">
+                                    <?php esc_html_e( 'Use MainWP from Claude, Cursor or another MCP client.', 'mainwp' ); ?><br>
+                                    <code><?php esc_html_e( 'Which of my sites have plugin updates waiting?', 'mainwp' ); ?></code>
+                                </div>
                             </div>
                             <div class="extra content"><a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=mainwp-mcp' ) ); ?>"><?php esc_html_e( 'Set up MCP', 'mainwp' ); ?></a></div>
                         </div>

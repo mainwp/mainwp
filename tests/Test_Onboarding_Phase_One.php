@@ -355,7 +355,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 				$this->assertSame( 1, $xpath->query( $footer . '/div[@class="ten wide column"]/a[@id="mainwp_addsite_continue_button"][@class="ui basic button"]' )->length );
 			}
 		}
-		$this->assertSame( 2, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"][@class="ui two stackable cards"]/div[@class="card"][div[@class="content"]/div[@class="description"]]' )->length );
+		$this->assertSame( 3, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"][@class="ui three doubling stackable cards"]/div[@class="card"][div[@class="content"]/div[@class="description"]]' )->length );
 		$this->assertStringContainsString( 'Connect more WordPress sites to manage them together.', $html );
 		$this->assertStringContainsString( 'Group sites by client for reports and billing.', $html );
 		$this->assertStringContainsString( 'https://www.usetiful.com/privacy-policy', $html );
@@ -1096,7 +1096,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-get-started-list"][@class="ui middle aligned divided list"]' )->length );
 		$this->assertSame( count( $items ), $xpath->query( '//div[@id="mainwp-get-started-list"]/a[@class="item"]/div[@class="content"]/div[@class="header"]' )->length );
 		$this->assertSame( 0, $xpath->query( '//div[contains(concat(" ",normalize-space(@class)," ")," steps ")]' )->length );
-		$this->assertSame( 2, $xpath->query( '//a[@data-complete="true"]/i[@class="green check circle icon" or @class="green check circle icon tadaaaa"]' )->length );
+		$this->assertSame( 2, $xpath->query( '//a[@data-complete="true"]/i[@class="green check circle icon"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//a[@data-complete="false"]/i[@class="heartbeat icon"]' )->length );
 		update_option( 'mainwp_onboarding_first_update', 1 );
 		update_option( 'mainwp_onboarding_mcp_visited', 1 );
@@ -1121,7 +1121,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$html  = ob_get_clean();
 		$xpath = $this->html_xpath( $html );
 		$this->assertSame( count( $items ), $xpath->query( '//a[@data-complete="true"]/div[@class="content"]/div[@class="header"][normalize-space(.)!=""]' )->length );
-		$this->assertSame( count( $items ), $xpath->query( '//a[@data-complete="true"]/i[@class="green check circle icon" or @class="green check circle icon tadaaaa"]' )->length );
+		$this->assertSame( count( $items ), $xpath->query( '//a[@data-complete="true"]/i[@class="green check circle icon"]' )->length );
 		$this->assertSame( 0, $xpath->query( '//a[contains(@class,"completed")]' )->length );
 		$this->assertTrue( MainWP_Get_Started::is_visible() );
 		update_user_option( get_current_user_id(), 'mainwp_notice_saved_status', array( 'get-started' => 1 ) );

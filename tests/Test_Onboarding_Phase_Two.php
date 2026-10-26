@@ -181,17 +181,24 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'alt="MainWP Dashboard overview with connected sites and pending updates"', $html );
 		$this->assertStringNotContainsString( 'name="tab_connect"', $html );
 		$xpath = $this->html_xpath( $html );
-		$cards = '//div[@class="ui two stackable link cards"]';
+		$cards = '//div[@class="ui two stackable link cards"][@id="mainwp-onboarding-start-cards"]';
 		$this->assertSame( 1, $xpath->query( '//h1[normalize-space(.)="How do you want to start?"]/following-sibling::*[1][self::p]/following-sibling::*[1][@class="ui two stackable link cards"]' )->length );
 		$this->assertSame( 2, $xpath->query( $cards . '/a[@class="ui card"]' )->length );
-		$this->assertSame( 1, $xpath->query( $cards . '/a[1]/div[@class="extra content"]/span[@class="ui green button"][normalize-space(.)="Connect my first site"]' )->length );
-		$this->assertSame( 1, $xpath->query( $cards . '/a[2]/div[@class="extra content"]/span[@class="ui basic button"][normalize-space(.)="Import a CSV"]' )->length );
+		$this->assertSame( 2, $xpath->query( $cards . '/a[@class="ui card"][div[@class="content"]/div[@class="description"]]' )->length );
+		$this->assertSame( 0, $xpath->query( $cards . '/a//p' )->length );
+		$this->assertSame( 1, $xpath->query( $cards . '/a[1]/div[@class="extra content"]/span[@class="ui green button"][@aria-hidden="true"][normalize-space(.)="Connect my first site"]' )->length );
+		$this->assertSame( 1, $xpath->query( $cards . '/a[2]/div[@class="extra content"]/span[@class="ui basic button"][@aria-hidden="true"][normalize-space(.)="Import a CSV"]' )->length );
 		$this->assertSame( 1, $xpath->query( $cards . '/a[1]//span[@class="ui small green label"][normalize-space(.)="Recommended"]' )->length );
 		$this->assertSame( 0, $xpath->query( $cards . '/a//a | ' . $cards . '/a//button' )->length );
-		$preview = $cards . '/following-sibling::*[1][@class="ui two column stackable middle aligned grid"]';
-		$this->assertSame( 1, $xpath->query( $preview . '//figure/img[@class="ui medium rounded bordered image"]' )->length );
-		$this->assertSame( 3, $xpath->query( $preview . '//div[@class="ui list"]/div[@class="item"]' )->length );
-		$this->assertSame( 0, $xpath->query( '//figure//span | //figure/img[@width="1200"]' )->length );
+		$preview = $cards . '/following-sibling::*[1][self::div][@class="mainwp-onboarding-preview"]';
+		$grid    = $preview . '/div[@class="ui stackable grid"]';
+		$details = $grid . '/div[@class="ten wide middle aligned column"]';
+		$this->assertSame( 1, $xpath->query( $grid . '/div[@class="six wide column"]/img[@class="ui medium rounded bordered image"]' )->length );
+		$this->assertSame( 1, $xpath->query( $details . '/*[1][self::p]' )->length );
+		$this->assertSame( "This is what you'll see in about 3 minutes.", trim( $xpath->query( $details . '/*[1]' )->item( 0 )->textContent ) );
+		$this->assertSame( 3, $xpath->query( $details . '/div[@class="ui list"]/div[@class="item"]' )->length );
+		$this->assertSame( 3, $xpath->query( $details . '/div[@class="ui list"]/div[@class="item"][i[@class="green check icon"]][div[@class="content"]]' )->length );
+		$this->assertSame( 0, $xpath->query( '//figure | ' . $preview . '//span | ' . $preview . '//img[@width="1200"]' )->length );
 	}
 
 	/**
@@ -277,13 +284,25 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 				libxml_use_internal_errors( $errors );
 			}
 			$xpath = new \DOMXPath( $document );
-			$this->assertSame( 3, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]/div[@class="card"]' )->length );
-			$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]/div[@class="card"]//a[normalize-space(.)="Set up MCP"]' )->length );
+			$group = '//div[@id="mainwp-onboarding-next-steps"]';
+			$this->assertSame( 1, $xpath->query( $group . '[@class="ui three doubling stackable cards"]' )->length );
+			$this->assertSame( 3, $xpath->query( $group . '/div[@class="card"]' )->length );
+			$this->assertSame( 3, $xpath->query( $group . '/div[@class="card"][div[@class="content"]/div[@class="header"]][div[@class="content"]/div[@class="description"]]' )->length );
+			$this->assertSame( 0, $xpath->query( $group . '//h3' )->length );
+			$this->assertSame( 1, $xpath->query( $group . '/div[@class="card"]//a[normalize-space(.)="Set up MCP"][contains(@href,"admin.php?page=mainwp-mcp")]' )->length );
 			add_filter( 'mainwp_is_disable_menu_item', $hide, 10, 3 );
-			$this->assertStringNotContainsString( 'Connect your AI assistant', $this->view( 'mwp_setup_ready' ) );
+			$html  = $this->view( 'mwp_setup_ready' );
+			$xpath = $this->html_xpath( $html );
+			$this->assertStringNotContainsString( 'Connect your AI assistant', $html );
+			$this->assertSame( 1, $xpath->query( $group . '[@class="ui two stackable cards"]' )->length );
+			$this->assertSame( 2, $xpath->query( $group . '/div[@class="card"]' )->length );
 			remove_filter( 'mainwp_is_disable_menu_item', $hide, 10 );
 			wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
-			$this->assertStringNotContainsString( 'Connect your AI assistant', $this->view( 'mwp_setup_ready' ) );
+			$html  = $this->view( 'mwp_setup_ready' );
+			$xpath = $this->html_xpath( $html );
+			$this->assertStringNotContainsString( 'Connect your AI assistant', $html );
+			$this->assertSame( 1, $xpath->query( $group . '[@class="ui two stackable cards"]' )->length );
+			$this->assertSame( 2, $xpath->query( $group . '/div[@class="card"]' )->length );
 		} finally {
 			remove_filter( 'mainwp_is_disable_menu_item', $hide, 10 );
 			$_mainwp_disable_menus_items = $before;

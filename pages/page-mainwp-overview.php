@@ -36,6 +36,31 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
     protected static $instance = null;
 
     /**
+     * Keep the decision after the visit receipt is saved, including for later menu renders.
+     *
+     * @var array
+     */
+    private static $first_onboarding_overview = array();
+
+    /**
+     * Whether this request is the user's first global Overview on a fresh Dashboard.
+     *
+     * @return bool
+     */
+    public static function is_first_onboarding_overview() {
+        $screen  = get_current_screen();
+        $user_id = get_current_user_id();
+        if ( ! $user_id || ! $screen || 'toplevel_page_mainwp_tab' !== $screen->id || MainWP_System_Utility::get_current_wpid() || ! get_option( 'mainwp_onboarding_fresh_install' ) || ! \mainwp_current_user_can( 'dashboard', 'access_global_dashboard' ) ) {
+            return false;
+        }
+
+        if ( ! array_key_exists( $user_id, static::$first_onboarding_overview ) ) {
+            static::$first_onboarding_overview[ $user_id ] = ! get_user_meta( $user_id, 'mainwp_onboarding_overview_seen', true );
+        }
+        return static::$first_onboarding_overview[ $user_id ];
+    }
+
+    /**
      * Screen dashdoard ID value.
      *
      * @var int $dashBoard default 0.
@@ -399,6 +424,9 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
      * @uses  \MainWP\Dashboard\MainWP_Utility::show_mainwp_message()
      */
     public static function render_dashboard_body( $websites = array() ) {
+        if ( static::is_first_onboarding_overview() ) {
+            update_user_meta( get_current_user_id(), 'mainwp_onboarding_overview_seen', 1 );
+        }
         $current_wp_id = MainWP_System_Utility::get_current_wpid();
         $website       = null;
         if ( ! empty( $current_wp_id ) ) {
@@ -422,7 +450,7 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     static::render_onboarding_monitoring_notice();
                 }
                 ?>
-                <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
+                <?php if ( ! static::is_first_onboarding_overview() && MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
                     <div class="ui message" style="margin: 1em;">
                         <i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>
                         <?php /* translators: 1: bulb emoji, 2: cog icon, 3: layout icon */ printf( esc_html__( '%1$s Tip: You can drag and drop widgets to reorder your dashboard, use Page Settings (%2$s) to show or hide widgets, and use Layout (%3$s) in the header to save and load your widget layouts.', 'mainwp' ), '<em data-emoji=":bulb:" class="small"></em>', '<i class="cog fitted icon"></i>', '<i class="all border fitted icon"></i>' ); ?>

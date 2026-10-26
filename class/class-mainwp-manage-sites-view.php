@@ -2187,6 +2187,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $params['uploaded_site_icon'] = isset( $_POST['uploaded_icon'] ) && ! empty( $_POST['uploaded_icon'] ) ? sanitize_text_field( wp_unslash( $_POST['uploaded_icon'] ) ) : '';
         $params['selected_site_icon'] = isset( $_POST['selected_icon'] ) && ! empty( $_POST['selected_icon'] ) ? sanitize_text_field( wp_unslash( $_POST['selected_icon'] ) ) : '';
         $params['cust_icon_color']    = isset( $_POST['cust_color'] ) && ! empty( $_POST['cust_color'] ) ? sanitize_hex_color( wp_unslash( $_POST['cust_color'] ) ) : '';
+        $params['defer_site_icon']    = ! empty( $_POST['defer_site_icon'] );
         $params['group_creation_ui']  = true;
 
         if ( isset( $_POST['qsw_page'] ) ) {
@@ -2241,7 +2242,7 @@ class MainWP_Manage_Sites_View { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param array $params  Child site add parameters.
      */
     private static function maybe_fetch_initial_site_favicon( $site_id, $params ) {
-        if ( empty( $site_id ) ) {
+        if ( empty( $site_id ) || ! empty( $params['defer_site_icon'] ) ) {
             return;
         }
 

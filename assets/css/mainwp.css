@@ -2260,3 +2260,12 @@ body.show-upload-theme .mainwp-content-wrap .mainwp-upload-theme {
     border: 1px solid var(--mainwp-border, var(--border-color, rgba(34, 36, 38, .15)));
     border-radius: var(--input-radius, 5px);
 }
+
+#mainwp-onboarding-tour-help {
+    display: block;
+    margin-top: 0.5em;
+}
+
+#mainwp-onboarding-uptime {
+    margin-top: 1em;
+}

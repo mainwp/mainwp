@@ -13,6 +13,7 @@ use MainWP\Dashboard\MainWP_DB_Client;
 use MainWP\Dashboard\MainWP_DB_Uptime_Monitoring;
 use MainWP\Dashboard\MainWP_Get_Started;
 use MainWP\Dashboard\MainWP_Manage_Sites;
+use MainWP\Dashboard\MainWP_Manage_Sites_View;
 use MainWP\Dashboard\MainWP_Overview;
 use MainWP\Dashboard\MainWP_Post_Handler;
 use MainWP\Dashboard\MainWP_Setup_Wizard;
@@ -265,9 +266,10 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 	 * Capture JSON termination without bypassing the production nonce or rights checks.
 	 *
 	 * @param string $nonce Action nonce.
+	 * @param string $action Monitoring action.
 	 * @return array JSON response.
 	 */
-	private function monitoring_ajax( $nonce ) {
+	private function monitoring_ajax( $nonce, $action = 'enable' ) {
 		$_REQUEST = array( 'security' => $nonce );
 		$die      = static function () {
 			return static function () {
@@ -278,7 +280,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		add_filter( 'wp_die_ajax_handler', $die );
 		ob_start();
 		try {
-			MainWP_Post_Handler::instance()->ajax_onboarding_enable_monitoring();
+			MainWP_Post_Handler::instance()->{ 'ajax_onboarding_' . $action . '_monitoring' }();
 			$this->fail( 'The handler must terminate with JSON.' );
 		} catch ( \RuntimeException $exception ) {
 			$this->assertSame( 'onboarding-json-stop', $exception->getMessage() );
@@ -402,7 +404,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Connect more WordPress sites to manage them together.', $html );
 		$this->assertStringContainsString( 'Group sites by client for reports and billing.', $html );
 		$this->assertStringContainsString( 'https://www.usetiful.com/privacy-policy', $html );
-		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[input[@id="mainwp-guided-tours-option"]]/following-sibling::p[@class="ui small text"]/a[@href="https://www.usetiful.com/privacy-policy"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[input[@id="mainwp-guided-tours-option"]]/following-sibling::span[@id="mainwp-onboarding-tour-help"][@class="ui small text"]/a[@href="https://www.usetiful.com/privacy-policy"]' )->length );
 	}
 
 	/** Existing installs receive neither monitoring defaults nor a widget. */
@@ -534,18 +536,18 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 	}
 
 	/**
-	 * An authorized summary save confirms only active monitoring.
+	 * Continuing saves the tour choice without changing monitoring.
 	 *
 	 * @dataProvider monitoring_choices
-	 * @param bool $active Submitted monitoring choice.
+	 * @param bool $active Stored monitoring choice.
 	 */
-	public function test_summary_save_records_explicit_uptime_confirmation( $active ): void {
+	public function test_summary_save_preserves_monitoring_and_saves_only_tours( $active ): void {
 		update_option( 'mainwp_onboarding_fresh_install', time() );
+		$settings           = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+		$settings['active'] = (int) $active;
+		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
 		$_REQUEST = array( '_wpnonce' => wp_create_nonce( 'mwp-setup' ) );
 		$_POST    = array( 'mainwp-guided-tours-option' => '1' );
-		if ( $active ) {
-			$_POST['mainwp_setup_enableUptimeMonitoring'] = '1';
-		}
 		$redirect = static function ( $location ) {
 			throw new \RuntimeException( $location );
 		};
@@ -558,10 +560,9 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		} finally {
 			remove_filter( 'wp_redirect', $redirect );
 		}
-		$this->assertSame( (int) $active, (int) get_option( 'mainwp_global_uptime_monitoring_settings' )['active'] );
+		$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
 		$this->assertSame( 1, (int) get_option( 'mainwp_enable_guided_tours' ) );
-		$this->assertSame( $active, (bool) get_option( 'mainwp_onboarding_uptime_confirmed' ) );
-		$this->assertSame( $active, MainWP_Get_Started::get_items()[3]['complete'] );
+		$this->assertSame( (bool) $active, (bool) get_option( 'mainwp_onboarding_uptime_confirmed' ) );
 	}
 
 	/**
@@ -729,14 +730,15 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 				$html = ob_get_clean();
 			}
 			$xpath = $this->html_xpath( $html );
-			$this->assertStringContainsString( $expected, $html );
+			$this->assertStringContainsString( $count ? sprintf( '%d updates waiting', 3 * $count ) : 'Everything is up to date', $html );
 			$button = $xpath->query( '//button[@id="mainwp-onboarding-update-all"]' );
 			$this->assertSame( $count && ! $hide ? 1 : 0, $button->length );
 			if ( $button->length ) {
 				$this->assertStringContainsString( 'This installs ' . $expected . '.', $button->item( 0 )->getAttribute( 'data-confirm' ) );
 			}
 			$label = $count && ! $hide ? 'Review updates first' : 'View updates';
-			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="' . $label . '"]' )->length );
+			// An up-to-date site has nothing to review.
+			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="' . $label . '"]' )->length );
 		}
 	}
 
@@ -863,7 +865,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertStringContainsString( $expected ? 'Uptime monitoring is on. Email alerts are disabled.' : 'Uptime monitoring is off.', $html );
 		$this->assertStringNotContainsString( $expected ? 'Uptime monitoring is off.' : 'Uptime monitoring is on.', $html );
 		$xpath = $this->html_xpath( $html );
-		$this->assertSame( $global_active, $xpath->query( '//input[@id="mainwp_setup_enableUptimeMonitoring"][@checked]' )->length );
+		$this->assertSame( $global_active, $xpath->query( '//a[@id="mainwp-onboarding-disable-monitoring"]' )->length );
 	}
 
 	/**
@@ -954,10 +956,10 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 1, $xpath->query( '//button[@id="mainwp-onboarding-update-all"][normalize-space(.)="Update everything now"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Review updates first"]' )->length );
 		$this->assertSame( admin_url( 'admin.php?page=managesites&updateid=' . $site->id ), $xpath->query( '//a[normalize-space(.)="Review updates first"]/@href' )->item( 0 )->value );
-		$this->assertSame( 1, $xpath->query( '//input[@id="mainwp_setup_enableUptimeMonitoring"][@type="checkbox"][@checked]' )->length );
+		$this->assertSame( 0, $xpath->query( '//input[@id="mainwp_setup_enableUptimeMonitoring"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//form//button[@type="submit"][normalize-space(.)="Go to Dashboard"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//form//button[@type="submit"]' )->length );
-		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[@class="ui toggle checkbox"]/input[@id="mainwp_setup_enableUptimeMonitoring"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//p[@id="mainwp-onboarding-uptime"]/a[@id="mainwp-onboarding-disable-monitoring"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[@class="ui checkbox"]/input[@id="mainwp-guided-tours-option"]' )->length );
 		$this->assertSame( 'ui green button', $xpath->query( '//button[@id="mainwp-onboarding-update-all"]/@class' )->item( 0 )->value );
 		$this->assertSame( 'ui basic button', $xpath->query( '//a[normalize-space(.)="Review updates first"]/@class' )->item( 0 )->value );
@@ -983,6 +985,11 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			$html = ob_get_clean();
 		}
 		$xpath = $this->html_xpath( $html );
+		$this->assertSame( 1, $xpath->query( '//h1[normalize-space(.)="Connect your first site"]' )->length );
+		$this->assertStringContainsString( "You'll need the site's address and an administrator login.", html_entity_decode( $html, ENT_QUOTES, 'UTF-8' ) );
+		$this->assertSame( 1, $xpath->query( '//a[@id="mainwp_managesites_add"][normalize-space(.)="Connect site"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//a[@id="mainwp_addsite_continue_button"][normalize-space(.)="Skip for now"]' )->length );
+		$this->assertSame( '(Required)', $xpath->query( '//label[@for="mainwp_managesites_add_admin_pwd"]/span' )->item( 0 )->textContent );
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-advanced"][@hidden]//input[@id="mainwp_managesites_add_wpname"][not(@required)]' )->length );
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-advanced"]/*[1][@class="ui hidden divider"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-advanced"]//div[@class="ui blue message"][contains(.,"WordPress admin login two-factor authentication")]' )->length );
@@ -994,6 +1001,278 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 0, $xpath->query( '//*[@id="mainwp-onboarding-password-help"]/ancestor::*[contains(concat(" ", normalize-space(@class), " "), " label ")]' )->length );
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"][@role="tooltip"]' )->length );
 		$this->assertStringContainsString( 'Your password is never stored by your Dashboard and never sent to MainWP.com.', $xpath->query( '//*[@id="mainwp-onboarding-password-explanation"]' )->item( 0 )->textContent );
+	}
+
+	/** CSV and other AJAX callers defer only when the interactive sender opts in. */
+	public function test_add_site_passes_only_explicit_defer_flag(): void {
+		foreach ( array( array(), array( 'bulk' => true ), array( 'qsw_page' => true ), array( 'defer_site_icon' => 0 ), array( 'defer_site_icon' => 1 ) ) as $request ) {
+			$_POST  = $request;
+			$params = Onboarding_Add_Site_Parameters_Fixture::add_site();
+			$this->assertSame( ! empty( $request['defer_site_icon'] ), $params['defer_site_icon'] );
+		}
+	}
+
+	/** The interactive flag skips the request while other callers keep fetching. */
+	public function test_initial_favicon_defer_and_custom_icons_skip_child_request(): void {
+		$site     = $this->site();
+		$requests = array();
+		$fetch    = static function ( $pre, $website, $action ) use ( &$requests ) {
+			$requests[] = array( (int) $website->id, $action );
+			return array();
+		};
+		$method   = new \ReflectionMethod( MainWP_Manage_Sites_View::class, 'maybe_fetch_initial_site_favicon' );
+		$method->setAccessible( true );
+		add_filter( 'mainwp_fetch_url_authed_pre', $fetch, 10, 3 );
+		try {
+			foreach ( array( array( 'defer_site_icon' => true ), array( 'uploaded_site_icon' => 'custom.png' ), array( 'selected_site_icon' => 'star' ) ) as $params ) {
+				$method->invoke( null, $site->id, $params );
+				$this->assertSame( array(), $requests );
+			}
+			$method->invoke( null, $site->id, array() );
+			$this->assertSame( array( array( (int) $site->id, 'get_site_icon' ) ), $requests );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fetch );
+		}
+	}
+
+	/** Summary pages fetch missing icons using the existing nonce-protected action. */
+	public function test_summary_fetches_only_missing_icons_without_custom_selection(): void {
+		$site = $this->site();
+		foreach ( array( '', 'uploaded:custom.png;selected:;color:', 'uploaded:;selected:star;color:' ) as $custom ) {
+			MainWP_DB::instance()->update_website_option( $site, 'cust_site_icon_info', $custom );
+			$html  = $this->render_summary( $site->id );
+			$xpath = $this->html_xpath( $html );
+			$nodes = $xpath->query( '//*[@id="mainwp-onboarding-site-icon"]' );
+			$this->assertSame( '' === $custom ? 1 : 0, $nodes->length );
+			if ( '' === $custom ) {
+				$this->assertSame( (string) $site->id, $nodes->item( 0 )->getAttribute( 'data-siteid' ) );
+				$this->assertNotFalse( wp_verify_nonce( $nodes->item( 0 )->getAttribute( 'data-security' ), 'mainwp_get_site_icon' ) );
+			}
+		}
+		MainWP_DB::instance()->update_website_option( $site, 'cust_site_icon_info', '' );
+		MainWP_DB::instance()->update_website_option( $site, 'favi_icon', 'stored-icon.png' );
+		$this->assertStringNotContainsString( 'id="mainwp-onboarding-site-icon"', $this->render_summary( $site->id ) );
+		$this->assertStringNotContainsString( 'id="mainwp-onboarding-site-icon"', $this->render_summary( 0 ) );
+	}
+
+	/** Names and versions come from stored payloads, including premium update overlays. */
+	public function test_summary_names_core_plugins_themes_and_translations(): void {
+		$site = $this->site();
+		MainWP_DB::instance()->update_website_values(
+			$site->id,
+			array(
+				'plugin_upgrades'      => wp_json_encode(
+					array(
+						'example/plugin.php' => array(
+							'Name'    => 'Example <Plugin>',
+							'Version' => '1.0',
+							'update'  => array( 'new_version' => '2.0' ),
+						),
+					)
+				),
+				'theme_upgrades'       => wp_json_encode(
+					array(
+						'example-theme' => array(
+							'Name'    => 'Example Theme',
+							'Version' => '3.0',
+							'update'  => array( 'new_version' => '4.0' ),
+						),
+					)
+				),
+				'translation_upgrades' => wp_json_encode( array( array( 'slug' => 'de_DE' ) ) ),
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $site, 'site_info', wp_json_encode( array( 'wpversion' => '7.1.3' ) ) );
+		MainWP_DB::instance()->update_website_option(
+			$site,
+			'wp_upgrades',
+			wp_json_encode(
+				array(
+					'current' => '7.1.3',
+					'new'     => '7.2',
+				)
+			)
+		);
+		update_option( 'mainwp_show_language_updates', 1 );
+		$rows = $this->html_xpath( $this->render_summary( $site->id ) )->query( '//ul[@id="mainwp-onboarding-update-list"]/li' );
+		$this->assertSame(
+			array( 'WordPress 7.1.3 to 7.2', 'Example <Plugin> 1.0 to 2.0', 'Example Theme 3.0 to 4.0', '1 translation update' ),
+			array_map(
+				static function ( $node ) {
+					return $node->textContent;
+				},
+				iterator_to_array( $rows )
+			)
+		);
+		$this->assertStringContainsString( '4 updates waiting', $this->render_summary( $site->id ) );
+		$this->assertStringNotContainsString( '<Plugin>', $this->render_summary( $site->id ) );
+		$premium = $this->site();
+		MainWP_DB::instance()->update_website_values(
+			$premium->id,
+			array(
+				'plugin_upgrades' => wp_json_encode(
+					array(
+						'example/plugin.php' => array(
+							'Name'    => 'Example <Plugin>',
+							'Version' => '1.0',
+							'update'  => array( 'new_version' => '2.0' ),
+						),
+					)
+				),
+			)
+		);
+		MainWP_DB::instance()->update_website_option( $premium, 'site_info', wp_json_encode( array( 'wpversion' => '7.1.3' ) ) );
+		MainWP_DB::instance()->update_website_values(
+			$premium->id,
+			array(
+				'premium_upgrades' => wp_json_encode(
+					array(
+						'example/plugin.php' => array(
+							'type'   => 'plugin',
+							'update' => array( 'new_version' => '2.1' ),
+						),
+					)
+				),
+			)
+		);
+		$this->assertStringContainsString( 'Example &lt;Plugin&gt; 1.0 to 2.1', $this->render_summary( $premium->id ) );
+	}
+
+	/** The summary caps rows at five and renders a clean verdict after updates finish. */
+	public function test_summary_caps_named_rows_and_renders_up_to_date_verdict(): void {
+		$site    = $this->site();
+		$plugins = array();
+		for ( $number = 1; 7 >= $number; ++$number ) {
+			$plugins[ 'example-' . $number . '/plugin.php' ] = array(
+				'Name'    => 'Example ' . $number,
+				'Version' => '1.0',
+				'update'  => array( 'new_version' => '2.0' ),
+			);
+		}
+		MainWP_DB::instance()->update_website_option( $site, 'site_info', wp_json_encode( array( 'wpversion' => '6.7' ) ) );
+		MainWP_DB::instance()->update_website_values( $site->id, array( 'plugin_upgrades' => wp_json_encode( $plugins ) ) );
+		$html  = $this->render_summary( $site->id );
+		$xpath = $this->html_xpath( $html );
+		$this->assertSame( 5, $xpath->query( '//ul[@id="mainwp-onboarding-update-list"]/li' )->length );
+		$this->assertStringContainsString( '7 updates waiting', $html );
+		$this->assertStringContainsString( 'and 2 more', $html );
+		$this->assertSame( 'Example 5 1.0 to 2.0', $xpath->query( '//ul[@id="mainwp-onboarding-update-list"]/li[5]' )->item( 0 )->textContent );
+		MainWP_DB::instance()->update_website_values( $site->id, array( 'plugin_upgrades' => wp_json_encode( array_slice( $plugins, -1, 1, true ) ) ) );
+		$html = $this->render_summary( $site->id );
+		$this->assertStringContainsString( '1 update waiting', $html );
+		$this->assertStringContainsString( 'Example 7 1.0 to 2.0', $html );
+		MainWP_DB::instance()->update_website_values( $site->id, array( 'plugin_upgrades' => '[]' ) );
+		$html = $this->render_summary( $site->id );
+		$this->assertStringContainsString( 'Everything is up to date', $html );
+		$this->assertStringNotContainsString( 'mainwp-onboarding-update-list', $html );
+		$this->assertStringNotContainsString( 'id="mainwp-onboarding-update-all"', $html );
+	}
+
+	/** The off action preserves tours and all other monitoring settings. */
+	public function test_turn_off_preserves_guided_tours_and_survives_summary_reload(): void {
+		update_option( 'mainwp_onboarding_fresh_install', time() );
+		MainWP_Setup_Wizard::apply_monitoring_defaults();
+		foreach ( array( 0, 1 ) as $tours ) {
+			update_option( 'mainwp_enable_guided_tours', $tours );
+			$settings           = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+			$settings['active'] = 1;
+			update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+			$this->assertTrue( $this->monitoring_ajax( wp_create_nonce( 'mainwp_onboarding_disable_monitoring' ), 'disable' )['success'] );
+			$settings['active'] = 0;
+			$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+			$this->assertSame( $tours, (int) get_option( 'mainwp_enable_guided_tours' ) );
+			$html = $this->render_summary( 0 );
+			$this->assertStringContainsString( 'Uptime monitoring is off.', $html );
+			$this->assertStringNotContainsString( 'id="mainwp-onboarding-disable-monitoring"', $html );
+			$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+		}
+	}
+
+	/** Invalid nonces and restricted users cannot turn monitoring off. */
+	public function test_turn_off_requires_its_nonce_and_settings_right(): void {
+		$settings           = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+		$settings['active'] = 1;
+		update_option( 'mainwp_global_uptime_monitoring_settings', $settings );
+		update_option( 'mainwp_enable_guided_tours', 1 );
+		foreach ( array( '', 'invalid', wp_create_nonce( 'mainwp_onboarding_enable_monitoring' ) ) as $nonce ) {
+			$this->assertFalse( $this->monitoring_ajax( $nonce, 'disable' )['success'] );
+		}
+		$deny = static function ( $allowed, $type, $right ) {
+			return 'dashboard' === $type && 'manage_dashboard_settings' === $right ? false : $allowed;
+		};
+		add_filter( 'mainwp_currentusercan', $deny, 999, 3 );
+		try {
+			$this->assertFalse( $this->monitoring_ajax( wp_create_nonce( 'mainwp_onboarding_disable_monitoring' ), 'disable' )['success'] );
+		} finally {
+			remove_filter( 'mainwp_currentusercan', $deny, 999 );
+		}
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'subscriber' ) ) );
+		$this->assertFalse( $this->monitoring_ajax( wp_create_nonce( 'mainwp_onboarding_disable_monitoring' ), 'disable' )['success'] );
+		$this->assertSame( $settings, get_option( 'mainwp_global_uptime_monitoring_settings' ) );
+		$this->assertSame( 1, (int) get_option( 'mainwp_enable_guided_tours' ) );
+	}
+
+	/** Single-site, CSV and skipped summaries all retain the global off switch. */
+	public function test_all_summary_variants_render_uptime_and_turn_off_link(): void {
+		$site = $this->site();
+		update_option( 'mainwp_onboarding_fresh_install', time() );
+		foreach ( array(
+			'single' => $site->id,
+			'csv'    => 0,
+			'none'   => 0,
+		) as $variant => $id ) {
+			$property = new \ReflectionProperty( MainWP_Manage_Sites::class, 'total_sites' );
+			$property->setAccessible( true );
+			$property->setValue( null, 'none' === $variant ? 0 : 1 );
+			$xpath = $this->html_xpath( $this->render_summary( $id ) );
+			$this->assertSame( 1, $xpath->query( '//p[@id="mainwp-onboarding-uptime"][contains(.,"Uptime monitoring is on.")]/a[normalize-space(.)="Turn off"]' )->length, $variant );
+			$link = $xpath->query( '//*[@id="mainwp-onboarding-disable-monitoring"]' )->item( 0 );
+			$this->assertNotFalse( wp_verify_nonce( $link->getAttribute( 'data-security' ), 'mainwp_onboarding_disable_monitoring' ) );
+			$this->assertSame( 0, $xpath->query( '//*[@id="mainwp_setup_enableUptimeMonitoring"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-guided-tours-option"]/parent::div/following-sibling::span[@id="mainwp-onboarding-tour-help"]/a[@href="https://www.usetiful.com/privacy-policy"]' )->length );
+		}
+	}
+
+	/** A digest promise requires both enabled delivery and recipients. */
+	public function test_digest_line_requires_enabled_digest_and_recipient(): void {
+		foreach ( array( array( 1, 'digest@example.org' ), array( 0, '' ), array( 0, 'digest@example.org' ) ) as list( $disabled, $recipient ) ) {
+			update_option(
+				'mainwp_settings_notification_emails',
+				array(
+					'daily_digest' => array(
+						'disable'    => $disabled,
+						'recipients' => $recipient,
+					),
+				)
+			);
+			$xpath = $this->html_xpath( $this->render_summary( 0 ) );
+			$line  = $xpath->query( '//p[@id="mainwp-onboarding-digest"]' );
+			$this->assertSame( ! $disabled && '' !== $recipient ? 1 : 0, $line->length );
+			if ( $line->length ) {
+				$this->assertSame( "We'll email digest@example.org a daily digest when updates are waiting or a site is disconnected.", $line->item( 0 )->textContent );
+			}
+		}
+	}
+
+	/**
+	 * Render the summary for an explicit site selection.
+	 *
+	 * @param int $site_id Site ID or zero.
+	 * @return string
+	 */
+	private function render_summary( $site_id ) {
+		$_GET = array(
+			'page'   => 'mainwp-setup',
+			'step'   => 'next_steps',
+			'siteid' => $site_id,
+		);
+		ob_start();
+		try {
+			$this->wizard->mwp_setup_ready();
+		} finally {
+			$html = ob_get_clean();
+		}
+		return $html;
 	}
 
 	/**
@@ -1077,6 +1356,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 1, $data['updates']['total_plugin_upgrades'] );
 		$this->assertSame( 0, $data['updates']['total_theme_upgrades'] );
 		$this->assertSame( 1, $data['updates']['total_translation_upgrades'] );
+		$this->assertSame( array( 'WordPress 6.7 to 6.8', 'kept 2.0', '1 translation update' ), $data['rows'] );
 		$this->assertTrue( $data['good'] );
 		$db->update_website_option( $site, 'ignored_trans_updates', 1 );
 		$db->update_website_option( $site, 'ignored_wp_upgrades', wp_json_encode( array( 'ignored_versions' => array( '6.8' ) ) ) );
@@ -1095,6 +1375,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( '', $data['new'] );
 		$this->assertSame( 0, $data['updates']['total_wp_upgrades'] );
 		$this->assertSame( 0, $data['updates']['total_translation_upgrades'] );
+		$this->assertSame( array( 'kept 2.0' ), $data['rows'] );
 		$this->assertFalse( $data['good'], 'A high score cannot conceal a critical issue.' );
 		$db->update_website_option( $site, 'ignored_trans_updates', 0 );
 		$site = MainWP_DB::instance()->get_website_by_id( $site->id );
@@ -1102,6 +1383,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		update_option( 'mainwp_show_language_updates', 0 );
 		$data = $this->invoke( 'summary_data', array( $site ) );
 		$this->assertSame( 0, $data['updates']['total_translation_upgrades'], 'Hidden translation updates are skipped by the update chain.' );
+		$this->assertSame( array( 'kept 2.0' ), $data['rows'] );
 	}
 
 	/** Explicit zero and inaccessible IDs must never fall back to an unrelated site. */
@@ -1255,5 +1537,20 @@ class Onboarding_System_Check_Fixture extends MainWP_Setup_Wizard {
 	 */
 	public function passes() {
 		return $this->system_checks_pass();
+	}
+}
+
+/** Captures the existing AJAX parameter parser before registration starts. */
+class Onboarding_Add_Site_Parameters_Fixture extends MainWP_Manage_Sites_View {
+	/**
+	 * Return parsed parameters without registering a Child.
+	 *
+	 * @param object|false $website Existing website.
+	 * @param array        $params Parsed parameters.
+	 * @param array        $output Registration output.
+	 * @return array
+	 */
+	public static function add_wp_site( $website, $params = array(), &$output = array() ) {
+		return $params;
 	}
 }

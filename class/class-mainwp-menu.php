@@ -834,7 +834,7 @@ class MainWP_Menu { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                         <i class="question circle outline icon"></i><br/>
                         <span class="ui small text"><?php esc_html_e( 'Support', 'mainwp' ); ?></span>
                     </a>
-                    <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_support_popup' ) ) : ?>
+                    <?php if ( ! MainWP_Overview::is_first_onboarding_overview() && MainWP_Utility::show_mainwp_message( 'notice', 'mainwp_support_popup' ) ) : ?>
                     <span class="ui mainwp-help-popup popup" style="width: 200px !important;">
                         <em data-emoji=":ring_buoy:" class="large"></em>
                         <h4 class="ui large header"><?php esc_html_e( 'Feeling stuck?', 'mainwp' ); ?></h4>

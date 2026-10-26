@@ -618,8 +618,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         ?>
         <div class="ui padded segment">
             <div>
-                <h1 class="ui massive header"><?php esc_html_e( 'Connect Your First Child Site', 'mainwp' ); ?></h1>
-                <p><?php esc_html_e( 'In the MainWP system, the sites you connect are referred to as "Child Sites."', 'mainwp' ); ?> <?php esc_html_e( 'These Child Sites will be managed centrally from your MainWP Dashboard.', 'mainwp' ); ?></p>
+                <h1 class="ui massive header"><?php esc_html_e( 'Connect your first site', 'mainwp' ); ?></h1>
+                <p><?php esc_html_e( "You'll need the site's address and an administrator login.", 'mainwp' ); ?></p>
             </div>
 
         <?php if ( ( $has_file_upload || $has_import_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) : ?>
@@ -698,7 +698,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                         <button type="button" class="ui basic button" id="mainwp-onboarding-retry" hidden><?php esc_html_e( 'Retry', 'mainwp' ); ?></button>
                                     </div>
                                     <div class="field" id="mainwp-administrator-password-field">
-                                        <label for="mainwp_managesites_add_admin_pwd"><?php esc_html_e( 'What is your administrator password on that site?', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Required if enabled)', 'mainwp' ); ?></span></label>
+                                        <label for="mainwp_managesites_add_admin_pwd"><?php esc_html_e( 'What is your administrator password on that site?', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
                                         <input type="password" id="mainwp_managesites_add_admin_pwd" name="mainwp_managesites_add_admin_pwd" value="" />
                                     </div>
                                     <p class="ui small text"><?php esc_html_e( 'Used once to set up a secure key. Never stored or sent to MainWP.com.', 'mainwp' ); ?> <a href="#mainwp-onboarding-password-explanation" id="mainwp-onboarding-password-help" aria-describedby="mainwp-onboarding-password-explanation"><?php esc_html_e( 'How?', 'mainwp' ); ?></a></p>
@@ -811,10 +811,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <div class="ui stackable grid">
                             <div class="ten wide column">
                                 <a href="<?php echo esc_url( $this->get_back_step_link( 'welcome' ) ); ?>" class="ui basic button"><i class="arrow left icon"></i> <?php esc_html_e( 'Back to Welcome', 'mainwp' ); ?></a>
-                                <a href="<?php echo esc_url( add_query_arg( 'siteid', 0, $this->get_next_step_link( 'next_steps' ) ) ); ?>" id="mainwp_addsite_continue_button" class="ui basic button"><?php esc_html_e( 'Continue Without Adding Sites', 'mainwp' ); ?></a>
+                                <a href="<?php echo esc_url( add_query_arg( 'siteid', 0, $this->get_next_step_link( 'next_steps' ) ) ); ?>" id="mainwp_addsite_continue_button" class="ui basic button"><?php esc_html_e( 'Skip for now', 'mainwp' ); ?></a>
                             </div>
                             <div class="six wide right aligned column">
-                                <button type="button" disabled name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui green button"><?php esc_html_e( 'Connect Site and Proceed', 'mainwp' ); ?> <i class="arrow right icon"></i></button>
+                                <button type="button" disabled name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui green button"><?php esc_html_e( 'Connect site', 'mainwp' ); ?> <i class="arrow right icon"></i></button>
                                 <a style="display:none" name="mainwp_managesites_add_import" id="mainwp_managesites_add_import" class="ui green button"><?php esc_html_e( 'Connect Sites and Proceed', 'mainwp' ); ?> <i class="arrow right icon"></i></a>
                             </div>
                         </div>
@@ -1199,11 +1199,42 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
             // The update chain skips translations while they are hidden, so the summary must not count them.
             $updates['total_translation_upgrades'] = 0;
         }
+        $rows = array();
+        if ( ! empty( $updates['total_wp_upgrades'] ) ) {
+            /* translators: 1: installed WordPress version, 2: available version. */
+            $rows[] = sprintf( esc_html__( 'WordPress %1$s to %2$s', 'mainwp' ), $core['current'] ?? $info['wpversion'] ?? '', $core['new'] ?? '' );
+        }
+        $premium = MainWP_Utility::get_decoded_array( MainWP_DB::instance()->get_website_option( $site, 'premium_upgrades' ) );
+        foreach ( array( 'plugin', 'theme' ) as $type ) {
+            $stored = MainWP_Utility::get_decoded_array( $site->{ $type . '_upgrades' } );
+            // Prepared entries select eligible slugs; names and versions come from the stored payload.
+            foreach ( $updates[ 'all_' . $type . 's_updates' ] as $entry ) {
+                $slug = $entry[ $type . '_slug' ];
+                $item = $stored[ $slug ] ?? array();
+                if ( isset( $premium[ $slug ] ) && $type === $premium[ $slug ]['type'] ) {
+                    $item = 'plugin' === $type ? array_merge( $item, array_filter( $premium[ $slug ] ) ) : $premium[ $slug ];
+                }
+                $name    = $item['Name'] ?? $slug;
+                $current = $item['Version'] ?? '';
+                $new     = $item['update']['new_version'] ?? '';
+                if ( '' !== $current && '' !== $new ) {
+                    /* translators: 1: plugin or theme name, 2: installed version, 3: available version. */
+                    $rows[] = sprintf( esc_html__( '%1$s %2$s to %3$s', 'mainwp' ), $name, $current, $new );
+                } else {
+                    $rows[] = trim( $name . ' ' . $new );
+                }
+            }
+        }
+        if ( ! empty( $updates['total_translation_upgrades'] ) ) {
+            /* translators: %d: translation update count. */
+            $rows[] = sprintf( _n( '%d translation update', '%d translation updates', $updates['total_translation_upgrades'], 'mainwp' ), $updates['total_translation_upgrades'] );
+        }
         return array(
             'synced'  => ! empty( $info ) && empty( $site->sync_errors ),
             'version' => isset( $info['wpversion'] ) ? $info['wpversion'] : '',
             'new'     => ! empty( $updates['total_wp_upgrades'] ) && isset( $core['new'] ) ? $core['new'] : '',
             'updates' => $updates,
+            'rows'    => $rows,
             'good'    => 80 <= $health['val'] && empty( $health['critical'] ),
         );
     }
@@ -1218,11 +1249,9 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         }
         check_admin_referer( 'mwp-setup' );
         MainWP_Utility::update_option( 'mainwp_enable_guided_tours', isset( $_POST['mainwp-guided-tours-option'] ) ? 1 : 0 );
-        $settings           = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
-        $settings['active'] = isset( $_POST['mainwp_setup_enableUptimeMonitoring'] ) ? 1 : 0;
-        MainWP_Uptime_Monitoring_Handle::update_uptime_global_settings( $settings );
-        $saved = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
-        if ( get_option( 'mainwp_onboarding_fresh_install' ) && 1 === $settings['active'] && 1 === (int) $saved['active'] ) {
+        // Continuing past the uptime sentence and its Turn off link confirms the alerts, as the old toggle did.
+        $settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        if ( get_option( 'mainwp_onboarding_fresh_install' ) && ! empty( $settings['active'] ) ) {
             update_option( 'mainwp_onboarding_uptime_confirmed', 1 );
         }
         wp_safe_redirect( admin_url( 'admin.php?page=mainwp_tab' ) );
@@ -1237,10 +1266,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $site     = $this->summary_site();
         $settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
         $email    = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
+        $digest   = MainWP_Notification_Settings::get_general_email_settings( 'daily_digest' );
         $site_id  = $site ? $site->id : 0;
         $monitor  = $site ? MainWP_DB_Uptime_Monitoring::instance()->get_primary_monitor( $site->id ) : false;
         // The scheduler checks only existing monitors; active = -1 follows the global setting.
-        $uptime_active = $monitor && ( 1 === (int) $monitor->active || ( -1 === (int) $monitor->active && ! empty( $settings['active'] ) ) );
+        $uptime_active = $site ? $monitor && ( 1 === (int) $monitor->active || ( -1 === (int) $monitor->active && ! empty( $settings['active'] ) ) ) : ! empty( $settings['active'] );
         ?>
         <div class="ui padded segment">
             <div>
@@ -1285,28 +1315,28 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                 )
                             );
                             $total   = $updates['total_wp_upgrades'] + $updates['total_plugin_upgrades'] + $updates['total_theme_upgrades'] + $updates['total_translation_upgrades'];
-                            echo esc_html( $total ? $counts : __( 'Everything is up to date', 'mainwp' ) );
+                            /* translators: %d: total update count. */
+                            echo esc_html( $total ? sprintf( _n( '%d update waiting', '%d updates waiting', $total, 'mainwp' ), $total ) : __( 'Everything is up to date', 'mainwp' ) );
                             if ( $data['new'] ) {
                                 /* translators: %s: WordPress version. */
                                 $counts .= ', ' . sprintf( __( 'WordPress %s', 'mainwp' ), $data['new'] );
-                                echo '<br>' . esc_html( sprintf( __( 'WordPress %s is available', 'mainwp' ), $data['new'] ) );
                             }
                             ?>
+                            <?php if ( $data['rows'] ) : ?>
+                                <ul id="mainwp-onboarding-update-list">
+                                    <?php foreach ( array_slice( $data['rows'], 0, 5 ) as $row ) : ?>
+                                        <li><?php echo esc_html( $row ); ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                                <?php if ( 5 < count( $data['rows'] ) ) : ?>
+                                    <div><?php /* translators: %d: additional update row count. */ printf( esc_html__( 'and %d more', 'mainwp' ), count( $data['rows'] ) - 5 ); ?></div>
+                                <?php endif; ?>
+                            <?php endif; ?>
                             </div>
                             <div class="item"><?php echo esc_html( $data['good'] ? __( 'Site health: Good', 'mainwp' ) : __( 'Site health: Should be improved', 'mainwp' ) ); ?></div>
                         <?php else : ?>
                             <div class="item"><?php esc_html_e( 'Updates and health will show here after the first successful sync.', 'mainwp' ); ?></div>
                         <?php endif; ?>
-                        <div class="item">
-                        <?php
-                        if ( $uptime_active && empty( $email['disable'] ) ) {
-                            /* translators: 1: notification recipients, 2: site name. */
-                            printf( esc_html__( 'Uptime monitoring is on. We\'ll email %1$s if %2$s goes down.', 'mainwp' ), esc_html( $email['recipients'] ), esc_html( $site->name ) );
-                        } else {
-                            echo esc_html( ! $uptime_active ? __( 'Uptime monitoring is off.', 'mainwp' ) : __( 'Uptime monitoring is on. Email alerts are disabled.', 'mainwp' ) );
-                        }
-                        ?>
-                        </div>
                     </div>
                     <?php
                     $can_update = $total && ! get_option( 'mainwp_hide_update_everything', false ) && \mainwp_current_user_can( 'dashboard', 'update_wordpress' ) && \mainwp_current_user_can( 'dashboard', 'update_plugins' ) && \mainwp_current_user_can( 'dashboard', 'update_themes' ) && \mainwp_current_user_can( 'dashboard', 'update_translations' );
@@ -1315,9 +1345,27 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         <?php /* translators: 1: site name, 2: update counts. */ $confirm = sprintf( __( 'Update %1$s now? This installs %2$s. Updates can occasionally break a site, so make sure you have a recent backup.', 'mainwp' ), $site->name, $counts ); ?>
                         <button type="button" class="ui green button" id="mainwp-onboarding-update-all" data-siteid="<?php echo intval( $site->id ); ?>" data-confirm="<?php echo esc_attr( $confirm ); ?>"><?php esc_html_e( 'Update everything now', 'mainwp' ); ?></button>
                     <?php endif; ?>
-                    <a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&updateid=' . $site->id ) ); ?>"><?php echo esc_html( $can_update ? __( 'Review updates first', 'mainwp' ) : __( 'View updates', 'mainwp' ) ); ?></a>
+                    <?php if ( $total || ! $data['synced'] ) : ?>
+                        <a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&updateid=' . $site->id ) ); ?>"><?php echo esc_html( $can_update ? __( 'Review updates first', 'mainwp' ) : __( 'View updates', 'mainwp' ) ); ?></a>
+                    <?php endif; ?>
                 <?php elseif ( $count ) : ?>
                     <a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=UpdatesManage' ) ); ?>"><?php esc_html_e( 'View updates', 'mainwp' ); ?></a>
+                <?php endif; ?>
+                <p id="mainwp-onboarding-uptime">
+                <?php
+                if ( $site && $uptime_active && empty( $email['disable'] ) ) {
+                    /* translators: 1: notification recipients, 2: site name. */
+                    printf( esc_html__( 'Uptime monitoring is on. We\'ll email %1$s if %2$s goes down.', 'mainwp' ), esc_html( $email['recipients'] ), esc_html( $site->name ) );
+                } else {
+                    echo esc_html( ! $uptime_active ? __( 'Uptime monitoring is off.', 'mainwp' ) : ( $site ? __( 'Uptime monitoring is on. Email alerts are disabled.', 'mainwp' ) : __( 'Uptime monitoring is on.', 'mainwp' ) ) );
+                }
+                ?>
+                <?php if ( ! empty( $settings['active'] ) && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) : ?>
+                    <a href="#" id="mainwp-onboarding-disable-monitoring" data-security="<?php echo esc_attr( wp_create_nonce( 'mainwp_onboarding_disable_monitoring' ) ); ?>" data-error="<?php echo esc_attr__( 'Unable to turn off monitoring. Please try again.', 'mainwp' ); ?>"><?php esc_html_e( 'Turn off', 'mainwp' ); ?></a>
+                <?php endif; ?>
+                </p>
+                <?php if ( empty( $digest['disable'] ) && ! empty( $digest['recipients'] ) ) : ?>
+                    <p id="mainwp-onboarding-digest"><?php /* translators: %s: daily digest recipients. */ printf( esc_html__( "We'll email %s a daily digest when updates are waiting or a site is disconnected.", 'mainwp' ), esc_html( $digest['recipients'] ) ); ?></p>
                 <?php endif; ?>
             </div>
             <div class="ui hidden divider"></div>
@@ -1359,17 +1407,11 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 <div class="ui hidden divider"></div>
                 <form method="post" class="ui form">
                     <div class="field">
-                        <div class="ui toggle checkbox">
-                            <input type="checkbox" name="mainwp_setup_enableUptimeMonitoring" id="mainwp_setup_enableUptimeMonitoring" <?php checked( ! empty( $settings['active'] ) ); ?>>
-                            <label for="mainwp_setup_enableUptimeMonitoring"><?php esc_html_e( 'Enable uptime monitoring', 'mainwp' ); ?></label>
-                        </div>
-                    </div>
-                    <div class="field">
                         <div class="ui checkbox">
                             <input type="checkbox" name="mainwp-guided-tours-option" id="mainwp-guided-tours-option" <?php checked( get_option( 'mainwp_enable_guided_tours', 0 ) ); ?>>
                             <label for="mainwp-guided-tours-option"><?php esc_html_e( 'Show me a guided tour of MainWP', 'mainwp' ); ?></label>
                         </div>
-                        <p class="ui small text"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag. */ printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?></p>
+                        <span class="ui small text" id="mainwp-onboarding-tour-help"><?php /* translators: 1: opening anchor tag, 2: closing anchor tag. */ printf( esc_html__( 'This feature is implemented using Javascript provided by Usetiful and is subject to the %1$sUsetiful Privacy Policy%2$s.', 'mainwp' ), '<a href="https://www.usetiful.com/privacy-policy" target="_blank">', '</a>' ); ?></span>
                     </div>
                     <?php wp_nonce_field( 'mwp-setup' ); ?>
                     <input type="hidden" name="save_step" value="1">
@@ -1386,6 +1428,14 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         </div>
         <?php
         if ( $site ) {
+            $icons    = MainWP_Manage_Sites::get_instance();
+            $uploaded = $icons->get_cust_site_icon( $site->cust_site_icon_info, 'uploaded' );
+            $selected = $icons->get_cust_site_icon( $site->cust_site_icon_info, 'selected' );
+            if ( ! $uploaded && ! $selected && ! MainWP_DB::instance()->get_website_option( $site, 'favi_icon' ) ) {
+                ?>
+                <div id="mainwp-onboarding-site-icon" hidden data-siteid="<?php echo intval( $site->id ); ?>" data-security="<?php echo esc_attr( wp_create_nonce( 'mainwp_get_site_icon' ) ); ?>"></div>
+                <?php
+            }
             echo '<div id="mainwp_prepare_global_update_all_container" style="display:none"></div>';
             MainWP_System_View::render_footer_content( array( $site ), $site->id );
             MainWP_Updates_Overview::render_bottom( array( $site->id ), false );

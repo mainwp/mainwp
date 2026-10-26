@@ -535,6 +535,32 @@ const matrixSequences = [
         },
         expected: matrixView('waiting', 'none', ['cap', 'poll'])
     })),
+    {
+        name: 'E4 waiting | http:// URL typed with https dropdown, blur | none', status: 'waiting', deadline: 'none',
+        run(h) {
+            h.$('#mainwp_managesites_add_wpurl').val('http://' + h.$('#mainwp_managesites_add_wpurl').val());
+            h.trigger('#mainwp_managesites_add_wpurl', 'input');
+            h.advance(400);
+            h.reply({ response: 'NOMAINWP' });
+            h.trigger('#mainwp_managesites_add_wpurl', 'change');
+        },
+        expected: { ...matrixView('waiting', 'none', ['cap', 'poll']),
+            installHref: 'http://example.org/wordpress/wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term' }
+    },
+    {
+        name: 'E4 detected | http:// URL with https dropdown, blur after the deadline then NOMAINWP | passed', status: 'detected', deadline: 'passed',
+        run(h) {
+            h.$('#mainwp_managesites_add_wpurl').val('http://' + h.$('#mainwp_managesites_add_wpurl').val());
+            h.trigger('#mainwp_managesites_add_wpurl', 'input');
+            h.advance(400);
+            h.reply({ response: 'OK', connection_window_remaining: 2 });
+            h.advance(2000);
+            h.trigger('#mainwp_managesites_add_wpurl', 'change');
+            h.advance(400);
+            h.reply({ response: 'NOMAINWP' });
+        },
+        expected: matrixView('expired', 'passed', [], null, ['#mainwp-message-zone'])
+    },
     ...['none', 'future', 'passed'].map(deadline => ({
         name: `E3 expired | password validation then refresh | ${deadline}`, status: 'expired', deadline,
         run(h, controller) { h.trigger('#mainwp_managesites_add', 'click'); controller.refresh(); },
@@ -578,9 +604,9 @@ const matrixSequences = [
     }
 ];
 
-test('detection state/input matrix (478 rows)', async t => {
+test('detection state/input matrix (480 rows)', async t => {
     const rows = [...detectionMatrix, ...matrixSequences];
-    assert.equal(rows.length, 478);
+    assert.equal(rows.length, 480);
     for (const row of rows) await t.test(row.name, () => {
         const h = uiHarness();
         const controller = matrixSeed(h, row.status, row.deadline);

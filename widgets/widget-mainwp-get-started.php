@@ -100,7 +100,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
              */
             do_action( 'mainwp_get_started_widget_top' );
             ?>
-            <div class="ui mini fluid vertical steps mainwp-get-started-steps">
+            <div class="ui mini fluid vertical steps">
                 <?php foreach ( $items as $item ) : ?>
                     <?php
                     $celebrate = $item['complete'] && ! in_array( $item['id'], $seen, true );

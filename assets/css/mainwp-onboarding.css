@@ -37,11 +37,6 @@
     .tadaaaa { animation: none; }
 }
 
-/* The themes paint completed step titles white for the filled wizard step bar; Get Started rows have no fill. */
-.mainwp-ui.mainwp-custom-theme .ui.steps.mainwp-get-started-steps .step.completed .title {
-    color: var(--mainwp-text-header, inherit) !important;
-}
-
 .mainwp-onboarding-preview {
     position: relative;
     margin: 1.5em 0;

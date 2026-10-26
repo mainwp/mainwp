@@ -235,8 +235,8 @@ function mainwp_onboarding_bind_detection() {
   });
   function target() {
     const fields = mainwp_onboarding_fields();
-    return JSON.stringify([fields.url || jQuery('#mainwp_managesites_add_wpurl').val().trim(),
-      jQuery('#mainwp_managesites_add_wpurl_protocol').val(), fields.admin]);
+    return JSON.stringify(fields.url ? [fields.url, fields.admin]
+      : [jQuery('#mainwp_managesites_add_wpurl').val().trim(), jQuery('#mainwp_managesites_add_wpurl_protocol').val(), fields.admin]);
   }
   let appliedTarget = target();
   jQuery('#mainwp_managesites_add_wpurl, #mainwp_managesites_add_wpurl_protocol, #mainwp_managesites_add_wpadmin').on('input change', function () {
@@ -447,7 +447,7 @@ let mainwp_setup_managesites_add = function () {
 
   const title = jQuery('#mainwp_managesites_add_wpname');
   if (title.val().trim() == '' || title.attr('data-autofilled')) {
-    // A failed attempt already added the trailing slash to the URL field.
+    // Drop a typed trailing slash so the autofilled title is the bare site address.
     title.val(jQuery('#mainwp_managesites_add_wpurl').val().trim().replace(/\/+$/, '')).attr('data-autofilled', '1');
   }
 

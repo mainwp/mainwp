@@ -619,7 +619,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         <div class="ui padded segment">
             <div>
                 <h1 class="ui massive header"><?php esc_html_e( 'Connect your first site', 'mainwp' ); ?></h1>
-                <p><?php esc_html_e( "You'll need the site's address and an administrator login.", 'mainwp' ); ?></p>
+                <p><?php echo esc_html( 'multiple-site' === $mode ? __( "Upload a CSV with each site's address and an administrator login.", 'mainwp' ) : __( "You'll need the site's address and an administrator login.", 'mainwp' ) ); ?></p>
             </div>
 
         <?php if ( ( $has_file_upload || $has_import_data ) && check_admin_referer( 'mainwp-admin-nonce' ) ) : ?>
@@ -815,7 +815,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                             </div>
                             <div class="six wide right aligned column">
                                 <button type="button" disabled name="mainwp_managesites_add" id="mainwp_managesites_add" class="ui green button"><?php esc_html_e( 'Connect site', 'mainwp' ); ?> <i class="arrow right icon"></i></button>
-                                <a style="display:none" name="mainwp_managesites_add_import" id="mainwp_managesites_add_import" class="ui green button"><?php esc_html_e( 'Connect Sites and Proceed', 'mainwp' ); ?> <i class="arrow right icon"></i></a>
+                                <a style="display:none" name="mainwp_managesites_add_import" id="mainwp_managesites_add_import" class="ui green button"><?php esc_html_e( 'Connect sites', 'mainwp' ); ?> <i class="arrow right icon"></i></a>
                             </div>
                         </div>
                     </div>
@@ -1383,7 +1383,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                     <div class="card">
                         <div class="content">
                             <div class="header"><?php echo esc_html( $site || $count ? __( 'Add another site', 'mainwp' ) : __( 'Add your first site', 'mainwp' ) ); ?></div>
-                            <div class="description"><?php esc_html_e( 'Connect more WordPress sites to manage them together.', 'mainwp' ); ?></div>
+                            <div class="description"><?php esc_html_e( 'Connect your WordPress sites to manage them together.', 'mainwp' ); ?></div>
                         </div>
                         <div class="extra content">
                             <a class="ui basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=managesites&do=new' ) ); ?>"><?php esc_html_e( 'Add a site', 'mainwp' ); ?></a>

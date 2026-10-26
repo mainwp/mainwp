@@ -232,6 +232,9 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 			$this->assertStringNotContainsString( 'onmouseover="alert', $html );
 			$xpath = $this->html_xpath( $html );
 			$this->assertSame( 1, $xpath->query( '//h1[normalize-space(.)="Connect your first site"]' )->length );
+			$intro = 'multiple-site' === $expected ? "Upload a CSV with each site's address and an administrator login." : "You'll need the site's address and an administrator login.";
+			$this->assertSame( $intro, trim( $xpath->query( '//h1/following-sibling::p[1]' )->item( 0 )->textContent ) );
+			$this->assertSame( 1, $xpath->query( '//a[@id="mainwp_managesites_add_import"][normalize-space(.)="Connect sites"]' )->length );
 			$this->assertStringContainsString( 'Unconnected MainWP Child installations switch off for security after a set time.', $html );
 			$this->assertSame( 0, $xpath->query( '//div[contains(@class,"menu-connect-first-site")]' )->length );
 			$switch = 'single-site' === $expected ? 'Import a CSV instead' : 'Connect one site instead';

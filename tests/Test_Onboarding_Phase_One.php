@@ -401,7 +401,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			}
 		}
 		$this->assertSame( 3, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"][@class="ui three doubling stackable cards"]/div[@class="card"][div[@class="content"]/div[@class="description"]]' )->length );
-		$this->assertStringContainsString( 'Connect more WordPress sites to manage them together.', $html );
+		$this->assertStringContainsString( 'Connect your WordPress sites to manage them together.', $html );
 		$this->assertStringContainsString( 'Group sites by client for reports and billing.', $html );
 		$this->assertStringContainsString( 'https://www.usetiful.com/privacy-policy', $html );
 		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[input[@id="mainwp-guided-tours-option"]]/following-sibling::span[@id="mainwp-onboarding-tour-help"][@class="ui small text"]/a[@href="https://www.usetiful.com/privacy-policy"]' )->length );

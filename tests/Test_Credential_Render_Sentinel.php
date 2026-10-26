@@ -302,6 +302,50 @@ class Test_Credential_Render_Sentinel extends \WP_UnitTestCase {
 		$this->assertSame( $before, glob( $key_dir . '*' ) );
 	}
 
+	/** A same-name replacement must not retire the key used by the saved envelope. */
+	public function test_child_api_key_filename_collision_preserves_saved_key(): void {
+		$site_id   = $this->create_test_site();
+		$option    = 'mainwp_api_backups_cloudways_api_key';
+		$utility   = \MainWP\Dashboard\Module\ApiBackups\Api_Backups_Utility::get_instance();
+		$key_dir   = \MainWP\Dashboard\MainWP_Keys_Manager::get_keys_dir();
+		$before    = glob( $key_dir . '*' );
+		$key_files = array();
+		$deleted   = array();
+		$collision = null;
+		$observe   = static function ( $file_key ) use ( &$deleted ) {
+			$deleted[] = $file_key;
+		};
+		try {
+			$this->assertTrue( $utility->update_child_api_key( $site_id, 'cloudways', 'synthetic-original-secret' ) );
+			$original    = json_decode( \MainWP\Dashboard\MainWP_DB::instance()->get_website_option( $site_id, $option ), true );
+			$key_files[] = $original['file_key'];
+			$collision   = function ( $envelope ) use ( $key_dir, $original, &$key_files ) {
+				$key_files[] = $envelope['file_key'];
+				$this->assertTrue( rename( $key_dir . $envelope['file_key'], $key_dir . $original['file_key'] ) );
+				$envelope['file_key'] = $original['file_key'];
+				return $envelope;
+			};
+			add_filter( 'mainwp_encrypt_key_value', $collision, 11 );
+			add_action( 'mainwp_delete_key_file', $observe, 1 );
+			$this->assertTrue( $utility->update_child_api_key( $site_id, 'cloudways', 'synthetic-replacement-secret' ) );
+			$this->assertSame( array(), $deleted, 'A filename shared by both envelopes must not be deleted.' );
+			$stored = json_decode( \MainWP\Dashboard\MainWP_DB::instance()->get_website_option( $site_id, $option ), true );
+			$this->assertSame( $original['file_key'], $stored['file_key'] );
+			$this->assertSame( 'synthetic-replacement-secret', $utility->decrypt_api_keys( $stored ) );
+			$this->assertFileExists( $key_dir . $original['file_key'] );
+			$this->assertCount( count( $before ) + 1, glob( $key_dir . '*' ) );
+		} finally {
+			if ( null !== $collision ) {
+				remove_filter( 'mainwp_encrypt_key_value', $collision, 11 );
+			}
+			remove_action( 'mainwp_delete_key_file', $observe, 1 );
+			foreach ( array_unique( $key_files ) as $file_key ) {
+				do_action( 'mainwp_delete_key_file', $file_key );
+			}
+		}
+		$this->assertSame( $before, glob( $key_dir . '*' ) );
+	}
+
 	/**
 	 * A successful per-site save stores a decryptable encryption envelope.
 	 */

@@ -208,6 +208,46 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 0, $xpath->query( '//script' )->length );
 	}
 
+	/** The notice must not promise emails that the uptime notification settings turn off. */
+	public function test_monitoring_notice_copy_respects_disabled_email_alerts(): void {
+		update_option( 'mainwp_onboarding_fresh_install', time() );
+		update_user_option( get_current_user_id(), 'mainwp_notice_saved_status', array() );
+		$property = new \ReflectionProperty( MainWP_Manage_Sites::class, 'total_sites' );
+		$property->setAccessible( true );
+		$property->setValue( null, 1 );
+		$method = new \ReflectionMethod( MainWP_Overview::class, 'render_onboarding_monitoring_notice' );
+		$method->setAccessible( true );
+		$cases = array(
+			array( 0, 'alerts@example.org' ),
+			array( 1, 'alerts@example.org' ),
+			array( 0, '' ),
+		);
+		foreach ( $cases as list( $disable, $recipients ) ) {
+			$disabled = $disable || '' === $recipients;
+			update_option(
+				'mainwp_settings_notification_emails',
+				array(
+					'uptime' => array(
+						'disable'    => $disable,
+						'recipients' => $recipients,
+					),
+				)
+			);
+			ob_start();
+			try {
+				$method->invoke( null );
+			} finally {
+				$html = ob_get_clean();
+			}
+			$xpath    = $this->html_xpath( $html );
+			$expected = $disabled ? 'Uptime monitoring is off. Turn it on to check your sites for downtime.' : 'Uptime monitoring is off. Turn it on and MainWP emails alerts@example.org when a site goes down.';
+			$this->assertSame( $expected, trim( $xpath->query( '//div[@id="mainwp-onboarding-monitoring-notice"]/p[1]' )->item( 0 )->textContent ) );
+			if ( $disabled ) {
+				$this->assertStringNotContainsString( 'alerts@example.org', $html );
+			}
+		}
+	}
+
 	/**
 	 * Cover all combinations, including overlapping reasons to hide the notice.
 	 *
@@ -328,7 +368,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		}
 	}
 
-	/** Phase 1 footers share the same grid and keep exit destinations inside its left column. */
+	/** Exit destinations stay outside the action grid so they do not compete with step actions. */
 	public function test_phase_one_footer_and_card_markup(): void {
 		update_user_option( get_current_user_id(), 'mainwp_selected_theme', 'default' );
 		$_GET = array(
@@ -338,12 +378,15 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		foreach ( array( 'mwp_setup_welcome', 'mwp_setup_connect_first_site', 'mwp_setup_ready' ) as $view ) {
 			ob_start();
 			$this->wizard->$view();
+			$this->wizard->setup_wizard_footer();
 			$html  = ob_get_clean();
 			$xpath = $this->html_xpath( $html );
 			$this->assertSame( 1, $xpath->query( '//div[@class="ui padded segment"]' )->length, $view );
 			$footer = '//div[@class="ui divider"]/following-sibling::div[1][@class="ui stackable grid"]';
-			$this->assertSame( 1, $xpath->query( $footer . '/div[@class="ten wide column"]/*[@id="mainwp-qsw-exit-links"]' )->length, $view );
+			$this->assertSame( 1, $xpath->query( $footer . '/div[@class="ten wide column"]' )->length, $view );
 			$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-qsw-exit-links"]' )->length, $view );
+			$this->assertSame( 0, $xpath->query( $footer . '//*[@id="mainwp-qsw-exit-links"]' )->length, $view );
+			$this->assertSame( 1, $xpath->query( '//div[@class="ui padded segment"]/following-sibling::*[@id="mainwp-qsw-exit-links"]' )->length, $view );
 			$this->assertSame( 0, $xpath->query( $footer . '//*[contains(@class,"mini") or contains(@class,"floated")]' )->length, $view );
 			$primary_count = 'mwp_setup_welcome' === $view ? 0 : ( 'mwp_setup_connect_first_site' === $view ? 2 : 1 );
 			$this->assertSame( $primary_count, $xpath->query( $footer . '/div[@class="six wide right aligned column"]/*[@class="ui green button"]' )->length, $view );
@@ -359,6 +402,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'Connect more WordPress sites to manage them together.', $html );
 		$this->assertStringContainsString( 'Group sites by client for reports and billing.', $html );
 		$this->assertStringContainsString( 'https://www.usetiful.com/privacy-policy', $html );
+		$this->assertSame( 1, $xpath->query( '//div[@class="field"]/div[input[@id="mainwp-guided-tours-option"]]/following-sibling::p[@class="ui small text"]/a[@href="https://www.usetiful.com/privacy-policy"]' )->length );
 	}
 
 	/** Existing installs receive neither monitoring defaults nor a widget. */
@@ -375,7 +419,12 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 	/** A fresh summary enables monitoring once and leaves later edits alone. */
 	public function test_fresh_defaults_apply_once(): void {
 		update_option( 'mainwp_onboarding_fresh_install', time() );
+		$site = $this->site();
+		$db   = MainWP_DB_Uptime_Monitoring::instance();
+		$db->delete_site_monitors( $site->id );
+		$this->assertEmpty( $db->get_monitor_by( $site->id, 'issub', 0 ) );
 		$this->invoke( 'apply_monitoring_defaults' );
+		$this->assertNotEmpty( $db->get_monitor_by( $site->id, 'issub', 0 ) );
 		$settings = get_option( 'mainwp_global_uptime_monitoring_settings' );
 		$this->assertSame( 1, (int) $settings['active'] );
 		$this->assertSame( 60, (int) $settings['interval'] );
@@ -723,14 +772,37 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			}
 			$xpath = $this->html_xpath( $html );
 			$this->assertSame( $heading, trim( $xpath->query( '//h1' )->item( 0 )->textContent ) );
-			$this->assertSame( $count ? 0 : 1, $xpath->query( '//a[normalize-space(.)="Add your first site"]' )->length );
-			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="Add another site"]' )->length );
+			$this->assertSame( $count ? 0 : 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="Add your first site"]' )->length );
+			$this->assertSame( $count ? 1 : 0, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="Add another site"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Add a site"]' )->length );
 			$this->assertSame( $count ? 1 : 0, $xpath->query( '//a[normalize-space(.)="View updates"]' )->length );
-			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Assign sites to a client"]' )->length );
+			$client_header = $count ? 'Assign sites to a client' : 'Add your first client';
+			$client_button = $count ? 'Assign to a client' : 'Add a client';
+			$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="' . $client_header . '"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="' . $client_button . '"]' )->length );
+			$client_url = $count ? add_query_arg( 'siteid', 0, $this->invoke( 'get_next_step_link', array( 'add_client' ) ) ) : admin_url( 'admin.php?page=ClientAddNew' );
+			$this->assertSame( $client_url, $xpath->query( '//a[normalize-space(.)="' . $client_button . '"]/@href' )->item( 0 )->value );
 			$this->assertStringNotContainsString( 'Assign this site to a client', $html );
 			$this->assertStringNotContainsString( 'Review updates first', $html );
 		}
 		$property->setValue( null, null );
+	}
+
+	/** Without a selected site, the single-client form assigns the only site; with more it assigns none. */
+	public function test_add_client_without_selection_assigns_only_site(): void {
+		$only = $this->site();
+		foreach ( array( (string) $only->id, '0' ) as $expected ) {
+			$_GET = array( 'siteid' => 0 );
+			ob_start();
+			try {
+				$this->wizard->mwp_setup_add_client();
+			} finally {
+				$html = ob_get_clean();
+			}
+			$xpath = $this->html_xpath( $html );
+			$this->assertSame( $expected, $xpath->query( '//input[@name="selected_first_site"]/@value' )->item( 0 )->value );
+			$this->site();
+		}
 	}
 
 	/** The multi-client form must assign the site chosen from the summary. */
@@ -891,6 +963,11 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		$this->assertSame( 'ui basic button', $xpath->query( '//a[normalize-space(.)="Review updates first"]/@class' )->item( 0 )->value );
 		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]/parent::div/preceding-sibling::*[1][@class="ui hidden divider"]' )->length );
 		$this->assertSame( 'ui green button', $xpath->query( '//form//button[@type="submit"]/@class' )->item( 0 )->value );
+		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="Add another site"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Add a site"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]//div[@class="header"][normalize-space(.)="Assign this site to a client"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="Assign to a client"]' )->length );
+		$this->assertSame( add_query_arg( 'siteid', $site->id, $this->invoke( 'get_next_step_link', array( 'add_client' ) ) ), $xpath->query( '//a[normalize-space(.)="Assign to a client"]/@href' )->item( 0 )->value );
 	}
 
 	/** Default connection fields exclude optional settings and keep help independently focusable. */
@@ -907,6 +984,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		}
 		$xpath = $this->html_xpath( $html );
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-advanced"][@hidden]//input[@id="mainwp_managesites_add_wpname"][not(@required)]' )->length );
+		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-advanced"]/*[1][@class="ui hidden divider"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//*[@id="mainwp-onboarding-advanced"]//div[@class="ui blue message"][contains(.,"WordPress admin login two-factor authentication")]' )->length );
 		foreach ( array( 'mainwp_managesites_add_wpurl', 'mainwp_managesites_add_wpadmin', 'mainwp_managesites_add_admin_pwd' ) as $id ) {
 			$this->assertSame( 1, $xpath->query( '//input[@id="' . $id . '"][not(ancestor::*[@id="mainwp-onboarding-advanced"])]' )->length, $id );
@@ -1094,7 +1172,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		MainWP_Get_Started::render_content();
 		$xpath = $this->html_xpath( ob_get_clean() );
 		$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-get-started-list"][@class="ui middle aligned divided list"]' )->length );
-		$this->assertSame( count( $items ), $xpath->query( '//div[@id="mainwp-get-started-list"]/a[@class="item"]/div[@class="content"]/div[@class="header"]' )->length );
+		$this->assertSame( count( $items ), $xpath->query( '//div[@id="mainwp-get-started-list"]/a[@class="item"]/div[@class="content"][normalize-space(.)!=""][not(*)]' )->length );
 		$this->assertSame( 0, $xpath->query( '//div[contains(concat(" ",normalize-space(@class)," ")," steps ")]' )->length );
 		$this->assertSame( 2, $xpath->query( '//a[@data-complete="true"]/i[@class="green check circle icon"]' )->length );
 		$this->assertSame( 1, $xpath->query( '//a[@data-complete="false"]/i[@class="heartbeat icon"]' )->length );
@@ -1120,7 +1198,7 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		MainWP_Get_Started::render_content();
 		$html  = ob_get_clean();
 		$xpath = $this->html_xpath( $html );
-		$this->assertSame( count( $items ), $xpath->query( '//a[@data-complete="true"]/div[@class="content"]/div[@class="header"][normalize-space(.)!=""]' )->length );
+		$this->assertSame( count( $items ), $xpath->query( '//a[@data-complete="true"]/div[@class="content"][normalize-space(.)!=""][not(*)]' )->length );
 		$this->assertSame( count( $items ), $xpath->query( '//a[@data-complete="true"]/i[@class="green check circle icon"]' )->length );
 		$this->assertSame( 0, $xpath->query( '//a[contains(@class,"completed")]' )->length );
 		$this->assertTrue( MainWP_Get_Started::is_visible() );

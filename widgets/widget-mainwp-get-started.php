@@ -110,7 +110,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                     ?>
                     <a class="item" data-complete="<?php echo $item['complete'] ? 'true' : 'false'; ?>" href="<?php echo esc_url( admin_url( $item['url'] ) ); ?>">
                         <i class="<?php echo esc_attr( $item['complete'] ? 'green check circle' : $item['icon'] ); ?> icon"<?php echo $celebrate ? ' data-celebrate="true"' : ''; ?>></i>
-                        <div class="content"><div class="header"><?php echo esc_html( $item['title'] ); ?></div></div>
+                        <div class="content"><?php echo esc_html( $item['title'] ); ?></div>
                     </a>
                 <?php endforeach; ?>
                 <?php

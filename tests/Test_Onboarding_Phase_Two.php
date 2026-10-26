@@ -328,12 +328,12 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		$this->assertNotContains( 'first_update', (array) get_user_meta( $first, 'mainwp_onboarding_seen_milestones', true ) );
 		update_option( 'mainwp_onboarding_first_update', 1 );
 		$html = $this->widget();
-		$this->assertMatchesRegularExpression( '/<i class="green check circle icon" data-celebrate="true"><\/i>\s*<div class="content"><div class="header">Run your first update<\/div>/', $html );
+		$this->assertMatchesRegularExpression( '/<i class="green check circle icon" data-celebrate="true"><\/i>\s*<div class="content">Run your first update<\/div>/', $html );
 		$this->assertStringNotContainsString( 'tadaaaa', $html );
 		$this->assertContains( 'first_update', get_user_meta( $first, 'mainwp_onboarding_seen_milestones', true ) );
 		$this->assertStringNotContainsString( 'data-celebrate=', $this->widget() );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		$this->assertMatchesRegularExpression( '/<i class="green check circle icon" data-celebrate="true"><\/i>\s*<div class="content"><div class="header">Run your first update<\/div>/', $this->widget() );
+		$this->assertMatchesRegularExpression( '/<i class="green check circle icon" data-celebrate="true"><\/i>\s*<div class="content">Run your first update<\/div>/', $this->widget() );
 		$this->assertStringNotContainsString( 'data-celebrate=', $this->widget() );
 		wp_set_current_user( $first );
 		delete_option( 'mainwp_onboarding_first_update' );

@@ -228,6 +228,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                     'site-url',
                     'name',
                     'admin',
+                    'adminpassword',
                     'uniqueid',
                     'ssl_verify',
                     'force_use_ipv4',
@@ -1127,12 +1128,30 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param object $website    Object containing child site data.
      */
     public static function callback_site_add_site( $args = array(), $assoc_args = array(), $website = false ) {
-        $fields = static::get_cli_params( $args, $assoc_args, 'add-site' );
+        $fields        = static::get_cli_params( $args, $assoc_args, 'add-site' );
+        $adminpassword = isset( $fields['adminpassword'] ) ? (string) $fields['adminpassword'] : '';
+        if ( isset( $fields['adminpassword'] ) ) {
+            // Child URL-decodes userpwd after WordPress request slashing.
+            $fields['adminpassword'] = rawurlencode( $adminpassword );
+        }
         $data   = MainWP_Manage_Sites_Handler::rest_api_add_site( $fields );
+        $result = print_r( $data, true ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- CLI result.
+        if ( '' !== $adminpassword ) {
+            $passwords    = array( $adminpassword, wp_unslash( $adminpassword ), rawurlencode( $adminpassword ) );
+            $replacements = array();
+            foreach ( $passwords as $password ) {
+                foreach ( array( $password, esc_html( $password ), MainWP_Utility::esc_content( $password ) ) as $variant ) {
+                    if ( '' !== $variant ) {
+                        $replacements[ $variant ] = '[redacted]';
+                    }
+                }
+            }
+            $result = strtr( $result, $replacements );
+        }
         if ( is_array( $data ) && ! empty( $data['siteid'] ) ) {
-            \WP_CLI::success( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result.
+            \WP_CLI::success( '  -> Add site result: ' . $result );
         } else {
-            \WP_CLI::error( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result.
+            \WP_CLI::error( '  -> Add site result: ' . $result );
         }
     }
 

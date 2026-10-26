@@ -130,6 +130,12 @@ class MainWP_WP_CLI_Command extends \WP_CLI_Command { // phpcs:ignore Generic.Cl
      * [--site-info]
      *  : If set, get site info.
      *
+     * [--add-site]
+     *  : Add a child site. Requires --site-url, --name and --admin.
+     *
+     * [--adminpassword=<password>]
+     *  : Child administrator password for --add-site, when required by the Child plugin.
+     *
      *
      * ## EXAMPLES
      *

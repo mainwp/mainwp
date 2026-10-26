@@ -149,6 +149,47 @@ class Test_Updates_Pagination_Count extends \WP_UnitTestCase {
 		$this->assertSame( $visible, $this->listed_site_ids() );
 	}
 
+	/** Counts retain listing scope without returning full site records. */
+	public function test_count_projection_returns_scalar_for_scoped_listing() {
+		$sites   = $this->production_sites();
+		$visible = array_slice( $sites, 0, 2 );
+		$this->create_test_site( array( 'sync_errors' => 'Fixture connection error' ) );
+		$this->create_test_site( array( 'is_staging' => 1 ) );
+		$this->set_site_option( $visible[0], 'premium_upgrades', 'fixture-premium-update' );
+		add_filter(
+			'mainwp_currentuserallowedaccesssites',
+			static function () use ( $visible ) {
+				return $visible;
+			}
+		);
+		$db = MainWP_DB::instance();
+		add_filter(
+			'mainwp_get_sql_websites',
+			static function () {
+				return array( 'connected' => 'yes' );
+			}
+		);
+		foreach ( array( false, true ) as $select_groups ) {
+			$params = array( 'connected' => 'yes' );
+			$sql    = $db->get_sql_websites_for_current_user( $select_groups, null, 'wp.url', false, false, null, false, array( 'premium_upgrades' ), 'no', $params );
+			$result = $db->query( $sql );
+			$this->assertSame( 2, MainWP_DB::num_rows( $result ) );
+			$this->assertGreaterThan( 2, $result->field_count );
+			$site = MainWP_DB::fetch_object( $result );
+			$this->assertSame( $visible[0], (int) $site->id );
+			$this->assertSame( 'fixture-premium-update', $site->premium_upgrades );
+			MainWP_DB::free_result( $result );
+
+			$params['count_only'] = true;
+			$sql                  = $db->get_sql_websites_for_current_user( $select_groups, null, 'wp.url', false, false, null, false, array( 'premium_upgrades' ), 'no', $params );
+			$result               = $db->query( $sql );
+			$this->assertSame( 1, MainWP_DB::num_rows( $result ), 'A count query must return one row.' );
+			$this->assertSame( 1, $result->field_count, 'A count query must return one scalar field.' );
+			MainWP_DB::free_result( $result );
+			$this->assertSame( 2, (int) $db->get_var_field( $sql ) );
+		}
+	}
+
 	/**
 	 * Create four connected production sites.
 	 *

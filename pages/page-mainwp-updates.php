@@ -1957,6 +1957,8 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
                 if ( ! empty( $limit_sites ) ) {
                     $params['limit_sites'] = $limit_sites;
                 }
+            } else {
+                $params['count_only'] = true;
             }
             $sql = MainWP_DB::instance()->get_sql_websites_for_current_user( false, null, 'wp.url', false, false, null, false, array( 'wp_upgrades', 'ignored_wp_upgrades', 'ignored_trans_updates', 'premium_upgrades', 'rollback_updates_data', 'plugins_outdate_dismissed', 'themes_outdate_dismissed', 'plugins_outdate_info', 'themes_outdate_info', 'favi_icon', 'site_info' ), $is_staging, $params );
         }
@@ -1969,6 +1971,9 @@ class MainWP_Updates { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
      * @return int Visible site count.
      */
     private static function get_sites_count() {
+        if ( ! MainWP_System_Utility::get_current_wpid() ) {
+            return (int) MainWP_DB::instance()->get_var_field( self::get_sites_query( false ) );
+        }
         $websites = MainWP_DB::instance()->query( self::get_sites_query( false ) );
         $count    = (int) MainWP_DB::num_rows( $websites );
         if ( $websites ) {

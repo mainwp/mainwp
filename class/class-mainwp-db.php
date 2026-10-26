@@ -1466,6 +1466,7 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
         $is_staging = 'no',
         $params = array()
     ) {
+        $count_only = ! empty( $params['count_only'] );
 
         /**
          * The hook mainwp_get_sql_websites
@@ -1620,8 +1621,9 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
 
         // wpgroups to fix issue for mysql 8.0, as groups will generate error syntax.
         if ( $selectgroups ) {
-            $qry = 'SELECT wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors,
-            wpclient.name as client_name
+            $select = $count_only ? 'wp.id,wp_sync.sync_id' : 'wp.*,wp_sync.*' . $view_selects . ', GROUP_CONCAT(gr.name ORDER BY gr.name SEPARATOR ",") as wpgroups, GROUP_CONCAT(gr.id ORDER BY gr.name SEPARATOR ",") as wpgroupids, GROUP_CONCAT(gr.color ORDER BY gr.name SEPARATOR ",") as wpgroups_colors,
+            wpclient.name as client_name';
+            $qry    = 'SELECT ' . $select . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_group' ) . ' wpgr ON wp.id = wpgr.wpid
             LEFT JOIN ' . $this->table_name( 'group' ) . ' gr ON wpgr.groupid = gr.id
@@ -1632,7 +1634,8 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
             GROUP BY wp.id, wp_sync.sync_id
             ORDER BY ' . $orderBy;
         } else {
-            $qry = 'SELECT wp.*,wp_sync.*' . $view_selects . ', wpclient.name as client_name
+            $select = $count_only ? 'wp.id,wp_sync.sync_id' : 'wp.*,wp_sync.*' . $view_selects . ', wpclient.name as client_name';
+            $qry    = 'SELECT ' . $select . '
             FROM ' . $this->table_name( 'wp' ) . ' wp
             LEFT JOIN ' . $this->table_name( 'wp_clients' ) . ' wpclient ON wp.client_id = wpclient.client_id
             JOIN ' . $this->table_name( 'wp_sync' ) . ' wp_sync ON wp.id = wp_sync.wpid
@@ -1657,6 +1660,10 @@ class MainWP_DB extends MainWP_DB_Base { // phpcs:ignore Generic.Classes.Opening
                 $start        = $current_page * $limit_sites;
                 $qry         .= ' LIMIT ' . intval( $start ) . ', ' . intval( $limit_sites );
             }
+        }
+
+        if ( $count_only ) {
+            $qry = 'SELECT COUNT(*) FROM (' . $qry . ') AS mainwp_sites_count';
         }
 
         if ( ! empty( $_included_cache_ids ) ) {

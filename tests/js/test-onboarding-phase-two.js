@@ -675,3 +675,25 @@ test('rows that a stopped check never reached read Not checked instead of Checki
     h.reply({ response: 'NOMAINWP' });
     assert.equal(h.$('#mainwp-onboarding-child').text(), 'Not yet');
 });
+
+test('the re-check after a failed connect keeps the reported deadline, so NOMAINWP past it offers expiry recovery', () => {
+    const h = uiHarness();
+    h.fill(); h.advance(400);
+    h.reply({ response: 'OK', connection_window_minutes: 20, connection_window_remaining: 2 });
+    h.$('#mainwp_managesites_add_admin_pwd').val('wrong');
+    h.trigger('#mainwp_managesites_add_admin_pwd', 'input');
+    h.trigger('#mainwp_managesites_add', 'click');
+    h.reply({ response: 'ERROR Wrong password' });
+    assert.equal(h.requests.at(-1).options.data.action, 'mainwp_checkwp');
+    h.advance(2000);
+    h.reply({ response: 'NOMAINWP' });
+    assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', h.context), 'expired');
+    assert.equal(h.$('#mainwp-onboarding-expiry').prop('hidden'), false);
+    assert.equal(h.$('#mainwp-onboarding-retry').prop('hidden'), false);
+    assert.equal(h.$('#mainwp-onboarding-install').prop('hidden'), true);
+    h.trigger('#mainwp-onboarding-retry', 'click');
+    h.reply({ response: 'NOMAINWP' });
+    assert.equal(vm.runInContext('mainwp_onboarding_detection.state().status', h.context), 'waiting');
+    h.trigger('window', 'pagehide');
+    assert.equal(h.timers.size, 0);
+});

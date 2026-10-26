@@ -106,10 +106,12 @@ function mainwp_onboarding_detection_controller(options) {
       }
     });
   }
-  function restart() {
+  function restart(carry) {
     cancel();
     paused = options.hidden();
     state = mainwp_onboarding_initial_state(options.now());
+    // Same target after a failed connect: keep the reported deadline so a later NOMAINWP can still be read as expiry.
+    if (carry && carry.detected) Object.assign(state, { detected: true, deadline: carry.deadline, minutes: carry.minutes });
     if (!options.ready()) { publish(); return; }
     armLimit();
     poll();
@@ -485,11 +487,13 @@ let mainwp_setup_managesites_add = function () {
         mainwp_set_message_zone('#mainwp-message-zone', res_things.failure_ux ? res_things.failure_ux : response.substring(0, 5) === 'ERROR' ? response.substring(6) : mainwp_onboarding_escape(response || mainwp_onboarding_copy('error')), 'red');
         if (mainwp_onboarding_detection) {
           // Only a passed reported deadline can explain the failure as expiry; otherwise re-check so the rows and timer stay current.
-          if (mainwp_onboarding_detection.state() === detectionState && mainwp_onboarding_deadline_passed(detectionState, Date.now())) {
+          if (mainwp_onboarding_detection.state() !== detectionState) {
+            mainwp_onboarding_detection.restart();
+          } else if (mainwp_onboarding_deadline_passed(detectionState, Date.now())) {
             mainwp_onboarding_detection.stop('stopped');
             mainwp_onboarding_detection.checkExpiry();
           } else {
-            mainwp_onboarding_detection.restart();
+            mainwp_onboarding_detection.restart(detectionState);
           }
         }
       } else {

@@ -1966,6 +1966,10 @@ body.mainwp-ui.mainwp-custom-theme,
 .mainwp-ui.mainwp-custom-theme .ui.steps .step.completed .title {
   color: #ffffff !important;
 }
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step.active .title,
+.mainwp-ui.mainwp-custom-theme .ui.circular.steps .step.completed .title {
+  color: var(--mainwp-green) !important;
+}
 .mainwp-ui.mainwp-custom-theme .ui.steps .step .description {
   color: var(--mainwp-text) !important;
 }

@@ -210,6 +210,17 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 			$this->assertStringContainsString( 'Connect your AI assistant', $html );
 			$this->assertStringContainsString( '<code>Which of my sites have plugin updates waiting?</code>', $html );
 			$this->assertStringContainsString( 'admin.php?page=mainwp-mcp', $html );
+			$errors   = libxml_use_internal_errors( true );
+			$document = new \DOMDocument();
+			try {
+				$document->loadHTML( $html );
+			} finally {
+				libxml_clear_errors();
+				libxml_use_internal_errors( $errors );
+			}
+			$xpath = new \DOMXPath( $document );
+			$this->assertSame( 3, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]/div[@class="card"]' )->length );
+			$this->assertSame( 1, $xpath->query( '//div[@id="mainwp-onboarding-next-steps"]/div[@class="card"]//a[normalize-space(.)="Set up MCP"]' )->length );
 			add_filter( 'mainwp_is_disable_menu_item', $hide, 10, 3 );
 			$this->assertStringNotContainsString( 'Connect your AI assistant', $this->view( 'mwp_setup_ready' ) );
 			remove_filter( 'mainwp_is_disable_menu_item', $hide, 10 );
@@ -239,11 +250,11 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		$this->widget();
 		$this->assertNotContains( 'first_update', (array) get_user_meta( $first, 'mainwp_onboarding_seen_milestones', true ) );
 		update_option( 'mainwp_onboarding_first_update', 1 );
-		$this->assertStringContainsString( 'sync icon tadaaaa', $this->widget() );
+		$this->assertMatchesRegularExpression( '/<i class="green check circle icon tadaaaa"><\/i>\s*<div class="content"><div class="header">Run your first update<\/div>/', $this->widget() );
 		$this->assertContains( 'first_update', get_user_meta( $first, 'mainwp_onboarding_seen_milestones', true ) );
 		$this->assertStringNotContainsString( 'tadaaaa', $this->widget() );
 		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
-		$this->assertStringContainsString( 'sync icon tadaaaa', $this->widget() );
+		$this->assertMatchesRegularExpression( '/<i class="green check circle icon tadaaaa"><\/i>\s*<div class="content"><div class="header">Run your first update<\/div>/', $this->widget() );
 		$this->assertStringNotContainsString( 'tadaaaa', $this->widget() );
 		wp_set_current_user( $first );
 		delete_option( 'mainwp_onboarding_first_update' );

@@ -354,6 +354,29 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
 
 
     /**
+     * Skipping setup leaves fresh Dashboards without the summary's monitoring defaults.
+     */
+    private static function render_onboarding_monitoring_notice() {
+        if ( ! get_option( 'mainwp_onboarding_fresh_install' ) || get_option( 'mainwp_onboarding_defaults_applied' ) || ! \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) || ! MainWP_Utility::show_mainwp_message( 'notice', 'onboarding-monitoring' ) || 1 > MainWP_Manage_Sites::get_total_sites() ) {
+            return;
+        }
+        $settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        if ( ! empty( $settings['active'] ) ) {
+            return;
+        }
+        $email = MainWP_Notification_Settings::get_general_email_settings( 'uptime' );
+        ?>
+        <div class="ui message" id="mainwp-onboarding-monitoring-notice" aria-live="polite">
+            <i class="close icon mainwp-notice-dismiss" notice-id="onboarding-monitoring"></i>
+            <p><?php /* translators: %s: notification recipients. */ printf( esc_html__( 'Uptime monitoring is off. Turn it on and MainWP emails %s when a site goes down.', 'mainwp' ), esc_html( $email['recipients'] ) ); ?></p>
+            <button type="button" class="ui mini green button" id="mainwp-onboarding-enable-monitoring" data-nonce="<?php echo esc_attr( wp_create_nonce( 'mainwp_onboarding_enable_monitoring' ) ); ?>" data-error="<?php esc_attr_e( 'Unable to turn on uptime monitoring. Please try again.', 'mainwp' ); ?>"><?php esc_html_e( 'Turn on uptime monitoring', 'mainwp' ); ?></button>
+            <a class="ui mini basic button" href="<?php echo esc_url( admin_url( 'admin.php?page=MonitoringSettings' ) ); ?>"><?php esc_html_e( 'Monitoring settings', 'mainwp' ); ?></a>
+            <p class="mainwp-onboarding-monitoring-error" role="alert" hidden></p>
+        </div>
+        <?php
+    }
+
+    /**
      * Method render_dashboard_body()
      *
      * Render the Dashboard Body content.
@@ -384,6 +407,11 @@ class MainWP_Overview { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Con
                     </div>
                 <?php endif; ?>
                 <div id="mainwp-message-zone" class="ui message" style="display:none;"></div>
+                <?php
+                if ( empty( $current_wp_id ) ) {
+                    static::render_onboarding_monitoring_notice();
+                }
+                ?>
                 <?php if ( MainWP_Utility::show_mainwp_message( 'notice', 'widgets' ) ) : ?>
                     <div class="ui message" style="margin: 1em;">
                         <i class="close icon mainwp-notice-dismiss" notice-id="widgets"></i>

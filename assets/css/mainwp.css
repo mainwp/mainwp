@@ -141,12 +141,6 @@ table.mainwp-manage-updates-table tbody tr td .mainwp-update-selected-button,
     background: none !important;
 }
 
-#mainwp-qsw-exit-links {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-}
-
 /* Content Wrap */
 
 .mainwp-content-wrap {

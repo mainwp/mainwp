@@ -100,7 +100,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
              */
             do_action( 'mainwp_get_started_widget_top' );
             ?>
-            <div class="ui mini fluid vertical steps">
+            <div class="ui middle aligned divided list" id="mainwp-get-started-list">
                 <?php foreach ( $items as $item ) : ?>
                     <?php
                     $celebrate = $item['complete'] && ! in_array( $item['id'], $seen, true );
@@ -108,9 +108,9 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
                         $newly_seen[] = $item['id'];
                     }
                     ?>
-                    <a class="<?php echo $item['complete'] ? 'completed' : ''; ?> step" href="<?php echo esc_url( admin_url( $item['url'] ) ); ?>">
-                        <i class="<?php echo esc_attr( $item['icon'] ); ?> icon <?php echo $celebrate ? 'tadaaaa' : ''; ?>"></i>
-                        <div class="content"><div class="<?php echo $item['complete'] ? 'description' : 'title'; ?>"><?php echo esc_html( $item['title'] ); ?></div></div>
+                    <a class="item" data-complete="<?php echo $item['complete'] ? 'true' : 'false'; ?>" href="<?php echo esc_url( admin_url( $item['url'] ) ); ?>">
+                        <i class="<?php echo esc_attr( $item['complete'] ? 'green check circle' : $item['icon'] ); ?> icon<?php echo $celebrate ? ' tadaaaa' : ''; ?>"></i>
+                        <div class="content"><div class="header"><?php echo esc_html( $item['title'] ); ?></div></div>
                     </a>
                 <?php endforeach; ?>
                 <?php

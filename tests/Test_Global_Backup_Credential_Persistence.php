@@ -458,6 +458,63 @@ class Test_Global_Backup_Credential_Persistence extends \WP_UnitTestCase {
 	}
 
 	/**
+	 * Read filters may hide the replacement envelope entirely.
+	 *
+	 * @return array First saves and replacements with different filtered readbacks.
+	 */
+	public static function hidden_readback_cases(): array {
+		return array(
+			'first-save-previous'  => array( false, false ),
+			'replacement-previous' => array( true, false ),
+			'first-save-scalar'    => array( false, true ),
+			'replacement-scalar'   => array( true, true ),
+		);
+	}
+
+	/**
+	 * Read filters cannot cause cleanup to delete the successfully persisted key.
+	 *
+	 * @dataProvider hidden_readback_cases
+	 * @param bool $existing Whether an original credential already exists.
+	 * @param bool $scalar   Whether reads return a scalar instead of the old envelope.
+	 */
+	public function test_hidden_readback_keeps_persisted_key( bool $existing, bool $scalar ): void {
+		$utility = Api_Backups_Utility::get_instance();
+		$option  = 'mainwp_api_backups_plesk_api_key';
+		if ( $existing ) {
+			$this->assertTrue( $utility->update_api_key( 'plesk', 'fixture-original' ) );
+		}
+		$previous = get_option( $option );
+		$before   = count( $this->key_files() );
+		$hooks    = array();
+		foreach ( array( 'updated_option', 'added_option' ) as $hook ) {
+			$hooks[ $hook ] = $GLOBALS['wp_filter'][ $hook ]->callbacks ?? array();
+		}
+		$hide = static function () use ( $previous, $scalar ) {
+			return $scalar ? 'fixture-hidden' : $previous;
+		};
+		add_filter( 'option_' . $option, $hide );
+		try {
+			$result = $utility->update_api_key( 'plesk', 'fixture-replacement' );
+		} finally {
+			remove_filter( 'option_' . $option, $hide );
+		}
+		$stored = get_option( $option );
+		$this->assertFalse( $result, 'A hidden readback must preserve the existing false return contract.' );
+		$this->assertSame( end( $this->keys ), $stored['file_key'] );
+		$this->assertFileExists( MainWP_Keys_Manager::get_keys_dir() . $stored['file_key'] );
+		$this->assertTrue( 'fixture-replacement' === $utility->get_api_key( 'plesk' ), 'The persisted replacement must still decrypt after the read filter is removed.' );
+		if ( $existing ) {
+			$this->assertFileExists( MainWP_Keys_Manager::get_keys_dir() . $previous['file_key'] );
+			$this->assertTrue( 'fixture-original' === $utility->decrypt_api_keys( $previous ), 'The unconfirmed save must retain the original credential too.' );
+		}
+		$this->assertCount( $before + 1, $this->key_files() );
+		foreach ( $hooks as $hook => $callbacks ) {
+			$this->assertSame( $callbacks, $GLOBALS['wp_filter'][ $hook ]->callbacks ?? array(), 'Temporary persistence listeners must be removed.' );
+		}
+	}
+
+	/**
 	 * Stored and read-filter metadata can change comparison without changing key ownership.
 	 *
 	 * @return array Persistence/read filter and first-save/replacement cases.

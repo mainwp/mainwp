@@ -697,8 +697,27 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return false;
         }
 
-        $new_key_file = $encrypted['file_key'];
-        update_option( $opt_name, $encrypted );
+        $new_key_file    = $encrypted['file_key'];
+        $persisted       = null;
+        $capture_updated = static function ( $option, $old_value, $value ) use ( &$persisted, $opt_name ) {
+            if ( $option === $opt_name ) {
+                $persisted = $value;
+            }
+        };
+        $capture_added   = static function ( $option, $value ) use ( &$persisted, $opt_name ) {
+            if ( $option === $opt_name ) {
+                $persisted = $value;
+            }
+        };
+        // Read filters may hide the stored key, so retain the successful write's value.
+        add_action( 'updated_option', $capture_updated, 10, 3 );
+        add_action( 'added_option', $capture_added, 10, 2 );
+        try {
+            update_option( $opt_name, $encrypted );
+        } finally {
+            remove_action( 'updated_option', $capture_updated, 10 );
+            remove_action( 'added_option', $capture_added, 10 );
+        }
         // An unchanged option also returns false, so confirm the stored envelope.
         $stored = get_option( $opt_name );
         if ( $stored === $encrypted ) {
@@ -714,6 +733,9 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
         $stored_key_file = '';
         if ( is_array( $stored ) && isset( $stored['file_key'] ) && is_string( $stored['file_key'] ) ) {
             $stored_key_file = $stored['file_key'];
+        }
+        if ( is_array( $persisted ) && isset( $persisted['file_key'] ) && is_string( $persisted['file_key'] ) ) {
+            $stored_key_file = $persisted['file_key'];
         }
         if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file && $staged_key_file !== $stored_key_file ) {
             do_action( 'mainwp_delete_key_file', $staged_key_file );

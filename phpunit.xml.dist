@@ -43,6 +43,7 @@
             <exclude>tests/abilities/test-rest-integration.php</exclude>
             <exclude>tests/abilities/test-rest-key-auth-route-match.php</exclude>
             <exclude>tests/abilities/test-rest-key-auth-v1-routes.php</exclude>
+            <exclude>tests/abilities/test-per-user-ownership.php</exclude>
         </testsuite>
         <testsuite name="Backup">
             <directory suffix=".php">tests/backup</directory>
@@ -71,6 +72,7 @@
             <file>tests/Test_REST_V2_Registration_Fixes.php</file>
             <file>tests/abilities/test-rest-integration.php</file>
             <file>tests/abilities/test-rest-key-auth-v1-routes.php</file>
+            <file>tests/abilities/test-per-user-ownership.php</file>
         </testsuite>
     </testsuites>
 

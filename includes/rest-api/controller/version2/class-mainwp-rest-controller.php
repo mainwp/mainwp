@@ -1531,8 +1531,8 @@ abstract class MainWP_REST_Controller extends WP_REST_Controller { //phpcs:ignor
         if ( true !== $valid ) {
             return $valid;
         }
-        $sites  = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all();
-        $groups = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all();
+        $sites  = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all( false );
+        $groups = \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_group_ids_or_all( false );
         if ( 'all' !== $sites || 'all' !== $groups ) {
             return new WP_Error(
                 'mainwp_restricted_account',

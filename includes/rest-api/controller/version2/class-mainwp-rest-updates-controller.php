@@ -851,7 +851,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
      */
     protected function ignored_updates_error( $error, $request = null ) {
         $code = $error->get_error_code();
-        if ( null !== $request && 'ability_invalid_permissions' === $code && 'all' !== \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all() ) {
+        if ( null !== $request && 'ability_invalid_permissions' === $code && 'all' !== \MainWP\Dashboard\MainWP_Abilities_Util::get_scoped_site_ids_or_all( false ) ) {
             return $this->get_rest_data_error( is_numeric( $request['id_domain'] ) ? 'id' : 'domain', 'site' );
         }
         if ( 'ability_invalid_permissions' === $code ) {

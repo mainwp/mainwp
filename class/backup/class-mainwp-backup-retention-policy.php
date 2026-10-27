@@ -7,9 +7,9 @@
  * or a standalone full or db snapshot. A chain prunes only as a whole, so
  * a base can never be deleted out from under its children. Constraints
  * evaluate age first, then count, then the storage cap, oldest first
- * within each pass, and the newest complete unit always survives - a
- * site keeps at least one restorable backup no matter how tight the
- * policy.
+ * within each pass. The newest complete unit and the newest restorable
+ * unit always survive, so unavailable archives cannot displace the site's
+ * remaining coverage.
  *
  * @package MainWP/Dashboard
  */
@@ -75,9 +75,10 @@ class MainWP_Backup_Retention_Policy { // phpcs:ignore Generic.Classes.OpeningBr
      * Evaluate the policy against one site and task pair's units.
      *
      * Each unit is an array with snapshots (rows, base first),
-     * is_complete, size_bytes, newest_created and oldest_created.
-     * Incomplete units are never candidates and never count as the
-     * protected last backup.
+     * is_complete, is_restorable, size_bytes, newest_created and oldest_created.
+     * Incomplete units are never candidates and never count as a
+     * protected backup. Complete units without restorable artifacts
+     * remain candidates but supply no keep-count coverage.
      *
      * @param array $units Restorable units for one (site, task) pair.
      * @param int   $now   Evaluation instant, UTC timestamp.
@@ -104,7 +105,6 @@ class MainWP_Backup_Retention_Policy { // phpcs:ignore Generic.Classes.OpeningBr
             return array();
         }
 
-        // Newest first: position 0 is the protected last restorable backup.
         usort(
             $complete,
             static function ( $a, $b ) {
@@ -112,12 +112,32 @@ class MainWP_Backup_Retention_Policy { // phpcs:ignore Generic.Classes.OpeningBr
             }
         );
 
+        // The newest complete unit stays protected even when it is not restorable.
+        // Restorability can change between one pass's evaluation and its deletes
+        // (a cloud copy finishes uploading), and two overlapping passes that each
+        // protected only their own newest restorable unit could delete each other's.
+        // The newest complete unit only changes when a newer backup lands, so every
+        // pass agrees on it.
+        $protected = array( 0 => true );
+        foreach ( $complete as $index => $unit ) {
+            if ( $unit['is_restorable'] ?? true ) {
+                $protected[ $index ] = true;
+                break;
+            }
+        }
+
+        foreach ( $complete as $index => $unit ) {
+            if ( ! empty( $unit['unknown_age'] ) || ! empty( $unit['required_upload_hold'] ) || (int) ( $unit['protected_until'] ?? 0 ) > $now ) {
+                $protected[ $index ] = true;
+            }
+        }
+
         $reasons = array();
 
         if ( $this->retention_days > 0 ) {
             $cutoff = $now - $this->retention_days * DAY_IN_SECONDS;
             foreach ( $complete as $index => $unit ) {
-                if ( $unit['newest_created'] < $cutoff ) {
+                if ( ! isset( $protected[ $index ] ) && $unit['newest_created'] < $cutoff ) {
                     $reasons[ $index ] = 'age';
                 }
             }
@@ -129,9 +149,10 @@ class MainWP_Backup_Retention_Policy { // phpcs:ignore Generic.Classes.OpeningBr
                 if ( isset( $reasons[ $index ] ) ) {
                     continue;
                 }
-                ++$kept;
-                if ( $kept > $this->retention_count ) {
+                if ( $kept >= $this->retention_count && ! isset( $protected[ $index ] ) ) {
                     $reasons[ $index ] = 'count';
+                } elseif ( $unit['is_restorable'] ?? true ) {
+                    ++$kept;
                 }
             }
         }
@@ -145,7 +166,7 @@ class MainWP_Backup_Retention_Policy { // phpcs:ignore Generic.Classes.OpeningBr
                 }
             }
             for ( $index = count( $complete ) - 1; $index >= 0 && $total > $cap; $index-- ) {
-                if ( isset( $reasons[ $index ] ) ) {
+                if ( isset( $reasons[ $index ] ) || isset( $protected[ $index ] ) ) {
                     continue;
                 }
                 $reasons[ $index ] = 'storage_cap';
@@ -153,8 +174,7 @@ class MainWP_Backup_Retention_Policy { // phpcs:ignore Generic.Classes.OpeningBr
             }
         }
 
-        // Never give up the last restorable backup.
-        unset( $reasons[0] );
+        $reasons = array_diff_key( $reasons, $protected );
 
         krsort( $reasons );
 

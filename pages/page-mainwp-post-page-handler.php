@@ -512,7 +512,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                 if ( ! $skip_post ) {
                     if ( $p_id ) {
-                        static::posting_posts( $p_id, 'posting' );
+                        static::posting_posts( $p_id, 'posting', true );
                     } else {
                         ?>
                         <div class="ui red message"><?php esc_html_e( 'Undefined error occurred!', 'mainwp' ); ?></div>
@@ -559,7 +559,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="scrolling content">
                 <?php
                 if ( $post_id ) {
-                    static::posting_posts( $post_id, 'preparing' );
+                    static::posting_posts( $post_id, 'preparing', true );
                 } else {
                     ?>
                     <div class="error">
@@ -604,7 +604,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_postingbulk' );
         $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : false;
         if ( $post_id ) {
-            static::posting_posts( $post_id, 'ajax_posting' );
+            static::posting_posts( $post_id, 'ajax_posting', true );
         }
          // phpcs:enable
         die();
@@ -637,8 +637,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param int    $post_id Post or Page ID.
      * @param string $what What posting process.
+     * @param bool   $check_site_access Apply ownership checks for Dashboard UI requests.
      */
-    public static function posting_posts( $post_id, $what ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function posting_posts( $post_id, $what, $check_site_access = false ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( empty( $post_id ) ) {
             return false;
@@ -770,7 +771,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 foreach ( $selected_sites as $k ) {
                     if ( MainWP_Utility::ctype_digit( $k ) ) {
                         $website = MainWP_DB::instance()->get_website_by_id( $k );
-                        if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+                        if ( $website && ( ! $check_site_access || MainWP_System_Utility::can_edit_website( $website ) ) && empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
                             $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
                         }
                     }
@@ -795,7 +796,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     if ( MainWP_Utility::ctype_digit( $k ) ) {
                         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
                         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-                            if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                            if ( ( $check_site_access && ! MainWP_System_Utility::can_edit_website( $website ) ) || '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
                             }
                             $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
@@ -942,7 +943,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 $ajax_result = '';
-                if ( 'ajax_posting' === $what ) {
+                if ( 'ajax_posting' === $what && ! empty( $dbwebsites ) ) {
                     if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) {
                         $ajax_result     = esc_html( $succes_message ) . ' <a href="' . esc_url( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
                         $posting_succeed = true;
@@ -1116,6 +1117,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
         $foundMatches = preg_match_all( '/(<a[^>]+href=\"(.*?)\"[^>]*>)?(<img[^>\/]*src=\"((.*?)(png|gif|jpg|jpeg))\")/ix', $new_post['post_content'], $matches, PREG_SET_ORDER );
         if ( 0 < $foundMatches ) {
+            $downloaded_images  = array();
+            $image_replacements = array();
             foreach ( $matches as $match ) {
                 $hrefLink = $match[2];
                 $imgUrl   = $match[4];
@@ -1133,7 +1136,10 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 try {
-                    $downloadfile = static::upload_image( $originalImgUrl );
+                    if ( ! isset( $downloaded_images[ $originalImgUrl ] ) ) {
+                        $downloaded_images[ $originalImgUrl ] = static::upload_image( $originalImgUrl );
+                    }
+                    $downloadfile = $downloaded_images[ $originalImgUrl ];
                     $localUrl     = $downloadfile['url'];
 
                     $linkToReplaceWith = dirname( $localUrl );
@@ -1148,13 +1154,18 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     }
                     $lnkToReplace = dirname( $imgUrl );
                     if ( 'http:' !== $lnkToReplace && 'https:' !== $lnkToReplace ) {
-                        $new_post['post_content'] = str_replace( $imgUrl, $localUrl, $new_post['post_content'] ); // replace src image.
-                        $new_post['post_content'] = str_replace( $lnkToReplace, $linkToReplaceWith, $new_post['post_content'] );
+                        $image_replacements[ $imgUrl ]         = $localUrl;
+                        $image_replacements[ $originalImgUrl ] = $localUrl;
+                        $image_replacements[ $lnkToReplace ]   = $linkToReplaceWith;
                     }
                 } catch ( \Exception $e ) {
                     // ok.
                 }
             }
+            foreach ( $image_replacements as $image_url => $replacement_url ) {
+                $image_replacements[ str_replace( '/', '\/', $image_url ) ] = str_replace( '/', '\/', (string) $replacement_url );
+            }
+            $new_post['post_content'] = strtr( $new_post['post_content'], $image_replacements );
         }
 
         if ( has_shortcode( $new_post['post_content'], 'gallery' ) && preg_match_all( '/\[gallery[^\]]+ids=\"(.*?)\"[^\]]*\]/ix', $new_post['post_content'], $matches, PREG_SET_ORDER ) ) {
@@ -1307,6 +1318,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $matches_checked[] = $match;
                 }
             }
+            $downloaded_images  = array();
+            $image_replacements = array();
             foreach ( $matches_checked as $match ) {
 
                 $imgUrl = $match[0];
@@ -1323,18 +1336,25 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 try {
-                    $downloadfile      = static::upload_image( wp_unslash( $originalImgUrl ) );
+                    if ( ! isset( $downloaded_images[ $originalImgUrl ] ) ) {
+                        $downloaded_images[ $originalImgUrl ] = static::upload_image( wp_unslash( $originalImgUrl ) );
+                    }
+                    $downloadfile      = $downloaded_images[ $originalImgUrl ];
                     $localUrl          = $downloadfile['url'];
                     $linkToReplaceWith = dirname( $localUrl );
                     $lnkToReplace      = dirname( $imgUrl );
                     if ( 'http:' !== $lnkToReplace && 'https:' !== $lnkToReplace ) {
-                        $content = str_replace( $imgUrl, $localUrl, $content ); // replace src image.
-                        $content = str_replace( $lnkToReplace, $linkToReplaceWith, $content );
+                        $image_replacements[ $imgUrl ]       = $localUrl;
+                        $image_replacements[ $lnkToReplace ] = $linkToReplaceWith;
                     }
                 } catch ( \Exception $e ) {
                     // ok.
                 }
             }
+            foreach ( $image_replacements as $image_url => $replacement_url ) {
+                $image_replacements[ str_replace( '/', '\/', $image_url ) ] = str_replace( '/', '\/', (string) $replacement_url );
+            }
+            $content = strtr( $content, $image_replacements );
             if ( false === strripos( $site_url_source, $dashboard_url ) ) {
                 // replace other images src outside upload folder.
                 $content = str_replace( $site_url_source, $dashboard_url, $content );
@@ -1367,21 +1387,25 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $temporary_file ) ) {
             throw new MainWP_Exception( 'Error: ' . $temporary_file->get_error_message() );  //phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
         } else {
-            $upload_dir     = wp_upload_dir();
-            $local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . basename( $img_url );
-            $local_img_url  = $upload_dir['url'] . '/' . basename( $img_url );
+            $upload_dir = wp_upload_dir();
+            $filename   = basename( $img_url );
+            if ( file_exists( $upload_dir['path'] . DIRECTORY_SEPARATOR . $filename ) ) {
+                $filename = wp_unique_filename( $upload_dir['path'], $filename );
+            }
+            $local_img_path = $upload_dir['path'] . DIRECTORY_SEPARATOR . $filename;
+            $local_img_url  = $upload_dir['url'] . '/' . $filename;
             $moved          = false;
             if ( MainWP_Utility::check_image_file_name( $local_img_path ) ) {
                 global $wp_filesystem;
                 if ( $wp_filesystem ) {
-                    $moved = $wp_filesystem->move( $temporary_file, $local_img_path, true );
+                    $moved = $wp_filesystem->move( $temporary_file, $local_img_path, false );
                 }
             }
             if ( $moved ) {
-                $wp_filetype = wp_check_filetype( basename( $img_url ), null );
+                $wp_filetype = wp_check_filetype( $filename, null );
                 $attachment  = array(
                     'post_mime_type' => $wp_filetype['type'],
-                    'post_title'     => isset( $img_data['title'] ) && ! empty( $img_data['title'] ) ? $img_data['title'] : preg_replace( '/\.[^.]+$/', '', basename( $img_url ) ),
+                    'post_title'     => isset( $img_data['title'] ) && ! empty( $img_data['title'] ) ? $img_data['title'] : preg_replace( '/\.[^.]+$/', '', $filename ),
                     'post_content'   => isset( $img_data['description'] ) && ! empty( $img_data['description'] ) ? $img_data['description'] : '',
                     'post_excerpt'   => isset( $img_data['caption'] ) && ! empty( $img_data['caption'] ) ? MainWP_Utility::esc_content( $img_data['caption'] ) : '',
                     'post_status'    => 'inherit',

@@ -94,16 +94,26 @@ class Test_Site_Credential_Encryption extends \WP_UnitTestCase {
 		$this->assertNull( \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( null, 'http_pass' ) );
 	}
 
-	public function test_encrypt_passes_through_non_string_input(): void {
+	/** Nonstring submissions preserve the credential already stored for the field. */
+	public function test_encrypt_ignores_non_string_input(): void {
 		$arr = array( 'not', 'a', 'string' );
-		$this->assertSame( $arr, \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( $arr, 'http_pass' ) );
+		$this->assertNull( \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( $arr, 'http_pass' ) );
+		$this->assertSame( 'stored-password', \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( $arr, 'http_pass', 'stored-password' ) );
 	}
 
 	public function test_encrypt_is_idempotent_on_existing_envelope(): void {
 		$plaintext = 'idempotent-test';
 		$once      = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( $plaintext, 'http_pass' );
-		$twice     = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( $once, 'http_pass' );
+		$twice     = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( $once, 'http_pass', $once );
 		$this->assertSame( $once, $twice );
+	}
+
+	/** A client-supplied envelope must pass through plaintext encryption. */
+	public function test_encrypt_treats_an_untrusted_envelope_as_plaintext(): void {
+		$foreign = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( 'foreign-password', 'http_pass' );
+		$stored  = \MainWP\Dashboard\MainWP_Credential_Storage::encrypt_credential( $foreign, 'http_pass' );
+		$this->assertNotSame( $foreign, $stored );
+		$this->assertSame( $foreign, \MainWP\Dashboard\MainWP_Credential_Storage::decrypt_credential( $stored ) );
 	}
 
 	public function test_encrypt_returns_false_when_filter_fails(): void {

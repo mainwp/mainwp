@@ -410,6 +410,32 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
                 static::KIND_DELETE
             )
         );
+        if ( null !== $existing && ! empty( $checkpoint['manual_override'] ) ) {
+            $current = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT checkpoint, locked_until FROM ' . $this->table() . ' WHERE id = %d', (int) $existing ) );
+            if ( null === $current || (int) $current->locked_until >= time() ) {
+                return 'failed';
+            }
+            $previous = json_decode( (string) $current->checkpoint, true );
+            $previous = is_array( $previous ) ? $previous : array();
+            if ( empty( $previous['manual_override'] ) ) {
+                // Preserve every key and cursor. A changed checkpoint or new lease
+                // refuses this upgrade so the caller retains its local source.
+                $previous['manual_override'] = true;
+                $previous['retention_cause'] = 'manual';
+                $updated                     = $this->wpdb->query(
+                    $this->wpdb->prepare(
+                        'UPDATE ' . $this->table() . ' SET checkpoint = %s, next_retry_at = 0 WHERE id = %d AND checkpoint = %s AND locked_until < %d',
+                        (string) wp_json_encode( $previous ),
+                        (int) $existing,
+                        (string) $current->checkpoint,
+                        time()
+                    )
+                );
+                if ( 1 !== $updated ) {
+                    return 'failed';
+                }
+            }
+        }
         return null !== $existing ? 'existing' : 'failed';
     }
 
@@ -532,6 +558,27 @@ class MainWP_Backup_Upload_Job_Store extends MainWP_Backup_Job_Store_Base { // p
             $this->fire_settled( $job_id );
         }
         return $settled;
+    }
+
+    /**
+     * Defer protected deletion without recording a failed upload attempt.
+     *
+     * @param int         $job_id Delete job identity.
+     * @param int         $until Next protection check.
+     * @param string|null $lock_token Current lease owner.
+     * @return bool Whether the fenced defer persisted.
+     */
+    public function defer_delete_for_retention( int $job_id, int $until, ?string $lock_token = null ): bool {
+        return $this->update_job(
+            $job_id,
+            array(
+                'next_retry_at' => $until,
+                'locked_until'  => 0,
+                'locked_by'     => '',
+            ),
+            array( '%d', '%d', '%s' ),
+            $lock_token
+        );
     }
 
     /**

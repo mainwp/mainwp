@@ -99,16 +99,16 @@ class MainWP_Recent_Posts { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 $individual = true;
             } else {
                 $wpsite_fields = array( 'id', 'name', 'url' );
-                $websites      = MainWP_DB::instance()->query(
-                    MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
-                        array(
-                            'view'             => 'custom_view',
-                            'others_fields'    => array( 'recent_posts' ),
-                            'select_wp_fields' => $wpsite_fields,
-                        )
-                    )
+                $params        = array(
+                    'view'             => 'custom_view',
+                    'others_fields'    => array( 'recent_posts' ),
+                    'select_wp_fields' => $wpsite_fields,
                 );
-                $individual    = false;
+                if ( MainWP_System::instance()->is_multi_user() ) {
+                    $params['where'] = 'wp.userid = ' . (int) get_current_user_id();
+                }
+                $websites   = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
+                $individual = false;
             }
 
             if ( $websites ) {

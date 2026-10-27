@@ -396,6 +396,9 @@ class MainWP_Site_Actions { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                         $client_sites_empty = false;
                         $wpsite_fields      = array( 'id', 'name' );
                         $params             = array( 'select_wp_fields' => $wpsite_fields );
+                        if ( MainWP_System::instance()->is_multi_user() ) {
+                            $params['where'] = 'wp.userid = ' . (int) get_current_user_id();
+                        }
                         if ( 'client' === $context ) {
                             if ( empty( $client_sites_ids ) ) {
                                 $client_sites_empty = true;

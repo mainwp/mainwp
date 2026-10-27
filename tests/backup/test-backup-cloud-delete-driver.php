@@ -204,6 +204,7 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 		$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( 980001, 'delete' )[0];
 		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_COMPLETE, $job->status );
 		$this->assertTrue( $job->checkpoint['swept'] );
+		$this->assertArrayNotHasKey( 'storage_age_floor', $job->checkpoint, 'Minimum zero keeps the existing delete path.' );
 	}
 
 	/**
@@ -686,6 +687,15 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 		$driver->process_pending_delete_jobs( 60, $now + 30 * DAY_IN_SECONDS );
 		$this->assertFileDoesNotExist( $base . '/' . $prefix . 'files/a.tar' );
 		$this->assertFileDoesNotExist( $base . '/' . $prefix . 'chunks/partial.bin' );
+		$job = $store->get_jobs_for_snapshot( 980099, 'delete' )[0];
+		$this->assertSame(
+			array(
+				'uploaded_at' => $now,
+				'unknown_age' => false,
+			),
+			$job->checkpoint['storage_age']
+		);
+		$this->assertArrayNotHasKey( 'storage_age_floor', $job->checkpoint );
 	}
 
 	/** Unknown-age partial objects need an explicit manual bypass at positive minimum. */
@@ -768,5 +778,94 @@ class MainWP_Backup_Cloud_Delete_Driver_Test extends \WP_UnitTestCase {
 		$this->assertSame( 0, (int) $held->attempt_count );
 		$this->assertSame( 0, (int) $held->reclaim_count );
 		$this->assertGreaterThan( $now, (int) $held->next_retry_at );
+	}
+	/** Legacy jobs persist a conservative floor before waiting or deleting. */
+	public function test_legacy_delete_floor_expires_from_queue_time_or_first_observation() {
+		global $wpdb;
+		foreach ( array( true, false ) as $has_queue_time ) {
+			list( $destination, $base ) = $this->make_local_destination();
+			MainWP_Backup_Storage_Destinations::instance()->update_destination(
+				$destination,
+				array(
+					'settings' => array(
+						'base_path'                     => $base,
+						'minimum_remote_retention_days' => 2,
+					),
+				)
+			);
+			$id     = $has_queue_time ? 980110 : 980111;
+			$prefix = '5/' . $id . '/';
+			$this->write_remote_objects( $base, $prefix, array( 'archive.tar', 'partial.bin' ) );
+			$this->enqueue_delete( $id, $destination, $prefix, array( $prefix . 'archive.tar' ) );
+			$store  = MainWP_Backup_Upload_Job_Store::instance();
+			$job    = $store->get_jobs_for_snapshot( $id, 'delete' )[0];
+			$now    = time();
+			$queued = $has_queue_time ? $now - DAY_IN_SECONDS : 0;
+			$floor  = $has_queue_time ? $queued : $now;
+			$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'created' => $queued ), array( 'id' => $job->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- fixture queue timestamp.
+			$driver = MainWP_Backup_Cloud_Delete_Driver::instance();
+			$driver->process_pending_delete_jobs( 60, $now );
+			$job = $store->get_job( $job->id );
+			$this->assertSame( $floor, $job->checkpoint['storage_age_floor'] ?? null );
+			$this->assertArrayNotHasKey( 'storage_age', $job->checkpoint );
+			$this->assertSame( 0, (int) $job->attempt_count );
+			$this->assertSame( '', $job->locked_by );
+			$driver->process_pending_delete_jobs( 60, $floor + 2 * DAY_IN_SECONDS - 1 );
+			$this->assertFileExists( $base . '/' . $prefix . 'archive.tar' );
+			$this->assertFileExists( $base . '/' . $prefix . 'partial.bin' );
+			$this->assertSame( $floor, $store->get_job( $job->id )->checkpoint['storage_age_floor'] );
+			$driver->process_pending_delete_jobs( 60, $floor + 2 * DAY_IN_SECONDS );
+			$this->assertFileDoesNotExist( $base . '/' . $prefix . 'archive.tar' );
+			$this->assertFileDoesNotExist( $base . '/' . $prefix . 'partial.bin' );
+			$this->assertSame( 'complete', $store->get_job( $job->id )->status );
+		}
+	}
+
+	/** An expired floor cannot authorize deletion until its checkpoint write succeeds. */
+	public function test_legacy_delete_floor_write_failure_stops_deletion() {
+		global $wpdb;
+		list( $destination, $base ) = $this->make_local_destination();
+		MainWP_Backup_Storage_Destinations::instance()->update_destination(
+			$destination,
+			array(
+				'settings' => array(
+					'base_path'                     => $base,
+					'minimum_remote_retention_days' => 1,
+				),
+			)
+		);
+		$prefix = '5/980112/';
+		$this->write_remote_objects( $base, $prefix, array( 'archive.tar' ) );
+		$this->enqueue_delete( 980112, $destination, $prefix, array( $prefix . 'archive.tar' ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$job   = $store->get_jobs_for_snapshot( 980112, 'delete' )[0];
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$wpdb->update( $table, array( 'created' => time() - 2 * DAY_IN_SECONDS ), array( 'id' => $job->id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- fixture queue timestamp.
+		$writes     = 0;
+		$fail       = static function ( $sql ) use ( $table, &$writes ) {
+			if ( str_starts_with( $sql, 'UPDATE ' . $table ) && str_contains( $sql, 'storage_age_floor' ) ) {
+				++$writes;
+				return 'UPDATE ' . $table . ' SET mainwp_missing_floor_column = 1';
+			}
+			return $sql;
+		};
+		$suppressed = $wpdb->suppress_errors();
+		add_filter( 'query', $fail );
+		try {
+			MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $suppressed );
+		}
+		$this->assertSame( 1, $writes );
+		$this->assertFileExists( $base . '/' . $prefix . 'archive.tar' );
+		$job = $store->get_job( $job->id );
+		$this->assertArrayNotHasKey( 'storage_age_floor', $job->checkpoint );
+		$this->assertSame( 'pending', $job->status );
+		$this->assertSame( 0, (int) $job->attempt_count );
+		$this->assertSame( '', $job->locked_by );
+		MainWP_Backup_Cloud_Delete_Driver::instance()->process_pending_delete_jobs( 60 );
+		$this->assertFileDoesNotExist( $base . '/' . $prefix . 'archive.tar' );
+		$this->assertSame( 'complete', $store->get_job( $job->id )->status );
 	}
 }

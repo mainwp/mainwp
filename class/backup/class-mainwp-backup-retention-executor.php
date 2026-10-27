@@ -628,12 +628,10 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * @param int      $site_id Child site identity.
      * @param int|null $keep Complete on-demand units to retain.
      * @param int      $orphan_min_age Minimum directory age in seconds.
-     * @param bool     $manual_override Explicit confirmed removal bypasses minimum protection.
      * @return array Internal paths, snapshot identities, units and byte estimate.
      */
-    public function plan_site_cleanup( int $site_id, ?int $keep = null, int $orphan_min_age = 6 * HOUR_IN_SECONDS, bool $manual_override = false ): array {
+    public function plan_site_cleanup( int $site_id, ?int $keep = null, int $orphan_min_age = 6 * HOUR_IN_SECONDS ): array {
         // Preview includes held candidates so confirmed callers can show the warning.
-        unset( $manual_override );
         $plan = array(
             'orphan_dirs'                => $this->select_orphan_dirs( $site_id, $orphan_min_age ),
             'orphaned_task_snapshot_ids' => $this->select_orphaned_task_snapshot_ids( $site_id ),

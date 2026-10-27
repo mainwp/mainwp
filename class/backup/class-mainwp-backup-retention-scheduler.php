@@ -296,7 +296,8 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
      *               the policy found nothing to prune.
      */
     public function run_retention_for_pair( object $task, int $site_id, int $budget_seconds = self::PAIR_BUDGET_SECONDS, ?int $now = null ): array {
-        $now = null === $now ? time() : $now;
+        $started = microtime( true );
+        $now     = null === $now ? time() : $now;
 
         /**
          * Filters whether retention runs report-only. With true, the
@@ -318,6 +319,7 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
         $policy = new MainWP_Backup_Retention_Policy( MainWP_Backup_Settings::task_retention_count( $task ), (int) $task->retention_days, (int) $task->retention_storage_mb );
 
         $candidates = $policy->evaluate( $units, $now );
+        $remaining  = max( 0, (int) floor( $budget_seconds - ( microtime( true ) - $started ) ) );
         if ( empty( $candidates ) ) {
             $report = array(
                 'eviction'             => $eviction,
@@ -326,13 +328,14 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
                 'deleted_ids'          => array(),
                 'remaining_ids'        => array(),
                 'cloud_deletes_queued' => array(),
-                'skipped'              => 0,
+                'skipped'              => count( $candidates ),
                 'errors'               => array(),
                 'dry_run'              => $dry_run,
                 'candidates'           => array(),
             );
         } else {
-            $report = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, $dry_run, $budget_seconds );
+            // With no time left, the executor attempts one candidate and defers the rest.
+            $report = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, $dry_run, $remaining );
         }
         $report['eviction'] = $eviction;
         $report['errors']   = array_merge( $report['errors'], $eviction['errors'] );

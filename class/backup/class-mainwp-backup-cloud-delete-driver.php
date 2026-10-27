@@ -143,7 +143,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
     private function run_job( object $job, float $deadline, int $now ): bool {
         $store = MainWP_Backup_Upload_Job_Store::instance();
 
-        $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+        $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id, true );
         if ( null === $destination ) {
             $store->fail_permanent( (int) $job->id, 'Storage destination was deleted; its objects are unreachable.', $this->lock_token );
             return true;
@@ -154,8 +154,18 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
             return true;
         }
 
-        // Legacy queued deletes have no manual consent or trustworthy upload age.
-        // They retain their old behavior at minimum zero and wait at a positive minimum.
+        if ( ! array_key_exists( 'storage_age', $job->checkpoint ) && empty( $job->checkpoint['manual_override'] )
+            && (int) ( $destination->settings['minimum_remote_retention_days'] ?? 0 ) > 0
+            && (int) ( $job->checkpoint['storage_age_floor'] ?? 0 ) <= 0 ) {
+            // The object existed by enqueue time; counting from then can only delay expiry.
+            $checkpoint                      = $job->checkpoint;
+            $queued_at                       = (int) ( $job->created ?? 0 );
+            $checkpoint['storage_age_floor'] = $queued_at > 0 ? $queued_at : $now;
+            if ( ! $store->save_checkpoint( (int) $job->id, $checkpoint, $this->lock_token ) ) {
+                return false;
+            }
+            $job->checkpoint = $checkpoint;
+        }
         if ( $this->retention_holds_delete( $job, $destination, $now ) ) {
             return $this->defer_protected_delete( $job, $destination, $now );
         }
@@ -184,7 +194,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
                     return false;
                 }
 
-                $current_destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+                $current_destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id, true );
                 if ( null === $current_destination ) {
                     return false;
                 }
@@ -255,7 +265,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
                 if ( microtime( true ) >= $deadline ) {
                     return false;
                 }
-                $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+                $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id, true );
                 if ( null === $destination ) {
                     return false;
                 }
@@ -286,7 +296,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
         if ( ! empty( $job->checkpoint['manual_override'] ) ) {
             return false;
         }
-        $protection = MainWP_Backup_Retention_Protection::destination_protection( $destination, (array) ( $job->checkpoint['storage_age'] ?? array() ) );
+        $protection = MainWP_Backup_Retention_Protection::destination_protection( $destination, (array) ( $job->checkpoint['storage_age'] ?? array( 'uploaded_at' => (int) ( $job->checkpoint['storage_age_floor'] ?? 0 ) ) ) );
         return $protection['unknown_age'] || $protection['protected_until'] > $now;
     }
 
@@ -299,7 +309,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
      * @return bool Whether deferral persisted and later jobs may proceed.
      */
     private function defer_protected_delete( object $job, object $destination, int $now ): bool {
-        $protection = MainWP_Backup_Retention_Protection::destination_protection( $destination, (array) ( $job->checkpoint['storage_age'] ?? array() ) );
+        $protection = MainWP_Backup_Retention_Protection::destination_protection( $destination, (array) ( $job->checkpoint['storage_age'] ?? array( 'uploaded_at' => (int) ( $job->checkpoint['storage_age_floor'] ?? 0 ) ) ) );
         $until      = $protection['unknown_age'] ? $now + DAY_IN_SECONDS : min( $protection['protected_until'], $now + DAY_IN_SECONDS );
         return MainWP_Backup_Upload_Job_Store::instance()->defer_delete_for_retention( (int) $job->id, $until, $this->lock_token );
     }

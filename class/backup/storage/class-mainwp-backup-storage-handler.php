@@ -511,7 +511,25 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             return $merged;
         }
 
-        $test = static::run_connection_test( $merged );
+        $test_connection = true;
+        $existing        = $merged['expected'];
+        if ( 'dropbox' === $merged['provider'] && null !== $existing && 'dropbox' === $existing->provider
+            && empty( $existing->credentials_invalid ) && is_array( $existing->settings ) ) {
+            $test_connection = false;
+            foreach ( array( 'app_key', 'app_secret', 'refresh_token', 'base_path' ) as $field ) {
+                $candidate = (string) ( $merged['settings'][ $field ] ?? '' );
+                $stored    = (string) ( $existing->settings[ $field ] ?? '' );
+                if ( 'base_path' === $field ) {
+                    $candidate = trim( $candidate, '/' );
+                    $stored    = trim( $stored, '/' );
+                }
+                if ( $candidate !== $stored ) {
+                    $test_connection = true;
+                    break;
+                }
+            }
+        }
+        $test = $test_connection ? static::run_connection_test( $merged ) : array( 'ok' => true );
         if ( empty( $test['ok'] ) ) {
             return array(
                 'error' => sprintf(
@@ -523,7 +541,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         }
 
         $identity_field = MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD;
-        if ( 'dropbox' === $merged['provider'] && ! empty( $merged['settings'][ $identity_field ]['key'] )
+        if ( $test_connection && 'dropbox' === $merged['provider'] && ! empty( $merged['settings'][ $identity_field ]['key'] )
             && ! MainWP_Backup_Retention_Protection::dropbox_identity_valid( $merged['settings'] ) ) {
             try {
                 $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider( (object) $merged );

@@ -104,6 +104,158 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 		return MainWP_Keys_Manager::get_keys_dir() . $file_key;
 	}
 
+	/** Repeated reads share one query and decrypt, while callers own their rows. */
+	public function test_request_memo_returns_independent_rows() {
+		global $wpdb;
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Memo',
+				'settings' => $this->s3_settings(),
+			)
+		);
+		$calls = 0;
+		$count = static function ( $value ) use ( &$calls ) {
+			++$calls;
+			return $value;
+		};
+		add_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		$queries = $wpdb->num_queries;
+		try {
+			$first                     = $store->get_destination( $id, false );
+			$first->name               = 'Changed by caller';
+			$first->settings['bucket'] = 'changed';
+			$second                    = $store->get_destination( $id, false );
+			$this->assertSame( 'Memo', $second->name );
+			$this->assertSame( $this->s3_settings(), $second->settings );
+			$this->assertNotSame( $first, $second );
+			$this->assertSame( 1, $wpdb->num_queries - $queries );
+			$this->assertSame( 1, $calls );
+		} finally {
+			remove_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		}
+	}
+
+	/** Failed decodes retry on fresh reads and preview reads in the same request. */
+	public function test_failed_decode_retries_without_losing_successful_reuse() {
+		foreach ( array( true, false ) as $refresh ) {
+			$store     = MainWP_Backup_Storage_Destinations::instance();
+			$id        = $store->add_destination(
+				array(
+					'provider'   => 's3',
+					'name'       => 'Retry decode',
+					'settings'   => $this->s3_settings(),
+					'is_default' => 1,
+				)
+			);
+			$calls     = 0;
+			$fail_once = static function ( $value ) use ( &$calls ) {
+				++$calls;
+				return 1 === $calls ? false : $value;
+			};
+			add_filter( 'mainwp_decrypt_key_value', $fail_once, PHP_INT_MAX );
+			try {
+				$failed = $store->get_destination( $id, $refresh );
+				$this->assertTrue( $failed->credentials_invalid );
+				$this->assertNull( $failed->settings );
+				$recovered = $store->get_destination( $id, $refresh );
+				$this->assertFalse( $recovered->credentials_invalid );
+				$this->assertSame( $this->s3_settings(), $recovered->settings );
+				$this->assertSame( $this->s3_settings(), $store->get_default()->settings );
+				$this->assertSame( $this->s3_settings(), $store->get_destination( $id, $refresh )->settings );
+				$this->assertSame( 2, $calls, 'Retry once, then reuse the successful decode.' );
+			} finally {
+				remove_filter( 'mainwp_decrypt_key_value', $fail_once, PHP_INT_MAX );
+			}
+		}
+	}
+
+	/** Every mutation makes subsequent reads observe the stored row. */
+	public function test_request_memo_invalidates_writes_defaults_and_delete() {
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$first = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'First',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$this->assertSame( 1, (int) $store->get_destination( $first, false )->is_default );
+		$second = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'Second',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$this->assertSame( 0, (int) $store->get_destination( $first, false )->is_default );
+		$this->assertSame( 1, (int) $store->get_destination( $second, false )->is_default );
+		$this->assertTrue( $store->update_destination( $first, array( 'is_default' => 1 ), $store->get_destination( $first, false ) ) );
+		$this->assertSame( 0, (int) $store->get_destination( $second, false )->is_default );
+		$this->assertTrue( $store->update_destination( $second, array( 'is_default' => 1 ) ) );
+		$this->assertSame( 0, (int) $store->get_destination( $first, false )->is_default );
+		$this->assertTrue( $store->update_destination( $second, array( 'name' => 'Renamed' ) ) );
+		$this->assertSame( 'Renamed', $store->get_destination( $second, false )->name );
+		$settings           = $this->s3_settings();
+		$settings['bucket'] = 'new-bucket';
+		$this->assertTrue( $store->update_destination( $second, array( 'settings' => $settings ) ) );
+		$this->assertSame( $settings, $store->get_destination( $second, false )->settings );
+		$this->assertTrue( $store->delete_destination( $second ) );
+		$this->assertNull( $store->get_destination( $second, false ) );
+		$this->assertNull( $store->get_default() );
+	}
+
+	/** Ordinary reads observe another request's metadata and deletion. */
+	public function test_default_reads_observe_external_destination_changes() {
+		global $wpdb;
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'Before',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$this->assertSame( 'Before', $store->get_destination( $id )->name );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$wpdb->update( $table, array( 'name' => 'After' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- simulate another request.
+		$this->assertSame( 'After', $store->get_default()->name );
+		$this->assertSame( 'After', $store->get_destination( $id )->name );
+		$wpdb->delete( $table, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- simulate another request.
+		$this->assertNull( $store->get_destination( $id ) );
+	}
+
+	/** Default and explicit reads reuse the decrypted settings. */
+	public function test_default_and_id_reads_share_decryption() {
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'Default',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$calls = 0;
+		$count = static function ( $value ) use ( &$calls ) {
+			++$calls;
+			return $value;
+		};
+		add_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		try {
+			$default                     = $store->get_default();
+			$default->settings['bucket'] = 'caller-change';
+			$this->assertSame( $this->s3_settings(), $store->get_destination( $id )->settings );
+			$this->assertSame( 1, $calls );
+		} finally {
+			remove_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		}
+	}
+
 	/**
 	 * Add a destination and read it back with settings decrypted.
 	 *

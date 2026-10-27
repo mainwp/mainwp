@@ -32,6 +32,7 @@ namespace MainWP\Dashboard {
 	}
 	class MainWP_DB {
 		public static function instance() { return new self(); }
+		public function get_sites() { throw new \Rest_Rights_Boundary( 'site list' ); }
 		public function get_website_by_id( $id, $groups = false ) {
 			return (object) array( 'id' => (int) $id, 'url' => 'https://example.test/', 'translation_upgrades' => '[{"slug":"example/example.php"}]' );
 		}

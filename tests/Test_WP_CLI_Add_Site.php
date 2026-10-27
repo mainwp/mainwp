@@ -149,7 +149,7 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 	 * @param string $url     Registration endpoint.
 	 * @param string $postdata Serialized request.
 	 * @param bool   $check_constraints Whether transport checks site constraints.
-	 * @param bool   $verify_certificate Whether transport verifies the certificate.
+	 * @param int    $verify_certificate TLS policy: 0 off, 1 verify, 2 inherit global.
 	 * @return array Child response fixture.
 	 * @throws MainWP_Exception Native transport failure fixture.
 	 */
@@ -171,7 +171,7 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 	 * @param string $what Operation.
 	 * @param array  $params Request fields.
 	 * @param bool   $force Force request.
-	 * @param bool   $verify_certificate Certificate verification.
+	 * @param int    $verify_certificate TLS policy: 0 off, 1 verify, 2 inherit global.
 	 * @param string $http_user HTTP username.
 	 * @param string $http_pass HTTP password.
 	 * @param int    $ssl_version TLS version.
@@ -224,7 +224,7 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 		$args['adminpassword'] = 'CliFixture42';
 		update_option( 'mainwp_sslVerifyCertificate', 0 );
 		list( $status ) = $this->run_command( $args );
-		$this->assertSame( array( true ), $this->certificate_checks );
+		$this->assertSame( array( 1 ), $this->certificate_checks );
 		$this->assertSame( 'success', $status );
 	}
 
@@ -314,7 +314,7 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 		$this->transport_error       = $diagnostic;
 		list( $status, $message )    = $this->run_command( $args );
 		$this->assertSame( 'error', $status );
-		$this->assertSame( array( true, true ), $this->certificate_checks );
+		$this->assertSame( array( 1, 1 ), $this->certificate_checks );
 		$this->assertStringContainsString( $diagnostic, $message );
 		$this->assertStringContainsString( 'TLS certificate verification failed', $message );
 		$this->assertStringContainsString( '--ssl_verify=0', $message );
@@ -383,7 +383,7 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 	 * @dataProvider tls_compatibility_arguments
 	 * @param string $scheme   URL scheme.
 	 * @param array  $extra    Additional CLI arguments.
-	 * @param bool   $expected Expected certificate verification flag.
+	 * @param int    $expected TLS policy sent to transport: 0 off, 1 verify, 2 inherit global.
 	 */
 	public function test_tls_choices_preserve_existing_behavior( $scheme, $extra, $expected ) {
 		$args                        = array_merge( $this->arguments(), $extra );
@@ -408,7 +408,7 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 					'adminpassword' => 'CliFixture42',
 					'ssl_verify'    => '0',
 				),
-				false,
+				0,
 			),
 			'https-opt-out'     => array(
 				'https',
@@ -416,7 +416,7 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 					'adminpassword' => 'CliFixture42',
 					'ssl_verify'    => '0',
 				),
-				false,
+				0,
 			),
 			'https-verify'      => array(
 				'https',
@@ -424,7 +424,7 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 					'adminpassword' => 'CliFixture42',
 					'ssl_verify'    => '1',
 				),
-				true,
+				1,
 			),
 			'https-global'      => array(
 				'https',
@@ -432,14 +432,14 @@ class Test_WP_CLI_Add_Site extends \WP_UnitTestCase {
 					'adminpassword' => 'CliFixture42',
 					'ssl_verify'    => '2',
 				),
-				true,
+				2,
 			),
-			'http-no-password'  => array( 'http', array(), false ),
-			'https-no-password' => array( 'https', array(), false ),
-			'legacy-verify'     => array( 'https', array( 'ssl_verify' => '1' ), true ),
-			'legacy-opt-out'    => array( 'http', array( 'ssl_verify' => '0' ), false ),
-			'legacy-empty'      => array( 'https', array( 'ssl_verify' => '' ), false ),
-			'legacy-invalid'    => array( 'https', array( 'ssl_verify' => 'invalid' ), false ),
+			'http-no-password'  => array( 'http', array(), 2 ),
+			'https-no-password' => array( 'https', array(), 2 ),
+			'legacy-verify'     => array( 'https', array( 'ssl_verify' => '1' ), 1 ),
+			'legacy-opt-out'    => array( 'http', array( 'ssl_verify' => '0' ), 0 ),
+			'legacy-empty'      => array( 'https', array( 'ssl_verify' => '' ), 2 ),
+			'legacy-invalid'    => array( 'https', array( 'ssl_verify' => 'invalid' ), 2 ),
 		);
 	}
 

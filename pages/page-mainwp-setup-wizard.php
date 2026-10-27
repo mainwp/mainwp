@@ -1301,23 +1301,26 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         $total         = 0;
         $counts        = '';
         if ( $site && $data['synced'] ) {
-            $updates = $data['updates'];
-            $total   = $updates['total_wp_upgrades'] + $updates['total_plugin_upgrades'] + $updates['total_theme_upgrades'] + $updates['total_translation_upgrades'];
-            $counts  = implode(
-                ', ',
-                array(
-                    /* translators: %d: plugin update count. */
-                    sprintf( _n( '%d plugin update', '%d plugin updates', $updates['total_plugin_upgrades'], 'mainwp' ), $updates['total_plugin_upgrades'] ),
-                    /* translators: %d: theme update count. */
-                    sprintf( _n( '%d theme update', '%d theme updates', $updates['total_theme_upgrades'], 'mainwp' ), $updates['total_theme_upgrades'] ),
-                    /* translators: %d: translation update count. */
-                    sprintf( _n( '%d translation update', '%d translation updates', $updates['total_translation_upgrades'], 'mainwp' ), $updates['total_translation_upgrades'] ),
-                )
-            );
+            $updates  = $data['updates'];
+            $total    = $updates['total_wp_upgrades'] + $updates['total_plugin_upgrades'] + $updates['total_theme_upgrades'] + $updates['total_translation_upgrades'];
+            $segments = array();
+            if ( $updates['total_plugin_upgrades'] ) {
+                /* translators: %d: plugin update count. */
+                $segments[] = sprintf( _n( '%d plugin update', '%d plugin updates', $updates['total_plugin_upgrades'], 'mainwp' ), $updates['total_plugin_upgrades'] );
+            }
+            if ( $updates['total_theme_upgrades'] ) {
+                /* translators: %d: theme update count. */
+                $segments[] = sprintf( _n( '%d theme update', '%d theme updates', $updates['total_theme_upgrades'], 'mainwp' ), $updates['total_theme_upgrades'] );
+            }
+            if ( $updates['total_translation_upgrades'] ) {
+                /* translators: %d: translation update count. */
+                $segments[] = sprintf( _n( '%d translation update', '%d translation updates', $updates['total_translation_upgrades'], 'mainwp' ), $updates['total_translation_upgrades'] );
+            }
             if ( $data['new'] ) {
                 /* translators: %s: WordPress version. */
-                $counts .= ', ' . sprintf( __( 'WordPress %s', 'mainwp' ), $data['new'] );
+                $segments[] = sprintf( __( 'WordPress %s', 'mainwp' ), $data['new'] );
             }
+            $counts = implode( ', ', $segments );
         }
         $can_update = $total && ! get_option( 'mainwp_hide_update_everything', false ) && \mainwp_current_user_can( 'dashboard', 'update_wordpress' ) && \mainwp_current_user_can( 'dashboard', 'update_plugins' ) && \mainwp_current_user_can( 'dashboard', 'update_themes' ) && \mainwp_current_user_can( 'dashboard', 'update_translations' );
         ?>

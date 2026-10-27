@@ -757,6 +757,32 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 		);
 	}
 
+	/** The update confirmation names only the update types that are waiting. */
+	public function test_summary_confirmation_leaves_out_zero_counts(): void {
+		$site = $this->site();
+		MainWP_DB::instance()->update_website_option( $site, 'site_info', wp_json_encode( array( 'wpversion' => '6.7' ) ) );
+		MainWP_DB::instance()->update_website_values(
+			$site->id,
+			array(
+				'plugin_upgrades'      => wp_json_encode( array( 'example/plugin.php' => array( 'Name' => 'Example' ) ) ),
+				'theme_upgrades'       => wp_json_encode( array() ),
+				'translation_upgrades' => wp_json_encode( array( array( 'slug' => 'example' ) ) ),
+			)
+		);
+		update_option( 'mainwp_hide_update_everything', 0 );
+		update_option( 'mainwp_show_language_updates', 0 );
+		$_GET = array( 'siteid' => $site->id );
+		ob_start();
+		try {
+			$this->wizard->mwp_setup_ready();
+		} finally {
+			$html = ob_get_clean();
+		}
+		$button = $this->html_xpath( $html )->query( '//button[@id="mainwp-onboarding-update-all"]' );
+		$this->assertSame( 1, $button->length );
+		$this->assertStringContainsString( 'This installs 1 plugin update.', $button->item( 0 )->getAttribute( 'data-confirm' ) );
+	}
+
 	/** The multi-site summary heading follows the connected-site count. */
 	public function test_summary_without_site_pluralizes_connected_count(): void {
 		$property = new \ReflectionProperty( MainWP_Manage_Sites::class, 'total_sites' );

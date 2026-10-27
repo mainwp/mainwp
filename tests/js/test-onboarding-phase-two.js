@@ -479,7 +479,7 @@ function matrixView(status, deadline, timers = [], request = null, zone = matrix
         rowClasses: rows.slice(0, 2).map(label => [label === 'Yes', label === 'No']),
         rowIcons: rows.slice(0, 2).map(label => ({
             Yes: 'green check icon', No: 'red times icon', 'Checking...': 'notched circle loading icon',
-            'Not yet': 'exclamation circle icon', 'Not checked': 'grey circle icon'
+            'Not yet': 'exclamation circle icon', 'Not checked': 'circle outline icon'
         })[label]),
         childLabel: rows[0] === 'Yes' && rows[1] !== 'Yes' ? 'MainWP Child not active' : 'MainWP Child installed and active',
         install: rows[2], installHref: rows[2] ? matrixSite + 'wp-admin/plugin-install.php?s=mainwp+child&tab=search&type=term' : '',

@@ -351,7 +351,7 @@ function mainwp_onboarding_render_detection(state) {
   for (const [id, status] of [['reachable', state.reachable], ['child', state.child]]) {
     const label = status === 'ok' ? 'yes' : status === 'failed' ? 'no' : id === 'child' && state.reachable === 'ok' ? 'notYet' : settled ? 'notChecked' : 'checking';
     jQuery('#mainwp-onboarding-' + id).text(mainwp_onboarding_copy(label)).toggleClass('is-ok', status === 'ok').toggleClass('is-failed', status === 'failed');
-    const icon = label === 'yes' ? 'green check' : label === 'no' ? 'red times' : label === 'checking' ? 'notched circle loading' : label === 'notYet' ? 'exclamation circle' : 'grey circle';
+    const icon = label === 'yes' ? 'green check' : label === 'no' ? 'red times' : label === 'checking' ? 'notched circle loading' : label === 'notYet' ? 'exclamation circle' : 'circle outline';
     jQuery('#mainwp-onboarding-' + id + '-icon').attr('class', icon + ' icon');
   }
   const install = ['waiting', 'timed_out', 'checking'].includes(state.status) && state.reachable === 'ok' && !!fields.url;

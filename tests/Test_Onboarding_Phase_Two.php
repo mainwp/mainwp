@@ -225,7 +225,7 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		) as $id => $label ) {
 			$this->assertSame( 1, $xpath->query( '//label[@for="mainwp_managesites_add_' . $id . '"][starts-with(normalize-space(.),"' . $label . '")]/span[normalize-space(.)="(Required)"]' )->length );
 		}
-		$this->assertSame( 1, $xpath->query( '//select[@id="mainwp_managesites_add_wpurl_protocol"][@aria-label="Protocol"]' )->length );
+		$this->assertSame( 1, $xpath->query( '//select[@id="mainwp_managesites_add_wpurl_protocol"][@aria-label="Protocol"][contains(concat(" ", @class, " "), " not-auto-init ")]' )->length );
 		$this->assertSame( 1, $xpath->query( '//a[normalize-space(.)="How to install MainWP Child"]' )->length );
 	}
 

@@ -672,7 +672,8 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                                     <div class="field">
                                         <label for="mainwp_managesites_add_wpurl"><?php esc_html_e( 'Site URL', 'mainwp' ); ?> <span class="ui red small text"><?php esc_html_e( '(Required)', 'mainwp' ); ?></span></label>
                                         <div class="ui left action input">
-                                            <select class="ui compact selection dropdown" id="mainwp_managesites_add_wpurl_protocol" aria-label="<?php esc_attr_e( 'Protocol', 'mainwp' ); ?>" name="mainwp_managesites_add_wpurl_protocol" style="width:120px;padding:0px;">
+                                            <?php // Left native: the Fomantic dropdown wrapper takes focus without the select's accessible name. ?>
+                                            <select class="ui compact selection dropdown not-auto-init" id="mainwp_managesites_add_wpurl_protocol" aria-label="<?php esc_attr_e( 'Protocol', 'mainwp' ); ?>" name="mainwp_managesites_add_wpurl_protocol" style="width:120px;padding:0px;">
                                                 <option value="https">https://</option>
                                                 <option value="http">http://</option>
                                             </select>

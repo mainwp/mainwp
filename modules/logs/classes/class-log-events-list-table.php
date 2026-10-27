@@ -339,6 +339,14 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             case 'name':
                 $out = 'N/A';
 
+                if ( ! empty( $item->deleted_site_orphan ) && 'site' === $record->connector && 'sites' === $record->context && 'deleted' === $record->action ) {
+                    if ( ! empty( $record->log_site_name ) ) {
+                        $out = esc_html( stripslashes( $record->log_site_name ) ) . '<div><span class="ui small text">' . esc_html( $record->url ) . '</span></div>';
+                    }
+                    $escaped = true;
+                    break;
+                }
+
                 if ( ! empty( $record->log_site_name ) ) {
                     ob_start();
                     if ( \mainwp_current_user_can( 'dashboard', 'access_wpadmin_on_child_sites' ) ) : ?>

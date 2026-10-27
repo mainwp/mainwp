@@ -290,9 +290,8 @@ class Test_Per_User_Ownership extends MainWP_Abilities_Test_Case {
 		}
 	}
 
-	/** Deletes resolve IDs, URLs and domains within ownership. */
+	/** Out-of-scope targets match a missing site, and an owned site still deletes. */
 	public function test_site_ability_targets(): void {
-		$this->setExpectedIncorrectUsage( 'WP_Ability::execute' );
 		$this->authenticate( 'DELETE', 'sites/' . $this->sites[1] . '/remove' );
 		foreach ( $this->references( 1 ) as $reference ) {
 			foreach ( array( 'mainwp/delete-site-v1', 'mainwp/get-site-plugins-v1' ) as $ability ) {
@@ -302,7 +301,7 @@ class Test_Per_User_Ownership extends MainWP_Abilities_Test_Case {
 				}
 				$result = $this->execute_ability( $ability, $input );
 				$this->assertWPError( $result );
-				$this->assertSame( 'mainwp/get-site-plugins-v1' === $ability ? 'ability_invalid_permissions' : 'mainwp_site_not_found', $result->get_error_code() );
+				$this->assertSame( 'mainwp_site_not_found', $result->get_error_code() );
 				$missing = $this->execute_ability( $ability, array_merge( $input, array( 'site_id_or_domain' => 99999999 ) ) );
 				$this->assertSame( $missing->get_error_code(), $result->get_error_code() );
 				$this->assertSame( $missing->get_error_data(), $result->get_error_data() );

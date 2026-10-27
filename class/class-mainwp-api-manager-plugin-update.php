@@ -154,10 +154,8 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
      * @param array $args       Request arguments.
      * @param bool  $bulk_check Check if updating in bulk true|false.
      *
-     * @return array|false Plugin information.
+     * @return \stdClass|array|false Plugin information.
      * @since       1.0.0
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
      */
     public function plugin_information( $args, $bulk_check = false ) {
 
@@ -219,16 +217,33 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
         if ( isset( $args['json'] ) ) { // bulkupdatecheck: json.
             $response = json_decode( $response, true );
         } else { // pluginupdatecheck, plugininformation : serialize.
-            $response = unserialize( $response ); // phpcs:ignore -- data from extensions, to compatible.
+            $decode_failed = false;
+            set_error_handler( // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_set_error_handler -- Reject malformed API data and restore the previous handler in finally.
+                static function () use ( &$decode_failed ) {
+                    $decode_failed = true;
+                    return true;
+                }
+            );
+            try {
+                // The legacy API requires serialization. Only methodless stdClass objects are allowed.
+                // nosemgrep: AIK_unserialize-use -- Only stdClass is allowed; custom classes cannot run their magic methods. Depth is bounded and any decode warning rejects the response.
+                $response = unserialize( // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize -- Preserve the required legacy API format with a strict class allowlist.
+                    $response,
+                    array(
+                        'allowed_classes' => array( 'stdClass' ),
+                        'max_depth'       => 64,
+                    )
+                );
+            } finally {
+                restore_error_handler();
+            }
+            if ( $decode_failed ) {
+                $response = false;
+            }
         }
 
-        /**
-         * For debugging errors from the API
-         * For errors like: unserialize(): Error at offset 0 of 170 bytes
-         * Comment out $response above first
-         */
         if ( ! $bulk_check ) {
-            if ( is_object( $response ) ) {
+            if ( $response instanceof \stdClass ) {
                 if ( isset( $response->package ) ) {
                     $response->package = apply_filters( 'mainwp_api_manager_upgrade_package_url', $response->package, $response );
                 }

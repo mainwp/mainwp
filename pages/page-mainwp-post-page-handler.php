@@ -191,7 +191,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 $groupIdsRequested[] = $groupId;
             }
 
-            $websites = MainWP_DB::instance()->get_websites_by_group_ids( $groupIdsRequested );
+            $websites = MainWP_Bulk_Post::scope_group_sites( MainWP_DB::instance()->get_websites_by_group_ids( $groupIdsRequested ) );
         } elseif ( isset( $_REQUEST['clients'] ) && ( '' !== $_REQUEST['clients'] ) ) {
             $clientIds          = explode( ',', sanitize_text_field( urldecode( wp_unslash( $_REQUEST['clients'] ) ) ) );  // sanitize ok.
             $clientIdsRequested = array();
@@ -454,6 +454,10 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             wp_die( 'Invalid request!' );
         }
 
+        if ( ! current_user_can( 'manage_options' ) && ( ! MainWP_Bulk_Post::can_access_post( $p_id, 'bulkpost' ) || ! current_user_can( 'edit_post', $p_id ) ) ) {
+            wp_die( -1 );
+        }
+
         $posting_bulk_sites = apply_filters( 'mainwp_posts_posting_bulk_sites', false );
         ?>
         <input type="hidden" name="bulk_posting_id" id="bulk_posting_id" value="<?php echo intval( $p_id ); ?>"/>
@@ -619,7 +623,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         // phpcs:disable WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_get_sites_of_groups' );
         $groups   = isset( $_POST['groups'] ) && is_array( $_POST['groups'] ) ? array_map( 'sanitize_text_field', wp_unslash( $_POST['groups'] ) ) : '';
-        $websites = MainWP_DB::instance()->get_websites_by_group_ids( $groups );
+        $websites = MainWP_Bulk_Post::scope_group_sites( MainWP_DB::instance()->get_websites_by_group_ids( $groups ) );
          // phpcs:enable
         $site_Ids = array();
         if ( $websites ) {
@@ -680,6 +684,14 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             $selected_sites   = apply_filters( 'mainwp_posting_post_selected_sites', $selected_sites, $id );
             $selected_groups  = apply_filters( 'mainwp_posting_selected_groups', $selected_groups, $id );
             $selected_clients = apply_filters( 'mainwp_posting_selected_clients', $selected_clients, $id );
+            if ( MainWP_System_Utility::is_team_control_staff() && in_array( $what, array( 'posting', 'preparing' ), true ) ) {
+                $selected_sites = array_filter(
+                    (array) $selected_sites,
+                    static function ( $site_id ) {
+                        return MainWP_Utility::ctype_digit( $site_id ) && MainWP_DB::instance()->get_website_by_id( $site_id );
+                    }
+                );
+            }
 
             if ( 'preparing' !== $what ) {
                 $post_category = base64_decode( get_post_meta( $id, '_categories', true ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
@@ -749,6 +761,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'ping_status'    => $_post->ping_status,
                     'mainwp_post_id' => $_post->ID,
                 );
+                if ( 'bulkpage' === $_post->post_type ) {
+                    $new_post['post_type'] = 'page';
+                }
 
                 if ( ! empty( $featured_image_id ) ) {
                     $img                 = wp_get_attachment_image_src( $featured_image_id, 'full' );
@@ -1026,13 +1041,16 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         try {
+            if ( ! current_user_can( 'manage_options' ) && ! MainWP_Bulk_Post::can_access_remote_post( $website, $postId, $postType ) ) {
+                wp_die( -1 );
+            }
             $information = MainWP_Connect::fetch_url_authed(
                 $website,
                 'post_action',
                 array(
                     'action'    => 'get_edit',
                     'id'        => $postId,
-                    'post_type' => $postType,
+                    'post_type' => current_user_can( 'manage_options' ) || 'page' === $postType ? $postType : 'post',
                 )
             );
 
@@ -1047,6 +1065,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( ! isset( $information['status'] ) || ( 'SUCCESS' !== $information['status'] ) ) {
             die( wp_json_encode( array( 'error' => 'Unexpected error.' ) ) );
         } else {
+            if ( ! current_user_can( 'manage_options' ) && ! MainWP_Bulk_Post::remote_type_matches( $information, $postType ) ) {
+                wp_die( -1 );
+            }
             $ret = static::new_post( $information['my_post'], $replaceadvImg, $website );
             if ( is_array( $ret ) && isset( $ret['id'] ) ) {
                 // to support edit post.

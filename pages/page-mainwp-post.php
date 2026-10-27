@@ -91,21 +91,22 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Post_Page_Handler::get_class_name()
      */
     public static function init_menu() {
-        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . esc_html__( 'Posts', 'mainwp' ) . '</span>', 'manage_options', 'PostBulkManage', array( static::get_class_name(), 'render' ) );
+        // phpcs:disable WordPress.WP.Capabilities.Unknown -- Granted per request by MainWP_Bulk_Post.
+        $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<span id="mainwp-Posts">' . esc_html__( 'Posts', 'mainwp' ) . '</span>', 'mainwp_manage_bulk_posts', 'PostBulkManage', array( static::get_class_name(), 'render' ) );
         add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_page' ) );
         add_filter( 'manage_' . $_page . '_columns', array( static::get_class_name(), 'get_manage_columns' ) );
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkAdd' ) ) {
-            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'manage_options', 'PostBulkAdd', array( static::get_class_name(), 'render_bulk_add' ) );
+            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Add New', 'mainwp' ) . '</div>', 'mainwp_manage_bulk_posts', 'PostBulkAdd', array( static::get_class_name(), 'render_bulk_add' ) );
             add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_add_edit' ) );
         }
 
         if ( ! MainWP_Menu::is_disable_menu_item( 3, 'PostBulkEdit' ) ) {
-            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Post', 'mainwp' ) . '</div>', 'manage_options', 'PostBulkEdit', array( static::get_class_name(), 'render_bulk_edit' ) );
+            $_page = add_submenu_page( 'mainwp_tab', esc_html__( 'Posts', 'mainwp' ), '<div class="mainwp-hidden">' . esc_html__( 'Edit Post', 'mainwp' ) . '</div>', 'mainwp_manage_bulk_posts', 'PostBulkEdit', array( static::get_class_name(), 'render_bulk_edit' ) );
             add_action( 'load-' . $_page, array( static::get_class_name(), 'on_load_add_edit' ) );
         }
 
-        add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . esc_html__( 'Posts', 'mainwp' ) . '</div>', 'manage_options', 'PostingBulkPost', array( MainWP_Post_Page_Handler::get_class_name(), 'posting_bulk' ) );
+        add_submenu_page( 'mainwp_tab', 'Posting new bulkpost', '<div class="mainwp-hidden">' . esc_html__( 'Posts', 'mainwp' ) . '</div>', 'mainwp_manage_bulk_posts', 'PostingBulkPost', array( MainWP_Post_Page_Handler::get_class_name(), 'posting_bulk' ) );
 
         /**
          * Posts Subpages
@@ -123,10 +124,11 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
                 if ( MainWP_Menu::is_disable_menu_item( 3, 'Post' . $subPage['slug'] ) ) {
                     continue;
                 }
-                add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'manage_options', 'Post' . $subPage['slug'], $subPage['callback'] );
+                add_submenu_page( 'mainwp_tab', $subPage['title'], '<div class="mainwp-hidden">' . $subPage['title'] . '</div>', 'mainwp_manage_bulk_posts', 'Post' . $subPage['slug'], $subPage['callback'] );
             }
         }
         static::init_left_menu( static::$subPages );
+        // phpcs:enable WordPress.WP.Capabilities.Unknown
     }
 
 
@@ -217,8 +219,12 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * Type corresponding to $output on success or null on failure. When $output is OBJECT, a WP_Post instance is returned.
      */
     public static function on_load_bulkpost( $post_id ) {
+        if ( ! current_user_can( 'manage_options' ) && ( ! MainWP_Bulk_Post::can_access_post( $post_id ) || ! current_user_can( 'edit_post', $post_id ) ) ) {
+            wp_die( -1 );
+        }
 
         wp_enqueue_media( array( 'post' => $post_id ) );
+        MainWP_Bulk_Post::enqueue_media_parent( $post_id );
 
         wp_enqueue_script(
             'mainwp-post',
@@ -351,6 +357,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Menu::is_disable_menu_item()
      */
     public static function init_left_menu( $subPages = array() ) {
+        if ( ! MainWP_Bulk_Post::can_access( 'bulkpost' ) ) {
+            return;
+        }
         $init_sub_subleftmenu = array(
             array(
                 'title'                => esc_html__( 'Manage Posts', 'mainwp' ),
@@ -435,7 +444,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
 
             $renderItems = array();
 
-        if ( \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+        if ( MainWP_Bulk_Post::can_access( 'bulkpost' ) ) {
             $renderItems[] = array(
                 'title'  => esc_html__( 'Manage Posts', 'mainwp' ),
                 'href'   => 'admin.php?page=PostBulkManage',
@@ -499,7 +508,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Cache::get_cached_context()
      */
     public static function render() { // phpcs:ignore -- NOSONAR - complex.
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+        if ( ! MainWP_Bulk_Post::can_access( 'bulkpost' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
             return;
         }
@@ -1102,6 +1111,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_Utility::enabled_wp_seo()
      */
     public static function render_table_body( $keyword, $dtsstart, $dtsstop, $status, $groups, $sites, $postId, $userId, $post_type = '', $search_on = 'all', $table_content = false, $clients = '' ) { // phpcs:ignore -- NOSONAR - complex function.
+        if ( ! MainWP_Bulk_Post::can_access( 'bulkpost' ) ) {
+            wp_die( -1 );
+        }
 
         $data_fields = MainWP_System_Utility::get_default_map_site_fields();
 
@@ -1110,6 +1122,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
             foreach ( $sites as $v ) {
                 if ( MainWP_Utility::ctype_digit( $v ) ) {
                     $website = MainWP_DB::instance()->get_website_by_id( $v );
+                    if ( ! $website ) {
+                        continue;
+                    }
                     if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
                         $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
                             $website,
@@ -2023,6 +2038,9 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @uses \MainWP\Dashboard\MainWP_UI
      */
     public static function render_bulkpost( $post_id, $input_type ) { //phpcs:ignore -- NOSONAR - complex method.
+        if ( ! current_user_can( 'manage_options' ) && ( ! MainWP_Bulk_Post::can_access_post( $post_id, $input_type ) || ! current_user_can( 'edit_post', $post_id ) ) ) {
+            wp_die( -1 );
+        }
         $post = get_post( $post_id );
 
         if ( $post ) {
@@ -2654,7 +2672,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return string Bulk add tab html.
      */
     public static function render_bulk_add() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+        if ( ! MainWP_Bulk_Post::can_access( 'bulkpost' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
             return;
         }
@@ -2679,7 +2697,7 @@ class MainWP_Post { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Content
      * @return string Bulk edit tab html.
      */
     public static function render_bulk_edit() {
-        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_posts' ) ) {
+        if ( ! MainWP_Bulk_Post::can_access( 'bulkpost' ) ) {
             \mainwp_do_not_have_permissions( esc_html__( 'manage posts', 'mainwp' ) );
             return;
         }

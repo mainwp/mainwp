@@ -80,6 +80,10 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
         if ( empty( $_GET['page'] ) || 'mainwp-setup' !== $_GET['page'] ) { // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
             return;
         }
+        // admin_init runs before WordPress checks the page's menu capability, so check it here.
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
         // Consume entry redirects here so every wizard exit keeps its requested destination.
         delete_option( 'mainwp_run_quick_setup' );
         delete_option( 'mainwp_activated' );

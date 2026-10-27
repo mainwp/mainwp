@@ -441,6 +441,22 @@ class Test_Onboarding_Phase_Two extends \WP_UnitTestCase {
 		$this->assertStringNotContainsString( 'data-celebrate=', $this->widget() );
 	}
 
+	/** The wizard's admin_init must not run for a user without the page's menu capability. */
+	public function test_wizard_requires_the_menu_capability_before_running(): void {
+		wp_get_current_user()->add_cap( 'manage_options', false );
+		update_option( 'mainwp_run_quick_setup', 'yes' );
+		$_GET['page'] = 'mainwp-setup';
+		$wizard       = new Onboarding_Phase_Two_Wizard();
+		try {
+			// Without the guard this renders the wizard and exits.
+			$wizard->admin_init();
+		} finally {
+			remove_action( 'admin_menu', array( $wizard, 'admin_menus' ) );
+			remove_action( 'admin_init', array( $wizard, 'admin_init' ), 999 );
+		}
+		$this->assertSame( 'yes', get_option( 'mainwp_run_quick_setup' ) );
+	}
+
 	/** Hidden widgets cannot consume unseen completions. */
 	public function test_hidden_widget_does_not_record_seen_milestones(): void {
 		update_option( 'mainwp_onboarding_first_update', 1 );

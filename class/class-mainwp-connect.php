@@ -3117,6 +3117,9 @@ class MainWP_Connect { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Cont
         }
 
         if ( false !== $expected_size && 'already_complete' !== $result ) {
+            // The partial file was stat'd before the transfer. PHP can keep that
+            // size until clearstatcache(), so the check would still see it.
+            clearstatcache( true, $file );
             $final_size = $wp_filesystem->exists( $file ) ? (int) $wp_filesystem->size( $file ) : 0;
             if ( $final_size < $expected_size || $final_size > self::download_size_ceiling( $expected_size ) ) {
                 $too_small = $final_size < $expected_size;

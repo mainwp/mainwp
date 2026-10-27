@@ -14,14 +14,7 @@
 
 namespace MainWP\Dashboard;
 
-/**
- * A fixed second makes same-second initiation coverage independent of database speed.
- *
- * @return int
- */
-function time() {
-	return Tests\MainWP_Backup_Incremental_Sender_Test::$fixed_time ?? \time();
-}
+require_once dirname( __DIR__ ) . '/fixtures/dashboard-time.php';
 
 namespace MainWP\Dashboard\Tests; // phpcs:ignore Universal.Namespaces.OneDeclarationPerFile.MultipleFound -- The production-namespace filesystem stub belongs with its tests.
 

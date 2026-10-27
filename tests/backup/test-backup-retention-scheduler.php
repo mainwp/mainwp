@@ -376,4 +376,68 @@ class MainWP_Backup_Retention_Scheduler_Test extends \WP_UnitTestCase {
 		$jobs = MainWP_System_Cron_Jobs::instance()->get_cron_jobs();
 		$this->assertArrayNotHasKey( 'mainwp_cronbackups_prune_action', $jobs );
 	}
+	/** Daily backstop retries held archive eviction even when every retention cap is zero. */
+	public function test_unlimited_remote_only_task_daily_backstop_retries_eviction() {
+		$destination = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Unlimited retention fixture',
+				'settings' => array(),
+			)
+		);
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$task = $this->insert_task(
+			array(
+				'retention_count'      => 0,
+				'retention_days'       => 0,
+				'retention_storage_mb' => 0,
+			)
+		);
+		$protection::save_task_remove_local_archives( $task, true );
+		$id = $this->insert_snapshot_with_dir( $task );
+		$protection::capture_required_destinations( $id, array( $destination ) );
+		$store = \MainWP\Dashboard\MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $destination ) );
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array(
+				'provider'   => 's3',
+				'status'     => 'complete',
+				'checkpoint' => wp_json_encode(
+					array(
+						'uploaded_at'         => time(),
+						'manifest_submitted'  => true,
+						'destination_binding' => \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) ),
+						'artifacts'           => array(
+							array(
+								'file'   => 'artifact.tar',
+								'role'   => 'full',
+								'size'   => 100,
+								'sha256' => hash( 'sha256', str_repeat( 'x', 100 ) ),
+								'mode'   => 'whole',
+								'done'   => true,
+							),
+						),
+					)
+				),
+			),
+			array( 'snapshot_id' => $id )
+		);
+		$path        = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives[0]['path'];
+		$restores    = \MainWP\Dashboard\MainWP_Backup_Restore_Job_Store::instance();
+		$reservation = $restores->reserve_site( $this->site_id );
+		$this->assertGreaterThan( 0, $reservation );
+		$scheduler = MainWP_Backup_Retention_Scheduler::instance();
+		$scheduler->on_snapshot_recorded( $id, $task, $this->site_id );
+		$scheduler->process_post_snapshot_queue();
+		$this->assertFileExists( $path );
+		$restores->release_reservation( $reservation );
+		delete_option( MainWP_Backup_Retention_Scheduler::QUEUE_OPTION );
+		$scheduler->cron_backups_prune();
+		$this->assertFileDoesNotExist( $path );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+	}
 }

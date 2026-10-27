@@ -1835,4 +1835,112 @@ class MainWP_Backup_Storage_Page_Test extends \WP_UnitTestCase {
 		$this->assertStringContainsString( 'class="ui mini red button mainwp-storage-delete"', $output );
 		$this->assertStringNotContainsString( 'basic red button', $output );
 	}
+	/**
+	 * Dropbox continuity uses provider metadata under each token's account.
+	 *
+	 * @param array $objects Stored remote objects by account and path.
+	 * @param array $requests Captured provider requests.
+	 * @return callable
+	 */
+	private function retention_dropbox_transport( array &$objects, array &$requests ) {
+		return static function ( $pre, $args, $url ) use ( &$objects, &$requests ) {
+			unset( $pre );
+			$requests[] = array( $url, $args );
+			$status     = 200;
+			$data       = array();
+			if ( str_ends_with( $url, '/oauth2/token' ) ) {
+				$data = array( 'access_token' => $args['body']['refresh_token'] );
+			} else {
+				$token   = substr( $args['headers']['Authorization'], 7 );
+				$account = str_starts_with( $token, 'other-' ) ? 'other' : 'original';
+				$arg     = json_decode( $args['headers']['Dropbox-API-Arg'] ?? $args['body'], true );
+				$path    = $arg['path'];
+				if ( str_ends_with( $url, '/upload' ) ) {
+					$id                           = $objects[ $account ][ $path ]['id'] ?? 'id:file' . count( $requests );
+					$objects[ $account ][ $path ] = array(
+						'.tag' => 'file',
+						'id'   => $id,
+						'size' => strlen( $args['body'] ),
+					);
+					$data                         = $objects[ $account ][ $path ];
+				} elseif ( str_ends_with( $url, '/delete_v2' ) ) {
+					unset( $objects[ $account ][ $path ] );
+				} elseif ( 'broken-token' === $token && str_contains( $path, '.mainwp-retention-' ) ) {
+					$status = 503;
+				} elseif ( isset( $objects[ $account ][ $path ] ) ) {
+					$data = $objects[ $account ][ $path ];
+				} else {
+					$status = 409;
+					$data   = array( 'error_summary' => 'path/not_found/..' );
+				}
+			}
+			return array(
+				'headers'  => array(),
+				'body'     => wp_json_encode( $data ),
+				'response' => array(
+					'code'    => $status,
+					'message' => '',
+				),
+			);
+		};
+	}
+
+	/** Replacement credentials must resolve to the original server-issued file ID. */
+	public function test_retention_dropbox_rotation_proves_namespace_and_keeps_identity_private() {
+		$objects   = array();
+		$requests  = array();
+		$transport = $this->retention_dropbox_transport( $objects, $requests );
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$store      = MainWP_Backup_Storage_Destinations::instance();
+			$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+			$field      = '_mainwp_retention_identity';
+			$settings   = array(
+				'app_key'       => 'app-key',
+				'app_secret'    => 'app-secret',
+				'refresh_token' => 'original-token',
+				'base_path'     => 'backups',
+			);
+			$input      = array(
+				'provider' => 'dropbox',
+				'name'     => 'Dropbox',
+				'settings' => $settings,
+			);
+			$created    = MainWP_Backup_Storage_Handler::save_destination( $input );
+			$this->assertArrayHasKey( 'id', $created );
+			$input['id'] = $created['id'];
+			$row         = $store->get_destination( $created['id'] );
+			$this->assertArrayNotHasKey( $field, $row->settings, 'Default saves must not create retention marker objects.' );
+			$this->assertEmpty( array_filter( $objects['original'] ?? array() ) );
+			$this->assertTrue( method_exists( $store, 'prepare_retention_identity' ) );
+			$row      = $store->prepare_retention_identity( $row );
+			$identity = $row->settings[ $field ];
+			$binding  = $protection::destination_binding( $row );
+			$this->assertTrue( $protection::dropbox_identity_valid( $row->settings ) );
+			$input['settings']['refresh_token'] = 'original-rotated';
+			$input['settings'][ $field ]        = array(
+				'key'     => 'forged',
+				'id'      => 'id:forged',
+				'receipt' => 'forged',
+			);
+			$this->assertArrayHasKey( 'id', MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$row = $store->get_destination( $created['id'] );
+			$this->assertSame( $binding, $protection::destination_binding( $row ) );
+			$this->assertSame( $identity['key'], $row->settings[ $field ]['key'] );
+			$this->assertArrayNotHasKey( $field, MainWP_Backup_Storage_Handler::destination_for_edit( $created['id'] )['settings'] );
+			$public = \MainWP\Dashboard\MainWP_Backup_Read_Model::get_destination( $created['id'] );
+			$this->assertStringNotContainsString( $identity['key'], wp_json_encode( $public ) );
+			$input['settings']['refresh_token'] = 'other-account';
+			$this->assertArrayHasKey( 'id', MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$this->assertNotSame( $binding, $protection::destination_binding( $store->get_destination( $created['id'] ) ) );
+			$input['settings']['refresh_token'] = 'original-returned';
+			$this->assertArrayHasKey( 'id', MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$this->assertSame( $binding, $protection::destination_binding( $store->get_destination( $created['id'] ) ) );
+			$input['settings']['refresh_token'] = 'broken-token';
+			$this->assertArrayHasKey( 'error', MainWP_Backup_Storage_Handler::save_destination( $input ) );
+			$this->assertSame( 'original-returned', $store->get_destination( $created['id'] )->settings['refresh_token'] );
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+		}
+	}
 }

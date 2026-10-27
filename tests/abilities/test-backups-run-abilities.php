@@ -1251,10 +1251,11 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 			 * @param int      $site_id Site id.
 			 * @param int|null $keep Retained count.
 			 * @param int      $orphan_min_age Minimum orphan age.
+			 * @param bool     $manual_override Confirmed manual deletion.
 			 * @return array Cleanup result.
 			 */
-			public function cleanup_site_backups( int $site_id, ?int $keep = null, int $orphan_min_age = 6 * HOUR_IN_SECONDS ): array {
-				unset( $site_id, $keep, $orphan_min_age );
+			public function cleanup_site_backups( int $site_id, ?int $keep = null, int $orphan_min_age = 6 * HOUR_IN_SECONDS, bool $manual_override = false ): array {
+				unset( $site_id, $keep, $orphan_min_age, $manual_override );
 				return array(
 					'orphan_dirs_removed'       => 0,
 					'orphaned_snapshots_pruned' => 0,
@@ -1437,7 +1438,7 @@ class MainWP_Backups_Run_Abilities_Test extends MainWP_Abilities_Test_Case {
 		} else {
 			$this->assertSame( 1, $wpdb->delete( $table, array( 'id' => $this->task_id ) ) );
 		}
-		$ids   = $uploads ? array( $covered ? $b : $a ) : array();
+		$ids     = $uploads ? array( $covered ? $b : $a ) : array();
 		$count   = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- table identifier.
 		$options = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->options}" );
 		$this->assertNull( $db->get_manual_backup_task( $this->site_id ) );

@@ -154,6 +154,12 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
             return true;
         }
 
+        // Legacy queued deletes have no manual consent or trustworthy upload age.
+        // They retain their old behavior at minimum zero and wait at a positive minimum.
+        if ( $this->retention_holds_delete( $job, $destination, $now ) ) {
+            return $this->defer_protected_delete( $job, $destination, $now );
+        }
+
         try {
             $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider( $destination );
         } catch ( \RuntimeException $e ) {
@@ -178,6 +184,14 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
                     return false;
                 }
 
+                $current_destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+                if ( null === $current_destination ) {
+                    return false;
+                }
+                if ( $this->retention_holds_delete( $job, $current_destination, $now ) ) {
+                    return $this->defer_protected_delete( $job, $current_destination, $now );
+                }
+
                 if ( empty( $keys[ $i ]['deleted'] ) && ! empty( $keys[ $i ]['key'] ) ) {
                     if ( false === $provider->delete_object( (string) $keys[ $i ]['key'] ) ) {
                         throw new \RuntimeException( esc_html( 'Could not delete object: ' . $keys[ $i ]['key'] ) );
@@ -190,7 +204,7 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
             }
 
             if ( empty( $checkpoint['swept'] ) ) {
-                if ( ! $this->sweep_prefix( $job, $checkpoint, $provider, $deadline ) ) {
+                if ( ! $this->sweep_prefix( $job, $checkpoint, $provider, $deadline, $now ) ) {
                     return false; // Deadline or lost lease; the sweep restarts next tick - deletes are idempotent.
                 }
                 $checkpoint['swept'] = true;
@@ -217,11 +231,13 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
      * @param MainWP_Backup_Storage_Provider $provider   Destination provider.
      * @param float                          $deadline   Monotonic deadline.
      *
+     * @param int                            $now Evaluation instant.
+     *
      * @throws \RuntimeException When a provider refuses a delete.
      *
      * @return bool True when the sweep finished; false on deadline.
      */
-    private function sweep_prefix( object $job, array $checkpoint, MainWP_Backup_Storage_Provider $provider, float $deadline ): bool {
+    private function sweep_prefix( object $job, array $checkpoint, MainWP_Backup_Storage_Provider $provider, float $deadline, int $now ): bool {
         $prefix = isset( $checkpoint['prefix'] ) ? (string) $checkpoint['prefix'] : '';
         if ( '' === $prefix ) {
             return true; // No prefix recorded; the key walk covered everything known.
@@ -239,6 +255,14 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
                 if ( microtime( true ) >= $deadline ) {
                     return false;
                 }
+                $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( (int) $job->destination_id );
+                if ( null === $destination ) {
+                    return false;
+                }
+                if ( $this->retention_holds_delete( $job, $destination, $now ) ) {
+                    $this->defer_protected_delete( $job, $destination, $now );
+                    return false;
+                }
                 if ( false === $provider->delete_object( (string) $object['key'] ) ) {
                     throw new \RuntimeException( esc_html( 'Could not delete object: ' . $object['key'] ) );
                 }
@@ -248,6 +272,36 @@ class MainWP_Backup_Cloud_Delete_Driver { // phpcs:ignore Generic.Classes.Openin
         } while ( ! empty( $page['truncated'] ) && null !== $token );
 
         return true;
+    }
+
+    /**
+     * Check the current minimum before deleting an object or sweeping partial writes.
+     *
+     * @param object $job Delete job.
+     * @param object $destination Current destination settings.
+     * @param int    $now Evaluation instant.
+     * @return bool
+     */
+    private function retention_holds_delete( object $job, object $destination, int $now ): bool {
+        if ( ! empty( $job->checkpoint['manual_override'] ) ) {
+            return false;
+        }
+        $protection = MainWP_Backup_Retention_Protection::destination_protection( $destination, (array) ( $job->checkpoint['storage_age'] ?? array() ) );
+        return $protection['unknown_age'] || $protection['protected_until'] > $now;
+    }
+
+    /**
+     * Recheck at least daily so changed destination settings can release a hold.
+     *
+     * @param object $job Delete job.
+     * @param object $destination Current destination settings.
+     * @param int    $now Evaluation instant.
+     * @return bool Whether deferral persisted and later jobs may proceed.
+     */
+    private function defer_protected_delete( object $job, object $destination, int $now ): bool {
+        $protection = MainWP_Backup_Retention_Protection::destination_protection( $destination, (array) ( $job->checkpoint['storage_age'] ?? array() ) );
+        $until      = $protection['unknown_age'] ? $now + DAY_IN_SECONDS : min( $protection['protected_until'], $now + DAY_IN_SECONDS );
+        return MainWP_Backup_Upload_Job_Store::instance()->defer_delete_for_retention( (int) $job->id, $until, $this->lock_token );
     }
 
     /**

@@ -135,14 +135,29 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             return array( 'error' => esc_html__( 'A destination name, the app key, and the app secret are required before connecting.', 'mainwp' ) );
         }
 
+        $stored  = $id > 0 ? MainWP_Backup_Storage_Destinations::instance()->get_destination( $id ) : null;
+        $minimum = filter_var(
+            array_key_exists( 'minimum_remote_retention_days', $settings ) ? $settings['minimum_remote_retention_days'] : ( $stored->settings['minimum_remote_retention_days'] ?? 0 ),
+            FILTER_VALIDATE_INT,
+            array(
+                'options' => array(
+                    'min_range' => 0,
+                    'max_range' => 36500,
+                ),
+            )
+        );
+        if ( false === $minimum ) {
+            return array( 'error' => esc_html__( 'Minimum retention must be a whole number from 0 to 36500 days.', 'mainwp' ) );
+        }
         $stash = array(
-            'user_id'        => get_current_user_id(),
-            'destination_id' => $id,
-            'name'           => $name,
-            'app_key'        => $app_key,
-            'app_secret'     => $app_secret,
-            'base_path'      => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',
-            'is_default'     => empty( $input['is_default'] ) ? 0 : 1,
+            'minimum_remote_retention_days' => $minimum,
+            'user_id'                       => get_current_user_id(),
+            'destination_id'                => $id,
+            'name'                          => $name,
+            'app_key'                       => $app_key,
+            'app_secret'                    => $app_secret,
+            'base_path'                     => isset( $settings['base_path'] ) ? (string) $settings['base_path'] : '',
+            'is_default'                    => empty( $input['is_default'] ) ? 0 : 1,
         );
 
         $envelope = MainWP_Credential_Storage::encrypt_credential( (string) wp_json_encode( $stash ), 'storage_destination' );
@@ -241,10 +256,11 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
                 'name'       => (string) $stash['name'],
                 'is_default' => empty( $stash['is_default'] ) ? 0 : 1,
                 'settings'   => array(
-                    'app_key'       => (string) $stash['app_key'],
-                    'app_secret'    => (string) $stash['app_secret'],
-                    'refresh_token' => (string) $exchange['refresh_token'],
-                    'base_path'     => isset( $stash['base_path'] ) ? (string) $stash['base_path'] : '',
+                    'app_key'                       => (string) $stash['app_key'],
+                    'app_secret'                    => (string) $stash['app_secret'],
+                    'minimum_remote_retention_days' => (int) ( $stash['minimum_remote_retention_days'] ?? 0 ),
+                    'refresh_token'                 => (string) $exchange['refresh_token'],
+                    'base_path'                     => isset( $stash['base_path'] ) ? (string) $stash['base_path'] : '',
                 ),
             )
         );
@@ -342,9 +358,14 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         if ( isset( $_POST['settings'] ) && is_array( $_POST['settings'] ) ) {
             $settings = array();
             foreach ( wp_unslash( $_POST['settings'] ) as $field => $value ) { // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- sanitized per field below.
-                // A PEM private key is multi-line; sanitize_text_field would strip its line breaks.
                 $field = sanitize_key( $field );
-                if ( 'private_key' === $field ) {
+                if ( MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD === $field ) {
+                    continue;
+                }
+                // A PEM private key is multi-line; sanitize_text_field would strip its line breaks.
+                if ( 'minimum_remote_retention_days' === $field ) {
+                    $settings[ $field ] = is_scalar( $value ) ? sanitize_text_field( (string) $value ) : null;
+                } elseif ( 'private_key' === $field ) {
                     $settings[ $field ] = sanitize_textarea_field( (string) $value );
                 } elseif ( in_array( $field, static::SECRET_FIELDS, true ) ) {
                     $settings[ $field ] = (string) $value;
@@ -452,6 +473,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         foreach ( static::SECRET_FIELDS as $field ) {
             unset( $settings[ $field ] );
         }
+        unset( $settings[ MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD ] );
 
         return array(
             'id'                  => (int) $destination->id,
@@ -500,6 +522,20 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             );
         }
 
+        $identity_field = MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD;
+        if ( 'dropbox' === $merged['provider'] && ! empty( $merged['settings'][ $identity_field ]['key'] )
+            && ! MainWP_Backup_Retention_Protection::dropbox_identity_valid( $merged['settings'] ) ) {
+            try {
+                $provider = MainWP_Backup_Storage_Destinations::instance()->make_provider( (object) $merged );
+                if ( ! $provider instanceof MainWP_Backup_Storage_Dropbox ) {
+                    return array( 'error' => esc_html__( 'Dropbox storage identity could not be verified.', 'mainwp' ) );
+                }
+                $merged['settings'] = MainWP_Backup_Retention_Protection::with_dropbox_identity( $merged['settings'], $provider->retention_marker_id( $merged['settings'][ $identity_field ]['key'] ) );
+            } catch ( \RuntimeException $e ) {
+                return array( 'error' => $e->getMessage() );
+            }
+        }
+
         $store = MainWP_Backup_Storage_Destinations::instance();
         $row   = array(
             'provider'   => $merged['provider'],
@@ -509,7 +545,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
         );
 
         if ( $merged['id'] > 0 ) {
-            if ( ! $store->update_destination( $merged['id'], $row ) ) {
+            if ( ! $store->update_destination( $merged['id'], $row, $merged['expected'] ) ) {
                 return array( 'error' => esc_html__( 'Could not save the storage destination.', 'mainwp' ) );
             }
             $result = array( 'id' => $merged['id'] );
@@ -548,9 +584,11 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             return array( 'error' => esc_html__( 'A destination name is required.', 'mainwp' ) );
         }
 
-        $id        = isset( $input['id'] ) ? (int) $input['id'] : 0;
-        $submitted = isset( $input['settings'] ) && is_array( $input['settings'] );
-        $settings  = $submitted ? $input['settings'] : array();
+        $id             = isset( $input['id'] ) ? (int) $input['id'] : 0;
+        $submitted      = isset( $input['settings'] ) && is_array( $input['settings'] );
+        $settings       = $submitted ? $input['settings'] : array();
+        $identity_field = MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD;
+        unset( $settings[ $identity_field ] );
 
         if ( $id > 0 ) {
             $existing = MainWP_Backup_Storage_Destinations::instance()->get_destination( $id );
@@ -569,7 +607,29 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
                         }
                     }
                 }
+                if ( 'dropbox' === $provider && isset( $existing->settings[ $identity_field ] ) ) {
+                    $settings[ $identity_field ] = $existing->settings[ $identity_field ];
+                }
             }
+        }
+
+        $stored_minimum = isset( $existing ) && is_array( $existing->settings ) ? array_intersect_key( $existing->settings, array( 'minimum_remote_retention_days' => true ) ) : array();
+        if ( array_key_exists( 'minimum_remote_retention_days', $settings ) || $stored_minimum ) {
+            $minimum = array_key_exists( 'minimum_remote_retention_days', $settings ) ? $settings['minimum_remote_retention_days'] : $stored_minimum['minimum_remote_retention_days'];
+            $minimum = filter_var(
+                $minimum,
+                FILTER_VALIDATE_INT,
+                array(
+                    'options' => array(
+                        'min_range' => 0,
+                        'max_range' => 36500,
+                    ),
+                )
+            );
+            if ( false === $minimum ) {
+                return array( 'error' => esc_html__( 'Minimum retention must be a whole number from 0 to 36500 days.', 'mainwp' ) );
+            }
+            $settings['minimum_remote_retention_days'] = $minimum;
         }
 
         if ( 'local' === $provider && '' !== (string) ( $settings['base_path'] ?? '' ) ) {
@@ -590,6 +650,7 @@ class MainWP_Backup_Storage_Handler extends MainWP_Post_Base_Handler { // phpcs:
             'settings'         => $settings,
             'reset_sftp_trust' => $decision['notice'],
             'test_id'          => $decision['test_id'],
+            'expected'         => $existing ?? null,
         );
     }
 

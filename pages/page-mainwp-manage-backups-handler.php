@@ -933,6 +933,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             // The add form posts '' here, which has always meant the global setting.
             $fields['archive_tuning']['load_files_before_zip'] = '' === $input['loadFilesBeforeZip'] || 1 === (int) $input['loadFilesBeforeZip'];
         }
+        if ( array_key_exists( 'remove_local_after_upload', $input ) ) {
+            $fields['retention']['remove_local_after_upload'] = ! empty( $input['remove_local_after_upload'] );
+        }
         if ( isset( $input['retention_count'] ) ) {
             $fields['retention']['count'] = absint( $input['retention_count'] );
         } elseif ( isset( $input['id'] ) ) {
@@ -2211,11 +2214,19 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public static function remove_backup() {
         //phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified by the AJAX router.
-        $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+        $id      = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+        $dry_run = array_key_exists( 'dry_run', $_POST );
+        if ( $dry_run && ( ! is_scalar( $_POST['dry_run'] ) || '1' !== sanitize_text_field( wp_unslash( (string) $_POST['dry_run'] ) ) ) ) {
+            wp_send_json( array( 'error' => __( 'The deletion preview could not be loaded. Reload the page and try again.', 'mainwp' ) ) );
+        }
         // Only an explicit 0 keeps the snapshots; older clients send nothing and purge as before.
         $delete_snapshots = ! isset( $_POST['delete_snapshots'] ) || '0' !== sanitize_text_field( wp_unslash( $_POST['delete_snapshots'] ) );
         //phpcs:enable WordPress.Security.NonceVerification.Missing
-        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::delete_task( $id, $delete_snapshots, 'ui' ), 'remove', $id ) );
+        $result = $dry_run ? MainWP_Backup_Operations::preview_task_delete( $id, $delete_snapshots, 'ui' ) : MainWP_Backup_Operations::delete_task( $id, $delete_snapshots, 'ui' );
+        if ( $dry_run && ! is_wp_error( $result ) ) {
+            $result = $result['can_proceed'] ? array( 'warnings' => $result['warnings'] ) : array( 'error' => implode( ' ', array_column( $result['refusals'], 'message' ) ) );
+        }
+        wp_send_json( static::task_ajax_result( $result, 'remove', $id ) );
     }
 
     /**
@@ -2231,13 +2242,14 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @param int  $id               Task id.
      * @param bool $delete_snapshots Whether to purge the task's snapshots too.
      *
+     * @param bool $manual_override Whether the confirmation exposed the remote minimum warning.
      * @return array Response payload: result | error | notask.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_Backup_Retention_Executor::purge_snapshots_for_task()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::remove_backup_task()
      */
-    public static function remove_backup_result( $id, $delete_snapshots = true ) {
+    public static function remove_backup_result( $id, $delete_snapshots = true, $manual_override = false ) {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $id );
         if ( empty( $task ) || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'notask' => true );
@@ -2288,7 +2300,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return array( 'result' => 'SUCCESS' );
         }
 
-        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
+        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ), (bool) $manual_override );
 
         // The purge deliberately keeps a snapshot when its artifact cannot be
         // reached (recorded outside the uploads root, or an unlink refused).

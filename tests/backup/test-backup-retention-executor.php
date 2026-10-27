@@ -14,6 +14,7 @@
 namespace MainWP\Dashboard\Tests;
 
 require_once __DIR__ . '/trait-backup-private-root-fixture.php';
+require_once __DIR__ . '/test-backup-now-continuation.php';
 
 use MainWP\Dashboard\MainWP_DB;
 use MainWP\Dashboard\MainWP_Backup_Private_Root;
@@ -2576,5 +2577,786 @@ class MainWP_Backup_Retention_Executor_Test extends MainWP_Abilities_Test_Case {
 			$this->assertFalse( $store->mark_pruned( $id, 'manual' ) );
 			$this->assertSame( '', $store->get_snapshot_by_id( $id )->removal_reason );
 		}
+	}
+	/**
+	 * Produce a completed index for the fixture's actual recorded artifacts.
+	 *
+	 * @param int $snapshot_id Snapshot identity.
+	 * @return array Matching remote artifacts.
+	 */
+	private function verified_artifacts( int $snapshot_id ): array {
+		return array_map(
+			static function ( $archive ) {
+				return array(
+					'file'   => $archive['file'],
+					'role'   => $archive['role'],
+					'size'   => $archive['size'],
+					'sha256' => hash_file( 'sha256', $archive['path'] ),
+					'mode'   => 'whole',
+					'done'   => true,
+				);
+			},
+			MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->archives
+		);
+	}
+
+	/**
+	 * Create a readable remote destination without making provider requests.
+	 *
+	 * @return int Destination identity.
+	 */
+	private function make_retention_destination(): int {
+		return \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Retention fixture',
+				'settings' => array(),
+			)
+		);
+	}
+
+	/** A captured destination remains required after an enqueue failure and task edits. */
+	public function test_remote_only_capture_holds_missing_upload_and_preserves_metadata() {
+		$first  = $this->make_retention_destination();
+		$second = $this->make_retention_destination();
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ), 'Remote-only retention protection must be available.' );
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$protection::save_task_remove_local_archives( $this->task_id, true );
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		file_put_contents( $dir . '/files.list', 'child manifest' );
+		$before = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$this->assertTrue( $protection::capture_required_destinations( $id, array( $first, $second ) ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $first ) );
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$wpdb->update(
+			$table,
+			array(
+				'provider'   => 's3',
+				'status'     => 'complete',
+				'checkpoint' => wp_json_encode(
+					array(
+						'manifest_submitted'  => true,
+						'destination_binding' => \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->get_destination( $first ) ),
+						'artifacts'           => $this->verified_artifacts( $id ),
+						'uploaded_at'         => time(),
+					)
+				),
+			),
+			array( 'snapshot_id' => $id )
+		);
+		$executor = MainWP_Backup_Retention_Executor::instance();
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertFalse( $protection::capture_required_destinations( $id, array( $first ) ), 'The initial requirement cannot be replaced.' );
+		$store->enqueue_for_snapshot( $id, array( $second ) );
+		$wpdb->update(
+			$table,
+			array(
+				'provider'   => 's3',
+				'status'     => 'complete',
+				'checkpoint' => wp_json_encode(
+					array(
+						'manifest_submitted'  => true,
+						'destination_binding' => \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->get_destination( $first ) ),
+						'artifacts'           => $this->verified_artifacts( $id ),
+						'uploaded_at'         => time(),
+					)
+				),
+			),
+			array( 'snapshot_id' => $id )
+		);
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileDoesNotExist( $dir . '/artifact.tar' );
+		$this->assertSame( 'child manifest', file_get_contents( $dir . '/files.list' ) );
+		$this->assertEquals( $before, MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id ) );
+		$this->assertCount( 2, $store->get_jobs_for_snapshot( $id ) );
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/files.list', 'Repeated eviction keeps the Child manifest.' );
+	}
+
+	/** Automatic pruning holds young remote copies even under every retention cap. */
+	public function test_remote_minimum_holds_automatic_pruning_but_manual_override_deletes() {
+		$destinations     = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$destination      = $destinations->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Retention minimum',
+				'settings' => array( 'minimum_remote_retention_days' => 30 ),
+			)
+		);
+		list( $id, $dir ) = $this->make_snapshot_with_dir( array( 'created' => time() - 100 * DAY_IN_SECONDS ) );
+		$store            = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $destination ) );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$store->save_checkpoint(
+			$job->id,
+			array(
+				'uploaded_at'        => time(),
+				'manifest_submitted' => true,
+			)
+		);
+		$store->complete_job( $job->id );
+		$executor = MainWP_Backup_Retention_Executor::instance();
+		$result   = $executor->run_prune(
+			array(
+				array(
+					'snapshot_ids' => array( $id ),
+					'reason'       => 'count',
+					'size_bytes'   => 100,
+				),
+			),
+			$this->make_task()
+		);
+		$this->assertSame( array(), $result['deleted_ids'], 'Snapshot age does not replace remote upload age.' );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $id ) );
+		$result = $executor->purge_snapshots_for_task( $this->task_id, true, true );
+		$this->assertSame( array( $id ), $result['deleted_ids'] );
+		$this->assertTrue( $store->get_jobs_for_snapshot( $id, 'delete' )[0]->checkpoint['manual_override'] );
+	}
+
+	/** Failed partial uploads have no trustworthy storage age. */
+	public function test_remote_minimum_holds_partial_upload_without_legacy_fallback() {
+		$destinations     = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$destination      = $destinations->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Partial retention minimum',
+				'settings' => array( 'minimum_remote_retention_days' => 30 ),
+			)
+		);
+		list( $id, $dir ) = $this->make_snapshot_with_dir( array( 'created' => time() - 100 * DAY_IN_SECONDS ) );
+		$store            = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $destination ) );
+		$store->fail_permanent( $store->get_jobs_for_snapshot( $id )[0]->id, 'Failed after a chunk upload' );
+		$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, true );
+		$this->assertSame( array(), $result['deleted_ids'] );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $id, 'delete' ) );
+	}
+
+	/** Each destination uses upload age, with legacy fallback limited to complete jobs. */
+	public function test_remote_minimum_exact_boundary_legacy_fallback_and_unknown_age() {
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection   = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$now          = time();
+		$destinations = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$destination  = $destinations->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Boundary minimum',
+				'settings' => array( 'minimum_remote_retention_days' => 30 ),
+			)
+		);
+		list( $id )   = $this->make_snapshot_with_dir( array( 'created' => $now - 100 * DAY_IN_SECONDS ) );
+		$store        = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $destination ) );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$store->save_checkpoint(
+			$job->id,
+			array(
+				'uploaded_at'        => $now - 30 * DAY_IN_SECONDS,
+				'manifest_submitted' => true,
+			)
+		);
+		$store->complete_job( $job->id );
+		$this->assertSame( $now, $protection::remote_protection( array( $id ), $now )['protected_until'] );
+		$this->assertTrue( $protection::holds_automatic_removal( array( $id ), $now - 1 ) );
+		$this->assertFalse( $protection::holds_automatic_removal( array( $id ), $now ) );
+		$store->save_checkpoint( $job->id, array() );
+		$this->assertSame( $now - 70 * DAY_IN_SECONDS, $protection::remote_protection( array( $id ), $now )['protected_until'] );
+		$store->set_status( $job->id, 'failed_permanent' );
+		$this->assertTrue( $protection::remote_protection( array( $id ), $now )['unknown_age'] );
+	}
+
+	/** A failed destination read cannot make its unknown minimum disappear. */
+	public function test_remote_minimum_unreadable_destination_keeps_snapshot_metadata() {
+		$destination      = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Unreadable minimum',
+				'settings' => array( 'minimum_remote_retention_days' => 30 ),
+			)
+		);
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		$store            = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $destination ) );
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), array( 'settings' => 'unreadable-settings' ), array( 'id' => $destination ) );
+		$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, true );
+		$this->assertSame( array(), $result['deleted_ids'] );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $id ) );
+	}
+
+	/** Eviction waits on restore reservations, live transfers and unfinished checkpoints. */
+	public function test_remote_only_eviction_holds_and_resumes_without_metadata_changes() {
+		$destination = $this->make_retention_destination();
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$protection::save_task_remove_local_archives( $this->task_id, true );
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		$protection::capture_required_destinations( $id, array( $destination ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $destination ) );
+		$job      = $store->get_jobs_for_snapshot( $id )[0];
+		$executor = MainWP_Backup_Retention_Executor::instance();
+		foreach ( array( 'pending', 'failed_retryable', 'failed_permanent', 'credentials_invalid', 'complete' ) as $status ) {
+			$store->set_status( $job->id, $status );
+			$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+			$this->assertFileExists( $dir . '/artifact.tar', $status . ' without verified checkpoint keeps source' );
+		}
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array(
+				'provider'   => 's3',
+				'status'     => 'complete',
+				'checkpoint' => wp_json_encode(
+					array(
+						'uploaded_at'         => time(),
+						'manifest_submitted'  => true,
+						'destination_binding' => \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) ),
+						'artifacts'           => $this->verified_artifacts( $id ),
+					)
+				),
+			),
+			array( 'id' => $job->id )
+		);
+		$reservation = MainWP_Backup_Restore_Job_Store::instance()->reserve_site( $this->site_id );
+		$this->assertGreaterThan( 0, $reservation );
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		MainWP_Backup_Restore_Job_Store::instance()->release_reservation( $reservation );
+		$store->claim_uploads_for_prune( array( $id ), 'prune:other' );
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$store->release_prune_claims( 'prune:other' );
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id, 0 );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileDoesNotExist( $dir . '/artifact.tar' );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+	}
+	/** A confirmed retry upgrades an existing automatic delete without losing its cursor. */
+	public function test_manual_override_updates_existing_automatic_delete_consent() {
+		$destination = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Existing delete',
+				'settings' => array( 'minimum_remote_retention_days' => 30 ),
+			)
+		);
+		list( $id )  = $this->make_snapshot_with_dir();
+		$store       = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $destination ) );
+		$store->enqueue_delete_job(
+			$id,
+			$destination,
+			array(
+				'manual_override' => false,
+				'cursor'          => 3,
+				'keys'            => array(),
+				'storage_age'     => array( 'unknown_age' => true ),
+			)
+		);
+		$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, true, true );
+		$this->assertSame( array( $id ), $result['deleted_ids'] );
+		$job = $store->get_jobs_for_snapshot( $id, 'delete' )[0];
+		$this->assertTrue( $job->checkpoint['manual_override'] );
+		$this->assertSame( 3, $job->checkpoint['cursor'] );
+	}
+	/** Enabling remote-only behavior does not change ordinary retention of legacy rows. */
+	public function test_legacy_snapshot_without_capture_keeps_ordinary_retention() {
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection       = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		$protection::save_task_remove_local_archives( $this->task_id, true );
+		$this->assertFalse( $protection::holds_automatic_removal( array( $id ) ) );
+		MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, false );
+		$this->assertSame( array( $id ), $result['deleted_ids'] );
+	}
+	/** A failed second unlink resumes without deleting the Child manifest or upload records. */
+	public function test_remote_only_interrupted_eviction_resumes_after_backup_hold() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root bypasses directory write permissions.' );
+		}
+		$destination = $this->make_retention_destination();
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$protection::save_task_remove_local_archives( $this->task_id, true );
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		$second_dir       = $dir . '/second';
+		wp_mkdir_p( $second_dir );
+		file_put_contents( $second_dir . '/second.tar', 'second archive' );
+		file_put_contents( $dir . '/files.list', 'incremental manifest' );
+		global $wpdb;
+		$snapshot   = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$archives   = $snapshot->archives;
+		$archives[] = array(
+			'file' => 'second.tar',
+			'role' => 'part',
+			'size' => 14,
+			'path' => $second_dir . '/second.tar',
+		);
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'archives' => wp_json_encode( $archives ) ), array( 'id' => $id ) );
+		$protection::capture_required_destinations( $id, array( $destination ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $destination ) );
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array(
+				'provider'   => 's3',
+				'status'     => 'complete',
+				'checkpoint' => wp_json_encode(
+					array(
+						'uploaded_at'         => time(),
+						'manifest_submitted'  => true,
+						'destination_binding' => \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) ),
+						'artifacts'           => $this->verified_artifacts( $id ),
+					)
+				),
+			),
+			array( 'snapshot_id' => $id )
+		);
+		$executor = MainWP_Backup_Retention_Executor::instance();
+		$hold     = \MainWP\Dashboard\MainWP_Backup_Executor::BACKUP_HOLD_OPTION_PREFIX . $this->site_id;
+		update_option( $hold, wp_json_encode( array( 'owner' => time() + 300 ) ) );
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		delete_option( $hold );
+		chmod( $second_dir, 0500 );
+		try {
+			$result = $executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+			$this->assertFileDoesNotExist( $dir . '/artifact.tar' );
+			$this->assertFileExists( $second_dir . '/second.tar' );
+			$this->assertNotEmpty( $result['errors'] );
+		} finally {
+			chmod( $second_dir, 0700 );
+		}
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileDoesNotExist( $second_dir . '/second.tar' );
+		$this->assertSame( 'incremental manifest', file_get_contents( $dir . '/files.list' ) );
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $id ) );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+		rmdir( $second_dir );
+	}
+
+	/** Destination minimums protect the entire incremental unit independently. */
+	public function test_destination_minimums_hold_whole_chain_independently() {
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection                = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$destinations              = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$first                     = $destinations->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Long minimum',
+				'settings' => array( 'minimum_remote_retention_days' => 30 ),
+			)
+		);
+		$second                    = $destinations->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Short minimum',
+				'settings' => array( 'minimum_remote_retention_days' => 7 ),
+			)
+		);
+		list( $base, $base_dir )   = $this->make_snapshot_with_dir();
+		list( $child, $child_dir ) = $this->make_snapshot_with_dir(
+			array(
+				'type'      => 'incremental',
+				'parent_id' => $base,
+			)
+		);
+		$now                       = time();
+		$store                     = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $child, array( $first, $second ) );
+		foreach ( $store->get_jobs_for_snapshot( $child ) as $job ) {
+			$store->save_checkpoint(
+				$job->id,
+				array(
+					'uploaded_at'        => $now,
+					'manifest_submitted' => true,
+				)
+			);
+			$store->complete_job( $job->id );
+		}
+		$this->assertSame( $now + 30 * DAY_IN_SECONDS, $protection::remote_protection( array( $base, $child ) )['protected_until'] );
+		$result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( $this->task_id, true );
+		$this->assertSame( array(), $result['deleted_ids'] );
+		$this->assertFileExists( $base_dir . '/artifact.tar' );
+		$this->assertFileExists( $child_dir . '/artifact.tar' );
+		$destinations->update_destination( $first, array( 'settings' => array( 'minimum_remote_retention_days' => 0 ) ) );
+		$this->assertSame( $now + 7 * DAY_IN_SECONDS, $protection::remote_protection( array( $base, $child ) )['protected_until'] );
+		$destinations->update_destination( $second, array( 'settings' => array( 'minimum_remote_retention_days' => 0 ) ) );
+		$this->assertFalse( $protection::holds_automatic_removal( array( $base, $child ) ) );
+	}
+	/** Terminal flags cannot replace complete, matching remote artifact evidence. */
+	public function test_remote_only_refuses_missing_mismatched_or_incomplete_artifact_indexes() {
+		$destination = $this->make_retention_destination();
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$protection::save_task_remove_local_archives( $this->task_id, true );
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		global $wpdb;
+		$snapshot              = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$archives              = $snapshot->archives;
+		$hash                  = hash_file( 'sha256', $dir . '/artifact.tar' );
+		$archives[0]['sha256'] = $hash;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'archives' => wp_json_encode( $archives ) ), array( 'id' => $id ) );
+		$protection::capture_required_destinations( $id, array( $destination ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $destination ) );
+		$valid   = array(
+			'file'   => 'artifact.tar',
+			'role'   => 'full',
+			'size'   => 100,
+			'sha256' => $hash,
+			'mode'   => 'whole',
+			'done'   => true,
+		);
+		$invalid = array(
+			'missing artifact'       => array(),
+			'wrong size'             => array( array_merge( $valid, array( 'size' => 101 ) ) ),
+			'wrong immutable hash'   => array( array_merge( $valid, array( 'sha256' => str_repeat( '0', 64 ) ) ) ),
+			'incomplete chunk index' => array(
+				array_merge(
+					$valid,
+					array(
+						'mode'   => 'chunked',
+						'chunks' => array(),
+					)
+				),
+			),
+		);
+		foreach ( $invalid as $case => $artifacts ) {
+			$wpdb->update(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+				array(
+					'provider'   => 's3',
+					'status'     => 'complete',
+					'checkpoint' => wp_json_encode(
+						array(
+							'uploaded_at'         => time(),
+							'manifest_submitted'  => true,
+							'destination_binding' => \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) ),
+							'artifacts'           => $artifacts,
+						)
+					),
+				),
+				array( 'snapshot_id' => $id )
+			);
+			$this->assertFalse( $protection::required_uploads_verified( $id ), $case );
+			MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+			$this->assertFileExists( $dir . '/artifact.tar', $case );
+		}
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
+			array(
+				'checkpoint' => wp_json_encode(
+					array(
+						'uploaded_at'         => time(),
+						'manifest_submitted'  => true,
+						'destination_binding' => \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) ),
+						'artifacts'           => array( $valid ),
+					)
+				),
+			),
+			array( 'snapshot_id' => $id )
+		);
+		$this->assertTrue( $protection::required_uploads_verified( $id ) );
+		MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileDoesNotExist( $dir . '/artifact.tar' );
+	}
+	/**
+	 * Build a captured verified upload against a real readable destination row.
+	 *
+	 * @return array Snapshot id, local directory and destination id.
+	 */
+	private function make_verified_retention_snapshot(): array {
+		$destination      = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Verified retention fixture',
+				'settings' => array(),
+			)
+		);
+		list( $id, $dir ) = $this->make_snapshot_with_dir();
+		$protection       = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$protection::save_task_remove_local_archives( $this->task_id, true );
+		$protection::capture_required_destinations( $id, array( $destination ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $destination ) );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$store->save_checkpoint(
+			$job->id,
+			array(
+				'manifest_submitted'  => true,
+				'destination_binding' => \MainWP\Dashboard\MainWP_Backup_Retention_Protection::destination_binding( \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) ),
+				'uploaded_at'         => time(),
+				'artifacts'           => $this->verified_artifacts( $id ),
+			)
+		);
+		$store->complete_job( $job->id );
+		return array( $id, $dir, $destination );
+	}
+
+	/** Deleting a destination during a restore hold must keep the remaining local source. */
+	public function test_remote_only_deleted_destination_keeps_source_after_hold_releases() {
+		list( $id, $dir, $destination ) = $this->make_verified_retention_snapshot();
+		$protection                     = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$this->assertTrue( $protection::required_uploads_verified( $id ) );
+		$restores    = MainWP_Backup_Restore_Job_Store::instance();
+		$reservation = $restores->reserve_site( $this->site_id );
+		$this->assertGreaterThan( 0, $reservation );
+		$executor = MainWP_Backup_Retention_Executor::instance();
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$result = \MainWP\Dashboard\MainWP_Backup_Storage_Handler::delete_destination_flow( $destination, true );
+		$this->assertSame( array( 'deleted' => true ), $result );
+		$job = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( 'complete', $job->status, 'Destination removal retains completed upload history.' );
+		$provider = new \ReflectionMethod( '\MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver', 'provider_for_destination' );
+		$this->assertNull( $provider->invoke( \MainWP\Dashboard\MainWP_Backup_Restore_Transfer_Driver::instance(), $destination ) );
+		$restores->release_reservation( $reservation );
+		$this->assertFalse( $protection::required_uploads_verified( $id ) );
+		$executor->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertSame( array( $destination ), get_option( $protection::REQUIRED_OPTION_PREFIX . $id ) );
+	}
+
+	/**
+	 * Changed or unreadable destinations cannot supply the recorded remote copy.
+	 *
+	 * @dataProvider unavailable_required_destinations
+	 * @param array $mutation Stored destination changes.
+	 */
+	public function test_remote_only_unavailable_destination_keeps_source( array $mutation ) {
+		list( $id, $dir, $destination ) = $this->make_verified_retention_snapshot();
+		$protection                     = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$this->assertTrue( $protection::required_uploads_verified( $id ) );
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), $mutation, array( 'id' => $destination ) );
+		$this->assertFalse( $protection::required_uploads_verified( $id ) );
+		MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertSame( array( $destination ), get_option( $protection::REQUIRED_OPTION_PREFIX . $id ) );
+	}
+
+	/**
+	 * Destination mutations that make the recorded copy unavailable.
+	 *
+	 * @return array Mutations.
+	 */
+	public static function unavailable_required_destinations(): array {
+		return array(
+			'unreadable settings' => array( array( 'settings' => 'unreadable-settings' ) ),
+			'changed provider'    => array( array( 'provider' => 'gcs' ) ),
+		);
+	}
+
+	/** A failed pruning status write preserves verification for an automatic retry. */
+	public function test_remote_only_failed_prune_status_retains_upload_evidence_for_retry() {
+		list( $id ) = $this->make_verified_retention_snapshot();
+		global $wpdb;
+		$table     = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$fail      = static function ( $sql ) use ( $table, $id ) {
+			if ( 0 === strpos( $sql, 'UPDATE `' . $table . '` SET ' ) && false !== strpos( $sql, '`id` = ' . $id ) ) {
+				return str_replace( '`status`', '`missing_status_column`', $sql );
+			}
+			return $sql;
+		};
+		$candidate = array(
+			array(
+				'snapshot_ids' => array( $id ),
+				'reason'       => 'count',
+				'size_bytes'   => 100,
+			),
+		);
+		$executor  = MainWP_Backup_Retention_Executor::instance();
+		$store     = MainWP_Backup_Upload_Job_Store::instance();
+		add_filter( 'query', $fail );
+		$suppress = $wpdb->suppress_errors( true );
+		try {
+			$result = $executor->run_prune( $candidate, $this->make_task() );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $suppress );
+		}
+		$this->assertNotEmpty( $result['errors'] );
+		$this->assertSame( 'complete', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->status );
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $id ), 'The retry needs the persisted required-upload evidence.' );
+		$result = $executor->run_prune( $candidate, $this->make_task() );
+		$this->assertSame( array( $id ), $result['deleted_ids'] );
+		$this->assertSame( array(), $store->get_jobs_for_snapshot( $id ) );
+		$this->assertFalse( get_option( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::REQUIRED_OPTION_PREFIX . $id, false ) );
+	}
+
+	/** Confirmed pruned state completes evidence cleanup after an interrupted worker. */
+	public function test_remote_only_already_pruned_retry_cleans_retained_upload_evidence() {
+		list( $id, $dir ) = $this->make_verified_retention_snapshot();
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ), array( 'status' => 'pruned' ), array( 'id' => $id ) );
+		unlink( $dir . '/artifact.tar' );
+		$result = MainWP_Backup_Retention_Executor::instance()->run_prune(
+			array(
+				array(
+					'snapshot_ids' => array( $id ),
+					'reason'       => 'count',
+					'size_bytes'   => 100,
+				),
+			),
+			$this->make_task()
+		);
+		$this->assertSame( array(), $result['remaining_ids'] );
+		$this->assertSame( array(), MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id ) );
+		$this->assertFalse( get_option( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::REQUIRED_OPTION_PREFIX . $id, false ) );
+	}
+
+	/** Same-provider target edits preserve local data while policy-only edits remain compatible. */
+	public function test_remote_only_target_binding_rejects_target_edits_and_allows_minimum_change() {
+		list( $id, $dir, $destination ) = $this->make_verified_retention_snapshot();
+		$protection                     = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$destinations                   = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$this->assertTrue( $protection::required_uploads_verified( $id ) );
+		$destinations->update_destination( $destination, array( 'settings' => array( 'minimum_remote_retention_days' => 30 ) ) );
+		$this->assertTrue( $protection::required_uploads_verified( $id ), 'Retention policy does not change remote object location.' );
+		$destinations->update_destination(
+			$destination,
+			array(
+				'settings' => array(
+					'bucket'                        => 'replacement-bucket',
+					'minimum_remote_retention_days' => 30,
+				),
+			)
+		);
+		$this->assertFalse( $protection::required_uploads_verified( $id ) );
+		MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+		$this->assertSame( array( $destination ), get_option( $protection::REQUIRED_OPTION_PREFIX . $id ) );
+	}
+
+	/** Completed uploads without original target evidence retain the local archive. */
+	public function test_remote_only_legacy_upload_without_binding_keeps_source() {
+		list( $id, $dir ) = $this->make_verified_retention_snapshot();
+		$store            = MainWP_Backup_Upload_Job_Store::instance();
+		$job              = $store->get_jobs_for_snapshot( $id )[0];
+		$checkpoint       = $job->checkpoint;
+		unset( $checkpoint['destination_binding'] );
+		$store->save_checkpoint( $job->id, $checkpoint );
+		$this->assertFalse( \MainWP\Dashboard\MainWP_Backup_Retention_Protection::required_uploads_verified( $id ) );
+		MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $this->site_id, $this->task_id );
+		$this->assertFileExists( $dir . '/artifact.tar' );
+	}
+
+	/** A reused chain candidate skips its confirmed-pruned leaf and retries a failed base. */
+	public function test_remote_only_partial_chain_retry_preserves_verification_and_skips_pruned_leaf() {
+		list( $base ) = $this->make_verified_retention_snapshot();
+		list( $leaf ) = $this->make_verified_retention_snapshot();
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->update(
+			$table,
+			array(
+				'parent_id' => $base,
+				'type'      => 'incremental',
+			),
+			array( 'id' => $leaf )
+		);
+		$fail      = static function ( $sql ) use ( $table, $base ) {
+			return 0 === strpos( $sql, 'UPDATE `' . $table . '` SET ' ) && false !== strpos( $sql, '`id` = ' . $base ) ? str_replace( '`status`', '`missing_status_column`', $sql ) : $sql;
+		};
+		$executor  = MainWP_Backup_Retention_Executor::instance();
+		$candidate = array(
+			array(
+				'snapshot_ids' => array( $base, $leaf ),
+				'reason'       => 'count',
+				'size_bytes'   => 200,
+			),
+		);
+		add_filter( 'query', $fail );
+		$suppress = $wpdb->suppress_errors( true );
+		try {
+			$first = $executor->run_prune( $candidate, $this->make_task() );
+		} finally {
+			remove_filter( 'query', $fail );
+			$wpdb->suppress_errors( $suppress );
+		}
+		$this->assertSame( array( $leaf ), $first['deleted_ids'] );
+		$this->assertSame( array( $base ), $first['remaining_ids'] );
+		$this->assertCount( 1, MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $base ) );
+		$second = $executor->run_prune( $candidate, $this->make_task() );
+		$this->assertSame( array( $base ), $second['deleted_ids'] );
+		$this->assertSame( array(), $second['remaining_ids'] );
+		$this->assertSame( array(), $second['errors'] );
+	}
+	/** Retained manifests and already-offloaded payloads do not consume eviction work. */
+	public function test_remote_only_skips_offloaded_history_and_reaches_new_local_payload() {
+		list( $old, $old_dir )     = $this->make_verified_retention_snapshot();
+		list( $alias, $alias_dir ) = $this->make_verified_retention_snapshot();
+		list( $fresh, $fresh_dir ) = $this->make_verified_retention_snapshot();
+		file_put_contents( $old_dir . '/files.list', 'retained manifest' );
+		file_put_contents( $old_dir . '/tombstones.list', 'retained tombstones' );
+		$old_snapshot   = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $old );
+		$old_archives   = $old_snapshot->archives;
+		$old_archives[] = array(
+			'file' => 'files.list',
+			'role' => 'manifest',
+			'path' => $old_dir . '/files.list',
+			'size' => 17,
+		);
+		$old_archives[] = array(
+			'file' => 'tombstones.list',
+			'role' => 'tombstones',
+			'path' => $old_dir . '/tombstones.list',
+			'size' => 19,
+		);
+		global $wpdb;
+		$snapshot_table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$wpdb->update( $snapshot_table, array( 'archives' => wp_json_encode( $old_archives ) ), array( 'id' => $old ) );
+		$old_job                 = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $old )[0];
+		$checkpoint              = $old_job->checkpoint;
+		$checkpoint['artifacts'] = $this->verified_artifacts( $old );
+		MainWP_Backup_Upload_Job_Store::instance()->save_checkpoint( $old_job->id, $checkpoint );
+		unlink( $old_dir . '/artifact.tar' );
+		// An archive descriptor can point at manifest_path even without a manifest role.
+		$wpdb->update( $snapshot_table, array( 'manifest_path' => $alias_dir . '/artifact.tar' ), array( 'id' => $alias ) );
+		$job_table       = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$claims          = array();
+		$protected_reads = array();
+		$watch           = static function ( $sql ) use ( &$claims, &$protected_reads, $job_table, $snapshot_table, $old, $alias ) {
+			if ( 0 === strpos( $sql, 'UPDATE ' . $job_table . ' SET locked_by' ) && preg_match( '/snapshot_id IN \(([0-9, ]+)\)/', $sql, $matches ) ) {
+				foreach ( array_map( 'intval', explode( ',', $matches[1] ) ) as $id ) {
+					$claims[] = $id;
+					if ( in_array( $id, array( $old, $alias ), true ) ) {
+						// Model slow historical verification without a wall-clock sleep.
+						MainWP_Backup_Now_Continuation_Test::$fixed_microtime += 120;
+					}
+				}
+			}
+			if ( 0 === strpos( $sql, 'SELECT archives, manifest_path FROM ' . $snapshot_table ) && preg_match( '/id <> ([0-9]+)/', $sql, $matches ) ) {
+				$protected_reads[] = (int) $matches[1];
+			}
+			return $sql;
+		};
+		MainWP_Backup_Now_Continuation_Test::$fixed_microtime = microtime( true );
+		add_filter( 'query', $watch );
+		try {
+			$result = MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $this->site_id, $this->task_id, 60 );
+		} finally {
+			remove_filter( 'query', $watch );
+			MainWP_Backup_Now_Continuation_Test::$fixed_microtime = null;
+		}
+		$this->assertSame( array( $fresh ), $result['evicted_ids'] );
+		$this->assertSame( array( $fresh ), $claims, 'Only snapshots with an evictable payload need upload claims.' );
+		$this->assertSame( array( $fresh ), $protected_reads, 'Already-offloaded history needs no site-wide protected-path scan.' );
+		$this->assertFileDoesNotExist( $fresh_dir . '/artifact.tar' );
+		$this->assertFileExists( $old_dir . '/files.list' );
+		$this->assertFileExists( $old_dir . '/tombstones.list' );
+		$this->assertFileExists( $alias_dir . '/artifact.tar' );
 	}
 }

@@ -316,25 +316,29 @@ class MainWP_Abilities_Backups {
                 'retention'        => array(
                     'type'                 => 'object',
                     'additionalProperties' => false,
-                    'required'             => array( 'count', 'days', 'storage_mb', 'delete_cloud_copies', 'max_chain_length' ),
+                    'required'             => array( 'count', 'days', 'storage_mb', 'delete_cloud_copies', 'max_chain_length', 'remove_local_after_upload' ),
                     'properties'           => array(
-                        'count'               => array(
+                        'count'                     => array(
                             'type'        => 'integer',
                             'minimum'     => 0,
                             'description' => '0 means no limit.',
                         ),
-                        'days'                => array(
+                        'days'                      => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                         ),
-                        'storage_mb'          => array(
+                        'storage_mb'                => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                         ),
-                        'delete_cloud_copies' => array(
+                        'remove_local_after_upload' => array(
+                            'type'        => 'boolean',
+                            'description' => 'Remove new local archives after every selected destination has a verified upload. Requires a non-local destination. Omission preserves the current value.',
+                        ),
+                        'delete_cloud_copies'       => array(
                             'type' => 'boolean',
                         ),
-                        'max_chain_length'    => array(
+                        'max_chain_length'          => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                         ),
@@ -2278,21 +2282,26 @@ class MainWP_Abilities_Backups {
             'additionalProperties' => false,
             'required'             => array( 'id', 'name', 'provider', 'is_default', 'location', 'credentials_invalid', 'task_count', 'created_at', 'updated_at' ),
             'properties'           => array(
-                'id'                  => array(
+                'minimum_remote_retention_days' => array(
+                    'type'        => 'integer',
+                    'minimum'     => 0,
+                    'description' => 'Minimum days before automatic deletion, measured from verified upload completion. Older completed uploads without a recorded upload time use backup creation instead. 0 disables the minimum. Confirmed manual deletion can override it.',
+                ),
+                'id'                            => array(
                     'type'    => 'integer',
                     'minimum' => 1,
                 ),
-                'name'                => array(
+                'name'                          => array(
                     'type' => 'string',
                 ),
-                'provider'            => array(
+                'provider'                      => array(
                     'type' => 'string',
                     'enum' => array( 's3', 'gcs', 'dropbox', 'sftp', 'local' ),
                 ),
-                'is_default'          => array(
+                'is_default'                    => array(
                     'type' => 'boolean',
                 ),
-                'location'            => array(
+                'location'                      => array(
                     'type'                 => 'object',
                     'additionalProperties' => false,
                     'description'          => 'Non-credential, non-path location fields only. Access keys, app keys, usernames, host fingerprints, every secret, and every filesystem or folder path are never returned.',
@@ -2319,16 +2328,16 @@ class MainWP_Abilities_Backups {
                         ),
                     ),
                 ),
-                'credentials_invalid' => array(
+                'credentials_invalid'           => array(
                     'type'        => 'boolean',
                     'description' => 'The stored settings could not be decrypted. Fix it on the Backup Storage page.',
                 ),
-                'task_count'          => array(
+                'task_count'                    => array(
                     'type'    => 'integer',
                     'minimum' => 0,
                 ),
-                'created_at'          => self::ts_schema(),
-                'updated_at'          => self::ts_schema(),
+                'created_at'                    => self::ts_schema(),
+                'updated_at'                    => self::ts_schema(),
             ),
         );
     }
@@ -2596,6 +2605,9 @@ class MainWP_Abilities_Backups {
         $safe   = MainWP_Backup_Operations::safe_error( $error->get_error_code() );
         $source = $error->get_error_data();
         $data   = array( 'status' => is_array( $source ) && isset( $source['status'] ) ? (int) $source['status'] : 500 );
+        if ( 'mainwp_internal_error' === $safe['code'] && is_array( $source ) && true === ( $source['task_save_recovery_failed'] ?? false ) ) {
+            $safe['message'] = __( 'The backup task could not be restored after a failed save or concurrent change. It may still hold new retention values. Reload the task and check its settings.', 'mainwp' );
+        }
         if ( 'mainwp_insufficient_right' === $safe['code'] && is_array( $source ) && isset( $source['right'] ) && in_array( $source['right'], array_merge( self::READ_RIGHTS, MainWP_Abilities_Util::ABILITY_OPERATION_RIGHTS, array( 'restore_backups' ) ), true ) ) {
             $data['right'] = $source['right'];
         }
@@ -4062,25 +4074,29 @@ class MainWP_Abilities_Backups {
                     'type'                 => 'object',
                     'additionalProperties' => false,
                     'properties'           => array(
-                        'count'               => array(
+                        'count'                     => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                             'maximum' => 1000,
                         ),
-                        'days'                => array(
+                        'days'                      => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                             'maximum' => 3650,
                         ),
-                        'storage_mb'          => array(
+                        'storage_mb'                => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                             'maximum' => 104857600,
                         ),
-                        'delete_cloud_copies' => array(
+                        'remove_local_after_upload' => array(
+                            'type'        => 'boolean',
+                            'description' => 'Remove new local archives after every selected destination has a verified upload. Requires a non-local destination. Omission preserves the current value.',
+                        ),
+                        'delete_cloud_copies'       => array(
                             'type' => 'boolean',
                         ),
-                        'max_chain_length'    => array(
+                        'max_chain_length'          => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                             'maximum' => 1000,
@@ -4318,25 +4334,29 @@ class MainWP_Abilities_Backups {
                     'type'                 => 'object',
                     'additionalProperties' => false,
                     'properties'           => array(
-                        'count'               => array(
+                        'count'                     => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                             'maximum' => 1000,
                         ),
-                        'days'                => array(
+                        'days'                      => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                             'maximum' => 3650,
                         ),
-                        'storage_mb'          => array(
+                        'storage_mb'                => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                             'maximum' => 104857600,
                         ),
-                        'delete_cloud_copies' => array(
+                        'remove_local_after_upload' => array(
+                            'type'        => 'boolean',
+                            'description' => 'Remove new local archives after every selected destination has a verified upload. Requires a non-local destination. Omission preserves the current value.',
+                        ),
+                        'delete_cloud_copies'       => array(
                             'type' => 'boolean',
                         ),
-                        'max_chain_length'    => array(
+                        'max_chain_length'          => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                             'maximum' => 1000,
@@ -5079,25 +5099,30 @@ class MainWP_Abilities_Backups {
                         'days',
                         'storage_mb',
                         'delete_cloud_copies',
+                        'remove_local_after_upload',
                         'max_chain_length',
                     ),
                     'properties'           => array(
-                        'count'               => array(
+                        'count'                     => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                         ),
-                        'days'                => array(
+                        'days'                      => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                         ),
-                        'storage_mb'          => array(
+                        'storage_mb'                => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                         ),
-                        'delete_cloud_copies' => array(
+                        'remove_local_after_upload' => array(
+                            'type'        => 'boolean',
+                            'description' => 'Remove new local archives after every selected destination has a verified upload. Requires a non-local destination. Omission preserves the current value.',
+                        ),
+                        'delete_cloud_copies'       => array(
                             'type' => 'boolean',
                         ),
-                        'max_chain_length'    => array(
+                        'max_chain_length'          => array(
                             'type'    => 'integer',
                             'minimum' => 0,
                         ),
@@ -5658,7 +5683,7 @@ class MainWP_Abilities_Backups {
             'mainwp/update-backup-destination-v1',
             array(
                 'label'               => __( 'Update Backup Destination', 'mainwp' ),
-                'description'         => __( 'Rename a destination or change its default flag. Nothing else can be changed here: credentials, hosts, buckets and paths are edited on the Backup Storage page. The stored connection is tested before saving, and an SFTP destination without a pinned host key pins the key on first contact. Requires an account with access to all sites. Possible errors: mainwp_invalid_input, mainwp_backup_destination_not_found, mainwp_backup_destination_credentials_required, mainwp_backup_legacy_disabled, mainwp_restricted_account, and the provider\'s failure code when the connection test fails.', 'mainwp' ),
+                'description'         => __( 'Rename a destination, change its default flag, or set its minimum remote retention from 0 to 36500 days. Credentials, hosts, buckets and paths are edited on the Backup Storage page. The stored connection is tested before saving, and an SFTP destination without a pinned host key pins the key on first contact. Requires an account with access to all sites. Possible errors: mainwp_invalid_input, mainwp_backup_destination_not_found, mainwp_backup_destination_credentials_required, mainwp_backup_legacy_disabled, mainwp_restricted_account, and the provider\'s failure code when the connection test fails.', 'mainwp' ),
                 'category'            => 'mainwp-backups',
                 'ability_class'       => MainWP_Backup_Ability::class,
                 'input_schema'        => self::update_backup_destination_input_schema(),
@@ -5814,6 +5839,11 @@ class MainWP_Abilities_Backups {
         $schema                             = self::test_backup_destination_input_schema();
         $schema['properties']['name']       = array( 'type' => 'string' );
         $schema['properties']['is_default'] = array( 'type' => 'boolean' );
+        $schema['properties']['minimum_remote_retention_days'] = array(
+            'type'    => 'integer',
+            'minimum' => 0,
+            'maximum' => 36500,
+        );
         return $schema;
     }
 
@@ -5950,13 +5980,13 @@ class MainWP_Abilities_Backups {
                             'properties'           => array(
                                 'field' => array(
                                     'type' => 'string',
-                                    'enum' => array( 'name', 'is_default' ),
+                                    'enum' => array( 'name', 'is_default', 'minimum_remote_retention_days' ),
                                 ),
                                 'from'  => array(
-                                    'type' => array( 'string', 'boolean' ),
+                                    'type' => array( 'string', 'boolean', 'integer' ),
                                 ),
                                 'to'    => array(
-                                    'type' => array( 'string', 'boolean' ),
+                                    'type' => array( 'string', 'boolean', 'integer' ),
                                 ),
                             ),
                         ),

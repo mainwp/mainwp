@@ -184,6 +184,16 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
 
 
     /**
+     * Check the site's translation update toggle, loading it when needed.
+     *
+     * @param object $website Child site row.
+     * @return bool
+     */
+    public static function is_translation_updates_ignored( $website ): bool {
+        return ! empty( MainWP_DB::instance()->get_website_option( $website, 'ignored_trans_updates' ) );
+    }
+
+    /**
      * Count one site's available updates the same way the Available Updates tables do.
      *
      * Per-site ignore toggles, per-version core ignores, and per-site or global
@@ -241,7 +251,7 @@ class MainWP_Common_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSameLi
         }
 
         $translation_upgrades = json_decode( $website->translation_upgrades, true );
-        if ( ! empty( $website->ignored_trans_updates ) ) {
+        if ( self::is_translation_updates_ignored( $website ) ) {
             $translation_upgrades = array();
         }
 

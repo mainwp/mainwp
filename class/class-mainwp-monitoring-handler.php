@@ -253,6 +253,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'emails/mainwp-uptime-monitoring-email.php',
                 array(
                     'current_email_site' => $site, // support tokens process.
+                    'plain_text'         => $plain_text,
                     'heading'            => $heading,
                 )
             );
@@ -330,6 +331,7 @@ class MainWP_Monitoring_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSa
                 'emails/mainwp-site-health-monitoring-email.php',
                 array(
                     'current_email_site' => $site,  // support tokens process.
+                    'plain_text'         => $plain_text,
                     'heading'            => $heading,
                 )
             );

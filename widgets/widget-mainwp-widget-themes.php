@@ -169,7 +169,7 @@ class MainWP_Widget_Themes { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                                 <div class="ui right pointing dropdown">
                                     <i class="ellipsis vertical icon"></i>
                                     <div class="menu">
-                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_themes' ) ) : ?>
+                                        <?php if ( \mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) : ?>
                                             <a href="#" class="mainwp-theme-activate item <?php echo $is_demo ? 'disabled' : ''; ?>"><?php esc_html_e( 'Activate', 'mainwp' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></a>
                                         <?php endif; ?>
                                         <?php if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) : ?>

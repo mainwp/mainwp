@@ -530,6 +530,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             var backupSinceTs = 0;
             var backupInProgress = false;
             var snapshotsListLoaded = false;
+            var snapshotListRequest = 0;
             var currentSiteUrl = '';
             var phaseOrder = [ 'pending', 'preflight', 'pre_snapshot', 'staging', 'transferring', 'running', 'verifying', 'completed' ];
 
@@ -546,8 +547,8 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
 
             var sourceLabels = {
                 'local': '<?php echo esc_js( esc_html__( 'This Dashboard', 'mainwp' ) ); ?>',
-                'remote': '<?php echo esc_js( esc_html__( 'Cloud Storage', 'mainwp' ) ); ?>',
-                'remote_chunked': '<?php echo esc_js( esc_html__( 'Cloud Storage', 'mainwp' ) ); ?>',
+                'remote': '<?php echo esc_js( esc_html__( 'Remote only', 'mainwp' ) ); ?>',
+                'remote_chunked': '<?php echo esc_js( esc_html__( 'Remote only', 'mainwp' ) ); ?>',
                 'unavailable': '<?php echo esc_js( esc_html__( 'Removed by Retention', 'mainwp' ) ); ?>',
                 'removed': '<?php echo esc_js( esc_html__( 'Removed', 'mainwp' ) ); ?>',
                 'damaged': '<?php echo esc_js( esc_html__( 'Damaged Archive', 'mainwp' ) ); ?>'
@@ -1119,11 +1120,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
             // refilled through the DataTables API.
             function loadSnapshots( siteId ) {
                 var followGen = backupFollowGen;
+                var requestId = ++snapshotListRequest;
                 if ( currentSite !== siteId ) {
                     ++snapshotDeleteRequest;
                     snapshotDeletePreview = null;
                     $( '#mainwp-snapshot-delete-modal' ).modal( 'hide' );
                 }
+                $( '#mainwp-snapshots-cleanup-btn' ).removeData( 'retention-warnings' );
                 currentSite = siteId;
                 if ( siteId > 0 ) {
                     enableSnapshotControls( true );
@@ -1137,12 +1140,13 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 snapshotsTable.clear().draw();
                 $( '#mainwp-restore-failed-jobs' ).hide().find( 'tbody' ).empty();
                 $.post( ajaxurl, { action: 'mainwp_restore_snapshot_list', security: nonces.list, site_id: siteId }, function ( response ) {
-                    if ( siteId !== currentSite ) {
+                    if ( siteId !== currentSite || requestId !== snapshotListRequest ) {
                         return; // A site switch superseded this request; its response must not repaint the newer site's list.
                     }
                     // Before the rows draw: the Restore buttons read this flag.
                     showDisconnected( response.site_disconnected, response.reconnect_url );
                     enableSnapshotControls( siteId > 0 );
+                    $( '#mainwp-snapshots-cleanup-btn' ).data( 'retention-warnings', ! response.error && Array.isArray( response.cleanup_warnings ) ? response.cleanup_warnings : null );
                     siteIsMultisite = !! response.multisite;
                     siteHasWooCommerce = !! response.site_has_woocommerce;
                     currentSiteUrl = response.site_url || '';
@@ -1227,7 +1231,7 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     // supersession rule as the success path, or a delayed
                     // failure from the previous site would erase the list the
                     // newer request just drew.
-                    if ( siteId !== currentSite ) {
+                    if ( siteId !== currentSite || requestId !== snapshotListRequest ) {
                         return;
                     }
                     setSnapshotsPlaceholder( snapshotsPlaceholders.error );
@@ -2314,6 +2318,11 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                 if ( $( this ).hasClass( 'disabled' ) || ! ( currentSite > 0 ) ) {
                     return;
                 }
+                var cleanupWarnings = $( '#mainwp-snapshots-cleanup-btn' ).data( 'retention-warnings' );
+                if ( ! Array.isArray( cleanupWarnings ) ) {
+                    setBackupStatus( '<?php echo esc_js( esc_html__( 'The backup list is not ready for cleanup. Wait for it to load, or refresh the page and try again.', 'mainwp' ) ); ?>', true );
+                    return;
+                }
                 var runCleanup = function () {
                     $( '#mainwp-snapshots-cleanup-btn' ).prop( 'disabled', true ).addClass( 'disabled' );
                     setBackupStatus( '<?php echo esc_js( esc_html__( 'Cleaning up backups...', 'mainwp' ) ); ?>', false );
@@ -2344,6 +2353,9 @@ class MainWP_Backup_Snapshots_View { // phpcs:ignore Generic.Classes.OpeningBrac
                     } );
                 };
                 var confirmMsg = '<?php echo esc_js( esc_html__( 'Clean up this site\'s backups? Leftover files from interrupted backups are removed, and old on-demand backups beyond the retention count are pruned. Clean Up also deletes snapshots whose backup task was deleted, including their cloud copies. Pruned and deleted backups can no longer be restored.', 'mainwp' ) ); ?>';
+                cleanupWarnings.forEach( function ( warning ) {
+                    confirmMsg += '<div class="ui yellow message">' + escAttr( warning ) + '</div>';
+                } );
                 mainwp_confirm( confirmMsg, runCleanup );
             } );
 

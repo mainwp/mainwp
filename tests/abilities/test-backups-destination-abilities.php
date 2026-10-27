@@ -52,6 +52,90 @@ class MainWP_Backups_Destination_Abilities_Test extends MainWP_Abilities_Test_Ca
 		);
 	}
 
+	/** Minimum changes use the same numeric value in preview, save and public reads. */
+	public function test_minimum_remote_retention_ability_roundtrip(): void {
+		$input   = array(
+			'destination_id'                => $this->id,
+			'minimum_remote_retention_days' => 90,
+		);
+		$preview = $this->execute( 'update-backup-destination', $input + array( 'dry_run' => true ) );
+		$this->assert_output( 'update-backup-destination', $preview );
+		$this->assertContains(
+			array(
+				'field' => 'minimum_remote_retention_days',
+				'from'  => 0,
+				'to'    => 90,
+			),
+			$preview['would_affect']['changes']
+		);
+		$this->assertSame( 0, (int) ( MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id )->settings['minimum_remote_retention_days'] ?? 0 ) );
+		$saved = $this->execute( 'update-backup-destination', $input + array( 'confirm' => true ) );
+		$this->assert_output( 'update-backup-destination', $saved );
+		$this->assertSame( 90, $saved['destination']['minimum_remote_retention_days'] );
+		$renamed = $this->execute(
+			'update-backup-destination',
+			array(
+				'destination_id' => $this->id,
+				'name'           => 'Preserved minimum',
+				'confirm'        => true,
+			)
+		);
+		$this->assertSame( 90, $renamed['destination']['minimum_remote_retention_days'] );
+		$disabled = $this->execute(
+			'update-backup-destination',
+			array(
+				'destination_id'                => $this->id,
+				'minimum_remote_retention_days' => 0,
+				'confirm'                       => true,
+			)
+		);
+		$this->assertSame( 0, $disabled['destination']['minimum_remote_retention_days'] );
+	}
+
+	/** REST preserves the minimum in both preview projection and confirmed reads. */
+	public function test_minimum_remote_retention_rest_parity(): void {
+		$input = array(
+			'destination_id'                => $this->id,
+			'minimum_remote_retention_days' => 90,
+		);
+		foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+			$response = $this->rest( 'update-backup-destination', $input + array( $mode => true ) );
+			$this->assertSame( 200, $response->get_status() );
+			$result = $response->get_data();
+			$this->assert_output( 'update-backup-destination', $result );
+			if ( 'dry_run' === $mode ) {
+				$this->assertContains(
+					array(
+						'field' => 'minimum_remote_retention_days',
+						'from'  => 0,
+						'to'    => 90,
+					),
+					$result['would_affect']['changes']
+				);
+			} else {
+				$this->assertSame( 90, $result['destination']['minimum_remote_retention_days'] );
+			}
+		}
+	}
+
+	/** Invalid minimums fail preview and save before any provider probe. */
+	public function test_minimum_remote_retention_rejects_invalid_values(): void {
+		foreach ( array( -1, 36501, 1.5, 'invalid', true ) as $value ) {
+			foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+				$result = $this->execute(
+					'update-backup-destination',
+					array(
+						'destination_id'                => $this->id,
+						'minimum_remote_retention_days' => $value,
+						$mode                           => true,
+					),
+					true
+				);
+				$this->assertWPError( $result );
+			}
+		}
+	}
+
 	/** The case owns its rows and scratch files. */
 	public function tear_down() {
 		MainWP_Backup_Storage_Destinations::instance()->delete_destination( $this->id );

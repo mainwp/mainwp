@@ -37,7 +37,7 @@ source /path/to/your/.env
 
 # Install test harness (creates test database)
 # Adjust DB credentials and socket variable name for your setup
-bin/install-wp-tests.sh mainwp_tests root root "localhost:$DB_SOCKET" latest
+WP_TESTS_DIR=/tmp/wordpress-tests-lib bin/install-wp-tests.sh mainwp_tests root root "localhost:$DB_SOCKET" latest
 ```
 
 ## Running Tests

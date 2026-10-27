@@ -157,10 +157,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
         if ( ! $wp_filesystem->exists( $dir . 'index.php' ) ) {
             $wp_filesystem->touch( $dir . 'index.php' );
         }
-        $maxBackups = get_option( 'mainwp_backupsOnServer' );
-        if ( false === $maxBackups ) {
-            $maxBackups = 1;
-        }
+        $maxBackups = MainWP_Backup_Settings::get_server_retention_count();
 
         $dbBackups   = array();
         $fullBackups = array();
@@ -221,7 +218,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 continue;
             }
             ++$cnt;
-            if ( $cnt >= $maxBackups ) {
+            if ( null !== $maxBackups && $maxBackups > 0 && $cnt >= $maxBackups ) {
                 $wp_filesystem->delete( $dbBackup );
             }
         }
@@ -232,7 +229,7 @@ class MainWP_Backup_File_Manager { // phpcs:ignore Generic.Classes.OpeningBraceS
                 continue;
             }
             ++$cnt;
-            if ( $cnt >= $maxBackups ) {
+            if ( null !== $maxBackups && $maxBackups > 0 && $cnt >= $maxBackups ) {
                 $wp_filesystem->delete( $fullBackup );
             }
         }

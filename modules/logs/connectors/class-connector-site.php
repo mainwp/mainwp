@@ -167,7 +167,10 @@ class Connector_Site extends Log_Connector {
         $this->log(
             '%1$s',
             array(
-                'item' => esc_html__( 'Deleted', 'mainwp' ),
+                'item'                    => esc_html__( 'Deleted', 'mainwp' ),
+                'deleted_site_name'       => (string) $website->name,
+                'deleted_site_url'        => (string) $website->url,
+                'deleted_site_is_staging' => (int) $website->is_staging,
             ),
             $website->id,
             'sites',

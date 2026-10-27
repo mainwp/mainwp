@@ -254,6 +254,9 @@ class Log_Admin {
      */
     public function ajax_clean_up_child_logs() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_log_clean_up_child_logs' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_insights_actions' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+        }
 
         $siteid  = isset( $_POST['siteid'] ) ? intval( $_POST['siteid'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $website = false;

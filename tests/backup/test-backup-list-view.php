@@ -17,6 +17,8 @@ use MainWP\Dashboard\MainWP_Backup_List_View;
  */
 class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 
+	use Site_Fixture;
+
 	/**
 	 * Build a minimal backup task row object.
 	 *
@@ -293,6 +295,48 @@ class MainWP_Backup_List_View_Test extends \WP_UnitTestCase {
 		$paused = $view->column_actions( $this->make_item( array( 'paused' => 1 ) ) );
 		$this->assertStringContainsString( 'class="item" task_id="1" onClick="return managebackups_resume(this);"', $paused );
 		$this->assertStringNotContainsString( 'backup_run_now', $paused );
+	}
+
+	/** Rendering Delete must not read the task's backup history. */
+	public function test_row_delete_action_does_not_load_history(): void {
+		global $wpdb;
+		wp_set_current_user( self::factory()->user->create( array( 'role' => 'administrator' ) ) );
+		update_option( 'mainwp_enableNativeBackups', 1 );
+		$site = $this->create_test_site();
+		$task = \MainWP\Dashboard\MainWP_DB_Backup::instance()->add_backup_task( get_current_user_id(), 'History stays lazy', 'daily', 'full', '', (string) $site, '', '', '', 0, 0, 0, 0, 0, 'zip', 0, 1, 150, 0, 0 );
+		$this->assertNotFalse( $task );
+		$table = \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$this->assertNotFalse(
+			$wpdb->insert(
+				$table,
+				array(
+					'site_id'  => $site,
+					'task_id'  => $task->id,
+					'type'     => 'full',
+					'status'   => 'complete',
+					'created'  => time(),
+					'archives' => '[]',
+				)
+			)
+		);
+		$reads = array();
+		$query = static function ( $sql ) use ( &$reads ) {
+			if ( preg_match( '/^\s*SELECT\b.*mainwp_wp_backup(?:_|\b)/is', $sql ) ) {
+				$reads[] = $sql;
+			}
+			return $sql;
+		};
+		add_filter( 'query', $query );
+		try {
+			$output = ( new MainWP_Backup_List_View() )->column_actions( $task );
+		} finally {
+			remove_filter( 'query', $query );
+			$wpdb->delete( $table, array( 'task_id' => $task->id ) );
+			$wpdb->delete( \MainWP\Dashboard\MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'id' => $task->id ) );
+		}
+		$this->assertSame( array(), $reads, 'Rendering a row must not load task or snapshot history for its Delete action.' );
+		$this->assertStringContainsString( 'managebackups_remove(this)', $output );
+		$this->assertStringNotContainsString( 'data-retention-warning', $output );
 	}
 
 	/**

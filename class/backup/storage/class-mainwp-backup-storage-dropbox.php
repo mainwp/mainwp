@@ -290,6 +290,59 @@ class MainWP_Backup_Storage_Dropbox implements MainWP_Backup_Storage_Provider { 
     }
 
     /**
+     * Resolve a persistent marker without overwriting an existing file.
+     *
+     * @param string $key Server-owned marker key.
+     * @return string Server-issued file ID.
+     * @throws \RuntimeException When the namespace cannot be verified.
+     */
+    public function retention_marker_id( string $key ): string {
+        if ( ! preg_match( '/^\.mainwp-retention-[a-f0-9]{32}$/D', $key ) ) {
+            throw new \RuntimeException( 'Invalid backup storage marker.' );
+        }
+        $response = $this->authed_request(
+            static::API_BASE . '/2/files/get_metadata',
+            array( 'Content-Type' => 'application/json' ),
+            (string) wp_json_encode( array( 'path' => $this->object_path( $key ) ) ),
+            array( 'timeout' => 30 )
+        );
+        if ( $this->is_missing_path( $response ) ) {
+            $response = $this->authed_request(
+                static::CONTENT_BASE . '/2/files/upload',
+                array(
+                    'Content-Type'    => 'application/octet-stream',
+                    'Dropbox-API-Arg' => (string) wp_json_encode(
+                        array(
+                            'path'            => $this->object_path( $key ),
+                            'mode'            => 'add',
+                            'autorename'      => false,
+                            'strict_conflict' => true,
+                            'mute'            => true,
+                        )
+                    ),
+                ),
+                '1',
+                array( 'timeout' => 30 )
+            );
+            // Read back both a successful creation and a concurrent creator's conflict.
+            $this->expect_status( $response, array( 200, 409 ), 'backup storage marker creation' );
+            $response = $this->authed_request(
+                static::API_BASE . '/2/files/get_metadata',
+                array( 'Content-Type' => 'application/json' ),
+                (string) wp_json_encode( array( 'path' => $this->object_path( $key ) ) ),
+                array( 'timeout' => 30 )
+            );
+        }
+        $this->expect_status( $response, array( 200 ), 'backup storage identity' );
+        $metadata = json_decode( (string) wp_remote_retrieve_body( $response ), true );
+        if ( ! is_array( $metadata ) || 'file' !== ( $metadata['.tag'] ?? '' ) || ! is_string( $metadata['id'] ?? null )
+            || '' === $metadata['id'] || ! isset( $metadata['size'] ) || 1 !== $metadata['size'] ) {
+            throw new \RuntimeException( 'Dropbox did not confirm the backup storage marker.' );
+        }
+        return $metadata['id'];
+    }
+
+    /**
      * Send an RPC request with a JSON body.
      *
      * @param string $endpoint Endpoint path on the API base.

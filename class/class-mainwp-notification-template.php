@@ -200,7 +200,7 @@ class MainWP_Notification_Template { // phpcs:ignore Generic.Classes.OpeningBrac
 
         if ( isset( $current_email_site ) && is_object( $current_email_site ) ) {
 
-            $content = MainWP_Notification_Settings::replace_tokens_for_content( $content, $current_email_site );
+            $content = MainWP_Notification_Settings::replace_tokens_for_content( $content, $current_email_site, empty( $args['plain_text'] ) );
 
             if ( isset( $child_site_tokens ) && ! empty( $child_site_tokens ) ) {
 

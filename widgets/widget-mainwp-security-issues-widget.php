@@ -51,15 +51,15 @@ class MainWP_Security_Issues_Widget { // phpcs:ignore Generic.Classes.OpeningBra
             $websites = MainWP_DB::instance()->query( $sql );
         } else {
             $wpsite_fields = array( 'id', 'name', 'url', 'securityIssues' );
-            $websites      = MainWP_DB::instance()->query(
-                MainWP_DB::instance()->get_sql_websites_for_current_user_by_params(
-                    array(
-                        'select_wp_fields' => $wpsite_fields,
-                        'others_fields'    => array(),
-                        'view'             => 'custom_view',
-                    )
-                )
+            $params        = array(
+                'select_wp_fields' => $wpsite_fields,
+                'others_fields'    => array(),
+                'view'             => 'custom_view',
             );
+            if ( MainWP_System::instance()->is_multi_user() ) {
+                $params['where'] = 'wp.userid = ' . (int) get_current_user_id();
+            }
+            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
         }
 
         $total_securityIssues = 0;

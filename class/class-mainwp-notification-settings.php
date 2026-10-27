@@ -811,17 +811,21 @@ class MainWP_Notification_Settings { // phpcs:ignore Generic.Classes.OpeningBrac
     /**
      * Replace site tokens for content.
      *
-     * @param string $content content to find and replace tokens.
-     * @param object $website The website.
+     * @param string $content     content to find and replace tokens.
+     * @param object $website     The website.
+     * @param bool   $escape_html Whether to escape core values for HTML.
      *
      * @return string $content after replaced tokens.
      *
      * @uses \MainWP\Dashboard\MainWP_System_Utility::get_tokens_site_values()
      * @uses \MainWP\Dashboard\MainWP_System_Utility::replace_tokens_values()
      */
-    public static function replace_tokens_for_content( $content, $website ) {
+    public static function replace_tokens_for_content( $content, $website, $escape_html = true ) {
 
         $tokens_values = MainWP_System_Utility::get_tokens_site_values( $website, true );
+        if ( $escape_html ) {
+            $tokens_values = array_map( 'esc_html', $tokens_values );
+        }
 
         $content = MainWP_System_Utility::replace_tokens_values( $content, $tokens_values );
 

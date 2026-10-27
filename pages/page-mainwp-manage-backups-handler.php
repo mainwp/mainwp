@@ -1570,7 +1570,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 }
                 $errorOutput  .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
                 $_error_code   = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
-                $_history_code = MainWP_Backup_Error_Codes::code_for_exception( $e );
+                $_history_data = MainWP_Backup_Run_History::error_context( $e );
                 // Readiness, private-root and download-capacity failures need their specific remedy.
                 $_error_output = ! $_disk_refused && ! in_array( $_error_code, array( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ), true ) && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
                 $errorOutput  .= $_error_output . '<br />';
@@ -1581,11 +1581,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     $_progress                       = MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, (int) $siteid, array() );
                     $_progress_values['child_phase'] = MainWP_Backup_Task_Phase::FAILED;
                 }
-                if ( '' !== $_history_code ) {
+                if ( '' !== $_history_data['code'] ) {
                     $_fetch                          = $_progress && is_array( $_progress->fetchResult ) ? $_progress->fetchResult : array();
-                    $_fetch['error_code']            = $_history_code;
-                    $_extra                          = $e instanceof MainWP_Exception ? (string) $e->get_message_extra() : '';
-                    $_fetch['error_extra']           = preg_match( '/^AUTH_ERROR2(?:; mainwp_[a-z0-9_]+)?$/', $_extra ) ? $_extra : '';
+                    $_fetch['error_code']            = $_history_data['code'];
+                    $_fetch['error_extra']           = $_history_data['extra'];
                     $_progress_values['fetchResult'] = wp_json_encode( $_fetch );
                 }
                 MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, (int) $siteid, $_progress_values );

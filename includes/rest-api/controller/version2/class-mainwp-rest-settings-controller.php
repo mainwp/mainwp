@@ -2265,7 +2265,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         }
 
         // Return status url.
-        $status_url = $this->namespace . '/' . $this->rest_base . '/tools/disconnect-status/' . $disconnect_id;
+        $status_url = $this->namespace . '/' . $this->rest_base . '/tools/disconnect-all-sites-status/' . $disconnect_id;
         return rest_ensure_response(
             array(
                 'success'       => 1,

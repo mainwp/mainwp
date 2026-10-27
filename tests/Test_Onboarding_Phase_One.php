@@ -752,8 +752,8 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 	public static function update_counts() {
 		return array(
 			'zero'     => array( 0, 'Up to date' ),
-			'singular' => array( 1, '1 plugin update, 1 theme update, 1 translation update' ),
-			'plural'   => array( 2, '2 plugin updates, 2 theme updates, 2 translation updates' ),
+			'singular' => array( 1, '1 plugin update, 1 theme update, and 1 translation update' ),
+			'plural'   => array( 2, '2 plugin updates, 2 theme updates, and 2 translation updates' ),
 		);
 	}
 
@@ -770,17 +770,23 @@ class Test_Onboarding_Phase_One extends \WP_UnitTestCase {
 			)
 		);
 		update_option( 'mainwp_hide_update_everything', 0 );
-		update_option( 'mainwp_show_language_updates', 0 );
-		$_GET = array( 'siteid' => $site->id );
-		ob_start();
-		try {
-			$this->wizard->mwp_setup_ready();
-		} finally {
-			$html = ob_get_clean();
+		$_GET  = array( 'siteid' => $site->id );
+		$cases = array(
+			0 => '1 plugin update',
+			1 => '1 plugin update and 1 translation update',
+		);
+		foreach ( $cases as $show_translations => $expected ) {
+			update_option( 'mainwp_show_language_updates', $show_translations );
+			ob_start();
+			try {
+				$this->wizard->mwp_setup_ready();
+			} finally {
+				$html = ob_get_clean();
+			}
+			$button = $this->html_xpath( $html )->query( '//button[@id="mainwp-onboarding-update-all"]' );
+			$this->assertSame( 1, $button->length );
+			$this->assertStringContainsString( 'This installs ' . $expected . '.', $button->item( 0 )->getAttribute( 'data-confirm' ) );
 		}
-		$button = $this->html_xpath( $html )->query( '//button[@id="mainwp-onboarding-update-all"]' );
-		$this->assertSame( 1, $button->length );
-		$this->assertStringContainsString( 'This installs 1 plugin update.', $button->item( 0 )->getAttribute( 'data-confirm' ) );
 	}
 
 	/** The multi-site summary heading follows the connected-site count. */

@@ -1282,6 +1282,7 @@ function esc_html__( $text, $domain ) { return esc_html( $text ); }
 function esc_attr__( $text, $domain ) { return esc_attr( $text ); }
 function esc_html_e( $text, $domain ) { echo esc_html( $text ); }
 function _n( $single, $plural, $count, $domain ) { return 1 === (int) $count ? $single : $plural; }
+function wp_sprintf( $pattern, $items ) { $last = array_pop( $items ); return $items ? implode( ', ', $items ) . ( count( $items ) > 1 ? ', and ' : ' and ' ) . $last : (string) $last; }
 function wp_kses_post( $html ) { return $html; }
 function admin_url( $path ) { return 'https://dashboard.example.org/wp-admin/' . $path; }
 function add_query_arg( $name, $value, $url ) { return $url . '&' . $name . '=' . $value; }

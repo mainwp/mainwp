@@ -1320,7 +1320,7 @@ class MainWP_Setup_Wizard { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 /* translators: %s: WordPress version. */
                 $segments[] = sprintf( __( 'WordPress %s', 'mainwp' ), $data['new'] );
             }
-            $counts = implode( ', ', $segments );
+            $counts = wp_sprintf( '%l', $segments );
         }
         $can_update = $total && ! get_option( 'mainwp_hide_update_everything', false ) && \mainwp_current_user_can( 'dashboard', 'update_wordpress' ) && \mainwp_current_user_can( 'dashboard', 'update_plugins' ) && \mainwp_current_user_can( 'dashboard', 'update_themes' ) && \mainwp_current_user_can( 'dashboard', 'update_translations' );
         ?>

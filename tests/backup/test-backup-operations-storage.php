@@ -42,6 +42,40 @@ class MainWP_Backup_Operations_Storage_Test extends MainWP_Abilities_Test_Case {
 		);
 	}
 
+	/** The public destination model supplies an absent minimum as zero. */
+	public function test_remote_minimum_defaults_to_zero(): void {
+		$detail = \MainWP\Dashboard\MainWP_Backup_Read_Model::get_destination( $this->id );
+		$this->assertArrayHasKey( 'minimum_remote_retention_days', $detail );
+		$this->assertSame( 0, $detail['minimum_remote_retention_days'] );
+	}
+
+	/** Form-style string values are validated and retained across partial settings edits. */
+	public function test_storage_minimum_validation_and_partial_preservation(): void {
+		$handler = \MainWP\Dashboard\MainWP_Backup_Storage_Handler::class;
+		$input   = array(
+			'id'       => $this->id,
+			'provider' => 'local',
+			'name'     => 'Minimum fixture',
+			'settings' => array(
+				'base_path'                     => $this->dir,
+				'minimum_remote_retention_days' => '90',
+			),
+		);
+		$this->assertArrayHasKey( 'id', $handler::save_destination( $input ) );
+		$this->assertSame( 90, MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id )->settings['minimum_remote_retention_days'] );
+		unset( $input['settings']['minimum_remote_retention_days'] );
+		$this->assertArrayHasKey( 'id', $handler::save_destination( $input ) );
+		$this->assertSame( 90, MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id )->settings['minimum_remote_retention_days'] );
+		foreach ( array( '-1', '36501', '1.5', 'abc', array( 1 ) ) as $value ) {
+			$input['settings']['minimum_remote_retention_days'] = $value;
+			$this->assertArrayHasKey( 'error', $handler::save_destination( $input ) );
+			$this->assertSame( 90, MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id )->settings['minimum_remote_retention_days'] );
+		}
+		$input['settings']['minimum_remote_retention_days'] = '0';
+		$this->assertArrayHasKey( 'id', $handler::save_destination( $input ) );
+		$this->assertSame( 0, MainWP_Backup_Storage_Destinations::instance()->get_destination( $this->id )->settings['minimum_remote_retention_days'] );
+	}
+
 	/** Connection-test scratch must not survive the fixture. */
 	public function tearDown(): void {
 		foreach ( glob( $this->dir . '/*' ) ?: array() as $file ) {

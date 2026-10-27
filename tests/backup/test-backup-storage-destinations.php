@@ -104,6 +104,158 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 		return MainWP_Keys_Manager::get_keys_dir() . $file_key;
 	}
 
+	/** Repeated reads share one query and decrypt, while callers own their rows. */
+	public function test_request_memo_returns_independent_rows() {
+		global $wpdb;
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Memo',
+				'settings' => $this->s3_settings(),
+			)
+		);
+		$calls = 0;
+		$count = static function ( $value ) use ( &$calls ) {
+			++$calls;
+			return $value;
+		};
+		add_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		$queries = $wpdb->num_queries;
+		try {
+			$first                     = $store->get_destination( $id, false );
+			$first->name               = 'Changed by caller';
+			$first->settings['bucket'] = 'changed';
+			$second                    = $store->get_destination( $id, false );
+			$this->assertSame( 'Memo', $second->name );
+			$this->assertSame( $this->s3_settings(), $second->settings );
+			$this->assertNotSame( $first, $second );
+			$this->assertSame( 1, $wpdb->num_queries - $queries );
+			$this->assertSame( 1, $calls );
+		} finally {
+			remove_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		}
+	}
+
+	/** Failed decodes retry on fresh reads and preview reads in the same request. */
+	public function test_failed_decode_retries_without_losing_successful_reuse() {
+		foreach ( array( true, false ) as $refresh ) {
+			$store     = MainWP_Backup_Storage_Destinations::instance();
+			$id        = $store->add_destination(
+				array(
+					'provider'   => 's3',
+					'name'       => 'Retry decode',
+					'settings'   => $this->s3_settings(),
+					'is_default' => 1,
+				)
+			);
+			$calls     = 0;
+			$fail_once = static function ( $value ) use ( &$calls ) {
+				++$calls;
+				return 1 === $calls ? false : $value;
+			};
+			add_filter( 'mainwp_decrypt_key_value', $fail_once, PHP_INT_MAX );
+			try {
+				$failed = $store->get_destination( $id, $refresh );
+				$this->assertTrue( $failed->credentials_invalid );
+				$this->assertNull( $failed->settings );
+				$recovered = $store->get_destination( $id, $refresh );
+				$this->assertFalse( $recovered->credentials_invalid );
+				$this->assertSame( $this->s3_settings(), $recovered->settings );
+				$this->assertSame( $this->s3_settings(), $store->get_default()->settings );
+				$this->assertSame( $this->s3_settings(), $store->get_destination( $id, $refresh )->settings );
+				$this->assertSame( 2, $calls, 'Retry once, then reuse the successful decode.' );
+			} finally {
+				remove_filter( 'mainwp_decrypt_key_value', $fail_once, PHP_INT_MAX );
+			}
+		}
+	}
+
+	/** Every mutation makes subsequent reads observe the stored row. */
+	public function test_request_memo_invalidates_writes_defaults_and_delete() {
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$first = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'First',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$this->assertSame( 1, (int) $store->get_destination( $first, false )->is_default );
+		$second = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'Second',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$this->assertSame( 0, (int) $store->get_destination( $first, false )->is_default );
+		$this->assertSame( 1, (int) $store->get_destination( $second, false )->is_default );
+		$this->assertTrue( $store->update_destination( $first, array( 'is_default' => 1 ), $store->get_destination( $first, false ) ) );
+		$this->assertSame( 0, (int) $store->get_destination( $second, false )->is_default );
+		$this->assertTrue( $store->update_destination( $second, array( 'is_default' => 1 ) ) );
+		$this->assertSame( 0, (int) $store->get_destination( $first, false )->is_default );
+		$this->assertTrue( $store->update_destination( $second, array( 'name' => 'Renamed' ) ) );
+		$this->assertSame( 'Renamed', $store->get_destination( $second, false )->name );
+		$settings           = $this->s3_settings();
+		$settings['bucket'] = 'new-bucket';
+		$this->assertTrue( $store->update_destination( $second, array( 'settings' => $settings ) ) );
+		$this->assertSame( $settings, $store->get_destination( $second, false )->settings );
+		$this->assertTrue( $store->delete_destination( $second ) );
+		$this->assertNull( $store->get_destination( $second, false ) );
+		$this->assertNull( $store->get_default() );
+	}
+
+	/** Ordinary reads observe another request's metadata and deletion. */
+	public function test_default_reads_observe_external_destination_changes() {
+		global $wpdb;
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'Before',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$this->assertSame( 'Before', $store->get_destination( $id )->name );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_storage' );
+		$wpdb->update( $table, array( 'name' => 'After' ), array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- simulate another request.
+		$this->assertSame( 'After', $store->get_default()->name );
+		$this->assertSame( 'After', $store->get_destination( $id )->name );
+		$wpdb->delete( $table, array( 'id' => $id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- simulate another request.
+		$this->assertNull( $store->get_destination( $id ) );
+	}
+
+	/** Default and explicit reads reuse the decrypted settings. */
+	public function test_default_and_id_reads_share_decryption() {
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$id    = $store->add_destination(
+			array(
+				'provider'   => 's3',
+				'name'       => 'Default',
+				'settings'   => $this->s3_settings(),
+				'is_default' => 1,
+			)
+		);
+		$calls = 0;
+		$count = static function ( $value ) use ( &$calls ) {
+			++$calls;
+			return $value;
+		};
+		add_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		try {
+			$default                     = $store->get_default();
+			$default->settings['bucket'] = 'caller-change';
+			$this->assertSame( $this->s3_settings(), $store->get_destination( $id )->settings );
+			$this->assertSame( 1, $calls );
+		} finally {
+			remove_filter( 'mainwp_decrypt_key_value', $count, PHP_INT_MAX );
+		}
+	}
+
 	/**
 	 * Add a destination and read it back with settings decrypted.
 	 *
@@ -704,5 +856,145 @@ class MainWP_Backup_Storage_Destinations_Test extends \WP_UnitTestCase {
 		foreach ( array( 'fd00:ec2::254', '[fd00:ec2::254]', '169.254.169.254', 'fe80::1', '::ffff:169.254.169.254' ) as $host ) {
 			$this->assertFalse( MainWP_Backup_Storage_Destinations::is_private_network_host( $host ), $host . ' is not eligible for HTTP.' );
 		}
+	}
+	/** Credential replacement preserves a location; account/path changes do not. */
+	public function test_retention_binding_survives_credentials_but_not_location_changes() {
+		$protection = '\\MainWP\\Dashboard\\MainWP_Backup_Retention_Protection';
+		$cases      = array(
+			's3'   => array(
+				array(
+					'bucket'     => 'archive',
+					'access_key' => 'old-key',
+					'secret_key' => 'old-secret',
+				),
+				array(
+					'access_key' => 'new-key',
+					'secret_key' => 'new-secret',
+					'sse'        => 'AES256',
+				),
+				'bucket',
+			),
+			'gcs'  => array(
+				array(
+					'bucket'     => 'archive',
+					'access_key' => 'old-key',
+					'secret_key' => 'old-secret',
+				),
+				array(
+					'access_key' => 'new-key',
+					'secret_key' => 'new-secret',
+					'region'     => 'us-east1',
+				),
+				'bucket',
+			),
+			'sftp' => array(
+				array(
+					'host'      => 'server.example',
+					'username'  => 'alice',
+					'base_path' => '/archive',
+					'password'  => 'old',
+				),
+				array(
+					'password'         => 'new',
+					'private_key'      => 'new-key',
+					'host_fingerprint' => 'SHA256:known',
+				),
+				'username',
+			),
+		);
+		foreach ( $cases as $provider => list( $settings, $rotation, $location ) ) {
+			$row           = (object) array(
+				'provider' => $provider,
+				'settings' => $settings,
+			);
+			$binding       = $protection::destination_binding( $row );
+			$row->settings = array_merge( $settings, $rotation );
+			$this->assertSame( $binding, $protection::destination_binding( $row ), $provider . ' credential rotation must preserve archive eligibility.' );
+			$row->settings[ $location ] = 'another-target';
+			$this->assertNotSame( $binding, $protection::destination_binding( $row ), $provider . ' target change must invalidate old evidence.' );
+		}
+	}
+
+	/** A stale background identity save cannot replace an intervening settings edit. */
+	public function test_retention_identity_compare_and_swap_preserves_concurrent_edit() {
+		$store  = MainWP_Backup_Storage_Destinations::instance();
+		$id     = $store->add_destination(
+			array(
+				'provider' => 'dropbox',
+				'name'     => 'Before',
+				'settings' => array( 'refresh_token' => 'old-token' ),
+			)
+		);
+		$before = $store->get_destination( $id );
+		$this->assertTrue(
+			$store->update_destination(
+				$id,
+				array(
+					'name'     => 'Concurrent edit',
+					'settings' => array( 'refresh_token' => 'new-token' ),
+				)
+			)
+		);
+		$this->assertFalse( $store->update_destination( $id, array( 'settings' => $before->settings ), $before ) );
+		$after = $store->get_destination( $id );
+		$this->assertSame( 'Concurrent edit', $after->name );
+		$this->assertSame( 'new-token', $after->settings['refresh_token'] );
+	}
+
+	/** A zero-row CAS rolls back staged encryption while preserving the live key. */
+	public function test_retention_identity_cas_refusal_rolls_back_encryption() {
+		$store    = MainWP_Backup_Storage_Destinations::instance();
+		$id       = $store->add_destination(
+			array(
+				'provider' => 'dropbox',
+				'name'     => 'Dropbox',
+				'settings' => array( 'refresh_token' => 'live-token' ),
+			)
+		);
+		$source   = $store->get_destination( $id );
+		$before   = $this->keys_dir_listing();
+		$envelope = $this->raw_settings( $id );
+		$refuse   = static function ( $sql ) {
+			return str_starts_with( $sql, 'UPDATE' ) && str_contains( $sql, 'wp_backup_storage' ) ? 'SELECT 1 WHERE 0=1' : $sql;
+		};
+		add_filter( 'query', $refuse );
+		try {
+			$this->assertFalse( $store->update_destination( $id, array( 'settings' => array( 'refresh_token' => 'never-landed' ) ), $source ) );
+		} finally {
+			remove_filter( 'query', $refuse );
+		}
+		$this->assertSame( $before, $this->keys_dir_listing() );
+		$this->assertSame( $envelope, $this->raw_settings( $id ) );
+		$this->assertSame( 'live-token', $store->get_destination( $id )->settings['refresh_token'] );
+	}
+	/** The SQL predicate fences an edit landing after the initial source read. */
+	public function test_retention_identity_cas_fences_a_write_between_read_and_update() {
+		$store     = MainWP_Backup_Storage_Destinations::instance();
+		$id        = $store->add_destination(
+			array(
+				'provider' => 'dropbox',
+				'name'     => 'Dropbox',
+				'settings' => array( 'refresh_token' => 'old-token' ),
+			)
+		);
+		$source    = $store->get_destination( $id );
+		$key_count = count( $this->keys_dir_listing() );
+		$raced     = false;
+		$race      = static function ( $sql ) use ( $store, $id, &$raced ) {
+			if ( ! $raced && str_starts_with( $sql, 'UPDATE' ) && str_contains( $sql, 'wp_backup_storage' ) ) {
+				$raced = true;
+				$store->update_destination( $id, array( 'settings' => array( 'refresh_token' => 'concurrent-token' ) ) );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $race );
+		try {
+			$this->assertFalse( $store->update_destination( $id, array( 'settings' => array( 'refresh_token' => 'stale-worker-token' ) ), $source ) );
+		} finally {
+			remove_filter( 'query', $race );
+		}
+		$this->assertTrue( $raced );
+		$this->assertSame( 'concurrent-token', $store->get_destination( $id )->settings['refresh_token'] );
+		$this->assertCount( $key_count, $this->keys_dir_listing(), 'The refused worker must retire only its unpersisted key.' );
 	}
 }

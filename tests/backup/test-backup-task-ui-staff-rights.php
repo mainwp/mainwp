@@ -407,6 +407,180 @@ class MainWP_Backup_Task_UI_Staff_Rights_Test extends MainWP_Abilities_Test_Case
 	}
 
 	/**
+	 * Preview uses the existing browser admission matrix without mutating state.
+	 *
+	 * @return array
+	 */
+	public static function delete_preview_actors(): array {
+		$cases = array();
+		foreach ( array( 'cookie-nonce', 'cookie-only', 'cookie-invalid-nonce', 'application-password', 'application-password-cookie' ) as $state ) {
+			foreach ( array( 'S+', 'S-right', 'S-site', 'A', 'N', 'N-sub' ) as $actor ) {
+				$cases[ $state . '/' . $actor ] = array( $state, $actor );
+			}
+		}
+		return $cases;
+	}
+
+	/**
+	 * A preview must authorize the browser before returning warnings.
+	 *
+	 * @dataProvider delete_preview_actors
+	 * @param string $state Authentication state.
+	 * @param string $actor Actor.
+	 */
+	public function test_task_delete_preview_auth_matrix( string $state, string $actor ): void {
+		$this->actor( $actor, 'delete_backup_tasks' );
+		$this->authenticate( $state );
+		wp_create_nonce( 'mainwp_removebackup' );
+		$result = $this->observe(
+			fn() => $this->request(
+				'mainwp_removebackup',
+				$state,
+				array(
+					'dry_run'          => '1',
+					'delete_snapshots' => '1',
+				)
+			)
+		);
+		if ( 'cookie-nonce' === $state && in_array( $actor, array( 'S+', 'A', 'N' ), true ) ) {
+			$this->assertSame( array( 'warnings' => array() ), $result );
+		} elseif ( 'cookie-nonce' === $state && 'S-site' === $actor ) {
+			$this->assertSame( array( 'notask' => true ), $result );
+		} else {
+			$this->assertSame( array(), $result );
+		}
+	}
+
+	/** Missing, template, ownership and historical-site refusals remain read-only. */
+	public function test_task_delete_preview_hidden_and_history_guards(): void {
+		$this->actor( 'S-site' );
+		$this->authenticate( 'cookie-nonce' );
+		wp_create_nonce( 'mainwp_removebackup' );
+		$preview = fn( $id ) => $this->observe(
+			fn() => $this->request(
+				'mainwp_removebackup',
+				'cookie-nonce',
+				array(
+					'id'               => $id,
+					'dry_run'          => '1',
+					'delete_snapshots' => '1',
+				)
+			)
+		);
+		foreach ( array( 999999999, $this->fixture['tb'], $this->fixture['template'] ) as $id ) {
+			$this->assertSame( array( 'notask' => true ), $preview( $id ) );
+		}
+		add_filter( 'mainwp_is_single_user', '__return_false' );
+		try {
+			$this->assertSame( array( 'notask' => true ), $preview( $this->fixture['ta'] ) );
+		} finally {
+			remove_filter( 'mainwp_is_single_user', '__return_false' );
+		}
+		global $wpdb;
+		$this->assertNotFalse(
+			$wpdb->insert(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+				array(
+					'site_id'  => $this->fixture['b'],
+					'task_id'  => $this->fixture['ta'],
+					'type'     => 'full',
+					'created'  => time(),
+					'archives' => '[]',
+				)
+			)
+		);
+		$this->assertSame( array( 'error' => 'You are not allowed to schedule backups for one or more of the selected sites.' ), $preview( $this->fixture['ta'] ) );
+	}
+
+	/** A running task refuses confirmation through its preview without changing it. */
+	public function test_task_delete_preview_reports_running_refusal(): void {
+		$this->update( $this->fixture['tab'], array( 'completed' => 0 ) );
+		$this->actor();
+		$this->authenticate( 'cookie-nonce' );
+		wp_create_nonce( 'mainwp_removebackup' );
+		$result = $this->observe( fn() => $this->request( 'mainwp_removebackup', 'cookie-nonce', array( 'dry_run' => '1' ) ) );
+		$this->assertArrayHasKey( 'error', $result );
+		$this->assertNotEmpty( $result['error'] );
+	}
+
+	/** Malformed preview flags must never fall through to deletion. */
+	public function test_task_delete_preview_invalid_flags_are_read_only(): void {
+		$this->actor();
+		$this->authenticate( 'cookie-nonce' );
+		wp_create_nonce( 'mainwp_removebackup' );
+		foreach ( array( array( '1' ), null, 'invalid', '0', '' ) as $flag ) {
+			$result = $this->observe( fn() => $this->request( 'mainwp_removebackup', 'cookie-nonce', array( 'dry_run' => $flag ) ) );
+			$this->assertArrayHasKey( 'error', $result );
+			$this->assertNotEmpty( $result['error'] );
+		}
+	}
+
+	/** The browser receives the warning without unrelated snapshot or destination metadata. */
+	public function test_task_delete_preview_returns_only_minimum_warning(): void {
+		global $wpdb;
+		$this->update( $this->fixture['tab'], array( 'delete_cloud_copies' => 1 ) );
+		$snapshots = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+		$this->assertNotFalse( $wpdb->update( $snapshots, array( 'status' => 'complete' ), array( 'task_id' => $this->fixture['tab'] ) ) );
+		$id    = (int) $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE task_id = %d', $snapshots, $this->fixture['tab'] ) );
+		$store = MainWP_Backup_Storage_Destinations::instance();
+		$dest  = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Private destination name',
+				'settings' => array( 'minimum_remote_retention_days' => 90 ),
+			)
+		);
+		$this->assertNotFalse( $dest );
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' );
+		$this->assertNotFalse(
+			$wpdb->insert(
+				$table,
+				array(
+					'snapshot_id'    => $id,
+					'destination_id' => $dest,
+					'provider'       => 's3',
+					'status'         => 'complete',
+					'kind'           => 'upload',
+					'checkpoint'     => wp_json_encode( array( 'uploaded_at' => time() ) ),
+				)
+			)
+		);
+		$job = (int) $wpdb->insert_id;
+		try {
+			$this->actor();
+			$this->authenticate( 'cookie-nonce' );
+			wp_create_nonce( 'mainwp_removebackup' );
+			$result = $this->observe(
+				fn() => $this->request(
+					'mainwp_removebackup',
+					'cookie-nonce',
+					array(
+						'dry_run'          => '1',
+						'delete_snapshots' => '1',
+					)
+				)
+			);
+			$this->assertSame( array( 'warnings' ), array_keys( $result ) );
+			$this->assertCount( 1, $result['warnings'] );
+			$this->assertStringContainsString( 'minimum retention period', $result['warnings'][0] );
+			$kept = $this->observe(
+				fn() => $this->request(
+					'mainwp_removebackup',
+					'cookie-nonce',
+					array(
+						'dry_run'          => '1',
+						'delete_snapshots' => '0',
+					)
+				)
+			);
+			$this->assertSame( array( 'warnings' => array() ), $kept );
+		} finally {
+			$wpdb->delete( $table, array( 'id' => $job ) );
+			$store->delete_destination( $dest );
+		}
+	}
+
+	/**
 	 * Add has no entity id; its submitted scope is tested separately.
 	 *
 	 * @return array

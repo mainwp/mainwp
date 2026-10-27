@@ -250,6 +250,50 @@ class MainWP_Backup_Task_Delete_Auth_Test extends MainWP_Abilities_Test_Case {
 		return array( (int) $wpdb->insert_id, $path );
 	}
 
+	/** UI task deletion does not retry an already-pruned snapshot's leftover files. */
+	public function test_ui_delete_ignores_unremovable_pruned_snapshot_directory() {
+		if ( function_exists( 'posix_geteuid' ) && 0 === posix_geteuid() ) {
+			$this->markTestSkipped( 'Root bypasses filesystem permission failures.' );
+		}
+		$this->set_up_private_root();
+		$dir = '';
+		try {
+			$user = self::factory()->user->create( array( 'role' => 'administrator' ) );
+			wp_set_current_user( $user );
+			$site_id                    = $this->create_test_site( array( 'userid' => $user ) );
+			$task                       = $this->create_task( $site_id );
+			list( $snapshot_id, $path ) = $this->record_local_snapshot( (int) $task->id, $site_id );
+			$dir                        = dirname( $path ) . '/snapshot-ui-delete-' . $snapshot_id;
+			wp_mkdir_p( $dir );
+			$new_path = $dir . '/' . basename( $path );
+			rename( $path, $new_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- owned fixture.
+			$snapshot                      = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id );
+			$snapshot->archives[0]['path'] = $new_path;
+			global $wpdb;
+			$wpdb->update(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+				array(
+					'archives' => wp_json_encode( $snapshot->archives ),
+					'status'   => 'pruned',
+				),
+				array( 'id' => $snapshot_id )
+			); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- owned pruned fixture.
+			chmod( $dir, 0500 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- force the actual unlink refusal as the web user.
+			$this->assertFalse( is_writable( $dir ), 'The leftover directory must refuse file removal.' ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- permission precondition.
+
+			$response = MainWP_Manage_Backups_Handler::remove_backup_result( $task->id, true );
+			$this->assertSame( 'SUCCESS', $response['result'] ?? null, wp_json_encode( $response ) );
+			$this->assertNull( MainWP_DB_Backup::instance()->get_backup_task_by_id( $task->id ) );
+			$this->assertSame( 'pruned', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $snapshot_id )->status );
+			$this->assertFileExists( $new_path );
+		} finally {
+			if ( '' !== $dir && is_dir( $dir ) ) {
+				chmod( $dir, 0700 ); // phpcs:ignore WordPress.WP.AlternativeFunctions -- restore the owned fixture before cleanup.
+			}
+			$this->tear_down_private_root();
+		}
+	}
+
 	/**
 	 * Run a snapshots-page AJAX handler with its nonce and return the decoded response.
 	 *

@@ -950,26 +950,36 @@ class MainWP_REST_Authentication { //phpcs:ignore -- NOSONAR - maximumMethodThre
             return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid timestamp.', 'mainwp' ), array( 'status' => 401 ) );
         }
 
+        if ( ! is_string( $nonce ) ) {
+            return $this->refused_key_error();
+        }
+
         $used_nonces = maybe_unserialize( $user->nonces );
 
         if ( empty( $used_nonces ) ) {
             $used_nonces = array();
         }
 
-        if ( in_array( $nonce, $used_nonces, true ) ) {
-            return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid nonce - nonce has already been used.', 'mainwp' ), array( 'status' => 401 ) );
-        }
-
-        $used_nonces[ $timestamp ] = $nonce;
-
-        // Remove expired nonces.
-        foreach ( $used_nonces as $nonce_timestamp => $nonce ) {
-            if ( $nonce_timestamp < ( time() - $valid_window ) ) {
-                unset( $used_nonces[ $nonce_timestamp ] );
+        $nonce_history = array();
+        foreach ( $used_nonces as $stored_key => $stored_value ) {
+            // Legacy entries use timestamp keys and string nonce values.
+            $nonce_timestamp = is_int( $stored_value ) ? $stored_value : (int) $stored_key;
+            $stored_nonce    = is_int( $stored_value ) ? $stored_key : $stored_value;
+            if ( ! is_string( $stored_nonce ) && ! is_int( $stored_nonce ) ) {
+                continue;
+            }
+            if ( $nonce_timestamp >= ( time() - $valid_window ) ) {
+                $nonce_history[ $stored_nonce ] = $nonce_timestamp;
             }
         }
 
-        $used_nonces = maybe_serialize( $used_nonces );
+        if ( isset( $nonce_history[ $nonce ] ) ) {
+            return new WP_Error( 'mainwp_rest_authentication_error', __( 'Invalid nonce - nonce has already been used.', 'mainwp' ), array( 'status' => 401 ) );
+        }
+
+        $nonce_history[ $nonce ] = (int) $timestamp;
+
+        $used_nonces = maybe_serialize( $nonce_history );
 
         $wpdb->update(
             MainWP_DB::instance()->get_table_name( 'api_keys' ),

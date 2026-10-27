@@ -42,6 +42,20 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
     private static $instance = null;
 
     /**
+     * Decrypted rows for this request only. Callers receive clones.
+     *
+     * @var array<int, object|null>
+     */
+    private $destination_rows = array();
+
+    /**
+     * Decoded settings for identical ciphertext in this request.
+     *
+     * @var array<string, array>
+     */
+    private $decoded_settings = array();
+
+    /**
      * Method instance()
      *
      * Create public static instance.
@@ -71,6 +85,9 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @return int Destination id, 0 on failure.
      */
     public function add_destination( array $data ): int {
+        $this->destination_rows = array();
+        $this->decoded_settings = array();
+
         $intent = $this->stage_settings_encryption( isset( $data['settings'] ) && is_array( $data['settings'] ) ? $data['settings'] : array() );
         if ( false === $intent ) {
             return 0;
@@ -94,6 +111,9 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             array( '%s', '%s', '%s', '%d', '%d', '%d' )
         );
 
+        $this->destination_rows = array();
+        $this->decoded_settings = array();
+
         if ( ! $inserted ) {
             // The row never landed: delete the key file the staging
             // minted instead of orphaning it.
@@ -112,14 +132,36 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * or leaving SFTP, or when readable SFTP settings identify a different server.
      * Unreadable SFTP-to-SFTP recovery preserves any surviving pin.
      *
-     * @param int   $id   Destination id.
-     * @param array $data Fields to update: provider, name, settings, is_default.
+     * @param int         $id   Destination id.
+     * @param array       $data Fields to update: provider, name, settings, is_default.
+     * @param object|null $expected Optional source row for a conditional settings write.
      *
      * @return bool
      */
-    public function update_destination( int $id, array $data ): bool {
-        $row    = array();
-        $format = array();
+    public function update_destination( int $id, array $data, ?object $expected = null ): bool {
+        $this->destination_rows = array();
+        $this->decoded_settings = array();
+
+        $row          = array();
+        $format       = array();
+        $where        = array( 'id' => $id );
+        $where_format = array( '%d' );
+        if ( null !== $expected ) {
+            $raw     = $this->wpdb->get_row( $this->wpdb->prepare( 'SELECT * FROM ' . $this->table_name( 'wp_backup_storage' ) . ' WHERE id = %d', $id ) );
+            $current = $this->decode_row( null === $raw ? null : clone $raw );
+            if ( null === $current || $current->provider !== $expected->provider || $current->settings !== $expected->settings
+                || $current->name !== $expected->name || (int) $current->is_default !== (int) $expected->is_default ) {
+                return false;
+            }
+            $where        = array(
+                'id'         => $id,
+                'provider'   => $raw->provider,
+                'settings'   => $raw->settings,
+                'name'       => $raw->name,
+                'is_default' => $raw->is_default,
+            );
+            $where_format = array( '%d', '%s', '%s', '%s', '%d' );
+        }
 
         foreach ( array( 'provider', 'name' ) as $field ) {
             if ( isset( $data[ $field ] ) ) {
@@ -148,12 +190,12 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             $row['settings'] = $settings_intent['value'];
             $format[]        = '%s';
 
-            $old_file_key = $this->stored_file_key( $id );
+            $old_file_key = null === $expected ? $this->stored_file_key( $id ) : $this->envelope_file_key( (string) $raw->settings );
         }
 
         if ( isset( $data['is_default'] ) ) {
             $is_default = empty( $data['is_default'] ) ? 0 : 1;
-            if ( $is_default ) {
+            if ( $is_default && null === $expected ) {
                 $this->clear_default();
             }
             $row['is_default'] = $is_default;
@@ -170,11 +212,17 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         $updated = $this->wpdb->update(
             $this->table_name( 'wp_backup_storage' ),
             $row,
-            array( 'id' => $id ),
+            $where,
             $format,
-            array( '%d' )
+            $where_format
         );
 
+        $this->destination_rows = array();
+        $this->decoded_settings = array();
+
+        if ( null !== $expected && 0 === $updated ) {
+            $updated = false;
+        }
         if ( false === $updated && null !== $settings_intent ) {
             // The row update never landed: the stored envelope still
             // references the old key file, so the freshly minted one is
@@ -193,8 +241,51 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             // A failed save must leave the original destination's trust intact.
             MainWP_Backup_Storage_SFTP::forget_host_key( $id );
         }
+        if ( false !== $updated && null !== $expected && ! empty( $row['is_default'] ) ) {
+            $this->wpdb->query( $this->wpdb->prepare( 'UPDATE ' . $this->table_name( 'wp_backup_storage' ) . ' SET is_default = 0 WHERE is_default = 1 AND id <> %d', $id ) );
+            $this->destination_rows = array();
+            $this->decoded_settings = array();
+        }
 
         return false !== $updated;
+    }
+
+    /**
+     * Establish Dropbox namespace proof before an opted-in upload writes archives.
+     *
+     * @param object $destination Source destination row.
+     * @return object Reloaded destination with persisted proof.
+     * @throws \RuntimeException When proof or a conditional write fails.
+     */
+    public function prepare_retention_identity( object $destination ): object {
+        if ( 'dropbox' !== $destination->provider || MainWP_Backup_Retention_Protection::dropbox_identity_valid( $destination->settings ) ) {
+            return $destination;
+        }
+        $field    = MainWP_Backup_Retention_Protection::DROPBOX_IDENTITY_FIELD;
+        $settings = $destination->settings;
+        if ( empty( $settings[ $field ]['key'] ) ) {
+            $settings[ $field ] = array( 'key' => '.mainwp-retention-' . bin2hex( random_bytes( 16 ) ) );
+            if ( ! $this->update_destination( (int) $destination->id, array( 'settings' => $settings ), $destination ) ) {
+                throw new \RuntimeException( 'Storage destination changed while preparing its backup identity.' );
+            }
+            $destination = $this->get_destination( (int) $destination->id );
+            if ( null === $destination || 'dropbox' !== $destination->provider || $destination->settings !== $settings ) {
+                throw new \RuntimeException( 'Storage destination changed while preparing its backup identity.' );
+            }
+        }
+        $provider = $this->make_provider( $destination );
+        if ( ! $provider instanceof MainWP_Backup_Storage_Dropbox ) {
+            throw new \RuntimeException( 'Dropbox storage identity could not be verified.' );
+        }
+        $settings = MainWP_Backup_Retention_Protection::with_dropbox_identity( $destination->settings, $provider->retention_marker_id( $destination->settings[ $field ]['key'] ) );
+        if ( ! $this->update_destination( (int) $destination->id, array( 'settings' => $settings ), $destination ) ) {
+            throw new \RuntimeException( 'Storage destination changed before its backup identity could be saved.' );
+        }
+        $current = $this->get_destination( (int) $destination->id );
+        if ( null === $current || 'dropbox' !== $current->provider || ! MainWP_Backup_Retention_Protection::dropbox_identity_valid( $current->settings ) ) {
+            throw new \RuntimeException( 'Storage destination identity could not be read back.' );
+        }
+        return $current;
     }
 
     /**
@@ -205,9 +296,15 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * @return bool
      */
     public function delete_destination( int $id ): bool {
+        $this->destination_rows = array();
+        $this->decoded_settings = array();
+
         $file_key = $this->stored_file_key( $id );
 
         $deleted = (bool) $this->wpdb->delete( $this->table_name( 'wp_backup_storage' ), array( 'id' => $id ), array( '%d' ) );
+
+        $this->destination_rows = array();
+        $this->decoded_settings = array();
 
         if ( $deleted && '' !== $file_key ) {
             MainWP_Keys_Manager::instance()->delete_key_file( $file_key );
@@ -223,18 +320,22 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      * Get a destination with settings decrypted. Undecryptable settings
      * load as null with credentials_invalid set.
      *
-     * @param int $id Destination id.
+     * @param int  $id Destination id.
+     * @param bool $refresh Read the current row; false reuses readable rows for list previews.
      *
      * @return object|null
      */
-    public function get_destination( int $id ): ?object {
-        $row = $this->wpdb->get_row(
-            $this->wpdb->prepare(
-                'SELECT * FROM ' . $this->table_name( 'wp_backup_storage' ) . ' WHERE id = %d',
-                $id
-            )
-        );
-        return $this->decode_row( $row );
+    public function get_destination( int $id, bool $refresh = true ): ?object {
+        if ( $refresh || ! array_key_exists( $id, $this->destination_rows ) || ! empty( $this->destination_rows[ $id ]->credentials_invalid ) ) {
+            $row                           = $this->wpdb->get_row(
+                $this->wpdb->prepare(
+                    'SELECT * FROM ' . $this->table_name( 'wp_backup_storage' ) . ' WHERE id = %d',
+                    $id
+                )
+            );
+            $this->destination_rows[ $id ] = $this->decode_row( $row );
+        }
+        return null === $this->destination_rows[ $id ] ? null : clone $this->destination_rows[ $id ];
     }
 
     /**
@@ -246,7 +347,12 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
         $row = $this->wpdb->get_row(
             'SELECT * FROM ' . $this->table_name( 'wp_backup_storage' ) . ' WHERE is_default = 1 ORDER BY id DESC LIMIT 1'
         );
-        return $this->decode_row( $row );
+        if ( null === $row ) {
+            return null;
+        }
+        $id                            = (int) $row->id;
+        $this->destination_rows[ $id ] = $this->decode_row( $row );
+        return clone $this->destination_rows[ $id ];
     }
 
     /**
@@ -336,6 +442,8 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
      */
     private function clear_default(): void {
         $this->wpdb->query( 'UPDATE ' . $this->table_name( 'wp_backup_storage' ) . ' SET is_default = 0 WHERE is_default = 1' );
+        $this->destination_rows = array();
+        $this->decoded_settings = array();
     }
 
     /**
@@ -354,26 +462,20 @@ class MainWP_Backup_Storage_Destinations extends MainWP_DB_Base { // phpcs:ignor
             return null;
         }
 
-        $row->credentials_invalid = false;
-
-        $stored    = (string) $row->settings;
-        $plaintext = false;
-        if ( MainWP_Credential_Storage::is_credential_envelope( $stored ) ) {
-            $decrypted = MainWP_Credential_Storage::decrypt_credential( $stored );
-            $plaintext = '' === $decrypted ? false : $decrypted;
+        $stored = (string) $row->settings;
+        if ( ! array_key_exists( $stored, $this->decoded_settings ) ) {
+            $plaintext = false;
+            if ( MainWP_Credential_Storage::is_credential_envelope( $stored ) ) {
+                $decrypted = MainWP_Credential_Storage::decrypt_credential( $stored );
+                $plaintext = '' === $decrypted ? false : $decrypted;
+            }
+            $decoded = false === $plaintext ? null : json_decode( $plaintext, true );
+            if ( is_array( $decoded ) ) {
+                $this->decoded_settings[ $stored ] = $decoded;
+            }
         }
-
-        if ( false === $plaintext ) {
-            $row->settings            = null;
-            $row->credentials_invalid = true;
-            return $row;
-        }
-
-        $decoded       = json_decode( $plaintext, true );
-        $row->settings = is_array( $decoded ) ? $decoded : null;
-        if ( null === $row->settings ) {
-            $row->credentials_invalid = true;
-        }
+        $row->settings            = $this->decoded_settings[ $stored ] ?? null;
+        $row->credentials_invalid = null === $row->settings;
 
         return $row;
     }

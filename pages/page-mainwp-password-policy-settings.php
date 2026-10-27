@@ -652,7 +652,7 @@ class MainWP_Password_Policy_Settings {
 
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
 
-        if ( ! $website ) {
+        if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
             wp_send_json_error( array( 'message' => esc_html__( 'Site not found', 'mainwp' ) ) );
         }
 
@@ -765,7 +765,7 @@ class MainWP_Password_Policy_Settings {
 
         $website = MainWP_DB::instance()->get_website_by_id( $site_id );
 
-        if ( ! $website ) {
+        if ( ! MainWP_System_Utility::can_edit_website( $website ) ) {
             wp_send_json( array( 'error' => esc_html__( 'Site not found', 'mainwp' ) ) );
         }
 

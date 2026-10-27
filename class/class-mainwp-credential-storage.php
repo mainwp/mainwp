@@ -51,9 +51,9 @@ class MainWP_Credential_Storage {
      *
      * Returns:
      *   - the prefixed envelope string on success
-     *   - the input unchanged when input is null (not provided) or not a string
+     *   - null when input is not provided; the stored value for other nonstrings
      *   - the input unchanged when input is '' (credential cleared)
-     *   - the input unchanged when input is already an envelope (idempotent)
+     *   - the stored envelope when it is resubmitted unchanged for the same field
      *   - the old envelope when the plaintext matches its decrypted value
      *     (unchanged save; no re-encryption, no key file rotation)
      *   - false when the encryption layer fails to produce an envelope
@@ -95,7 +95,7 @@ class MainWP_Credential_Storage {
      *   - fresh_key:  newly minted key file to delete if the write rolls back
      *
      * A staging that reuses the old envelope (unchanged value, idempotent
-     * input, null/non-string passthrough) carries neither key.
+     * input, omitted or ignored non-string input) carries neither key.
      *
      * @param mixed  $plaintext    Credential to encrypt.
      * @param string $field        Field name (used in keyfile prefix).
@@ -108,7 +108,11 @@ class MainWP_Credential_Storage {
             'retire_key' => null,
             'fresh_key'  => null,
         );
-        if ( null === $plaintext || ! is_string( $plaintext ) ) {
+        if ( null === $plaintext ) {
+            return $intent;
+        }
+        if ( ! is_string( $plaintext ) ) {
+            $intent['value'] = $old_envelope;
             return $intent;
         }
         if ( '' === $plaintext ) {
@@ -117,7 +121,7 @@ class MainWP_Credential_Storage {
             $intent['retire_key'] = static::envelope_file_key( $old_envelope );
             return $intent;
         }
-        if ( static::is_credential_envelope( $plaintext ) ) {
+        if ( static::is_credential_envelope( $plaintext ) && $plaintext === $old_envelope ) {
             return $intent;
         }
         if ( static::is_credential_envelope( $old_envelope )

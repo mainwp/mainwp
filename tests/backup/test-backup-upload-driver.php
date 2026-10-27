@@ -2467,4 +2467,614 @@ class MainWP_Backup_Upload_Driver_Test extends MainWP_Abilities_Test_Case {
 		remove_filter( 'mainwp_get_wp_upload_dir', $filter );
 		$this->assertDirectoryDoesNotExist( $legacy );
 	}
+	/** Storage age is persisted only after the real remote manifest verifies. */
+	public function test_verified_upload_persists_storage_age() {
+		list( $dest_id, $base ) = $this->make_local_destination();
+		$id                     = $this->make_snapshot(
+			array(
+				'archive.bin' => array(
+					'size' => 100,
+					'role' => 'full',
+				),
+			)
+		);
+		$store                  = MainWP_Backup_Upload_Job_Store::instance();
+		$store->enqueue_for_snapshot( $id, array( $dest_id ) );
+		$started = time();
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$job = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( 'complete', $job->status );
+		$this->assertGreaterThanOrEqual( $started, $job->checkpoint['uploaded_at'] ?? 0 );
+	}
+
+	/** Required destinations are captured before a partial enqueue and survive task edits. */
+	public function test_remote_only_captures_before_partial_enqueue_and_keeps_remote_restore_plan() {
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection     = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		list( $first )  = $this->make_local_destination();
+		list( $second ) = $this->make_local_destination();
+		foreach ( array( $first, $second ) as $destination ) {
+			MainWP_Backup_Storage_Destinations::instance()->update_destination(
+				$destination,
+				array(
+					'provider' => 's3',
+					'settings' => array(
+						'bucket'     => 'retention-' . $destination,
+						'region'     => 'us-east-1',
+						'access_key' => 'k',
+						'secret_key' => 's',
+					),
+				)
+			);
+		}
+		$remote = array();
+		add_filter(
+			'pre_http_request',
+			static function ( $pre, $args, $url ) use ( &$remote ) {
+				if ( 'PUT' === $args['method'] ) {
+					$remote[ $url ] = (string) $args['body'];
+				}
+				$exists = isset( $remote[ $url ] );
+				return array(
+					'headers'  => array( 'content-length' => $exists ? (string) strlen( $remote[ $url ] ) : '0' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => $exists ? 200 : 404,
+						'message' => $exists ? 'OK' : 'Not Found',
+					),
+				);
+			},
+			10,
+			3
+		);
+
+		$task = $this->insert_task( array( $first, $second ) );
+		$protection::save_task_remove_local_archives( $task, true );
+		$failing  = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Model one destination failing to enqueue.
+			 *
+			 * @param int   $snapshot_id Snapshot identity.
+			 * @param array $destinations Required destination identities.
+			 * @return int Inserted jobs.
+			 */
+			public function enqueue_for_snapshot( int $snapshot_id, array $destinations ): int {
+				return parent::enqueue_for_snapshot( $snapshot_id, array_slice( $destinations, 0, 1 ) );
+			}
+		};
+		$property = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$saved    = $property->getValue();
+		$property->setValue( null, $failing );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		try {
+			$id = $this->make_snapshot( $this->standard_files(), $task );
+		} finally {
+			$property->setValue( null, $saved );
+		}
+		$this->assertSame( array( $first, $second ), get_option( $protection::REQUIRED_OPTION_PREFIX . $id ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $id ) );
+		global $wpdb;
+		$wpdb->update( MainWP_DB::instance()->get_table_name( 'wp_backup' ), array( 'destinations' => wp_json_encode( array( $first ) ) ), array( 'id' => $task ) );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$dir      = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( 4 ) . 'snapshot-retention-' . $id . '/';
+		wp_mkdir_p( $dir );
+		$this->temp_dirs[] = $dir;
+		$archives          = $snapshot->archives;
+		foreach ( $archives as &$archive ) {
+			rename( $archive['path'], $dir . $archive['file'] );
+			$archive['path'] = $dir . $archive['file'];
+		}
+		unset( $archive );
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'archives'      => wp_json_encode( $archives ),
+				'manifest_path' => $dir . 'files.list',
+			),
+			array( 'id' => $id )
+		);
+		$manifest = file_get_contents( $dir . 'files.list' );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$executor = \MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance();
+		$executor->evict_local_archives_for_pair( 4, $task );
+		$this->assertFileExists( $dir . 'big.bin' );
+		$store->enqueue_for_snapshot( $id, array( $second ) );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$this->assertNotEmpty( $remote, 'The real S3 driver verified the fixture PUTs with HEAD requests.' );
+		$before = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$executor->evict_local_archives_for_pair( 4, $task );
+		$this->assertFileDoesNotExist( $dir . 'big.bin' );
+		$this->assertFileDoesNotExist( $dir . 'small.txt' );
+		$this->assertSame( $manifest, file_get_contents( $dir . 'files.list' ) );
+		$this->assertEquals( $before, MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id ) );
+		$plan = \MainWP\Dashboard\MainWP_Backup_Snapshot_Catalog::instance()->assemble_plan( array( $before ) );
+		$this->assertCount( 2, $plan );
+		$this->assertSame( array( 'remote_chunked', 'remote' ), array_column( $plan, 'source' ) );
+		foreach ( $plan as $entry ) {
+			$this->assertCount( 2, $entry['remote_candidates'] );
+		}
+		$push = new \ReflectionMethod( '\MainWP\Dashboard\MainWP_Backup_Executor', 'pushable_manifest' );
+		$this->assertSame( base64_encode( $manifest ), $push->invoke( null, $before ) );
+	}
+
+	/** Failed retention evidence still queues uploads and preserves the local source. */
+	public function test_mwp_1963_capture_failure_uploads_with_warning_and_keeps_source() {
+		$this->assertTrue( class_exists( '\MainWP\Dashboard\MainWP_Backup_Retention_Protection' ) );
+		$protection          = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		list( $destination ) = $this->make_local_destination();
+		$this->configure_mwp_1964_s3_destination( $destination, false );
+		$this->install_mwp_1964_s3_transport();
+		$warnings = array();
+		$capture  = static function ( $message, $site_id, $task_id ) use ( &$warnings ) {
+			$warnings[] = array( $message, $site_id, $task_id );
+		};
+		add_action( 'mainwp_log_warning', $capture, 10, 3 );
+		$task = $this->insert_task( array( $destination ) );
+		$protection::save_task_remove_local_archives( $task, true );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$refuse = static function ( $sql ) {
+			return 0 === strpos( $sql, 'INSERT' ) && false !== strpos( $sql, 'mainwp_backup_required_uploads_' ) ? 'SELECT 1 WHERE 0=1' : $sql;
+		};
+		add_filter( 'query', $refuse );
+		try {
+			$id = $this->make_snapshot( $this->standard_files(), $task );
+		} finally {
+			remove_filter( 'query', $refuse );
+			remove_action( 'mainwp_log_warning', $capture );
+		}
+		$this->assertFalse( get_option( $protection::REQUIRED_OPTION_PREFIX . $id, false ) );
+		$store = MainWP_Backup_Upload_Job_Store::instance();
+		$this->assertCount( 1, $store->get_jobs_for_snapshot( $id ), 'Capture failure must not suppress the configured offsite upload.' );
+		$this->assertSame( 'pending', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->offsite_state );
+		$this->assertCount( 1, $warnings );
+		$this->assertSame( array( 'Could not save the required backup destinations. Uploads will continue, and local archives will be kept.', 4, $task ), $warnings[0] );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status );
+		$this->assertSame( 'verified', MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->offsite_state );
+		\MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( 4, $task );
+		$this->assertFalse( $protection::required_uploads_verified( $id ) );
+		$this->assertTrue( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives[0]['retention_requires_uploads'] ?? false );
+		$this->assertTrue( $protection::holds_automatic_removal( array( $id ) ) );
+		foreach ( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives as $archive ) {
+			$this->assertFileExists( $archive['path'] );
+		}
+	}
+	/**
+	 * Stored bindings survive S3 address-style changes during and after upload.
+	 *
+	 * @dataProvider mwp_1964_binding_cases
+	 * @param bool $legacy Whether to use the stored pre-fix binding format.
+	 * @param bool $path_style Original S3 addressing style.
+	 * @param bool $complete Whether upload completed before the edit.
+	 */
+	public function test_mwp_1964_path_style_keeps_inflight_upload_and_eviction( bool $legacy, bool $path_style, bool $complete ) {
+		list( $destination ) = $this->make_local_destination();
+		$this->configure_mwp_1964_s3_destination( $destination, $path_style );
+		$this->install_mwp_1964_s3_transport();
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$task       = $this->insert_task( array( $destination ) );
+		$protection::save_task_remove_local_archives( $task, true );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$id       = $this->make_snapshot( $this->standard_files(), $task );
+		$snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$dir      = \MainWP\Dashboard\MainWP_Backup_Private_Root::site_dir( 4 ) . 'snapshot-style-' . $id . '/';
+		wp_mkdir_p( $dir );
+		$this->temp_dirs[] = $dir;
+		$archives          = $snapshot->archives;
+		foreach ( $archives as &$archive ) {
+			rename( $archive['path'], $dir . $archive['file'] );
+			$archive['path'] = $dir . $archive['file'];
+		}
+		unset( $archive );
+		global $wpdb;
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+			array(
+				'archives'      => wp_json_encode( $archives ),
+				'manifest_path' => $dir . 'files.list',
+			),
+			array( 'id' => $id )
+		); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- private archive fixture.
+		$snapshot                          = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+		$build                             = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'new_checkpoint' );
+		$checkpoint                        = $build->invoke( MainWP_Backup_Upload_Driver::instance(), $snapshot );
+		$destination_row                   = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination );
+		$canonical                         = $protection::destination_binding( $destination_row );
+		$checkpoint['destination_binding'] = $legacy ? $this->mwp_1964_legacy_binding( $destination_row ) : $canonical;
+		$store                             = MainWP_Backup_Upload_Job_Store::instance();
+		$job                               = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+		if ( $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status );
+		}
+		$this->configure_mwp_1964_s3_destination( $destination, ! $path_style );
+		if ( ! $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		}
+		$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status, 'Changing the request addressing style must not invalidate an in-flight target.' );
+		$this->assertSame( $canonical, $protection::destination_binding( MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) ) );
+		$this->assertTrue( $protection::required_uploads_verified( $id ) );
+		$this->assertFalse( $protection::holds_automatic_removal( array( $id ) ) );
+		\MainWP\Dashboard\MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( 4, $task );
+		$this->assertFileDoesNotExist( $dir . 'big.bin' );
+		$this->assertFileDoesNotExist( $dir . 'small.txt' );
+		$this->assertFileExists( $dir . 'files.list' );
+	}
+
+	/**
+	 * Stored and newly generated bindings at both upload stages.
+	 *
+	 * @return array
+	 */
+	public static function mwp_1964_binding_cases(): array {
+		return array(
+			'legacy virtual in flight' => array( true, false, false ),
+			'legacy path in flight'    => array( true, true, false ),
+			'legacy virtual complete'  => array( true, false, true ),
+			'legacy path complete'     => array( true, true, true ),
+			'canonical in flight'      => array( false, false, false ),
+			'canonical complete'       => array( false, true, true ),
+		);
+	}
+
+	/**
+	 * Legacy compatibility must still reject a changed storage location.
+	 *
+	 * @dataProvider mwp_1964_changed_targets
+	 * @param array $changes Changed S3 location fields.
+	 * @param bool  $complete Whether the original upload completed.
+	 */
+	public function test_mwp_1964_changed_target_still_refuses_upload_and_eviction( array $changes, bool $complete ) {
+		list( $destination ) = $this->make_local_destination();
+		$this->configure_mwp_1964_s3_destination( $destination, false );
+		$this->install_mwp_1964_s3_transport();
+		$protection = '\MainWP\Dashboard\MainWP_Backup_Retention_Protection';
+		$task       = $this->insert_task( array( $destination ) );
+		$protection::save_task_remove_local_archives( $task, true );
+		MainWP_Backup_Upload_Driver::instance()->init();
+		$id                                = $this->make_snapshot( $this->standard_files(), $task );
+		$build                             = new \ReflectionMethod( MainWP_Backup_Upload_Driver::class, 'new_checkpoint' );
+		$checkpoint                        = $build->invoke( MainWP_Backup_Upload_Driver::instance(), MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id ) );
+		$checkpoint['destination_binding'] = $this->mwp_1964_legacy_binding( MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination ) );
+		$store                             = MainWP_Backup_Upload_Job_Store::instance();
+		$job                               = $store->get_jobs_for_snapshot( $id )[0];
+		$this->assertTrue( $store->save_checkpoint( (int) $job->id, $checkpoint ) );
+		if ( $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertSame( 'complete', $store->get_jobs_for_snapshot( $id )[0]->status );
+		}
+		$requests = 0;
+		add_filter(
+			'pre_http_request',
+			static function () use ( &$requests ) {
+				++$requests;
+				return new \WP_Error( 'unexpected_request' );
+			},
+			11
+		);
+		$this->configure_mwp_1964_s3_destination( $destination, true, $changes );
+		if ( ! $complete ) {
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		}
+		$this->assertSame( $complete ? 'complete' : 'failed_permanent', $store->get_jobs_for_snapshot( $id )[0]->status );
+		$this->assertSame( 0, $requests );
+		$this->assertFalse( $protection::required_uploads_verified( $id ) );
+		$this->assertTrue( $protection::holds_automatic_removal( array( $id ) ) );
+	}
+
+	/**
+	 * Location fields that must remain in the binding.
+	 *
+	 * @return array
+	 */
+	public static function mwp_1964_changed_targets(): array {
+		return array(
+			'bucket in flight'   => array( array( 'bucket' => 'different-backups' ), false ),
+			'endpoint in flight' => array( array( 'endpoint' => 'https://other.example.test' ), false ),
+			'region in flight'   => array( array( 'region' => 'eu-west-1' ), false ),
+			'bucket complete'    => array( array( 'bucket' => 'different-backups' ), true ),
+			'endpoint complete'  => array( array( 'endpoint' => 'https://other.example.test' ), true ),
+			'region complete'    => array( array( 'region' => 'eu-west-1' ), true ),
+		);
+	}
+
+	/**
+	 * Configure the real S3 adapter without provider traffic.
+	 *
+	 * @param int   $destination Destination id.
+	 * @param bool  $path_style Addressing style.
+	 * @param array $changes Extra location changes.
+	 */
+	private function configure_mwp_1964_s3_destination( int $destination, bool $path_style, array $changes = array() ): void {
+		$this->assertTrue(
+			MainWP_Backup_Storage_Destinations::instance()->update_destination(
+				$destination,
+				array(
+					'provider' => 's3',
+					'settings' => array_merge(
+						array(
+							'bucket'     => 'retention-backups',
+							'endpoint'   => 'https://storage.example.test',
+							'region'     => 'us-east-1',
+							'path_style' => $path_style,
+							'access_key' => 'k',
+							'secret_key' => 's',
+						),
+						$changes
+					),
+				)
+			)
+		);
+	}
+
+	/**
+	 * Preserve the old ordered binding input as a compatibility fixture.
+	 *
+	 * @param object $destination Original decrypted destination.
+	 * @return string
+	 */
+	private function mwp_1964_legacy_binding( object $destination ): string {
+		$settings = $destination->settings;
+		$values   = array(
+			'version'  => 2,
+			'provider' => 's3',
+			'location' => array(
+				'endpoint'   => $settings['endpoint'],
+				'bucket'     => $settings['bucket'],
+				'path_style' => ! empty( $settings['path_style'] ),
+				'region'     => $settings['region'],
+			),
+		);
+		return hash_hmac( 'sha256', 'mainwp-backup-retention:' . wp_json_encode( $values ), wp_salt( 'auth' ) );
+	}
+
+	/** Keep fixture objects addressable through either S3 request style. */
+	private function install_mwp_1964_s3_transport(): void {
+		$objects = array();
+		add_filter(
+			'pre_http_request',
+			static function ( $pre, $args, $url ) use ( &$objects ) {
+				unset( $pre );
+				$key = preg_replace( '#^/retention-backups/#', '/', wp_parse_url( $url, PHP_URL_PATH ) );
+				if ( 'PUT' === $args['method'] ) {
+					$objects[ $key ] = (string) $args['body'];
+				}
+				$exists = isset( $objects[ $key ] );
+				return array(
+					'headers'  => array( 'content-length' => $exists ? (string) strlen( $objects[ $key ] ) : '0' ),
+					'body'     => '',
+					'response' => array(
+						'code'    => $exists ? 200 : 404,
+						'message' => $exists ? 'OK' : 'Not Found',
+					),
+				);
+			},
+			10,
+			3
+		);
+	}
+	/** A resumed upload keeps its original target proof and refuses a changed base path. */
+	public function test_changed_destination_target_cannot_rebind_completed_artifacts() {
+		list( $destination, $old_base ) = $this->make_local_destination();
+		$new_base                       = $this->make_temp_dir();
+		$task                           = $this->insert_task( array( $destination ) );
+		\MainWP\Dashboard\MainWP_Backup_Retention_Protection::save_task_remove_local_archives( $task, true );
+		$id       = $this->make_snapshot( $this->standard_files(), $task );
+		$failing  = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Interrupt after actual remote artifacts and manifest were verified.
+			 *
+			 * @param int         $job_id Job identity.
+			 * @param array       $checkpoint Checkpoint.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool Persisted state.
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				return ! empty( $checkpoint['manifest_submitted'] ) ? false : parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+		$property = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$saved    = $property->getValue();
+		$property->setValue( null, $failing );
+		try {
+			$failing->enqueue_for_snapshot( $id, array( $destination ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$before = $failing->get_jobs_for_snapshot( $id )[0];
+		} finally {
+			$property->setValue( null, $saved );
+		}
+		$this->assertSame( 'submitting', $before->status );
+		$this->assertNotEmpty( $before->checkpoint['destination_binding'] ?? '' );
+		$this->assertSame( array( true, true, true ), array_column( $before->checkpoint['artifacts'], 'done' ) );
+		MainWP_Backup_Storage_Destinations::instance()->update_destination( $destination, array( 'settings' => array( 'base_path' => $new_base ) ) );
+		MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+		$after = MainWP_Backup_Upload_Job_Store::instance()->get_jobs_for_snapshot( $id )[0];
+		$this->assertSame( MainWP_Backup_Upload_Job_Store::STATUS_FAILED_PERMANENT, $after->status );
+		$this->assertSame( $before->checkpoint['destination_binding'], $after->checkpoint['destination_binding'] );
+		$this->assertEmpty( glob( $new_base . '/*' ) );
+		$this->assertFileExists( $old_base . '/4/' . $id . '/manifest.json' );
+		foreach ( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives as $archive ) {
+			$this->assertFileExists( $archive['path'] );
+		}
+	}
+	/**
+	 * Dropbox rotation preserves both ordinary resumes and opted-in namespace proof.
+	 *
+	 * @dataProvider retention_dropbox_opt_in
+	 * @param bool $opt_in Whether this snapshot requires upload proof.
+	 */
+	public function test_retention_default_off_dropbox_resume_after_token_rotation( bool $opt_in ) {
+		$objects   = array();
+		$requests  = array();
+		$transport = static function ( $pre, $args, $url ) use ( &$objects, &$requests ) {
+			unset( $pre );
+			$requests[] = array( $url, $args );
+			$status     = 200;
+			if ( str_ends_with( $url, '/oauth2/token' ) ) {
+				$data = array( 'access_token' => 'same-account' );
+			} else {
+				$arg  = json_decode( $args['headers']['Dropbox-API-Arg'] ?? $args['body'], true );
+				$path = $arg['path'];
+				if ( str_ends_with( $url, '/upload' ) ) {
+					$objects[ $path ] = array(
+						'.tag' => 'file',
+						'id'   => 'id:file' . count( $requests ),
+						'size' => strlen( $args['body'] ),
+					);
+				}
+				$data   = $objects[ $path ] ?? array( 'error_summary' => 'path/not_found/..' );
+				$status = isset( $objects[ $path ] ) ? 200 : 409;
+			}
+			return array(
+				'headers'  => array(),
+				'body'     => wp_json_encode( $data ),
+				'response' => array(
+					'code'    => $status,
+					'message' => '',
+				),
+			);
+		};
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		$store       = MainWP_Backup_Storage_Destinations::instance();
+		$settings    = array(
+			'app_key'       => 'app',
+			'app_secret'    => 'secret',
+			'refresh_token' => 'old-token',
+		);
+		$destination = $store->add_destination(
+			array(
+				'provider' => 'dropbox',
+				'name'     => 'Dropbox',
+				'settings' => $settings,
+			)
+		);
+		$task        = $this->insert_task( array( $destination ) );
+		$protection  = '\\MainWP\\Dashboard\\MainWP_Backup_Retention_Protection';
+		$protection::save_task_remove_local_archives( $task, $opt_in );
+		$id = $this->make_snapshot( $this->standard_files(), $task );
+		if ( $opt_in ) {
+			$protection::capture_required_destinations( $id, array( $destination ) );
+		}
+		$failing  = new class() extends MainWP_Backup_Upload_Job_Store {
+			/**
+			 * Refuse terminal persistence to exercise a later resume.
+			 *
+			 * @param int         $job_id Job identity.
+			 * @param array       $checkpoint Checkpoint.
+			 * @param string|null $lock_token Lease token.
+			 * @return bool
+			 */
+			public function save_checkpoint( int $job_id, array $checkpoint, ?string $lock_token = null ): bool {
+				return ! empty( $checkpoint['manifest_submitted'] ) ? false : parent::save_checkpoint( $job_id, $checkpoint, $lock_token );
+			}
+		};
+		$instance = new \ReflectionProperty( MainWP_Backup_Upload_Job_Store::class, 'instance' );
+		$original = MainWP_Backup_Upload_Job_Store::instance();
+		try {
+			$instance->setValue( null, $failing );
+			$failing->enqueue_for_snapshot( $id, array( $destination ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$job = $failing->get_jobs_for_snapshot( $id )[0];
+			$this->assertSame( 'submitting', $job->status );
+			if ( $opt_in ) {
+				$this->assertNotEmpty( $job->checkpoint['destination_binding'] ?? '' );
+			} else {
+				$this->assertArrayNotHasKey( 'destination_binding', $job->checkpoint );
+			}
+			$instance->setValue( null, $original );
+			$settings['refresh_token'] = 'rotated-token';
+			if ( $opt_in ) {
+				$result = \MainWP\Dashboard\MainWP_Backup_Storage_Handler::save_destination(
+					array(
+						'id'       => $destination,
+						'provider' => 'dropbox',
+						'name'     => 'Dropbox',
+						'settings' => $settings,
+					)
+				);
+				$this->assertArrayHasKey( 'id', $result );
+			} else {
+				$this->assertTrue( $store->update_destination( $destination, array( 'settings' => $settings ) ) );
+			}
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$this->assertSame( 'complete', $original->get_jobs_for_snapshot( $id )[0]->status );
+			if ( $opt_in ) {
+				$this->assertTrue( $protection::required_uploads_verified( $id ) );
+				$objects_before = count( $requests );
+				$this->assertTrue( $protection::required_uploads_verified( $id ) );
+				$this->assertCount( $objects_before, $requests, 'Retention checks must use local receipts without provider calls.' );
+			} else {
+				$this->assertStringNotContainsString( '.mainwp-retention-', wp_json_encode( $requests ) );
+				$this->assertArrayNotHasKey( '_mainwp_retention_identity', $store->get_destination( $destination )->settings );
+			}
+		} finally {
+			$instance->setValue( null, $original );
+			remove_filter( 'pre_http_request', $transport );
+		}
+	}
+
+	/**
+	 * Ordinary and opted-in upload cases.
+	 *
+	 * @return array
+	 */
+	public static function retention_dropbox_opt_in() {
+		return array(
+			'default off' => array( false ),
+			'opted in'    => array( true ),
+		);
+	}
+	/** A failed namespace lookup cannot write archives or capture eviction evidence. */
+	public function test_retention_dropbox_identity_failure_keeps_local_archive_and_retries() {
+		$requests  = array();
+		$transport = static function ( $pre, $args, $url ) use ( &$requests ) {
+			unset( $pre );
+			$requests[] = $url;
+			$mint       = str_ends_with( $url, '/oauth2/token' );
+			return array(
+				'headers'  => array(),
+				'body'     => $mint ? '{"access_token":"test-token"}' : '{}',
+				'response' => array(
+					'code'    => $mint ? 200 : 503,
+					'message' => '',
+				),
+			);
+		};
+		add_filter( 'pre_http_request', $transport, 10, 3 );
+		try {
+			$store       = MainWP_Backup_Storage_Destinations::instance();
+			$destination = $store->add_destination(
+				array(
+					'provider' => 'dropbox',
+					'name'     => 'Dropbox',
+					'settings' => array(
+						'app_key'       => 'app',
+						'app_secret'    => 'secret',
+						'refresh_token' => 'token',
+					),
+				)
+			);
+			$task        = $this->insert_task( array( $destination ) );
+			$protection  = '\\MainWP\\Dashboard\\MainWP_Backup_Retention_Protection';
+			$protection::save_task_remove_local_archives( $task, true );
+			$id = $this->make_snapshot( $this->standard_files(), $task );
+			$this->assertTrue( $protection::capture_required_destinations( $id, array( $destination ) ) );
+			$jobs = MainWP_Backup_Upload_Job_Store::instance();
+			$jobs->enqueue_for_snapshot( $id, array( $destination ) );
+			MainWP_Backup_Upload_Driver::instance()->process_pending_jobs( 240 );
+			$job = $jobs->get_jobs_for_snapshot( $id )[0];
+			$this->assertSame( 'failed_retryable', $job->status );
+			$this->assertEmpty( $job->checkpoint['artifacts'] ?? array() );
+			$this->assertFalse( $protection::required_uploads_verified( $id ) );
+			$this->assertCount( 2, $requests );
+			$this->assertStringEndsWith( '/2/files/get_metadata', $requests[1] );
+			foreach ( MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id )->archives as $archive ) {
+				$this->assertFileExists( $archive['path'] );
+			}
+		} finally {
+			remove_filter( 'pre_http_request', $transport );
+		}
+	}
 }

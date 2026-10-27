@@ -933,6 +933,9 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             // The add form posts '' here, which has always meant the global setting.
             $fields['archive_tuning']['load_files_before_zip'] = '' === $input['loadFilesBeforeZip'] || 1 === (int) $input['loadFilesBeforeZip'];
         }
+        if ( array_key_exists( 'remove_local_after_upload', $input ) ) {
+            $fields['retention']['remove_local_after_upload'] = ! empty( $input['remove_local_after_upload'] );
+        }
         if ( isset( $input['retention_count'] ) ) {
             $fields['retention']['count'] = absint( $input['retention_count'] );
         } elseif ( isset( $input['id'] ) ) {
@@ -1567,7 +1570,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                 }
                 $errorOutput  .= 'Site: <strong>' . MainWP_Utility::get_nice_url( $website->url ) . '</strong><br />';
                 $_error_code   = $e instanceof MainWP_Exception ? $e->get_message_error_code() : '';
-                $_history_code = MainWP_Backup_Error_Codes::code_for_exception( $e );
+                $_history_data = MainWP_Backup_Run_History::error_context( $e );
                 // Readiness, private-root and download-capacity failures need their specific remedy.
                 $_error_output = ! $_disk_refused && ! in_array( $_error_code, array( MainWP_Backup_Error_Codes::ERR_CHILD_PREFLIGHT_FAILED, MainWP_Backup_Error_Codes::ERR_PRIVATE_ROOT_UNAVAILABLE ), true ) && in_array( $_error_code, MainWP_Backup_Error_Codes::get_registered_codes(), true ) ? MainWP_Backup_Error_Codes::message( $_error_code ) : MainWP_Error_Helper::get_error_message( $e );
                 $errorOutput  .= $_error_output . '<br />';
@@ -1578,11 +1581,10 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
                     $_progress                       = MainWP_DB_Backup::instance()->add_backup_task_progress( (int) $task->id, (int) $siteid, array() );
                     $_progress_values['child_phase'] = MainWP_Backup_Task_Phase::FAILED;
                 }
-                if ( '' !== $_history_code ) {
+                if ( '' !== $_history_data['code'] ) {
                     $_fetch                          = $_progress && is_array( $_progress->fetchResult ) ? $_progress->fetchResult : array();
-                    $_fetch['error_code']            = $_history_code;
-                    $_extra                          = $e instanceof MainWP_Exception ? (string) $e->get_message_extra() : '';
-                    $_fetch['error_extra']           = preg_match( '/^AUTH_ERROR2(?:; mainwp_[a-z0-9_]+)?$/', $_extra ) ? $_extra : '';
+                    $_fetch['error_code']            = $_history_data['code'];
+                    $_fetch['error_extra']           = $_history_data['extra'];
                     $_progress_values['fetchResult'] = wp_json_encode( $_fetch );
                 }
                 MainWP_DB_Backup::instance()->update_backup_task_progress( (int) $task->id, (int) $siteid, $_progress_values );
@@ -2211,11 +2213,19 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      */
     public static function remove_backup() {
         //phpcs:disable WordPress.Security.NonceVerification.Missing -- nonce verified by the AJAX router.
-        $id = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+        $id      = isset( $_POST['id'] ) ? intval( $_POST['id'] ) : 0;
+        $dry_run = array_key_exists( 'dry_run', $_POST );
+        if ( $dry_run && ( ! is_scalar( $_POST['dry_run'] ) || '1' !== sanitize_text_field( wp_unslash( (string) $_POST['dry_run'] ) ) ) ) {
+            wp_send_json( array( 'error' => __( 'The deletion preview could not be loaded. Reload the page and try again.', 'mainwp' ) ) );
+        }
         // Only an explicit 0 keeps the snapshots; older clients send nothing and purge as before.
         $delete_snapshots = ! isset( $_POST['delete_snapshots'] ) || '0' !== sanitize_text_field( wp_unslash( $_POST['delete_snapshots'] ) );
         //phpcs:enable WordPress.Security.NonceVerification.Missing
-        wp_send_json( static::task_ajax_result( MainWP_Backup_Operations::delete_task( $id, $delete_snapshots, 'ui' ), 'remove', $id ) );
+        $result = $dry_run ? MainWP_Backup_Operations::preview_task_delete( $id, $delete_snapshots, 'ui' ) : MainWP_Backup_Operations::delete_task( $id, $delete_snapshots, 'ui' );
+        if ( $dry_run && ! is_wp_error( $result ) ) {
+            $result = $result['can_proceed'] ? array( 'warnings' => $result['warnings'] ) : array( 'error' => implode( ' ', array_column( $result['refusals'], 'message' ) ) );
+        }
+        wp_send_json( static::task_ajax_result( $result, 'remove', $id ) );
     }
 
     /**
@@ -2231,13 +2241,14 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
      * @param int  $id               Task id.
      * @param bool $delete_snapshots Whether to purge the task's snapshots too.
      *
+     * @param bool $manual_override Whether the confirmation exposed the remote minimum warning.
      * @return array Response payload: result | error | notask.
      *
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::get_backup_task_by_id()
      * @uses \MainWP\Dashboard\MainWP_Backup_Retention_Executor::purge_snapshots_for_task()
      * @uses \MainWP\Dashboard\MainWP_DB_Backup::remove_backup_task()
      */
-    public static function remove_backup_result( $id, $delete_snapshots = true ) {
+    public static function remove_backup_result( $id, $delete_snapshots = true, $manual_override = false ) {
         $task = MainWP_DB_Backup::instance()->get_backup_task_by_id( (int) $id );
         if ( empty( $task ) || ! empty( $task->template ) || ! static::can_edit_backuptask( $task ) ) {
             return array( 'notask' => true );
@@ -2288,7 +2299,7 @@ class MainWP_Manage_Backups_Handler { // phpcs:ignore Generic.Classes.OpeningBra
             return array( 'result' => 'SUCCESS' );
         }
 
-        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ) );
+        $purge_result = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ), (bool) $manual_override );
 
         // The purge deliberately keeps a snapshot when its artifact cannot be
         // reached (recorded outside the uploads root, or an unlink refused).

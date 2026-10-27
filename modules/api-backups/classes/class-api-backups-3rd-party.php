@@ -2277,7 +2277,12 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
         curl_setopt( $curl, CURLOPT_HTTPHEADER, $headers );
         curl_setopt( $curl, CURLOPT_POSTFIELDS, $data );
 
-        $ssl_verifyhost = ( false === get_option( 'mainwp_sslVerifyCertificate' ) ) || ( 1 === (int) get_option( 'mainwp_sslVerifyCertificate' ) );
+        /**
+         * Allow integrations to disable Vultr TLS verification for a local CA issue.
+         *
+         * @param bool $verify_ssl Whether to verify the provider certificate. Default true.
+         */
+        $ssl_verifyhost = (bool) apply_filters( 'mainwp_api_backups_verify_ssl', true );
 
         if ( $ssl_verifyhost ) {
             curl_setopt( $curl, CURLOPT_SSL_VERIFYHOST, 2 );
@@ -2724,7 +2729,7 @@ class Api_Backups_3rd_Party { //phpcs:ignore -- NOSONAR - multi methods.
 
         // Grab Sites List.
         $grid_response = (array) static::call_gridpane_api( 'GET', '/site?per_page=' . $sites_count, $accessToken );
-        Api_Backups_Utility::log_debug( 'GridPane API get sites :: [response=' . ( is_array( $grid_response ) ? print_r( $grid_response, true ) : 'INVALID' ). '] :: '  . $accessToken  ); // phpcs:ignore -- NOSONAR - for debugging.
+        Api_Backups_Utility::log_debug( 'GridPane API get sites' );
         $grid_response_decoded = json_decode( $grid_response[0] );
         if ( is_object( $grid_response_decoded ) && property_exists( $grid_response_decoded, 'data' ) ) {
             return $grid_response_decoded->data;

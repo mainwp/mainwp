@@ -1312,7 +1312,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
                 'verify_certificate' => array(
                     'type'        => 'integer',
                     'description' => __( 'SSL verification (0=off, 1=on, 2=global)', 'mainwp' ),
-                    'default'     => 1,
+                    'default'     => 2,
                     'enum'        => array( 0, 1, 2 ),
                 ),
                 'ssl_version'        => array(
@@ -1430,7 +1430,7 @@ class MainWP_Abilities_Sites { //phpcs:ignore -- NOSONAR - multi methods.
             'url'         => $url,
             'name'        => $name,
             'admin'       => $admin_username,
-            'ssl_verify'  => isset( $input['verify_certificate'] ) ? (int) $input['verify_certificate'] : 1,
+            'ssl_verify'  => MainWP_Manage_Sites_View::normalize_ssl_verify( $input['verify_certificate'] ?? null ),
             'ssl_version' => isset( $input['ssl_version'] ) ? (int) $input['ssl_version'] : 0,
         );
 

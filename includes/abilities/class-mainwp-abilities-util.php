@@ -182,7 +182,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
             return 'cli' === $machine_context;
         }
 
-        return (bool) apply_filters( 'mainwp_currentusercan', true, 'dashboard', $right );
+        return (bool) MainWP_System::filter_current_user_permission( true, 'dashboard', $right );
     }
 
     /**
@@ -255,7 +255,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
                     // A scoped Team Control role can use its key without
                     // broad WordPress capabilities. The default 'all' alone
                     // must not promote an ordinary non-admin key owner.
-                    $allowed_sites = self::get_allowed_site_ids();
+                    $allowed_sites = self::get_configured_site_ids();
                     if ( is_array( $allowed_sites ) && ! empty( $allowed_sites ) ) {
                         return true;
                     }
@@ -321,19 +321,28 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
     }
 
     /**
-     * Get the current user's allowed site IDs.
+     * Get site grants intersected with the current user's ownership.
+     *
+     * @return string|int[] Effective target scope.
+     */
+    public static function get_allowed_site_ids() {
+        return self::intersect_owned_scope( self::get_configured_site_ids(), 'wp' );
+    }
+
+    /**
+     * Get normalized site grants configured by Team Control.
      *
      * Applies the mainwp_currentuserallowedaccesssites filter directly,
      * not through MainWP_DB::get_sql_where_allow_access_sites(), which
      * skips the filter entirely while DOING_CRON, WP_CLI, or
      * MAINWP_REST_API_DOING is defined. Every scoping check below builds on
-     * this helper so REST/MCP surfaces stay covered.
+     * the effective scope so REST/MCP surfaces stay covered.
      *
      * @return string|int[] 'all' when unrestricted, otherwise a (possibly
      *                      empty) unique int list. Unexpected filter shapes
      *                      fail closed to an empty list.
      */
-    public static function get_allowed_site_ids() {
+    public static function get_configured_site_ids() {
         $allowed = apply_filters( 'mainwp_currentuserallowedaccesssites', 'all' );
 
         if ( 'all' === $allowed ) {
@@ -353,29 +362,31 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      * Preserve userless CLI automation; userless REST has no site scope.
      * API-key requests carry a user whose site restrictions still apply.
      *
+     * @param bool $include_ownership Include ownership when selecting targets.
      * @return int[]|string Allowed site IDs, or 'all' for unrestricted access.
      */
-    public static function get_scoped_site_ids_or_all() {
+    public static function get_scoped_site_ids_or_all( $include_ownership = true ) {
         $machine_context = self::get_machine_execution_context();
         if ( '' !== $machine_context && 0 === get_current_user_id() ) {
             return 'cli' === $machine_context ? 'all' : array();
         }
 
-        return self::get_allowed_site_ids();
+        return $include_ownership ? self::get_allowed_site_ids() : self::get_configured_site_ids();
     }
 
     /**
      * Preserve userless CLI automation; userless REST has no group scope.
      *
+     * @param bool $include_ownership Include ownership when selecting targets.
      * @return int[]|string Allowed group IDs, or 'all' for unrestricted access.
      */
-    public static function get_scoped_group_ids_or_all() {
+    public static function get_scoped_group_ids_or_all( $include_ownership = true ) {
         $machine_context = self::get_machine_execution_context();
         if ( '' !== $machine_context && 0 === get_current_user_id() ) {
             return 'cli' === $machine_context ? 'all' : array();
         }
 
-        return self::get_allowed_group_ids();
+        return $include_ownership ? self::get_allowed_group_ids() : self::get_configured_group_ids();
     }
 
     /**
@@ -389,6 +400,15 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
      *                      empty) unique int list.
      */
     public static function get_allowed_group_ids() {
+        return self::intersect_owned_scope( self::get_configured_group_ids(), 'group' );
+    }
+
+    /**
+     * Get normalized group grants configured by Team Control.
+     *
+     * @return string|int[] Configured grants, without ownership restrictions.
+     */
+    public static function get_configured_group_ids() {
         $allowed = apply_filters( 'mainwp_currentuserallowedaccessgroups', 'all' );
 
         if ( 'all' === $allowed ) {
@@ -400,6 +420,26 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         return array();
+    }
+
+    /**
+     * Intersect configured grants with owned rows in per-user mode.
+     *
+     * @param string|int[] $allowed Configured grants.
+     * @param string       $table   Internal MainWP table suffix.
+     * @return string|int[] Effective target scope.
+     */
+    private static function intersect_owned_scope( $allowed, $table ) {
+        $user_id = get_current_user_id();
+        if ( $user_id <= 0 || (bool) apply_filters( 'mainwp_is_single_user', true ) ) {
+            return $allowed;
+        }
+
+        global $wpdb;
+        $owned = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i WHERE userid = %d', MainWP_DB::instance()->get_table_name( $table ), $user_id ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Ownership must reflect the current rows for both sites and tags.
+        $owned = array_map( 'intval', $owned );
+
+        return 'all' === $allowed ? $owned : array_values( array_intersect( $allowed, $owned ) );
     }
 
     /**

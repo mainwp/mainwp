@@ -773,6 +773,7 @@ mainwp_managebackups_update = function () {
             retention_days: jQuery('#mainwp-backup-retention-days').val(),
             retention_storage_mb: jQuery('#mainwp-backup-retention-storage-mb').val(),
             max_chain_length: jQuery('#mainwp-backup-max-chain-length').val(),
+            remove_local_after_upload: (jQuery('#mainwp-backup-remove-local-after-upload').is(':checked') ? 1 : 0),
             delete_cloud_copies: (jQuery('#mainwp-backup-delete-cloud-copies').is(':checked') ? 1 : 0),
             //loadFilesBeforeZip: loadFilesBeforeZip
         });
@@ -856,6 +857,7 @@ mainwp_managebackups_add = function () {
             retention_days: jQuery('#mainwp-backup-retention-days').val(),
             retention_storage_mb: jQuery('#mainwp-backup-retention-storage-mb').val(),
             max_chain_length: jQuery('#mainwp-backup-max-chain-length').val(),
+            remove_local_after_upload: (jQuery('#mainwp-backup-remove-local-after-upload').is(':checked') ? 1 : 0),
             delete_cloud_copies: (jQuery('#mainwp-backup-delete-cloud-copies').is(':checked') ? 1 : 0),
             loadFilesBeforeZip: loadFilesBeforeZip
         });
@@ -878,47 +880,118 @@ mainwp_managebackups_add = function () {
 managebackups_remove = function (element) {
     let id = jQuery(element).attr('task_id');
     managebackups_init();
-
-    let msg = MainWP.I18n.t('Are you sure you want to delete this backup task?') +
-        '<div class="ui form" style="margin-top: 1em;"><div class="field">' +
-        '<div class="ui checkbox"><input type="checkbox" id="mainwp-backup-task-delete-snapshots" checked="checked">' +
-        '<label for="mainwp-backup-task-delete-snapshots">' + MainWP.I18n.t("Also delete this task's snapshots") + '</label></div>' +
-        '<div><em>' + MainWP.I18n.t('Leave this unticked to keep the snapshots. They stay in Snapshots & Restore until you delete them with Clean Up.') + '</em></div>' +
-        '</div></div>';
-    mainwp_confirm(msg, function () {
-        // Read before the modal is reused: the checkbox lives in its content.
-        let deleteSnapshots = jQuery('#mainwp-backup-task-delete-snapshots').is(':checked') ? 1 : 0;
-        jQuery('#task-status-' + id).html(MainWP.I18n.t('Removing the task...'));
-        let data = mainwp_secure_data({
-            action: 'mainwp_removebackup',
-            id: id,
-            delete_snapshots: deleteSnapshots
-        });
-        jQuery.post(ajaxurl, data, function (pElement) {
-            return function (response) {
-                managebackups_init();
-                let result = '';
-                let error = '';
-                if (response.error != undefined) {
-                    error = response.error;
-                } else if (response.result == 'SUCCESS') {
-                    result = MainWP.I18n.t('The task has been removed.');
-                } else {
-                    error = MainWP.I18n.t('An undefined error occurred.');
-                }
-
-                if (error != '') {
-                    managebackups_show_message(error, 'red');
-                }
-                if (result != '') {
-                    setHtml('#mainwp_managebackups_add_message', result);
-                }
-                jQuery('#task-status-' + id).html('');
-                if (error == '') {
-                    jQuery(pElement).closest('tr').remove();
-                }
+    jQuery('#task-status-' + id).html(MainWP.I18n.t('Loading deletion preview...'));
+    let previewError = MainWP.I18n.t('The deletion preview could not be loaded. Reload the page and try again.');
+    let data = mainwp_secure_data({
+        action: 'mainwp_removebackup',
+        id: id,
+        dry_run: 1,
+        delete_snapshots: 1
+    });
+    jQuery.post(ajaxurl, data, function (response) {
+        jQuery('#task-status-' + id).html('');
+        if (!response || response.error != undefined || response.notask || !Array.isArray(response.warnings) || !response.warnings.every(warning => typeof warning === 'string')) {
+            let error = response && typeof response.error === 'string' && response.error ? response.error : previewError;
+            managebackups_show_message(jQuery('<div>').text(error).html(), 'red');
+            return;
+        }
+        let msg = MainWP.I18n.t('Are you sure you want to delete this backup task?') +
+            '<div class="ui form" style="margin-top: 1em;"><div class="field">' +
+            '<div class="ui checkbox"><input type="checkbox" id="mainwp-backup-task-delete-snapshots" checked="checked">' +
+            '<label for="mainwp-backup-task-delete-snapshots">' + MainWP.I18n.t("Also delete this task's snapshots") + '</label></div>' +
+            '<div><em>' + MainWP.I18n.t('Leave this unticked to keep the snapshots. They stay in Snapshots & Restore until you delete them with Clean Up.') + '</em></div>' +
+            '</div></div>';
+        let retentionWarning = response.warnings.join(' ');
+        let previewRequest = 0;
+        let previewReady = true;
+        let currentPreviewError = previewError;
+        msg += '<div id="mainwp-backup-task-delete-warnings" class="ui yellow message"' + (retentionWarning ? '' : ' style="display:none"') + '>' + jQuery('<div>').text(retentionWarning).html() + '</div>';
+        let confirmRemoval = function () {
+            if (!previewReady) {
+                managebackups_show_message(jQuery('<div>').text(currentPreviewError).html(), 'red');
+                return false;
             }
-        }(element), 'json');
+            // Read before the modal is reused: the checkbox lives in its content.
+            let deleteSnapshots = jQuery('#mainwp-backup-task-delete-snapshots').is(':checked') ? 1 : 0;
+            jQuery('#task-status-' + id).html(MainWP.I18n.t('Removing the task...'));
+            let data = mainwp_secure_data({
+                action: 'mainwp_removebackup',
+                id: id,
+                delete_snapshots: deleteSnapshots
+            });
+            jQuery.post(ajaxurl, data, function (pElement) {
+                return function (response) {
+                    managebackups_init();
+                    let result = '';
+                    let error = '';
+                    if (response.error != undefined) {
+                        error = response.error;
+                    } else if (response.result == 'SUCCESS') {
+                        result = MainWP.I18n.t('The task has been removed.');
+                    } else {
+                        error = MainWP.I18n.t('An undefined error occurred.');
+                    }
+
+                    if (error != '') {
+                        managebackups_show_message(error, 'red');
+                    }
+                    if (result != '') {
+                        setHtml('#mainwp_managebackups_add_message', result);
+                    }
+                    jQuery('#task-status-' + id).html('');
+                    if (error == '') {
+                        jQuery(pElement).closest('tr').remove();
+                    }
+                }
+            }(element), 'json').fail(function () {
+                jQuery('#task-status-' + id).html('');
+                managebackups_show_message(
+                    MainWP.I18n.t('The deletion result could not be confirmed. Reload the page before trying again.'),
+                    'red'
+                );
+            });
+        };
+        mainwp_confirm(msg, confirmRemoval);
+        jQuery('#mainwp-modal-confirm').modal('setting', 'onApprove', function () {
+            if (!previewReady) {
+                return false;
+            }
+            confirmRemoval();
+        });
+        let previewCheckbox = jQuery('#mainwp-backup-task-delete-snapshots');
+        let previewWarnings = jQuery('#mainwp-backup-task-delete-warnings');
+        previewCheckbox.on('change', function () {
+            let request = ++previewRequest;
+            previewReady = false;
+            currentPreviewError = previewError;
+            previewWarnings.text(MainWP.I18n.t('Loading deletion preview...')).toggle(true);
+            let data = mainwp_secure_data({
+                action: 'mainwp_removebackup',
+                id: id,
+                dry_run: 1,
+                delete_snapshots: previewCheckbox.is(':checked') ? 1 : 0
+            });
+            jQuery.post(ajaxurl, data, function (response) {
+                if (request !== previewRequest) {
+                    return;
+                }
+                if (!response || response.error != undefined || response.notask || !Array.isArray(response.warnings) || !response.warnings.every(warning => typeof warning === 'string')) {
+                    currentPreviewError = response && typeof response.error === 'string' && response.error ? response.error : previewError;
+                    previewWarnings.text(currentPreviewError).toggle(true);
+                    return;
+                }
+                previewReady = true;
+                let warning = response.warnings.join(' ');
+                previewWarnings.text(warning).toggle(!!warning);
+            }, 'json').fail(function () {
+                if (request === previewRequest) {
+                    previewWarnings.text(previewError).toggle(true);
+                }
+            });
+        });
+    }, 'json').fail(function () {
+        jQuery('#task-status-' + id).html('');
+        managebackups_show_message(previewError, 'red');
     });
     return false;
 };

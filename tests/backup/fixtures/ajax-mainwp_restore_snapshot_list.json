@@ -34,6 +34,7 @@
             "test_restore_label": ""
         }
     ],
+    "cleanup_warnings": [],
     "multisite": false,
     "site_has_woocommerce": false,
     "site_url": "https://parity.example.org/",

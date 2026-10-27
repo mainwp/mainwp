@@ -3685,32 +3685,18 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         $skipped      = self::get_execution_skipped( array( $site ), array( 'translations' ), $slugs, $ignore_backup_gate, $backup_gates );
         $gate         = $backup_gates[ (int) $site->id ];
 
-        $translation_upgrades = ! empty( $site->translation_upgrades ) ? json_decode( $site->translation_upgrades, true ) : array();
-        if ( ! is_array( $translation_upgrades ) || empty( $translation_upgrades ) ) {
-            return array(
-                'dry_run'     => false,
-                'backup_gate' => $gate,
-                'skipped'     => $skipped,
-                'updated'     => array(),
-                'errors'      => array(),
-                'summary'     => array(
-                    'total_skipped' => count( $skipped ),
-                    'total_updated' => 0,
-                    'total_errors'  => 0,
-                ),
-            );
-        }
+        $updates = self::get_site_updates( $site, array( 'translations' ), array(), array(), array() );
 
         if ( ! empty( $slugs ) ) {
-            $translation_upgrades = array_filter(
-                $translation_upgrades,
-                function ( $translation ) use ( $slugs ) {
-                    return isset( $translation['slug'] ) && in_array( $translation['slug'], $slugs, true );
+            $updates = array_filter(
+                $updates,
+                function ( $update ) use ( $slugs ) {
+                    return in_array( $update['slug'], $slugs, true );
                 }
             );
         }
 
-        if ( empty( $translation_upgrades ) ) {
+        if ( empty( $updates ) ) {
             return array(
                 'dry_run'     => false,
                 'backup_gate' => $gate,
@@ -3722,25 +3708,6 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
                     'total_updated' => 0,
                     'total_errors'  => 0,
                 ),
-            );
-        }
-
-        $updates = array();
-        foreach ( $translation_upgrades as $translation ) {
-
-            $name = '';
-
-            if ( isset( $translation['name'] ) ) {
-                $name = $translation['name'];
-            } elseif ( isset( $translation['slug'] ) ) {
-                $name = $translation['slug'];
-            }
-
-            $updates[] = array(
-                'slug'            => isset( $translation['slug'] ) ? $translation['slug'] : '',
-                'name'            => $name,
-                'current_version' => isset( $translation['version'] ) ? $translation['version'] : '',
-                'new_version'     => isset( $translation['new_version'] ) ? $translation['new_version'] : '',
             );
         }
 
@@ -4433,6 +4400,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             foreach ( array( 'is_ignoreCoreUpdates', 'is_ignorePluginUpdates', 'is_ignoreThemeUpdates' ) as $flag ) {
                 $unheld->{$flag} = 0;
             }
+            $unheld->ignored_trans_updates   = 0;
             $site_holds                      = clone $unheld;
             $site_holds->ignored_plugins     = self::get_site_column_value( $site, 'ignored_plugins' );
             $site_holds->ignored_themes      = self::get_site_column_value( $site, 'ignored_themes' );
@@ -4441,6 +4409,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
             foreach ( array( 'is_ignoreCoreUpdates', 'is_ignorePluginUpdates', 'is_ignoreThemeUpdates' ) as $flag ) {
                 $flag_holds->{$flag} = $site->{$flag} ?? 0;
             }
+            $flag_holds->ignored_trans_updates = MainWP_DB::instance()->get_website_option( $site, 'ignored_trans_updates' );
 
             $pending = self::get_site_updates( $unheld, $types, array(), array(), array() );
             $layers  = array(
@@ -4777,7 +4746,7 @@ class MainWP_Abilities_Updates { //phpcs:ignore -- NOSONAR - multi methods.
         }
 
         // Translation updates.
-        if ( in_array( 'translations', $types, true ) ) {
+        if ( in_array( 'translations', $types, true ) && ! MainWP_Common_Handler::is_translation_updates_ignored( $site ) ) {
             $raw_translation_upgrades = self::get_site_column_value( $site, 'translation_upgrades' );
             $translation_upgrades     = ! empty( $raw_translation_upgrades ) ? json_decode( $raw_translation_upgrades, true ) : array();
 

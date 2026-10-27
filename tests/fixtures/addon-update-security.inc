@@ -34,14 +34,13 @@ namespace {
 	$GLOBALS['probe_hooks'] = array();
 	$GLOBALS['probe_wakeup_calls'] = 0;
 	$GLOBALS['probe_warnings'] = array();
-	set_error_handler(
-		static function ( $severity, $message ) {
-			if ( error_reporting() & $severity ) {
-				$GLOBALS['probe_warnings'][] = $message;
-			}
-			return true;
+	$previous_handler = static function ( $severity, $message ) {
+		if ( error_reporting() & $severity ) {
+			$GLOBALS['probe_warnings'][] = $message;
 		}
-	);
+		return true;
+	};
+	set_error_handler( $previous_handler );
 
 	class Addon_Update_Wakeup_Probe {
 		public function __wakeup() { ++$GLOBALS['probe_wakeup_calls']; }
@@ -103,6 +102,8 @@ namespace {
 	} elseif ( 'api_error' === $input['body'] ) {
 		$expected->package = '';
 		$expected->errors = array( 'download_revoked' => 'download_revoked' );
+	} elseif ( 'nested_data' === $input['body'] ) {
+		$expected->extra = (object) array( 'enabled' => true, 'disabled' => false, 'empty' => null, 'number' => 1.5, 'list' => array( 'fixture', (object) array( 'text' => 'UTF-8: café; O:8:"stdClass"; E:4:"text";' ) ) );
 	}
 	$body = serialize( $expected );
 	switch ( $input['body'] ) {
@@ -117,6 +118,9 @@ namespace {
 		case 'array': $body = serialize( array( 'package' => 'fixture.zip' ) ); break;
 		case 'scalar': $body = serialize( 'fixture' ); break;
 		case 'false': $body = serialize( false ); break;
+		case 'trailing_data': $body .= 'GARBAGE'; break;
+		case 'trailing_object': $body .= serialize( new Addon_Update_Wakeup_Probe() ); break;
+		case 'trailing_whitespace': $body .= "\r\n"; break;
 		case 'too_deep':
 			$deep = array();
 			for ( $i = 0; $i < 70; ++$i ) { $deep = array( $deep ); }
@@ -134,6 +138,8 @@ namespace {
 	$client = new \MainWP\Dashboard\MainWP_Api_Manager_Plugin_Update();
 	$response = 'information' === $input['body'] ? $client->request( $args ) : $client->plugin_information( $args, $bulk );
 	if ( ! $bulk ) { $expected->package .= '?filtered=1'; }
+	$restored = set_error_handler( static function () { return true; } ) === $previous_handler;
+	restore_error_handler();
 	echo json_encode(
 		array(
 			'response' => $response,
@@ -141,6 +147,7 @@ namespace {
 			'wakeup_calls' => $GLOBALS['probe_wakeup_calls'],
 			'nested_class' => isset( $response->extra ) && is_object( $response->extra ) ? get_class( $response->extra ) : null,
 			'warnings' => $GLOBALS['probe_warnings'],
+			'error_handler_restored' => $restored,
 		),
 		JSON_THROW_ON_ERROR
 	);

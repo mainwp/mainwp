@@ -45,6 +45,7 @@ class Test_Addon_Update_Security extends TestCase {
 			'update'      => array( 'update' ),
 			'information' => array( 'information' ),
 			'api error'   => array( 'api_error' ),
+			'nested data' => array( 'nested_data' ),
 		);
 	}
 
@@ -64,6 +65,7 @@ class Test_Addon_Update_Security extends TestCase {
 		$this->assertSame( $result['expected'], $result['response'] );
 		$this->assertSame( 0, $result['wakeup_calls'] );
 		$this->assertSame( array(), $result['warnings'] );
+		$this->assertTrue( $result['error_handler_restored'] );
 	}
 
 	/**
@@ -74,7 +76,7 @@ class Test_Addon_Update_Security extends TestCase {
 	public static function rejected_responses(): array {
 		return array_map(
 			static fn( $body ) => array( $body ),
-			array( 'foreign_object', 'unknown_object', 'malformed', 'empty', 'array', 'scalar', 'false', 'too_deep' )
+			array( 'foreign_object', 'unknown_object', 'malformed', 'empty', 'array', 'scalar', 'false', 'too_deep', 'trailing_data', 'trailing_object', 'trailing_whitespace' )
 		);
 	}
 
@@ -94,6 +96,7 @@ class Test_Addon_Update_Security extends TestCase {
 		$this->assertSame( 0, $result['wakeup_calls'] );
 		$this->assertFalse( $result['response'] );
 		$this->assertSame( array(), $result['warnings'] );
+		$this->assertTrue( $result['error_handler_restored'] );
 	}
 
 	/** Disallowed nested classes must not execute even inside a normal response. */

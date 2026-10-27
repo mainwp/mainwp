@@ -732,7 +732,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
             default:
                 break;
         }
-        $parse_title = Log_Changes_Logs_Helper::get_changes_log_title( $record->log_type_id, $data, 'action' );
+        $parse_title = Log_Changes_Logs_Helper::get_changes_log_title( $record->log_type_id, array_map( 'esc_html', $data ), 'action' );
         return ! empty( $parse_title ) ? $parse_title : ucfirst( $record->action );
     }
 
@@ -760,7 +760,7 @@ class Log_Events_List_Table { //phpcs:ignore -- NOSONAR - complex.
                 break;
         }
         if ( ! empty( $data ) ) {
-            $formatted_title = Log_Changes_Logs_Helper::get_changes_log_title( $record->log_type_id, $data, 'object' );
+            $formatted_title = Log_Changes_Logs_Helper::get_changes_log_title( $record->log_type_id, array_map( 'esc_html', $data ), 'object' );
             if ( ! empty( $formatted_title ) ) {
                 return $formatted_title;
             }

@@ -32,7 +32,7 @@ jQuery(function () {
     jQuery(document).on('click', '#mainwp_managesites_btn_save_csv', function () {
         let fail_data = '';
         jQuery('#mainwp_managesites_import_fail_logging span').each(function () {
-            fail_data += jQuery(this).html() + "\r";
+            fail_data += jQuery(this).text() + "\r";
         });
         let blob = new Blob([fail_data], { type: "text/plain;charset=utf-8" });
         saveAs(blob, "import_sites_fails.csv");
@@ -144,7 +144,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
         import_wpadmin_pwd = '';
     }
 
-    jQuery('#mainwp_managesites_import_logging .log').append('<strong>[' + import_current + '] << ' + import_line_orig + '</strong><br/>');
+    jQuery('#mainwp_managesites_import_logging .log').append(jQuery('<strong>').text('[' + import_current + '] << ' + import_line_orig), '<br/>');
 
     let errors = [];
 
@@ -161,8 +161,8 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
     }
 
     if (errors.length > 0) {
-        jQuery('#mainwp_managesites_import_logging .log').append('[' + import_current + '] >> Error - ' + errors.join(" ") + '<br/>');
-        jQuery('#mainwp_managesites_import_fail_logging').append('<span>' + import_line_orig + '</span>');
+        jQuery('#mainwp_managesites_import_logging .log').append(document.createTextNode('[' + import_current + '] >> Error - ' + errors.join(" ")), '<br/>');
+        jQuery('#mainwp_managesites_import_fail_logging').append(jQuery('<span>').text(import_line_orig));
         import_count_fails++;
         mainwp_managesites_import_sites();
         return;
@@ -193,12 +193,12 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
             url += '/';
         }
 
-        url = url.replaceAll('"', '&quot;');
-
         if (response == 'HTTPERROR') {
             errors.push(check_result + MainWP.I18n.t('HTTP error: website does not exist!'));
         } else if (response == 'NOMAINWP') {
-            errors.push(check_result + MainWP.I18n.t('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation)', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins'));
+            let message = jQuery('<span>').html(MainWP.I18n.t('MainWP Child plugin not detected! First install and activate the MainWP Child plugin and add your site to MainWP afterwards. Click <a href="%1" target="_blank">here</a> to install <a href="%2" target="_blank">MainWP</a> plugin (do not forget to activate it after installation)', '#', '#'));
+            message.find('a').attr('href', url + 'wp-admin/plugin-install.php?tab=search&type=term&s=mainwp&plugin-search-input=Search+Plugins');
+            errors.push(jQuery('<span>').text(check_result).append(message));
         } else if (response == 'TIMEOUT') {
             let timeoutKind = res_things && res_things.timeout_kind ? res_things.timeout_kind : 'operation';
             errors.push(check_result + mainwp_js_request_timeout_message(timeoutKind));
@@ -206,7 +206,7 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
             if (response.length == 5) {
                 errors.push(check_result + MainWP.I18n.t('Undefined error!'));
             } else {
-                errors.push(check_result + 'ERROR: ' + response.substring(6));
+                errors.push(jQuery('<span>').text(check_result + 'ERROR: ').append(res_things.failure_ux ? mainwp_failure_ux_nodes(res_things.failure_ux) : document.createTextNode(mainwp_entities_text(response.substring(6)))));
             }
         } else if (response == 'OK') {
             let groupids = [];
@@ -237,8 +237,8 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
                 response = response.trim();
 
                 if (response.substring(0, 5) == 'ERROR') {
-                    jQuery('#mainwp_managesites_import_fail_logging').append('<span>' + import_line_orig + '</span>');
-                    jQuery('#mainwp_managesites_import_logging .log').append(add_result + response.substring(6) + "<br/>");
+                    jQuery('#mainwp_managesites_import_fail_logging').append(jQuery('<span>').text(import_line_orig));
+                    jQuery('#mainwp_managesites_import_logging .log').append(document.createTextNode(add_result), res_things.failure_ux ? mainwp_failure_ux_nodes(res_things.failure_ux) : document.createTextNode(mainwp_entities_text(response.substring(6))), '<br/>');
                     import_count_fails++;
                 } else {
                     //Message the WP was added.
@@ -260,16 +260,22 @@ let mainwp_managesites_import_sites = function () { // NOSONAR - to compatible.
                 }
                 mainwp_managesites_import_sites();
             }, 'json').fail(function (xhr, textStatus, errorThrown) {
-                jQuery('#mainwp_managesites_import_fail_logging').append('<span>' + import_line_orig + '</span>');
-                jQuery('#mainwp_managesites_import_logging .log').append("error: " + errorThrown + "<br/>");
+                jQuery('#mainwp_managesites_import_fail_logging').append(jQuery('<span>').text(import_line_orig));
+                jQuery('#mainwp_managesites_import_logging .log').append(document.createTextNode("error: " + errorThrown), '<br/>');
                 import_count_fails++;
                 mainwp_managesites_import_sites();
             });
         }
 
         if (errors.length > 0) {
-            jQuery('#mainwp_managesites_import_fail_logging').append('<span>' + import_line_orig + '</span>');
-            jQuery('#mainwp_managesites_import_logging .log').append(errors.join("\n") + '<br/>');
+            jQuery('#mainwp_managesites_import_fail_logging').append(jQuery('<span>').text(import_line_orig));
+            errors.forEach(function (error, index) {
+                if (index > 0) {
+                    jQuery('#mainwp_managesites_import_logging .log').append(document.createTextNode('\n'));
+                }
+                jQuery('#mainwp_managesites_import_logging .log').append(typeof error === 'string' ? document.createTextNode(error) : error);
+            });
+            jQuery('#mainwp_managesites_import_logging .log').append('<br/>');
             import_count_fails++;
             mainwp_managesites_import_sites();
         }

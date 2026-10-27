@@ -25,6 +25,9 @@ function get_option( $name, $default = false ) {
 function delete_option( $name ) {
 	unset( $GLOBALS['options'][ $name ] );
 }
+function current_user_can( $capability ) {
+	return 'manage_options' === $capability;
+}
 function esc_html__( $text, $domain ) {
 	return $text;
 }

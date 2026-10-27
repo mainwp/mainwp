@@ -3122,7 +3122,7 @@ class MainWP_Rest_Sites_Controller extends MainWP_REST_Controller{ //phpcs:ignor
         $item_fields['wpadmin']    = isset( $request['admin'] ) ? sanitize_text_field( $request['admin'] ) : '';
         $item_fields['adminpwd']   = isset( $request['adminpassword'] ) ? (string) $request['adminpassword'] : ''; // Cast only; sanitize_text_field() strips characters a password may legitimately hold.
         $item_fields['unique_id']  = sanitize_text_field( $request['uniqueid'] ?? $request['uniqueId'] ?? '' ); // uniqueid is the documented input spelling, uniqueId is what the item schema registers on this route.
-        $item_fields['ssl_verify'] = empty( $request['ssl_verify'] ) ? false : intval( $request['ssl_verify'] );
+        $item_fields['ssl_verify'] = MainWP_Manage_Sites_View::normalize_ssl_verify( $request['ssl_verify'] );
         // Omitted stays null: fetch_url() then reads the global mainwp_forceUseIPv4 option
         // for the handshake, the same as the UI and the v1 add handler send, and
         // add_website() leaves the column at its default.

@@ -474,10 +474,15 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
         $store  = MainWP_Backup_Upload_Job_Store::instance();
         $work   = array();
         if ( $retry_pruned ) {
-            $table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
-            $rows  = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- deleted-site purges also own unfinished pruned cleanup.
+            // Terminal failed/partial rows must record their archive/manifest paths;
+            // cleanup cannot remove files whose paths were never recorded.
+            $table      = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+            $site_table = MainWP_DB::instance()->get_table_name( 'wp' );
+            $rows       = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- deleted-site purges also own terminal rows and unfinished pruned cleanup.
                 $wpdb->prepare(
-                    "SELECT * FROM {$table} WHERE task_id = %d AND status = 'pruned' ORDER BY id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted MainWP snapshot table identifier.
+                    "SELECT snapshot.* FROM %i snapshot LEFT JOIN %i site ON site.id = snapshot.site_id WHERE snapshot.task_id = %d AND (snapshot.status = 'pruned' OR (snapshot.site_id > 0 AND site.id IS NULL AND snapshot.status IN ('failed', 'partial'))) ORDER BY snapshot.id ASC",
+                    $table,
+                    $site_table,
                     $task_id
                 )
             );
@@ -487,14 +492,16 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             }
             foreach ( $rows as $snapshot ) {
                 $snapshot->archives = json_decode( (string) $snapshot->archives, true );
-                if ( ! $this->pruned_cleanup_pending( $snapshot, $store ) ) {
+                if ( 'pruned' === $snapshot->status && ! $this->pruned_cleanup_pending( $snapshot, $store ) ) {
                     continue;
                 }
                 $work[ (int) $snapshot->id ] = array(
                     'snapshot_ids' => array( (int) $snapshot->id ),
                     'reason'       => 'task_deleted',
-                    'pruned_row'   => $snapshot,
                 );
+                if ( 'pruned' === $snapshot->status ) {
+                    $work[ (int) $snapshot->id ]['pruned_row'] = $snapshot;
+                }
             }
         }
         $sites = $query->list_site_ids_for_task( $task_id );

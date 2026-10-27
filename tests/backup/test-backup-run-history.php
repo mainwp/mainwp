@@ -400,6 +400,144 @@ class MainWP_Backup_Run_History_Test extends MainWP_Abilities_Test_Case {
 	}
 
 	/**
+	 * The task driver must keep a newer Child's reason through storage and reads.
+	 */
+	public function test_unknown_child_error_survives_driver_and_history_reads(): void {
+		$site    = $this->site();
+		$task    = $this->task( array( $site ) );
+		$code    = 'mainwp_backup_dl_recorded_hash_unreadable';
+		$message = 'Cannot read ' . ABSPATH . 'wp-content/backup-aB3dE5fG7hJ9kL2m/record. Run a new backup.';
+		$clean   = 'Cannot read wp-content/backup-[redacted]/record. Run a new backup.';
+		$fail    = static function ( $pre, $website, $what ) use ( $message, $code ) {
+			if ( 'backup_task_create' === $what ) {
+				throw new \MainWP\Dashboard\MainWP_Exception( $message, null, $code );
+			}
+			return $pre;
+		};
+		add_filter( 'mainwp_fetch_url_authed_pre', $fail, 20, 3 );
+		try {
+			MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+		} finally {
+			remove_filter( 'mainwp_fetch_url_authed_pre', $fail, 20 );
+		}
+		$this->assertCount( 1, $this->rows() );
+		$row = $this->rows()[0];
+		$this->assertSame( 'failed', $row['outcome'] );
+		$this->assertSame( $clean, $row['message'] );
+		$this->assertSame( $code, $row['error_code'] );
+		$progress = MainWP_DB_Backup::instance()->get_backup_task_progress( (int) $task->id, $site );
+		$this->assertSame( $code, $progress->fetchResult['error_code'] );
+		$this->assertSame( $clean, $progress->fetchResult['error_extra'] );
+		$read = MainWP_Backup_Run_History::query( array(), 1, 10, array( $site ) )['items'][0];
+		$this->assertSame( $clean, $read['message'] );
+		$this->assertSame(
+			array(
+				'code'    => $code,
+				'message' => $clean,
+			),
+			$read['error']
+		);
+		$this->assertSame( $row, $this->rows()[0], 'Reads must not rewrite stored history.' );
+
+		$ability = \MainWP\Dashboard\MainWP_Abilities_Backups::execute_list_backup_history( array( 'site_id_or_domain' => $site ) );
+		$this->assertIsArray( $ability );
+		$this->assertSame( MainWP_Backup_Operations::safe_error( $code ), $ability['items'][0]['error'] );
+		$this->assertStringNotContainsString( 'Run a new backup.', wp_json_encode( $ability ) );
+	}
+
+	/**
+	 * The executor escapes Child text before the task driver catches its exception.
+	 */
+	public function test_child_response_history_keeps_plain_text_and_repeated_reads(): void {
+		$site = $this->site();
+		$task = $this->task( array( $site ) );
+		MainWP_Manage_Backups_Handler::execute_backup_task( $task, 1, true );
+		$message      = "Cannot read 'record' & backup. Literal &amp;lt;tag&amp;gt;.";
+		$expected     = "Cannot read 'record' & backup. Literal &lt;tag&gt;.";
+		$this->answer = array(
+			'phase'      => 'failed',
+			'error'      => $message,
+			'error_code' => 'mainwp_backup_dl_recorded_hash_unreadable',
+		);
+		$this->finish_task( $task );
+		$row = $this->rows()[0];
+		$this->assertSame( 'failed', $row['outcome'] );
+		$this->assertSame( $expected, $row['message'] );
+		foreach ( array( 1, 2 ) as $read_number ) {
+			$read = MainWP_Backup_Run_History::query( array(), 1, 10, array( $site ) )['items'][0];
+			$this->assertSame( $expected, $read['message'], 'Read ' . $read_number . ' must not decode again.' );
+			$this->assertSame( $row, $this->rows()[0] );
+		}
+	}
+
+	/**
+	 * Only unknown Child codes may select their supplied text.
+	 *
+	 * @dataProvider history_child_messages
+	 * @param string $code Error code.
+	 * @param string $extra Child text or replay context.
+	 * @param string $expected Expected display text.
+	 */
+	public function test_history_child_message_contract( string $code, string $extra, string $expected ): void {
+		$site = $this->site();
+		$id   = MainWP_Backup_Run_History::start( 1, $site, time() );
+		$this->assertTrue( MainWP_Backup_Run_History::finalize( $id, 'failed', $code, null, $extra ) );
+		$row = $this->rows()[0];
+		$this->assertSame( $expected, $row['message'] );
+		$read = MainWP_Backup_Run_History::query( array(), 1, 10, array( $site ) )['items'][0];
+		$this->assertSame( $expected, $read['message'] );
+		$this->assertSame( $row, $this->rows()[0] );
+	}
+
+	/**
+	 * Fixed messages are resolved after WordPress has loaded translations.
+	 *
+	 * @return array
+	 */
+	public static function history_child_messages(): array {
+		$unknown = 'mainwp_backup_new_child_error';
+		$generic = MainWP_Backup_Operations::safe_error( '' )['message'];
+		return array(
+			'unknown Child' => array( $unknown, 'Try a new backup.', 'Try a new backup.' ),
+			'64-byte code'  => array( 'mainwp_' . str_repeat( 'a', 57 ), 'Try a new backup.', 'Try a new backup.' ),
+			'65-byte code'  => array( 'mainwp_' . str_repeat( 'a', 58 ), 'Try a new backup.', $generic ),
+			'empty Child'   => array( $unknown, '', $generic ),
+			'blank Child'   => array( $unknown, '   ', $generic ),
+			'invalid code'  => array( 'untrusted_error', 'Try a new backup.', $generic ),
+			'newline code'  => array( $unknown . "\n", 'Try a new backup.', $generic ),
+			'registered'    => array( MainWP_Backup_Error_Codes::ERR_ZIP_FAILED, 'Ignore the registry.', MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_ZIP_FAILED )['message'] ),
+			'house'         => array( 'mainwp_permission_denied', 'Ignore permissions.', MainWP_Backup_Operations::safe_error( 'mainwp_permission_denied' )['message'] ),
+			'replay cause'  => array( MainWP_Backup_Error_Codes::ERR_TIMEOUT, 'AUTH_ERROR2; ' . MainWP_Backup_Error_Codes::ERR_HTTP_ERROR, MainWP_Backup_Operations::safe_error( MainWP_Backup_Error_Codes::ERR_TIMEOUT )['message'] . ' (AUTH_ERROR2; ' . MainWP_Backup_Error_Codes::ERR_HTTP_ERROR . ')' ),
+			'UTF-8 cap'     => array( $unknown, str_repeat( 'a', 1999 ) . 'éover', str_repeat( 'a', 1999 ) . 'é' ),
+			'sensitive'     => array( $unknown, "Cannot read `private_table`. Table 'private_name'. SELECT secret FROM private_rows WHERE id=1; backup-aB3dE5fG7hJ9kL2m", "Cannot read [redacted]. Table '[redacted]'. [SQL removed]; backup-[redacted]" ),
+		);
+	}
+
+	/**
+	 * Rows written before Child text was retained keep their fixed projection.
+	 */
+	public function test_legacy_history_row_keeps_generic_message_without_rewrite(): void {
+		global $wpdb;
+		$site = $this->site();
+		$id   = MainWP_Backup_Run_History::start( 1, $site, time() );
+		$safe = MainWP_Backup_Operations::safe_error( 'mainwp_backup_new_child_error' );
+		$wpdb->update(
+			MainWP_DB::instance()->get_table_name( 'wp_backup_run_history' ),
+			array(
+				'outcome'    => 'failed',
+				'error_code' => $safe['code'],
+				'message'    => $safe['message'],
+			),
+			array( 'id' => $id )
+		);
+		$before = $this->rows();
+		$read   = MainWP_Backup_Run_History::query( array(), 1, 10, array( $site ) )['items'][0];
+		$this->assertSame( $safe, $read['error'] );
+		$this->assertSame( $safe['message'], $read['message'] );
+		$this->assertSame( $before, $this->rows() );
+	}
+
+	/**
 	 * Run Now advances elapsed and calendar schedules after a successful claim.
 	 *
 	 * @dataProvider s84_manual_schedules

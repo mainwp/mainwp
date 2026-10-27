@@ -122,7 +122,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( ! apply_filters( 'mainwp_check_site_access', true, (int) $site->id, null ) ) {
             return false;
         }
-        return self::userless_cli() || ( MainWP_System_Utility::can_edit_website( $site ) && apply_filters( 'mainwp_currentusercan', true, 'site', (int) $site->id ) );
+        return self::userless_cli() || ( MainWP_System_Utility::can_edit_website( $site ) && MainWP_System::filter_current_user_permission( true, 'site', (int) $site->id ) );
     }
 
     /**
@@ -290,6 +290,8 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $message = self::safe_error( 'mainwp_invalid_input' )['message'];
         if ( 'name' === $field ) {
             $message = esc_html__( 'Invalid backup task name. Please, enter a new name and try again.', 'mainwp' );
+        } elseif ( 'remove_local_after_upload' === $field ) {
+            $message = esc_html__( 'Select at least one remote storage destination before enabling local archive removal.', 'mainwp' );
         } elseif ( 'type' === $field ) {
             $message = esc_html__( 'Invalid backup type. Select Full, Database, Incremental, or Files Only and try again.', 'mainwp' );
         }
@@ -352,11 +354,12 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'archive_format'  => $task->archiveFormat ?? 'site',
             'exclude'         => $task ? html_entity_decode( $task->exclude, ENT_QUOTES ) : '',
             'retention'       => array(
-                'count'               => $task ? (int) $task->retention_count : MainWP_Manage_Backups_Handler::NEW_TASK_RETENTION_COUNT,
-                'days'                => $task ? (int) $task->retention_days : 0,
-                'storage_mb'          => $task ? (int) $task->retention_storage_mb : 0,
-                'delete_cloud_copies' => ! empty( $task->delete_cloud_copies ),
-                'max_chain_length'    => $task ? (int) $task->max_chain_length : 0,
+                'count'                     => $task ? (int) $task->retention_count : MainWP_Manage_Backups_Handler::NEW_TASK_RETENTION_COUNT,
+                'days'                      => $task ? (int) $task->retention_days : 0,
+                'storage_mb'                => $task ? (int) $task->retention_storage_mb : 0,
+                'remove_local_after_upload' => $task ? MainWP_Backup_Retention_Protection::task_removes_local_archives( (int) $task->id ) : false,
+                'delete_cloud_copies'       => ! empty( $task->delete_cloud_copies ),
+                'max_chain_length'          => $task ? (int) $task->max_chain_length : 0,
             ),
             'exclude_flags'   => array(
                 'backup_archives' => ! empty( $task->excludebackup ),
@@ -486,6 +489,17 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 if ( is_bool( $base[ $field ][ $key ] ) ? ! is_bool( $value ) : ( ! is_int( $value ) || $value < 0 || ( $submitted && isset( $ceilings[ $key ] ) && $value > $ceilings[ $key ] ) ) ) {
                     return self::invalid_task_input( $field );
                 }
+            }
+        }
+        $flag_submitted = array_key_exists( 'remove_local_after_upload', $fields['retention'] ?? array() );
+        if ( $values['retention']['remove_local_after_upload'] && ( $flag_submitted || array_key_exists( 'destination_ids', $fields ) || null === $task ) ) {
+            $remote = false;
+            foreach ( $values['destination_ids'] as $destination_id ) {
+                $destination = MainWP_Backup_Storage_Destinations::instance()->get_destination( $destination_id );
+                $remote      = $remote || ( $destination && 'local' !== $destination->provider );
+            }
+            if ( ! $remote ) {
+                return self::invalid_task_input( 'remove_local_after_upload' );
             }
         }
         if ( ! is_string( $values['exclude'] ) && ! is_array( $values['exclude'] ) ) {
@@ -646,7 +660,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     }
 
     /**
-     * The schedule and retention savers use the same values as the normalized result.
+     * Persist task fields before the checked local archive option.
      *
      * @param array       $values Normalized task fields.
      * @param array       $fields Submitted legacy filename fields.
@@ -654,55 +668,194 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     private static function save_task( array $values, array $fields, ?object $task = null ) {
-        $db        = MainWP_DB_Backup::instance();
-        $sites     = implode( ',', $values['site_ids'] );
-        $groups    = implode( ',', $values['group_ids'] );
-        $exclude   = MainWP_Backup_Settings::sanitize_exclude_list( array_map( 'htmlentities', $values['exclude'] ) );
-        $flags     = $values['exclude_flags'];
-        $tuning    = $values['archive_tuning'];
-        $subfolder = sanitize_text_field( $fields['subfolder'] ?? $task->subfolder ?? '' );
-        $filename  = sanitize_text_field( $fields['filename'] ?? $task->filename ?? '' );
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery.DirectQuery -- Raw evidence and guarded recovery require checked database access.
+        global $wpdb;
+        $table             = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+        $flags             = $values['exclude_flags'];
+        $tuning            = $values['archive_tuning'];
+        $write             = array(
+            'userid'                         => get_current_user_id(),
+            'name'                           => htmlentities( $values['name'] ),
+            'schedule'                       => $values['schedule'],
+            'type'                           => $values['type'],
+            'exclude'                        => MainWP_Backup_Settings::sanitize_exclude_list( array_map( 'htmlentities', $values['exclude'] ) ),
+            'sites'                          => implode( ',', $values['site_ids'] ),
+            'groups'                         => implode( ',', $values['group_ids'] ),
+            'subfolder'                      => MainWP_Utility::remove_preslash_spaces( sanitize_text_field( $fields['subfolder'] ?? $task->subfolder ?? '' ) ),
+            'filename'                       => sanitize_text_field( $fields['filename'] ?? $task->filename ?? '' ),
+            'excludebackup'                  => (int) $flags['backup_archives'],
+            'excludecache'                   => (int) $flags['cache'],
+            'excludenonwp'                   => (int) $flags['non_wp_folders'],
+            'excludezip'                     => (int) $flags['zip_archives'],
+            'archiveFormat'                  => $values['archive_format'],
+            'loadFilesBeforeZip'             => (int) $tuning['load_files_before_zip'],
+            'maximumFileDescriptorsOverride' => (int) $tuning['max_file_descriptors_override'],
+            'maximumFileDescriptorsAuto'     => (int) $tuning['max_file_descriptors_auto'],
+            'maximumFileDescriptors'         => $tuning['max_file_descriptors'],
+            'zip_force_override'             => (int) $tuning['zip_force_override'],
+            'authorized_sites'               => implode( ',', MainWP_Manage_Backups_Handler::expand_task_site_ids( implode( ',', $values['site_ids'] ), implode( ',', $values['group_ids'] ) ) ),
+            'destinations'                   => wp_json_encode( $values['destination_ids'] ),
+            'interval_hours'                 => $values['interval_hours'] ?? 0,
+            'time_of_day'                    => $values['time_of_day'] ?? '',
+            'day_of_week'                    => min( 6, absint( $values['day_of_week'] ?? $task->day_of_week ?? 0 ) ),
+            'day_of_month'                   => max( 1, min( 28, absint( $values['day_of_month'] ?? $task->day_of_month ?? 1 ) ) ),
+            'retention_count'                => $values['retention']['count'],
+            'retention_days'                 => $values['retention']['days'],
+            'retention_storage_mb'           => $values['retention']['storage_mb'],
+            'delete_cloud_copies'            => (int) $values['retention']['delete_cloud_copies'],
+            'max_chain_length'               => $values['retention']['max_chain_length'],
+        );
+        $calculator        = new MainWP_Backup_Schedule_Calculator( wp_timezone(), time() );
+        $write['next_run'] = empty( $task->paused ) ? $calculator->compute_next_run( (object) $write, empty( $task->last_run ) ? null : (int) $task->last_run ) : (int) $task->next_run;
+        $id                = $task ? (int) $task->id : 0;
+        $before            = array();
+        $option_before     = null;
+        $key               = MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $id;
+        $error             = new \WP_Error( 'mainwp_internal_error', esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ), array( 'status' => 500 ) );
         if ( $task ) {
-            do_action( 'mainwp_update_backuptask', $task->id );
-            $saved = $db->update_backup_task( $task->id, get_current_user_id(), htmlentities( $values['name'] ), $values['schedule'], $values['type'], $exclude, $sites, $groups, $subfolder, $filename, (int) $flags['backup_archives'], (int) $flags['cache'], (int) $flags['non_wp_folders'], (int) $flags['zip_archives'], $values['archive_format'], $tuning['max_file_descriptors_override'], $tuning['max_file_descriptors_auto'], $tuning['max_file_descriptors'], (int) $tuning['load_files_before_zip'], (int) $tuning['zip_force_override'] );
+            $raw = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $id ), ARRAY_A );
+            if ( ! $raw || '' !== $wpdb->last_error ) {
+                return $error;
+            }
+            $before        = array_intersect_key( $raw, $write );
+            $option_before = $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $key ), ARRAY_A );
+            if ( '' !== $wpdb->last_error ) {
+                return $error;
+            }
+            do_action( 'mainwp_update_backuptask', $id );
+            $saved = $wpdb->update( $table, $write, array( 'id' => $id ) );
         } else {
-            $saved = $db->add_backup_task( get_current_user_id(), htmlentities( $values['name'] ), $values['schedule'], $values['type'], $exclude, $sites, $groups, $subfolder, $filename, 0, (int) $flags['backup_archives'], (int) $flags['cache'], (int) $flags['non_wp_folders'], (int) $flags['zip_archives'], $values['archive_format'], $tuning['max_file_descriptors_override'], $tuning['max_file_descriptors_auto'], $tuning['max_file_descriptors'], (int) $tuning['load_files_before_zip'], (int) $tuning['zip_force_override'] );
+            $write += array(
+                'last'              => 0,
+                'last_run'          => 0,
+                'last_run_manually' => 0,
+                'completed_sites'   => '',
+                'completed'         => 0,
+                'backup_errors'     => '',
+                'backup_notices'    => '',
+                'paused'            => 0,
+                'template'          => 0,
+                'manual_site_id'    => null,
+            );
+            $saved  = $wpdb->insert( $table, $write );
+            if ( false === $saved ) {
+                return $error;
+            }
+            $id            = (int) $wpdb->insert_id;
+            $key           = MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $id;
+            $option_before = $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $key ), ARRAY_A );
+            if ( '' !== $wpdb->last_error ) {
+                return self::recover_failed_task_save( $id, $before, $write, $option_before, false, $values['retention']['remove_local_after_upload'], $error );
+            }
         }
-        if ( false === $saved ) {
-            return new \WP_Error( 'mainwp_internal_error', esc_html__( 'Could not save the backup task. Please check that all required fields are filled in and try again. If the issue persists, check your server error log.', 'mainwp' ), array( 'status' => 500 ) );
+        $actual  = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $id ), ARRAY_A );
+        $matches = $actual && '' === $wpdb->last_error;
+        foreach ( $write as $field => $value ) {
+            $matches = $matches && array_key_exists( $field, $actual ?? array() ) && ( null === $value ? null === $actual[ $field ] : (string) $value === (string) $actual[ $field ] );
         }
-        $id = (int) ( $task ? $task->id : $saved->id );
-        MainWP_Manage_Backups_Handler::stamp_task_scope_snapshot( $id, $sites, $groups );
-        MainWP_Backup_Storage_Handler::save_task_destinations( $id, $values['destination_ids'] );
-        $schedule = MainWP_Manage_Backups_Handler::save_task_schedule_fields(
-            $id,
-            array(
-                'schedule_interval_hours' => $values['interval_hours'] ?? 0,
-                'schedule_time_of_day'    => $values['time_of_day'] ?? '',
-                'schedule_day_of_week'    => $values['day_of_week'] ?? $task->day_of_week ?? 0,
-                'schedule_day_of_month'   => $values['day_of_month'] ?? $task->day_of_month ?? 1,
-            )
-        );
-        MainWP_Manage_Backups_Handler::save_task_retention_fields(
-            $id,
-            array(
-                'retention_count'      => $values['retention']['count'],
-                'retention_days'       => $values['retention']['days'],
-                'retention_storage_mb' => $values['retention']['storage_mb'],
-                'delete_cloud_copies'  => $values['retention']['delete_cloud_copies'],
-                'max_chain_length'     => $values['retention']['max_chain_length'],
-            ),
-            null === $task
-        );
+        if ( false === $saved || ! $matches ) {
+            return self::recover_failed_task_save( $id, $before, $write, $option_before, false, $values['retention']['remove_local_after_upload'], $error );
+        }
+        wp_cache_delete( $key, 'options' );
+        wp_cache_delete( 'alloptions', 'options' );
+        wp_cache_delete( 'notoptions', 'options' );
+        $saved_option = MainWP_Backup_Retention_Protection::save_task_remove_local_archives( $id, $values['retention']['remove_local_after_upload'] );
+        $option_after = $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $key ), ARRAY_A );
+        if ( ! $saved_option || '' !== $wpdb->last_error || ! $option_after || ( $values['retention']['remove_local_after_upload'] ? '1' : '0' ) !== $option_after['option_value'] ) {
+            return self::recover_failed_task_save( $id, $before, $write, $option_before, true, $values['retention']['remove_local_after_upload'], $error );
+        }
         if ( null === $task ) {
             do_action( 'mainwp_add_backuptask', $id );
         }
         return array(
             'task_id'     => $id,
             'normalized'  => $values,
-            'next_run_at' => empty( $schedule['next_run'] ) ? null : (int) $schedule['next_run'],
+            'next_run_at' => empty( $write['next_run'] ) ? null : (int) $write['next_run'],
         );
     }
+
+    /**
+     * Recover only this save's values, leaving later edits in place.
+     *
+     * @param int        $id Task identity.
+     * @param array      $before Raw prior task fields; empty for a new task.
+     * @param array      $write This save's intended field values.
+     * @param array|null $option_before Raw prior option row or absence.
+     * @param bool       $option_attempted Whether the option write ran.
+     * @param bool       $enabled This save's requested flag.
+     * @param \WP_Error  $error Original save error.
+     * @return \WP_Error Save or recovery failure.
+     */
+    private static function recover_failed_task_save( int $id, array $before, array $write, ?array $option_before, bool $option_attempted, bool $enabled, \WP_Error $error ): \WP_Error {
+        global $wpdb;
+        $table     = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+        $key       = MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $id;
+        $recovered = true;
+        if ( $option_attempted ) {
+            $current = $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $key ), ARRAY_A );
+            if ( '' !== $wpdb->last_error ) {
+                $recovered = false;
+            } elseif ( $current !== $option_before ) {
+                $own      = $enabled ? '1' : '0';
+                $autoload = function_exists( 'wp_determine_option_autoload_value' ) ? wp_determine_option_autoload_value( $key, $enabled ? 1 : 0, $own, false ) : 'no';
+                $where    = array(
+                    'option_name'  => $key,
+                    'option_value' => $own,
+                    'autoload'     => $autoload,
+                );
+                if ( $option_before ) {
+                    $where['option_id'] = (int) $option_before['option_id'];
+                    $restored           = $wpdb->update(
+                        $wpdb->options,
+                        array(
+                            'option_value' => $option_before['option_value'],
+                            'autoload'     => $option_before['autoload'],
+                        ),
+                        $where
+                    );
+                } else {
+                    $restored = $wpdb->delete( $wpdb->options, $where );
+                }
+                $recovered = false !== $restored && $recovered;
+            }
+        }
+        wp_cache_delete( $key, 'options' );
+        wp_cache_delete( 'alloptions', 'options' );
+        wp_cache_delete( 'notoptions', 'options' );
+        $current   = $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $key ), ARRAY_A );
+        $recovered = '' === $wpdb->last_error && $current === $option_before && $recovered;
+        if ( empty( $before ) ) {
+            $deleted   = $wpdb->delete( $table, array( 'id' => $id ) );
+            $remaining = $wpdb->get_var( $wpdb->prepare( 'SELECT id FROM %i WHERE id = %d', $table, $id ) );
+            $recovered = false !== $deleted && '' === $wpdb->last_error && null === $remaining && $recovered;
+        } else {
+            foreach ( $before as $field => $value ) {
+                if ( ( null === $write[ $field ] ? null : (string) $write[ $field ] ) === $value ) {
+                    continue;
+                }
+                $set       = null === $value ? $wpdb->prepare( '%i = NULL', $field ) : $wpdb->prepare( '%i = %s', $field, $value );
+                $where     = null === $write[ $field ] ? $wpdb->prepare( '%i IS NULL', $field ) : $wpdb->prepare( 'BINARY %i = BINARY %s', $field, (string) $write[ $field ] );
+                $restored  = $wpdb->query( $wpdb->prepare( 'UPDATE %i SET ', $table ) . $set . $wpdb->prepare( ' WHERE id = %d AND ', $id ) . $where ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- identifiers and values are individually prepared.
+                $recovered = false !== $restored && $recovered;
+            }
+            $current   = $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', $table, $id ), ARRAY_A );
+            $recovered = $current && '' === $wpdb->last_error && array_intersect_key( $current, $before ) === $before && $recovered;
+        }
+        if ( ! $recovered ) {
+            MainWP_Logger::instance()->warning( 'Backup task ' . $id . ' could not be restored after a failed save or concurrent change.' );
+            return new \WP_Error(
+                'mainwp_internal_error',
+                __( 'The backup task could not be restored after a failed save or concurrent change. It may still hold new retention values. Reload the task and check its settings.', 'mainwp' ),
+                array(
+                    'status'                    => 500,
+                    'task_save_recovery_failed' => true,
+                )
+            );
+        }
+        return $error;
+    }
+
+    // phpcs:enable WordPress.DB.DirectDatabaseQuery.DirectQuery
 
     /**
      * Deleting a task can also destroy its historical snapshots.
@@ -728,7 +881,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( is_wp_error( $history ) ) {
             return $history;
         }
-        return self::task_action_result( MainWP_Manage_Backups_Handler::remove_backup_result( $task_id, $delete_snapshots ), (int) $task->completed < (int) $task->last_run ? MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING : 'mainwp_operation_failed' );
+        return self::task_action_result( MainWP_Manage_Backups_Handler::remove_backup_result( $task_id, $delete_snapshots, true ), (int) $task->completed < (int) $task->last_run ? MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING : 'mainwp_operation_failed' );
     }
 
     /**
@@ -1398,7 +1551,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     'provider'   => $destination->provider,
                     'name'       => $fields['name'] ?? $destination->name,
                     'is_default' => $fields['is_default'] ?? ! empty( $destination->is_default ),
-                    'settings'   => $destination->settings,
+                    'settings'   => array_merge( $destination->settings, array_intersect_key( $fields, array( 'minimum_remote_retention_days' => true ) ) ),
                 )
             ),
             (string) $destination->provider
@@ -1412,7 +1565,10 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @return array|\WP_Error
      */
     private static function prepare_destination_fields( array $fields ) {
-        if ( ! $fields || array_diff( array_keys( $fields ), array( 'name', 'is_default' ) ) || ( array_key_exists( 'name', $fields ) && ! is_string( $fields['name'] ) ) || ( array_key_exists( 'is_default', $fields ) && ! is_bool( $fields['is_default'] ) ) ) {
+        if ( ! $fields || array_diff( array_keys( $fields ), array( 'name', 'is_default', 'minimum_remote_retention_days' ) ) || ( array_key_exists( 'name', $fields ) && ! is_string( $fields['name'] ) ) || ( array_key_exists( 'is_default', $fields ) && ! is_bool( $fields['is_default'] ) ) ) {
+            return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
+        }
+        if ( array_key_exists( 'minimum_remote_retention_days', $fields ) && ( ! is_int( $fields['minimum_remote_retention_days'] ) || $fields['minimum_remote_retention_days'] < 0 || $fields['minimum_remote_retention_days'] > 36500 ) ) {
             return new \WP_Error( 'mainwp_invalid_input', self::safe_error( 'mainwp_invalid_input' )['message'], array( 'status' => 400 ) );
         }
         if ( array_key_exists( 'name', $fields ) ) {
@@ -1627,7 +1783,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
                 $effect['changes'] = array();
                 foreach ( $fields as $field => $value ) {
-                    $before = 'is_default' === $field ? ! empty( $destination->is_default ) : (string) $destination->name;
+                    $before = 'minimum_remote_retention_days' === $field ? (int) ( $destination->settings[ $field ] ?? 0 ) : ( 'is_default' === $field ? ! empty( $destination->is_default ) : (string) $destination->name );
                     if ( $before !== $value ) {
                         $effect['changes'][] = array(
                             'field' => $field,
@@ -1851,6 +2007,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $warn ) {
             $warnings[] = __( 'After this deletion, updates for this site are held until it has another backup that meets the "Require a backup before an update" setting.', 'mainwp' );
         }
+        if ( $cloud ) {
+            $warnings = array_merge( $warnings, self::remote_minimum_warnings( $ids ) );
+        }
         if ( ! $cloud ) {
             $warnings[] = __( 'Cloud copies stay in your storage, but they will no longer appear in MainWP.', 'mainwp' );
         }
@@ -1872,6 +2031,19 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
             'warnings'     => $preview['warnings'],
             'refusals'     => $preview['refusals'],
         );
+    }
+
+    /**
+     * Warn before a confirmed deletion overrides a destination minimum.
+     *
+     * @param array $snapshot_ids Selected history.
+     * @return array Warning strings.
+     */
+    private static function remote_minimum_warnings( array $snapshot_ids ): array {
+        $protection = MainWP_Backup_Retention_Protection::remote_protection( $snapshot_ids, null, false );
+        return ! empty( $protection['unknown_age'] ) || $protection['protected_until'] > time()
+            ? array( __( 'Some copies are still inside their minimum retention period, or MainWP cannot confirm that it has expired. Deleting them overrides that protection.', 'mainwp' ) )
+            : array();
     }
 
     /**
@@ -2153,9 +2325,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
         // A preview must not fall through to the existing destructive pass.
         if ( $dry_run ) {
-            return MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep );
+            return MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep, 6 * HOUR_IN_SECONDS );
         }
-        return MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $site_id, $keep );
+        return MainWP_Backup_Retention_Executor::instance()->cleanup_site_backups( $site_id, $keep, 6 * HOUR_IN_SECONDS, true );
     }
     /**
      * Fleet status must use the same applicability rule as the enforcing update lane.
@@ -2188,10 +2360,11 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
+        $warnings   = array( __( 'Site capabilities and available run slots are checked when you confirm.', 'mainwp' ) );
         $db         = MainWP_DB_Backup::instance();
         $task       = $db->get_manual_backup_task( $site_id );
         $keep       = MainWP_Backup_Settings::get_on_demand_retention_count();
-        $candidates = $task ? self::retention_after_backup( $site_id, (int) $task->id, new MainWP_Backup_Retention_Policy( $keep, 0, 0 ) ) : array();
+        $candidates = $task ? self::retention_after_backup( $site_id, (int) $task->id, new MainWP_Backup_Retention_Policy( $keep, 0, 0 ), $warnings ) : array();
         $ids        = array();
         foreach ( $candidates as $candidate ) {
             $ids = array_merge( $ids, $candidate['snapshot_ids'] );
@@ -2211,7 +2384,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'would_prune_snapshot_ids' => $ids,
             ),
             $refusals,
-            array( __( 'Site capabilities and available run slots are checked when you confirm.', 'mainwp' ) )
+            $warnings
         );
     }
 
@@ -2230,16 +2403,20 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
-        $stale   = array();
-        $sites   = MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task, $stale );
-        $code    = '';
-        $message = MainWP_Manage_Backups_Handler::manual_task_start_error( $task, $stale, $code );
-        $impact  = array();
-        $policy  = new MainWP_Backup_Retention_Policy( (int) $task->retention_count, (int) $task->retention_days, (int) $task->retention_storage_mb );
+        $warnings = array(
+            __( 'Site capabilities and available run slots are checked when you confirm.', 'mainwp' ),
+            __( 'Retention estimates use the stored snapshots; the size of the new backup is not known yet.', 'mainwp' ),
+        );
+        $stale    = array();
+        $sites    = MainWP_Manage_Backups_Handler::resolve_task_run_sites( $task, $stale );
+        $code     = '';
+        $message  = MainWP_Manage_Backups_Handler::manual_task_start_error( $task, $stale, $code );
+        $impact   = array();
+        $policy   = new MainWP_Backup_Retention_Policy( (int) $task->retention_count, (int) $task->retention_days, (int) $task->retention_storage_mb );
         foreach ( $sites as $id ) {
             $ids     = array();
             $reasons = array();
-            foreach ( self::retention_after_backup( $id, $task_id, $policy ) as $candidate ) {
+            foreach ( self::retention_after_backup( $id, $task_id, $policy, $warnings ) as $candidate ) {
                 $ids       = array_merge( $ids, $candidate['snapshot_ids'] );
                 $reasons[] = $candidate['reason'];
             }
@@ -2249,10 +2426,6 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'reasons'                  => array_values( array_unique( $reasons ) ),
             );
         }
-        $warnings = array(
-            __( 'Site capabilities and available run slots are checked when you confirm.', 'mainwp' ),
-            __( 'Retention estimates use the stored snapshots; the size of the new backup is not known yet.', 'mainwp' ),
-        );
         if ( 'incremental' === $task->type ) {
             $warnings[] = __( 'Retention estimates assume a new complete backup unit. An incremental run may extend an existing chain instead.', 'mainwp' );
         }
@@ -2276,23 +2449,41 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      * @param int                            $site_id Site identity.
      * @param int                            $task_id Task identity.
      * @param MainWP_Backup_Retention_Policy $policy Stored policy.
+     * @param array                          $warnings Receives explanations of retention holds.
      * @return array
      */
-    private static function retention_after_backup( int $site_id, int $task_id, MainWP_Backup_Retention_Policy $policy ): array {
-        $units  = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $site_id, $task_id );
-        $now    = time();
-        $newest = $now;
+    private static function retention_after_backup( int $site_id, int $task_id, MainWP_Backup_Retention_Policy $policy, array &$warnings ): array {
+        $units    = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $site_id, $task_id );
+        $warnings = array_values( array_unique( array_merge( $warnings, self::retention_hold_warnings( $units ) ) ) );
+        $now      = time();
+        $newest   = $now;
         foreach ( $units as $unit ) {
             $newest = max( $newest, (int) $unit['newest_created'] + 1 );
         }
         $units[] = array(
             'snapshots'      => array(),
             'is_complete'    => true,
+            'is_restorable'  => true,
             'size_bytes'     => 0,
             'newest_created' => $newest,
             'oldest_created' => $newest,
         );
         return $policy->evaluate( $units, $now );
+    }
+
+    /**
+     * Explain why automatic retention may exceed configured limits.
+     *
+     * @param array $units Decorated retention units.
+     * @return array Warning strings.
+     */
+    private static function retention_hold_warnings( array $units ): array {
+        foreach ( $units as $unit ) {
+            if ( ! empty( $unit['unknown_age'] ) || ! empty( $unit['required_upload_hold'] ) || ( $unit['protected_until'] ?? 0 ) > time() ) {
+                return array( __( 'Automatic retention keeps backups with protected copies or unfinished required uploads. Count or storage limits may be exceeded until those holds clear.', 'mainwp' ) );
+            }
+        }
+        return array();
     }
 
     /**
@@ -2371,10 +2562,11 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param int      $site_id Site identity.
      * @param int|null $keep Retention override.
+     * @param string   $context Calling transport.
      * @return array|\WP_Error
      */
-    public static function preview_site_cleanup( int $site_id, ?int $keep ) {
-        $site = self::authorize_site( $site_id, 'execute_backups' );
+    public static function preview_site_cleanup( int $site_id, ?int $keep, string $context = 'ability' ) {
+        $site = self::authorize_site( $site_id, 'execute_backups', $context );
         if ( is_wp_error( $site ) ) {
             return $site;
         }
@@ -2382,9 +2574,13 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
-        $task = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
-        $keep = $keep ?? ( $task ? MainWP_Backup_Settings::task_retention_count( $task ) : MainWP_Backup_Settings::get_on_demand_retention_count() );
-        $plan = MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep );
+        $task         = MainWP_DB_Backup::instance()->get_manual_backup_task( $site_id );
+        $keep         = $keep ?? ( $task ? MainWP_Backup_Settings::task_retention_count( $task ) : MainWP_Backup_Settings::get_on_demand_retention_count() );
+        $plan         = MainWP_Backup_Retention_Executor::instance()->plan_site_cleanup( $site_id, $keep, 6 * HOUR_IN_SECONDS );
+        $snapshot_ids = $plan['orphaned_task_snapshot_ids'];
+        foreach ( $plan['on_demand_units'] as $unit ) {
+            $snapshot_ids = array_merge( $snapshot_ids, $unit['snapshot_ids'] );
+        }
         return self::backup_preview(
             array(
                 'site_id'                    => $site_id,
@@ -2393,7 +2589,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'orphaned_task_snapshot_ids' => $plan['orphaned_task_snapshot_ids'],
                 'on_demand_units'            => $plan['on_demand_units'],
                 'bytes_to_prune'             => $plan['bytes'],
-            )
+            ),
+            array(),
+            self::remote_minimum_warnings( $snapshot_ids )
         );
     }
 
@@ -2448,14 +2646,22 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         // The stored row came from the form, which never had the machine-input ceilings.
         $before = self::normalize_task_fields( array( 'name' => html_entity_decode( $task->name, ENT_QUOTES ) ), $task, 'ui' );
         // A repair of an invalid legacy value must still be reviewable.
-        $before = is_wp_error( $before ) ? self::stored_task_fields( $task ) : $before;
-        $query  = MainWP_Backup_Retention_Query::instance();
-        $policy = new MainWP_Backup_Retention_Policy( $values['retention']['count'], $values['retention']['days'], $values['retention']['storage_mb'] );
-        $impact = array();
+        $before   = is_wp_error( $before ) ? self::stored_task_fields( $task ) : $before;
+        $query    = MainWP_Backup_Retention_Query::instance();
+        $policy   = new MainWP_Backup_Retention_Policy( $values['retention']['count'], $values['retention']['days'], $values['retention']['storage_mb'] );
+        $impact   = array();
+        $warnings = array();
         foreach ( $query->list_site_ids_for_task( $task_id ) as $site_id ) {
             $ids     = array();
             $reasons = array();
-            foreach ( $policy->evaluate( $query->get_units_for_site_task( $site_id, $task_id ), time() ) as $candidate ) {
+            $units   = $query->get_units_for_site_task( $site_id, $task_id );
+            foreach ( $units as &$unit ) {
+                $unit['required_upload_hold'] = $values['retention']['remove_local_after_upload']
+                    && $unit['required_uploads_pending'];
+            }
+            unset( $unit );
+            $warnings = array_values( array_unique( array_merge( $warnings, self::retention_hold_warnings( $units ) ) ) );
+            foreach ( $policy->evaluate( $units, time() ) as $candidate ) {
                 $ids       = array_merge( $ids, $candidate['snapshot_ids'] );
                 $reasons[] = $candidate['reason'];
             }
@@ -2472,7 +2678,9 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 'retention_impact'         => $impact,
                 'next_run_at'              => self::preview_task_next_run( $values, $task ),
                 'owner_changes_to_user_id' => get_current_user_id() === (int) $task->userid ? null : get_current_user_id(),
-            )
+            ),
+            array(),
+            $warnings
         );
     }
 
@@ -2528,12 +2736,13 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
     /**
      * Historical sites need authorization before a deletion preview exposes their snapshots.
      *
-     * @param int  $task_id Task identity.
-     * @param bool $delete_snapshots Whether snapshots would be purged.
+     * @param int    $task_id Task identity.
+     * @param bool   $delete_snapshots Whether snapshots would be purged.
+     * @param string $context Calling transport.
      * @return array|\WP_Error
      */
-    public static function preview_task_delete( int $task_id, bool $delete_snapshots = true ) {
-        $task = self::authorize_task( $task_id, 'delete_backup_tasks' );
+    public static function preview_task_delete( int $task_id, bool $delete_snapshots = true, string $context = 'ability' ) {
+        $task = self::authorize_task( $task_id, 'delete_backup_tasks', $context );
         if ( is_wp_error( $task ) ) {
             return $task;
         }
@@ -2541,7 +2750,7 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
         if ( $error ) {
             return $error;
         }
-        $history = self::authorize_task_history_sites( $task_id, 'delete_backup_tasks' );
+        $history = self::authorize_task_history_sites( $task_id, 'delete_backup_tasks', $context );
         if ( is_wp_error( $history ) ) {
             return $history;
         }
@@ -2574,20 +2783,23 @@ class MainWP_Backup_Operations { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
             }
         }
-        $warnings = array();
+        $warnings = ! empty( $task->delete_cloud_copies ) ? self::remote_minimum_warnings( array_column( $snapshots, 'id' ) ) : array();
         if ( count( $snapshots ) > 500 || count( $cloud ) > 500 ) {
             $warnings[] = __( 'The preview lists up to 500 snapshots and 500 cloud copies. Confirmation deletes the full selection.', 'mainwp' );
         }
         $refusals = (int) $task->completed < (int) $task->last_run ? array( self::safe_error( MainWP_Backup_Error_Codes::ERR_ALREADY_RUNNING ) ) : array();
         return self::backup_preview(
             array(
-                'task_id'             => $task_id,
-                'task_name'           => html_entity_decode( $task->name, ENT_QUOTES ),
-                'delete_snapshots'    => $delete_snapshots,
-                'delete_cloud_copies' => $delete_snapshots && ! empty( $task->delete_cloud_copies ),
-                'snapshots'           => array_slice( $snapshots, 0, 500 ),
-                'snapshots_truncated' => count( $snapshots ) > 500,
-                'cloud_copies'        => array_slice( $cloud, 0, 500 ),
+                'task_id'                => $task_id,
+                'task_name'              => html_entity_decode( $task->name, ENT_QUOTES ),
+                'delete_snapshots'       => $delete_snapshots,
+                'delete_cloud_copies'    => $delete_snapshots && ! empty( $task->delete_cloud_copies ),
+                'snapshot_count'         => count( $snapshots ),
+                'cloud_copy_count'       => count( $cloud ),
+                'snapshots'              => array_slice( $snapshots, 0, 500 ),
+                'snapshots_truncated'    => count( $snapshots ) > 500,
+                'cloud_copies'           => array_slice( $cloud, 0, 500 ),
+                'cloud_copies_truncated' => count( $cloud ) > 500,
             ),
             $refusals,
             $warnings

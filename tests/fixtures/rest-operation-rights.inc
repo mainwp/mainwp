@@ -35,6 +35,7 @@ namespace MainWP\Dashboard {
 		public function get_website_by_id( $id, $groups = false ) {
 			return (object) array( 'id' => (int) $id, 'url' => 'https://example.test/', 'translation_upgrades' => '[{"slug":"example/example.php"}]' );
 		}
+		public function get_website_option( $site, $option ) { return $site->{$option} ?? null; }
 		public function get_rest_api_key_by( $id ) { return (object) array( 'key_id' => $id, 'user_id' => 99 ); }
 		public function remove_rest_api_key( $id ) { throw new \Rest_Rights_Boundary( 'key deletion' ); }
 	}
@@ -136,7 +137,9 @@ namespace {
 		$input
 	);
 	$root = dirname( __DIR__, 2 );
+	require $root . '/class/class-mainwp-common-handler.php';
 	require $root . '/includes/rest-api/class-mainwp-rest-authentication.php';
+	require $root . '/class/class-mainwp-system.php';
 	require $root . '/includes/abilities/class-mainwp-abilities-util.php';
 	require $root . '/includes/rest-api/controller/version2/class-mainwp-rest-controller.php';
 	foreach ( glob( $root . '/includes/rest-api/controller/version2/*.php' ) as $file ) {

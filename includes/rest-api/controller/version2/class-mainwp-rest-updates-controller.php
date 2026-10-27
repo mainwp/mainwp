@@ -16,6 +16,7 @@ use MainWP\Dashboard\MainWP_Connect;
 use MainWP\Dashboard\Rest_Api_V1_Helper;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_Common_Functions;
+use MainWP\Dashboard\MainWP_Common_Handler;
 use MainWP\Dashboard\MainWP_Cron_Jobs_Batch;
 use MainWP\Dashboard\MainWP_Logger;
 use MainWP\Dashboard\MainWP_Auto_Updates_DB;
@@ -349,7 +350,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         }
 
         $all_updates = array();
-        $websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true, null, 'wp.url', false, false, null, false, array( 'ignored_wp_upgrades', 'rollback_updates_data' ) ) );
+        $websites    = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true, null, 'wp.url', false, false, null, false, array( 'ignored_wp_upgrades', 'rollback_updates_data', 'ignored_trans_updates' ) ) );
 
         if ( empty( $type ) ) {
             $type[] = 'all';
@@ -392,6 +393,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
             $plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
             $theme_upgrades       = json_decode( $website->theme_upgrades, true );
             $translation_upgrades = json_decode( $website->translation_upgrades, true );
+
+            if ( MainWP_Common_Handler::is_translation_updates_ignored( $website ) ) {
+                $translation_upgrades = array();
+            }
 
             if ( $website->is_ignoreCoreUpdates ) {
                 $wp_upgrades = array();
@@ -547,7 +552,7 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         $rollback_themes  = array();
 
         // get data.
-        $website = MainWP_DB::instance()->get_website_by_id( $item->id, false, array( 'ignored_wp_upgrades', 'wp_upgrades', 'rollback_updates_data' ) );
+        $website = MainWP_DB::instance()->get_website_by_id( $item->id, false, array( 'ignored_wp_upgrades', 'wp_upgrades', 'rollback_updates_data', 'ignored_trans_updates' ) );
 
         $wp_upgrades          = ! empty( $website->wp_upgrades ) ? json_decode( $website->wp_upgrades, true ) : array();
         $plugin_upgrades      = ! empty( $website->plugin_upgrades ) ? json_decode( $website->plugin_upgrades, true ) : array();
@@ -567,6 +572,10 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
         }
 
         if ( ! is_array( $translation_upgrades ) ) {
+            $translation_upgrades = array();
+        }
+
+        if ( MainWP_Common_Handler::is_translation_updates_ignored( $website ) ) {
             $translation_upgrades = array();
         }
 
@@ -1368,6 +1377,15 @@ class MainWP_Rest_Updates_Controller extends MainWP_REST_Controller{ //phpcs:ign
 
         if ( is_wp_error( $website ) ) {
             return $website;
+        }
+
+        if ( MainWP_Common_Handler::is_translation_updates_ignored( $website ) ) {
+            return rest_ensure_response(
+                array(
+                    'success' => 0,
+                    'message' => esc_html__( 'Translations ignored updates per site.', 'mainwp' ),
+                )
+            );
         }
 
         $prepared_slugs = ! empty( $request['slug'] ) ? array_map( 'trim', wp_parse_list( $request['slug'] ) ) : array();

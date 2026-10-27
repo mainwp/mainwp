@@ -4631,21 +4631,32 @@ class MainWP_Abilities_Backups {
                     'snapshots',
                     'snapshots_truncated',
                     'cloud_copies',
+                    'cloud_copies_truncated',
+                    'snapshot_count',
+                    'cloud_copy_count',
                 ),
                 'properties'           => array(
-                    'task_id'             => array(
+                    'task_id'                => array(
                         'type' => 'integer',
                     ),
-                    'task_name'           => array(
+                    'task_name'              => array(
                         'type' => 'string',
                     ),
-                    'delete_snapshots'    => array(
+                    'delete_snapshots'       => array(
                         'type' => 'boolean',
                     ),
-                    'delete_cloud_copies' => array(
+                    'delete_cloud_copies'    => array(
                         'type' => 'boolean',
                     ),
-                    'snapshots'           => array(
+                    'snapshot_count'         => array(
+                        'type'    => 'integer',
+                        'minimum' => 0,
+                    ),
+                    'cloud_copy_count'       => array(
+                        'type'    => 'integer',
+                        'minimum' => 0,
+                    ),
+                    'snapshots'              => array(
                         'type'     => 'array',
                         'maxItems' => 500,
                         'items'    => array(
@@ -4677,10 +4688,13 @@ class MainWP_Abilities_Backups {
                             ),
                         ),
                     ),
-                    'snapshots_truncated' => array(
+                    'snapshots_truncated'    => array(
                         'type' => 'boolean',
                     ),
-                    'cloud_copies'        => array(
+                    'cloud_copies_truncated' => array(
+                        'type' => 'boolean',
+                    ),
+                    'cloud_copies'           => array(
                         'type'     => 'array',
                         'maxItems' => 500,
                         'items'    => array(

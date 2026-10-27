@@ -36,6 +36,9 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      */
     const DEFAULT_BUDGET_SECONDS = 120;
 
+    /** Internal, non-autoloaded traversal progress for deleted-task cleanup. */
+    const PURGE_CURSOR_OPTION = 'mainwp_backup_deleted_task_cursor';
+
     /** Bound daily cleanup without letting one unreachable site consume the lane. */
     const CHILD_PRUNE_RESEND_BATCH           = 50;
     const CHILD_PRUNE_RESEND_BUDGET_SECONDS  = 60;
@@ -432,25 +435,26 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
      * the task ever ran on are removed together, since retention only ever
      * revisits sites through a live task row.
      *
-     * @param int  $task_id             Task id being deleted or removed.
-     * @param bool $delete_cloud_copies The task's delete_cloud_copies
-     *                                  column value; controls whether
-     *                                  remote objects are queued for
-     *                                  deletion too.
+     * @param int        $task_id             Task id being deleted or removed.
+     * @param bool       $delete_cloud_copies The task's delete_cloud_copies
+     *                                        column value; controls whether
+     *                                        remote objects are queued for
+     *                                        deletion too.
      *
-     * @param bool $manual_override Explicit confirmed removal bypasses minimum protection.
-     * @param bool $retry_pruned Revisit pruned leftovers when deleting a site.
+     * @param bool       $manual_override Explicit confirmed removal bypasses minimum protection.
+     * @param bool       $retry_pruned Revisit pruned leftovers when deleting a site.
+     * @param float|null $deadline Shared absolute deadline; null leaves explicit removal unbounded.
+     * @param bool       $dry_run Report candidates without cleanup or progress writes.
      * @return array Pruned unit and snapshot counts, deleted_ids, remaining_ids,
      *               cloud_deletes_queued (snapshot/destination pairs) and errors.
      */
-    public function purge_snapshots_for_task( int $task_id, bool $delete_cloud_copies, bool $manual_override = false, bool $retry_pruned = false ): array {
+    public function purge_snapshots_for_task( int $task_id, bool $delete_cloud_copies, bool $manual_override = false, bool $retry_pruned = false, ?float $deadline = null, bool $dry_run = false ): array {
         global $wpdb;
 
-        $task = (object) array(
+        $task   = (object) array(
             'id'                  => $task_id,
             'delete_cloud_copies' => $delete_cloud_copies,
         );
-
         $result = array(
             'pruned'               => 0,
             'snapshots_pruned'     => 0,
@@ -458,15 +462,22 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
             'remaining_ids'        => array(),
             'cloud_deletes_queued' => array(),
             'errors'               => array(),
+            'skipped'              => 0,
+            'attempted'            => 0,
+            'dry_run'              => $dry_run,
+            'candidates'           => array(),
+            'local'                => 0,
+            'remote'               => 0,
+            'held'                 => 0,
         );
-
-        $query      = MainWP_Backup_Retention_Query::instance();
-        $pruned_ids = array();
+        $query  = MainWP_Backup_Retention_Query::instance();
+        $store  = MainWP_Backup_Upload_Job_Store::instance();
+        $work   = array();
         if ( $retry_pruned ) {
-            $table      = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
-            $pruned_ids = $wpdb->get_col( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- deleted-site purges must retry cleanup belonging to already-pruned snapshots.
+            $table = MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' );
+            $rows  = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- deleted-site purges also own unfinished pruned cleanup.
                 $wpdb->prepare(
-                    "SELECT id FROM {$table} WHERE task_id = %d AND status = 'pruned'", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted MainWP snapshot table identifier.
+                    "SELECT * FROM {$table} WHERE task_id = %d AND status = 'pruned' ORDER BY id ASC", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted MainWP snapshot table identifier.
                     $task_id
                 )
             );
@@ -474,47 +485,178 @@ class MainWP_Backup_Retention_Executor { // phpcs:ignore Generic.Classes.Opening
                 $result['errors'][] = __( 'Removed backups could not be read. The task was kept for another cleanup attempt.', 'mainwp' );
                 return $result;
             }
-        }
-        $store = MainWP_Backup_Upload_Job_Store::instance();
-        foreach ( $pruned_ids as $snapshot_id ) {
-            $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot_id );
-            if ( '' !== $wpdb->last_error || null === $snapshot ) {
-                $result['errors'][] = sprintf( 'Snapshot %d: its removed backup could not be read for cleanup.', (int) $snapshot_id );
-                continue;
-            }
-            // A previous purge may have marked the row before its final file or upload cleanup finished.
-            $errors_before = count( $result['errors'] );
-            if ( ! $this->remove_local_dir( $snapshot, $result['errors'] ) || count( $result['errors'] ) !== $errors_before ) {
-                continue;
-            }
-            $this->cleanup_pruned_uploads( (int) $snapshot_id, $store );
-            $remaining_uploads = $store->get_jobs_for_snapshot( (int) $snapshot_id );
-            if ( '' !== $wpdb->last_error || ! empty( $remaining_uploads ) ) {
-                $result['errors'][] = sprintf( 'Snapshot %d: its upload cleanup could not finish. The task was kept for another attempt.', (int) $snapshot_id );
+            foreach ( $rows as $snapshot ) {
+                $snapshot->archives = json_decode( (string) $snapshot->archives, true );
+                if ( ! $this->pruned_cleanup_pending( $snapshot, $store ) ) {
+                    continue;
+                }
+                $work[ (int) $snapshot->id ] = array(
+                    'snapshot_ids' => array( (int) $snapshot->id ),
+                    'reason'       => 'task_deleted',
+                    'pruned_row'   => $snapshot,
+                );
             }
         }
-
-        foreach ( $query->list_site_ids_for_task( $task_id ) as $site_id ) {
-            foreach ( $query->get_units_for_site_task( $site_id, $task_id ) as $unit ) {
-                $snapshot_ids = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
-                // prune_candidate() reverses this list to walk leaf first;
-                // it must arrive base first (ascending id), the same
-                // ordering the policy's own candidates carry.
-                sort( $snapshot_ids, SORT_NUMERIC );
-
-                $candidate = array(
-                    'snapshot_ids' => $snapshot_ids,
+        $sites = $query->list_site_ids_for_task( $task_id );
+        if ( '' !== $wpdb->last_error ) {
+            $result['errors'][] = 'Backup sites could not be read. The task was kept for another cleanup attempt.';
+            return $result;
+        }
+        foreach ( $sites as $site_id ) {
+            $units = $query->get_units_for_site_task( $site_id, $task_id );
+            if ( '' !== $wpdb->last_error ) {
+                $result['errors'][] = 'Backups could not be read. The task was kept for another cleanup attempt.';
+                return $result;
+            }
+            foreach ( $units as $unit ) {
+                $ids = array_map( 'intval', array_column( $unit['snapshots'], 'id' ) );
+                // Keep chains base first; prune_candidate reverses them under its reservation.
+                sort( $ids, SORT_NUMERIC );
+                $work[ $ids[0] ] = array(
+                    'snapshot_ids' => $ids,
                     'reason'       => 'task_deleted',
                     'size_bytes'   => (int) $unit['size_bytes'],
                 );
-
-                if ( $this->prune_candidate( $candidate, $task, $result, MainWP_Backup_Snapshots::REMOVAL_REASON_TASK_DELETED, $manual_override ) ) {
-                    ++$result['pruned'];
+            }
+        }
+        ksort( $work, SORT_NUMERIC );
+        $bounded = $retry_pruned && null !== $deadline;
+        if ( $bounded ) {
+            $progress = get_option( self::PURGE_CURSOR_OPTION, array() );
+            $cursor   = (int) ( $progress['tasks'][ $task_id ] ?? 0 );
+            $later    = array_filter( $work, static fn( $id ) => $id > $cursor, ARRAY_FILTER_USE_KEY );
+            $work     = $later + array_diff_key( $work, $later );
+        }
+        $work = array_values( $work );
+        foreach ( $work as $position => $candidate ) {
+            if ( ! empty( $result['candidates'] ) && null !== $deadline && microtime( true ) >= $deadline ) {
+                $result['skipped'] = count( $work ) - $position;
+                foreach ( array_slice( $work, $position ) as $pending ) {
+                    $result['remaining_ids'] = array_merge( $result['remaining_ids'], $pending['snapshot_ids'] );
+                }
+                break;
+            }
+            $result['candidates'][] = array(
+                'snapshot_ids' => $candidate['snapshot_ids'],
+                'reason'       => 'task_deleted',
+            );
+            if ( $dry_run ) {
+                foreach ( $candidate['snapshot_ids'] as $id ) {
+                    $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( $id );
+                    if ( null !== $snapshot && $this->snapshot_has_local_cleanup( $snapshot ) ) {
+                        ++$result['local'];
+                    }
+                    if ( $delete_cloud_copies && ! isset( $candidate['pruned_row'] ) ) {
+                        foreach ( $store->get_jobs_for_snapshot( $id, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD ) as $job ) {
+                            if ( ! empty( $job->provider ) && 'local' !== $job->provider ) {
+                                ++$result['remote'];
+                            }
+                        }
+                    }
+                }
+                if ( ! isset( $candidate['pruned_row'] ) && MainWP_Backup_Retention_Protection::holds_automatic_removal( $candidate['snapshot_ids'] ) ) {
+                    ++$result['held'];
+                }
+                $result['remaining_ids'] = array_merge( $result['remaining_ids'], $candidate['snapshot_ids'] );
+                continue;
+            }
+            if ( isset( $candidate['pruned_row'] ) ) {
+                $snapshot      = $candidate['pruned_row'];
+                $errors_before = count( $result['errors'] );
+                if ( $this->remove_local_dir( $snapshot, $result['errors'] ) && count( $result['errors'] ) === $errors_before ) {
+                    $this->cleanup_pruned_uploads( (int) $snapshot->id, $store );
+                }
+                if ( $this->pruned_cleanup_pending( $snapshot, $store ) ) {
+                    $result['remaining_ids'][] = (int) $snapshot->id;
+                    $result['errors'][]        = sprintf( 'Snapshot %d: its cleanup could not finish. The task was kept for another attempt.', (int) $snapshot->id );
+                }
+            } elseif ( $this->prune_candidate( $candidate, $task, $result, MainWP_Backup_Snapshots::REMOVAL_REASON_TASK_DELETED, $manual_override ) ) {
+                ++$result['pruned'];
+            }
+            ++$result['attempted'];
+            if ( $bounded ) {
+                // A held or failed attempt advances traversal too; snapshot status records deletion.
+                $progress                      = get_option( self::PURGE_CURSOR_OPTION, array() );
+                $progress                      = is_array( $progress ) ? $progress : array();
+                $progress['tasks'][ $task_id ] = (int) $candidate['snapshot_ids'][0];
+                $progress['last_task']         = $task_id;
+                $saved                         = update_option( self::PURGE_CURSOR_OPTION, $progress, false );
+                if ( ! $saved && get_option( self::PURGE_CURSOR_OPTION ) !== $progress ) {
+                    $result['errors'][] = 'Deleted backup cleanup progress could not be saved. The task was kept for another attempt.';
+                    foreach ( array_slice( $work, $position + 1 ) as $pending ) {
+                        ++$result['skipped'];
+                        $result['remaining_ids'] = array_merge( $result['remaining_ids'], $pending['snapshot_ids'] );
+                    }
+                    break;
                 }
             }
         }
-
         return $result;
+    }
+
+    /**
+     * Whether recorded files or a snapshot directory still need local cleanup.
+     *
+     * @param object $snapshot Snapshot with decoded archives.
+     * @return bool
+     */
+    private function snapshot_has_local_cleanup( object $snapshot ): bool {
+        global $wpdb;
+
+        $paths           = array_column( (array) $snapshot->archives, 'path' );
+        $paths[]         = (string) $snapshot->manifest_path;
+        $protected_paths = null;
+        $protected_dirs  = array();
+        foreach ( $paths as $path ) {
+            if ( '' === $path ) {
+                continue;
+            }
+            $real     = realpath( $path );
+            $dir      = dirname( $path );
+            $real_dir = realpath( $dir );
+            $has_dir  = false !== $real_dir && str_starts_with( basename( $real_dir ), 'snapshot-' )
+                && is_dir( $real_dir ) && MainWP_Backup_Private_Root::is_within_site_roots( $real_dir, (int) $snapshot->site_id );
+            if ( ! is_file( $path ) && ! is_link( $path ) && ! $has_dir ) {
+                continue;
+            }
+            // Only remaining artifacts need the same ownership check as removal.
+            if ( null === $protected_paths ) {
+                $protected_paths = MainWP_Backup_Snapshots::instance()->get_protected_paths_for_site( (int) $snapshot->site_id, (int) $snapshot->id );
+                if ( '' !== $wpdb->last_error ) {
+                    return true;
+                }
+                foreach ( array_keys( $protected_paths ) as $protected_path ) {
+                    $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( dirname( $protected_path ) ) ] = true;
+                }
+            }
+            if ( isset( $protected_paths[ MainWP_Backup_Snapshots::normalise_path( $path ) ] )
+                || ( false !== $real && isset( $protected_paths[ MainWP_Backup_Snapshots::normalise_path( $real ) ] ) )
+                || ( $has_dir && ( isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( $dir ) ] )
+                    || isset( $protected_dirs[ MainWP_Backup_Snapshots::normalise_path( $real_dir ) ] ) ) ) ) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Settled tombstones must not spend the pass's guaranteed attempt.
+     *
+     * @param object                         $snapshot Pruned snapshot with decoded archives.
+     * @param MainWP_Backup_Upload_Job_Store $store Upload store.
+     * @return bool
+     */
+    private function pruned_cleanup_pending( object $snapshot, MainWP_Backup_Upload_Job_Store $store ): bool {
+        global $wpdb;
+
+        $jobs = $store->get_jobs_for_snapshot( (int) $snapshot->id, MainWP_Backup_Upload_Job_Store::KIND_UPLOAD );
+        if ( '' !== $wpdb->last_error || ! empty( $jobs ) ) {
+            return true;
+        }
+        // The archive descriptor survives removal of the actual required-uploads option.
+        return false !== get_option( MainWP_Backup_Retention_Protection::REQUIRED_OPTION_PREFIX . (int) $snapshot->id, false )
+            || $this->snapshot_has_local_cleanup( $snapshot );
     }
 
     /**

@@ -11,7 +11,12 @@ require_once dirname( __DIR__ ) . '/vendor/autoload.php';
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
 
 if ( ! $_tests_dir ) {
-	$_tests_dir = rtrim( sys_get_temp_dir(), '/\\' ) . '/wordpress-tests-lib';
+	$_tests_home = getenv( 'HOME' );
+	if ( false === $_tests_home || '' === $_tests_home ) {
+		echo 'HOME is required for the default test directory; set HOME or WP_TESTS_DIR.' . PHP_EOL;
+		exit( 1 );
+	}
+	$_tests_dir = $_tests_home . '/.mainwp-wp-tests/wordpress-tests-lib';
 }
 
 if ( ! file_exists( $_tests_dir . '/includes/functions.php' ) ) {

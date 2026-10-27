@@ -87,6 +87,7 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
      */
     public function init(): void {
         add_action( 'mainwp_backup_snapshot_recorded', array( $this, 'on_snapshot_recorded' ), 20, 3 );
+        add_action( 'mainwp_backup_upload_job_settled', array( $this, 'on_upload_settled' ), 20, 1 );
     }
 
     /**
@@ -127,6 +128,19 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
         );
 
         update_option( static::QUEUE_OPTION, $queue, false );
+    }
+
+    /**
+     * Upload completion can make a queued eviction eligible immediately.
+     *
+     * @param int $snapshot_id Snapshot identity.
+     * @return void
+     */
+    public function on_upload_settled( $snapshot_id ): void {
+        $snapshot = MainWP_Backup_Snapshots::instance()->get_snapshot_by_id( (int) $snapshot_id );
+        if ( null !== $snapshot && 'complete' === $snapshot->status ) {
+            $this->on_snapshot_recorded( $snapshot_id, $snapshot->task_id, $snapshot->site_id );
+        }
     }
 
     /**
@@ -180,6 +194,8 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
      * @return void
      */
     public function cron_backups_prune(): void {
+        global $wpdb;
+
         if ( ! MainWP_Backup_Settings::is_native_backups_enabled() ) {
             return;
         }
@@ -199,12 +215,66 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
 
         $deadline = microtime( true ) + static::DAILY_BUDGET_SECONDS;
 
+        $deleted_tasks = array();
+        $live_tasks    = array();
         foreach ( MainWP_Backup_Retention_Query::instance()->list_tasks_with_policy() as $task ) {
-            foreach ( MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( (int) $task->id ) as $site_id ) {
-                if ( microtime( true ) >= $deadline ) {
-                    return; // Tomorrow's sweep picks up where this one stopped.
+            if ( ! empty( $task->manual_site_id ) ) {
+                $site_table = MainWP_DB::instance()->get_table_name( 'wp' );
+                $site_id    = $wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- deletion requires the site row itself to be absent, regardless of joined sync metadata.
+                    $wpdb->prepare( "SELECT id FROM {$site_table} WHERE id = %d", (int) $task->manual_site_id ) // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- trusted MainWP site table identifier.
+                );
+                if ( '' !== $wpdb->last_error ) {
+                    continue;
                 }
-                $this->run_retention_for_pair( $task, $site_id, static::PAIR_BUDGET_SECONDS );
+                if ( null === $site_id ) {
+                    $deleted_tasks[ (int) $task->id ] = $task;
+                    continue;
+                }
+            }
+            $live_tasks[] = $task;
+        }
+
+        // Live retention runs before deleted-site history spends the shared budget.
+        foreach ( $live_tasks as $task ) {
+            if ( microtime( true ) >= $deadline ) {
+                break;
+            }
+            foreach ( MainWP_Backup_Retention_Query::instance()->list_site_ids_for_task( (int) $task->id ) as $site_id ) {
+                $remaining = max( 0, (int) floor( $deadline - microtime( true ) ) );
+                if ( 0 === $remaining ) {
+                    break 2;
+                }
+                $this->run_retention_for_pair( $task, $site_id, min( static::PAIR_BUDGET_SECONDS, $remaining ) );
+            }
+        }
+
+        $progress  = get_option( MainWP_Backup_Retention_Executor::PURGE_CURSOR_OPTION, array() );
+        $last_task = (int) ( $progress['last_task'] ?? 0 );
+        ksort( $deleted_tasks, SORT_NUMERIC );
+        $later         = array_filter( $deleted_tasks, static fn( $id ) => $id > $last_task, ARRAY_FILTER_USE_KEY );
+        $deleted_tasks = $later + array_diff_key( $deleted_tasks, $later );
+        foreach ( $deleted_tasks as $task ) {
+            $site_id = (int) $task->manual_site_id;
+            if ( apply_filters( 'mainwp_backup_retention_dry_run', false, (int) $task->id ) ) {
+                $report     = MainWP_Backup_Retention_Executor::instance()->purge_snapshots_for_task( (int) $task->id, ! empty( $task->delete_cloud_copies ), false, true, $deadline, true );
+                $candidates = count( $report['candidates'] );
+                do_action( 'mainwp_log_info', 'Backup retention dry run for deleted site: ' . $candidates . ( 1 === $candidates ? ' candidate, ' : ' candidates, ' ) . $report['local'] . ' local backups, ' . $report['remote'] . ' remote cleanup targets, ' . $report['held'] . ' held by protection, ' . $report['skipped'] . ' deferred until another pass.', $site_id, (int) $task->id );
+                if ( microtime( true ) >= $deadline ) {
+                    break;
+                }
+                continue;
+            }
+            // One attempt after expiry keeps held history moving without a new budget.
+            MainWP_Post_Backup_Handler::instance()->hook_delete_manual_backup_task(
+                (object) array(
+                    'id'   => $site_id,
+                    'name' => '',
+                    'url'  => '',
+                ),
+                $deadline
+            );
+            if ( microtime( true ) >= $deadline ) {
+                break;
             }
         }
     }
@@ -256,25 +326,8 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
      *               the policy found nothing to prune.
      */
     public function run_retention_for_pair( object $task, int $site_id, int $budget_seconds = self::PAIR_BUDGET_SECONDS, ?int $now = null ): array {
-        $now = null === $now ? time() : $now;
-
-        $units  = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $site_id, (int) $task->id );
-        $policy = new MainWP_Backup_Retention_Policy( MainWP_Backup_Settings::task_retention_count( $task ), (int) $task->retention_days, (int) $task->retention_storage_mb );
-
-        $candidates = $policy->evaluate( $units, $now );
-        if ( empty( $candidates ) ) {
-            return array(
-                'pruned'               => 0,
-                'snapshots_pruned'     => 0,
-                'deleted_ids'          => array(),
-                'remaining_ids'        => array(),
-                'cloud_deletes_queued' => array(),
-                'skipped'              => 0,
-                'errors'               => array(),
-                'dry_run'              => false,
-                'candidates'           => array(),
-            );
-        }
+        $started = microtime( true );
+        $now     = null === $now ? time() : $now;
 
         /**
          * Filters whether retention runs report-only. With true, the
@@ -284,9 +337,38 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
          * @param bool $dry_run Defaults to false.
          * @param int  $task_id The task being evaluated.
          */
-        $dry_run = (bool) apply_filters( 'mainwp_backup_retention_dry_run', false, (int) $task->id );
+        $dry_run  = (bool) apply_filters( 'mainwp_backup_retention_dry_run', false, (int) $task->id );
+        $eviction = $dry_run ? array(
+            'evicted_ids' => array(),
+            'held'        => 0,
+            'errors'      => array(),
+        )
+            : MainWP_Backup_Retention_Executor::instance()->evict_local_archives_for_pair( $site_id, (int) $task->id, $budget_seconds );
 
-        $report = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, $dry_run, $budget_seconds );
+        $units  = MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $site_id, (int) $task->id );
+        $policy = new MainWP_Backup_Retention_Policy( MainWP_Backup_Settings::task_retention_count( $task ), (int) $task->retention_days, (int) $task->retention_storage_mb );
+
+        $candidates = $policy->evaluate( $units, $now );
+        $remaining  = max( 0, (int) floor( $budget_seconds - ( microtime( true ) - $started ) ) );
+        if ( empty( $candidates ) ) {
+            $report = array(
+                'eviction'             => $eviction,
+                'pruned'               => 0,
+                'snapshots_pruned'     => 0,
+                'deleted_ids'          => array(),
+                'remaining_ids'        => array(),
+                'cloud_deletes_queued' => array(),
+                'skipped'              => count( $candidates ),
+                'errors'               => array(),
+                'dry_run'              => $dry_run,
+                'candidates'           => array(),
+            );
+        } else {
+            // With no time left, the executor attempts one candidate and defers the rest.
+            $report = MainWP_Backup_Retention_Executor::instance()->run_prune( $candidates, $task, $dry_run, $remaining );
+        }
+        $report['eviction'] = $eviction;
+        $report['errors']   = array_merge( $report['errors'], $eviction['errors'] );
 
         if ( ! empty( $report['errors'] ) ) {
             // Both cron triggers (the post-snapshot drain and the daily
@@ -307,6 +389,7 @@ class MainWP_Backup_Retention_Scheduler { // phpcs:ignore Generic.Classes.Openin
      * @return bool
      */
     private function task_has_policy( object $task ): bool {
-        return (int) $task->retention_count > 0 || (int) $task->retention_days > 0 || (int) $task->retention_storage_mb > 0;
+        return (int) $task->retention_count > 0 || (int) $task->retention_days > 0 || (int) $task->retention_storage_mb > 0
+            || MainWP_Backup_Retention_Protection::task_removes_local_archives( (int) $task->id );
     }
 }

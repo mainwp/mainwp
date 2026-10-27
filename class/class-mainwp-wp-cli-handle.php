@@ -228,6 +228,7 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
                     'site-url',
                     'name',
                     'admin',
+                    'adminpassword',
                     'uniqueid',
                     'ssl_verify',
                     'force_use_ipv4',
@@ -1127,12 +1128,48 @@ class MainWP_WP_CLI_Handle extends \WP_CLI_Command { // phpcs:ignore Generic.Cla
      * @param object $website    Object containing child site data.
      */
     public static function callback_site_add_site( $args = array(), $assoc_args = array(), $website = false ) {
-        $fields = static::get_cli_params( $args, $assoc_args, 'add-site' );
-        $data   = MainWP_Manage_Sites_Handler::rest_api_add_site( $fields );
+        $fields        = static::get_cli_params( $args, $assoc_args, 'add-site' );
+        $adminpassword = isset( $fields['adminpassword'] ) ? (string) $fields['adminpassword'] : '';
+        if ( isset( $fields['adminpassword'] ) ) {
+            if ( ! isset( $fields['ssl_verify'] ) ) {
+                $fields['ssl_verify'] = 1;
+            }
+            if ( ! in_array( (string) $fields['ssl_verify'], array( '0', '1', '2' ), true ) ) {
+                \WP_CLI::error( 'Invalid --ssl_verify value with --adminpassword. Use 1 or 2 to verify HTTPS certificates, or --ssl_verify=0 to opt out of TLS protection.' );
+                return;
+            }
+            $scheme = wp_parse_url( sanitize_text_field( wp_unslash( $fields['url'] ) ), PHP_URL_SCHEME );
+            if ( '0' !== (string) $fields['ssl_verify'] && 'https' !== strtolower( (string) $scheme ) ) {
+                \WP_CLI::error( 'Sending --adminpassword requires HTTPS. Use --ssl_verify=0 only if you accept sending the password without TLS protection.' );
+                return;
+            }
+            // Child URL-decodes userpwd after WordPress request slashing.
+            $fields['adminpassword'] = rawurlencode( $adminpassword );
+        }
+        $output = array();
+        $data   = MainWP_Manage_Sites_Handler::rest_api_add_site( $fields, $output );
+        if ( isset( $fields['adminpassword'], $data['error'], $output['error_category'] ) && ! empty( $fields['ssl_verify'] ) && 'http_error' === $output['error_category'] && is_string( $data['error'] ) ) {
+            if ( 0 === strpos( $data['error'], 'HTTP error - SSL certificate problem:' ) || 0 === strpos( $data['error'], 'HTTP error - SSL: no alternative certificate subject name' ) ) {
+                $data['error'] .= ' TLS certificate verification failed. Fix the site certificate, or use --ssl_verify=0 only if you accept an unverified connection.';
+            }
+        }
+        $result = print_r( $data, true ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r -- CLI result.
+        if ( '' !== $adminpassword ) {
+            $passwords    = array( $adminpassword, wp_unslash( $adminpassword ), rawurlencode( $adminpassword ) );
+            $replacements = array();
+            foreach ( $passwords as $password ) {
+                foreach ( array( $password, esc_html( $password ), MainWP_Utility::esc_content( $password ) ) as $variant ) {
+                    if ( '' !== $variant ) {
+                        $replacements[ $variant ] = '[redacted]';
+                    }
+                }
+            }
+            $result = strtr( $result, $replacements );
+        }
         if ( is_array( $data ) && ! empty( $data['siteid'] ) ) {
-            \WP_CLI::success( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result.
+            \WP_CLI::success( '  -> Add site result: ' . $result );
         } else {
-            \WP_CLI::error( '  -> Add site result: ' . print_r( $data, true ) ); // phpcs:ignore -- for cli result.
+            \WP_CLI::error( '  -> Add site result: ' . $result );
         }
     }
 

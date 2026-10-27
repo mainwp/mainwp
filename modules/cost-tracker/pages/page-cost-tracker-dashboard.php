@@ -988,6 +988,9 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
      */
     public function ajax_notes_save() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_notes_save' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_cost_tracker' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+        }
         //phpcs:disable WordPress.Security.NonceVerification.Missing
         $sub_id = isset( $_POST['subid'] ) ? intval( $_POST['subid'] ) : 0;
         $sub    = Cost_Tracker_DB::get_instance()->get_cost_tracker_by( 'id', $sub_id );
@@ -1142,6 +1145,9 @@ class Cost_Tracker_Dashboard { // phpcs:ignore -- NOSONAR - multi methods.
      */
     public function ajax_cost_tracker_delete() {
         MainWP_Post_Handler::instance()->check_security( 'mainwp_module_cost_tracker_delete' );
+        if ( ! \mainwp_current_user_can( 'dashboard', 'manage_cost_tracker' ) ) {
+            wp_send_json( array( 'error' => esc_html__( 'Error - insufficient permissions!', 'mainwp' ) ) );
+        }
         $sub_id = isset( $_POST['sub_id'] ) ? intval( $_POST['sub_id'] ) : 0; //phpcs:ignore WordPress.Security.NonceVerification.Missing,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 
         if ( Cost_Tracker_DB::get_instance()->delete_cost_tracker( 'id', $sub_id ) ) {

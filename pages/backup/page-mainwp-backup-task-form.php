@@ -213,6 +213,13 @@ class MainWP_Backup_Task_Form { // phpcs:ignore Generic.Classes.OpeningBraceSame
                 <span class="ui small text"><?php esc_html_e( 'When this task\'s backups for a site exceed the cap, the oldest are removed until they fit.', 'mainwp' ); ?></span>
             </div>
         </div>
+        <div class="ui grid field">
+            <label class="six wide column middle aligned" for="mainwp-backup-remove-local-after-upload"><?php esc_html_e( 'Remove local archives after upload', 'mainwp' ); ?></label>
+            <div class="ten wide column ui toggle checkbox">
+                <input type="checkbox" id="mainwp-backup-remove-local-after-upload" <?php checked( ! empty( $task->id ) && MainWP_Backup_Retention_Protection::task_removes_local_archives( (int) $task->id ) ); ?>>
+                <span class="ui small text"><?php esc_html_e( 'For new backups, remove Dashboard archives after every selected destination has a verified upload. Select at least one remote destination. This setting does not remove archives from existing backups. Normal retention still applies.', 'mainwp' ); ?></span>
+            </div>
+        </div>
         <div class="ui grid field" id="mainwp-backup-max-chain-length-wrapper" <?php echo $chain_wrapper_style; //phpcs:ignore -- static attribute. ?>>
             <label class="six wide column middle aligned"><?php esc_html_e( 'Start a new chain after (backups)', 'mainwp' ); ?></label>
             <div class="ten wide column">

@@ -54,6 +54,446 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 		$this->created_ids = array( $this->task_id );
 	}
 
+	/** Opt-in refuses absent/local destinations and omission preserves saved state. */
+	public function test_remove_local_after_upload_task_ability_roundtrip(): void {
+		$input = array(
+			'task_id'   => $this->task_id,
+			'retention' => array( 'remove_local_after_upload' => true ),
+		);
+		foreach ( array( 'dry_run', 'confirm' ) as $mode ) {
+			$this->assertWPError( $this->execute( 'update-backup-task', $input + array( $mode => true ) ) );
+		}
+		$store  = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$local  = $store->add_destination(
+			array(
+				'provider' => 'local',
+				'name'     => 'Local only',
+				'settings' => array(),
+			)
+		);
+		$remote = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Remote task fixture',
+				'settings' => array(),
+			)
+		);
+		try {
+			$this->assertWPError(
+				$this->execute(
+					'update-backup-task',
+					$input + array(
+						'destination_ids' => array( $local ),
+						'dry_run'         => true,
+					)
+				)
+			);
+			$input['destination_ids'] = array( $remote );
+			$preview                  = $this->execute( 'update-backup-task', $input + array( 'dry_run' => true ) );
+			$this->assert_output( 'update-backup-task', $preview );
+			$this->assertContains(
+				array(
+					'field' => 'retention.remove_local_after_upload',
+					'from'  => false,
+					'to'    => true,
+				),
+				$preview['would_affect']['changes']
+			);
+			$saved = $this->execute( 'update-backup-task', $input + array( 'confirm' => true ) );
+			$this->assert_output( 'update-backup-task', $saved );
+			$this->assertTrue( $saved['retention']['remove_local_after_upload'] );
+			$renamed = $this->execute(
+				'update-backup-task',
+				array(
+					'task_id' => $this->task_id,
+					'name'    => 'Retain opt-in',
+					'confirm' => true,
+				)
+			);
+			$this->assertTrue( $renamed['retention']['remove_local_after_upload'] );
+			$disabled = $this->execute(
+				'update-backup-task',
+				array(
+					'task_id'         => $this->task_id,
+					'retention'       => array( 'remove_local_after_upload' => false ),
+					'destination_ids' => array(),
+					'confirm'         => true,
+				)
+			);
+			$this->assertFalse( $disabled['retention']['remove_local_after_upload'] );
+		} finally {
+			$store->delete_destination( $local );
+			$store->delete_destination( $remote );
+		}
+	}
+
+	/** A failed option write must not report a successful opt-in. */
+	public function test_remove_local_after_upload_failed_write(): void {
+		$protection = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
+		$this->assertTrue( $protection::save_task_remove_local_archives( $this->task_id, false ) );
+		$store  = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$remote = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Failed option fixture',
+				'settings' => array(),
+			)
+		);
+		$filter = 'pre_update_option_' . $protection::TASK_OPTION_PREFIX . $this->task_id;
+		$block  = static fn( $candidate, $old ) => $old;
+		add_filter( $filter, $block, 10, 2 );
+		try {
+			$result = $this->execute(
+				'update-backup-task',
+				array(
+					'task_id'         => $this->task_id,
+					'destination_ids' => array( $remote ),
+					'retention'       => array( 'remove_local_after_upload' => true ),
+					'confirm'         => true,
+				)
+			);
+			$this->assertWPError( $result );
+			$this->assertFalse( $protection::task_removes_local_archives( $this->task_id ) );
+		} finally {
+			remove_filter( $filter, $block );
+			$store->delete_destination( $remote );
+		}
+	}
+
+	/** A failed option INSERT must leave unlimited retention outside the prune list. */
+	public function test_final_task_save_existing_option_insert_failure_restores_unlimited(): void {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$wpdb->update(
+			$table,
+			array(
+				'retention_count'      => 0,
+				'retention_days'       => 0,
+				'retention_storage_mb' => 0,
+			),
+			array( 'id' => $this->task_id )
+		);
+		$key = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $this->task_id;
+		delete_option( $key );
+		$before = $this->final_task_save_raw_task();
+		$this->assertNotContains( $this->task_id, $this->final_task_save_policy_ids() );
+		$result = $this->final_task_save_fault(
+			fn() => $this->execute(
+				'update-backup-task',
+				array(
+					'task_id'   => $this->task_id,
+					'name'      => 'Refused retention save',
+					'retention' => array( 'count' => 1 ),
+					'confirm'   => true,
+				)
+			),
+			$wpdb->options,
+			'INSERT',
+			$key
+		);
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_internal_error', $result->get_error_code() );
+		$this->assertSame( 500, $result->get_error_data()['status'] );
+		$this->assertSame( $before, $this->final_task_save_raw_task() );
+		$this->assertNull( $this->final_task_save_raw_option( $key ) );
+		$this->assertFalse( get_option( $key, false ) );
+		$this->assertNotContains( $this->task_id, $this->final_task_save_policy_ids() );
+	}
+
+	/** A refused new task must leave neither a row nor a creation notification. */
+	public function test_final_task_save_new_option_failure_removes_row_without_hook(): void {
+		global $wpdb;
+		$table  = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$before = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i ORDER BY id', $table ) );
+		$hooks  = array();
+		$added  = static function ( $id ) use ( &$hooks ) {
+			$hooks[] = $id;
+		};
+		add_action( 'mainwp_add_backuptask', $added );
+		try {
+			$result = $this->final_task_save_fault( fn() => $this->execute( 'create-backup-task', $this->input( 'create-backup-task' ) + array( 'confirm' => true ) ), $wpdb->options, 'INSERT', \MainWP\Dashboard\MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX );
+		} finally {
+			remove_action( 'mainwp_add_backuptask', $added );
+			$after             = $wpdb->get_col( $wpdb->prepare( 'SELECT id FROM %i ORDER BY id', $table ) );
+			$this->created_ids = array_merge( $this->created_ids, array_map( 'intval', array_diff( $after, $before ) ) );
+		}
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_internal_error', $result->get_error_code() );
+		$this->assertSame( $before, $after );
+		$this->assertSame( array(), $hooks );
+	}
+
+	/** Recovery restores this save's fields and preserves a later writer. */
+	public function test_final_task_save_concurrent_writer_is_preserved_and_reported(): void {
+		global $wpdb;
+		$table = MainWP_DB::instance()->get_table_name( 'wp_backup' );
+		$wpdb->update(
+			$table,
+			array(
+				'retention_count'      => 0,
+				'retention_days'       => 0,
+				'retention_storage_mb' => 0,
+			),
+			array( 'id' => $this->task_id )
+		);
+		$key = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $this->task_id;
+		delete_option( $key );
+		$before = $this->final_task_save_raw_task();
+		$later  = function () use ( $wpdb, $table ) {
+			$wpdb->update(
+				$table,
+				array(
+					'name'            => 'Later writer',
+					'retention_count' => 7,
+				),
+				array( 'id' => $this->task_id )
+			);
+		};
+		$result = $this->final_task_save_fault(
+			fn() => $this->execute(
+				'update-backup-task',
+				array(
+					'task_id'   => $this->task_id,
+					'name'      => 'Refused edit',
+					'retention' => array(
+						'count' => 1,
+						'days'  => 3,
+					),
+					'confirm'   => true,
+				)
+			),
+			$wpdb->options,
+			'INSERT',
+			$key,
+			$later
+		);
+		$this->assertWPError( $result );
+		$this->assertSame( 'mainwp_internal_error', $result->get_error_code() );
+		$this->assertStringContainsString( 'concurrent', $result->get_error_message() );
+		$this->assertStringContainsString( 'may still hold new retention values', $result->get_error_message() );
+		$this->assertSame( array( 'status' => 500 ), $result->get_error_data() );
+		$before['name']            = 'Later writer';
+		$before['retention_count'] = '7';
+		$this->assertSame( $before, $this->final_task_save_raw_task() );
+		$this->assertNull( $this->final_task_save_raw_option( $key ) );
+	}
+
+	/**
+	 * Flag transitions and checked-write refusals.
+	 *
+	 * @return array Cases.
+	 */
+	public static function final_task_save_flag_cases(): array {
+		return array(
+			'enable'           => array( 0, true, '' ),
+			'disable'          => array( 1, false, '' ),
+			'unchanged'        => array( 1, true, '' ),
+			'enable-refused'   => array( 0, true, 'option' ),
+			'disable-refused'  => array( 1, false, 'option' ),
+			'task-refused'     => array( 0, true, 'task' ),
+			'readback-refused' => array( 0, true, 'readback' ),
+		);
+	}
+
+	/**
+	 * Flag transitions preserve raw prior state when either checked write fails.
+	 *
+	 * @dataProvider final_task_save_flag_cases
+	 * @param int    $old Stored flag.
+	 * @param bool   $enabled Requested flag.
+	 * @param string $failure Failure phase.
+	 */
+	public function test_final_task_save_flag_enable_disable_unchanged( int $old, bool $enabled, string $failure ): void {
+		global $wpdb;
+		$store  = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$remote = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Checked flag save',
+				'settings' => array(),
+			)
+		);
+		$key    = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::TASK_OPTION_PREFIX . $this->task_id;
+		delete_option( $key );
+		$this->assertTrue( add_option( $key, $old, '', true ) );
+		$before        = $this->final_task_save_raw_task();
+		$before_option = $this->final_task_save_raw_option( $key );
+		get_option( $key );
+		$call = fn() => $this->execute(
+			'update-backup-task',
+			array(
+				'task_id'         => $this->task_id,
+				'name'            => 'Checked flag edit',
+				'destination_ids' => array( $remote ),
+				'retention'       => array(
+					'count'                     => 1,
+					'remove_local_after_upload' => $enabled,
+				),
+				'confirm'         => true,
+			)
+		);
+		try {
+			$result = '' === $failure ? $call() : $this->final_task_save_fault( $call, 'task' === $failure ? MainWP_DB::instance()->get_table_name( 'wp_backup' ) : $wpdb->options, 'readback' === $failure ? 'READBACK' : 'UPDATE', 'task' === $failure ? '' : $key );
+			if ( '' === $failure ) {
+				$this->assertNotWPError( $result );
+				$this->assertSame( $enabled, $result['retention']['remove_local_after_upload'] );
+				$this->assertSame( $enabled, \MainWP\Dashboard\MainWP_Backup_Retention_Protection::task_removes_local_archives( $this->task_id ) );
+				$this->assertSame( $enabled ? '1' : '0', $this->final_task_save_raw_option( $key )['option_value'] );
+			} else {
+				$this->assertWPError( $result );
+				$this->assertSame( 'mainwp_internal_error', $result->get_error_code() );
+				$this->assertSame( $before, $this->final_task_save_raw_task() );
+				$this->assertSame( $before_option, $this->final_task_save_raw_option( $key ) );
+				$this->assertSame( (bool) $old, (bool) get_option( $key ) );
+			}
+		} finally {
+			delete_option( $key );
+			$store->delete_destination( $remote );
+		}
+	}
+
+	/**
+	 * Read raw task fields, including those outside this save.
+	 *
+	 * @return array Task row.
+	 */
+	private function final_task_save_raw_task(): array {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT * FROM %i WHERE id = %d', MainWP_DB::instance()->get_table_name( 'wp_backup' ), $this->task_id ), ARRAY_A );
+	}
+
+	/**
+	 * Read the raw option without its cache.
+	 *
+	 * @param string $key Option name.
+	 * @return array|null Raw option evidence.
+	 */
+	private function final_task_save_raw_option( string $key ): ?array {
+		global $wpdb;
+		return $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $key ), ARRAY_A );
+	}
+
+	/**
+	 * Read the scheduler's policy task identities.
+	 *
+	 * @return int[] Task IDs.
+	 */
+	private function final_task_save_policy_ids(): array {
+		return array_map( static fn( $task ) => (int) $task->id, \MainWP\Dashboard\MainWP_Backup_Retention_Query::instance()->list_tasks_with_policy() );
+	}
+
+	/**
+	 * Redirect one matched real SQL write to a missing table.
+	 *
+	 * @param callable      $call Product operation.
+	 * @param string        $table Target table.
+	 * @param string        $verb SQL verb.
+	 * @param string        $needle Optional identifying value.
+	 * @param callable|null $later Simulated later writer.
+	 * @return mixed Product result.
+	 */
+	private function final_task_save_fault( callable $call, string $table, string $verb, string $needle = '', ?callable $later = null ) {
+		global $wpdb;
+		$count      = 0;
+		$write_seen = false;
+		$fault      = static function ( $sql ) use ( $table, $verb, $needle, $later, &$count, &$write_seen ) {
+			if ( 'READBACK' === $verb ) {
+				$target = '`?' . preg_quote( $table, '/' ) . '`?';
+				if ( preg_match( '/^\s*UPDATE\s+' . $target . '\s/i', $sql ) && str_contains( $sql, $needle ) ) {
+					$write_seen = true;
+				}
+				$pattern = '/^(\s*SELECT\b.*?)\bFROM\s+' . $target . '\s/is';
+				if ( $write_seen && 0 === $count && preg_match( $pattern, $sql ) && str_contains( $sql, $needle ) ) {
+					++$count;
+					return preg_replace( $pattern, '$1FROM `' . $table . '_task_save_missing` ', $sql, 1 );
+				}
+				return $sql;
+			}
+			$pattern = '/^\s*' . $verb . ( 'INSERT' === $verb ? '\s+(?:IGNORE\s+)?INTO' : '' ) . '\s+`?' . preg_quote( $table, '/' ) . '`?\s/i';
+			if ( 0 === $count && preg_match( $pattern, $sql ) && ( '' === $needle || str_contains( $sql, $needle ) ) ) {
+				++$count;
+				if ( $later ) {
+					$later(); }
+				return preg_replace( $pattern, $verb . ( 'INSERT' === $verb ? ' INTO' : '' ) . ' `' . $table . '_task_save_missing` ', $sql, 1 );
+			}
+			return $sql;
+		};
+		add_filter( 'query', $fault, PHP_INT_MAX );
+		$suppressed = $wpdb->suppress_errors( true );
+		try {
+			$result = $call();
+		} finally {
+			remove_filter( 'query', $fault, PHP_INT_MAX );
+			$wpdb->suppress_errors( $suppressed );
+		}
+		$this->assertSame( 1, $count, 'The intended SQL fault must execute.' );
+		return $result;
+	}
+
+	/** Prospective task flags hold marked pending units and leave legacy history ordinary. */
+	public function test_remove_local_preview_toggle_uses_captured_history(): void {
+		global $wpdb;
+		$store       = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance();
+		$destination = $store->add_destination(
+			array(
+				'provider' => 's3',
+				'name'     => 'Preview capture fixture',
+				'settings' => array(),
+			)
+		);
+		$protection  = \MainWP\Dashboard\MainWP_Backup_Retention_Protection::class;
+		$ids         = array();
+		foreach ( array( true, false, false ) as $index => $marked ) {
+			$wpdb->insert(
+				MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ),
+				array(
+					'site_id'  => $this->site_id,
+					'task_id'  => $this->task_id,
+					'type'     => 'full',
+					'status'   => 'complete',
+					'created'  => time() - ( 3 - $index ) * 60,
+					'archives' => wp_json_encode( $marked ? array( array( 'retention_requires_uploads' => true ) ) : array() ),
+				)
+			);
+			$ids[] = (int) $wpdb->insert_id;
+		}
+		try {
+			$enable = $this->execute(
+				'update-backup-task',
+				array(
+					'task_id'         => $this->task_id,
+					'destination_ids' => array( $destination ),
+					'retention'       => array(
+						'count'                     => 1,
+						'remove_local_after_upload' => true,
+					),
+					'dry_run'         => true,
+				)
+			);
+			$this->assert_output( 'update-backup-task', $enable );
+			$this->assertSame( array( $ids[1] ), $enable['would_affect']['retention_impact'][0]['would_prune_snapshot_ids'] );
+			$this->assertStringContainsString( 'unfinished required uploads', implode( ' ', $enable['warnings'] ) );
+			$this->assertTrue( $protection::save_task_remove_local_archives( $this->task_id, true ) );
+			$disable = $this->execute(
+				'update-backup-task',
+				array(
+					'task_id'   => $this->task_id,
+					'retention' => array(
+						'count'                     => 1,
+						'remove_local_after_upload' => false,
+					),
+					'dry_run'   => true,
+				)
+			);
+			$this->assert_output( 'update-backup-task', $disable );
+			$this->assertSame( array_slice( $ids, 0, 2 ), $disable['would_affect']['retention_impact'][0]['would_prune_snapshot_ids'] );
+			$this->assertSame( array(), $disable['warnings'] );
+		} finally {
+			$protection::save_task_remove_local_archives( $this->task_id, false );
+			$store->delete_destination( $destination );
+		}
+	}
+
 	/** Fixture cleanup owns only the rows allocated to this case. */
 	public function tear_down() {
 		global $wpdb;
@@ -1096,7 +1536,9 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 	/** Retention previews must identify stored snapshots and the pending owner transfer. */
 	public function test_update_retention_and_delete_snapshot_cloud_preview() {
 		global $wpdb;
-		$ids = array();
+		$ids      = array();
+		$artifact = tempnam( sys_get_temp_dir(), 'mainwp-retention-preview-' );
+		file_put_contents( $artifact, 'backup' );
 		for ( $i = 0; $i < 3; ++$i ) {
 			$this->assertNotFalse(
 				$wpdb->insert(
@@ -1107,23 +1549,29 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 						'type'     => 'full',
 						'status'   => 'complete',
 						'created'  => time() - ( 3 - $i ) * 60,
-						'archives' => '[]',
+						'archives' => wp_json_encode(
+							array(
+								array(
+									'path' => $artifact,
+									'file' => basename( $artifact ),
+									'size' => 6,
+									'role' => 'full',
+								),
+							)
+						),
 					)
 				)
 			);
 			$ids[] = (int) $wpdb->insert_id;
 		}
-		$this->assertNotFalse(
-			$wpdb->insert(
-				MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ),
-				array(
-					'name'     => 'Cloud fixture',
-					'provider' => 's3',
-					'settings' => '',
-				)
+		$destination = \MainWP\Dashboard\MainWP_Backup_Storage_Destinations::instance()->add_destination(
+			array(
+				'name'     => 'Cloud fixture',
+				'provider' => 's3',
+				'settings' => array(),
 			)
 		);
-		$destination = (int) $wpdb->insert_id;
+		$this->assertGreaterThan( 0, $destination );
 		$this->assertNotFalse(
 			$wpdb->insert(
 				MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ),
@@ -1147,6 +1595,11 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 			)
 		);
 		try {
+			$units = \MainWP\Dashboard\MainWP_Backup_Retention_Query::instance()->get_units_for_site_task( $this->site_id, $this->task_id );
+			$this->assertSame( array( true, true, true ), array_column( $units, 'is_restorable' ) );
+			$this->assertSame( array( 0, 0, 0 ), array_column( $units, 'protected_until' ) );
+			$this->assertSame( array( false, false, false ), array_column( $units, 'unknown_age' ) );
+			$this->assertSame( array( false, false, false ), array_column( $units, 'required_upload_hold' ) );
 			$preview = $this->execute(
 				'update-backup-task',
 				array(
@@ -1186,8 +1639,14 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 					'dry_run'          => true,
 				)
 			);
+			$this->assert_output( 'delete-backup-task', $preview );
 			$this->assertSame( array(), $preview['would_affect']['snapshots'] );
 			$this->assertSame( array(), $preview['would_affect']['cloud_copies'] );
+			$this->assertArrayHasKey( 'snapshot_count', $preview['would_affect'] );
+			$this->assertSame( 0, $preview['would_affect']['snapshot_count'] );
+			$this->assertSame( 0, $preview['would_affect']['cloud_copy_count'] );
+			$this->assertFalse( $preview['would_affect']['snapshots_truncated'] );
+			$this->assertFalse( $preview['would_affect']['cloud_copies_truncated'] );
 			$output = $this->execute(
 				'delete-backup-task',
 				array(
@@ -1197,9 +1656,19 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 				)
 			);
 			$this->assert_output( 'delete-backup-task', $output );
+			$this->assertSame(
+				array(
+					'task_id'           => $this->task_id,
+					'deleted'           => true,
+					'snapshots_deleted' => false,
+					'dry_run'           => false,
+				),
+				$output
+			);
 			$this->assertFalse( $output['snapshots_deleted'] );
 			$this->assertSame( 3, (int) $wpdb->get_var( $wpdb->prepare( 'SELECT COUNT(*) FROM ' . MainWP_DB::instance()->get_table_name( 'wp_backup_snapshot' ) . ' WHERE task_id = %d', $this->task_id ) ) );
 		} finally {
+			unlink( $artifact );
 			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_upload_job' ), array( 'id' => $job ) );
 			$wpdb->delete( MainWP_DB::instance()->get_table_name( 'wp_backup_storage' ), array( 'id' => $destination ) );
 		}
@@ -1276,6 +1745,11 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 			);
 			$this->assert_output( 'delete-backup-task', $preview );
 			$this->assertSame( $expected, $preview['would_affect']['cloud_copies'] );
+			$this->assertArrayHasKey( 'snapshot_count', $preview['would_affect'] );
+			$this->assertSame( 1, $preview['would_affect']['snapshot_count'] );
+			$this->assertSame( count( $expected ), $preview['would_affect']['cloud_copy_count'] );
+			$this->assertFalse( $preview['would_affect']['snapshots_truncated'] );
+			$this->assertFalse( $preview['would_affect']['cloud_copies_truncated'] );
 			$purge_result = null;
 			$capture      = static function ( $task_id, $result ) use ( &$purge_result ) {
 				$purge_result = $result;
@@ -1293,6 +1767,15 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 				remove_action( 'mainwp_backup_task_snapshots_purged', $capture );
 			}
 			$this->assert_output( 'delete-backup-task', $output );
+			$this->assertSame(
+				array(
+					'task_id'           => $this->task_id,
+					'deleted'           => true,
+					'snapshots_deleted' => true,
+					'dry_run'           => false,
+				),
+				$output
+			);
 			$this->assertTrue( $output['snapshots_deleted'] );
 			$this->assertIsArray( $purge_result );
 			foreach ( $preview['would_affect']['snapshots'] as $snapshot ) {
@@ -1323,6 +1806,117 @@ class MainWP_Backups_Task_Abilities_Test extends MainWP_Abilities_Test_Case {
 			'failed permanent' => array( 's3', 'failed_permanent', 1 ),
 			'copies retained'  => array( 'local', 'complete', 0 ),
 		);
+	}
+
+	/**
+	 * Totals describe the full selection even when either preview list is capped.
+	 *
+	 * @dataProvider delete_preview_count_cases
+	 * @param int $snapshot_count      Selected snapshots.
+	 * @param int $copies_per_snapshot Upload records per snapshot.
+	 */
+	public function test_delete_preview_reports_full_totals( $snapshot_count, $copies_per_snapshot ) {
+		global $wpdb;
+		$db           = MainWP_DB::instance();
+		$snapshot_ids = array();
+		$destinations = array();
+		MainWP_DB_Backup::instance()->update_backup_task_with_values( $this->task_id, array( 'delete_cloud_copies' => 1 ) );
+		try {
+			for ( $copy = 0; $copy < $copies_per_snapshot; ++$copy ) {
+				$this->assertNotFalse(
+					$wpdb->insert(
+						$db->get_table_name( 'wp_backup_storage' ),
+						array(
+							'name'     => 'Preview copy fixture',
+							'provider' => 'local',
+							'settings' => '',
+						)
+					)
+				);
+				$destinations[] = (int) $wpdb->insert_id;
+			}
+			for ( $i = 0; $i < $snapshot_count; ++$i ) {
+				$snapshot_id    = $this->create_task_history_snapshot( $this->site_id );
+				$snapshot_ids[] = $snapshot_id;
+				foreach ( $destinations as $destination ) {
+					$this->assertNotFalse(
+						$wpdb->insert(
+							$db->get_table_name( 'wp_backup_upload_job' ),
+							array(
+								'snapshot_id'    => $snapshot_id,
+								'destination_id' => $destination,
+								'provider'       => 'local',
+								'status'         => 'complete',
+								'checkpoint'     => '',
+								'last_error'     => '',
+							)
+						)
+					);
+				}
+			}
+			$preview = $this->execute( 'delete-backup-task', $this->input( 'delete-backup-task' ) + array( 'dry_run' => true ) );
+			$this->assert_output( 'delete-backup-task', $preview );
+			$affected    = $preview['would_affect'];
+			$cloud_count = $snapshot_count * $copies_per_snapshot;
+			$this->assertArrayHasKey( 'snapshot_count', $affected );
+			$this->assertArrayHasKey( 'cloud_copy_count', $affected );
+			$this->assertArrayHasKey( 'cloud_copies_truncated', $affected );
+			$this->assertSame( $snapshot_count, $affected['snapshot_count'] );
+			$this->assertSame( $cloud_count, $affected['cloud_copy_count'] );
+			$this->assertCount( min( 500, $snapshot_count ), $affected['snapshots'] );
+			$this->assertCount( min( 500, $cloud_count ), $affected['cloud_copies'] );
+			$this->assertSame( array_slice( $snapshot_ids, 0, 500 ), array_column( $affected['snapshots'], 'id' ) );
+			$this->assertSame( $snapshot_count > 500, $affected['snapshots_truncated'] );
+			$this->assertSame( $cloud_count > 500, $affected['cloud_copies_truncated'] );
+			$warning = 'The preview lists up to 500 snapshots and 500 cloud copies. Confirmation deletes the full selection.';
+			if ( $snapshot_count > 500 || $cloud_count > 500 ) {
+				$this->assertContains( $warning, $preview['warnings'] );
+			} else {
+				$this->assertNotContains( $warning, $preview['warnings'] );
+			}
+		} finally {
+			foreach ( $snapshot_ids as $snapshot_id ) {
+				$wpdb->delete( $db->get_table_name( 'wp_backup_upload_job' ), array( 'snapshot_id' => $snapshot_id ) );
+			}
+			foreach ( $destinations as $destination ) {
+				$wpdb->delete( $db->get_table_name( 'wp_backup_storage' ), array( 'id' => $destination ) );
+			}
+		}
+	}
+
+	/**
+	 * Snapshot and cloud limits are independent at the 500-item boundary.
+	 *
+	 * @return array Cases.
+	 */
+	public static function delete_preview_count_cases() {
+		return array(
+			'empty'                 => array( 0, 0 ),
+			'below both caps'       => array( 1, 2 ),
+			'exactly 500 copies'    => array( 250, 2 ),
+			'over 500 copies'       => array( 251, 2 ),
+			'exactly 500 snapshots' => array( 500, 0 ),
+			'over 500 snapshots'    => array( 501, 0 ),
+		);
+	}
+
+	/** Preview metadata must be required and retain its declared types and bounds. */
+	public function test_delete_preview_schema_requires_truncation_metadata() {
+		$preview = $this->execute( 'delete-backup-task', $this->input( 'delete-backup-task' ) + array( 'dry_run' => true ) );
+		$this->assert_output( 'delete-backup-task', $preview );
+		$schema = $this->ability( 'delete-backup-task' )->get_output_schema();
+		foreach ( array( 'snapshot_count', 'cloud_copy_count', 'cloud_copies_truncated' ) as $field ) {
+			$invalid = $preview;
+			unset( $invalid['would_affect'][ $field ] );
+			$this->assertWPError( rest_validate_value_from_schema( $invalid, $schema ), 'Missing ' . $field );
+			$invalid['would_affect'][ $field ] = array();
+			$this->assertWPError( rest_validate_value_from_schema( $invalid, $schema ), 'Wrong type for ' . $field );
+		}
+		foreach ( array( 'snapshot_count', 'cloud_copy_count' ) as $field ) {
+			$invalid                           = $preview;
+			$invalid['would_affect'][ $field ] = -1;
+			$this->assertWPError( rest_validate_value_from_schema( $invalid, $schema ), 'Negative ' . $field );
+		}
 	}
 
 	/** Older form tasks can have names beyond the machine-input ceiling. */

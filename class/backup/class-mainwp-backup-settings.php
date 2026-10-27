@@ -70,6 +70,13 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     private static string $recovery_passphrase_rejected = '';
 
     /**
+     * Count errors from the authenticated settings POST, kept in this request.
+     *
+     * @var array
+     */
+    private static array $count_errors = array();
+
+    /**
      * Method get_class_name()
      *
      * Get Class Name.
@@ -271,6 +278,33 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Parse a global archive count without treating malformed input as unlimited.
+     *
+     * @param mixed $value Submitted or stored count.
+     * @return int|null Nonnegative count, or null for malformed values.
+     */
+    public static function normalize_global_retention_count( $value ): ?int {
+        if ( ! is_string( $value ) && ! is_int( $value ) && ! is_float( $value ) ) {
+            return null;
+        }
+        if ( is_string( $value ) && MainWP_Utility::ctype_digit( $value ) ) {
+            $value = ltrim( $value, '0' );
+            $value = '' === $value ? '0' : $value;
+        }
+        $count = filter_var( $value, FILTER_VALIDATE_INT, array( 'options' => array( 'min_range' => 0 ) ) );
+        return false === $count ? null : $count;
+    }
+
+    /**
+     * A malformed stored limit cannot authorize deleting existing archives.
+     *
+     * @return int|null Missing options use one; null holds archives until a valid count is saved.
+     */
+    public static function get_server_retention_count(): ?int {
+        return self::normalize_global_retention_count( get_option( 'mainwp_backupsOnServer', 1 ) );
+    }
+
+    /**
      * Hidden rows must follow setting changes before their next backup.
      *
      * @param object $task Task row.
@@ -334,6 +368,166 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Return field errors for the current settings form.
+     *
+     * @return array Field names and messages.
+     */
+    public static function get_count_errors(): array {
+        return self::$count_errors;
+    }
+
+    /**
+     * Read a count row without option-cache coercion.
+     *
+     * @param string $option Count option name.
+     * @return array|null|false Raw row, absence, or read failure.
+     */
+    private static function read_count_row( string $option ) {
+        global $wpdb;
+        $row = $wpdb->get_row( $wpdb->prepare( 'SELECT option_id, option_value, autoload FROM %i WHERE option_name = %s', $wpdb->options, $option ), ARRAY_A ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Recovery needs the exact persisted row.
+        return '' === $wpdb->last_error ? $row : false;
+    }
+
+    /**
+     * Recover count rows only while they still match this save's writes.
+     *
+     * @param array $changes Original and written count rows.
+     */
+    private static function recover_count_changes( array $changes ): void {
+        global $wpdb;
+        foreach ( array_reverse( $changes, true ) as $option => $change ) {
+            $written = $change['written'];
+            if ( null === $change['before'] ) {
+                $sql = $wpdb->prepare(
+                    'DELETE FROM %i WHERE option_name = %s AND option_id = %d AND BINARY option_value = BINARY %s AND BINARY autoload = BINARY %s',
+                    $wpdb->options,
+                    $option,
+                    $written['option_id'],
+                    $written['option_value'],
+                    $written['autoload']
+                );
+            } else {
+                $sql = $wpdb->prepare(
+                    'UPDATE %i SET option_value = %s, autoload = %s WHERE option_name = %s AND option_id = %d AND BINARY option_value = BINARY %s AND BINARY autoload = BINARY %s',
+                    $wpdb->options,
+                    $change['before']['option_value'],
+                    $change['before']['autoload'],
+                    $option,
+                    $written['option_id'],
+                    $written['option_value'],
+                    $written['autoload']
+                );
+            }
+            if ( false === $wpdb->query( $sql ) ) { // phpcs:ignore WordPress.DB.DirectDatabaseQuery,WordPress.DB.PreparedSQL.NotPrepared -- Conditional recovery SQL is prepared above.
+                MainWP_Logger::instance()->warning( 'Backup count settings could not be restored after a failed save.' );
+            }
+            wp_cache_delete( $option, 'options' );
+            wp_cache_delete( 'alloptions', 'options' );
+            wp_cache_delete( 'notoptions', 'options' );
+        }
+    }
+
+    /**
+     * Persist counts before other settings, with the server count last.
+     *
+     * @param array $counts Submitted count values.
+     * @return array|false Recovery journal, or refusal.
+     */
+    private static function save_count_changes( array $counts ) {
+        $changes = array();
+        $before  = array();
+        foreach ( $counts as $option => $count ) {
+            $before[ $option ] = self::read_count_row( $option );
+            if ( false === $before[ $option ] ) {
+                return false;
+            }
+        }
+        foreach ( array( 'mainwp_backupOnExternalSources', 'mainwp_backupsOnServer' ) as $option ) {
+            if ( ! array_key_exists( $option, $counts ) ) {
+                continue;
+            }
+            $written        = null;
+            $capture_failed = false;
+            $original       = $before[ $option ];
+            $autoload       = null === $original ? 'no' : $original['autoload'];
+            $add_autoload   = function_exists( 'wp_determine_option_autoload_value' ) ? ( null === $original ? 'off' : 'auto' ) : ( null === $original ? 'no' : 'yes' );
+            $track_autoload = static function ( $value, $name ) use ( $option, &$autoload, &$add_autoload ) {
+                if ( $option === $name ) {
+                    $autoload     = is_bool( $value ) ? ( $value ? 'auto-on' : 'auto-off' ) : 'auto';
+                    $add_autoload = $autoload;
+                }
+                return $value;
+            };
+            $capture        = static function ( $unused, $value ) use ( $option, $original, &$autoload, &$add_autoload, &$written, &$capture_failed ) {
+                global $wpdb;
+                if ( null !== $written ) {
+                    return;
+                }
+                $inserted = 0 === strpos( current_filter(), 'add_option_' );
+                $fallback = array(
+                    'option_id'    => $inserted ? $wpdb->insert_id : ( $original['option_id'] ?? 0 ),
+                    'option_value' => (string) maybe_serialize( $value ),
+                    'autoload'     => $inserted ? $add_autoload : $autoload,
+                );
+                for ( $attempt = 0; $attempt < 3; ++$attempt ) {
+                    $written = self::read_count_row( $option );
+                    if ( false !== $written ) {
+                        break;
+                    }
+                }
+                if ( ! is_array( $written ) || (string) $fallback['option_id'] !== $written['option_id'] || $fallback['option_value'] !== $written['option_value'] || $fallback['autoload'] !== $written['autoload'] ) {
+                    // Recover before later hooks can make another write with the same value.
+                    self::recover_count_changes(
+                        array(
+                            $option => array(
+                                'before'  => $original,
+                                'written' => $fallback,
+                            ),
+                        )
+                    );
+                    $capture_failed = true;
+                } else {
+                    // A false-valued upsert can leave an older autoloaded value cached.
+                    wp_cache_delete( $option, 'options' );
+                    wp_cache_delete( 'alloptions', 'options' );
+                    wp_cache_delete( 'notoptions', 'options' );
+                }
+            };
+            // Capture before later hooks can edit the row or replace its identity.
+            add_filter( 'wp_default_autoload_value', $track_autoload, PHP_INT_MAX, 2 );
+            add_action( 'add_option_' . $option, $capture, PHP_INT_MIN, 2 );
+            add_action( 'update_option_' . $option, $capture, PHP_INT_MIN, 2 );
+            try {
+                $updated = null === $original ? add_option( $option, $counts[ $option ], '', 'no' ) : update_option( $option, $counts[ $option ] );
+            } finally {
+                remove_filter( 'wp_default_autoload_value', $track_autoload, PHP_INT_MAX );
+                remove_action( 'add_option_' . $option, $capture, PHP_INT_MIN );
+                remove_action( 'update_option_' . $option, $capture, PHP_INT_MIN );
+            }
+            if ( $capture_failed || ( $updated && ! is_array( $written ) ) ) {
+                MainWP_Logger::instance()->warning( 'Backup count settings could not be checked after a write.' );
+                self::recover_count_changes( $changes );
+                return false;
+            }
+            if ( is_array( $written ) && $written !== $before[ $option ] ) {
+                $changes[ $option ] = array(
+                    'before'  => $before[ $option ],
+                    'written' => $written,
+                );
+            }
+            $current = self::read_count_row( $option );
+            if ( ! is_array( $current ) || (string) $counts[ $option ] !== $current['option_value'] ) {
+                self::recover_count_changes( $changes );
+                return false;
+            }
+            wp_cache_delete( $option, 'options' );
+            wp_cache_delete( 'alloptions', 'options' );
+            wp_cache_delete( 'notoptions', 'options' );
+        }
+        return $changes;
+    }
+
+    /**
      * Method handle_settings_post()
      *
      * Update Child Site Settings.
@@ -346,8 +540,27 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     public static function handle_settings_post(): bool {
         self::$encryption_forced_off        = false;
         self::$recovery_passphrase_rejected = '';
+        self::$count_errors                 = array();
         if ( MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff() && \mainwp_current_user_can( 'dashboard', 'manage_dashboard_settings' ) ) {
             if ( isset( $_POST['submit'] ) && isset( $_POST['wp_nonce'] ) && wp_verify_nonce( sanitize_key( $_POST['wp_nonce'] ), 'BackupSettings' ) ) {
+                $counts = array();
+                foreach ( array(
+                    'mainwp_options_backupOnServer' => 'mainwp_backupsOnServer',
+                    'mainwp_options_backupOnExternalSources' => 'mainwp_backupOnExternalSources',
+                ) as $field => $option ) {
+                    if ( ! array_key_exists( $field, $_POST ) ) {
+                        continue;
+                    }
+                    $count = self::normalize_global_retention_count( wp_unslash( $_POST[ $field ] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- the count parser rejects malformed values before any write.
+                    if ( null === $count ) {
+                        self::$count_errors[ $field ] = __( 'Enter a whole number of 0 or more.', 'mainwp' );
+                        continue;
+                    }
+                    $counts[ $option ] = $count;
+                }
+                if ( ! empty( self::$count_errors ) ) {
+                    return false;
+                }
                 $old_primaryBackup       = get_option( 'mainwp_primaryBackup' );
                 $old_enableNativeBackups = static::is_native_backups_enabled();
                 $enableNativeBackups     = ! empty( $_POST['mainwp_options_enableNativeBackups'] );
@@ -358,19 +571,18 @@ class MainWP_Backup_Settings { // phpcs:ignore Generic.Classes.OpeningBraceSameL
                 if ( isset( $_POST['mainwp_options_onDemandRetentionCount'] ) ) {
                     $values['on_demand_retention_count'] = max( 1, intval( $_POST['mainwp_options_onDemandRetentionCount'] ) );
                 }
-                if ( is_wp_error( MainWP_Backup_Operations::save_backup_settings( $values, 'ui' ) ) ) {
+                $count_changes = self::save_count_changes( $counts );
+                if ( false === $count_changes ) {
                     return false;
                 }
-                if ( isset( $_POST['mainwp_options_backupOnServer'] ) && 0 < $_POST['mainwp_options_backupOnServer'] ) {
-                    MainWP_Utility::update_option( 'mainwp_backupsOnServer', ( isset( $_POST['mainwp_options_backupOnServer'] ) ? intval( $_POST['mainwp_options_backupOnServer'] ) : 1 ) );
+                if ( is_wp_error( MainWP_Backup_Operations::save_backup_settings( $values, 'ui' ) ) ) {
+                    self::recover_count_changes( $count_changes );
+                    return false;
                 }
                 if ( isset( $_POST['mainwp_options_maximumFileDescriptors'] ) && - 1 < $_POST['mainwp_options_maximumFileDescriptors'] ) {
                     MainWP_Utility::update_option( 'mainwp_maximumFileDescriptors', ( isset( $_POST['mainwp_options_maximumFileDescriptors'] ) ? intval( $_POST['mainwp_options_maximumFileDescriptors'] ) : 1 ) );
                 }
                 MainWP_Utility::update_option( 'mainwp_maximumFileDescriptorsAuto', ( ! isset( $_POST['mainwp_maximumFileDescriptorsAuto'] ) ? 0 : 1 ) );
-                if ( ! empty( $_POST['mainwp_options_backupOnExternalSources'] ) && 0 <= $_POST['mainwp_options_backupOnExternalSources'] ) {
-                    MainWP_Utility::update_option( 'mainwp_backupOnExternalSources', ( isset( $_POST['mainwp_options_backupOnExternalSources'] ) ? intval( $_POST['mainwp_options_backupOnExternalSources'] ) : 1 ) );
-                }
                 MainWP_Utility::update_option( 'mainwp_archiveFormat', ( isset( $_POST['mainwp_archiveFormat'] ) ? sanitize_text_field( wp_unslash( $_POST['mainwp_archiveFormat'] ) ) : '' ) );
 
                 if ( isset( $_POST['mainwp_primaryBackup'] ) ) {

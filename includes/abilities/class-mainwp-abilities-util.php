@@ -182,7 +182,7 @@ class MainWP_Abilities_Util { //phpcs:ignore -- NOSONAR - multi methods.
             return 'cli' === $machine_context;
         }
 
-        return (bool) apply_filters( 'mainwp_currentusercan', true, 'dashboard', $right );
+        return (bool) MainWP_System::filter_current_user_permission( true, 'dashboard', $right );
     }
 
     /**

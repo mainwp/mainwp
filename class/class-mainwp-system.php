@@ -666,6 +666,22 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
 
 
     /**
+     * Applies the permission filter and denies access when a callback throws.
+     *
+     * @param mixed      $initial_grant Default permission value.
+     * @param string     $cap_type      Capability group.
+     * @param string|int $cap           Capability or site ID.
+     * @return mixed Filter result, or false when a callback throws.
+     */
+    public static function filter_current_user_permission( $initial_grant, $cap_type, $cap ) {
+        try {
+            return apply_filters( 'mainwp_currentusercan', $initial_grant, $cap_type, $cap );
+        } catch ( \Throwable $e ) {
+            return false;
+        }
+    }
+
+    /**
      * Method plugins_loaded()
      *
      * Load plugin text domain.
@@ -719,11 +735,7 @@ class MainWP_System { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.Conte
                     require_once ABSPATH . WPINC . '/pluggable.php'; // NOSONAR - WP compatible.
                 }
 
-                try {
-                    return apply_filters( 'mainwp_currentusercan', true, $cap_type, $cap );
-                } catch ( \Throwable $e ) {
-                    return false;
-                }
+                return MainWP_System::filter_current_user_permission( true, $cap_type, $cap ); // phpcs:ignore Squiz.Classes.SelfMemberReference.NotUsed -- This named function has no class scope.
             }
         }
     }

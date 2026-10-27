@@ -1008,8 +1008,9 @@ KEY idx_wpid_issub (wpid, issub)";
 
         return $this->wpdb->get_col(
             $this->wpdb->prepare(
-                'SELECT s.id
-                FROM ' . $sites_table . ' AS s ' . // NOSONAR - table name is generated internally and safely escaped.
+                'SELECT s.id FROM ' .
+                // nosemgrep: AIK_tainted-sql-string -- table names come from table_name() and $wpdb->options, $where is prepared with %d, and $retry_where is a fixed string.
+                $sites_table . ' AS s ' . // NOSONAR - table name is generated internally and safely escaped.
                 ' LEFT JOIN ' . $options_table . ' AS ra ' . // NOSONAR - table name is generated internally and safely escaped.
                 " ON ra.option_name = CONCAT(
                     'mainwp_primary_monitor_repair_attempts_for_wp_',

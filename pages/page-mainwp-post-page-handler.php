@@ -1115,9 +1115,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         $post_type               = isset( $new_post['post_type'] ) ? $new_post['post_type'] : '';
         $new_post['post_type']   = 'page' === $post_type ? 'bulkpage' : 'bulkpost';
 
-        $foundMatches = preg_match_all( '/(<a[^>]+href=\"(.*?)\"[^>]*>)?(<img[^>\/]*src=\"((.*?)(png|gif|jpg|jpeg))\")/ix', $new_post['post_content'], $matches, PREG_SET_ORDER );
+        $downloaded_images = array();
+        $foundMatches      = preg_match_all( '/(<a[^>]+href=\"(.*?)\"[^>]*>)?(<img[^>\/]*src=\"((.*?)(png|gif|jpg|jpeg))\")/ix', $new_post['post_content'], $matches, PREG_SET_ORDER );
         if ( 0 < $foundMatches ) {
-            $downloaded_images  = array();
             $image_replacements = array();
             foreach ( $matches as $match ) {
                 $hrefLink = $match[2];
@@ -1136,11 +1136,20 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 try {
-                    if ( ! isset( $downloaded_images[ $originalImgUrl ] ) ) {
+                    if ( ! array_key_exists( $originalImgUrl, $downloaded_images ) ) {
                         $downloaded_images[ $originalImgUrl ] = static::upload_image( $originalImgUrl );
                     }
                     $downloadfile = $downloaded_images[ $originalImgUrl ];
-                    $localUrl     = $downloadfile['url'];
+                    if ( null === $downloadfile ) {
+                        $extension_position = strrpos( $originalImgUrl, '.' );
+                        $failed_pattern     = '#' . preg_quote( substr( $originalImgUrl, 0, $extension_position ), '#' ) . '(?:-\d{3}x\d{3})?' . preg_quote( substr( $originalImgUrl, $extension_position ), '#' ) . '#';
+                        preg_match_all( $failed_pattern, str_replace( '\\/', '/', $new_post['post_content'] ), $failed_matches );
+                        foreach ( $failed_matches[0] as $failed_url ) {
+                            $image_replacements[ $failed_url ] = $failed_url;
+                        }
+                        continue;
+                    }
+                    $localUrl = $downloadfile['url'];
 
                     $linkToReplaceWith = dirname( $localUrl );
                     if ( '' !== $hrefLink ) {
@@ -1203,8 +1212,8 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         }
 
         if ( $replaceadvImg && $website ) {
-            $new_post['post_content'] = static::replace_advanced_image( $new_post['post_content'], $upload_dir, $website );
-            $new_post['post_content'] = static::replace_advanced_image( $new_post['post_content'], $upload_dir, $website, true ); // to fix images url with slashes.
+            $new_post['post_content'] = static::replace_advanced_image( $new_post['post_content'], $upload_dir, $website, false, $downloaded_images );
+            $new_post['post_content'] = static::replace_advanced_image( $new_post['post_content'], $upload_dir, $website, true, $downloaded_images ); // to fix images url with slashes.
         }
 
         $is_sticky = false;
@@ -1283,14 +1292,15 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * Handle upload advanced image.
      *
-     * @param array $content post content data.
-     * @param array $upload_dir upload directory info.
-     * @param mixed $website The website.
-     * @param bool  $withslashes to use preg pattern with slashes.
+     * @param array      $content post content data.
+     * @param array      $upload_dir upload directory info.
+     * @param mixed      $website The website.
+     * @param bool       $withslashes to use preg pattern with slashes.
+     * @param array|null $downloaded_images Download results shared by the current import.
      *
      * @return mixed array of result.
      */
-    public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false ) { //phpcs:ignore -- NOSONAR - complex.
+    public static function replace_advanced_image( $content, $upload_dir, $website, $withslashes = false, &$downloaded_images = null ) { //phpcs:ignore -- NOSONAR - complex.
 
         if ( empty( $upload_dir ) || ! isset( $upload_dir['baseurl'] ) ) {
             return $content;
@@ -1318,7 +1328,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     $matches_checked[] = $match;
                 }
             }
-            $downloaded_images  = array();
+            if ( null === $downloaded_images ) {
+                $downloaded_images = array();
+            }
             $image_replacements = array();
             foreach ( $matches_checked as $match ) {
 
@@ -1336,10 +1348,20 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 try {
-                    if ( ! isset( $downloaded_images[ $originalImgUrl ] ) ) {
-                        $downloaded_images[ $originalImgUrl ] = static::upload_image( wp_unslash( $originalImgUrl ) );
+                    $image_key = wp_unslash( $originalImgUrl );
+                    if ( ! array_key_exists( $image_key, $downloaded_images ) ) {
+                        $downloaded_images[ $image_key ] = static::upload_image( $image_key );
                     }
-                    $downloadfile      = $downloaded_images[ $originalImgUrl ];
+                    $downloadfile = $downloaded_images[ $image_key ];
+                    if ( null === $downloadfile ) {
+                        $extension_position = strrpos( $image_key, '.' );
+                        $failed_pattern     = '#' . preg_quote( substr( $image_key, 0, $extension_position ), '#' ) . '(?:-\d{3}x\d{3})?' . preg_quote( substr( $image_key, $extension_position ), '#' ) . '#';
+                        preg_match_all( $failed_pattern, str_replace( '\\/', '/', $content ), $failed_matches );
+                        foreach ( $failed_matches[0] as $failed_url ) {
+                            $image_replacements[ $failed_url ] = $failed_url;
+                        }
+                        continue;
+                    }
                     $localUrl          = $downloadfile['url'];
                     $linkToReplaceWith = dirname( $localUrl );
                     $lnkToReplace      = dirname( $imgUrl );
@@ -1354,11 +1376,11 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             foreach ( $image_replacements as $image_url => $replacement_url ) {
                 $image_replacements[ str_replace( '/', '\/', $image_url ) ] = str_replace( '/', '\/', (string) $replacement_url );
             }
-            $content = strtr( $content, $image_replacements );
             if ( false === strripos( $site_url_source, $dashboard_url ) ) {
                 // replace other images src outside upload folder.
-                $content = str_replace( $site_url_source, $dashboard_url, $content );
+                $image_replacements[ $site_url_source ] = $dashboard_url;
             }
+            $content = strtr( $content, $image_replacements );
         }
         return $content;
     }

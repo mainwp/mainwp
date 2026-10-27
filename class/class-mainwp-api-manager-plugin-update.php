@@ -154,10 +154,8 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
      * @param array $args       Request arguments.
      * @param bool  $bulk_check Check if updating in bulk true|false.
      *
-     * @return array|false Plugin information.
+     * @return \stdClass|array|false Plugin information.
      * @since       1.0.0
-     *
-     * @uses \MainWP\Dashboard\MainWP_System_Utility::maybe_unserialyze()
      */
     public function plugin_information( $args, $bulk_check = false ) {
 
@@ -219,7 +217,14 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
         if ( isset( $args['json'] ) ) { // bulkupdatecheck: json.
             $response = json_decode( $response, true );
         } else { // pluginupdatecheck, plugininformation : serialize.
-            $response = unserialize( $response ); // phpcs:ignore -- data from extensions, to compatible.
+            // The legacy API returns stdClass objects; never instantiate other response classes.
+            $response = @unserialize( // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.serialize_unserialize,WordPress.PHP.NoSilencedErrors.Discouraged -- Preserve the legacy API format and refuse malformed responses below.
+                $response,
+                array(
+                    'allowed_classes' => array( 'stdClass' ),
+                    'max_depth'       => 64,
+                )
+            );
         }
 
         /**
@@ -228,7 +233,7 @@ class MainWP_Api_Manager_Plugin_Update { // phpcs:ignore Generic.Classes.Opening
          * Comment out $response above first
          */
         if ( ! $bulk_check ) {
-            if ( is_object( $response ) ) {
+            if ( $response instanceof \stdClass ) {
                 if ( isset( $response->package ) ) {
                     $response->package = apply_filters( 'mainwp_api_manager_upgrade_package_url', $response->package, $response );
                 }

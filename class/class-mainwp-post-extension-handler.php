@@ -69,7 +69,6 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
             $this->add_action( 'mainwp_extension_getpurchased', array( MainWP_Extensions::get_class_name(), 'ajax_get_purchased_extensions' ) );
             $this->add_action( 'mainwp_extension_downloadandinstall', array( &$this, 'download_and_install' ) );
             $this->add_action( 'mainwp_extension_bulk_activate', array( &$this, 'bulk_activate' ) );
-            $this->add_action( 'mainwp_extension_apisslverifycertificate', array( &$this, 'save_api_ssl_verify' ) );
         }
 
         // Page: ManageSites.
@@ -434,19 +433,6 @@ class MainWP_Post_Extension_Handler extends MainWP_Post_Base_Handler { // phpcs:
         }
 
         die( wp_json_encode( $return ) );
-    }
-
-    /**
-     * Save whenther or not to verify MainWP API SSL certificate.
-     *
-     * @return void
-     *
-     * @uses  \MainWP\Dashboard\MainWP_Utility::update_option()
-     */
-    public function save_api_ssl_verify() {
-        $this->check_security( 'mainwp_extension_apisslverifycertificate' );
-        MainWP_Utility::update_option( 'mainwp_api_sslVerifyCertificate', isset( $_POST['api_sslverify'] ) ? intval( $_POST['api_sslverify'] ) : 0 ); // phpcs:ignore WordPress.Security.NonceVerification,WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-        die( wp_json_encode( array( 'saved' => 1 ) ) );
     }
 
     /**

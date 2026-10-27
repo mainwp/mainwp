@@ -63,7 +63,8 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
      * Validate SSL certificate.
      */
     public function __construct() {
-        static::$apisslverify = ( ( get_option( 'mainwp_api_sslVerifyCertificate' ) === false ) || ( 1 === (int) get_option( 'mainwp_api_sslVerifyCertificate' ) ) ) ? 1 : 0;
+        // Ignore the retired opt-out, including values saved by older Dashboards.
+        static::$apisslverify = 1;
     }
 
     /**

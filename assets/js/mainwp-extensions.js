@@ -420,7 +420,6 @@ function mainwp_extensions_activate(pObj, retring) {
             } else if (response.error) {
                 loadingEl.find('.ui.text.loader').html(response.error);
             } else if (response.retry_action && response.retry_action == 1) {
-                jQuery("#mainwp_api_sslVerifyCertificate").val(0);
                 mainwp_extensions_activate(pObj, true);
                 return false;
             } else {
@@ -550,7 +549,6 @@ function mainwp_extensions_savelogin(retring, autoTriggerInstall) {
             } else if (response.error) {
                 statusEl.find('.text').html(response.error);
             } else if (response.retry_action && response.retry_action == 1) {
-                jQuery("#mainwp_api_sslVerifyCertificate").val(0);
                 statusEl.fadeOut();
                 mainwp_extensions_savelogin(true, autoTriggerInstall);
                 return false;
@@ -737,7 +735,6 @@ let mainwp_extension_grab_purchased = function (retring) {
                 } else if (response.error) {
                     statusEl.find('.text').html(response.error);
                 } else if (response.retry_action && response.retry_action == 1) {
-                    jQuery("#mainwp_api_sslVerifyCertificate").val(0);
                     statusEl.fadeOut();
                     mainwp_extension_grab_purchased(true);
                     return false;
@@ -956,48 +953,6 @@ let mainwp_extension_bulk_install_done = function () {
     }
 }
 
-
-// Is this function still in use???
-jQuery(document).on('click', '#mainwp-extensions-api-sslverify-certificate', function () {
-
-    let parent = jQuery(this).closest(".extension_api_sslverify_loading");
-    let statusEl = parent.find('span.status');
-    let loadingEl = parent.find("i");
-
-    let data = mainwp_secure_data({
-        action: 'mainwp_extension_apisslverifycertificate',
-        api_sslverify: jQuery("#mainwp_api_sslVerifyCertificate").val()
-    });
-
-    statusEl.hide();
-    loadingEl.show();
-    jQuery.post(ajaxurl, data, function (response) {
-        loadingEl.hide();
-        let undefError = false;
-        if (response) {
-            if (response.saved) {
-                statusEl.css('color', '#0074a2');
-                statusEl.html('MainWP Main API Key saved!').fadeIn();
-                setTimeout(function () {
-                    statusEl.fadeOut();
-                }, 3000);
-            } else if (response.error) {
-                statusEl.css('color', 'red');
-                statusEl.html(response.error).fadeIn();
-            } else {
-                undefError = true;
-            }
-        } else {
-            undefError = true;
-        }
-
-        if (undefError) {
-            statusEl.css('color', 'red');
-            statusEl.html('<i class="exclamation circle icon"></i> Undefined error').fadeIn();
-        }
-    }, 'json');
-    return false;
-});
 
 jQuery(function ($) {
     jQuery(document).on('click', '#mainwp-check-all-sync-ext', function () {

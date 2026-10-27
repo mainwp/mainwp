@@ -1872,6 +1872,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return $permission;
         }
 
+        $permission = $this->check_operation_right( 'edit_sites' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
         $websites = $this->get_websites();
         if ( is_wp_error( $websites ) ) {
             return $websites;
@@ -2048,6 +2053,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function renew_connections( $request ) {
         $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
+        $permission = $this->check_operation_right( 'edit_sites' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }
@@ -2237,6 +2247,11 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
      */
     public function disconnect_all_sites( $request ) {
         $permission = $this->check_operation_right( 'manage_dashboard_settings' );
+        if ( is_wp_error( $permission ) ) {
+            return $permission;
+        }
+
+        $permission = $this->check_operation_right( 'edit_sites' );
         if ( is_wp_error( $permission ) ) {
             return $permission;
         }

@@ -676,11 +676,43 @@ class Api_Backups_Utility { //phpcs:ignore -- NOSONAR - multi methods.
             return true;
         }
 
-        $encrypted = $this->encrypt_api_keys( $value, false, $key_file, $name );
-        if ( is_array( $encrypted ) && ! empty( $encrypted['file_key'] ) && ! empty( $encrypted['encrypted_val'] ) ) {
-            return update_option( $opt_name, $encrypted );
+        $staged_key_file = '';
+        $capture_key     = static function ( $envelope ) use ( &$staged_key_file ) {
+            if ( is_array( $envelope ) && ! empty( $envelope['file_key'] ) && is_string( $envelope['file_key'] ) ) {
+                $staged_key_file = $envelope['file_key'];
+            }
+            return $envelope;
+        };
+        // Retain the staged filename if a later encryption filter rejects the envelope.
+        add_filter( 'mainwp_encrypt_key_value', $capture_key, 10 );
+        try {
+            $encrypted = $this->encrypt_api_keys( $value, false, false, $name );
+        } finally {
+            remove_filter( 'mainwp_encrypt_key_value', $capture_key, 10 );
+        }
+        if ( ! is_array( $encrypted ) || empty( $encrypted['encrypted_val'] ) || ! is_string( $encrypted['encrypted_val'] ) || empty( $encrypted['file_key'] ) || ! is_string( $encrypted['file_key'] ) ) {
+            if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file ) {
+                do_action( 'mainwp_delete_key_file', $staged_key_file );
+            }
+            return false;
         }
 
+        $new_key_file = $encrypted['file_key'];
+        update_option( $opt_name, $encrypted );
+        // An unchanged option also returns false, so confirm the stored envelope.
+        if ( get_option( $opt_name ) === $encrypted ) {
+            if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file && $staged_key_file !== $new_key_file ) {
+                do_action( 'mainwp_delete_key_file', $staged_key_file );
+            }
+            if ( ! empty( $key_file ) && $key_file !== $new_key_file ) {
+                do_action( 'mainwp_delete_key_file', $key_file );
+            }
+            return true;
+        }
+
+        if ( ! empty( $staged_key_file ) && $staged_key_file !== $key_file ) {
+            do_action( 'mainwp_delete_key_file', $staged_key_file );
+        }
         return false;
     }
 

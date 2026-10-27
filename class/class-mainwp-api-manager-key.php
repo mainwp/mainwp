@@ -212,14 +212,7 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
         );
 
         if ( is_wp_error( $request ) ) {
-            $error_message = $request->get_error_message();
-            // Certificate verification failures name the certificate (cURL 51, 60, 77, the streams transport);
-            // other SSL-layer errors such as a reset handshake keep their own message.
-            if ( 1 === (int) static::$apisslverify && false !== stripos( $error_message, 'certificate' ) ) {
-                throw new MainWP_Exception( esc_html__( 'Could not verify the TLS certificate of the MainWP license server. Check that the CA certificates on the server hosting this Dashboard are up to date and that no proxy is intercepting TLS, then try again.', 'mainwp' ) );
-            }
-
-            throw new MainWP_Exception( esc_html( $error_message ) );
+            throw new MainWP_Exception( esc_html( $this->get_request_error_message( $request ) ) );
         }
 
         $code = wp_remote_retrieve_response_code( $request );
@@ -233,13 +226,31 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
     }
 
     /**
+     * Describe license transport failures without suggesting an unverified retry.
+     *
+     * @param \WP_Error $request Failed HTTP request.
+     * @return string Error message.
+     */
+    private function get_request_error_message( $request ) {
+        $error_message = $request->get_error_message();
+        // Certificate verification failures name the certificate (cURL 51, 60, 77, the streams transport);
+        // other SSL-layer errors such as a reset handshake keep their own message.
+        if ( 1 === (int) static::$apisslverify && false !== stripos( $error_message, 'certificate' ) ) {
+            return __( 'Could not verify the TLS certificate of the MainWP license server. Check that the CA certificates on the server hosting this Dashboard are up to date and that no proxy is intercepting TLS, then try again.', 'mainwp' );
+        }
+
+        return $error_message;
+    }
+
+    /**
      * Get purchased software.
      *
      * This function grabs a list of purchased MainWP Extensions that are available for download.
      *
      * @param array $args Software Arguments.
      *
-     * @return array Request response.
+     * @return string|false Request response body, or false for an HTTP error status.
+     * @throws \MainWP_Exception Request transport error.
      *
      * @uses \MainWP\Dashboard\MainWP_Api_Manager::get_upgrade_url()
      */
@@ -262,7 +273,11 @@ class MainWP_Api_Manager_Key { // phpcs:ignore Generic.Classes.OpeningBraceSameL
 
         MainWP_Logger::instance()->debug( 'Get purchased softwares: ' . MainWP_Utility::value_to_string( $request ) );
 
-        if ( is_wp_error( $request ) || 200 !== wp_remote_retrieve_response_code( $request ) ) {
+        if ( is_wp_error( $request ) ) {
+            throw new MainWP_Exception( esc_html( $this->get_request_error_message( $request ) ) );
+        }
+
+        if ( 200 !== wp_remote_retrieve_response_code( $request ) ) {
             // Request failed.
             return false;
         }

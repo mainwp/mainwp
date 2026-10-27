@@ -12,6 +12,8 @@ use PHPUnit\Framework\TestCase;
 /** Exercise the real update decoder, licence client and legacy TLS callbacks. */
 class Test_Addon_Update_Security extends TestCase {
 
+	private const TLS_ERROR = 'Could not verify the TLS certificate of the MainWP license server. Check that the CA certificates on the server hosting this Dashboard are up to date and that no proxy is intercepting TLS, then try again.';
+
 	/**
 	 * Invoke the production classes in a fresh process with isolated WP services.
 	 *
@@ -19,8 +21,9 @@ class Test_Addon_Update_Security extends TestCase {
 	 * @return array Observed response and side effects.
 	 */
 	private function probe( array $input ): array {
+		$fixture = 'purchased' === $input['mode'] ? 'purchased-addons-response.inc' : 'addon-update-security.inc';
 		$process = proc_open(
-			array( PHP_BINARY, __DIR__ . '/fixtures/addon-update-security.inc', json_encode( $input, JSON_THROW_ON_ERROR ) ),
+			array( PHP_BINARY, __DIR__ . '/fixtures/' . $fixture, json_encode( $input, JSON_THROW_ON_ERROR ) ),
 			array( array( 'pipe', 'r' ), array( 'pipe', 'w' ), array( 'pipe', 'w' ) ),
 			$pipes
 		);
@@ -156,6 +159,102 @@ class Test_Addon_Update_Security extends TestCase {
 		);
 		$this->assertSame( 1, $result['sslverify'] );
 		$this->assertSame( '{"success":true}', $result['response'] );
+	}
+
+	/**
+	 * Certificate failures need guidance; other transport errors keep their message.
+	 *
+	 * @return array Transport messages and expected escaped errors.
+	 */
+	public static function transport_failures(): array {
+		return array(
+			'cURL 60'   => array( 'cURL error 60: SSL certificate problem: unable to get local issuer certificate', self::TLS_ERROR ),
+			'cURL 77'   => array( 'cURL error 77: error setting certificate verify locations', self::TLS_ERROR ),
+			'hostname'  => array( 'cURL error 51: SSL: no alternative certificate subject name matches target host name', self::TLS_ERROR ),
+			'streams'   => array( 'The SSL certificate for the host could not be verified.', self::TLS_ERROR ),
+			'timeout'   => array( 'cURL error 28: Operation timed out', 'cURL error 28: Operation timed out' ),
+			'handshake' => array( 'cURL error 35: Connection reset by peer', 'cURL error 35: Connection reset by peer' ),
+			'HTML'      => array( '<b>Transport failure</b>', '&lt;b&gt;Transport failure&lt;/b&gt;' ),
+		);
+	}
+
+	/**
+	 * Login and purchased add-ons must report errors without an unverified retry.
+	 *
+	 * @dataProvider transport_failures
+	 * @param string $message Transport error.
+	 * @param string $expected Expected user-facing error.
+	 */
+	public function test_transport_failures_reach_the_caller( string $message, string $expected ): void {
+		foreach ( array( 'verify', 'purchased' ) as $operation ) {
+			$result = $this->probe(
+				array(
+					'mode'      => 'purchased',
+					'operation' => $operation,
+					'error'     => $message,
+				)
+			);
+			$this->assertSame( array( 'error' => $expected ), $result['response'] );
+			$this->assertSame( 1, $result['sslverify'] );
+			$this->assertSame( 1, $result['requests'] );
+			$this->assertSame( array(), $result['warnings'] );
+		}
+	}
+
+	/**
+	 * An unsuccessful lookup must not be rendered as an empty purchase list.
+	 *
+	 * @return array HTTP and response-body failure cases.
+	 */
+	public static function failed_purchase_responses(): array {
+		$error = 'Could not retrieve purchased add-ons from the MainWP license server. Please try again later.';
+		return array(
+			'HTTP error'            => array( 503, 'Service unavailable', $error ),
+			'malformed JSON'        => array( 200, 'not JSON', $error ),
+			'empty body'            => array( 200, '', $error ),
+			'unsuccessful response' => array( 200, '{"success":false}', $error ),
+			'API error'             => array( 200, '{"success":false,"error":"Fixture license error"}', 'Fixture license error' ),
+		);
+	}
+
+	/**
+	 * Keep API errors and reject unusable responses before generating add-on rows.
+	 *
+	 * @dataProvider failed_purchase_responses
+	 * @param int    $code HTTP status.
+	 * @param string $body Response body.
+	 * @param string $expected Expected error.
+	 */
+	public function test_failed_purchase_responses_do_not_report_success( int $code, string $body, string $expected ): void {
+		$result = $this->probe(
+			array(
+				'mode' => 'purchased',
+				'code' => $code,
+				'body' => $body,
+			)
+		);
+		$this->assertSame( array( 'error' => $expected ), $result['response'] );
+		$this->assertSame( 1, $result['sslverify'] );
+		$this->assertSame( 1, $result['requests'] );
+		$this->assertSame( array(), $result['warnings'] );
+	}
+
+	/** Valid ownership and empty entitlement responses still render their proper rows. */
+	public function test_successful_purchase_responses_preserve_ownership(): void {
+		foreach ( array( false, true ) as $owned ) {
+			$result = $this->probe(
+				array(
+					'mode'  => 'purchased',
+					'owned' => $owned,
+				)
+			);
+			$this->assertSame( 'SUCCESS', $result['response']['result'] );
+			$this->assertSame( $owned, str_contains( $result['response']['data'], 'class="item extension extension-to-install ' ) );
+			$this->assertSame( ! $owned, str_contains( $result['response']['data'], 'Add-on not purchased.' ) );
+			$this->assertSame( 1, $result['sslverify'] );
+			$this->assertSame( 1, $result['requests'] );
+			$this->assertSame( array(), $result['warnings'] );
+		}
 	}
 
 	/** Old PHP callbacks must not provide another way to turn TLS off. */

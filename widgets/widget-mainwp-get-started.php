@@ -177,7 +177,7 @@ class MainWP_Get_Started { // phpcs:ignore Generic.Classes.OpeningBraceSameLine.
             ),
             array(
                 'id'       => 'uptime_alerts',
-                'title'    => __( 'Confirm uptime alerts', 'mainwp' ),
+                'title'    => __( 'Turn on uptime monitoring', 'mainwp' ),
                 'url'      => 'admin.php?page=MonitoringSettings',
                 'icon'     => 'heartbeat',
                 'complete' => ! empty( $settings['active'] ) && (bool) get_option( 'mainwp_onboarding_uptime_confirmed' ),

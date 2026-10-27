@@ -304,27 +304,31 @@ test('ordinary admin requests do not consume wizard entry redirects', () => {
     assert.equal(output.options.mainwp_run_quick_setup, 'yes');
 });
 
-test('password explanation opens on hover and keyboard focus and closes on blur', () => {
-    const h = harness();
-    const help = h.$('#mainwp-onboarding-password-help');
-    const popup = { visible: false, options: undefined };
-    help.popup = action => {
-        if (typeof action === 'object') popup.options = action;
-        else popup.visible = action === 'show';
-        return help;
-    };
-    vm.runInContext(setup, h.context);
-    assert.equal(popup.options?.on, 'hover');
-    assert.equal(popup.options?.popup, '#mainwp-onboarding-password-explanation');
-    h.handlers.get('#mainwp-onboarding-password-help:focus').call(help);
-    assert.equal(popup.visible, true);
-    h.handlers.get('#mainwp-onboarding-password-help:blur').call(help);
-    assert.equal(popup.visible, false);
-    let prevented = false;
-    h.handlers.get('#mainwp-onboarding-password-help:click').call(help, { preventDefault() { prevented = true; } });
-    assert.equal(prevented, true);
-    assert.equal(popup.visible, true);
-});
+for (const prefix of ['mainwp-onboarding', 'mainwp-onboarding-csv']) {
+    test(`${prefix} password explanation opens on hover, focus and click and closes on blur`, () => {
+        const h = harness();
+        const selector = `#${prefix}-password-help`;
+        const help = h.$(selector);
+        const popup = { visible: false, options: undefined };
+        help.popup = action => {
+            if (typeof action === 'object') popup.options = action;
+            else popup.visible = action === 'show';
+            return help;
+        };
+        vm.runInContext(setup, h.context);
+        assert.equal(popup.options?.on, 'hover');
+        assert.equal(popup.options?.popup, `#${prefix}-password-explanation`);
+        assert.equal(popup.options?.position, 'top center');
+        h.handlers.get(selector + ':focus').call(help);
+        assert.equal(popup.visible, true);
+        h.handlers.get(selector + ':blur').call(help);
+        assert.equal(popup.visible, false);
+        let prevented = false;
+        h.handlers.get(selector + ':click').call(help, { preventDefault() { prevented = true; } });
+        assert.equal(prevented, true);
+        assert.equal(popup.visible, true);
+    });
+}
 
 test('choosing a connection mode keeps Skip for now available', () => {
     const h = harness();

@@ -220,7 +220,7 @@ KEY idx_wpid_issub (wpid, issub)";
 
             $delColumns       = array( 'status_check_interval' );
             $table_wp         = esc_sql( $this->table_name( 'wp' ) );
-            $existing_columns = $this->wpdb->get_col( "SHOW COLUMNS FROM {$table_wp}", 0 ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name is a hardcoded internal identifier escaped via esc_sql(), no user input involved.
+            $existing_columns = $this->wpdb->get_col( 'SHOW COLUMNS FROM ' . $table_wp, 0 ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- DDL introspection; table name is a hardcoded internal identifier escaped via esc_sql(), no user input involved.
 
             foreach ( $delColumns as $column ) {
                 if ( in_array( $column, $existing_columns, true ) ) {
@@ -1008,23 +1008,24 @@ KEY idx_wpid_issub (wpid, issub)";
 
         return $this->wpdb->get_col(
             $this->wpdb->prepare(
-                "SELECT s.id
-                FROM {$sites_table} AS s " . // NOSONAR - table name is generated internally and safely escaped.
-                " LEFT JOIN {$options_table} AS ra " . // NOSONAR - table name is generated internally and safely escaped.
+                'SELECT s.id FROM ' .
+                // nosemgrep: AIK_tainted-sql-string -- table names come from table_name() and $wpdb->options, $where is prepared with %d, and $retry_where is a fixed string.
+                $sites_table . ' AS s ' . // NOSONAR - table name is generated internally and safely escaped.
+                ' LEFT JOIN ' . $options_table . ' AS ra ' . // NOSONAR - table name is generated internally and safely escaped.
                 " ON ra.option_name = CONCAT(
                     'mainwp_primary_monitor_repair_attempts_for_wp_',
                     s.id
                 )
                 WHERE NOT EXISTS (
                     SELECT 1
-                    FROM {$monitors_table} AS m " . // NOSONAR - table name is generated internally and safely escaped.
+                    FROM " . $monitors_table . ' AS m ' . // NOSONAR - table name is generated internally and safely escaped.
                     " WHERE m.wpid = s.id
                         AND m.suburl = ''
                 )
-                {$retry_where}
-                {$where}
+                " . $retry_where . '
+                ' . $where . '
                 ORDER BY s.id ASC
-                LIMIT %d",
+                LIMIT %d',
                 $limit
             )
         );
@@ -1034,7 +1035,7 @@ KEY idx_wpid_issub (wpid, issub)";
     /**
      * Update site monitor increase retries.
      *
-     * @param array $data data.
+     * @param int $monitor_id Monitor ID.
      *
      * @return bool Database query results or false.
      */
@@ -1267,7 +1268,7 @@ KEY idx_wpid_issub (wpid, issub)";
 
         $table_monitors = $this->table_name( 'monitors' );
 
-        $sql         = $this->wpdb->prepare( "SELECT monitor_id FROM {$table_monitors} WHERE wpid = %d", $site_id );
+        $sql         = $this->wpdb->prepare( 'SELECT monitor_id FROM ' . $table_monitors . ' WHERE wpid = %d', $site_id );
         $monitor_ids = $this->wpdb->get_col( $sql ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter
 
         if ( empty( $monitor_ids ) ) {
@@ -1444,19 +1445,24 @@ KEY idx_wpid_issub (wpid, issub)";
      * @return array data.
      */
     public function get_count_up_down_monitors() {
-        $table_monitors = esc_sql( $this->table_name( 'monitors' ) );
-        $table_wp       = esc_sql( $this->table_name( 'wp' ) );
+        $table_monitors  = esc_sql( $this->table_name( 'monitors' ) );
+        $table_wp        = esc_sql( $this->table_name( 'wp' ) );
+        $global_settings = MainWP_Uptime_Monitoring_Handle::get_global_monitoring_settings();
+        $global_active   = isset( $global_settings['active'] ) ? (int) $global_settings['active'] : 1;
 
         $where_and_allow_sites = MainWP_DB::instance()->get_sql_where_allow_access_sites( 'wp' ); // Example: AND wp.is_staging = 0 or empty.
 
-        $sql = "
+        $sql = $this->wpdb->prepare(
+            '
             SELECT
                 SUM(mo.last_status = 1) AS count_up,
-                SUM(mo.last_status = 0) AS count_down
-            FROM {$table_monitors} mo
-            LEFT JOIN {$table_wp} wp ON wp.id = mo.wpid
-            WHERE 1 {$where_and_allow_sites}
-        ";
+                SUM(mo.last_status = 0) AS count_down,
+                SUM(mo.last_status = 99 AND wp.suspended = 0 AND (mo.active = 1 OR (mo.active = -1 AND 1 = %d))) AS count_pending
+            FROM ' . $table_monitors . ' mo
+            LEFT JOIN ' . $table_wp . ' wp ON wp.id = mo.wpid
+            WHERE 1 ' . $where_and_allow_sites,
+            $global_active
+        );
 
         return $this->wpdb->get_row( $sql, ARRAY_A ); //phpcs:ignore PluginCheck.Security.DirectDB.UnescapedDBParameter -- SQL from wpdb->prepare().
     }
@@ -2062,8 +2068,6 @@ KEY idx_wpid_issub (wpid, issub)";
      * Cleanup monitoring data.
      *
      * @param int $days Days to keep monitoring data.
-     *
-     * @return int Deleted results.
      */
     public function cleanup_heartbeat_data( $days ) {
         $table_monitor_heartbeat = esc_sql( $this->table_name( 'monitor_heartbeat' ) );
@@ -2076,10 +2080,10 @@ KEY idx_wpid_issub (wpid, issub)";
         do {
             $rows = $this->wpdb->query(
                 $this->wpdb->prepare(
-                    "DELETE FROM {$table_monitor_heartbeat}
+                    'DELETE FROM ' . $table_monitor_heartbeat . '
                     WHERE `time` < %s
                     ORDER BY `time`
-                    LIMIT %d",
+                    LIMIT %d',
                     $datetime,
                     1000
                 )

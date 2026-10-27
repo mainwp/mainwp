@@ -1972,6 +1972,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( ! $destroy_data || 'completed' === $destroy_data['status'] ) {
             return;
         }
+        if ( ! isset( $destroy_data['started_at'] ) ) {
+            $destroy_data['started_at'] = time();
+        }
+
         $website_ids = $destroy_data['websites'];
         $start_index = $destroy_data['processed'];
         $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
@@ -2151,6 +2155,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
         if ( ! $renew_data || 'completed' === $renew_data['status'] ) {
             return;
         }
+        if ( ! isset( $renew_data['started_at'] ) ) {
+            $renew_data['started_at'] = time();
+        }
+
         $website_ids = $renew_data['websites'];
         $start_index = $renew_data['processed'];
         $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
@@ -2296,6 +2304,10 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
             return;
         }
 
+        if ( ! isset( $disconnect_data['started_at'] ) ) {
+            $disconnect_data['started_at'] = time();
+        }
+
         $website_ids = $disconnect_data['websites'];
         $start_index = $disconnect_data['processed'];
         $batch       = array_slice( $website_ids, $start_index, self::$batch_size );
@@ -2384,7 +2396,7 @@ class MainWP_Rest_Settings_Controller extends MainWP_REST_Controller { //phpcs:i
                 'failed'       => $disconnect_data['failed'],
                 'progress'     => round( ( $disconnect_data['processed'] / $disconnect_data['total'] ) * 100, 2 ),
                 'errors'       => ! empty( $disconnect_data['errors'] ) ? array_slice( $disconnect_data['errors'], 0, 10 ) : array(),
-                'started_at'   => $disconnect_data['started_at'],
+                'started_at'   => $disconnect_data['started_at'] ?? '',
                 'completed_at' => $disconnect_data['completed_at'] ?? null,
             )
         );

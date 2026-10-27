@@ -109,7 +109,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                     foreach ( $selected_sites as $k ) {
                         if ( MainWP_Utility::ctype_digit( $k ) ) {
                             $website = MainWP_DB::instance()->get_website_by_id( $k );
-                            if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                            if ( ! MainWP_System_Utility::can_edit_website( $website ) || '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
                             }
                             $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -141,7 +141,7 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                         if ( MainWP_Utility::ctype_digit( $k ) ) {
                             $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
                             while ( $websites && ( $website = MainWP_DB::fetch_object( $websites ) ) ) {
-                                if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                                if ( ! MainWP_System_Utility::can_edit_website( $website ) || '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                     continue;
                                 }
                                 $dbwebsites[ $website->id ] = MainWP_Utility::map_site(
@@ -154,11 +154,12 @@ class MainWP_Bulk_Update_Admin_Passwords { // phpcs:ignore Generic.Classes.Openi
                     }
                 }
 
+                $output         = new \stdClass();
+                $output->ok     = array();
+                $output->errors = array();
+
                 if ( ! empty( $dbwebsites ) ) {
-                    $post_data      = array( 'new_password' => base64_encode( $new_password ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
-                    $output         = new \stdClass();
-                    $output->ok     = array();
-                    $output->errors = array();
+                    $post_data = array( 'new_password' => base64_encode( $new_password ) ); // phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions -- base64_encode used for http encoding compatible.
 
                     MainWP_Connect::fetch_urls_authed(
                         $dbwebsites,

@@ -22,6 +22,7 @@ function harness() {
         if (selector && typeof selector === 'object' && selector.attr) return selector;
         if (!elements.has(selector)) {
             const attrs = {};
+            const data = {};
             let value = selector && String(selector).includes('qsw_nonce') ? 'fixture-nonce' : '';
             let checkboxOptions = {};
             const el = {
@@ -32,6 +33,11 @@ function harness() {
                     return el;
                 },
                 prop(name, next) { return el.attr(name, next); },
+                data(name, next) {
+                    if (next === undefined) return data[name];
+                    data[name] = next;
+                    return el;
+                },
                 val(next) {
                     if (next === undefined) return value;
                     value = next;

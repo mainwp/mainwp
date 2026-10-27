@@ -25,6 +25,77 @@ class Test_AddSite_Ability extends MainWP_Abilities_Test_Case {
     private $scope_filters = array();
 
     /**
+     * SSL versions must reach registration and the saved site through the ability.
+     *
+     * @dataProvider ssl_version_inputs
+     * @param array $fields Optional ability inputs.
+     * @param int   $expected Expected transport and stored SSL version.
+     * @return void
+     */
+    public function test_add_site_preserves_ssl_version( $fields, $expected ) {
+        $this->skip_if_no_abilities_api();
+        $this->set_current_user_as_admin();
+
+        $captured  = array();
+        $transport = function ( $pre, $url, $admin, $what, $params, $force, $policy, $http_user, $http_pass, $ssl_version ) use ( &$captured ) {
+            $captured[] = array( $what, $ssl_version );
+            return array(
+                'register'  => 'OK',
+                'wpversion' => '6.8',
+            );
+        };
+        add_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
+        add_filter( 'mainwp_fetch_url_not_authed_pre', $transport, 10, 10 );
+        add_filter( 'mainwp_fetch_url_authed_pre', '__return_empty_array' );
+
+        try {
+            $result = $this->execute_ability(
+                'mainwp/add-site-v1',
+                array_merge(
+                    array(
+                        'url'            => 'https://ssl-version.example.com/',
+                        'name'           => 'SSL version fixture',
+                        'admin_username' => 'admin',
+                    ),
+                    $fields
+                )
+            );
+
+            $this->assertNotWPError( $result );
+            $site = \MainWP\Dashboard\MainWP_DB::instance()->get_websites_by_url( 'https://ssl-version.example.com/' );
+            $this->assertNotEmpty( $site, 'Registration must save a site.' );
+            $this->assertSame(
+                array(
+                    'registration' => array( array( 'register', $expected ) ),
+                    'stored'       => $expected,
+                ),
+                array(
+                    'registration' => $captured,
+                    'stored'       => (int) $site[0]->ssl_version,
+                ),
+                'The registration transport and saved site must retain the requested SSL version.'
+            );
+        } finally {
+            remove_filter( 'mainwp_add_site_skip_key_generation', '__return_true' );
+            remove_filter( 'mainwp_fetch_url_not_authed_pre', $transport );
+            remove_filter( 'mainwp_fetch_url_authed_pre', '__return_empty_array' );
+        }
+    }
+
+    /**
+     * Supplied versions and the existing automatic selection default.
+     *
+     * @return array
+     */
+    public static function ssl_version_inputs() {
+        return array(
+            'TLS v1.2' => array( array( 'ssl_version' => 6 ), 6 ),
+            'omitted'  => array( array(), 0 ),
+            'zero'     => array( array( 'ssl_version' => 0 ), 0 ),
+        );
+    }
+
+    /**
      * Test that the ability is registered.
      *
      * @return void

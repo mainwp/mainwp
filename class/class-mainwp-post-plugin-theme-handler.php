@@ -82,9 +82,11 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
         $this->add_action( 'mainwp_themes_search_all', array( &$this, 'mainwp_themes_search_all' ) );
         if ( \mainwp_current_user_can( 'dashboard', 'activate_themes' ) ) {
             $this->add_action( 'mainwp_theme_activate', array( &$this, 'mainwp_theme_activate' ) );
+            $this->add_action( 'mainwp_widget_theme_activate', array( &$this, 'mainwp_widget_theme_activate' ) );
         }
         if ( \mainwp_current_user_can( 'dashboard', 'delete_themes' ) ) {
             $this->add_action( 'mainwp_theme_delete', array( &$this, 'mainwp_theme_delete' ) );
+            $this->add_action( 'mainwp_widget_theme_delete', array( &$this, 'mainwp_widget_theme_delete' ) );
         }
         $this->add_action( 'mainwp_trusted_theme_notes_save', array( &$this, 'mainwp_trusted_theme_notes_save' ) );
         if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
@@ -97,25 +99,19 @@ class MainWP_Post_Plugin_Theme_Handler extends MainWP_Post_Base_Handler { // php
 
         if ( \mainwp_current_user_can( 'dashboard', 'activate_deactivate_plugins' ) ) {
             $this->add_action( 'mainwp_plugin_activate', array( &$this, 'mainwp_plugin_activate' ) );
+            $this->add_action( 'mainwp_widget_plugin_activate', array( &$this, 'mainwp_widget_plugin_activate' ) );
             $this->add_action( 'mainwp_plugin_deactivate', array( &$this, 'mainwp_plugin_deactivate' ) );
+            $this->add_action( 'mainwp_widget_plugin_deactivate', array( &$this, 'mainwp_widget_plugin_deactivate' ) );
         }
         if ( \mainwp_current_user_can( 'dashboard', 'delete_plugins' ) ) {
             $this->add_action( 'mainwp_plugin_delete', array( &$this, 'mainwp_plugin_delete' ) );
+            $this->add_action( 'mainwp_widget_plugin_delete', array( &$this, 'mainwp_widget_plugin_delete' ) );
         }
 
         if ( \mainwp_current_user_can( 'dashboard', 'ignore_unignore_updates' ) ) {
             $this->add_action( 'mainwp_plugin_ignore_updates', array( &$this, 'mainwp_plugin_ignore_updates' ) );
         }
         $this->add_action( 'mainwp_trusted_plugin_notes_save', array( &$this, 'mainwp_trusted_plugin_notes_save' ) );
-
-        // Widget: Plugins.
-        $this->add_action( 'mainwp_widget_plugin_activate', array( &$this, 'mainwp_widget_plugin_activate' ) );
-        $this->add_action( 'mainwp_widget_plugin_deactivate', array( &$this, 'mainwp_widget_plugin_deactivate' ) );
-        $this->add_action( 'mainwp_widget_plugin_delete', array( &$this, 'mainwp_widget_plugin_delete' ) );
-
-        // Widget: Themes.
-        $this->add_action( 'mainwp_widget_theme_activate', array( &$this, 'mainwp_widget_theme_activate' ) );
-        $this->add_action( 'mainwp_widget_theme_delete', array( &$this, 'mainwp_widget_theme_delete' ) );
     }
 
     /**

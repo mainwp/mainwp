@@ -237,6 +237,7 @@ class MainWP_Notification { // phpcs:ignore Generic.Classes.OpeningBraceSameLine
                 'other_digest'       => $other_digest,
                 'heading'            => $heading,
                 'current_email_site' => $email_site, // support tokens process.
+                'plain_text'         => $plain_text,
             )
         );
 

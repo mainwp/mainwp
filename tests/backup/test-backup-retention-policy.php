@@ -294,4 +294,37 @@ class MainWP_Backup_Retention_Policy_Test extends \WP_UnitTestCase {
 
 		$this->assertSame( array( array( 1 ), array( 2 ) ), array_column( $candidates, 'snapshot_ids' ) );
 	}
+	/** Minimum protection survives count, age and storage pressure until its exact boundary. */
+	public function test_minimum_protection_and_restorable_coverage() {
+		$policy                 = new MainWP_Backup_Retention_Policy( 1, 1, 1 );
+		$old                    = $this->make_unit( array( 1 ), 100, 10 * MB_IN_BYTES );
+		$old['protected_until'] = $this->now + 1;
+		$new                    = $this->make_unit( array( 2 ), 10, 10 * MB_IN_BYTES );
+		$this->assertSame( array(), $policy->evaluate( array( $old, $new ), $this->now ) );
+		$this->assertSame( array( 1 ), $this->pruned_ids( $policy->evaluate( array( $old, $new ), $this->now + 1 ) ) );
+		$old['protected_until'] = 0;
+		$new['is_restorable']   = false;
+		$this->assertSame( array(), $policy->evaluate( array( $old, $new ), $this->now ), 'Newest complete and newest restorable units both survive.' );
+	}
+	/** Damaged units supply no keep-count coverage, including when none are restorable. */
+	public function test_restorable_count_window_and_all_damaged_units() {
+		$policy = new MainWP_Backup_Retention_Policy( 2, 0, 0 );
+		$units  = array();
+		foreach ( array( true, true, false, true, false ) as $index => $restorable ) {
+			$unit                  = $this->make_unit( array( $index + 1 ), 50 - 10 * $index, 2 * MB_IN_BYTES );
+			$unit['is_restorable'] = $restorable;
+			$units[]               = $unit;
+		}
+		$this->assertSame( array( 1 ), $this->pruned_ids( $policy->evaluate( $units, $this->now ) ) );
+		foreach ( $units as &$unit ) {
+			$unit['is_restorable'] = false;
+		}
+		unset( $unit );
+		$this->assertSame( array(), $policy->evaluate( $units, $this->now ) );
+		$this->assertSame( array(), ( new MainWP_Backup_Retention_Policy( 1, 0, 0 ) )->evaluate( $units, $this->now ) );
+		$age_candidates = ( new MainWP_Backup_Retention_Policy( 1, 25, 0 ) )->evaluate( $units, $this->now );
+		$this->assertSame( array( 1, 2, 3 ), $this->pruned_ids( $age_candidates ) );
+		$this->assertSame( array( 'age', 'age', 'age' ), array_column( $age_candidates, 'reason' ) );
+		$this->assertSame( array( 1, 2, 3, 4 ), $this->pruned_ids( ( new MainWP_Backup_Retention_Policy( 1, 0, 1 ) )->evaluate( $units, $this->now ) ) );
+	}
 }

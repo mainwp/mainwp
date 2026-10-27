@@ -11,6 +11,7 @@
 namespace MainWP\Dashboard\Module\Log;
 
 use MainWP\Dashboard\MainWP_DB;
+use MainWP\Dashboard\MainWP_System;
 use MainWP\Dashboard\MainWP_Utility;
 use MainWP\Dashboard\MainWP_UI;
 
@@ -124,7 +125,11 @@ class Log_Graph_Plugins_Widget {
     public function render_widget_content() {
         $wp_plugins    = array();
         $wpsite_fields = array( 'id', 'name', 'plugins' );
-        $websites      = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( array( 'select_wp_fields' => $wpsite_fields ) ) );
+        $params        = array( 'select_wp_fields' => $wpsite_fields );
+        if ( MainWP_System::instance()->is_multi_user() ) {
+            $params['where'] = 'wp.userid = ' . (int) get_current_user_id();
+        }
+        $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user_by_params( $params ) );
         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
             $plugins = ! empty( $website->plugins ) ? json_decode( $website->plugins, 1 ) : array();
             if ( ! is_array( $plugins ) ) {

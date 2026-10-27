@@ -1855,7 +1855,7 @@ class MainWP_Post_Handler extends MainWP_Post_Base_Handler { // phpcs:ignore -- 
                 'security_id'        => $this->mainwp_get_sanitized_post( 'security_id' ),
                 'http_username'      => $this->mainwp_get_sanitized_post( 'http_username' ),
                 'http_password'      => $this->mainwp_get_sanitized_post( 'http_password' ),
-                'verify_certificate' => $this->mainwp_get_sanitized_post( 'verify_certificate', 'intval' ) ?? 1,
+                'verify_certificate' => MainWP_Manage_Sites_View::normalize_ssl_verify( $this->mainwp_get_sanitized_post( 'verify_certificate' ) ),
                 'ssl_version'        => $this->mainwp_get_sanitized_post( 'ssl_version' ) ?? 'auto',
             );
 

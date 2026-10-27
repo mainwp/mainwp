@@ -2222,14 +2222,17 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
                     $site_id = $request['site_id'];
 
                     // get data.
-                    $website     = MainWP_DB::instance()->get_website_by_id( $site_id, false, array( 'rollback_updates_data' ) );
+                    $website     = MainWP_DB::instance()->get_website_by_id( $site_id, false, array( 'rollback_updates_data', 'ignored_trans_updates' ) );
                     $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
                     $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
                     $plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
                     $theme_upgrades       = json_decode( $website->theme_upgrades, true );
                     $translation_upgrades = json_decode( $website->translation_upgrades, true );
-                    $data                 = array(
+                    if ( MainWP_Common_Handler::is_translation_updates_ignored( $website ) ) {
+                        $translation_upgrades = array();
+                    }
+                    $data = array(
                         'wp_core'     => $wp_upgrades,
                         'plugins'     => $plugin_upgrades,
                         'themes'      => $theme_upgrades,
@@ -2293,12 +2296,15 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
                     $site_id = $request['site_id'];
 
                     // get data.
-                    $website      = MainWP_DB::instance()->get_website_by_id( $site_id, false, array( 'rollback_updates_data' ) );
+                    $website      = MainWP_DB::instance()->get_website_by_id( $site_id, false, array( 'rollback_updates_data', 'ignored_trans_updates' ) );
                     $plugins      = json_decode( $website->plugin_upgrades, true );
                     $themes       = json_decode( $website->theme_upgrades, true );
                     $translations = json_decode( $website->translation_upgrades, true );
-                    $wp           = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
-                    $wp           = ! empty( $wp ) ? json_decode( $wp, true ) : array();
+                    if ( MainWP_Common_Handler::is_translation_updates_ignored( $website ) ) {
+                        $translations = array();
+                    }
+                    $wp = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
+                    $wp = ! empty( $wp ) ? json_decode( $wp, true ) : array();
 
                     if ( ! empty( $wp ) ) {
                         $wp = 1;
@@ -3239,7 +3245,10 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
                     $site_id = $request['site_id'];
 
                     // get data.
-                    $website              = MainWP_DB::instance()->get_website_by_id( $site_id );
+                    $website = MainWP_DB::instance()->get_website_by_id( $site_id );
+                    if ( MainWP_Common_Handler::is_translation_updates_ignored( $website ) ) {
+                        return $this->mainwp_run_process_success();
+                    }
                     $translation_upgrades = json_decode( $website->translation_upgrades, true );
                     $slugs                = array();
                     foreach ( $translation_upgrades as $translation_upgrade ) {
@@ -3693,15 +3702,18 @@ class Rest_Api_V1 { //phpcs:ignore -- NOSONAR - multi methods.
 
             $all_updates = array();
 
-            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true, null, 'wp.url', false, false, null, false, array( 'rollback_updates_data' ) ) );
+            $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_for_current_user( true, null, 'wp.url', false, false, null, false, array( 'rollback_updates_data', 'ignored_trans_updates' ) ) );
 
             while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
                 $wp_upgrades = MainWP_DB::instance()->get_website_option( $website, 'wp_upgrades' );
                 $wp_upgrades = ! empty( $wp_upgrades ) ? json_decode( $wp_upgrades, true ) : array();
 
-                $plugin_upgrades             = json_decode( $website->plugin_upgrades, true );
-                $theme_upgrades              = json_decode( $website->theme_upgrades, true );
-                $translation_upgrades        = json_decode( $website->translation_upgrades, true );
+                $plugin_upgrades      = json_decode( $website->plugin_upgrades, true );
+                $theme_upgrades       = json_decode( $website->theme_upgrades, true );
+                $translation_upgrades = json_decode( $website->translation_upgrades, true );
+                if ( MainWP_Common_Handler::is_translation_updates_ignored( $website ) ) {
+                    $translation_upgrades = array();
+                }
                 $all_updates[ $website->id ] = array(
                     'wp_core'     => $wp_upgrades,
                     'plugins'     => $plugin_upgrades,

@@ -108,6 +108,17 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     public function record_snapshot( array $data ): int {
         $archives = '[]';
         if ( isset( $data['archives'] ) && is_array( $data['archives'] ) ) {
+            if ( MainWP_Backup_Retention_Protection::task_removes_local_archives( (int) ( $data['task_id'] ?? 0 ) ) ) {
+                // Insert intent with the row so a failed requirement capture still
+                // holds this new snapshot. Legacy archive descriptors stay unchanged.
+                foreach ( $data['archives'] as &$archive ) {
+                    if ( is_array( $archive ) ) {
+                        $archive['retention_requires_uploads'] = true;
+                        break;
+                    }
+                }
+                unset( $archive );
+            }
             $archives = wp_json_encode( $data['archives'] );
             if ( false === $archives ) {
                 return 0;
@@ -224,7 +235,9 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
     }
 
     /**
-     * Preserve local integrity failures without changing the retention lifecycle.
+     * Record local integrity failures without changing completion or removal state.
+     *
+     * Retention reads this flag when the catalog resolves the unit's required archive copies.
      *
      * @param int    $snapshot_id Snapshot owning the archive.
      * @param string $source_file Original archive filename.
@@ -601,7 +614,11 @@ class MainWP_Backup_Snapshots extends MainWP_DB_Base { // phpcs:ignore Generic.C
                 $snapshot_id
             );
         }
-        return 1 === $this->wpdb->query( $sql );
+        $changed = 1 === $this->wpdb->query( $sql );
+        if ( $changed ) {
+            delete_option( MainWP_Backup_Retention_Protection::REQUIRED_OPTION_PREFIX . $snapshot_id );
+        }
+        return $changed;
     }
 
     /**

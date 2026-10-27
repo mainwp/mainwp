@@ -375,7 +375,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
             $consumer_key_hashed    = wp_hash_password( $consumer_key );
             $consumer_secret_hashed = wp_hash_password( $consumer_secret );
 
-            if ( ! empty( $_POST['mainwp_rest_api_keys_compatible_v1'] ) ) {
+            if ( self::can_manage_legacy_api_keys() && ! empty( $_POST['mainwp_rest_api_keys_compatible_v1'] ) ) {
                 $all_keys[ $consumer_key ] = array(
                     'ck_hashed' => $consumer_key_hashed,
                     'cs'        => $consumer_secret_hashed,
@@ -477,6 +477,10 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                     $updated = true;
                     $save    = true;
                 } else {
+                    if ( ! self::can_manage_legacy_api_keys() ) {
+                        wp_safe_redirect( admin_url( 'admin.php?page=RESTAPI' ) );
+                        exit();
+                    }
                     $edit_id  = sanitize_text_field( $edit_id );
                     $all_keys = get_option( 'mainwp_rest_api_keys', false );
                     if ( is_array( $all_keys ) && isset( $all_keys[ $edit_id ] ) ) {
@@ -702,7 +706,7 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function render_api_keys_v1_table() { //phpcs:ignore -- NOSONAR - complex.
         $all_keys        = static::check_rest_api_updates();
-        $can_edit_keys   = static::can_edit_rest_api_keys();
+        $can_edit_keys   = static::can_edit_rest_api_keys() && self::can_manage_legacy_api_keys();
         $can_delete_keys = static::can_delete_rest_api_keys();
 
         if ( ! is_array( $all_keys ) ) {
@@ -1284,17 +1288,20 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
                         </div>
                     </div>
 
-                    <div class="ui grid field">
-                        <label
-                            class="six wide column middle aligned" for="mainwp_rest_api_keys_compatible_v1"><?php esc_html_e( 'Enable MainWP REST API v1 Compatibility', 'mainwp' ); ?></label>
-                        <div class="ten wide column ui toggle checkbox"
-                            data-tooltip="<?php esc_attr_e( 'If enabled, the credentials will be compatible with REST API v1.', 'mainwp' ); ?>"
-                            data-inverted="" data-position="bottom left">
-                            <input type="checkbox" name="mainwp_rest_api_keys_compatible_v1"
-                                id="mainwp_rest_api_keys_compatible_v1"
-                                aria-label="<?php esc_attr_e( 'If enabled, the credentials will be compatible with REST API v1.', 'mainwp' ); ?>" />
+                    <?php if ( self::can_manage_legacy_api_keys() ) : ?>
+                        <div class="ui grid field">
+                            <label
+                                class="six wide column middle aligned" for="mainwp_rest_api_keys_compatible_v1"><?php esc_html_e( 'Enable MainWP REST API v1 Compatibility', 'mainwp' ); ?></label>
+                            <div class="ten wide column ui toggle checkbox"
+                                data-tooltip="<?php esc_attr_e( 'If enabled, the credentials will be compatible with REST API v1.', 'mainwp' ); ?>"
+                                data-inverted="" data-position="bottom left">
+                                <input type="checkbox" name="mainwp_rest_api_keys_compatible_v1"
+                                    id="mainwp_rest_api_keys_compatible_v1"
+                                    aria-label="<?php esc_attr_e( 'If enabled, the credentials will be compatible with REST API v1.', 'mainwp' ); ?>" />
+                            </div>
                         </div>
-                    </div>
+
+                    <?php endif; ?>
 
                     <?php $init_pers = 'r,w,d'; ?>
 
@@ -1576,6 +1583,9 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      * @param array  $item The Key edit.
      */
     public static function render_rest_api_edit( $keyid, $item ) { //phpcs:ignore -- NOSONAR - complex.
+        if ( ! self::can_manage_legacy_api_keys() ) {
+            return;
+        }
 
         $edit_desc = is_array( $item ) && isset( $item['desc'] ) ? $item['desc'] : '';
         $enabled   = is_array( $item ) && isset( $item['enabled'] ) && ! empty( $item['enabled'] ) ? true : false;
@@ -2622,6 +2632,15 @@ class MainWP_Rest_Api_Page { // phpcs:ignore Generic.Classes.OpeningBraceSameLin
      */
     public static function can_view_manage_rest_api() {
         return \mainwp_current_user_can( 'rest_api', 'manage_rest_api_keys' );
+    }
+
+    /**
+     * Global legacy keys require an unrestricted Dashboard administrator.
+     *
+     * @return bool
+     */
+    private static function can_manage_legacy_api_keys() {
+        return MainWP_System_Utility::is_admin() && ! MainWP_System_Utility::is_team_control_staff();
     }
 
     /**

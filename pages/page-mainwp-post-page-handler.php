@@ -512,7 +512,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
 
                 if ( ! $skip_post ) {
                     if ( $p_id ) {
-                        static::posting_posts( $p_id, 'posting' );
+                        static::posting_posts( $p_id, 'posting', true );
                     } else {
                         ?>
                         <div class="ui red message"><?php esc_html_e( 'Undefined error occurred!', 'mainwp' ); ?></div>
@@ -559,7 +559,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
             <div class="scrolling content">
                 <?php
                 if ( $post_id ) {
-                    static::posting_posts( $post_id, 'preparing' );
+                    static::posting_posts( $post_id, 'preparing', true );
                 } else {
                     ?>
                     <div class="error">
@@ -604,7 +604,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
         MainWP_Post_Handler::instance()->secure_request( 'mainwp_post_postingbulk' );
         $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : false;
         if ( $post_id ) {
-            static::posting_posts( $post_id, 'ajax_posting' );
+            static::posting_posts( $post_id, 'ajax_posting', true );
         }
          // phpcs:enable
         die();
@@ -637,8 +637,9 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
      *
      * @param int    $post_id Post or Page ID.
      * @param string $what What posting process.
+     * @param bool   $check_site_access Apply ownership checks for Dashboard UI requests.
      */
-    public static function posting_posts( $post_id, $what ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
+    public static function posting_posts( $post_id, $what, $check_site_access = false ) { // phpcs:ignore -- NOSONAR -Current complexity is the only way to achieve desired results, pull request solutions appreciated.
 
         if ( empty( $post_id ) ) {
             return false;
@@ -770,7 +771,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 foreach ( $selected_sites as $k ) {
                     if ( MainWP_Utility::ctype_digit( $k ) ) {
                         $website = MainWP_DB::instance()->get_website_by_id( $k );
-                        if ( empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
+                        if ( $website && ( ! $check_site_access || MainWP_System_Utility::can_edit_website( $website ) ) && empty( $website->sync_errors ) && ! MainWP_System_Utility::is_suspended_site( $website ) ) {
                             $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
                         }
                     }
@@ -795,7 +796,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                     if ( MainWP_Utility::ctype_digit( $k ) ) {
                         $websites = MainWP_DB::instance()->query( MainWP_DB::instance()->get_sql_websites_by_group_id( $k ) );
                         while ( $websites && ( $website  = MainWP_DB::fetch_object( $websites ) ) ) {
-                            if ( '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
+                            if ( ( $check_site_access && ! MainWP_System_Utility::can_edit_website( $website ) ) || '' !== $website->sync_errors || MainWP_System_Utility::is_suspended_site( $website ) ) {
                                 continue;
                             }
                             $dbwebsites[ $website->id ] = MainWP_Utility::map_site( $website, $data_fields );
@@ -942,7 +943,7 @@ class MainWP_Post_Page_Handler { // phpcs:ignore Generic.Classes.OpeningBraceSam
                 }
 
                 $ajax_result = '';
-                if ( 'ajax_posting' === $what ) {
+                if ( 'ajax_posting' === $what && ! empty( $dbwebsites ) ) {
                     if ( isset( $output->ok[ $website->id ] ) && 1 === (int) $output->ok[ $website->id ] ) {
                         $ajax_result     = esc_html( $succes_message ) . ' <a href="' . esc_url( $output->link[ $website->id ] ) . '" class="mainwp-may-hide-referrer" target="_blank">View Post</a>';
                         $posting_succeed = true;
